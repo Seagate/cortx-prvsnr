@@ -1,0 +1,9 @@
+/var/log/halon.decision.log {
+  daily
+  copytruncate
+  create 700 root root
+  dateext
+  rotate 30
+  size 1M
+  compress
+}
