@@ -58,8 +58,6 @@ update_sspl_ll_conf:
     - pattern: setup=.*$
     - repl: setup=vm
     - append_if_not_found: True
-    - require:
-      - sls: components.sspl.install
 
 {% endif %}
 

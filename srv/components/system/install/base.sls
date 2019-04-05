@@ -1,13 +1,5 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-clean_yum_local:
-  cmd.run:
-    - name: yum clean all
-
-clean_yum_cache:
-  cmd.run:
-    - name: rm -rf /var/cache/yum
-
 cleanup_yum_repos_dir:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/*.repo
@@ -18,7 +10,7 @@ add_{{repo.id}}_repo:
   pkgrepo.managed:
     - name: {{ repo.id }}
     - enabled: True
-    - humanname: base
+    - humanname: {{ repo.id }}
     - baseurl: {{ repo.url }}
     - gpgcheck: 0
 {% endfor %}
@@ -35,9 +27,17 @@ add_saltsatck_repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.saltsatck_repo.id }}
     - enabled: True
-    - humanname: epel
+    - humanname: saltstack
     - baseurl: {{ defaults.base_repos.saltsatck_repo.url }}
     - gpgcheck: 0
+
+clean_yum_local:
+  cmd.run:
+    - name: yum clean all
+
+clean_yum_cache:
+  cmd.run:
+    - name: rm -rf /var/cache/yum
 
 update_yum_repos:
   module.run:
