@@ -1,0 +1,19 @@
+SSU:
+    sw_components: [ os, mero, halon ]
+    nodes: [ {{ pillar['csm']['ssu_list'] }} ]
+    admin_user: root
+
+S3_SERVER:
+    sw_components: [ os, halon ]
+    nodes: [ {{ pillar['csm']['qb_list'] }} ]
+    admin_user: root
+
+CMU:
+    sw_components: [ os, s3_cli, csm ]
+    nodes: [ {{ pillar['csm']['cmu'] }} ]
+    admin_user: root
+
+S3_LOAD_BALANCER:
+    sw_components: [ ]
+    nodes: [ {{ pillar['csm']['lb_list'] }} ]
+    admin_user: root

@@ -1,0 +1,26 @@
+/var/log/salt/master {
+    yearly
+    missingok
+    rotate 3
+    compress
+    notifempty
+    size 30k
+}
+
+/var/log/salt/minion {
+    yearly
+    missingok
+    rotate 3
+    compress
+    notifempty
+    size 30k
+}
+
+/var/log/salt/key {
+    yearly
+    missingok
+    rotate 3
+    compress
+    notifempty
+    size 30k
+}

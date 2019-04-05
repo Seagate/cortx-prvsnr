@@ -1,0 +1,19 @@
+qb04n1-m06:
+  host: 10.230.164.98
+  user: root
+  timeout: 120
+
+qb04n2-m06:
+  host: 10.230.162.11
+  user: root
+  timeout: 120
+
+qb04n3-m06:
+  host: 10.230.162.11
+  user: root
+  timeout: 120
+
+qb04n4-m06:
+  host: 10.230.162.11
+  user: root
+  timeout: 120
