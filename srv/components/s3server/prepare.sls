@@ -1,12 +1,19 @@
-install_common_runtime:
-  pkg.installed:
-    - pkgs:
-      - java-1.8.0-openjdk-headless
-      - libxml2
-      - libyaml
-      - yaml-cpp
-      - gflags
-      - glog
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+add_s3server_repo:
+  pkgrepo.managed:
+    - name: {{ defaults.s3server.repo.id }}
+    - enabled: True
+    - baseurl: {{ defaults.s3server.repo.url }}
+    - gpgcheck: 0
+
+add_s3server_uploads_repo:
+  pkgrepo.managed:
+    - name: {{ defaults.s3server.uploads_repo.id }}
+    - enabled: True
+    - humanname: s3server_uploads
+    - baseurl: {{ defaults.s3server.uploads_repo.url }}
+    - gpgcheck: 0
 
 Update to latest selinux-policy (required by latest openldap):
   pkg.latest:
@@ -47,15 +54,6 @@ service_rsyslog:
   service.running:
     - name: rsyslog
     - enable: True
-
-Install keepalived:
-  pkg.installed:
-    - name: keepalived
-
-Setup keepalived master config (sample, manually updated):
-  file.managed:
-    - name: /etc/keepalived/keepalived.conf.master
-    - source: salt://components/s3server/files/keepalived/keepalived.conf.master
 
 Create working directory for S3 server:
   file.directory:

@@ -1,6 +1,3 @@
-include:
-  - components.sspl.install
-
 {% set role = 'gw' %}
 
 {% if (not salt['grains.get']('productname').lower().startswith('virtual')) %}

@@ -1,6 +1,9 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+disable_halon_service:
+  service.dead:
+    - name: halond
+    - enable: false
 
-halon_conf:
+delete_halon_conf:
   file.managed:
     - name: /etc/sysconfig/halond
     - contents:
@@ -8,10 +11,3 @@ halon_conf:
       - HALOND_STATION_OPTIONS="--rs-lease 4000000"
     - user: root
     - group: root
-
-halon_service:
-  service.running:
-    - name: halond
-    - enable: True
-    - watch:
-      - file: halon_conf
