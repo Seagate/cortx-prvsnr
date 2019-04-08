@@ -1,8 +1,3 @@
-Setup keepalived master config (sample, manually updated):
-  file.managed:
-    - name: /etc/keepalived/keepalived.conf.master
-    - source: salt://components/s3server/files/keepalived/keepalived.conf.master
-
 # modify_s3config_file:
 #   file.replace:
 #     - name: /opt/seagate/s3/conf/s3config.yaml

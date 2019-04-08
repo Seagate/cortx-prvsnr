@@ -19,11 +19,6 @@ install_s3server_uploads:
       - require:
         - pkgrepo: add_s3server_uploads_repo
 
-
-Install keepalived:
-  pkg.installed:
-    - name: keepalived
-
 # Only for client
 # install_s3s3iamcli:
 #   pkg.installed:
