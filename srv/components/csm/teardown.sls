@@ -1,25 +1,25 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-install_grafana:
-  pkg.installed:
+remove_grafana:
+  pkg.purged:
     - name: grafana
     - require:
       - pkgrepo: add_graphana_repo
 
-install_graphite:
-  pkg.installed:
+remove_graphite:
+  pkg.purged:
     - pkgs:
       - graphite-web
       - python-carbon
 
-install_csm:
-  pkg.installed:
+remove_csm:
+  pkg.purged:
     - name: {{ defaults.csm.repo.package.name }}
     - version: {{ defaults.csm.repo.package.version }}
     - refresh: True
 
-install_statsd:
-  pkg.installed:
+remove_statsd:
+  pkg.purged:
     - pkgs:
       - statsd
       - python2-statsd

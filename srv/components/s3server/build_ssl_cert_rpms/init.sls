@@ -3,7 +3,7 @@ include:
   - components.s3s3server.build_ssl_cert_rpms.install
   - components.s3s3server.build_ssl_cert_rpms.config
   - components.s3s3server.build_ssl_cert_rpms.housekeeping
-
+  - components.s3s3server.build_ssl_cert_rpms.sanity_check
 
 # install_s3server_certs:
 #   pkg.installed:

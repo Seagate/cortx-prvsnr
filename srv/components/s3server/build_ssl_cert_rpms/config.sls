@@ -7,9 +7,6 @@ generate_s3_certs:
   cmd.run:
     - name: /opt/seagate/s3server/ssl/generate_certificate.sh -f domain_input.conf
     - cwd: {{ rpm_sources_dir }}/{{ s3_certs_src }}
-    - require:
-      - copy_s3_utils
-      - ensure_s3_certs_dir
 
 copy_s3_certs:
   file.copy:
@@ -32,8 +29,6 @@ build_s3server_certs_rpm:
          --define "_s3_deploy_tag {{ defaults.s3server.config.DEPLOY_TAG }}" \
         /opt/seagate/s3server/s3certs/s3certs.spec
     - cwd: {{ rpm_sources_dir }}
-    - watch_in:
-      - remove_rpmbuild
 
 build_s3client_certs_rpm:
   cmd.run:
@@ -43,5 +38,3 @@ build_s3client_certs_rpm:
          --define "_s3_deploy_tag {{ defaults.s3server.config.DEPLOY_TAG }}" \
          /opt/seagate/s3server/s3certs/s3clientcerts.spec
     - cwd: {{ rpm_sources_dir }}
-    - watch_in:
-      - remove_rpmbuild

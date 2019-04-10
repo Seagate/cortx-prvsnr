@@ -4,4 +4,4 @@ include:
   - components.halon.install
   - components.halon.config
   - components.halon.housekeeping
-  # - components.halon.sanity_check
+  - components.halon.sanity_check
