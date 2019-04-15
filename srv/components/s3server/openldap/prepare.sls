@@ -1,6 +1,3 @@
-include:
-  - components.s3server.openldap.install
-
 create_dir_tmp_slapd:
   file.directory:
     - name: /tmp/s3ldap
@@ -64,10 +61,4 @@ backup_original_slapd_file:
     - replace: True
     - keep_source: False
     - makedirs: True
-    - watch_in:
-      - service: slapd
 {% endfor %}
-
-slapd:
-  service.running:
-    - enable: True
