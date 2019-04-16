@@ -1,6 +1,3 @@
-include:
-  - components.sspl.install
-
 {% set role = 'gw' %}
 
 {% if (not salt['grains.get']('productname').lower().startswith('virtual')) %}
@@ -58,8 +55,6 @@ update_sspl_ll_conf:
     - pattern: setup=.*$
     - repl: setup=vm
     - append_if_not_found: True
-    - require:
-      - sls: components.sspl.install
 
 {% endif %}
 

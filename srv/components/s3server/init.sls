@@ -1,5 +1,6 @@
-clude:
-  - components.s3server.openldap
-  - components.s3server.common_runtime
-  - components.s3server.build_rpms
-  - components.s3server.s3server
+include:
+  - components.s3s3server.prepare
+  - components.s3s3server.install
+  - components.s3s3server.config
+  - components.s3s3server.housekeeping
+  - components.s3s3server.sanity_check

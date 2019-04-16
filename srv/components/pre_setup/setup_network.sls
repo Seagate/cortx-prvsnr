@@ -49,6 +49,15 @@ set_network_file:
       - watch_in:
           - service: service_network
 
+# COSTOR-202
+prevent_bond0_interface_creation_on_boot:
+  file.managed:
+    - name: /etc/modprobe.d/bonding.conf
+    - contents:
+      - options bonding max_bonds=0
+    - user: root
+    - group: root
+
 service_network:
   service.running:
     - name: network.service

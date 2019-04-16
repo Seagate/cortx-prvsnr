@@ -1,7 +1,3 @@
-include:
-  - components.sspl.config
-  - components.csm.install
-
 copy_cluster_yaml:
   file.copy:
     - name: /etc/csm/cluster.yaml

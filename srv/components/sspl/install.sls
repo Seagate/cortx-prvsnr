@@ -1,16 +1,3 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
-include:
-  - components.system.install.base
-
-add_sspl_prereqs_repo:
-  pkgrepo.managed:
-    - name: {{ defaults.sspl.uploads_repo.id }}
-    - enabled: True
-    - humanname: sspl_uploads
-    - baseurl: {{ defaults.sspl.uploads_repo.url }}
-    - gpgcheck: 0
-
 {% if (not salt['grains.get']('productname').lower().startswith('virtual')) %}
 install_sspl_prereqs_hw_pecific:
   pkg.installed:
@@ -35,14 +22,6 @@ install_sspl_prereqs_vm_pecific:
     - pkgs:
       - lxqt-policykit
 {% endif %}
-
-add_sspl_repo:
-  pkgrepo.managed:
-    - name: {{ defaults.sspl.repo.id }}
-    - enabled: True
-    - humanname: sspl
-    - baseurl: {{ defaults.sspl.repo.url }}
-    - gpgcheck: 0
 
 install_sspl:
   pkg.installed:
