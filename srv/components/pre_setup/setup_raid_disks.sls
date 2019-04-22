@@ -15,41 +15,41 @@ setup_mdraid:
 # Label raid disk partition created above
 label_partition:
   module.run:
-    - name: parted.mklabel
-    - device: /dev/md0
-    - label_type: gpt
+    - parted.mklabel:
+      - device: /dev/md0
+      - label_type: gpt
 
 # Create raid partition for [SWAP]
 make_swap_partition:
   module.run:
-    - name: parted.mkpart
-    - device: /dev/md0
-    - part_type: primary
-    - fs_type: linux-swap
-    - start: 0%
-    - end: 35%
+    - parted.mkpart:
+      - device: /dev/md0
+      - part_type: primary
+      - fs_type: linux-swap
+      - start: 0%
+      - end: 35%
 
 # Create raid partition of /opt
 make_opt_partition:
   module.run:
-    - name: parted.mkpart
-    - device: /dev/md0
-    - part_type: primary
-    - fs_type: ext4
-    - start: 36%
-    - end: 100%
+    - parted.mkpart:
+      - device: /dev/md0
+      - part_type: primary
+      - fs_type: ext4
+      - start: 36%
+      - end: 100%
 
 # Print block device attributes
 part1_blkid:
   module.run:
-    - name: disk.blkid
-    - device: /dev/md0p1
+    - disk.blkid:
+      - device: /dev/md0p1
 
 # Print block device attributes
 part2_blkid:
   module.run:
-    - name: disk.blkid
-    - device: /dev/md0p2
+    - disk.blkid:
+      - device: /dev/md0p2
 
 # Activate SWAP device
 mount_swap:

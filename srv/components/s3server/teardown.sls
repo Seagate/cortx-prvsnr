@@ -1,43 +1,29 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
-{% set rpm_sources_dir = defaults.tmp_dir + "/s3certs/rpmbuild/SOURCES/" %}
-
 #-------------------------
-# Teardown openldap
+# Teardown haproxy/openldap
 #-------------------------
 include:
   - components.s3server.openldap.teardown
+  - components.s3server.haproxy.teardown
+  - components.s3server.keepalived.teardown
 #-------------------------
-# Teardown openldap
+# Teardown haproxy/openldap
 #-------------------------
 
 #-------------------------
 # Teardown S3Server
 #-------------------------
+Remove S3Server:
+  pkg.purged:
+    - name: s3server
 
-#-------------------------
-# Teardown S3Server End
-#-------------------------
-
-#-------------------------
-# Teardown Common Runtime
-#-------------------------
-service_rsyslog:
-  service.dead:
-    - name: rsyslog
-    - enable: False
-
-Remove keepalived master config:
-  file.managed:
-    - name: /etc/keepalived/keepalived.conf.master
-
-Remove haproxy config to enable logs:
-  file.absent:
-    - name: /etc/rsyslog.d/haproxy.conf
-
-Remove haproxy 503 error code to http file:
-  file.absent:
-    - name: /etc/haproxy/errors/503.http
+Remove s3server_uploads:
+  pkg.purged:
+    - pkgs:
+      - python34-jmespath
+      - python34-botocore
+      - python34-s3transfer
+      - python34-boto3
+      - python34-xmltodict
 
 Remove /tmp/s3certs:
   file.absent:
@@ -47,19 +33,35 @@ Remove working directory for S3 server:
   file.absent:
     - name: /var/seagate/s3
 
+Remove S3Server under opt:
+  file.absent:
+    - name: /opt/seagate/s3server
+#-------------------------
+# Teardown S3Server End
+#-------------------------
+
+#-------------------------
+# Teardown Common Runtime
+#-------------------------
+Disable http port in selinux:
+  cmd.run:
+    - name: setsebool httpd_can_network_connect false -P
+    - onlyif: salt['grains.get']('selinux:enabled')
+
+service_rsyslog:
+  service.dead:
+    - name: rsyslog
+    - enable: False
+
 remove_common_runtime:
   pkg.purged:
     - pkgs:
-      - keepalived
-      - haproxy
-      - glog
-      - gflags
-      - yaml-cpp
-      - openssl
-      - openssl-libs
+      - java-1.8.0-openjdk-headless
       - libxml2
       - libyaml
-      - java-1.8.0-openjdk-headless
+      - yaml-cpp
+      - gflags
+      - glog
 #------------------------------
 # Teardown Common Runtime End
 #------------------------------

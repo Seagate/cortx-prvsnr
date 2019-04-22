@@ -15,6 +15,10 @@ copy_s3_utils:
     - clean: True
     - replace: True
 
+clean_slate:
+  file.absent:
+    - name: {{ rpm_sources_dir }}
+
 create_rpm_sources_dir:
   file.directory:
     - name: {{ rpm_sources_dir }}

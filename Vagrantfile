@@ -3,16 +3,27 @@
 # Vagrantfile configuration fefernece:
 #   https://www.vagrantup.com/docs/hyperv/configuration.html
 
-# VM name
-vm_name = 'ees-box'
-# Maximum memory in MB
-vm_memory = 2048
-# Number of CPUs
-vm_cpus = 2
+# read vm configuration(s) from JSON file
+salt_nodes = [
+    {
+        "name" => "ees-node1",
+        "cpus" => 1,
+        "memory" => 512,
+        "maxmemory" => 1024,
+        "mgmt0" => "172.16.10.101"
+    },
+    {
+        "name"=> "ees-node2",
+        "cpus"=> 1,
+        "memory"=> 512,
+        "maxmemory"=> 1024,
+        "mgmt0" => "172.16.10.111"
+    }
+]
 
 # Disk configuration details
 disks_dir = File.join(Dir.pwd, ".vdisks")
-disk_count = 2         # number of disks
+disk_count = 2
 disk_size = 256         # in MB
 
 Vagrant.configure("2") do |config|
@@ -20,98 +31,135 @@ Vagrant.configure("2") do |config|
   config.vm.box = "centos_7.5.1804"
   config.vm.box_check_update = false
   config.vm.boot_timeout = 600
-  config.vm.hostname = vm_name
 
-  config.vm.provider :virtualbox do |vb, override|
-    ## Network configuration
-    #override.vm.network :private_network, ip: node['mgmt1'], virtualbox__intnet: "mgmt"
+  salt_nodes.each do |node|
+    config.vm.define node['name'] do |node_config|
+      node_config.vm.hostname = node['name']
 
-    # Headless
-    vb.gui = false
+      config.vm.provider :virtualbox do |vb, override|
+        # Headless
+        vb.gui = false
 
-    # name
-    vb.name = vm_name
+        # name
+        vb.name = node['name']
 
-    # Virtual h/w specs
-    vb.memory = vm_memory
-    vb.cpus = vm_cpus
+        # Virtual h/w specs
+        vb.memory = node['maxmemory']
+        vb.cpus = node['cpus']
 
-    # Use differencing disk instead of cloning entire VDI
-    vb.linked_clone = true
+        # Use differencing disk instead of cloning entire VDI
+        vb.linked_clone = true
 
-    # Check if machine already provisioned
-    if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
-      # VDisk configuration start
-      if not Dir.exist?(disks_dir)
-        Dir.mkdir(disks_dir)
+        ## Network configuration
+        override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt"
+
+        # Disable USB
+        vb.customize ["modifyvm", :id, "--usb", "off"]
+        vb.customize ["modifyvm", :id, "--usbehci", "off"]
+
+        # Check if machine already provisioned
+        if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
+          # VDisk configuration start
+          if not Dir.exist?(disks_dir)
+            Dir.mkdir(disks_dir)
+          end
+
+          # SAS Controller - 1
+          vb.customize [ 'storagectl',
+            :id,
+            '--name', "#{node['name']}_vdisk_vol_1",
+            '--add', 'sas',
+            '--controller', 'LSILogicSAS',
+            '--portcount', 2,
+            '--hostiocache', 'off',
+            '--bootable', 'off'
+          ]
+
+          (1..disk_count).each do |disk_number|
+            disk_file = File.expand_path(disks_dir).to_s + "/#{node['name']}_disk_#{disk_number}.vdi"
+
+            # Note: Create a hard disk image: vboxmanage createmedium --filename $PWD/disk_<vm_name>_<disk_count>.vdi --size <disk_size> --format VDI
+            if not File.exist?(disk_file)
+              vb.customize ['createmedium',
+                'disk',
+                '--filename', disk_file,
+                '--size', disk_size,
+                '--format', 'VDI',
+                '--variant', 'Standard'
+              ]
+            end
+
+            # Attach hard disk
+            # see https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach
+            vb.customize [
+              'storageattach',
+              :id,
+              '--storagectl', "#{node['name']}_vdisk_vol_1",
+              '--port', disk_number - 1,
+              '--device', 0,
+              '--type', 'hdd',
+              '--medium', disk_file,
+              '--mtype', 'normal'
+            ]
+          end         # Disk creation loop
+          # VDisk configuration end
+        end           # Provisioned machine check
+      end             # Virtualbox provisioner
+
+      # Folder synchonization
+      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
+      create: true,
+      disabled: false,
+      type: "rsync",
+      rsync__auto: true,
+      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
+
+      # node_config.vm.synced_folder ".", "/opt/seagate/prvsnr-ees",
+      # create: true,
+      # disabled: false,
+      # automount: true,
+      # owner: "root",
+      # group: "root"
+
+      node_config.vm.provision :salt do |salt|
+        # Master/Minion specific configs.
+        salt.masterless = true
+        salt.minion_config = './files/etc/salt/minion'
+
+        # Generic configs
+        salt.install_type = 'stable'
+        salt.run_highstate = false
+        salt.colorize = true
+        salt.log_level = 'warning'
       end
 
-      # SAS Controller
-      vb.customize [ 'storagectl',
-        :id,
-        '--name', 'vdisk_vol',
-        '--add', 'sas',
-        '--controller', 'LSILogicSAS',
-        '--portcount', disk_count,
-        '--hostiocache', 'off',
-        '--bootable', 'off'
-      ]
+      node_config.vm.provision "file", source: "./files/.ssh", destination: "/home/vagrant/.ssh"
 
-      (1..disk_count).each do |disk_number|
-        disk_file = File.expand_path(disks_dir).to_s + "/disk_#{disk_number}.vdi"
+      node_config.vm.provision "shell", inline: <<-SHELL
 
-        # Note: Create a hard disk image: vboxmanage createmedium --filename $PWD/disk_<vm_name>_<disk_count>.vdi --size <disk_size> --format VDI
-        if not File.exist?(disk_file)
-          vb.customize ['createmedium',
-            'disk',
-            '--filename', disk_file,
-            '--size', disk_size,
-            '--format', 'VDI',
-            '--variant', 'Standard'
-          ]
-        end
+        # ToDo
+        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-eth* /etc/sysconfig/network-scripts/
 
-        # Attach hard disk
-        # see https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach
-        vb.customize [
-          'storageattach',
-          :id,
-          '--storagectl', 'vdisk_vol',
-          '--port', disk_number - 1,
-          '--device', 0,
-          '--type', 'hdd',
-          '--medium', disk_file,
-          '--mtype', 'normal'
-        ]
-      end         # Disk creation loop
-      # VDisk configuration end
-    end           # Provisioned machine check
-  end             # Virtualbox provisioner
+        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
+        # sudo sed -i 's/IPADDR=/IPADDR=#{node['mgmt0']}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
 
-  # Folder synchonization
-  config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
-  create: true,
-  disabled: false,
-  type: "rsync",
-  rsync__auto: true,
-  rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
+        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
+        # sudo sed -i 's/IPADDR=/IPADDR=#{node['data0']}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
-  # config.vm.synced_folder ".", "/opt/seagate/prvsnr-ees",
-  # create: true,
-  # disabled: false,
-  # automount: true,
-  # owner: "root",
-  # group: "root"
+        # sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
 
-  config.vm.provision :salt do |salt|
-    # Master/Minion specific configs.
-    salt.masterless = true
-    salt.minion_config = './files/etc/salt/minion'
+        # systemctl restart network.service
 
-    # Generic configs
-    salt.install_type = 'stable'
-    salt.run_highstate = false
-    salt.colorize = true
-    salt.log_level = 'warning'
+        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
+
+        cat /home/vagrant/.ssh/id_rsa.pub>>/home/vagrant/.ssh/authorized_keys
+        chmod 755 /home/vagrant/.ssh
+        chmod 644 /home/vagrant/.ssh/*
+        chmod 600 /home/vagrant/.ssh/id_rsa
+
+        # sudo systemctl stop salt-minion
+        # sudo systemctl disable salt-minion
+      SHELL
+    end
   end
 end

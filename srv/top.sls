@@ -1,1 +1,5 @@
-# DO NOT USE this file.
+include:
+  - components.sspl
+  - components.mero
+  - components.halon
+  - components.s3server

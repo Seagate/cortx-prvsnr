@@ -1,10 +1,10 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% set rpm_sources_dir = defaults.tmp_dir + "/s3certs/rpmbuild/SOURCES/" %}
+{% set rpm_dir = defaults.tmp_dir + "/s3certs" %}
 
-delete_rpm_sources_dir:
+delete_rpm_dir:
   file.absent:
-    - name: {{ rpm_sources_dir }}
+    - name: {{ rpm_dir }}
 
 remove_rpmbuild:
   pkg.purged:

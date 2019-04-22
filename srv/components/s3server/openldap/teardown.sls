@@ -20,6 +20,7 @@ remove_pkgs:
 {% for filename in [
    '/etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif',
    '/var/lib/ldap',
+   '/etc/openldap/ldap.conf',
    '/etc/openldap/ldap.conf.bak',
    '/etc/sysconfig/slapd.bak',
    '/etc/sysconfig/slapd.repos',
