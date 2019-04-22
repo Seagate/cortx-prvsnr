@@ -63,7 +63,7 @@ s3server:
     url: {{ eos_repo_url }}/s3server_uploads
   config:
     DEPLOY_TAG: "s3dev"
-    S3_VERSION: "s3ver"
+    S3_VERSION: "1.0"
     S3_DOMAIN: "s3.seagate.com"
 
 csm:

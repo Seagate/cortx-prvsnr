@@ -1,0 +1,10 @@
+DEVICE=mgmt0
+BOOTPROTO=none
+ONBOOT=yes
+DEFROUTE=yes
+BONDING_OPTS="mode=active-backup primary=eth1 miimon=100"
+NM_CONTROLLED=no
+USRCTL=no
+ONBOOT=yes
+MTU=1500
+IPADDR=

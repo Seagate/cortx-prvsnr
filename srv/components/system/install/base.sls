@@ -41,7 +41,7 @@ clean_yum_cache:
 
 update_yum_repos:
   module.run:
-    - name: pkg.update
+    - pkg.update:
 
 # install_base_packages:
 #   pkg.installed:

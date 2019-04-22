@@ -1,9 +1,22 @@
-# include:
-#   - components.s3server.openldap.prepare
+backup_ldap_conf:
+  file.copy:
+    - name: /etc/openldap/ldap.conf.bak
+    - source: /etc/openldap/ldap.conf
+    - force: True
+    - preserve: True
 
-slapd_service:
-  service.running:
-    - name:
+backup_original_slapd_file:
+  file.copy:
+    - name: /etc/sysconfig/slapd.bak
+    - source: /etc/sysconfig/slapd
+    - force: True
+    - preserve: True
+
+generate_slapdpasswd_for_rootDN:
+  cmd.run:
+    - name: slappasswd -s {{ pillar['openldap']['openldappasswd'] }}
+    - require:
+      - service: slapd_service
 
 base_config:
   cmd.run:
@@ -46,3 +59,7 @@ update_openldap_configuration:
 add_ssl_nonssl_ldap_uri:
   cmd.run:
     - name: sed -i "s/^SLAPD_URLS=.*/SLAPD_URLS={{ pillar['openldap']['ldap_url'] }}/" /etc/sysconfig/slapd
+
+slapd_service:
+  service.running:
+    - name: slapd

@@ -16,8 +16,6 @@ install_s3server_uploads:
       - python34-s3transfer
       - python34-boto3
       - python34-xmltodict
-      - require:
-        - pkgrepo: add_s3server_uploads_repo
 
 # Only for client
 # install_s3s3iamcli:
@@ -30,7 +28,4 @@ install_s3server_uploads:
 
 install_s3server:
   pkg.installed:
-    - pkgs:
-      - s3server
-    - require:
-      - pkgrepo: add_s3server_repo
+    - name: s3server
