@@ -1,0 +1,6 @@
+[epel]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/epel/
+name=epel
+

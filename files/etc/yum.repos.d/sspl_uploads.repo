@@ -1,0 +1,6 @@
+[sspl_uploads]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/sspl_uploads
+name=sspl_uploads
+
