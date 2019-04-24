@@ -1,0 +1,6 @@
+[base]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/7.5.1804.vault/vault.centos.org/7.5.1804/os/x86_64/
+name=base
+

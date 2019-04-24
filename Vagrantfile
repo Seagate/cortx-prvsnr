@@ -136,6 +136,7 @@ Vagrant.configure("2") do |config|
       node_config.vm.provision "file", source: "./files/.ssh", destination: "/home/vagrant/.ssh"
 
       node_config.vm.provision "shell", inline: <<-SHELL
+        sudo yum remove epel-release -y        
 
         # ToDo
         # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-eth* /etc/sysconfig/network-scripts/

@@ -39,12 +39,13 @@ clean_yum_cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
 
-update_yum_repos:
-  module.run:
-    - pkg.update:
+# update_yum_repos:
+#   module.run:
+#     - pkg.update:
 
-# install_base_packages:
-#   pkg.installed:
-#     - pkgs:
-#       - vi-enhanced
-#       - tmux
+install_base_packages:
+  pkg.installed:
+    - pkgs:
+      - python2-pip
+      # - vi-enhanced
+      # - tmux

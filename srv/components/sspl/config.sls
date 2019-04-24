@@ -1,6 +1,6 @@
 {% set role = 'gw' %}
 
-{% if (not salt['grains.get']('productname').lower().startswith('virtual')) %}
+{% if (not 'virtual' in salt['grains.get']('productname').lower()) %}
 
 # START: Prepare for SSPL configuration for HW SSU only
 
