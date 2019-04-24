@@ -1,6 +1,6 @@
 include:
-  - components.s3s3server.keepalive.prepare
-  - components.s3s3server.keepalive.install
-  - components.s3s3server.keepalive.config
-  - components.s3s3server.keepalive.housekeeping
-  - components.s3s3server.keepalive.sanity_check
+  - components.s3server.keepalived.prepare
+  - components.s3server.keepalived.install
+  - components.s3server.keepalived.config
+  - components.s3server.keepalived.housekeeping
+  - components.s3server.keepalived.sanity_check
