@@ -29,3 +29,7 @@ install_s3server_uploads:
 install_s3server:
   pkg.installed:
     - name: s3server
+
+s3authserver:
+  service.running:
+    - enable: True
