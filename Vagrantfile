@@ -28,6 +28,8 @@ disk_size = 256         # in MB
 
 Vagrant.configure("2") do |config|
   # Configure salt nodes
+    config.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box"
+  config.vm.box_download_insecure = true
   config.vm.box = "centos_7.5.1804"
   config.vm.box_check_update = false
   config.vm.boot_timeout = 600
