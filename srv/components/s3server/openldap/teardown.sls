@@ -36,3 +36,9 @@ remove_pkgs:
 delete_tmp_s3ldap_directory:
   file.absent:
     - name: /tmp/s3ldap
+
+Remove user ldap:
+  user.absent:
+    - name: ldap
+    - purge: True
+    - force: True

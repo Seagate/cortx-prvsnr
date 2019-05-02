@@ -43,7 +43,7 @@ mero:
     id: "mero"
     url: {{ eos_repo_url }}/{{ release_tag }}/mero/repo
   config:
-    lnet_dev: enp0s3
+    lnet_dev: enp0s8
 
 halon:
   repo:

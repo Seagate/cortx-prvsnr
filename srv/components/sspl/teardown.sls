@@ -42,3 +42,21 @@ Remove directory install sspl:
 Remove test fw lettuce:
   pip.removed:
     - name: lettuce
+
+Remove user sspl-ll:
+  user.absent:
+    - name: sspl-ll
+    - purge: True
+    - force: True
+
+Remove user zabbix:
+  user.absent:
+    - name: zabbix
+    - purge: True
+    - force: True
+
+Remove user rabbitmq:
+  user.absent:
+    - name: rabbitmq
+    - purge: True
+    - force: True

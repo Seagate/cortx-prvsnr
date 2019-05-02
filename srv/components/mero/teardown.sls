@@ -10,6 +10,12 @@ remove_mero:
       - mero
       # - mero-debuginfo
 
+Remove user mero:
+  user.absent:
+    - name: mero
+    - purge: True
+    - force: True
+
 remove_lustre:
   pkg.purged:
     - pkgs:

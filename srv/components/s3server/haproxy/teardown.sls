@@ -30,3 +30,9 @@ Remove logrotate config for haproxy:
 Remove haproxy:
   pkg.purged:
     - name: haproxy
+
+Remove user haproxy:
+  user.absent:
+    - name: haproxy
+    - purge: True
+    -  force: True
