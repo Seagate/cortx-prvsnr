@@ -43,7 +43,7 @@ mero:
     id: "mero"
     url: {{ eos_repo_url }}/{{ release_tag }}/mero/repo
   config:
-    lnet_dev: enp0s8
+    lnet_dev: {{ salt['grains.get']('ip4_interfaces:lo:0', '127.0.0.1') }}
 
 halon:
   repo:

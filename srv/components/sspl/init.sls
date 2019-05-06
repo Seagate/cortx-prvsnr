@@ -4,4 +4,4 @@ include:
   - components.sspl.install
   - components.sspl.config
   - components.sspl.housekeeping
-  - components.sspl.sanity_check
+  #- components.sspl.sanity_check
