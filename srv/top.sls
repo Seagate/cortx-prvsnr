@@ -1,4 +1,5 @@
 include:
+  - components.system
   - components.sspl
   - components.mero
   - components.halon
