@@ -7,17 +7,19 @@
 salt_nodes = [
     {
         "name" => "ees-node1",
-        "cpus" => 1,
+        "cpus" => 2,
         "memory" => 512,
-        "maxmemory" => 1024,
-        "mgmt0" => "172.16.10.101"
+        "maxmemory" => 2048,
+        "mgmt0" => "172.16.10.101",
+        "data0" => "172.19.10.101"
     },
     {
         "name"=> "ees-node2",
-        "cpus"=> 1,
+        "cpus"=> 2,
         "memory"=> 512,
-        "maxmemory"=> 1024,
-        "mgmt0" => "172.16.10.111"
+        "maxmemory"=> 2048,
+        "mgmt0" => "172.16.10.102",
+        "data0" => "172.19.10.102"
     }
 ]
 
@@ -54,6 +56,7 @@ Vagrant.configure("2") do |config|
 
         ## Network configuration
         override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt"
+        override.vm.network :private_network, ip: node['data0'], virtualbox__intnet: "data"
 
         # Disable USB
         vb.customize ["modifyvm", :id, "--usb", "off"]
@@ -138,7 +141,7 @@ Vagrant.configure("2") do |config|
       node_config.vm.provision "file", source: "./files/.ssh", destination: "/home/vagrant/.ssh"
 
       node_config.vm.provision "shell", inline: <<-SHELL
-        sudo yum remove epel-release -y        
+        sudo yum remove epel-release -y
 
         # ToDo
         # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-eth* /etc/sysconfig/network-scripts/
@@ -160,8 +163,8 @@ Vagrant.configure("2") do |config|
         chmod 644 /home/vagrant/.ssh/*
         chmod 600 /home/vagrant/.ssh/id_rsa
 
-        # sudo systemctl stop salt-minion
-        # sudo systemctl disable salt-minion
+        sudo systemctl stop salt-minion
+        sudo systemctl disable salt-minion
       SHELL
     end
   end

@@ -1,17 +1,40 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-add_sspl_prereqs_repo:
+cleanup_yum_repos_dir:
+  cmd.run:
+    - name: rm -rf /etc/yum.repos.d/*.repo
+    - if: test -f /etc/yum.repos.d/CentOS-Base.repo
+
+{% for repo in defaults.base_repos.centos_repos %}
+add_{{repo.id}}_repo:
   pkgrepo.managed:
-    - name: {{ defaults.sspl.uploads_repo.id }}
+    - name: {{ repo.id }}
     - enabled: True
-    - humanname: sspl_uploads
-    - baseurl: {{ defaults.sspl.uploads_repo.url }}
+    - humanname: {{ repo.id }}
+    - baseurl: {{ repo.url }}
     - gpgcheck: 0
-    
-add_sspl_repo:
+{% endfor %}
+
+add_epel_repo:
   pkgrepo.managed:
-    - name: {{ defaults.sspl.repo.id }}
+    - name: {{ defaults.base_repos.epel_repo.id }}
     - enabled: True
-    - humanname: sspl
-    - baseurl: {{ defaults.sspl.repo.url }}
+    - humanname: epel
+    - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
+
+add_saltsatck_repo:
+  pkgrepo.managed:
+    - name: {{ defaults.base_repos.saltsatck_repo.id }}
+    - enabled: True
+    - humanname: saltstack
+    - baseurl: {{ defaults.base_repos.saltsatck_repo.url }}
+    - gpgcheck: 0
+
+clean_yum_local:
+  cmd.run:
+    - name: yum clean all
+
+clean_yum_cache:
+  cmd.run:
+    - name: rm -rf /var/cache/yum
