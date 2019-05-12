@@ -1,0 +1,83 @@
+~~~~~~
+README
+~~~~~~
+
+Exos-OS UDX Utils Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1.  eos-bootstrap.sh
+
+    Run the script eos-bootstrap.sh to configure the mero
+    object store cluster.
+
+    If using this script on vm or on single node cluster then
+    ensure that the "single_node_cluster" varibale  is set to
+    "yes" in eos-defs.sh file in the same directory.
+
+    usage:
+    eos-bootstrap.sh [-y] [-c <mini-eos-config-file.yaml]
+        [-e <data network interface> [-E mgmt network interface>]
+
+    The sample mini config file is provided in the config direc-
+    tory, it can be used with the eos-vm which has 12 virtual
+    disks.
+
+    Option -y is for non interactive mode, it is recommended only
+    if you want to perform selective steps of cluster configurat-
+    ion. Using it without complete knowledge may make the cluster
+    offline or non recoverable mode.
+
+    If mini-eos-config-file is provided to the script then n/w
+    interfaces provided are used for creating other config files.
+    If no network interfaces are provided, then the any one n/w
+    interface with ip address assigned to it will be used for both
+    data and management interfaces.
+
+    Data interface is used for read write from mero object store
+    Management interface is used for communication between cluster
+    nodes and services.
+
+
+    Following are various scenarios where the scirpt can be used:
+
+    1. After packages are installed, run it to configure the clu-
+       ster with following options:
+
+       $ eos-bootstrap.sh -y -c mini-config-file.yaml -e eth0
+
+       Before running the command, ensure that mini-config-file
+       has the correct hostnames and the disks mentioned in it
+       actually exists.
+
+       If you are running this script on vm, then no need to pro-
+       vide management interface, the network interface provided
+       for data will be used for management interface by default.
+
+    2. Re-bootstrap the cluster.
+
+       Warning: Re-bootstrap erases all the data stored on the ob-
+       ject store.
+
+       If the cluster goes in unrecoverable state due to seom reas-
+       on. This script can be used to re-bootstrap/re-configure the
+       cluster without creating or changing the config files.
+       Simply run:
+
+       $eos-bootstrap.sh -y
+
+       This will stop the cluster (if running) and start it again.
+       If the configuration needs to be changed, run the scirpt as
+       mentioned in scenario 1.
+
+2. eos-cleanup.sh
+
+       Run this script to cleanup all the eos configuratoin data.
+       This will cleanup all mero and halon config data stored
+       under /var/mero and /var/lib/halon/. It will however retain
+       the halon facts file, lnet config file and halon conf file.
+
+       To run this script with non interactive mode
+
+       $ /opt/seagate/eos/utils/eos-cleanup.sh -y
+
+       This will erase all the data stored on the eos.
