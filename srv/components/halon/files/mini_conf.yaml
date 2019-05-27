@@ -1,20 +1,6 @@
-s3servers: [ {{ pillar['csm']['qb_list'] }} ]
-confds: [ ssu1-h02 ]
+{% set node = 'node_1' if grains['host'] == pillar['facts']['node_1']['fqdn'] else 'node_2' %}
+s3servers: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
+confds: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
 ssus:
-  - host: ssu1-h02
-    disks: /dev/disk/by-id/ata-ST*
-
-  - host: ssu2-h02
-    disks: /dev/disk/by-id/ata-ST*
-
-  - host: ssu3-h02
-    disks: /dev/disk/by-id/ata-ST*
-
-  - host: ssu4-h02
-    disks: /dev/disk/by-id/ata-ST*
-
-  - host: ssu5-h02
-    disks: /dev/disk/by-id/ata-ST*
-
-  - host: ssu6-h02
-    disks: /dev/disk/by-id/ata-ST*
+  - host: {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }}
+    disks: {{ salt['pillar.get']('facts:{0}:disk_2'.format(node), '') }}

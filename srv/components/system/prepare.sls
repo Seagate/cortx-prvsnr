@@ -5,6 +5,11 @@ cleanup_yum_repos_dir:
     - name: rm -rf /etc/yum.repos.d/*.repo
     - if: test -f /etc/yum.repos.d/CentOS-Base.repo
 
+Reset EPEL:
+  cmd.run:
+    - name: rm -rf /etc/yum.repos.d/epel.repo.*
+    - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
+
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
   pkgrepo.managed:

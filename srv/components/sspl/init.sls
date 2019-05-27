@@ -1,5 +1,4 @@
 include:
-  - components.system
   - components.sspl.prepare
   - components.sspl.install
   - components.sspl.config

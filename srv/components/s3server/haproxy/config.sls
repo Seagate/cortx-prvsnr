@@ -12,6 +12,7 @@ Setup haproxy config:
     - source: salt://components/s3server/haproxy/files/haproxy.cfg
     - makedirs: True
     - keep_source: False
+    - template: jinja
     - watch_in:
       - service: Restart HAProxy
 

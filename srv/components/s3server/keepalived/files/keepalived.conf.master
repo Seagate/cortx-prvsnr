@@ -9,7 +9,7 @@ global_defs {
 }
 
 vrrp_instance VI_1 {
-  interface ens33 # interface to monitor
+  interface data0 # interface to monitor
 
   state MASTER # MASTER on haproxy1, BACKUP on haproxy2
 

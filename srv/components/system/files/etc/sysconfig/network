@@ -1,0 +1,7 @@
+SEARCH=mero.colo.seagate.com
+NETWORKING=yes
+NETWORKING_IPV6=no
+
+# GATEWAY for LCO Lab
+GATEWAY=10.230.160.1
+GATEWAYDEV=eth0
