@@ -20,6 +20,14 @@ salt_nodes = [
         "maxmemory"=> 2048,
         "mgmt0" => "172.16.10.102",
         "data0" => "172.19.10.102"
+    },
+    {
+        "name"=> "s3client",
+        "cpus"=> 2,
+        "memory"=> 512,
+        "maxmemory"=> 2048,
+        "mgmt0" => "172.16.10.103",
+        "data0" => "172.19.10.103"
     }
 ]
 
@@ -55,61 +63,65 @@ Vagrant.configure("2") do |config|
         vb.linked_clone = true
 
         ## Network configuration
-        override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt"
-        override.vm.network :private_network, ip: node['data0'], virtualbox__intnet: "data"
+        override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt0"
+        override.vm.network :private_network, ip: node['data0'], virtualbox__intnet: "data0"
 
         # Disable USB
         vb.customize ["modifyvm", :id, "--usb", "off"]
         vb.customize ["modifyvm", :id, "--usbehci", "off"]
+      end
 
-        # Check if machine already provisioned
-        if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
-          # VDisk configuration start
-          if not Dir.exist?(disks_dir)
-            Dir.mkdir(disks_dir)
-          end
-
-          # SAS Controller - 1
-          vb.customize [ 'storagectl',
-            :id,
-            '--name', "#{node['name']}_vdisk_vol_1",
-            '--add', 'sas',
-            '--controller', 'LSILogicSAS',
-            '--portcount', 2,
-            '--hostiocache', 'off',
-            '--bootable', 'off'
-          ]
-
-          (1..disk_count).each do |disk_number|
-            disk_file = File.expand_path(disks_dir).to_s + "/#{node['name']}_disk_#{disk_number}.vdi"
-
-            # Note: Create a hard disk image: vboxmanage createmedium --filename $PWD/disk_<vm_name>_<disk_count>.vdi --size <disk_size> --format VDI
-            if not File.exist?(disk_file)
-              vb.customize ['createmedium',
-                'disk',
-                '--filename', disk_file,
-                '--size', disk_size,
-                '--format', 'VDI',
-                '--variant', 'Standard'
-              ]
+      unless 's3client' == node['name']
+        config.vm.provider :virtualbox do |vb, override|
+          # Check if machine already provisioned
+          if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
+            # VDisk configuration start
+            if not Dir.exist?(disks_dir)
+              Dir.mkdir(disks_dir)
             end
 
-            # Attach hard disk
-            # see https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach
-            vb.customize [
-              'storageattach',
+            # SAS Controller - 1
+            vb.customize [ 'storagectl',
               :id,
-              '--storagectl', "#{node['name']}_vdisk_vol_1",
-              '--port', disk_number - 1,
-              '--device', 0,
-              '--type', 'hdd',
-              '--medium', disk_file,
-              '--mtype', 'normal'
+              '--name', "#{node['name']}_vdisk_vol_1",
+              '--add', 'sas',
+              '--controller', 'LSILogicSAS',
+              '--portcount', 2,
+              '--hostiocache', 'off',
+              '--bootable', 'off'
             ]
-          end         # Disk creation loop
-          # VDisk configuration end
-        end           # Provisioned machine check
-      end             # Virtualbox provisioner
+
+            (1..disk_count).each do |disk_number|
+              disk_file = File.expand_path(disks_dir).to_s + "/#{node['name']}_disk_#{disk_number}.vdi"
+
+              # Note: Create a hard disk image: vboxmanage createmedium --filename $PWD/disk_<vm_name>_<disk_count>.vdi --size <disk_size> --format VDI
+              if not File.exist?(disk_file)
+                vb.customize ['createmedium',
+                  'disk',
+                  '--filename', disk_file,
+                  '--size', disk_size,
+                  '--format', 'VDI',
+                  '--variant', 'Standard'
+                ]
+              end
+
+              # Attach hard disk
+              # see https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach
+              vb.customize [
+                'storageattach',
+                :id,
+                '--storagectl', "#{node['name']}_vdisk_vol_1",
+                '--port', disk_number - 1,
+                '--device', 0,
+                '--type', 'hdd',
+                '--medium', disk_file,
+                '--mtype', 'normal'
+              ]
+            end         # Disk creation loop
+            # VDisk configuration end
+          end           # Provisioned machine check
+        end             # Virtualbox provisioner
+      end
 
       # Folder synchonization
       node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",

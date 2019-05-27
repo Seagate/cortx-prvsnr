@@ -233,7 +233,7 @@ generate_openldap_cert
 # 3. generate jks
 generate_jks_and_iamcert
 # 4. import s3 and openldap crt in jks
-import_s3_ldap_cert_in_jks
+# import_s3_ldap_cert_in_jks
 
 
 echo

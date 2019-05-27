@@ -12,11 +12,11 @@ backup_original_slapd_file:
     - force: True
     - preserve: True
 
-generate_slapdpasswd_for_rootDN:
-  cmd.run:
-    - name: slappasswd -s {{ pillar['openldap']['openldappasswd'] }}
-    - require:
-      - service: slapd_service
+# generate_slapdpasswd_for_rootDN:
+#   cmd.run:
+#     - name: slappasswd -s {{ pillar['openldap']['openldappasswd'] }}
+#     - require:
+#       - service: slapd_service
 
 base_config:
   cmd.run:

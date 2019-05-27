@@ -11,8 +11,6 @@ remove_pkgs:
     - pkgs:
       - openldap-servers
       - openldap-clients
-      - stx-s3-certs
-      - stx-s3-client-certs
     - require:
       - stop_slapd
 

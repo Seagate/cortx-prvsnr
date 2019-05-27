@@ -29,6 +29,14 @@ Remove /tmp/s3certs:
   file.absent:
     - name: /tmp/s3certs
 
+Remove s3 cert rpm:
+  file.absent:
+    - name: stx-s3-certs-1.0-1_s3dev.x86_64.rpm
+
+remove s3client cert rpm:
+  file.absent:
+    - name: stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
+
 Remove working directory for S3 server:
   file.absent:
     - name: /var/seagate/s3
@@ -36,6 +44,16 @@ Remove working directory for S3 server:
 Remove S3Server under opt:
   file.absent:
     - name: /opt/seagate/s3server
+
+Remove s3openldap cert:
+  cmd.run:
+    - name: keytool -delete -noprompt -alias ldapcert -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate
+    - onlyif: test -f /etc/ssl/stx-s3/s3auth/s3authserver.jks
+
+Remove s3server cert:
+  cmd.run:
+    - name: keytool -delete -noprompt -alias s3 -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate
+    - onlyif: test -f /etc/ssl/stx-s3/s3auth/s3authserver.jks
 #-------------------------
 # Teardown S3Server End
 #-------------------------
