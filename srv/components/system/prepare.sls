@@ -30,10 +30,10 @@ add_epel_repo:
 
 add_saltsatck_repo:
   pkgrepo.managed:
-    - name: {{ defaults.base_repos.saltsatck_repo.id }}
+    - name: {{ defaults.base_repos.saltstack_repo.id }}
     - enabled: True
     - humanname: saltstack
-    - baseurl: {{ defaults.base_repos.saltsatck_repo.url }}
+    - baseurl: {{ defaults.base_repos.saltstack_repo.url }}
     - gpgcheck: 0
 
 clean_yum_local:

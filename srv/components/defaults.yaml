@@ -21,7 +21,7 @@ base_repos:
     id: "epel"
     # url: {{ prvsnr_repo_url }}/centos/epel/
     url: {{ prvsnr_repo_url }}/centos/epel-20191423/mirror.grid.uchicago.edu/pub/linux/epel/7/x86_64/
-  saltsatck_repo:
+  saltstack_repo:
     id: "saltsatck"
     url: {{ prvsnr_repo_url }}/salt/2018.3.2/
 
