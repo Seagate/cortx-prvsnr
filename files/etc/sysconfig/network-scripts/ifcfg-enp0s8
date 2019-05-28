@@ -1,4 +1,4 @@
-DEVICE="eth2"
+DEVICE="enp0s8"
 TYPE="Ethernet"
 BOOTPROTO="none"
 MASTER="mgmt0"

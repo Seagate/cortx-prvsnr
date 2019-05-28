@@ -1,5 +1,4 @@
-NAME="eth0"
-DEVICE="eth0"
+DEVICE="enp0s3"
 TYPE="Ethernet"
 NM_CONTROLLED="no"
 BOOTPROTO="dhcp"
