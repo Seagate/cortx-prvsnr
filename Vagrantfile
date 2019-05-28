@@ -156,17 +156,17 @@ Vagrant.configure("2") do |config|
         sudo yum remove epel-release -y
 
         # ToDo
-        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-eth* /etc/sysconfig/network-scripts/
+        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
 
-        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
-        # sudo sed -i 's/IPADDR=/IPADDR=#{node['mgmt0']}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
+        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
 
-        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
-        # sudo sed -i 's/IPADDR=/IPADDR=#{node['data0']}/g' /etc/sysconfig/network-scripts/ifcfg-data0
+        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
+        sudo sed -i 's/IPADDR=/IPADDR=#{node['mgmt0']}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
 
-        # sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
+        sudo sed -i 's/IPADDR=/IPADDR=#{node['data0']}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
-        # systemctl restart network.service
+        systemctl restart network.service
 
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
 
