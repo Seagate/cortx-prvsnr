@@ -31,11 +31,11 @@ Remove /tmp/s3certs:
 
 Remove s3 cert rpm:
   file.absent:
-    - name: stx-s3-certs-1.0-1_s3dev.x86_64.rpm
+    - name: /opt/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
 
 remove s3client cert rpm:
   file.absent:
-    - name: stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
+    - name: /opt/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
 Remove working directory for S3 server:
   file.absent:

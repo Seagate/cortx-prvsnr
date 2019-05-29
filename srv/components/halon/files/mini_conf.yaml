@@ -1,6 +1,6 @@
-{% set node = 'node_1' if grains['host'] == pillar['facts']['node_1']['fqdn'] else 'node_2' %}
+{% set node = 'node_1' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else 'node_2' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else None %}
 s3servers: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
 confds: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
 ssus:
   - host: {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }}
-    disks: {{ salt['pillar.get']('facts:{0}:disk_2'.format(node), '') }}
+    disks: {{ salt['pillar.get']('facts:{0}:data_device_1'.format(node), '') }}

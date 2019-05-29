@@ -18,14 +18,14 @@
 label_partition:
   module.run:
     - parted.mklabel:
-      - device: /dev/{{ pillar[node]['disk_1'] }}
+      - device: /dev/{{ pillar[node]['metadata_device'] }}
       - label_type: gpt
 
 # Create raid partition for [SWAP]
 make_swap_partition:
   module.run:
     - parted.mkpart:
-      - device: /dev/{{ pillar[node]['disk_1'] }}1
+      - device: /dev/{{ pillar[node]['metadata_device'] }}1
       - part_type: primary
       - fs_type: linux-swap
       - start: 0%
@@ -35,7 +35,7 @@ make_swap_partition:
 make_opt_partition:
   module.run:
     - parted.mkpart:
-      - device: /dev/{{ pillar[node]['disk_2'] }}2
+      - device: /dev/{{ pillar[node]['data_device_1'] }}2
       - part_type: primary
       - fs_type: ext4
       - start: 1T
@@ -44,14 +44,14 @@ make_opt_partition:
 # Activate SWAP device
 mount_swap:
   mount.swap:
-    - name: /dev/{{ pillar[node]['disk_1'] }}1
+    - name: /dev/{{ pillar[node]['metadata_device'] }}1
     - persist: True     # save in the fstab
 
 # Verify that a device is mounted
 mount_opt_partition:
   mount.mounted:
     - name: /var/mero
-    - device: /dev/{{ pillar[node]['disk_2'] }}2
+    - device: /dev/{{ pillar[node]['data_device_1'] }}2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
     - persist: True     # save in the fstab
