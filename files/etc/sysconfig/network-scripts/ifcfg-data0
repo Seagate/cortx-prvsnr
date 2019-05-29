@@ -1,5 +1,4 @@
 DEVICE=data0
-NAME=data0
 BOOTPROTO=static
 ONBOOT=yes
 BONDING_OPTS="miimon=100 mode=802.3ad lacp_rate=1 xmit_hash_policy=1"
