@@ -1,18 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% if grains['fqdn'] in pillar['facts']['node_1']['fqdn'] %}
-
-{% set node = 'node_1' %}
-
-{% elif grains['fqdn'] in pillar['facts']['node_2']['fqdn'] %}
-
-{% set node = 'node_2' %}
-
-{% else %}
-
-{% set node = None %}
-
-{% endif %}
+{% set node = 'node_1' if grains['host'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['host'] == pillar['facts']['node_2']['fqdn'] else None %}
 
 {% set mgmt_if = salt["pillar.get"]("facts:{0}:mgmt_if".format(node), "lo") %}
 {% set data_if = salt["pillar.get"]("facts:{0}:data_if".format(node), "lo") %}
