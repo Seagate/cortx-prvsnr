@@ -1,7 +1,7 @@
 Remove temporary mini_conf file:
-  file.managed:
+  file.absent:
     - name: /tmp/mini_conf.yaml
 
 Remove temporary halon_facts file:
-  file.managed:
+  file.absent:
     - name: /tmp/halon_facts.yaml
