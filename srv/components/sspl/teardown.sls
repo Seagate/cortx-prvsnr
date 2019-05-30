@@ -1,7 +1,20 @@
+service_dcs_collector:
+  cmd.run:
+    - name: /etc/rc.d/init.d/dcs-collector stop
+    - onlyif: test -f /etc/rc.d/init.d/dcs-collector
+
+{% if 'virtual' in salt['grains.get']('productname').lower() %}
+
 Remove packages:
   pkg.purged:
     - pkgs:
-      - sspl-test
+      - lxqt-policykit
+
+{% else %}
+
+Remove packages:
+  pkg.purged:
+    - pkgs:
       - sg3_utils
       - openhpi
       - gemhpi
@@ -13,12 +26,12 @@ Remove packages:
       - zabbix-api-gescheit
       - zabbix-xrtx-lib
       - zabbix-collector
-      - lxqt-policykit
+
+{% endif %}
 
 Remove sspl packages:
   pkg.purged:
     - pkgs:
-      - lxqt-policykit
       - libsspl_sec
       - libsspl_sec-method_none
       - sspl
@@ -39,10 +52,6 @@ Remove directory install sspl:
   file.absent:
     - name: /opt/seagate/sspl
 
-Remove test fw lettuce:
-  pip.removed:
-    - name: lettuce
-
 Remove user sspl-ll:
   user.absent:
     - name: sspl-ll
@@ -60,3 +69,7 @@ Remove user rabbitmq:
     - name: rabbitmq
     - purge: True
     - force: True
+
+# Remove test fw lettuce:
+#   pip.removed:
+#     - name: lettuce

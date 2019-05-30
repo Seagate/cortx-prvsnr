@@ -1,11 +1,11 @@
-install_lustre:
+Install Lustre:
   pkg.installed:
     - pkgs:
       - kmod-lustre-client
       - lustre-client
       # - lustre-client-devel
 
-install_mero:
+Install Mero:
   pkg.installed:
     - pkgs:
       - mero

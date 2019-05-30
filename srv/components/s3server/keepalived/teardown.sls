@@ -1,4 +1,4 @@
-remove keepalived config:
+Remove keepalived config:
   file.absent:
     - name: /etc/keepalived/keepalived.conf
 

@@ -2,17 +2,17 @@
 {% set rpm_build_dir = defaults.tmp_dir + "/rpmbuild/RPMS/x86_64" %}
 
 # Kind of slapd cleanup from here
-stop_slapd:
+Stop slapd:
   service.dead:
     - name: slapd
 
-remove_pkgs:
+Remove pkgs:
   pkg.purged:
     - pkgs:
       - openldap-servers
       - openldap-clients
     - require:
-      - stop_slapd
+      - Stop slapd
 
 # File cleanup operation
 {% for filename in [
@@ -28,10 +28,10 @@ remove_pkgs:
 {{ filename }}:
   file.absent:
     - require:
-      - pkg: remove_pkgs
+      - pkg: Remove pkgs
 {% endfor %}
 
-delete_tmp_s3ldap_directory:
+Delete dir /tmp/s3ldap:
   file.absent:
     - name: /tmp/s3ldap
 

@@ -1,7 +1,7 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
 # Required for s3cmd installation
-add_s3server_uploads_repo:
+Add s3server_uploads yum repo:
   pkgrepo.managed:
     - name: {{ defaults.s3server.uploads_repo.id }}
     - enabled: True
@@ -10,7 +10,7 @@ add_s3server_uploads_repo:
     - gpgcheck: 0
 
 # Required for s3iamcli installation
-add_s3server_repo:
+Add s3server yum repo:
   pkgrepo.managed:
     - name: {{ defaults.s3server.repo.id }}
     - enabled: True

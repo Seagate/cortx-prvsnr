@@ -4,21 +4,21 @@ Remove existing certs:
       - stx-s3-certs
       - stx-s3-client-certs
 
-create_dir_tmp_slapd:
+Create dir /tmp/slapd:
   file.directory:
     - name: /tmp/s3ldap
     - clean: True
     - makedirs: True
     - force: True
 
-copy_initial_ldap_config:
+Copy initial ldap config:
   file.managed:
     - name: /tmp/s3ldap/cfg_ldap.ldif
     - source: salt://components/s3server/openldap/files/cfg_ldap.ldif
     - keep_source: False
     - template: jinja
 
-copy_ldap_config:
+Copy ldap config:
   file.managed:
     - name: /tmp/s3ldap/iam-admin.ldif
     - source: salt://components/s3server/openldap/files/iam-admin.ldif

@@ -1,7 +1,5 @@
-install_halon:
+Install Halon package:
   pkg.installed:
     - pkgs:
       - halon
     - refresh: True
-    - require:
-      - pkgrepo: add_halon_repo

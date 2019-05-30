@@ -3,7 +3,7 @@
 {% set rpm_sources_dir = defaults.tmp_dir + "/s3certs/rpmbuild/SOURCES/" %}
 {% set s3_certs_src = "stx-s3-certs-" + defaults.s3server.config.S3_VERSION + '-' + defaults.s3server.config.DEPLOY_TAG %}
 
-copy_s3_utils:
+Copy s3 utils:
   file.recurse:
     - name: /opt/seagate/s3server/
     - source: salt://components/s3server/build_ssl_cert_rpms/files/
@@ -15,11 +15,11 @@ copy_s3_utils:
     - clean: True
     - replace: True
 
-clean_slate:
+Clean slate:
   file.absent:
     - name: {{ rpm_sources_dir }}
 
-create_rpm_sources_dir:
+Create rpm sources dir:
   file.directory:
     - name: {{ rpm_sources_dir }}
     - user: root
@@ -33,7 +33,7 @@ create_rpm_sources_dir:
     - clean: True
     - makedirs: True
 
-ensure_s3_certs_dir:
+Ensure s3 certs dir:
   file.directory:
     - name: {{ rpm_sources_dir }}/{{ s3_certs_src }}
     - user: root

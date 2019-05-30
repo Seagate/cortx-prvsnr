@@ -31,11 +31,11 @@ Remove /tmp/s3certs:
 
 Remove s3 cert rpm:
   file.absent:
-    - name: /opt/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
+    - name: /opt/seagate/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
 
 remove s3client cert rpm:
   file.absent:
-    - name: /opt/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
+    - name: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
 Remove working directory for S3 server:
   file.absent:
@@ -71,15 +71,15 @@ service_rsyslog:
     - name: rsyslog
     - enable: False
 
-remove_common_runtime:
+Remove common_runtime libraries:
   pkg.purged:
     - pkgs:
       - java-1.8.0-openjdk-headless
-      - libxml2
-      - libyaml
-      - yaml-cpp
       - gflags
       - glog
+      - yaml-cpp
+      # - libxml2
+      # - libyaml
 #------------------------------
 # Teardown Common Runtime End
 #------------------------------

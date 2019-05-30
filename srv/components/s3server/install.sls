@@ -1,4 +1,4 @@
-install_common_runtime:
+Install common runtime libraries:
   pkg.installed:
     - pkgs:
       - java-1.8.0-openjdk-headless
@@ -8,7 +8,7 @@ install_common_runtime:
       - gflags
       - glog
 
-install_s3server_uploads:
+Install from s3server_uploads packages:
   pkg.installed:
     - pkgs:
       - python34-jmespath
@@ -17,15 +17,6 @@ install_s3server_uploads:
       - python34-boto3
       - python34-xmltodict
 
-# Only for client
-# install_s3s3iamcli:
-#   pkg.installed:
-#     - pkgs:
-#       - s3iamcli
-#       # is this required in PROD?
-#       # - s3iamcli-devel
-#       # - s3server-debuginfo
-
-install_s3server:
+Install s3server package:
   pkg.installed:
     - name: s3server

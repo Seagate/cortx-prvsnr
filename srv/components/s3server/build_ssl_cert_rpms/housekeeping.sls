@@ -2,10 +2,10 @@
 
 {% set rpm_dir = defaults.tmp_dir + "/s3certs" %}
 
-delete_rpm_dir:
+Delete dir rpm:
   file.absent:
     - name: {{ rpm_dir }}
 
-remove_rpmbuild:
+Remove rpmbuild:
   pkg.purged:
     - name: rpm-build

@@ -1,6 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-add_s3server_uploads_repo:
+Add s3server_uploads yum repo:
   pkgrepo.managed:
     - name: {{ defaults.s3server.uploads_repo.id }}
     - enabled: True
@@ -8,7 +8,7 @@ add_s3server_uploads_repo:
     - baseurl: {{ defaults.s3server.uploads_repo.url }}
     - gpgcheck: 0
 
-add_s3server_repo:
+Add s3server yum repo:
   pkgrepo.managed:
     - name: {{ defaults.s3server.repo.id }}
     - enabled: True

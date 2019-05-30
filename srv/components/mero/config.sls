@@ -2,7 +2,7 @@
 
 {% set node = 'node_1' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else 'node_2' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else None %}
 
-configure_lnet:
+Update lnet config file:
   file.managed:
     - name: /etc/modprobe.d/lnet.conf
     - contents:

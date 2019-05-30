@@ -1,6 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-add_halon_repo:
+Add Halon yum repo:
   pkgrepo.managed:
     - name: {{ defaults.halon.repo.id }}
     - enabled: True

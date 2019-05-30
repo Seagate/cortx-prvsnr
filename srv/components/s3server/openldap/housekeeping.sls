@@ -1,3 +1,3 @@
-delete_dir_tmp_slapd:
+Delete dir /tmp/slapd:
   file.absent:
     - name: /tmp/s3ldap

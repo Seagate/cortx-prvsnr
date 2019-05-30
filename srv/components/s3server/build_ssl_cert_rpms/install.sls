@@ -1,4 +1,4 @@
-install_packages:
+Install Openssl packages:
   pkg.installed:
     - pkgs:
       - openssl-libs

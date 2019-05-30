@@ -1,6 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-add_lustre_repo:
+Add Lustre yum repo:
   pkgrepo.managed:
     - name: {{ defaults.lustre.repo.id }}
     - enabled: True
@@ -8,7 +8,7 @@ add_lustre_repo:
     - baseurl: {{ defaults.lustre.repo.url }}
     - gpgcheck: 0
 
-add_mero_repo:
+Add Mero yum repo:
   pkgrepo.managed:
     - name: {{ defaults.mero.repo.id }}
     - enabled: True

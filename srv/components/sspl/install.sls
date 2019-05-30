@@ -1,5 +1,13 @@
-{% if (not salt['grains.get']('productname').lower().startswith('virtual')) %}
-install_sspl_prereqs_hw_pecific:
+{% if 'virtual' in salt['grains.get']('productname').lower() %}
+
+Install prereq packages for sspl - vm specific:
+  pkg.installed:
+    - pkgs:
+      - lxqt-policykit
+
+{% else %}
+
+Install prereq packages for sspl - hw specific:
   pkg.installed:
     - pkgs:
       - sg3_utils
@@ -14,22 +22,13 @@ install_sspl_prereqs_hw_pecific:
       - zabbix-xrtx-lib
       - zabbix-collector
     - refresh: True
-    - require:
-      - pkgrepo: add_sspl_prereqs_repo
-{% else %}
-install_sspl_prereqs_vm_pecific:
-  pkg.installed:
-    - pkgs:
-      - lxqt-policykit
+
 {% endif %}
 
-install_sspl:
+Install sspl packages:
   pkg.installed:
     - pkgs:
-      - lxqt-policykit
       - libsspl_sec
       - libsspl_sec-method_none
       - sspl
     - refresh: True
-    - require:
-      - pkgrepo: add_sspl_repo

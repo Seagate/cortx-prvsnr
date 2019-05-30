@@ -1,14 +1,14 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-add_sspl_prereqs_repo:
+Add sspl_prereqs yum repo:
   pkgrepo.managed:
     - name: {{ defaults.sspl.uploads_repo.id }}
     - enabled: True
     - humanname: sspl_uploads
     - baseurl: {{ defaults.sspl.uploads_repo.url }}
     - gpgcheck: 0
-    
-add_sspl_repo:
+
+Add sspl yum repo:
   pkgrepo.managed:
     - name: {{ defaults.sspl.repo.id }}
     - enabled: True
