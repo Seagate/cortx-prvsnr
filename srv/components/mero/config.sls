@@ -1,5 +1,3 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
 {% set node = 'node_1' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else 'node_2' if grains['host'] == salt["pillar.get"]('facts:node_1:fqdn') else None %}
 
 Update lnet config file:

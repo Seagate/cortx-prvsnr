@@ -8,24 +8,21 @@ salt_nodes = [
     {
         "name" => "ees-node1",
         "cpus" => 2,
-        "memory" => 512,
-        "maxmemory" => 2048,
+        "memory" => 4096,
         "mgmt0" => "172.16.10.101",
         "data0" => "172.19.10.101"
     },
     {
         "name"=> "ees-node2",
         "cpus"=> 2,
-        "memory"=> 512,
-        "maxmemory"=> 2048,
+        "memory"=> 4096,
         "mgmt0" => "172.16.10.102",
         "data0" => "172.19.10.102"
     },
     {
         "name"=> "s3client",
         "cpus"=> 2,
-        "memory"=> 512,
-        "maxmemory"=> 2048,
+        "memory"=> 2048,
         "mgmt0" => "172.16.10.103",
         "data0" => "172.19.10.103"
     }
@@ -34,7 +31,7 @@ salt_nodes = [
 # Disk configuration details
 disks_dir = File.join(Dir.pwd, ".vdisks")
 disk_count = 2
-disk_size = 256         # in MB
+disk_size = 1024         # in MB
 
 Vagrant.configure("2") do |config|
   # Configure salt nodes
@@ -56,7 +53,7 @@ Vagrant.configure("2") do |config|
         vb.name = node['name']
 
         # Virtual h/w specs
-        vb.memory = node['maxmemory']
+        vb.memory = node['memory']
         vb.cpus = node['cpus']
 
         # Use differencing disk instead of cloning entire VDI
