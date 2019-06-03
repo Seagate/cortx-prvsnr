@@ -147,8 +147,6 @@ Vagrant.configure("2") do |config|
         salt.log_level = 'warning'
       end
 
-      node_config.vm.provision "file", source: "./files/.ssh", destination: "/home/vagrant/.ssh"
-
       node_config.vm.provision "shell", inline: <<-SHELL
         sudo yum remove epel-release -y
 
@@ -167,10 +165,12 @@ Vagrant.configure("2") do |config|
 
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
 
-        cat /home/vagrant/.ssh/id_rsa.pub>>/home/vagrant/.ssh/authorized_keys
-        chmod 755 /home/vagrant/.ssh
-        chmod 644 /home/vagrant/.ssh/*
-        chmod 600 /home/vagrant/.ssh/id_rsa
+        sudo mkdir -p /root/.ssh
+        sudo chmod 755 /root/.ssh
+        sudo cp -r /opt/seagate/ees-prvsnr/files/.ssh /root
+        sudo cat /root/.ssh/id_rsa.pub>>/root/.ssh/authorized_keys
+        sudo chmod 644 /root/.ssh/*
+        sudo chmod 600 /root/.ssh/id_rsa
 
         sudo systemctl stop salt-minion
         sudo systemctl disable salt-minion
