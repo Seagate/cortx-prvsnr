@@ -135,20 +135,12 @@ Vagrant.configure("2") do |config|
       # owner: "root",
       # group: "root"
 
-      node_config.vm.provision :salt do |salt|
-        # Master/Minion specific configs.
-        salt.masterless = true
-        salt.minion_config = './files/etc/salt/minion'
-
-        # Generic configs
-        salt.install_type = 'stable'
-        salt.run_highstate = false
-        salt.colorize = true
-        salt.log_level = 'warning'
-      end
-
       node_config.vm.provision "shell", inline: <<-SHELL
         sudo yum remove epel-release -y
+
+        [[ -f /etc/yum.repos.d/epel.repo.rpmsave ]] && sudo rm -rf /etc/yum.repos.d/epel.repo.*
+        [[ -f /etc/yum.repos.d/CentOS-Base.repo ]] && sudo rm -rf /etc/yum.repos.d/*.repo
+        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/yum.repos.d /etc
 
         # ToDo
         sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
@@ -172,9 +164,24 @@ Vagrant.configure("2") do |config|
         sudo chmod 644 /root/.ssh/*
         sudo chmod 600 /root/.ssh/id_rsa
 
+        sudo yum install -y salt-minion
+
         sudo systemctl stop salt-minion
         sudo systemctl disable salt-minion
       SHELL
+
+      node_config.vm.provision :salt do |salt|
+        # Master/Minion specific configs.
+        salt.masterless = true
+        salt.minion_config = './files/etc/salt/minion'
+
+        # Generic configs
+        salt.install_type = 'stable'
+        salt.run_highstate = false
+        salt.colorize = true
+        salt.log_level = 'warning'
+      end
+
     end
   end
 end

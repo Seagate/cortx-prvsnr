@@ -31,7 +31,7 @@ set_hostname:
 
 # set_nic_bios_dev_name_grub:
 #   file.replace:
-#     - name: /etc/grub2.cfg
+#     - name: /etc/default/grub
 #     - pattern: 'biosdevname=0'
 #     - repl: 'biosdevname=1'
 #     - append_if_not_found: False
@@ -40,7 +40,7 @@ set_hostname:
 
 # set_nic_net_if_name_grub:
 #   file.replace:
-#     - name: /etc/grub2.cfg
+#     - name: /etc/default/grub
 #     - pattern: 'net.ifnames=0'
 #     - repl: 'net.ifnames=1'
 #     - append_if_not_found: False
