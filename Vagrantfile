@@ -128,6 +128,20 @@ Vagrant.configure("2") do |config|
       rsync__auto: true,
       rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
 
+      node_config.vm.synced_folder "./files/etc", "/etc",
+      create: true,
+      disabled: false,
+      type: "rsync",
+      rsync__auto: true,
+      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
+
+      node_config.vm.synced_folder "./files/.ssh", "/root/.ssh",
+      create: true,
+      disabled: false,
+      type: "rsync",
+      rsync__auto: true,
+      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
+
       # node_config.vm.synced_folder ".", "/opt/seagate/prvsnr-ees",
       # create: true,
       # disabled: false,
