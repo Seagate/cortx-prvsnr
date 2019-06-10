@@ -14,7 +14,6 @@ Reset EPEL:
 add_{{repo.id}}_repo:
   pkgrepo.managed:
     - name: {{ repo.id }}
-    - enabled: True
     - humanname: {{ repo.id }}
     - baseurl: {{ repo.url }}
     - gpgcheck: 0
@@ -23,7 +22,6 @@ add_{{repo.id}}_repo:
 add_epel_repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.epel_repo.id }}
-    - enabled: True
     - humanname: epel
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
@@ -31,10 +29,10 @@ add_epel_repo:
 add_saltsatck_repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.saltstack_repo.id }}
-    - enabled: True
     - humanname: saltstack
     - baseurl: {{ defaults.base_repos.saltstack_repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
 
 clean_yum_local:
   cmd.run:
