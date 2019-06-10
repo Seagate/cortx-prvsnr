@@ -46,14 +46,14 @@ Ensure file dcs_collector.conf exists:
 
         [hpi_monitor]
     - require:
-      - file: ensure_directory_dcs_collector_conf_d
+      - file: Ensure directory dcs_collector.conf.d exists
 
 Start service dcs-collector:
   cmd.run:
     - name: /etc/rc.d/init.d/dcs-collector start
     - onlyif: test -f /etc/rc.d/init.d/dcs-collector
     - require:
-      - file: ensure_file_dcs_collector_conf
+      - file: Ensure file dcs_collector.conf exists
 
 # END: Prepare for SSPL configuration
 

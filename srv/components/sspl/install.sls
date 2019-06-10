@@ -28,6 +28,7 @@ Install prereq packages for sspl - hw specific:
 Install sspl packages:
   pkg.installed:
     - pkgs:
+      - rabbitmq-server
       - libsspl_sec
       - libsspl_sec-method_none
       - sspl
