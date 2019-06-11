@@ -128,20 +128,6 @@ Vagrant.configure("2") do |config|
       rsync__auto: true,
       rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
 
-      node_config.vm.synced_folder "./files/etc", "/etc",
-      create: true,
-      disabled: false,
-      type: "rsync",
-      rsync__auto: true,
-      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
-
-      node_config.vm.synced_folder "./files/.ssh", "/root/.ssh",
-      create: true,
-      disabled: false,
-      type: "rsync",
-      rsync__auto: true,
-      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
-
       # node_config.vm.synced_folder ".", "/opt/seagate/prvsnr-ees",
       # create: true,
       # disabled: false,
@@ -191,7 +177,7 @@ Vagrant.configure("2") do |config|
 
         # Generic configs
         salt.install_type = 'stable'
-        salt.run_highstate = false
+        salt.run_highstate = true
         salt.colorize = true
         salt.log_level = 'warning'
       end
