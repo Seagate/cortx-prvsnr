@@ -2,7 +2,7 @@ DEVICE=mgmt0
 BOOTPROTO=none
 ONBOOT=yes
 DEFROUTE=yes
-BONDING_OPTS="mode=active-backup primary=eth1 miimon=100"
+BONDING_OPTS="miimon=100 mode=active-backup"
 NM_CONTROLLED=no
 USRCTL=no
 ONBOOT=yes
