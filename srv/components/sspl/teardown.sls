@@ -32,9 +32,10 @@ Remove packages:
 Remove sspl packages:
   pkg.purged:
     - pkgs:
-      - libsspl_sec
-      - libsspl_sec-method_none
       - sspl
+      - libsspl_sec-method_none
+      - libsspl_sec
+      - rabbitmq-server
 
 Remove file sspl_ll.conf:
   file.absent:
