@@ -1,5 +1,5 @@
 base:
   '*':
     - components.s3server
-    - components.system
-    - components.repos
+    - components.cluster
+    - components.release
