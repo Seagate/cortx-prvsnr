@@ -1,5 +1,7 @@
 base:
   '*':
-    - components.s3server
     - components.cluster
+    - components.haproxy
     - components.release
+    - components.s3server
+    - components.sspl

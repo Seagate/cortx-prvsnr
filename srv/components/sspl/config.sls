@@ -1,4 +1,4 @@
-{% set role = 'gw' %}
+{% set role = pillar['sspl']['role'] %}
 
 {% if 'virtual' in salt['grains.get']('productname').lower() %}
 {% set role = 'vm' %}

@@ -1,0 +1,2 @@
+sspl:
+    role: gw
