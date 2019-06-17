@@ -1,4 +1,4 @@
-{% set node = 'node_1' if grains['host'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['host'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
 
 # File still work in progress as disks devices are hard coded
 
