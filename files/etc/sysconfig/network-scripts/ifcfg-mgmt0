@@ -1,5 +1,5 @@
 DEVICE=mgmt0
-BOOTPROTO=none
+BOOTPROTO=static
 ONBOOT=yes
 DEFROUTE=yes
 BONDING_OPTS="miimon=100 mode=active-backup"

@@ -21,14 +21,14 @@
 #     - unless: grep "$(mdadm --detail --scan)" /etc/mdadm.conf
 
 # Label raid disk partition created above
-label_partition:
+Label Metadata partition:
   module.run:
     - partition.mklabel:
       - device: {{ pillar['facts'][node]['metadata_device'] }}
       - label_type: gpt
 
-# Create raid partition for [SWAP]
-make_swap_partition:
+# Create partition for SWAP
+Create swap partition:
   module.run:
     - partition.mkpartfs:
       - device: {{ pillar['facts'][node]['metadata_device'] }}
@@ -37,8 +37,8 @@ make_swap_partition:
       - start: 0%
       - end: 30%
 
-# Create raid partition of /opt
-make_metadata_partition:
+# Create partition for Metadata
+Create metadata partition:
   module.run:
     - partition.mkpartfs:
       - device: {{ pillar['facts'][node]['metadata_device'] }}
@@ -47,18 +47,40 @@ make_metadata_partition:
       - start: 31%
       - end: 100%
 
-# Activate SWAP device
-mount_swap:
-  mount.swap:
-    - name: {{ pillar['facts'][node]['metadata_device'] }}1
-    - persist: True     # save in the fstab
+# Make SWAP
+Make SWAP partition:
+  cmd.run:
+    - Name: mkswap {{ pillar['facts'][node]['metadata_device'] }}-part1
+    - onlyif: test -f {{ pillar['facts'][node]['metadata_device'] }}-part1
+    - require:
+      - Create swap partition
 
-# Verify that a device is mounted
-mount_mero_partition:
+
+# Activate SWAP device
+Enable swap:
+  mount.swap:
+    - name: {{ pillar['facts'][node]['metadata_device'] }}-part1
+    - persist: True     # save in the fstab
+    - require:
+      - Make SWAP partition
+
+# Format metadata partition
+Make metadata partition:
+  module.run:
+    - extfs.mkfs:
+      - device: {{ pillar['facts'][node]['metadata_device'] }}-part2
+      - fs_type: ext4
+      - require:
+        - Create metadata partition
+
+# Ensure /var/mero is mounted
+Mount mero partition:
   mount.mounted:
     - name: /var/mero
-    - device: {{ pillar['facts'][node]['metadata_device'] }}2
+    - device: {{ pillar['facts'][node]['metadata_device'] }}-part2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
     - persist: True     # save in the fstab
     - mount: True
+    - require:
+      - Make metadata partition

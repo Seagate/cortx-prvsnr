@@ -1,5 +1,14 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+Stop cluster:
+  cmd.run:
+    - name: hctl mero stop
+
+Cleanup halon:
+  service.running:
+    - name: halon-cleanup
+
+# This sercice should already be stooped by halon-cleanup above
 Disable Halon service:
   service.dead:
     - name: halond

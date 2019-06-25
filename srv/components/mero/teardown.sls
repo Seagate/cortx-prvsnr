@@ -1,5 +1,9 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+Cleanup mero:
+  service.running:
+    - name: mero-cleanup
+
 Remove mero package:
   pkg.purged:
     - pkgs:
@@ -17,11 +21,10 @@ Remove Lustre:
       - lustre-client
       # - lustre-client-devel
 
-Delete Lustre yum repo:
-  pkgrepo.absent:
-    - name: {{ defaults.lustre.repo.id }}
-
-
 Delete Lnet config file:
   file.absent:
     - name: /etc/modprobe.d/lnet.conf
+
+Delete Lustre yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.lustre.repo.id }}
