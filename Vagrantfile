@@ -5,27 +5,27 @@
 
 # read vm configuration(s) from JSON file
 salt_nodes = [
-    {
-        "name" => "ees-node1",
-        "cpus" => 2,
-        "memory" => 4096,
-        "mgmt0" => "172.16.10.101",
-        "data0" => "172.19.10.101"
-    },
-    {
-        "name"=> "ees-node2",
-        "cpus"=> 2,
-        "memory"=> 4096,
-        "mgmt0" => "172.16.10.102",
-        "data0" => "172.19.10.102"
-    },
-    {
-        "name"=> "s3client",
-        "cpus"=> 2,
-        "memory"=> 2048,
-        "mgmt0" => "172.16.10.103",
-        "data0" => "172.19.10.103"
-    }
+  {
+    "name" => "ees-node1",
+    "cpus" => 2,
+    "memory" => 4096,
+    "mgmt0" => "172.16.10.101",
+    "data0" => "172.19.10.101"
+  },
+  {
+    "name"=> "ees-node2",
+    "cpus"=> 2,
+    "memory"=> 4096,
+    "mgmt0" => "172.16.10.102",
+    "data0" => "172.19.10.102"
+  },
+  {
+    "name"=> "s3client",
+    "cpus"=> 2,
+    "memory"=> 2048,
+    "mgmt0" => "172.16.10.103",
+    "data0" => "172.19.10.103"
+  }
 ]
 
 # Disk configuration details
@@ -34,18 +34,18 @@ disk_count = 2
 disk_size = 1024         # in MB
 
 Vagrant.configure("2") do |config|
-  # Configure salt nodes
-    config.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box"
-  config.vm.box_download_insecure = true
-  config.vm.box = "centos_7.5.1804"
-  config.vm.box_check_update = false
-  config.vm.boot_timeout = 600
 
   salt_nodes.each do |node|
     config.vm.define node['name'] do |node_config|
+      # Configure salt nodes
+      node_config.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box"
+      node_config.vm.box_download_insecure = true
+      node_config.vm.box = "centos_7.5.1804"
+      node_config.vm.box_check_update = false
+      node_config.vm.boot_timeout = 600
       node_config.vm.hostname = node['name']
 
-      config.vm.provider :virtualbox do |vb, override|
+      node_config.vm.provider :virtualbox do |vb, override|
         # Headless
         vb.gui = false
 
@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
       end
 
       unless 's3client' == node['name']
-        config.vm.provider :virtualbox do |vb, override|
+        node_config.vm.provider :virtualbox do |vb, override|
           # Check if machine already provisioned
           if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
             # VDisk configuration start
@@ -147,11 +147,14 @@ Vagrant.configure("2") do |config|
 
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
 
+        echo IPADDR=#{node["mgmt0"]}
+        echo IPADDR=#{node["data0"]}
+
         sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
-        sudo sed -i 's/IPADDR=/IPADDR=#{node['mgmt0']}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
+        sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
 
         sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
-        sudo sed -i 's/IPADDR=/IPADDR=#{node['data0']}/g' /etc/sysconfig/network-scripts/ifcfg-data0
+        sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
         systemctl restart network.service
 
@@ -168,18 +171,21 @@ Vagrant.configure("2") do |config|
 
         sudo systemctl stop salt-minion
         sudo systemctl disable salt-minion
+        sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion /etc/salt/minion
       SHELL
 
-      node_config.vm.provision :salt do |salt|
-        # Master/Minion specific configs.
-        salt.masterless = true
-        salt.minion_config = './files/etc/salt/minion'
+      unless 's3client' == node['name']
+        node_config.vm.provision :salt do |salt|
+          # Master/Minion specific configs.
+          salt.masterless = true
+          salt.minion_config = './files/etc/salt/minion'
 
-        # Generic configs
-        salt.install_type = 'stable'
-        salt.run_highstate = true
-        salt.colorize = true
-        salt.log_level = 'warning'
+          # Generic configs
+          salt.install_type = 'stable'
+          salt.run_highstate = true
+          salt.colorize = true
+          salt.log_level = 'warning'
+        end
       end
 
     end
