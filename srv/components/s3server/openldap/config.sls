@@ -14,72 +14,72 @@ Backup slapd config file:
 
 # generate_slapdpasswd_for_rootDN:
 #   cmd.run:
-#     - name: slappasswd -s {{ pillar['openldap']['openldappasswd'] }}
+#     - name: slappasswd -s {{ pillar['openldap']['admin_passwd'] }}
 #     - require:
 #       - service: Service Slapd
 
 Configure OpenLDAP - Base config:
   cmd.run:
-    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/cfg_ldap.ldif
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/cfg_ldap.ldif
     - cwd: /tmp/s3ldap/
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Schema:
   cmd.run:
-    - name: ldapadd -x -D "cn=admin,cn=config" -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/cn={1}s3user.ldif
+    - name: ldapadd -x -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/cn={1}s3user.ldif
     - cwd: /tmp/s3ldap/
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Base data:
   cmd.run:
-    - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/ldap-init.ldif
+    - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/ldap-init.ldif
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Add IAM admin:
   cmd.run:
-    - name: ldapadd -x -D 'cn=admin,dc=seagate,dc=com' -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/iam-admin.ldif
+    - name: ldapadd -x -D 'cn=admin,dc=seagate,dc=com' -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/iam-admin.ldif
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Setup permissions for IAM admin:
   cmd.run:
-    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/iam-admin-access.ldif
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/iam-admin-access.ldif
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Enable IAM constraints:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/iam-constraints.ldif
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/iam-constraints.ldif
     - watch_in:
       - service: Service Slapd
 
 Configure OpenLDAP - Load ppolicy schema:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['openldappasswd'] }} -a -f /etc/openldap/schema/ppolicy.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /etc/openldap/schema/ppolicy.ldif
     - watch_in:
       - service: Service Slapd
 
 
 Configure OpenLDAP - Load ppolicy module:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['openldappasswd'] }} -a -f /tmp/s3ldap/ppolicymodule.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /tmp/s3ldap/ppolicymodule.ldif
     - watch_in:
       - service: Service Slapd
 
 
 Configure OpenLDAP - Load ppolicy overlay:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['openldappasswd'] }} -a -f /tmp/s3ldap/ppolicyoverlay.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /tmp/s3ldap/ppolicyoverlay.ldif
     - watch_in:
       - service: Service Slapd
 
 
 Configure OpenLDAP - Configure password policy:
   cmd.run:
-    - name: ldapmodify -x -a -H ldapi:/// -D cn=admin,dc=seagate,dc=com -w {{ pillar['openldap']['openldappasswd'] }} -f /tmp/s3ldap/ppolicy-default.ldif
+    - name: ldapmodify -x -a -H ldapi:/// -D cn=admin,dc=seagate,dc=com -w {{ pillar['openldap']['admin_passwd'] }} -f /tmp/s3ldap/ppolicy-default.ldif
     - watch_in:
       - service: Service Slapd
 

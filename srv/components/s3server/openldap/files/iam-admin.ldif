@@ -4,4 +4,4 @@ description: Seagate ldap admin for iam.
 objectclass: organizationalRole
 objectclass: simpleSecurityObject
 cn: sgiamadmin
-userPassword: {{ salt['pillar.get']("openldap:ldapadminpasswdhash", "seagate") }}
+userPassword: {{ salt['pillar.get']("openldap:iam_admin_passwd_hash", "{SSHA}6JlHJF63EpTcEPSuztPP6h4yFrxTloQ4") }}

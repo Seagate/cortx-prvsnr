@@ -57,7 +57,7 @@ Vagrant.configure("2") do |config|
         vb.cpus = node['cpus']
 
         # Use differencing disk instead of cloning entire VDI
-        vb.linked_clone = true
+        vb.linked_clone = false
 
         ## Network configuration
         override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt0"
@@ -66,10 +66,8 @@ Vagrant.configure("2") do |config|
         # Disable USB
         vb.customize ["modifyvm", :id, "--usb", "off"]
         vb.customize ["modifyvm", :id, "--usbehci", "off"]
-      end
 
-      unless 's3client' == node['name']
-        node_config.vm.provider :virtualbox do |vb, override|
+        unless 's3client' == node['name']
           # Check if machine already provisioned
           if not File.exist?(File.join(Dir.pwd, "/.vagrant/machines/default/virtualbox/id"))
             # VDisk configuration start
@@ -114,26 +112,17 @@ Vagrant.configure("2") do |config|
                 '--medium', disk_file,
                 '--mtype', 'normal'
               ]
-            end         # Disk creation loop
+            end       # Disk creation loop
             # VDisk configuration end
-          end           # Provisioned machine check
-        end             # Virtualbox provisioner
-      end
+          end         # Provisioned machine check
+        end           # End of Unless
+      end             # Virtualbox provisioner
 
       # Folder synchonization
       node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
-      create: true,
-      disabled: false,
       type: "rsync",
-      rsync__auto: true,
-      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"]
-
-      # node_config.vm.synced_folder ".", "/opt/seagate/prvsnr-ees",
-      # create: true,
-      # disabled: false,
-      # automount: true,
-      # owner: "root",
-      # group: "root"
+      rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
+      rsync__verbose: false
 
       node_config.vm.provision "shell", inline: <<-SHELL
         sudo yum remove epel-release -y
@@ -142,21 +131,24 @@ Vagrant.configure("2") do |config|
         [[ -f /etc/yum.repos.d/CentOS-Base.repo ]] && sudo rm -rf /etc/yum.repos.d/*.repo
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/yum.repos.d /etc
 
+        sudo ifdown enp0s8
+        sudo ifdown enp0s9
+        sudo ifdown data0
+        sudo ifdown mgmt0
+
         # ToDo
-        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
-
         echo IPADDR=#{node["mgmt0"]}
         echo IPADDR=#{node["data0"]}
-
-        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
+        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
+        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
+        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
         sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
-
-        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
         sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
-        systemctl restart network.service
+        sudo ifup data0
+        sudo ifup mgmt0
+        #sudo systemctl restart network.service
 
         sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
 
@@ -185,9 +177,8 @@ Vagrant.configure("2") do |config|
           salt.run_highstate = true
           salt.colorize = true
           salt.log_level = 'warning'
-        end
-      end
-
+        end     # End of Salt Provisioning
+      end       # End of Unless
     end
   end
 end

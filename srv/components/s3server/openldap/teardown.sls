@@ -31,9 +31,17 @@ Remove pkgs:
       - pkg: Remove pkgs
 {% endfor %}
 
-Delete dir /tmp/s3ldap:
+Delete directory /tmp/s3ldap:
   file.absent:
     - name: /tmp/s3ldap
+
+Delete directory /opt/s3server/ssl:
+  file.absent:
+    - name: /opt/seagate/s3server/ssl
+
+Delete directory /opt/s3server/s3certs:
+  file.absent:
+    - name: /opt/seagate/s3server/s3certs
 
 Remove user ldap:
   user.absent:

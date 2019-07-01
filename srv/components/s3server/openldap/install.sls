@@ -13,3 +13,6 @@ Install certs:
 slapd:
   service.running:
     - enable: True
+    - require:
+      - pkg: Install openldap pkgs
+      - pkg: Install certs
