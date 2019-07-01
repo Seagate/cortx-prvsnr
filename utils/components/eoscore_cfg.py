@@ -1,19 +1,35 @@
+#!/usr/bin/python3
+import argparse
 import json
 import yaml
+
 
 class EOSCoreCfg():
     __mero_options = {}
     __cfg_path = ""
 
+
     def __init__(self, arg_parser, cfg_path):
+        if not arg_parser:
+            raise Exception("Class cannot be initialized without an argparse object")
+
         self.__cfg_path = cfg_path
         self.__setup_args(arg_parser)
         self.__load_defaults()
 
+
     def __setup_args(self, arg_parser):
         # TODO - validate for accidental override
-        arg_parser.add_argument('--eoscore-file', action="store", help='Yaml file with eoscore configs')
-        arg_parser.add_argument('--show-eoscore-file-format', action="store_true", help='Display Yaml file format for eoscore configs')
+        arg_parser.add_argument(
+            '--eoscore-file',
+            action="store",
+            help='Yaml file with eoscore configs')
+
+        arg_parser.add_argument(
+            '--show-eoscore-file-format',
+            action="store_true",
+            help='Display Yaml file format for eoscore configs')
+
 
     def __load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
@@ -21,7 +37,10 @@ class EOSCoreCfg():
             # print(json.dumps(self._release_options, indent = 4))
             # TODO validations for configs.
 
-    def process_inputs(self, program_args):
+
+    def process_inputs(self, arg_parser):
+        program_args = arg_parser.parse_args()
+
         if program_args.show_eoscore_file_format:
             print(self.__mero_options)
             return False
@@ -47,6 +66,7 @@ class EOSCoreCfg():
 
             # print(json.dumps(self._mero_options, indent = 4))
             return True
+
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:

@@ -1,22 +1,34 @@
+#!/usr/bin/python3
+import argparse
 import json
 import yaml
+
 
 class ClusterCfg:
     _cluster_options = {}
     _cfg_path = ""
 
+
     def __init__(self, arg_parser, cfg_path):
+        if not arg_parser:
+            raise Exception("Class cannot be initialized without an argparse object")
+
         self._cfg_path = cfg_path
         self._setup_args(arg_parser)
         self._load_defaults()
 
+
     def _setup_args(self, arg_parser):
         # TODO - validate for accidental override
-        arg_parser.add_argument('--cluster-file', action="store",\
+        arg_parser.add_argument(
+            '--cluster-file',
+            action="store",
             help='Yaml file with cluster configs')
-        arg_parser.add_argument('--show-cluster-file-format',\
-            action="store_true",\
+
+        arg_parser.add_argument('--show-cluster-file-format',
+            action="store_true",
             help='Display Yaml file format for cluster configs')
+
 
     def _load_defaults(self):
         with open(self._cfg_path, 'r') as fd:
@@ -24,7 +36,10 @@ class ClusterCfg:
         # print(json.dumps(self._mero_options, indent = 4))
         # TODO validations for configs.
 
-    def process_inputs(self, program_args):
+
+    def process_inputs(self, arg_parser):
+        program_args = arg_parser.parse_args()
+
         if program_args.show_cluster_file_format:
             print(self._cluster_options)
             return False
@@ -74,6 +89,7 @@ class ClusterCfg:
             # Process args for node_2
             # print(json.dumps(self._cluster_options, indent = 4))
             return True
+
 
     def save(self):
         with open(self._cfg_path, 'w') as fd:
