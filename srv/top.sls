@@ -5,3 +5,4 @@ base:
     - components.mero
     - components.halon
     - components.s3server
+    - components.post_setup

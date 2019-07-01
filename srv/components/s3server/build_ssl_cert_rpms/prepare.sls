@@ -14,6 +14,7 @@ Copy s3 utils:
     - keep_source: False
     - clean: True
     - replace: True
+    - template: jinja
 
 Clean slate:
   file.absent:

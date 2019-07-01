@@ -74,3 +74,4 @@ Remove user rabbitmq:
 # Remove test fw lettuce:
 #   pip.removed:
 #     - name: lettuce
+#     - bin_env: '/usr/bin/pip3'
