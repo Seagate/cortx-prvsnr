@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+#!/usr/bin/python3
+import argparse
 import json
 import yaml
 
@@ -7,19 +9,28 @@ class S3ClientCfg:
     __pillar_data_options = {}
     __cfg_path = ""
 
+
     def __init__(self, arg_parser, cfg_path):
+        if not arg_parser:
+            raise Exception("Class cannot be initialized without an argparse object")
+
         self.__cfg_path = cfg_path
         self.__setup_args(arg_parser)
         self.__load_defaults()
 
+
     def __setup_args(self, arg_parser):
         # TODO - validate for accidental override
         arg_parser.add_argument(
-            '--file', action="store", help='Yaml file with s3client configs')
+            '--file',
+            action="store",
+            help='Yaml file with s3client configs')
 
         arg_parser.add_argument(
-            '--showfileformat', action="store_true",
+            '--showfileformat',
+            action="store_true",
             help='Display Yaml file format for s3client configs')
+
 
     def __load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
@@ -27,7 +38,10 @@ class S3ClientCfg:
         # print(json.dumps(self.__pillar_data_options, indent = 4))
         # TODO validations for configs.
 
-    def process_inputs(self, program_args):
+
+    def process_inputs(self, arg_parser):
+        program_args = arg_parser.parse_args()
+
         if program_args.showfileformat:
             print(self.__pillar_data_options)
             return False
@@ -61,6 +75,7 @@ class S3ClientCfg:
             self.__pillar_data_options["s3client"]["s3endpoint"] = input(
                 input_msg) or self.__pillar_data_options["s3client"]["s3endpoint"]
             # print(json.dumps(self.__pillar_data_options, indent = 4))
+
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:

@@ -1,22 +1,35 @@
+#!/usr/bin/python3
+import argparse
 import json
 import yaml
+
 
 class HAProxyCfg:
     _haproxy_options = {}
     _cfg_path = ""
 
+
     def __init__(self, arg_parser, cfg_path):
+        if not arg_parser:
+            raise Exception("Class cannot be initialized without an argparse object")
+
         self._cfg_path = cfg_path
         self._setup_args(arg_parser)
         self._load_defaults()
 
+
     def _setup_args(self, arg_parser):
         # TODO - validate for accidental override
-        arg_parser.add_argument('--haproxy-file', action="store",\
+        arg_parser.add_argument(
+            '--haproxy-file',
+            action="store",
             help='Yaml file with haproxy configs')
-        arg_parser.add_argument('--show-haproxy-file-format',\
-            action="store_true",\
+
+        arg_parser.add_argument(
+            '--show-haproxy-file-format',
+            action="store_true",
             help='Display Yaml file format for haproxy configs')
+
 
     def _load_defaults(self):
         with open(self._cfg_path, 'r') as fd:
@@ -24,7 +37,10 @@ class HAProxyCfg:
         # print(json.dumps(self._haproxy_options, indent = 4))
         # TODO validations for configs.
 
-    def process_inputs(self, program_args):
+
+    def process_inputs(self, arg_parser):
+        program_args = arg_parser.parse_args()
+
         if program_args.show_haproxy_file_format:
             print(self._haproxy_options)
             return False
@@ -73,6 +89,7 @@ class HAProxyCfg:
                     self._haproxy_options["haproxy"]["backend"]["s3authserver"]["ssl_enabled"]
             # print(json.dumps(self._haproxy_options, indent = 4))
             return True
+
 
     def save(self):
         with open(self._cfg_path, 'w') as fd:

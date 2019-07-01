@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <workload name="s3-sample" description="sample benchmark for s3">
 
-  <storage type="s3" config="path_style_access=true;accesskey={{ pillar['s3client']['aws']['access_key'] }};secretkey={{ pillar['s3client']['aws']['secret_key'] }};endpoint=http://s3.seagate.com" />
+  <storage type="s3" config="path_style_access=true;accesskey={{ pillar['s3client']['access_key'] }};secretkey={{ pillar['s3client']['secret_key'] }};endpoint=http://s3.seagate.com" />
 
   <workflow>
 

@@ -14,7 +14,7 @@ class SSPLCfg:
         # TODO - validate for accidental override
         arg_parser.add_argument('--sspl-file', action="store", \
             help='Yaml file with sspl configs')
-        arg_parser.add_argument('--show-sspl-file-format', \
+        arg_parser.add_argument('--show_sspl_file_format', \
             action="store_true",\
             help='Display Yaml file format for sspl configs')
 
