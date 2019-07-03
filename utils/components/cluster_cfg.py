@@ -46,7 +46,9 @@ class ClusterCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_cluster_file_format:
-            print(self._cluster_options)
+            from pprint import pprint
+
+            pprint(self._cluster_options, width = 1)
             return False
         elif program_args.cluster_file:
             # Load cluster file and merge options.

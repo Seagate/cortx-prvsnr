@@ -49,7 +49,9 @@ class ReleaseCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_release_file_format:
-            print(self._release_options)
+            from pprint import pprint
+
+            pprint(self._release_options, width = 1)
             return False
         elif program_args.release_file:
             # Load release file and merge options.

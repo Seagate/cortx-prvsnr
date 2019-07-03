@@ -1,8 +1,12 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+# Mostly we would have uninstalled halond already
+# Without halond service, this wouldn't make sense
+{% if salt['service.status']('halond.service') %}
 Cleanup mero:
   service.running:
     - name: mero-cleanup
+{% endif %}
 
 Remove mero package:
   pkg.purged:

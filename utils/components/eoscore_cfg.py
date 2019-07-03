@@ -44,7 +44,9 @@ class EOSCoreCfg():
         program_args = arg_parser.parse_args()
 
         if program_args.show_eoscore_file_format:
-            print(self.__mero_options)
+            from pprint import pprint
+
+            pprint(self.__mero_options, width = 1)
             return False
         elif program_args.eoscore_file:
             # Load eoscore file and merge options.

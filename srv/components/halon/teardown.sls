@@ -1,5 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+{% if salt['service.status']('halond.service') %}
 Stop cluster:
   cmd.run:
     - name: hctl mero stop
@@ -7,6 +8,7 @@ Stop cluster:
 Cleanup halon:
   service.running:
     - name: halon-cleanup
+{% endif %}
 
 # This sercice should already be stooped by halon-cleanup above
 Disable Halon service:

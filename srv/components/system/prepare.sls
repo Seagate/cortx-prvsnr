@@ -41,3 +41,11 @@ clean_yum_local:
 clean_yum_cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
+
+Sync pillar data:
+  module.run:
+    - saltutil.sync_pillar: []
+
+Update pillar data:
+  module.run:
+    - saltutil.refresh_pillar: []

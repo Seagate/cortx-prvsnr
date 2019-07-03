@@ -24,13 +24,15 @@ class S3ClientCfg:
             '--s3client-file',
             dest = 's3client_file',
             action="store",
-            help='Yaml file with s3client configs')
+            help='Yaml file with s3client configs'
+        )
 
         arg_parser.add_argument(
             '--show-s3client-file-format',
             dest = 'show_s3client_file_format',
             action="store_true",
-            help='Display Yaml file format for s3client configs')
+            help='Display Yaml file format for s3client configs'
+        )
 
 
     def __load_defaults(self):
@@ -44,7 +46,9 @@ class S3ClientCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_s3client_file_format:
-            print(self.__pillar_data_options)
+            from pprint import pprint
+
+            pprint(self.__pillar_data_options, width = 1)
             return False
         elif program_args.s3client_file:
             # Load s3server file and merge options.

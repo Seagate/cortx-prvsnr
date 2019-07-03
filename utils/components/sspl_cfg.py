@@ -38,7 +38,9 @@ class SSPLCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_sspl_file_format:
-            print(self.__sspl_options)
+            from pprint import pprint
+
+            pprint(self.__sspl_options, width = 1)
             return False
         elif program_args.sspl_file:
             # Load sspl file and merge options.

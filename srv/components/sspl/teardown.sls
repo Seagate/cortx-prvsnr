@@ -29,6 +29,10 @@ Remove packages:
 
 {% endif %}
 
+stop service rabbitmq-server:
+  service.dead:
+    - name: rabbitmq-server
+
 Remove sspl packages:
   pkg.purged:
     - pkgs:

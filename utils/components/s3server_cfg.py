@@ -4,15 +4,19 @@ import json
 import yaml
 
 class S3ServerCfg:
-    _s3server_options = {}
-    _cfg_path = ""
+    __s3server_options = {}
+    __cfg_path = ""
 
     def __init__(self, arg_parser, cfg_path):
-        self._cfg_path = cfg_path
-        self._setup_args(arg_parser)
+        if not arg_parser:
+            raise Exception("Class cannot be initialized without an argparse object")
+
+        self.__cfg_path = cfg_path
+        self.__setup_args(arg_parser)
         self._load_defaults()
 
-    def _setup_args(self, arg_parser):
+
+    def __setup_args(self, arg_parser):
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--s3server-file',
@@ -27,17 +31,21 @@ class S3ServerCfg:
             help='Display Yaml file format for s3server configs'
         )
 
+
     def _load_defaults(self):
-        with open(self._cfg_path, 'r') as fd:
-            self._s3server_options = yaml.load(fd, Loader=yaml.FullLoader)
-        # print(json.dumps(self._s3server_options, indent = 4))
+        with open(self.__cfg_path, 'r') as fd:
+            self.__s3server_options = yaml.load(fd, Loader=yaml.FullLoader)
+        # print(json.dumps(self.__s3server_options, indent = 4))
         # TODO validations for configs.
+
 
     def process_inputs(self, arg_parser):
         program_args = arg_parser.parse_args()
 
         if program_args.show_s3server_file_format:
-            print(self._s3server_options)
+            from pprint import pprint
+
+            pprint(self.__s3server_options, width = 1)
             return False
         elif program_args.s3server_file:
             # Load s3server file and merge options.
@@ -347,6 +355,7 @@ class S3ServerCfg:
             # print("ERROR: No usable inputs provided.")
             return False
 
+
     def save(self):
-        with open(self._cfg_path, 'w') as fd:
+        with open(self.__cfg_path, 'w') as fd:
             yaml.dump(self._s3server_options, fd, default_flow_style=False)

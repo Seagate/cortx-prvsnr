@@ -65,14 +65,14 @@ def __config_modules(arg_parser):
                 "s3client.sls"
             )
         ),
-        # S3ServerCfg(
-        #     arg_parser,
-        #     cfg_path=os.path.join(
-        #         __config_dir,
-        #         "components",
-        #         "s3client.sls"
-        #     )
-        # ),
+        S3ServerCfg(
+            arg_parser,
+            cfg_path=os.path.join(
+                __config_dir,
+                "components",
+                "s3server.sls"
+            )
+        ),
         SSPLCfg(
             arg_parser,
             cfg_path=os.path.join(

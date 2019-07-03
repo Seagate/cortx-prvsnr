@@ -44,7 +44,9 @@ class HAProxyCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_haproxy_file_format:
-            print(self._haproxy_options)
+            from pprint import pprint
+
+            pprint(self._haproxy_options, width = 1)
             return False
         elif program_args.haproxy_file:
             # Load haproxy file and merge options.
