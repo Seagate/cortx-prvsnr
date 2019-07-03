@@ -22,19 +22,21 @@ class S3ClientCfg:
     def __setup_args(self, arg_parser):
         # TODO - validate for accidental override
         arg_parser.add_argument(
-            '--file',
+            '--s3client-file',
+            dest = 's3client_file',
             action="store",
             help='Yaml file with s3client configs')
 
         arg_parser.add_argument(
-            '--showfileformat',
+            '--show-s3client-file-format',
+            dest = 'show_s3client_file_format',
             action="store_true",
             help='Display Yaml file format for s3client configs')
 
 
     def __load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
-            self.__pillar_data_options = yaml.load(fd)
+            self.__pillar_data_options = yaml.load(fd, Loader=yaml.FullLoader)
         # print(json.dumps(self.__pillar_data_options, indent = 4))
         # TODO validations for configs.
 
@@ -42,14 +44,14 @@ class S3ClientCfg:
     def process_inputs(self, arg_parser):
         program_args = arg_parser.parse_args()
 
-        if program_args.showfileformat:
+        if program_args.show_s3client_file_format:
             print(self.__pillar_data_options)
             return False
-        elif program_args.file:
+        elif program_args.s3client_file:
             # Load s3server file and merge options.
             new_options = {}
             with open(program_args.file, 'r') as fd:
-                new_options = yaml.load(fd)
+                new_options = yaml.load(fd, Loader=yaml.FullLoader)
                 self.__pillar_data_options.update(new_options)
         elif program_args.interactive:
             input_msg = ("S3Server FQDN [{0}]: ".format(self.__pillar_data_options["s3client"]["s3server"]["ip"]))

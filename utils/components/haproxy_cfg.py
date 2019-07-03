@@ -22,11 +22,13 @@ class HAProxyCfg:
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--haproxy-file',
+            dest = 'haproxy_file',
             action="store",
             help='Yaml file with haproxy configs')
 
         arg_parser.add_argument(
             '--show-haproxy-file-format',
+            dest = 'show_haproxy_file_format',
             action="store_true",
             help='Display Yaml file format for haproxy configs')
 

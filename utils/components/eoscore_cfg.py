@@ -22,11 +22,13 @@ class EOSCoreCfg():
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--eoscore-file',
+            dest = 'eoscore_file',
             action="store",
             help='Yaml file with eoscore configs')
 
         arg_parser.add_argument(
             '--show-eoscore-file-format',
+            dest = 'show_eoscore_file_format',
             action="store_true",
             help='Display Yaml file format for eoscore configs')
 

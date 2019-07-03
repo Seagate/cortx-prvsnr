@@ -27,11 +27,13 @@ class ReleaseCfg:
 
         arg_parser.add_argument(
             '--release-file',
+            dest = 'release_file',
             action="store",
             help='Yaml file with release configs')
 
         arg_parser.add_argument(
             '--show-release-file-format',
+            dest = 'show_release_file_format',
             action="store_true",
             help='Display Yaml file format for release configs')
 
@@ -60,10 +62,13 @@ class ReleaseCfg:
             input_msg = ("Enter target eos release version: (default is {0}):".format(self._release_options["eos_release"]["target_build"]))
             self._release_options["eos_release"]["target_build"] = input(input_msg) or self._release_options["eos_release"]["target_build"]
             return True
-        else:
+        elif program_args.release:
             self._release_options["eos_release"]["target_build"] = program_args.release
             # print(json.dumps(self._release_options, indent = 4))
             return True
+        else:
+            print("ERROR: No usable inputs provided.")
+            return False
 
 
     def save(self):

@@ -13,12 +13,14 @@ class S3ServerCfg:
     def _setup_args(self, arg_parser):
         # TODO - validate for accidental override
         arg_parser.add_argument(
-            '--s3server_file',
+            '--s3server-file',
+            dest = 's3server_file',
             action="store",
             help='Yaml file with s3server configs'
         )
         arg_parser.add_argument(
-            '--show_s3server_file_format',
+            'show-s3server-file-format',
+            dest = 'show_s3server_file_format',
             action="store_true",
             help='Display Yaml file format for s3server configs'
         )

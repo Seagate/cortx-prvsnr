@@ -12,10 +12,15 @@ class SSPLCfg:
 
     def _setup_args(self, arg_parser):
         # TODO - validate for accidental override
-        arg_parser.add_argument('--sspl-file', action="store", \
+        arg_parser.add_argument(
+            '--sspl-file',
+            dest = 'sspl_file',
+            action="store",
             help='Yaml file with sspl configs')
-        arg_parser.add_argument('--show_sspl_file_format', \
-            action="store_true",\
+        arg_parser.add_argument(
+            '--show-sspl-file-format',
+            dest = 'show_sspl_file_format',
+            action="store_true",
             help='Display Yaml file format for sspl configs')
 
     def _load_defaults(self):

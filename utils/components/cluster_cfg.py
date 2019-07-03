@@ -22,6 +22,7 @@ class ClusterCfg:
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--cluster-file',
+            dest = 'cluster_file',
             action="store",
             help='Yaml file with cluster configs')
 
