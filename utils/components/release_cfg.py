@@ -67,7 +67,7 @@ class ReleaseCfg:
             # print(json.dumps(self._release_options, indent = 4))
             return True
         else:
-            print("ERROR: No usable inputs provided.")
+            # print("ERROR: No usable inputs provided.")
             return False
 
 

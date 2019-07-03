@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+import argparse
 import json
 import yaml
 
@@ -19,7 +21,7 @@ class S3ServerCfg:
             help='Yaml file with s3server configs'
         )
         arg_parser.add_argument(
-            'show-s3server-file-format',
+            '--show-s3server-file-format',
             dest = 'show_s3server_file_format',
             action="store_true",
             help='Display Yaml file format for s3server configs'
@@ -31,7 +33,9 @@ class S3ServerCfg:
         # print(json.dumps(self._s3server_options, indent = 4))
         # TODO validations for configs.
 
-    def process_inputs(self, program_args):
+    def process_inputs(self, arg_parser):
+        program_args = arg_parser.parse_args()
+
         if program_args.show_s3server_file_format:
             print(self._s3server_options)
             return False
@@ -339,6 +343,9 @@ class S3ServerCfg:
                     or self._s3server_options["thirdparty"]["memory_pool"]["max_threshold_in_bytes"]
             # print(json.dumps(self._s3server_options, indent = 4))
             return True
+        else:
+            # print("ERROR: No usable inputs provided.")
+            return False
 
     def save(self):
         with open(self._cfg_path, 'w') as fd:

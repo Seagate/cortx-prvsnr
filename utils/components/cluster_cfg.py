@@ -24,11 +24,15 @@ class ClusterCfg:
             '--cluster-file',
             dest = 'cluster_file',
             action="store",
-            help='Yaml file with cluster configs')
+            help='Yaml file with cluster configs'
+        )
 
-        arg_parser.add_argument('--show-cluster-file-format',
+        arg_parser.add_argument(
+            '--show-cluster-file-format',
+            dest = 'show_cluster_file_format',
             action="store_true",
-            help='Display Yaml file format for cluster configs')
+            help='Display Yaml file format for cluster configs'
+        )
 
 
     def _load_defaults(self):
@@ -90,6 +94,9 @@ class ClusterCfg:
             # Process args for node_2
             # print(json.dumps(self._cluster_options, indent = 4))
             return True
+        else:
+            # print("ERROR: No usable inputs provided.")
+            return False
 
 
     def save(self):

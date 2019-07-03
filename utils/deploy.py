@@ -9,6 +9,7 @@ from components.eoscore_cfg import EOSCoreCfg
 from components.haproxy_cfg import HAProxyCfg
 from components.release_cfg import ReleaseCfg
 from components.s3client_cfg import S3ClientCfg
+from components.s3server_cfg import S3ServerCfg
 from components.sspl_cfg import SSPLCfg
 
 
@@ -38,40 +39,48 @@ def __config_modules(arg_parser):
                 __config_dir,
                 "components",
                 "cluster.sls"
-                )
-            ),
-        SSPLCfg(
-            arg_parser,
-            cfg_path=os.path.join(
-                __config_dir,
-                "components",
-                "sspl.sls"
-                )
-            ),
+            )
+        ),
         EOSCoreCfg(
             arg_parser,
             cfg_path=os.path.join(
                 __config_dir,
                 "components",
                 "mero.sls"
-                )
-            ),
+            )
+        ),
         HAProxyCfg(
             arg_parser,
             cfg_path=os.path.join(
                 __config_dir,
                 "components",
                 "haproxy.sls"
-                )
-            ),
+            )
+        ),
         S3ClientCfg(
             arg_parser,
             cfg_path=os.path.join(
                 __config_dir,
                 "components",
                 "s3client.sls"
-                )
             )
+        ),
+        # S3ServerCfg(
+        #     arg_parser,
+        #     cfg_path=os.path.join(
+        #         __config_dir,
+        #         "components",
+        #         "s3client.sls"
+        #     )
+        # ),
+        SSPLCfg(
+            arg_parser,
+            cfg_path=os.path.join(
+                __config_dir,
+                "components",
+                "sspl.sls"
+            )
+        )
     ]
     return cfg_module
 
@@ -88,7 +97,7 @@ def execute():
     )
 
     for mod in __config_modules(arg_parser):
-        print("Processing module: {0}".format(mod))
+        # print("Processing module: {0}".format(mod))
         if mod.process_inputs(arg_parser):
             mod.save()
 

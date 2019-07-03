@@ -68,7 +68,9 @@ class EOSCoreCfg():
 
             # print(json.dumps(self._mero_options, indent = 4))
             return True
-
+        else:
+            # print("ERROR: No usable inputs provided.")
+            return False
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:

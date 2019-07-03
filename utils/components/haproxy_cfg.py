@@ -91,7 +91,9 @@ class HAProxyCfg:
                     self._haproxy_options["haproxy"]["backend"]["s3authserver"]["ssl_enabled"]
             # print(json.dumps(self._haproxy_options, indent = 4))
             return True
-
+        else:
+            # print("ERROR: No usable inputs provided.")
+            return False
 
     def save(self):
         with open(self._cfg_path, 'w') as fd:

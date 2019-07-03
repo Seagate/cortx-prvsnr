@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 import argparse
 import json
 import yaml
@@ -77,6 +76,9 @@ class S3ClientCfg:
             self.__pillar_data_options["s3client"]["s3endpoint"] = input(
                 input_msg) or self.__pillar_data_options["s3client"]["s3endpoint"]
             # print(json.dumps(self.__pillar_data_options, indent = 4))
+        else:
+            # print("ERROR: No usable inputs provided.")
+            return False
 
 
     def save(self):
