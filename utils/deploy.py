@@ -86,10 +86,6 @@ def execute():
         action="store_true",
         help='interactive mode, overrides the command line arguments.'
     )
-    arg_parser.add_argument('module',
-        type=str,
-        help='an integer for the accumulator'
-    )
 
     for mod in __config_modules(arg_parser):
         print("Processing module: {0}".format(mod))
