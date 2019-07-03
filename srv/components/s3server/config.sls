@@ -56,3 +56,11 @@ Open https port for s3server:
     - dport: 443
     - family: ipv4
     - save: True
+
+Append /etc/hosts:
+  file.line:
+    - name: /etc/hosts
+    - content: |
+      - {{ grains['ip_interfaces']['data0'][0] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
+    - location: end
+    - mode: ensure
