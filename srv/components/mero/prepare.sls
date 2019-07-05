@@ -15,7 +15,3 @@ Add Mero yum repo:
     - humanname: mero
     - baseurl: {{ defaults.mero.repo.url }}
     - gpgcheck: 0
-
-Update Mero config:
-  mero.config:
-    - name: /etc/sysconfig/mero

@@ -122,6 +122,7 @@ Vagrant.configure("2") do |config|
       node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
       type: "rsync",
       rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
+      rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
       rsync__verbose: false
 
       node_config.vm.provision "shell", inline: <<-SHELL

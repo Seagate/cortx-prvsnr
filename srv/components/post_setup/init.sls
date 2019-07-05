@@ -1,8 +1,14 @@
 # hctl mero bootstrap
-bootstrap mero:
+Bootstrap mero:
   cmd.run:
     - name: hctl mero bootstrap
     - onlyif: test -f /etc/halon/halon_facts.yaml
+
+# Restart HAProxy:
+#   service.running:
+#     - name: haproxy
+#     - watch:
+#       - cmd: Bootstrap mero
 
 # Expected running services
 # s3authserver: Failed
