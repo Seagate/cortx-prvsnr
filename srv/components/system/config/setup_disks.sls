@@ -44,7 +44,7 @@ Create metadata partition:
       - device: {{ pillar['facts'][node]['metadata_device'] }}
       - part_type: primary
       - fs_type: ext4
-      - start: 31%
+      - start: 30%
       - end: 100%
 
 # Make SWAP

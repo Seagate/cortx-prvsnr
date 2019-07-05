@@ -1,0 +1,5 @@
+SEARCH=mero.colo.seagate.com
+NETWORKING=yes
+NETWORKING_IPV6=no
+GATEWAY=10.230.160.1
+GATEWAYDEV=mgmt0

@@ -1,4 +1,4 @@
-{% set node_name = salt['pillar.get'] ('node_name') %}
+{% set node_name = salt['pillar.get'] ('fact:{0}:fqdn'.format(node_1)) %}
 
 stop_and_diasble_nm:
   service.dead:
