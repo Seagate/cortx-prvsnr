@@ -5,7 +5,7 @@ import yaml
 
 
 class S3ClientCfg:
-    __pillar_data_options = {}
+    __options = {}
     __cfg_path = ""
 
 
@@ -37,8 +37,8 @@ class S3ClientCfg:
 
     def __load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
-            self.__pillar_data_options = yaml.load(fd, Loader=yaml.FullLoader)
-        # print(json.dumps(self.__pillar_data_options, indent = 4))
+            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
+        # print(json.dumps(self.__options, indent = 4))
         # TODO validations for configs.
 
 
@@ -46,40 +46,82 @@ class S3ClientCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_s3client_file_format:
-            from pprint import pprint
-
-            pprint(self.__pillar_data_options, width = 1)
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
             return False
+
         elif program_args.s3client_file:
             # Load s3server file and merge options.
             new_options = {}
             with open(program_args.file, 'r') as fd:
                 new_options = yaml.load(fd, Loader=yaml.FullLoader)
-                self.__pillar_data_options.update(new_options)
+                self.__options.update(new_options)
+
         elif program_args.interactive:
-            input_msg = ("S3Server FQDN [{0}]: ".format(self.__pillar_data_options["s3client"]["s3server"]["ip"]))
-            self.__pillar_data_options["s3client"]["s3server"]["fqdn"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["s3server"]["fqdn"]
-            input_msg = ("S3Server IP [{0}]: ".format(self.__pillar_data_options["s3client"]["s3server"]["ip"]))
-            self.__pillar_data_options["s3client"]["s3server"]["ip"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["s3server"]["ip"]
+            input_msg = ("S3Server FQDN ({0}): ".format(
+                    self.__options["s3client"]["s3server"]["ip"]
+                )
+            )
+            self.__options["s3client"]["s3server"]["fqdn"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["s3server"]["fqdn"]
+            )
+
+            input_msg = ("S3Server IP ({0}): ".format(
+                    self.__options["s3client"]["s3server"]["ip"]
+                )
+            )
+            self.__options["s3client"]["s3server"]["ip"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["s3server"]["ip"]
+            )
 
             input_msg = ("S3 Access Key: ")
-            self.__pillar_data_options["s3client"]["access_key"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["access_key"]
+            self.__options["s3client"]["access_key"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["access_key"]
+            )
+
             input_msg = ("S3 Secret Key: ")
-            self.__pillar_data_options["s3client"]["secret_key"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["secret_key"]
-            input_msg = ("Region [{0}]: ".format(self.__pillar_data_options["s3client"]["region"]))
-            self.__pillar_data_options["s3client"]["region"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["region"]
-            input_msg = ("Output format [{0}]: ".format(self.__pillar_data_options["s3client"]["output"]))
-            self.__pillar_data_options["s3client"]["output"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["output"]
-            input_msg = ("S3 Endpoint [{0}]: ".format(self.__pillar_data_options["s3client"]["s3endpoint"]))
-            self.__pillar_data_options["s3client"]["s3endpoint"] = input(
-                input_msg) or self.__pillar_data_options["s3client"]["s3endpoint"]
-            # print(json.dumps(self.__pillar_data_options, indent = 4))
+            self.__options["s3client"]["secret_key"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["secret_key"]
+            )
+
+            input_msg = ("Region ({0}): ".format(
+                    self.__options["s3client"]["region"]
+                )
+            )
+            self.__options["s3client"]["region"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["region"]
+            )
+
+            input_msg = ("Output format ({0}): ".format(
+                    self.__options["s3client"]["output"]
+                )
+            )
+            self.__options["s3client"]["output"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["output"]
+            )
+
+            input_msg = ("S3 Endpoint ({0}): ".format(
+                    self.__options["s3client"]["s3endpoint"]
+                )
+            )
+            self.__options["s3client"]["s3endpoint"] = (
+                input(input_msg)
+                or
+                self.__options["s3client"]["s3endpoint"]
+            )
+            # print(json.dumps(self.__options, indent = 4))
+
         else:
             # print("ERROR: No usable inputs provided.")
             return False
@@ -87,4 +129,4 @@ class S3ClientCfg:
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
-            yaml.dump(self.__pillar_data_options, fd, default_flow_style = False)
+            yaml.dump(self.__options, fd, default_flow_style = False)
