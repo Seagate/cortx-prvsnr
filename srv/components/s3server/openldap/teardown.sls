@@ -11,6 +11,8 @@ Remove pkgs:
     - pkgs:
       - openldap-servers
       - openldap-clients
+      - stx-s3-client-certs
+      - stx-s3-certs
     - require:
       - Stop slapd
 
