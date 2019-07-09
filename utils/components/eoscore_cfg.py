@@ -1,10 +1,13 @@
-#!/usr/bin/python3
-import argparse
+#!/usr/bin/env python3
 import json
 import yaml
 
+from argparse import ArgumentParser
 
-class EOSCoreCfg():
+from .base_cfg import BaseCfg
+
+
+class EOSCoreCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
@@ -18,7 +21,7 @@ class EOSCoreCfg():
         self.__load_defaults()
 
 
-    def __setup_args(self, arg_parser):
+    def __setup_args(self, arg_parser) -> bool:
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--eoscore-file',
@@ -40,12 +43,13 @@ class EOSCoreCfg():
             # TODO validations for configs.
 
 
-    def process_inputs(self, arg_parser):
+    def process_inputs(self, arg_parser: ArgumentParser) -> bool:
         program_args = arg_parser.parse_args()
 
         if program_args.show_eoscore_file_format:
             print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
             return False
+
         elif program_args.eoscore_file:
             # Load eoscore file and merge options.
             new_options = {}
@@ -89,9 +93,18 @@ class EOSCoreCfg():
             return True
 
         else:
-            # print("ERROR: No usable inputs provided.")
+            # print("WARNING: No usable inputs provided.")
             return False
+
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
             yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
+
+
+    def load(self, yaml_file):
+        pass
+
+
+    def validate(self, yaml_string) -> bool:
+        pass
