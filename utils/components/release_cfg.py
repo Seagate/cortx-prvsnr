@@ -6,15 +6,15 @@ import yaml
 
 
 class ReleaseCfg:
-    _release_options = {}
-    _cfg_path = ""
+    __options = {}
+    __cfg_path = ""
 
 
     def __init__(self, arg_parser, cfg_path):
         if not arg_parser:
             raise Exception("Class cannot be initialized without an argparse object")
 
-        self._cfg_path = cfg_path
+        self.__cfg_path = cfg_path
         self._setup_args(arg_parser)
         self._load_defaults()
 
@@ -39,9 +39,9 @@ class ReleaseCfg:
 
 
     def _load_defaults(self):
-        with open(self._cfg_path, 'r') as fd:
-            self._release_options = yaml.load(fd, Loader=yaml.FullLoader)
-        # print(json.dumps(self._release_options, indent = 4))
+        with open(self.__cfg_path, 'r') as fd:
+            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
+        # print(json.dumps(self.__options, indent = 4))
         # TODO validations for configs.
 
 
@@ -49,30 +49,39 @@ class ReleaseCfg:
         program_args = arg_parser.parse_args()
 
         if program_args.show_release_file_format:
-            from pprint import pprint
-
-            pprint(self._release_options, width = 1)
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
             return False
+
         elif program_args.release_file:
             # Load release file and merge options.
             new_options = {}
             with open(program_args.release_file, 'r') as fd:
                 new_options = yaml.load(fd, Loader=yaml.FullLoader)
-                self._release_options.update(new_options)
+                self.__options.update(new_options)
             return True
+
         elif program_args.interactive:
-            input_msg = ("Enter target eos release version: (default is {0}):".format(self._release_options["eos_release"]["target_build"]))
-            self._release_options["eos_release"]["target_build"] = input(input_msg) or self._release_options["eos_release"]["target_build"]
+            input_msg = ("Enter target eos release version ({0}): ".format(
+                    self.__options["eos_release"]["target_build"]
+                )
+            )
+            self.__options["eos_release"]["target_build"] = (
+                input(input_msg)
+                or
+                self.__options["eos_release"]["target_build"]
+            )
             return True
+
         elif program_args.release:
-            self._release_options["eos_release"]["target_build"] = program_args.release
-            # print(json.dumps(self._release_options, indent = 4))
+            self.__options["eos_release"]["target_build"] = program_args.release
+            # print(json.dumps(self.__options, indent = 4))
             return True
+
         else:
             # print("ERROR: No usable inputs provided.")
             return False
 
 
     def save(self):
-        with open(self._cfg_path, 'w') as fd:
-            yaml.dump(self._release_options, fd, default_flow_style=False)
+        with open(self.__cfg_path, 'w') as fd:
+            yaml.dump(self.__options, fd, default_flow_style=False, indent=4)

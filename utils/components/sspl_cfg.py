@@ -4,13 +4,15 @@ import json
 import yaml
 
 class SSPLCfg:
-    __sspl_options = {}
+    __options = {}
     __cfg_path = ""
+
 
     def __init__(self, arg_parser, cfg_path):
         self.__cfg_path = cfg_path
         self._setup_args(arg_parser)
         self._load_defaults()
+
 
     def _setup_args(self, arg_parser):
         # TODO - validate for accidental override
@@ -28,38 +30,47 @@ class SSPLCfg:
             action="store_true",
             help='Display Yaml file format for sspl configs')
 
+
     def _load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
-            self.__sspl_options = yaml.load(fd, Loader=yaml.FullLoader)
+            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
         # print(json.dumps(self._release_options, indent = 4))
         # TODO validations for configs.
+
 
     def process_inputs(self, arg_parser):
         program_args = arg_parser.parse_args()
 
         if program_args.show_sspl_file_format:
-            from pprint import pprint
-
-            pprint(self.__sspl_options, width = 1)
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
             return False
+
         elif program_args.sspl_file:
             # Load sspl file and merge options.
             new_options = {}
             with open(program_args.sspl_file, 'r') as fd:
                 new_options = yaml.load(fd, Loader=yaml.FullLoader)
-                self.__sspl_options.update(new_options)
+                self.__options.update(new_options)
             return True
+
         elif program_args.interactive:
-            input_msg = ("Enter sspl role on this system: (default is {0}):"\
-                .format(self.__sspl_options["sspl"]["role"]))
-            self.__sspl_options["sspl"]["role"] = input(input_msg) or \
-                self.__sspl_options["sspl"]["role"]
+            input_msg = ("Enter sspl role on this system: ({0}): ".format(
+                    self.__options["sspl"]["role"]
+                )
+            )
+            self.__options["sspl"]["role"] = (
+                input(input_msg)
+                or
+                self.__options["sspl"]["role"]
+            )
             # print(json.dumps(self._release_options, indent = 4))
             return True
+
         else:
             # print("ERROR: No usable inputs provided.")
             return False
 
+
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
-            yaml.dump(self.__sspl_options, fd, default_flow_style=False)
+            yaml.dump(self.__options, fd, default_flow_style=False, indent=4)

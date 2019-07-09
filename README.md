@@ -1,5 +1,3 @@
-[__TOC__]
-
 # Introduction
 The purpose of this repository is to provide a provisioning framework for EOS project.
 The objective shall be to
