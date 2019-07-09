@@ -1,10 +1,13 @@
 #!/usr/bin/python3
-import argparse
 import json
 import yaml
 
+from argparse import ArgumentParser
 
-class S3ClientCfg:
+from .base_cfg import BaseCfg
+
+
+class S3ClientCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
@@ -123,10 +126,18 @@ class S3ClientCfg:
             # print(json.dumps(self.__options, indent = 4))
 
         else:
-            # print("ERROR: No usable inputs provided.")
+            # print("WARNING: No usable inputs provided.")
             return False
 
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
-            yaml.dump(self.__options, fd, default_flow_style = False)
+            yaml.dump(self.__options, fd, default_flow_style = False, indent=4)
+
+
+    def load(self, yaml_file):
+        pass
+
+
+    def validate(self, yaml_string) -> bool:
+        pass

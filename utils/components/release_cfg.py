@@ -1,11 +1,14 @@
 #!/usr/bin/python3
-import argparse
 import json
 import sys
 import yaml
 
+from argparse import ArgumentParser
 
-class ReleaseCfg:
+from .base_cfg import BaseCfg
+
+
+class ReleaseCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
@@ -15,11 +18,11 @@ class ReleaseCfg:
             raise Exception("Class cannot be initialized without an argparse object")
 
         self.__cfg_path = cfg_path
-        self._setup_args(arg_parser)
-        self._load_defaults()
+        self.__setup_args(arg_parser)
+        self.__load_defaults()
 
 
-    def _setup_args(self, arg_parser):
+    def __setup_args(self, arg_parser):
         # TODO - validate for accidental override
         arg_parser.add_argument(
             '--release',
@@ -38,7 +41,7 @@ class ReleaseCfg:
             help='Display Yaml file format for release configs')
 
 
-    def _load_defaults(self):
+    def __load_defaults(self):
         with open(self.__cfg_path, 'r') as fd:
             self.__options = yaml.load(fd, Loader=yaml.FullLoader)
         # print(json.dumps(self.__options, indent = 4))
@@ -78,10 +81,18 @@ class ReleaseCfg:
             return True
 
         else:
-            # print("ERROR: No usable inputs provided.")
+            # print("WARNING: No usable inputs provided.")
             return False
 
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
             yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
+
+
+    def load(self, yaml_file):
+        pass
+
+
+    def validate(self, yaml_string) -> bool:
+        pass
