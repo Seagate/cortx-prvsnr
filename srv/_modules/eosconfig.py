@@ -1,6 +1,6 @@
 
 # def update(name: str, ref_pillar: str, backup: bool=True, file_type: str='yaml') -> bool:
-def update(name, ref_pillar, type=None, backup=True):
+def update(name, ref_pillar="eoscore", type=None, backup=True):
   """Update component config file.
 
   Args :
@@ -12,7 +12,7 @@ def update(name, ref_pillar, type=None, backup=True):
   print("Name: {0}".format(name))
   print("Pillar ref: {0}".format(ref_pillar))
 
-  pillar_dict = __pillar__.get(ref_pillar)
+  pillar_dict = __salt__['pillar.get'](ref_pillar)
   type(pillar_dict)
   print(pillar_dict)
 
