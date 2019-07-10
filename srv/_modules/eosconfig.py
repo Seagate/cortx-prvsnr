@@ -1,15 +1,23 @@
+import sys
+
 # def update(name: str, ref_pillar: str, backup: bool=True, file_type: str='yaml') -> bool:
-def update(name, ref_pillar, backup=True, type='yaml'):
+def update(name, ref_pillar, type=None, backup=True):
   """Update component config file.
 
   Args :
     name: Destination path of component config file to be updated
     ref_pillar: Reference section from pillar data for a component to be updated
+    type: Type of config file YAML/INI
     backup: Backup config file before modification as bool (Default: True)
-    type: Type of config file YAML/INI (Default: True)
   """
 
-  print (__read_config_file(name))
+  if 'YAML'.__eq__(str(type).upper()):
+    print(__read_yaml(name))
+  elif 'INI'.__eq__(str(type).upper()):
+    print(__read_ini(name))
+  else:
+    print(__read_config_file(name))
+
   return True
 
 
@@ -18,6 +26,7 @@ def __read_config_file(config_filename):
   config_data = None
 
   try:
+    print("Attempting YAML format")
     config_data = __read_yaml(config_filename)
   except Exception as e:
     print(e)
@@ -35,8 +44,10 @@ def __read_yaml(config_filename):
   import yaml
 
   try:
-    with open(config_filename) as fd:
-      return yaml.safe_load(fd)
+    with open(config_filename, 'r') as fd:
+      yaml_to_dict = yaml.safe_load(fd)
+      print(yaml_to_dict)
+      return yaml_to_dict
   except yaml.YAMLError as ex:
     print(ex)
     msg = """
@@ -50,11 +61,17 @@ def __read_yaml(config_filename):
 
 # def __read_ini(config_filename: str) -> dict:
 def __read_ini(config_filename):
-  import configparser
+  if "2." in sys.version:
+    from ConfigParser import ConfigParser, ParsingError
+  else:
+    from configparser import ConfigParser, ParsingError
 
   try:
-    return configparser.ConfigParser().read_file(config_filename)
-  except configparser.ParsingError as ex:
+    cp = ConfigParser()
+    ini_to_dict = cp.read([config_filename])
+    print(ini_to_dict)
+    return ini_to_dict
+  except ParsingError as ex:
     print(ex.message)
     msg = """
     ==================================================
@@ -65,7 +82,6 @@ def __read_ini(config_filename):
     raise Exception(msg)
 
 
-
 # def __read_pillar(ref_component_pillar: str) -> dict:
 def __read_pillar(ref_component_pillar):
   pass
@@ -73,4 +89,4 @@ def __read_pillar(ref_component_pillar):
 
 if __name__ == "__main__":
   import sys
-  update(sys.argv[0], sys.argv[1])
+  update(sys.argv[1], sys.argv[2])
