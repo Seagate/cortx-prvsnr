@@ -67,4 +67,4 @@ def get_bmc_macs():
     return ret
 
 if __name__ == "__main__":
-    print get_bmc_macs()
+    print(get_bmc_macs())

@@ -1,4 +1,3 @@
-import sys
 
 # def update(name: str, ref_pillar: str, backup: bool=True, file_type: str='yaml') -> bool:
 def update(name, ref_pillar, type=None, backup=True):
@@ -10,6 +9,12 @@ def update(name, ref_pillar, type=None, backup=True):
     type: Type of config file YAML/INI
     backup: Backup config file before modification as bool (Default: True)
   """
+  print("Name: {0}".format(name))
+  print("Pillar ref: {0}".format(ref_pillar))
+
+  pillar_dict = __pillar__.get(ref_pillar)
+  type(pillar_dict)
+  print(pillar_dict)
 
   if 'YAML'.__eq__(str(type).upper()):
     print(__read_yaml(name))
@@ -61,13 +66,14 @@ def __read_yaml(config_filename):
 
 # def __read_ini(config_filename: str) -> dict:
 def __read_ini(config_filename):
+  import sys
   if "2." in sys.version:
-    from ConfigParser import ConfigParser, ParsingError
+    from ConfigParser import SafeConfigParser, ParsingError
   else:
-    from configparser import ConfigParser, ParsingError
+    from configparser import SafeConfigParser, ParsingError
 
   try:
-    cp = ConfigParser()
+    cp = SafeConfigParser()
     ini_to_dict = cp.read([config_filename])
     print(ini_to_dict)
     return ini_to_dict
