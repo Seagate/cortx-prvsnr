@@ -12,9 +12,9 @@ def update(name, ref_pillar="eoscore", type=None, backup=True):
   print("Name: {0}".format(name))
   print("Pillar ref: {0}".format(ref_pillar))
 
-  pillar_dict = __salt__['pillar.get'](ref_pillar)
-  type(pillar_dict)
-  print(pillar_dict)
+  # pillar_dict = __salt__['pillar.get'](ref_pillar)
+  # type(pillar_dict)
+  # print(pillar_dict)
 
   if 'YAML'.__eq__(str(type).upper()):
     print(__read_yaml(name))
