@@ -40,12 +40,12 @@ def _read_config_file(config_filename):
 
   try:
     config_data = _read_yaml(config_filename)
-  except Exception as e:
-    # print(e)
+  except Exception as ex:
+    # print(ex)
     try:
       config_data = _read_ini(config_filename)
-    except Exception as e:
-      # print(e)
+    except Exception as ex:
+      # print(ex)
       print("Unexpected file format encountered.")
 
   return config_data
@@ -74,24 +74,27 @@ def _read_yaml(config_filename):
 
 # def _read_ini(config_filename: str) -> dict:
 def _read_ini(config_filename):
-  print("Attempting INI format")
-
   if "2." in sys.version:
     from ConfigParser import ConfigParser, ParsingError, MissingSectionHeaderError
   else:
     from configparser import ConfigParser, ParsingError, MissingSectionHeaderError
 
+  print("Attempting INI format")
+  print("Parsing file: {0}".format(config_filename))
+
   ini_to_dict = None
-  parser = ConfigParser()
+  parser = ConfigParser(allow_no_value=True)
   try:
-    ini_to_dict = parser.read(config_filename)._sections
-    print("INI file read as: {0}".format(ini_to_dict))
+    parser.read(config_filename)
+    ini_to_dict = parser._sections
+    # with open(config_filename, 'r') as fd:
+    #   ini_to_dict = parser.read_string(fd.readlines())._sections
 
   except MissingSectionHeaderError:
     print("ERROR: INI file {0} has no section header".format(config_filename))
     with open(config_filename, 'r') as fd:
-        ini_to_dict = parser.read_string("[top]\n" + fd.read())._section
-        print("INI file read as: {0}".format(ini_to_dict))
+      parser.read_string("[top]\n" + fd.read())
+      ini_to_dict = parser._sections
 
   except ParsingError as ex:
     print(ex.message)
@@ -102,7 +105,10 @@ def _read_ini(config_filename):
     ==================================================
     """
     raise Exception(msg)
+  except Exception as ex:
+    print(ex)
 
+  print("INI file read as: {0}".format(ini_to_dict))
   return ini_to_dict
 
 

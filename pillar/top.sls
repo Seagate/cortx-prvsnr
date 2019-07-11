@@ -3,7 +3,7 @@ base:
     - components.cluster
     - components.halon
     - components.haproxy
-    - components.mero
+    - components.eoscore
     - components.openldap
     - components.rabbitmq
     - components.release
