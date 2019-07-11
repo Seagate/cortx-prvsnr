@@ -1,6 +1,12 @@
+import sys
+# How to test:
+# $ salt-call saltutil.clear_cache
+# $ salt-call saltutil.sync_modules
+# $ salt-call eosconfig.update "/opt/seagate/s3/conf/s3config.yaml" s3server
 
-# def update(name: str, ref_pillar: str, backup: bool=True, file_type: str='yaml') -> bool:
-def update(name, ref_pillar="eoscore", type=None, backup=True):
+
+# def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
+def update(name, ref_pillar, type=None, backup=True):
   """Update component config file.
 
   Args :
@@ -9,44 +15,46 @@ def update(name, ref_pillar="eoscore", type=None, backup=True):
     type: Type of config file YAML/INI
     backup: Backup config file before modification as bool (Default: True)
   """
-  print("Name: {0}".format(name))
-  print("Pillar ref: {0}".format(ref_pillar))
+  # print("Name: {0}".format(name))
+  # print("Pillar ref: {0}".format(ref_pillar))
 
-  # pillar_dict = __salt__['pillar.get'](ref_pillar)
-  # type(pillar_dict)
-  # print(pillar_dict)
+  pillar_data = _read_pillar(ref_pillar)
+  # print("Pillar data: {0}".format(pillar_data))
 
-  if 'YAML'.__eq__(str(type).upper()):
-    print(__read_yaml(name))
-  elif 'INI'.__eq__(str(type).upper()):
-    print(__read_ini(name))
+  config_data = None
+  if type and 'YAML' in type.upper():
+    config_data = _read_yaml(name)
+  elif type and 'INI' in type.upper():
+    config_data = _read_ini(name)
   else:
-    print(__read_config_file(name))
+    config_data = _read_config_file(name)
 
-  return True
+  print("Config data: {0}".format(config_data))
+
+  return True if config_data else False
 
 
-# def __read_config_file(config_filename: str) -> dict:
-def __read_config_file(config_filename):
+# def _read_config_file(config_filename: str) -> dict:
+def _read_config_file(config_filename):
   config_data = None
 
   try:
-    print("Attempting YAML format")
-    config_data = __read_yaml(config_filename)
+    config_data = _read_yaml(config_filename)
   except Exception as e:
-    print(e)
-    print("Attempting INI format")
+    # print(e)
     try:
-      config_data = __read_ini(config_filename)
+      config_data = _read_ini(config_filename)
     except Exception as e:
-      print(e)
+      # print(e)
+      print("Unexpected file format encountered.")
 
   return config_data
 
 
-# def __read_yaml(config_filename: str) -> dict:
-def __read_yaml(config_filename):
+# def _read_yaml(config_filename: str) -> dict:
+def _read_yaml(config_filename):
   import yaml
+  print("Attempting YAML format")
 
   try:
     with open(config_filename, 'r') as fd:
@@ -54,7 +62,7 @@ def __read_yaml(config_filename):
       print(yaml_to_dict)
       return yaml_to_dict
   except yaml.YAMLError as ex:
-    print(ex)
+    # print(ex)
     msg = """
     ==================================================
     ERROR: Provided input config file not in YAML format.
@@ -64,19 +72,27 @@ def __read_yaml(config_filename):
     raise Exception(msg)
 
 
-# def __read_ini(config_filename: str) -> dict:
-def __read_ini(config_filename):
-  import sys
-  if "2." in sys.version:
-    from ConfigParser import SafeConfigParser, ParsingError
-  else:
-    from configparser import SafeConfigParser, ParsingError
+# def _read_ini(config_filename: str) -> dict:
+def _read_ini(config_filename):
+  print("Attempting INI format")
 
+  if "2." in sys.version:
+    from ConfigParser import ConfigParser, ParsingError, MissingSectionHeaderError
+  else:
+    from configparser import ConfigParser, ParsingError, MissingSectionHeaderError
+
+  ini_to_dict = None
+  parser = ConfigParser()
   try:
-    cp = SafeConfigParser()
-    ini_to_dict = cp.read([config_filename])
-    print(ini_to_dict)
-    return ini_to_dict
+    ini_to_dict = parser.read(config_filename)._sections
+    print("INI file read as: {0}".format(ini_to_dict))
+
+  except MissingSectionHeaderError:
+    print("ERROR: INI file {0} has no section header".format(config_filename))
+    with open(config_filename, 'r') as fd:
+        ini_to_dict = parser.read_string("[top]\n" + fd.read())._section
+        print("INI file read as: {0}".format(ini_to_dict))
+
   except ParsingError as ex:
     print(ex.message)
     msg = """
@@ -87,12 +103,9 @@ def __read_ini(config_filename):
     """
     raise Exception(msg)
 
-
-# def __read_pillar(ref_component_pillar: str) -> dict:
-def __read_pillar(ref_component_pillar):
-  pass
+  return ini_to_dict
 
 
-if __name__ == "__main__":
-  import sys
-  update(sys.argv[1], sys.argv[2])
+# def _read_pillar(ref_component_pillar: str) -> dict:
+def _read_pillar(ref_component_pillar):
+  return __pillar__[ref_component_pillar]
