@@ -61,6 +61,10 @@ Remove directory install sspl:
   file.absent:
     - name: /opt/seagate/sspl
 
+Remove rabbitmq log dir:
+  file.absent:
+    - name: /var/log/rabbitmq
+
 Remove user sspl-ll:
   user.absent:
     - name: sspl-ll
@@ -82,4 +86,4 @@ Remove user rabbitmq:
 # Remove test fw lettuce:
 #   pip.removed:
 #     - name: lettuce
-#     - bin_env: '/usr/bin/pip3'
+#     - bin_env: '/usr/bin/pip'
