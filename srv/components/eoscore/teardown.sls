@@ -3,20 +3,20 @@
 # Mostly we would have uninstalled halond already
 # Without halond service, this wouldn't make sense
 {% if salt['service.status']('halond.service') %}
-Cleanup mero:
+Cleanup eoscore:
   service.running:
     - name: mero-cleanup
 {% endif %}
 
-Remove mero package:
+Remove eoscore package:
   pkg.purged:
     - pkgs:
       - mero
       # - mero-debuginfo
 
-Delete Mero yum repo:
+Delete eoscore yum repo:
   pkgrepo.absent:
-    - name: {{ defaults.mero.repo.id }}
+    - name: {{ defaults.eoscore.repo.id }}
 
 Remove Lustre:
   pkg.purged:
