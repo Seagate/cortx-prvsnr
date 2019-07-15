@@ -11,6 +11,13 @@ Update sspl-ll conf file:
     - repl: setup=vm
     - append_if_not_found: True
 
+#Update sspl config file with pillar data:
+#  module.run:
+#    - eosconfig.update
+#      - name: /etc/sspl_ll.conf
+#      - ref_pillar: sspl
+#      - type: YAML
+#      - backup: True
 {% else %}
 
 # START: Prepare for SSPL configuration for HW SSU only

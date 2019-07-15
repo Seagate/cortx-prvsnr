@@ -1,10 +1,11 @@
 # This file is for reference only and should not be used.
 
 import sys
+import yaml
 
 # How to test:
 # $ salt-call saltutil.clear_cache
-# $ salt-call saltutil.sync_modules && salt-call eos.conf_update "/opt/seagate/s3/conf/s3config.yaml" s3server
+# $ salt-call saltutil.sync_modules && salt-call eos.conf_update "/opt/seagate/s3/conf/s3config.yaml" s3_pillar_data
 
 
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
@@ -21,8 +22,7 @@ def conf_update(name, ref_pillar, type=None, backup=True):
   # print("Pillar ref: {0}".format(ref_pillar))
 
   pillar_data = _read_pillar(ref_pillar)
-  # print("Pillar data: {0}".format(pillar_data))
-
+  print("Pillar data dict: {0}".format(pillar_data))
   config_data = None
   if type and 'YAML' in type.upper():
     config_data = _read_yaml(name)
@@ -30,8 +30,9 @@ def conf_update(name, ref_pillar, type=None, backup=True):
     config_data = _read_ini(name)
   else:
     config_data = _read_config_file(name)
-
-  print("Config data: {0}".format(config_data))
+  print("Config file dict: {0}".format(config_data))
+  with open(name, 'w') as fd:
+    yaml.dump(pillar_data, fd, default_flow_style=False, width=1, indent=4)
 
   return True if config_data else False
 
@@ -55,13 +56,13 @@ def _read_config_file(config_filename):
 
 # def _read_yaml(config_filename: str) -> dict:
 def _read_yaml(config_filename):
-  import yaml
   print("Attempting YAML format")
+  import yaml
 
   try:
     with open(config_filename, 'r') as fd:
       yaml_to_dict = yaml.safe_load(fd)
-      print(yaml_to_dict)
+      #print(yaml_to_dict)
       return yaml_to_dict
   except yaml.YAMLError as ex:
     # print(ex)
