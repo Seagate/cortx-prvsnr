@@ -1,3 +1,4 @@
+import os.path
 import re
 import sys
 
@@ -14,7 +15,7 @@ def _read_pillar(ref_component_pillar):
 
 
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
-def conf_update(name, ref_pillar, type=None, backup=True):
+def conf_update(name='/etc/sysconfig/mero', ref_pillar='eoscore', type=None, backup=True):
   """Update component config file.
 
   Args :
@@ -26,6 +27,10 @@ def conf_update(name, ref_pillar, type=None, backup=True):
 
   name =  name if name else '/etc/sysconfig/mero'
   ref_pillar = ref_pillar if ref_pillar else 'eoscore'
+
+  if not os.path.exists(name):
+    print("ERROR: EOSCore config file {0} doesn't exist.".format(name))
+    return False
 
   pillar_data = _read_pillar(ref_pillar)
   # print("Pillar data: {0}".format(pillar_data))

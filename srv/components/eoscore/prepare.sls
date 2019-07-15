@@ -8,7 +8,7 @@ Add Lustre yum repo:
     - baseurl: {{ defaults.lustre.repo.url }}
     - gpgcheck: 0
 
-Add eoscore yum repo:
+Add EOSCore yum repo:
   pkgrepo.managed:
     - name: {{ defaults.eoscore.repo.id }}
     - enabled: True

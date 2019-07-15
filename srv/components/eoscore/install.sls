@@ -5,7 +5,7 @@ Install Lustre:
       - lustre-client
       # - lustre-client-devel
 
-Install Mero:
+Install EOSCore:
   pkg.installed:
     - pkgs:
       - mero

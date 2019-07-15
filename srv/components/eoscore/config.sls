@@ -9,7 +9,7 @@ Update lnet config file:
     - group: root
 
 
-Update Mero config:
+Update EOSCore config:
   module.run:
     - saltutil.clear_cache: []
     - saltutil.sync_modules: []
