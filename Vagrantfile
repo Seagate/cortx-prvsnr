@@ -175,7 +175,7 @@ Vagrant.configure("2") do |config|
 
           # Generic configs
           salt.install_type = 'stable'
-          salt.run_highstate = true
+          salt.run_highstate = false
           salt.colorize = true
           salt.log_level = 'warning'
         end     # End of Salt Provisioning
