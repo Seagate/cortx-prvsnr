@@ -1,5 +1,6 @@
 {% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
 s3servers: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
+clovis_apps: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
 confds: [ {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }} ]
 ssus:
   - host: {{ salt['pillar.get']('facts:{0}:fqdn'.format(node), 'localhost') }}
