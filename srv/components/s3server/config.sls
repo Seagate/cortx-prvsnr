@@ -1,11 +1,10 @@
-# modify_s3config_file:
-#   file.replace:
-#     - name: /opt/seagate/s3/conf/s3config.yaml
-#     - pattern: "S3_ENABLE_STATS:.+false"
-#     - repl: "S3_ENABLE_STATS: true"
-#     - require:
-#       - install_s3server
-# S3 installation end
+Update s3 config file with pillar data:
+  module.run:
+    - eos.conf_update:
+      - name: /opt/seagate/s3/conf/s3config.yaml
+      - ref_pillar: s3_pillar_data
+      - type: YAML
+      - backup: True
 
 Import s3openldap cert to s3authserver.jks:
   cmd.run:

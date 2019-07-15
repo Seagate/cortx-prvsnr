@@ -13,8 +13,6 @@ Setup haproxy config:
     - makedirs: True
     - keep_source: False
     - template: jinja
-    - watch_in:
-      - service: Restart HAProxy
 
 Setup haproxy 503 error code to http file:
   file.managed:
