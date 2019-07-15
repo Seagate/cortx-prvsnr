@@ -8,10 +8,10 @@ Add Lustre yum repo:
     - baseurl: {{ defaults.lustre.repo.url }}
     - gpgcheck: 0
 
-Add Mero yum repo:
+Add EOSCore yum repo:
   pkgrepo.managed:
-    - name: {{ defaults.mero.repo.id }}
+    - name: {{ defaults.eoscore.repo.id }}
     - enabled: True
-    - humanname: mero
-    - baseurl: {{ defaults.mero.repo.url }}
+    - humanname: eoscore
+    - baseurl: {{ defaults.eoscore.repo.url }}
     - gpgcheck: 0

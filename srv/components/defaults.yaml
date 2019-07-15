@@ -39,9 +39,9 @@ lustre:
     id: "lustre"
     url: {{ eos_repo_url }}/{{ release_tag }}/lustre/repo
 
-mero:
+eoscore:
   repo:
-    id: "mero"
+    id: "eoscore"
     url: {{ eos_repo_url }}/{{ release_tag }}/mero/repo
 
 halon:

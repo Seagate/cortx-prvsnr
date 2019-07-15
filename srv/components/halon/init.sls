@@ -1,5 +1,5 @@
 include:
-  - components.mero
+  - components.eoscore
   - components.halon.prepare
   - components.halon.install
   - components.halon.config
