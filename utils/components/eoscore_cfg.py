@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json
+import os.path
 import yaml
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 from .base_cfg import BaseCfg
 
@@ -12,17 +13,32 @@ class EOSCoreCfg(BaseCfg):
     __cfg_path = ""
 
 
-    def __init__(self, arg_parser, cfg_path):
+    def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
+        if cfg_path:
+            self.__cfg_path = cfg_path
+        else:
+            self.__cfg_path = os.path.join(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    "../..",
+                    "pillar"
+                ),
+                "components",
+                "eoscore.sls"
+            )
+
+        if os.path.exists(self.__cfg_path):
+            self.__load_defaults()
+
+        if arg_parser:
+            self.__setup_args(arg_parser)
+
+
+    def __setup_args(self, arg_parser=None) -> bool:
+
         if not arg_parser:
-            raise Exception("Class cannot be initialized without an argparse object")
+            raise Exception("__setup_args() cannot be called without an argparse object")
 
-        self.__cfg_path = cfg_path
-        self.__setup_args(arg_parser)
-        self.__load_defaults()
-
-
-    def __setup_args(self, arg_parser) -> bool:
-        # TODO - validate for accidental override
         arg_parser.add_argument(
             '--eoscore-file',
             dest = 'eoscore_file',
@@ -37,28 +53,18 @@ class EOSCoreCfg(BaseCfg):
 
 
     def __load_defaults(self):
+
         with open(self.__cfg_path, 'r') as fd:
             self.__options = yaml.load(fd, Loader=yaml.FullLoader)
             # print(json.dumps(self._release_options, indent = 4))
             # TODO validations for configs.
 
 
-    def process_inputs(self, arg_parser: ArgumentParser) -> bool:
-        program_args = arg_parser.parse_args()
+    def process_inputs(self, program_args: Namespace) -> bool:
 
-        if program_args.show_eoscore_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
-            return False
+        if program_args.interactive:
+            input("\nAccepting interactive inputs for pillar/eoscore.sls. Press any key to continue...")
 
-        elif program_args.eoscore_file:
-            # Load eoscore file and merge options.
-            new_options = {}
-            with open(program_args.eoscore_file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
-                self.__options.update(new_options)
-            return True
-
-        elif program_args.interactive:
             input_msg = ("Enter Maximum RPC message size to be used for eoscore daemon: ({0}):".format(
                     self.__options["eoscore"]["MERO_M0D_MAX_RPC_MSG_SIZE"]
                 )
@@ -92,6 +98,21 @@ class EOSCoreCfg(BaseCfg):
             # print(json.dumps(self._options, indent = 4))
             return True
 
+        elif program_args.show_eoscore_file_format:
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            return False
+
+        elif program_args.eoscore_file:
+            if not os.path.exists(program_args.eoscore_file):
+                raise FileNotFoundError("Error: No file exists at location sepecified by argument '--eoscore-file'.")
+
+            # Load eoscore file and merge options.
+            new_options = {}
+            with open(program_args.eoscore_file, 'r') as fd:
+                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+                self.__options.update(new_options)
+            return True
+
         else:
             # print("WARNING: No usable inputs provided.")
             return False
@@ -102,9 +123,5 @@ class EOSCoreCfg(BaseCfg):
             yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
 
 
-    def load(self, yaml_file):
-        pass
-
-
-    def validate(self, yaml_string) -> bool:
+    def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass
