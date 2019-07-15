@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 import json
+import os.path
 import yaml
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 from .base_cfg import BaseCfg
 
@@ -12,17 +13,33 @@ class S3ClientCfg(BaseCfg):
     __cfg_path = ""
 
 
-    def __init__(self, arg_parser, cfg_path):
+    def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
+
+        if cfg_path:
+            self.__cfg_path = cfg_path
+        else:
+            self.__cfg_path = os.path.join(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    "../..",
+                    "pillar"
+                ),
+                "components",
+                "s3client.sls"
+            )
+
+        if os.path.exists(self.__cfg_path):
+            self.__load_defaults()
+
+        if arg_parser:
+            self.__setup_args(arg_parser)
+
+
+    def __setup_args(self, arg_parser=None):
+
         if not arg_parser:
-            raise Exception("Class cannot be initialized without an argparse object")
+            raise Exception("__setup_args() cannot be called without an argparse object")
 
-        self.__cfg_path = cfg_path
-        self.__setup_args(arg_parser)
-        self.__load_defaults()
-
-
-    def __setup_args(self, arg_parser):
-        # TODO - validate for accidental override
         arg_parser.add_argument(
             '--s3client-file',
             dest = 's3client_file',
@@ -39,27 +56,18 @@ class S3ClientCfg(BaseCfg):
 
 
     def __load_defaults(self):
+
         with open(self.__cfg_path, 'r') as fd:
             self.__options = yaml.load(fd, Loader=yaml.FullLoader)
         # print(json.dumps(self.__options, indent = 4))
         # TODO validations for configs.
 
 
-    def process_inputs(self, arg_parser):
-        program_args = arg_parser.parse_args()
+    def process_inputs(self, program_args: Namespace) -> bool:
 
-        if program_args.show_s3client_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
-            return False
+        if program_args.interactive:
+            input("\nAccepting interactive inputs for pillar/s3client.sls. Press any key to continue...")
 
-        elif program_args.s3client_file:
-            # Load s3server file and merge options.
-            new_options = {}
-            with open(program_args.file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
-                self.__options.update(new_options)
-
-        elif program_args.interactive:
             input_msg = ("S3Server FQDN ({0}): ".format(
                     self.__options["s3client"]["s3server"]["ip"]
                 )
@@ -125,6 +133,20 @@ class S3ClientCfg(BaseCfg):
             )
             # print(json.dumps(self.__options, indent = 4))
 
+        elif program_args.show_s3client_file_format:
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            return False
+
+        elif program_args.s3client_file:
+            if not os.path.exists(program_args.s3client_file):
+                raise FileNotFoundError("Error: No file exists at location sepecified by argument '--s3client-file'.")
+
+            # Load s3server file and merge options.
+            new_options = {}
+            with open(program_args.file, 'r') as fd:
+                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+                self.__options.update(new_options)
+
         else:
             # print("WARNING: No usable inputs provided.")
             return False
@@ -135,9 +157,5 @@ class S3ClientCfg(BaseCfg):
             yaml.dump(self.__options, fd, default_flow_style = False, indent=4)
 
 
-    def load(self, yaml_file):
-        pass
-
-
-    def validate(self, yaml_string) -> bool:
+    def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

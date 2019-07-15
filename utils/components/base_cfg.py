@@ -3,13 +3,13 @@ import json
 import yaml
 
 from abc import ABCMeta, abstractmethod
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 
 class BaseCfg(metaclass=ABCMeta):
 
     @abstractmethod
-    def process_inputs(self, arg_parser: ArgumentParser) -> bool:
+    def process_inputs(self, program_args: Namespace) -> bool:
         """Process CLI inputs.
 
         Args :
@@ -19,7 +19,7 @@ class BaseCfg(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def save(self, pillar_dict: dict, dest_file: dict) -> None:
+    def save(self) -> None:
         """ Save a Python dict into .sls file.
 
         Args :

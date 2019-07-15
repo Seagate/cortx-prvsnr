@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json
+import os.path
 import yaml
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 from .base_cfg import BaseCfg
 
@@ -12,17 +13,41 @@ class ClusterCfg(BaseCfg):
     __cfg_path = ""
 
 
-    def __init__(self, arg_parser, cfg_path):
+    def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
+
+        if cfg_path:
+            self.__cfg_path = cfg_path
+        else:
+            self.__cfg_path = os.path.join(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    "../..",
+                    "pillar"
+                ),
+                "components",
+                "cluster.sls"
+            )
+
+        if os.path.exists(self.__cfg_path):
+            self.__load_defaults()
+
+        if arg_parser:
+            self.__setup_args(arg_parser)
+
+
+    def __load_defaults(self):
+
+        with open(self.__cfg_path, 'r') as fd:
+            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
+        # print(json.dumps(self._mero_options, indent = 4))
+        # TODO validations for configs.
+
+
+    def __setup_args(self, arg_parser=None):
+
         if not arg_parser:
-            raise Exception("Class cannot be initialized without an argparse object")
+            raise Exception("__setup_args() cannot be called without an argparse object")
 
-        self.__cfg_path = cfg_path
-        self.__setup_args(arg_parser)
-        self.__load_defaults()
-
-
-    def __setup_args(self, arg_parser: ArgumentParser):
-        # TODO - validate for accidental override
         arg_parser.add_argument(
             '--cluster-file',
             dest = 'cluster_file',
@@ -38,29 +63,11 @@ class ClusterCfg(BaseCfg):
         )
 
 
-    def __load_defaults(self):
-        with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
-        # print(json.dumps(self._mero_options, indent = 4))
-        # TODO validations for configs.
+    def process_inputs(self, program_args: Namespace) -> bool:
 
+        if program_args.interactive:
+            input("\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
 
-    def process_inputs(self, arg_parser) -> bool:
-        program_args = arg_parser.parse_args()
-
-        if program_args.show_cluster_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
-            return False
-
-        elif program_args.cluster_file:
-            # Load cluster file and merge options.
-            new_options = {}
-            with open(program_args.cluster_file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
-            self.__options.update(new_options)
-            return True
-
-        elif program_args.interactive:
             input_msg = ("Enter fqdn for ees node 1 ({0}): ".format(
                     self.__options["facts"]["node_1"]["fqdn"]
                 )
@@ -125,6 +132,21 @@ class ClusterCfg(BaseCfg):
             # print(json.dumps(self.__options, indent = 4))
             return True
 
+        elif program_args.show_cluster_file_format:
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            return False
+
+        elif program_args.cluster_file:
+            if not os.path.exists(program_args.cluster_file):
+                raise FileNotFoundError("Error: No file exists at location sepecified by argument '--cluster-file'.")
+
+            # Load cluster file and merge options.
+            new_options = {}
+            with open(program_args.cluster_file, 'r') as fd:
+                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+            self.__options.update(new_options)
+            return True
+
         else:
             # print("WARNING: No usable inputs provided.")
             return False
@@ -135,9 +157,5 @@ class ClusterCfg(BaseCfg):
             yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
 
 
-    def load(self, yaml_file):
-        pass
-
-
-    def validate(self, yaml_string) -> bool:
+    def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass
