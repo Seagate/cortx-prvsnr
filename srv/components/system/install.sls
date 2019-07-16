@@ -9,7 +9,7 @@ Install_base_packages:
       - jq
       - python36
     # - tmux
-    - reload_modules: true
+    - reload_modules: True
 
 # Install python-pip packages (version 2 and 3)
 # version 2 is needed for salt-minion's pip_state
@@ -18,7 +18,16 @@ python-pip:
     - pkgs:
       - python2-pip
       - python36-pip
-    - reload_modules: true
+    - reload_modules: True
+
+pip3 upgrade:
+  pip.installed:
+    - name: pip
+    - bin_env: /usr/local/bin/pip
+    - upgrade: True
+    - require:
+      - pkg: python-pip
+
 
 Install pyyaml:
   # Install using pip
@@ -27,7 +36,8 @@ Install pyyaml:
     - name: pyyaml
     # Absolute path to a virtual environment directory or absolute path to a pip executable
     # We want to install python3 paramiko so we use pip3 here
-    - bin_env: '/usr/bin/pip3'
+    - bin_env: '/usr/local/bin/pip3'
+    - upgrade: True
     # Require python-pip state to be run before this one
     - require:
       - pkg: python-pip
