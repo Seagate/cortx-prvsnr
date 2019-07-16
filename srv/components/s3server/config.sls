@@ -1,10 +1,11 @@
-Update s3 config file with pillar data:
-  module.run:
-    - eos.conf_update:
-      - name: /opt/seagate/s3/conf/s3config.yaml
-      - ref_pillar: s3_pillar_data
-      - type: YAML
-      - backup: True
+#TODO: Commenting due to a known issue.
+#Update s3 config file with pillar data:
+#  module.run:
+#    - eos.conf_update:
+#      - name: /opt/seagate/s3/conf/s3config.yaml
+#      - ref_pillar: s3_pillar_data
+#      - type: YAML
+#      - backup: True
 
 Import s3openldap cert to s3authserver.jks:
   cmd.run:
