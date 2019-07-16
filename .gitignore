@@ -3,3 +3,7 @@
 .vdisks
 *.log
 *__pycache__*
+*.pyc
+components/_modules/*.pyc
+utils/*.pyc
+utils/components/*.pyc
