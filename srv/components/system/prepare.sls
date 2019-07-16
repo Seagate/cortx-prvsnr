@@ -42,10 +42,10 @@ clean_yum_cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
 
-Sync pillar data:
+Sync data:
   module.run:
-    - saltutil.sync_pillar: []
-
-Update pillar data:
-  module.run:
+    - saltutil.clear_cache: []
+    - saltutil.sync_all: []
+    - saltutil.refresh_grains: []
+    - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []

@@ -11,8 +11,6 @@ Update lnet config file:
 
 Update EOSCore config:
   module.run:
-    - saltutil.clear_cache: []
-    - saltutil.sync_modules: []
     - eoscore.conf_update:
       - name: /etc/sysconfig/mero
       - ref_pillar: eoscore
