@@ -1,4 +1,4 @@
-s3_pillar_data:
+s3server:
    S3Config_Sections: [S3_SERVER_CONFIG, S3_AUTH_CONFIG, S3_CLOVIS_CONFIG, S3_THIRDPARTY_CONFIG]
    S3_SERVER_CONFIG:                                     # Section for S3 Server
       S3_DAEMON_WORKING_DIR: "/var/mero/"                # S3 Daemon will run in the specified directory

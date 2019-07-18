@@ -91,7 +91,7 @@ class SSPLCfg(BaseCfg):
             return True
 
         else:
-            # print("WARNING: No usable inputs provided.")
+            print("WARNING: No usable inputs provided.")
             return False
 
 

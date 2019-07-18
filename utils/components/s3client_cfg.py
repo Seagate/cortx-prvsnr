@@ -148,7 +148,7 @@ class S3ClientCfg(BaseCfg):
                 self.__options.update(new_options)
 
         else:
-            # print("WARNING: No usable inputs provided.")
+            print("WARNING: No usable inputs provided.")
             return False
 
 
