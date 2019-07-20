@@ -52,6 +52,10 @@ remove_eth_cfg_files:
     - name: rm -rf /etc/sysconfig/network-scripts/ifcfg-eth*
     - onlyif: test -f /etc/sysconfig/network-scripts/ifcfg-eth0
 
+rm_ifcfg_lan0:
+  file.absent:
+    - name: /etc/sysconfig/network-scripts/ifcfg-lan0
+
 system:
   network.system:
     - enabled: True
@@ -60,17 +64,19 @@ system:
     - gateway: {{ pillar['facts'][node]['gateway_ip'] }}
     - require_reboot: True
 
-# set_network_file:
-#   file.managed:
-#     - name: /etc/sysconfig/network
-#     - source: salt://components/system/files/etc/sysconfig/network
-#     - dir_mode: 0644
-#     - file_mode: 0644
-#     - clean: False
-#     - keep_symlinks: True
-#     - include_empty: True
-#     - watch_in:
-#       - service: service_network
+set_network_file:
+  file.managed:
+    - name: /etc/sysconfig/network
+    - contents: |
+        - NETWORKING=yes
+        - NETWORKING_IPV6=no
+    - dir_mode: 0644
+    - file_mode: 0644
+    - clean: False
+    - keep_symlinks: True
+    - include_empty: True
+    - watch_in:
+      - service: service_network
 
 # set_network_script_files:
 #   file.recurse:
@@ -82,6 +88,12 @@ system:
 #     - clean: False
 #     - keep_symlinks: True
 #     - include_empty: True
+
+# set_mlx4_conf:
+#   file.managed:
+#     - name: {{mnt_point1}}/etc/rdma/mlx4.conf
+#     - contents:
+#       - '0000:0c:00.0 eth eth'
 
 {% set network_ifs = salt['grains.get']('ip_interfaces' ,'') %}
 {% for nw_id,nw_if in network_ifs.items() %}
@@ -98,10 +110,6 @@ system:
     - MASTER: data0
 {% endif %}
 {% endfor %}
-
-rm_ifcfg_lan0:
-  file.absent:
-    - name: /etc/sysconfig/network-scripts/ifcfg-lan0
 
 set_bonding_config:
   file.managed:
@@ -122,7 +130,7 @@ Setup mgmt0 bonding:
       - mode: 802.3ad
       - miimon: 100
       - lacp_rate: fast
-      - xmit_hash_policy: layer2+3
+      - xmit_hash_policy: layer3+4
 
 Setup data0 bonding:
   network.managed:
