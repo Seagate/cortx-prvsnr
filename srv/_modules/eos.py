@@ -21,21 +21,20 @@ def conf_update(name, ref_pillar, type=None, backup=True):
   # print("Name: {0}".format(name))
   # print("Pillar ref: {0}".format(ref_pillar))
 
-  pillar_data = _read_pillar(ref_pillar)
-  print("Pillar data dict: {0}".format(pillar_data))
-  config_data = None
+  pillar_dict = _read_pillar(ref_pillar)
+  #print("Pillar dict: {0}".format(pillar_dict))
+  config_dict = None
   if type and 'YAML' in type.upper():
-    config_data = _read_yaml(name)
+    config_dict = _read_yaml(name)
   elif type and 'INI' in type.upper():
-    config_data = _read_ini(name)
+    config_dict = _read_ini(name)
   else:
-    config_data = _read_config_file(name)
-  print("Config file dict: {0}".format(config_data))
+    config_dict = _read_config_file(name)
+  #print("Config file dict: {0}".format(config_dict))
   with open(name, 'w') as fd:
-    yaml.dump(pillar_data, fd, default_flow_style=False, width=1, indent=4)
+    yaml.dump(pillar_dict, fd, default_flow_style=False, width=1, indent=4)
 
-  return True if config_data else False
-
+  return True if config_dict else False
 
 # def _read_config_file(config_filename: str) -> dict:
 def _read_config_file(config_filename):
@@ -53,10 +52,8 @@ def _read_config_file(config_filename):
 
   return config_data
 
-
 # def _read_yaml(config_filename: str) -> dict:
 def _read_yaml(config_filename):
-  print("Attempting YAML format")
   import yaml
 
   try:
@@ -73,7 +70,6 @@ def _read_yaml(config_filename):
     ==================================================
     """
     raise Exception(msg)
-
 
 # def _read_ini(config_filename: str) -> dict:
 def _read_ini(config_filename):
@@ -114,7 +110,10 @@ def _read_ini(config_filename):
   print("INI file read as: {0}".format(ini_to_dict))
   return ini_to_dict
 
-
 # def _read_pillar(ref_component_pillar: str) -> dict:
 def _read_pillar(ref_component_pillar):
-  return __pillar__[ref_component_pillar]
+  from collections import OrderedDict
+  from json import loads, dumps
+  pillar_data = __pillar__[ref_component_pillar]
+  pillar_dict = loads(dumps(dict(pillar_data)))
+  return pillar_dict
