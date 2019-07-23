@@ -143,9 +143,10 @@ class S3ClientCfg(BaseCfg):
 
             # Load s3server file and merge options.
             new_options = {}
-            with open(program_args.file, 'r') as fd:
+            with open(program_args.s3client_file, 'r') as fd:
                 new_options = yaml.load(fd, Loader=yaml.FullLoader)
                 self.__options.update(new_options)
+            return True
 
         else:
             print("WARNING: No usable inputs provided.")
