@@ -149,7 +149,7 @@ class S3ClientCfg(BaseCfg):
             return True
 
         else:
-            print("WARNING: No usable inputs provided.")
+            print("Error: No usable inputs provided.")
             return False
 
 
