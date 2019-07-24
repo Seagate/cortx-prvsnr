@@ -60,16 +60,7 @@ class S3ServerCfg(BaseCfg):
 
 
     def process_inputs(self, program_args: Namespace) -> bool:
-        if program_args.show_s3server_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
-            return False
-        elif program_args.s3server_file:
-            # Load s3server file and merge options.
-            new_options = {}
-            with open(program_args.s3server_file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
-            self.__options.update(new_options)
-            return True
+
         if program_args.interactive:
             input("\nAccepting interactive inputs for pillar/s3server.sls. Press any key to continue...")
             input_msg = (
@@ -429,8 +420,18 @@ class S3ServerCfg(BaseCfg):
                 )
             # print(json.dumps(self.__options, indent = 4))
             return True
+        if program_args.show_s3server_file_format:
+            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            return False
+        elif program_args.s3server_file:
+            # Load s3server file and merge options.
+            new_options = {}
+            with open(program_args.s3server_file, 'r') as fd:
+                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+            self.__options.update(new_options)
+            return True
         else:
-            print("WARNING: No usable inputs provided.")
+            print("Error: No usable inputs provided.")
             return False
 
 
