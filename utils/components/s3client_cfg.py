@@ -69,7 +69,7 @@ class S3ClientCfg(BaseCfg):
             input("\nAccepting interactive inputs for pillar/s3client.sls. Press any key to continue...")
 
             input_msg = ("S3Server FQDN ({0}): ".format(
-                    self.__options["s3client"]["s3server"]["ip"]
+                    self.__options["s3client"]["s3server"]["fqdn"]
                 )
             )
             self.__options["s3client"]["s3server"]["fqdn"] = (
@@ -132,6 +132,7 @@ class S3ClientCfg(BaseCfg):
                 self.__options["s3client"]["s3endpoint"]
             )
             # print(json.dumps(self.__options, indent = 4))
+            return True
 
         elif program_args.show_s3client_file_format:
             print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
