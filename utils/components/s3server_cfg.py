@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import json
+#import json
 import os.path
-import yaml
 
 from argparse import ArgumentParser, Namespace
-
+import yaml
 from .base_cfg import BaseCfg
 
 
@@ -12,8 +11,7 @@ class S3ServerCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-
-    def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
+    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
         if cfg_path:
             self.__cfg_path = cfg_path
         else:
@@ -35,34 +33,35 @@ class S3ServerCfg(BaseCfg):
     def __setup_args(self, arg_parser=None):
 
         if not arg_parser:
-            raise Exception("__setup_args() cannot be called without an argparse object")
+            raise Exception(
+                "__setup_args() cannot be called without an argparse object")
 
         arg_parser.add_argument(
             '--s3server-file',
-            dest = 's3server_file',
+            dest='s3server_file',
             action="store",
             help='Yaml file with s3server configs'
         )
 
         arg_parser.add_argument(
             '--show-s3server-file-format',
-            dest = 'show_s3server_file_format',
+            dest='show_s3server_file_format',
             action="store_true",
             help='Display Yaml file format for s3server configs'
         )
 
-
     def __load_defaults(self):
-        with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
+        with open(self.__cfg_path, 'r') as stream:
+            self.__options = yaml.load(stream, Loader=yaml.FullLoader)
         # print(json.dumps(self.__options, indent = 4))
         # TODO validations for configs.
-
 
     def process_inputs(self, program_args: Namespace) -> bool:
 
         if program_args.interactive:
-            input("\nAccepting interactive inputs for pillar/s3server.sls. Press any key to continue...")
+            input(
+                "\nAccepting interactive inputs for pillar/s3server.sls. \
+		    Press any key to continue...")
             input_msg = (
                 "Reuse the port for s3server? (true/false)({0}): ".format(
                     self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_REUSEPORT"]
@@ -98,7 +97,7 @@ class S3ServerCfg(BaseCfg):
 
             input_msg = ("Enter bind port for s3server ({0}): ".format(
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_BIND_PORT"]
-                )
+            )
             )
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_BIND_PORT"] = (
                 input(input_msg)
@@ -248,7 +247,8 @@ class S3ServerCfg(BaseCfg):
                 )
 
                 input_msg = (
-                    "Provide the path of the yaml input file for White list of Stats metrics to be published to the backend ({0}): ".format(
+                    "Provide the path of the yaml input file for White list of Stats metrics \
+			to be published to the backend ({0}): ".format(
                         self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATS_WHITELIST_FILENAME"]
                     )
                 )
@@ -263,7 +263,7 @@ class S3ServerCfg(BaseCfg):
             )
             if config_clovis:
                 print ("Clovis configuration Section, stick to defaults if "
-                    "you are not sure about the parameters")
+                       "you are not sure about the parameters")
                 input_msg = (
                     "Enter maximum units per read/write request to clovis ({0}): ".format(
                         self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_UNITS_PER_REQUEST"]
@@ -310,7 +310,7 @@ class S3ServerCfg(BaseCfg):
                 )
 
                 print ("Clovis memory pool configuration Section, stick to "
-                    "defaults if you are not sure about the parameters")
+                       "defaults if you are not sure about the parameters")
                 input_msg = (
                     "Enter array of unit sizes to create Clovis memory pools ({0}): ".format(
                         self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_UNIT_SIZES_FOR_MEMORY_POOL"]
@@ -346,7 +346,8 @@ class S3ServerCfg(BaseCfg):
                 )
 
                 input_msg = (
-                    "Enter the maximum memory threshold for the pool in bytes (multiple of S3_CLOVIS_UNIT_SIZE) ({0}): ".format(
+                    "Enter the maximum memory threshold for the pool in bytes \
+			(multiple of S3_CLOVIS_UNIT_SIZE) ({0}): ".format(
                         self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_MAX_THRESHOLD"]
                     )
                 )
@@ -361,9 +362,11 @@ class S3ServerCfg(BaseCfg):
             )
 
             if config_libevent:
-                print ("Libevent configuration Section, stick to defaults if you are not sure about the parameters")
+                print (
+                    "Libevent configuration Section, stick to defaults if you are not sure about the parameters")
                 input_msg = (
-                    "Enter maximum read size for a single read operation in bytes (user should not try to read more than this value) ({0}): ".format(
+                    "Enter maximum read size for a single read operation in bytes \
+			(user should not try to read more than this value) ({0}): ".format(
                         self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_MAX_READ_SIZE"]
                     )
                 )
@@ -386,8 +389,9 @@ class S3ServerCfg(BaseCfg):
                     self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_BUFFER_SIZE"]
                 )
 
-                input_msg = ("Enter the initial pool size in bytes (should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
-                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"]
+                input_msg = ("Enter the initial pool size in bytes \
+			(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
+                    self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"]
                     )
                 )
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"] = (
@@ -409,10 +413,10 @@ class S3ServerCfg(BaseCfg):
                 )
 
                 input_msg = ("Enter the maximum memory threshold for the pool in bytes "
-                    "(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
-                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"]
-                    )
-                )
+                             "(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
+                                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"]
+                                 )
+                             )
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"] = (
                     input(input_msg)
                     or
@@ -421,24 +425,23 @@ class S3ServerCfg(BaseCfg):
             # print(json.dumps(self.__options, indent = 4))
             return True
         if program_args.show_s3server_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            print(yaml.dump(self.__options,
+                            default_flow_style=False, width=1, indent=4))
             return False
         elif program_args.s3server_file:
             # Load s3server file and merge options.
             new_options = {}
-            with open(program_args.s3server_file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+            with open(program_args.s3server_file, 'r') as stream:
+                new_options = yaml.load(stream, Loader=yaml.FullLoader)
             self.__options.update(new_options)
             return True
         else:
             print("Error: No usable inputs provided.")
             return False
 
-
     def save(self):
-        with open(self.__cfg_path, 'w') as fd:
-            yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
-
+        with open(self.__cfg_path, 'w') as stream:
+            yaml.dump(self.__options, stream, default_flow_style=False, indent=4)
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

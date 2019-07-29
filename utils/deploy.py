@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import argparse
-import os
+#import os
 import sys
-import yaml
+#import yaml
 
-from components.base_cfg import BaseCfg
+#from components.base_cfg import BaseCfg
 from components.cluster_cfg import ClusterCfg
 from components.eoscore_cfg import EOSCoreCfg
 from components.haproxy_cfg import HAProxyCfg
@@ -90,20 +90,21 @@ def execute():
     parser = arg_parser.parse_args()
     # print("Parser_args: {0}".format(parser))
 
-    for k, v in eos_mods.items():
+    for key, value in eos_mods.items():
         # print("Processing component object: {0}".format(k))
         if parser.subparser_name and 'all' in parser.subparser_name:
-            if v.process_inputs(parser):
-                v.save()
-        elif parser.subparser_name and (k in parser.subparser_name):
-            if v.process_inputs(parser):
-                v.save()
+            if value.process_inputs(parser):
+                value.save()
+        elif parser.subparser_name and (key in parser.subparser_name):
+            if value.process_inputs(parser):
+                value.save()
             break
 
 
 if __name__ == "__main__":
     try:
         execute()
-    except KeyboardInterrupt as e:
-        print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
+    except KeyboardInterrupt:
+        print("\n\nWARNING: User aborted command. Partial data save/corruption might occur.\
+		It is advised to re-run the command.")
         sys.exit(1)

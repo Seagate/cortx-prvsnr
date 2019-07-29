@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import json
-import yaml
+#import json
+#import yaml
 
 from abc import ABCMeta, abstractmethod
-from argparse import ArgumentParser, Namespace
+#from argparse import ArgumentParser, Namespace
 
 
 class BaseCfg(metaclass=ABCMeta):
@@ -17,7 +17,6 @@ class BaseCfg(metaclass=ABCMeta):
         """
         pass
 
-
     @abstractmethod
     def save(self) -> None:
         """ Save a Python dict into .sls file.
@@ -29,7 +28,6 @@ class BaseCfg(metaclass=ABCMeta):
         None
         """
         pass
-
 
     @abstractmethod
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
