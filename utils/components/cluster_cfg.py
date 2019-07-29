@@ -64,69 +64,71 @@ class ClusterCfg(BaseCfg):
 
 
     def process_inputs(self, program_args: Namespace) -> bool:
-
         if program_args.interactive:
-            input("\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
-
-            input_msg = ("Enter fqdn for ees node 1 ({0}): ".format(
-                    self.__options["facts"]["node_1"]["fqdn"]
+            input(
+                "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
+            for node in self.__options["facts"]:
+                input_msg = ("Enter fqdn for ees {1} ({0}): ".format(
+                    self.__options["facts"][node]["fqdn"], node
                 )
-            )
-            self.__options["facts"]["node_1"]["fqdn"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["fqdn"]
-            )
-
-            input_msg = ("Is this a primary ees node? ({0}): ".format(
-                    self.__options["facts"]["node_1"]["primary"]
                 )
-            )
-            self.__options["facts"]["node_1"]["primary"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["primary"]
-            )
-
-            input_msg = ("Enter management interface name ({0}): ".format(
-                    self.__options["facts"]["node_1"]["mgmt_if"]
+                self.__options["facts"][node]["fqdn"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["fqdn"]
                 )
-            )
-            self.__options["facts"]["node_1"]["mgmt_if"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["mgmt_if"]
-            )
 
-            input_msg = ("Enter data interface name ({0}): ".format(
-                    self.__options["facts"]["node_1"]["data_if"]
+                input_msg = ("Is this a primary ees node? ({0}): ".format(
+                    self.__options["facts"][node]["primary"]
                 )
-            )
-            self.__options["facts"]["node_1"]["data_if"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["data_if"]
-            )
+                )
+                self.__options["facts"][node]["primary"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["primary"]
+                )
 
-            input_msg = ("Enter the default gateway ip ({0}): ".format(
-                    self.__options["facts"]["node_1"]["gateway_ip"]
+                input_msg = ("Enter management interface name ({0}): ".format(
+                    self.__options["facts"][node]["mgmt_if"]
                 )
-            )
-            self.__options["facts"]["node_1"]["gateway_ip"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["gateway_ip"]
-            )
+                )
+                self.__options["facts"][node]["mgmt_if"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["mgmt_if"]
+                )
 
-            input_msg = ("Enter the data disk device for node_1 ({0}): ".format(
-                    self.__options["facts"]["node_1"]["data_device_1"]
+                input_msg = ("Enter data interface name ({0}): ".format(
+                    self.__options["facts"][node]["data_if"]
                 )
-            )
-            self.__options["facts"]["node_1"]["data_device_1"] = (
-                input(input_msg)
-                or
-                self.__options["facts"]["node_1"]["data_device_1"]
-            )
+                )
+                self.__options["facts"][node]["data_if"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["data_if"]
+                )
+
+                input_msg = ("Enter the default gateway ip ({0}): ".format(
+                    self.__options["facts"][node]["gateway_ip"]
+                )
+                )
+                self.__options["facts"][node]["gateway_ip"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["gateway_ip"]
+                )
+
+                input_msg = ("Enter the data disk device for {1} ({0}): ".format(
+                    self.__options["facts"][node]["data_device_1"], node
+                )
+                )
+                self.__options["facts"][node]["data_device_1"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["data_device_1"]
+                )
+
+
 
             # Process args for node_2
             # print(json.dumps(self.__options, indent = 4))
