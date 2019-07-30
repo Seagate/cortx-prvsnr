@@ -117,6 +117,16 @@ class ClusterCfg(BaseCfg):
                     or
                     self.__options["facts"][node]["gateway_ip"]
                 )
+                
+                input_msg = ("Enter the default metadata_device ({0}): ".format(
+                    self.__options["facts"][node]["metadata_device"]
+                )
+                )
+                self.__options["facts"][node]["metadata_device"] = (
+                    input(input_msg)
+                    or
+                    self.__options["facts"][node]["metadata_device"]
+                )
 
                 input_msg = ("Enter the data disk device for {1} ({0}): ".format(
                     self.__options["facts"][node]["data_device_1"], node
