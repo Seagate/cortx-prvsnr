@@ -1,2 +1,2 @@
 sspl:
-    role: gw
+    role: eos
