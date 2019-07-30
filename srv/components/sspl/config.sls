@@ -1,4 +1,10 @@
 {% set role = pillar['sspl']['role'] %}
+# Copy conf file to /etc/sspl_ll.conf
+Copy sample file:
+  file.copy:
+    - name: /etc/sspl_ll.conf
+    - source: /opt/seagate/sspl/conf/sspl.conf.EES
+    - mode: 644
 
 {% if 'virtual' in salt['grains.get']('productname').lower() %}
 {% set role = 'vm' %}
