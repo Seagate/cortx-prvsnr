@@ -11,7 +11,10 @@ class HAProxyCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
+    def __init__(
+            self,
+            cfg_path: str = None,
+            arg_parser: ArgumentParser = None):
 
         if cfg_path:
             self.__cfg_path = cfg_path
@@ -64,8 +67,9 @@ class HAProxyCfg(BaseCfg):
                 "\nAccepting interactive inputs for pillar/haproxy.sls. \
 		    Press any key to continue...")
 
-            input_msg = ("Enter no of background processes for HAProxy ({0}): ".format(
-                self.__options["haproxy"]["nbproc"]))
+            input_msg = (
+                "Enter no of background processes for HAProxy ({0}): ".format(
+                    self.__options["haproxy"]["nbproc"]))
             self.__options["haproxy"]["nbproc"] = (
                 input(input_msg)
                 or
@@ -125,7 +129,11 @@ class HAProxyCfg(BaseCfg):
 
     def save(self):
         with open(self.__cfg_path, 'w') as stream:
-            yaml.dump(self.__options, stream, default_flow_style=False, indent=4)
+            yaml.dump(
+                self.__options,
+                stream,
+                default_flow_style=False,
+                indent=4)
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

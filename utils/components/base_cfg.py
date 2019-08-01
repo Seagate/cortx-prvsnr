@@ -3,7 +3,7 @@
 #import yaml
 
 from abc import ABCMeta, abstractmethod
-#from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace
 
 
 class BaseCfg(metaclass=ABCMeta):

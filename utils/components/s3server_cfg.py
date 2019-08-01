@@ -11,7 +11,10 @@ class S3ServerCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
+    def __init__(
+            self,
+            cfg_path: str = None,
+            arg_parser: ArgumentParser = None):
         if cfg_path:
             self.__cfg_path = cfg_path
         else:
@@ -73,22 +76,16 @@ class S3ServerCfg(BaseCfg):
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_REUSEPORT"]
             )
 
-            input_msg = (
-                "Enter the bind address for ipv4 ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV4_BIND_ADDR"]
-                )
-            )
+            input_msg = ("Enter the bind address for ipv4 ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV4_BIND_ADDR"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV4_BIND_ADDR"] = (
                 input(input_msg)
                 or
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV4_BIND_ADDR"]
             )
 
-            input_msg = (
-                "Enter the bind address for ipv6 ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV6_BIND_ADDR"]
-                )
-            )
+            input_msg = ("Enter the bind address for ipv6 ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV6_BIND_ADDR"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_IPV6_BIND_ADDR"] = (
                 input(input_msg)
                 or
@@ -105,33 +102,24 @@ class S3ServerCfg(BaseCfg):
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_BIND_PORT"]
             )
 
-            input_msg = (
-                "Enter the endpoint for s3 ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_DEFAULT_ENDPOINT"]
-                )
-            )
+            input_msg = ("Enter the endpoint for s3 ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_DEFAULT_ENDPOINT"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_DEFAULT_ENDPOINT"] = (
                 input(input_msg)
                 or
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_DEFAULT_ENDPOINT"]
             )
 
-            input_msg = (
-                "Enter the regional endpoints for s3 ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_REGION_ENDPOINTS"]
-                )
-            )
+            input_msg = ("Enter the regional endpoints for s3 ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_REGION_ENDPOINTS"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_REGION_ENDPOINTS"] = (
                 input(input_msg)
                 or
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_SERVER_REGION_ENDPOINTS"]
             )
 
-            input_msg = (
-                "Enter the read ahead multiple ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_READ_AHEAD_MULTIPLE"]
-                )
-            )
+            input_msg = ("Enter the read ahead multiple ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_READ_AHEAD_MULTIPLE"]))
             # TODO: Put the better input message.
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_READ_AHEAD_MULTIPLE"] = (
                 input(input_msg)
@@ -152,9 +140,7 @@ class S3ServerCfg(BaseCfg):
 
             input_msg = (
                 "Do you want to enable performance stats for s3 server (0/1)? ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_PERF"]
-                )
-            )
+                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_PERF"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_PERF"] = (
                 input(input_msg)
                 or
@@ -163,20 +149,15 @@ class S3ServerCfg(BaseCfg):
 
             input_msg = (
                 "Enter the logging mode for s3 server (DEBUG, INFO, WARN, ERROR, FATAL) ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_MODE"]
-                )
-            )
+                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_MODE"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_MODE"] = (
                 input(input_msg)
                 or
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_MODE"]
             )
 
-            input_msg = (
-                "Do you want to enable buffering during logging? ({0}): ".format(
-                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_ENABLE_BUFFERING"]
-                )
-            )
+            input_msg = ("Do you want to enable buffering during logging? ({0}): ".format(
+                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_ENABLE_BUFFERING"]))
             self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_LOG_ENABLE_BUFFERING"] = (
                 input(input_msg)
                 or
@@ -196,9 +177,7 @@ class S3ServerCfg(BaseCfg):
 
             input_msg = (
                 "Enter ip address for s3 auth server (for ipv6 use following format: ipv6:::1)({0}): ".format(
-                    self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_IP_ADDR"]
-                )
-            )
+                    self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_IP_ADDR"]))
             self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_IP_ADDR"] = (
                 input(input_msg)
                 or
@@ -207,39 +186,30 @@ class S3ServerCfg(BaseCfg):
 
             input_msg = (
                 "Enter the port for s3 auth server to be used for https requests ({0}): ".format(
-                    self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_PORT"]
-                )
-            )
+                    self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_PORT"]))
             self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_PORT"] = (
                 input(input_msg)
                 or
                 self.__options["s3server"]["S3_AUTH_CONFIG"]["S3_AUTH_PORT"]
             )
 
-            input_msg = ("Do you want to enable the Stats feature (true/false)? ({0}): ".format(
-                self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"]
-                )
-            )
-            self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"] = input(input_msg) \
-                or self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"]
+            input_msg = (
+                "Do you want to enable the Stats feature (true/false)? ({0}): ".format(
+                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"]))
+            self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"] = input(
+                input_msg) or self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"]
 
             if self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_ENABLE_STATS"]:
-                input_msg = (
-                    "Enter Statsd server IP address: ({0}): ".format(
-                        self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_IP_ADDR"]
-                    )
-                )
+                input_msg = ("Enter Statsd server IP address: ({0}): ".format(
+                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_IP_ADDR"]))
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_IP_ADDR"] = (
                     input(input_msg)
                     or
                     self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_IP_ADDR"]
                 )
 
-                input_msg = (
-                    "Enter Statsd server IP port ({0}): ".format(
-                        self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_PORT"]
-                    )
-                )
+                input_msg = ("Enter Statsd server IP port ({0}): ".format(
+                    self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_PORT"]))
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATSD_PORT"] = (
                     input(input_msg)
                     or
@@ -249,9 +219,7 @@ class S3ServerCfg(BaseCfg):
                 input_msg = (
                     "Provide the path of the yaml input file for White list of Stats metrics \
 			to be published to the backend ({0}): ".format(
-                        self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATS_WHITELIST_FILENAME"]
-                    )
-                )
+                        self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATS_WHITELIST_FILENAME"]))
                 self.__options["s3server"]["S3_SERVER_CONFIG"]["S3_STATS_WHITELIST_FILENAME"] = (
                     input(input_msg)
                     or
@@ -262,13 +230,10 @@ class S3ServerCfg(BaseCfg):
                 "Do you want to configure Clovis parameters? 'no' will set the defaults. (yes/no): "
             )
             if config_clovis:
-                print ("Clovis configuration Section, stick to defaults if "
-                       "you are not sure about the parameters")
-                input_msg = (
-                    "Enter maximum units per read/write request to clovis ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_UNITS_PER_REQUEST"]
-                    )
-                )
+                print("Clovis configuration Section, stick to defaults if "
+                      "you are not sure about the parameters")
+                input_msg = ("Enter maximum units per read/write request to clovis ({0}): ".format(
+                    self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_UNITS_PER_REQUEST"]))
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_UNITS_PER_REQUEST"] = (
                     input(input_msg)
                     or
@@ -277,9 +242,7 @@ class S3ServerCfg(BaseCfg):
 
                 input_msg = (
                     "Enter maximum no of key value pair to be fetched from a KVS index ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_IDX_FETCH_COUNT"]
-                    )
-                )
+                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_IDX_FETCH_COUNT"]))
                 # TODO: Enter beeter input message.
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_IDX_FETCH_COUNT"] = (
                     input(input_msg)
@@ -300,33 +263,25 @@ class S3ServerCfg(BaseCfg):
 
                 input_msg = (
                     "Enter the maximum size of the rpc message for Clovis [{0} bytes]: ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_RPC_MSG_SIZE"]
-                    )
-                )
+                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_RPC_MSG_SIZE"]))
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_RPC_MSG_SIZE"] = (
                     input(input_msg)
                     or
                     self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_MAX_RPC_MSG_SIZE"]
                 )
 
-                print ("Clovis memory pool configuration Section, stick to "
-                       "defaults if you are not sure about the parameters")
-                input_msg = (
-                    "Enter array of unit sizes to create Clovis memory pools ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_UNIT_SIZES_FOR_MEMORY_POOL"]
-                    )
-                )
+                print("Clovis memory pool configuration Section, stick to "
+                      "defaults if you are not sure about the parameters")
+                input_msg = ("Enter array of unit sizes to create Clovis memory pools ({0}): ".format(
+                    self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_UNIT_SIZES_FOR_MEMORY_POOL"]))
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_UNIT_SIZES_FOR_MEMORY_POOL"] = (
                     input(input_msg)
                     or
                     self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_UNIT_SIZES_FOR_MEMORY_POOL"]
                 )
 
-                input_msg = (
-                    "Enter the read initial buffer count ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_INITIAL_BUFFER_COUNT"]
-                    )
-                )
+                input_msg = ("Enter the read initial buffer count ({0}): ".format(
+                    self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_INITIAL_BUFFER_COUNT"]))
                 # TODO: Enter better input message.
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_INITIAL_BUFFER_COUNT"] = (
                     input(input_msg)
@@ -336,9 +291,7 @@ class S3ServerCfg(BaseCfg):
 
                 input_msg = (
                     "Enter pool's expandable size in blocks (multiple of S3_CLOVIS_UNIT_SIZE) ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_EXPANDABLE_COUNT"]
-                    )
-                )
+                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_EXPANDABLE_COUNT"]))
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_EXPANDABLE_COUNT"] = (
                     input(input_msg)
                     or
@@ -348,9 +301,7 @@ class S3ServerCfg(BaseCfg):
                 input_msg = (
                     "Enter the maximum memory threshold for the pool in bytes \
 			(multiple of S3_CLOVIS_UNIT_SIZE) ({0}): ".format(
-                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_MAX_THRESHOLD"]
-                    )
-                )
+                        self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_MAX_THRESHOLD"]))
                 self.__options["s3server"]["S3_CLOVIS_CONFIG"]["S3_CLOVIS_READ_POOL_MAX_THRESHOLD"] = (
                     input(input_msg)
                     or
@@ -362,14 +313,12 @@ class S3ServerCfg(BaseCfg):
             )
 
             if config_libevent:
-                print (
+                print(
                     "Libevent configuration Section, stick to defaults if you are not sure about the parameters")
                 input_msg = (
                     "Enter maximum read size for a single read operation in bytes \
 			(user should not try to read more than this value) ({0}): ".format(
-                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_MAX_READ_SIZE"]
-                    )
-                )
+                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_MAX_READ_SIZE"]))
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_MAX_READ_SIZE"] = (
                     input(input_msg)
                     or
@@ -380,20 +329,17 @@ class S3ServerCfg(BaseCfg):
                     "Enter Libevent pool buffer size, (in case of "
                     "S3_CLOVIS_UNIT_SIZE of size 1MB, it is recommended to "
                     "have S3_LIBEVENT_POOL_BUFFER_SIZE of size 16384) ({0}): ".format(
-                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_BUFFER_SIZE"]
-                    )
-                )
+                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_BUFFER_SIZE"]))
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_BUFFER_SIZE"] = (
                     input(input_msg)
                     or
                     self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_BUFFER_SIZE"]
                 )
 
-                input_msg = ("Enter the initial pool size in bytes \
+                input_msg = (
+                    "Enter the initial pool size in bytes \
 			(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
-                    self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"]
-                    )
-                )
+                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"]))
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_INITIAL_SIZE"] = (
                     input(input_msg)
                     or
@@ -403,20 +349,17 @@ class S3ServerCfg(BaseCfg):
                 input_msg = (
                     "Enter pool's expandable size in bytes "
                     "(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
-                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_EXPANDABLE_SIZE"]
-                    )
-                )
+                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_EXPANDABLE_SIZE"]))
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_EXPANDABLE_SIZE"] = (
                     input(input_msg)
                     or
                     self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_EXPANDABLE_SIZE"]
                 )
 
-                input_msg = ("Enter the maximum memory threshold for the pool in bytes "
-                             "(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
-                                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"]
-                                 )
-                             )
+                input_msg = (
+                    "Enter the maximum memory threshold for the pool in bytes "
+                    "(should be multiple of S3_CLOVIS_UNIT_SIZE) ({0}):".format(
+                        self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"]))
                 self.__options["s3server"]["S3_THIRDPARTY_CONFIG"]["S3_LIBEVENT_POOL_MAX_THRESHOLD"] = (
                     input(input_msg)
                     or
@@ -441,7 +384,11 @@ class S3ServerCfg(BaseCfg):
 
     def save(self):
         with open(self.__cfg_path, 'w') as stream:
-            yaml.dump(self.__options, stream, default_flow_style=False, indent=4)
+            yaml.dump(
+                self.__options,
+                stream,
+                default_flow_style=False,
+                indent=4)
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

@@ -12,7 +12,10 @@ class ReleaseCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
+    def __init__(
+            self,
+            cfg_path: str = None,
+            arg_parser: ArgumentParser = None):
 
         if cfg_path:
             self.__cfg_path = cfg_path
@@ -110,7 +113,11 @@ class ReleaseCfg(BaseCfg):
 
     def save(self):
         with open(self.__cfg_path, 'w') as stream:
-            yaml.dump(self.__options, stream, default_flow_style=False, indent=4)
+            yaml.dump(
+                self.__options,
+                stream,
+                default_flow_style=False,
+                indent=4)
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

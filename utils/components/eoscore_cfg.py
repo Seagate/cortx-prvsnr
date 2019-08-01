@@ -11,7 +11,10 @@ class EOSCoreCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
+    def __init__(
+            self,
+            cfg_path: str = None,
+            arg_parser: ArgumentParser = None):
         if cfg_path:
             self.__cfg_path = cfg_path
         else:
@@ -63,8 +66,8 @@ class EOSCoreCfg(BaseCfg):
 		Press any key to continue...")
 
             input_msg = (
-		"Enter Maximum RPC message size to be used for eoscore daemon: ({0}):".format(
-		    self.__options["eoscore"]["MERO_M0D_MAX_RPC_MSG_SIZE"]))
+                "Enter Maximum RPC message size to be used for eoscore daemon: ({0}):".format(
+                    self.__options["eoscore"]["MERO_M0D_MAX_RPC_MSG_SIZE"]))
             self.__options["eoscore"]["MERO_M0D_MAX_RPC_MSG_SIZE"] = (
                 input(input_msg)
                 or
@@ -112,7 +115,11 @@ class EOSCoreCfg(BaseCfg):
 
     def save(self):
         with open(self.__cfg_path, 'w') as stream:
-            yaml.dump(self.__options, stream, default_flow_style=False, indent=4)
+            yaml.dump(
+                self.__options,
+                stream,
+                default_flow_style=False,
+                indent=4)
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

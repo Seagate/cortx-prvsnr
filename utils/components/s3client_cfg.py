@@ -12,7 +12,10 @@ class S3ClientCfg(BaseCfg):
     __options = {}
     __cfg_path = ""
 
-    def __init__(self, cfg_path: str = None, arg_parser: ArgumentParser = None):
+    def __init__(
+            self,
+            cfg_path: str = None,
+            arg_parser: ArgumentParser = None):
 
         if cfg_path:
             self.__cfg_path = cfg_path
