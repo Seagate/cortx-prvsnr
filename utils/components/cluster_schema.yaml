@@ -1,0 +1,53 @@
+facts:
+  type: dict
+  schema:
+      node_1:
+        type: dict
+        schema:
+          data_device_1:
+            type: str
+            required: true
+          data_if:
+            type: str
+            required: true
+          fqdn:
+            type: str
+            required: true
+          gateway_ip:
+            type: str
+            required: true
+            format: ip-address
+          metadata_device:
+            type: str
+            required: true
+          mgmt_if:
+            type: str
+            required: true
+          primary:
+            type: bool
+            required: true
+      node_2:
+        type: dict
+        schema:
+          data_device_1:
+            type: str
+            required: true
+          data_if:
+            type: str
+            required: true
+          fqdn:
+            type: str
+            required: true
+          gateway_ip:
+            type: str
+            required: true
+            format: ip-address
+          metadata_device:
+            type: str
+            required: true
+          mgmt_if:
+            type: str
+            required: true
+          primary:
+            type: bool
+            required: true

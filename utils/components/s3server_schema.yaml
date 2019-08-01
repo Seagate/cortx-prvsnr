@@ -1,0 +1,223 @@
+s3server:
+  type: dict
+  schema:
+    S3Config_Sections:
+      type: list
+      required: true
+    S3_SERVER_CONFIG:
+      type: dict
+      schema:
+        S3_DAEMON_WORKING_DIR:
+          type: str
+          required: true
+        S3_DAEMON_DO_REDIRECTION:
+          type: int
+          required: true
+          option: 0/1
+        S3_LOG_DIR:
+          type: str
+          required: true
+        S3_LOG_MODE:
+          type: str
+          required: true
+          option: DEBUG/INFO/WARN/ERROR/FATAL
+          default: INFO
+        S3_LOG_FILE_MAX_SIZE:
+          type: int
+          required: true
+          default: 100
+        S3_LOG_ENABLE_BUFFERING:
+          type: bool
+          required: true
+          default: true
+        S3_ENABLE_AUTH_SSL:
+          type: bool
+          required: true
+          default: true
+        S3_REUSEPORT:
+          type: bool
+          required: true
+          default: true
+        S3_IAM_CERT_FILE:
+          type: str
+          required: true
+        S3_LOG_FLUSH_FREQUENCY:
+          type: int
+          required: true
+          default: 30
+        S3_AUDIT_LOG_CONFIG:
+          type: str
+          required: true
+        S3_AUDIT_LOG_FORMAT_TYPE:
+          type: str
+          required: true
+          option: JSON/S3_FORMAT
+        S3_AUDIT_LOGGER_POLICY:
+          type: str
+          required: true
+        S3_AUDIT_LOGGER_HOST:
+          type: str
+          required: true
+        S3_AUDIT_LOGGER_PORT:
+          type: int
+          required: true
+        S3_AUDIT_LOGGER_RSYSLOG_MSGID:
+          type: str
+          required: true
+        S3_SERVER_BIND_PORT:
+          type: int
+          required: true
+        S3_SERVER_REGION_ENDPOINTS:
+          type: list
+          required: true
+        S3_SERVER_DEFAULT_ENDPOINT:
+          type: str
+          required: true
+        S3_SERVER_SHUTDOWN_GRACE_PERIOD:
+          type: int
+          required: true
+          default: 10
+        S3_SERVER_SSL_ENABLE:
+          type: bool
+          required: true
+        S3_SERVER_CERT_FILE:
+          type: str
+          required: true
+        S3_SERVER_PEM_FILE:
+          type: str
+          required: true
+        S3_SERVER_SSL_SESSION_TIMEOUT:
+          type: int
+          required: true
+        S3_ENABLE_PERF:
+          type: int
+          required: true
+          option: 0/1
+          default: 0
+        S3_PERF_LOG_FILENAME:
+          type: str
+          required: true
+        S3_READ_AHEAD_MULTIPLE:
+          type: int
+          required: true
+        S3_MAX_RETRY_COUNT:
+          type: int
+          required: true
+        S3_ENABLE_MURMURHASH_OID:
+          type: bool
+          required: true
+        S3_RETRY_INTERVAL_MILLISEC:
+          type: int
+          required: true
+        S3_CLIENT_REQ_READ_TIMEOUT_SECS:
+          type: int
+          required: true
+        S3_ENABLE_STATS:
+          type: bool
+          required: true
+        S3_STATSD_IP_ADDR:
+          type: str
+          required: true
+          format: ip-address
+        S3_STATSD_PORT:
+          type: int
+          required: true
+        S3_STATSD_MAX_SEND_RETRY:
+          type: int
+          required: true
+        S3_STATS_WHITELIST_FILENAME:
+          type: str
+          required: true
+    S3_AUTH_CONFIG:
+      type: dict
+      schema:
+        S3_AUTH_IP_ADDR:
+          type: str
+          required: true
+        S3_AUTH_PORT:
+          type: int
+          required: true
+    S3_CLOVIS_CONFIG:
+      type: dict
+      schema:
+        S3_CLOVIS_LOCAL_ADDR:
+          type: str
+          required: true
+        S3_CLOVIS_HA_ADDR:
+          type: str
+          required: true
+        S3_CLOVIS_PROF:
+          type: str
+          required: true  
+        S3_CLOVIS_LAYOUT_ID:
+          type: int
+          required: true
+        S3_CLOVIS_UNIT_SIZE:
+          type: int
+          required: true
+        S3_CLOVIS_MAX_UNITS_PER_REQUEST:
+          type: int
+          required: true
+        S3_CLOVIS_MAX_IDX_FETCH_COUNT:
+          type: int
+          required: true
+        S3_CLOVIS_IS_OOSTORE:
+          type: bool
+          required: true
+        S3_CLOVIS_IS_READ_VERIFY:
+          type: bool
+          required: true
+        S3_CLOVIS_TM_RECV_QUEUE_MIN_LEN:
+          type: int
+          required: true
+          default: 2
+        S3_CLOVIS_MAX_RPC_MSG_SIZE:
+          type: int
+          required: true
+          default: 131072
+        S3_CLOVIS_PROCESS_FID:
+          type: str
+          required: true
+        S3_CLOVIS_IDX_SERVICE_ID:
+          type: int
+          required: true
+        S3_CLOVIS_CASS_CLUSTER_EP:
+          type: str
+          required: true  
+        S3_CLOVIS_CASS_KEYSPACE:
+          type: str
+          required: true
+        S3_CLOVIS_CASS_MAX_COL_FAMILY_NUM:
+          type: int
+          required: true
+          default: 1
+        S3_UNIT_SIZES_FOR_MEMORY_POOL:
+          type: list
+          required: true
+        S3_CLOVIS_READ_POOL_INITIAL_BUFFER_COUNT:
+          type: int
+          required: true
+        S3_CLOVIS_READ_POOL_EXPANDABLE_COUNT:
+          type: int
+          required: true
+        S3_CLOVIS_READ_POOL_MAX_THRESHOLD:
+          type: int
+          required: true
+    S3_THIRDPARTY_CONFIG:
+      type: dict
+      schema:
+        S3_LIBEVENT_POOL_BUFFER_SIZE:
+          type: int
+          required: true
+        S3_LIBEVENT_MAX_READ_SIZE:
+          type: int
+          required: true
+        S3_LIBEVENT_POOL_INITIAL_SIZE:
+          type: int
+          required: true
+        S3_LIBEVENT_POOL_EXPANDABLE_SIZE:
+          type: int
+          required: true
+        S3_LIBEVENT_POOL_MAX_THRESHOLD:
+          type: int
+          required: true

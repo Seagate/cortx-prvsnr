@@ -1,0 +1,30 @@
+s3client:
+  type: dict
+  schema:
+    s3server:
+      type: dict
+      schema:
+        fqdn:
+          type: str
+          required: true
+        ip:
+          type: str
+          format: ip-address
+    access_key:
+      type: str
+      required: true
+    secret_key:
+      type: str
+      required: true
+    region:
+      type: str
+      required: true
+      default: US
+    output:
+      type: str
+      required: true
+      default: text
+      option: json/text/table
+    s3endpoint:
+      type: str
+      required: true

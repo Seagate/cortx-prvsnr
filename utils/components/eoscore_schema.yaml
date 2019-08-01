@@ -1,0 +1,12 @@
+eoscore:
+  type: dict
+  schema:
+    MERO_M0D_BELOG_SIZE:
+      type: int
+      required: true
+    MERO_M0D_IOS_BESEG_SIZE:
+      type: int
+      required: true
+    MERO_M0D_MAX_RPC_MSG_SIZE:
+      type: int
+      required: true

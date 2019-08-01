@@ -1,0 +1,6 @@
+eos_release:
+  type: dict
+  schema:
+    target_build: 
+      type: str
+      required: true

@@ -1,0 +1,36 @@
+haproxy:
+  type: dict
+  schema:
+    backend:
+      type: dict
+      schema:
+        s3authserver:
+          type: dict
+          schema:
+            ssl_enabled:
+              required: true
+              type: bool
+        s3server:
+          type: dict
+          schema:
+            ssl_enabled:
+              required: true
+              type: bool
+    frontend:
+      type: dict
+      schema:
+        s3authserver:
+          type: dict
+          schema:
+            ssl_enabled:
+              required: true
+              type: bool
+        s3server:
+          type: dict
+          schema:
+            ssl_enabled:
+              required: true
+              type: bool
+    nbproc:
+      required: true
+      type: int

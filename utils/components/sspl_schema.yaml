@@ -1,0 +1,8 @@
+sspl:
+  type: dict
+  schema:
+    role:
+      type: str
+      required: true
+    
+
