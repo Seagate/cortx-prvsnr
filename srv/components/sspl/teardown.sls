@@ -47,7 +47,7 @@ Remove sspl packages:
 
 Remove file sspl_ll.conf:
   file.absent:
-    - name: /etc/sspl_ll.conf
+    - name: /etc/sspl.conf
 
 Remove file dcs_collector.conf:
   file.absent:

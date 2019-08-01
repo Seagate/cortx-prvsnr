@@ -1,9 +1,9 @@
 {% set role = pillar['sspl']['role'] %}
-# Copy conf file to /etc/sspl_ll.conf
+# Copy conf file to /etc/sspl.conf
 Copy sample file:
   file.copy:
-    - name: /etc/sspl_ll.conf
-    - source: /opt/seagate/sspl/conf/sspl.conf.EES
+    - name: /etc/sspl.conf
+    - source: /opt/seagate/sspl/conf/sspl.conf.{{ pillar['sspl']['product'] }}
     - mode: 644
 
 {% if 'virtual' in salt['grains.get']('productname').lower() %}
@@ -12,7 +12,7 @@ Copy sample file:
 # Execute only on Virtual Machine
 Update sspl-ll conf file:
   file.replace:
-    - name: /etc/sspl_ll.conf
+    - name: /etc/sspl.conf
     - pattern: setup=.*$
     - repl: setup=vm
     - append_if_not_found: True
@@ -20,7 +20,7 @@ Update sspl-ll conf file:
 #Update sspl config file with pillar data:
 #  module.run:
 #    - eosconfig.update
-#      - name: /etc/sspl_ll.conf
+#      - name: /etc/sspl.conf
 #      - ref_pillar: sspl
 #      - type: YAML
 #      - backup: True
