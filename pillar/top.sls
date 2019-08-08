@@ -4,7 +4,6 @@ base:
     - components.halon
     - components.haproxy
     - components.eoscore
-    # - components.nfs
     - components.openldap
     - components.rabbitmq
     - components.release

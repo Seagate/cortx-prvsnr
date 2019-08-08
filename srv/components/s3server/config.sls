@@ -1,10 +1,13 @@
-#Update s3 config file with pillar data:
-#  module.run:
-#    - eos.conf_update:
-#      - name: /opt/seagate/s3/conf/s3config.yaml
-#      - ref_pillar: s3server
-#      - type: YAML
-#      - backup: True
+{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set data_if = pillar['facts'][node]['data_if'] %}
+
+# Update s3 config file with pillar data:
+#   module.run:
+#     - eos.conf_update:
+#       - name: /opt/seagate/s3/conf/s3config.yaml
+#       - ref_pillar: s3server
+#       - type: YAML
+#       - backup: True
 
 Import s3openldap cert to s3authserver.jks:
   cmd.run:
@@ -59,7 +62,7 @@ Open https port for s3server:
 # Append /etc/hosts:
 #   file.line:
 #     - name: /etc/hosts
-#     - content: {{ grains['ip_interfaces']['data0'][0] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
+#     - content: {{ grains['ip_interfaces'][data_if][0] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
 #     - location: end
 #     - mode: ensure
 

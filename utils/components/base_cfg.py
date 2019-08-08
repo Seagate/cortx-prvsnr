@@ -19,14 +19,10 @@ class BaseCfg(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def save(self) -> None:
+    def save(self):
         """ Save a Python dict into .sls file.
 
-        Args :
-        pillar_dict : A pillar dictionary object as a dict
-        dest_file : Pillar data file to be written with pillar_dict data as str
-        Returns :
-        None
+        Accepts no args and returns nothing. The file set on the component cfg object is used to save the data.
         """
         pass
 

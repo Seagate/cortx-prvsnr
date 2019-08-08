@@ -1,6 +1,9 @@
+{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set data_if = pillar['facts'][node]['data_if'] %}
+
 Create index:
   cmd.run:
-    - name: m0clovis -l {{ pillar['nfs']['local_addr'] }} -h {{ pillar['nfs']['ha_addr'] }} -p '{{ pillar['nfs']['profile'] }}' -f '\{{{ pillar['nfs']['proc_fid'] }}\}' index create "{{ pillar['nfs']['kvs_fid'] }}"
+    - name: m0clovis -l {{ grains['ip_interfaces'][data_if][0] }}@tcp:12345:44:301 -h {{ grains['ip_interfaces'][data_if][0] }}@tcp:12345:45:1 -p '0x7000000000000001:1' -f '0x7200000000000000:0' index create "0x780000000000000b:1"
 
 Initialize KVSNS:
   cmd.run:
@@ -13,6 +16,6 @@ Start NFS Server:
 Mount NFS4:
   mount.mounted:
     - name: /mnt/nfs_mount
-    - device: {{ grains['ip_interfaces']['data0'][0] }}:/kvsns
+    - device: {{ grains['ip_interfaces'][data_if][0] }}:/kvsns
     - fstype: nfs4
     - mkmnt: True

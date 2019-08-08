@@ -1,18 +1,12 @@
-Restart HAProxy:
-  service.running:
-    - name: haproxy.service
-
-Restart Rsyslog:
-  service.running:
-    - name: rsyslog.service
-
-Setup haproxy config:
+Setup HAProxy config:
   file.managed:
     - name: /etc/haproxy/haproxy.cfg
     - source: salt://components/s3server/haproxy/files/haproxy.cfg
     - makedirs: True
     - keep_source: False
     - template: jinja
+    - watch_in:
+      - service: Ensure HAProxy running
 
 Setup haproxy 503 error code to http file:
   file.managed:
@@ -20,6 +14,8 @@ Setup haproxy 503 error code to http file:
     - source: salt://components/s3server/haproxy/files/503.http
     - makedirs: True
     - keep_source: False
+    - watch_in:
+      - service: Ensure HAProxy running
 
 Setup logrotate config for haproxy:
   file.managed:
@@ -27,8 +23,10 @@ Setup logrotate config for haproxy:
     - source: salt://components/s3server/haproxy/files/logrotate/haproxy
     - makedirs: True
     - keep_source: False
+    - watch_in:
+      - service: Ensure HAProxy running
 
-Setup logrotate config for haproxy to run hourly:
+Setup logrotate cron for haproxy to run hourly:
   file.managed:
     - name: /etc/cron.hourly/logrotate
     - source: salt://components/s3server/haproxy/files/logrotate/logrotate
@@ -42,4 +40,12 @@ Setup haproxy config to enable logs:
     - makedirs: True
     - keep_source: False
     - watch_in:
-      - service: Restart Rsyslog
+      - service: Ensure rsyslog running
+
+Ensure HAProxy running:
+  service.running:
+    - name: haproxy.service
+
+Ensure rsyslog running:
+  service.running:
+    - name: rsyslog.service

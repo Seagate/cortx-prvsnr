@@ -68,11 +68,9 @@ Remove common_runtime libraries:
   pkg.purged:
     - pkgs:
       - java-1.8.0-openjdk-headless
-      - gflags
       - glog
+      - gflags
       - yaml-cpp
-      # - libxml2
-      # - libyaml
 #------------------------------
 # Teardown Common Runtime End
 #------------------------------

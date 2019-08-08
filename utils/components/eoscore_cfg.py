@@ -55,7 +55,7 @@ class EOSCoreCfg(BaseCfg):
     def __load_defaults(self):
 
         with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.load(fd, Loader=yaml.FullLoader)
+            self.__options = yaml.safe_load(fd)
             # print(json.dumps(self._release_options, indent = 4))
             # TODO validations for configs.
 
@@ -99,7 +99,16 @@ class EOSCoreCfg(BaseCfg):
             return True
 
         elif program_args.show_eoscore_file_format:
-            print(yaml.dump(self.__options, default_flow_style=False, width=1, indent=4))
+            print(
+                yaml.safe_dump(
+                    self.__options,
+                    stream=None,
+                    default_flow_style=False,
+                    canonical=False,
+                    width=1,
+                    indent=4
+                )
+            )
             return False
 
         elif program_args.eoscore_file:
@@ -109,7 +118,7 @@ class EOSCoreCfg(BaseCfg):
             # Load eoscore file and merge options.
             new_options = {}
             with open(program_args.eoscore_file, 'r') as fd:
-                new_options = yaml.load(fd, Loader=yaml.FullLoader)
+                new_options = yaml.safe_load(fd)
                 self.__options.update(new_options)
             return True
 
@@ -120,7 +129,14 @@ class EOSCoreCfg(BaseCfg):
 
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
-            yaml.dump(self.__options, fd, default_flow_style=False, indent=4)
+            yaml.safe_dump(
+                self.__options,
+                stream=fd,
+                default_flow_style=False,
+                canonical=False,
+                width=1,
+                indent=4
+            )
 
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
