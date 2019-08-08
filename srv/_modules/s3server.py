@@ -51,7 +51,6 @@ def conf_update(config_file = "/opt/seagate/s3/conf/s3config.yaml", ref_pillar =
 
 def update_dict(config_dict, pillar_dict):
   for key in list(config_dict.keys()):
-    print(key)
     if key in pillar_dict:
       if isinstance(config_dict[key], dict):
         update_dict(config_dict[key], pillar_dict[key])
