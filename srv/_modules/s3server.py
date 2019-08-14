@@ -1,5 +1,4 @@
-# This file is for reference only and should not be used.
-
+import errno
 import os
 import sys
 import yaml
@@ -16,7 +15,12 @@ def _read_pillar(ref_component_pillar):
 
 
 # def update(config_file: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
-def conf_update(config_file = "/opt/seagate/s3/conf/s3config.yaml", ref_pillar = "s3server" , type=None, backup=True):
+def conf_update(
+    config_file="/opt/seagate/s3/conf/s3config.yaml",
+    ref_pillar="s3server",
+    type=None,
+    backup=True
+  ):
   """Update component config file.
 
   Args :
@@ -25,23 +29,26 @@ def conf_update(config_file = "/opt/seagate/s3/conf/s3config.yaml", ref_pillar =
     type: Type of config file YAML/INI
     backup: Backup config file before modification as bool (Default: True)
   """
-  # print("Name: {0}".format(config_file))
-  # print("Pillar ref: {0}".format(ref_pillar))
   pillar_dict = _read_pillar(ref_pillar)
-  config_dict = {}
+  
   if not os.path.exists(config_file):
-    print("ERROR: S3server config file {0} doesn't exist.".format(config_file))
-    return False
+    print("[ERROR   ] Possible error with s3server installation.")
+    raise FileNotFoundError(
+      errno.ENOENT,
+      os.strerror(errno.ENOENT),
+      config_file
+    )
 
-  with open(config_file,"r") as f:
+  config_dict = {}
+  with open(config_file, "r") as fd:
     try:
-      config_dict = yaml.safe_load(f)
-    except yaml.YAMLError as yexc:
-      print("Error parsing yaml file {}".format(yexc))
+      config_dict = yaml.safe_load(fd)
+    except yaml.YAMLError as yerr:
+      print("Error parsing yaml file {0}".format(yerr))
       return False
-
-  if not config_dict:
-    return False
+    finally:
+      if not config_dict:
+        return False
 
   if backup:
     copyfile(config_file, config_file + '.bak')
@@ -52,7 +59,7 @@ def conf_update(config_file = "/opt/seagate/s3/conf/s3config.yaml", ref_pillar =
   with open(config_file, 'w') as fd:
     yaml.dump(config_dict, fd)
 
-  return True if config_dict else False
+  return True
 
 
 def _update_dict(config_dict, pillar_dict):
@@ -64,6 +71,8 @@ def _update_dict(config_dict, pillar_dict):
         config_dict[key] = _BlockSeqList(pillar_dict[key])
       else:
         config_dict[key] = pillar_dict[key]
+  
+  return config_dict
 
 
 class _BlockSeqList( list ): pass
