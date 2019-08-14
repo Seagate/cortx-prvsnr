@@ -1,4 +1,4 @@
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = grains['id'] %}
 vrrp_script chk_haproxy {
   script "/usr/bin/systemctl status haproxy" # check the haproxy process
   interval 2 # every 2 seconds
@@ -10,7 +10,7 @@ global_defs {
 }
 
 vrrp_instance VI_1 {
-  interface {{ pillar['facts'][node]['data_if'] }} # interface to monitor
+  interface {{ pillar['cluster'][node]['network']['data_if'][0] }} # interface to monitor
 
   state MASTER # MASTER on haproxy1, BACKUP on haproxy2
 

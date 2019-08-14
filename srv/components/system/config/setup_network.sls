@@ -1,4 +1,4 @@
-{% set node_name = salt['pillar.get'] ('fact:{0}:fqdn'.format('node_1')) %}
+{% set node = grains['id'] %}
 
 stop_and_diasble_nm:
   service.dead:
@@ -27,7 +27,7 @@ salt_disable_firewalld:
 
 set_hostname:
   cmd.run:
-    - name: hostnamectl set-hostname {{ node_name }}
+    - name: hostnamectl set-hostname {{ pillar['cluster'][node]['fqdn'] }}
 
 # set_nic_bios_dev_name_grub:
 #   file.replace:
@@ -61,7 +61,7 @@ system:
     - enabled: True
     - hostname: {{ node_name }}
     - apply_hostname: True
-    - gateway: {{ pillar['facts'][node]['gateway_ip'] }}
+    - gateway: {{ pillar['cluster'][node]['network']['gateway_ip'] }}
     - require_reboot: True
 
 set_network_file:

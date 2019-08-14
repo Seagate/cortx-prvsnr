@@ -1,10 +1,10 @@
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = grains['id'] %}
 
 Update lnet config file:
   file.managed:
     - name: /etc/modprobe.d/lnet.conf
     - contents:
-      - options lnet networks=tcp({{ salt['pillar.get']("facts:{0}:data_if".format(node), 'lo') }})  config_on_load=1
+      - options lnet networks=tcp({{ salt['pillar.get']("cluster:{0}:network:data_if:0".format(node), 'lo') }})  config_on_load=1
     - user: root
     - group: root
 

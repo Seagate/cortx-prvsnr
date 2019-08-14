@@ -6,25 +6,28 @@
 # read vm configuration(s) from JSON file
 salt_nodes = [
   {
-    "name" => "ees-node1",
+    "name" => "eosnode-1",
     "cpus" => 2,
     "memory" => 4096,
     "mgmt0" => "172.16.10.101",
-    "data0" => "172.19.10.101"
+    "data0" => "172.19.10.101",
+    "minion_id" => "eosnode-1"
   },
   {
-    "name"=> "ees-node2",
+    "name"=> "eosnode-2",
     "cpus"=> 2,
     "memory"=> 4096,
     "mgmt0" => "172.16.10.102",
-    "data0" => "172.19.10.102"
+    "data0" => "172.19.10.102",
+    "minion_id" => "eosnode-2"
   },
   {
     "name"=> "s3client",
     "cpus"=> 2,
     "memory"=> 2048,
     "mgmt0" => "172.16.10.103",
-    "data0" => "172.19.10.103"
+    "data0" => "172.19.10.103",
+    "minion_id" => "s3client"
   }
 ]
 
@@ -121,65 +124,52 @@ Vagrant.configure("2") do |config|
       # Folder synchonization
       node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
       type: "rsync",
-      rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
       rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
-      rsync__verbose: false
+      rsync__auto: true,
+      rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
+      rsync__verbose: true
 
-      node_config.vm.provision "shell", inline: <<-SHELL
-        sudo yum remove epel-release -y
+      node_config.vm.provision "shell",
+        name: "Boootstrap VM",
+        #run: "once",
+        path: './files/scripts/setup/bootstrap.sh',
+        privileged: true
 
-        [[ -f /etc/yum.repos.d/epel.repo.rpmsave ]] && sudo rm -rf /etc/yum.repos.d/epel.repo.*
-        [[ -f /etc/yum.repos.d/CentOS-Base.repo ]] && sudo rm -rf /etc/yum.repos.d/*.repo
-        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/yum.repos.d /etc
+      node_config.vm.provision "shell",
+        name: "Vagrant_override",
+        #run: "once",
+        inline: <<-SHELL
+          echo IPADDR=#{node["mgmt0"]}
+          echo IPADDR=#{node["data0"]}
+          sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
+          sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
-        sudo ifdown enp0s8
-        sudo ifdown enp0s9
-        sudo ifdown data0
-        sudo ifdown mgmt0
+          sudo ifdown enp0s8
+          sudo ifdown enp0s9
+          sudo ifdown data0
+          sudo ifdown mgmt0
+          sudo ifup data0
+          sudo ifup mgmt0
 
-        # ToDo
-        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
-        echo IPADDR=#{node["mgmt0"]}
-        echo IPADDR=#{node["data0"]}
-        sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
-        # sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
-        sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
-        sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
+          sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
 
-        sudo ifup data0
-        sudo ifup mgmt0
-        #sudo systemctl restart network.service
+          touch /etc/salt/minion_id
+          echo #{node["minion_id"]} |tee /etc/salt/minion_id
+        SHELL
 
-        sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
-
-        sudo mkdir -p /root/.ssh
-        sudo chmod 755 /root/.ssh
-        sudo cp -r /opt/seagate/ees-prvsnr/files/.ssh /root
-        sudo cat /root/.ssh/id_rsa.pub>>/root/.ssh/authorized_keys
-        sudo chmod 644 /root/.ssh/*
-        sudo chmod 600 /root/.ssh/id_rsa
-
-        sudo yum install -y salt-minion
-
-        sudo systemctl stop salt-minion
-        sudo systemctl disable salt-minion
-        sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion /etc/salt/minion
-      SHELL
-
-      unless 's3client' == node['name']
-        node_config.vm.provision :salt do |salt|
-          # Master/Minion specific configs.
-          salt.masterless = true
-          salt.minion_config = './files/etc/salt/minion'
-
-          # Generic configs
-          salt.install_type = 'stable'
-          salt.run_highstate = false
-          salt.colorize = true
-          salt.log_level = 'warning'
-        end     # End of Salt Provisioning
-      end       # End of Unless
+      #unless 's3client' == node['name']
+      #  node_config.vm.provision :salt do |salt|
+      #    # Master/Minion specific configs.
+      #    salt.masterless = true
+      #    salt.minion_config = './files/etc/salt/minion'
+      #
+      #    # Generic configs
+      #    salt.install_type = 'stable'
+      #    salt.run_highstate = false
+      #    salt.colorize = true
+      #    salt.log_level = 'warning'
+      #  end     # End of Salt Provisioning
+      #end       # End of Unless
     end
   end
 end

@@ -24,17 +24,26 @@ Update sspl-ll conf file:
 #      - ref_pillar: sspl
 #      - type: YAML
 #      - backup: True
-{% else %}
 
-# START: Prepare for SSPL configuration for HW SSU only
+{% else %}
 
 # Add zabbix user in sudoers file:
 #   file.line:
-#     - name: /etc/sudoer
-    # Add line after
-    # %wheel ALL=(ALL) NOPASSWD: ALL
-    # zabbix ALL=(ALL) NOPASSWD: ALL
+#     - name: /etc/sudoers
+#     - content: 'zabbix ALL=(ALL) NOPASSWD: ALL'
+#     - mode: ensure
+#     - after: '.*%wheel\s+ALL=\(ALL\)\s+NOPASSWD: ALL.*'
+#     - backup: True
 
+Create sudoers file for zabbix user:
+  file.managed:
+    - name: /etc/sudoers.d/zabbix
+    - makedirs: True
+    - replace: True
+    - mode: 644
+    - contents:
+      - 'zabbix ALL=(ALL) NOPASSWD: ALL'
+    
 Ensure directory dcs_collector.conf.d exists:
   file.directory:
     - name: /etc/dcs_collector.conf.d

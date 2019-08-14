@@ -1,9 +1,10 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = grains['id'] %}
 
-{% set mgmt_if = salt["pillar.get"]("facts:{0}:mgmt_if".format(node), "lo") %}
-{% set data_if = salt["pillar.get"]("facts:{0}:data_if".format(node), "lo") %}
+{% if pillar['cluster'][node]['is_primary'] %}
+{% set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if:0".format(node), "lo") %}
+{% set data_if = salt["pillar.get"]("cluster:{0}:network:data_if:0".format(node), "lo") %}
 
 # Configure halond
 Update Halon config file:
@@ -44,3 +45,5 @@ Copy halon_facts.yaml to /etc/halon:
     - onlyif: test -f /tmp/halon_facts.yaml
     - require:
       - Generate halon_facts.yaml file
+
+{% endif %}

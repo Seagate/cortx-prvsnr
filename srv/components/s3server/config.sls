@@ -1,5 +1,5 @@
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
-{% set data_if = pillar['facts'][node]['data_if'] %}
+{% set node = grains['id'] %}
+{% set data_if = pillar['cluster'][node]['network']['data_if'][0] %}
 
 # Update s3 config file with pillar data:
 #   module.run:

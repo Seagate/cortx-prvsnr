@@ -67,75 +67,75 @@ class ClusterCfg(BaseCfg):
         if program_args.interactive:
             input(
                 "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
-            for node in self.__options["facts"]:
+            for node in self.__options["cluster"]["node_list"]:
                 input_msg = ("Enter fqdn for ees {1} ({0}): ".format(
                     self.__options["facts"][node]["fqdn"], node
                 )
                 )
-                self.__options["facts"][node]["fqdn"] = (
+                self.__options["cluster"][node]["fqdn"] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["fqdn"]
+                    self.__options["cluster"][node]["fqdn"]
                 )
 
                 input_msg = ("Is this a primary ees node? ({0}): ".format(
-                    self.__options["facts"][node]["primary"]
+                    self.__options["cluster"][node]["is_primary"]
                 )
                 )
-                self.__options["facts"][node]["primary"] = (
+                self.__options["cluster"][node]["is_primary"] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["primary"]
+                    self.__options["cluster"][node]["is_primary"]
                 )
 
                 input_msg = ("Enter management interface name ({0}): ".format(
-                    self.__options["facts"][node]["mgmt_if"]
+                    self.__options["cluster"][node]["network"]["mgmt_if"][0]
                 )
                 )
-                self.__options["facts"][node]["mgmt_if"] = (
+                self.__options["cluster"][node]["network"]["mgmt_if"][0] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["mgmt_if"]
+                    self.__options["cluster"][node]["network"]["mgmt_if"][0]
                 )
 
                 input_msg = ("Enter data interface name ({0}): ".format(
-                    self.__options["facts"][node]["data_if"]
+                    self.__options["cluster"][node]["network"]["data_if"][0]
                 )
                 )
-                self.__options["facts"][node]["data_if"] = (
+                self.__options["cluster"][node]["network"]["data_if"][0] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["data_if"]
+                    self.__options["cluster"][node]["network"]["data_if"][0]
                 )
 
                 input_msg = ("Enter the default gateway ip ({0}): ".format(
-                    self.__options["facts"][node]["gateway_ip"]
+                    self.__options["cluster"][node]["network"]["gateway_ip"]
                 )
                 )
-                self.__options["facts"][node]["gateway_ip"] = (
+                self.__options["cluster"][node]["network"]["gateway_ip"] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["gateway_ip"]
+                    self.__options["cluster"][node]["network"]["gateway_ip"]
                 )
                 
                 input_msg = ("Enter the default metadata_device ({0}): ".format(
-                    self.__options["facts"][node]["metadata_device"]
+                    self.__options["cluster"][node]['storage']["metadata_device"][0]
                 )
                 )
-                self.__options["facts"][node]["metadata_device"] = (
+                self.__options["cluster"][node]['storage']["metadata_device"][0] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["metadata_device"]
+                    self.__options["cluster"][node]['storage']["metadata_device"][0]
                 )
 
                 input_msg = ("Enter the data disk device for {1} ({0}): ".format(
-                    self.__options["facts"][node]["data_device_1"], node
+                    self.__options["cluster"][node]['storage']["data_device_1"][0], node
                 )
                 )
-                self.__options["facts"][node]["data_device_1"] = (
+                self.__options["cluster"][node]['storage']["data_device_1"][0] = (
                     input(input_msg)
                     or
-                    self.__options["facts"][node]["data_device_1"]
+                    self.__options["cluster"][node]['storage']["data_device_1"][0]
                 )
 
 

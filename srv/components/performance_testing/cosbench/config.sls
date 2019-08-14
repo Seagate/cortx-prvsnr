@@ -1,4 +1,4 @@
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = grains['id'] %}
 
 Update /etc/hosts:
   file.managed:
@@ -18,7 +18,7 @@ Setup driver file:
     - contents:
       - [driver]
       - name=DriverA
-      - url=http://{{grains['ip_interfaces'][pillar['facts'][node]['data_if']][0]}}:18088/driver
+      - url=http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'][0] }}:18088/driver
 
 Setup controller file:
   file.managed:
@@ -34,7 +34,7 @@ Setup controller file:
       -
       - [driver1]
       - name = DriverA
-      - url = http://{{grains['ip_interfaces'][pillar['facts'][node]['data_if']][0]}}:18088/driver
+      - url = http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'][0] }}:18088/driver
 
 Copy sample file:
   file.managed:

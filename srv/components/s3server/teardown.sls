@@ -3,9 +3,9 @@
 #-------------------------
 include:
   - components.s3server.build_ssl_cert_rpms.teardown
-  - components.s3server.openldap.teardown
-  - components.s3server.haproxy.teardown
-  - components.s3server.keepalived.teardown
+  - components.misc.openldap.teardown
+  - components.ha.haproxy.teardown
+  - components.ha.keepalived.teardown
 #-------------------------
 # Teardown haproxy/openldap
 #-------------------------
@@ -29,6 +29,14 @@ Remove s3server_uploads:
 Remove /tmp/s3certs:
   file.absent:
     - name: /tmp/s3certs
+
+Delete directory /opt/s3server/ssl:
+  file.absent:
+    - name: /opt/seagate/s3server/ssl
+
+Delete directory /opt/s3server/s3certs:
+  file.absent:
+    - name: /opt/seagate/s3server/s3certs
 
 Remove working directory for S3 server:
   file.absent:

@@ -1,19 +1,15 @@
-qb04n1-m06:
-  host: 10.230.164.98
-  user: root
-  timeout: 120
+eosnode-1:
+    host: 172.19.10.101
+    user: root
+    timeout: 60
+    minion_opts:
+        id: eosnode-1
+        roles: server-node
 
-qb04n2-m06:
-  host: 10.230.162.11
-  user: root
-  timeout: 120
-
-qb04n3-m06:
-  host: 10.230.162.11
-  user: root
-  timeout: 120
-
-qb04n4-m06:
-  host: 10.230.162.11
-  user: root
-  timeout: 120
+eosnode-2:
+    host: 172.19.10.101
+    user: root
+    timeout: 60
+    minion_opts:
+        id: eosnode-2
+        roles: server-node

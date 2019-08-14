@@ -1,4 +1,4 @@
-{% set node = 'node_1' if grains['fqdn'] == pillar['facts']['node_1']['fqdn'] else 'node_2' if grains['fqdn'] == pillar['facts']['node_2']['fqdn'] else None %}
+{% set node = grains['id'] %}
 
 # File still work in progress as disks devices are hard coded
 
@@ -24,14 +24,14 @@
 Label Metadata partition:
   module.run:
     - partition.mklabel:
-      - device: {{ pillar['facts'][node]['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
       - label_type: gpt
 
 # Create partition for SWAP
 Create swap partition:
   module.run:
     - partition.mkpartfs:
-      - device: {{ pillar['facts'][node]['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
       - part_type: primary
       - fs_type: linux-swap
       - start: 0%
@@ -41,7 +41,7 @@ Create swap partition:
 Create metadata partition:
   module.run:
     - partition.mkpartfs:
-      - device: {{ pillar['facts'][node]['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
       - part_type: primary
       - fs_type: ext4
       - start: 30%
@@ -50,37 +50,37 @@ Create metadata partition:
 # Make SWAP
 Make SWAP partition:
   cmd.run:
-    - Name: mkswap {{ pillar['facts'][node]['metadata_device'] }}-part1
-    - onlyif: test -f {{ pillar['facts'][node]['metadata_device'] }}-part1
+    - Name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
+    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
     - require:
-      - Create swap partition
+      - module: Create swap partition
 
 
 # Activate SWAP device
 Enable swap:
   mount.swap:
-    - name: {{ pillar['facts'][node]['metadata_device'] }}-part1
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
     - persist: True     # save in the fstab
     - require:
-      - Make SWAP partition
+      - cmd: Make SWAP partition
 
 # Format metadata partition
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: {{ pillar['facts'][node]['metadata_device'] }}-part2
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part2
       - fs_type: ext4
       - require:
-        - Create metadata partition
+        - module: Create metadata partition
 
 # Ensure /var/mero is mounted
 Mount mero partition:
   mount.mounted:
     - name: /var/mero
-    - device: {{ pillar['facts'][node]['metadata_device'] }}-part2
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
     - persist: True     # save in the fstab
     - mount: True
     - require:
-      - Make metadata partition
+      - module: Make metadata partition

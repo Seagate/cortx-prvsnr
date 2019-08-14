@@ -1,17 +1,49 @@
-facts:
-    node_1:
-        data_device_1: /dev/sdc
-        data_if: data0
-        fqdn: ees-node1
-        gateway_ip: 10.230.160.1
-        metadata_device: /dev/sdb
-        mgmt_if: mgmt0
-        primary: true
-    node_2:
-        data_device_1: /dev/sdc
-        data_if: data0
-        fqdn: ees-node2
-        gateway_ip: 10.230.160.1
-        metadata_device: /dev/sdb
-        mgmt_if: mgmt0
-        primary: false
+cluster:
+  type: single        # single/ees/ecs
+  node_list:
+    - eosnode-1
+    - eosnode-2
+  eosnode-1:
+    fqdn: eosnode-1
+    is_primary: true
+    network:
+      mgmt_if:                        # Management network interfaces for bonding
+        - mgmt0
+        # - ifcfg-enp0s8
+      data_if:                        # Management network interfaces for bonding
+        - data0
+        # - ifcfg-enp0s9
+      gateway_ip: 10.230.160.1
+    storage:
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc
+  eosnode-2:
+    fqdn: eosnode-2
+    is_primary: false
+    network:
+      mgmt_if:                        # Management network interfaces for bonding
+        - mgmt0
+        # - ifcfg-enp0s8
+      data_if:                        # Management network interfaces for bonding
+        - data0
+        # - ifcfg-enp0s9
+      gateway_ip: 10.230.160.1
+    storage:
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc
+  storage_enclosure:
+    - id: storage_node_1                  # equivalent to fqdn for server node
+      type: 5U84                          # Type of enclosure. E.g. 5U84/PODS
+      controller:
+        type: gallium                   # Type of controller on storage node. E.g. gallium/indium/sati
+        mc:
+          - ip:
+            port:
+          - ip:
+            port:
+        user:
+        password:
