@@ -23,7 +23,7 @@ python-pip:
 pip3 upgrade:
   pip.installed:
     - name: pip
-    - bin_env: /usr/local/bin/pip
+    - bin_env: /usr/bin/pip
     - upgrade: True
     - require:
       - pkg: python-pip
@@ -36,7 +36,7 @@ Install pyyaml:
     - name: pyyaml
     # Absolute path to a virtual environment directory or absolute path to a pip executable
     # We want to install python3 paramiko so we use pip3 here
-    - bin_env: '/usr/local/bin/pip3'
+    - bin_env: '/usr/bin/pip3'
     - upgrade: True
     # Require python-pip state to be run before this one
     - require:
