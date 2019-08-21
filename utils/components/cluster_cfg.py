@@ -68,8 +68,8 @@ class ClusterCfg(BaseCfg):
             input(
                 "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
             for node in self.__options["cluster"]["node_list"]:
-                input_msg = ("Enter fqdn for ees {1} ({0}): ".format(
-                    self.__options["facts"][node]["fqdn"], node
+                input_msg = ("\nEnter fqdn for ees {1} ({0}): ".format(
+                    self.__options["cluster"][node]["fqdn"], node
                 )
                 )
                 self.__options["cluster"][node]["fqdn"] = (
@@ -129,16 +129,14 @@ class ClusterCfg(BaseCfg):
                 )
 
                 input_msg = ("Enter the data disk device for {1} ({0}): ".format(
-                    self.__options["cluster"][node]['storage']["data_device_1"][0], node
+                    self.__options["cluster"][node]['storage']["data_devices"][0], node
                 )
                 )
-                self.__options["cluster"][node]['storage']["data_device_1"][0] = (
+                self.__options["cluster"][node]['storage']["data_devices"][0] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]['storage']["data_device_1"][0]
+                    self.__options["cluster"][node]['storage']["data_devices"][0]
                 )
-
-
 
             # Process args for node_2
             # print(json.dumps(self.__options, indent = 4))
