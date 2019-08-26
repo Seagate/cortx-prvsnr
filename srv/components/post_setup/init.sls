@@ -1,17 +1,9 @@
-{% set node = grains['id'] %}
-
-{% if pillar['cluster'][node]['is_primary'] %}
-
 Ensure halond running:
   service.running:
     - name: halond
 
-Restart HAProxy:
-  service.running:
-    - name: haproxy
-    - watch:
-      - cmd: Bootstrap mero
-
+{% set node = grains['id'] %}
+{% if pillar['cluster'][node]['is_primary'] %}
 # hctl mero bootstrap
 Bootstrap mero:
   cmd.run:
@@ -20,13 +12,16 @@ Bootstrap mero:
     - require:
       - service: Ensure halond running
 
+Restart HAProxy:
+  service.running:
+    - name: haproxy
+{% endif %}
+
 # Expected running services
-# s3authserver: Failed
+# s3authserver: running
 # slapd: running
-# haproxy: failed
-# lnet: dead (disabled)
+# haproxy: running
 # halond: running
 # sspl-ll: running
-# mero-kernel: dead (disabled)
-
-{% endif %}
+# mero-kernel: running
+# lnet: dead running

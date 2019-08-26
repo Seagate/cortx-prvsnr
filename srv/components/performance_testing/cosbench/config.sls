@@ -18,7 +18,7 @@ Setup driver file:
     - contents:
       - [driver]
       - name=DriverA
-      - url=http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'][0] }}:18088/driver
+      - url=http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'] }}:18088/driver
 
 Setup controller file:
   file.managed:
@@ -34,7 +34,7 @@ Setup controller file:
       -
       - [driver1]
       - name = DriverA
-      - url = http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'][0] }}:18088/driver
+      - url = http://{{ grains['ip_interfaces'][pillar['cluster'][node]['network']['data_if'] }}:18088/driver
 
 Copy sample file:
   file.managed:

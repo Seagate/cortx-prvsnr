@@ -24,14 +24,14 @@
 Label Metadata partition:
   module.run:
     - partition.mklabel:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - label_type: gpt
 
 # Create partition for SWAP
 Create swap partition:
   module.run:
     - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: linux-swap
       - start: 0%
@@ -41,7 +41,7 @@ Create swap partition:
 Create metadata partition:
   module.run:
     - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext4
       - start: 30%
@@ -50,8 +50,8 @@ Create metadata partition:
 # Make SWAP
 Make SWAP partition:
   cmd.run:
-    - Name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
-    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
+    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
+    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - require:
       - module: Create swap partition
 
@@ -59,7 +59,7 @@ Make SWAP partition:
 # Activate SWAP device
 Enable swap:
   mount.swap:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part1
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - persist: True     # save in the fstab
     - require:
       - cmd: Make SWAP partition
@@ -68,7 +68,7 @@ Enable swap:
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part2
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part2
       - fs_type: ext4
       - require:
         - module: Create metadata partition
@@ -77,7 +77,7 @@ Make metadata partition:
 Mount mero partition:
   mount.mounted:
     - name: /var/mero
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'] }}-part2
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
     - persist: True     # save in the fstab

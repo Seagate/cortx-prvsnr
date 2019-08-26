@@ -1,10 +1,10 @@
 salt-ssh:
   config_dir: /opt/seagate/ees-prvsnr/files/etc/salt
-  ssh_max_procs: 30
-  ssh_wipe: True
+  ignore_host_keys: True
+  no_host_keys: True
   refresh_cache: True
   regen_thin: True
   roster_file: ./roster-file
-  no_host_keys: True
-  ignore_host_keys: True
+  ssh_max_procs: 30
+  ssh_wipe: True
   state_output: mixed

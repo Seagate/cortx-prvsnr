@@ -4,7 +4,7 @@ Update lnet config file:
   file.managed:
     - name: /etc/modprobe.d/lnet.conf
     - contents:
-      - options lnet networks=tcp({{ salt['pillar.get']("cluster:{0}:network:data_if:0".format(node), 'lo') }})  config_on_load=1
+      - options lnet networks=tcp({{ salt['pillar.get']("cluster:{0}:network:data_if".format(node), 'lo') }})  config_on_load=1
     - user: root
     - group: root
 

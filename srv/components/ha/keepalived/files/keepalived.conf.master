@@ -10,7 +10,7 @@ global_defs {
 }
 
 vrrp_instance VI_1 {
-  interface {{ pillar['cluster'][node]['network']['data_if'][0] }} # interface to monitor
+  interface {{ pillar['cluster'][node]['network']['data_if'] }} # interface to monitor
 
   state MASTER # MASTER on haproxy1, BACKUP on haproxy2
 

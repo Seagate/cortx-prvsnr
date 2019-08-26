@@ -24,12 +24,16 @@ sudo cp -R /opt/seagate/ees-prvsnr/files/etc/yum.repos.d/* /etc/yum.repos.d/
 sudo yum install -y salt-ssh salt-minion salt-master
 
 # Update master & minion config
-sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion /etc/salt/minion
+sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion_masterless /etc/salt/minion
 sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/master /etc/salt/master
 
+# Disable salt-master as we would execute provisioning on-demand
+sudo systemctl stop salt-master
+sudo systemctl disable salt-master
+
 # Disable salt-minion as we would execute provisioning on-demand
-# sudo systemctl stop salt-minion
-# sudo systemctl disable salt-minion
+sudo systemctl stop salt-minion
+sudo systemctl disable salt-minion
 
 ################
 # Network setup

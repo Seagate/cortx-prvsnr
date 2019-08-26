@@ -1,5 +1,5 @@
 {% set node = grains['id'] %}
-{% set data_if = pillar['cluster'][node]['network']['data_if'][0] %}
+{% set data_if = pillar['cluster'][node]['network']['data_if'] %}
 
 Update s3 config file with pillar data:
   module.run:
