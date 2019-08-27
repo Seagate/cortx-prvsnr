@@ -24,16 +24,21 @@ sudo cp -R /opt/seagate/ees-prvsnr/files/etc/yum.repos.d/* /etc/yum.repos.d/
 sudo yum install -y salt-ssh salt-minion salt-master
 
 # Update master & minion config
-sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion_masterless /etc/salt/minion
+sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/minion /etc/salt/minion
 sudo cp /opt/seagate/ees-prvsnr/files/etc/salt/master /etc/salt/master
 
+sudo systemctl enable salt-master
+sudo systemctl restart salt-master
+sudo systemctl enable salt-minion
+sudo systemctl restart salt-minion
+
 # Disable salt-master as we would execute provisioning on-demand
-sudo systemctl stop salt-master
-sudo systemctl disable salt-master
+# sudo systemctl stop salt-master
+# sudo systemctl disable salt-master
 
 # Disable salt-minion as we would execute provisioning on-demand
-sudo systemctl stop salt-minion
-sudo systemctl disable salt-minion
+# sudo systemctl stop salt-minion
+# sudo systemctl disable salt-minion
 
 ################
 # Network setup
@@ -66,6 +71,8 @@ sudo cp /opt/seagate/ees-prvsnr/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/id_rsa.p
 sudo chmod -R 644 /root/.ssh/id_rsa.pub
 sudo cp /opt/seagate/ees-prvsnr/files/.ssh/authorized_keys /root/.ssh/authorized_keys
 sudo chmod -R 644 /root/.ssh/authorized_keys
+sudo cp /opt/seagate/ees-prvsnr/files/.ssh/known_hosts /root/.ssh/known_hosts
+sudo chmod -R 644 /root/.ssh/known_hosts
 
 sudo mkdir -p /etc/salt/pki/master/ssh
 sudo chmod -R 755 /etc/salt/pki/master/ssh

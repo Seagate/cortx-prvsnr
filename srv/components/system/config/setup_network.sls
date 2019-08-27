@@ -1,11 +1,11 @@
 {% set node = grains['id'] %}
 
-stop_and_diasble_nm:
+Stop and disable NetworkManager service:
   service.dead:
     - name: NetworkManager
     - enable: False
 
-purge_package_nm:
+Remove NetworkManager package:
   pkg.purged:
     - name: NetworkManager
     - require:
@@ -13,19 +13,19 @@ purge_package_nm:
 
 # Disabling NetworkManager doesn't kill dhclient process.
 # If not killed explicitly, it causes network restart to fail: COSTOR-439
-kill_dhclient:
+Kill dhclient:
   cmd.run:
     - name: pkill -SIGTERM dhclient
     - unless: pgrep dhclient
     - watch:
       - service: stop_and_diasble_nm
 
-salt_disable_firewalld:
+Stop and disable firewalld service:
   service.dead:
     - name: firewalld
     - enable: False
 
-set_hostname:
+Set hostname:
   cmd.run:
     - name: hostnamectl set-hostname {{ pillar['cluster'][node]['fqdn'] }}
 
@@ -47,12 +47,19 @@ set_hostname:
 #     - prepend_if_not_found: False
 #     - ignore_if_missing: True
 
-remove_eth_cfg_files:
+# Re-generate grub config:
+#   cmd.run:
+#     - name: grub2-mkconfig -o /boot/grub2/grub.cfg
+#     - watch:
+#       - file: set_nic_bios_dev_name_grub
+#       - file: set_nic_bios_dev_name_grub
+
+Remove eth network interface configuration files:
   cmd.run:
     - name: rm -rf /etc/sysconfig/network-scripts/ifcfg-eth*
     - onlyif: test -f /etc/sysconfig/network-scripts/ifcfg-eth0
 
-rm_ifcfg_lan0:
+Remove lan0:
   file.absent:
     - name: /etc/sysconfig/network-scripts/ifcfg-lan0
 
@@ -64,7 +71,7 @@ system:
     - gateway: {{ pillar['cluster'][node]['network']['gateway_ip'] }}
     - require_reboot: True
 
-set_network_file:
+Update network file:
   file.managed:
     - name: /etc/sysconfig/network
     - contents: |
@@ -78,7 +85,7 @@ set_network_file:
     - watch_in:
       - service: service_network
 
-# set_network_script_files:
+# Set network-script files:
 #   file.recurse:
 #     - name: /etc/sysconfig/network-scripts
 #     - source: salt://build_node/files/etc/sysconfig/network-scripts
@@ -89,6 +96,7 @@ set_network_file:
 #     - keep_symlinks: True
 #     - include_empty: True
 
+# For mellanox NICs
 # set_mlx4_conf:
 #   file.managed:
 #     - name: {{mnt_point1}}/etc/rdma/mlx4.conf

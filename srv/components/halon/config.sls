@@ -10,7 +10,7 @@ Update Halon config file:
   file.managed:
     - name: /etc/sysconfig/halond
     - contents:
-      - HALOND_LISTEN={{ grains["ip4_interfaces"][mgmt_if] }}:9070
+      - HALOND_LISTEN={{ grains["ip4_interfaces"][mgmt_if][0] }}:9070
       - HALOND_STATION_OPTIONS="--rs-lease 4000000"
     - user: root
     - group: root
