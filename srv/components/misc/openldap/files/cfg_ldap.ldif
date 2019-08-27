@@ -11,7 +11,7 @@ olcAccess: {0}to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,c
 dn: olcDatabase={0}config,cn=config
 changetype: modify
 replace: olcRootPW
-olcRootPW: {{ salt['pillar.get']("openldap:admin_passwd_hash", "{SSHA}s8f0Qhty+QZX3WW5suLnDF0ANCamTWqh") }}
+olcRootPW:
 
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
@@ -26,7 +26,7 @@ olcRootDN: cn=admin,dc=seagate,dc=com
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcRootPW
-olcRootPW: {{ salt['pillar.get']("openldap:admin_passwd_hash", "{SSHA}s8f0Qhty+QZX3WW5suLnDF0ANCamTWqh") }}
+olcRootPW:
 
 # Configuring custom data dir for openldap
 # Before setting this directory ensure

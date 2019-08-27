@@ -6,6 +6,15 @@ Stop slapd:
   service.dead:
     - name: slapd
 
+disable slapd:
+  service.disabled:
+    - name: slapd
+
+set_chkconfig_off:
+  cmd.run:
+    - name: chkconfig slapd off
+    - only_if: systemctl is-enabled slapd
+
 Remove pkgs:
   pkg.purged:
     - pkgs:
@@ -23,19 +32,15 @@ Remove pkgs:
    '/etc/openldap/ldap.conf',
    '/etc/openldap/ldap.conf.bak',
    '/etc/sysconfig/slapd.bak',
-   '/etc/sysconfig/slapd.repos',
    '/etc/openldap/slapd.d',
-   rpm_build_dir
+   '/opt/seagate/generated_configs/',
+   '/opt/seagate/scripts/',
  ] %}
 {{ filename }}:
   file.absent:
     - require:
       - pkg: Remove pkgs
 {% endfor %}
-
-Delete directory /tmp/s3ldap:
-  file.absent:
-    - name: /tmp/s3ldap
 
 Remove user ldap:
   user.absent:

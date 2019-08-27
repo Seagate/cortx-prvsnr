@@ -20,37 +20,34 @@
 # Command to add configuration to ldap:
 # ldapmodify -Y EXTERNAL  -H ldapi:/// -f replicate.ldif
 
+{% set current_node_name = grains['id'] -%}
+{% set node_list = salt['pillar.get']('cluster:node_list', []) -%}
+
 dn: cn=config
 changetype: modify
 replace: olcServerID
-olcServerID: 2
+{% for node in node_list -%}
+{% if current_node_name == node -%}
+olcServerID: {{ loop.index }}
+{% endif -%}
+{% endfor %}
 
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 add: olcSyncRepl
-olcSyncRepl: rid=004
-  provider=ldap://<sample_provider_URI>:389/
+{% for node in node_list -%}
+olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
+  provider=ldap://{{ node }}:389/
   bindmethod=simple
   binddn="cn=admin,dc=seagate,dc=com"
-  credentials=seagate
+  credentials={{ salt['pillar.get']('openldap:admin_passwd', "seagate") }}
   searchbase="dc=seagate,dc=com"
   scope=sub
   schemachecking=on
   type=refreshAndPersist
   retry="30 5 300 3"
   interval=00:00:05:00
-# Enable additional providers
-# olcSyncRepl: rid=005
-#   provider=ldap://<sample_provider_URI>:389/
-#   bindmethod=simple
-#   binddn="cn=admin,dc=seagate,dc=com"
-#   credentials=seagate
-#   searchbase="dc=seagate,dc=com"
-#   scope=sub
-#   schemachecking=on
-#   type=refreshAndPersist
-#   retry="30 5 300 3"
-#   interval=00:00:05:00
+{% endfor %}
 -
 replace: olcMirrorMode
 olcMirrorMode: TRUE

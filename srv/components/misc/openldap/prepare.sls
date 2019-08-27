@@ -4,53 +4,77 @@ Remove existing certs:
       - stx-s3-certs
       - stx-s3-client-certs
 
-Delete tmp dir:
-  file.absent:
-    - name: /tmp/s3ldap
-
 Create tmp dir:
   file.directory:
-    - name: /tmp/s3ldap
+    - name: /opt/seagate/generated_configs/ldap
     - clean: True
     - makedirs: True
     - force: True
 
 Copy initial ldap config:
   file.managed:
-    - name: /tmp/s3ldap/cfg_ldap.ldif
+    - name: /opt/seagate/generated_configs/ldap/cfg_ldap.ldif
     - source: salt://components/misc/openldap/files/cfg_ldap.ldif
-    - keep_source: False
-    - template: jinja
 
 Copy ldap config:
   file.managed:
-    - name: /tmp/s3ldap/iam-admin.ldif
+    - name: /opt/seagate/generated_configs/ldap/iam-admin.ldif
     - source: salt://components/misc/openldap/files/iam-admin.ldif
+
+Copy ldap_gen_passwd script:
+  file.managed:
+    - name: /opt/seagate/scripts/ldap_gen_passwd.sh
+    - source: salt://components/misc/openldap/files/ldap_gen_passwd.sh
+    - keep_source: False
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: True
+    - template: jinja
+
+Copy ldap enale ssl script:
+  file.managed:
+    - name: /opt/seagate/scripts/enable_ssl_openldap.sh
+    - source: salt://components/misc/openldap/files/ssl/enable_ssl_openldap.sh
+    - keep_source: False
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: True
+
+{% if pillar['cluster']['type'] == "ees" %}
+Copy ldap replication config:
+  file.managed:
+    - name: /opt/seagate/generated_configs/ldap/replicate.ldif
+    - source: salt://components/misc/openldap/files/replicate.ldif
     - keep_source: False
     - template: jinja
+{% endif %}
 
 # File copy operation
 {% for filename in [
     { "src": 'salt://components/misc/openldap/files/cn={1}s3user.ldif',
-      "dest": '/tmp/s3ldap/cn={1}s3user.ldif' },
+      "dest": '/opt/seagate/generated_configs/ldap/cn={1}s3user.ldif' },
     { "src": 'salt://components/misc/openldap/files/ldap-init.ldif',
-      "dest": '/tmp/s3ldap/ldap-init.ldif' },
+      "dest": '/opt/seagate/generated_configs/ldap/ldap-init.ldif' },
     { "src": 'salt://components/misc/openldap/files/iam-admin-access.ldif',
-    "dest": '/tmp/s3ldap/iam-admin-access.ldif' },
+    "dest": '/opt/seagate/generated_configs/ldap/iam-admin-access.ldif' },
     { "src": 'salt://components/misc/openldap/files/iam-constraints.ldif',
-    "dest": '/tmp/s3ldap/iam-constraints.ldif' },
-    { "src": 'salt://components/misc/openldap/files/syncprov-mod.ldif',
-    "dest": '/tmp/s3ldap/syncprov-mod.ldif' },
+    "dest": '/opt/seagate/generated_configs/ldap/iam-constraints.ldif' },
+    { "src": 'salt://components/misc/openldap/files/syncprov_mod.ldif',
+    "dest": '/opt/seagate/generated_configs/ldap/syncprov_mod.ldif' },
     { "src": 'salt://components/misc/openldap/files/syncprov.ldif',
-    "dest": '/tmp/s3ldap/syncprov.ldif' },
+    "dest": '/opt/seagate/generated_configs/ldap/syncprov.ldif' },
     { "src": 'salt://components/misc/openldap/files/ssl/ssl_certs.ldif',
-    "dest": '/tmp/s3ldap/ssl_certs.ldif' },
+    "dest": '/opt/seagate/generated_configs/ldap/ssl_certs.ldif' },
     { "src": 'salt://components/misc/openldap/files/ppolicy-default.ldif',
-    "dest": '/tmp/s3ldap/ppolicy-default.ldif'},
+    "dest": '/opt/seagate/generated_configs/ldap/ppolicy-default.ldif'},
     { "src": 'salt://components/misc/openldap/files/ppolicymodule.ldif',
-    "dest": '/tmp/s3ldap/ppolicymodule.ldif'},
+    "dest": '/opt/seagate/generated_configs/ldap/ppolicymodule.ldif'},
     { "src": 'salt://components/misc/openldap/files/ppolicyoverlay.ldif',
-    "dest": '/tmp/s3ldap/ppolicyoverlay.ldif'},
+    "dest": '/opt/seagate/generated_configs/ldap/ppolicyoverlay.ldif'},
+    { "src": 'salt://components/misc/openldap/files/test_data.ldif',
+    "dest": '/opt/seagate/generated_configs/ldap/test_data.ldif' },
     { "src": 'salt://components/misc/openldap/files/ssl/ldap.conf',
     "dest": '/etc/openldap/ldap.conf' },
     ]
