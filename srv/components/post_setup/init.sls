@@ -1,8 +1,3 @@
-{% if pillar['cluster']['type'] == "ees" %}
-include:
-    - components.misc.openldap.config.replication
-{% endif %}
-
 Ensure sspl-ll running:
   service.running:
     - name: sspl-ll
@@ -11,23 +6,18 @@ Ensure halond running:
   service.running:
     - name: halond
 
-Ensure HAProxy restarted:
+Ensure HAProxy running:
   service.running:
     - name: haproxy
-    - full_restart: True
 
-Ensure Slapd restarted:
+Ensure Slapd running:
   service.running:
     - name: slapd
-    - full_restart: True
-    - watch_in:
-      - service: Ensure s3authserver restarted
 
-Ensure s3authserver restarted:
+Ensure s3authserver running:
   service.running:
     - name: s3authserver
     - enable: True
-    - full_restart: True
     - init_delay: 2
 
 # TODO: Should be run only on primary node.

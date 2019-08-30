@@ -26,10 +26,10 @@
 dn: cn=config
 changetype: modify
 replace: olcServerID
-{% for node in node_list -%}
-{% if current_node_name == node -%}
+{% for node in node_list %}
+{%- if current_node_name == node -%}
 olcServerID: {{ loop.index }}
-{% endif -%}
+{%- endif -%}
 {% endfor %}
 
 dn: olcDatabase={2}hdb,cn=config
@@ -47,7 +47,7 @@ olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
   type=refreshAndPersist
   retry="30 5 300 3"
   interval=00:00:05:00
-{% endfor %}
+{% endfor -%}
 -
 replace: olcMirrorMode
 olcMirrorMode: TRUE

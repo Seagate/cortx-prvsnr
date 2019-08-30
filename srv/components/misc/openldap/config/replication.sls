@@ -34,7 +34,7 @@ Configure openldap syncprov:
 
 Configure openldap replication:
   cmd.run:
-    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -f /opt/seagate/generated_configs/ldap/replicate.ldif
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/generated_configs/ldap/replicate.ldif
     - watch_in:
       - service: Restart Slapd
     - require:

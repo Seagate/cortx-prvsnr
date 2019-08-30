@@ -28,11 +28,11 @@ Remove pkgs:
 # File cleanup operation
 {% for filename in [
    '/etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif',
+   '/etc/openldap/slapd.d',
    '/var/lib/ldap',
    '/etc/openldap/ldap.conf',
    '/etc/openldap/ldap.conf.bak',
-   '/etc/sysconfig/slapd.bak',
-   '/etc/openldap/slapd.d',
+   '/etc/sysconfig/slapd',
    '/opt/seagate/generated_configs/',
    '/opt/seagate/scripts/',
  ] %}
@@ -40,6 +40,17 @@ Remove pkgs:
   file.absent:
     - require:
       - pkg: Remove pkgs
+{% endfor %}
+
+# Remove directories
+{% for dirname in [
+    '/etc/openldap/slapd',
+    '/etc/sysconfig/slapd',
+    '/etc/openldap/slapd.d'
+] %}
+remove {{ dirname }}:
+  cmd.run:
+    - name: rm -rf {{ dirname }}*.*
 {% endfor %}
 
 Remove user ldap:
