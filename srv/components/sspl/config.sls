@@ -3,8 +3,15 @@
 Copy sample file:
   file.copy:
     - name: /etc/sspl.conf
-    - source: /opt/seagate/sspl/conf/sspl.conf.{{ pillar['sspl']['product'] }}
+    - source: /opt/seagate/sspl/conf/sspl.conf.{{ pillar['sspl']['SYSTEM_INFORMATION']['product'] }}
     - mode: 644
+
+Update SSPL config:
+  module.run:
+    - sspl.conf_update:
+      - name: /etc/sspl.conf
+      - ref_pillar: sspl
+      - backup: True
 
 {% if 'virtual' in salt['grains.get']('productname').lower() %}
 {% set role = 'vm' %}

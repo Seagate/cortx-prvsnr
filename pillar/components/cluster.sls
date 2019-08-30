@@ -1,5 +1,5 @@
 cluster:
-  type: single                      # single/ees/ecs
+  type: ees                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
     - eosnode-1                     # minion ID for node-1 
     - eosnode-2                     # minion ID for node-2
