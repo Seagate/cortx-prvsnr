@@ -20,9 +20,8 @@ Update SSPL config:
 Update sspl-ll conf file:
   file.replace:
     - name: /etc/sspl.conf
-    - pattern: setup=.*$
-    - repl: setup=vm
-    - append_if_not_found: True
+    - pattern: ^system\s*=\s*.+
+    - repl: setup = vm
 
 #Update sspl config file with pillar data:
 #  module.run:

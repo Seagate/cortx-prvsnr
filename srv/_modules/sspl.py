@@ -37,8 +37,15 @@ def conf_update(  name = '/etc/sspl.conf',
     copyfile(name, name + '.bak')
 
   pillar_dict = __pillar__[ref_pillar]
+
+  # Read
   config_dict = _read_ini(name)
+
+  # Update
   config_dict = commons._update_dict(config_dict, pillar_dict)
+  config_dict = _inject_storage_enclosure(config_dict)
+
+  # Write
   _write_ini(name, config_dict)
 
   return True
@@ -104,4 +111,30 @@ def _write_ini(ini_file, config_dict):
 
   # Save to file
   with open(ini_file, 'w') as fd:
-    parser.write(fd)
+    parser.write(fd, space_around_delimiters=False)
+
+
+def _inject_storage_enclosure(config_dict={}):
+  """Inject data for storage enclosure from pillar/components/cluster.sls
+  """
+  cluster_pillar = __pillar__['cluster']
+
+  if cluster_pillar['storage_enclosure']['controller']['user']:
+    config_dict['STORAGE_ENCLOSURE']['user'] = cluster_pillar['storage_enclosure']['controller']['user']
+  
+  if cluster_pillar['storage_enclosure']['controller']['password']:
+    config_dict['STORAGE_ENCLOSURE']['password'] = cluster_pillar['storage_enclosure']['controller']['password']
+  
+  if cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']
+    
+  if cluster_pillar['storage_enclosure']['controller']['primary_mc']['port']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_port'] = cluster_pillar['storage_enclosure']['controller']['primary_mc']['port']
+
+  if cluster_pillar['storage_enclosure']['controller']['secondary_mc']['ip']:
+    config_dict['STORAGE_ENCLOSURE']['secondary_controller_ip'] = cluster_pillar['storage_enclosure']['controller']['secondary_mc']['ip']
+
+  if cluster_pillar['storage_enclosure']['controller']['secondary_mc']['port']:
+    config_dict['STORAGE_ENCLOSURE']['secondary_controller_port'] = cluster_pillar['storage_enclosure']['controller']['secondary_mc']['port']
+  
+  return config_dict

@@ -22,15 +22,15 @@ Ensure s3authserver running:
 
 # TODO: Should be run only on primary node.
 # Prereq: all the services on second node are online.
-#{#% set node = grains['id'] %#}
-#{#% if pillar['cluster'][node]['is_primary'] %#}
-# hctl mero bootstrap
-#Bootstrap mero:
-#  cmd.run:
-#    - name: hctl mero bootstrap
-#    - onlyif: test -f /etc/halon/halon_facts.yaml
-#    - require:
-#      - service: Ensure halond running
+{% set node = grains['id'] %}
+{% if pillar['cluster'][node]['is_primary'] -%}
+Bootstrap mero:
+ cmd.run:
+   - name: hctl mero bootstrap
+   - onlyif: test -f /etc/halon/halon_facts.yaml
+   - require:
+     - service: Ensure halond running
+{%- endif %}
 
 # Expected running services
 # s3authserver: running
@@ -40,4 +40,3 @@ Ensure s3authserver running:
 # sspl-ll: running
 # mero-kernel: running
 # lnet: dead running
-#{#% endif %#}

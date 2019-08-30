@@ -98,12 +98,13 @@ sspl:
     logging_interval: 3600
 
   STORAGE_ENCLOSURE:
-    primary_controller_ip: 127.0.0.1
-    primary_controller_port: 80
-    secondary_controller_ip: 127.0.0.1
-    secondary_controller_port: 80
+    primary_controller_ip:
+    primary_controller_port:
+    secondary_controller_ip:
+    secondary_controller_port:
     user: xxxxx
     password: xxxxx
+    mgmt_interface: cliapi
 
   REALSTORPSUSENSOR:
     threaded: true

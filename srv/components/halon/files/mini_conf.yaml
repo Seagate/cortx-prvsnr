@@ -1,15 +1,15 @@
-{% set node = grains['id'] %}
+{%- set node = grains['id'] -%}
 s3servers:
-{% for node_id in pillar['cluster']['node_list'] %}
+{%- for node_id in pillar['cluster']['node_list'] %}
   - {{ pillar['cluster'][node_id]['fqdn'] }}
-{% endfor %}
+{%- endfor %}
 clovis_apps: 
-{% for node_id in pillar['cluster']['node_list'] %}
+{%- for node_id in pillar['cluster']['node_list'] %}
   - {{ pillar['cluster'][node_id]['fqdn'] }}
-{% endfor %}
-{% if pillar['cluster'][node]['is_primary'] %}
+{%- endfor %}
+{% if pillar['cluster'][node]['is_primary'] -%}
 confds: [ {{ pillar['cluster'][node]['fqdn'] }} ]
-{% endif %}
+{% endif -%}
 ssus:
   - host: {{ pillar['cluster'][node]['fqdn'] }}
     disks: [{{ ', '.join(pillar['cluster'][node]['storage']['data_devices']) }}]
