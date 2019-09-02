@@ -1,12 +1,10 @@
-#!/bin/sh
-
-DEF_EES_PRVSNR_VERSION="ees1.0.0-PI.2-sprint5"
+#!/bin/bash
 
 function usage {
   echo "\
 Usage: $0 [ees-prvsnr-tag]
 defaults:
-    - ees-prvsnr-tag: '${DEF_EES_PRVSNR_VERSION}'
+    - ees-prvsnr-tag: latest tagged
 "
 }
 
@@ -20,11 +18,22 @@ set -eu
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 INSTALLDIR="/opt/seagate/ees-prvsnr"
+EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
-prvsnr_version="${1:-$DEF_EES_PRVSNR_VERSION}"
+prvsnr_version="${1:-}"
 
 # TODO replace with eos-provisioner.rpm installation
 if [ ! -d "$INSTALLDIR" ]; then
+    if [ -z "$prvsnr_version" ]; then
+        _tags=$(curl "$EES_PRVSNR_REPO_API_TAGS")
+        prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)
+    fi
+
+    if [ -z "$prvsnr_version" ]; then
+        >&2 echo 'Version of the provisioner repo is unknown'
+        exit 1
+    fi
+
     mkdir -p "$INSTALLDIR"
     pushd "$INSTALLDIR"
         curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${prvsnr_version}/${prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
