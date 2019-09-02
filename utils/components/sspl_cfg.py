@@ -58,20 +58,26 @@ class SSPLCfg(BaseCfg):
         # TODO validations for configs.
 
 
+    def __read_user_inputs(self, opt_tree: dict={}, parent: list=[]) -> dict:
+        for k, v in opt_tree.items():
+            if isinstance(v, dict):
+                parent.append(k)
+                opt_tree[k] = self.__read_user_inputs(v, parent)
+            else:
+                printable_parent = ']['.join(parent) if parent else ''
+                opt_tree[k] = input("Enter value for [{0}][{1}] -> ({2}): ".format(printable_parent, k, v))
+        
+        parent.pop()
+        return opt_tree
+
+
     def process_inputs(self, program_args: Namespace) -> bool:
 
         if program_args.interactive:
             input("\nAccepting interactive inputs for pillar/sspl.sls. Press any key to continue...")
 
-            input_msg = ("Enter sspl role on this system: ({0}): ".format(
-                    self.__options["sspl"]["role"]
-                )
-            )
-            self.__options["sspl"]["role"] = (
-                input(input_msg)
-                or
-                self.__options["sspl"]["role"]
-            )
+            self.__options = self.__read_user_inputs(self.__options)
+
             # print(json.dumps(self._release_options, indent = 4))
             return True
 

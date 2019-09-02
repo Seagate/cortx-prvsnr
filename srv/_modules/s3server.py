@@ -5,6 +5,8 @@ import yaml
 
 from shutil import copyfile
 
+import commons
+
 # How to test:
 # $ salt-call saltutil.clear_cache
 # $ salt-call saltutil.sync_modules && salt-call s3server.conf_update "/opt/seagate/ees-prvsnr/srv/_modules/files/samples/s3config.yaml" s3server
@@ -14,7 +16,7 @@ def _read_pillar(ref_component_pillar):
   return __pillar__[ref_component_pillar]
 
 
-# def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
+# def update(name: str, ref_pillar: str, backup: bool=True) -> bool:
 def conf_update(
     name="/opt/seagate/s3/conf/s3config.yaml",
     ref_pillar="s3server",
@@ -51,7 +53,7 @@ def conf_update(
   if backup:
     copyfile(name, name + '.bak')
 
-  config_dict = _update_dict(config_dict, pillar_dict)
+  config_dict = commons._update_dict(config_dict, pillar_dict)
   yaml.add_representer(list, _blockseqlist_rep)
   yaml.add_representer(type(None), _represent_none)
 
@@ -68,15 +70,15 @@ def conf_update(
   return True
 
 
-def _update_dict(config_dict, pillar_dict):
-  for key in list(config_dict.keys()):
-    if key in pillar_dict:
-      if isinstance(config_dict[key], dict):
-        _update_dict(config_dict[key], pillar_dict[key])
-      else:
-        config_dict[key] = pillar_dict[key]
+# def _update_dict(config_dict, pillar_dict):
+#   for key in list(config_dict.keys()):
+#     if key in pillar_dict:
+#       if isinstance(config_dict[key], dict):
+#         _update_dict(config_dict[key], pillar_dict[key])
+#       else:
+#         config_dict[key] = pillar_dict[key]
   
-  return config_dict
+#   return config_dict
 
 
 def _blockseqlist_rep(dumper, data):
