@@ -20,13 +20,14 @@ python-pip:
       - python36-pip
     - reload_modules: True
 
-pip3 upgrade:
-  pip.installed:
-    - name: pip
-    - bin_env: /usr/bin/pip
-    - upgrade: True
-    - require:
-      - pkg: python-pip
+# TODO verify that it might work
+#pip3 upgrade:
+#  pip.installed:
+#    - name: pip
+#    - bin_env: /usr/bin/pip
+#    - upgrade: True
+#    - require:
+#      - pkg: python-pip
 
 
 Install pyyaml:
