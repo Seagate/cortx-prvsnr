@@ -1,3 +1,8 @@
+{% set node = grains['id'] %}
+{% if pillar['cluster']['type'] == "ees" and pillar['cluster'][node]['is_primary'] == True %}
+include:
+  - components.halon.config.generate_facts
+{% endif %}
 Ensure sspl-ll running:
   service.running:
     - name: sspl-ll
@@ -21,16 +26,15 @@ Ensure s3authserver running:
     - init_delay: 2
 
 # TODO: Should be run only on primary node.
-# Prereq: all the services on second node are online.
-{% set node = grains['id'] %}
-{% if pillar['cluster'][node]['is_primary'] -%}
+# Prereq: for ees all the services on second node are online.
+{% if pillar['cluster'][node]['is_primary'] == True %}
 Bootstrap mero:
  cmd.run:
    - name: hctl mero bootstrap
-   - onlyif: test -f /etc/halon/halon_facts.yaml
+   - onlyif: test -f /etc/halon/halon_facts.yaml && test -f /etc/halon/bootstrap.ready
    - require:
      - service: Ensure halond running
-{%- endif %}
+{% endif %}}
 
 # Expected running services
 # s3authserver: running

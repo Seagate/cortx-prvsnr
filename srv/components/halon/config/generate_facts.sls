@@ -1,29 +1,8 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
 {% set node = grains['id'] %}
 
-{% set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if".format(node), "lo") %}
-{% set data_if = salt["pillar.get"]("cluster:{0}:network:data_if".format(node), "lo") %}
-
-# Configure halond
-Update Halon config file:
-  file.managed:
-    - name: /etc/sysconfig/halond
-    - contents:
-      - HALOND_LISTEN={{ grains["ip4_interfaces"][mgmt_if][0] }}:9070
-      - HALOND_STATION_OPTIONS="--rs-lease 4000000"
-    - user: root
-    - group: root
-
-# Setup Halon service
-Service Halon startup:
+Ensure halond service running:
   service.running:
     - name: halond
-    - enable: True
-    - watch:
-      - file: Update Halon config file
-
-{% if pillar['cluster'][node]['is_primary'] %}
 
 # Generate mini_conf.yaml
 Prepare mini_conf file:
@@ -47,4 +26,10 @@ Copy halon_facts.yaml to /etc/halon:
     - require:
       - Generate halon_facts.yaml file
 
-{% endif %}
+# Create a file /etc/halon/bootstrap.ready to indicate that the node is ready for bootstrap
+Touch bootstrap.ready file:
+  cmd.run:
+    - name: touch /etc/halon/bootstrap.ready
+    - onlyif: test -f /etc/halon/halon_facts.yaml
+    - require:
+      - Copy halon_facts.yaml to /etc/halon

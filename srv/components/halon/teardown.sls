@@ -32,3 +32,8 @@ Remove temporary mini_conf file:
 Remove temporary halon_facts file:
   file.absent:
     - name: /tmp/halon_facts.yaml
+
+Remove bootstrap.ready file:
+  file.absent:
+    - name: /etc/halon/bootstrap.ready
+    - onlyif: test -f /etc/halon/bootstrap.ready
