@@ -1,5 +1,5 @@
 cluster:
-  type: ees                         # single/ees/ecs
+  type: single                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
     - eosnode-1                     # minion ID for node-1 
     # - eosnode-2                     # minion ID for node-2
@@ -9,7 +9,7 @@ cluster:
     network:
       mgmt_if: mgmt0                # Management network interfaces for bonding
       data_if: data0                # Management network interfaces for bonding
-      gateway_ip: 10.230.160.1
+      gateway_ip: 10.0.2.2
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
         - /dev/sdb
@@ -21,7 +21,7 @@ cluster:
   #   network:
   #     mgmt_if: mgmt0                # Management network interfaces for bonding
   #     data_if: data0                # Management network interfaces for bonding
-  #     gateway_ip: 10.230.160.1
+  #     gateway_ip: 10.0.2.2
   #   storage:
   #     metadata_device:              # Device for /var/mero and possibly SWAP
   #       - /dev/sdb
@@ -39,4 +39,4 @@ cluster:
         ip: 127.0.0.1
         port: 80
       user: user
-      password: passwd
+      password: 'passwd'

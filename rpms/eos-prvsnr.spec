@@ -42,7 +42,6 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
 
-/opt/seagate/eos-prvsnr/files
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/utils

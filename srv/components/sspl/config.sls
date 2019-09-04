@@ -1,3 +1,12 @@
+# logrotate.d
+Setup logrotate policy for rabbitmq-server:
+  file.managed:
+  - name: /etc/logrotate.d/rabbitmq-server
+  - source: salt://components/sspl/files/etc/logrotate.d/rabbitmq-server
+  - keep_source: False
+  - user: root
+  - group: root
+
 {% set role = pillar['sspl']['role'] %}
 # Copy conf file to /etc/sspl.conf
 Copy sample file:
@@ -33,22 +42,22 @@ Update sspl-ll conf file:
 
 {% else %}
 
-# Add zabbix user in sudoers file:
-#   file.line:
-#     - name: /etc/sudoers
-#     - content: 'zabbix ALL=(ALL) NOPASSWD: ALL'
-#     - mode: ensure
-#     - after: '.*%wheel\s+ALL=\(ALL\)\s+NOPASSWD: ALL.*'
-#     - backup: True
+Add zabbix user in sudoers file:
+  file.line:
+    - name: /etc/sudoers
+    - content: 'zabbix ALL=(ALL) NOPASSWD: ALL'
+    - mode: ensure
+    - after: '.*%wheel\s+ALL=\(ALL\)\s+NOPASSWD:\s*ALL'
+    - backup: True
 
-Create sudoers file for zabbix user:
-  file.managed:
-    - name: /etc/sudoers.d/zabbix
-    - makedirs: True
-    - replace: True
-    - mode: 644
-    - contents:
-      - 'zabbix ALL=(ALL) NOPASSWD: ALL'
+# Create sudoers file for zabbix user:
+#   file.managed:
+#     - name: /etc/sudoers.d/zabbix
+#     - makedirs: True
+#     - replace: True
+#     - mode: 644
+#     - contents:
+#       - 'zabbix ALL=(ALL) NOPASSWD: ALL'
     
 Ensure directory dcs_collector.conf.d exists:
   file.directory:

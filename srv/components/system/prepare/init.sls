@@ -1,6 +1,3 @@
-include:
-  - components.system.prepare.setup_yum_repos
-
 Sync data:
   module.run:
     - saltutil.clear_cache: []
@@ -8,3 +5,6 @@ Sync data:
     - saltutil.refresh_grains: []
     - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []
+
+include:
+  - components.system.prepare.setup_yum_repos

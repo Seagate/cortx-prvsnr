@@ -10,6 +10,8 @@ EOS_PRVSNR_VERSION=1.0.0
 
 usage() { echo "Usage: $0 [-G <git short revision>] [-S <EOS Provisioner version>]" 1>&2; exit 1; }
 
+[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y rpm-build
+
 while getopts ":G:S:" o; do
     case "${o}" in
         G)
@@ -48,4 +50,6 @@ rm -rf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 
 sudo yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
 
-rpmbuild -ba --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}"  --define "_ees_prvsnr_git_ver git${GIT_VER}" ${BASEDIR}/eos-prvsnr.spec
+rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}"  --define "_ees_prvsnr_git_ver git${GIT_VER}" ${BASEDIR}/eos-prvsnr.spec
+
+#[[ $(rpm --quiet -qi rpm-build) == 0 ]] && yum remove -q -y rpm-build

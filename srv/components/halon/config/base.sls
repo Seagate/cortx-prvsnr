@@ -1,9 +1,17 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+{% import_yaml 'components/defaults.yaml' as defaults -%}
 
-{% set node = grains['id'] %}
+# logrotate.d
+Setup logrotate policy for halon decision log:
+  file.managed:
+  - name: /etc/logrotate.d/halon
+  - source: salt://components/halon/files/etc/logrotate.d/halon
+  - keep_source: False
+  - user: root
+  - group: root
 
-{% set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if".format(node), "lo") %}
-{% set data_if = salt["pillar.get"]("cluster:{0}:network:data_if".format(node), "lo") %}
+{%- set node = grains['id'] -%}
+{%- set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if".format(node), "lo") -%}
+{%- set data_if = salt["pillar.get"]("cluster:{0}:network:data_if".format(node), "lo") %}
 
 # Configure halond
 Update Halon config file:

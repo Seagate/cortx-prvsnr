@@ -87,3 +87,21 @@ Remove user rabbitmq:
 #   pip.removed:
 #     - name: lettuce
 #     - bin_env: '/usr/bin/pip'
+
+Remove sspl-ll sudoers file:
+  file.line:
+    - name: /etc/sudoers
+    - mode: delete
+    - match: "sspl-ll ALL = NOPASSWD: /usr/sbin/smartctl, /usr/sbin/mdadm, /usr/bin/mount, /uss
+r/bin/umount, /usr/sbin/swapon, /usr/sbin/swapoff, /usr/sbin/hdparm, /usr/bin/syy
+stemctl, /usr/sbin/wbcli"
+
+Remove zabbix sudoers file:
+  file.line:
+    - name: /etc/sudoers
+    - mode: delete
+    - match: "zabbix ALL=(ALL) NOPASSWD: ALL"
+
+Remove zabbix from sudoers.d:
+  file.absent:
+    - name: /etc/sudoers.d/zabbix

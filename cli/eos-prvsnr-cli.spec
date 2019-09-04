@@ -33,6 +33,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 
+#/opt/seagate/eos-prvsnr/files
 /opt/seagate/eos-prvsnr/cli/setup-provisioner
 /opt/seagate/eos-prvsnr/cli/configure-eos
 /opt/seagate/eos-prvsnr/cli/deploy-eos
