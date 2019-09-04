@@ -1,8 +1,10 @@
 {% set node = grains['id'] %}
+
 {% if pillar['cluster']['type'] == "ees" and pillar['cluster'][node]['is_primary'] == True %}
 include:
   - components.halon.config.generate_facts
 {% endif %}
+
 Ensure sspl-ll running:
   service.running:
     - name: sspl-ll
@@ -34,7 +36,7 @@ Bootstrap mero:
    - onlyif: test -f /etc/halon/halon_facts.yaml && test -f /etc/halon/bootstrap.ready
    - require:
      - service: Ensure halond running
-{% endif %}}
+{% endif %}
 
 # Expected running services
 # s3authserver: running
