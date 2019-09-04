@@ -1,5 +1,8 @@
 {% set node = grains['id'] %}
 
+{% set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if".format(node), "lo") %}
+{% set data_if = salt["pillar.get"]("cluster:{0}:network:data_if".format(node), "lo") %}
+
 Ensure halond service running:
   service.running:
     - name: halond
