@@ -1,20 +1,9 @@
-{% set node = grains['id'] %}
-{%- if pillar['cluster']['type'] == "single" -%}
-s3servers:
-  - {{ node }}
-clovis_apps:
-  - {{ node }}
-confds:
-  - {{ node }}
-ssus:
-  - host: {{ node }}
-    disks: [{{ ', '.join(pillar['cluster'][node]['storage']['data_devices']) }}]
-{% else -%}
+{% set node = grains['id'] -%}
 s3servers:
 {%- for node_id in pillar['cluster']['node_list'] %}
   - {{ pillar['cluster'][node_id]['fqdn'] }}
 {%- endfor %}
-clovis_apps:
+clovis-apps:
 {%- for node_id in pillar['cluster']['node_list'] %}
   - {{ pillar['cluster'][node_id]['fqdn'] }}
 {%- endfor -%}
@@ -29,4 +18,3 @@ ssus:
   - host: {{ pillar['cluster'][node_id]['fqdn'] }}
     disks: [{{ ', '.join(pillar['cluster'][node_id]['storage']['data_devices']) }}]
 {%- endfor %}
-{%- endif -%}

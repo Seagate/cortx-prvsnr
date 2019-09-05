@@ -10,7 +10,11 @@ EOS_PRVSNR_VERSION=1.0.0
 
 usage() { echo "Usage: $0 [-G <git short revision>] [-S <EOS Provisioner version>]" 1>&2; exit 1; }
 
+# Install rpm-build package
 [[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y rpm-build
+
+# Clean-up pycache
+find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
 
 while getopts ":G:S:" o; do
     case "${o}" in
@@ -35,7 +39,7 @@ echo "Using [EOS_PRVSNR_VERSION=${EOS_PRVSNR_VERSION}] ..."
 echo "Using [GIT_VER=${GIT_VER}] ..."
 
 mkdir -p ~/rpmbuild/SOURCES/
-cd ~/rpmbuild/SOURCES/
+pushd ~/rpmbuild/SOURCES/
 rm -rf eos-prvsnr*
 
 # Setup the source tar for rpm build
@@ -50,6 +54,9 @@ rm -rf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 
 sudo yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
 
-rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}"  --define "_ees_prvsnr_git_ver git${GIT_VER}" ${BASEDIR}/eos-prvsnr.spec
+rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" ${BASEDIR}/eos-prvsnr.spec
 
+popd
+
+# Remove rpm-build package
 #[[ $(rpm --quiet -qi rpm-build) == 0 ]] && yum remove -q -y rpm-build

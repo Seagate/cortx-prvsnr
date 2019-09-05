@@ -25,7 +25,9 @@ EOS Provisioner Command line interface. Provides utilities to deploy EOS Object 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli
-install -p cli/src/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+cp -p -R cli/src/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+#mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files
+#cp -p -R files %{buildroot}/opt/seagate/eos-prvsnr/
 
 %clean
 rm -rf %{buildroot}
