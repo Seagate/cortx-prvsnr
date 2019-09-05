@@ -1,24 +1,95 @@
 #!/bin/bash
 
+set -eu
+
 function usage {
   echo "\
-Usage: $0
+Usage: $0 [--local|--remote <host>] --ssh-config <FILE>
 
 Installs EOS stack and configures eos services locally.
+
+Options:
+    --local               run locally (default)
+    --remote <host>       run remotely on specified host
+    --ssh-config <FILE>   alternative path to ssh configuration file
 "
 }
 
-if [ "$1" = "--help" ]; then
-    usage
-    exit 0
+function parse_args() {
+    set -eu
+
+    ! getopt --test > /dev/null
+    if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+        echo 'Error: getopt is not functional (`getopt --test` failed).'
+        exit 1
+    fi
+
+    OPTIONS=hlr:F:
+    LONGOPTS=help,local,remote:,ssh-config:
+
+    ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
+    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+        exit 2
+    fi
+    # read getopt’s output this way to handle the quoting right:
+    eval set -- "$PARSED"
+
+    while true; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -l|--local)
+                mode=local
+                shift
+                ;;
+            -r|--remote)
+                mode=remote
+                host="$2"
+                shift 2
+                ;;
+            -F|--ssh-config)
+                ssh_config="$2"
+                if [[ ! -f "$ssh_config" ]]; then
+                    echo "'$ssh_config' not a file"
+                    exit 2
+                fi
+                shift 2
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                echo "Programming error"
+                exit 3
+                ;;
+        esac
+    done
+
+    if [[ $# -ne 0 ]]; then
+        echo "$0: Unexpected arguments: $@"
+        exit 4
+    fi
+
+}
+
+mode=local host= ssh_config=
+parse_args "$@"
+echo "mode: $mode, host: $host, ssh_config: $ssh_config"
+
+ssh=
+if [[ "$mode" == "remote" ]]; then
+
+    if [[ -n "$ssh_config" ]]; then
+        ssh_config="-F $ssh_config"
+    fi
+
+    ssh="ssh $ssh_config $host"
 fi
 
-set -eu
-
-SCRIPT_PATH=$(readlink -f "$0")
-BASEDIR=$(dirname "$SCRIPT_PATH")
-
-components=$(salt-call --local state.show_top | grep components | awk '{print $NF}')
+components=$($ssh salt-call --local state.show_top | grep components | awk '{print $NF}')
 
 if [ -z "$components" ]; then
     >&2 echo 'No eos components found in salt formulas'
