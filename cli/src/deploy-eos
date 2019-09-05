@@ -1,8 +1,33 @@
-#!/bin/sh
+#!/bin/bash
 
-set -e
+function usage {
+  echo "\
+Usage: $0
+
+Installs EOS stack and configures eos services locally.
+"
+}
+
+if [ "$1" = "--help" ]; then
+    usage
+    exit 0
+fi
+
+set -eu
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-echo "Running $0 ..."
+components=$(salt-call --local state.show_top | grep components | awk '{print $NF}')
+
+if [ -z "$components" ]; then
+    >&2 echo 'No eos components found in salt formulas'
+    exit 1
+fi
+
+for component in $components; do
+    echo "Applying '$component'..."
+    salt-call --local state.apply $component
+done
+
+echo "Done"
