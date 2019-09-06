@@ -4,20 +4,21 @@ set -eu
 
 function usage {
   echo "\
-Usage: $0 [--local|--remote [user@]hostname] [--ssh-config FILE] [--dry-run]
+Usage: $0 [options] [[user@]hostname]
 
-Installs EOS stack and configures eos services locally.
+Installs EOS stack and configures eos services either on remote host or locally
+if hostname is not specified.
 
 Options:
-    --local                     run locally (default)
-    --remote [user@]hostname    run remotely on specified host
-    --ssh-config FILE           alternative path to ssh configuration file
-    --dry-run                   do not actually perform any changes
+    -F,  --ssh-config FILE  alternative path to ssh configuration file
+    -n,  --dry-run          do not actually perform any changes
 "
 }
 
 function parse_args() {
     set -eu
+
+    # Note. this mostly based on https://stackoverflow.com/a/29754866
 
     ! getopt --test > /dev/null
     if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
@@ -25,14 +26,14 @@ function parse_args() {
         exit 1
     fi
 
-    OPTIONS=hlr:F:n
-    LONGOPTS=help,local,remote:,ssh-config:,dry-run
+    OPTIONS=hF:n
+    LONGOPTS=help,ssh-config:,dry-run
 
     ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         exit 2
     fi
-    # read getopt’s output this way to handle the quoting right:
+
     eval set -- "$PARSED"
 
     while true; do
@@ -40,15 +41,6 @@ function parse_args() {
             -h|--help)
                 usage
                 exit 0
-                ;;
-            -l|--local)
-                mode=local
-                shift
-                ;;
-            -r|--remote)
-                mode=remote
-                host="$2"
-                shift 2
                 ;;
             -F|--ssh-config)
                 ssh_config="$2"
@@ -59,7 +51,7 @@ function parse_args() {
                 shift 2
                 ;;
             -n|--dry-run)
-                test_mode=True
+                dry_run=True
                 shift
                 ;;
             --)
@@ -73,19 +65,23 @@ function parse_args() {
         esac
     done
 
-    if [[ $# -ne 0 ]]; then
-        echo "$0: Unexpected arguments: $@"
+    if [[ $# -eq 1 ]]; then
+        host=$1
+    elif [[ $# -ne 0 ]]; then
+        echo "$0: Only a single remote host is expected, provided: $@"
         exit 4
     fi
 
 }
 
-mode=local host= ssh_config= test_mode=False
+# parse args
+host= ssh_config= dry_run=False
 parse_args "$@"
-echo "mode: $mode, host: $host, ssh_config: $ssh_config, dry-run: $test_mode"
+echo "host: $host, ssh_config: $ssh_config, dry-run: $dry_run"
 
+# set ssh options
 ssh=
-if [[ "$mode" == "remote" ]]; then
+if [[ -n "$host" ]]; then
 
     if [[ -n "$ssh_config" ]]; then
         ssh_config="-F $ssh_config"
@@ -94,16 +90,18 @@ if [[ "$mode" == "remote" ]]; then
     ssh="ssh $ssh_config $host"
 fi
 
-components=$($ssh salt-call --local state.show_top | grep components | awk '{print $NF}')
+# resolve salt states to apply
+states=$($ssh salt-call --local state.show_top | grep components | awk '{print $NF}')
 
-if [ -z "$components" ]; then
-    >&2 echo 'No eos components found in salt formulas'
+if [ -z "$states" ]; then
+    >&2 echo 'No states found in salt formulas'
     exit 1
 fi
 
-for component in $components; do
-    echo "Applying '$component'..."
-    $ssh salt-call --local state.apply "$component" test="$test_mode"
+# apply states
+for state in $states; do
+    echo "Applying '$state'..."
+    $ssh salt-call --local state.apply "$state" test="$dry_run"
 done
 
 echo "Done"
