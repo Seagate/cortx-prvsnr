@@ -61,7 +61,7 @@ Open https port for s3server:
 # Append /etc/hosts:
 #   file.line:
 #     - name: /etc/hosts
-#     - content: {{ grains['ip_interfaces'][data_if][0] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
+#     - content: {{ grains['ip_interfaces'][data_if] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
 #     - location: end
 #     - mode: ensure
 
