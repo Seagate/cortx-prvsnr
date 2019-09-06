@@ -4,7 +4,7 @@ set -eu
 
 function usage {
   echo "\
-Usage: $0 [--local|--remote <host>] --ssh-config <FILE>
+Usage: $0 [--local|--remote <host>] [--ssh-config <FILE>]
 
 Installs EOS stack and configures eos services locally.
 
