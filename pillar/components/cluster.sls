@@ -12,9 +12,9 @@ cluster:
       gateway_ip: 10.0.2.2
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
-        - /dev/disk/by-path/pci-0000:00:16.0-sas-phy0-lun-0
+        - /dev/sdb
       data_devices:                 # Data device/LUN from storage enclosure
-        - /dev/disk/by-path/pci-0000:00:16.0-sas-phy1-lun-0
+        - /dev/sdc
   # eosnode-2:                        # minion ID for node-2. Should match one from node_list above.
   #   fqdn: eosnode-2
   #   is_primary: false
@@ -24,9 +24,9 @@ cluster:
   #     gateway_ip: 10.0.2.2
   #   storage:
   #     metadata_device:              # Device for /var/mero and possibly SWAP
-  #      - /dev/disk/by-path/pci-0000:00:16.0-sas-phy0-lun-0
-  #    data_devices:                 # Data device/LUN from storage enclosure
-  #      - /dev/disk/by-path/pci-0000:00:16.0-sas-phy1-lun-0
+  #       - /dev/sdb
+  #     data_devices:                 # Data device/LUN from storage enclosure
+  #       - /dev/sdc
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS
