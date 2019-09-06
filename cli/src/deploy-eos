@@ -10,8 +10,10 @@ Installs EOS stack and configures eos services either on remote host or locally
 if hostname is not specified.
 
 Options:
-    -F,  --ssh-config FILE  alternative path to ssh configuration file
     -n,  --dry-run          do not actually perform any changes
+    -s,  --sudo             use sudo
+    -h,  --help             print this help and exit
+    -F,  --ssh-config FILE  alternative path to ssh configuration file
 "
 }
 
@@ -26,8 +28,8 @@ function parse_args() {
         exit 1
     fi
 
-    OPTIONS=hF:n
-    LONGOPTS=help,ssh-config:,dry-run
+    OPTIONS=nshF:
+    LONGOPTS=dry-run,sudo,help,ssh-config:
 
     ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -38,6 +40,14 @@ function parse_args() {
 
     while true; do
         case "$1" in
+            -n|--dry-run)
+                dry_run=True
+                shift
+                ;;
+            -s|--sudo)
+                sudo=sudo
+                shift
+                ;;
             -h|--help)
                 usage
                 exit 0
@@ -49,10 +59,6 @@ function parse_args() {
                     exit 2
                 fi
                 shift 2
-                ;;
-            -n|--dry-run)
-                dry_run=True
-                shift
                 ;;
             --)
                 shift
@@ -75,23 +81,28 @@ function parse_args() {
 }
 
 # parse args
-host= ssh_config= dry_run=False
+host= ssh_config= dry_run=False sudo=
 parse_args "$@"
-echo "host: $host, ssh_config: $ssh_config, dry-run: $dry_run"
+echo "host: $host, ssh_config: $ssh_config, dry-run: $dry_run, sudo: $sudo"
 
-# set ssh options
-ssh=
+# prepare command
+cmd="$sudo"
 if [[ -n "$host" ]]; then
 
     if [[ -n "$ssh_config" ]]; then
         ssh_config="-F $ssh_config"
     fi
 
-    ssh="ssh $ssh_config $host"
+    if [[ -n "$sudo" ]]; then
+        ssh_config="-t $ssh_config"
+    fi
+
+    cmd="ssh $ssh_config $host $cmd"
 fi
 
 # resolve salt states to apply
-states=$($ssh salt-call --local state.show_top | grep components | awk '{print $NF}')
+# TODO sudo prompt (if it appears) is not visible for now
+states=$($cmd salt-call --local state.show_top | grep components | awk '{print $NF}')
 
 if [ -z "$states" ]; then
     >&2 echo 'No states found in salt formulas'
@@ -101,7 +112,7 @@ fi
 # apply states
 for state in $states; do
     echo "Applying '$state'..."
-    $ssh salt-call --local state.apply "$state" test="$dry_run"
+    $cmd salt-call --local state.apply "$state" test="$dry_run"
 done
 
 echo "Done"
