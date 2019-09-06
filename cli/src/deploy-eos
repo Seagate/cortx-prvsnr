@@ -4,14 +4,15 @@ set -eu
 
 function usage {
   echo "\
-Usage: $0 [--local|--remote <host>] [--ssh-config <FILE>]
+Usage: $0 [--local|--remote [user@]hostname] [--ssh-config FILE] [--dry-run]
 
 Installs EOS stack and configures eos services locally.
 
 Options:
-    --local               run locally (default)
-    --remote <host>       run remotely on specified host
-    --ssh-config <FILE>   alternative path to ssh configuration file
+    --local                     run locally (default)
+    --remote [user@]hostname    run remotely on specified host
+    --ssh-config FILE           alternative path to ssh configuration file
+    --dry-run                   do not actually perform any changes
 "
 }
 
@@ -24,8 +25,8 @@ function parse_args() {
         exit 1
     fi
 
-    OPTIONS=hlr:F:
-    LONGOPTS=help,local,remote:,ssh-config:
+    OPTIONS=hlr:F:n
+    LONGOPTS=help,local,remote:,ssh-config:,dry-run
 
     ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -57,6 +58,10 @@ function parse_args() {
                 fi
                 shift 2
                 ;;
+            -n|--dry-run)
+                test_mode=True
+                shift
+                ;;
             --)
                 shift
                 break
@@ -75,9 +80,9 @@ function parse_args() {
 
 }
 
-mode=local host= ssh_config=
+mode=local host= ssh_config= test_mode=False
 parse_args "$@"
-echo "mode: $mode, host: $host, ssh_config: $ssh_config"
+echo "mode: $mode, host: $host, ssh_config: $ssh_config, dry-run: $test_mode"
 
 ssh=
 if [[ "$mode" == "remote" ]]; then
@@ -98,7 +103,7 @@ fi
 
 for component in $components; do
     echo "Applying '$component'..."
-    salt-call --local state.apply $component
+    $ssh salt-call --local state.apply "$component" test="$test_mode"
 done
 
 echo "Done"
