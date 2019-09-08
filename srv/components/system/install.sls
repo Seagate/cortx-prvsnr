@@ -5,10 +5,11 @@
 Install_base_packages:
   pkg.installed:
     - pkgs:
-      - vim-enhanced
+      - ipmitool
       - jq
       - python36
-    # - tmux
+      - vim-enhanced
+      - tmux
     - reload_modules: True
 
 # Install python-pip packages (version 2 and 3)
@@ -29,16 +30,15 @@ python-pip:
 #    - require:
 #      - pkg: python-pip
 
-
-Install pyyaml:
-  # Install using pip
-  pip.installed:
-    # The pip module we want to install
-    - name: pyyaml
-    # Absolute path to a virtual environment directory or absolute path to a pip executable
-    # We want to install python3 paramiko so we use pip3 here
-    - bin_env: '/usr/bin/pip3'
-    - upgrade: True
-    # Require python-pip state to be run before this one
-    - require:
-      - pkg: python-pip
+# Install pyyaml:
+#   # Install using pip
+#   pip.installed:
+#     # The pip module we want to install
+#     - name: pyyaml
+#     # Absolute path to a virtual environment directory or absolute path to a pip executable
+#     # We want to install python3 paramiko so we use pip3 here
+#     - bin_env: '/usr/bin/pip3'
+#     - upgrade: True
+#     # Require python-pip state to be run before this one
+#     - require:
+#       - pkg: python-pip
