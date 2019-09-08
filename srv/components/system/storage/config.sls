@@ -62,13 +62,16 @@ Create metadata partition:
       - end: 100%
 
 # Make SWAP
+Ensure SWAP partition is unmounted:
+  cmd.run:
+    - name: swapoff -a
+    
 Make SWAP partition:
   cmd.run:
     - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - require:
       - module: Create swap partition
-
 
 # Activate SWAP device
 Enable swap:
