@@ -149,7 +149,7 @@ if $cluster; then
     done
 else
     for state in system sspl eoscore halon s3.build_ssl_certs ha.haproxy misc.openldap s3server; do
-        $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
+        $cmd salt-call --local state.apply components."$state" test="$dry_run"
     done
 fi
 
