@@ -4,16 +4,22 @@ set -eu
 
 function usage {
   echo "\
-Usage: $0 [options] [[user@]hostname]
+Usage: $0 [options]
 
-Installs EOS stack and configures eos services either on remote host or locally
-if hostname is not specified.
+Installs EOS stack and configures eos services either on remote host or locally.
+
+By default performs singlenode (masterless) SaltStack configuration.
+Use '--cluster' to switch to cluster mode. Note: in cluster mode the host is
+expected to be a salt master.
 
 Options:
-    -n,  --dry-run          do not actually perform any changes
-    -s,  --sudo             use sudo
-    -h,  --help             print this help and exit
-    -F,  --ssh-config FILE  alternative path to ssh configuration file
+    -c,  --cluster                  treat host as cluster primary
+    -n,  --dry-run                  do not actually perform any changes
+    -h,  --help                     print this help and exit
+    -r,  --remote [user@]hostname   remote host specification
+    -F,  --ssh-config FILE          alternative path to ssh configuration file
+    -s,  --sudo                     use sudo
+    -v,  --verbose                  be more verbose
 "
 }
 
@@ -28,8 +34,8 @@ function parse_args() {
         exit 1
     fi
 
-    OPTIONS=nshF:
-    LONGOPTS=dry-run,sudo,help,ssh-config:
+    OPTIONS=cdnhr:F:sv
+    LONGOPTS=cluster,debug,dry-run,help,remote:,ssh-config:,sudo,verbose
 
     ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -40,17 +46,25 @@ function parse_args() {
 
     while true; do
         case "$1" in
-            -n|--dry-run)
-                dry_run=True
+            -c|--cluster)
+                cluster=true
                 shift
                 ;;
-            -s|--sudo)
-                sudo=sudo
+            -d|--debug)
+                debug=true
+                shift
+                ;;
+            -n|--dry-run)
+                dry_run=True
                 shift
                 ;;
             -h|--help)
                 usage
                 exit 0
+                ;;
+            -r|--remote)
+                hostspec="$2"
+                shift 2
                 ;;
             -F|--ssh-config)
                 ssh_config="$2"
@@ -59,6 +73,14 @@ function parse_args() {
                     exit 2
                 fi
                 shift 2
+                ;;
+            -s|--sudo)
+                sudo=sudo
+                shift
+                ;;
+            -v|--verbose)
+                ((verbosity=verbosity+1))
+                shift
                 ;;
             --)
                 shift
@@ -71,23 +93,36 @@ function parse_args() {
         esac
     done
 
-    if [[ $# -eq 1 ]]; then
-        host=$1
-    elif [[ $# -ne 0 ]]; then
-        echo "$0: Only a single remote host is expected, provided: $@"
+    if [[ $# -ne 0 ]]; then
+        echo "$0: No positional arguments are expected, provided: $@"
         exit 4
     fi
 
 }
 
 # parse args
-host= ssh_config= dry_run=False sudo=
+cluster=false
+debug=false
+dry_run=False
+hostspec=
+ssh_config=
+sudo=
+verbosity=0
 parse_args "$@"
-echo "host: $host, ssh_config: $ssh_config, dry-run: $dry_run, sudo: $sudo"
+
+
+if [[ $verbosity -gt 0 ]]; then
+    echo "Parsed args: cluster=$cluster, debug=$debug, dry-run=$dry_run, remote=$hostspec, ssh-config=$ssh_config, sudo=$sudo, verbosity=$verbosity"
+fi
+
+
+if $debug; then
+    exit 0
+fi
 
 # prepare command
 cmd="$sudo"
-if [[ -n "$host" ]]; then
+if [[ -n "$hostspec" ]]; then
 
     if [[ -n "$ssh_config" ]]; then
         ssh_config="-F $ssh_config"
@@ -97,22 +132,25 @@ if [[ -n "$host" ]]; then
         ssh_config="-t $ssh_config"
     fi
 
-    cmd="ssh $ssh_config $host $cmd"
-fi
-
-# resolve salt states to apply
-# TODO sudo prompt (if it appears) is not visible for now
-states=$($cmd salt-call --local state.show_top | grep components | awk '{print $NF}')
-
-if [ -z "$states" ]; then
-    >&2 echo 'No states found in salt formulas'
-    exit 1
+    cmd="ssh $ssh_config $hostspec $cmd"
 fi
 
 # apply states
-for state in $states; do
-    echo "Applying '$state'..."
-    $cmd salt-call --local state.apply "$state" test="$dry_run"
-done
+if $cluster; then
+    for state in system sspl eoscore halon; do
+        $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
+    done
+
+    $cmd salt eosnode-1  state.apply components.s3.build_ssl_certs test="$dry_run"
+    $cmd salt eosnode-2 state.apply components.s3.build_ssl_certs test="$dry_run"
+
+    for state in ha.haproxy misc.openldap s3server; do
+        $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
+    done
+else
+    for state in system sspl eoscore halon s3.build_ssl_certs ha.haproxy misc.openldap s3server; do
+        $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
+    done
+fi
 
 echo "Done"
