@@ -15,6 +15,7 @@ Install prereq packages for sspl - hw specific:
       - python-daemon
       - python-hpi
       - python-openhpi-baselib
+      - sudo
       - zabbix-agent-lib
       - zabbix-api-gescheit
       - zabbix-xrtx-lib
