@@ -16,5 +16,5 @@ confds:
 ssus:
 {%- for node_id in pillar['cluster']['node_list'] %}
   - host: {{ pillar['cluster'][node_id]['fqdn'] }}
-    disks: [{{ ', '.join(pillar['cluster'][node_id]['storage']['data_devices']) }}]
+    disks: {{ pillar['cluster'][node_id]['storage']['data_devices'] }}
 {%- endfor %}
