@@ -85,12 +85,12 @@ Ensure file dcs_collector.conf exists:
     - require:
       - file: Ensure directory dcs_collector.conf.d exists
 
-Start service dcs-collector:
-  cmd.run:
-    - name: /etc/rc.d/init.d/dcs-collector start
-    - onlyif: test -f /etc/rc.d/init.d/dcs-collector
-    - require:
-      - file: Ensure file dcs_collector.conf exists
+#Start service dcs-collector:
+#  cmd.run:
+#    - name: /etc/rc.d/init.d/dcs-collector start
+#    - onlyif: test -f /etc/rc.d/init.d/dcs-collector
+#    - require:
+#      - file: Ensure file dcs_collector.conf exists
 
 # END: Prepare for SSPL configuration
 

@@ -65,8 +65,8 @@ Open https port for s3server:
 #     - location: end
 #     - mode: ensure
 
-Restart haproxy:
-  service.running:
-    - name: haproxy
-    - watch:
-      - service: s3authserver
+#Restart haproxy:
+#  service.running:
+#    - name: haproxy
+#    - watch:
+#      - service: s3authserver

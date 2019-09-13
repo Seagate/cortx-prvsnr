@@ -23,10 +23,3 @@ Update Halon config file:
     - user: root
     - group: root
 
-# Setup Halon service
-Service Halon startup:
-  service.running:
-    - name: halond
-    - enable: True
-    - watch:
-      - file: Update Halon config file
