@@ -1,19 +1,19 @@
-# Setup multipath
-Copy multipath config:
-  file.copy:
-    - name: /etc/multipath.conf
-    - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
-    - force: True
-    - makedirs: True
-
-Restart multipath service:
-  service.running:
-    - name: multipathd.service
-    - watch:
-      - file: Copy multipath config
-
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
+
+# Setup multipath
+# Copy multipath config:
+#   file.copy:
+#     - name: /etc/multipath.conf
+#     - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
+#     - force: True
+#     - makedirs: True
+
+# Restart multipath service:
+#   service.running:
+#     - name: multipathd.service
+#     - watch:
+#       - file: Copy multipath config
 
 # File still work in progress as disks devices are hard coded
 # This formula is an attempt to automate the raid setup on concerned devices.
@@ -72,6 +72,7 @@ Make SWAP partition:
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - require:
       - module: Create swap partition
+      - cmd: Ensure SWAP partition is unmounted
 
 # Activate SWAP device
 Enable swap:
