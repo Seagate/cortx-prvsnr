@@ -82,3 +82,16 @@ Remove common_runtime libraries:
 #------------------------------
 # Teardown Common Runtime End
 #------------------------------
+
+#------------------------------
+# Teardown S3IAMCLI Start
+#------------------------------
+Remove S3 iamcli:
+  pkg.removed:
+    - pkgs:
+      - s3iamcli
+#       # - s3iamcli-devel
+#       # - s3server-debuginfo
+#------------------------------
+# Teardown S3IAMCLI End
+#------------------------------
