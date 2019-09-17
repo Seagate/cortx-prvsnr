@@ -42,6 +42,14 @@ Remove file sspl_ll.conf:
   file.absent:
     - name: /etc/sspl.conf
 
+Remove file sspl_ll.conf.bak :
+  file.absent:
+    - name: /etc/sspl.conf.bak
+
+Remove directory install sspl-ll:
+  file.absent:
+    - name: /etc/sspl-ll
+
 Remove file dcs_collector.conf:
   file.absent:
     - name: /etc/dcs_collector.conf
