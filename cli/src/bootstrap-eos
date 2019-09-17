@@ -23,7 +23,7 @@ Options:
 "
 }
 
-function parse_args() {
+function parse_args {
     set -eu
 
     # Note. this mostly based on https://stackoverflow.com/a/29754866
