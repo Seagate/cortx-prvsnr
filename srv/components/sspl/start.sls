@@ -1,3 +1,7 @@
+Start rabbitmq-server:
+  service.running:
+    - name: rabbitmq-server
+
 Start service dcs-collector:
   cmd.run:
     - name: /etc/rc.d/init.d/dcs-collector start

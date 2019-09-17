@@ -18,6 +18,3 @@ include:
   - components.halon.stop
   - components.sspl.stop
 
-Stop rabbitmq-server:
-  service.dead:
-    - name: rabbitmq-server

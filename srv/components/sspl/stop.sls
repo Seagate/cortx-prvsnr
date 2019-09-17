@@ -6,3 +6,8 @@ service_dcs_collector:
 stop service sspl-ll:
   service.dead:
     - name: sspl-ll
+
+Stop rabbitmq-server:
+  service.dead:
+    - name: rabbitmq-server
+
