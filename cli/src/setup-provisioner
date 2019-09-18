@@ -1,26 +1,41 @@
 #!/bin/bash
 
-function usage {
-  echo "\
-Usage: $0 [ees-prvsnr-tag]
-defaults:
-    - ees-prvsnr-tag: latest tagged
-"
-}
-
-if [ "$1" = "--help" ]; then
-    usage
-    exit 0
-fi
-
 set -eu
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
-INSTALLDIR="/opt/seagate/ees-prvsnr"
-EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
+
+. $BASEDIR/functions.sh
+
+function usage {
+  echo "\
+Usage: $0 [options] [ees-prvsnr-tag]
+
+Defaults:
+ ees-prvsnr-tag: latest tagged
+
+Options:
+$base_options_usage
+"
+}
+
+parse_args '' '' '' "$@"
+
+eval set -- "$positional_args"
+
+if [[ $# -gt 1 ]]; then
+    >&2 echo "$0: Only one positional argument is expected, provided: $@"
+    exit 2
+fi
 
 prvsnr_version="${1:-}"
+
+cmd=$(build_command)
+
+exit 0
+
+INSTALLDIR="/opt/seagate/ees-prvsnr"
+EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
 # TODO replace with eos-provisioner.rpm installation
 if [ ! -d "$INSTALLDIR" ]; then
@@ -43,20 +58,20 @@ fi
 pushd "$INSTALLDIR"
 
     # config custom yum repos
-    rm -rf /var/cache/yum
-    rm -rf /etc/yum.repos.d
-    cp -R files/etc/yum.repos.d /etc
+    $cmd rm -rf /var/cache/yum
+    $cmd rm -rf /etc/yum.repos.d
+    $cmd cp -R files/etc/yum.repos.d /etc
 
     # install salt
-    yum install -y salt-minion
+    $cmd yum install -y salt-minion
 
     # re-config and restart salt
-    mv -f /etc/salt/minion /etc/salt/minion.org
-    cp files/etc/salt/minion /etc/salt/minion
-    systemctl restart salt-minion
+    $cmd mv -f /etc/salt/minion /etc/salt/minion.org
+    $cmd cp files/etc/salt/minion /etc/salt/minion
+    $cmd systemctl restart salt-minion
 
     # ensure it works and log the version
-    salt-call --version
+    $cmd salt-call --version
 
 popd
 
