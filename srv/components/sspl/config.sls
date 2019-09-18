@@ -14,8 +14,6 @@ Copy sample file:
     - name: /etc/sspl.conf
     - source: /opt/seagate/sspl/conf/sspl.conf.{{ pillar['sspl']['SYSTEM_INFORMATION']['product'] }}
     - mode: 644
-    - require:
-        - pkg: Install sspl packages
 
 Update SSPL config:
   module.run:
@@ -51,8 +49,6 @@ Add zabbix user in sudoers file:
     - mode: ensure
     - after: '.*%wheel\s+ALL=\(ALL\)\s+NOPASSWD:\s*ALL'
     - backup: True
-    - require:
-        - pkg: sudo
 
 # Create sudoers file for zabbix user:
 #   file.managed:
