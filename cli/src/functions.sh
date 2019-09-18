@@ -1,47 +1,63 @@
 #!/bin/bash
 
 # general set of arguments
+# TODO should be added to docs as part of the API
 cluster=false
-dry_run=False
+dry_run=false
 hostspec=
 ssh_config=
-sudo=
+sudo=false
 verbosity=0
+positional_args=
 
-function combine_usage_options {
-    local _add_opts_info=${1:-''}
-    local _base_opts_info="\
-    -c,  --cluster                  treat host as cluster primary
-    -n,  --dry-run                  do not actually perform any changes
-    -h,  --help                     print this help and exit
-    -r,  --remote [user@]hostname   remote host specification
-    -F,  --ssh-config FILE          alternative path to ssh configuration file
-    -s,  --sudo                     use sudo
-    -v,  --verbose                  be more verbose
+base_options_usage="\
+  -c,  --cluster                  treat host as cluster primary
+  -n,  --dry-run                  do not actually perform any changes
+  -h,  --help                     print this help and exit
+  -r,  --remote [user@]hostname   remote host specification
+  -F,  --ssh-config FILE          alternative path to ssh configuration file
+  -s,  --sudo                     use sudo
+  -v,  --verbose                  be more verbose
 "
-    echo "\
-        
-Options:
-$_base_opts_info
-$_add_opts_info
-"
-}
 
-
+# default usage
+# TODO mention in docs how to override
 function usage {
-  local _opts_info=$(combine_usage_options)
   echo "\
 Usage: $0 [options]
 
-$_opts_info
+Options:
+$base_options_usage
 "
 }
+
+
+# API:
+#   - parse_args <add_opts_short> <add_opts_long> <add_opts_parse_cb> <options_to_parse>
+#   - add_opts_short a string of one-letter additional options
+#   - add_opts_long  a comma-separated string of long additional options
+#   - add_opts_parse_cb a function name to call to parse additional options
+#       - should raise an error (e.g. exit) if something goes wrong
+#   - parsed values for base set of options are assigned to global variables:
+#       - cluster
+#       - dry_run
+#       - hostspec
+#       - ssh_config
+#       - sudo
+#       - verbosity
+#   - positional arguments are set to positional_args global variable
+#   - exits in case of an error, exit codes:
+#       - 0: success
+#       - 1: getopt can't be used in the environment (self getopt's test fails)
+#       - 2: command line arguments don't satisfy the specification
+#           (e.g. unknown option or missed required argument)
+#       - 3: some other getopt error
+#       - 4: options parser callback is not defined when it is expected
+#       - 5: bad argument values (e.g. not a file for ssh-config)
 
 
 function parse_args {
     set -eu
-
-    echo "$@"
 
     local _add_opts=$1
     local _add_long_opts=$2
@@ -72,6 +88,7 @@ function parse_args {
         exit 2
     fi
 
+    # TODO why eval here
     eval set -- "$PARSED"
 
     while true; do
@@ -81,7 +98,7 @@ function parse_args {
                 shift
                 ;;
             -n|--dry-run)
-                dry_run=True
+                dry_run=true
                 shift
                 ;;
             -h|--help)
@@ -96,12 +113,12 @@ function parse_args {
                 ssh_config="$2"
                 if [[ ! -f "$ssh_config" ]]; then
                     >&2 echo "'$ssh_config' not a file"
-                    exit 2
+                    exit 5
                 fi
                 shift 2
                 ;;
             -s|--sudo)
-                sudo=sudo
+                sudo=true
                 shift
                 ;;
             -v|--verbose)
@@ -117,46 +134,49 @@ function parse_args {
                     >&2 echo "Programming error"
                     exit 3
                 else
-                    set +e
+                    if [[ -z "$_opts_cb" ]]; then
+                        >&2 echo "Options parser callback is not defined"
+                        exit 4
+                    fi
+
                     $_opts_cb "$@"
-                    _res=$?
-                    set -e
-                    shift $_res
+
+                    local _opt=$(echo "$1" | sed 's/^-\+//g')
+                    if (echo "$_add_opts" | grep -qP "$_opt(?=:)") || (echo ",$_add_long_opts" | grep -qP ",$_opt(?=:)"); then
+                        shift 2
+                    else
+                        shift
+                    fi
                 fi
                 ;;
         esac
     done
 
-    if [[ $# -ne 0 ]]; then
-        >&2 echo "$0: No positional arguments are expected, provided: $@"
-        exit 4
-    fi
-
-    if [[ $verbosity -gt 0 ]]; then
-        echo "Parsed args: 'cluster'=$cluster, 'dry-run'=$dry_run, 'remote'=$hostspec, 'ssh-config'=$ssh_config, 'sudo'=$sudo, 'verbosity'=$verbosity, 'positional'=$@"
-    fi
+    positional_args="$@"
 }
 
 
-function prepare_command() {
-    local _sudo=${1:-$sudo}
-    local _hostspec=${2:-$hostspec}
-    local _ssh_config=${3:-$ssh_config}
+function build_command() {
+    set -eu
 
-    # prepare command
-    local _cmd="$_sudo"
-    if [[ -n "$_hostspec" ]]; then
+    local _cmd=''
+    if [[ -n "$hostspec" ]]; then
+        _cmd='ssh'
 
-        if [[ -n "$_ssh_config" ]]; then
-            _ssh_config="-F $_ssh_config"
+        if $sudo; then
+            _cmd="$_cmd -t"
         fi
 
-        if [[ -n "$_sudo" ]]; then
-            _ssh_config="-t $_ssh_config"
+        if [[ -n "$ssh_config" ]]; then
+            _cmd="$_cmd -F $ssh_config"
         fi
 
-        _cmd="ssh $_ssh_config $_hostspec $_cmd"
+        _cmd="$_cmd $hostspec"
     fi
 
-    echo "$_cmd"
+    if $sudo; then
+        _cmd="$_cmd sudo"
+    fi
+
+    echo $_cmd
 }
