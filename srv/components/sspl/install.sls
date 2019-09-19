@@ -1,8 +1,3 @@
-Install prereq packages for sspl - vm specific:
-  pkg.installed:
-    - pkgs:
-      - lxqt-policykit
-
 {% if not 'virtual' in salt['grains.get']('productname').lower() %}
 
 Install prereq packages for sspl - hw specific:

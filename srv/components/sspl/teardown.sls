@@ -3,14 +3,7 @@ service_dcs_collector:
     - name: /etc/rc.d/init.d/dcs-collector stop
     - onlyif: test -f /etc/rc.d/init.d/dcs-collector
 
-{% if 'virtual' in salt['grains.get']('productname').lower() %}
-
-Remove packages:
-  pkg.purged:
-    - pkgs:
-      - lxqt-policykit
-
-{% else %}
+{% if not 'virtual' in salt['grains.get']('productname').lower() %}
 
 Remove packages:
   pkg.purged:
