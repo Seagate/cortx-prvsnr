@@ -19,20 +19,21 @@ $base_options_usage
 "
 }
 
-parse_args '' '' '' "$@"
+# TODO update tests
+function positional_args_parser {
+    set -eu
 
-eval set -- "$positional_args"
+    if [[ $# -gt 1 ]]; then
+        >&2 echo "$0: Only one positional argument is expected, provided: $@"
+        exit 2
+    fi
 
-if [[ $# -gt 1 ]]; then
-    >&2 echo "$0: Only one positional argument is expected, provided: $@"
-    exit 2
-fi
+    prvsnr_version="${1:-}"
+}
 
-prvsnr_version="${1:-}"
+parse_args '' '' '' positional_args_parser "$@"
 
 cmd=$(build_command)
-
-exit 0
 
 INSTALLDIR="/opt/seagate/ees-prvsnr"
 EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'

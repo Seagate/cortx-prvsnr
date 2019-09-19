@@ -8,7 +8,6 @@ hostspec=
 ssh_config=
 sudo=false
 verbosity=0
-positional_args=
 
 base_options_usage="\
   -c,  --cluster                  treat host as cluster primary
@@ -33,11 +32,12 @@ $base_options_usage
 
 
 # API:
-#   - parse_args <add_opts_short> <add_opts_long> <add_opts_parse_cb> <options_to_parse>
+#   - parse_args <add_opts_short> <add_opts_long> <add_opts_parse_cb> <positional_args_cb> <options_to_parse>
 #   - add_opts_short a string of one-letter additional options
 #   - add_opts_long  a comma-separated string of long additional options
 #   - add_opts_parse_cb a function name to call to parse additional options
 #       - should raise an error (e.g. exit) if something goes wrong
+#   - positional_args_cb a function name to call to parse positional arguments
 #   - parsed values for base set of options are assigned to global variables:
 #       - cluster
 #       - dry_run
@@ -45,7 +45,6 @@ $base_options_usage
 #       - ssh_config
 #       - sudo
 #       - verbosity
-#   - positional arguments are set to positional_args global variable
 #   - exits in case of an error, exit codes:
 #       - 0: success
 #       - 1: getopt can't be used in the environment (self getopt's test fails)
@@ -62,8 +61,9 @@ function parse_args {
     local _add_opts=$1
     local _add_long_opts=$2
     local _opts_cb=$3
+    local _positional_args_cb=$4
     local _res
-    shift 3
+    shift 4
 
     # Note. this mostly based on https://stackoverflow.com/a/29754866
 
@@ -129,30 +129,34 @@ function parse_args {
                 shift
                 break
                 ;;
+            ?)
+                >&2 echo "Programming error"
+                exit 3
+                ;;
             *)
-                if [[ "$1" == '?' ]]; then
-                    >&2 echo "Programming error"
-                    exit 3
+                if [[ -z "$_opts_cb" ]]; then
+                    >&2 echo "Options parser callback is not defined"
+                    exit 4
+                fi
+
+                $_opts_cb "$@"
+
+                local _opt=$(echo "$1" | sed 's/^-\+//g')
+                if (echo "$_add_opts" | grep -qP "$_opt(?=:)") || (echo ",$_add_long_opts" | grep -qP ",$_opt(?=:)"); then
+                    shift 2
                 else
-                    if [[ -z "$_opts_cb" ]]; then
-                        >&2 echo "Options parser callback is not defined"
-                        exit 4
-                    fi
-
-                    $_opts_cb "$@"
-
-                    local _opt=$(echo "$1" | sed 's/^-\+//g')
-                    if (echo "$_add_opts" | grep -qP "$_opt(?=:)") || (echo ",$_add_long_opts" | grep -qP ",$_opt(?=:)"); then
-                        shift 2
-                    else
-                        shift
-                    fi
+                    shift
                 fi
                 ;;
         esac
     done
 
-    positional_args="$@"
+    if [[ -n "$_positional_args_cb" ]]; then
+        $_positional_args_cb "$@"
+    elif [[ $# -gt 0 ]]; then
+        >&2 echo "$0: positional arguments are not expected, provided: $@"
+        exit 2
+    fi
 }
 
 
