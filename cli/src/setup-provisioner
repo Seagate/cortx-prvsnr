@@ -38,6 +38,7 @@ cmd=$(build_command)
 INSTALLDIR="/opt/seagate/ees-prvsnr"
 EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
+# TODO fix for remote usage
 # TODO replace with eos-provisioner.rpm installation
 if [ ! -d "$INSTALLDIR" ]; then
     if [ -z "$prvsnr_version" ]; then
