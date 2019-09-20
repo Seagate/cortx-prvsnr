@@ -20,10 +20,12 @@ Unmount metadata vol:
     - config: /etc/fstab
     - persist: True
 
-Unmount swap:
+Unmount SWAP:
+  cmd.run:
+    - name: swapoff -a
+
+Remove swap:
   module.run:
-    - mount.swapoff:
-      - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - mount.rm_fstab:
       - name: SWAP
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1

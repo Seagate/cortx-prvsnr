@@ -1,20 +1,6 @@
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
 
-# Setup multipath
-# Copy multipath config:
-#   file.copy:
-#     - name: /etc/multipath.conf
-#     - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
-#     - force: True
-#     - makedirs: True
-
-# Restart multipath service:
-#   service.running:
-#     - name: multipathd.service
-#     - watch:
-#       - file: Copy multipath config
-
 # File still work in progress as disks devices are hard coded
 # This formula is an attempt to automate the raid setup on concerned devices.
 
@@ -34,7 +20,20 @@
 #     - name: mdadm --detail --scan | tee /etc/mdadm.conf
 #     - unless: grep "$(mdadm --detail --scan)" /etc/mdadm.conf
 
-# Label raid disk partition created above
+# Setup multipath
+Copy multipath config:
+  file.copy:
+    - name: /etc/multipath.conf
+    - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
+    - force: True
+    - makedirs: True
+
+Restart multipath service:
+  service.running:
+    - name: multipathd.service
+    - watch:
+      - file: Copy multipath config
+
 Label Metadata partition:
   module.run:
     - partition.mklabel:
@@ -64,11 +63,11 @@ Create metadata partition:
 # Make SWAP
 Ensure SWAP partition is unmounted:
   cmd.run:
-    - name: swapoff -a
+    - name: swapoff -a && sleep 5
     
 Make SWAP partition:
   cmd.run:
-    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
+    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1 && sleep 5
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
     - require:
       - module: Create swap partition
