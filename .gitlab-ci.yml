@@ -1,11 +1,23 @@
 rpm_package:
   before_script:
-    - yum install rpm-build createrepo -y
+    - yum install git rpm-build createrepo -y
   script:
     - sh ./rpms/buildrpm.sh
     
 cli_rpm_package:
   before_script:
-    - yum install rpm-build createrepo -y
+    - yum install git rpm-build createrepo -y
   script:
     - sh ./cli/buildrpm.sh
+
+# package_upload:
+#   script:
+#     - # Repo creation process
+#     - pushd /mnt/bigstorage/releases/eos/components/dev/csm/$BUILD_NUMBER
+#     - createrepo .
+#     - # Link repo to release build
+#     - rm -rf /mnt/bigstorage/releases/master/last_successful/csm/*
+#     - pushd /mnt/bigstorage/releases/master/last_successful/csm
+#     - ln -s /mnt/bigstorage/releases/eos/components/dev/csm/$BUILD_NUMBER repo
+#     - popd
+#     - popd
