@@ -1,23 +1,46 @@
-rpm_package:
-  before_script:
-    - yum install git rpm-build createrepo -y
+stages:
+  - prepare
+  - package
+  - create_repo
+  - upload
+  - release
+
+Prepare for build execution:
+  stage: prepare
+  script:
+    - yum install sudo git rpm-build createrepo python36 -y
+    - rm -rf /root/rpmbuild/RPMS/x86_64/eos-prvsnr*
+
+build eos-prvsnr rpm:
+  stage: package
   script:
     - sh ./rpms/buildrpm.sh
     
-cli_rpm_package:
-  before_script:
-    - yum install git rpm-build createrepo -y
+build eos-prvsnr-cli rpm:
+  stage: package
   script:
     - sh ./cli/buildrpm.sh
 
-# package_upload:
-#   script:
-#     - # Repo creation process
-#     - pushd /mnt/bigstorage/releases/eos/components/dev/csm/$BUILD_NUMBER
-#     - createrepo .
-#     - # Link repo to release build
-#     - rm -rf /mnt/bigstorage/releases/master/last_successful/csm/*
-#     - pushd /mnt/bigstorage/releases/master/last_successful/csm
-#     - ln -s /mnt/bigstorage/releases/eos/components/dev/csm/$BUILD_NUMBER repo
-#     - popd
-#     - popd
+Create yum repo db:
+  stage: create_repo
+  script:
+    - pushd /mnt/bigstorage/releases/eos/components/dev/provisiner/$CI_PIPELINE_ID
+    - createrepo .
+    - popd
+  
+Upload:
+  stage: upload
+  before_script:
+    - mkdir -p /mnt/bigstorage/releases/eos/components/dev/provisioner/$CI_PIPELINE_ID
+    - rm -rf /mnt/bigstorage/releases/eos/components/dev/provisioner/$CI_PIPELINE_ID/*
+  script:
+    - cp /root/rpmbuild/RPMS/x86_64/eos-prvsnr* /mnt/bigstorage/releases/eos/components/dev/provisioner/$CI_PIPELINE_ID
+
+Create a link to release repo:
+  stage: release
+  before_script:
+    - rm -rf /mnt/bigstorage/releases/master/last_successful/provisiner/CI_PIPELINE_ID/*
+  script:
+    - pushd /mnt/bigstorage/releases/master/last_successful/provisioner
+    - ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/$CI_PIPELINE_ID repo
+    - popd
