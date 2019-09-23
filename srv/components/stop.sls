@@ -12,6 +12,7 @@ Stop cluster:
 {% endif %}
 
 include:
+  - components.ha.haproxy.stop
   - components.s3server.stop
   - components.eoscore.stop
   - components.halon.stop

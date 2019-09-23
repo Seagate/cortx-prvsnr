@@ -7,6 +7,7 @@ include:
   - components.halon.start
   - components.eoscore.start
   - components.s3server.start
+  - components.ha.haproxy.start
 
 {% set node = grains['id'] %}
 

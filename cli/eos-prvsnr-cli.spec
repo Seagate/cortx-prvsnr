@@ -36,14 +36,7 @@ rm -rf %{buildroot}
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 
 #/opt/seagate/eos-prvsnr/files
-/opt/seagate/eos-prvsnr/cli/setup-provisioner
-/opt/seagate/eos-prvsnr/cli/configure-eos
-/opt/seagate/eos-prvsnr/cli/deploy-eos
-/opt/seagate/eos-prvsnr/cli/bootstrap-eos
-/opt/seagate/eos-prvsnr/cli/start-eos
-/opt/seagate/eos-prvsnr/cli/stop-eos
-/opt/seagate/eos-prvsnr/cli/update-eos
-/opt/seagate/eos-prvsnr/cli/destroy-eos
+/opt/seagate/eos-prvsnr/cli
 
 %post
 # TBD
