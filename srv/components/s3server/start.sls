@@ -1,4 +1,4 @@
-Restart HAProxy:
+Start HAProxy:
   service.running:
     - name: haproxy
 
@@ -6,7 +6,7 @@ Start slapd:
   service.running:
     - name: slapd
 
-Restart s3authserver:
+Start s3authserver:
   service.running:
     - name: s3authserver
     - require:
