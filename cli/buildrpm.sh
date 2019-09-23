@@ -11,7 +11,10 @@ EOS_PRVSNR_VERSION=1.0.0
 usage() { echo "Usage: $0 [-G <git short revision>] [-P <EOS Provisioner version>]" 1>&2; exit 1; }
 
 # Install rpm-build package
+[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y git
+[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y python36
 [[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y rpm-build
+[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y sudo
 
 # Clean-up pycache
 find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
