@@ -2,7 +2,6 @@
 # Teardown haproxy/openldap
 #-------------------------
 include:
-  - components.s3server.build_ssl_cert_rpms.teardown
   - components.misc.openldap.teardown
   - components.ha.haproxy.teardown
   - components.ha.keepalived.teardown

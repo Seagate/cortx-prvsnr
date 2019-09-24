@@ -6,7 +6,7 @@
 Copy s3 utils:
   file.recurse:
     - name: /opt/seagate/s3server/
-    - source: salt://components/s3server/build_ssl_cert_rpms/files/
+    - source: salt://components/misc/build_ssl_cert_rpms/files/
     - user: root
     - group: root
     - file_mode: 750

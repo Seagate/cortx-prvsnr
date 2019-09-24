@@ -137,21 +137,19 @@ fi
 
 # apply states
 if $cluster; then
-    for state in system sspl eoscore halon; do
+
+    # Execute on eosnode-2 only if cert generation on eosnode-1 succeeds.
+    $cmd salt eosnode-1 state.apply components.misc.build_ssl_cert_rpms test="$dry_run" \
+    && \
+    $cmd salt eosnode-2 state.apply components.misc.build_ssl_cert_rpms test="$dry_run"
+
+    for state in system sspl eoscore halon s3server ; do
         $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
     done
 
-    $cmd salt eosnode-1 state.apply components.s3.build_ssl_certs test="$dry_run"
-    $cmd salt eosnode-2 state.apply components.s3.build_ssl_certs test="$dry_run"
-
-    for state in ha.haproxy misc.openldap s3server; do
-        $cmd salt eosnode-[1,2] state.apply components."$state" test="$dry_run"
-    done
 else
     # TODO switch to masterful mode
-    for state in system sspl eoscore halon s3.build_ssl_certs ha.haproxy misc.openldap s3server; do
-        $cmd salt-call --local state.apply components."$state" test="$dry_run"
-    done
+    $cmd salt-call --local state.highstate test="$dry_run"
 fi
 
 echo "Done"
