@@ -58,16 +58,14 @@ class SSPLCfg(BaseCfg):
         # TODO validations for configs.
 
 
-    def __read_user_inputs(self, opt_tree: dict={}, parent: list=[]) -> dict:
+    def __read_user_inputs(self, opt_tree: dict={}, parent: str='') -> dict:
         for k, v in opt_tree.items():
             if isinstance(v, dict):
-                parent.append(k)
-                opt_tree[k] = self.__read_user_inputs(v, parent)
+                opt_tree[k] = self.__read_user_inputs(v, f'{parent}[{k}]')
             else:
-                printable_parent = ']['.join(parent) if parent else ''
-                opt_tree[k] = input("Enter value for [{0}][{1}] -> ({2}): ".format(printable_parent, k, v))
+                user_input = input(f"Enter value for {parent}[{k}] -> ({v}): ")
+                opt_tree[k] = user_input if user_input else v
         
-        parent.pop()
         return opt_tree
 
 
