@@ -5,30 +5,34 @@ set -e
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
+BUILD_NUMBER=0
 GIT_VER=
 EOS_PRVSNR_VERSION=1.0.0
 
 usage() { echo "Usage: $0 [-G <git short revision>] [-S <EOS Provisioner version>]" 1>&2; exit 1; }
 
 # Install rpm-build package
-[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y git
-[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y python36
-[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y rpm-build
-[[ $(rpm --quiet -qi rpm-build) != 0 ]] && yum install -q -y sudo
+rpm --quiet -qi git || yum install -q -y git && echo "git already installed."
+rpm --quiet -qi python36 || yum install -q -y python36 && echo "python36 already installed."
+rpm --quiet -qi rpm-build || yum install -q -y rpm-build && echo "rpm-build already installed."
+rpm --quiet -qi yum-utils || yum install -q -y yum-utils && echo "yum-utils already installed."
 
 # Clean-up pycache
 find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
 
-while getopts ":G:S:" o; do
+while getopts ":g:e:b:" o; do
     case "${o}" in
-        G)
+        g)
             GIT_VER=${OPTARG}
             ;;
-        S)
+        e)
             EOS_PRVSNR_VERSION=${OPTARG}
             ;;
+        b)
+            BUILD_NUMBER=${OPTARG}
+            ;;
         *)
-            usage
+            echo "Usage: buildrpm.sh -g <git_commit_hash> -e <ees_prvsnr_version> -b <build_number>"
             ;;
     esac
 done
@@ -57,7 +61,7 @@ rm -rf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 
 yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
 
-rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" ${BASEDIR}/eos-prvsnr.spec
+rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr.spec
 
 popd
 

@@ -1,9 +1,6 @@
-# build number
-%define build_num  %( test -n "$build_number" && echo "$build_number" || echo 1 )
-
 Name:       eos-prvsnr
 Version:    %{_ees_prvsnr_version}
-Release:    %{build_num}_%{_ees_prvsnr_git_ver}_%{?dist:el7}
+Release:    %{_build_number}_%{_ees_prvsnr_git_ver}_%{?dist:el7}
 Summary:    EOS Provisioning.
 
 Group:      Tools
