@@ -1,6 +1,7 @@
 base:
   '*':
     - components.cluster
+    - components.csm
     - components.halon
     - components.haproxy
     - components.eoscore

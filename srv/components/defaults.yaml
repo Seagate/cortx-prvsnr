@@ -72,12 +72,7 @@ nfs:
     url: {{ eos_repo_url }}/nfs_uploads/
 
 csm:
-  grafana_repo:
-    id: "graphana"
-    url: {{ prvsnr_repo_url }}/grafana
   repo:
     id: "csm"
-    url: {{ eos_repo_url }}/{{ release_tag }}/csm/repo
-    package:
-      name: csm
-      version: 1.0.1
+    url: {{ eos_repo_url  }}/components/dev/csm/last_successful/
+
