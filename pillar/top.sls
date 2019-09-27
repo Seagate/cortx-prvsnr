@@ -10,3 +10,4 @@ base:
     - components.s3client
     - components.s3server
     - components.sspl
+    - components.system
