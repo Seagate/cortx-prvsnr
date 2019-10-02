@@ -51,7 +51,6 @@ rm -rf eos-prvsnr-cli*
 
 # Setup the source tar for rpm build
 mkdir -p eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
-cp -R ${BASEDIR}/../files eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
 cp -R ${BASEDIR}/ eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli
 tar -czvf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}.tar.gz eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
