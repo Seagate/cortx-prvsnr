@@ -22,8 +22,8 @@ base_repos:
     # url: {{ prvsnr_repo_url }}/centos/epel/
     url: {{ prvsnr_repo_url }}/centos/epel-20191423/mirror.grid.uchicago.edu/pub/linux/epel/7/x86_64/
   saltstack_repo:
-    id: "saltsatck"
-    url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/2019.2
+    id: "saltstack"
+    url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
 
 sspl:
   repo:

@@ -677,7 +677,7 @@ ssh_update_roster: True
 #
 file_roots:
   base:
-    - /opt/seagate/ees-prvsnr/srv
+    - /opt/seagate/eos-prvsnr/srv
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.
@@ -853,7 +853,7 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /opt/seagate/ees-prvsnr/pillar
+    - /opt/seagate/eos-prvsnr/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a

@@ -2,146 +2,39 @@
 
 set -eu
 
+SCRIPT_PATH=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT_PATH")
+
+. $BASEDIR/functions.sh
+
 function usage {
   echo "\
 Usage: $0 [options]
 
 Initializes EOS services either on remote host or locally.
 
-By default performs singlenode (masterless) SaltStack configuration.
-Use '--cluster' to switch to cluster mode. Note: in cluster mode the host is
-expected to be a salt master.
+Target host is considered to be an EOS SaltStack master.
 
-Options:
-    -c,  --cluster                  treat host as cluster primary
-    -n,  --dry-run                  do not actually perform any changes
-    -h,  --help                     print this help and exit
-    -r,  --remote [user@]hostname   remote host specification
-    -F,  --ssh-config FILE          alternative path to ssh configuration file
-    -s,  --sudo                     use sudo
-    -v,  --verbose                  be more verbose
+General options:
+$base_options_usage
 "
 }
 
-function parse_args {
-    set -eu
+parse_args '' '' '' '' "$@"
 
-    # Note. this mostly based on https://stackoverflow.com/a/29754866
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
 
-    ! getopt --test > /dev/null
-    if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-        echo 'Error: getopt is not functional (`getopt --test` failed).'
-        exit 1
-    fi
-
-    OPTIONS=cdnhr:F:sv
-    LONGOPTS=cluster,debug,dry-run,help,remote:,ssh-config:,sudo,verbose
-
-    ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-        exit 2
-    fi
-
-    eval set -- "$PARSED"
-
-    while true; do
-        case "$1" in
-            -c|--cluster)
-                cluster=true
-                shift
-                ;;
-            -d|--debug)
-                debug=true
-                shift
-                ;;
-            -n|--dry-run)
-                dry_run=True
-                shift
-                ;;
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            -r|--remote)
-                hostspec="$2"
-                shift 2
-                ;;
-            -F|--ssh-config)
-                ssh_config="$2"
-                if [[ ! -f "$ssh_config" ]]; then
-                    echo "'$ssh_config' not a file"
-                    exit 2
-                fi
-                shift 2
-                ;;
-            -s|--sudo)
-                sudo=sudo
-                shift
-                ;;
-            -v|--verbose)
-                ((verbosity=verbosity+1))
-                shift
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                echo "Programming error"
-                exit 3
-                ;;
-        esac
-    done
-
-    if [[ $# -ne 0 ]]; then
-        echo "$0: No positional arguments are expected, provided: $@"
-        exit 4
-    fi
-
-}
-
-# parse args
-cluster=false
-debug=false
-dry_run=False
-hostspec=
-ssh_config=
-sudo=
-verbosity=0
-parse_args "$@"
-
-
-if [[ $verbosity -gt 0 ]]; then
-    echo "Parsed args: cluster=$cluster, debug=$debug, dry-run=$dry_run, remote=$hostspec, ssh-config=$ssh_config, sudo=$sudo, verbosity=$verbosity"
-fi
-
-
-if $debug; then
-    exit 0
-fi
-
-# prepare command
-cmd="$sudo"
-if [[ -n "$hostspec" ]]; then
-
-    if [[ -n "$ssh_config" ]]; then
-        ssh_config="-F $ssh_config"
-    fi
-
-    if [[ -n "$sudo" ]]; then
-        ssh_config="-t $ssh_config"
-    fi
-
-    cmd="ssh $ssh_config $hostspec $cmd"
+salt_opts=
+if [[ "$dry_run" == true ]]; then
+    salt_opts="test=True"
 fi
 
 # apply states
-if $cluster; then
-    $cmd salt eosnode-2 state.apply components.post_setup test="$dry_run"
-    $cmd salt eosnode-1 state.apply components.post_setup test="$dry_run"
+if [[ "$singlenode" == true ]]; then
+    $cmd salt eosnode-1 state.apply components.post_setup $salt_opts
 else
-    # TODO switch to masterful mode
-    $cmd salt-call --local state.apply components.post_setup
+    $cmd salt eosnode-2 state.apply components.post_setup $salt_opts
+    $cmd salt eosnode-1 state.apply components.post_setup $salt_opts
 fi
 
 echo "Done"

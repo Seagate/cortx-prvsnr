@@ -1,141 +1,96 @@
 #!/bin/bash
 set -eu
 
+# TODO
+# - dry-run support
+
+SCRIPT_PATH=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT_PATH")
+
+show_file=false
+component=
+file_path=
+
+. $BASEDIR/functions.sh
+
 function usage {
   echo "\
 Usage: Usage: $0 [options] component
 
-Configures eos services either on remote host or locally for a component
-among {cluster,eoscore,haproxy,release,s3client,s3server,sspl}
-if hostname is not specified.
+Configures eos services either on remote host or locally.
+
+'component' is one of {cluster,eoscore,haproxy,release,s3client,s3server,sspl}.
+
+Target host is considered to be an EOS SaltStack master.
+
+General options:
+$base_options_usage
 
 Options:
-    -d,  --show-file-format     show module’s config file contents
-    -F,  --ssh-config FILE      alternative path to ssh configuration file
-    -h,  --help                 print this help and exit
-    -r,  --remote user@IP       remote execution
-    -s,  --sudo                 use sudo
-    -u,  --file FILE            update component pillar data 
+  -f,  --file FILE                      update component pillar data using FILE as source,
+                                         default: not set
+  -p,  --show-file-format               show module’s config file contents
 "
 }
 
-
-function parse_args() {
-    set -eu
-
-    # Note. this mostly based on https://stackoverflow.com/a/29754866
-
-    ! getopt --test > /dev/null
-    if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-        echo 'Error: getopt is not functional (`getopt --test` failed).'
-        exit 1
-    fi
-    OPTIONS=dsu:hF:r:
-    LONGOPTS=show-file-format,sudo,file:,help,ssh-config:,remote:
-
-    ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-        exit 2
-    fi
-
-    eval set -- "$PARSED"
-    while true; do
-        case "$1" in
-            -d|--show-file-format)
-                show_file=true
-                shift
-                ;;
-            -s|--sudo)
-                sudo=sudo
-                shift
-                ;;
-            -u|--file)
-                update_file=true
-                file_path=$2
-                if [[ ! -f "$file_path" ]]; then
-                    echo "ERROR: '$file_path' not a file"
-                    exit 2
-                fi
-                shift 2
-                ;;
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            -F|--ssh-config)
-                ssh_config="$2"
-                if [[ ! -f "$ssh_config" ]]; then
-                    echo "ERROR: '$ssh_config' not a file"
-                    exit 2
-                fi
-                shift 2
-                ;;
-            -r|--remote)
-                host="$2"
-                if [[ -z $host ]]; then
-                    echo "ERROR: host@ip not specified"
-                    exit 2 
-                fi
-                shift 2
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                echo "Programming error"
-                exit 3
-                ;;
-        esac
-    done
-    
-    if [[ $# -eq 1 ]]; then
-        component=$1
-        components=("cluster" "eoscore" "haproxy" "release" "s3client" "s3server" "sspl")
-        if [[ ! " ${components[@]} " =~ " ${component} " ]]; then
-            echo "ERROR: Invalid component type"
-            exit 2
-        fi
-    else
-        echo "$0: Inappropriate arguments provided: $@"
-        usage
-        exit 4
-    fi
-
+# TODO tests
+function options_parser {
+    case "$1" in
+        -f|--file)
+            file_path=$2
+            if [[ ! -f "$file_path" ]]; then
+                >&2 echo "ERROR: '$file_path' not a file"
+                exit 5
+            fi
+            ;;
+        -p|--show-file-format)
+            show_file=true
+            ;;
+        *)
+            >&2 echo "Unknown option: $1"
+            exit 5
+    esac
 }
 
-# parse args
-show_file=false
-update_file=false
-component= 
-file_path= 
-host= 
-ssh_config= 
-sudo=
 
-parse_args "$@"
+# TODO update tests
+function positional_args_parser {
+    set -eu
 
-cmd="$sudo"
-if [[ -n "$host" ]]; then
-
-    if [[ -n "$ssh_config" ]]; then
-        ssh_config="-F $ssh_config"
+    if [[ $# -eq 1 ]]; then
+        case "$1" in
+            cluster|eoscore|haproxy|release|s3client|s3server|sspl)
+                component=$1
+                ;;
+            *)
+                >&2 echo "ERROR: Invalid component type: $1"
+                usage
+                exit 5
+        esac
+    else
+        >&2 echo "ERROR: Inappropriate number of positional arguments provided: $@"
+        usage
+        exit 2
     fi
+}
 
-    if [[ -n "$sudo" ]]; then
-        ssh_config="-t $ssh_config"
-    fi
+parse_args 'f:p' 'file:,show-file-format' options_parser positional_args_parser "$@"
 
-    cmd="ssh $ssh_config $host $cmd"
-    if [[ -f "$file_path" ]]; then 
-        $(scp $file_path ${host}:/tmp/${component}.sls $ssh_config)
-        file_path="/tmp/${component}.sls"
+# check eosnode-1 occurence in ssh-config
+if [[ -n "$hostspec" ]]; then
+    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config")" ]]; then
+        >&2 echo "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
+        exit 1
     fi
 fi
 
-if $show_file ; then
-    echo "$($cmd python3.6 /opt/seagate/ees-prvsnr/utils/configure-eos.py ${component} --show-${component}-file-format)"
-elif  $update_file ; then
-    echo "$($cmd python3.6 /opt/seagate/ees-prvsnr/utils/configure-eos.py ${component} --${component}-file $file_path)"
+if [[ "$show_file" == true ]]; then
+    eos_pillar_show_skeleton "$component" "$hostspec" "$ssh_config" "$sudo"
+    exit 0
+elif [[ -z "$file_path" ]]; then
+    >&2 echo "ERROR: '--file' is a required options for the pillar update"
+    exit 1
 fi
 
+# update pillar on eosnode-1
+eos_pillar_update "$component" "$file_path" "$hostspec" "$ssh_config" "$sudo"

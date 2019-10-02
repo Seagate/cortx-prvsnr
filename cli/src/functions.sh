@@ -1,19 +1,25 @@
 #!/bin/bash
 
+# TODO API for error exit that might:
+#       - echos to stderr
+#       - print usage (optionally)
+#       - exits with specified code
+
 # general set of arguments
 # TODO should be added to docs as part of the API
-cluster=false
 dry_run=false
 hostspec=
+singlenode=false
 ssh_config=
 sudo=false
 verbosity=0
 
+
 base_options_usage="\
-  -c,  --cluster                  treat host as cluster primary
   -n,  --dry-run                  do not actually perform any changes
   -h,  --help                     print this help and exit
   -r,  --remote [user@]hostname   remote host specification
+  -S,  --singlenode               switch to single node mode setup
   -F,  --ssh-config FILE          alternative path to ssh configuration file
   -s,  --sudo                     use sudo
   -v,  --verbose                  be more verbose
@@ -31,30 +37,92 @@ $base_options_usage
 }
 
 
-# API:
-#   - parse_args <add_opts_short> <add_opts_long> <add_opts_parse_cb> <positional_args_cb> <options_to_parse>
-#   - add_opts_short a string of one-letter additional options
-#   - add_opts_long  a comma-separated string of long additional options
-#   - add_opts_parse_cb a function name to call to parse additional options
-#       - should raise an error (e.g. exit) if something goes wrong
-#   - positional_args_cb a function name to call to parse positional arguments
-#   - parsed values for base set of options are assigned to global variables:
-#       - cluster
-#       - dry_run
-#       - hostspec
-#       - ssh_config
-#       - sudo
-#       - verbosity
-#   - exits in case of an error, exit codes:
-#       - 0: success
-#       - 1: getopt can't be used in the environment (self getopt's test fails)
-#       - 2: command line arguments don't satisfy the specification
-#           (e.g. unknown option or missed required argument)
-#       - 3: some other getopt error
-#       - 4: options parser callback is not defined when it is expected
-#       - 5: bad argument values (e.g. not a file for ssh-config)
+#   parse_args <add_opts_short> <add_opts_long> <add_opts_parse_cb> <positional_args_cb> <options_to_parse>
+#
+#   Uses `getopt` (`man 1 getopt`) to parse short and long options.
+#
+#   Holds a predefined set of general options: `check base_options_usage` variable.
+#
+#   Provides an API to extend that options list:
+#       1. additional short options might be passed as non-blank `add_opts_short`
+#       2. additional long options might be passed as non-blank `add_opts_long`
+#       3. if additional options are expected non-blank `add_opts_parse_cb` must be specified
+#       4. if positional arguments are expected `positional_args_cb` must be specified
+#
+#   All these arguments are required (either blank or non-blank).
+#   All other arguments are treated as original command line string to parse and usually
+#   it would be: `"$@"`.
+#
+#   Args:
+#       add_opts_short: a string of one-letter additional options.
+#       add_opts_long: a comma-separated string of long additional options.
+#       add_opts_parse_cb: a function name to call to parse additional options.
+#           In case of an error must exits with some error code.
+#           No calls of `shift` is required.
+#       positional_args_cb: a function name to call to parse positional arguments.
+#
+#   Returns:
+#       In case of success returns 0 and the following global variables are assigned:
+#           - dry_run
+#           - hostspec
+#           - singlenode
+#           - ssh_config
+#           - sudo
+#           - verbosity
+#
+#       Otherwise exits with the following codes:
+#           - 0: success
+#           - 1: getopt can't be used in the environment (self getopt's test fails)
+#           - 2: command line arguments don't satisfy the specification
+#               (e.g. unknown option or missed required argument)
+#           - 3: some other getopt error
+#           - 4: options parser callback is not defined when it is expected
+#           - 5: bad argument values (e.g. not a file for ssh-config)
+#
+#   Examples:
+#
+#       1. parse only general set of options with no paositional arguments expected
+#
+#           `parse_args '' '' '' '' "$@`
+#
+#       2. parse additional options
 
-
+#            add_opt1_value=
+#            add_opt2_value=
+#
+#            function options_parser {
+#                set -eu
+#                case "$1" in
+#                    -a|--add-option1)
+#                        add_opt1_value=true
+#                        ;;
+#                    -A|--add-option2)
+#                        add_opt2_value="$2"
+#                        ;;
+#                    *)
+#                        2>&1 echo "Unknown option: $1"
+#                        exit 5
+#                esac
+#            }
+#
+#           `parse_args 'aA:' 'add-option1,add-option2:' 'options_parser' '' "$@`
+#
+#       3. parse positional arguments
+#
+#            pos_arg=
+#
+#            function pos_args_parser {
+#                set -eu
+#                if [[ $# -gt 1 ]]; then
+#                    >&2 echo "$0: Only one positional argument is expected, provided: $@"
+#                    exit 2
+#                fi
+#
+#                pos_arg="${1:-}"
+#            }
+#
+#           `parse_args '' '' '' 'pos_args_parser' "$@`
+#
 function parse_args {
     set -eu
 
@@ -73,12 +141,12 @@ function parse_args {
         exit 1
     fi
 
-    local _opts=cnhr:F:sv
+    local _opts=nhr:SF:sv
     if [[ -n $_add_opts ]]; then
         _opts=$_opts$_add_opts
     fi
 
-    local _long_opts=cluster,dry-run,help,remote:,ssh-config:,sudo,verbose
+    local _long_opts=dry-run,help,remote:,singlenode,ssh-config:,sudo,verbose
     if [[ -n $_add_long_opts ]]; then
         _long_opts=$_long_opts,$_add_long_opts
     fi
@@ -93,10 +161,6 @@ function parse_args {
 
     while true; do
         case "$1" in
-            -c|--cluster)
-                cluster=true
-                shift
-                ;;
             -n|--dry-run)
                 dry_run=true
                 shift
@@ -108,6 +172,10 @@ function parse_args {
             -r|--remote)
                 hostspec="$2"
                 shift 2
+                ;;
+            -S|--singlenode)
+                singlenode=true
+                shift
                 ;;
             -F|--ssh-config)
                 ssh_config="$2"
@@ -160,27 +228,567 @@ function parse_args {
 }
 
 
+#   build_command [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Constructs command as a prefix for other commands to run over ssh and/or
+#   with sudo usage and echoes the result into stdout.
+#
+#   If no arguments provided will return just an empty string.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+#   Outputs:
+#       Prepared `ssh` command if `hostspec` is specified. `sudo` would be added at the end
+#       if it was required.
+#
 function build_command() {
     set -eu
 
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
     local _cmd=''
-    if [[ -n "$hostspec" ]]; then
+    if [[ -n "$_hostspec" ]]; then
         _cmd='ssh'
 
-        if $sudo; then
+        if [[ "$_sudo" == true ]]; then
             _cmd="$_cmd -t"
         fi
 
-        if [[ -n "$ssh_config" ]]; then
-            _cmd="$_cmd -F $ssh_config"
+        if [[ -n "$_ssh_config" ]]; then
+            _cmd="$_cmd -F $_ssh_config"
         fi
 
-        _cmd="$_cmd $hostspec"
+        _cmd="$_cmd $_hostspec"
     fi
 
-    if $sudo; then
+    if [[ "$_sudo" == true ]]; then
         _cmd="$_cmd sudo"
     fi
 
     echo $_cmd
+}
+
+
+#   hostname_from_spec <hostspec>
+#
+#   Extracts and echoes hostname of the hostspec into stdout.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#
+#   Outputs:
+#       An extracted hostname value.
+#
+function hostname_from_spec {
+    set -eu
+
+    local _hostname="$1"
+    if [[ $_hostname == *"@"* ]]; then
+        IFS='@' read -a _arr <<< $_hostname
+        if [[ "${#_arr[@]}" -eq 2 ]]; then
+            _hostname="${_arr[1]}"
+        else
+            _hostname=
+        fi
+    fi
+    echo "$_hostname"
+}
+
+
+#   check_host_in_ssh_config <hostspec> <ssh-config>
+#
+#   Checks a hostname part of the specified hostspec in provided ssh config file
+#   and returns matched string if found.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#       ssh-config: past to an alternative ssh-config file.
+#
+#   Outputs:
+#       Matched string from the ssh-config file which starts the hostname
+#       ssh config specification block.
+#
+function check_host_in_ssh_config {
+    set -eu
+
+    local _hostspec=$1
+    local _ssh_config=$2
+
+    local _hostname="$(hostname_from_spec "$_hostspec")"
+
+    if [[ -f "$_ssh_config" && -n "$_hostname" ]]; then
+        echo "$(grep "^Host[[:space:]]\+$_hostname" "$_ssh_config")"
+    fi
+}
+
+
+#   install_repo [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
+#
+#   Install provisioner repository either on the remote host or locally using
+#   one of possible types of sources.
+#
+#   Args:
+#       repo-src: One of the following:
+#           `rpm` - installs from a rpm package (default),
+#           `gitlab` - installs from GitLab using the specified
+#               version `prvsnr-version`. If the version is not set
+#               uses the latest tagged one.
+#           `local` - copies local working copy of the repository, assumes
+#               that script is a part of it.
+#       prvsnr-version: The version of the EOS provisioner to install. Makes sense only
+#           for `gitlab` source for now. Default: not set.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function install_repo {
+    set -eu
+
+    local _script
+
+    local _repo_src="${1:-rpm}"
+    local _prvsnr_version="${2:-}"
+    local _hostspec="${3:-}"
+    local _ssh_config="${4:-}"
+    local _sudo="${5:-false}"
+    local _installdir="${6:-/opt/seagate/eos-prvsnr}"
+
+    local _prvsnr_repo=
+    local _repo_archive_path=
+
+    # assuming that 'local' mode would be used only in dev setup within the repo
+    if [[ "$_repo_src" == "local" ]]; then
+        # might not always work
+        local _script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+        pushd "$_script_dir"
+            local _repo_root="$(git rev-parse --show-toplevel)"
+        popd
+
+        local _repo_archive_name='repo.zip'
+        local _scp_opts=
+        _repo_archive_path="$_repo_root/$_repo_archive_name"
+
+        pushd "$_repo_root"
+            git archive --format=zip HEAD >"$_repo_archive_path"
+
+            if [[ -n "$_hostspec" ]]; then
+                if [[ -n "$_ssh_config" ]]; then
+                    _scp_opts="-F $_ssh_config"
+                fi
+
+                $(scp $_scp_opts $_repo_archive_path ${_hostspec}:/tmp)
+                rm -fv "$_repo_archive_path"
+                _repo_archive_path="/tmp/$_repo_archive_name"
+            fi
+        popd
+    fi
+
+! read -r -d '' _prvsnr_repo << "EOF"
+[base]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/releases/master/last_successful/provisioner/repo
+name=base
+EOF
+
+    if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" ]]; then
+        >&2 echo "ERROR: unsupported repo src: $_repo_src"
+        exit 1
+    fi
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    rm -rvf "$_installdir"
+    mkdir -p "$_installdir"
+    if [[ "$_repo_src" == "gitlab" ]]; then
+        pushd "$_installdir"
+            curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
+        popd
+    elif [[ "$_repo_src" == "rpm" ]]; then
+        echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
+        yum install -y eos-prvsnr
+    else
+        # local
+        unzip -d "$_installdir" "$_repo_archive_path"
+        rm -vf "$_repo_archive_path"
+    fi
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
+#   configure_network [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]
+#
+#   Configures network on the EOS stack node either on local or remote host.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function configure_network {
+    set -eu
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    pushd "$_installdir"
+        if [[ -n "\$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
+          systemctl stop NetworkManager
+          systemctl disable NetworkManager
+          yum remove -y NetworkManager
+        fi
+
+        mkdir -p /etc/sysconfig/network-scripts/
+        cp files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
+        cp files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+    popd
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+#   install_salt [<hostspec> [<ssh-config> [<sudo> [<is-master> [<installation-dir>]]]]]
+#
+#   Install SaltStack either on the remote host or locally.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       is-master: A flag to switch between primary / secondary EOS stack nodes.
+#           Default: `true`.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function install_salt {
+    set -eu
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+    local _master="${4:-true}"
+    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    local _saltstack_repo=
+
+! read -r -d '' _saltstack_repo << "EOF"
+[saltstack-repo]
+name=SaltStack repo for RHEL/CentOS \$releasever PY3
+baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0
+enabled=1
+gpgcheck=1
+gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+EOF
+
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    pushd "$_installdir"
+        # config custom yum repos
+        rm -rf /var/cache/yum
+        rm -rf /etc/yum.repos.d
+        cp -R files/etc/yum.repos.d /etc
+
+        # TODO a temporary fix since later version (2019.2.1) is buggy
+        # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+        rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+        echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
+        yum clean expire-cache
+
+        # install salt
+        if [[ "$_master" == true ]]; then
+            yum install -y salt-minion salt-master
+        else
+            yum install -y salt-minion
+        fi
+    popd
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
+#   configure_salt <minion-id> [<hostspec> [<ssh-config> [<sudo> [<is-master> [<master-hostname> [<installation-dir>]]]]]]
+#
+#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#       - SaltStack is installed.
+#
+#   Args:
+#       minion-id: an id of the minion.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       is-master: A flag to switch between primary / secondary EOS stack nodes.
+#           Default: `true`.
+#       master-hostname: A resolvable (from within the minion's host) domain name or IP of the salt master.
+#           Default: not set.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function configure_salt {
+    set -eu
+
+    local _script
+
+    local _minion_id="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+    local _master="${5:-true}"
+    local _master_hostname="${6:-}"
+    local _installdir="${7:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    pushd "$_installdir"
+        # re-config salt master
+        if [[ "$_master" == true ]]; then
+            systemctl stop salt-master
+            mv -f /etc/salt/master /etc/salt/master.org
+            cp files/etc/salt/master /etc/salt/master
+            systemctl enable salt-master
+            systemctl start salt-master
+        fi
+
+        # re-config salt minion
+        systemctl stop salt-minion
+        mv -f /etc/salt/minion /etc/salt/minion.org
+        cp files/etc/salt/minion /etc/salt/minion
+        if [[ -n "$_master_hostname" ]]; then
+            sed -i "s/^master: eosnode-1/master: $_master_hostname/g" /etc/salt/minion
+        fi
+        echo "$_minion_id" >/etc/salt/minion_id
+        systemctl enable salt-minion
+        systemctl start salt-minion
+    popd
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
+#   accept_salt_keys [<minion-ids> [<hostspec> [<ssh-config> [<sudo> [<timeout>]]]]]
+#
+#   Makes keys for the specified list of minions accepted by the salt master.
+#
+#   Salt master might be either local or remote host.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#       - SaltStack is installed.
+#       - EOS stack salt master/minions are configured.
+#
+#   Args:
+#       minion-ids: a space separated list minion ids which keys should be accepted.
+#           Default: `eosnode-1`.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       timeout: a time to wait until a minion becomes connected to master.
+#           Default: `false`.
+#
+function accept_salt_keys {
+    set -eu
+
+    local _script
+
+    local _keys="${1:-eosnode-1}"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+    local _timeout="${5:-30}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    for key in $_keys; do
+        try=1
+        echo "Wainting for keys to be accepted..." >&2
+        until echo \$(salt-key --list unaccepted) | grep \$key >/dev/null 2>&1
+        do
+            if [ "\$try" -gt "$_timeout" ]; then
+                echo -e "\nERROR: minion \$key seems not connected after $_timeout seconds." >&2
+                salt-key --list all >&2
+                exit 1
+            fi
+            echo -n "." >&2
+            try=\$(( \$try + 1 ))
+            sleep 1
+        done
+        salt-key -y -a \$key
+        echo -e "\nKey \$key is accepted." >&2
+    done
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
+#   eos_pillar_show_skeleton <component> [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Calls `configure-eos.py` util either locally or remotely to dump a skeleton
+#   of the configuration yaml for the specified `component`.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       component: a name of the provisioner repo component.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       timeout: a time to wait until a minion becomes connected to master.
+#           Default: `false`.
+#
+function eos_pillar_show_skeleton {
+    set -eu
+
+    local _component="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    # TODO is it ok that we stick to python3.6 here ?
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/utils/configure-eos.py ${_component} --show-${_component}-file-format
+}
+
+
+#   eos_pillar_show_skeleton <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Calls `configure-eos.py` util either locally or remotely to update
+#   the configuration yaml for the specified `component` using `file-path`
+#   as a source.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       component: a name of the provisioner repo component.
+#       file-path: remote host specification in the format [user@]hostname.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function eos_pillar_update {
+    set -eu
+
+    local _component="$1"
+    local _file_path="$2"
+    local _hostspec="${3:-}"
+    local _ssh_config="${4:-}"
+    local _sudo="${5:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    # TODO test
+    if [[ ! -f "$_file_path" ]]; then
+        >&2 echo "ERROR: not a file: $_file_path"
+        exit 1
+    fi
+
+    if [[ -n "$_hostspec" ]]; then
+        if [[ -n "$_ssh_config" ]]; then
+            _ssh_config="-F $_ssh_config"
+        fi
+
+        $(scp $_ssh_config $_file_path ${_hostspec}:/tmp/${_component}.sls)
+        _file_path="/tmp/${_component}.sls"
+    fi
+
+    # TODO is it ok that we stick to python3.6 here ?
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/utils/configure-eos.py ${_component} --${_component}-file $_file_path
+
+    local _target_minions='*'
+    if [[ -n "$_hostspec" ]]; then
+        _target_minions="'*'"
+    fi
+    $_cmd salt "$_target_minions" saltutil.refresh_pillar
 }

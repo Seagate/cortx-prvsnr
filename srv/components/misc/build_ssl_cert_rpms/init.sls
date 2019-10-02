@@ -17,7 +17,8 @@ include:
 
 Copy certs from primary:
   cmd.run:
-    - name: scp {{ pillar['cluster'][node_id]['fqdn'] }}:/opt/seagate/stx-s3-*.rpm /opt/seagate
+    # TODO safer way to pass known_hosts check, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/15
+    - name: scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{ pillar['cluster'][node_id]['fqdn'] }}:/opt/seagate/stx-s3-*.rpm /opt/seagate
 
   {% endif %}
 {% endfor %}

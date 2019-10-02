@@ -572,7 +572,7 @@ ping_interval: 5
 file_roots:
   base:
     - /opt/seagate/eos-prvsnr/srv
-    - /opt/seagate/ees-prvsnr/srv
+    - /opt/seagate/eos-prvsnr/srv
 
 # Uncomment the line below if you do not want the file_server to follow
 # symlinks when walking the filesystem tree. This is set to True
@@ -615,7 +615,7 @@ file_roots:
 pillar_roots:
   base:
     - /opt/seagate/eos-prvsnr/pillar
-    - /opt/seagate/ees-prvsnr/pillar
+    - /opt/seagate/eos-prvsnr/pillar
 
 
 # Set a hard-limit on the size of the files that can be pushed to the master.

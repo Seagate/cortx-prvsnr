@@ -2,114 +2,64 @@
 
 set -eu
 
+SCRIPT_PATH=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT_PATH")
+
+. $BASEDIR/functions.sh
+
+restart=false
+
 function usage {
   echo "\
-Usage: $0 [options] 
+Usage: $0 [options]
 
-Starts all EOS services or restart EOS services if 
-restart flag is explicitely specified.
+Starts all EOS services either on remote host or locally.
+
+Restart EOS services if '--restart' flag is explicitly
+specified.
+
+Target host is considered to be an EOS SaltStack master.
+
+General options:
+$base_options_usage
 
 Options:
-    -h,  --help                 print this help and exit
-    -r,  --remote user@IP       remote execution
     -R,  --restart              restart all services
-    -s,  --sudo                 use sudo
-    -F,  --ssh-config FILE      alternative path to ssh configuration file
 "
 }
 
-function parse_args() {
-    set -eu
-
-    # Note. this mostly based on https://stackoverflow.com/a/29754866
-
-    ! getopt --test > /dev/null
-    if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-        echo 'Error: getopt is not functional (`getopt --test` failed).'
-        exit 1
-    fi
-    OPTIONS=RshF:r:
-    LONGOPTS=restart,sudo,help,ssh-config:,remote:
-
-    ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-        exit 2
-    fi
-
-    eval set -- "$PARSED"
-    while true; do
-        case "$1" in
-            -R|--restart)
-                restart=true
-                shift
-                ;;
-            -s|--sudo)
-                sudo=sudo
-                shift
-                ;;
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            -F|--ssh-config)
-                ssh_config="$2"
-                if [[ ! -f "$ssh_config" ]]; then
-                    echo "ERROR: '$ssh_config' not a file"
-                    exit 2
-                fi
-                shift 2
-                ;;
-            -r|--remote)
-                host=$2
-                if [[ -z $host ]]; then
-                    echo "ERROR: host@ip not specified"
-                    exit 2 
-                fi
-                shift 2
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                echo "Programming error"
-                exit 3
-                ;;
-        esac
-    done
-    if [[ $# -ne 0 ]]; then
-        echo "$0: Inappropriate arguments provided: $@"
-        usage
-        exit 4
-    fi
-
+# TODO tests
+function options_parser {
+    case "$1" in
+        -R|--restart)
+            restart=true
+            ;;
+        *)
+            >&2 echo "Unknown option: $1"
+            exit 5
+    esac
 }
 
-# parse args
-host= 
-ssh_config= 
-restart=false 
-sudo=
-parse_args "$@"
+parse_args 'R' 'restart' options_parser '' "$@"
 
-# prepare command
-cmd="$sudo"
-if [[ -n "$host" ]]; then
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
 
-    if [[ -n "$ssh_config" ]]; then
-        ssh_config="-F $ssh_config"
-    fi
-
-    if [[ -n "$sudo" ]]; then
-        ssh_config="-t $ssh_config"
-    fi
-
-    cmd="ssh $ssh_config $host $cmd"
+salt_opts=
+if [[ "$dry_run" == true ]]; then
+    salt_opts="test=True"
 fi
 
-if $restart ; then
-    $cmd salt-call --local state.apply components.stop
-    $cmd salt-call --local state.apply components.start
+target_minions='*'
+if [[ -n "$hostspec" ]]; then
+    target_minions="'*'"
+fi
+
+# apply states
+if [[ "$restart" == true ]]; then
+    $cmd salt "$target_minions" state.apply components.stop $salt_opts
+    $cmd salt "$target_minions" state.apply components.start $salt_opts
 else
-    $cmd salt-call --local state.apply components.start
+    $cmd salt "$target_minions" state.apply components.start $salt_opts
 fi
+
+echo "Done"
