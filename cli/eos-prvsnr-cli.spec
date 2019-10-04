@@ -8,29 +8,42 @@ License:    Seagate
 URL:        http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr
 Source:     %{name}-%{version}-%{_ees_prvsnr_git_ver}.tar.gz
 
-BuildRequires: python36
+BuildRequires: python36-devel
 
-Requires: python36
 Requires: PyYAML
+Requires: python36
+Requires: eos-prvsnr
+
 
 %description
 EOS Provisioner Command line interface. Provides utilities to deploy EOS Object storage.
 
+
 %prep
 %setup -n %{name}-%{version}-%{_ees_prvsnr_git_ver}
 
+
+%build
+# Turn off the brp-python-bytecompile automagic
+%global _python_bytecompile_extra 0
+%global __python %{__python3}
+
+
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli
-cp -p -R cli/src/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
+cp -p -R cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+cp -p -R cli/utils/* %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
+
 
 %clean
 rm -rf %{buildroot}
 
+
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
-
 /opt/seagate/eos-prvsnr/cli
+
 
 %post
 # TBD

@@ -8,37 +8,42 @@ License:    Seagate
 URL:        http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr
 Source:     %{name}-%{version}-%{_ees_prvsnr_git_ver}.tar.gz
 
-BuildRequires: python36
-#BuildRequires: python36-PyYAML
+BuildRequires: python36-devel
 
 Requires: python36
 Requires: python36-PyYAML
 Requires: salt-master
 Requires: salt-minion
-Requires: salt-ssh
+#Requires: salt-ssh
 #Requires: salt-syndic
+
 
 %description
 EOS Provisioning to deploy EOS Object storage software.
 
+
 %prep
 %setup -n %{name}-%{version}-%{_ees_prvsnr_git_ver}
+rm -rf %{buildroot}
+
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,utils}
-mkdir -p %{buildroot}/etc/yum.repos.d
+# Create directories
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
+mkdir -p %{buildroot}/etc/yum.repos.d
+
+# Copy files
 cp -R files/etc/yum.repos.d/saltstack.repo %{buildroot}/etc/yum.repos.d/saltstack.repo
 cp -R files/etc/salt/master %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/master
 cp -R files/etc/salt/minion %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/minion
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr/
-cp -R utils %{buildroot}/opt/seagate/eos-prvsnr/
-exit 0
+
 
 %clean
 rm -rf %{buildroot}
+
 
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
@@ -48,7 +53,7 @@ rm -rf %{buildroot}
 /opt/seagate/eos-prvsnr/files/etc/salt/minion
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
-/opt/seagate/eos-prvsnr/utils
+
 
 %post
 cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master

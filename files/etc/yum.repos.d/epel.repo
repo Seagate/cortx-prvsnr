@@ -1,6 +1,6 @@
 [epel]
 gpgcheck=0
 enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/epel/
+baseurl=https://dl.fedoraproject.org/pub/epel/7/x86_64/
 name=epel
 

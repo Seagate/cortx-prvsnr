@@ -50,11 +50,13 @@ pushd ~/rpmbuild/SOURCES/
 rm -rf eos-prvsnr*
 
 # Setup the source tar for rpm build
-mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
-cp -R ${BASEDIR}/../files eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
+mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/{files,pillar,srv}
+mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/salt
+mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/yum.repos.d
+cp -R ${BASEDIR}/../files/etc/salt/* eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/salt/
+cp -R ${BASEDIR}/../files/etc/yum.repos.d/saltstack.repo eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/yum.repos.d/saltstack.repo
 cp -R ${BASEDIR}/../pillar eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
 cp -R ${BASEDIR}/../srv eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
-cp -R ${BASEDIR}/../utils eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
 
 tar -zcvf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}.tar.gz eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 rm -rf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
