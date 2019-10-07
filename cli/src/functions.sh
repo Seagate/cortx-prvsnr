@@ -330,10 +330,85 @@ function check_host_in_ssh_config {
 }
 
 
+#   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Install SaltStack either on the remote host or locally.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function install_salt {
+    set -eu
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    local _epel_repo=
+    local _saltstack_repo=
+
+! read -r -d '' _epel_repo << "EOF"
+[epel]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/epel/
+name=epel
+EOF
+
+! read -r -d '' _saltstack_repo << "EOF"
+[saltstack-repo]
+name=SaltStack repo for RHEL/CentOS \$releasever PY3
+baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0
+enabled=1
+gpgcheck=1
+gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+EOF
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    # config custom yum repos
+    rm -rf /var/cache/yum
+    mkdir -p /etc/yum.repos.d
+
+    echo "$_epel_repo" >/etc/yum.repos.d/epel.repo
+
+    # TODO a temporary fix since later version (2019.2.1) is buggy
+    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+    echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
+
+    yum clean expire-cache
+
+    # install salt master/minion
+    yum install -y salt-minion salt-master
+EOF
+    # TODO install salt-ssh salt-syndic as well as eos-prvsnr rpm supposes
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
 #   install_repo [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
 #
 #   Install provisioner repository either on the remote host or locally using
 #   one of possible types of sources.
+#
+#   Prerequisites:
+#       - (for rpm only) SaltStack is available.
 #
 #   Args:
 #       repo-src: One of the following:
@@ -397,11 +472,11 @@ function install_repo {
     fi
 
 ! read -r -d '' _prvsnr_repo << "EOF"
-[base]
+[provisioner]
 gpgcheck=0
 enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/releases/master/last_successful/provisioner/repo
-name=base
+baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/last_successful
+name=provisioner
 EOF
 
     if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" ]]; then
@@ -438,6 +513,8 @@ EOF
 }
 
 
+# TODO better to have similar logic as part of salt formulas
+#
 #   configure_network [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]
 #
 #   Configures network on the EOS stack node either on local or remote host.
@@ -490,89 +567,14 @@ EOF
     $_cmd bash -c "$_script"
 }
 
-#   install_salt [<hostspec> [<ssh-config> [<sudo> [<is-master> [<installation-dir>]]]]]
-#
-#   Install SaltStack either on the remote host or locally.
-#
-#   Prerequisites:
-#       - The provisioner repo is installed.
-#
-#   Args:
-#       hostspec: remote host specification in the format [user@]hostname.
-#           Default: not set.
-#       ssh-config: path to an alternative ssh-config file.
-#           Default: not set.
-#       sudo: a flag to use sudo. Expected values: `true` or `false`.
-#           Default: `false`.
-#       is-master: A flag to switch between primary / secondary EOS stack nodes.
-#           Default: `true`.
-#       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
-#
-function install_salt {
-    set -eu
 
-    local _script
-
-    local _hostspec="${1:-}"
-    local _ssh_config="${2:-}"
-    local _sudo="${3:-false}"
-    local _master="${4:-true}"
-    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
-
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
-
-    local _saltstack_repo=
-
-! read -r -d '' _saltstack_repo << "EOF"
-[saltstack-repo]
-name=SaltStack repo for RHEL/CentOS \$releasever PY3
-baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0
-enabled=1
-gpgcheck=1
-gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-EOF
-
-
-! read -r -d '' _script << EOF
-    set -eu
-
-    pushd "$_installdir"
-        # config custom yum repos
-        rm -rf /var/cache/yum
-        rm -rf /etc/yum.repos.d
-        cp -R files/etc/yum.repos.d /etc
-
-        # TODO a temporary fix since later version (2019.2.1) is buggy
-        # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-        rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-        echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
-        yum clean expire-cache
-
-        # install salt
-        if [[ "$_master" == true ]]; then
-            yum install -y salt-minion salt-master
-        else
-            yum install -y salt-minion
-        fi
-    popd
-EOF
-
-    if [[ -n "$_hostspec" ]]; then
-        _script="'$_script'"
-    fi
-
-    $_cmd bash -c "$_script"
-}
-
-
-#   configure_salt <minion-id> [<hostspec> [<ssh-config> [<sudo> [<is-master> [<master-hostname> [<installation-dir>]]]]]]
+#   configure_salt <minion-id> [<hostspec> [<ssh-config> [<sudo> [<is-master> [<master-host> [<installation-dir>]]]]]]
 #
 #   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
 #
 #   Prerequisites:
-#       - The provisioner repo is installed.
 #       - SaltStack is installed.
+#       - The provisioner repo is installed.
 #
 #   Args:
 #       minion-id: an id of the minion.
@@ -584,7 +586,7 @@ EOF
 #           Default: `false`.
 #       is-master: A flag to switch between primary / secondary EOS stack nodes.
 #           Default: `true`.
-#       master-hostname: A resolvable (from within the minion's host) domain name or IP of the salt master.
+#       master-host: A resolvable (from within the minion's host) domain name or IP of the salt master.
 #           Default: not set.
 #       installation-dir: destination installation directory.
 #           Default: /opt/seagate/eos-prvsnr
@@ -599,7 +601,7 @@ function configure_salt {
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
     local _master="${5:-true}"
-    local _master_hostname="${6:-}"
+    local _master_host="${6:-}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
@@ -609,24 +611,35 @@ function configure_salt {
 
     pushd "$_installdir"
         # re-config salt master
-        if [[ "$_master" == true ]]; then
-            systemctl stop salt-master
+        if [[ ! -f /etc/salt/master.org ]]; then
             mv -f /etc/salt/master /etc/salt/master.org
             cp files/etc/salt/master /etc/salt/master
+        fi
+
+        # TODO remove that once renaming completed (new rpm is built)
+        sed -i "s/ees-prvsnr/eos-prvsnr/g" /etc/salt/master
+
+        if [[ "$_master" == true ]]; then
             systemctl enable salt-master
-            systemctl start salt-master
+            systemctl restart salt-master
         fi
 
         # re-config salt minion
-        systemctl stop salt-minion
-        mv -f /etc/salt/minion /etc/salt/minion.org
-        cp files/etc/salt/minion /etc/salt/minion
-        if [[ -n "$_master_hostname" ]]; then
-            sed -i "s/^master: eosnode-1/master: $_master_hostname/g" /etc/salt/minion
+        if [[ ! -f /etc/salt/minion.org ]]; then
+            mv -f /etc/salt/minion /etc/salt/minion.org
+            cp files/etc/salt/minion /etc/salt/minion
+        fi
+
+        # TODO remove that once renaming completed (new rpm is built)
+        sed -i "s/ees-prvsnr/eos-prvsnr/g" /etc/salt/minion
+
+        if [[ -n "$_master_host" ]]; then
+            sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion
         fi
         echo "$_minion_id" >/etc/salt/minion_id
+
         systemctl enable salt-minion
-        systemctl start salt-minion
+        systemctl restart salt-minion
     popd
 EOF
 
@@ -645,8 +658,8 @@ EOF
 #   Salt master might be either local or remote host.
 #
 #   Prerequisites:
-#       - The provisioner repo is installed.
 #       - SaltStack is installed.
+#       - The provisioner repo is installed.
 #       - EOS stack salt master/minions are configured.
 #
 #   Args:
@@ -738,7 +751,7 @@ function eos_pillar_show_skeleton {
 }
 
 
-#   eos_pillar_show_skeleton <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
+#   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Calls `configure-eos.py` util either locally or remotely to update
 #   the configuration yaml for the specified `component` using `file-path`

@@ -31,10 +31,8 @@ rm -rf %{buildroot}
 # Create directories
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
-mkdir -p %{buildroot}/etc/yum.repos.d
 
 # Copy files
-cp -R files/etc/yum.repos.d/saltstack.repo %{buildroot}/etc/yum.repos.d/saltstack.repo
 cp -R files/etc/salt/master %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/master
 cp -R files/etc/salt/minion %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/minion
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
@@ -48,13 +46,20 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
 
-/etc/yum.repos.d/saltstack.repo
 /opt/seagate/eos-prvsnr/files/etc/salt/master
 /opt/seagate/eos-prvsnr/files/etc/salt/minion
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 
 
+# TODO test
 %post
+mv -f /etc/salt/master /etc/salt/master.org
+mv -f /etc/salt/minion /etc/salt/minion.org
 cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
 cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
+
+# TODO test
+%postun
+mv -f /etc/salt/master.org /etc/salt/master
+mv -f /etc/salt/minion.org /etc/salt/minion

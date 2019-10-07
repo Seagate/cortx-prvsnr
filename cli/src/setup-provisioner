@@ -124,21 +124,23 @@ fi
 
 
 # setup eosnode-1
+install_salt "$hostspec" "$ssh_config" "$sudo"
 install_repo "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
-# TODO use salt formulas instead
-configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
-install_salt "$hostspec" "$ssh_config" "$sudo" true "$INSTALLDIR"
 configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
 accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
+# TODO use salt formulas instead
+# disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
+# configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 if [[ "$singlenode" != true ]]; then
+    install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
     # setup eosnode-2
     install_repo "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
-    # TODO use salt formulas instead
-    configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
-    install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$INSTALLDIR"
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
     accept_salt_keys eosnode-2 "$hostspec" "$ssh_config" "$sudo"
+    # TODO use salt formulas instead
+    # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
+    # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 fi
 
 echo "Done"
