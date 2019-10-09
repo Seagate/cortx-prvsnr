@@ -10,6 +10,21 @@ Cleanup halon:
     - name: halon-cleanup
 {% endif %}
 
+
+Kill m0d process:
+  module.run:
+    - name: ps.pkill
+    - m_name: m0d
+    - m_signal: 15
+
+
+Kill s3server process:
+  module.run:
+    - name: ps.pkill
+    - m_name: s3server
+    - m_signal: 15
+
+
 # This sercice should already be stooped by halon-cleanup above
 Disable Halon service:
   service.dead:
