@@ -1,4 +1,6 @@
 base:
+  'G@roles:primary':
+    - roles.primary
   '*':
     - components.cluster
     - components.csm

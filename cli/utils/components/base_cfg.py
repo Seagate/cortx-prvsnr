@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import json
 import yaml
 
@@ -7,6 +8,16 @@ from argparse import ArgumentParser, Namespace
 
 
 class BaseCfg(metaclass=ABCMeta):
+
+    _root_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "../../.."
+    )
+
+    _pillar_path = os.path.join(
+        _root_path,
+        "pillar"
+    )
 
     @abstractmethod
     def process_inputs(self, program_args: Namespace) -> bool:

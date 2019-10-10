@@ -143,4 +143,14 @@ if [[ "$singlenode" != true ]]; then
     # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 fi
 
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
+target_minions='*'
+if [[ -n "$hostspec" ]]; then
+    target_minions="'*'"
+fi
+
+# TODO test that
+# force salt to mine data
+$cmd salt "$target_minions" mine.update
+
 echo "Done"

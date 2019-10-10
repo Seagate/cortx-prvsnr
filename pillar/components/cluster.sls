@@ -1,7 +1,7 @@
 cluster:
   type: single                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
-    - eosnode-1                     # minion ID for node-1 
+    - eosnode-1                     # minion ID for node-1
     # - eosnode-2                     # minion ID for node-2
   eosnode-1:                        # minion ID for node-1. Should match one from node_list above.
     fqdn: eosnode-1
@@ -39,7 +39,7 @@ cluster:
       primary_mc:
         ip: 127.0.0.1
         port: 80
-      secondary_mc:  
+      secondary_mc:
         ip: 127.0.0.1
         port: 80
       user: user

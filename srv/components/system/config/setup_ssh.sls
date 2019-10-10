@@ -54,3 +54,4 @@
     - group: root
     - mode: 644
     - create: True
+    - template: jinja

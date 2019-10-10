@@ -33,6 +33,7 @@ fi
 if [[ "$singlenode" == true ]]; then
     $cmd salt eosnode-1 state.highstate $salt_opts
 else
+    # TODO use salt orchestration
     for state in system sspl eoscore halon; do
         $cmd salt eosnode-[1,2] state.apply components."$state" $salt_opts
     done

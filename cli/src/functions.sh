@@ -636,6 +636,13 @@ function configure_salt {
         if [[ -n "$_master_host" ]]; then
             sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion
         fi
+
+        if [[ "$_master" == true ]]; then
+            cp -f files/etc/salt/grains.primary /etc/salt/grains
+        else
+            cp -f files/etc/salt/grains.slave /etc/salt/grains
+        fi
+
         echo "$_minion_id" >/etc/salt/minion_id
 
         systemctl enable salt-minion
@@ -679,7 +686,7 @@ function accept_salt_keys {
 
     local _script
 
-    local _keys="${1:-eosnode-1}"
+    local _ids="${1:-eosnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
@@ -690,13 +697,14 @@ function accept_salt_keys {
 ! read -r -d '' _script << EOF
     set -eu
 
-    for key in $_keys; do
+    for id in $_ids; do
         try=1
-        echo "Wainting for keys to be accepted..." >&2
-        until echo \$(salt-key --list unaccepted) | grep \$key >/dev/null 2>&1
+
+        # waiting for a minion to connect the master
+        until salt-key --list all | grep \$id >/dev/null 2>&1
         do
-            if [ "\$try" -gt "$_timeout" ]; then
-                echo -e "\nERROR: minion \$key seems not connected after $_timeout seconds." >&2
+            if [[ "\$try" -gt "$_timeout" ]]; then
+                echo -e "\\nERROR: minion \$id seems not connected after $_timeout seconds." >&2
                 salt-key --list all >&2
                 exit 1
             fi
@@ -704,8 +712,24 @@ function accept_salt_keys {
             try=\$(( \$try + 1 ))
             sleep 1
         done
-        salt-key -y -a \$key
-        echo -e "\nKey \$key is accepted." >&2
+
+        # minion is connected but does not need acceptance
+        if [[ -z "\$(salt-key --list unaccepted | grep \$id 2>/dev/null)" ]]; then
+            echo -e "\\nWARNING: no key acceptance is needed for minion \$id." >&2
+            salt-key --list all >&2
+            exit 0
+        fi
+
+        salt-key -y -a \$id
+        echo -e "\\nKey \$id is accepted." >&2
+
+        # wait until minion is started since there is an interval
+        # for re-auth (ACCEPTANCE_WAIT_TIME) and does not become started
+        # immediately once the key is accepted
+
+        # TODO race condition is possible: event had been raised before we started to wait it
+        salt-run state.event "salt/minion/\$id/start" count=1
+        echo -e "\\nMinion \$id started." >&2
     done
 EOF
 
@@ -747,7 +771,7 @@ function eos_pillar_show_skeleton {
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/utils/configure-eos.py ${_component} --show-${_component}-file-format
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
 }
 
 
@@ -797,7 +821,7 @@ function eos_pillar_update {
     fi
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/utils/configure-eos.py ${_component} --${_component}-file $_file_path
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --${_component}-file $_file_path
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then

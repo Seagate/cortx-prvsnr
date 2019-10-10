@@ -20,11 +20,7 @@ class ReleaseCfg(BaseCfg):
             self.__cfg_path = cfg_path
         else:
             self.__cfg_path = os.path.join(
-                os.path.join(
-                    os.path.dirname(os.path.realpath(__file__)),
-                    "../..",
-                    "pillar"
-                ),
+                self._pillar_path,
                 "components",
                 "release.sls"
             )
