@@ -1,35 +1,32 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
 {% if salt['service.status']('halond.service') %}
-Stop cluster:
-  cmd.run:
-    - name: hctl mero stop
-
-Cleanup halon:
+Cleanup halon:                # Does 'hctl mero stop'
   service.running:
     - name: halon-cleanup
-{% endif %}
 
-
-Kill m0d process:
-  module.run:
-    - name: ps.pkill
-    - m_name: m0d
-    - m_signal: 15
-
-
-Kill s3server process:
-  module.run:
-    - name: ps.pkill
-    - m_name: s3server
-    - m_signal: 15
-
-
-# This sercice should already be stooped by halon-cleanup above
+# This sercice should already be stoped by halon-cleanup above
 Disable Halon service:
   service.dead:
     - name: halond
     - enable: false
+{% endif %}
+
+{% if salt['ps.pgrep']('m0d') -%}
+Kill m0d process:
+  module.run:
+    - ps.pkill:
+      - pattern: m0d
+      - signal: 9             # Force kill the processes
+{%- endif %}
+
+{% if salt['ps.pgrep']('s3server') -%}
+Kill s3server process:
+  module.run:
+    - ps.pkill:
+      - pattern: s3server
+      - signal: 9             # Force kill the processes
+{%- endif %}
 
 Remove Halon package:
   pkg.purged:

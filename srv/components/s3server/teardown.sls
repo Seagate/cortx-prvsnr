@@ -12,6 +12,12 @@ include:
 #-------------------------
 # Teardown S3Server
 #-------------------------
+Stop s3server service:
+  service.dead:
+    - name: s3server
+    - enable: False
+    - init_delay: 2
+
 Remove S3Server:
   pkg.purged:
     - name: s3server
@@ -66,10 +72,11 @@ Disable http port in selinux:
     - name: setsebool httpd_can_network_connect false -P
     - onlyif: salt['grains.get']('selinux:enabled')
 
-service_rsyslog:
+Stop rsyslog service:
   service.dead:
     - name: rsyslog
     - enable: False
+    - init_delay: 2
 
 Remove common_runtime libraries:
   pkg.purged:
