@@ -12,8 +12,6 @@ BuildRequires: python36-devel
 
 Requires: PyYAML
 Requires: python36
-Requires: eos-prvsnr
-
 
 %description
 EOS Provisioner Command line interface. Provides utilities to deploy EOS Object storage.
