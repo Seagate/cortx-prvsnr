@@ -489,7 +489,9 @@ EOF
 ! read -r -d '' _script << EOF
     set -eu
 
-    rm -rvf "$_installdir"
+    # TODO test cases when installation dir is presented and not empty
+    # issue #23
+    #rm -rvf "$_installdir"
     mkdir -p "$_installdir"
     if [[ "$_repo_src" == "gitlab" ]]; then
         pushd "$_installdir"
