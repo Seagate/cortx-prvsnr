@@ -4,8 +4,12 @@ Remove s3cmd package:
 
 Ensure s3cmd config file is removed:
   file.absent:
-    - name: /root/.s3cfg
+    - name: ~/.s3cmd
+
+Ensure s3cfg config file is removed:
+  file.absent:
+    - name: ~/.s3cfg
 
 Ensure the cert directory is removed:
   file.absent:
-    - name: /root/.s3cmd/ssl
+    - name: ~/.s3cmd/ssl
