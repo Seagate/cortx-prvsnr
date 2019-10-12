@@ -67,8 +67,8 @@ Ensure SWAP partition is unmounted:
     
 Make SWAP partition:
   cmd.run:
-    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1 && sleep 5
-    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
+    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 && sleep 5
+    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - require:
       - module: Create swap partition
       - cmd: Ensure SWAP partition is unmounted
@@ -76,7 +76,7 @@ Make SWAP partition:
 # Activate SWAP device
 Enable swap:
   mount.swap:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - persist: True     # save in the fstab
     - require:
       - cmd: Make SWAP partition
@@ -85,7 +85,7 @@ Enable swap:
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part2
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
       - fs_type: ext4
       - require:
         - module: Create metadata partition
@@ -94,7 +94,7 @@ Make metadata partition:
 Mount mero partition:
   mount.mounted:
     - name: /var/mero
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part2
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
     - persist: True     # save in the fstab
