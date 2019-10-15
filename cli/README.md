@@ -10,12 +10,12 @@ Each script prints help with details regarding its usage, please use `-h`/`--hel
 
 The scripts might be applied to either remote or local hosts and have some prerequisites regarding the hosts state.
 It means they should be called in the following predefined order:
-1. `setup-provisioner`
-2. `configure-eos`
-3. `deploy-eos`
-4. `bootstrap-eos`
-5. `start-eos`
-6. `stop-eos`
+1. `setup-provisioner`: installs and configures SaltStack, installs provisioner repo and setup SaltStack master-minion connections
+2. `configure-eos`: adjusts pillars for provisioner components
+3. `deploy-eos`: installs EOS stack using Salt
+4. `bootstrap-eos`: initializes EOS services
+5. `start-eos`: starts/restarts EOS services
+6. `stop-eos`: stops EOS services
 
 ### Common Options
 
@@ -242,4 +242,104 @@ Stop all services for a cluster with remote host as eosnode-1
 
 ```shell
 $ stop-eos --remote eosnode-1 -F ./ssh_config
+```
+
+### End-to-End Examples
+
+#### Singlenode local installation
+
+**Note**: requires to be run under `root` user.
+
+1. `setup-provisioner -S`
+2. `configure-eos -p cluster >./cluster.sls`
+3. ... edit `cluster.sls` manually ...
+4. `configure-eos -f ./cluster.sls cluster`
+5. `configure-eos -p release >./release.sls`
+6. ... edit `release.sls` manually ...
+7. `configure-eos -f ./release.sls release`
+8. `deploy-eos -S`
+9. `bootstrap-eos -S`
+10. `start-eos -S`
+
+#### Singlenode remote installation
+
+Remote installation requires ssh configuration:
+- ssh keypair should be created (e.g. `ssh-keygen -t rsa -b 4096 -o -a 100 -C "your_email@example.com" -f ./id_rsa.eos`)
+- public key should be added for the `root`'s user (`/root/.ssh/authorized_keys`) on a remote host
+- local ssh-configuration file should be prepared
+
+**Note**: `root` user is not required on a local system.
+
+Example of a ssh-config file:
+
+```
+Host eosnode-1
+    HostName <ip/domain-name>
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile ./id_rsa.eos
+    IdentitiesOnly yes
+```
+
+Steps are exactly the same with the only difference: all scripts calls should include options `-r eosnode-1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `eosnode-1` is an ID of the host described in that file.
+
+#### Cluster local installation
+
+**Note 1**: since primary node is a localhost the following requires to be run under `root` user.
+
+**Note 2**: Cluster installation for both local and remote modes requires ssh configuration since even for a local installation slave node is supposed to be a remote host. At the same time:
+- configuation is required only for the slave node
+- only `setup-provisioner` should be supplied with the configuration file. Other scripts will perform local operations only.
+
+Please refer to [Singlenode remote installation](#singlenode-remote-installation) regarding the details.
+
+Example of a ssh-config file:
+
+```
+Host eosnode-2
+    HostName <ip/domain-name>
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile ./id_rsa.eos
+    IdentitiesOnly yes
+```
+
+1. `setup-provisioner -F ./ssh_config --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the slave one)
+2. `configure-eos -p cluster >./cluster.sls`
+3. ... edit `./cluster.sls` manually ...
+4. `configure-eos -f ./cluster.sls cluster`
+5. `configure-eos -p release >./release.sls`
+6. ... edit `./release.sls` manually ...
+7. `configure-eos -f ./release.sls release`
+8. `deploy-eos`
+9. `bootstrap-eos`
+10. `start-eos`
+
+
+#### Cluster remote installation
+
+**Note**. The differences with the [local cluster installation](#cluster-local-installation) are:
+- ssh config file should include specifications for both primary and slave node
+- all scripts require remote connections specification (e.g. `-r eosnode-1 -F ./ssh_config`)
+
+Example of a ssh-config file:
+
+```
+Host eosnode-1
+    HostName <ip1/domain-name1>
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile ./id_rsa.eos
+    IdentitiesOnly yes
+
+Host eosnode-2
+    HostName <ip2/domain-name2>
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile ./id_rsa.eos
+    IdentitiesOnly yes
 ```
