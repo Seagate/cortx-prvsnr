@@ -1,3 +1,5 @@
+[[_TOC_]]
+
 # The Provisioner Setup Scripts
 
 This folder includes scripts that simplify provisioning of the EOS stack providing a set of CLI utils:
