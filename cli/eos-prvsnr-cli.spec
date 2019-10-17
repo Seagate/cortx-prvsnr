@@ -32,6 +32,8 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
 cp -p -R cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
 cp -p -R cli/utils/* %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
+cp -R files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/bonding.conf
+cp -R files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-*
 
 
 %clean
@@ -41,6 +43,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
+/opt/seagate/eos-prvsnr/files/etc
 
 
 %post

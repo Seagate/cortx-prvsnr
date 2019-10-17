@@ -122,7 +122,7 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
       type: "rsync",
       rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
       rsync__auto: true,

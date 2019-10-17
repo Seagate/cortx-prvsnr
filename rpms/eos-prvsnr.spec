@@ -33,8 +33,7 @@ mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
 
 # Copy files
-cp -R files/etc/salt/master %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/master
-cp -R files/etc/salt/minion %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/minion
+cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr/
 
@@ -46,8 +45,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
 
-/opt/seagate/eos-prvsnr/files/etc/salt/master
-/opt/seagate/eos-prvsnr/files/etc/salt/minion
+/opt/seagate/eos-prvsnr/files/etc/salt
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 

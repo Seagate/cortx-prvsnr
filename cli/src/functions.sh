@@ -829,7 +829,7 @@ function eos_pillar_update {
     if [[ -n "$_hostspec" ]]; then
         _target_minions="'*'"
     fi
-    if [[ $(rpm -qa salt-master) ]]; then
+    if [[ $($_cmd rpm -qa salt-master) ]]; then
         $_cmd salt "$_target_minions" saltutil.refresh_pillar
     fi
 }
