@@ -1,0 +1,20 @@
+FROM centos:7.5.1804
+
+# configure docker for systemd: here and CMD at end
+ENV container docker
+
+COPY images/docker/setup_systemd.sh /tmp/
+RUN bash /tmp/setup_systemd.sh
+
+# configure ssh
+COPY images/docker/setup_ssh.sh /tmp/
+RUN bash /tmp/setup_ssh.sh
+
+# install necessary packages
+COPY images/docker/setup_system_packages.sh /tmp/
+RUN bash /tmp/setup_system_packages.sh
+
+VOLUME [ "/sys/fs/cgroup" ]
+WORKDIR /opt/seagate
+EXPOSE 22
+CMD ["/usr/sbin/init"]

@@ -1,0 +1,10 @@
+FROM seagate/ees-prvsnr:centos7-base
+
+# TODO populate .dockerignore
+COPY cli/src/functions.sh /tmp/
+COPY files /opt/seagate/eos-prvsnr/files/
+RUN sed -i 's/\(systemctl restart\)/#\1/g' /tmp/functions.sh \
+    && mkdir -p /opt/seagate/eos-prvsnr \
+    && bash -xec ". /tmp/functions.sh; install_salt '' '' '' true" \
+    && rm /tmp/functions.sh \
+    && rm -rf /var/cache/yum
