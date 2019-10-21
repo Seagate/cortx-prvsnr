@@ -4,33 +4,8 @@ set -eu
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
-INSTALLDIR="/opt/seagate/ees-prvsnr"
-
-# TODO replace with eos-provisioner.rpm installation
-if [ ! -d "$INSTALLDIR" ]; then
-    mkdir -p "$INSTALLDIR"
-    pushd "$INSTALLDIR"
-        curl http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/master/ees-prvsnr-master.tar.gz | tar xzf - --strip-components=1
-    popd
-fi
-
-pushd "$INSTALLDIR"
-
-    # config custom yum repos
-    rm -rf /var/cache/yum
-    rm -rf /etc/yum.repos.d
-    cp -R files/etc/yum.repos.d /etc
-
-    # install salt
-    yum install -y salt-minion
-    systemctl disable salt-minion
-    mv -f /etc/salt/minion /etc/salt/minion.org
-    salt-call --version
-
-    # config salt
-    cp -f files/etc/salt/minion /etc/salt/minion
-
-popd
+INSTALLDIR="/opt/seagate/eos-prvsnr"
+EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
 eosnode_2_hostspec=eosnode-2
 
