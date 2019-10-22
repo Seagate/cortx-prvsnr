@@ -39,7 +39,6 @@ def post_host_run_hook(localhost, local_scripts_path):
 
 
 def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
-    host = _host if host is None else host
     res = None
     try:
         res = host.run(
@@ -131,7 +130,7 @@ def test_setup_provisioner_fail(host):
 def test_setup_provisioner_singlenode(
     host, hostname, localhost, ssh_config, remote, project_path, request
 ):
-    if remote == True:
+    if remote is True:
         script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
     else:
         host_project_path = request.getfixturevalue('inject_repo')['host']
@@ -180,7 +179,7 @@ def test_setup_provisioner_cluster(
     host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
     ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config
 ):
-    if remote == True:
+    if remote is True:
         script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
     else:
         # in case of 'local' source inject the whole repository

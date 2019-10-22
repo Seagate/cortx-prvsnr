@@ -41,7 +41,6 @@ def post_host_run_hook(localhost, local_scripts_path):
 
 
 def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
-    host = _host if host is None else host
     res = None
     try:
         res = host.run(
@@ -70,7 +69,6 @@ def test_configure_eos_show(
     #       test_functions.sh:test_functions_eos_pillar_show_skeleton a lot
     component = 'cluster'
 
-    component_pillar = '{}.sls'.format(component)
     # TODO python3.6 ???
     pillar_content = host.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
@@ -98,7 +96,7 @@ def test_configure_eos_show(
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_functions_eos_pillar_update(
+def test_configure_eos_update(
     host, hostname, host_tmp_path,
     localhost, tmp_path,
     ssh_config, remote, project_path,

@@ -61,7 +61,7 @@ class SSPLCfg(BaseCfg):
             else:
                 user_input = input(f"Enter value for {parent}[{k}] -> ({v}): ")
                 opt_tree[k] = user_input if user_input else v
-        
+
         return opt_tree
 
 

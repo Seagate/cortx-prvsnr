@@ -26,6 +26,13 @@ def safe_docker_container_name(name):
 
 
 # TODO
+# - reasearch real limitations
+# - test
+def safe_vagrant_machine_name(name):
+    return safe_docker_container_name(name)
+
+
+# TODO
 # - tests
 # - better satisfy RFC 1123 (https://tools.ietf.org/html/rfc1123#page-13)
 # - ??? actually docker used to check hostnames but is not clear how it happens now

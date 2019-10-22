@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 # TODO better correlation with post_env_run_hook routine
 DEFAULT_SCRIPT_PATH = "/tmp/bootstrap-eos"
 
+
 @pytest.fixture(scope='module')
 def env_name():
     return 'centos7-base'
@@ -38,7 +39,6 @@ def post_host_run_hook(localhost, local_scripts_path):
 
 
 def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
-    host = _host if host is None else host
     res = None
     try:
         res = host.run(

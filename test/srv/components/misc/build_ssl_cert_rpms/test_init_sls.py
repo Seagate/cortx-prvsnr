@@ -6,6 +6,7 @@ from test.helper import PRVSNR_REPO_INSTALL_DIR
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
@@ -30,7 +31,7 @@ def test_build_ssl_cert_rpms_appliance(
     )
 
     for label in ('host_eosnode1', 'host_eosnode2'):
-        output = host_eosnode1.check_output(
+        host_eosnode1.check_output(
             "salt '{}' state.apply components.misc.build_ssl_cert_rpms".format(
                 eos_hosts[label]['minion_id']
             )

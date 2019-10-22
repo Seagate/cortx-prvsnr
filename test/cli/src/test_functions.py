@@ -32,15 +32,14 @@ def local_script_path(project_path):
     return str(project_path / 'cli/src/functions.sh')
 
 
-# TODO use post_host_run_hook instead
 @pytest.fixture(scope='module')
-def post_docker_run(localhost, local_script_path):
-    def f(container):
+def post_host_run_hook(localhost, local_script_path):
+    def f(host, hostname, ssh_config, request):
         localhost.check_output(
-            "docker cp {} {}:{}"
-            .format(
+            "scp -F {} {} {}:{}".format(
+                ssh_config,
                 local_script_path,
-                container.name,
+                hostname,
                 DEFAULT_SCRIPT_PATH
             )
         )
@@ -215,7 +214,7 @@ def test_functions_parse_args_parses_singlenode(parse_args):
 
 
 def test_functions_parse_args_parses_remote(parse_args):
-    hostspec='user@host'
+    hostspec = 'user@host'
     for arg in ('-r', '--remote'):
         res = parse_args(arg, hostspec)
         assert res.rc == 0
@@ -438,7 +437,7 @@ def test_functions_build_command(build_command, host_ssh_config):
 
     res = build_command("user@host {} true".format(host_ssh_config))
     assert res.rc == 0
-    assert "cmd=<ssh -t -F {} user@host sudo>".format(host_ssh_config)  in res.stdout
+    assert "cmd=<ssh -t -F {} user@host sudo>".format(host_ssh_config) in res.stdout
 
 
 def test_functions_hostname_from_spec(run_script):
@@ -527,7 +526,7 @@ def test_functions_install_repo_local(
     request
 ):
     host_project_path = None
-    if remote == True:
+    if remote is True:
         script_path = project_path / 'cli' / 'src' / 'functions.sh'
     else:
         host_project_path = request.getfixturevalue('inject_repo')['host']
@@ -551,7 +550,7 @@ def test_functions_install_repo_local(
     for path in ('files', 'pillar', 'srv', 'cli'):
         assert host.file(str(PRVSNR_REPO_INSTALL_DIR / path)).exists
 
-    if remote == True:
+    if remote is True:
         assert not localhost.file(str(project_path / 'repo.zip')).exists
         assert not host.file('/tmp/repo.zip').exists
     else:
@@ -839,7 +838,6 @@ def test_functions_eos_pillar_show_skeleton(
     install_repo
 ):
     # 1. get pillar to compare
-    component_pillar = '{}.sls'.format(component)
     # TODO python3.6 ???
     pillar_content = host.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
