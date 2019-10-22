@@ -1,22 +1,12 @@
 # Setup SWAP and /var/mero
+include:
+  - components.system.storage.multipath.teardown
+
 {% set node = grains['id'] %}
-
-Stop and disable multipath service:
-  service.dead:
-    - name: multipathd.service
-
-Remove multipath service:
-  pkg.purged:
-    - name: device-mapper-multipath
-
-Remove multipath config:
-  file.absent:
-    - name: /etc/multipath.conf
-
 Unmount metadata vol:
   mount.unmounted:
     - name: /var/mero
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part2
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - config: /etc/fstab
     - persist: True
 
@@ -28,7 +18,7 @@ Remove swap:
   module.run:
     - mount.rm_fstab:
       - name: SWAP
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}-part1
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
   
 Remove partition:
   module.run:

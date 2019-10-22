@@ -53,7 +53,7 @@ rm -rf eos-prvsnr-cli*
 mkdir -p eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli/utils
 cp -R ${BASEDIR}/src/* eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli
 cp -R ${BASEDIR}/utils/* eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli/utils
-cp -R ${BASEDIR}/..files/etc/sysconfig/network-scripts/ifcfg-* eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/sysconfig/network-scripts/ifcfg-*
+cp -R ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/sysconfig/network-scripts/ifcfg-*
 cp -R ${BASEDIR}/../files/etc/modprobe.d/bonding.conf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/modprobe.d/bonding.conf
 
 tar -czvf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}.tar.gz eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}

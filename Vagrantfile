@@ -122,7 +122,7 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
       type: "rsync",
       rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
       rsync__auto: true,
@@ -131,7 +131,7 @@ Vagrant.configure("2") do |config|
 
       node_config.vm.provision "shell",
         name: "Boootstrap VM",
-        #run: "once",
+        run: "once",
         path: './files/scripts/setup/bootstrap.sh',
         privileged: true
 

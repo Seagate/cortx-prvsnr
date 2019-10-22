@@ -31,7 +31,6 @@ Encrypt ldap password:
 
 s3authserver:
   service.running:
-    - enable: True
     - init_delay: 2
 
 Open http port for s3server:
@@ -64,9 +63,3 @@ Open https port for s3server:
 #     - content: {{ grains['ip_interfaces'][data_if] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
 #     - location: end
 #     - mode: ensure
-
-#Restart haproxy:
-#  service.running:
-#    - name: haproxy
-#    - watch:
-#      - service: s3authserver

@@ -1,8 +1,3 @@
-haproxy:
-  pkg.installed: []
-  service.running:
-    - enable: True
-
-rsyslog:
-  service.running:
-    - enable: True
+Install haproxy:
+  pkg.installed:
+    - name: haproxy

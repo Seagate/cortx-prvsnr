@@ -9,5 +9,6 @@ Start slapd:
 Start s3authserver:
   service.running:
     - name: s3authserver
+    - enable: True
     - require:
       - Start slapd

@@ -19,20 +19,8 @@
 #   cmd.run:
 #     - name: mdadm --detail --scan | tee /etc/mdadm.conf
 #     - unless: grep "$(mdadm --detail --scan)" /etc/mdadm.conf
+# End setup RAID
 
-# Setup multipath
-Copy multipath config:
-  file.copy:
-    - name: /etc/multipath.conf
-    - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
-    - force: True
-    - makedirs: True
-
-Restart multipath service:
-  service.running:
-    - name: multipathd.service
-    - watch:
-      - file: Copy multipath config
 
 Label Metadata partition:
   module.run:
@@ -63,7 +51,7 @@ Create metadata partition:
 # Make SWAP
 Ensure SWAP partition is unmounted:
   cmd.run:
-    - name: swapoff -a && sleep 5
+    - name: swapoff -a && sleep 2
     
 Make SWAP partition:
   cmd.run:

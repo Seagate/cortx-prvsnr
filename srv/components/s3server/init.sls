@@ -1,4 +1,5 @@
 include:
+  - components.misc.build_ssl_cert_rpms
   - components.ha.haproxy
   - components.misc.openldap
   # - components.ha.keepalived

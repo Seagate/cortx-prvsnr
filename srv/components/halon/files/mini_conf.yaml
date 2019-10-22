@@ -3,10 +3,10 @@ s3servers:
 {%- for node_id in pillar['cluster']['node_list'] %}
   - {{ pillar['cluster'][node_id]['fqdn'] }}
 {%- endfor %}
-clovis-apps:
-{%- for node_id in pillar['cluster']['node_list'] %}
-  - {{ pillar['cluster'][node_id]['fqdn'] }}
-{%- endfor -%}
+# clovis-apps:
+# {%- for node_id in pillar['cluster']['node_list'] %}
+#  - {{ pillar['cluster'][node_id]['fqdn'] }}
+#{%- endfor -%}
 {% for node_id in pillar['cluster']['node_list'] -%}
 {% if pillar['cluster'][node_id]['is_primary'] %}
 confds:

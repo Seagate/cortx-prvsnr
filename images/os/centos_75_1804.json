@@ -1,0 +1,71 @@
+{
+  "variables": {
+    "version": ""
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "boot_command": [
+        "<tab><wait>",
+        " ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos75_1804.cfg<enter>"
+      ],
+      "boot_wait": "10s",
+      "cpus": 2,
+      "disk_size": 16000,
+      "format": "ova",
+      "guest_os_type": "RedHat_64",
+      "hard_drive_discard": true,
+      "hard_drive_nonrotational": true,
+      "headless": false,
+      "http_directory": ".",
+      "iso_urls": [
+        "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-1804.iso",
+        "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/7.5.1804.isos/CentOS-7-x86_64-Minimal-1804.iso"
+      ],
+      "iso_checksum": "FABDC67FF3A1674A489953EFFA285DFD",
+      "iso_checksum_type": "md5",
+      "memory": 2048,
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "10000s",
+      "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+      "vm_name": "centos_75_1804_virtualbox"
+    },
+    {
+      "type": "vmware-iso",
+      "boot_command": [
+        "<tab><wait>",
+        " ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos_75_1804_1804.cfg<enter>"
+      ],
+      "iso_urls": [
+        "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-1804.iso",
+        "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/7.5.1804.isos/CentOS-7-x86_64-Minimal-1804.iso"
+      ],
+      "cpus": 2,
+      "disk_size": 16000,
+      "guest_os_type": "CentOS 7 64-bit",
+      "iso_checksum": "FABDC67FF3A1674A489953EFFA285DFD",
+      "iso_checksum_type": "md5",
+      "memory": 2048,
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+      "vm_name": "centos_75_1804_vmware"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "hostnamectl set-hostname ees-node1",
+        "sudo yum install -y git",
+        "sudo yum install -y vim",
+        "sudo yum install -y salt-minion",
+        "sudo systemctl stop salt-minion",
+        "sudo systemctl disable salt-minion"
+      ]
+    }
+  ]
+}
