@@ -18,7 +18,7 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                git branch: 'ci-pipeline', credentialsId: 'ees-prvsnr_ssh', url: 'ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git'
+                git branch: 'master', credentialsId: 'ees-prvsnr_ssh', url: 'ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git'
             }
         }
         stage('Package: Provisioner RPMS') {
