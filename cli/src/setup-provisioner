@@ -24,8 +24,8 @@ Installs the provisioner repository along with SaltStack
 on the hosts with bare OS installed, configures salt master/minion
 connections and makes some additional preliminary configuration.
 
-`ees-prvsnr-version` as an optional positional argument might specify
-the desired version of the provisioner to install. Makes sense for `gitlab`
+'ees-prvsnr-version' as an optional positional argument might specify
+the desired version of the provisioner to install. Makes sense for 'gitlab'
 source only as of now. Not set by default.
 
 General options:
