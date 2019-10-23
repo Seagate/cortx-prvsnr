@@ -49,14 +49,18 @@ mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 rm -rf eos-prvsnr-cli*
 
-# Setup the source tar for rpm build
-mkdir -p eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli/utils
-cp -R ${BASEDIR}/src/* eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli
-cp -R ${BASEDIR}/utils/* eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}/cli/utils
-cp -R ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/sysconfig/network-scripts/ifcfg-*
-cp -R ${BASEDIR}/../files/etc/modprobe.d/bonding.conf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/modprobe.d/bonding.conf
 
-tar -czvf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}.tar.gz eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+# Setup the source tar for rpm build
+mkdir -p ${DEST_DIR}/cli/utils
+mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
+mkdir -p ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
+cp -R ${BASEDIR}/src/* ${DEST_DIR}/cli
+cp -R ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
+cp -R ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
+cp -R ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
+
+tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
 rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 
 yum-builddep -y ${BASEDIR}/eos-prvsnr-cli.spec

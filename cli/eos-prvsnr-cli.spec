@@ -30,10 +30,11 @@ EOS Provisioner Command line interface. Provides utilities to deploy EOS Object 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
 cp -p -R cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
-cp -p -R cli/utils/* %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
-cp -R files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/bonding.conf
-cp -R files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-*
+cp -p -R files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/bonding.conf
+cp -p -R files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
 
 
 %clean

@@ -12,6 +12,8 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
+                deleteDir()
+
                 sh encoding: 'utf-8', label: 'Install Python', returnStdout: true, script: 'yum install -y python'
                 sh encoding: 'utf-8', label: 'Cleanup', returnStdout: true, script: 'test -d /root/rpmbuild && rm -rf /root/rpmbuild || echo "/root/rpmbuild absent. Skipping cleanup..."'
             }
