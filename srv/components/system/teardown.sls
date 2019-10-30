@@ -8,3 +8,7 @@ install_base_packages:
       - python36-pip
       # - vi-enhanced
       # - tmux
+
+clean_yum_local:
+  cmd.run:
+    - name: yum clean all
