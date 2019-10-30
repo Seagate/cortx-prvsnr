@@ -6,3 +6,6 @@
 *__pycache__*
 *.pyc
 *.swp
+*packer_cache*
+*.vdi
+*.box
