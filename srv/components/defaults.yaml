@@ -19,8 +19,8 @@ base_repos:
       url: {{ prvsnr_repo_url }}/centos/7.5.1804.vault/vault.centos.org/7.5.1804/updates/x86_64/
   epel_repo:
     id: "epel"
-    # url: {{ prvsnr_repo_url }}/centos/epel/
-    url: {{ prvsnr_repo_url }}/centos/epel-20191423/mirror.grid.uchicago.edu/pub/linux/epel/7/x86_64/
+    url: {{ prvsnr_repo_url }}/centos/epel/
+    # url: {{ prvsnr_repo_url }}/centos/epel-20191423/mirror.grid.uchicago.edu/pub/linux/epel/7/x86_64/
   saltstack_repo:
     id: "saltstack"
     url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
