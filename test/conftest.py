@@ -619,7 +619,7 @@ def mock_hosts(hosts, request):
 
 
 @pytest.fixture
-def install_repo(hosts, localhost, project_path, ssh_config):
+def install_provisioner(hosts, localhost, project_path, ssh_config):
     for host in hosts.values():
         host.check_output(
             "mkdir -p {}"
@@ -737,7 +737,7 @@ def eos_primary_host_ip(eos_primary_host):
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_repo, eos_primary_host_ip):
+def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
@@ -756,7 +756,7 @@ def configure_salt(eos_hosts, install_repo, eos_primary_host_ip):
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_repo, eos_primary_host):
+def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_host):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():

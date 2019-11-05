@@ -29,6 +29,9 @@ if [[ "$dry_run" == true ]]; then
     salt_opts="test=True"
 fi
 
+echo "Running deploy..."
+echo "This may take a while..."
+
 # apply states
 if [[ "$singlenode" == true ]]; then
     $cmd salt eosnode-1 state.highstate $salt_opts

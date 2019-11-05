@@ -371,6 +371,7 @@ baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/20
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+priority: 1
 EOF
 
 ! read -r -d '' _script << EOF
@@ -387,6 +388,10 @@ EOF
     rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
     echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
 
+    # Remove any older saltstack if any.
+    systemctl stop salt-minion salt-master || /bin/true
+    yum remove -y salt-minion salt-master
+
     yum clean expire-cache
 
     # install salt master/minion
@@ -402,7 +407,7 @@ EOF
 }
 
 
-#   install_repo [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
+#   install_provisioner [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
 #
 #   Install provisioner repository either on the remote host or locally using
 #   one of possible types of sources.
@@ -428,9 +433,11 @@ EOF
 #           Default: `false`.
 #       installation-dir: destination installation directory.
 #           Default: /opt/seagate/eos-prvsnr
+#       cluster-mode: "singlenode" or "ees"
+#           Default: singlenode
 #
-function install_repo {
-    set -eu
+function install_provisioner {
+    set -eux
 
     local _script
 
@@ -440,24 +447,27 @@ function install_repo {
     local _ssh_config="${4:-}"
     local _sudo="${5:-false}"
     local _installdir="${6:-/opt/seagate/eos-prvsnr}"
+    local _cluster_mode="${7:-singlenode}"
 
     local _prvsnr_repo=
     local _repo_archive_path=
+    local _tmp_dir=$(mktemp -d)
 
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
         # might not always work
         local _script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
         pushd "$_script_dir"
-            local _repo_root="$(git rev-parse --show-toplevel)"
+            local _repo_root="$(realpath $_script_dir/../../)"
         popd
 
         local _repo_archive_name='repo.zip'
         local _scp_opts=
-        _repo_archive_path="$_repo_root/$_repo_archive_name"
+        _repo_archive_path="$_tmp_dir/$_repo_archive_name"
 
         pushd "$_repo_root"
-            git archive --format=zip HEAD >"$_repo_archive_path"
+            #git archive --format=zip HEAD >"$_repo_archive_path"
+            tar -zcvf "$_repo_archive_path" -C "$_repo_root" .
 
             if [[ -n "$_hostspec" ]]; then
                 if [[ -n "$_ssh_config" ]]; then
@@ -465,19 +475,11 @@ function install_repo {
                 fi
 
                 $(scp $_scp_opts $_repo_archive_path ${_hostspec}:/tmp)
-                rm -fv "$_repo_archive_path"
+                rm -rfv "$_tmp_dir"
                 _repo_archive_path="/tmp/$_repo_archive_name"
             fi
         popd
     fi
-
-! read -r -d '' _prvsnr_repo << "EOF"
-[provisioner]
-gpgcheck=0
-enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/last_successful
-name=provisioner
-EOF
 
     if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" ]]; then
         >&2 echo "ERROR: unsupported repo src: $_repo_src"
@@ -485,6 +487,14 @@ EOF
     fi
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+# Setting up default cluster file depending on mode.
+_cluster_src=""
+if [[ "$_cluster_mode" == "singlenode" ]]; then
+  _cluster_src="$_installdir/pillar/components/samples/singlenode.cluster.sls"
+elif [[ "$_cluster_mode" == "ees" ]]; then
+  _cluster_src="$_installdir/pillar/components/samples/ees.cluster.sls"
+fi
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -498,13 +508,14 @@ EOF
             curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
-        echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
+        cp -f "$_installdir/files/etc/yum.repos.d/eos-prvsnr.repo" /etc/yum.repos.d/prvsnr.repo
         yum install -y eos-prvsnr
     else
         # local
-        unzip -d "$_installdir" "$_repo_archive_path"
+        tar -zxvf "$_repo_archive_path" -C "$_installdir"
         rm -vf "$_repo_archive_path"
     fi
+    cp -f "$_cluster_src" "$_installdir/pillar/components/cluster.sls"
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -557,8 +568,8 @@ function configure_network {
         fi
 
         mkdir -p /etc/sysconfig/network-scripts/
-        cp files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-        cp files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+        cp -f files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
+        cp -f files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
     popd
 EOF
 

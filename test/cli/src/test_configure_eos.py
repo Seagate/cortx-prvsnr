@@ -63,7 +63,7 @@ def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_show(
-    host, hostname, localhost, ssh_config, remote, project_path, install_repo
+    host, hostname, localhost, ssh_config, remote, project_path, install_provisioner
 ):
     # Note. not parametrized per component since the test copies
     #       test_functions.sh:test_functions_eos_pillar_show_skeleton a lot
@@ -100,7 +100,7 @@ def test_configure_eos_update(
     host, hostname, host_tmp_path,
     localhost, tmp_path,
     ssh_config, remote, project_path,
-    install_repo
+    install_provisioner
 ):
     # Note. not parametrized per component since the test copies
     #       test_functions.sh:test_functions_eos_pillar_update a lot

@@ -484,7 +484,7 @@ def test_functions_check_host_in_ssh_config(run_script, host, host_tmp_path):
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("repo_src", ['unknown', 'rpm', 'gitlab'])
-def test_functions_install_repo(
+def test_functions_install_provisioner(
     run_script, host, hostname, localhost,
     ssh_config, remote, repo_src, project_path
 ):
@@ -496,7 +496,7 @@ def test_functions_install_repo(
     script_path = (project_path / 'cli' / 'src' / 'functions.sh') if remote else DEFAULT_SCRIPT_PATH
 
     script = """
-        install_repo {} {} {} {} {}
+        install_provisioner {} {} {} {} {}
     """.format(repo_src, prvsnr_version, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
@@ -520,7 +520,7 @@ def test_functions_install_repo(
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_functions_install_repo_local(
+def test_functions_install_provisioner_local(
     run_script, host, hostname, localhost,
     ssh_config, remote, project_path,
     request
@@ -538,7 +538,7 @@ def test_functions_install_repo_local(
     with_sudo = 'false' # TODO
 
     script = """
-        install_repo local {} {} {} {}
+        install_provisioner local {} {} {} {}
     """.format(prvsnr_version, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
@@ -565,7 +565,7 @@ def test_functions_install_repo_local(
 def test_functions_configure_network(
     run_script, host, hostname, localhost,
     ssh_config, remote, nm_installed, project_path,
-    install_repo
+    install_provisioner
 ):
     if not nm_installed:
         host.check_output('yum remove -y NetworkManager')
@@ -603,7 +603,7 @@ def test_functions_configure_network(
 def test_functions_install_salt(
     run_script, host, hostname, localhost,
     ssh_config, remote, project_path,
-    install_repo
+    install_provisioner
 ):
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
@@ -632,7 +632,7 @@ def test_functions_install_salt(
 def test_functions_configure_salt(
     run_script, host, hostname, localhost,
     ssh_config, remote, master, project_path,
-    install_repo
+    install_provisioner
 ):
     minion_id = 'some-minion-id'
     hostspec = hostname if remote else "''"
@@ -683,7 +683,7 @@ def test_functions_configure_salt(
 def test_functions_configure_salt_master_host(
     run_script, host, hostname, localhost,
     ssh_config, remote, master_host, project_path,
-    install_repo
+    install_provisioner
 ):
     default_eos_salt_master = 'eosnode-1'
 
@@ -717,7 +717,7 @@ def test_functions_configure_salt_master_host(
 def test_functions_accept_salt_keys_singlenode(
     run_script, host, hostname, localhost,
     ssh_config, remote, project_path,
-    install_repo
+    install_provisioner
 ):
     minion_id = 'some-minion-id'
     hostspec = hostname if remote else "''"
@@ -776,7 +776,7 @@ def test_functions_accept_salt_keys_cluster(
     run_script, host_eosnode1, host_eosnode2, hostname_eosnode1,
     host_tmp_path_eosnode1, host_tmp_path_eosnode2,
     localhost, ssh_config, remote, project_path,
-    install_repo
+    install_provisioner
 ):
     eosnode1_minion_id = 'eosnode-1'
     eosnode2_minion_id = 'eosnode-2'
@@ -835,7 +835,7 @@ def test_functions_eos_pillar_show_skeleton(
     run_script, host, hostname, host_tmp_path,
     localhost, tmp_path,
     ssh_config, remote, component, project_path,
-    install_repo
+    install_provisioner
 ):
     # 1. get pillar to compare
     # TODO python3.6 ???
@@ -868,7 +868,7 @@ def test_functions_eos_pillar_show_skeleton(
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 def test_functions_eos_pillar_update_fail(
-    run_script, host, ssh_config, install_repo
+    run_script, host, ssh_config, install_provisioner
 ):
     res = run_script('eos_pillar_update cluster some-path', host=host)
     assert res.rc == 1
@@ -893,7 +893,7 @@ def test_functions_eos_pillar_update(
     run_script, host, hostname, host_tmp_path,
     localhost, tmp_path,
     ssh_config, remote, component, project_path,
-    install_repo, mock_hosts
+    install_provisioner, mock_hosts
 ):
     # 1. prepare some valid pillar for the component
     component_pillar = '{}.sls'.format(component)

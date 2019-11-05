@@ -28,14 +28,15 @@ cluster:
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
   storage_enclosure:
-    - id: storage_node_1                  # equivalent to fqdn for server node
-      type: 5U84                          # Type of enclosure. E.g. 5U84/PODS
-      controller:
-        type: gallium                   # Type of controller on storage node. E.g. gallium/indium/sati
-        mc:
-          - ip:
-            port:
-          - ip:
-            port:
-        user:
-        password:
+    id: storage_node_1            # equivalent to fqdn for server node
+    type: 5U84                    # Type of enclosure. E.g. 5U84/PODS
+    controller:
+      type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
+      primary_mc:
+        ip: 127.0.0.1
+        port: 8090
+      secondary_mc:
+        ip: 127.0.0.1
+        port: 8090
+      user: user
+      password: 'passwd'

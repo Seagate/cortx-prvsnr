@@ -4,32 +4,101 @@
 #   https://www.vagrantup.com/docs/hyperv/configuration.html
 
 # read vm configuration(s) from JSON file
-salt_nodes = [
-  {
-    "name" => "eosnode-1",
-    "cpus" => 2,
-    "memory" => 4096,
-    "mgmt0" => "172.16.10.101",
-    "data0" => "172.19.10.101",
-    "minion_id" => "eosnode-1"
-  },
-  {
-    "name"=> "eosnode-2",
-    "cpus"=> 2,
-    "memory"=> 4096,
-    "mgmt0" => "172.16.10.102",
-    "data0" => "172.19.10.102",
-    "minion_id" => "eosnode-2"
-  },
-  {
-    "name"=> "s3client",
-    "cpus"=> 2,
-    "memory"=> 2048,
-    "mgmt0" => "172.16.10.103",
-    "data0" => "172.19.10.103",
-    "minion_id" => "s3client"
-  }
-]
+require 'getoptlong'
+
+def show_usage
+  puts <<-EOF
+
+USAGE:
+  vagrant [OPTION] <vagrant options>
+
+  --help:                       show help
+
+  --singlenode | --ees:         default: singlenode.
+  Where
+        --singlenode: Single eos node VM.
+        --ees: EES setup with 2 eos nodes.
+
+  --with-s3client:              Create a S3 client VM.
+
+  EOF
+end
+
+single_node_mode=false
+ees_mode=false
+create_s3client=false
+
+opts = GetoptLong.new(
+  [ '--singlenode', GetoptLong::OPTIONAL_ARGUMENT ],
+  [ '--ees', GetoptLong::OPTIONAL_ARGUMENT ],
+  [ '--help', GetoptLong::OPTIONAL_ARGUMENT ]
+)
+
+begin
+  opts.each do |opt, arg|
+    case opt
+      when '--help'
+        show_usage
+        exit
+      when '--singlenode'
+        single_node_mode=true
+        if ees_mode
+          puts "ERROR: Only one option should be specified (--singlenode | --ees)"
+          show_usage
+          exit
+        end
+      when '--ees'
+        ees_mode=true
+        if single_node_mode
+          puts "ERROR: Only one option should be specified (--singlenode | --ees)"
+          show_usage
+          exit
+        end
+      when '--with-s3client'
+        create_s3client=true
+    end
+  end
+rescue Exception => err
+  puts "ERROR: %s." % err.message
+  show_usage
+  exit
+end
+
+salt_nodes = []
+number_of_eos_nodes = 1 # default 1
+if ees_mode
+  number_of_eos_nodes = 2
+end
+
+last_octet_for_ip=100
+
+for i in 1..number_of_eos_nodes
+  last_octet_for_ip = last_octet_for_ip + i
+  salt_nodes.push(
+    {
+      "name" => "eosnode-%d" % i,
+      "cpus" => 2,
+      "memory" => 4096,
+      "mgmt0" => "172.16.10.%d" % last_octet_for_ip,
+      "data0" => "172.19.10.%d" % last_octet_for_ip,
+      "minion_id" => "eosnode-%d" % i
+    }
+  )
+end
+
+if create_s3client
+  last_octet_for_ip = last_octet_for_ip + i
+  salt_nodes.push(
+    {
+      "name"=> "s3client",
+      "cpus"=> 2,
+      "memory"=> 2048,
+      "mgmt0" => "172.16.10.%d" % last_octet_for_ip,
+      "data0" => "172.19.10.%d" % last_octet_for_ip,
+      "minion_id" => "s3client"
+    }
+  )
+end
 
 # Disk configuration details
 disks_dir = File.join(Dir.pwd, ".vdisks")
@@ -129,11 +198,7 @@ Vagrant.configure("2") do |config|
       rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
       rsync__verbose: true
 
-      node_config.vm.provision "shell",
-        name: "Boootstrap VM",
-        run: "once",
-        path: './files/scripts/setup/bootstrap.sh',
-        privileged: true
+      # Setup the ips in ifcfg sample files.
 
       node_config.vm.provision "shell",
         name: "Vagrant_override",
@@ -141,21 +206,37 @@ Vagrant.configure("2") do |config|
         inline: <<-SHELL
           echo IPADDR=#{node["mgmt0"]}
           echo IPADDR=#{node["data0"]}
-          sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
-          sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
-
-          sudo ifdown enp0s8
-          sudo ifdown enp0s9
-          sudo ifdown data0
-          sudo ifdown mgmt0
-          sudo ifup data0
-          sudo ifup mgmt0
-
-          sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
-
-          touch /etc/salt/minion_id
-          echo #{node["minion_id"]} |tee /etc/salt/minion_id
+          sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-mgmt0
+          sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0
         SHELL
+
+      node_config.vm.provision "shell",
+        name: "Boootstrap EOS VM",
+        run: "once",
+        path: './files/scripts/setup/bootstrap-eos-vm.sh',
+        privileged: true
+      #
+      # node_config.vm.provision "shell",
+      #   name: "Vagrant_override",
+      #   #run: "once",
+      #   inline: <<-SHELL
+      #     echo IPADDR=#{node["mgmt0"]}
+      #     echo IPADDR=#{node["data0"]}
+      #     sudo sed -i 's/IPADDR=/IPADDR=#{node["mgmt0"]}/g' /etc/sysconfig/network-scripts/ifcfg-mgmt0
+      #     sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
+      #
+      #     sudo ifdown enp0s8
+      #     sudo ifdown enp0s9
+      #     sudo ifdown data0
+      #     sudo ifdown mgmt0
+      #     sudo ifup data0
+      #     sudo ifup mgmt0
+      #
+      #     sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
+      #
+      #     touch /etc/salt/minion_id
+      #     echo #{node["minion_id"]} |tee /etc/salt/minion_id
+      #   SHELL
 
       #unless 's3client' == node['name']
       #  node_config.vm.provision :salt do |salt|

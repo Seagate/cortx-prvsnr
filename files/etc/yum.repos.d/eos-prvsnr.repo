@@ -1,0 +1,6 @@
+[eos-provisioner]
+gpgcheck=0
+enabled=1
+baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/last_successful
+name=provisioner
+priority=1
