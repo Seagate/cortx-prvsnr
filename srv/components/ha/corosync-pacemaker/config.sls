@@ -6,47 +6,64 @@
 #
 
 Disable firewall:
-  cmd.run:
-    - names: 
-      - systemctl stop firewalld
-      - systemctl disable firewalld
+  service.dead:
+    - name: firewalld
+    - enable: False 
 
-Create HA Client and Cluster:
-  cmd.run:
-    - names: 
-      - getent group haclient >/dev/null || groupadd -r haclient -g 189
-      - getent passwd hacluster >/dev/null || useradd -r -g haclient -u 189 -s /sbin/nologin -c "cluster user" {{ pillar['csm']['user'] }}
+Enable corosync service:
+  service.enabled:
+    - name: corosync
 
-{% set node = grains['id'] %}
-{% if pillar['cluster'][node]['is_primary'] %}
+Enable pacemaker service:
+  service.enabled:
+    - name: pacemaker
 
-Configure password for user:
-  cmd.run:
-    - name: echo {{ pillar['csm']['password'] }} | passwd --stdin {{ pillar['csm']['user'] }}
+Start pcsd service:
+  service.running:
+    - name: pcsd
+    - enable: True
 
-
+Create ha user:
+  user.present:
+    - name: {{ pillar['corosync-pacemaker']['user'] }}
+    - password: {{ pillar['corosync-pacemaker']['password'] }}               # To be set using 'openssl passwd -1'
+    - hash_password: True
+    - createhome: True
+    
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Authorize nodes:
-  cmd.run:
-    - names:
-      - pcs pcsd clear-auth --remote
-      - service pcsd restart
-      - pcs cluster auth -u {{ pillar['csm']['user'] }} -p {{ pillar['csm']['password'] }} {{ pillar["cluster"]["node_list"][0] }}
-
-
+  pcs.auth:
+    - nodes:
+      {%- for node_id in pillar['cluster']['node_list'] %}
+      - {{ pillar['cluster'][node_id]['fqdn'] }}
+      {%- endfor %}
+    - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
+    - pcspasswd: {{ pillar['corosync-pacemaker']['password'] }}
+    - extra_args:
+      - '--force'
+    - require:
+      - user: Create ha user
+ 
 Setup Cluster:
-  cmd.run:
-    - name: pcs cluster setup --name {{ pillar['csm']['cluster_name'] }} {{ pillar["cluster"]["node_list"][0] }}
+  pcs.cluster_setup:
+    - nodes:
+      {%- for node_id in pillar['cluster']['node_list'] %}
+      - {{ pillar['cluster'][node_id]['fqdn'] }}
+      {%- endfor %}
+    - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
+    - extra_args:
+      - '--start'
+      - '--enable'
+      - '--force'
 
-Start cluster services:
-  cmd.run:
-    - names:
-      - pcs cluster start --all
-      - pcs cluster enable --all
+Ignore the Quorum Policy:
+  pcs.prop_has_value:
+    - prop: no-quorum-policy
+    - value: ignore
 
-Disable STONITH and Ignore the Quorum Policy:
-  cmd.run:
-    - names:
-      - pcs property set stonith-enabled=false
-      - pcs property set no-quorum-policy=ignore
+Disable STONITH:
+  pcs.prop_has_value:
+    - prop: stonith-enabled
+    - value: false
 
 {% endif %}

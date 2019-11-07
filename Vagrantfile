@@ -32,7 +32,7 @@ salt_nodes = [
 ]
 
 # Disk configuration details
-disks_dir = File.join(Dir.pwd, ".vdisks")
+disks_dir = File.join(Dir.pwd, ".vagrant", "vdisks")
 disk_count = 2
 disk_size = 1024         # in MB
 
@@ -122,11 +122,11 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
       type: "rsync",
       rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
       rsync__auto: true,
-      rsync__exclude: [".git", ".gitignore", ".vagrant", ".vdisks", "Vagrantfile"],
+      rsync__exclude: [".git", ".gitignore", ".vagrant", "Vagrantfile"],
       rsync__verbose: true
 
       node_config.vm.provision "shell",
@@ -155,6 +155,8 @@ Vagrant.configure("2") do |config|
 
           touch /etc/salt/minion_id
           echo #{node["minion_id"]} |tee /etc/salt/minion_id
+
+          sudo systemctl restart salt-minion
         SHELL
 
       #unless 's3client' == node['name']

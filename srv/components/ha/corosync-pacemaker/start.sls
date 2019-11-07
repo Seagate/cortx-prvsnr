@@ -8,9 +8,7 @@ Start corosync:
     - name: corosync
     - enable: True
 
-
 Start pacemaker:
   service.running:
     - name: pacemaker
     - enable: True
-

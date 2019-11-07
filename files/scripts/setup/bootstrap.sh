@@ -17,8 +17,8 @@ sudo yum remove epel-release -y
 sudo cp -Rut ${BASEDIR}/files/etc/yum.repos.d /etc/yum.repos.d
 
 # Uncomment only if necessary
-# sudo yum clean all
-# sudo rm -rf /var/cache/yum
+sudo yum clean all
+sudo rm -rf /var/cache/yum
 # yum update
 # yum makecache fast
 

@@ -3,7 +3,7 @@ base:
     - roles.primary
   '*':
     - components.cluster
-    - components.csm
+    - components.corosync-pacemaker
     - components.halon
     - components.haproxy
     - components.eoscore

@@ -74,5 +74,5 @@ nfs:
 csm:
   repo:
     id: "csm"
-    url: {{ eos_repo_url  }}/components/dev/csm/last_successful/
+    url: {{ eos_repo_url  }}/{{ release_tag }}/csm/repo
 

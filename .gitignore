@@ -1,6 +1,6 @@
-.vagrant
-.git
-.vdisks
+*.vagrant
+*.git
+*.vdisks
 *.bak
 *.log
 *__pycache__*

@@ -1,3 +1,15 @@
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+
+Destroy Cluster:
+  pcs.cluster_setup:
+    - nodes:
+      {%- for node_id in pillar['cluster']['node_list'] %}
+        - {{ pillar['cluster'][node_id]['fqdn'] }}
+      {%- endfor -%}
+    - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
+    - extra_args:
+      - '--stop'
+      - '--destroy'
 
 Stop Cluster:
   cmd.run:
@@ -7,11 +19,12 @@ Destroy Cluster:
   cmd.run:
     - name: pcs cluster destroy
 
+{%- endif -%}
+
 Remove user and group:
   cmd.run:
     - names: 
-      - userdel {{ pillar['csm']['user'] }}
-      - groupdel haclient
+      - userdel {{ pillar['corosync-pacemaker']['user'] }}
 
 Remove pcs package:
   pkg.purged:
@@ -20,8 +33,8 @@ Remove pcs package:
       - pacemaker
       - corosync
 
-Enable and Start Firewall:
-  cmd.run:
-    - names:
-      - systemctl enable firewalld
-      - systemctl start firewalld
+# Enable and Start Firewall:
+#   cmd.run:
+#     - names:
+#       - systemctl enable firewalld
+#       - systemctl start firewalld

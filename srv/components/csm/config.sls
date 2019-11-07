@@ -10,4 +10,3 @@ Copy Cluster Configuration file:
 Initialize CSM setup:
   cmd.run:
     - name: csm_setup init -f
-
