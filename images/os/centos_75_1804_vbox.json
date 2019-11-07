@@ -16,7 +16,7 @@
       "guest_os_type": "RedHat_64",
       "hard_drive_discard": true,
       "hard_drive_nonrotational": true,
-      "headless": false,
+      "headless": true,
       "http_directory": ".",
       "iso_urls": [
         "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-1804.iso",
