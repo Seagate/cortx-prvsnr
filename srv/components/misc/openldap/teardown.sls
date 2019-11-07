@@ -28,6 +28,7 @@ Remove pkgs:
 # File cleanup operation
 {% for filename in [
    '/etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif',
+   '/etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif',
    '/etc/openldap/slapd.d',
    '/var/lib/ldap',
    '/etc/openldap/ldap.conf',

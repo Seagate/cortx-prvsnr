@@ -61,6 +61,8 @@ Copy ldap replication config:
       "dest": '/opt/seagate/generated_configs/ldap/iam-admin-access.ldif' },
     { "src": 'salt://components/misc/openldap/files/iam-constraints.ldif',
       "dest": '/opt/seagate/generated_configs/ldap/iam-constraints.ldif' },
+    { "src": 'salt://components/misc/openldap/files/olcDatabase={2}mdb.ldif',
+      "dest": '/opt/seagate/generated_configs/ldap/olcDatabase={2}mdb.ldif' },
     { "src": 'salt://components/misc/openldap/files/syncprov_mod.ldif',
       "dest": '/opt/seagate/generated_configs/ldap/syncprov_mod.ldif' },
     { "src": 'salt://components/misc/openldap/files/syncprov.ldif',

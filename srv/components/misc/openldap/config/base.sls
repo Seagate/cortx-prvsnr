@@ -12,6 +12,19 @@ Backup slapd config file:
     - force: True
     - preserve: True
 
+Clean up old mdb ldiff file:
+  file.absent:
+    - name: /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif
+
+Copy mdb ldiff file, if not present:
+  file.copy:
+    - name: /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif
+    - source: /opt/seagate/generated_configs/ldap/olcDatabase\=\{2\}mdb.ldif
+    - force: True
+    - preserve: True
+    - user: ldap
+    - group: ldap
+
 generate_slapdpasswds:
    cmd.run:
      - name: /opt/seagate/scripts/ldap_gen_passwd.sh

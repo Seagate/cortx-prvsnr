@@ -32,7 +32,7 @@ olcServerID: {{ loop.index }}
 {%- endif -%}
 {% endfor %}
 
-dn: olcDatabase={2}hdb,cn=config
+dn: olcDatabase={2}mdb,cn=config
 changetype: modify
 add: olcSyncRepl
 {% for node in node_list -%}
@@ -47,6 +47,18 @@ olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
   type=refreshAndPersist
   retry="30 5 300 3"
   interval=00:00:05:00
+# Enable additional providers
+# olcSyncRepl: rid=005
+#   provider=ldap://<sample_provider_URI>:389/
+#   bindmethod=simple
+#   binddn="cn=admin,dc=seagate,dc=com"
+#   credentials=seagate
+#   searchbase="dc=seagate,dc=com"
+#   scope=sub
+#   schemachecking=on
+#   type=refreshAndPersist
+#   retry="30 5 300 3"
+#   interval=00:00:05:00
 {% endfor -%}
 -
 replace: olcMirrorMode
