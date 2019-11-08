@@ -23,7 +23,7 @@ Copy ldap config:
 
 Copy ldap_gen_passwd script:
   file.managed:
-    - name: /opt/seagate/scripts/ldap_gen_passwd.sh
+    - name: /opt/seagate/generated_configs/ldap/ldap_gen_passwd.sh
     - source: salt://components/misc/openldap/files/ldap_gen_passwd.sh
     - keep_source: False
     - user: root
@@ -32,9 +32,9 @@ Copy ldap_gen_passwd script:
     - makedirs: True
     - template: jinja
 
-Copy ldap enale ssl script:
+Copy ldap enable ssl script:
   file.managed:
-    - name: /opt/seagate/scripts/enable_ssl_openldap.sh
+    - name: /opt/seagate/generated_configs/ldap/enable_ssl_openldap.sh
     - source: salt://components/misc/openldap/files/ssl/enable_ssl_openldap.sh
     - keep_source: False
     - user: root

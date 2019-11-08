@@ -9,6 +9,9 @@ EXPR='s/olcRootPW: *.*/olcRootPW: '$ESC_SHA'/g'
 CFG_FILE=/opt/seagate/generated_configs/ldap/cfg_ldap.ldif
 sed -i "$EXPR" $CFG_FILE
 
+CFG_FILE=/opt/seagate/generated_configs/ldap/olcDatabase={2}mdb.ldif
+sed -i "$EXPR" $CFG_FILE
+
 # generate encrypted password for ldap admin
 SHA=$(slappasswd -s $LDAPADMINPASS)
 ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')

@@ -12,7 +12,7 @@ import commons
 
 # How to test:
 # $ salt-call saltutil.clear_cache
-# $ salt-call saltutil.sync_modules && salt-call sspl.conf_update "/opt/seagate/ees-prvsnr/srv/_modules/files/samples/sspl.conf" sspl
+# $ salt-call saltutil.sync_modules && salt-call sspl.conf_update "/opt/seagate/eos-prvsnr/srv/_modules/files/samples/sspl.conf" sspl
 
 def conf_update(  name = '/etc/sspl.conf',
                   ref_pillar = 'sspl',

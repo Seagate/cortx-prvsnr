@@ -45,13 +45,12 @@ Remove pkgs:
 
 # Remove directories
 {% for dirname in [
-    '/etc/openldap/slapd',
-    '/etc/sysconfig/slapd',
-    '/etc/openldap/slapd.d'
+    '/etc/openldap',
+    '/etc/sysconfig/slapd.bak'
 ] %}
-remove {{ dirname }}:
-  cmd.run:
-    - name: rm -rf {{ dirname }}*.*
+Remove {{ dirname }}:
+  file.absent:
+    - name: {{ dirname }}
 {% endfor %}
 
 Remove user ldap:

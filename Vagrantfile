@@ -122,7 +122,7 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
       type: "rsync",
       rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
       rsync__auto: true,
@@ -150,8 +150,6 @@ Vagrant.configure("2") do |config|
           sudo ifdown mgmt0
           sudo ifup data0
           sudo ifup mgmt0
-
-          sudo cp -R /opt/seagate/ees-prvsnr/files/etc/hosts /etc/hosts
 
           touch /etc/salt/minion_id
           echo #{node["minion_id"]} |tee /etc/salt/minion_id

@@ -49,6 +49,8 @@ sudo systemctl restart salt-minion
 ################
 # Network setup
 ################
+sudo cp -R ${BASEDIR}/files/etc/hosts /etc/hosts
+
 # TODO: To be converted to a salt formula
 if [[ -n "$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
   sudo systemctl stop NetworkManager
@@ -69,18 +71,18 @@ sudo cp -R ${BASEDIR}/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.
 # sudo sed -i 's/IPADDR=//g' /etc/sysconfig/network-scripts/ifcfg-data0
 # sudo systemctl restart network.service
 
-sudo mkdir -p /root/.ssh
-sudo chmod -R 755 /root/.ssh
-sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr /root/.ssh/id_rsa
-sudo chmod -R 400 /root/.ssh/id_rsa
-sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/id_rsa.pub
-sudo chmod -R 644 /root/.ssh/id_rsa.pub
-sudo cp ${BASEDIR}/files/.ssh/authorized_keys /root/.ssh/authorized_keys
-sudo chmod -R 644 /root/.ssh/authorized_keys
-sudo cp ${BASEDIR}/files/.ssh/known_hosts /root/.ssh/known_hosts
-sudo chmod -R 644 /root/.ssh/known_hosts
-sudo cp ${BASEDIR}/files/.ssh/ssh_config /root/.ssh/ssh_config
-sudo chmod -R 644 /root/.ssh/ssh_config
+sudo mkdir -p ~/.ssh
+sudo chmod -R 755 ~/.ssh
+sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr ~/.ssh/id_rsa
+sudo chmod -R 400 ~/.ssh/id_rsa
+sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr.pub ~/.ssh/id_rsa.pub
+sudo chmod -R 644 ~/.ssh/id_rsa.pub
+sudo cp ${BASEDIR}/files/.ssh/authorized_keys ~/.ssh/authorized_keys
+sudo chmod -R 644 ~/.ssh/authorized_keys
+sudo cp ${BASEDIR}/files/.ssh/known_hosts ~/.ssh/known_hosts
+sudo chmod -R 644 ~/.ssh/known_hosts
+sudo cp ${BASEDIR}/files/.ssh/ssh_config ~/.ssh/ssh_config
+sudo chmod -R 644 ~/.ssh/ssh_config
 
 sudo mkdir -p /etc/salt/pki/master/ssh
 sudo chmod -R 755 /etc/salt/pki/master/ssh

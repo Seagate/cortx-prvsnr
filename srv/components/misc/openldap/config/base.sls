@@ -1,42 +1,7 @@
-Backup ldap config file:
-  file.copy:
-    - name: /etc/openldap/ldap.conf.bak
-    - source: /etc/openldap/ldap.conf
-    - force: True
-    - preserve: True
-
-Backup slapd config file:
-  file.copy:
-    - name: /etc/sysconfig/slapd.bak
-    - source: /etc/sysconfig/slapd
-    - force: True
-    - preserve: True
-
-Clean up old mdb ldiff file:
-  file.absent:
-    - name: /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif
-
-Copy mdb ldiff file, if not present:
-  file.copy:
-    - name: /etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif
-    - source: /opt/seagate/generated_configs/ldap/olcDatabase\=\{2\}mdb.ldif
-    - force: True
-    - preserve: True
-    - user: ldap
-    - group: ldap
-
-generate_slapdpasswds:
-   cmd.run:
-     - name: /opt/seagate/scripts/ldap_gen_passwd.sh
-
 Configure OpenLDAP - Base config:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/generated_configs/ldap/cfg_ldap.ldif
-    - require:
-      - generate_slapdpasswds
-    - watch_in:
-      - service: Service Slapd
-
+    
 Remove existing file:
   cmd.run:
     - name: rm -f /etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif
@@ -99,11 +64,10 @@ Configure OpenLDAP - password policy:
 
 Update openldap SSL certificates:
   cmd.run:
-    - name: /opt/seagate/scripts/enable_ssl_openldap.sh -cafile /etc/ssl/stx-s3/openldap/ca.crt -certfile /etc/ssl/stx-s3/openldap/s3openldap.crt -keyfile /etc/ssl/stx-s3/openldap/s3openldap.key
+    - name: /opt/seagate/generated_configs/ldap/enable_ssl_openldap.sh -cafile /etc/ssl/stx-s3/openldap/ca.crt -certfile /etc/ssl/stx-s3/openldap/s3openldap.crt -keyfile /etc/ssl/stx-s3/openldap/s3openldap.key
     - require:
       - Configure OpenLDAP - password policy
 
-Service Slapd:
+Restart Service Slapd:
   service.running:
     - name: slapd
-    - full_restart: True

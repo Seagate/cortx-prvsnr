@@ -13,7 +13,7 @@ creatorsName: cn=config
 createTimestamp: 20191015075612Z
 olcSuffix: dc=seagate,dc=com
 olcRootDN: cn=admin,dc=seagate,dc=com
-olcRootPW:: e1NTSEF9aGZVMWhEVGE5cDEweTQ1N0JBNFhwY0VLQVhTVnhuYmE=
+olcRootPW: 
 olcAccess: {0}to attrs=userPassword by self write by dn.base="cn=sgiamadmin,
  dc=seagate,dc=com" write by anonymous auth by * none
 olcAccess: {1}to dn.sub="ou=idp,dc=s3,dc=seagate,dc=com" by dn.base="cn=sgia
