@@ -28,14 +28,6 @@ parse_args()
     [[ $# -lt 1 ]] && usage
 }
 
-cli_status_get()
-{
-    _xml_doc=$1
-    status=`$xml_cmd -xpath '/RESPONSE/OBJECT/PROPERTY[@name="response-type"]/text()' $_xml_doc`
-    [[ $status != "Success" ]] && echo "Command failed on the controller" && exit 1
-    echo "Command run successfully"
-}
-
 # run_cli_cmd()
 # Arg1: cli command to run on enclosure, e.g. 'show version'
 # Arg2: The element to be searched from the xml output of arg1 command.
@@ -55,19 +47,6 @@ check_active_ports()
 {
     #TODO: extract port details
     cmd_run 'show ports'
-}
-
-create_volumes()
-{
-    _count=$1
-    _size=$2
-    _baselun=$3
-    _basename=$4
-    _ports=$5
-    _pool=$6
-    _cmd="create volume-set access rw baselun $_baselun basename $_basename count $_count pool $_pool size $_size ports $_ports"
-    echo "Creating volume set with $_count volumes of size $_size in pool $_pool and mapped to ports $_ports"
-    cmd_run $_cmd
 }
 
 main()
