@@ -34,7 +34,7 @@ salt_nodes = [
 # Disk configuration details
 disks_dir = File.join(Dir.pwd, ".vagrant", "vdisks")
 disk_count = 2
-disk_size = 1024         # in MB
+disk_size = 2048         # in MB
 
 Vagrant.configure("2") do |config|
 
@@ -97,7 +97,7 @@ Vagrant.configure("2") do |config|
                 vb.customize ['createmedium',
                   'disk',
                   '--filename', disk_file,
-                  '--size', disk_size,
+                  '--size', disk_size * disk_number,
                   '--format', 'VDI',
                   '--variant', 'Standard'
                 ]
