@@ -1,3 +1,4 @@
+{%- set db = pillar['openldap']['backend_db'] -%}
 ## Steps to update LDAP schema
 NOTE - Perform these steps from the current directory
        i.e mero/fe/s3/auth-utils/ldap
@@ -105,7 +106,7 @@ firewall-cmd --reload
 # 4. Verify permissions ls -ldZ /var/seagate/ldap
 # drwx------. ldap ldap system_u:object_r:slapd_db_t:s0  /var/seagate/ldap
 # More details https://www.systutorials.com/docs/linux/man/8-slapd_selinux/
-dn: olcDatabase={2}mdb,cn=config
+dn: olcDatabase={2}{{db}},cn=config
 changetype: modify
 replace: olcDbDirectory
 olcDbDirectory: /var/seagate/ldap

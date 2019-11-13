@@ -1,9 +1,10 @@
+{%- set db = pillar['openldap']['backend_db'] -%}
 # AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.
-# CRC32 c6272005
-dn: olcDatabase={2}mdb
+# CRC32 8f106f67
+dn: olcDatabase={2}{{db}}
 objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
-olcDatabase: {2}mdb
+olcDatabase: {2}{{db}}
 olcDbDirectory: /var/lib/ldap
 olcDbIndex: objectClass eq,pres
 olcDbIndex: ou,cn,mail,surname,givenname eq,pres,sub
@@ -13,7 +14,6 @@ creatorsName: cn=config
 createTimestamp: 20191015075612Z
 olcSuffix: dc=seagate,dc=com
 olcRootDN: cn=admin,dc=seagate,dc=com
-olcRootPW: 
 olcAccess: {0}to attrs=userPassword by self write by dn.base="cn=sgiamadmin,
  dc=seagate,dc=com" write by anonymous auth by * none
 olcAccess: {1}to dn.sub="ou=idp,dc=s3,dc=seagate,dc=com" by dn.base="cn=sgia

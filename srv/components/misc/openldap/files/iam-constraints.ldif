@@ -1,3 +1,4 @@
+{%- set db = pillar['openldap']['backend_db'] -%}
 # S3 IAM ldap schema constraints
 # email id is unique attribute
 
@@ -7,7 +8,7 @@ objectClass: olcModuleList
 olcModulePath: /usr/lib64/openldap/
 olcModuleLoad: unique.la
 
-dn: olcOverlay=unique,olcDatabase={2}mdb,cn=config
+dn: olcOverlay=unique,olcDatabase={2}{{db}},cn=config
 objectClass: olcOverlayConfig
 objectClass: olcUniqueConfig
 olcOverlay: unique

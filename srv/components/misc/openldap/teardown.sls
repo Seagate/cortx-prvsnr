@@ -10,11 +10,6 @@ disable slapd:
   service.disabled:
     - name: slapd
 
-set_chkconfig_off:
-  cmd.run:
-    - name: chkconfig slapd off
-    - only_if: systemctl is-enabled slapd
-
 Remove pkgs:
   pkg.purged:
     - pkgs:
@@ -28,29 +23,18 @@ Remove pkgs:
 # File cleanup operation
 {% for filename in [
    '/etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif',
-   '/etc/openldap/slapd.d/cn\=config/olcDatabase\=\{2\}mdb.ldif',
-   '/etc/openldap/slapd.d',
    '/var/lib/ldap',
+   '/etc/sysconfig/slapd',
+   '/etc/sysconfig/slapd.bak',
+   '/etc/openldap/slapd.d',
    '/etc/openldap/ldap.conf',
    '/etc/openldap/ldap.conf.bak',
-   '/etc/sysconfig/slapd',
-   '/opt/seagate/generated_configs/',
-   '/opt/seagate/scripts/',
+   '/opt/seagate/eos-prvsnr/generated_configs/ldap'
  ] %}
 {{ filename }}:
   file.absent:
     - require:
       - pkg: Remove pkgs
-{% endfor %}
-
-# Remove directories
-{% for dirname in [
-    '/etc/openldap',
-    '/etc/sysconfig/slapd.bak'
-] %}
-Remove {{ dirname }}:
-  file.absent:
-    - name: {{ dirname }}
 {% endfor %}
 
 Remove user ldap:

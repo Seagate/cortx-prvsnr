@@ -33,25 +33,31 @@ Backup slapd config file:
     - force: True
     - preserve: True
 
+Generate Slapdpasswds:
+   cmd.run:
+     - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap_gen_passwd.sh
+
+Stop slapd:
+  service.dead:
+    - name: slapd
+
+{% if 'mdb' in pillar['openldap']['backend_db'] -%}
 Clean up old mdb ldiff file:
   file.absent:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
 
-Generate Slapdpasswds:
-   cmd.run:
-     - name: /opt/seagate/generated_configs/ldap/ldap_gen_passwd.sh
-
 Copy mdb ldiff file, if not present:
   file.copy:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
-    - source: /opt/seagate/generated_configs/ldap/olcDatabase={2}mdb.ldif
+    - source: /opt/seagate/eos-prvsnr/generated_configs/ldap/olcDatabase={2}mdb.ldif
     - force: True
     - user: ldap
     - group: ldap
     - require:
-      - Generate Slapdpasswds
+      - Generate Slapdpasswds 
     - watch_in:
       - service: slapd
+{%- endif %}
 
 slapd:
   service.running:

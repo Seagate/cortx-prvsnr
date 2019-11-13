@@ -1,7 +1,7 @@
 include:
-  - components.misc.build_ssl_cert_rpms
   - components.ha.haproxy
   - components.misc.openldap
+  
   # - components.ha.keepalived
   - components.s3server.prepare
   - components.s3server.install
