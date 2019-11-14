@@ -177,7 +177,8 @@ def test_setup_provisioner_singlenode(
 @pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
 def test_setup_provisioner_cluster(
     host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
-    ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config
+    ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config,
+    hosts_meta
 ):
     if remote is True:
         script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
@@ -190,7 +191,7 @@ def test_setup_provisioner_cluster(
         else:
             script_path = DEFAULT_SCRIPT_PATH
 
-    salt_server_ip = host_eosnode1.interface("eth0").addresses[0]
+    salt_server_ip = host_eosnode1.interface(hosts_meta['host_eosnode1'].iface).addresses[0]
 
     remote = '--remote {}'.format(hostname_eosnode1) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config)

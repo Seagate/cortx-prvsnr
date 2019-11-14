@@ -3,6 +3,7 @@ import time
 import json
 import attr
 import os
+import csv
 from pathlib import Path
 from collections import defaultdict
 
@@ -31,6 +32,7 @@ OS_NAMES = [
 ENV_LEVELS_HIERARCHY = {
     'base': None,
     'utils': 'base',
+    'network-manager-installed': 'base',
     'salt-installed': 'utils',
     'prvsnr-ready': 'base'
 }
@@ -44,6 +46,28 @@ DEFAULT_EOS_SPEC = {
         'is_primary': False,
     }
 }
+
+
+@attr.s
+class HostMeta(object):
+    # TODO validators for all
+    name = attr.ib()
+    host = attr.ib()
+    provider = attr.ib()
+    machine_name = attr.ib(default=None)
+    hostname = attr.ib(default=None)
+    iface = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        if self.hostname is None:
+            self.hostname = self.host.check_output('hostname')
+
+        # TODO more smarter logic to get iface that is asseccible from host
+        # (relates to https://github.com/hashicorp/vagrant/issues/2779)
+        if self.iface is None:
+            self.iface = 'eth1' if self.provider == 'vbox' else 'eth0'
+
+        assert self.host.interface(self.iface).exists
 
 # TODO check packer is available
 @attr.s
@@ -92,6 +116,22 @@ class Packer(object):
         return self.packer("validate", *args)
 
 
+# TODO seems the format is not yet finallized by vagrant
+#      (https://www.vagrantup.com/docs/cli/machine-readable.html)
+@attr.s
+class VagrantParsedRow(object):
+    _row = attr.ib()  # should be a csv row for now
+    ts = attr.ib(init=False, default=None)
+    target = attr.ib(init=False, default=None)
+    data_type = attr.ib(init=False, default=None)
+    data = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        row = next(csv.reader([self._row]))
+        self.ts, self.target, self.data_type = row[:3]
+        self.data = row[3:]
+
+
 # TODO check packer is available
 @attr.s
 class Vagrant(object):
@@ -121,36 +161,41 @@ class Vagrant(object):
                     logger.debug(line)
         return res.stdout
 
-    def vagrant(self, command, *args):
-        return self.check_output(
-            "{}vagrant {} {}".format(
+    def vagrant(self, command, *args, parse=False, **kwargs):
+        output = self.check_output(
+            "{}vagrant {} {} {}".format(
                 "VAGRANT_LOG={} ".format(self.log) if self.log else '',
+                '--machine-readable' if parse else '',
                 command,
                 ' '.join([*args])
             )
         )
+        if parse:
+            return [VagrantParsedRow(row) for row in output.split(os.linesep) if row]
+        else:
+            return output
 
     # TODO use some dynamic way instead
-    def ssh(self, *args):
-        return self.vagrant("ssh --", *args)
+    def ssh(self, *args, **kwargs):
+        return self.vagrant("ssh --", *args, **kwargs)
 
-    def ssh_config(self, *args):
-        return self.vagrant("ssh-config", *args)
+    def ssh_config(self, *args, **kwargs):
+        return self.vagrant("ssh-config", *args, **kwargs)
 
-    def validate(self, *args):
-        return self.vagrant("validate", *args)
+    def validate(self, *args, **kwargs):
+        return self.vagrant("validate", *args, **kwargs)
 
-    def up(self, *args):
-        return self.vagrant("up", *args)
+    def up(self, *args, **kwargs):
+        return self.vagrant("up", *args, **kwargs)
 
-    def destroy(self, *args):
-        return self.vagrant("destroy", *args)
+    def destroy(self, *args, **kwargs):
+        return self.vagrant("destroy", *args, **kwargs)
 
-    def box(self, *args):
-        return self.vagrant("box", *args)
+    def box(self, *args, **kwargs):
+        return self.vagrant("box", *args, **kwargs)
 
-    def cmd(self, cmd, *args):
-        return self.vagrant(cmd, *args)
+    def cmd(self, cmd, *args, **kwargs):
+        return self.vagrant(cmd, *args, **kwargs)
 
 
 # TODO check vagrant is available
@@ -171,12 +216,13 @@ class VagrantMachine(object):
 
     # TODO validators for all
     name = attr.ib()
-    box = attr.ib()
+    # TODO should be required if default template is used
+    box = attr.ib(default=None)
     vagrantfile = attr.ib(
         converter=lambda v: None if v is None else v.resolve(),
         default=None
     )
-    vagrantfile_path = attr.ib(
+    vagrantfile_dest = attr.ib(
         converter=lambda v: None if v is None else Path(v),
         default=None
     )
@@ -188,6 +234,11 @@ class VagrantMachine(object):
         default=None
     )
     log = attr.ib(default='debug')
+    last_status = attr.ib(
+        init=False,
+        default=None
+    )
+    # TODO factoiry to set {} as default
     _vagrant = attr.ib(
         init=False,
         default=None
@@ -200,9 +251,9 @@ class VagrantMachine(object):
     @vagrantfile.validator
     def _check_vagrantfile(self, attribute, value):
         if value is None:
-            if self.vagrantfile_path is None:
+            if self.vagrantfile_dest is None:
                 raise ValueError(
-                    "Either vagrantfile or vagrantfile_path should be defined"
+                    "Either vagrantfile or vagrantfile_dest should be defined"
                 )
             else:
                 return
@@ -217,11 +268,11 @@ class VagrantMachine(object):
             .format(value.parent, value.name)
         )
 
-    @vagrantfile_path.validator
-    def _check_vagrantfile_path(self, attribute, value):
+    @vagrantfile_dest.validator
+    def _check_vagrantfile_dest(self, attribute, value):
         if value is None:
             return
-        value.touch()
+        # TODO check that it's possible to creat it
 
     def __attrs_post_init__(self):
         if self.hostname is None:
@@ -229,7 +280,8 @@ class VagrantMachine(object):
 
         # create vagrantfile if missed using template
         if self.vagrantfile is None:
-            self.vagrantfile = self.vagrantfile_path
+            self.vagrantfile_dest.touch()
+            self.vagrantfile = self.vagrantfile_dest
             _content = self.vagrantfile_tmpl.format(
                 self.box.name, self.name, self.hostname
             )
@@ -241,6 +293,7 @@ class VagrantMachine(object):
                 ('VAGRANT_VAGRANTFILE', self.vagrantfile.name)
             ]
         )
+        self.last_status = {}
 
     # TODO use some dynamic way instead
     def ssh(self, *args):
@@ -260,6 +313,17 @@ class VagrantMachine(object):
 
     def cmd(self, cmd, *args):
         return self._vagrant.cmd(cmd, *args)
+
+    def status(self, *args, update=False):
+        if update:
+            raw_status = self._vagrant.cmd('status', *args, parse=True)
+            self.last_status.clear
+            for row in raw_status:
+                # TODO possible other cases: empty target and 'ui' as type
+                if row.target == self.name:
+                    self.last_status[row.data_type] = row.data
+
+        return self.last_status
 
 
 @attr.s
@@ -329,6 +393,32 @@ def docker_client():
 @pytest.fixture(scope="session")
 def localhost():
     return testinfra.get_host('local://')
+
+
+# TODO multi platforms case
+@pytest.fixture(scope="session", autouse="true")
+def vbox_seed_machine(request, project_path):
+    if request.config.getoption("envprovider") != 'vbox':
+        return None
+
+    platform = 'centos7'
+    machine_suffix = "{}-base".format(platform)
+    machine_name = "{}.{}".format(DOCKER_IMAGES_REPO.replace('/', '.'), machine_suffix)
+    vagrantfile_name = "Vagrantfile.{}".format(machine_suffix)
+    vagrantfile = project_path / 'images' / 'vagrant' / vagrantfile_name
+
+    machine = VagrantMachine(
+        machine_name, vagrantfile=vagrantfile
+    )
+    status = machine.status(update=True)
+    # TODO move that specific to VagrantMachine API
+    if status['state'][0] == 'not_created':
+        machine.up()
+        machine.cmd('halt')
+        machine.cmd('snapshot', 'save', machine.name, 'initial --force')
+    else:
+        # TODO do that only if rebuild base vagrant box
+        machine.cmd('snapshot', 'restore', machine.name, 'initial --no-start')
 
 
 @pytest.fixture(scope='module')
@@ -402,22 +492,28 @@ def build_vagrant_box_fixture(os_name, env_level):
         # TODO smarter logic of boxes rebuild, triggered when:
         #  - parent env is changed
         #  - provisioning scripts and other related sources are changed
-        if not box_path.exists:
+        # box_updated = False
+        if not box_path.exists():
             # TODO pytest options to turn on packer debug
             # TODO add box to vagrant here: it should prevent auto add by
             #      vagrant during 'vagrant up' where it uses path to source box
             packer = Packer(packerfile)
             packer.build('--force')
+            # box_updated = True
 
         box = VagrantBox(
             "{}.{}".format(DOCKER_IMAGES_REPO.replace('/', '.'), _env_name),
             box_path
         )
+
+        # TODO add only if not exists or updated
         Vagrant(log='debug').box(
-            "add --force --provider virtualbox --name",
+            "add --provider virtualbox --name",
             box.name,
+            '--force',
             str(box.path)
         )
+
         return box
 
     fixture_builder(
@@ -458,16 +554,16 @@ def build_vagrant_machine_shared_fixture(os_name, env_level):
         )
         machine_name = safe_vagrant_machine_name("{}-shared".format(box.name))
         tmpdir = tmp_path_factory.mktemp(safe_filename(machine_name))
-        vagrantfile_path = str(tmpdir / 'Vagrantfile')
+        vagrantfile_dest = str(tmpdir / 'Vagrantfile')
         machine = VagrantMachine(
-            machine_name, box=box, vagrantfile_path=vagrantfile_path
+            machine_name, box=box, vagrantfile_dest=vagrantfile_dest
         )
         try:
             machine.destroy('--force')
             machine.up()
             machine.cmd('halt')
             # TODO hardcoded
-            machine.cmd('snapshot', 'save initial --force')
+            machine.cmd('snapshot', 'save', machine.name, 'initial --force')
             machine.cmd('halt --force')
             yield machine
         finally:
@@ -539,14 +635,14 @@ def vagrant_machine(localhost, request, tmp_path_factory):
         suffix = None
 
     # TODO configurable way for that
-    shared = True
+    shared = False
     if shared:
         machine = request.getfixturevalue(
             "vagrant_machine_shared_{}".format(request.scope)
         )
         try:
             # TODO hardcoded
-            machine.cmd('snapshot', 'restore initial --no-provision')
+            machine.cmd('snapshot', 'restore', machine.name, 'initial --no-provision')
             yield machine
         finally:
             machine.cmd('halt', '--force')
@@ -554,9 +650,9 @@ def vagrant_machine(localhost, request, tmp_path_factory):
         box = request.getfixturevalue("vagrant_box_{}".format(request.scope))
         machine_name = "{}{}".format(safe_vagrant_machine_name(request.node.nodeid), suffix)
         tmpdir = tmp_path_factory.mktemp(safe_filename(request.node.nodeid))
-        vagrantfile_path = str(tmpdir / 'Vagrantfile.{}'.format(box.name))
+        vagrantfile_dest = str(tmpdir / 'Vagrantfile.{}'.format(box.name))
         machine = VagrantMachine(
-            machine_name, box=box, vagrantfile_path=vagrantfile_path
+            machine_name, box=box, vagrantfile_dest=vagrantfile_dest
         )
         try:
             machine.up()
@@ -596,6 +692,11 @@ def hosts(request):
     return {
         host: request.getfixturevalue(host) for host in hosts
     }
+
+
+@pytest.fixture
+def hosts_meta():
+    return {}
 
 
 @pytest.fixture
@@ -732,8 +833,14 @@ def eos_primary_host(eos_hosts):
 
 
 @pytest.fixture
-def eos_primary_host_ip(eos_primary_host):
-    return eos_primary_host.interface("eth0").addresses[0]
+def eos_primary_host_label(eos_hosts):
+    return [k for k, v in eos_hosts.items() if v['is_primary']][0]
+
+
+@pytest.fixture
+def eos_primary_host_ip(eos_primary_host_label, hosts_meta):
+    meta = hosts_meta[eos_primary_host_label]
+    return meta.host.interface(meta.iface).addresses[0]
 
 
 @pytest.fixture
@@ -771,13 +878,13 @@ def build_host_fixture(suffix=None, module_name=__name__):
     # TODO not the best way since it should correlate with outside naming policy
     host_fixture_name = '_'.join([part for part in ['host', suffix] if part])
 
-    # TODO would be handy to have that as an attribute of the host
+    # TODO discard, use HostMeta instead
     # TODO there might be some cheaper way (e.g. get from testinfra host object)
     def hostname(request):
         host = request.getfixturevalue(host_fixture_name)
         return host.check_output('hostname')
 
-    # TODO would be handy to have that as an attribute of the host
+    # TODO discard, use HostMeta instead
     def host_tmp_path(request, tmp_path):
         host = request.getfixturevalue(host_fixture_name)
         host.check_output("mkdir -p {}".format(tmp_path))
@@ -817,7 +924,7 @@ def build_host_fixture(suffix=None, module_name=__name__):
         "function", suffix=suffix, module_name=module_name,
         name_with_scope=False
     )
-    def host(localhost, request):
+    def host(localhost, request, tmpdir, hosts_meta):
         envprovider = request.config.getoption("envprovider")
         if envprovider == 'host':
             return localhost
@@ -827,14 +934,14 @@ def build_host_fixture(suffix=None, module_name=__name__):
             else 'module'
         )
 
-        _hostname = None
-        _ssh_config = None
-
         # TODO add try-catch and remove default implementation of post_host_run_hook
         post_host_run_hook = request.getfixturevalue('post_host_run_hook')
         ssh_config = request.getfixturevalue('ssh_config')
         ssh_config.touch(mode=0o600, exist_ok=True)
 
+        _host = None
+        _machine_name = None
+        _iface = 'eth0'
         if envprovider == 'docker':
             container = request.getfixturevalue(
                 docker_container_fixtures[scope].__name__
@@ -843,28 +950,7 @@ def build_host_fixture(suffix=None, module_name=__name__):
             container.reload()
 
             _host = testinfra.get_host(container.id, connection='docker')
-            # TODO there might be some cheaper way (e.g. get from testinfra host object)
-            _hostname = _host.check_output('hostname')
-
-            # prepare ssh configuration
-
-            ssh_key = request.getfixturevalue('ssh_key')
-            _ssh_config = (
-                    "Host {}\n"
-                    "  Hostname {}\n"
-                    "  Port 22\n"
-                    "  User {}\n"
-                    "  UserKnownHostsFile /dev/null\n"
-                    "  StrictHostKeyChecking no\n"
-                    "  IdentityFile {}\n"
-                    "  IdentitiesOnly yes\n"
-                    "  LogLevel FATAL\n"
-                ).format(
-                    _hostname,
-                    _host.interface("eth0").addresses[0],
-                    'root',
-                    str(ssh_key)
-                )
+            _machine_name = container.name
 
             # Wait ssh to be up
             service = _host.service
@@ -872,24 +958,48 @@ def build_host_fixture(suffix=None, module_name=__name__):
             service_name = 'sshd'
             while not service(service_name).is_running:
                 time.sleep(.5)
-
+            # TODO verify that eth0 is always true for docker
         else:
             # TODO skip if vagrant or packer or virtualbox is not installed
             # pytest.skip()
             machine = request.getfixturevalue(
                 vagrant_machine_fixtures[scope].__name__
             )
-            _hostname = machine.hostname
-            _ssh_config = machine.ssh_config()
+
+            # in vagrant ssh-config a machine is accessible via localhost:localport,
+            # use that as a temporary way to get its own ip and access
+            # its internal ssh port
+            _ssh_config_tmp = tmpdir / "ssh_config.{}".format(machine.hostname)
+            with _ssh_config_tmp.open('w') as f:
+                f.write(machine.ssh_config())
+
             # vagrant uses vagrant machine name as Host ID in ssh-config,
-            # replace it with hostname which is seems safer and satisfies
-            # these tests convention
-            _ssh_config = _ssh_config.replace(
-                "Host {}\n".format(
-                    machine.name
-                ), "Host {}\n".format(
-                    machine.hostname
-                )
+            _host = testinfra.get_host(
+                "ssh://{}".format(machine.name), ssh_config=str(_ssh_config_tmp)
+            )
+            _machine_name = machine.name
+            _iface = 'eth1'
+
+        # TODO there might be some cheaper way (e.g. get from testinfra host object)
+        _hostname = _host.check_output('hostname')
+
+        # prepare ssh configuration
+        ssh_key = request.getfixturevalue('ssh_key')
+        _ssh_config = (
+                "Host {}\n"
+                "  Hostname {}\n"
+                "  Port 22\n"
+                "  User {}\n"
+                "  UserKnownHostsFile /dev/null\n"
+                "  StrictHostKeyChecking no\n"
+                "  IdentityFile {}\n"
+                "  IdentitiesOnly yes\n"
+                "  LogLevel FATAL\n"
+            ).format(
+                _hostname,
+                _host.interface(_iface).addresses[0],
+                'root',
+                str(ssh_key)
             )
 
         with ssh_config.open('a') as f:
@@ -898,6 +1008,15 @@ def build_host_fixture(suffix=None, module_name=__name__):
         hostspec = "ssh://{}".format(_hostname)
         _host = testinfra.get_host(hostspec, ssh_config=str(ssh_config))
         post_host_run_hook(_host, _hostname, ssh_config, request)
+
+        hosts_meta[host_fixture_name] = HostMeta(
+            host_fixture_name,
+            machine_name=_machine_name,
+            host=_host,
+            provider=envprovider,
+            hostname=_hostname,
+            iface=_iface
+        )
 
         return _host
 

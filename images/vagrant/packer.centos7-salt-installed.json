@@ -7,7 +7,7 @@
       "add_force"           : true,
       "box_name"            : "seagate.ees-prvsnr.centos7-utils",
       "template"            : "{{template_dir}}/vagrantfile.packer.template",
-      "output_dir"          : "{{template_dir}}/../../.boxes/salt-installed",
+      "output_dir"          : "{{template_dir}}/../../.boxes/centos7-salt-installed",
       "output_vagrantfile"  : "{{template_dir}}/vagrantfile.boxed",
       "package_include"     : [
           "{{template_dir}}/../../test/id_rsa.test"

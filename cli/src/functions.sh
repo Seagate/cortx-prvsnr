@@ -618,9 +618,6 @@ function configure_salt {
             cp files/etc/salt/master /etc/salt/master
         fi
 
-        # TODO remove that once renaming completed (new rpm is built)
-        sed -i "s/ees-prvsnr/eos-prvsnr/g" /etc/salt/master
-
         if [[ "$_master" == true ]]; then
             systemctl enable salt-master
             systemctl restart salt-master
@@ -631,9 +628,6 @@ function configure_salt {
             mv -f /etc/salt/minion /etc/salt/minion.org
             cp files/etc/salt/minion /etc/salt/minion
         fi
-
-        # TODO remove that once renaming completed (new rpm is built)
-        sed -i "s/ees-prvsnr/eos-prvsnr/g" /etc/salt/minion
 
         if [[ -n "$_master_host" ]]; then
             sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion

@@ -25,6 +25,14 @@
       ]
     }
   ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "{{template_dir}}/../docker/setup_system_packages.sh"
+      ]
+    }
+  ],
   "post-processors": [{
       "type"                : "vagrant",
       "output"              : "{{template_dir}}/../../.boxes/centos7-base/package.box",

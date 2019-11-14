@@ -776,13 +776,13 @@ def test_functions_accept_salt_keys_cluster(
     run_script, host_eosnode1, host_eosnode2, hostname_eosnode1,
     host_tmp_path_eosnode1, host_tmp_path_eosnode2,
     localhost, ssh_config, remote, project_path,
-    install_repo
+    install_repo, hosts_meta
 ):
     eosnode1_minion_id = 'eosnode-1'
     eosnode2_minion_id = 'eosnode-2'
     with_sudo = 'false' # TODO
 
-    salt_server_ip = host_eosnode1.interface("eth0").addresses[0]
+    salt_server_ip = host_eosnode1.interface(hosts_meta['host_eosnode1'].iface).addresses[0]
 
     # configure eosnode-1
     script = """
