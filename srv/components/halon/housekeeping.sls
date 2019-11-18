@@ -1,7 +1,9 @@
-Remove temporary mini_conf file:
+# File cleanup operation
+{% for filename in [
+   '/tmp/mini_conf.yaml',
+   '/tmp/halon_facts.yaml'
+ ] %}
+{{ filename }}:
   file.absent:
-    - name: /tmp/mini_conf.yaml
-
-Remove temporary halon_facts file:
-  file.absent:
-    - name: /tmp/halon_facts.yaml
+    - onlyif: test -f {{ filename }}
+{% endfor %}

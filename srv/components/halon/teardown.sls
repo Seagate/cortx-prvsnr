@@ -33,19 +33,14 @@ Remove Halon package:
     - pkgs:
       - halon
 
-Delete Halon conf file:
+# File cleanup operation
+{% for filename in [
+   '/tmp/mini_conf.yaml',
+   '/tmp/halon_facts.yaml',
+   '/etc/halon/bootstrap.ready',
+   '/etc/sysconfig/halond'
+ ] %}
+{{ filename }}:
   file.absent:
-    - name: /etc/sysconfig/halond
-
-Remove temporary mini_conf file:
-  file.absent:
-    - name: /tmp/mini_conf.yaml
-
-Remove temporary halon_facts file:
-  file.absent:
-    - name: /tmp/halon_facts.yaml
-
-Remove bootstrap.ready file:
-  file.absent:
-    - name: /etc/halon/bootstrap.ready
-    - onlyif: test -f /etc/halon/bootstrap.ready
+    - onlyif: test -f {{ filename }}
+{% endfor %}
