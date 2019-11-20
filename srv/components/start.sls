@@ -1,7 +1,3 @@
-Start rabbitmq-server:
-  service.running:
-    - name: rabbitmq-server
-
 include:
   - components.sspl.start
   - components.halon.start
