@@ -155,6 +155,19 @@ Vagrant.configure("2") do |config|
           echo #{node["minion_id"]} |tee /etc/salt/minion_id
 
           sudo systemctl restart salt-minion
+
+          sudo salt-key -A -y
+          sleep 2
+          sudo salt eosnode-1 state.apply components.system
+          sudo salt eosnode-1 state.apply components.system.storage
+          #sudo salt eosnode-1 state.apply components.ha.haproxy
+          #sudo salt eosnode-1 state.apply components.misc.build_ssl_cert_rpms
+          #sudo salt eosnode-1 state.apply components.misc.openldap
+          #sudo salt eosnode-1 state.apply components.sspl
+          #sudo salt eosnode-1 state.apply components.eoscore
+          #sudo salt eosnode-1 state.apply components.halon
+          #sudo salt eosnode-1 state.apply components.s3server
+          #sudo salt eosnode-1 state.apply components.post_setup
         SHELL
 
       #unless 's3client' == node['name']

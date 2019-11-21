@@ -44,3 +44,8 @@ Remove Halon package:
   file.absent:
     - onlyif: test -f {{ filename }}
 {% endfor %}
+
+Remove bootstrap.ready file:
+  file.absent:
+    - name: /etc/halon/bootstrap.ready
+    - onlyif: test -f /etc/halon/bootstrap.ready
