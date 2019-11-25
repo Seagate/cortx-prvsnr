@@ -130,3 +130,30 @@ To cleanup Vagrant setup with deletion of all created boxes and supported virtua
 - [ ] add proper description
 - [ ] add actual code
 - [x] add automatic mirroring to SeaGit
+
+# Continious Integration
+
+## Requirements
+
+### Jenkins server
+
+- cleanWS plugin: https://plugins.jenkins.io/ws-cleanup
+- junit plugin: https://plugins.jenkins.io/junit
+- Branch Source (https://plugins.jenkins.io/gitlab-branch-source) to power Multi Branch pipeline: GitLab
+  - Jenkins server:
+    - Global Configuration: TODO
+    - MBr Pipeline Configuration: TODO
+  - GitLab, configure webhooks:
+    - URL: <jenkins_url>/gitlab-webhook/post
+    - Triggers: Push, Tag, Comments and Merge requests
+- optionally:
+  - Blue Ocean plugin (https://plugins.jenkins.io/blueocean) to improve UX
+
+## Jenkins agent
+- virtualbox
+  - plus jenkins user should be added to vboxusers (e.g. usermod -a -G vboxusers jenkins). Note. jenkins node will require reconnection (re-login) after that.
+- vagrant
+- packer
+- python3.6 and pip
+- pipenv: pip3 install --user pipenv
+- yamllint: pip3 install --user yamllint

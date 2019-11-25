@@ -76,6 +76,7 @@ class Packer(object):
         converter=lambda v: v.resolve()
     )
     log = attr.ib(default=True)
+    err_to_out = attr.ib(default=True)
     _localhost = attr.ib(
         init=False, default=testinfra.get_host('local://')
     )
@@ -88,24 +89,29 @@ class Packer(object):
             )
         self.validate()
 
-    def check_output(self, cmd):
+    def check_output(self, cmd, err_to_out=None):
         res = None
+        err_to_out = (self.err_to_out if err_to_out is None else err_to_out)
         try:
-            res = self._localhost.run(cmd)
+            res = self._localhost.run(
+                cmd + (' 2>&1' if err_to_out else '')
+            )
             assert res.rc == 0
         finally:
             if res is not None:
+                for line in res.stderr.split(os.linesep):
+                    logger.debug(line)
                 for line in res.stdout.split(os.linesep):
                     logger.debug(line)
         return res.stdout
 
-    def packer(self, command, *args):
+    def packer(self, command, *args, **kwargs):
         return self.check_output(
             "{}packer {} {} {}".format(
                 "PACKER_LOG=1 " if self.log else '',
                 command,
                 ' '.join([*args]), self.packerfile
-            )
+            ), **kwargs
         )
 
     # TODO use some dynamic way instead
@@ -137,7 +143,8 @@ class VagrantParsedRow(object):
 class Vagrant(object):
     # TODO validate
     env_vars = attr.ib(default=None)
-    log = attr.ib(default='debug')
+    log = attr.ib(default='error')
+    err_to_out = attr.ib(default=True)
     _env_prefix = attr.ib(default='')
     _localhost = attr.ib(
         init=False,
@@ -150,25 +157,33 @@ class Vagrant(object):
                 ["{}={}".format(n, v) for (n, v) in self.env_vars]
             ) + ' '
 
-    def check_output(self, cmd):
+    def check_output(self, cmd, err_to_out=None):
         res = None
+        err_to_out = (self.err_to_out if err_to_out is None else err_to_out)
         try:
-            res = self._localhost.run(self._env_prefix + cmd)
+            res = self._localhost.run(
+                self._env_prefix + cmd + (' 2>&1' if err_to_out else '')
+            )
             assert res.rc == 0
         finally:
             if res is not None:
+                for line in res.stderr.split(os.linesep):
+                    logger.debug(line)
                 for line in res.stdout.split(os.linesep):
                     logger.debug(line)
         return res.stdout
 
     def vagrant(self, command, *args, parse=False, **kwargs):
+        if parse:
+            kwargs['err_to_out'] = False
+
         output = self.check_output(
             "{}vagrant {} {} {}".format(
                 "VAGRANT_LOG={} ".format(self.log) if self.log else '',
                 '--machine-readable' if parse else '',
                 command,
                 ' '.join([*args])
-            )
+            ), **kwargs
         )
         if parse:
             return [VagrantParsedRow(row) for row in output.split(os.linesep) if row]
@@ -180,7 +195,7 @@ class Vagrant(object):
         return self.vagrant("ssh --", *args, **kwargs)
 
     def ssh_config(self, *args, **kwargs):
-        return self.vagrant("ssh-config", *args, **kwargs)
+        return self.vagrant("ssh-config", *args, err_to_out=False, **kwargs)
 
     def validate(self, *args, **kwargs):
         return self.vagrant("validate", *args, **kwargs)
@@ -233,7 +248,7 @@ class VagrantMachine(object):
         converter=lambda v: None if v is None else safe_hostname(v),
         default=None
     )
-    log = attr.ib(default='debug')
+    log = attr.ib(default='error')
     last_status = attr.ib(
         init=False,
         default=None
@@ -305,7 +320,14 @@ class VagrantMachine(object):
     def validate(self, *args):
         return self._vagrant.validate(*args)
 
-    def up(self, *args):
+    def up(self, *args, prune=True):
+        if prune:
+            # ensure that no orphan VirtualBox machine is running
+            status = self.status(update=False)
+            if status['state'][0] == 'not_created':
+                # TODO that is stuck to VBox only
+                self._localhost.run('VBoxManage unregistervm --delete {}'.format(self.name))
+
         return self._vagrant.up(*args)
 
     def destroy(self, *args):
@@ -315,7 +337,7 @@ class VagrantMachine(object):
         return self._vagrant.cmd(cmd, *args)
 
     def status(self, *args, update=False):
-        if update:
+        if not self.last_status or update:
             raw_status = self._vagrant.cmd('status', *args, parse=True)
             self.last_status.clear
             for row in raw_status:
@@ -395,9 +417,14 @@ def localhost():
     return testinfra.get_host('local://')
 
 
+@pytest.fixture(scope="session")
+def vagrant_global_status_prune(localhost):
+    localhost.check_output('vagrant global-status --prune')
+
+
 # TODO multi platforms case
-@pytest.fixture(scope="session", autouse="true")
-def vbox_seed_machine(request, project_path):
+@pytest.fixture(scope="session")
+def vbox_seed_machine(request, project_path, vagrant_global_status_prune, localhost):
     if request.config.getoption("envprovider") != 'vbox':
         return None
 
@@ -413,6 +440,7 @@ def vbox_seed_machine(request, project_path):
     status = machine.status(update=True)
     # TODO move that specific to VagrantMachine API
     if status['state'][0] == 'not_created':
+        # create VM
         machine.up()
         machine.cmd('halt')
         machine.cmd('snapshot', 'save', machine.name, 'initial --force')
@@ -494,6 +522,11 @@ def build_vagrant_box_fixture(os_name, env_level):
         #  - provisioning scripts and other related sources are changed
         # box_updated = False
         if not box_path.exists():
+            # TODO smarter logic of seed machine reference
+            # build seed machine beforehand
+            if parent_env is None:
+                request.getfixturevalue('vbox_seed_machine')
+
             # TODO pytest options to turn on packer debug
             # TODO add box to vagrant here: it should prevent auto add by
             #      vagrant during 'vagrant up' where it uses path to source box
@@ -507,7 +540,7 @@ def build_vagrant_box_fixture(os_name, env_level):
         )
 
         # TODO add only if not exists or updated
-        Vagrant(log='debug').box(
+        Vagrant().box(
             "add --provider virtualbox --name",
             box.name,
             '--force',
@@ -973,7 +1006,12 @@ def build_host_fixture(suffix=None, module_name=__name__):
             with _ssh_config_tmp.open('w') as f:
                 f.write(machine.ssh_config())
 
-            # vagrant uses vagrant machine name as Host ID in ssh-config,
+            # FIXME sometimes hostonlynetwork of the vbox machine ('eth1' here) is not up properly
+            # (route table is not created), no remedy found yet, possible workaround
+            # is to remove vbox hostonly network for a machine and re-create the machine
+            # https://jts.seagate.com/browse/EOS-3129
+
+            # vagrant uses vagrant machine name as Host ID in ssh-config
             _host = testinfra.get_host(
                 "ssh://{}".format(machine.name), ssh_config=str(_ssh_config_tmp)
             )

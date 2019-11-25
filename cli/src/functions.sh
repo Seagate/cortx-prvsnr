@@ -133,11 +133,9 @@ function parse_args {
     local _res
     shift 4
 
-    # Note. this mostly based on https://stackoverflow.com/a/29754866
-
     ! getopt --test > /dev/null
     if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-        echo 'Error: getopt is not functional (`getopt --test` failed).'
+        echo 'Error: getopt is not functional.'
         exit 1
     fi
 
@@ -151,13 +149,14 @@ function parse_args {
         _long_opts=$_long_opts,$_add_long_opts
     fi
 
-    ! PARSED=$(getopt --options=$_opts --longoptions=$_long_opts --name "$0" -- "$@")
+    local _getopt_res
+    ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         exit 2
     fi
 
     # TODO why eval here
-    eval set -- "$PARSED"
+    eval set -- "$_getopt_res"
 
     while true; do
         case "$1" in
@@ -198,7 +197,7 @@ function parse_args {
                 break
                 ;;
             ?)
-                >&2 echo "Programming error"
+                >&2 echo "Runtime error"
                 exit 3
                 ;;
             *)
