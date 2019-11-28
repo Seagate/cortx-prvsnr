@@ -53,7 +53,7 @@ DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 # Setup the source tar for rpm build
 mkdir -p ${DEST_DIR}/cli/utils
 mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
-mkdir -p ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
+mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
 cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
 cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
 cp -pr ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
