@@ -100,6 +100,8 @@ def test_deploy_eos_commands(
 
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
 
-    stdout_lines = res.stdout.split(os.linesep)
+    stdout_lines = [
+        line for line in res.stdout.split(os.linesep) if 'SALT-ARGS' in line
+    ]
     ind = stdout_lines.index(expected_lines[0])
     assert stdout_lines[ind:(ind + len(expected_lines))] == expected_lines

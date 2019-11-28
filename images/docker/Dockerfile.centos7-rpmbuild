@@ -1,0 +1,5 @@
+FROM seagate/ees-prvsnr:centos7-base
+
+COPY images/docker/setup_rpmbuild.sh /tmp/
+RUN bash /tmp/setup_rpmbuild.sh \
+    && rm -f /tmp/setup_rpmbuild.sh

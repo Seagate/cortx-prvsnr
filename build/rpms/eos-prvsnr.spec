@@ -12,8 +12,8 @@ BuildRequires: python36-devel
 
 Requires: python36
 Requires: python36-PyYAML
-Requires: salt-master
-Requires: salt-minion
+Requires: salt-master = 2019.2.0
+Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
 #Requires: salt-syndic
 

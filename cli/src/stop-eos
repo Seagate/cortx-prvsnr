@@ -22,7 +22,11 @@ $base_options_usage
 
 parse_args '' '' '' '' "$@"
 
-cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 
 salt_opts=
 if [[ "$dry_run" == true ]]; then
@@ -35,6 +39,7 @@ if [[ -n "$hostspec" ]]; then
 fi
 
 # apply states
+l_info "Applying 'components.stop' for all nodes"
 $cmd salt "$target_minions" state.apply components.stop $salt_opts
 
-echo "Done"
+l_info "Done"

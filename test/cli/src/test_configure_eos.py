@@ -97,7 +97,7 @@ def test_configure_eos_show(
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_update(
-    host, hostname, host_tmp_path,
+    host, hostname, host_tmpdir,
     localhost, tmp_path,
     ssh_config, remote, project_path,
     install_repo
@@ -121,7 +121,7 @@ def test_configure_eos_update(
         # - might need to update configure-eos.py to dump with endline at end
     tmp_file.write_text(new_pillar_content.strip() + '\n')
     if not remote:
-        host_tmp_file = host_tmp_path / component_pillar
+        host_tmp_file = host_tmpdir / component_pillar
         localhost.check_output(
             "scp -F {0} {1} {2}:{3}".format(
                 ssh_config,

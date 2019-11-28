@@ -22,7 +22,11 @@ $base_options_usage
 
 parse_args '' '' '' '' "$@"
 
-cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 
 salt_opts=
 if [[ "$dry_run" == true ]]; then
@@ -31,18 +35,24 @@ fi
 
 # apply states
 if [[ "$singlenode" == true ]]; then
+    l_info "Applying highstate for eosnode-1 (singlenode)"
     $cmd salt eosnode-1 state.highstate $salt_opts
 else
     # TODO use salt orchestration
     for state in system sspl eoscore halon; do
+        l_info "Applying 'components.$state' for both nodes"
         $cmd salt eosnode-[1,2] state.apply components."$state" $salt_opts
     done
 
     # Execute on eosnode-2 only if cert generation on eosnode-1 succeeds.
+    l_info "Applying 'components.misc.build_ssl_cert_rpms' for eosnode-1"
     $cmd salt eosnode-1 state.apply components.misc.build_ssl_cert_rpms $salt_opts
+
+    l_info "Applying 'components.misc.build_ssl_cert_rpms' for eosnode-2"
     $cmd salt eosnode-2 state.apply components.misc.build_ssl_cert_rpms $salt_opts
 
+    l_info "Applying 'components.s3server' for both nodes"
     $cmd salt eosnode-[1,2] state.apply components.s3server $salt_opts
 fi
 
-echo "Done"
+l_info "Done"

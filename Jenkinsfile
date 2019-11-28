@@ -26,7 +26,7 @@ pipeline {
         stage('Package: Provisioner RPMS') {
             steps {
                 sh encoding: 'utf-8', label: 'Provisioner RPMS', returnStdout: true, script: """
-                    sh ./rpms/buildrpm.sh -g \$(git rev-parse --short HEAD) -e 1.0.0 -b ${BUILD_NUMBER}
+                    sh ./build/rpms/buildrpm.sh -g \$(git rev-parse --short HEAD) -e 1.0.0 -b ${BUILD_NUMBER}
                 """
             }
         }

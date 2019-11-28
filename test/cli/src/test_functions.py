@@ -1,12 +1,13 @@
 import os
 import pytest
 import json
+import functools
 from pathlib import Path
 
 import logging
 import testinfra
 
-from test.helper import PRVSNR_REPO_INSTALL_DIR
+import test.helper as h
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +48,8 @@ def post_host_run_hook(localhost, local_script_path):
 
 
 @pytest.fixture
-def host_ssh_config(host, host_tmp_path):
-    fpath = host_tmp_path / 'ssh_config'
+def host_ssh_config(host, host_tmpdir):
+    fpath = host_tmpdir / 'ssh_config'
     host.check_output("touch {}".format(fpath))
     return fpath
 
@@ -56,17 +57,23 @@ def host_ssh_config(host, host_tmp_path):
 @pytest.fixture
 def run_script(localhost, tmp_path, ssh_config, request):
 
-    def _f(test_content, trace=False, host=None, host_tmp_path=None, script_path=DEFAULT_SCRIPT_PATH):
+    def _f(
+        test_content, trace=False, host=None, host_tmpdir=None,
+        script_path=DEFAULT_SCRIPT_PATH, stderr_to_stdout=True
+    ):
         host = request.getfixturevalue('host') if host is None else host
-        host_tmp_path = request.getfixturevalue('host_tmp_path') if host_tmp_path is None else host_tmp_path
+        host_tmpdir = request.getfixturevalue('host_tmpdir') if host_tmpdir is None else host_tmpdir
         hostname = host.check_output('hostname')
 
         test_script_name = 'test_script.sh'
         test_script_path = tmp_path / test_script_name
-        test_script_path.write_text("set -e\n. {}\n{}".format(script_path, test_content))
+        test_script_path.write_text(
+            "set -e\n. {}\n{}\n{}"
+            .format(script_path, 'verbosity=2' if trace else '', test_content)
+        )
 
         if host is not localhost:
-            host_script_path = host_tmp_path / test_script_name
+            host_script_path = host_tmpdir / test_script_name
             localhost.check_output(
                 "scp -F {0} {1} {2}:{3}".format(
                     ssh_config,
@@ -77,21 +84,16 @@ def run_script(localhost, tmp_path, ssh_config, request):
             )
             test_script_path = host_script_path
 
-        res = None
-        try:
-            res = host.run(
-                "bash {} {} 2>&1"
+        return h.run(
+            host, (
+                "bash {} {} {}"
                 .format(
                     '-x' if trace else '',
-                    test_script_path
+                    test_script_path,
+                    '2>&1' if stderr_to_stdout else ''
                 )
             )
-        finally:
-            if res is not None:
-                for line in res.stdout.split(os.linesep):
-                    logger.debug(line)
-
-        return res
+        )
 
     return _f
 
@@ -114,7 +116,6 @@ def parse_args(run_script):
                 {}
                 parse_args {} {} {} {} {}
                 {}
-                {}
             """.format(
                 before_script,
                 add_opts,
@@ -122,11 +123,6 @@ def parse_args(run_script):
                 opts_cb,
                 positional_args_cb,
                 ' '.join([*args]),
-                (
-                    "echo \"Parsed args: dry-run=<$dry_run>, remote=<$hostspec>, "
-                    "singlenode=<$singlenode>, ssh-config=<$ssh_config>, sudo=<$sudo>, "
-                    "verbosity=<$verbosity>\""
-                ),
                 after_script
             ),
             trace=trace
@@ -151,6 +147,74 @@ def build_command(run_script):
     return _f
 
 
+def test_functions_log_fails_for_wrong_level(run_script):
+    level = 'some_bad_level'
+    script = "log {} message".format(level)
+    res = run_script(script, stderr_to_stdout=False)
+    assert res.rc == 5
+    assert res.stderr == "ERROR: Unknown log level: {}\n".format(level)
+
+
+def test_functions_log_levels(run_script):
+    # TODO test log helpers
+
+    levels_visibility = {
+        'trace': 2,
+        'debug': 1,
+        'info': 0,
+        'warn': 0,
+        'error': 0
+    }
+    message = 'some-message'
+
+    for verbosity in (0, 1, 2):
+        for level in levels_visibility:
+            script = """
+                verbosity={0}
+                log {1} {2}
+                l_{1} {2}
+            """.format(verbosity, level, message)
+            res = run_script(script, stderr_to_stdout=False)
+            assert res.rc == 0
+            if levels_visibility[level] > verbosity:
+                assert res.stdout == ''
+            else:
+                stream = (
+                    res.stderr if level in ('warn', 'error') else res.stdout
+                )
+                _level = ('warning' if level == 'warn' else level)
+                assert stream.count("{}: {}\n".format(_level.upper(), message)) == 2
+
+
+def test_functions_log_helpers(run_script):
+    # TODO test log helpers
+
+    levels_visibility = {
+        'trace': 2,
+        'debug': 1,
+        'info': 0,
+        'warn': 0,
+        'error': 0
+    }
+    message = 'some-message'
+
+    for verbosity in (0, 1, 2):
+        for level in levels_visibility:
+            script = """
+                verbosity={}
+                log {} {}
+            """.format(verbosity, level, message)
+            res = run_script(script, stderr_to_stdout=False)
+            assert res.rc == 0
+            if levels_visibility[level] > verbosity:
+                assert res.stdout == ''
+            else:
+                stream = (
+                    res.stderr if level in ('warn', 'error') else res.stdout
+                )
+                level = ('warning' if level == 'warn' else level)
+                assert "{}: {}".format(level.upper(), message) in stream.split(os.linesep)
+
 
 def test_functions_parse_args_succeeds_for_help(parse_args):
     for arg in ('-h',  '--help'):
@@ -174,6 +238,10 @@ def test_functions_parse_args_fails_due_to_missed_host_spec(parse_args):
 
 
 def test_functions_parse_args_parses_verbosity(parse_args):
+    parse_args = functools.partial(
+        parse_args, after_script='echo "verbosity=<$verbosity>"'
+    )
+
     res = parse_args()
     assert res.rc == 0
     assert "verbosity=<0>" in res.stdout
@@ -190,25 +258,28 @@ def test_functions_parse_args_parses_verbosity(parse_args):
 
 
 def test_functions_parse_args_defaults(parse_args):
-    res = parse_args()
+    res = parse_args(before_script="verbosity=1")
     assert res.rc == 0
-    assert "dry-run=<false>" in res.stdout
+    # disabled by EOS-2410
+    # assert "dry-run=<false>" in res.stdout
     assert "remote=<>" in res.stdout
     assert "singlenode=<false>" in res.stdout
     assert "ssh-config=<>" in res.stdout
-    assert "sudo=<false>" in res.stdout
+    # disabled by EOS-2410
+    # assert "sudo=<false>" in res.stdout
 
 
+@pytest.mark.skip(reason="EOS-2410")
 def test_functions_parse_args_parses_dry_run(parse_args):
     for arg in ('-n', '--dry-run'):
-        res = parse_args(arg)
+        res = parse_args(arg, before_script="verbosity=1")
         assert res.rc == 0
         assert "dry-run=<true>" in res.stdout
 
 
 def test_functions_parse_args_parses_singlenode(parse_args):
     for arg in ('-S', '--singlenode'):
-        res = parse_args(arg)
+        res = parse_args(arg, before_script="verbosity=1")
         assert res.rc == 0
         assert "singlenode=<true>" in res.stdout
 
@@ -216,21 +287,22 @@ def test_functions_parse_args_parses_singlenode(parse_args):
 def test_functions_parse_args_parses_remote(parse_args):
     hostspec = 'user@host'
     for arg in ('-r', '--remote'):
-        res = parse_args(arg, hostspec)
+        res = parse_args(arg, hostspec, before_script="verbosity=1")
         assert res.rc == 0
         assert "remote=<{}>".format(hostspec) in res.stdout
 
 
 def test_functions_parse_args_parses_ssh_config(parse_args, host_ssh_config):
     for arg in ('-F', '--ssh-config'):
-        res = parse_args(arg, str(host_ssh_config))
+        res = parse_args(arg, str(host_ssh_config), before_script="verbosity=1")
         assert res.rc == 0
         assert "ssh-config=<{}>".format(host_ssh_config) in res.stdout
 
 
+@pytest.mark.skip(reason="EOS-2410")
 def test_functions_parse_args_parses_sudo(parse_args):
     for arg in ('-s', '--sudo'):
-        res = parse_args(arg)
+        res = parse_args(arg, before_script="verbosity=1")
         assert res.rc == 0
         assert "sudo=<true>" in res.stdout
 
@@ -254,12 +326,14 @@ def test_functions_base_options_usage(run_script):
     assert res.rc == 0
 
     for opt in (
-        '-n,  --dry-run',
+        # disabled by EOS-2410
+        # '-n,  --dry-run',
         '-h,  --help',
         '-r,  --remote [user@]hostname',
         '-S,  --singlenode',
         '-F,  --ssh-config FILE',
-        '-s,  --sudo',
+        # disabled by EOS-2410
+        #  '-s,  --sudo',
         '-v,  --verbose'
     ):
         assert opt in res.stdout
@@ -454,8 +528,8 @@ def test_functions_hostname_from_spec(run_script):
     assert "res=<hostname>" in res.stdout
 
 
-def test_functions_check_host_in_ssh_config(run_script, host, host_tmp_path):
-    host_ssh_config = host_tmp_path / 'ssh-config'
+def test_functions_check_host_in_ssh_config(run_script, host, host_tmpdir):
+    host_ssh_config = host_tmpdir / 'ssh-config'
     script = """
         if [[ -n "$(check_host_in_ssh_config {0} {1})" ]]; then
             echo {0} found
@@ -477,6 +551,87 @@ def test_functions_check_host_in_ssh_config(run_script, host, host_tmp_path):
     assert res.rc == 0
     assert "host3 not found" in res.stdout
 
+
+# TODO
+#   - remote case is better to test from within virtual env as well
+#   - other cases: ip missed, ifconfig missed, hostname is 127.0.0.1
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-base')
+@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+def test_functions_collect_addrs(
+    run_script, host, hostname, localhost,
+    ssh_config, remote, project_path,
+    request
+):
+    _host = localhost if remote else host
+    hostspec = hostname if remote else "''"
+    ssh_config = ssh_config if remote else "''"
+
+    if remote is True:
+        script_path = project_path / 'cli' / 'src' / 'functions.sh'
+    else:
+        script_path = DEFAULT_SCRIPT_PATH
+
+    script = """
+        verbosity=2
+        collect_addrs {} {}
+    """.format(hostspec, ssh_config)
+
+    res = run_script(script, host=_host, script_path=script_path, stderr_to_stdout=False)
+    assert res.rc == 0
+
+    collected = res.stdout.strip().split()
+    expected = [hostname]
+
+    ifaces = host.check_output(
+        "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
+    )
+
+    # Note. will include ip6 as well
+    for iface in ifaces.strip().split(os.linesep):
+        # TODO verify that it will work for all cases
+        expected += [
+            addr for addr in host.interface(iface).addresses
+            if ':' not in addr
+        ]
+
+    assert set(collected) == set(expected)
+
+
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-base')
+@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+def test_functions_check_host_reachable(
+    run_script, host, hostname, localhost,
+    ssh_config, remote, project_path, host_meta,
+    request
+):
+    _host = localhost if remote else host
+    hostspec = hostname if remote else "''"
+    ssh_config = ssh_config if remote else "''"
+
+    if remote is True:
+        script_path = project_path / 'cli' / 'src' / 'functions.sh'
+    else:
+        script_path = DEFAULT_SCRIPT_PATH
+
+    host_ips = host.interface(host_meta.iface).addresses
+
+    for dest in host_ips + [hostname]:
+        script = """
+            check_host_reachable {} {} {}
+        """.format(dest, hostspec, ssh_config)
+        res = run_script(script, host=_host, script_path=script_path)
+        assert res.rc == 0
+        assert res.stdout == dest
+
+    for dest in ['1.2.3.4', 'some-domain']:
+        script = """
+            check_host_reachable {} {} {}
+        """.format(dest, hostspec, ssh_config)
+        res = run_script(script, host=_host, script_path=script_path)
+        assert res.rc == 0
+        assert not res.stdout
 
 
 # TODO actually utils env level is enough for all except 'rpm'
@@ -513,7 +668,7 @@ def test_functions_install_repo(
 
         # check repo files are in place
         for path in ('files', 'pillar', 'srv'):
-            assert host.file(str(PRVSNR_REPO_INSTALL_DIR / path)).exists
+            assert host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
 
 
 # TODO remote case is better to test from within virtual env as well
@@ -548,7 +703,7 @@ def test_functions_install_repo_local(
     # TODO some more strict checks
     # check repo files are in place
     for path in ('files', 'pillar', 'srv', 'cli'):
-        assert host.file(str(PRVSNR_REPO_INSTALL_DIR / path)).exists
+        assert host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
 
     if remote is True:
         assert not localhost.file(str(project_path / 'repo.zip')).exists
@@ -651,12 +806,12 @@ def test_functions_configure_salt(
 
     host.check_output(
         'diff -q {} /etc/salt/master'.format(
-            PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/master'
+            h.PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/master'
         )
     )
     host.check_output(
         'diff -q {} /etc/salt/minion'.format(
-            PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/minion'
+            h.PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/minion'
         )
     )
     assert host.check_output('cat /etc/salt/minion_id') == minion_id
@@ -762,10 +917,9 @@ def test_functions_accept_salt_keys_singlenode(
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
     assert res.rc == 0
     assert (
-        "WARNING: no key acceptance is needed for minion {}"
+        "INFO: no key acceptance is needed for minion {}"
         .format(minion_id) in res.stdout
     )
-
 
 
 @pytest.mark.isolated
@@ -774,7 +928,7 @@ def test_functions_accept_salt_keys_singlenode(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_keys_cluster(
     run_script, host_eosnode1, host_eosnode2, hostname_eosnode1,
-    host_tmp_path_eosnode1, host_tmp_path_eosnode2,
+    host_tmpdir_eosnode1, host_tmpdir_eosnode2,
     localhost, ssh_config, remote, project_path,
     install_repo, hosts_meta
 ):
@@ -790,7 +944,7 @@ def test_functions_accept_salt_keys_cluster(
     """.format(
         eosnode1_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, host=host_eosnode1, host_tmp_path=host_tmp_path_eosnode1)
+    res = run_script(script, host=host_eosnode1, host_tmpdir=host_tmpdir_eosnode1)
     assert res.rc == 0
 
     # configure eosnode-2
@@ -799,7 +953,7 @@ def test_functions_accept_salt_keys_cluster(
     """.format(
         eosnode2_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, host=host_eosnode2, host_tmp_path=host_tmp_path_eosnode2)
+    res = run_script(script, host=host_eosnode2, host_tmpdir=host_tmpdir_eosnode2)
     assert res.rc == 0
 
     hostspec = hostname_eosnode1 if remote else "''"
@@ -813,7 +967,7 @@ def test_functions_accept_salt_keys_cluster(
 
     res = run_script(
         script, host=(localhost if remote else host_eosnode1),
-        host_tmp_path=host_tmp_path_eosnode1,
+        host_tmpdir=host_tmpdir_eosnode1,
         script_path=script_path
     )
     assert res.rc == 0
@@ -832,7 +986,7 @@ def test_functions_accept_salt_keys_cluster(
     ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
 )
 def test_functions_eos_pillar_show_skeleton(
-    run_script, host, hostname, host_tmp_path,
+    run_script, host, hostname, host_tmpdir,
     localhost, tmp_path,
     ssh_config, remote, component, project_path,
     install_repo
@@ -841,7 +995,7 @@ def test_functions_eos_pillar_show_skeleton(
     # TODO python3.6 ???
     pillar_content = host.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
-            PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
+            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
 
@@ -890,7 +1044,7 @@ def test_functions_eos_pillar_update_fail(
     ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
 )
 def test_functions_eos_pillar_update(
-    run_script, host, hostname, host_tmp_path,
+    run_script, host, hostname, host_tmpdir,
     localhost, tmp_path,
     ssh_config, remote, component, project_path,
     install_repo, mock_hosts
@@ -900,7 +1054,7 @@ def test_functions_eos_pillar_update(
         # TODO python3.6 ???
     new_pillar_content = host.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
-            PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
+            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
     tmp_file = tmp_path / component_pillar
@@ -908,7 +1062,7 @@ def test_functions_eos_pillar_update(
         # TODO might need to update configure-eos.py to dump with endline at end
     tmp_file.write_text(new_pillar_content + '\n')
     if not remote:
-        host_tmp_file = host_tmp_path / component_pillar
+        host_tmp_file = host_tmpdir / component_pillar
         localhost.check_output(
             "scp -F {0} {1} {2}:{3}".format(
                 ssh_config,
@@ -921,7 +1075,7 @@ def test_functions_eos_pillar_update(
 
     # 2. remove original pillar to ensure that coming update is applied
         # TODO better to have modified pillar
-    original_pillar = PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
+    original_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
     host.check_output('rm -f {}'.format(original_pillar))
 
     # 3. call the script

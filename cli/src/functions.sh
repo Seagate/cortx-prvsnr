@@ -16,14 +16,15 @@ verbosity=0
 
 
 base_options_usage="\
-  -n,  --dry-run                  do not actually perform any changes
   -h,  --help                     print this help and exit
   -r,  --remote [user@]hostname   remote host specification
   -S,  --singlenode               switch to single node mode setup
   -F,  --ssh-config FILE          alternative path to ssh configuration file
-  -s,  --sudo                     use sudo
   -v,  --verbose                  be more verbose
 "
+# disabled options (EOS-2410)
+#  -n,  --dry-run                  do not actually perform any changes
+#  -s,  --sudo                     use sudo
 
 # default usage
 # TODO mention in docs how to override
@@ -34,6 +35,101 @@ Usage: $0 [options]
 Options:
 $base_options_usage
 "
+}
+
+
+#   log level message
+#
+#   Logs a message if its log level satisifies current current verbosity:
+#       trace: >= 2
+#       debug: >= 1
+#       info: >= 0
+#       warning: >= 0
+#       error: >= 0
+#
+#   Thus erros, warnings and info messages are always logged.
+#   Note. errors and warnings are logged to stderr.
+#
+#   Args:
+#       level: a string that specifies logging level,
+#           possible options: trace, debug, info, warn, error
+#       message: a message to log
+#
+function log {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _level=$1
+    local _message=$2
+
+    local _verbosity=-1
+    local _error=false
+
+    case "$_level" in
+        trace)
+            _verbosity=2
+            ;;
+        debug)
+            _verbosity=1
+            ;;
+        info)
+            _verbosity=0
+            ;;
+        warn)
+            _verbosity=0
+            _error=true
+            _level=warning
+            ;;
+        error)
+            _verbosity=0
+            _error=true
+            ;;
+        *)
+            l_error "Unknown log level: $_level"
+            exit 5
+    esac
+
+
+    if [[ "$verbosity" -ge "$_verbosity" ]]; then
+        _level=$(echo "$_level" | tr '[:lower:]' '[:upper:]')
+        _message="$_level: $_message"
+
+        if [[ "$_error" == true ]]; then
+            >&2 echo "$_message"
+        else
+            echo "$_message"
+        fi
+    fi
+}
+
+#   l_* message
+#
+#   Log helpers for a handy logging.
+#
+#   Args:
+#       message: a message to log
+#
+function l_trace {
+    log trace "$1"
+}
+
+function l_debug {
+    log debug "$1"
+}
+
+function l_info {
+    log info "$1"
+}
+
+function l_warn {
+    log warn "$1"
+}
+
+function l_error {
+    log error "$1"
 }
 
 
@@ -100,7 +196,7 @@ $base_options_usage
 #                        add_opt2_value="$2"
 #                        ;;
 #                    *)
-#                        2>&1 echo "Unknown option: $1"
+#                        l_error "Unknown option: $1"
 #                        exit 5
 #                esac
 #            }
@@ -114,7 +210,7 @@ $base_options_usage
 #            function pos_args_parser {
 #                set -eu
 #                if [[ $# -gt 1 ]]; then
-#                    >&2 echo "$0: Only one positional argument is expected, provided: $@"
+#                    l_error "$0: Only one positional argument is expected, provided: $@"
 #                    exit 2
 #                fi
 #
@@ -126,6 +222,10 @@ $base_options_usage
 function parse_args {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _add_opts=$1
     local _add_long_opts=$2
     local _opts_cb=$3
@@ -135,7 +235,7 @@ function parse_args {
 
     ! getopt --test > /dev/null
     if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
-        echo 'Error: getopt is not functional.'
+        l_error 'Error: getopt is not functional.'
         exit 1
     fi
 
@@ -161,7 +261,8 @@ function parse_args {
     while true; do
         case "$1" in
             -n|--dry-run)
-                dry_run=true
+                # disabled EOS-2410
+                # dry_run=true
                 shift
                 ;;
             -h|--help)
@@ -179,13 +280,14 @@ function parse_args {
             -F|--ssh-config)
                 ssh_config="$2"
                 if [[ ! -f "$ssh_config" ]]; then
-                    >&2 echo "'$ssh_config' not a file"
+                    l_error "'$ssh_config' not a file"
                     exit 5
                 fi
                 shift 2
                 ;;
             -s|--sudo)
-                sudo=true
+                # disabled EOS-2410
+                # sudo=true
                 shift
                 ;;
             -v|--verbose)
@@ -197,12 +299,12 @@ function parse_args {
                 break
                 ;;
             ?)
-                >&2 echo "Runtime error"
+                l_error "Runtime error"
                 exit 3
                 ;;
             *)
                 if [[ -z "$_opts_cb" ]]; then
-                    >&2 echo "Options parser callback is not defined"
+                    l_error "Options parser callback is not defined"
                     exit 4
                 fi
 
@@ -221,9 +323,14 @@ function parse_args {
     if [[ -n "$_positional_args_cb" ]]; then
         $_positional_args_cb "$@"
     elif [[ $# -gt 0 ]]; then
-        >&2 echo "$0: positional arguments are not expected, provided: $@"
+        l_error "$0: positional arguments are not expected, provided: $@"
         exit 2
     fi
+
+    local _res="dry-run=<$dry_run>, remote=<$hostspec>"
+    _res+=", singlenode=<$singlenode>, ssh-config=<$ssh_config>"
+    _res+=", sudo=<$sudo>, verbosity=<$verbosity>"
+    l_debug "Parsed common args: $_res"
 }
 
 
@@ -248,6 +355,10 @@ function parse_args {
 #
 function build_command() {
     set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
 
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
@@ -289,6 +400,10 @@ function build_command() {
 function hostname_from_spec {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _hostname="$1"
     if [[ $_hostname == *"@"* ]]; then
         IFS='@' read -a _arr <<< $_hostname
@@ -318,15 +433,118 @@ function hostname_from_spec {
 function check_host_in_ssh_config {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _hostspec=$1
     local _ssh_config=$2
 
-    local _hostname="$(hostname_from_spec "$_hostspec")"
+    local _hostname="$(hostname_from_spec "$_hostspec" 2>/dev/null)"
 
     if [[ -f "$_ssh_config" && -n "$_hostname" ]]; then
         echo "$(grep "^Host[[:space:]]\+$_hostname" "$_ssh_config")"
     fi
 }
+
+
+#   TODO
+#       - yum limits to centos/redhat for now
+
+#   collect_addrs [<hostspec> [<ssh-config>]]
+#
+#   Collects addresses / domain names either for the local or remote host.
+#   Tries to use tools like ifconfig, ip, hostname ...
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+function collect_addrs {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" 2>/dev/null)"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    yum -y install iproute >&2
+
+    ip_list="\$(ip addr show scope global up | sed -n "s/.*inet \([^/]\+\).*/\1/p" || true)"
+    ifconfig_list="\$(ifconfig 2>/dev/null | sed -n "s/.*inet \([^ ]\+\).*/\1/p" | grep -v 127.0.0.1 || true)"
+    hostname="\$(hostname | grep -v 127.0.0.1 || true)"
+    echo \$ip_list \$ifconfig_list \$hostname | awk "{for(i = 1; i<=NF; i++) {print \\\$i}}" | sort -u | paste -sd " " -
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+
+#   check_host_reachable destination [<hostspec> [<ssh-config>]]
+#
+#   Check whether destination host is reachable either
+#   from the remote host or locally.
+#
+#   Args:
+#       destination: either IP or domain of the host to check
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+function check_host_reachable {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _dest="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" 2>/dev/null)"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    ping -c 1 -W 1 $_dest
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    ! $_cmd bash -c "$_script" >/dev/null 2>&1
+
+    if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+        echo -n "$_dest"
+    fi
+}
+
 
 
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
@@ -344,16 +562,22 @@ function check_host_in_ssh_config {
 function install_salt {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _script
 
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
     local _epel_repo=
     local _saltstack_repo=
+
+    l_info "Installing salt on '$_hostspec'"
 
 ! read -r -d '' _epel_repo << "EOF"
 [epel]
@@ -374,6 +598,10 @@ EOF
 
 ! read -r -d '' _script << EOF
     set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
 
     # config custom yum repos
     rm -rf /var/cache/yum
@@ -431,6 +659,10 @@ EOF
 function install_repo {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _script
 
     local _repo_src="${1:-rpm}"
@@ -442,6 +674,8 @@ function install_repo {
 
     local _prvsnr_repo=
     local _repo_archive_path=
+
+    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version)"
 
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
@@ -479,14 +713,18 @@ name=provisioner
 EOF
 
     if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" ]]; then
-        >&2 echo "ERROR: unsupported repo src: $_repo_src"
+        l_error "unsupported repo src: $_repo_src"
         exit 1
     fi
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
 ! read -r -d '' _script << EOF
     set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
 
     # TODO test cases when installation dir is presented and not empty
     # issue #23
@@ -536,6 +774,10 @@ EOF
 function configure_network {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _script
 
     local _hostspec="${1:-}"
@@ -543,10 +785,16 @@ function configure_network {
     local _sudo="${3:-false}"
     local _installdir="${5:-/opt/seagate/eos-prvsnr}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Configuring network on '$_hostspec'"
 
 ! read -r -d '' _script << EOF
     set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
 
     pushd "$_installdir"
         if [[ -n "\$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
@@ -595,6 +843,10 @@ EOF
 function configure_salt {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _script
 
     local _minion_id="$1"
@@ -605,10 +857,16 @@ function configure_salt {
     local _master_host="${6:-}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Configuring salt on '$_hostspec': minion-id $_minion_id, is-master $_master, master host $_master_host"
 
 ! read -r -d '' _script << EOF
     set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
 
     pushd "$_installdir"
         # re-config salt master
@@ -679,6 +937,10 @@ EOF
 function accept_salt_keys {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _script
 
     local _ids="${1:-eosnode-1}"
@@ -687,15 +949,21 @@ function accept_salt_keys {
     local _sudo="${4:-false}"
     local _timeout="${5:-30}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Accepting minion ids $_ids on salt master '$_hostspec', timeout $_timeout"
 
 ! read -r -d '' _script << EOF
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     for id in $_ids; do
         try=1
 
-        # waiting for a minion to connect the master
+        echo -e "\\nINFO: waiting for minion \$id to become connected to master"
         until salt-key --list all | grep \$id >/dev/null 2>&1
         do
             if [[ "\$try" -gt "$_timeout" ]]; then
@@ -703,28 +971,35 @@ function accept_salt_keys {
                 salt-key --list all >&2
                 exit 1
             fi
-            echo -n "." >&2
+            echo -n "."
             try=\$(( \$try + 1 ))
             sleep 1
         done
+        echo -e "\\nINFO: Key \$id is connected."
 
         # minion is connected but does not need acceptance
         if [[ -z "\$(salt-key --list unaccepted | grep \$id 2>/dev/null)" ]]; then
-            echo -e "\\nWARNING: no key acceptance is needed for minion \$id." >&2
+            echo -e "\\nINFO: no key acceptance is needed for minion \$id." >&2
             salt-key --list all >&2
             exit 0
         fi
 
         salt-key -y -a \$id
-        echo -e "\\nKey \$id is accepted." >&2
+        echo -e "\\nINFO: Key \$id is accepted."
 
-        # wait until minion is started since there is an interval
-        # for re-auth (ACCEPTANCE_WAIT_TIME) and does not become started
-        # immediately once the key is accepted
-
-        # TODO race condition is possible: event had been raised before we started to wait it
-        salt-run state.event "salt/minion/\$id/start" count=1
-        echo -e "\\nMinion \$id started." >&2
+        # TODO move that to a separate API
+        echo -e "\\nINFO: waiting for minion \$id to become ready"
+        try=1; tries=10
+        until salt -t 1 \$id test.ping >/dev/null 2>&1
+        do
+            if [[ "\$try" -gt "\$tries" ]]; then
+                echo -e "\\nERROR: minion \$id seems still not ready after \$tries checks." >&2
+                exit 1
+            fi
+            echo -n "."
+            try=\$(( \$try + 1 ))
+        done
+        echo -e "\\nINFO: Minion \$id started."
     done
 EOF
 
@@ -758,12 +1033,16 @@ EOF
 function eos_pillar_show_skeleton {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _component="$1"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
     # TODO is it ok that we stick to python3.6 here ?
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
@@ -792,17 +1071,23 @@ function eos_pillar_show_skeleton {
 function eos_pillar_update {
     set -eu
 
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
     local _component="$1"
     local _file_path="$2"
     local _hostspec="${3:-}"
     local _ssh_config="${4:-}"
     local _sudo="${5:-false}"
 
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Updating a pillar component $_component on '$_hostspec' using $_file_path as source"
 
     # TODO test
     if [[ ! -f "$_file_path" ]]; then
-        >&2 echo "ERROR: not a file: $_file_path"
+        l_error "not a file: $_file_path"
         exit 1
     fi
 

@@ -23,12 +23,14 @@ It means they should be called in the following predefined order:
 
 Besides help options each script might be called using any of the following options:
 
-  - `-n`/`--dry-run`: do not actually perform any changes (_not fully supported for now_)
-  - `-r`/`--remote`: specifies the hostspec of the remote host. When passed the script performs its commands against remote host instead of the local one.
-  - `-S`/`--singlenode`: turns on single mode installation. Makes sense not for all scripts.
-  - `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
-  - `-s`/`--sudo`: tells the script to use `sudo` (_not enough tested yet_).
-  - `-v`/`--verbose`: tells the script to be more verbose.
+- `-r`/`--remote`: specifies the hostspec of the remote host. When passed the script performs its commands against remote host instead of the local one.
+- `-S`/`--singlenode`: turns on single mode installation. Makes sense not for all scripts.
+- `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
+- `-v`/`--verbose`: tells the script to be more verbose.
+
+[//]: #   (commented by EOS-2410)
+[//]: #   (- `-n`/`--dry-run`: do not actually perform any changes)
+[//]: #   (- `-s`/`--sudo`: tells the script to use `sudo`.)
 
 #### Remote hosts configuration
 
@@ -70,8 +72,8 @@ Besides [general](#common-options) set of options it expects the following ones:
 - `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
-  - `rpm` to install from using rpm package.
-- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master. By default it is not set which means that default will be set (which is `eosnode-1`).
+  - `rpm` to install from using rpm package (default).
+- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master. By default it is not set the script will try to discover it itself. As a final fallback the default value will be used (it is specified in salt minion's [config file](../files/etc/salt/minion) and is `eosnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.
 For now that makes sense only for `gitlab` and if missed the latest tagged version would be installed.

@@ -39,7 +39,7 @@ function options_parser {
         -f|--file)
             file_path=$2
             if [[ ! -f "$file_path" ]]; then
-                >&2 echo "ERROR: '$file_path' not a file"
+                l_error "'$file_path' not a file"
                 exit 5
             fi
             ;;
@@ -47,7 +47,7 @@ function options_parser {
             show_file=true
             ;;
         *)
-            >&2 echo "Unknown option: $1"
+            l_error "Unknown option: $1"
             exit 5
     esac
 }
@@ -63,12 +63,12 @@ function positional_args_parser {
                 component=$1
                 ;;
             *)
-                >&2 echo "ERROR: Invalid component type: $1"
+                l_error "Invalid component type: $1"
                 usage
                 exit 5
         esac
     else
-        >&2 echo "ERROR: Inappropriate number of positional arguments provided: $@"
+        l_error "Inappropriate number of positional arguments provided: $@"
         usage
         exit 2
     fi
@@ -76,10 +76,14 @@ function positional_args_parser {
 
 parse_args 'f:p' 'file:,show-file-format' options_parser positional_args_parser "$@"
 
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
 # check eosnode-1 occurence in ssh-config
 if [[ -n "$hostspec" ]]; then
-    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config")" ]]; then
-        >&2 echo "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
+    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+        l_error "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
         exit 1
     fi
 fi
@@ -88,7 +92,7 @@ if [[ "$show_file" == true ]]; then
     eos_pillar_show_skeleton "$component" "$hostspec" "$ssh_config" "$sudo"
     exit 0
 elif [[ -z "$file_path" ]]; then
-    >&2 echo "ERROR: '--file' is a required options for the pillar update"
+    l_error "'--file' is a required options for the pillar update"
     exit 1
 fi
 

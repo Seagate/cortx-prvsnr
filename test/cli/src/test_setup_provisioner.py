@@ -5,6 +5,8 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 
+import test.helper as h
+
 # TODO better correlation with post_env_run_hook routine
 DEFAULT_SCRIPT_PATH = "/tmp/setup-provisioner"
 
@@ -39,9 +41,8 @@ def post_host_run_hook(localhost, local_scripts_path):
 
 
 def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
-    res = None
-    try:
-        res = host.run(
+    return h.run(
+        host, (
             "bash {} {} {} 2>&1"
             .format(
                 '-x' if trace else '',
@@ -49,12 +50,8 @@ def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
                 ' '.join([*args])
             )
         )
-    finally:
-        if res is not None:
-            for line in res.stdout.split(os.linesep):
-                logger.debug(line)
+    )
 
-    return res
 
 # TODO split
 @pytest.mark.isolated
@@ -169,44 +166,7 @@ def test_setup_provisioner_singlenode(
     }
 
 
-@pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
-@pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
-@pytest.mark.inject_ssh_config(['host_eosnode1'])
-@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
-def test_setup_provisioner_cluster(
-    host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
-    ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config,
-    hosts_meta
-):
-    if remote is True:
-        script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
-    else:
-        # in case of 'local' source inject the whole repository
-        if repo_src == 'local':
-            host_project_path = request.getfixturevalue('inject_repo')['host_eosnode1']
-            script_path = host_project_path / 'cli' / 'src' / 'setup-provisioner'
-        # not required otherwise
-        else:
-            script_path = DEFAULT_SCRIPT_PATH
-
-    salt_server_ip = host_eosnode1.interface(hosts_meta['host_eosnode1'].iface).addresses[0]
-
-    remote = '--remote {}'.format(hostname_eosnode1) if remote else ''
-    ssh_config = '--ssh-config {}'.format(ssh_config)
-    with_sudo = '' # TODO
-
-    res = run_script(
-        localhost if remote else host_eosnode1,
-        "{} {} {} --eosnode-2 {} --salt-master {} --repo-src {}".format(
-            ssh_config, with_sudo, remote, hostname_eosnode2,
-            salt_server_ip, repo_src
-        ),
-        script_path=script_path
-    )
-    assert res.rc == 0
-
+def check_setup_provisioner_results(host_eosnode1):
     states_expected = [
         "components.{}".format(st) for st in
         ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 's3server']
@@ -227,3 +187,65 @@ def test_setup_provisioner_cluster(
                 if states:
                     break
         assert states == states_expected
+
+
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-utils')
+@pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
+@pytest.mark.inject_ssh_config(['host_eosnode1'])
+@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
+def test_setup_provisioner_cluster(
+    host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
+    ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config
+):
+    if remote is True:
+        script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
+    else:
+        # in case of 'local' source inject the whole repository
+        if repo_src == 'local':
+            host_project_path = request.getfixturevalue('inject_repo')['host_eosnode1']
+            script_path = host_project_path / 'cli' / 'src' / 'setup-provisioner'
+        # not required otherwise
+        else:
+            script_path = DEFAULT_SCRIPT_PATH
+
+    remote = '--remote {}'.format(hostname_eosnode1) if remote else ''
+    ssh_config = '--ssh-config {}'.format(ssh_config)
+    with_sudo = '' # TODO
+
+    res = run_script(
+        localhost if remote else host_eosnode1,
+        "{} {} {} --eosnode-2 {} --repo-src {}".format(
+            ssh_config, with_sudo, remote, hostname_eosnode2, repo_src
+        ),
+        script_path=script_path
+    )
+    assert res.rc == 0
+    check_setup_provisioner_results(host_eosnode1)
+
+
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-utils')
+@pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
+def test_setup_provisioner_cluster_with_salt_master_host_provided(
+    host_eosnode1, hostname_eosnode1, hostname_eosnode2,
+    ssh_config, localhost, project_path, host_meta_eosnode1
+):
+    script_path = project_path / 'cli' / 'src' / 'setup-provisioner'
+    salt_server_ip = host_eosnode1.interface(host_meta_eosnode1.iface).addresses[0]
+
+    ssh_config = '--ssh-config {}'.format(ssh_config)
+    remote = '--remote {}'.format(hostname_eosnode1)
+    with_sudo = '' # TODO
+
+    res = run_script(
+        localhost,
+        "{} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(
+            ssh_config, with_sudo, remote, hostname_eosnode2,
+            salt_server_ip
+        ),
+        script_path=script_path
+    )
+    assert res.rc == 0
+    check_setup_provisioner_results(host_eosnode1)

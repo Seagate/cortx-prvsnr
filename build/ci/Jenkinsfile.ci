@@ -23,16 +23,27 @@ def nodeWrapper(label=null, body) {
 }
 
 
+Closure preparePythonEnv = {
+    String testPipenvReport = "pipenv.out"
+    stage('Prepare python environment') {
+        try {
+            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                sh "bash -x build/ci/create_python_env.sh $testPipenvReport >/dev/null 2>&1"
+            }
+        } catch (_err) {
+            archiveArtifacts artifacts: testPipenvReport, allowEmptyArchive: true
+            throw _err
+        }
+    }
+}
+
+
 Closure staticValidation = {
     def test_err
 
     checkout scm
 
-    stage('Prepare environment') {
-        withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-            sh "bash -x build/ci/create_python_env.sh"
-        }
-    }
+    preparePythonEnv()
 
     String testPythonReport = "flake8.out"  // TODO not configurable for now
     stage('Check python') {
@@ -43,9 +54,8 @@ Closure staticValidation = {
             }
         } catch (_err) {
             archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
-            // TODO later that shouldn't be passed
             echo "Python static validation failed: $_err"
-            // TODO later that shouldn't be passed
+            // TODO that should break the pipeline actually
             // throw _err
         }
     }
@@ -58,8 +68,9 @@ Closure staticValidation = {
             }
         } catch (_err) {
             archiveArtifacts artifacts: testYamlReport, allowEmptyArchive: true
-            // TODO later that shouldn't be passed
             echo "YAML static validation failed: $_err"
+            // TODO that should break the pipeline actually
+            // throw _err
         }
     }
 }
@@ -75,13 +86,14 @@ Closure dynamicValidation = {
     String pytestTargets = ""
 
     try {
+        stage('Clean VirtualBox environment') {
+            sh "bash -x build/ci/clean_vbox.sh"
+        }
+
+        preparePythonEnv()
+
         // TODO is it a best way to ensure pipenv available
         withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-            stage('Prepare environment') {
-                sh "bash -x build/ci/clean_vbox.sh"
-                sh "bash -x build/ci/create_python_env.sh"
-            }
-
             // run tests
             stage('Run tests') {
                 sh "pipenv run bash -x build/ci/run_tests.sh $pytestArgs $pytestTargets"

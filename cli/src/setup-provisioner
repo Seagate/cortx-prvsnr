@@ -10,7 +10,7 @@ EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eo
 eosnode_2_hostspec=eosnode-2
 
 salt_master_hostname=
-prvsnr_repo_src=gitlab
+prvsnr_repo_src=rpm
 
 prvsnr_version=
 
@@ -43,8 +43,6 @@ Options:
 
 # TODO
 # - dry-run support
-# - echos for progress and verbosity levels support
-
 
 # TODO tests
 function options_parser {
@@ -60,7 +58,7 @@ function options_parser {
                     prvsnr_repo_src="$2"
                     ;;
                 *)
-                    >&2 echo "Incorrect repo source: $1"
+                    l_error "Incorrect repo source: $1"
                     usage
                     exit 5
             esac
@@ -69,7 +67,7 @@ function options_parser {
             salt_master_hostname="$2"
             ;;
         *)
-            >&2 echo "Unknown option: $1"
+            l_error "Unknown option: $1"
             exit 5
     esac
 }
@@ -80,7 +78,7 @@ function positional_args_parser {
     set -eu
 
     if [[ $# -gt 1 ]]; then
-        >&2 echo "$0: Only one positional argument is expected, provided: $@"
+        l_error "$0: Only one positional argument is expected, provided: $@"
         exit 2
     fi
 
@@ -90,19 +88,21 @@ function positional_args_parser {
 
 parse_args '' 'eosnode-2:,repo-src:,salt-master:' options_parser positional_args_parser "$@"
 
-# check eosnode-1/eosnode-2 occurence in ssh-config
-
-if [[ -n "$hostspec" ]]; then
-    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config")" ]]; then
-        >&2 echo "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
-        exit 1
-    fi
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
 fi
 
 
+# CHECK EOSNODE-1/EOSNODE-2 OCCURENCE IN SSH-CONFIG
+if [[ -n "$hostspec" ]]; then
+    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+        l_error "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
+        exit 1
+    fi
+fi
 if [[ "$singlenode" == false ]]; then
-    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config")" ]]; then
-        >&2 echo "eosnode-2 node ssh configuration is not found in ssh-config ($ssh_config)"
+    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+        l_error "eosnode-2 node ssh configuration is not found in ssh-config ($ssh_config)"
         exit 1
     fi
 fi
@@ -118,39 +118,69 @@ fi
 
 # TODO rpm case for now doesn't support selection per version, only latest one
 if [[ -z "$prvsnr_version" && "$prvsnr_repo_src" != "local" && "$prvsnr_repo_src" != "rpm" ]]; then
-    >&2 echo 'ERROR: provisioner repo version is unknown'
+    l_error 'provisioner repo version is unknown'
     exit 1
 fi
 
 
-# setup eosnode-1
+# TODO move to API function for better testing
+if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
+    l_info 'trying to auto-detect salt master host for eosnode-2'
+
+    _salt_master_addrs="$(collect_addrs "$hostspec" "$ssh_config" 2>/dev/null)"
+    l_debug "possible salt master hostnames: $_salt_master_addrs"
+
+    for _addr in $_salt_master_addrs; do
+        if [[ -n "$(check_host_reachable "$_addr" "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+            salt_master_hostname="$_addr"
+            break
+        fi
+    done
+
+    if [[ -z "$salt_master_hostname" ]]; then
+        l_warn "reachable salt master hostname hasn't been detected"
+    else
+        l_info "salt master hostname set as $_addr"
+    fi
+fi
+
+# SETUP EOSNODE-1
 install_salt "$hostspec" "$ssh_config" "$sudo"
+
 install_repo "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
 configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
+
 accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
+
 # TODO use salt formulas instead
 # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
 # configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
+
+# SETUP EOSNODE-2
 if [[ "$singlenode" != true ]]; then
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
-    # setup eosnode-2
+
     install_repo "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
+
     accept_salt_keys eosnode-2 "$hostspec" "$ssh_config" "$sudo"
+
     # TODO use salt formulas instead
     # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
     # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 fi
 
-cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 target_minions='*'
 if [[ -n "$hostspec" ]]; then
     target_minions="'*'"
 fi
 
 # TODO test that
-# force salt to mine data
+l_info "Triggering salt data mining"
 $cmd salt "$target_minions" mine.update
 
-echo "Done"
+l_info "Done"

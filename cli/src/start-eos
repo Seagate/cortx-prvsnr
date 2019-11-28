@@ -35,14 +35,18 @@ function options_parser {
             restart=true
             ;;
         *)
-            >&2 echo "Unknown option: $1"
+            l_error "Unknown option: $1"
             exit 5
     esac
 }
 
 parse_args 'R' 'restart' options_parser '' "$@"
 
-cmd="$(build_command "$hostspec" "$ssh_config" "$sudo")"
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 
 salt_opts=
 if [[ "$dry_run" == true ]]; then
@@ -54,12 +58,12 @@ if [[ -n "$hostspec" ]]; then
     target_minions="'*'"
 fi
 
-# apply states
 if [[ "$restart" == true ]]; then
+    l_info "Applying 'components.stop' for all nodes"
     $cmd salt "$target_minions" state.apply components.stop $salt_opts
-    $cmd salt "$target_minions" state.apply components.start $salt_opts
-else
-    $cmd salt "$target_minions" state.apply components.start $salt_opts
 fi
 
-echo "Done"
+l_info "Applying 'components.start' for all nodes"
+$cmd salt "$target_minions" state.apply components.start $salt_opts
+
+l_info "Done"

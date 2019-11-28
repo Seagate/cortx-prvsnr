@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -eu
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
@@ -9,11 +9,11 @@ BUILD_NUMBER=0
 GIT_VER=
 EOS_PRVSNR_VERSION=1.0.0
 
-usage() { echo "Usage: $0 [-G <git short revision>] [-P <EOS Provisioner version>]" 1>&2; exit 1; }
+#usage() { echo "Usage: $0 [-G <git short revision>] [-P <EOS Provisioner version>]" 1>&2; exit 1; }
 
 # Install rpm-build package
 rpm --quiet -qi git || yum install -q -y git && echo "git already installed."
-rpm --quiet -qi python36 || yum install -q -y python36 && echo "python36 already installed."
+rpm --quiet -qi python3-3.6.* || yum install -q -y python36 && echo "python36 already installed."
 rpm --quiet -qi rpm-build || yum install -q -y rpm-build && echo "rpm-build already installed."
 rpm --quiet -qi yum-utils || yum install -q -y yum-utils && echo "yum-utils already installed."
 
@@ -33,6 +33,7 @@ while getopts ":g:e:b:" o; do
             ;;
         *)
             echo "Usage: buildrpm.sh -g <git_commit_hash> -e <ees_prvsnr_version> -b <build_number>"
+            exit 0
             ;;
     esac
 done
@@ -47,7 +48,6 @@ echo "Using [GIT_VER=${GIT_VER}] ..."
 
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
-rm -rf eos-prvsnr-cli*
 
 DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 # Setup the source tar for rpm build
@@ -59,12 +59,12 @@ cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
 cp -pr ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
 cp -p ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
 
-tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
-rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
+    rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
 
-yum-builddep -y ${BASEDIR}/eos-prvsnr-cli.spec
+    yum-builddep -y ${BASEDIR}/eos-prvsnr-cli.spec
 
-rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr-cli.spec
+    rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr-cli.spec
 
 popd
 
