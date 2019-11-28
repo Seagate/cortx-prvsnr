@@ -64,14 +64,14 @@ class ClusterCfg(BaseCfg):
             input(
                 "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
             for node in self.__options["cluster"]["node_list"]:
-                input_msg = ("\nEnter fqdn for ees {1} ({0}): ".format(
-                    self.__options["cluster"][node]["fqdn"], node
+                input_msg = ("\nEnter hostname for ees {1} ({0}): ".format(
+                    self.__options["cluster"][node]["hostname"], node
                 )
                 )
-                self.__options["cluster"][node]["fqdn"] = (
+                self.__options["cluster"][node]["hostname"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["fqdn"]
+                    self.__options["cluster"][node]["hostname"]
                 )
 
                 input_msg = ("Is this a primary ees node? ({0}): ".format(

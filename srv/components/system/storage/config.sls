@@ -36,7 +36,7 @@ Create swap partition:
       - part_type: primary
       - fs_type: linux-swap
       - start: 0%
-      - end: 30%
+      - end: 50%
 
 # Create partition for Metadata
 Create metadata partition:
@@ -45,7 +45,7 @@ Create metadata partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext4
-      - start: 30%
+      - start: 50%
       - end: 100%
 
 # Make SWAP

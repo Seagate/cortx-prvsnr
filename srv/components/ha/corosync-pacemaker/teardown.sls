@@ -4,7 +4,7 @@ Destroy Cluster:
   pcs.cluster_setup:
     - nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
-        - {{ pillar['cluster'][node_id]['fqdn'] }}
+        - {{ pillar['cluster'][node_id]['hostname'] }}
       {%- endfor -%}
     - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
     - extra_args:

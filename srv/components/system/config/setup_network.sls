@@ -1,5 +1,3 @@
-{% set node = grains['id'] %}
-
 Stop and disable NetworkManager service:
   service.dead:
     - name: NetworkManager
@@ -25,9 +23,6 @@ Stop and disable firewalld service:
     - name: firewalld
     - enable: False
 
-Set hostname:
-  cmd.run:
-    - name: hostnamectl set-hostname {{ pillar['cluster'][node]['fqdn'] }}
 
 # set_nic_bios_dev_name_grub:
 #   file.replace:
@@ -68,7 +63,7 @@ system:
     - enabled: True
     - hostname: {{ node_name }}
     - apply_hostname: True
-    - gateway: {{ pillar['cluster'][node]['network']['gateway_ip'] }}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['gateway_ip'] }}
     - require_reboot: True
 
 Update network file:

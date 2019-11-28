@@ -4,7 +4,7 @@ cluster:
     - eosnode-1
     - eosnode-2
   eosnode-1:
-    fqdn: eosnode-1
+    hostname: eosnode-1
     is_primary: true
     network:
       mgmt_if: mgmt0                  # Management network interfaces for bonding
@@ -16,7 +16,7 @@ cluster:
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
   eosnode-2:
-    fqdn: eosnode-2
+    hostname: eosnode-2
     is_primary: false
     network:
       mgmt_if: mgmt0                  # Management network interfaces for bonding

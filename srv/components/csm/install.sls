@@ -8,26 +8,6 @@ Extract Node.js:
     - clean: True
     - trim_output: False
 
-Apppend bash_profile:
-  file.blockreplace:
-    - name: ~/.bash_profile
-    - marker_start: '# DO NOT EDIT: Nodejs'
-    - marker_end: '# DO NOT EDIT: End'
-    - content: |
-        VERSION=v12.13.0
-        DISTRO=linux-x64
-        export PATH=/opt/nodejs/node-$VERSION-$DISTRO/bin:$PATH
-    - backup: '.org'
-    - append_if_not_found: True
-    - require:
-      - archive: Extract Node.js
-
-Refresh bash_profile:
-  cmd.run:
-    - name: source ~/.bash_profile
-    - require:
-      - file: Apppend bash_profile
-
 Install csm package:
   pkg.installed:
     - name: eos_csm

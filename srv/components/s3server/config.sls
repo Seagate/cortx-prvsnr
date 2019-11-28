@@ -1,6 +1,3 @@
-{% set node = grains['id'] %}
-{% set data_if = pillar['cluster'][node]['network']['data_if'] %}
-
 Update s3 config file with pillar data:
   module.run:
     - s3server.conf_update:
@@ -57,9 +54,12 @@ Open https port for s3server:
     - family: ipv4
     - save: True
 
-# Append /etc/hosts:
-#   file.line:
-#     - name: /etc/hosts
-#     - content: {{ grains['ip_interfaces'][data_if] }}  s3.cloud.seagate.com iam.cloud.seagate.com sts.cloud.seagate.com
-#     - location: end
-#     - mode: ensure
+
+{% set node = grains['id'] -%}
+{% set data_if = pillar['cluster'][node]['network']['data_if'] -%}
+Append /etc/hosts:
+  file.line:
+    - name: /etc/hosts
+    - content: {{ grains['ip_interfaces'][data_if] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+    - location: end
+    - mode: ensure

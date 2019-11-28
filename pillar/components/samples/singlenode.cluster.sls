@@ -3,7 +3,7 @@ cluster:
   node_list:
     - eosnode-1
   eosnode-1:
-    fqdn: eosnode-1
+    hostname: eosnode-1
     is_primary: true
     network:
       mgmt_if: mgmt0                  # Management network interfaces for bonding

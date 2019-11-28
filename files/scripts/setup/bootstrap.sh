@@ -11,10 +11,9 @@ fi
 ################
 # Cleanup repos
 ################
-sudo yum remove epel-release -y
 [[ -f /etc/yum.repos.d/epel.repo.rpmsave ]] && sudo rm -rf /etc/yum.repos.d/epel.repo.*
 [[ -f /etc/yum.repos.d/CentOS-Base.repo ]] && sudo rm -rf /etc/yum.repos.d/*.repo
-sudo cp -Rut ${BASEDIR}/files/etc/yum.repos.d /etc/yum.repos.d
+sudo cp ${BASEDIR}/files/etc/yum.repos.d/*.repo /etc/yum.repos.d/
 
 # Uncomment only if necessary
 sudo yum clean all
@@ -58,9 +57,6 @@ if [[ -n "$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
   sudo yum remove -y NetworkManager
 fi
 
-sudo cp ${BASEDIR}/files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-sudo cp ${BASEDIR}/files/etc/sysconfig/network-scripts/ifcfg-mgmt0 /etc/sysconfig/network-scripts/
-sudo cp ${BASEDIR}/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
 sudo cp -R ${BASEDIR}/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
 
 # For HW setup

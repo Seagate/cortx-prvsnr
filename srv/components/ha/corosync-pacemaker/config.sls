@@ -35,7 +35,7 @@ Authorize nodes:
   pcs.auth:
     - nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['fqdn'] }}
+      - {{ pillar['cluster'][node_id]['hostname'] }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
     - pcspasswd: {{ pillar['corosync-pacemaker']['password'] }}
@@ -48,7 +48,7 @@ Setup Cluster:
   pcs.cluster_setup:
     - nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['fqdn'] }}
+      - {{ pillar['cluster'][node_id]['hostname'] }}
       {%- endfor %}
     - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
     - extra_args:

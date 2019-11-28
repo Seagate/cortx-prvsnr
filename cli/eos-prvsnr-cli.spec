@@ -32,9 +32,9 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
-cp -p -R cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
-cp -p -R files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/bonding.conf
-cp -p -R files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
+cp -pr cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+cp -pr files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/
+cp -p files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
 
 
 %clean
