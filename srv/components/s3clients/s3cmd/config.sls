@@ -1,7 +1,7 @@
 Configure s3cmd:
   file.managed:
     - name: ~/.s3cfg
-    - source: salt://components/s3client/s3cmd/files/.s3cfg
+    - source: salt://components/s3clients/s3cmd/files/.s3cfg
     - keep_source: False
     - template: jinja
     - makedirs: True
