@@ -19,6 +19,14 @@ logger = logging.getLogger(__name__)
 PRVSNR_REPO_INSTALL_DIR = Path('/opt/seagate/eos-prvsnr')
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80
+REPO_BUILD_DIRS = [
+    '.build',
+    '.boxes',
+    '.vdisks',
+    '.vagrant',
+    '.pytest_cache',
+    '__pycache__'
+]
 
 
 @attr.s
@@ -645,34 +653,29 @@ def run(host, script, force_dump=False):
     return res
 
 
-def check_output(host, script):
-    res = run(host, script)
+def check_output(host, script, *args, **kwargs):
+    res = run(host, script, *args, **kwargs)
     assert res.rc == 0
     return res.stdout
 
 
-def inject_repo(localhost, host, ssh_config, project_path, host_repo_dir=None):
+def inject_repo(localhost, host, ssh_config, local_repo_tgz, project_path, host_repo_dir=None):
+    host_repo_tgz = Path('/tmp') / local_repo_tgz.name
+
     if host_repo_dir is None:
         host_repo_dir = Path('/tmp') / project_path.name
+
     hostname = host.check_output('hostname')
-    host.check_output("mkdir -p {}".format(host_repo_dir))
-    # TODO smarter way, option:
-    # - copy just .git and everything that modified
-    # - do remote git commit
-    # ! we need modifications to be taken into account
-    # by possible 'git archive' command
-    # !? deleted / not yet added files
     localhost.check_output(
-        "scp -r -F {} {} {}:{}".format(
+        'scp -r -F "{}" "{}" {}:"{}"'.format(
             ssh_config,
-            ' '.join(
-                [
-                    str(project_path / path) for path in
-                    ('.git', 'files', 'pillar', 'srv', 'cli', 'build')
-                ]
-            ),
+            local_repo_tgz,
             hostname,
-            host_repo_dir
+            host_repo_tgz
         )
+    )
+    host.check_output(
+        'mkdir -p "{0}" && tar -zxf "{1}" -C "{0}"'
+        .format(host_repo_dir, host_repo_tgz)
     )
     return host_repo_dir

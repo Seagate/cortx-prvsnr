@@ -147,7 +147,7 @@ fi
 # SETUP EOSNODE-1
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
-install_repo "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
 configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
 
@@ -162,7 +162,7 @@ accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
 if [[ "$singlenode" != true ]]; then
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_repo "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
 
@@ -180,7 +180,10 @@ if [[ -n "$hostspec" ]]; then
 fi
 
 # TODO test that
-l_info "Triggering salt data mining"
-$cmd salt "$target_minions" mine.update
+if [[ "$singlenode" != true ]]; then
+    l_info "Triggering salt data mining"
+    # force salt to mine data
+    $cmd salt "$target_minions" mine.update
+fi
 
 l_info "Done"

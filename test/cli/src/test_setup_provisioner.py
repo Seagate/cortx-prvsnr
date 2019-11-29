@@ -1,11 +1,12 @@
 import os
 import pytest
 import json
-
 import logging
-logger = logging.getLogger(__name__)
 
 import test.helper as h
+
+logger = logging.getLogger(__name__)
+
 
 # TODO better correlation with post_env_run_hook routine
 DEFAULT_SCRIPT_PATH = "/tmp/setup-provisioner"

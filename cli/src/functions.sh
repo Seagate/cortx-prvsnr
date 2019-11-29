@@ -594,6 +594,7 @@ baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/20
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+priority: 1
 EOF
 
 ! read -r -d '' _script << EOF
@@ -614,6 +615,10 @@ EOF
     rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
     echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
 
+    # Remove any older saltstack if any.
+    systemctl stop salt-minion salt-master || true
+    yum remove -y salt-minion salt-master
+
     yum clean expire-cache
 
     # install salt master/minion
@@ -629,7 +634,7 @@ EOF
 }
 
 
-#   install_repo [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
+#   install_provisioner [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<singlenode> [<installation-dir>]]]]]]]
 #
 #   Install provisioner repository either on the remote host or locally using
 #   one of possible types of sources.
@@ -653,10 +658,12 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       singlenode: a flag for a singlenode setup mode. Expected values: `true` or `false`.
+#           Default: `false`
 #       installation-dir: destination installation directory.
 #           Default: /opt/seagate/eos-prvsnr
 #
-function install_repo {
+function install_provisioner {
     set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
@@ -670,27 +677,47 @@ function install_repo {
     local _hostspec="${3:-}"
     local _ssh_config="${4:-}"
     local _sudo="${5:-false}"
-    local _installdir="${6:-/opt/seagate/eos-prvsnr}"
+    local _singlenode="${6:-false}"
+    local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
     local _prvsnr_repo=
     local _repo_archive_path=
+    local _tmp_dir=$(mktemp -d)
 
-    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version)"
+    local _cluster_sls_src
+    if [[ "$_singlenode" == true ]]; then
+        _cluster_sls_src="$_installdir/pillar/components/samples/singlenode.cluster.sls"
+    else
+        _cluster_sls_src="$_installdir/pillar/components/samples/ees.cluster.sls"
+    fi
+
+    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version), singlenode is $_singlenode"
 
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
         # might not always work
         local _script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
         pushd "$_script_dir"
-            local _repo_root="$(git rev-parse --show-toplevel)"
+            local _repo_root="$(realpath $_script_dir/../../)"
         popd
 
-        local _repo_archive_name='repo.zip'
+        local _repo_archive_name='repo.tgz'
         local _scp_opts=
-        _repo_archive_path="$_repo_root/$_repo_archive_name"
+        _repo_archive_path="$_tmp_dir/$_repo_archive_name"
 
         pushd "$_repo_root"
-            git archive --format=zip HEAD >"$_repo_archive_path"
+            if [[ -n "$_prvsnr_version" ]]; then  # treat the version as git commit/branch/tag ...
+                git archive --format=tar.gz "$_prvsnr_version" -o "$_repo_archive_path"
+            else  # do raw archive with uncommitted/untracked changes otherwise
+                tar -zcf "$_repo_archive_path" \
+                    --exclude=".build" \
+                    --exclude=".boxes" \
+                    --exclude=".vdisks" \
+                    --exclude=".vagrant" \
+                    --exclude=".pytest_cache" \
+                    --exclude="__pycache__" \
+                    -C "$_repo_root" .
+            fi
 
             if [[ -n "$_hostspec" ]]; then
                 if [[ -n "$_ssh_config" ]]; then
@@ -698,7 +725,7 @@ function install_repo {
                 fi
 
                 $(scp $_scp_opts $_repo_archive_path ${_hostspec}:/tmp)
-                rm -fv "$_repo_archive_path"
+                rm -rfv "$_tmp_dir"
                 _repo_archive_path="/tmp/$_repo_archive_name"
             fi
         popd
@@ -739,9 +766,10 @@ EOF
         yum install -y eos-prvsnr
     else
         # local
-        unzip -d "$_installdir" "$_repo_archive_path"
+        tar -zxf "$_repo_archive_path" -C "$_installdir"
         rm -vf "$_repo_archive_path"
     fi
+    cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -804,8 +832,8 @@ function configure_network {
         fi
 
         mkdir -p /etc/sysconfig/network-scripts/
-        cp files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-        cp files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+        cp -f files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
+        cp -f files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
     popd
 EOF
 

@@ -92,7 +92,7 @@ def run_script(localhost, tmp_path, ssh_config, request):
                     test_script_path,
                     '2>&1' if stderr_to_stdout else ''
                 )
-            )
+            ), force_dump=trace
         )
 
     return _f
@@ -671,13 +671,16 @@ def test_functions_install_provisioner(
             assert host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
 
 
-# TODO remote case is better to test from within virtual env as well
+# TODO
+#  - remote case is better to test from within virtual env as well
+#  - by tag
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+@pytest.mark.parametrize("version", [None, 'headcommit', 'HEAD'])
 def test_functions_install_provisioner_local(
     run_script, host, hostname, localhost,
-    ssh_config, remote, project_path,
+    ssh_config, remote, version, project_path,
     request
 ):
     host_project_path = None
@@ -687,33 +690,92 @@ def test_functions_install_provisioner_local(
         host_project_path = request.getfixturevalue('inject_repo')['host']
         script_path = host_project_path / 'cli/src/functions.sh'
 
-    prvsnr_version = 'ees1.0.0-PI.2-sprint7'
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false' # TODO
+
+    prvsnr_version = version
+    if prvsnr_version is None:
+        prvsnr_version = "''"
+    elif prvsnr_version == 'headcommit':
+        prvsnr_version = localhost.check_output('git rev-parse HEAD')
 
     script = """
         install_provisioner local {} {} {} {}
     """.format(prvsnr_version, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
-
     assert res.rc == 0
 
-    # TODO some more strict checks
-    # check repo files are in place
-    for path in ('files', 'pillar', 'srv', 'cli'):
-        assert host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
+    # TODO ensure that it doesn't leave any temporary files
 
-    if remote is True:
-        assert not localhost.file(str(project_path / 'repo.zip')).exists
-        assert not host.file('/tmp/repo.zip').exists
+    if version is None:
+        # check that it installs the whole repository directory
+        excluded_dirs = ['-name "{}"'.format(d) for d in h.REPO_BUILD_DIRS]
+        expected = localhost.check_output(
+            "cd {} && find . \\( {} \\) -prune -o -type f -printf '%P\n'"
+            .format(project_path, ' -o '.join(excluded_dirs))
+        ).split()
+
+        installed = host.check_output(
+            "find {} -type f -printf '%P\n'".format(h.PRVSNR_REPO_INSTALL_DIR)
+        ).split()
     else:
-        assert not host.file(str(host_project_path / 'repo.zip')).exists
+        # check repo files are in place
+        expected = localhost.check_output(
+            'git ls-tree --full-tree -r --name-only {}'.format(prvsnr_version)
+        ).split()
 
+        installed = host.check_output(
+            "find {} -type f -printf '%P\n'".format(h.PRVSNR_REPO_INSTALL_DIR)
+        ).split()
+
+    diff_expected = set(expected) - set(installed)
+    diff_installed = set(installed) - set(expected)
+    assert not diff_expected
+    assert not diff_installed
 
 
 @pytest.mark.isolated
+@pytest.mark.env_name('centos7-utils')
+@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+@pytest.mark.parametrize("singlenode", [True, False], ids=['singlenode', 'cluster'])
+def test_functions_install_provisioner_proper_cluster_pillar(
+    run_script, host, hostname, localhost,
+    ssh_config, remote, project_path, singlenode,
+    request
+):
+    host_project_path = None
+    if remote is True:
+        script_path = project_path / 'cli' / 'src' / 'functions.sh'
+    else:
+        host_project_path = request.getfixturevalue('inject_repo')['host']
+        script_path = host_project_path / 'cli/src/functions.sh'
+
+    hostspec = hostname if remote else "''"
+    ssh_config = ssh_config if remote else "''"
+    with_sudo = 'false' # TODO
+    is_singlenode = 'true' if singlenode else 'false'
+
+    prvsnr_version = 'HEAD'
+
+    script = """
+        install_provisioner local {} {} {} {} {}
+    """.format(prvsnr_version, hostspec, ssh_config, with_sudo, is_singlenode)
+
+    res = run_script(script, host=(localhost if remote else host), script_path=script_path)
+    assert res.rc == 0
+
+    source_path = h.PRVSNR_REPO_INSTALL_DIR / (
+        'pillar/components/samples/singlenode.cluster.sls' if singlenode
+        else 'pillar/components/samples/ees.cluster.sls'
+    )
+    dest_path = h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/cluster.sls'
+    h.check_output(host, 'diff -us {} {}'.format(source_path, dest_path))
+
+
+@pytest.mark.isolated
+@pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.env_name('centos7-network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("nm_installed", [True, False], ids=['nm_installed', 'nm_not_installed'])
@@ -757,8 +819,7 @@ def test_functions_configure_network(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_install_salt(
     run_script, host, hostname, localhost,
-    ssh_config, remote, project_path,
-    install_provisioner
+    ssh_config, remote, project_path
 ):
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
@@ -782,13 +843,18 @@ def test_functions_install_salt(
 #   - integration test for master-minion connected scheme to check grains, minion-ids ...
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
 def test_functions_configure_salt(
-    run_script, host, hostname, localhost,
-    ssh_config, remote, master, project_path,
-    install_provisioner
+    run_script, localhost, ssh_config, remote, master, project_path, request
 ):
+    host_label = 'eosnode1' if master else 'eosnode2'
+    host = request.getfixturevalue('host_' + host_label)
+    hostname = request.getfixturevalue('hostname_' + host_label)
+    host_tmpdir = request.getfixturevalue('host_tmpdir_' + host_label)
+    _ = request.getfixturevalue('install_provisioner')
+
     minion_id = 'some-minion-id'
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
@@ -801,7 +867,12 @@ def test_functions_configure_salt(
         configure_salt {} {} {} {} {}
     """.format(minion_id, hostspec, ssh_config, with_sudo, is_master)
 
-    res = run_script(script, host=(localhost if remote else host), script_path=script_path)
+    res = run_script(
+        script,
+        host=(localhost if remote else host),
+        host_tmpdir=host_tmpdir,
+        script_path=script_path
+    )
     assert res.rc == 0
 
     host.check_output(
@@ -833,6 +904,7 @@ def test_functions_configure_salt(
 
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master_host", [None, 'some-master-host'], ids=['default_master', 'custom_master'])
 def test_functions_configure_salt_master_host(
@@ -868,6 +940,7 @@ def test_functions_configure_salt_master_host(
 
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_keys_singlenode(
     run_script, host, hostname, localhost,
@@ -890,7 +963,7 @@ def test_functions_accept_salt_keys_singlenode(
     assert res.rc == 0
 
     script = """
-        accept_salt_keys {} {} {} {} 10
+        accept_salt_keys {} {} {} {}
     """.format(minion_id, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
@@ -911,7 +984,7 @@ def test_functions_accept_salt_keys_singlenode(
     #    - more cases to cover: already rejected, denied
     # check how it works for already accepted key
     script = """
-        accept_salt_keys {} {} {} {} 10
+        accept_salt_keys {} {} {} {}
     """.format(minion_id, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, host=(localhost if remote else host), script_path=script_path)
@@ -930,10 +1003,10 @@ def test_functions_accept_salt_keys_cluster(
     run_script, host_eosnode1, host_eosnode2, hostname_eosnode1,
     host_tmpdir_eosnode1, host_tmpdir_eosnode2,
     localhost, ssh_config, remote, project_path,
-    install_provisioner, hosts_meta
+    install_provisioner, hosts_meta, eos_spec
 ):
-    eosnode1_minion_id = 'eosnode-1'
-    eosnode2_minion_id = 'eosnode-2'
+    eosnode1_minion_id = eos_spec['host_eosnode1']['minion_id']
+    eosnode2_minion_id = eos_spec['host_eosnode2']['minion_id']
     with_sudo = 'false' # TODO
 
     salt_server_ip = host_eosnode1.interface(hosts_meta['host_eosnode1'].iface).addresses[0]
@@ -962,7 +1035,7 @@ def test_functions_accept_salt_keys_cluster(
     script_path = (project_path / 'cli' / 'src' / 'functions.sh') if remote else DEFAULT_SCRIPT_PATH
 
     script = """
-        accept_salt_keys "{} {}" {} {} {} 10
+        accept_salt_keys "{} {}" {} {} {}
     """.format(eosnode1_minion_id, eosnode2_minion_id, hostspec, ssh_config, with_sudo)
 
     res = run_script(
@@ -980,6 +1053,7 @@ def test_functions_accept_salt_keys_cluster(
 # (TODO might need to improve)
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
@@ -1021,6 +1095,7 @@ def test_functions_eos_pillar_show_skeleton(
 
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
 def test_functions_eos_pillar_update_fail(
     run_script, host, ssh_config, install_provisioner
 ):
@@ -1037,6 +1112,7 @@ def test_functions_eos_pillar_update_fail(
 #     (e.g. for utils)
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.mock_cmds(['salt'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
