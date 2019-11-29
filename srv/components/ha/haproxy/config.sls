@@ -5,8 +5,6 @@ Setup HAProxy config:
     - makedirs: True
     - keep_source: False
     - template: jinja
-    - watch_in:
-      - service: Ensure HAProxy running
 
 Setup haproxy 503 error code to http file:
   file.managed:
@@ -14,8 +12,6 @@ Setup haproxy 503 error code to http file:
     - source: salt://components/ha/haproxy/files/503.http
     - makedirs: True
     - keep_source: False
-    - watch_in:
-      - service: Ensure HAProxy running
 
 Setup logrotate config for haproxy:
   file.managed:
@@ -23,8 +19,6 @@ Setup logrotate config for haproxy:
     - source: salt://components/ha/haproxy/files/logrotate/haproxy
     - makedirs: True
     - keep_source: False
-    - watch_in:
-      - service: Ensure HAProxy running
 
 Setup logrotate cron for haproxy to run hourly:
   file.managed:
@@ -39,5 +33,3 @@ Setup haproxy config to enable logs:
     - source: salt://components/ha/haproxy/files/rsyslog.d/haproxy.conf
     - makedirs: True
     - keep_source: False
-    - watch_in:
-      - service: Ensure rsyslog running

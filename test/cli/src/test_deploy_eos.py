@@ -94,7 +94,7 @@ def test_deploy_eos_commands(
             'SALT-ARGS: eosnode-2 state.apply components.misc.build_ssl_cert_rpms'
         ] + [
             'SALT-ARGS: eosnode-[1,2] state.apply components.{}'.format(state)
-            for state in ['s3server']
+            for state in ['ha.haproxy', 'misc.openldap', 's3server']
         ]
 
 

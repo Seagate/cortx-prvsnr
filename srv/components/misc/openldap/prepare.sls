@@ -11,7 +11,6 @@ Create tmp dir:
     - makedirs: True
     - force: True
 
-
 {% if pillar['cluster']['type'] == "ees" %}
 Copy ldap replication config:
   file.managed:

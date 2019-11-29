@@ -157,7 +157,7 @@ def test_setup_provisioner_singlenode(
     output = json.loads(res.stdout)
     expected = [
         "components.{}".format(st) for st in
-        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 's3server']
+        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server']
     ]
     assert output == {
         'eosnode-1': {
@@ -169,7 +169,7 @@ def test_setup_provisioner_singlenode(
 def check_setup_provisioner_results(host_eosnode1):
     states_expected = [
         "components.{}".format(st) for st in
-        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 's3server']
+        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server']
     ]
 
     for minion_id in ('eosnode-1', 'eosnode-2'):
@@ -194,7 +194,7 @@ def check_setup_provisioner_results(host_eosnode1):
 @pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
 @pytest.mark.inject_ssh_config(['host_eosnode1'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
+@pytest.mark.parametrize("repo_src", ['local'])
 def test_setup_provisioner_cluster(
     host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
     ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config

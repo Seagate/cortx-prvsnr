@@ -5,19 +5,19 @@ Update s3 config file with pillar data:
       - ref_pillar: s3server
       - backup: True
 
-Import s3openldap cert to s3authserver.jks:
-  cmd.run:
-    - name: keytool -import -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate -noprompt -alias ldapcert -file /etc/ssl/stx-s3/openldap/s3openldap.crt
-    - onlyif: test -f /etc/ssl/stx-s3/openldap/s3openldap.crt
-    - watch_in:
-      - service: s3authserver
+# Import s3openldap cert to s3authserver.jks:
+#   cmd.run:
+#     - name: keytool -import -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate -noprompt -alias ldapcert -file /etc/ssl/stx-s3/openldap/s3openldap.crt
+#     - onlyif: test -f /etc/ssl/stx-s3/openldap/s3openldap.crt
+#     - watch_in:
+#       - service: s3authserver
 
-Import s3server cert to s3authserver.jks:
-  cmd.run:
-    - name: keytool -import -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate -noprompt -alias s3 -file /etc/ssl/stx-s3/s3/s3server.crt
-    - onlyif: test -f /etc/ssl/stx-s3/s3/s3server.crt
-    - watch_in:
-      - service: s3authserver
+# Import s3server cert to s3authserver.jks:
+#   cmd.run:
+#     - name: keytool -import -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate -noprompt -alias s3 -file /etc/ssl/stx-s3/s3/s3server.crt
+#     - onlyif: test -f /etc/ssl/stx-s3/s3/s3server.crt
+#     - watch_in:
+#       - service: s3authserver
 
 Encrypt ldap password:
   cmd.run:
@@ -55,11 +55,10 @@ Open https port for s3server:
     - save: True
 
 
-{% set node = grains['id'] -%}
-{% set data_if = pillar['cluster'][node]['network']['data_if'] -%}
+{% set data_if = pillar['cluster'][grains['id']]['network']['data_if'] -%}
 Append /etc/hosts:
   file.line:
     - name: /etc/hosts
-    - content: {{ grains['ip_interfaces'][data_if] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+    - content: {{ grains['ip4_interfaces'][data_if][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
     - location: end
-    - mode: ensure
+    - mode: insert

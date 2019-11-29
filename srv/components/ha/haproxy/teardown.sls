@@ -36,3 +36,15 @@ Remove user haproxy:
     - name: haproxy
     - purge: True
     -  force: True
+
+Reset selinux bool for haproxy:
+  selinux.boolean:
+    - name: haproxy_connect_any
+    - value: 0
+    - persist: True
+
+Reset selinux bool for httpd:
+  selinux.boolean:
+    - name: httpd_can_network_connect
+    - value: false
+    - persist: True

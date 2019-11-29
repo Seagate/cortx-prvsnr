@@ -1,10 +1,10 @@
 #-------------------------
 # Teardown haproxy/openldap
 #-------------------------
-include:
-  - components.misc.openldap.teardown
-  - components.ha.haproxy.teardown
-  - components.ha.keepalived.teardown
+# include:
+#   - components.misc.openldap.teardown
+#   - components.ha.haproxy.teardown
+#   - components.ha.keepalived.teardown
 #-------------------------
 # Teardown haproxy/openldap
 #-------------------------
@@ -67,11 +67,6 @@ Remove s3server cert:
 #-------------------------
 # Teardown Common Runtime
 #-------------------------
-Disable http port in selinux:
-  cmd.run:
-    - name: setsebool httpd_can_network_connect false -P
-    - onlyif: salt['grains.get']('selinux:enabled')
-
 Stop rsyslog service:
   service.dead:
     - name: rsyslog

@@ -98,7 +98,7 @@ Update network file:
 #     - contents:
 #       - '0000:0c:00.0 eth eth'
 
-{% set network_ifs = salt['grains.get']('ip_interfaces' ,'') %}
+{% set network_ifs = salt['grains.get']('ip4_interfaces' ,'') %}
 {% for nw_id,nw_if in network_ifs.items() %}
 {% if 'lo' not in nw_id and 'em' not in nw_id %}
 # Setup network for eth* interfaces

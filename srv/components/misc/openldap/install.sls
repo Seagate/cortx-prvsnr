@@ -8,11 +8,6 @@ Update to latest selinux-policy:
   pkg.installed:
     - name: selinux-policy
 
-Enable http port in selinux:
-  cmd.run:
-    - name: setsebool httpd_can_network_connect true -P
-    - onlyif: salt['grains.get']('selinux:enabled')
-
 Install certs:
   pkg.installed:
     - sources:
