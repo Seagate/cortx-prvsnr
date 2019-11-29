@@ -1,6 +1,6 @@
 include:
-  - components.s3client.awscli.prepare
-  - components.s3client.awscli.install
-  - components.s3client.awscli.config
-  - components.s3client.awscli.housekeeping
-  - components.s3client.awscli.sanity_check
+  - components.s3clients.awscli.prepare
+  - components.s3clients.awscli.install
+  - components.s3clients.awscli.config
+  - components.s3clients.awscli.housekeeping
+  - components.s3clients.awscli.sanity_check
