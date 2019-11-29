@@ -2,7 +2,7 @@
 
 Copy certs from s3server:
   cmd.run:
-    - name: scp {{ pillar['s3client']['s3server']['hostname'] }}:/opt/seagate/stx-s3-client-certs-*.rpm /opt/seagate
+    - name: scp {{ pillar['s3client']['s3server']['fqdn'] }}:/opt/seagate/stx-s3-client-certs-*.rpm /opt/seagate
     - unless: test -f /opt/seagate/stx-s3-client-certs-*
 
 Install certs:

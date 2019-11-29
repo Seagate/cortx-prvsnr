@@ -1,5 +1,5 @@
 include:
-  - components.s3client.prepare
+  - components.s3clients.prepare
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
