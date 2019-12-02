@@ -1,7 +1,7 @@
 pipeline { 
     agent {
         node {
-            label 'centos7.5_1804'
+            label 'docker-prvsnr-node'
         }
     }
     
@@ -20,7 +20,7 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                git branch: 'master', credentialsId: 'ees-prvsnr_ssh', url: 'ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git'
+                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git'
             }
         }
         stage('Package: Provisioner RPMS') {
@@ -77,5 +77,34 @@ pipeline {
                 """
             }
         }
+    }
+	
+	post {
+        success {
+            emailext (
+			subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+			body: """
+			<h><span style=color:green>SUCCESSFUL:</span> Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</h>
+			<p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>
+			<p>RPM's are located at http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/${env.BUILD_NUMBER}</p>
+			""",
+			recipientProviders: [[$class: 'DevelopersRecipientProvider']]
+			)
+			
+        }
+		
+		failure {
+            emailext (
+			subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+			body: """
+			<h><span style=color:red>FAILED:</span> Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</h>
+			<p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>
+			""",
+			to: 'shailesh.vaidya@seagate.com',
+			recipientProviders: [[$class: 'DevelopersRecipientProvider'],[$class: 'RequesterRecipientProvider']]
+			)
+			
+        }
+		
     }
 }
