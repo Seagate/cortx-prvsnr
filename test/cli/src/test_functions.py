@@ -1,6 +1,7 @@
 import os
 import pytest
 import json
+import yaml
 import functools
 from pathlib import Path
 
@@ -1050,17 +1051,20 @@ def test_functions_eos_pillar_update(
     install_repo, mock_hosts
 ):
     # 1. prepare some valid pillar for the component
-    component_pillar = '{}.sls'.format(component)
         # TODO python3.6 ???
     new_pillar_content = host.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
-    tmp_file = tmp_path / component_pillar
+    new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
+    new_pillar_dict.update({"test": "temporary"})
 
-        # TODO might need to update configure-eos.py to dump with endline at end
-    tmp_file.write_text(new_pillar_content + '\n')
+    component_pillar = '{}.sls'.format(component)
+    tmp_file = tmp_path / component_pillar
+    tmp_file.write_text(
+        yaml.dump(new_pillar_dict, default_flow_style=False, canonical=False)
+    )
     if not remote:
         host_tmp_file = host_tmpdir / component_pillar
         localhost.check_output(
@@ -1073,12 +1077,7 @@ def test_functions_eos_pillar_update(
         )
         tmp_file = host_tmp_file
 
-    # 2. remove original pillar to ensure that coming update is applied
-        # TODO better to have modified pillar
-    original_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
-    host.check_output('rm -f {}'.format(original_pillar))
-
-    # 3. call the script
+    # 2. call the script
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false' # TODO
@@ -1093,13 +1092,16 @@ def test_functions_eos_pillar_update(
         script, host=(localhost if remote else host), script_path=script_path
     )
 
-    # 4. verify
+    # 3. verify
     assert res.rc == 0
 
-    # TODO check md5sum is everywhere available
-    tmp_file_hash = (localhost if remote else host).check_output('md5sum {}'.format(tmp_file))
-    pillar_file_hash = host.check_output('md5sum {}'.format(original_pillar))
-    assert tmp_file_hash.split()[0] == pillar_file_hash.split()[0]
+    tmp_file_content = (localhost if remote else host).check_output('cat {}'.format(tmp_file))
+    original_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
+    pillar_file_content = host.check_output('cat {}'.format(original_pillar))
+
+    tmp_file_dict = yaml.safe_load(tmp_file_content.split()[0])
+    pillar_file_dict = yaml.safe_load(pillar_file_content.split()[0])
+    assert tmp_file_dict == pillar_file_dict
 
     # check that pillar has been refreshed on the minions
     expected_lines = [
