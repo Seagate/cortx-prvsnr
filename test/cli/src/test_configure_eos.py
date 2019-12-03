@@ -61,6 +61,7 @@ def run_script(host, *args, script_path=DEFAULT_SCRIPT_PATH, trace=False):
 
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_show(
     host, hostname, localhost, ssh_config, remote, project_path, install_provisioner
@@ -95,6 +96,7 @@ def test_configure_eos_show(
 
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.eos_spec({'host': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_update(
     host, hostname, host_tmpdir,
