@@ -30,7 +30,7 @@ class ClusterCfg(BaseCfg):
 
         if arg_parser:
             self.__setup_args(arg_parser)
-        
+
 
     def __load_defaults(self):
 
@@ -58,7 +58,7 @@ class ClusterCfg(BaseCfg):
             action="store_true",
             help='Display Yaml file format for cluster configs'
         )
-        
+
         arg_parser.add_argument(
             '--load-default',
             dest = 'load_default',
@@ -121,7 +121,7 @@ class ClusterCfg(BaseCfg):
                     or
                     self.__options["cluster"][node]["network"]["gateway_ip"]
                 )
-                
+
                 input_msg = ("Enter the default metadata_device ({0}): ".format(
                     self.__options["cluster"][node]['storage']["metadata_device"][0]
                 )
@@ -168,7 +168,7 @@ class ClusterCfg(BaseCfg):
                 new_options = yaml.safe_load(fd)
             self.__options.update(new_options)
             return True
-        
+
         elif program_args.load_default:
             if os.path.exists(self.__cfg_path+".bak"):
                 copy(self.__cfg_path+".bak",self.__cfg_path)

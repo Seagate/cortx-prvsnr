@@ -1076,18 +1076,6 @@ function eos_pillar_show_skeleton {
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
 }
 
-function eos_pillar_load_default {
-    set -eu
-
-    local _component="$1"
-    local _hostspec="${2:-}"
-    local _ssh_config="${3:-}"
-    local _sudo="${4:-false}"
-
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
-
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
-}
 
 #   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
@@ -1142,6 +1130,49 @@ function eos_pillar_update {
 
     # TODO is it ok that we stick to python3.6 here ?
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --${_component}-file $_file_path
+
+    local _target_minions='*'
+    if [[ -n "$_hostspec" ]]; then
+        _target_minions="'*'"
+    fi
+
+    # TODO test that
+    if [[ $($_cmd rpm -qa salt-master) ]]; then
+        $_cmd salt "$_target_minions" saltutil.refresh_pillar
+    fi
+}
+
+
+#   eos_pillar_load_default <component> [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Calls `configure-eos.py` util either locally or remotely to reset
+#   to a default state the configuration yaml for the specified `component`.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       component: a name of the provisioner repo component.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       timeout: a time to wait until a minion becomes connected to master.
+#           Default: `false`.
+#
+function eos_pillar_load_default {
+    set -eu
+
+    local _component="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then

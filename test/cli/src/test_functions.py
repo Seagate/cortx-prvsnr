@@ -1106,11 +1106,12 @@ def test_functions_eos_pillar_update_fail(
 
 
 # TODO
-#   - might need to improve ???
 #   - 'centos7-salt-installed' is used since it has python3.6 installed,
 #      python and repo installed would be enough actually
 #   - do we need to test all components actually, might be a subject of other test
 #     (e.g. for utils)
+#   - update and load default are related to each other but anyway makes sense
+#     to split into separate tests
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.eos_spec({'host': {'minion_id': 'eosnode-1', 'is_primary': True}})
@@ -1120,12 +1121,14 @@ def test_functions_eos_pillar_update_fail(
     "component",
     ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
 )
-def test_functions_eos_pillar_update(
+def test_functions_eos_pillar_update_and_load_default(
     run_script, host, hostname, host_tmpdir,
     localhost, tmp_path,
     ssh_config, remote, component, project_path,
     install_provisioner, mock_hosts
 ):
+    pillar_new_key = 'test'
+
     # 1. prepare some valid pillar for the component
         # TODO python3.6 ???
     new_pillar_content = host.check_output(
@@ -1134,7 +1137,7 @@ def test_functions_eos_pillar_update(
         )
     )
     new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
-    new_pillar_dict.update({"test": "temporary"})
+    new_pillar_dict.update({pillar_new_key: "temporary"})
 
     component_pillar = '{}.sls'.format(component)
     tmp_file = tmp_path / component_pillar
@@ -1153,7 +1156,7 @@ def test_functions_eos_pillar_update(
         )
         tmp_file = host_tmp_file
 
-    # 2. call the script
+    # 2. call the update script
     hostspec = hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false' # TODO
@@ -1172,17 +1175,40 @@ def test_functions_eos_pillar_update(
     assert res.rc == 0
 
     tmp_file_content = (localhost if remote else host).check_output('cat {}'.format(tmp_file))
-    original_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
-    pillar_file_content = host.check_output('cat {}'.format(original_pillar))
+    current_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
+    pillar_file_content = host.check_output('cat {}'.format(current_pillar))
 
-    tmp_file_dict = yaml.safe_load(tmp_file_content.split()[0])
-    pillar_file_dict = yaml.safe_load(pillar_file_content.split()[0])
+    tmp_file_dict = yaml.safe_load(tmp_file_content)
+    pillar_file_dict = yaml.safe_load(pillar_file_content)
     assert tmp_file_dict == pillar_file_dict
 
     # check that pillar has been refreshed on the minions
     expected_lines = [
         'SALT-ARGS: * saltutil.refresh_pillar'
     ]
+    assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
+
+    stdout_lines = res.stdout.split(os.linesep)
+    ind = stdout_lines.index(expected_lines[0])
+    assert stdout_lines[ind:(ind + len(expected_lines))] == expected_lines
+
+    # 4. call the script to reset to defaults
+    script = """
+        eos_pillar_load_default {} {} {} {}
+    """.format(component, hostspec, ssh_config, with_sudo)
+
+    res = run_script(
+        script, host=(localhost if remote else host), script_path=script_path
+    )
+
+    # 5. verify
+    assert res.rc == 0
+
+    pillar_file_content = host.check_output('cat {}'.format(current_pillar))
+    pillar_file_dict = yaml.safe_load(pillar_file_content)
+    del new_pillar_dict[pillar_new_key]
+    assert new_pillar_dict == pillar_file_dict
+
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
 
     stdout_lines = res.stdout.split(os.linesep)

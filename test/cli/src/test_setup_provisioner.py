@@ -1,6 +1,7 @@
 import os
 import pytest
 import json
+import yaml
 import logging
 
 import test.helper as h
@@ -172,6 +173,11 @@ def check_setup_provisioner_results(host_eosnode1):
         "components.{}".format(st) for st in
         ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server']
     ]
+    top_sls_content = host_eosnode1.check_output(
+        'cat {}'.format(h.PRVSNR_REPO_INSTALL_DIR / 'srv/top.sls')
+    )
+    top_sls_dict = yaml.safe_load(top_sls_content)
+    states_expected = top_sls_dict['base']['*']
 
     for minion_id in ('eosnode-1', 'eosnode-2'):
         # check states listed
@@ -195,7 +201,7 @@ def check_setup_provisioner_results(host_eosnode1):
 @pytest.mark.hosts(['host_eosnode1', 'host_eosnode2'])
 @pytest.mark.inject_ssh_config(['host_eosnode1'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['local'])
+@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
 def test_setup_provisioner_cluster(
     host_eosnode1, host_eosnode2, hostname_eosnode1, hostname_eosnode2,
     ssh_config, localhost, remote, repo_src, project_path, request, inject_ssh_config

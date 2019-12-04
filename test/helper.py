@@ -117,6 +117,7 @@ class Remote(ABC):
     def destroy(self, ok_if_missed=True, force=True):
         pass
 
+    # TODO force=False doesn't have any sense for automated scope
     @staticmethod
     @abstractmethod
     def destroy_by_name(remote_name, ok_if_missed=True, force=True):
@@ -220,7 +221,7 @@ class Vagrant:
                 self._env_prefix + cmd + (' 2>&1' if err_to_out else '')
             )
             if res.rc != 0:
-                raise VagrantError(res)
+                raise VagrantError(res.rc, res.stdout, res.stderr)
 
         finally:
             if res is not None:
@@ -396,28 +397,39 @@ class VagrantMachine(Remote):
         return self._vagrant.up(*args)
 
     def destroy(self, ok_if_missed=True, force=True):
-        self.destroy_by_name(self.name, ok_if_missed=ok_if_missed, force=force)
-
-    @staticmethod
-    def destroy_by_name(machine_name, ok_if_missed=True, force=True):
         _args = ['--force'] if force else []
-        vagrant = Vagrant()
         try:
-            vagrant.destroy(*_args, machine_name)
+            self._vagrant.destroy(*_args)
         except VagrantError as exc:
             # TODO custom error for that case
             if (
                 "machine with the name '{}' was not found configured"
-                .format(machine_name) in exc.stderr
+                .format(self.name) in exc.stderr
             ):
                 if ok_if_missed:
                     logger.info(
-                        'Vagrant machine with name {} is missed'.format(machine_name)
+                        'Vagrant machine with name {} is missed'.format(self.name)
                     )
                     return
                 else:
-                    raise RemoteNotExist(machine_name)
+                    raise RemoteNotExist(self.name)
             raise
+
+
+    @staticmethod
+    def destroy_by_name(machine_name, ok_if_missed=True, force=True):
+        # TODO move to module level, a kind of singletone
+        localhost = testinfra.get_host('local://')
+        global_status = run(localhost, 'vagrant global-status --prune | grep {}'.format(machine_name))
+        if global_status.rc != 0:  # missed
+            if ok_if_missed:
+                return
+            else:
+                raise RemoteNotExist('Vagrant machine with name {} is missed'.format(machine_name))
+
+        machine_id = global_status.stdout.split()[0]
+        _args = ['--force'] if force else []
+        Vagrant().destroy(*_args, machine_id)
 
     def cmd(self, cmd, *args):
         return self._vagrant.cmd(cmd, *args)
@@ -596,7 +608,7 @@ def _docker_container_run(client, image, base_name):
             )
             return Container(container)
         except docker.errors.APIError as exc:
-            Container.destroy_by_name(container)
+            Container.destroy_by_name(container, ok_if_missed=True)
 
             if 'is already in use' in str(exc):
                 # TODO ? try to remove is it's not running

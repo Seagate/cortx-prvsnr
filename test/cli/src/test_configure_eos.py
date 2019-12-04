@@ -94,11 +94,13 @@ def test_configure_eos_show(
     assert res.stdout.strip() == pillar_content
 
 
+# TODO
+#  - mostly repeats 'test_functions_eos_pillar_update_and_load_default'
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.eos_spec({'host': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_configure_eos_update(
+def test_configure_eos_update_and_load_default(
     host, hostname, host_tmpdir,
     localhost, tmp_path,
     ssh_config, remote, project_path,
@@ -115,9 +117,11 @@ def test_configure_eos_update(
     )
     assert res.rc == 0
 
+    pillar_new_key = 'test'
+
     new_pillar_content = res.stdout
     new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
-    new_pillar_dict.update({"test": "temporary"})
+    new_pillar_dict.update({pillar_new_key: "temporary"})
 
     component_pillar = '{}.sls'.format(component)
     tmp_file = tmp_path / component_pillar
@@ -136,7 +140,7 @@ def test_configure_eos_update(
         )
         tmp_file = host_tmp_file
 
-    # 2. call the script
+    # 2. call the script to update
     remote = '--remote {}'.format(hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
     with_sudo = '' # TODO
@@ -155,12 +159,28 @@ def test_configure_eos_update(
     assert res.rc == 0
 
     tmp_file_content = (localhost if remote else host).check_output('cat {}'.format(tmp_file))
-    original_pillar = PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
-    pillar_file_content = host.check_output('cat {}'.format(original_pillar))
+    current_pillar = PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
+    pillar_file_content = host.check_output('cat {}'.format(current_pillar))
 
-    tmp_file_dict = yaml.safe_load(tmp_file_content.split()[0])
-    pillar_file_dict = yaml.safe_load(pillar_file_content.split()[0])
+    tmp_file_dict = yaml.safe_load(tmp_file_content)
+    pillar_file_dict = yaml.safe_load(pillar_file_content)
     assert tmp_file_dict == pillar_file_dict
 
+    # 4. call the script to reset to defaults
+    res = run_script(
+        localhost if remote else host,
+        "--load-default {} {} {} {}".format(
+            ssh_config, with_sudo, remote, component
+        ),
+        script_path=script_path
+    )
+
+    # 5. verify
+    assert res.rc == 0
+
+    pillar_file_content = host.check_output('cat {}'.format(current_pillar))
+    pillar_file_dict = yaml.safe_load(pillar_file_content)
+    del new_pillar_dict[pillar_new_key]
+    assert new_pillar_dict == pillar_file_dict
 # TODO
 # - add testes for load defaults functionality
