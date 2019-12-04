@@ -2,6 +2,7 @@
 import json
 import os.path
 import yaml
+from shutil import copy
 
 from argparse import ArgumentParser, Namespace
 
@@ -45,6 +46,12 @@ class SSPLCfg(BaseCfg):
             dest = 'show_sspl_file_format',
             action="store_true",
             help='Display Yaml file format for sspl configs')
+        arg_parser.add_argument(
+            '--load-default',
+            dest = 'load_default',
+            action = 'store_true',
+            help = 'Reset default values to a modified YAML file'
+        )
 
 
     def __load_defaults(self):
@@ -99,11 +106,24 @@ class SSPLCfg(BaseCfg):
                 self.__options.update(new_options)
             return True
 
+        elif program_args.load_default:
+            if os.path.exists(self.__cfg_path+".bak"):
+                copy(self.__cfg_path+".bak",self.__cfg_path)
+            else:
+                print("Error: No Backup File exists ")
+            return False
         else:
             print("Error: No usable inputs provided.")
             return False
 
+    def pillar_backup(func):
+        def backup(*args):
+            copy(args[0].__cfg_path,args[0].__cfg_path+".bak")
+            return func(*args)
+        return backup
 
+
+    @pillar_backup
     def save(self):
         with open(self.__cfg_path, 'w') as fd:
             yaml.safe_dump(

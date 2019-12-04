@@ -1,7 +1,7 @@
 import os
 import pytest
-import json
 import logging
+import yaml
 
 from test.helper import PRVSNR_REPO_INSTALL_DIR
 
@@ -114,14 +114,16 @@ def test_configure_eos_update(
         "--show-file-format {}".format(component),
     )
     assert res.rc == 0
+
     new_pillar_content = res.stdout
+    new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
+    new_pillar_dict.update({"test": "temporary"})
 
     component_pillar = '{}.sls'.format(component)
     tmp_file = tmp_path / component_pillar
-
-        # TODO
-        # - might need to update configure-eos.py to dump with endline at end
-    tmp_file.write_text(new_pillar_content.strip() + '\n')
+    tmp_file.write_text(
+        yaml.dump(new_pillar_dict, default_flow_style=False, canonical=False)
+    )
     if not remote:
         host_tmp_file = host_tmpdir / component_pillar
         localhost.check_output(
@@ -134,12 +136,7 @@ def test_configure_eos_update(
         )
         tmp_file = host_tmp_file
 
-    # 2. remove original pillar to ensure that coming update is applied
-        # TODO better to have modified pillar
-    original_pillar = PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
-    host.check_output('rm -f {}'.format(original_pillar))
-
-    # 3. call the script
+    # 2. call the script
     remote = '--remote {}'.format(hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
     with_sudo = '' # TODO
@@ -154,12 +151,16 @@ def test_configure_eos_update(
         script_path=script_path
     )
 
-    # 4. verify
+    # 3. verify
     assert res.rc == 0
 
-    # TODO
-    # - check md5sum is everywhere available
-    # - might be better to use pyyaml and compare objects instead
-    tmp_file_hash = (localhost if remote else host).check_output('md5sum {}'.format(tmp_file))
-    pillar_file_hash = host.check_output('md5sum {}'.format(original_pillar))
-    assert tmp_file_hash.split()[0] == pillar_file_hash.split()[0]
+    tmp_file_content = (localhost if remote else host).check_output('cat {}'.format(tmp_file))
+    original_pillar = PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
+    pillar_file_content = host.check_output('cat {}'.format(original_pillar))
+
+    tmp_file_dict = yaml.safe_load(tmp_file_content.split()[0])
+    pillar_file_dict = yaml.safe_load(pillar_file_content.split()[0])
+    assert tmp_file_dict == pillar_file_dict
+
+# TODO
+# - add testes for load defaults functionality

@@ -10,6 +10,8 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 show_file=false
 component=
 file_path=
+load_default=false
+
 
 . $BASEDIR/functions.sh
 
@@ -30,6 +32,8 @@ Options:
   -f,  --file FILE                      update component pillar data using FILE as source,
                                          default: not set
   -p,  --show-file-format               show module’s config file contents
+  -l,  --load-default                   load the backup configuration for the component file
+ 
 "
 }
 
@@ -45,6 +49,9 @@ function options_parser {
             ;;
         -p|--show-file-format)
             show_file=true
+            ;;
+        -l|--load-default)
+            load_default=true
             ;;
         *)
             l_error "Unknown option: $1"
@@ -74,7 +81,7 @@ function positional_args_parser {
     fi
 }
 
-parse_args 'f:p' 'file:,show-file-format' options_parser positional_args_parser "$@"
+parse_args 'f:pl' 'file:,show-file-format,load-default' options_parser positional_args_parser "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -90,6 +97,9 @@ fi
 
 if [[ "$show_file" == true ]]; then
     eos_pillar_show_skeleton "$component" "$hostspec" "$ssh_config" "$sudo"
+    exit 0
+elif [[ "$load_default" == true ]]; then
+    eos_pillar_load_default "$component" "$hostspec" "$ssh_config" "$sudo"
     exit 0
 elif [[ -z "$file_path" ]]; then
     l_error "'--file' is a required options for the pillar update"

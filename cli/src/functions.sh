@@ -1076,6 +1076,18 @@ function eos_pillar_show_skeleton {
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
 }
 
+function eos_pillar_load_default {
+    set -eu
+
+    local _component="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
+}
 
 #   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
