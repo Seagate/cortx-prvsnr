@@ -123,24 +123,17 @@ if [[ -z "$prvsnr_version" && "$prvsnr_repo_src" != "local" && "$prvsnr_repo_src
 fi
 
 
-# TODO move to API function for better testing
 if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
     l_info 'trying to auto-detect salt master host for eosnode-2'
+    _reachable_names="$(get_reachable_host_names "$hostspec" "$eosnode_2_hostspec" "$ssh_config")"
 
-    _salt_master_addrs="$(collect_addrs "$hostspec" "$ssh_config" 2>/dev/null)"
-    l_debug "possible salt master hostnames: $_salt_master_addrs"
-
-    for _addr in $_salt_master_addrs; do
-        if [[ -n "$(check_host_reachable "$_addr" "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-            salt_master_hostname="$_addr"
-            break
-        fi
-    done
-
-    if [[ -z "$salt_master_hostname" ]]; then
+    if [[ -z "$_reachable_names" ]]; then
         l_warn "reachable salt master hostname hasn't been detected"
     else
-        l_info "salt master hostname set as $_addr"
+        _reachable_names_arr=
+        read -r -a _reachable_names_arr <<< "$_reachable_names"
+        salt_master_hostname="${_reachable_names_arr[0]}"
+        l_info "salt master hostname set as $salt_master_hostname"
     fi
 fi
 

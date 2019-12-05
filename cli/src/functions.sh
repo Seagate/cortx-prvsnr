@@ -498,7 +498,7 @@ EOF
 }
 
 
-#   check_host_reachable destination [<hostspec> [<ssh-config>]]
+#   check_host_reachable <destination> [<hostspec> [<ssh-config>]]
 #
 #   Check whether destination host is reachable either
 #   from the remote host or locally.
@@ -545,6 +545,53 @@ EOF
     fi
 }
 
+
+
+#   get_reachable_host_names <hostspec1> <ssh-config> [<hostspec2>]
+#
+#   Collect names of the host specified by `hostspec1` reachable from
+#   the another host specified by `hostspec2`.
+#
+#   Args:
+#       hostspec1: either IP or domain of the destination host
+#       hostspec2: either IP or domain of the source host
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+function get_reachable_host_names {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _hostspec1="${1:-}"
+    local _hostspec2="${2:-}"
+    local _ssh_config="${3:-}"
+
+    local _res=()
+
+    if [[ "$_hostspec1" == "$_hostspec2" ]]; then
+        l_error "host1 and host2 can't be the same, provided: $_hostspec1"
+        exit 1
+    fi
+
+    _host1_addrs="$(collect_addrs "$_hostspec1" "$_ssh_config")"
+    _host2_addrs="$(collect_addrs "$_hostspec2" "$_ssh_config")"
+
+    for _addr in $_host1_addrs; do
+        if [[ "$_host2_addrs" == *"$_addr"* ]]; then
+            l_warn "ignoring common host name: $_addr"
+        else
+            if [[ -n "$(check_host_reachable "$_addr" "$_hostspec2" "$_ssh_config" 2>/dev/null)" ]]; then
+                _res+=("$_addr")
+                break
+            fi
+        fi
+    done
+
+    echo "${_res[*]}"
+}
 
 
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
