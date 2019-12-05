@@ -1,6 +1,6 @@
-Set hostname:
-  cmd.run:
-    - name: hostnamectl set-hostname {{ pillar['cluster'][grains['id']]['hostname'] }}
+#Set hostname:
+#  cmd.run:
+#    - name: hostnamectl set-hostname {{ pillar['cluster'][grains['id']]['hostname'] }}
 
 hostsfile:
   file.managed:
