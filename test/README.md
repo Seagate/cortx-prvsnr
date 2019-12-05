@@ -43,8 +43,174 @@ Check `custom options` section of `pytest --help` for more information.
 
 - `--env_name`: mark test to be run in the specific environment, default: `centos7-base`
 - `--isolated`: mark test to be run in isolated environment instead of module wide shared, default: not set
+- `--eos_spec`: mark test as expecting specific EOS stack configuration, default: not set
+- `--hosts`: mark test as expecting the specified list of hosts, default: ['host']
+- `--inject_repo`: mark test as expecting repo injection only for specified hosts, default: all hosts
+- `--inject_ssh_config`: mark test as expecting ssh configuration only for specified hosts, default: all hosts
+- `--mock_cmds`: mark test as requiring mocked system commands, default: not set
 
 Check `pytest --markers` for more information.
+
+## Test API
+
+Test framework has helper.py and conftest.py which declare and implement the API&#39;s that can be used in tests. helper.py provides a set of helper functions and conftest.py provides a set of pytest fixtures that are accessible across multiple test files.
+
+
+<details>
+<summary style="color:#337AFF;font-size:15px;">Helper [ helper.py ]</summary>
+
+PRVSNR_REPO_INSTALL_DIR:
+- Defines the path to the EOS provisioner repository
+
+HostMeta:
+- HostMeta class defines the host system with the attributes like,
+  - **remote**: Remote host instance
+  - **host**: Testinfra host instance
+  - **ssh_config**: ssh_configurations of the host
+  - **machine_name**: Remote hostname
+  - **hostname**: Testinfra host instance hostname
+  - **iface**: Interface of host
+
+safe_filename:
+- Sanitizes strings that are intended to be used as names of files/directories.
+- Parameters:
+  - **name** - is a string to sanitize
+- Returns: sanitized string
+
+mock_system_cmd:
+- Mocks `cmd` on a `host` in such a way that command arguments are printed to standard output with prefix "`<CMD>-ARGS`: ", where `<CMD>` is uppercase for `cmd`.
+- Parameters:
+  - **host** - testinfra&#39;s host instance
+  - **cmd** - command to mock on a host
+  - **bin_path** - bin path (default: /usr/local/bin)
+
+restore_system_cmd:
+- Reverses the mock_system_cmd.
+- Parameters:
+  - **host** - testinfra&#39;s host instance
+  - **cmd** - command to mock on a host
+  - **bin_path** - bin path (default: /usr/local/bin)
+
+run:
+- Executes the provided input script on the host and optionally dumps stdout and stderr to logs. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.run).
+- Parameters:
+  - **host** - testinfra&#39;s host instance
+  - **script** - script to execute on host
+  - **force_dump** - boolean  (default: false)
+-  Returns: result of script execution
+
+check_output:
+- Executes the input script on the host using run method and asserts the result is 0. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.check_output). And optionally dumps stdout and stderr to logs.
+- Parameters:
+  - **host** - testinfra&#39;s host instance
+  - **script** - script to execute on host
+- Returns: standard output of script execution
+
+inject_repo:
+- Copies repository data to the hosts in the provided host_repo_dir path.
+- Parameters:
+  - **localhost** - localhost instance from fixture
+  - **host** - host instance
+  - **ssh_config** - path to ssh_config from fixture
+  - **project_path** - path of local ees-prvsnr repository from fixture
+  - **host_repo_dir** - path to copy ees-prvsnr
+- Returns: path of copied repository
+</details>
+
+<details>
+<summary style="color:#337AFF;font-size:15px;">Fixtures [conftest.py]</summary>
+
+project_path:
+- Returns the full path of local ees-prvsnr repository.
+- Scope: `session`
+
+localhost:
+- Returns testinfra&#39;s host object for the localhost.
+- Scope:  `session`
+
+tmpdir_session:
+- Returns a session-scoped base temporary directory
+- Scope: `session`
+
+tmpdir_module:
+- Returns a module-scoped base temporary directory.
+- Scope: `module`
+
+tmpdir_function:
+- Returns function-scoped directory
+- Scope: `function`
+
+ssh_config:
+- Returns path of ssh_config file
+- Scope: `function`
+
+ssh_key:
+- Returns ssh\_key file to access remote hosts
+- Scope: `function`
+
+rpm_prvsnr:
+- Builds provisioner rpm inside dynamically provisioned remote and returns path to the rpm on a localhost.
+- Scope: `session`
+
+env_name:
+- Returns a pair `<os>-<env>` of targeted base operating system and environment level.
+- Scope: `module`
+
+post_host_run_hook:
+-  Returns a callback which should be called once the host is started.
+- Scope: `module`
+
+hosts:
+- Returns a dictionary of the hosts provided for the test. Key is host label, value is testinfra&#39;s host instance.
+- Scope: `function`
+
+mock_hosts:
+- Mocks system commands on hosts specified by `mock_cmds` marker.
+- Scope: `function`
+
+inject_ssh_config:
+- Adds the ssh_config to the testinfra&#39;s host instances
+- Scope: `function`
+
+eos_spec:
+-  Returns a dictionary of the specific EOS stack configuration.
+-  Returned dictionary has keys as minion_id with the value of salt minion id of EOS node and is_primary with the boolean value stating whether the node is primary or not.
+- Scope: `function`
+
+eos_hosts:
+- Returns a dictionary of EOS host nodes
+- Return dictionary has keys as host with value as instance of host,  minion_id with the value of salt minion id of EOS node and is_primary with the true/false value
+- Scope: `function`
+
+eos_primary_host:
+- Returns testinfra&#39;s primary EOS node instance
+- Scope: `function`
+
+eos_primary_host_label:
+- Returns host fixture label of a primary EOS node
+- Scope: `function`
+
+eos_primary_host_ip:
+- Returns primary EOS host ip address
+- Scope: `function`
+
+configure_salt:
+- configures the salt on EOS nodes.
+- Scope: `function`
+
+accept_salt_keys:
+- Accepts the salt keys from minions on a primary EOS node
+- Scope: `function`
+</details>
+
+<details>
+<summary style="color:#337AFF;font-size:15px;">To add new tests (In progress)</summary>
+
+1. For any new functionality, add fixture or helper function inside the conftest.py and helper.py. Reuse the fixtures and helper functions if applicable.
+2. Import fixtures in the test file if using.
+3. Add tests file according to the functionality. E.g, For component related tests, add/update srv/components/ tests.
+</details>
+
 
 ## Test Environment Providers
 
