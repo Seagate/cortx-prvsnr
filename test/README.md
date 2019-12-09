@@ -55,14 +55,12 @@ Check `pytest --markers` for more information.
 
 Test framework has helper.py and conftest.py which declare and implement the API&#39;s that can be used in tests. helper.py provides a set of helper functions and conftest.py provides a set of pytest fixtures that are accessible across multiple test files.
 
+### helper.py
 
-<details>
-<summary style="color:#337AFF;font-size:15px;">Helper [ helper.py ]</summary>
+#### PRVSNR_REPO_INSTALL_DIR:
+- Defines the path to the EOS provisioner installation directory
 
-PRVSNR_REPO_INSTALL_DIR:
-- Defines the path to the EOS provisioner repository
-
-HostMeta:
+#### HostMeta:
 - HostMeta class defines the host system with the attributes like,
   - **remote**: Remote host instance
   - **host**: Testinfra host instance
@@ -71,43 +69,43 @@ HostMeta:
   - **hostname**: Testinfra host instance hostname
   - **iface**: Interface of host
 
-safe_filename:
+#### safe_filename:
 - Sanitizes strings that are intended to be used as names of files/directories.
 - Parameters:
   - **name** - is a string to sanitize
 - Returns: sanitized string
 
-mock_system_cmd:
+#### mock_system_cmd:
 - Mocks `cmd` on a `host` in such a way that command arguments are printed to standard output with prefix "`<CMD>-ARGS`: ", where `<CMD>` is uppercase for `cmd`.
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **cmd** - command to mock on a host
   - **bin_path** - bin path (default: /usr/local/bin)
 
-restore_system_cmd:
-- Reverses the mock_system_cmd.
+#### restore_system_cmd:
+- Reverses the [mock_system_cmd]()
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **cmd** - command to mock on a host
   - **bin_path** - bin path (default: /usr/local/bin)
 
-run:
-- Executes the provided input script on the host and optionally dumps stdout and stderr to logs. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.run).
+#### run:
+- Executes the provided input script on the host and optionally dumps stdout and stderr to logs. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.run). If the command fails, it logs a stderr line by line with level ERROR. 
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **script** - script to execute on host
   - **force_dump** - boolean  (default: false)
 -  Returns: result of script execution
 
-check_output:
-- Executes the input script on the host using run method and asserts the result is 0. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.check_output). And optionally dumps stdout and stderr to logs.
+#### check_output:
+- Executes the input script on the host using [run]() method and asserts the result is 0. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.check_output). And optionally dumps stdout and stderr to logs.
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **script** - script to execute on host
 - Returns: standard output of script execution
 
-inject_repo:
-- Copies repository data to the hosts in the provided host_repo_dir path.
+#### inject_repo:
+- Copies repository data on the hosts in the provided host_repo_dir path.
 - Parameters:
   - **localhost** - localhost instance from fixture
   - **host** - host instance
@@ -115,101 +113,104 @@ inject_repo:
   - **project_path** - path of local ees-prvsnr repository from fixture
   - **host_repo_dir** - path to copy ees-prvsnr
 - Returns: path of copied repository
-</details>
 
-<details>
-<summary style="color:#337AFF;font-size:15px;">Fixtures [conftest.py]</summary>
+### conftest.py
 
-project_path:
+#### project_path:
 - Returns the full path of local ees-prvsnr repository.
 - Scope: `session`
 
-localhost:
+#### localhost:
 - Returns testinfra&#39;s host object for the localhost.
 - Scope:  `session`
 
-tmpdir_session:
+#### tmpdir_session:
 - Returns a session-scoped base temporary directory
 - Scope: `session`
 
-tmpdir_module:
+#### tmpdir_module:
 - Returns a module-scoped base temporary directory.
 - Scope: `module`
 
-tmpdir_function:
-- Returns function-scoped directory
+#### tmpdir_function:
+- Returns function-scoped base temporary directory
 - Scope: `function`
 
-ssh_config:
+#### ssh_config:
 - Returns path of ssh_config file
 - Scope: `function`
 
-ssh_key:
+#### ssh_key:
 - Returns ssh\_key file to access remote hosts
 - Scope: `function`
 
-rpm_prvsnr:
+#### rpm_prvsnr:
 - Builds provisioner rpm inside dynamically provisioned remote and returns path to the rpm on a localhost.
 - Scope: `session`
 
-env_name:
+#### env_name:
 - Returns a pair `<os>-<env>` of targeted base operating system and environment level.
 - Scope: `module`
 
-post_host_run_hook:
+#### post_host_run_hook:
 -  Returns a callback which should be called once the host is started.
 - Scope: `module`
 
-hosts:
+#### hosts:
 - Returns a dictionary of the hosts provided for the test. Key is host label, value is testinfra&#39;s host instance.
 - Scope: `function`
 
-mock_hosts:
+#### mock_hosts:
 - Mocks system commands on hosts specified by `mock_cmds` marker.
 - Scope: `function`
 
-inject_ssh_config:
-- Adds the ssh_config to the testinfra&#39;s host instances
+#### inject_ssh_config:
+- Adds the ssh_config to host instances
 - Scope: `function`
 
-eos_spec:
--  Returns a dictionary of the specific EOS stack configuration.
--  Returned dictionary has keys as minion_id with the value of salt minion id of EOS node and is_primary with the boolean value stating whether the node is primary or not.
+#### eos_spec:
+- Returns a dictionary of the specific EOS stack configuration.
+- Returned eos_spec dictionary will be a nested dictionary with the host_eosnode1, host_eosbode2, etc. dictionaries
+- host_eosnode1 and host_eosnode2 has
+    - key: minion_id and value: salt minion id of EOS node
+    - key: is_primary and value: true/false
 - Scope: `function`
 
-eos_hosts:
+#### eos_hosts:
 - Returns a dictionary of EOS host nodes
-- Return dictionary has keys as host with value as instance of host,  minion_id with the value of salt minion id of EOS node and is_primary with the true/false value
+- Returned eos_hosts dictionary has
+    - key: host and value: host instance
+    - key: minion_id and value: salt minion id 
+    - key: is_primary and value: true/false
 - Scope: `function`
 
-eos_primary_host:
-- Returns testinfra&#39;s primary EOS node instance
+#### eos_primary_host:
+- Returns primary EOS node instance
 - Scope: `function`
 
-eos_primary_host_label:
+#### eos_primary_host_label:
 - Returns host fixture label of a primary EOS node
 - Scope: `function`
 
-eos_primary_host_ip:
+#### eos_primary_host_ip:
 - Returns primary EOS host ip address
 - Scope: `function`
 
-configure_salt:
+#### configure_salt:
 - configures the salt on EOS nodes.
 - Scope: `function`
 
-accept_salt_keys:
+#### accept_salt_keys:
 - Accepts the salt keys from minions on a primary EOS node
 - Scope: `function`
-</details>
 
-<details>
-<summary style="color:#337AFF;font-size:15px;">To add new tests (In progress)</summary>
+
+## To add new tests (In progress)
 
 1. For any new functionality, add fixture or helper function inside the conftest.py and helper.py. Reuse the fixtures and helper functions if applicable.
 2. Import fixtures in the test file if using.
 3. Add tests file according to the functionality. E.g, For component related tests, add/update srv/components/ tests.
-</details>
+
 
 
 ## Test Environment Providers
