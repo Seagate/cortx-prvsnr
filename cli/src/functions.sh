@@ -498,7 +498,7 @@ EOF
 }
 
 
-#   check_host_reachable destination [<hostspec> [<ssh-config>]]
+#   check_host_reachable <destination> [<hostspec> [<ssh-config>]]
 #
 #   Check whether destination host is reachable either
 #   from the remote host or locally.
@@ -545,6 +545,53 @@ EOF
     fi
 }
 
+
+
+#   get_reachable_host_names <hostspec1> <ssh-config> [<hostspec2>]
+#
+#   Collect names of the host specified by `hostspec1` reachable from
+#   the another host specified by `hostspec2`.
+#
+#   Args:
+#       hostspec1: either IP or domain of the destination host
+#       hostspec2: either IP or domain of the source host
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+function get_reachable_host_names {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _hostspec1="${1:-}"
+    local _hostspec2="${2:-}"
+    local _ssh_config="${3:-}"
+
+    local _res=()
+
+    if [[ "$_hostspec1" == "$_hostspec2" ]]; then
+        l_error "host1 and host2 can't be the same, provided: $_hostspec1"
+        exit 1
+    fi
+
+    _host1_addrs="$(collect_addrs "$_hostspec1" "$_ssh_config")"
+    _host2_addrs="$(collect_addrs "$_hostspec2" "$_ssh_config")"
+
+    for _addr in $_host1_addrs; do
+        if [[ "$_host2_addrs" == *"$_addr"* ]]; then
+            l_warn "ignoring common host name: $_addr"
+        else
+            if [[ -n "$(check_host_reachable "$_addr" "$_hostspec2" "$_ssh_config" 2>/dev/null)" ]]; then
+                _res+=("$_addr")
+                break
+            fi
+        fi
+    done
+
+    echo "${_res[*]}"
+}
 
 
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
@@ -594,6 +641,7 @@ baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/20
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+priority: 1
 EOF
 
 ! read -r -d '' _script << EOF
@@ -614,6 +662,10 @@ EOF
     rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
     echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
 
+    # Remove any older saltstack if any.
+    systemctl stop salt-minion salt-master || true
+    yum remove -y salt-minion salt-master
+
     yum clean expire-cache
 
     # install salt master/minion
@@ -629,7 +681,7 @@ EOF
 }
 
 
-#   install_repo [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]]]
+#   install_provisioner [<repo-src> [<prvsnr-version> [<hostspec> [<ssh-config> [<sudo> [<singlenode> [<installation-dir>]]]]]]]
 #
 #   Install provisioner repository either on the remote host or locally using
 #   one of possible types of sources.
@@ -653,10 +705,12 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       singlenode: a flag for a singlenode setup mode. Expected values: `true` or `false`.
+#           Default: `false`
 #       installation-dir: destination installation directory.
 #           Default: /opt/seagate/eos-prvsnr
 #
-function install_repo {
+function install_provisioner {
     set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
@@ -670,27 +724,47 @@ function install_repo {
     local _hostspec="${3:-}"
     local _ssh_config="${4:-}"
     local _sudo="${5:-false}"
-    local _installdir="${6:-/opt/seagate/eos-prvsnr}"
+    local _singlenode="${6:-false}"
+    local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
     local _prvsnr_repo=
     local _repo_archive_path=
+    local _tmp_dir=$(mktemp -d)
 
-    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version)"
+    local _cluster_sls_src
+    if [[ "$_singlenode" == true ]]; then
+        _cluster_sls_src="$_installdir/pillar/components/samples/singlenode.cluster.sls"
+    else
+        _cluster_sls_src="$_installdir/pillar/components/samples/ees.cluster.sls"
+    fi
+
+    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version), singlenode is $_singlenode"
 
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
         # might not always work
         local _script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
         pushd "$_script_dir"
-            local _repo_root="$(git rev-parse --show-toplevel)"
+            local _repo_root="$(realpath $_script_dir/../../)"
         popd
 
-        local _repo_archive_name='repo.zip'
+        local _repo_archive_name='repo.tgz'
         local _scp_opts=
-        _repo_archive_path="$_repo_root/$_repo_archive_name"
+        _repo_archive_path="$_tmp_dir/$_repo_archive_name"
 
         pushd "$_repo_root"
-            git archive --format=zip HEAD >"$_repo_archive_path"
+            if [[ -n "$_prvsnr_version" ]]; then  # treat the version as git commit/branch/tag ...
+                git archive --format=tar.gz "$_prvsnr_version" -o "$_repo_archive_path"
+            else  # do raw archive with uncommitted/untracked changes otherwise
+                tar -zcf "$_repo_archive_path" \
+                    --exclude=".build" \
+                    --exclude=".boxes" \
+                    --exclude=".vdisks" \
+                    --exclude=".vagrant" \
+                    --exclude=".pytest_cache" \
+                    --exclude="__pycache__" \
+                    -C "$_repo_root" .
+            fi
 
             if [[ -n "$_hostspec" ]]; then
                 if [[ -n "$_ssh_config" ]]; then
@@ -698,7 +772,7 @@ function install_repo {
                 fi
 
                 $(scp $_scp_opts $_repo_archive_path ${_hostspec}:/tmp)
-                rm -fv "$_repo_archive_path"
+                rm -rfv "$_tmp_dir"
                 _repo_archive_path="/tmp/$_repo_archive_name"
             fi
         popd
@@ -739,9 +813,10 @@ EOF
         yum install -y eos-prvsnr
     else
         # local
-        unzip -d "$_installdir" "$_repo_archive_path"
+        tar -zxf "$_repo_archive_path" -C "$_installdir"
         rm -vf "$_repo_archive_path"
     fi
+    cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -804,8 +879,8 @@ function configure_network {
         fi
 
         mkdir -p /etc/sysconfig/network-scripts/
-        cp files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
-        cp files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+        cp -f files/etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/
+        cp -f files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
     popd
 EOF
 
@@ -1048,18 +1123,6 @@ function eos_pillar_show_skeleton {
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
 }
 
-function eos_pillar_load_default {
-    set -eu
-
-    local _component="$1"
-    local _hostspec="${2:-}"
-    local _ssh_config="${3:-}"
-    local _sudo="${4:-false}"
-
-    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
-
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
-}
 
 #   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
@@ -1114,6 +1177,49 @@ function eos_pillar_update {
 
     # TODO is it ok that we stick to python3.6 here ?
     $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --${_component}-file $_file_path
+
+    local _target_minions='*'
+    if [[ -n "$_hostspec" ]]; then
+        _target_minions="'*'"
+    fi
+
+    # TODO test that
+    if [[ $($_cmd rpm -qa salt-master) ]]; then
+        $_cmd salt "$_target_minions" saltutil.refresh_pillar
+    fi
+}
+
+
+#   eos_pillar_load_default <component> [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Calls `configure-eos.py` util either locally or remotely to reset
+#   to a default state the configuration yaml for the specified `component`.
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       component: a name of the provisioner repo component.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       timeout: a time to wait until a minion becomes connected to master.
+#           Default: `false`.
+#
+function eos_pillar_load_default {
+    set -eu
+
+    local _component="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
+
+    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then

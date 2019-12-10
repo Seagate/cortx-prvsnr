@@ -123,31 +123,24 @@ if [[ -z "$prvsnr_version" && "$prvsnr_repo_src" != "local" && "$prvsnr_repo_src
 fi
 
 
-# TODO move to API function for better testing
 if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
     l_info 'trying to auto-detect salt master host for eosnode-2'
+    _reachable_names="$(get_reachable_host_names "$hostspec" "$eosnode_2_hostspec" "$ssh_config")"
 
-    _salt_master_addrs="$(collect_addrs "$hostspec" "$ssh_config" 2>/dev/null)"
-    l_debug "possible salt master hostnames: $_salt_master_addrs"
-
-    for _addr in $_salt_master_addrs; do
-        if [[ -n "$(check_host_reachable "$_addr" "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-            salt_master_hostname="$_addr"
-            break
-        fi
-    done
-
-    if [[ -z "$salt_master_hostname" ]]; then
+    if [[ -z "$_reachable_names" ]]; then
         l_warn "reachable salt master hostname hasn't been detected"
     else
-        l_info "salt master hostname set as $_addr"
+        _reachable_names_arr=
+        read -r -a _reachable_names_arr <<< "$_reachable_names"
+        salt_master_hostname="${_reachable_names_arr[0]}"
+        l_info "salt master hostname set as $salt_master_hostname"
     fi
 fi
 
 # SETUP EOSNODE-1
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
-install_repo "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
 configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
 
@@ -162,7 +155,7 @@ accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
 if [[ "$singlenode" != true ]]; then
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_repo "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
 
@@ -180,7 +173,10 @@ if [[ -n "$hostspec" ]]; then
 fi
 
 # TODO test that
-l_info "Triggering salt data mining"
-$cmd salt "$target_minions" mine.update
+if [[ "$singlenode" != true ]]; then
+    l_info "Triggering salt data mining"
+    # force salt to mine data
+    $cmd salt "$target_minions" mine.update
+fi
 
 l_info "Done"

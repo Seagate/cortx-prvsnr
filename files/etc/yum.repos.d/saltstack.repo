@@ -4,3 +4,4 @@ baseurl=https://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+priority=1

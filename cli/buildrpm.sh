@@ -49,15 +49,17 @@ echo "Using [GIT_VER=${GIT_VER}] ..."
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 
-DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
-# Setup the source tar for rpm build
-mkdir -p ${DEST_DIR}/cli/utils
-mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
-mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
-cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
-cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
-cp -pr ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
-cp -p ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
+    rm -rf eos-prvsnr-cli*
+
+    DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    # Setup the source tar for rpm build
+    mkdir -p ${DEST_DIR}/cli/utils
+    mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
+    mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
+    cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
+    cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
+    cp -pr ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
+    cp -p ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}

@@ -6,9 +6,9 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
-      mgmt_if: eth0                # Management network interfaces for bonding
-      data_if: lo                # Management network interfaces for bonding
-      gateway_ip: 10.0.2.2
+      mgmt_if: eth0                 # Management network interfaces for bonding
+      data_if: lo                   # Management network interfaces for bonding
+      gateway_ip:                   # No Implementation
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
         - /dev/sdb

@@ -33,7 +33,6 @@ Options:
                                          default: not set
   -p,  --show-file-format               show module’s config file contents
   -l,  --load-default                   load the backup configuration for the component file
- 
 "
 }
 

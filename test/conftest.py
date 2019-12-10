@@ -143,9 +143,23 @@ def vbox_seed_machine(request, project_path, vagrant_global_status_prune, localh
         machine.cmd('snapshot', 'restore', machine.name, 'initial --no-start')
 
 
+# TODO
+#  - DOCS
+#  - make configurable to use specific git state (git archive)
+@pytest.fixture(scope='session')
+def repo_tgz(project_path, localhost, tmpdir_session):
+    res = tmpdir_session / 'repo.tgz'
+    excluded_dirs = ['--exclude="{}"'.format(d) for d in h.REPO_BUILD_DIRS]
+    localhost.check_output(
+        'tar -czf "{}" {} -C "{}" .'
+        .format(res, ' '.join(excluded_dirs), project_path)
+    )
+    return res
+
+
 # TODO DOCS
 @pytest.fixture(scope='session')
-def rpm_prvsnr(request, project_path, localhost, tmpdir_session):
+def rpm_prvsnr(request, project_path, localhost, tmpdir_session, repo_tgz):
     envprovider = request.config.getoption("envprovider")
 
     # TODO DOCS : example how to run machine out of fixture scope
@@ -153,7 +167,9 @@ def rpm_prvsnr(request, project_path, localhost, tmpdir_session):
         envprovider, request, 'centos7', 'rpmbuild'
     ) as remote:
         meta = discover_remote(request, remote)
-        repo_path = h.inject_repo(localhost, meta.host, meta.ssh_config, project_path)
+        repo_path = h.inject_repo(
+            localhost, meta.host, meta.ssh_config, repo_tgz, project_path
+        )
         h.check_output(
             meta.host, 'cd {} && sh -x build/rpms/buildrpm.sh'.format(repo_path)
         )
@@ -403,7 +419,7 @@ def tmpdir_function(request, tmpdir_module):
 def ssh_config(request, tmpdir_function):
     return tmpdir_function / "ssh_config"
 
-
+# TODO do not create fixtures here, just collect labels
 @pytest.fixture
 def hosts(request):
     hosts = ['host']
@@ -443,30 +459,7 @@ def mock_hosts(hosts, request):
 
 
 @pytest.fixture
-def install_repo(hosts, localhost, project_path, ssh_config):
-    for host in hosts.values():
-        host.check_output(
-            "mkdir -p {}"
-            .format(PRVSNR_REPO_INSTALL_DIR)
-        )
-        hostname = host.check_output('hostname')
-        localhost.check_output(
-            "scp -r -F {} {} {}:{}".format(
-                ssh_config,
-                ' '.join(
-                    [
-                        str(project_path / path) for path in
-                        ('files', 'pillar', 'srv', 'cli')
-                    ]
-                ),
-                hostname,
-                PRVSNR_REPO_INSTALL_DIR
-            )
-        )
-
-
-@pytest.fixture
-def inject_repo(hosts, localhost, project_path, ssh_config, request):
+def inject_repo(hosts, localhost, project_path, repo_tgz, ssh_config, request):
     repo_paths = {}
     target_hosts = list(hosts)
 
@@ -476,7 +469,9 @@ def inject_repo(hosts, localhost, project_path, ssh_config, request):
 
     for label, host in hosts.items():
         if label in target_hosts:
-            repo_paths[label] = h.inject_repo(localhost, host, ssh_config, project_path)
+            repo_paths[label] = h.inject_repo(
+                localhost, host, ssh_config, repo_tgz, project_path
+            )
     return repo_paths
 
 
@@ -545,7 +540,28 @@ def eos_primary_host_ip(eos_primary_host_label, hosts_meta):
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_repo, eos_primary_host_ip):
+def install_provisioner(eos_hosts, hosts_meta, localhost, project_path, ssh_config):
+    assert eos_hosts, "the fixture makes sense only for eos hosts"
+
+    for label in eos_hosts:
+        h.check_output(
+            localhost,
+            "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
+            "{ssh_config} {sudo} {singlenode}\""
+            .format(
+                script_path=(project_path / 'cli/src/functions.sh'),
+                repo_src='local',
+                prvsnr_version="''",
+                hostspec=hosts_meta[label].hostname,
+                ssh_config=ssh_config,
+                sudo='false',
+                singlenode=('true' if len(eos_hosts) == 1 else 'false')
+            )
+        )
+
+
+@pytest.fixture
+def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
@@ -564,7 +580,7 @@ def configure_salt(eos_hosts, install_repo, eos_primary_host_ip):
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_repo, eos_primary_host):
+def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_host):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
@@ -708,14 +724,14 @@ def build_host_fixture(label=None, module_name=__name__):
         label = request.fixturename[len('host_meta_'):]
         _host_fixture_name = 'host' + (('_' + label) if label else '')
         # ensure that related host fixture has been actually called
-        host = request.getfixturevalue(_host_fixture_name)
+        _ = request.getfixturevalue(_host_fixture_name)
         return request.getfixturevalue('hosts_meta')[_host_fixture_name]
 
     def hostname(request):
         label = request.fixturename[len('hostname_'):]
         _host_fixture_name = 'host' + (('_' + label) if label else '')
         # ensure that related host fixture has been actually called
-        host = request.getfixturevalue(_host_fixture_name)
+        _ = request.getfixturevalue(_host_fixture_name)
         hosts_meta = request.getfixturevalue('hosts_meta')
         return hosts_meta[_host_fixture_name].hostname
 
@@ -732,7 +748,7 @@ def build_host_fixture(label=None, module_name=__name__):
         suffix = ('_' + label) if label else ''
         _host_fixture_name = 'host' + suffix
         # ensure that related host fixture has been actually called
-        host = request.getfixturevalue(_host_fixture_name)
+        _ = request.getfixturevalue(_host_fixture_name)
         localhost = request.getfixturevalue('localhost')
         rpm_local_path = request.getfixturevalue('rpm_prvsnr')
         tmpdir = request.getfixturevalue('host_tmpdir' + suffix)
