@@ -33,3 +33,11 @@ Setup haproxy config to enable logs:
     - source: salt://components/ha/haproxy/files/rsyslog.d/haproxy.conf
     - makedirs: True
     - keep_source: False
+
+Enable haproxy service:
+  service.enabled:
+    - name: haproxy.service
+
+Enable rsyslog service:
+  service.enabled:
+    - name: rsyslog.service
