@@ -83,18 +83,18 @@ Test framework has helper.py and conftest.py which declare and implement the API
   - **bin_path** - bin path (default: /usr/local/bin)
 
 #### restore_system_cmd:
-- Reverses the [mock_system_cmd](#mock-system-cmd)
+- Reverses the [mock_system_cmd](#mock_system_cmd)
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **cmd** - command to mock on a host
   - **bin_path** - bin path (default: /usr/local/bin)
 
 #### run:
-- Executes the provided input script on the host and optionally dumps stdout and stderr to logs. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.run). If the command fails, it logs a stderr line by line with level ERROR. 
+- Executes the provided input script on the host and optionally dumps stdout and stderr to logs. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.run). If the command fails or `force_dump` is set to `True` it logs stdout with level DEBUG and stderr with level ERROR.
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **script** - script to execute on host
-  - **force_dump** - boolean  (default: false)
+  - **force_dump** - dump stderr and stdout in any case  (default: false)
 -  Returns: result of script execution
 
 #### check_output:
@@ -112,7 +112,7 @@ Test framework has helper.py and conftest.py which declare and implement the API
   - **ssh_config** - path to ssh_config from fixture
   - **project_path** - path of local ees-prvsnr repository from fixture
   - **host_repo_dir** - path to copy ees-prvsnr
-- Returns: path of copied repository
+- Returns: path of copied repository on the `host`
 
 ### conftest.py
 
