@@ -83,7 +83,7 @@ Test framework has helper.py and conftest.py which declare and implement the API
   - **bin_path** - bin path (default: /usr/local/bin)
 
 #### restore_system_cmd:
-- Reverses the [mock_system_cmd]()
+- Reverses the [mock_system_cmd](#mock-system-cmd)
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **cmd** - command to mock on a host
@@ -98,7 +98,7 @@ Test framework has helper.py and conftest.py which declare and implement the API
 -  Returns: result of script execution
 
 #### check_output:
-- Executes the input script on the host using [run]() method and asserts the result is 0. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.check_output). And optionally dumps stdout and stderr to logs.
+- Executes the input script on the host using [run](#run) method and asserts the result is 0. Wraps [testinfra API](https://testinfra.readthedocs.io/en/latest/modules.html#testinfra.host.Host.check_output). And optionally dumps stdout and stderr to logs.
 - Parameters:
   - **host** - testinfra&#39;s host instance
   - **script** - script to execute on host
