@@ -1,0 +1,8 @@
+FROM seagate/ees-prvsnr:centos7-utils
+
+# TODO populate .dockerignore
+COPY cli/src/functions.sh /tmp/cli/src/
+COPY files /tmp/files/
+RUN bash -xec ". /tmp/cli/src/functions.sh; install_repos" \
+    && rm -rf /tmp/cli /tmp/files \
+    && rm -rf /var/cache/yum

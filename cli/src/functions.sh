@@ -1,5 +1,9 @@
 #!/bin/bash
 
+cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+repo_root_dir="$(realpath $cli_scripts_dir/../../)"
+
+
 # TODO API for error exit that might:
 #       - echos to stderr
 #       - print usage (optionally)
@@ -594,6 +598,80 @@ function get_reachable_host_names {
 }
 
 
+#   install_repos [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Install package repositories either on the remote host or locally.
+#   The function assumes that '../../files/etc/yum.repos.d' exists.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function install_repos {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    local _repo_base_dir="/etc/yum.repos.d"
+    local _repo_base_dir_backup="/etc/yum.repos.d.bak"
+    local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
+
+    l_info "Installing replacing package repositories '$_hostspec'"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    # config custom repos
+    yum clean expire-cache
+    rm -rf /var/cache/yum
+
+    if [[ -d "$_repo_base_dir" && ! -d "$_repo_base_dir_backup" ]]; then
+        cp -R "$_repo_base_dir" "$_repo_base_dir_backup"
+    else
+        echo -e "\\nWARNING: skip backup creation since backup already exists" >&2
+    fi
+
+    rm -rf "$_repo_base_dir"
+
+    # TODO a temporary fix since later version (2019.2.1) is buggy
+    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+
+    if [[ -z "$_hostspec" ]]; then
+        cp -R "$_project_repos" "$_repo_base_dir"
+    fi
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+
+    if [[ -n "$_hostspec" ]]; then
+        scp -r -F "$_ssh_config" "$_project_repos" "${_hostspec}":"$_repo_base_dir"
+    fi
+}
+
+
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Install SaltStack either on the remote host or locally.
@@ -621,28 +699,7 @@ function install_salt {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    local _epel_repo=
-    local _saltstack_repo=
-
     l_info "Installing salt on '$_hostspec'"
-
-! read -r -d '' _epel_repo << "EOF"
-[epel]
-gpgcheck=0
-enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/epel/
-name=epel
-EOF
-
-! read -r -d '' _saltstack_repo << "EOF"
-[saltstack-repo]
-name=SaltStack repo for RHEL/CentOS \$releasever PY3
-baseurl=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0
-enabled=1
-gpgcheck=1
-gpgkey=https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-priority: 1
-EOF
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -651,22 +708,9 @@ EOF
         set -x
     fi
 
-    # config custom yum repos
-    rm -rf /var/cache/yum
-    mkdir -p /etc/yum.repos.d
-
-    echo "$_epel_repo" >/etc/yum.repos.d/epel.repo
-
-    # TODO a temporary fix since later version (2019.2.1) is buggy
-    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-    echo "$_saltstack_repo" >/etc/yum.repos.d/saltstack.repo
-
     # Remove any older saltstack if any.
     systemctl stop salt-minion salt-master || true
     yum remove -y salt-minion salt-master
-
-    yum clean expire-cache
 
     # install salt master/minion
     yum install -y salt-minion salt-master
@@ -743,16 +787,11 @@ function install_provisioner {
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
         # might not always work
-        local _script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-        pushd "$_script_dir"
-            local _repo_root="$(realpath $_script_dir/../../)"
-        popd
-
         local _repo_archive_name='repo.tgz'
         local _scp_opts=
         _repo_archive_path="$_tmp_dir/$_repo_archive_name"
 
-        pushd "$_repo_root"
+        pushd "$repo_root_dir"
             if [[ -n "$_prvsnr_version" ]]; then  # treat the version as git commit/branch/tag ...
                 git archive --format=tar.gz "$_prvsnr_version" -o "$_repo_archive_path"
             else  # do raw archive with uncommitted/untracked changes otherwise
@@ -763,7 +802,7 @@ function install_provisioner {
                     --exclude=".vagrant" \
                     --exclude=".pytest_cache" \
                     --exclude="__pycache__" \
-                    -C "$_repo_root" .
+                    -C "$repo_root_dir" .
             fi
 
             if [[ -n "$_hostspec" ]]; then

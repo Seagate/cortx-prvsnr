@@ -138,6 +138,8 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
 fi
 
 # SETUP EOSNODE-1
+install_repos "$hostspec" "$ssh_config" "$sudo"
+
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
 install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
@@ -153,6 +155,8 @@ accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
 
 # SETUP EOSNODE-2
 if [[ "$singlenode" != true ]]; then
+    install_repos "$eosnode_2_hostspec" "$ssh_config" "$sudo"
+
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
     install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"

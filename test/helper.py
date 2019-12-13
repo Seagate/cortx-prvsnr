@@ -16,6 +16,9 @@ from functools import wraps
 import logging
 logger = logging.getLogger(__name__)
 
+MODULE_DIR = Path(__file__).resolve().parent
+
+PROJECT_PATH = MODULE_DIR.parent
 PRVSNR_REPO_INSTALL_DIR = Path('/opt/seagate/eos-prvsnr')
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80
@@ -29,33 +32,7 @@ REPO_BUILD_DIRS = [
 ]
 
 
-@attr.s
-class HostMeta:
-    # TODO validators for all
-    remote = attr.ib()
-    host = attr.ib()
-    ssh_config = attr.ib()
-    fixture_name = attr.ib(default=None)
-    machine_name = attr.ib(default=None)
-    hostname = attr.ib(default=None)
-    iface = attr.ib(default=None)
-
-    def __attrs_post_init__(self):
-        if self.hostname is None:
-            self.hostname = self.host.check_output('hostname')
-
-        # TODO more smarter logic to get iface that is asseccible from host
-        # (relates to https://github.com/hashicorp/vagrant/issues/2779)
-        if self.iface is None:
-            if (
-                isinstance(self.remote, VagrantMachine) and
-                (self.remote.provider == 'vbox')
-            ):
-                self.iface = 'eth1'
-            else:
-                self.iface = 'eth0'
-
-        assert self.host.interface(self.iface).exists
+localhost = testinfra.get_host('local://')
 
 
 # TODO check packer is available
@@ -67,7 +44,7 @@ class Packer:
     log = attr.ib(default=True)
     err_to_out = attr.ib(default=True)
     _localhost = attr.ib(
-        init=False, default=testinfra.get_host('local://')
+        init=False, default=localhost
     )
 
     @packerfile.validator
@@ -204,7 +181,7 @@ class Vagrant:
     _env_prefix = attr.ib(default='')
     _localhost = attr.ib(
         init=False,
-        default=testinfra.get_host('local://')
+        default=localhost
     )
 
     def __attrs_post_init__(self):
@@ -326,7 +303,7 @@ class VagrantMachine(Remote):
     )
     _localhost = attr.ib(
         init=False,
-        default=testinfra.get_host('local://')
+        default=localhost
     )
 
     @vagrantfile.validator
@@ -419,7 +396,6 @@ class VagrantMachine(Remote):
     @staticmethod
     def destroy_by_name(machine_name, ok_if_missed=True, force=True):
         # TODO move to module level, a kind of singletone
-        localhost = testinfra.get_host('local://')
         global_status = run(localhost, 'vagrant global-status --prune | grep {}'.format(machine_name))
         if global_status.rc != 0:  # missed
             if ok_if_missed:
@@ -458,7 +434,6 @@ class VagrantBox:
             raise ValueError(
                 "{} is not a file".format(value)
             )
-
 
 # just some common sense for now
 re_filename = re.compile(r'([^a-zA-Z0-9_.-])')
@@ -553,11 +528,13 @@ def fixture_builder(scope, name_with_scope=True, suffix=None, module_name=__name
         for _scope in scopes:
             name_parts = [
                 part for part in (
-                    f.__name__, _scope if name_with_scope else None, suffix
+                    f.__name__,
+                    ('_' + _scope) if name_with_scope else None,
+                    suffix
                 ) if part
             ]
             _f = pytest.fixture(scope=_scope)(f)
-            setattr(_f, '__name__', '_'.join(name_parts))
+            setattr(_f, '__name__', ''.join(name_parts))
             setattr(mod, _f.__name__, _f)
             res.append(_f)
         return res if scopes is scope else res[0]
@@ -652,34 +629,36 @@ def _vagrant_machine_up(tmpdir, box, base_name):
 
 
 # TODO use object proxy for testinfra's host instances instead
-def run(host, script, force_dump=False):
+def run(host, script, *args, force_dump=False, **kwargs):
     res = None
     try:
-        res = host.run(script)
+        res = host.run(script, *args, **kwargs)
     finally:
         if (res is not None) and ((res.rc != 0) or force_dump):
-            for line in res.stdout.split(os.linesep):
-                logger.debug(line)
-            for line in res.stderr.split(os.linesep):
-                logger.error(line)
+            if res.stdout:
+                for line in res.stdout.strip().split(os.linesep):
+                    logger.debug(line)
+            if res.stderr:
+                for line in res.stderr.strip().split(os.linesep):
+                    logger.error(line)
     return res
 
 
 def check_output(host, script, *args, **kwargs):
     res = run(host, script, *args, **kwargs)
     assert res.rc == 0
-    return res.stdout
+    return res.stdout.rstrip("\r\n")
 
 
-def inject_repo(localhost, host, ssh_config, local_repo_tgz, project_path, host_repo_dir=None):
+def inject_repo(host, ssh_config, local_repo_tgz, host_repo_dir=None):
     host_repo_tgz = Path('/tmp') / local_repo_tgz.name
 
     if host_repo_dir is None:
-        host_repo_dir = Path('/tmp') / project_path.name
+        host_repo_dir = Path('/tmp') / PROJECT_PATH.name
 
     hostname = host.check_output('hostname')
     localhost.check_output(
-        'scp -r -F "{}" "{}" {}:"{}"'.format(
+        'scp -F "{}" "{}" {}:"{}"'.format(
             ssh_config,
             local_repo_tgz,
             hostname,
@@ -691,3 +670,18 @@ def inject_repo(localhost, host, ssh_config, local_repo_tgz, project_path, host_
         .format(host_repo_dir, host_repo_tgz)
     )
     return host_repo_dir
+
+
+# TODO requires md5sum and other system tools
+def hash_dir(path, host=localhost):
+    res = host.check_output(
+        'bash -c "set -o pipefail; '
+        'cd {} && find . -type f -print0 | LANG=C sort -z | xargs -0 md5sum | md5sum"'
+        .format(path)
+    )
+    return res.split()[0]
+
+
+def hash_file(path, host=localhost):
+    res = host.check_output('md5sum {}'.format(path))
+    return res.split()[0]
