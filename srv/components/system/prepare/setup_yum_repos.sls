@@ -26,6 +26,13 @@ add_epel_repo:
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
 
+add_python3_uploads:
+  pkgrepo.managed:
+    - name: {{ defaults.base_repos.python3_uploads.id }}
+    - humanname: python3_uploads
+    - baseurl: {{ defaults.base_repos.python3_uploads.url }}
+    - gpgcheck: 0
+
 add_saltsatck_repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.saltstack_repo.id }}
