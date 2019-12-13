@@ -197,15 +197,21 @@ Vagrant.configure("2") do |config|
         name: "Vagrant_override",
         #run: "once",
         inline: <<-SHELL
+          # Setup data0 network
+          sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
+          echo IPADDR=#{node["data0"]}
+          sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
+
           touch /etc/salt/minion_id
           sudo echo #{node["minion_id"]} > /etc/salt/minion_id
           sudo sed -i 's/master: .*/master: 127.0.0.1/g' /etc/salt/minion
 
-          #sudo salt-key -D
-          #sudo systemctl restart salt-minion
-          #sleep 2
-          #sudo salt-key -A -y
-          #sleep 2
+          sudo salt-key -D
+          sudo systemctl restart salt-minion
+          sleep 2
+          sudo salt-key -A -y
+          sleep 2
+          
           #sudo salt eosnode-1 state.apply components.system
           #sudo salt eosnode-1 state.apply components.system.storage
           #sudo salt eosnode-1 state.apply components.ha.haproxy
