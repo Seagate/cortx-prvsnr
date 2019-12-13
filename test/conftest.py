@@ -1,6 +1,7 @@
 import docker
 import time
 import json
+import attr
 from pathlib import Path
 from collections import defaultdict
 
@@ -32,19 +33,149 @@ ENV_LEVELS_HIERARCHY = {
     'utils': 'base',
     'rpmbuild': 'base',
     'network-manager-installed': 'base',
-    'salt-installed': 'utils',
+    'repos-installed': 'utils',
+    'salt-installed': 'repos-installed',
     'prvsnr-ready': 'base'
 }
 
 DEFAULT_EOS_SPEC = {
-    'host_eosnode1': {
+    'eosnode1': {
         'minion_id': 'eosnode-1',
         'is_primary': True,
-    }, 'host_eosnode2': {
+    }, 'eosnode2': {
         'minion_id': 'eosnode-2',
         'is_primary': False,
     }
 }
+
+
+@attr.s
+class HostMeta:
+    # TODO validators for all
+    remote = attr.ib()
+    host = attr.ib()
+    ssh_config = attr.ib()
+    request = attr.ib()
+
+    label = attr.ib(default='')
+    machine_name = attr.ib(default=None)
+    hostname = attr.ib(default=None)
+    iface = attr.ib(default=None)
+
+    _hostname = attr.ib(init=False, default=None)
+    _tmpdir = attr.ib(init=False, default=None)
+    _repo = attr.ib(init=False, default=None)
+    _rpm_prvsnr = attr.ib(init=False, default=None)
+    _rpm_prvsnr_cli = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        # TODO more smarter logic to get iface that is asseccible from host
+        # (relates to https://github.com/hashicorp/vagrant/issues/2779)
+        if self.iface is None:
+            if (
+                isinstance(self.remote, h.VagrantMachine) and
+                (self.remote.provider == 'vbox')
+            ):
+                self.iface = 'eth1'
+            else:
+                self.iface = 'eth0'
+
+        assert self.host.interface(self.iface).exists
+
+    @property
+    def hostname(self):
+        if self._hostname is None:
+            self._hostname = self.host.check_output('hostname')
+        return self._hostname
+
+    @property
+    def tmpdir(self):
+        if self._tmpdir is None:
+            tmpdir_function = self.request.getfixturevalue('tmpdir_function')
+            # TODO non linux systems
+            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')
+            self.host.check_output("mkdir -p {}".format(self._tmpdir))
+        return self._tmpdir
+
+    def _copy_to_host(self, local_path, host_path=None):
+        if host_path is None:
+            host_path = self.tmpdir / local_path.name
+        h.localhost.check_output(
+            "scp -r -F {} {} {}:{}".format(
+                self.ssh_config,
+                local_path,
+                self.hostname,
+                host_path
+            )
+        )
+        return host_path
+
+    @property
+    def rpm_prvsnr(self):
+        if self._rpm_prvsnr is None:
+            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr')
+            self._rpm_prvsnr = self._copy_to_host(rpm_local_path)
+        return self._rpm_prvsnr
+
+    @property
+    def rpm_prvsnr_cli(self):
+        if self._rpm_prvsnr_cli is None:
+            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_cli')
+            self._rpm_prvsnr_cli = self._copy_to_host(rpm_local_path)
+        return self._rpm_prvsnr_cli
+
+    @property
+    def repo(self):
+        if self._repo is None:
+            repo_tgz = self.request.getfixturevalue('repo_tgz')
+            self._repo = h.inject_repo(
+                self.host, self.ssh_config, repo_tgz
+            )
+        return self._repo
+
+    @property
+    def fixture_name(self):
+        return 'mhost' + self.label
+
+    def run(self, script, *args, force_dump=False, **kwargs):
+        return h.run(self.host, script, *args, force_dump=force_dump, **kwargs)
+
+    def check_output(self, script, *args, force_dump=False, **kwargs):
+        return h.check_output(self.host, script, *args, force_dump=force_dump, **kwargs)
+
+
+class LocalHostMeta(HostMeta):
+    @property
+    def hostname(self):
+        return 'localhost'
+
+    @property
+    def tmpdir(self):
+        if self._tmpdir is None:
+            self._tmpdir = self.request.getfixturevalue('tmpdir_function')
+        return self._tmpdir
+
+    @property
+    def rpm_prvsnr(self):
+        if self._rpm_prvsnr is None:
+            self._rpm_prvsnr = self.request.getfixturevalue('rpm_prvsnr')
+        return self._rpm_prvsnr
+
+    @property
+    def rpm_prvsnr_cli(self):
+        if self._rpm_prvsnr is None:
+            self._rpm_prvsnr = self.request.getfixturevalue('rpm_prvsnr_cli')
+        return self._rpm_prvsnr
+
+    @property
+    def repo(self):
+        if self._repo is None:
+            self._repo = h.PROJECT_PATH
+        return self._repo
+
+    @property
+    def fixture_name(self):
+        return 'mlocalhost'
 
 
 def pytest_configure(config):
@@ -59,23 +190,20 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "hosts(list): mark test as expecting "
-                   "the specified list of hosts, default: ['host']"
+                   "the specified list of hosts by labels, "
+                   "default: ['']"
     )
     config.addinivalue_line(
         "markers", "isolated: mark test to be run in the isolated "
                    "environment instead of module wide shared"
     )
     config.addinivalue_line(
-        "markers", "inject_repo: mark test as expecting repo injection "
-                   "only for specified hosts, default: all hosts"
-    )
-    config.addinivalue_line(
         "markers", "inject_ssh_config: mark test as expecting ssh configuration "
                    "only for specified hosts, default: all hosts"
     )
     config.addinivalue_line(
-        "markers", "mock_cmds(list): mark test as requiring "
-                   "mocked system commands"
+        "markers", "mock_cmds(dict[host_lable, list]): mark test as requiring "
+                   "list of mocked system commands per host"
     )
 
 
@@ -89,7 +217,7 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def project_path():
-    return MODULE_DIR.parent
+    return h.PROJECT_PATH
 
 
 @pytest.fixture(scope="session")
@@ -99,7 +227,7 @@ def docker_client():
 
 @pytest.fixture(scope="session")
 def localhost():
-    return testinfra.get_host('local://')
+    return h.localhost
 
 
 @pytest.fixture(scope='session')
@@ -118,7 +246,7 @@ def vagrant_global_status_prune(localhost):
 
 # TODO multi platforms case
 @pytest.fixture(scope="session")
-def vbox_seed_machine(request, project_path, vagrant_global_status_prune, localhost):
+def vbox_seed_machine(request, project_path, vagrant_global_status_prune):
     if request.config.getoption("envprovider") != 'vbox':
         return None
 
@@ -157,36 +285,66 @@ def repo_tgz(project_path, localhost, tmpdir_session):
     return res
 
 
-# TODO DOCS
-@pytest.fixture(scope='session')
-def rpm_prvsnr(request, project_path, localhost, tmpdir_session, repo_tgz):
+def _rpmbuild_mhost(request):
     envprovider = request.config.getoption("envprovider")
 
     # TODO DOCS : example how to run machine out of fixture scope
-    with build_remote(
+    remote = build_remote(
         envprovider, request, 'centos7', 'rpmbuild'
-    ) as remote:
-        meta = discover_remote(request, remote)
-        repo_path = h.inject_repo(
-            localhost, meta.host, meta.ssh_config, repo_tgz, project_path
+    )
+
+    try:
+        return discover_remote(request, remote)
+    except Exception:
+        remote.destoy()
+        raise
+
+
+def _copy_to_local(mhost, host_path, tmpdir_local):
+    local_path = tmpdir_local / host_path.name
+    h.localhost.check_output(
+        "scp -r -F {} {}:{} {}".format(
+            mhost.ssh_config,
+            mhost.hostname,
+            host_path,
+            local_path
         )
-        h.check_output(
-            meta.host, 'cd {} && sh -x build/rpms/buildrpm.sh'.format(repo_path)
+    )
+    return local_path
+
+
+# TODO DOCS
+@pytest.fixture(scope='session')
+def rpm_prvsnr(request, tmpdir_session):
+    mhost = _rpmbuild_mhost(request)
+    # TODO DOCS : example how to run machine out of fixture scope
+    with mhost.remote as _:
+        mhost.check_output(
+            'cd {} && sh -x build/rpms/buildrpm.sh'.format(mhost.repo)
         )
-        rpm_remote_path = h.check_output(
-            meta.host, 'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
-        ).strip()
-        rpm_remote_path = Path(rpm_remote_path)
-        rpm_local_path = tmpdir_session / rpm_remote_path.name
-        localhost.check_output(
-            "scp -F {} {}:{} {}".format(
-                meta.ssh_config,
-                meta.hostname,
-                rpm_remote_path,
-                rpm_local_path
-            )
+        rpm_remote_path = mhost.check_output(
+            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
         )
-        return rpm_local_path
+        return _copy_to_local(
+            mhost, Path(rpm_remote_path), tmpdir_session
+        )
+
+
+# TODO DOCS
+@pytest.fixture(scope='session')
+def rpm_prvsnr_cli(request, tmpdir_session):
+    mhost = _rpmbuild_mhost(request)
+    # TODO DOCS : example how to run machine out of fixture scope
+    with mhost.remote as _:
+        mhost.check_output(
+            'cd {} && sh -x cli/buildrpm.sh'.format(mhost.repo)
+        )
+        rpm_remote_path = mhost.check_output(
+            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
+        ).split()[0]
+        return _copy_to_local(
+            mhost, Path(rpm_remote_path), tmpdir_session
+        )
 
 
 @pytest.fixture(scope='module')
@@ -216,7 +374,7 @@ def build_docker_image_fixture(os_name, env_level):
 
     fixture_builder(
         'session',
-        suffix=env_fixture_suffix(os_name, env_level),
+        suffix=('_' + env_fixture_suffix(os_name, env_level)),
         module_name=__name__,
         name_with_scope=False
     )(docker_image)
@@ -275,7 +433,7 @@ def build_vagrant_box_fixture(os_name, env_level):
 
     fixture_builder(
         'session',
-        suffix=env_fixture_suffix(os_name, env_level),
+        suffix=('_' + env_fixture_suffix(os_name, env_level)),
         module_name=__name__,
         name_with_scope=False
     )(vagrant_box)
@@ -312,7 +470,7 @@ def build_vagrant_machine_shared_fixture(os_name, env_level):
 
     fixture_builder(
         'session',
-        suffix=env_fixture_suffix(os_name, env_level),
+        suffix=('_' + env_fixture_suffix(os_name, env_level)),
         module_name=__name__,
         name_with_scope=False
     )(vagrant_machine_shared)
@@ -342,7 +500,7 @@ def vagrant_machine_shared(request, env_name, project_path):
 
 @pytest.fixture(scope='module')
 def post_host_run_hook():
-    def f(host, hostname, ssh_config, request):
+    def f(mhost):
         pass
     return f
 
@@ -358,7 +516,7 @@ def docker_container(request, docker_client, env_name):
     os_name = _parts[0]
     env_level = '-'.join(_parts[1:])
 
-    label = request.fixturename[len('docker_container_{}'.format(request.scope)) + 1:]
+    label = request.fixturename[len('docker_container_{}'.format(request.scope)):]
 
     with build_remote(
         'docker', request, os_name, env_level, label
@@ -366,7 +524,7 @@ def docker_container(request, docker_client, env_name):
         yield remote
 
 
-def vagrant_machine(localhost, request, tmp_path_factory, env_name):
+def vagrant_machine(request, tmp_path_factory, env_name):
     # TODO API to reuse by other providers
     if request.scope == 'function':
         marker = request.node.get_closest_marker('env_name')
@@ -377,7 +535,7 @@ def vagrant_machine(localhost, request, tmp_path_factory, env_name):
     os_name = _parts[0]
     env_level = '-'.join(_parts[1:])
 
-    label = request.fixturename[len('vagrant_machine_{}'.format(request.scope)) + 1:]
+    label = request.fixturename[len('vagrant_machine_{}'.format(request.scope)):]
 
     # TODO configurable way for that
     shared = False
@@ -419,18 +577,15 @@ def tmpdir_function(request, tmpdir_module):
 def ssh_config(request, tmpdir_function):
     return tmpdir_function / "ssh_config"
 
-# TODO do not create fixtures here, just collect labels
+
 @pytest.fixture
 def hosts(request):
-    hosts = ['host']
-
+    hosts = ['']
     marker = request.node.get_closest_marker('hosts')
     if marker:
         hosts = marker.args[0]
 
-    return {
-        host: request.getfixturevalue(host) for host in hosts
-    }
+    return hosts
 
 
 @pytest.fixture
@@ -439,62 +594,50 @@ def hosts_meta():
 
 
 @pytest.fixture
-def mock_hosts(hosts, request):
-    cmds = []
+def mock_hosts(hosts, request, mlocalhost):
+    mocked = defaultdict(list)
 
     marker = request.node.get_closest_marker('mock_cmds')
-    if marker:
-        cmds = marker.args[0]
+    if not marker:
+        return
 
-    for host in hosts.values():
-        assert host is not localhost  # TODO more clever check
-        for cmd in cmds:
-            mock_system_cmd(host, cmd)
-
-    yield
-
-    for host in hosts.values():
-        for cmd in cmds:
-            restore_system_cmd(host, cmd)
-
-
-@pytest.fixture
-def inject_repo(hosts, localhost, project_path, repo_tgz, ssh_config, request):
-    repo_paths = {}
-    target_hosts = list(hosts)
-
-    marker = request.node.get_closest_marker('inject_repo')
-    if marker:
-        target_hosts = marker.args[0]
-
-    for label, host in hosts.items():
-        if label in target_hosts:
-            repo_paths[label] = h.inject_repo(
-                localhost, host, ssh_config, repo_tgz, project_path
-            )
-    return repo_paths
+    try:
+        for label, cmds in marker.args[0].items():
+            if label in hosts:
+                fixture_name = 'mhost' + label
+                mhost = request.getfixturevalue(fixture_name)
+                assert mhost is not mlocalhost  # TODO more clever check
+                for cmd in cmds:
+                    mock_system_cmd(mhost.host, cmd)
+                    mocked[fixture_name].append(cmd)
+        yield
+    finally:
+        for fixture_name, cmds in mocked.items():
+            mhost = request.getfixturevalue(fixture_name)
+            for cmd in cmds:
+                restore_system_cmd(mhost.host, cmd)
 
 
 @pytest.fixture
-def inject_ssh_config(hosts, localhost, ssh_config, ssh_key, request):
-    target_hosts = list(hosts)
+def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
+    target_hosts = set(hosts)
 
     marker = request.node.get_closest_marker('inject_ssh_config')
     if marker:
-        target_hosts = marker.args[0]
+        target_hosts = set(marker.args[0]) & set(hosts)
 
-    for label, host in hosts.items():
-        if label in target_hosts:
-            hostname = host.check_output('hostname')
-            for path in (ssh_config, ssh_key):
-                host.check_output("mkdir -p {}".format(path.parent))
-                localhost.check_output(
-                    "scp -p -F {} {} {}:{}".format(
-                        ssh_config, path, hostname, path
-                    )
+    for label in target_hosts:
+        mhost = request.getfixturevalue('mhost' + label)
+        assert mhost is not mlocalhost
+        for path in (ssh_config, ssh_key):
+            mhost.check_output("mkdir -p {}".format(path.parent))
+            mlocalhost.check_output(
+                "scp -p -F {} {} {}:{}".format(
+                    ssh_config, path, mhost.hostname, path
                 )
-            host.check_output("mkdir -p ~/.ssh".format(path.parent))
-            host.check_output('cp -p {} ~/.ssh/config'.format(ssh_config))
+            )
+        mhost.check_output("mkdir -p ~/.ssh")
+        mhost.check_output('cp -p {} ~/.ssh/config'.format(ssh_config))
 
 
 @pytest.fixture
@@ -514,18 +657,12 @@ def _eos_spec(eos_spec):
 @pytest.fixture
 def eos_hosts(hosts, _eos_spec, request):
     _hosts = defaultdict(dict)
-    for label, host in hosts.items():
+    for label in hosts:
         if label in _eos_spec:
-            _hosts[label]['host'] = host
             _hosts[label]['minion_id'] = _eos_spec[label]['minion_id']
             _hosts[label]['is_primary'] = _eos_spec[label].get('is_primary', True)
 
     return _hosts
-
-
-@pytest.fixture
-def eos_primary_host(eos_hosts):
-    return [v for v in eos_hosts.values() if v['is_primary']][0]['host']
 
 
 @pytest.fixture
@@ -534,25 +671,31 @@ def eos_primary_host_label(eos_hosts):
 
 
 @pytest.fixture
-def eos_primary_host_ip(eos_primary_host_label, hosts_meta):
-    meta = hosts_meta[eos_primary_host_label]
-    return meta.host.interface(meta.iface).addresses[0]
+def eos_primary_mhost(eos_primary_host_label, request):
+    return request.getfixturevalue('mhost' + eos_primary_host_label)
 
 
 @pytest.fixture
-def install_provisioner(eos_hosts, hosts_meta, localhost, project_path, ssh_config):
+def eos_primary_host_ip(eos_primary_mhost):
+    return eos_primary_mhost.host.interface(
+        eos_primary_mhost.iface
+    ).addresses[0]
+
+
+@pytest.fixture
+def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request):
     assert eos_hosts, "the fixture makes sense only for eos hosts"
 
     for label in eos_hosts:
-        h.check_output(
-            localhost,
+        mhost = request.getfixturevalue('mhost' + label)
+        mlocalhost.check_output(
             "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
             "{ssh_config} {sudo} {singlenode}\""
             .format(
                 script_path=(project_path / 'cli/src/functions.sh'),
                 repo_src='local',
                 prvsnr_version="''",
-                hostspec=hosts_meta[label].hostname,
+                hostspec=mhost.hostname,
                 ssh_config=ssh_config,
                 sudo='false',
                 singlenode=('true' if len(eos_hosts) == 1 else 'false')
@@ -561,7 +704,7 @@ def install_provisioner(eos_hosts, hosts_meta, localhost, project_path, ssh_conf
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip):
+def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
@@ -572,7 +715,8 @@ def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip):
         primary_host = (
             "localhost" if host_spec['is_primary'] else eos_primary_host_ip
         )
-        host_spec['host'].check_output(
+        mhost = request.getfixturevalue('mhost' + label)
+        mhost.check_output(
             ". {} && configure_salt '{}' '' '' '' {} {}".format(
                 cli_dir / 'functions.sh', minion_id, is_primary, primary_host
             )
@@ -580,15 +724,20 @@ def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip):
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_host):
+def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
-        eos_primary_host.check_output(". {} && accept_salt_keys '{}'".format(
+        eos_primary_mhost.check_output(". {} && accept_salt_keys '{}'".format(
             cli_dir / 'functions.sh', host_spec['minion_id'])
         )
 
-    eos_primary_host.check_output("salt '*' mine.update")
+    eos_primary_mhost.check_output("salt '*' mine.update")
+
+
+@pytest.fixture
+def mlocalhost(localhost, request):
+    return LocalHostMeta(None, localhost, None, request, label=None, iface='lo')
 
 
 def build_remote(
@@ -616,7 +765,7 @@ def build_remote(
 
 
 def discover_remote(
-    request, remote, ssh_config=None, host_fixture_name=None
+    request, remote, ssh_config=None, host_fixture_label=None
 ):
     tmpdir = request.getfixturevalue('tmpdir_{}'.format(request.scope))
 
@@ -690,22 +839,18 @@ def discover_remote(
     hostspec = "ssh://{}".format(_hostname)
     _host = testinfra.get_host(hostspec, ssh_config=str(ssh_config))
 
-    return h.HostMeta(
-        remote=remote,
-        host=_host,
-        ssh_config=ssh_config,
+    return HostMeta(
+        remote,
+        _host,
+        ssh_config,
+        request,
         machine_name=remote.name,
-        fixture_name=host_fixture_name,
-        hostname=_hostname,
         iface=_iface
     )
 
 
 
-def build_host_fixture(label=None, module_name=__name__):
-    # TODO not the best way since it should correlate with outside naming policy
-    host_fixture_name = '_'.join([part for part in ['host', label] if part])
-
+def build_mhost_fixture(label=None, module_name=__name__):
     remote_fixtures = {'module': {}, 'function': {}}
     for scope in ('module', 'function'):
         remote_fixtures[scope]['docker'] = fixture_builder(
@@ -720,87 +865,28 @@ def build_host_fixture(label=None, module_name=__name__):
             module_name=module_name
         )(vagrant_machine)
 
-    def host_meta(request):
-        label = request.fixturename[len('host_meta_'):]
-        _host_fixture_name = 'host' + (('_' + label) if label else '')
+    def host(request):
+        label = request.fixturename[len('host'):]
+        _mhost_fixture_name = 'mhost' + label
         # ensure that related host fixture has been actually called
-        _ = request.getfixturevalue(_host_fixture_name)
-        return request.getfixturevalue('hosts_meta')[_host_fixture_name]
-
-    def hostname(request):
-        label = request.fixturename[len('hostname_'):]
-        _host_fixture_name = 'host' + (('_' + label) if label else '')
-        # ensure that related host fixture has been actually called
-        _ = request.getfixturevalue(_host_fixture_name)
-        hosts_meta = request.getfixturevalue('hosts_meta')
-        return hosts_meta[_host_fixture_name].hostname
-
-    def host_tmpdir(request):
-        label = request.fixturename[len('host_tmpdir_'):]
-        _host_fixture_name = 'host' + (('_' + label) if label else '')
-        host = request.getfixturevalue(_host_fixture_name)
-        tmpdir_function = request.getfixturevalue('tmpdir_function')
-        host.check_output("mkdir -p {}".format(tmpdir_function))
-        return tmpdir_function
-
-    def host_rpm_prvsnr(request):
-        label = request.fixturename[len('host_rpm_prvsnr_'):]
-        suffix = ('_' + label) if label else ''
-        _host_fixture_name = 'host' + suffix
-        # ensure that related host fixture has been actually called
-        _ = request.getfixturevalue(_host_fixture_name)
-        localhost = request.getfixturevalue('localhost')
-        rpm_local_path = request.getfixturevalue('rpm_prvsnr')
-        tmpdir = request.getfixturevalue('host_tmpdir' + suffix)
-        meta = request.getfixturevalue('host_meta' + suffix)
-
-        rpm_remote_path = tmpdir / rpm_local_path.name
-        localhost.check_output(
-            "scp -F {} {} {}:{}".format(
-                meta.ssh_config,
-                rpm_local_path,
-                meta.hostname,
-                rpm_remote_path
-            )
-        )
-        return rpm_remote_path
+        mhost = request.getfixturevalue(_mhost_fixture_name)
+        return mhost.host
 
     fixture_builder(
         'function',
         suffix=label,
         module_name=module_name,
         name_with_scope=False
-    )(host_meta)
-
-    fixture_builder(
-        'function',
-        suffix=label,
-        module_name=module_name,
-        name_with_scope=False
-    )(hostname)
-
-    fixture_builder(
-        'function',
-        suffix=label,
-        module_name=module_name,
-        name_with_scope=False
-    )(host_tmpdir)
-
-    fixture_builder(
-        'function',
-        suffix=label,
-        module_name=module_name,
-        name_with_scope=False
-    )(host_rpm_prvsnr)
+    )(host)
 
     @fixture_builder(
         "function", suffix=label, module_name=module_name,
         name_with_scope=False
     )
-    def host(localhost, request, tmpdir_function, hosts_meta):
+    def mhost(localhost, request, tmpdir_function, hosts_meta):
         envprovider = request.config.getoption("envprovider")
         if envprovider == 'host':
-            return localhost
+            return request.getfixturevalue('mlocalhost')
 
         scope = (
             'function' if request.node.get_closest_marker('isolated')
@@ -822,21 +908,19 @@ def build_host_fixture(label=None, module_name=__name__):
 
         meta = discover_remote(
             request, remote,
-            ssh_config=ssh_config, host_fixture_name=host_fixture_name
+            ssh_config=ssh_config, host_fixture_label=label
         )
 
-        hosts_meta[host_fixture_name] = meta
+        hosts_meta[meta.fixture_name] = meta
 
         # TODO add try-catch and remove default implementation of post_host_run_hook
-        request.getfixturevalue('post_host_run_hook')(
-            meta.host, meta.hostname, ssh_config, request
-        )
+        request.getfixturevalue('post_host_run_hook')(meta)
 
-        return meta.host
+        return meta
 
 
 # default 'host' fixture is always present
-build_host_fixture()
+build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
-build_host_fixture('eosnode1')
-build_host_fixture('eosnode2')
+build_mhost_fixture('eosnode1')
+build_mhost_fixture('eosnode2')
