@@ -12,9 +12,9 @@ fi
 # Reset repos
 ################
 # ToDo: Improve logic to setup repos based on target platform
-#[[ -f /etc/yum.repos.d/epel.repo.rpmsave ]] && sudo rm -rf /etc/yum.repos.d/epel.repo.*
+[[ -f /etc/yum.repos.d/epel.repo.rpmsave ]] && sudo rm -rf /etc/yum.repos.d/epel.repo.*
 #[[ -f /etc/yum.repos.d/CentOS-Base.repo ]] && sudo rm -rf /etc/yum.repos.d/*.repo
-#sudo cp ${BASEDIR}/files/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+sudo cp ${BASEDIR}/files/etc/yum.repos.d/*.repo /etc/yum.repos.d/
 
 # Uncomment only if necessary
 sudo yum clean all
