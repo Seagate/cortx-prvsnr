@@ -7,7 +7,7 @@ Install_base_packages:
     - pkgs:
       - ipmitool
       - jq
-      - python36
+      - python3
       - vim-enhanced
       - tmux
     - reload_modules: True
@@ -24,7 +24,7 @@ python-pip:
   pkg.installed:
     - pkgs:
       - python2-pip
-      - python36-pip
+      - python3-pip
     - reload_modules: True
 
 pip3 upgrade:
