@@ -3,7 +3,7 @@
 tmp_dir: /tmp
 
 {% set base_repo_url = "http://ci-storage.mero.colo.seagate.com" %}
-{% set eos_repo_url = "{0}/releases/eos/integration_C7.6".format(base_repo_url) %}
+{% set eos_repo_url = "{0}/releases/eos".format(base_repo_url) %}
 {% set prvsnr_repo_url = "{0}/prvsnr/vendor/".format(base_repo_url) %}
 {% set release = pillar['eos_release']['target_build'] %}
 
@@ -29,7 +29,7 @@ base_repos:
 sspl:
   repo:
     id: "sspl"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ eos_repo_url }}/integration_C7.6/{{ release }}
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
@@ -43,17 +43,17 @@ lustre:
 eoscore:
   repo:
     id: "eoscore"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ eos_repo_url }}/integration_C7.6/{{ release }}
 
 halon:
   repo:
     id: "halon"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ eos_repo_url }}/integration_C7.6/{{ release }}
 
 s3server:
   repo:
     id: "s3server"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ eos_repo_url }}/integration_C7.6/{{ release }}
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
@@ -66,7 +66,7 @@ s3server:
 nfs:
   repo:
     id: "nfs"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ eos_repo_url }}/integration_C7.6/{{ release }}
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
@@ -75,4 +75,4 @@ nfs:
 csm:
   repo:
     id: "csm"
-    url: {{ eos_repo_url  }}/{{ release }}
+    url: {{ eos_repo_url  }}/integration_C7.6/{{ release }}
