@@ -3,7 +3,7 @@
 tmp_dir: /tmp
 
 {% set base_repo_url = "http://ci-storage.mero.colo.seagate.com" %}
-{% set eos_repo_url = "{0}/releases/eos/".format(base_repo_url) %}
+{% set eos_repo_url = "{0}/releases/eos/components/dev/centos-7.6.1810/integration/".format(base_repo_url) %}
 {% set prvsnr_repo_url = "{0}/prvsnr/vendor/".format(base_repo_url) %}
 {% set release = pillar['eos_release']['target_build'] %}
 
