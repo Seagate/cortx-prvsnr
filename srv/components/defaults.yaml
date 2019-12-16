@@ -24,7 +24,7 @@ base_repos:
     url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
   python3_uploads:
     id: "python3_uploads"
-    url: http://ci-storage.mero.colo.seagate.com/releases/eos/python3-uploads/		
+    url: http://ci-storage.mero.colo.seagate.com/releases/eos/python3-uploads/
 
 sspl:
   repo:
