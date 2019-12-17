@@ -1,7 +1,13 @@
 #!/bin/bash
 
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-repo_root_dir="$(realpath $cli_scripts_dir/../../)"
+
+# rpm package places scripts in parent folder
+if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
+    repo_root_dir="$(realpath $cli_scripts_dir/../)"
+else
+    repo_root_dir="$(realpath $cli_scripts_dir/../../)"
+fi
 
 
 # TODO API for error exit that might:
