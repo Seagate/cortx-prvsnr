@@ -1,6 +1,3 @@
-include:
-  - components.s3clients.prepare
-
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
 # Required for s3cmd installation

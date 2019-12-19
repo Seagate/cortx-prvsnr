@@ -1,5 +1,5 @@
 Install sspl packages:
   pkg.installed:
-    - pkgs:
-      - sspl
+    - name: sspl
+    - version: latest
     - refresh: True
