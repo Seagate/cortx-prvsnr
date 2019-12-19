@@ -14,3 +14,4 @@ base:
     - components.s3server
     - components.sspl
     - components.system
+    - components.elasticsearch

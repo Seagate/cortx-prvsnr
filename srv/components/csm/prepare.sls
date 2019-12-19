@@ -7,7 +7,3 @@ Add CSM repo:
     - humanname: csm
     - baseurl: {{ defaults.csm.repo.url }}
     - gpgcheck: 0
-
-Create dir for nvm:
-  file.directory:
-    - name: /opt/nvm

@@ -1,5 +1,6 @@
 include:
   - components.ha.corosync-pacemaker
+  - components.misc.nodejs
   # - components.sspl
   - components.csm.prepare
   - components.csm.install
