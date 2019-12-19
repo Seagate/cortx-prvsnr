@@ -12,5 +12,5 @@ Remove generic logrotate config:
 
 # Remove logrotate
 Remove logrotate package:
-  pkg.installed:
+  pkg.purged:
     - name: logrotate

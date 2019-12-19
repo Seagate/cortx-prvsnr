@@ -20,10 +20,12 @@ Install from s3server_uploads packages:
 Install s3server package:
   pkg.installed:
     - name: s3server
+    - version: latest
+    - refresh: True
 
 Install s3iamcli:
   pkg.installed:
     - pkgs:
-      - s3iamcli
+      - s3iamcli: latest
       # - s3iamcli-devel
       # - s3server-debuginfo

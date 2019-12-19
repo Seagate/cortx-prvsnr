@@ -1,4 +1,7 @@
 include:
+  - components.s3clients.prepare
+  - components.s3clients.install
+
   - components.s3clients.s3cmd.prepare
   - components.s3clients.s3cmd.install
   - components.s3clients.s3cmd.config

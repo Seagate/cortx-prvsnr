@@ -1,5 +1,5 @@
 Install Halon package:
   pkg.installed:
     - pkgs:
-      - halon
+      - halon: latest
     - refresh: True
