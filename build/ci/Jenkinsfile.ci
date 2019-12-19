@@ -87,7 +87,7 @@ Closure dynamicValidation = {
 
     try {
         stage('Clean VirtualBox environment') {
-            sh "bash -x build/ci/clean_vbox.sh"
+            sh "bash -x build/ci/clean_vbox.sh vms"
         }
 
         preparePythonEnv()
