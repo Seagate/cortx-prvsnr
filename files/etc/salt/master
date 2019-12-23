@@ -89,6 +89,7 @@ timeout: 300
 
 # Set the default outputter used by the salt command. The default is "nested".
 #output: nested
+output: highstate
 
 # To set a list of additional directories to search for salt outputters, set the
 # outputter_dirs option.
