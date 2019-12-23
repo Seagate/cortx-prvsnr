@@ -211,7 +211,7 @@ Vagrant.configure("2") do |config|
           sleep 2
           sudo salt-key -A -y
           sleep 2
-          
+
           #sudo salt eosnode-1 state.apply components.system
           #sudo salt eosnode-1 state.apply components.system.storage
           #sudo salt eosnode-1 state.apply components.ha.haproxy
