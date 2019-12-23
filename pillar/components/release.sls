@@ -1,2 +1,2 @@
 eos_release:
-    target_build: integration_C7.6/last_successful
+    target_build: integration/centos-7.6.1810/last_successful
