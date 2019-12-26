@@ -108,7 +108,7 @@ def test_setup_provisioner_singlenode(
     output = json.loads(res.stdout)
     expected = [
         "components.{}".format(st) for st in
-        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server']
+        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server', 'csm']
     ]
     assert output == {
         'eosnode-1': {
@@ -120,7 +120,7 @@ def test_setup_provisioner_singlenode(
 def check_setup_provisioner_results(mhosteosnode1):
     states_expected = [
         "components.{}".format(st) for st in
-        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server']
+        ['system', 'sspl', 'eoscore', 'halon', 'misc.build_ssl_cert_rpms', 'ha.haproxy', 'misc.openldap', 's3server', 'csm']
     ]
     top_sls_content = mhosteosnode1.check_output(
         'cat {}'.format(h.PRVSNR_REPO_INSTALL_DIR / 'srv/top.sls')

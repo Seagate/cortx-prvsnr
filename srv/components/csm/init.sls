@@ -1,6 +1,12 @@
 include:
-  - components.ha.corosync-pacemaker
+  # Dependecies
+  - components.misc.consul
+  - components.misc.elasticsearch
+  - components.misc.kibana
+  - components.misc.statsd
   - components.misc.nodejs
+  # HA component
+  - components.ha.corosync-pacemaker
   # - components.sspl
   - components.csm.prepare
   - components.csm.install
