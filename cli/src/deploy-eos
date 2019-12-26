@@ -51,7 +51,7 @@ else
     l_info "Applying 'components.misc.build_ssl_cert_rpms' for eosnode-2"
     $cmd salt eosnode-2 state.apply components.misc.build_ssl_cert_rpms $salt_opts
 
-    for state in ha.haproxy misc.openldap s3server; do
+    for state in ha.haproxy misc.openldap s3server csm; do
         l_info "Applying 'components.$state' for both nodes"
         $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
     done
