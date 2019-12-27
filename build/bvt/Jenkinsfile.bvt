@@ -1,14 +1,18 @@
 #!/usr/bin/env groovy
 
+// TODO copy-paste from Jenkinsfile.ci
+
 def err = null
 
 Map config = [
-    staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
     nodeLabel: 'centos-prvsnr-node'
 ]
 
+String eos_release = params.eos_release ?: 'integration/last_successful'
+
+echo "EOS release is set to '$eos_release'"
 
 def nodeWrapper(label=null, body) {
     echo "Running on `${label}` node type"
@@ -38,60 +42,41 @@ Closure preparePythonEnv = {
 }
 
 
-Closure staticValidation = {
-    def test_err
-
-    checkout scm
-
-    preparePythonEnv()
-
-    String testPythonReport = "flake8.out"  // TODO not configurable for now
-    stage('Check python') {
-        // TODO check other python sources (not only 'test')
-        try {
-            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                sh "pipenv run bash -x build/ci/validate_python.sh"
-            }
-        } catch (_err) {
-            archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
-            echo "Python static validation failed: $_err"
-            // TODO that should break the pipeline actually
-            // throw _err
-        }
-    }
-
-    String testYamlReport = "yamllint.out"  // TODO not configurable for now
-    stage('Check yaml') {
-        try {
-            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                sh "bash -x build/ci/validate_yaml.sh ."
-            }
-        } catch (_err) {
-            archiveArtifacts artifacts: testYamlReport, allowEmptyArchive: true
-            echo "YAML static validation failed: $_err"
-            // TODO that should break the pipeline actually
-            // throw _err
-        }
-    }
-}
-
-
 Closure dynamicValidation = {
     checkout scm
 
-    // tags are needed for some tests
-    sh "git fetch --tags"
-
     def test_err
+
     String testReportFileNameXml = "pytest.xml"
+    String testReportFileNameLog = "pytest.log"
     String testReportFileNamePlain = "pytest.out.txt"
-    String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
-    String pytestTargets = ""
-    String pytestMarkers = "not eos_bvt"
+
+    String eosTestRepo = "https://seagit.okla.seagate.com/eos/qa/eos-test/repository/"
+    String eosRepoVersion = 'Dev'
+    String eosRepoArchive = 'eos-test.tgz'
+
+    String bvtTestTargets = 'avocado_test/bvt_test.py'
+    String bvtResultsArchive = 'bvt.results.tgz'
+
+    String prvsnrCliRelease = eos_release
+    String prvsnrRelease = eos_release
+    String eosRelease = eos_release
+
+
+    String pytestArgs = "-l -vv -s --log-cli-level info --junit-xml=$testReportFileNameXml"
+    pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --eos-release=$eosRelease"
+    pytestArgs += " --bvt-repo-path=$eosRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
+    String pytestTargets = "test/bvt"
 
     try {
         stage('Clean VirtualBox environment') {
             sh "bash -x build/ci/clean_vbox.sh vms"
+        }
+
+        stage('Download QA tests') {
+            withCredentials([string(credentialsId: 'eos-test-repo-api-token', variable: 'token')]) {
+                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$eosRepoVersion/archive.tar.gz -o $eosRepoArchive"
+            }
         }
 
         preparePythonEnv()
@@ -101,7 +86,7 @@ Closure dynamicValidation = {
             // run tests
             stage('Run tests') {
                 sh """
-                    pipenv run bash -x build/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                    pipenv run bash -x build/ci/run_tests.sh "$pytestArgs $pytestTargets" '' "$testReportFileNamePlain"
                 """
             }
         }
@@ -111,9 +96,19 @@ Closure dynamicValidation = {
     } finally {
         stage("Upload reports") {
             sh "ls -la pytest* || true"
+            sh """
+                if [[ -f "$bvtResultsArchive" ]]; then
+                    tar zxvf $bvtResultsArchive ./results.xml ./job.log ./journalctl.out.txt
+                fi
+            """
             if (test_err) {
                 archiveArtifacts artifacts: testReportFileNamePlain, allowEmptyArchive: true
+                archiveArtifacts artifacts: testReportFileNameLog, allowEmptyArchive: true
+                archiveArtifacts artifacts: bvtResultsArchive, allowEmptyArchive: true
+                archiveArtifacts artifacts: "journalctl.out.txt", allowEmptyArchive: true
             }
+            junit testResults: "results.xml", allowEmptyResults: true
+            archiveArtifacts artifacts: "job.log", allowEmptyArchive: true
             junit testResults: testReportFileNameXml, allowEmptyResults: true
         }
     }
@@ -124,23 +119,9 @@ Closure dynamicValidation = {
 
 try {
     timeout(180) {
-        stage('Static validation') {
-            if (config.staticValidation) {
-                nodeWrapper(config.nodeLabel) {
-                    staticValidation()
-                }
-            } else {
-                echo "skipped"
-            }
-        }
-
         stage('Build / Test') {
-            if (config.dynamicValidation) {
-                nodeWrapper(config.nodeLabel) {
-                    dynamicValidation()
-                }
-            } else {
-                echo "skipped"
+            nodeWrapper(config.nodeLabel) {
+                dynamicValidation()
             }
         }
 

@@ -42,7 +42,7 @@ def test_deploy_eos_commands(
 
     if singlenode:
         expected_lines = [
-            'SALT-ARGS: eosnode-1 state.highstate'
+            'SALT-ARGS: -t 600 eosnode-1 state.highstate'
         ]
     else:
         expected_lines = [

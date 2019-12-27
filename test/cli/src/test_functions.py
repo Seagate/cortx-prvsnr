@@ -13,6 +13,9 @@ from .helper import run_script as _run_script
 
 logger = logging.getLogger(__name__)
 
+
+EOS_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
+
 # TODO
 #   - a way (marker) to split tests into groups:
 #       - ones that are isolated (and can be run concurrently, e.g. using pytest-xdist)
@@ -545,7 +548,6 @@ def test_functions_collect_addrs(
     ssh_config = ssh_config if remote else "''"
 
     script = """
-        verbosity=2
         collect_addrs {} {}
     """.format(hostspec, ssh_config)
 
@@ -601,6 +603,61 @@ def test_functions_check_host_reachable(
         assert not res.stdout
 
 
+# TODO
+#   - multiplte names case (need multiple ifaces reachable between nodes)
+#   - case when some iface is not shared between them
+#   - case when they have the same IP in some non-shared iface (vbox only case for now)
+#   - actually we don't need eos specific here, just two hosts
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-base')
+@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.parametrize(
+    "local",
+    ['eosnode1', 'eosnode2', None],
+    ids=['run_on_itself', 'run_on_target', 'run_on_other']
+)
+def test_functions_get_reachable_host_names(
+    run_script, mhosteosnode1, mhosteosnode2,
+    mlocalhost, ssh_config, local, project_path,
+    inject_ssh_config, request
+):
+    if local is None:
+        mhost = mlocalhost
+        hostspec1 = mhosteosnode1.hostname
+        hostspec2 = mhosteosnode2.hostname
+        _ssh_config = ssh_config
+    else:
+        _ssh_config = inject_ssh_config[local]
+        if local == 'eosnode1':
+            mhost = mhosteosnode1
+            hostspec1 = "''"
+            hostspec2 = mhosteosnode2.hostname
+        else:
+            mhost = mhosteosnode2
+            hostspec1 = mhosteosnode1.hostname
+            hostspec2 = "''"
+
+    script = """
+        get_reachable_host_names {} {} {}
+    """.format(hostspec1, hostspec2, _ssh_config)
+
+    res = run_script(
+        script,
+        mhost=mhost,
+        stderr_to_stdout=False
+    )
+    assert res.rc == 0
+
+    collected = res.stdout.split()
+    assert collected
+
+    host1_addrs = h.collect_ip4_addrs(mhosteosnode1.host)
+    host2_addrs = h.collect_ip4_addrs(mhosteosnode2.host)
+    common_addrs = set(host1_addrs) & set(host2_addrs)
+
+    assert not (set(collected) & common_addrs)
+
+
 # TODO check key for saltstack repo is imported
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-base')
@@ -647,16 +704,16 @@ def test_functions_systemd_libs_version_eos_3247(mhost):
     assert not res.stderr
 
 
-# TODO actually utils env level is enough for all except 'rpm'
+# TODO actually utils env level is enough
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['unknown', 'rpm', 'gitlab'])
+@pytest.mark.parametrize("repo_src", ['unknown', 'gitlab'])
 def test_functions_install_provisioner(
     run_script, mhost, mlocalhost,
-    ssh_config, remote, repo_src, project_path
+    ssh_config, remote, repo_src
 ):
-    prvsnr_version = 'ees1.0.0-PI.2-sprint7'
+    prvsnr_version = EOS_RELEASE_TEST_TAG
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false' # TODO
@@ -673,22 +730,59 @@ def test_functions_install_provisioner(
     else:
         assert res.rc == 0
 
-        # TODO some more strict checks
-        if repo_src == 'rpm':
-            assert mhost.host.package('eos-prvsnr').is_installed
-
         # check repo files are in place
         for path in ('files', 'pillar', 'srv'):
             assert mhost.host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
 
 
+@pytest.mark.isolated
+@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+@pytest.mark.parametrize("version", [
+    None,
+    EOS_RELEASE_TEST_TAG,
+    'components/dev/provisioner/last_successful',
+    'components/dev/provisioner/196'
+], ids=[
+    'default', 'tag', 'lastdev', 'somedev'
+])
+def test_functions_install_provisioner_rpm(
+    run_script, mhost, mlocalhost,
+    ssh_config, remote, version
+):
+    prvsnr_version = "''" if version is None else version
+    hostspec = mhost.hostname if remote else "''"
+    ssh_config = ssh_config if remote else "''"
+    with_sudo = 'false' # TODO
+
+    script = """
+        install_provisioner rpm {} {} {} {}
+    """.format(prvsnr_version, hostspec, ssh_config, with_sudo)
+
+    res = run_script(script, mhost=(mlocalhost if remote else mhost))
+    assert res.rc == 0
+
+    assert mhost.host.package('eos-prvsnr').is_installed
+    baseurl = mhost.check_output(
+        'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
+    ).split('=')[1]
+    assert baseurl == (
+        'http://ci-storage.mero.colo.seagate.com/releases/eos/{}'
+        .format('integration/last_successful' if version is None else version)
+    )
+
+
 # TODO
 #  - remote case is better to test from within virtual env as well
-#  - by tag
 @pytest.mark.isolated
 @pytest.mark.env_name('centos7-utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("version", [None, 'headcommit', 'HEAD'])
+@pytest.mark.parametrize("version", [
+    None,          # raw copy
+    'headcommit',  # by commit
+    'HEAD',
+    EOS_RELEASE_TEST_TAG  # by tag
+])
 def test_functions_install_provisioner_local(
     run_script, mhost, mlocalhost,
     ssh_config, remote, version, project_path,

@@ -9,6 +9,7 @@ import docker
 import testinfra
 from abc import ABC, abstractmethod
 from random import randrange
+from time import sleep
 
 import pytest
 from functools import wraps
@@ -17,8 +18,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
-
 PROJECT_PATH = MODULE_DIR.parent
+
 PRVSNR_REPO_INSTALL_DIR = Path('/opt/seagate/eos-prvsnr')
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80
@@ -73,7 +74,7 @@ class Packer:
 
     def packer(self, command, *args, **kwargs):
         return self.check_output(
-            "{}packer {} {} {}".format(
+            "{}packer {} {} '{}'".format(
                 "PACKER_LOG=1 " if self.log else '',
                 command,
                 ' '.join([*args]), self.packerfile
@@ -90,6 +91,10 @@ class Packer:
 
 # TODO with manager
 class Remote(ABC):
+    @abstractmethod
+    def run(self):
+        pass
+
     @abstractmethod
     def destroy(self, ok_if_missed=True, force=True):
         pass
@@ -109,15 +114,48 @@ class Remote(ABC):
 
 @attr.s
 class Container(Remote):
-    container = attr.ib()
-    name = attr.ib(init=False, default=None)
+    name = attr.ib()
+    image = attr.ib()
+    hostname = attr.ib(default=None)
+    container = attr.ib(init=False, default=None)
+    specific = attr.ib(default={})
 
     client = docker.from_env()
 
     def __attrs_post_init__(self):
-        self.name = self.container.name
+        if self.hostname is None:
+            self.hostname = safe_hostname(self.name)
+
+    def run(self):
+        if self.container is not None:
+            raise RuntimeError("already running") #  some API error
+
+        try:
+            self.container = self.client.containers.run(
+                self.image,
+                name=self.name,
+                # it's safer to not exceed 64 chars on Unix systems for the hostname
+                # (real limit might be get using `getconf HOST_NAME_MAX`)
+                hostname=self.hostname,
+                detach=True,
+                tty=True,
+                # network=network_name,
+                volumes={'/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}},
+                # security_opt=['seccomp=unconfined'],
+                tmpfs={'/run': '', '/run/lock': ''},
+                ports={'22/tcp': None},
+                **self.specific
+            )
+        except Exception as exc:
+            self.destroy()
+            if isinstance(exc, docker.errors.APIError):
+                if 'is already in use' in str(exc):
+                    # TODO ? try to remove is it's not running
+                    raise RemoteAlreadyInUse(self.name)
+            raise
 
     def destroy(self, ok_if_missed=True, force=True):
+        self.container = None
         self.destroy_by_name(self.name, ok_if_missed=ok_if_missed, force=force)
 
     @staticmethod
@@ -147,12 +185,17 @@ class VagrantAlreadyInUseError(VagrantError):
     pass
 
 
-class RemoteError():
+class RemoteError(Exception):
     pass
 
 
 @attr.s
 class RemoteNotExist(RemoteError):
+    name = attr.ib()
+
+
+@attr.s
+class RemoteAlreadyInUse(RemoteError):
     name = attr.ib()
 
 
@@ -187,7 +230,7 @@ class Vagrant:
     def __attrs_post_init__(self):
         if self.env_vars is not None:
             self._env_prefix = ' '.join(
-                ["{}={}".format(n, v) for (n, v) in self.env_vars]
+                ["{}='{}'".format(n, v) for (n, v) in self.env_vars]
             ) + ' '
 
     def check_output(self, cmd, err_to_out=None):
@@ -259,91 +302,65 @@ class Vagrant:
 @attr.s
 class VagrantMachine(Remote):
 
-    VAGRANTFILE_TMPL = (
-        "Vagrant.configure('2') do |config|\n"
-        "  config.vm.box = '{0}'\n"
-        "  config.vm.box_check_update = false\n"
-        "  config.vm.define '{1}'\n"
-        "  config.vm.hostname = '{2}'\n"
-        "  config.vm.provider :virtualbox do |vb, override|\n"
-        "    vb.name = '{1}'\n"
-        "  end\n"
-        "end\n"
-    )
+    VAGRANTFILE_TMPL = MODULE_DIR / 'Vagrantfile.tmpl'
 
     # TODO validators for all
     name = attr.ib()
+    vm_dir = attr.ib(default=None)
+    vagrantfile = attr.ib(default=None)
     provider = attr.ib(default='vbox')
+
     # TODO should be required if default template is used
     box = attr.ib(default=None)
-    vagrantfile = attr.ib(
-        converter=lambda v: None if v is None else v.resolve(),
-        default=None
-    )
-    vagrantfile_dest = attr.ib(
-        converter=lambda v: None if v is None else Path(v),
-        default=None
-    )
+    # Path or string
     vagrantfile_tmpl = attr.ib(
-        default=VAGRANTFILE_TMPL
+        converter=lambda v: v.read_text() if isinstance(v, Path) else v,
+        default=VAGRANTFILE_TMPL.read_text()
     )
     hostname = attr.ib(
         converter=lambda v: None if v is None else safe_hostname(v),
         default=None
     )
+    memory = attr.ib(
+        converter=lambda v: int(v), default=1024
+    )
+    cpus = attr.ib(
+        converter=lambda v: int(v), default=1
+    )
+    specific = attr.ib(default={})
     log = attr.ib(default='error')
-    last_status = attr.ib(
-        init=False,
-        default=None
-    )
-    # TODO factoiry to set {} as default
-    _vagrant = attr.ib(
-        init=False,
-        default=None
-    )
-    _localhost = attr.ib(
-        init=False,
-        default=localhost
-    )
 
-    @vagrantfile.validator
-    def _check_vagrantfile(self, attribute, value):
-        if value is None:
-            if self.vagrantfile_dest is None:
-                raise ValueError(
-                    "Either vagrantfile or vagrantfile_dest should be defined"
-                )
-            else:
-                return
-        if not value.is_file:
-            raise ValueError(
-                "{} is not a file".format(value)
-            )
-        # TODO here __attrs_post_init__ hasn't been called yet
-        # self.validate()
-        self._localhost.check_output(
-            "VAGRANT_CWD={} VAGRANT_VAGRANTFILE={} vagrant validate"
-            .format(value.parent, value.name)
-        )
-
-    @vagrantfile_dest.validator
-    def _check_vagrantfile_dest(self, attribute, value):
-        if value is None:
-            return
-        # TODO check that it's possible to creat it
+    last_status = attr.ib(init=False, default=None)
+    # TODO factory to set {} as default
+    _vagrant = attr.ib(init=False, default=None)
+    _localhost = attr.ib(init=False, default=testinfra.get_host('local://'))
 
     def __attrs_post_init__(self):
         if self.hostname is None:
             self.hostname = safe_hostname(self.name)
 
-        # create vagrantfile if missed using template
         if self.vagrantfile is None:
-            self.vagrantfile_dest.touch()
-            self.vagrantfile = self.vagrantfile_dest
-            _content = self.vagrantfile_tmpl.format(
-                self.box.name, self.name, self.hostname
+            assert self.vm_dir
+
+            if not self.vm_dir.exists():
+                self.vm_dir.mkdir()
+
+            if 'cpus' not in self.specific:
+                self.specific['cpus'] = self.cpus
+
+            if 'memory' not in self.specific:
+                self.specific['memory'] = self.memory
+
+            self.vagrantfile = self.vm_dir / 'Vagrantfile'
+            self.vagrantfile.write_text(
+                self.vagrantfile_tmpl.format(
+                    box_name=self.box.name,
+                    vm_name=self.name,
+                    hostname=self.hostname,
+                    vm_dir=self.vm_dir,
+                    **self.specific
+                )
             )
-            self.vagrantfile.write_text(_content)
 
         self._vagrant = Vagrant(
             log=self.log, env_vars=[
@@ -352,6 +369,8 @@ class VagrantMachine(Remote):
             ]
         )
         self.last_status = {}
+
+        self.validate()
 
     # TODO use some dynamic way instead
     def ssh(self, *args):
@@ -373,6 +392,15 @@ class VagrantMachine(Remote):
 
         return self._vagrant.up(*args)
 
+    def run(self):
+        try:
+            self.up()
+        except Exception as exc:
+            self.destroy(ok_if_missed=True, force=True)
+            if isinstance(exc, VagrantAlreadyInUseError):
+                raise RemoteAlreadyInUse(self.name)
+            raise
+
     def destroy(self, ok_if_missed=True, force=True):
         _args = ['--force'] if force else []
         try:
@@ -391,7 +419,6 @@ class VagrantMachine(Remote):
                 else:
                     raise RemoteNotExist(self.name)
             raise
-
 
     @staticmethod
     def destroy_by_name(machine_name, ok_if_missed=True, force=True):
@@ -562,70 +589,39 @@ def _docker_image_build(client, dockerfile, ctx, image_name):
     return image
 
 
-def _docker_container_run(client, image, base_name):
+def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
     base_name = base_name[-(MAX_REMOTE_NAME_LEN-3):]
 
     for i in range(3):  # just three tries
         _id = randrange(100)
-        container_name = '{}_{:02d}'.format(base_name, _id)
-        try:
-            container = client.containers.run(
-                image,
-                name=container_name,
-                # it's safer to not exceed 64 chars on Unix systems for the hostname
-                # (real limit might be get using `getconf HOST_NAME_MAX`)
-                hostname=safe_hostname(container_name),
-                detach=True,
-                tty=True,
-                # network=network_name,
-                volumes={'/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}},
-                # security_opt=['seccomp=unconfined'],
-                tmpfs={'/run': '', '/run/lock': ''},
-                ports={'22/tcp': None}
-            )
-            return Container(container)
-        except docker.errors.APIError as exc:
-            Container.destroy_by_name(container, ok_if_missed=True)
+        name = '{}_{:02d}'.format(base_name, _id)
 
-            if 'is already in use' in str(exc):
-                # TODO ? try to remove is it's not running
-                logger.warning(
-                    'container with name {} is already in use'.format(container_name)
-                )
-            else:
-                raise
-    else:
-        raise RuntimeError(
-            "unexpected number of containers with base name {} are already in use"
-            .format(base_name)
-        )
-
-
-def _vagrant_machine_up(tmpdir, box, base_name):
-    # TODO copy-paste (docker routine)
-    base_name = base_name[-(MAX_REMOTE_NAME_LEN-3):]
-
-    for i in range(3):  # just three tries
-        _id = randrange(100)
-        machine_name = '{}_{:02d}'.format(base_name, _id)
-        vagrantfile_dest = tmpdir / 'Vagrantfile.{}'.format(machine_name)
-        machine = VagrantMachine(
-            machine_name, box=box, vagrantfile_dest=str(vagrantfile_dest)
-        )
-        try:
-            machine.up()
-        except VagrantAlreadyInUseError:
-            logger.warning(
-                'ivagrant machine with name {} is already in use'.format(machine_name)
+        if provider == 'docker':
+            remote = Container(name, base_level, *args, **kwargs)
+        elif provider == 'vbox':
+            vm_dir = tmpdir / safe_filename(name)
+            remote = VagrantMachine(
+                name, vm_dir=vm_dir,
+                box=base_level,
+                *args, **kwargs
             )
         else:
-            return machine
+            raise RuntimeError('unknown provider')
+
+        try:
+            remote.run()
+        except RemoteAlreadyInUse:
+            logger.warning(
+                'remote {} with name {} is already in use'
+                .format(Container, name)
+            )
+        else:
+            return remote
     else:
         raise RuntimeError(
-            "unexpected number of containers with base name {} are already in use"
+            "unexpected number of remotes with base name {} are already in use"
             .format(base_name)
         )
-
 
 
 # TODO use object proxy for testinfra's host instances instead
@@ -634,10 +630,12 @@ def run(host, script, *args, force_dump=False, **kwargs):
     try:
         res = host.run(script, *args, **kwargs)
     finally:
+        # TODO it takes very much time if stdout/stderr are very long
+        # (e.g. minutes for salt logs)
         if (res is not None) and ((res.rc != 0) or force_dump):
             if res.stdout:
                 for line in res.stdout.strip().split(os.linesep):
-                    logger.debug(line)
+                    logger.info(line)
             if res.stderr:
                 for line in res.stderr.strip().split(os.linesep):
                     logger.error(line)
@@ -672,6 +670,23 @@ def inject_repo(host, ssh_config, local_repo_tgz, host_repo_dir=None):
     return host_repo_dir
 
 
+def collect_ip4_addrs(host):
+    res = []
+
+    ifaces = host.check_output(
+        "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
+    )
+
+    for iface in ifaces.strip().split(os.linesep):
+        for addr in host.interface(iface).addresses:
+            # Note. will include ip6 as well
+            # TODO verify that it will work for all cases
+            if not (':' in addr or addr in res):
+                res.append(addr)
+
+    return res
+
+
 # TODO requires md5sum and other system tools
 def hash_dir(path, host=localhost):
     res = host.check_output(
@@ -685,3 +700,37 @@ def hash_dir(path, host=localhost):
 def hash_file(path, host=localhost):
     res = host.check_output('md5sum {}'.format(path))
     return res.split()[0]
+
+
+# TODO eventually helper
+def ensure_mero_is_online(mhost, num_tries=120):
+    # ensure that mero in online
+    re_status = re.compile(r' +\[ *(.+)\]')
+    for i in range(num_tries):
+        mero_status = mhost.check_output("hctl mero status")
+        logger.debug('mero status, try {}: {}'.format(i + 1, mero_status))
+        for line in mero_status.split('\n'):
+            m = re_status.match(line)
+            if m and m.group(1) != 'online':
+                sleep(1)
+                break
+        else:
+            logger.info(
+                'mero becomes online after {} checks:\n{}'
+                .format(i + 1, mero_status)
+            )
+            break
+    else:
+        assert False, (
+            'mero is not online after {} tries, last status: {}'
+            .format(num_tries, mero_status)
+        )
+
+
+def bootstrap_eos(mhost):
+    logger.info('Bootstrapping the cluster')
+    mhost.check_output(
+        'bash {} -vv -S'
+        .format(PRVSNR_REPO_INSTALL_DIR / 'cli/bootstrap-eos')
+    )
+    ensure_mero_is_online(mhost)
