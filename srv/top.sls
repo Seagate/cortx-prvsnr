@@ -8,4 +8,4 @@ base:
     - components.ha.haproxy
     - components.misc.openldap
     - components.s3server
-    - components.csm
+#    - components.csm
