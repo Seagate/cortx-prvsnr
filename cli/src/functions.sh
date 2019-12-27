@@ -788,7 +788,7 @@ function install_provisioner {
         _cluster_sls_src="$_installdir/pillar/components/samples/ees.cluster.sls"
     fi
 
-    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as source (version is $_prvsnr_version), singlenode is $_singlenode"
+    l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as a source (version is $_prvsnr_version), singlenode is $_singlenode"
 
     # assuming that 'local' mode would be used only in dev setup within the repo
     if [[ "$_repo_src" == "local" ]]; then
@@ -821,13 +821,17 @@ function install_provisioner {
                 _repo_archive_path="/tmp/$_repo_archive_name"
             fi
         popd
+    elif [[ "$_repo_src" == "rpm" ]]; then
+        if [[ -z "$_prvsnr_version" ]]; then
+            _prvsnr_version="integration/last_successful"
+        fi
     fi
 
-! read -r -d '' _prvsnr_repo << "EOF"
+! read -r -d '' _prvsnr_repo << EOF
 [provisioner]
 gpgcheck=0
 enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/last_successful
+baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/$_prvsnr_version
 name=provisioner
 EOF
 
@@ -1203,7 +1207,7 @@ function eos_pillar_update {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Updating a pillar component $_component on '$_hostspec' using $_file_path as source"
+    l_info "Updating a pillar component $_component on '$_hostspec' using $_file_path as a source"
 
     # TODO test
     if [[ ! -f "$_file_path" ]]; then

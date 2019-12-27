@@ -36,7 +36,7 @@ fi
 # apply states
 if [[ "$singlenode" == true ]]; then
     l_info "Applying highstate for eosnode-1 (singlenode)"
-    $cmd salt eosnode-1 state.highstate $salt_opts
+    $cmd salt -t 600 eosnode-1 state.highstate $salt_opts
 else
     # TODO use salt orchestration
     for state in system sspl eoscore halon; do

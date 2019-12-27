@@ -109,7 +109,7 @@ fi
 
 
 if [[ -z "$prvsnr_version" ]]; then
-    if [[ "$prvsnr_repo_src" == "gitlab" || "$prvsnr_repo_src" == "rpm" ]]; then
+    if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
         # get latest version of provisioner
         ! _tags=$(curl "$EES_PRVSNR_REPO_API_TAGS")
         prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)

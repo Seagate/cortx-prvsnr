@@ -12,9 +12,8 @@ import logging
 
 import test.helper as h
 from .helper import (
-    _docker_image_build, _docker_container_run, fixture_builder,
-    safe_docker_container_name, safe_vagrant_machine_name, safe_filename,
-    safe_hostname,
+    _docker_image_build, fixture_builder,
+    safe_vagrant_machine_name, safe_filename,
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
 
@@ -30,19 +29,33 @@ OS_NAMES = [
 
 ENV_LEVELS_HIERARCHY = {
     'base': None,
-    'utils': 'base',
-    'rpmbuild': 'base',
-    'network-manager-installed': 'base',
-    'repos-installed': 'utils',
+    'repos-installed': 'base',
     'salt-installed': 'repos-installed',
-    'prvsnr-ready': 'base'
+    'singlenode-deploy-ready': {
+        'parent': 'salt-installed',
+        'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
+    },
+    'singlenode-eos-deployed': 'singlenode-deploy-ready',
+    'singlenode-eos-ready': 'singlenode-eos-deployed',
+    # utility levels
+    'rpmbuild': 'base',
+    'utils': 'base',
+    'network-manager-installed': 'base',
+    # bvt
+    'singlenode-bvt-ready': {
+        'parent': 'base',
+        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'eos_release']
+    }
 }
+
 
 DEFAULT_EOS_SPEC = {
     'eosnode1': {
+        'hostname': 'eosnode-1',
         'minion_id': 'eosnode-1',
         'is_primary': True,
     }, 'eosnode2': {
+        'hostname': 'eosnode-2',
         'minion_id': 'eosnode-2',
         'is_primary': False,
     }
@@ -76,7 +89,7 @@ class HostMeta:
                 isinstance(self.remote, h.VagrantMachine) and
                 (self.remote.provider == 'vbox')
             ):
-                self.iface = 'eth1'
+                self.iface = 'enp0s8'
             else:
                 self.iface = 'eth0'
 
@@ -97,7 +110,26 @@ class HostMeta:
             self.host.check_output("mkdir -p {}".format(self._tmpdir))
         return self._tmpdir
 
-    def _copy_to_host(self, local_path, host_path=None):
+    def copy_from_host(self, host_path, local_path=None):
+        tmpdir_local = self.request.getfixturevalue('tmpdir_function')
+
+        if local_path is None:
+            local_path = tmpdir_local / host_path.name
+        else:
+            local_path = local_path.resolve()
+            local_path.relative_to(tmpdir_local)  # ensure that it's inside tmpdir
+
+        h.localhost.check_output(
+            "scp -r -F {} {}:{} {}".format(
+                self.ssh_config,
+                self.hostname,
+                host_path,
+                local_path
+            )
+        )
+        return local_path
+
+    def copy_to_host(self, local_path, host_path=None):
         if host_path is None:
             host_path = self.tmpdir / local_path.name
         h.localhost.check_output(
@@ -114,14 +146,14 @@ class HostMeta:
     def rpm_prvsnr(self):
         if self._rpm_prvsnr is None:
             rpm_local_path = self.request.getfixturevalue('rpm_prvsnr')
-            self._rpm_prvsnr = self._copy_to_host(rpm_local_path)
+            self._rpm_prvsnr = self.copy_to_host(rpm_local_path)
         return self._rpm_prvsnr
 
     @property
     def rpm_prvsnr_cli(self):
         if self._rpm_prvsnr_cli is None:
             rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_cli')
-            self._rpm_prvsnr_cli = self._copy_to_host(rpm_local_path)
+            self._rpm_prvsnr_cli = self.copy_to_host(rpm_local_path)
         return self._rpm_prvsnr_cli
 
     @property
@@ -180,6 +212,10 @@ class LocalHostMeta(HostMeta):
 
 def pytest_configure(config):
     config.addinivalue_line(
+        "markers", "env_provider(string): mark test to be run "
+                   "in the environment provided by the provider"
+    )
+    config.addinivalue_line(
         "markers", "env_name(string): mark test to be run "
                    "in the specific environment"
     )
@@ -205,14 +241,49 @@ def pytest_configure(config):
         "markers", "mock_cmds(dict[host_lable, list]): mark test as requiring "
                    "list of mocked system commands per host"
     )
+    config.addinivalue_line(
+        "markers", "eos_bvt: mark test as BVT one"
+    )
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--envprovider", action='store', choices=['host', 'docker', 'vbox'],
+        "--env-provider", action='store', choices=['host', 'docker', 'vbox'],
         default='docker',
         help="test environment provider, defaults to docker"
     )
+    parser.addoption(
+        "--prvsnr-src", action='store', choices=['rpm', 'gitlab', 'local'],
+        default='rpm',
+        help="Provisioner source to use, defaults to 'rpm'"
+    )
+    parser.addoption(
+        "--prvsnr-cli-release", action='store', default='integration/last_successful',
+        help="Provisioner cli release to use, defaults to 'integration/last_successful'"
+    )
+    parser.addoption(
+        "--prvsnr-release", action='store', default='integration/last_successful',
+        help="Provisioner release to use, defaults to 'integration/last_successful'"
+    )
+    parser.addoption(
+        "--eos-release", action='store', default='integration/last_successful',
+        help="Target EOS release to verify, defaults to 'integration/last_successful'"
+    )
+
+
+
+@pytest.fixture(scope="session")
+def options_list():
+    return ["env-provider", "prvsnr-src", "prvsnr-cli-release", "prvsnr-release", "eos-release"]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def dump_options(request, options_list):
+    opts_str = '\n'.join([
+        '{}: {}'.format(opt, request.config.getoption(opt.replace('-', '_')))
+        for opt in options_list
+    ])
+    logger.info('Passed options:\n{}'.format(opts_str))
 
 
 @pytest.fixture(scope="session")
@@ -244,12 +315,53 @@ def vagrant_global_status_prune(localhost):
     localhost.check_output('vagrant global-status --prune')
 
 
+@pytest.fixture
+def env_provider(request):
+    res = request.config.getoption("env_provider")
+    marker = request.node.get_closest_marker('env_provider')
+    if marker:
+        res = marker.args[0]
+    return res
+
+
+@pytest.fixture(scope='session')
+def hosts_spec(request):
+    return {
+        'eosnode1': {
+            'remote': {
+                'hostname': 'eosnode-1',
+                'specific': {
+                    'vbox': {
+                        'memory': 4096,
+                        'cpus': 2,
+                        'mgmt_disk_size': 2048,
+                        'data_disk_size': 2048
+                    }
+                }
+            },
+            'minion_id': 'eosnode-1',
+            'is_primary': True,
+        }, 'eosnode2': {
+            'remote': {
+                'hostname': 'eosnode-2',
+                'specific': {
+                    'vbox': {
+                        'memory': 4096,
+                        'cpus': 2,
+                        'mgmt_disk_size': 2048,
+                        'data_disk_size': 2048
+                    }
+                }
+            },
+            'minion_id': 'eosnode-2',
+            'is_primary': False,
+        }
+    }
+
+
 # TODO multi platforms case
 @pytest.fixture(scope="session")
 def vbox_seed_machine(request, project_path, vagrant_global_status_prune):
-    if request.config.getoption("envprovider") != 'vbox':
-        return None
-
     platform = 'centos7'
     machine_suffix = "{}-base".format(platform)
     machine_name = "{}.{}".format(DOCKER_IMAGES_REPO.replace('/', '.'), machine_suffix)
@@ -259,6 +371,8 @@ def vbox_seed_machine(request, project_path, vagrant_global_status_prune):
     machine = h.VagrantMachine(
         machine_name, vagrantfile=vagrantfile
     )
+
+    logger.info("Starting VirtualBox seed machine")
     status = machine.status(update=True)
     # TODO move that specific to VagrantMachine API
     if status['state'][0] == 'not_created':
@@ -286,11 +400,11 @@ def repo_tgz(project_path, localhost, tmpdir_session):
 
 
 def _rpmbuild_mhost(request):
-    envprovider = request.config.getoption("envprovider")
+    env_provider = request.config.getoption("env_provider")
 
     # TODO DOCS : example how to run machine out of fixture scope
     remote = build_remote(
-        envprovider, request, 'centos7', 'rpmbuild'
+        env_provider, request, 'centos7', 'rpmbuild'
     )
 
     try:
@@ -347,6 +461,13 @@ def rpm_prvsnr_cli(request, tmpdir_session):
         )
 
 
+@pytest.fixture(autouse=True)
+def log_test_name(request):
+    logger.info('Test started: {}'.format(request.node.nodeid))
+    yield
+    logger.info('Test finished: {}'.format(request.node.nodeid))
+
+
 @pytest.fixture(scope='module')
 def env_name():
     return 'centos7-base'
@@ -370,6 +491,7 @@ def build_docker_image_fixture(os_name, env_level):
         df_name = "Dockerfile.{}".format(_env_name)
         dockerfile = str(project_path / 'images' / 'docker' / df_name)
         image_name = "{}:{}".format(DOCKER_IMAGES_REPO, _env_name)
+        logger.info("Building docker env '{}'".format(_env_name))
         return _docker_image_build(docker_client, dockerfile, ctx, image_name)
 
     fixture_builder(
@@ -388,13 +510,26 @@ for os_name in OS_NAMES:
 def build_vagrant_box_fixture(os_name, env_level):
 
     def vagrant_box(request, project_path):
-        parent_env = ENV_LEVELS_HIERARCHY.get(env_level)
-        if parent_env:
+        # TODO
+        #   - copy-paste from docker_image
+        #   - env variables logic is not solid
+        env_spec = ENV_LEVELS_HIERARCHY.get(env_level)
+        env_vars = {}
+        if env_spec:
+            if type(env_spec) is dict:
+                parent_env = env_spec['parent']
+
+                for vname in env_spec.get('vars', []):
+                    env_vars[vname] = request.config.getoption(vname)
+            else:
+                parent_env = env_spec
+            assert type(parent_env) is str
             _ = request.getfixturevalue(
                 "vagrant_box_{}".format(
                     env_fixture_suffix(os_name, parent_env))
             )
         _env_name = '-'.join([os_name, env_level])
+
         pf_name = "packer.{}.json".format(_env_name)
         packerfile = project_path / 'images' / 'vagrant' / pf_name
         box_path = project_path / '.boxes' / _env_name / 'package.box'
@@ -406,14 +541,21 @@ def build_vagrant_box_fixture(os_name, env_level):
         if not box_path.exists():
             # TODO smarter logic of seed machine reference
             # build seed machine beforehand
-            if parent_env is None:
+            if env_spec is None:
                 request.getfixturevalue('vbox_seed_machine')
 
             # TODO pytest options to turn on packer debug
             # TODO add box to vagrant here: it should prevent auto add by
             #      vagrant during 'vagrant up' where it uses path to source box
             packer = h.Packer(packerfile)
-            packer.build('--force')
+            logger.info("Building vagrant env '{}'".format(_env_name))
+            packer.build(
+                '--force {}'.format(
+                    ' '.join(
+                        ['-var {}={}'.format(k, v) for k, v in env_vars.items()]
+                    )
+                )
+            )
             # box_updated = True
 
         box = h.VagrantBox(
@@ -426,7 +568,7 @@ def build_vagrant_box_fixture(os_name, env_level):
             "add --provider virtualbox --name",
             box.name,
             '--force',
-            str(box.path)
+            "'{}'".format(box.path)
         )
 
         return box
@@ -505,7 +647,12 @@ def post_host_run_hook():
     return f
 
 
-def docker_container(request, docker_client, env_name):
+@pytest.fixture(scope='module')
+def vagrantfile_tmpl():
+    return MODULE_DIR / 'Vagrantfile.tmpl'
+
+
+def docker_container(request, docker_client, env_name, hosts_spec):
     # TODO API to reuse by other providers
     if request.scope == 'function':
         marker = request.node.get_closest_marker('env_name')
@@ -518,24 +665,51 @@ def docker_container(request, docker_client, env_name):
 
     label = request.fixturename[len('docker_container_{}'.format(request.scope)):]
 
+    try:
+        hostname = hosts_spec[label]['remote']['hostname']
+    except KeyError:
+        hostname = None
+
+    try:
+        remote_opts = hosts_spec[label]['remote']['specific']['docker']
+    except KeyError:
+        remote_opts = {}
+
     with build_remote(
-        'docker', request, os_name, env_level, label
+        'docker', request, os_name, env_level, label=label,
+        hostname=hostname, specific=remote_opts
     ) as remote:
         yield remote
 
 
-def vagrant_machine(request, tmp_path_factory, env_name):
+def vagrant_machine(
+    request, tmp_path_factory, env_name, vagrantfile_tmpl, hosts_spec
+):
     # TODO API to reuse by other providers
     if request.scope == 'function':
         marker = request.node.get_closest_marker('env_name')
         if marker:
             env_name = marker.args[0]
 
+        marker = request.node.get_closest_marker('vagrantfile_tmpl')
+        if marker:
+            vagrantfile_tmpl = marker.args[0]
+
     _parts = env_name.split('-')
     os_name = _parts[0]
     env_level = '-'.join(_parts[1:])
 
     label = request.fixturename[len('vagrant_machine_{}'.format(request.scope)):]
+
+    try:
+        hostname = hosts_spec[label]['remote']['hostname']
+    except KeyError:
+        hostname = None
+
+    try:
+        remote_opts = hosts_spec[label]['remote']['specific']['vbox']
+    except KeyError:
+        remote_opts = {}
 
     # TODO configurable way for that
     shared = False
@@ -551,9 +725,14 @@ def vagrant_machine(request, tmp_path_factory, env_name):
             machine.cmd('halt', '--force')
     else:
         with build_remote(
-            'vbox', request, os_name, env_level, label
+            'vbox', request, os_name, env_level, label=label,
+            vagrantfile_tmpl=vagrantfile_tmpl,
+            hostname=hostname, specific=remote_opts
         ) as remote:
             yield remote
+            logger.info(
+                "Destroying remote '{}'".format(remote.name)
+            )
 
 
 @pytest.fixture(scope='session')
@@ -621,6 +800,8 @@ def mock_hosts(hosts, request, mlocalhost):
 @pytest.fixture
 def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
     target_hosts = set(hosts)
+    ssh_config_paths = {}
+    def_ssh_config = '~/.ssh/config'
 
     marker = request.node.get_closest_marker('inject_ssh_config')
     if marker:
@@ -637,7 +818,11 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
                 )
             )
         mhost.check_output("mkdir -p ~/.ssh")
-        mhost.check_output('cp -p {} ~/.ssh/config'.format(ssh_config))
+        mhost.check_output('cp -p {} {}'.format(ssh_config, def_ssh_config))
+        ssh_config_paths[label] = Path(
+            mhost.check_output('realpath {}'.format(def_ssh_config))
+        )
+    return ssh_config_paths
 
 
 @pytest.fixture
@@ -740,28 +925,44 @@ def mlocalhost(localhost, request):
     return LocalHostMeta(None, localhost, None, request, label=None, iface='lo')
 
 
+@pytest.fixture
+def vagrant_default_ssh():
+    return False
+
+
 def build_remote(
-    envprovider, request, os_name, env_level, label=None
+    env_provider, request, os_name, env_level, label=None, **kwargs
 ):
     base_name = h.remote_name(
-        request.node.nodeid, request.scope, os_name, env_level, label
+        request.node.nodeid, request.scope, os_name, env_level, label=label
     )
 
+    logger.info(
+        "Building env-level '{}' for os '{}' with provider '{}'"
+        .format(env_level, os_name, env_provider)
+    )
     # TODO return an object of a class
-    if envprovider == 'docker':
-        docker_client = request.getfixturevalue('docker_client')
-        image = request.getfixturevalue(
+    if env_provider == 'docker':
+        base_level = request.getfixturevalue(
             "docker_image_{}".format(env_fixture_suffix(os_name, env_level))
         )
-        return _docker_container_run(docker_client, image, base_name)
-    elif envprovider == 'vbox':
-        box = request.getfixturevalue(
+    elif env_provider == 'vbox':
+        base_level = request.getfixturevalue(
             "vagrant_box_{}".format(env_fixture_suffix(os_name, env_level))
         )
-        tmpdir = request.getfixturevalue('tmpdir_{}'.format(request.scope))
-        return h._vagrant_machine_up(tmpdir, box, base_name)
     else:
-        raise ValueError("unknown envprovider {}".format(envprovider))
+        raise ValueError("unknown env provider {}".format(env_provider))
+
+    tmpdir = request.getfixturevalue('tmpdir_' + request.scope)
+
+    logger.info(
+        "Starting remote with base name '{}'".format(base_name)
+    )
+    remote = h.run_remote(env_provider, base_level, base_name, tmpdir, **kwargs)
+    logger.info(
+        "Started remote '{}'".format(remote.name)
+    )
+    return remote
 
 
 def discover_remote(
@@ -771,6 +972,7 @@ def discover_remote(
 
     _host = None
     _iface = 'eth0'
+    _ssh_config = None
     if isinstance(remote, h.Container):
         # update container data
         remote.container.reload()
@@ -791,7 +993,7 @@ def discover_remote(
         with _ssh_config_tmp.open('w') as f:
             f.write(remote.ssh_config())
 
-        # FIXME sometimes hostonlynetwork of the vbox machine ('eth1' here) is not up properly
+        # FIXME sometimes hostonlynetwork of the vbox machine is not up properly
         # (route table is not created), no remedy found yet, possible workaround
         # is to remove vbox hostonly network for a machine and re-create the machine
         # https://jts.seagate.com/browse/EOS-3129
@@ -800,7 +1002,9 @@ def discover_remote(
         _host = testinfra.get_host(
             "ssh://{}".format(remote.name), ssh_config=str(_ssh_config_tmp)
         )
-        _iface = 'eth1'
+        _iface = 'enp0s8'
+        if request.getfixturevalue('vagrant_default_ssh'):
+            _ssh_config = remote.ssh_config().replace(remote.name, remote.hostname)
 
     else:
         raise ValueError(
@@ -815,23 +1019,24 @@ def discover_remote(
     ssh_config.touch(mode=0o600, exist_ok=True)
 
     # prepare ssh configuration
-    ssh_key = request.getfixturevalue('ssh_key')
-    _ssh_config = (
-            "Host {}\n"
-            "  Hostname {}\n"
-            "  Port 22\n"
-            "  User {}\n"
-            "  UserKnownHostsFile /dev/null\n"
-            "  StrictHostKeyChecking no\n"
-            "  IdentityFile {}\n"
-            "  IdentitiesOnly yes\n"
-            "  LogLevel FATAL\n"
-        ).format(
-            _hostname,
-            _host.interface(_iface).addresses[0],
-            'root',
-            str(ssh_key)
-        )
+    if _ssh_config is None:
+        ssh_key = request.getfixturevalue('ssh_key')
+        _ssh_config = (
+                "Host {}\n"
+                "  Hostname {}\n"
+                "  Port 22\n"
+                "  User {}\n"
+                "  UserKnownHostsFile /dev/null\n"
+                "  StrictHostKeyChecking no\n"
+                "  IdentityFile {}\n"
+                "  IdentitiesOnly yes\n"
+                "  LogLevel FATAL\n"
+            ).format(
+                _hostname,
+                _host.interface(_iface).addresses[0],
+                'root',
+                str(ssh_key)
+            )
 
     with ssh_config.open('a') as f:
         f.write(_ssh_config)
@@ -883,9 +1088,8 @@ def build_mhost_fixture(label=None, module_name=__name__):
         "function", suffix=label, module_name=module_name,
         name_with_scope=False
     )
-    def mhost(localhost, request, tmpdir_function, hosts_meta):
-        envprovider = request.config.getoption("envprovider")
-        if envprovider == 'host':
+    def mhost(localhost, request, tmpdir_function, hosts_meta, env_provider):
+        if env_provider == 'host':
             return request.getfixturevalue('mlocalhost')
 
         scope = (
@@ -895,7 +1099,12 @@ def build_mhost_fixture(label=None, module_name=__name__):
 
         ssh_config = request.getfixturevalue('ssh_config')
 
-        if envprovider == 'docker':
+        logger.info(
+            "Building remote '{}' using provider '{}'"
+            .format('default' if label is None else label, env_provider)
+        )
+
+        if env_provider == 'docker':
             remote = request.getfixturevalue(
                 remote_fixtures[scope]['docker'].__name__
             )
@@ -906,6 +1115,9 @@ def build_mhost_fixture(label=None, module_name=__name__):
                 remote_fixtures[scope]['vagrant'].__name__
             )
 
+        logger.info(
+            "Discovering remote '{}'".format(remote.name)
+        )
         meta = discover_remote(
             request, remote,
             ssh_config=ssh_config, host_fixture_label=label

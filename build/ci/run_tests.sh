@@ -4,8 +4,15 @@ set -eu
 set -o pipefail
 
 # TODO make that configurable
-out_file=pytest.out
 
-pytest_args="$@"
+args="${1:-}"
+marker_expr="${2:-}"
+out_file="${3:-pytest.out}"
 
-python -m pytest $pytest_args 2>&1 | tee "$out_file"
+cmd="python -m pytest $args"
+
+if [[ -n "$marker_expr" ]]; then
+    cmd="$cmd -m '$marker_expr'"
+fi
+
+bash -c "$cmd" 2>&1 | tee "$out_file"

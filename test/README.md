@@ -32,7 +32,7 @@ Please check `pytest --help` and [pytest docs](http://doc.pytest.org/en/latest/u
 
 ### Custom Options
 
-- `--envprovider`: test environment provider, possible values: `host`, `docker`, `vagrant`, default: `docker`
+- `--env-provider`: test environment provider, possible values: `host`, `docker`, `vagrant`, default: `docker`
 
 *Note*. `host` and `vagrant` options are not actually ready to use for now.
 
