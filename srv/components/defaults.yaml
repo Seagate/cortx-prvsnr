@@ -5,7 +5,7 @@ tmp_dir: /tmp
 {% set prvsnr_repo_url = "{0}/prvsnr/vendor/".format(base_repo_url) %}
 {% set release = pillar['eos_release']['target_build'] %}
 
-kernel_pkg: {{ prvsnr_repo_url }}/centos/7.5.1804/Packages/kernel-3.10.0-862.el7.x86_64.rpm
+kernel_pkg: http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/Packages/k/kernel-3.10.0-1062.el7.x86_64.rpm
 
 base_repos:
   centos_repos:
