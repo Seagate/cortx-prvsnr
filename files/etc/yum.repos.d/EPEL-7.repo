@@ -1,5 +1,0 @@
-[EPEL-7]
-gpgcheck=0
-enabled=1
-baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/EPEL-7/
-name=EPEL-7

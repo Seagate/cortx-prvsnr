@@ -1,5 +1,0 @@
-[katello-client]
-gpgcheck=0
-enabled=1
-baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/Katello-Client/
-name=katello-client
