@@ -6,10 +6,7 @@ Install_base_packages:
   pkg.installed:
     - pkgs:
       - ipmitool
-      - jq
-      - python36
-      - vim-enhanced
-      - tmux
+      - python3
     - reload_modules: True
 
 Install policy packages for SELinux:
@@ -23,18 +20,11 @@ Install policy packages for SELinux:
 python-pip:
   pkg.installed:
     - pkgs:
-      - python2-pip
-      - python36-pip
+      - python3-pip
     - reload_modules: True
-
-pip3 upgrade:
- pip.installed:
-   - name: pip
-   - bin_env: /usr/bin/pip
-   - upgrade: True
-   - require:
-     - pkg: python-pip
-
+    - bin_env: /usr/bin/pip
+    - upgrade: True
+   
 # Install pyyaml:
 #   # Install using pip
 #   pip.installed:
