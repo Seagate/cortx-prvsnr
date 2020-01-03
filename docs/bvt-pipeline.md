@@ -1,7 +1,7 @@
 # Build Verification Testing Pipeline
 
 The [pipeline](../build/bvt/Jenkinsfile.bvt) automates new releases verification using
-testing suite from [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/repository/)
+testing suite from [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/)
 repository and logic of dynamic environment management provided by [testing suite](../test)
 from the current repository.
 
@@ -23,8 +23,10 @@ Please refer [here](http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvs
 
 The pipeline accepts the following parameters:
 
-- `eos_release`: EOS stack release to use as source for provisioner and EOS stack components.
+- `eosRelease`: EOS stack release to use as source for provisioner and EOS stack components.
 Default: `integration/last_successful`.
+- `eosTestRepoVersion`: version of the [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/)
+repository to use. Default: `master`.
 
 ## Artifacts
 
