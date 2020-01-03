@@ -1,3 +1,3 @@
-start service sspl-ll:
+Start service sspl-ll:
   service.running:
     - name: sspl-ll
