@@ -4,8 +4,8 @@ Install python packages:
       - vim-enhanced
       - jq
       - python2-pip
-      - python36
-      - python36-pip
+      - python3
+      - python3-pip
     - reload_modules: true
 
 Install AWS CLI:
