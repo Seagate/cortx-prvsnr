@@ -1,3 +1,6 @@
+include:
+  - components.misc.rsyslog.install
+
 Setup HAProxy config:
   file.managed:
     - name: /etc/haproxy/haproxy.cfg
@@ -33,11 +36,9 @@ Setup haproxy config to enable logs:
     - source: salt://components/ha/haproxy/files/rsyslog.d/haproxy.conf
     - makedirs: True
     - keep_source: False
+    - require:
+      - pkg: Install rsyslog
 
 Enable haproxy service:
   service.enabled:
     - name: haproxy.service
-
-Enable rsyslog service:
-  service.enabled:
-    - name: rsyslog.service

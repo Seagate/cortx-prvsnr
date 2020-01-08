@@ -1,8 +1,3 @@
-Disable Slapd:
-  service.dead:
-    - name: rsyslog
-    - enable: False
-
 Remove haproxy config:
   file.absent:
     - name: /etc/haproxy/haproxy.cfg

@@ -1,7 +1,8 @@
+include:
+  - components.misc.rsyslog.start
+
 Ensure HAProxy running:
   service.running:
     - name: haproxy.service
-
-Ensure rsyslog running:
-  service.running:
-    - name: rsyslog.service
+    - require:
+      - service: Ensure rsyslog running
