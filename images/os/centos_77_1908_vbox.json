@@ -10,7 +10,7 @@
         "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-1908",
         "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/7.7.1908.isos/CentOS-7-x86_64-Minimal-1908.iso"
       ],
-      "iso_checksum": "9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d",
+      "iso_checksum": "7002b56184180591a8fa08c2fe0c7338",
       "iso_checksum_type": "md5",
       "boot_command": [
         "<tab><wait>",
