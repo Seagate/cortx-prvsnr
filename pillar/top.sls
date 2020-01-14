@@ -2,7 +2,7 @@ base:
   'G@roles:primary':
     - roles.primary
   '*':
-    - node_info.node_data
+    # - node_info.node_data
     - components.cluster
     - components.corosync-pacemaker
     - components.halon

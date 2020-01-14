@@ -1,4 +1,4 @@
 mine_functions:
   network.ip_addrs:
-      - mgmt0
+      - eth0
       - data0
