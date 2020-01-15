@@ -5,3 +5,4 @@ include:
   - components.system.housekeeping
 #  - components.system.sanity_check
   - components.system.logrotate
+  - components.system.logrotate

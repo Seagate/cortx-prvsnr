@@ -1,24 +1,19 @@
----
-
 tmp_dir: /tmp
 
-{% set base_repo_url = "http://ci-storage.mero.colo.seagate.com" %}
-{% set eos_repo_url = "{0}/releases/eos/".format(base_repo_url) %}
-{% set prvsnr_repo_url = "{0}/prvsnr/vendor/".format(base_repo_url) %}
+{% set base_repo_url = "http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Production/" %}
+{% set eos_repo_url = "http://ci-storage.mero.colo.seagate.com/releases/eos/" %}
 {% set release = pillar['eos_release']['target_build'] %}
-
-kernel_pkg: {{ prvsnr_repo_url }}/centos/7.5.1804/Packages/kernel-3.10.0-862.el7.x86_64.rpm
 
 base_repos:
   centos_repos:
     - id: "base"
-      url: {{ prvsnr_repo_url }}/centos/7.5.1804.vault/vault.centos.org/7.5.1804/os/x86_64/
+      url: http://mirror.den1.denvercolo.net/CentOS/7.7.1908/os/x86_64/
     - id: "extras"
-      url: {{ prvsnr_repo_url }}/centos/7.5.1804.vault/vault.centos.org/7.5.1804/extras/x86_64/
+      url: http://mirror.den1.denvercolo.net/CentOS/7.7.1908/extras/x86_64/
   epel_repo:
     id: "epel"
-    url: {{ prvsnr_repo_url }}/centos/epel/
-    # url: {{ prvsnr_repo_url }}/centos/epel-20191423/mirror.grid.uchicago.edu/pub/linux/epel/7/x86_64/
+    url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
+    # url: http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/EPEL-7/
   saltstack_repo:
     id: "saltstack"
     url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0

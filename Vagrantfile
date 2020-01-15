@@ -38,9 +38,9 @@ Vagrant.configure("2") do |config|
       
       node_config.vm.provider :hyperv do |hv, override|
         # Configure salt nodes
-        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804_hyperv.box"
+        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_hyperv.box"
         override.vm.box_download_insecure = true
-        override.vm.box = "centos_7.5.1804_hyperv"
+        override.vm.box = "centos_7.7.1908_hyperv"
         override.vm.box_check_update = false
         override.vm.boot_timeout = 600
         override.vm.hostname = node['name']
@@ -95,9 +95,9 @@ Vagrant.configure("2") do |config|
 
       node_config.vm.provider :virtualbox do |vb, override|
         # Configure salt nodes
-        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804_vbox.box"
+        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_vbox.box"
         override.vm.box_download_insecure = true
-        override.vm.box = "centos_7.5.1804_vbox"
+        override.vm.box = "centos_7.7.1908_vbox"
         override.vm.box_check_update = false
         override.vm.boot_timeout = 600
         override.vm.hostname = node['name']
