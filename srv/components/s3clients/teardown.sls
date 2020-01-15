@@ -1,7 +1,7 @@
 include:
 # Clients
-  - components.s3client.awscli.teardown
-  - components.s3client.s3cmd.teardown
+  - components.s3clients.awscli.teardown
+  - components.s3clients.s3cmd.teardown
 
 
 Remove S3 client certs:

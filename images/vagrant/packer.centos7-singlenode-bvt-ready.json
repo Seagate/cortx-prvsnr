@@ -4,9 +4,9 @@
     "data_if": "lo",
     "mgmt_device": "/dev/sda",
     "data_device": "/dev/sdb",
-    "prvsnr_cli_release": "integration/last_successful",
-    "prvsnr_release": "integration/last_successful",
-    "eos_release": "integration/last_successful"
+    "prvsnr_cli_release": "integration/centos-7.7.1908/last_successful",
+    "prvsnr_release": "integration/centos-7.7.1908/last_successful",
+    "eos_release": "integration/centos-7.7.1908/last_successful"
   },
   "builders": [
     {

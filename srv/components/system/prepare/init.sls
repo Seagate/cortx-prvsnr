@@ -5,6 +5,7 @@ Sync data:
     - saltutil.refresh_grains: []
     - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []
+    - mine.update: []
 
 include:
   - components.system.prepare.setup_yum_repos

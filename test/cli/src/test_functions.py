@@ -768,7 +768,7 @@ def test_functions_install_provisioner_rpm(
     ).split('=')[1]
     assert baseurl == (
         'http://ci-storage.mero.colo.seagate.com/releases/eos/{}'
-        .format('integration/last_successful' if version is None else version)
+        .format('integration/centos-7.7.1908/last_successful' if version is None else version)
     )
 
 
