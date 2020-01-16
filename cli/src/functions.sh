@@ -776,6 +776,7 @@ function install_provisioner {
     local _sudo="${5:-false}"
     local _singlenode="${6:-false}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
+    local _os_release="centos-7.7.1908"
 
     local _prvsnr_repo=
     local _repo_archive_path=
@@ -823,7 +824,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            _prvsnr_version="integration/last_successful"
+            _prvsnr_version="integration/$_os_release/last_successful"
         fi
     fi
 
