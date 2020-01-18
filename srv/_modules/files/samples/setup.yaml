@@ -1,0 +1,26 @@
+test:
+    post_install:
+        script: echo
+        args:
+          - 'Stage:'
+          - Post Install
+    config:
+        script: echo
+        args:
+          - 'Stage:'
+          - Config
+    init:
+        script: echo
+        args:
+          - 'Stage:'
+          - init
+    test:
+        script: echo
+        args:
+          - 'Stage:'
+          - test
+    reset:
+        script: echo
+        args:
+          - 'Stage:'
+          - reset
