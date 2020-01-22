@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')
@@ -22,7 +22,7 @@ def vagrantfile_tmpl():
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
-@pytest.mark.env_name('centos7-singlenode-deploy-ready')
+@pytest.mark.env_level('singlenode-deploy-ready')
 @pytest.mark.hosts(['eosnode1'])
 def test_singlenode_deploy_ready_env(mhosteosnode1, request):
     # light check
@@ -64,7 +64,7 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
-@pytest.mark.env_name('centos7-singlenode-eos-deployed')
+@pytest.mark.env_level('singlenode-eos-deployed')
 @pytest.mark.hosts(['eosnode1'])
 def test_singlenode_eos_deployed_env(mhosteosnode1, request):
     # bootstrap the cluster
@@ -82,7 +82,7 @@ def test_singlenode_eos_deployed_env(mhosteosnode1, request):
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
-@pytest.mark.env_name('centos7-singlenode-eos-ready')
+@pytest.mark.env_level('singlenode-eos-ready')
 @pytest.mark.hosts(['eosnode1'])
 def test_singlenode_eos_ready_env(mhosteosnode1, request):
     mhosteosnode1.check_output('bash -ex /opt/seagate/eos-prvsnr/sanity_tests/s3-sanity.sh')
@@ -91,7 +91,7 @@ def test_singlenode_eos_ready_env(mhosteosnode1, request):
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
-@pytest.mark.env_name('centos7-singlenode-deploy-ready')
+@pytest.mark.env_level('singlenode-deploy-ready')
 @pytest.mark.hosts(['eosnode1'])
 def test_s3_sanity_singlenode_env(
     mhosteosnode1, ssh_config, mlocalhost,

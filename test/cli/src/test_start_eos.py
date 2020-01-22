@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')

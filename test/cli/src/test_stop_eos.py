@@ -11,8 +11,8 @@ DEFAULT_SCRIPT_PATH = "/tmp/stop-eos"
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')

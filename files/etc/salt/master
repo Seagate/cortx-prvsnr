@@ -404,6 +404,13 @@ color: True
 #    fred:
 #      - test.*
 #
+# TODO better authorization limitations
+external_auth:
+  pam:
+    prvsnrusers%:
+      - '*':
+        - '.*'
+
 # Time (in seconds) for a newly generated token to live. Default: 12 hours
 #token_expire: 43200
 #

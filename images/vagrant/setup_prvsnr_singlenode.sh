@@ -6,7 +6,7 @@
 set -eux
 
 prvsnr_src="${1:-rpm}"
-prvsnr_release="${2-integration/last_successful}"  # empty value should be accepted as well
+prvsnr_release="${2-integration/centos-7.7.1908/last_successful}"  # empty value should be accepted as well
 
 . ./functions.sh
 

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # TODO might makes sense to verify for cluster case as well
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 def test_setup_ssh_known_hosts(
     mhosteosnode1, eos_hosts, configure_salt, accept_salt_keys
 ):

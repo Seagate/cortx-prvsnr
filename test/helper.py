@@ -29,7 +29,8 @@ REPO_BUILD_DIRS = [
     '.vdisks',
     '.vagrant',
     '.pytest_cache',
-    '__pycache__'
+    '__pycache__',
+    'packer_cache'
 ]
 
 
@@ -309,6 +310,7 @@ class VagrantMachine(Remote):
     vm_dir = attr.ib(default=None)
     vagrantfile = attr.ib(default=None)
     provider = attr.ib(default='vbox')
+    user_vars = attr.ib(default={})
 
     # TODO should be required if default template is used
     box = attr.ib(default=None)
@@ -366,7 +368,7 @@ class VagrantMachine(Remote):
             log=self.log, env_vars=[
                 ('VAGRANT_CWD', self.vagrantfile.parent),
                 ('VAGRANT_VAGRANTFILE', self.vagrantfile.name)
-            ]
+            ] + [(k, v) for k, v in self.user_vars.items()]
         )
         self.last_status = {}
 
@@ -440,7 +442,7 @@ class VagrantMachine(Remote):
     def status(self, *args, update=False):
         if not self.last_status or update:
             raw_status = self._vagrant.cmd('status', *args, parse=True)
-            self.last_status.clear
+            self.last_status.clear()
             for row in raw_status:
                 # TODO possible other cases: empty target and 'ui' as type
                 if row.target == self.name:
@@ -453,11 +455,12 @@ class VagrantMachine(Remote):
 class VagrantBox:
     name = attr.ib()
     path = attr.ib(
-        converter=lambda v: v.resolve()
+        converter=lambda v: v.resolve() if v else None,
+        default=None
     )
     @path.validator
     def _check_path(self, attribute, value):
-        if not value.is_file:
+        if value and (not value.is_file):
             raise ValueError(
                 "{} is not a file".format(value)
             )
@@ -569,12 +572,15 @@ def fixture_builder(scope, name_with_scope=True, suffix=None, module_name=__name
     return _builder
 
 
-def _docker_image_build(client, dockerfile, ctx, image_name):
+def _docker_image_build(client, dockerfile, ctx, image_name=None):
     # build image from the Dockerfile
     output = []
+    kwargs = {}
+    if image_name:
+        kwargs['tag'] = image_name
     try:
         image, output = client.images.build(
-            dockerfile=dockerfile, path=ctx, tag=image_name
+            dockerfile=str(dockerfile), path=str(ctx), **kwargs
         )
     except Exception as exc:
         print("Failed to build docker image: {}".format(exc))
@@ -625,14 +631,14 @@ def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
 
 
 # TODO use object proxy for testinfra's host instances instead
-def run(host, script, *args, force_dump=False, **kwargs):
+def run(host, script, *args, quiet=True, force_dump=False, **kwargs):
     res = None
     try:
         res = host.run(script, *args, **kwargs)
     finally:
         # TODO it takes very much time if stdout/stderr are very long
         # (e.g. minutes for salt logs)
-        if (res is not None) and ((res.rc != 0) or force_dump):
+        if (res is not None) and ((res.rc != 0 and not quiet) or force_dump):
             if res.stdout:
                 for line in res.stdout.strip().split(os.linesep):
                     logger.info(line)

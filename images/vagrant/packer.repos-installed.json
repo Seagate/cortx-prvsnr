@@ -1,0 +1,51 @@
+{
+  "variables": {
+    "base_env": "centos7.7.1908",
+    "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/base/package.box",
+    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_base",
+    "skip_add": "false"
+  },
+  "builders": [
+    {
+      "type"                : "vagrant",
+      "provider"            : "virtualbox",
+      "source_path"         : "{{user `parent_source`}}",
+      "skip_add"            : "{{user `skip_add`}}",
+      "box_name"            : "{{user `parent_box_name`}}",
+      "add_force"           : "true",
+      "template"            : "{{template_dir}}/vagrantfile.packer.template",
+      "output_dir"          : "{{template_dir}}/../../.boxes/{{user `base_env`}}/repos-installed",
+      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.boxed",
+      "package_include"     : [
+          "{{template_dir}}/../../test/id_rsa.test"
+      ],
+      "communicator"        : "ssh"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir -p /tmp/eos-prvsnr/cli/src"
+      ]
+    },
+    {
+     "type": "file",
+     "source": "{{template_dir}}/../../cli/src/functions.sh",
+     "destination": "/tmp/eos-prvsnr/cli/src/"
+    },
+    {
+     "type": "file",
+     "source": "{{template_dir}}/../../files",
+     "destination": "/tmp/eos-prvsnr/"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "bash -xec \". /tmp/eos-prvsnr/cli/src/functions.sh; install_repos\"",
+        "rm -rf /tmp/eos-prvsnr",
+        "rm -rf /var/cache/yum"
+      ]
+    }
+  ]
+}
