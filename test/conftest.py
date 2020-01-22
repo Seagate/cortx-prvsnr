@@ -13,34 +13,51 @@ import logging
 import test.helper as h
 from .helper import (
     _docker_image_build, fixture_builder,
-    safe_vagrant_machine_name, safe_filename,
+    safe_filename,
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
 
 logger = logging.getLogger(__name__)
 
-DOCKER_IMAGES_REPO = "seagate/ees-prvsnr"
 MODULE_DIR = Path(__file__).resolve().parent
+
+DOCKER_IMAGES_REPO = "seagate/ees-prvsnr"
+VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
+
 SSH_KEY_FILE_NAME = "id_rsa.test"
 
-OS_NAMES = [
-    'centos7'
-]
-
 ENV_LEVELS_HIERARCHY = {
-    'base': None,
+    'base': {
+        'centos7.5.1804': {
+            'docker': 'centos:7.5.1804',
+            'vagrant': {
+                'vm_box_name': 'geerlingguy/centos7',
+                'vm_box_version': '1.2.7'
+            }
+        },
+        'centos7.7.1908': {
+            'docker': 'centos:7.7.1908',
+            'vagrant': {
+                'vm_box_name': 'geerlingguy/centos7',
+                'vm_box_version': '1.2.17'
+            }
+        }
+    },
     'repos-installed': 'base',
     'salt-installed': 'repos-installed',
+    'singlenode-prvsnr-installed': 'salt-installed',
     'singlenode-deploy-ready': {
         'parent': 'salt-installed',
         'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
     },
     'singlenode-eos-deployed': 'singlenode-deploy-ready',
     'singlenode-eos-ready': 'singlenode-eos-deployed',
+
     # utility levels
     'rpmbuild': 'base',
     'utils': 'base',
     'network-manager-installed': 'base',
+
     # bvt
     'singlenode-bvt-ready': {
         'parent': 'base',
@@ -48,6 +65,9 @@ ENV_LEVELS_HIERARCHY = {
     }
 }
 
+
+BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
+DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_EOS_SPEC = {
     'eosnode1': {
@@ -216,8 +236,8 @@ def pytest_configure(config):
                    "in the environment provided by the provider"
     )
     config.addinivalue_line(
-        "markers", "env_name(string): mark test to be run "
-                   "in the specific environment"
+        "markers", "env_level(string): mark test to be run "
+                   "in the specific environment level"
     )
     config.addinivalue_line(
         "markers", "eos_spec(dict): mark test as expecting "
@@ -246,35 +266,47 @@ def pytest_configure(config):
     )
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--env-provider", action='store', choices=['host', 'docker', 'vbox'],
+prvsnr_pytest_options = {
+    # TODO might be useful to test in multiple at once
+    "base-env": dict(
+        action='store', choices=BASE_OS_NAMES,
+        default=DEFAULT_BASE_OS_NAME,
+        help="base OS name, defaults to {}".format(DEFAULT_BASE_OS_NAME)
+    ),
+    "env-provider": dict(
+        action='store',
+        choices=['host', 'docker', 'vbox'],
         default='docker',
         help="test environment provider, defaults to docker"
-    )
-    parser.addoption(
-        "--prvsnr-src", action='store', choices=['rpm', 'gitlab', 'local'],
+    ),
+    "prvsnr-src": dict(
+        action='store', choices=['rpm', 'gitlab', 'local'],
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
+    ),
+    "prvsnr-cli-release": dict(
+        action='store', default='integration/centos-7.7.1908/last_successful',
+        help="Provisioner cli release to use, defaults to 'integration/centos-7.7.1908/last_successful'"
+    ),
+    "prvsnr-release": dict(
+        action='store', default='integration/centos-7.7.1908/last_successful',
+        help="Provisioner release to use, defaults to 'integration/centos-7.7.1908/last_successful'"
+    ),
+    "eos-release": dict(
+        action='store', default='integration/centos-7.7.1908/last_successful',
+        help="Target EOS release to verify, defaults to 'integration/centos-7.7.1908/last_successful'"
     )
-    parser.addoption(
-        "--prvsnr-cli-release", action='store', default='integration/last_successful',
-        help="Provisioner cli release to use, defaults to 'integration/last_successful'"
-    )
-    parser.addoption(
-        "--prvsnr-release", action='store', default='integration/last_successful',
-        help="Provisioner release to use, defaults to 'integration/last_successful'"
-    )
-    parser.addoption(
-        "--eos-release", action='store', default='integration/last_successful',
-        help="Target EOS release to verify, defaults to 'integration/last_successful'"
-    )
+}
 
+
+def pytest_addoption(parser):
+    for name, params in prvsnr_pytest_options.items():
+        parser.addoption("--" + name, **params)
 
 
 @pytest.fixture(scope="session")
 def options_list():
-    return ["env-provider", "prvsnr-src", "prvsnr-cli-release", "prvsnr-release", "eos-release"]
+    return list(prvsnr_pytest_options)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -313,6 +345,11 @@ def ssh_key(tmpdir_session):
 @pytest.fixture(scope="session")
 def vagrant_global_status_prune(localhost):
     localhost.check_output('vagrant global-status --prune')
+
+
+@pytest.fixture(scope="session")
+def base_env(request):
+    return request.config.getoption("base_env")
 
 
 @pytest.fixture
@@ -361,18 +398,25 @@ def hosts_spec(request):
 
 # TODO multi platforms case
 @pytest.fixture(scope="session")
-def vbox_seed_machine(request, project_path, vagrant_global_status_prune):
-    platform = 'centos7'
-    machine_suffix = "{}-base".format(platform)
-    machine_name = "{}.{}".format(DOCKER_IMAGES_REPO.replace('/', '.'), machine_suffix)
-    vagrantfile_name = "Vagrantfile.{}".format(machine_suffix)
+def vbox_seed_machine(request, base_env, project_path, vagrant_global_status_prune):
+    env_spec = ENV_LEVELS_HIERARCHY['base'][base_env]['vagrant']
+    # TODO separator ???
+    machine_name = '_'.join([VAGRANT_VMS_PREFIX, base_env, 'seed'])
+    vagrantfile_name = "Vagrantfile.seed"
     vagrantfile = project_path / 'images' / 'vagrant' / vagrantfile_name
 
     machine = h.VagrantMachine(
-        machine_name, vagrantfile=vagrantfile
+        machine_name, vagrantfile=vagrantfile, user_vars={
+            'VAR_VM_NAME': machine_name,
+            'VAR_VM_BOX_NAME': env_spec['vm_box_name'],
+            'VAR_VM_BOX_VERSION': env_spec['vm_box_version']
+        }
     )
 
-    logger.info("Starting VirtualBox seed machine")
+    logger.info(
+        "Preparing VirtualBox {} seed machine"
+        .format(base_env)
+    )
     status = machine.status(update=True)
     # TODO move that specific to VagrantMachine API
     if status['state'][0] == 'not_created':
@@ -383,6 +427,8 @@ def vbox_seed_machine(request, project_path, vagrant_global_status_prune):
     else:
         # TODO do that only if rebuild base vagrant box
         machine.cmd('snapshot', 'restore', machine.name, 'initial --no-start')
+
+    return machine
 
 
 # TODO
@@ -401,10 +447,11 @@ def repo_tgz(project_path, localhost, tmpdir_session):
 
 def _rpmbuild_mhost(request):
     env_provider = request.config.getoption("env_provider")
+    base_env = request.config.getoption("base_env")
 
     # TODO DOCS : example how to run machine out of fixture scope
     remote = build_remote(
-        env_provider, request, 'centos7', 'rpmbuild'
+        env_provider, request, base_env, 'rpmbuild'
     )
 
     try:
@@ -434,7 +481,7 @@ def rpm_prvsnr(request, tmpdir_session):
     # TODO DOCS : example how to run machine out of fixture scope
     with mhost.remote as _:
         mhost.check_output(
-            'cd {} && sh -x build/rpms/buildrpm.sh'.format(mhost.repo)
+            'cd {} && sh -x devops/rpms/buildrpm.sh'.format(mhost.repo)
         )
         rpm_remote_path = mhost.check_output(
             'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
@@ -469,8 +516,8 @@ def log_test_name(request):
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 def env_fixture_suffix(os_name, env_level):
@@ -479,20 +526,81 @@ def env_fixture_suffix(os_name, env_level):
 
 def build_docker_image_fixture(os_name, env_level):
 
-    def docker_image(request, docker_client, project_path):
-        parent_env = ENV_LEVELS_HIERARCHY.get(env_level)
-        if parent_env:
-            _ = request.getfixturevalue(
-                "docker_image_{}".format(
-                    env_fixture_suffix(os_name, parent_env))
+    def docker_image(request, docker_client, project_path, tmpdir_session):
+
+        def _image_short_id(image):
+            return image.short_id.replace('sha256:', '')
+
+        def _image_tag(image, os_name, env_level):
+            # TODO better parts separator
+            return '-'.join([os_name, env_level, _image_short_id(image)])
+
+        def _image_name(image, os_name, env_level):
+            return (
+                "{}:{}".format(
+                    DOCKER_IMAGES_REPO, _image_tag(image, os_name, env_level)
+                )
             )
-        ctx = str(project_path)
-        _env_name = '-'.join([os_name, env_level])
-        df_name = "Dockerfile.{}".format(_env_name)
-        dockerfile = str(project_path / 'images' / 'docker' / df_name)
-        image_name = "{}:{}".format(DOCKER_IMAGES_REPO, _env_name)
-        logger.info("Building docker env '{}'".format(_env_name))
-        return _docker_image_build(docker_client, dockerfile, ctx, image_name)
+
+        def _parent_image_name():
+            if env_level == 'base':
+                return ENV_LEVELS_HIERARCHY['base'][os_name]['docker']
+            else:
+                env_spec = ENV_LEVELS_HIERARCHY[env_level]
+                p_env = (
+                    env_spec['parent'] if type(env_spec) is dict else env_spec
+                )
+                p_image = request.getfixturevalue(
+                    "docker_image_{}".format(
+                        env_fixture_suffix(os_name, p_env)
+                    )
+                )
+                p_image_name = _image_name(p_image, os_name, p_env)
+                if p_image_name not in p_image.tags:
+                    logger.warning(
+                        "parent image {} doesn't have expected tag {}"
+                        .format(p_image, p_image_name)
+                    )
+                    # TODO what if no tags at all, do we allow referencing by id ?
+                    p_image_name = p_image.tags[0]
+                return p_image_name
+
+        parent_image_name = _parent_image_name()
+
+        df_name = "Dockerfile.{}".format(env_level)
+        dockerfile = project_path / 'images' / 'docker' / df_name
+        dockerfile_tmpl = dockerfile.parent / (dockerfile.name + '.tmpl')
+
+        if dockerfile_tmpl.exists():
+            dockerfile_str = dockerfile_tmpl.read_text().format(parent=parent_image_name)
+        else:
+            dockerfile_str = dockerfile.read_text()
+
+        dockerfile = tmpdir_session / dockerfile.name
+        dockerfile.write_text(dockerfile_str)
+
+        # build image
+        logger.info(
+            "Building docker env '{}' for base env '{}'"
+            .format(env_level, base_env)
+        )
+        image = _docker_image_build(docker_client, dockerfile, ctx=project_path)
+
+        # set image name
+        if _image_name(image, os_name, env_level) not in image.tags:
+            try:
+                image.tag(DOCKER_IMAGES_REPO, tag=_image_tag(image, os_name, env_level))
+            except Exception:
+                # ensure that image doesn't have any other tags
+                # TODO what if it actually was tagged but failed then,
+                #      is it possible in docker API
+                if not image.tags:
+                    docker_client.images.remove(image.id, force=False, noprune=False)
+                raise
+            else:
+                image.reload()
+
+        return image
 
     fixture_builder(
         'session',
@@ -502,76 +610,113 @@ def build_docker_image_fixture(os_name, env_level):
     )(docker_image)
 
 
-for os_name in OS_NAMES:
-    for env_level in ENV_LEVELS_HIERARCHY:
-        build_docker_image_fixture(os_name, env_level)
+for _os_name in BASE_OS_NAMES:
+    for _env_level in ENV_LEVELS_HIERARCHY:
+        build_docker_image_fixture(_os_name, _env_level)
 
 
 def build_vagrant_box_fixture(os_name, env_level):
 
-    def vagrant_box(request, project_path):
-        # TODO
-        #   - copy-paste from docker_image
-        #   - env variables logic is not solid
-        env_spec = ENV_LEVELS_HIERARCHY.get(env_level)
-        env_vars = {}
-        if env_spec:
-            if type(env_spec) is dict:
-                parent_env = env_spec['parent']
+    # returns VagrantBox object, box is already added to vagrant
+    def vagrant_box(request, base_env, project_path):
 
-                for vname in env_spec.get('vars', []):
-                    env_vars[vname] = request.config.getoption(vname)
+        def _get_user_vars():
+            res = {'base_env': base_env}
+
+            if env_level == 'base':
+                p_machine = request.getfixturevalue('vbox_seed_machine')
+                res['seed_vm_name'] = p_machine.name
             else:
-                parent_env = env_spec
-            assert type(parent_env) is str
-            _ = request.getfixturevalue(
-                "vagrant_box_{}".format(
-                    env_fixture_suffix(os_name, parent_env))
+                env_spec = ENV_LEVELS_HIERARCHY[env_level]
+                if type(env_spec) is dict:
+                    p_env = env_spec['parent']
+                    # add pytest session level vars from config
+                    for vname in env_spec.get('vars', []):
+                        res[vname] = request.config.getoption(vname)
+                else:
+                    p_env = env_spec
+
+                if type(p_env) is not str:
+                    raise RuntimeError(
+                        "{} is not a string: {}"
+                        .format(type(p_env), p_env)
+                    )
+
+                p_box = request.getfixturevalue(
+                    "vagrant_box_{}".format(
+                        env_fixture_suffix(os_name, p_env))
+                )
+                res['parent_source'] = res['parent_box_name'] = p_box.name
+                res['skip_add'] = 'true'
+
+            return res
+
+        def _check_box_added(box_name):
+            vagrant_rows = h.Vagrant().box("list", parse=True)
+            for row in vagrant_rows:
+                if (row.data_type == 'box-name') and (row.data[0] == box_name):
+                    return True
+            return False
+
+        def _add_box(path, name):
+            box = h.VagrantBox(name, path=path)
+            logger.info(
+                "Adding vagrant box '{}'".format(name)
             )
-        _env_name = '-'.join([os_name, env_level])
+            h.Vagrant().box(
+                "add --provider virtualbox --name",
+                box.name,
+                '--force',
+                "'{}'".format(box.path)
+            )
+            return box
 
-        pf_name = "packer.{}.json".format(_env_name)
-        packerfile = project_path / 'images' / 'vagrant' / pf_name
-        box_path = project_path / '.boxes' / _env_name / 'package.box'
+        user_vars = _get_user_vars()
 
-        # TODO smarter logic of boxes rebuild, triggered when:
+        # TODO separator ???
+        box_name = '_'.join([VAGRANT_VMS_PREFIX, base_env, env_level])
+        box_path = project_path / '.boxes' / base_env / env_level / 'package.box'
+
+        # TODO for now always rebuild the base box if box file is missed
+        #  until smarter logic of boxes rebuild is implemented,
+        #  should be triggered when any of the following is true:
         #  - parent env is changed
+        #  - input user variables set is changed
         #  - provisioning scripts and other related sources are changed
-        # box_updated = False
-        if not box_path.exists():
-            # TODO smarter logic of seed machine reference
-            # build seed machine beforehand
-            if env_spec is None:
-                request.getfixturevalue('vbox_seed_machine')
+        if _check_box_added(box_name) and False:
+            logger.info(
+                "Vagrant box for env '{}:{}' already added"
+                .format(base_env, env_level)
+            )
+            # TODO ??? do not specify package.box here since we don't
+            # know whether it exists or not and how it is really related
+            # to the box
+            return h.VagrantBox(box_name)
 
-            # TODO pytest options to turn on packer debug
-            # TODO add box to vagrant here: it should prevent auto add by
-            #      vagrant during 'vagrant up' where it uses path to source box
+        if not box_path.exists():
+            pf_name = "packer.{}.json".format(env_level)
+            packerfile = project_path / 'images' / 'vagrant' / pf_name
             packer = h.Packer(packerfile)
-            logger.info("Building vagrant env '{}'".format(_env_name))
+
+            logger.info(
+                "Building vagrant env '{}' for base env '{}'"
+                .format(env_level, base_env)
+            )
+            # TODO pytest options to turn on packer debug
             packer.build(
                 '--force {}'.format(
-                    ' '.join(
-                        ['-var {}={}'.format(k, v) for k, v in env_vars.items()]
-                    )
+                    ' '.join([
+                        '-var {}={}'.format(k, v) for k, v in user_vars.items()
+                    ])
                 )
             )
-            # box_updated = True
 
-        box = h.VagrantBox(
-            "{}.{}".format(DOCKER_IMAGES_REPO.replace('/', '.'), _env_name),
-            box_path
-        )
+        if not box_path.exists():
+            raise RuntimeError(
+                "Vagrant box file {} hasn't been created".format(box_path)
+            )
 
-        # TODO add only if not exists or updated
-        h.Vagrant().box(
-            "add --provider virtualbox --name",
-            box.name,
-            '--force',
-            "'{}'".format(box.path)
-        )
-
-        return box
+        return _add_box(box_path, box_name)
 
     fixture_builder(
         'session',
@@ -581,9 +726,9 @@ def build_vagrant_box_fixture(os_name, env_level):
     )(vagrant_box)
 
 
-for os_name in OS_NAMES:
-    for env_level in ENV_LEVELS_HIERARCHY:
-        build_vagrant_box_fixture(os_name, env_level)
+for _os_name in BASE_OS_NAMES:
+    for _env_level in ENV_LEVELS_HIERARCHY:
+        build_vagrant_box_fixture(_os_name, _env_level)
 
 '''
 def build_vagrant_machine_shared_fixture(os_name, env_level):
@@ -618,19 +763,19 @@ def build_vagrant_machine_shared_fixture(os_name, env_level):
     )(vagrant_machine_shared)
 
 
-for os_name in OS_NAMES:
-    for env_level in ENV_LEVELS_HIERARCHY:
-        build_vagrant_machine_shared_fixture(os_name, env_level)
+for _os_name in BASE_OS_NAMES:
+    for _env_level in ENV_LEVELS_HIERARCHY:
+        build_vagrant_machine_shared_fixture(_os_name, _env_level)
 
 
 @fixture_builder(['module', 'function'], module_name=__name__)
-def vagrant_machine_shared(request, env_name, project_path):
+def vagrant_machine_shared(request, env_level, project_path):
     if request.scope == 'function':
-        marker = request.node.get_closest_marker('env_name')
+        marker = request.node.get_closest_marker('env_level')
         if marker:
-            env_name = marker.args[0]
+            env_level = marker.args[0]
 
-    _parts = env_name.split('-')
+    _parts = env_level.split('-')
     os_name = _parts[0]
     env_level = '-'.join(_parts[1:])
 
@@ -652,16 +797,12 @@ def vagrantfile_tmpl():
     return MODULE_DIR / 'Vagrantfile.tmpl'
 
 
-def docker_container(request, docker_client, env_name, hosts_spec):
+def docker_container(request, docker_client, base_env, env_level, hosts_spec):
     # TODO API to reuse by other providers
     if request.scope == 'function':
-        marker = request.node.get_closest_marker('env_name')
+        marker = request.node.get_closest_marker('env_level')
         if marker:
-            env_name = marker.args[0]
-
-    _parts = env_name.split('-')
-    os_name = _parts[0]
-    env_level = '-'.join(_parts[1:])
+            env_level = marker.args[0]
 
     label = request.fixturename[len('docker_container_{}'.format(request.scope)):]
 
@@ -676,28 +817,24 @@ def docker_container(request, docker_client, env_name, hosts_spec):
         remote_opts = {}
 
     with build_remote(
-        'docker', request, os_name, env_level, label=label,
+        'docker', request, base_env, env_level, label=label,
         hostname=hostname, specific=remote_opts
     ) as remote:
         yield remote
 
 
 def vagrant_machine(
-    request, tmp_path_factory, env_name, vagrantfile_tmpl, hosts_spec
+    request, base_env, env_level, vagrantfile_tmpl, hosts_spec
 ):
     # TODO API to reuse by other providers
     if request.scope == 'function':
-        marker = request.node.get_closest_marker('env_name')
+        marker = request.node.get_closest_marker('env_level')
         if marker:
-            env_name = marker.args[0]
+            env_level = marker.args[0]
 
         marker = request.node.get_closest_marker('vagrantfile_tmpl')
         if marker:
             vagrantfile_tmpl = marker.args[0]
-
-    _parts = env_name.split('-')
-    os_name = _parts[0]
-    env_level = '-'.join(_parts[1:])
 
     label = request.fixturename[len('vagrant_machine_{}'.format(request.scope)):]
 
@@ -725,7 +862,7 @@ def vagrant_machine(
             machine.cmd('halt', '--force')
     else:
         with build_remote(
-            'vbox', request, os_name, env_level, label=label,
+            'vbox', request, base_env, env_level, label=label,
             vagrantfile_tmpl=vagrantfile_tmpl,
             hostname=hostname, specific=remote_opts
         ) as remote:
@@ -1052,7 +1189,6 @@ def discover_remote(
         machine_name=remote.name,
         iface=_iface
     )
-
 
 
 def build_mhost_fixture(label=None, module_name=__name__):

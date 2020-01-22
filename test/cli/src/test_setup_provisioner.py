@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')
@@ -80,7 +80,7 @@ def test_setup_provisioner_fail(mhost, run_script):
 # - add checks:
 #   - network is configured
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
+@pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_setup_provisioner_singlenode(
     mhost, mlocalhost, ssh_config, remote, run_script
@@ -146,7 +146,7 @@ def check_setup_provisioner_results(mhosteosnode1):
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
+@pytest.mark.env_level('utils')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.inject_ssh_config(['eosnode1'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -170,7 +170,7 @@ def test_setup_provisioner_cluster(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
+@pytest.mark.env_level('utils')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 def test_setup_provisioner_cluster_with_salt_master_host_provided(
     mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script

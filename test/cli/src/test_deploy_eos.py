@@ -10,8 +10,8 @@ DEFAULT_SCRIPT_PATH = "/tmp/deploy-eos"
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')
@@ -42,7 +42,7 @@ def test_deploy_eos_commands(
 
     if singlenode:
         expected_lines = [
-            'SALT-ARGS: -t 600 eosnode-1 state.highstate'
+            'SALT-ARGS: -t 1800 eosnode-1 state.highstate'
         ]
     else:
         expected_lines = [

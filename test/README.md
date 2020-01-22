@@ -41,7 +41,7 @@ Check `custom options` section of `pytest --help` for more information.
 
 ### Custom Markers
 
-- `--env_name`: mark test to be run in the specific environment, default: `centos7-base`
+- `--env_level`: mark test to be run in the specific environment level, default: `base`
 - `--isolated`: mark test to be run in isolated environment instead of module wide shared, default: not set
 - `--eos_spec`: mark test as expecting specific EOS stack configuration, default: not set
 - `--hosts`: mark test as expecting the specified list of hosts, default: ['host']
@@ -148,7 +148,7 @@ Test framework has helper.py and conftest.py which declare and implement the API
 - Builds provisioner rpm inside dynamically provisioned remote and returns path to the rpm on a localhost.
 - Scope: `session`
 
-#### env_name:
+#### env_level:
 - Returns a pair `<os>-<env>` of targeted base operating system and environment level.
 - Scope: `module`
 

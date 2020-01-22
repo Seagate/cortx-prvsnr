@@ -1,4 +1,0 @@
-FROM seagate/ees-prvsnr:centos7-base
-
-RUN yum -y install NetworkManager \
-    && rm -rf /var/cache/yum

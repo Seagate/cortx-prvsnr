@@ -1,0 +1,7 @@
+FROM {parent}
+
+# TODO populate .dockerignore
+COPY cli/src/functions.sh /tmp/
+RUN bash -xec ". /tmp/functions.sh; install_salt '' '' '' true" \
+    && rm -f /tmp/functions.sh \
+    && rm -rf /var/cache/yum

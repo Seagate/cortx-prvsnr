@@ -12,8 +12,8 @@ DEFAULT_SCRIPT_PATH = "/tmp/configure-eos"
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 @pytest.fixture(scope='module')
@@ -22,7 +22,7 @@ def script_name():
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_show(
@@ -56,7 +56,7 @@ def test_configure_eos_show(
 # TODO
 #  - mostly repeats 'test_functions_eos_pillar_update_and_load_default'
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_eos_update_and_load_default(

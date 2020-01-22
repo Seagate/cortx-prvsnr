@@ -809,6 +809,7 @@ function install_provisioner {
                     --exclude=".vagrant" \
                     --exclude=".pytest_cache" \
                     --exclude="__pycache__" \
+                    --exclude="packer_cache" \
                     -C "$repo_root_dir" .
             fi
 

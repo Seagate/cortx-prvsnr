@@ -12,14 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-salt-installed'
+def env_level():
+    return 'salt-installed'
 
 
 # TODO might makes sense to verify for cluster case as well
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 def test_mine_functions_primary_host_keys(
     mhosteosnode1, eos_hosts, configure_salt, accept_salt_keys
 ):

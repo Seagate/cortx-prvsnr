@@ -16,3 +16,6 @@ base:
     - components.sspl
     - components.system
     - components.elasticsearch
+    - components.elasticsearch
+    - user.*
+    - ignore_missing: True

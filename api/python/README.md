@@ -1,7 +1,38 @@
-## Python API:
-Defines python api's for deploying the EOS components on host system. It uses saltstack python API to apply salt states from python api's.
+# Provisioner API
 
-### Python API for NTP update:
+This is a northbound interface for EOS components that provides API
+to configure provisioned EOS stack.
+
+It uses saltstack client python API and should be called on the same machine where
+salt master is running.
+
+## Requirements
+
+1. Should be called on the same machine where salt master is running
+2. Exteranl auth for salt should be respected `TODO`
+
+
+## Installation
+
+### From GitLab
+
+```
+    pip install  git+http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr#subdirectory=api/python
+```
+
+Will install `master` branch version.
+To install specific `version` (it might be any branch, tag or commit sha1):
+
+```
+    pip install  git+http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr@version#subdirectory=api/python
+```
+
+### From yum repository
+
+Coming soon.
+
+
+## Python API for NTP update
 
 ### ntp.py
 Defines a python API to update NTP using below functions:

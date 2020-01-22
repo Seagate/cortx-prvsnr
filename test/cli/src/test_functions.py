@@ -27,8 +27,8 @@ EOS_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-base'
+def env_level():
+    return 'base'
 
 
 # TODO EOS-3247 remove
@@ -536,7 +536,7 @@ def test_functions_check_host_in_ssh_config(run_script, mhost):
 #   - remote case is better to test from within virtual env as well
 #   - other cases: ip missed, ifconfig missed, hostname is 127.0.0.1
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-base')
+@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_collect_addrs(
     run_script, mhost, mlocalhost,
@@ -573,7 +573,7 @@ def test_functions_collect_addrs(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-base')
+@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_check_host_reachable(
     run_script, mhost, mlocalhost,
@@ -609,7 +609,7 @@ def test_functions_check_host_reachable(
 #   - case when they have the same IP in some non-shared iface (vbox only case for now)
 #   - actually we don't need eos specific here, just two hosts
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-base')
+@pytest.mark.env_level('base')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.parametrize(
     "local",
@@ -660,7 +660,7 @@ def test_functions_get_reachable_host_names(
 
 # TODO check key for saltstack repo is imported
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-base')
+@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_install_repos(
     run_script, mhost, mlocalhost,
@@ -692,21 +692,21 @@ def test_functions_install_repos(
     assert 'WARNING: skip backup creation' in res.stderr
 
 
+# relates to EOS-3247
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-repos-installed')
-def test_functions_systemd_libs_version_eos_3247(mhost):
-    res = mhost.run(
-        'yum list all | grep systemd-libs | grep -v 219-57.el7'
+@pytest.mark.env_level('repos-installed')
+def test_functions_systemd_libs_not_from_updates(mhost):
+    res = mhost.check_output(
+        'yum list all | grep systemd-libs'
     )
-    # it should fail since only 219-57.el7 should be listed
-    assert res.rc == 1
-    assert not res.stdout
-    assert not res.stderr
+    # verify that no providers from updates repo
+    # TODO might be not enough generic (e.g. updates might have other names)
+    assert 'updates' not in res
 
 
 # TODO actually utils env level is enough
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("repo_src", ['unknown', 'gitlab'])
 def test_functions_install_provisioner(
@@ -735,14 +735,15 @@ def test_functions_install_provisioner(
             assert mhost.host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
 
 
+# TODO centos 7.6, 7.7
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("version", [
     None,
     EOS_RELEASE_TEST_TAG,
-    'components/dev/provisioner/last_successful',
-    'components/dev/provisioner/196'
+    'components/dev/centos-7.7.1908/provisioner/last_successful',
+    'components/dev/centos-7.7.1908/provisioner/20'
 ], ids=[
     'default', 'tag', 'lastdev', 'somedev'
 ])
@@ -775,7 +776,7 @@ def test_functions_install_provisioner_rpm(
 # TODO
 #  - remote case is better to test from within virtual env as well
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
+@pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("version", [
     None,          # raw copy
@@ -835,7 +836,7 @@ def test_functions_install_provisioner_local(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-utils')
+@pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("singlenode", [True, False], ids=['singlenode', 'cluster'])
 def test_functions_install_provisioner_proper_cluster_pillar(
@@ -867,7 +868,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 
 @pytest.mark.isolated
 @pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
-@pytest.mark.env_name('centos7-network-manager-installed')
+@pytest.mark.env_level('network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("nm_installed", [True, False], ids=['nm_installed', 'nm_not_installed'])
 def test_functions_configure_network(
@@ -908,7 +909,7 @@ def test_functions_configure_network(
 # - with sudo
 # - do not use localhost for remote tests
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-repos-installed')
+@pytest.mark.env_level('repos-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_install_salt(
     run_script, mhost, mlocalhost,
@@ -933,7 +934,7 @@ def test_functions_install_salt(
 #   - use different env for remote clients installation instead of the localhost
 #   - integration test for master-minion connected scheme to check grains, minion-ids ...
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
@@ -985,7 +986,7 @@ def test_functions_configure_salt(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master_host", [None, 'some-master-host'], ids=['default_master', 'custom_master'])
@@ -1018,7 +1019,7 @@ def test_functions_configure_salt_master_host(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_keys_singlenode(
@@ -1073,7 +1074,7 @@ def test_functions_accept_salt_keys_singlenode(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_keys_cluster(
@@ -1124,10 +1125,10 @@ def test_functions_accept_salt_keys_cluster(
     output = json.loads(output)
     assert set(output['minions']) == set([eosnode1_minion_id, eosnode2_minion_id])
 
-# Note. 'centos7-salt-installed' is used since it has python3.6 installed
+# Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
@@ -1164,7 +1165,7 @@ def test_functions_eos_pillar_show_skeleton(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
 def test_functions_eos_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
@@ -1175,14 +1176,14 @@ def test_functions_eos_pillar_update_fail(
 
 
 # TODO
-#   - 'centos7-salt-installed' is used since it has python3.6 installed,
+#   - 'salt-installed' is used since it has python3.6 installed,
 #      python and repo installed would be enough actually
 #   - do we need to test all components actually, might be a subject of other test
 #     (e.g. for utils)
 #   - update and load default are related to each other but anyway makes sense
 #     to split into separate tests
 @pytest.mark.isolated
-@pytest.mark.env_name('centos7-salt-installed')
+@pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])

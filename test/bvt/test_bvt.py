@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
-def env_name():
-    return 'centos7-singlenode-bvt-ready'
+def env_level():
+    return 'singlenode-bvt-ready'
 
 
 @pytest.fixture(scope='module')
@@ -164,10 +164,11 @@ def vagrant_default_ssh():
     return True
 
 
+@pytest.mark.timeout(3600)
 @pytest.mark.eos_bvt
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
-@pytest.mark.env_name('centos7-singlenode-bvt-ready')
+@pytest.mark.env_level('singlenode-bvt-ready')
 @pytest.mark.hosts(['eosnode1'])
 def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     eos_release = mhosteosnode1.check_output(

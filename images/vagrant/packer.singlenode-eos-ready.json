@@ -1,0 +1,38 @@
+{
+  "variables": {
+    "base_env": "centos7.7.1908",
+    "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/singlenode-eos-deployed/package.box",
+    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_singlenode-eos-deployed",
+    "skip_add": "false"
+  },
+  "builders": [
+    {
+      "type"                : "vagrant",
+      "provider"            : "virtualbox",
+      "source_path"         : "{{user `parent_source`}}",
+      "skip_add"            : "{{user `skip_add`}}",
+      "box_name"            : "{{user `parent_box_name`}}",
+      "add_force"           : "true",
+      "template"            : "{{template_dir}}/vagrantfile.eos.packer.template",
+      "output_dir"          : "{{template_dir}}/../../.boxes/{{user `base_env`}}/singlenode-eos-ready",
+      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.eos.boxed",
+      "package_include"     : [
+          "{{template_dir}}/../../test/id_rsa.test"
+      ],
+      "communicator"        : "ssh"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "cd /tmp/ees-prvsnr/cli/src",
+        "chmod u+x bootstrap-eos start-eos",
+        "set -o pipefail",
+        "hostname eosnode-1",
+        "./bootstrap-eos -vv -S 2>&1 | tee /tmp/bootstrap-eos.logs",
+        "./start-eos -vv -S 2>&1 | tee /tmp/start-eos.logs"
+      ]
+    }
+  ]
+}

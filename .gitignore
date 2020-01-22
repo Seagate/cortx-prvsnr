@@ -10,3 +10,6 @@
 *.vdi
 *.box
 *.ova
+.build
+.boxes
+.eggs
