@@ -9,10 +9,15 @@ Prepare mini_conf file:
     - source: salt://components/halon/files/mini_conf.yaml
     - template: jinja
 
+{% if 'mgmt0' in grains['ip4_interfaces'] %}
+  {% set mgmt_nw = 'mgmt0' %}
+{% else %}
+  {% set mgmt_nw = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] %}
+{% endif %}
 # Generate Halon facts file
 Generate halon_facts.yaml file:
   cmd.run:
-    - name: m0genfacts -o /opt/seagate/eos-prvsnr/generated_configs/halon_facts.yaml -c /opt/seagate/eos-prvsnr/generated_configs/mini_conf.yaml -e data0 -E mgmt0 -N 1 -K 0
+    - name: m0genfacts -o /opt/seagate/eos-prvsnr/generated_configs/halon_facts.yaml -c /opt/seagate/eos-prvsnr/generated_configs/mini_conf.yaml -e data0 -E {{ mgmt_nw }} -N 1 -K 0
     - require:
       - file: Prepare mini_conf file
 
