@@ -3,4 +3,3 @@ gpgcheck=0
 enabled=1
 baseurl=http://mirror.den1.denvercolo.net/CentOS/7.7.1908/os/x86_64/
 name=base
-

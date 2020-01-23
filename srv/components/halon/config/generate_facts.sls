@@ -1,8 +1,3 @@
-{% set node = grains['id'] %}
-
-{% set mgmt_if = salt["pillar.get"]("cluster:{0}:network:mgmt_if".format(node), "lo") %}
-{% set data_if = salt["pillar.get"]("cluster:{0}:network:data_if".format(node), "lo") %}
-
 Ensure halond service running:
   service.running:
     - name: halond
@@ -17,7 +12,7 @@ Prepare mini_conf file:
 # Generate Halon facts file
 Generate halon_facts.yaml file:
   cmd.run:
-    - name: m0genfacts -o /opt/seagate/eos-prvsnr/generated_configs/halon_facts.yaml -c /opt/seagate/eos-prvsnr/generated_configs/mini_conf.yaml -e {{ data_if }} -E {{ mgmt_if }} -N 1 -K 0
+    - name: m0genfacts -o /opt/seagate/eos-prvsnr/generated_configs/halon_facts.yaml -c /opt/seagate/eos-prvsnr/generated_configs/mini_conf.yaml -e data0 -E mgmt0 -N 1 -K 0
     - require:
       - file: Prepare mini_conf file
 
