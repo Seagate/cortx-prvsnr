@@ -13,7 +13,7 @@ usage() { echo "Usage: $0 [-G <git short revision>] [-S <EOS Provisioner version
 
 # Install rpm-build package
 rpm --quiet -qi git || yum install -q -y git && echo "git already installed."
-rpm --quiet -qi python3-3.6.* || yum install -q -y python3 && echo "python3 already installed."
+rpm --quiet -qi python3-3.6.* || yum install -q -y python36 && echo "python36 already installed."
 rpm --quiet -qi rpm-build || yum install -q -y rpm-build && echo "rpm-build already installed."
 rpm --quiet -qi yum-utils || yum install -q -y yum-utils && echo "yum-utils already installed."
 
