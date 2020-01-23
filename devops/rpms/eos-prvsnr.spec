@@ -8,10 +8,10 @@ License:    Seagate
 URL:        http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr
 Source:     %{name}-%{version}-%{_ees_prvsnr_git_ver}.tar.gz
 
-BuildRequires: python36-devel
+BuildRequires: python3-devel
 
-Requires: python36
-Requires: python36-PyYAML
+Requires: python3
+Requires: python3-PyYAML
 Requires: salt-master = 2019.2.0
 Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
@@ -29,13 +29,16 @@ rm -rf %{buildroot}
 
 %install
 # Create directories
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files}
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files,api}
+
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
 
 # Copy files
 cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr/
+cp -R api %{buildroot}/opt/seagate/eos-prvsnr/
+
 
 
 %clean
@@ -48,6 +51,7 @@ rm -rf %{buildroot}
 /opt/seagate/eos-prvsnr/files/etc/salt
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
+/opt/seagate/eos-prvsnr/api
 
 
 # TODO test
@@ -61,3 +65,4 @@ cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
 %postun
 mv -f /etc/salt/master.org /etc/salt/master
 mv -f /etc/salt/minion.org /etc/salt/minion
+
