@@ -6,22 +6,16 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
-      mgmt_nw:                  # Management network interfaces
-        iface:
-          - eth0
-        ipaddr: 
-        netmask: 
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 172.19.10.101
-        netmask: 
-      gateway_ip:               # Gateway IP of network
+      mgmt_if: eth0                 # Management network interfaces for bonding
+      data_if: lo                   # Management network interfaces for bonding
+      gateway_ip:                   # No Implementation
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
         - /dev/sdb
+        # - /dev/disk/by-path/pci-0000:00:16.0-sas-phy0-lun-0
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc
+        # - /dev/disk/by-path/pci-0000:00:16.0-sas-phy1-lun-0
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS

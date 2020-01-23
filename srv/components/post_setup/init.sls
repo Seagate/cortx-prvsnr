@@ -43,4 +43,4 @@ Bootstrap mero:
 # halond: running
 # sspl-ll: running
 # mero-kernel: running
-# lnet: dead
+# lnet: dead running
