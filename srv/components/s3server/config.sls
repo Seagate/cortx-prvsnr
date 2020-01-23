@@ -54,11 +54,9 @@ Open https port for s3server:
     - family: ipv4
     - save: True
 
-
-{% set data_if = pillar['cluster'][grains['id']]['network']['data_if'] -%}
 Append /etc/hosts:
   file.line:
     - name: /etc/hosts
-    - content: {{ grains['ip4_interfaces'][data_if][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+    - content: {{ grains['ip4_interfaces']['data0'][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
     - location: end
     - mode: insert
