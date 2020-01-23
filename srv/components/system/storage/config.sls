@@ -1,3 +1,6 @@
+# Setup SWAP and /var/mero
+{% set node = grains['id'] %}
+
 # File still work in progress as disks devices are hard coded
 # This formula is an attempt to automate the raid setup on concerned devices.
 
@@ -18,9 +21,6 @@
 #     - unless: grep "$(mdadm --detail --scan)" /etc/mdadm.conf
 # End setup RAID
 
-
-# Setup SWAP and /var/mero
-{% set node = grains['id'] %}
 
 Label Metadata partition:
   module.run:

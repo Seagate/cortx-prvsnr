@@ -10,7 +10,7 @@ global_defs {
 }
 
 vrrp_instance VI_1 {
-  interface data0 # interface to monitor
+  interface {{ pillar['cluster'][node]['network']['data_if'] }} # interface to monitor
 
   state MASTER # MASTER on haproxy1, BACKUP on haproxy2
 
@@ -23,7 +23,7 @@ vrrp_instance VI_1 {
   priority 100
 
   virtual_ipaddress {
-    {{ pillar ['keepalived']['vip'] }} # virtual ip address
+    172.16.221.143 # virtual ip address
   }
 
   track_script {
