@@ -8,10 +8,10 @@ License:    Seagate
 URL:        http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr
 Source:     %{name}-%{version}-%{_ees_prvsnr_git_ver}.tar.gz
 
-BuildRequires: python3-devel
+BuildRequires: python36-devel
 
-Requires: python3
-Requires: python3-PyYAML
+Requires: python36
+Requires: python36-PyYAML
 Requires: salt-master = 2019.2.0
 Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
@@ -25,6 +25,13 @@ EOS Provisioning to deploy EOS Object storage software.
 %prep
 %setup -n %{name}-%{version}-%{_ees_prvsnr_git_ver}
 rm -rf %{buildroot}
+
+
+%build
+# Turn off the brp-python-bytecompile automagic
+%global _python_bytecompile_extra 0
+%global __python %{__python3}
+
 
 
 %install
