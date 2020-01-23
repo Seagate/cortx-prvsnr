@@ -12,3 +12,7 @@ install_base_packages:
 clean_yum_local:
   cmd.run:
     - name: yum clean all
+
+clean_yum_cache:
+  file.absent:
+    - name: /var/cache/yum
