@@ -123,11 +123,13 @@ Closure dynamicValidation = {
 // PIPELINE
 
 try {
-    timeout(180) {
+    timeout(300) {
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
-                    staticValidation()
+                    timeout(10) {
+                        staticValidation()
+                    }
                 }
             } else {
                 echo "skipped"
@@ -137,7 +139,9 @@ try {
         stage('Build / Test') {
             if (config.dynamicValidation) {
                 nodeWrapper(config.nodeLabel) {
-                    dynamicValidation()
+                    timeout(120) {
+                        dynamicValidation()
+                    }
                 }
             } else {
                 echo "skipped"
