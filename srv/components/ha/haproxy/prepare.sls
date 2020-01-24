@@ -1,3 +1,4 @@
+{% if grains['selinux']['enabled'] and 'enforcing' in grains['selinux']['enforced'].lower() %}
 Set selinux bool for httpd:
   selinux.boolean:
     - name: httpd_can_network_connect
@@ -9,6 +10,7 @@ Set selinux bool for haproxy:
     - name: haproxy_connect_any
     - value: 1
     - persist: True
+{% endif %}
 
 Clean existing logrotate configuration:
   file.absent:

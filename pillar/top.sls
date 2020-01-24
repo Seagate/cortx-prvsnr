@@ -12,7 +12,6 @@ base:
     - components.rabbitmq
     - components.release
     - components.s3client
-    - components.s3server
     - components.sspl
     - components.system
     - components.elasticsearch
