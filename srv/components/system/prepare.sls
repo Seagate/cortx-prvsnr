@@ -1,4 +1,11 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+Sync data:
+  module.run:
+    - saltutil.clear_cache: []
+    - saltutil.sync_all: []
+    - saltutil.refresh_grains: []
+    - saltutil.refresh_modules: []
+    - saltutil.refresh_pillar: []
+
 
 cleanup_yum_repos_dir:
   cmd.run:
@@ -10,6 +17,7 @@ Reset EPEL:
     - name: rm -rf /etc/yum.repos.d/epel.repo.*
     - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
   pkgrepo.managed:
