@@ -27,43 +27,64 @@ To install specific `version` (it might be any branch, tag or commit sha1):
     pip install  git+http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr@version#subdirectory=api/python
 ```
 
+SSH based installation is also possible, e.g.
+
+```
+    pip install git+ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git#subdirectory=api/python
+```
+
 ### From yum repository
 
-Coming soon.
+The API is now bundled as part of provisioner rpm package `eos-prvsnr`.
+
+During the installation the api package is placed in `/opt/seagate/eos-prvsnr/api/python` directory.
+
+Also it is installed to global python3 environment and available for usual python imports.
 
 
-## Python API for NTP update
+## Authentication Initialization
 
-### ntp.py
-Defines a python API to update NTP using below functions:
-- update_pillar: 
-    - Updates pillar data defined in /opt/seagate/eos-prvsnr/pillar/components/system.sls using Pillar class.
-- refresh_ntpd: 
-    - Restarts the ntpd service once the configuration file is updated.
+To be used by non-root user the API requires additional initialization:
 
-### pillar.py
-Defines pillar class to update the pillar data as per user inputs using below functions:
-- __load_defaults:
-    - Parse the default pillar document in a stream
-- __backup_pillar:
-    - Backup existing pillar document
-- __save:
-    - Updates the pillar document as per user input 
+```
+from provisioner.salt import auth_init
 
-### How to use:
-1. Set sys path to import python modules in different directories
-    ```
-    export PYTHONPATH=${PYTHONPATH}:/opt/seagate/eos-prvsnr/api/python/ 
-    ```
-2. Import any module from utils:
-    ```
-     from utils import pillar
-    ```
-3.  How to use:
-    ```
-    python3 ntp.py
+auth_init(username=username, password=password)
+```
 
-    OR
+where `username` is a name of the user that is added to `prvsnrusers` group.
+So you should either add and existent user to that group or create new one and
+pass his name along with his password to `auth_init`.
 
-    pyhton3 ntp.py '{ "time_server": "TIME-SERVER-IP", "timezone": "TIMEZONE" }'
-    ```
+## API
+
+*TODO*
+
+## Usage examples
+
+### NTP configuration
+
+```
+    from provisioner.errors import ProvisionerError
+    from provisioner import get_params, set_ntp
+
+    # get current values
+
+    try:
+        curr_params = get_params('ntp_server', 'ntp_timezone')
+    except ProvisionerError:
+        raise
+
+    api_ntp_server = curr_params['ntp_server']
+    api_ntp_timezone = curr_params['ntp_timezone']
+
+    # set new ones
+
+    new_ntp_server = '0.north-america.pool.ntp.org'
+    new_ntp_timezone = 'Europe/Berlin'
+
+    try:
+        set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
+    except ProvisionerError:
+        raise
+```

@@ -1,14 +1,14 @@
-class ProvisionerBaseException(Exception):
+class ProvisionerError(Exception):
     pass
 
 
-class BadPillarDataError(ProvisionerBaseException):
+class BadPillarDataError(ProvisionerError):
     pass
 
 
-class UnknownParamError(ProvisionerBaseException):
+class UnknownParamError(ProvisionerError):
     pass
 
 
-class SaltError(ProvisionerBaseException):
+class SaltError(ProvisionerError):
     pass

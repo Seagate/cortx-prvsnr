@@ -631,7 +631,7 @@ def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
 
 
 # TODO use object proxy for testinfra's host instances instead
-def run(host, script, *args, quiet=True, force_dump=False, **kwargs):
+def run(host, script, *args, quiet=False, force_dump=False, **kwargs):
     res = None
     try:
         res = host.run(script, *args, **kwargs)

@@ -4,6 +4,9 @@ import logging
 import test.helper as h
 
 
+RPM_CONTENT_PATHS = ['pillar', 'srv', 'files/etc/salt', 'api']
+PRVSNRUSERS_GROUP = 'prvsnrusers'
+
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
     pass
 
@@ -21,12 +24,13 @@ def test_rpm_prvsnr_depends_on_salt_2019_2_0(mhost):
 def test_rpm_prvsnr_installation(mhost, mlocalhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
 
+    # check paths that were installed
     excluded = ['-name "{}"'.format(e) for e in h.REPO_BUILD_DIRS]
     expected = mlocalhost.check_output(
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             mlocalhost.repo,
-            'pillar srv files/etc/salt',
+            ' '.join(RPM_CONTENT_PATHS),
             ' -o '.join(excluded)
         )
     ).split()
@@ -36,7 +40,7 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             h.PRVSNR_REPO_INSTALL_DIR,
-            'pillar srv files/etc/salt',
+            ' '.join(RPM_CONTENT_PATHS),
             ' -o '.join(excluded)
         )
     ).split()
@@ -45,6 +49,26 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     diff_installed = set(installed) - set(expected)
     assert not diff_expected
     assert not diff_installed
+
+    # check post install sections
+    # TODO check salt config files replacement
+    #   check that api is installed into python env
+    assert 'eos-prvsnr' in mhost.check_output('pip3 list')
+    mhost.check_output("python3 -c 'import provisioner'")
+    #   check that prvsnrusers groups is created
+    assert PRVSNRUSERS_GROUP in mhost.check_output("cat /etc/group")
+
+
+@pytest.mark.isolated
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_removal(mhost, mlocalhost):
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+    mhost.check_output('yum remove -y eos-prvsnr')
+    # TODO check salt config files restoration
+    #   check that api is removed from python env
+    assert 'eos-prvsnr' not in mhost.check_output('pip3 list')
+    #   check that prvsnrusers groups is absent
+    assert PRVSNRUSERS_GROUP not in mhost.check_output("cat /etc/group")
 
 
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):

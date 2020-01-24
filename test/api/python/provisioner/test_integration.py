@@ -3,6 +3,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+@pytest.fixture
+def vagrant_default_ssh():
+    return True
 
 @pytest.fixture
 def prepare_test_env(request, hosts_meta):
