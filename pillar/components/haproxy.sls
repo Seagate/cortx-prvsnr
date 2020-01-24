@@ -1,7 +1,7 @@
 haproxy:
     backend:
         s3authserver:
-            ssl_enabled: true
+            ssl_enabled: false
         s3server:
             ssl_enabled: false
     frontend:
