@@ -484,7 +484,7 @@ def rpm_prvsnr(request, tmpdir_session):
             'cd {} && sh -x devops/rpms/buildrpm.sh'.format(mhost.repo)
         )
         rpm_remote_path = mhost.check_output(
-            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
+            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm | grep -v debug'
         )
         return _copy_to_local(
             mhost, Path(rpm_remote_path), tmpdir_session
@@ -501,8 +501,8 @@ def rpm_prvsnr_cli(request, tmpdir_session):
             'cd {} && sh -x cli/buildrpm.sh'.format(mhost.repo)
         )
         rpm_remote_path = mhost.check_output(
-            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm'
-        ).split()[0]
+            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm | grep -v debug'
+        )
         return _copy_to_local(
             mhost, Path(rpm_remote_path), tmpdir_session
         )

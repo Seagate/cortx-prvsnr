@@ -2,7 +2,7 @@ import os
 import logging
 import pytest
 
-from provisioner.errors import SaltError
+from provisioner.errors import ProvisionerError, SaltError
 from provisioner.salt import pillar_get, auth_init
 from provisioner import get_params, set_ntp, set_network
 
@@ -15,21 +15,32 @@ def test_ntp_configuration():
     pillar_ntp_server = pillar['eosnode-1']['system']['ntp']['time_server']
     pillar_ntp_timezone = pillar['eosnode-1']['system']['ntp']['timezone']
 
-    api_ntp_server = get_params('ntp_server')['ntp_server']
-    assert pillar_ntp_server == api_ntp_server
+    try:
+        curr_params = get_params('ntp_server', 'ntp_timezone')
+    except ProvisionerError:
+        raise
 
-    api_ntp_timezone = get_params('ntp_timezone')['ntp_timezone']
+    api_ntp_server = curr_params['ntp_server']
+    api_ntp_timezone = curr_params['ntp_timezone']
+    assert pillar_ntp_server == api_ntp_server
     assert pillar_ntp_timezone == api_ntp_timezone
 
     new_ntp_server = '0.north-america.pool.ntp.org'
     new_ntp_timezone = 'Europe/Berlin'
 
-    set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
+    try:
+        set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
+    except ProvisionerError:
+        raise
 
-    api_ntp_server = get_params('ntp_server')['ntp_server']
+    try:
+        curr_params = get_params('ntp_server', 'ntp_timezone')
+    except ProvisionerError:
+        raise
+
+    api_ntp_server = curr_params['ntp_server']
+    api_ntp_timezone = curr_params['ntp_timezone']
     assert new_ntp_server == api_ntp_server
-
-    api_ntp_timezone = get_params('ntp_timezone')['ntp_timezone']
     assert new_ntp_timezone == api_ntp_timezone
 
 
