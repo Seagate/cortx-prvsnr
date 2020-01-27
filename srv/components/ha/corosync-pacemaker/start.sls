@@ -1,14 +1,7 @@
-Start pcsd:
-  service.running:
-    - name: pcsd
-    - enable: True
+# start corosync-pacemaker through pcs
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+start corosync-pacemaker:
+  cmd.run:
+    - name: pcs cluster start --all
+{% endif %}
 
-Start corosync:
-  service.running:
-    - name: corosync
-    - enable: True
-
-Start pacemaker:
-  service.running:
-    - name: pacemaker
-    - enable: True
