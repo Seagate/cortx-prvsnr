@@ -1,11 +1,11 @@
 #!/bin/bash
 
 script_dir=$(dirname $0)
-export logdir="/opt/seagate/generated_configs/sc"
-[ ! -d $logdir ] && mkdir $logdir
+export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
+[ ! -d $logdir ] && mkdir -p $logdir
 
-export tmpdir="/opt/seagate/generated_configs/sc/tmp"
-[ ! -d $tmpdir ] && mkdir $tmpdir
+export tmpdir="$logdir/tmp"
+[ ! -d $tmpdir ] && mkdir -p $tmpdir
 
 export logfile=$logdir/controller.log
 [ -f $logfile ] && rm -rf $logfile
@@ -25,9 +25,13 @@ export nvols=8
 export default_prv=false
 export cleanup=false
 export show_prov=false
+export show_license=false
+export load_license=false
+export license_file=""
 export user=""
 export pass=""
 export host=""
+export ssh_tool="/usr/bin/sshpass"
 export ssh_cred=""
 export ssh_cmd=""
 export remote_cmd=""
@@ -38,7 +42,12 @@ export dflt_plvl="adapt"
 export dflt_p1nam="dg01"
 export dflt_p2nam="dg02"
 export prvsnr_mode=""
-show_disks=false
+export show_disks=false
+export update_fw=false
+export fw_bundle=""
+export show_fw_ver=false
+export show_license=false
+export load_license=false
 
 usage()
 {
@@ -148,7 +157,7 @@ parse_hopts()
         exit 1
   }
   echo "parse_hopts():$host, $user, $pass" >> $logfile
-  ssh_cred="/usr/bin/sshpass -p $pass"
+  ssh_cred="$ssh_tool -p $pass"
   ssh_cmd="ssh $user@$host"
   remote_cmd="$ssh_cred $ssh_cmd"
 }
@@ -276,10 +285,48 @@ parse_args()
                 show_disks=true
                 shift
                 ;;
+            -u|--update-fw)
+                echo "parse_args(): update firmware" >> $logfile
+                update_fw=true
+                [ -z "$2" ] &&
+                    echo "Error: firmware bundle not provided" && exit 1;
+                fw_bundle="$2"; shift 2
+                [ "$prov_optparse_done" = true ] &&
+                    echo "Error: firmware and prov options are not supported"\
+                        "together.." && exit 1
+                ftp_op=true ;;
+            -v|--show-fw-ver)
+                echo "parse_args(): update firmware" >> $logfile
+                show_fw_ver=true
+                [ "$prov_optparse_done" = true ] &&
+                    echo "Error: firmware and prov options are not supported"\
+                        "together.." && exit 1
+                shift
+                ;;
+            --show-license)
+                echo "parse_args(): show license" >> $logfile
+                show_license=true
+                shift
+                ;;
+            -l|--load-license)
+                echo "parse_args(): load license" >> $logfile
+                [ "$prov_optparse_done" = true ] &&
+                    echo "Error: firmware and prov options are not supported"\
+                        "together.." && exit 1
+                load_license=true
+                [ -z "$2" ] &&
+                    echo "Error: License file not provided" && exit 1;
+                license_file="$2"
+                shift 2 ;;
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
-    [ "$prov_optparse_done" = false -a "$show_disks" = false ] && {
+    [ "$host_optparse_done" = false ] &&
+        echo "Error: Controller details not provided, exiting.." && exit 1
+
+    [ "$prov_optparse_done" = false -a "$show_disks" = false -a\
+        "$show_license" = false -a "$load_license" = false -a\
+        "$show_fw_ver" = false -a "$update_fw" = false ] && {
         echo "Error: Incomplete arguments provided, exiting.."
         exit 1
     } 
@@ -287,66 +334,24 @@ parse_args()
     return 0
 }
 
+check_packages()
+{
+   for pkg in "$@"; do
+       [ ! -f "$pkg" ] && echo "Error: $pkg is not installed" && exit 1
+   done   
+}
+
 main()
 {
+    check_packages "$ssh_tool" "$xml_cmd"
     parse_args "$@"
-    _prvinfo=$tmpdir/prvinfo
-    _dskinfo=$tmpdir/dskinfo
+    [ "$prov_optparse_done" = true ] && do_provision
+    [ "$show_disks" = true ] && disks_list
+    [ "$load_license" = true ] && fw_license_load
+    [ "$update_fw" = true ] && fw_update
+    [ "$show_fw_ver" = true ] && fw_ver_get
+    [ "$show_license" = true ] && fw_license_show
 
-    [ "$pool_type" = "virtual" ] && license_check
-    [ "$cleanup" = true ] && cleanup_provisioning
-    [ "$default_prv" = true ] && {
-        echo "main(): default provisioning" >> $logfile
-        is_system_clean
-        ret=$?
-        [ $ret -eq 1 ] && {
-            echo "Error: Controller is not in clean state"
-            exit 1
-        }
-        disks_range_get
-        [ -z "$range1" -o -z "$range2" ] && {
-            echo "Error: Could not derive the disk list to creat a pool"
-            echo "Exiting."
-            exit 1
-        }
-        # Provision the controller with provided input
-        provision "$dflt_ptype" "$dflt_plvl" "$nvols" "$range1" "$dflt_p1nam"
-        provision "$dflt_ptype" "$dflt_plvl" "$nvols" "$range2" "$dflt_p2nam"
-
-        # Check if provisioning done successfully 
-        provisioning_info_get > $_prvinfo
-        [ -s $_prvinfo ] && {
-            echo "Controller provisioned successfully with following details:"
-            cat $_prvinfo
-         } || echo "Error: Controller could not be provisioned"
-    }
-    [ "$prvsnr_mode" = "manual" ] && {
-        echo "main(): manual provisioning" >> $logfile
-
-        # Provision the controller with provided input
-        provision "$pool_type" "$pool_level" "$nvols" "$disk_range" "$pool_name"
-
-        # Check if provisioning done successfully 
-        provisioning_info_get > $_prvinfo
-        [ -s $_prvinfo ] && {
-            echo "Controller provisioned successfully with following details:"
-            cat $_prvinfo
-         } || echo "Error: Controller could not be provisioned"
-    }
-    [ "$show_disks" = true ] && {
-        echo "Getting disks details.. this might take time"
-        disks_show_all > $_dskinfo
-        [ -s $_dskinfo ] && cat $_dskinfo || {
-            #echo "Error: No disks found on the controller."
-            echo "Error: No disk range could be derived."
-            exit 1
-        }
-    }
-    [ "$show_prov" = true ] && {
-        provisioning_info_get > $_prvinfo
-        [ -s $_prvinfo ] && cat $_prvinfo ||
-            echo "No provisioning details found on the controller"
-    }
     rm -rf $tmpdir $xml_doc
 }
 
