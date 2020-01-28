@@ -536,6 +536,7 @@ vol_size_get()
     _nvols=$2
     _avail_size_unit=`echo $_avail_size | tr -dc 'A-Z'`
     _bytes_avlblsize=`convert_to_bytes $_avail_size`
+    _bytes_200mb=`convert_to_bytes 200MB`
     _bytes_2g=`convert_to_bytes 2GB`
     _bytes_24g=`convert_to_bytes 24GB`
 
@@ -701,4 +702,182 @@ provision()
     #create volumeset and map all the volumes to all the ports
     echo "provision(): Creating volume-set" >> $logfile
     volumes_create $_baselun $_basename $_nvols $_pool_name $vsize $_ports
+}
+
+fw_ver_get()
+{
+    _tmp_file="$tmpdir/tmp_fw_ver"
+    [ -f "$_tmp_file" ] && rm -rf "$_tmp_file"
+    _fw_ver="$tmpdir/fw_ver"
+    [ -f "$_fw_ver" ] && rm -rf "$_fw_ver"
+    echo "fw_ver_get(): Entry" >> $logfile
+    _xml_obj_bt="versions"
+    _xml_obj_plist=("bundle-version")
+
+    echo "fw_ver_get(): running command: show configuration" >> $logfile
+    cmd_run 'show configuration'
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "fw_ver_get(): Couldn't get the firmware version" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    printf '%s'"fw_ver_get() Firmware version\n" > $_fw_ver
+    cat $_tmp_file >> $logfile
+    printf '%s'"--------------------- Firmware Version -----------------------\n" > $_fw_ver
+    printf '%-15s' "${_xml_obj_plist[@]}" >> $_fw_ver
+    printf '\n' >> $_fw_ver
+    while IFS=' ' read -r line
+    do
+       arr=($line)
+       printf '%-15s' "${arr[@]}" >> $_fw_ver
+       printf '\n' >> $_fw_ver
+    done < $_tmp_file
+    cat $_fw_ver
+
+}
+
+midplane_serial_get()
+{
+    _tmp_file="$tmpdir/tmp_serial"
+    [ -f "$_tmp_file" ] && rm -rf "$_tmp_file"
+    _mp_serial="$tmpdir/mp_serial"
+    [ -f "$_mp_serial" ] && rm -rf "$_mp_serial"
+    echo "midplane_serial_get(): Entry" >> $logfile
+    _xml_obj_bt="system"
+    _xml_obj_plist=("midplane-serial-number")
+
+    echo "midplane_serial_get(): running command: show system" >> $logfile
+    cmd_run 'show system'
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "midplane_serial_get(): Couldn't get the midplane serial " >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    printf '%s'"midplane_seria_get() Serial number\n" > $_mp_serial
+    cat $_tmp_file >> $logfile
+    printf '%s'"--------------------- Serial number-----------------------\n" > $_mp_serial
+    printf '%-15s' "${_xml_obj_plist[@]}" >> $_mp_serial
+    printf '\n' >> $_mp_serial
+    while IFS=' ' read -r line
+    do
+       arr=($line)
+       printf '%-15s' "${arr[@]}" >> $_mp_serial
+       printf '\n' >> $_mp_serial
+    done < $_tmp_file
+    cat $_mp_serial
+}
+
+sc_license_get()
+{
+    _tmp_file="$tmpdir/license-details"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    # objects name in the xml
+    _xml_obj_bt="license"
+    _xml_obj_plist=("virtualization" "volume-copy" "remote-snapshot-replication"\
+    "vds" "vss" "sra")
+    echo "sc_license_get(): Getting licenses "${_xml_obj_plist[@]}"" >> $logfile
+
+    # run command to get the license details
+    echo "Getting license details.."
+    echo "sc_license_get(): Running command: 'show license'" >> $logfile
+    cmd_run 'show license'
+    # parse xml to get required values of properties
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "sc_license_get(): No licenses found on the controller" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    echo "------licenses---------" >> $logfile
+    cat $_tmp_file >> $logfile
+    echo "-----------------------" >> $logfile
+    printf '%s'"--------------------- licenses ---------------------\n"
+    declare -a license_details
+    license_details=(`cat "$_tmp_file"`)
+    for ((i=0; i<=${#_xml_obj_plist[@]}; i++)); do
+        printf '%-28s %s\n' "${_xml_obj_plist[i]}" "${license_details[i]}"
+    done
+}
+
+fw_license_load()
+{
+    #TODO: load license here using ftp
+
+}
+
+fw_update()
+{
+    #TODO: load fw_bundle here over ftp
+
+}
+
+fw_license_show()
+{
+    fw_ver_get
+    midplane_serial_get
+    sc_license_get
+}
+
+disks_list()
+{
+    _dskinfo=$tmpdir/dskinfo
+    echo "Getting disks details.. this might take time"
+    disks_show_all > $_dskinfo
+    [ -s $_dskinfo ] && cat $_dskinfo || {
+        echo "Error: No disks found on the controller."
+        exit 1
+    }
+}
+
+do_provision()
+{
+    _prvinfo=$tmpdir/prvinfo
+
+    [ "$pool_type" = "virtual" ] && license_check
+    [ "$cleanup" = true ] && cleanup_provisioning
+    [ "$default_prv" = true ] && {
+        echo "main(): default provisioning" >> $logfile
+        is_system_clean
+        ret=$?
+        [ $ret -eq 1 ] && {
+            echo "Error: Controller is not in clean state"
+            exit 1
+        }
+        disks_range_get
+        [ -z "$range1" -o -z "$range2" ] && {
+            echo "Error: Could not derive the disk list to creat a pool"
+            echo "Exiting."
+            exit 1
+        }
+        # Provision the controller with provided input
+        provision "$dflt_ptype" "$dflt_plvl" "$nvols" "$range1" "$dflt_p1nam"
+        provision "$dflt_ptype" "$dflt_plvl" "$nvols" "$range2" "$dflt_p2nam"
+
+        # Check if provisioning done successfully
+        provisioning_info_get > $_prvinfo
+        [ -s $_prvinfo ] && {
+            echo "Controller provisioned successfully with following details:"
+            cat $_prvinfo
+         } || echo "Error: Controller could not be provisioned"
+    }
+    [ "$prvsnr_mode" = "manual" ] && {
+        echo "main(): manual provisioning" >> $logfile
+
+        # Provision the controller with provided input
+        provision "$pool_type" "$pool_level" "$nvols" "$disk_range" "$pool_name"
+
+        # Check if provisioning done successfully
+        provisioning_info_get > $_prvinfo
+        [ -s $_prvinfo ] && {
+            echo "Controller provisioned successfully with following details:"
+            cat $_prvinfo
+         } || echo "Error: Controller could not be provisioned"
+    }
+    [ "$show_prov" = true ] && {
+        provisioning_info_get > $_prvinfo
+        [ -s $_prvinfo ] && cat $_prvinfo ||
+            echo "No provisioning details found on the controller"
+    }
 }
