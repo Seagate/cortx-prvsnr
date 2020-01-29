@@ -5,4 +5,3 @@ Stop CSM agent:
 Stop CSM web:
   service.dead:
     - name: csm_web
-

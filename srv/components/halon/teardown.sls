@@ -33,6 +33,10 @@ Remove Halon package:
     - pkgs:
       - halon
 
+Delete EOSCore yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.halon.repo.id }}
+
 # File cleanup operation
 {% for filename in [
    '/tmp/mini_conf.yaml',
