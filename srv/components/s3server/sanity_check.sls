@@ -10,6 +10,6 @@ Verify HTTP port listens:
   cmd.run:
     - name: netstat -plnt | grep :$(grep -Po "(?<=httpPort=).*" /opt/seagate/auth/resources/authserver.properties)
 
-Verify HTTPS port listens:
-  cmd.run:
-    - name: netstat -plnt | grep :$(grep -Po "(?<=httpsPort=).*" /opt/seagate/auth/resources/authserver.properties)
+# Verify HTTPS port listens:
+#   cmd.run:
+#     - name: netstat -plnt | grep :$(grep -Po "(?<=httpsPort=).*" /opt/seagate/auth/resources/authserver.properties)
