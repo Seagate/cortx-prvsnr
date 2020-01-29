@@ -1,22 +1,11 @@
-{% set node = grains['id'] %}
+Stage - Post Install Core:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/core/conf/setup.yaml', 'core:post_install')
 
-{%- if pillar['cluster'][node]['network']['data_if'] == 'lo' %}
-Update lnet config file:
-  test.fail_without_changes:
-    - name: LNet doesn't support loopback network interface. Config dropped.
-{% else %}
-Update lnet config file:
-  file.managed:
-    - name: /etc/modprobe.d/lnet.conf
-    - contents:
-      - options lnet networks=tcp({{ salt['pillar.get']("cluster:{0}:network:data_if".format(node)) }})  config_on_load=1
-    - user: root
-    - group: root
-{% endif %}
+Stage - Config Core:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/core/conf/setup.yaml', 'core:config')
 
-Update EOSCore config:
-  module.run:
-    - eoscore.conf_update:
-      - name: /etc/sysconfig/mero
-      - ref_pillar: eoscore
-      - backup: True
+Stage - Init EOSCore:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/core/conf/setup.yaml', 'core:init')

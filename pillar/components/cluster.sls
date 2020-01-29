@@ -7,7 +7,7 @@ cluster:
     is_primary: true
     network:
       mgmt_if: eth0                 # Management network interfaces for bonding
-      data_if: lo                   # Management network interfaces for bonding
+      data_if: eth1                 # Management network interfaces for bonding
       gateway_ip:                   # No Implementation
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
