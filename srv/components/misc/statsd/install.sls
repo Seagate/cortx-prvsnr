@@ -1,3 +1,5 @@
 Install statsd:
   pkg.installed:
-    - name: statsd
+    - pkgs:
+      - statsd
+      - python-statsd

@@ -1,14 +1,5 @@
-Stop consul:
-  cmd.run:
-    - name: /opt/consul/consul leave
-
-{% if salt['ps.pgrep']('consul') -%}
-Kill m0d process:
-  module.run:
-    - ps.pkill:
-      - pattern: consul
-      - signal: 9
-{%- endif %}
+include:
+  - components.misc.consul.stop
 
 Remove Consul:
   file.absent:
@@ -24,3 +15,37 @@ Remove consul from bash_profile:
 Source bash_profile for consul cleanup:
   cmd.run:
     - name: source ~/.bashrc
+
+Remove Consul data directory:
+  file.absent:
+    - name: /opt/consul/data
+    
+Remove Consul config directory:
+  file.absent:
+    - name: /etc/consul.d
+    
+Remove Consul agent config file:
+  file.absent:
+    - name: /etc/consul.d/consul.json
+
+Remove Consul server config file:
+  file.absent:
+    - name: /etc/consul.d/consul_server.json
+    - source: salt://components/misc/consul/files/consul_server.json
+    - mode: 640
+    - template: jinja
+
+Remove Consul Agent Service:
+  file.absent:
+    - name: /etc/systemd/system/consul.service
+    - source: salt://components/misc/consul/files/consul.service
+    - makedirs: True
+    - mode: 644
+
+Reload service daemons post consul-agent.service removal:
+  cmd.run:
+    - name: systemctl daemon-reload
+
+Remove Consul user:
+  user.absent:
+    - name: consul

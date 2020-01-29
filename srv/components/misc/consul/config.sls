@@ -1,3 +1,7 @@
+include:
+  - components.misc.consul.prepare
+  - components.misc.consul.install
+
 Set consul in bash_profile:
   file.blockreplace:
     - name: ~/.bashrc
@@ -7,7 +11,18 @@ Set consul in bash_profile:
     - append_if_not_found: True
     - append_newline: True
     - backup: False
+    - require:
+      - Consul installed
 
 Source bash_profile for nodejs addition:
   cmd.run:
     - name: source ~/.bashrc
+    - require: 
+      - Set consul in bash_profile
+
+Reload service daemons for consul-agent.service:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - require:
+      - file: Create Consul Agent Service
+      - Consul installed

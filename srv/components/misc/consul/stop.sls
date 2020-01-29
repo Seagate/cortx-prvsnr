@@ -1,4 +1,4 @@
 Start Consul:
-  service.running:
+  service.dead:
     - name: consul.service
-    - enable: True
+    - enable: False

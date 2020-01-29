@@ -1,3 +1,6 @@
+include:
+  - components.misc.elasticsearch
+
 #Configure elasticsearch and statsd plugin:
 #  cmd.run:
 #    - names:
@@ -5,8 +8,9 @@
 #      - unzip /opt/statsd-utils*.zip
 #      - mv /opt/statsd-utils-Dev-ajay-eduard /opt/statsd-utils
 
-
 Update config:
   file.managed:
     - name: /etc/statsd/config.js
     - source: salt://components/misc/statsd/files/config.js
+    - require:
+      - Install elasticsearch

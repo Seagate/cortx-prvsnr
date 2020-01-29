@@ -1,6 +1,11 @@
+include:
+  - components.misc.statsd.stop
+
 Remove statsd:
   pkg.purged:
-    - name: statsd
+    - pkgs:
+      - statsd
+      - python-statsd
 
 Remove config:
   file.absent:
