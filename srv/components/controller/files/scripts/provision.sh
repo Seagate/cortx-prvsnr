@@ -780,7 +780,7 @@ sc_license_get()
     echo "sc_license_get(): Getting licenses "${_xml_obj_plist[@]}"" >> $logfile
 
     # run command to get the license details
-    echo "Getting license details.."
+    echo "Getting license details.." >> $logfile
     echo "sc_license_get(): Running command: 'show license'" >> $logfile
     cmd_run 'show license'
     # parse xml to get required values of properties
@@ -803,14 +803,12 @@ sc_license_get()
 
 fw_license_load()
 {
-    #TODO: load license here using ftp
-
+    return
 }
 
 fw_update()
 {
-    #TODO: load fw_bundle here over ftp
-
+    return
 }
 
 fw_license_show()

@@ -58,22 +58,18 @@ usage()
     "\t [{ prov [-a|--all][-c|--cleanup][-s|--show-prov]\n"\
     "\t   [-t <pool-type> -l <level> -m <pool-name> -d <disk-range>"\
     "[-n <no-of-vols>] }]\n"\
-    "\t [-s|--show-disks]\n"
+    "\t [-s|--show-disks]\n"\
+    "\t [-u|--update-fw]\n"\
+    "\t [-v|--show-fw-ver]\n"\
+    "\t [--show-license]\n"\
+    "\t [-l|--load-license]\n"\
     "\t [-h|--help]\n"
 }
 
 help()
 {
-    echo -e " Utility to configure the Seagate Gallium stroage controller\n"\
-    "=========================================================\n"\
-    "usage:\n"\
-    "$0\n\t { host -h <hostname|ip> -u <username> -p <password> }\n"\
-    "\t { prov [-a|--all][-c|--cleanup][-s|--show-prov]\n"\
-    "\t   [-t <pool-type> -l <level> -m <pool-name> -d <disk-range>"\
-    "[-n <no-of-vols>] }\n"\
-    "\t [-s|--show-disks]"
+    usage
     echo -e "\n"\
-    "\t [-h|--help]\n"\
     "where:\n"\
     "  hostname      :- hostname or ip of the controller\n"\
     "  username      :- username of the controller to be provisioned,\n"\
@@ -99,7 +95,12 @@ help()
     "-n> options\n"\
     "  -c|--cleanup  :- Cleanups the existing provisioning (delete all volumes"\
     "& pools)\n"\
-    "  -s|--show-prov:- Shows current provisioning- only pools\n"
+    "  -s|--show-prov:- Display current provisioning- only pools\n"\
+    "  -u|--update-fw:- \n"\
+    "  -v|--show-fw-ver:- \n"\
+    "  --show-license:- Display license details along with storage enclosure"\
+    "serial number and firmware version\n"\
+    "  -l|--load-license:- \n"\
     echo -e " Sample commands:\n"\
     "========================================================="
     echo -e "\n"\
