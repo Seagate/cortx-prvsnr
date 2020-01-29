@@ -42,6 +42,14 @@ add_saltsatck_repo:
     - gpgcheck: 1
     - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
 
+# Add commons yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.commons.repo.id }}
+#     - enabled: True
+#     - humanname: sspl_uploads
+#     - baseurl: {{ defaults.commons.repo.url }}
+#     - gpgcheck: 0
+
 clean_yum_local:
   cmd.run:
     - name: yum clean all

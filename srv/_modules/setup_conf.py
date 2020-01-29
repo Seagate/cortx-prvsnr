@@ -1,6 +1,7 @@
 # How to test:
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
 # salt-call update_grains.load_setup_conf "../files/samples/setup.yaml" 'test:post_install'
+import errno
 import os
 import yaml
 
@@ -21,7 +22,7 @@ def conf_cmd(conf_file, conf_key):
       yml_dict = yaml.safe_load(fd)
       script_path = yml_dict[conf_key.split(':')[0]][conf_key.split(':')[1]]['script']
       if script_path and os.path.exists(script_path):
-        args = yml_dict[conf_key.split(':')[0]][conf_key.split(':')[1]]['args']
+        args = yml_dict[conf_key.split(':')[0]][conf_key.split(':')[1]]['vars']
         if isinstance(args, list):
           args = ' '.join(args)
         ret_val = script_path + " " + args
