@@ -18,6 +18,12 @@ base_repos:
     id: "saltstack"
     url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
 
+commons:
+  repo:
+  # Binaries from external sources
+    id: "commons"
+    url: {{ eos_repo_url }}/uploads
+
 sspl:
   repo:
     id: "sspl"

@@ -4,17 +4,18 @@ base:
   '*':
     # - node_info.node_data
     - components.cluster
+    - components.commons
     - components.corosync-pacemaker
+    - components.elasticsearch
+    - components.eoscore
     - components.halon
     - components.haproxy
-    - components.eoscore
     - components.openldap
     - components.rabbitmq
     - components.release
     - components.s3client
+    - components.s3server
     - components.sspl
     - components.system
-    - components.elasticsearch
-    - components.elasticsearch
     - user.*
     - ignore_missing: True

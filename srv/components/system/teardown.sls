@@ -12,3 +12,8 @@ install_base_packages:
 clean_yum_local:
   cmd.run:
     - name: yum clean all
+
+{% import_yaml 'components/defaults.yaml' as defaults %}
+Delete Commons yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.commons.repo.id }}
