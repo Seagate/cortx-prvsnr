@@ -1189,7 +1189,8 @@ def test_functions_eos_pillar_update_fail(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
-    ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
+    ['cluster', 'eoscore', 'haproxy', 'release', 's3client']
+    # Removed s3server and sspl EOS-4907
 )
 def test_functions_eos_pillar_update_and_load_default(
     run_script, mhost, mlocalhost, tmpdir_function,
