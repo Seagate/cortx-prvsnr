@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
 @pytest.mark.env_level('salt-installed')
+@pytest.mark.skip(reason="EOS-4907")
 def test_setup_ssh_known_hosts(
     mhosteosnode1, eos_hosts, configure_salt, accept_salt_keys
 ):

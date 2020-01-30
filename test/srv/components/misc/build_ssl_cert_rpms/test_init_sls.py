@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.skip(reason="EOS-4907")
 def test_build_ssl_cert_rpms_appliance(
     mhosteosnode1, mhosteosnode2, eos_hosts, configure_salt, accept_salt_keys
 ):
