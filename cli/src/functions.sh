@@ -677,6 +677,64 @@ EOF
     fi
 }
 
+#   configure_firewall [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Open firewall ports for saltstack either on the remote host or locally.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function configure_firewall {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Configuring firewall ports for saltstack '$_hostspec'"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    #Disable iptables-services
+    systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
+    systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
+    systemctl stop ebtables && systemctl disable ebtables && systemctl mask ebtables
+
+    #Install and start firewalld
+    yum install -y firewalld
+    systemctl start firewalld
+    systemctl enable firewalld
+
+    # Open salt firewall ports
+    firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent
+    firewall-cmd --reload
+
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
 
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
 #
