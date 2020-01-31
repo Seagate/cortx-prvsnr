@@ -1,5 +1,5 @@
 include:
-  - components.misc.consul.stop
+  - components.misc_pkgs.consul.stop
 
 Remove Consul:
   file.absent:

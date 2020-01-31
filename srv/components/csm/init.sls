@@ -1,10 +1,10 @@
 include:
   # Dependecies
-  - components.misc.consul
-  - components.misc.elasticsearch
-  - components.misc.kibana
-  - components.misc.statsd
-  - components.misc.nodejs
+  - components.misc_pkgs.consul
+  - components.misc_pkgs.elasticsearch
+  - components.misc_pkgs.kibana
+  - components.misc_pkgs.statsd
+  - components.misc_pkgs.nodejs
   # HA component
   - components.ha.corosync-pacemaker
   # - components.sspl

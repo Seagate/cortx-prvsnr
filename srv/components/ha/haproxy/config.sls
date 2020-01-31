@@ -34,10 +34,5 @@ Setup haproxy config to enable logs:
     - makedirs: True
     - keep_source: False
 
-Enable haproxy service:
-  service.enabled:
-    - name: haproxy.service
-
-Enable rsyslog service:
-  service.enabled:
-    - name: rsyslog.service
+include:
+  - components.misc_pkgs.rsyslog.start

@@ -1,5 +1,5 @@
 include:
-  - components.misc.consul.prepare
+  - components.misc_pkgs.consul.prepare
 
 Consul installed:
   archive.extracted:

@@ -1,5 +1,5 @@
 include:
-  - components.misc.kibana.stop
+  - components.misc_pkgs.kibana.stop
 
 Remove kibana:
   pkg.purged:

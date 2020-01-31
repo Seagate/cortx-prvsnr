@@ -33,7 +33,7 @@ def test_build_ssl_cert_rpms_appliance(
 
     for label in ('eosnode1', 'eosnode2'):
         mhosteosnode1.check_output(
-            "salt '{}' state.apply components.misc.build_ssl_cert_rpms".format(
+            "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms".format(
                 eos_hosts[label]['minion_id']
             )
         )
