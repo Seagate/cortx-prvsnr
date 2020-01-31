@@ -79,6 +79,7 @@ s3:
       - {{ port }}/tcp
       {% endfor %}
       - 514/tcp
+      - 514/udp
       - 8125/tcp
       - 6379/tcp
       - 9080/tcp

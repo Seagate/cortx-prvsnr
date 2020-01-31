@@ -2,7 +2,7 @@
 # Teardown haproxy/openldap
 #-------------------------
 # include:
-#   - components.misc.openldap.teardown
+#   - components.misc_pkgs.openldap.teardown
 #   - components.ha.haproxy.teardown
 #   - components.ha.keepalived.teardown
 #-------------------------

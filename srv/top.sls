@@ -1,8 +1,8 @@
 base:
   '*':
     - components.system
-    - components.misc.build_ssl_cert_rpms
-    - components.misc.openldap
+    - components.misc_pkgs.build_ssl_cert_rpms
+    - components.misc_pkgs.openldap
     - components.ha.haproxy
     - components.eoscore
     - components.s3server

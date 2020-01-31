@@ -1,6 +1,6 @@
 include:
-  - components.misc.consul.prepare
-  - components.misc.consul.install
+  - components.misc_pkgs.consul.prepare
+  - components.misc_pkgs.consul.install
 
 Set consul in bash_profile:
   file.blockreplace:

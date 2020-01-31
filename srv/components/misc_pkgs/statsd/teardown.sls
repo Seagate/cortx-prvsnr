@@ -1,5 +1,5 @@
 include:
-  - components.misc.statsd.stop
+  - components.misc_pkgs.statsd.stop
 
 Remove statsd:
   pkg.purged:

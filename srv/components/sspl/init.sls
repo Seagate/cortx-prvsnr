@@ -1,5 +1,5 @@
 include:
-  - components.misc.rabbitmq
+  - components.misc_pkgs.rabbitmq
   - components.sspl.prepare
   - components.sspl.install
   - components.sspl.config

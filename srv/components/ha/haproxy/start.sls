@@ -1,7 +1,7 @@
 Ensure HAProxy running:
   service.running:
     - name: haproxy.service
+    - enable: True
 
-Ensure rsyslog running:
-  service.running:
-    - name: rsyslog.service
+include:
+  - components.misc_pkgs.rsyslog.start

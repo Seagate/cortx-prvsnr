@@ -1,5 +1,5 @@
 include:
-  - components.misc.lustre
+  - components.misc_pkgs.lustre
   - components.eoscore.prepare
   - components.eoscore.install
   - components.eoscore.config

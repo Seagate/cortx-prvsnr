@@ -1,6 +1,5 @@
-Ensure rsyslog stopped:
-  service.dead:
-    - name: rsyslog.service
+include:
+  - components.misc_pkgs.rsyslog.stop
 
 Ensure HAProxy stopped:
   service.dead:

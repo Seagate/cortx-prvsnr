@@ -1,6 +1,6 @@
 include:
   # - components.ha.haproxy
-  # - components.misc.openldap
+  # - components.misc_pkgs.openldap
   
   # - components.ha.keepalived
   - components.s3server.prepare

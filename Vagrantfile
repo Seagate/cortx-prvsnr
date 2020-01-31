@@ -226,17 +226,17 @@ Vagrant.configure("2") do |config|
           #sudo salt eosnode-1 state.apply components.system
           #sudo salt eosnode-1 state.apply components.system.storage
           
-          #sudo salt eosnode-1 state.apply components.misc.build_ssl_cert_rpms
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms
           # HA component
           #sudo salt eosnode-1 state.apply components.ha.corosync-pacemaker
           #sudo salt eosnode-1 state.apply components.ha.haproxy
           # Others
-          #sudo salt eosnode-1 state.apply components.misc.consul
-          #sudo salt eosnode-1 state.apply components.misc.elasticsearch
-          #sudo salt eosnode-1 state.apply components.misc.kibana
-          #sudo salt eosnode-1 state.apply components.misc.statsd
-          #sudo salt eosnode-1 state.apply components.misc.nodejs
-          #sudo salt eosnode-1 state.apply components.misc.openldap
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.consul
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.elasticsearch
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.kibana
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.statsd
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.nodejs
+          #sudo salt eosnode-1 state.apply components.misc_pkgs.openldap
           
           # IP path components
           #sudo salt eosnode-1 state.apply components.eoscore

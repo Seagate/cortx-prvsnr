@@ -1,6 +1,6 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 include:
-  - components.misc.lustre.start
+  - components.misc_pkgs.lustre.start
 
 Remove Lustre:
   pkg.purged:

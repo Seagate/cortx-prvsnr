@@ -15,4 +15,4 @@ Delete EOSCore yum repo:
     - name: {{ defaults.eoscore.repo.id }}
 
 include:
-  - components.misc.lustre.teardown
+  - components.misc_pkgs.lustre.teardown
