@@ -1,11 +1,11 @@
 base:
   '*':
     - components.system
-    - components.sspl
-    - components.eoscore
-    - components.halon
     - components.misc.build_ssl_cert_rpms
-    - components.ha.haproxy
     - components.misc.openldap
+    - components.ha.haproxy
+    - components.eoscore
     - components.s3server
+    - components.hare
+    - components.sspl
     - components.csm

@@ -15,7 +15,7 @@ include:
   - components.ha.haproxy.stop
   - components.s3server.stop
   - components.eoscore.stop
-  - components.halon.stop
+  - components.hare.stop
   - components.sspl.stop
 
 Stop rabbitmq-server:

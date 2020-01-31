@@ -1,5 +1,5 @@
 include:
-  - components.halon.teardown
+  - components.hare.teardown
   
   - components.misc.openldap.teardown
   - components.ha.haproxy.teardown

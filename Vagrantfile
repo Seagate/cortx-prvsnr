@@ -8,7 +8,7 @@ salt_nodes = [
   {
     "name" => "eosnode-1",
     "cpus" => 2,
-    "memory" => 2048,
+    "memory" => 4096,
     "mgmt0" => "172.16.10.101",
     "data0" => "172.19.10.101",
     "minion_id" => "eosnode-1"
@@ -16,7 +16,7 @@ salt_nodes = [
   {
     "name"=> "eosnode-2",
     "cpus"=> 2,
-    "memory"=> 2048,
+    "memory"=> 4096,
     "mgmt0" => "172.16.10.102",
     "data0" => "172.19.10.102",
     "minion_id" => "eosnode-2"
@@ -30,6 +30,15 @@ salt_nodes = [
     "minion_id" => "s3client"
   }
 ]
+
+# There is no proper way of checking in Vagrantfile if VM has been already
+# provisioned or not, so we use this hack:
+# https://stackoverflow.com/a/38203497
+def provisioned?(vm_name, provider='hyperv')
+  vg_dotfile_prefix =
+    ENV['VAGRANT_DOTFILE_PATH'].nil? ? '' : ENV['VAGRANT_DOTFILE_PATH'] + '/'
+  File.exist?("#{vg_dotfile_prefix}.vagrant/machines/#{vm_name}/#{provider}/action_provision")
+end
 
 Vagrant.configure("2") do |config|
 
@@ -136,16 +145,18 @@ Vagrant.configure("2") do |config|
               Dir.mkdir(disks_dir)
             end
 
-            # SAS Controller - 1
-            vb.customize [ 'storagectl',
-              :id,
-              '--name', "#{node['name']}_vdisk_vol_1",
-              '--add', 'sas',
-              '--controller', 'LSILogicSAS',
-              '--portcount', 2,
-              '--hostiocache', 'off',
-              '--bootable', 'off'
-            ]
+            if not provisioned?(node['name'], 'virtualbox')
+              # SAS Controller - 1
+              vb.customize [ 'storagectl',
+                :id,
+                '--name', "#{node['name']}_vdisk_vol_1",
+                '--add', 'sas',
+                '--controller', 'LSILogicSAS',
+                '--portcount', 2,
+                '--hostiocache', 'off',
+                '--bootable', 'off'
+              ]
+            end
 
             (1..disk_count).each do |disk_number|
               disk_file = File.expand_path(disks_dir).to_s + "/#{node['name']}_disk_#{disk_number}.vdi"
@@ -180,7 +191,7 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/ees-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
         type: "rsync",
         rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
         rsync__auto: true,
@@ -214,14 +225,28 @@ Vagrant.configure("2") do |config|
 
           #sudo salt eosnode-1 state.apply components.system
           #sudo salt eosnode-1 state.apply components.system.storage
-          #sudo salt eosnode-1 state.apply components.ha.haproxy
+          
           #sudo salt eosnode-1 state.apply components.misc.build_ssl_cert_rpms
+          # HA component
+          #sudo salt eosnode-1 state.apply components.ha.corosync-pacemaker
+          #sudo salt eosnode-1 state.apply components.ha.haproxy
+          # Others
+          #sudo salt eosnode-1 state.apply components.misc.consul
+          #sudo salt eosnode-1 state.apply components.misc.elasticsearch
+          #sudo salt eosnode-1 state.apply components.misc.kibana
+          #sudo salt eosnode-1 state.apply components.misc.statsd
+          #sudo salt eosnode-1 state.apply components.misc.nodejs
           #sudo salt eosnode-1 state.apply components.misc.openldap
-          #sudo salt eosnode-1 state.apply components.sspl
+          
+          # IP path components
           #sudo salt eosnode-1 state.apply components.eoscore
-          #sudo salt eosnode-1 state.apply components.halon
           #sudo salt eosnode-1 state.apply components.s3server
-          #sudo salt eosnode-1 state.apply components.post_setup
+          #sudo salt eosnode-1 state.apply components.hare
+
+          # Management path components
+          #sudo salt eosnode-1 state.apply components.sspl
+          #sudo salt eosnode-1 state.apply components.csm
+
         SHELL
 
       #unless 's3client' == node['name']

@@ -1,0 +1,18 @@
+nodes:
+  {% for node in pillar['cluster']['node_list'] %}
+  - hostname: {{ pillar['cluster'][node]['hostname'] }}
+    data_iface: {{ pillar['cluster'][node]['network']['data_if'] }}
+    m0_servers:
+      - runs_confd: true
+      - io_disks: 
+          # XXX Hare should support lists of disks, not only globs
+          path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
+    m0_clients:
+      s3: 4
+      other: 0
+  {% endfor %}
+pools:
+  - name: the pool
+    disks: all
+    data_units: 1 
+    parity_units: 0
