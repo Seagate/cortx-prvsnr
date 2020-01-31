@@ -14,6 +14,10 @@ include:
 # Fetch fqdn of primary node
 Copy certs from primary:
   cmd.run:
-    - name: scp {{ opts['master'] }}:/opt/seagate/stx-s3-*.rpm /opt/seagate
+{%- for node_id in pillar['cluster']['node_list'] -%}
+{%- if pillar['cluster'][node_id]['is_primary'] %}
+    - name: scp {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/stx-s3-*.rpm /opt/seagate
+{%- endif -%}
+{%- endfor -%}
 
 {% endif %}
