@@ -336,22 +336,26 @@ parse_args()
         "$show_fw_ver" = false -a "$update_fw" = false ] && {
         echo "Error: Incomplete arguments provided, exiting.."
         exit 1
-    } 
+    }
     echo "parse_args(): parsing done" >> $logfile
     return 0
 }
 
-check_packages()
+reqd_pkgs_install()
 {
-   for pkg in "$@"; do
-       [ ! -f "$pkg" ] && echo "Error: $pkg is not installed" && exit 1
-   done   
+    for pkg in "$@"; do
+        pkg_name=$(basename $pkg)
+        [ -f "$pkg" ] || {
+            echo "reqd_pkgs_install(): $pkg_name is not installed " >> $logfile
+            pkg_install $pkg_name
+        }
+    done
 }
 
 main()
 {
-    check_packages "$ssh_tool" "$xml_cmd"
     parse_args "$@"
+    reqd_pkgs_install "$ssh_tool" "$xml_cmd"
     [ "$prov_optparse_done" = true ] && do_provision
     [ "$show_disks" = true ] && disks_list
     [ "$load_license" = true ] && fw_license_load
