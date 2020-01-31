@@ -78,7 +78,6 @@ def test_singlenode_eos_deployed_env(mhosteosnode1, request):
 
 
 
-# TODO halon facts generation in scope of basebox requires attached disks
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')

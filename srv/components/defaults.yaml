@@ -43,9 +43,9 @@ eoscore:
     id: "eoscore"
     url: {{ eos_repo_url }}/{{ release }}
 
-halon:
+hare:
   repo:
-    id: "halon"
+    id: "hare"
     url: {{ eos_repo_url }}/{{ release }}
 
 s3server:

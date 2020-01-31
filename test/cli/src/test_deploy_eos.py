@@ -42,18 +42,19 @@ def test_deploy_eos_commands(
 
     if singlenode:
         expected_lines = [
-            'SALT-ARGS: -t 1800 eosnode-1 state.highstate'
+            'SALT-ARGS: -t 1800 eosnode-1 state.apply components.{}'.format(state)
+            for state in ['system', 'ha.haproxy', 'misc.openldap', 'misc.build_ssl_cert_rpms', 'eoscore', 's3server', 'hare', 'sspl', 'csm']
         ]
     else:
         expected_lines = [
             'SALT-ARGS: eosnode-[1,2] state.apply components.{}'.format(state)
-            for state in ['system', 'sspl', 'eoscore', 'halon']
+            for state in ['system', 'ha.haproxy', 'misc.openldap']
         ] + [
             'SALT-ARGS: eosnode-1 state.apply components.misc.build_ssl_cert_rpms',
             'SALT-ARGS: eosnode-2 state.apply components.misc.build_ssl_cert_rpms'
         ] + [
             'SALT-ARGS: eosnode-[1,2] state.apply components.{}'.format(state)
-            for state in ['ha.haproxy', 'misc.openldap', 's3server', 'csm']
+            for state in ['eoscore', 's3server', 'hare', 'sspl', 'csm']
         ]
 
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)

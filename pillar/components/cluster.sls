@@ -12,10 +12,8 @@ cluster:
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
         - /dev/sdb
-        # - /dev/disk/by-path/pci-0000:00:16.0-sas-phy0-lun-0
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc
-        # - /dev/disk/by-path/pci-0000:00:16.0-sas-phy1-lun-0
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS

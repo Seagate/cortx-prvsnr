@@ -69,7 +69,6 @@ CMD ["/usr/sbin/init"]
 #       - s3server apply fails second time even rsyslog already installed
 #   -  verify that hostname set formula works in docker (might be not true)
 #   - ldap fails (s3server)
-#   - halon-cleanup fails during teardown
 
 # ??? mac-address turns off ping to container
 
