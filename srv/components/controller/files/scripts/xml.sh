@@ -31,14 +31,14 @@ parse_xml()
     shift 2
     _elements=("$@")
     echo "parse_xml(): basetype=$_bt, _elements=("${_elements[@]}")" >> $logfile
-    _cnt=`xmllint --xpath 'count(/RESPONSE/OBJECT[@basetype="'$_bt'"])' $xml_doc`
+    _cnt=`$xml_cmd --xpath 'count(/RESPONSE/OBJECT[@basetype="'$_bt'"])' $xml_doc`
     for i in $(seq 1 $_cnt)
     do
         echo "parse_xml(): cnt=$_cnt, loop:$i" >> $logfile
         values=()
         for e in "${_elements[@]}"
         do
-            av=`xmllint --xpath '/RESPONSE/OBJECT[@basetype="'$_bt'"]['$i']\
+            av=`$xml_cmd --xpath '/RESPONSE/OBJECT[@basetype="'$_bt'"]['$i']\
                /PROPERTY[@name="'$e'"]/text()' $xml_doc 2>/dev/null`
             echo "parse_xml(): loop:$i, element=$e, av=$av" >> $logfile
             [ "$av" = "" ] && {

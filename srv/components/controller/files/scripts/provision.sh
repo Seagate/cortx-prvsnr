@@ -801,14 +801,58 @@ sc_license_get()
     done
 }
 
+pkg_install()
+{
+    _pkg="$1"
+    echo "Installing $_pkg"
+    yum install -q -y $_pkg > /dev/null 2>&1
+    ret=$?
+    [ $ret -eq 0 ] || {
+        echo "Error installing ftp"
+        exit 1
+    }
+    echo "pkg_install(): $_pkg installed successfully" >> $logfile
+}
+
+reqd_pkgs_install()
+{
+    for pkg in "$@"; do
+        pkg_name=$(basename $pkg)
+        [ -f "$pkg" ] || {
+            echo "reqd_pkgs_install(): $pkg_name not installed " >> $logfile
+            pkg_install $pkg_name
+        }
+    done
+}
+
+ftp_cmd_run()
+{
+    _cmd="$1"
+    ftp_cmd="/bin/ftp"
+    echo "ftp_cmd_run(): cmd: $_cmd" >> $logfile
+    reqd_pkgs_install $ftp_cmd
+    echo "ftp_cmd_run(): starting ftp session" >> $logfile
+$ftp_cmd -in $host <<EOF
+user $user "$pass"
+$_cmd
+bye
+EOF
+}
+
 fw_license_load()
 {
-    return
+    echo "Loading the license"
+    [ -z $license_file ] && echo "Error: No firmware bundle provided" &&
+        exit 1
+    ftp_cmd_run "put $license_file license"
 }
 
 fw_update()
 {
-    return
+    echo "Updating the firmware"
+    [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
+        exit 1
+    ftp_cmd_run "put $fw_bundle flash"
 }
 
 fw_license_show()
