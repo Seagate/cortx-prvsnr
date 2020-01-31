@@ -7,5 +7,6 @@ base:
     - components.eoscore
     - components.s3server
     - components.hare
+    - components.post_setup
     - components.sspl
     - components.csm

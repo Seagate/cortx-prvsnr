@@ -11,4 +11,4 @@ Install flask:
 
 Install sspl-test:
   pkg.installed:
-    - name: sspl-test-ctf
+    - name: sspl-test
