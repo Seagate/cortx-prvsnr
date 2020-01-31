@@ -552,7 +552,7 @@ vol_size_get()
     echo "vol_size_get(): new size after 8gb less:"\
         "`convert_from_bytes $_new_size_in_bytes GB`" >> $logfile
     echo "vol_size_get()"\
-        "`_volsize:$_volsize, `convert_from_bytes $_volsize GB``" >> $logfile
+        "_volsize:`convert_from_bytes $_volsize GB`($_volsize)" >> $logfile
     [ $_volsize -lt $_bytes_2g ] && {
         echo -e "Error: Volume of size less than 2GB is not supported in EOS" 
         echo -e "Error: Insufficient space($_avail_size)"\
@@ -680,7 +680,7 @@ provision()
     vsize=0
     vol_size_get $_avail_space_gb $_nvols
     ret=$?
-    [ $ret -ne 0 -o $vsize -eq 0 ] && {
+    [ $ret -ne 0 -o `convert_to_bytes $vsize` -eq 0 ] && {
         echo "Provision(): Error: exiting"
         rm -rf $tmpdir
         exit 1

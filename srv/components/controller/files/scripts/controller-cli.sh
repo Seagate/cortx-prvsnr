@@ -51,88 +51,94 @@ export load_license=false
 
 usage()
 {
-    echo -e " Utility to configure the Seagate Gallium stroage controller\n"\
-    "=========================================================\n"\
-    "usage:\n"\
-    "$0\n\t { host -h <hostname|ip> -u <username> -p <password> }\n"\
-    "\t [{ prov [-a|--all][-c|--cleanup][-s|--show-prov]\n"\
-    "\t   [-t <pool-type> -l <level> -m <pool-name> -d <disk-range>"\
-    "[-n <no-of-vols>] }]\n"\
-    "\t [-s|--show-disks]\n"\
-    "\t [-u|--update-fw]\n"\
-    "\t [-v|--show-fw-ver]\n"\
-    "\t [--show-license]\n"\
-    "\t [-l|--load-license]\n"\
-    "\t [-h|--help]\n"
+  cat <<USAGE
+  Utility to configure the Seagate Gallium stroage controller
+  =========================================================
+  usage:
+  $0
+         { host -h <hostname|ip> -u <username> -p <password> }
+         [{ prov [-a|--all][-c|--cleanup][-s|--show-prov]
+          [-t <pool-type> -l <level> -m <pool-name> -d <disk-range>]
+          [-n <no-of-vols>] }]
+         [-s|--show-disks]
+         [-u|--update-fw]
+         [-v|--show-fw-ver]
+         [--show-license]
+         [-l|--load-license] 
+         [-h|--help]
+USAGE
 }
 
 help()
 {
     usage
-    echo -e "\n"\
-    "where:\n"\
-    "  hostname      :- hostname or ip of the controller\n"\
-    "  username      :- username of the controller to be provisioned,\n"\
-    "                   user must have the manage role assigned to it\n"\
-    "  password      :- password for the <username>\n"\
-    "  pool-type     :- type of pool to be created - linear/virtual\n"\
-    "  level         :- pool configuration level .e.g. adapt, r6 etc\n"\
-    "                   supported levels: r1,r5,r6,r10,r50,adapt"
-    echo -e "   pool-name     :- name of the pool to be created\n"\
-    "                   for the virtual pool type the pool-name can only"\
-    "be either 'a' or 'b'\n"\
-    "  disk-range    :- range of disks e.g. '0.0-41',"\
-    "                   '0.42-83', '0.0-5,0.7-20,0.24'\n"\
-    "  no-of-vols    :- no of volumes to be created under the pool"\
-    "<pool-name>, the argument\n"\
-    "                   is optional, by default 8 volumes in a pool will be"\
-    "created\n"\
-    "  -a|--all      :- (Optional) Provisions the controller with standard"\
-    "configuration:\n"\
-    "                   2 linear pools with 8 volumes per pool mapped to all"\
-    "the initiators\n"\
-    "                   NOTE: -a option is mutually exclusive to <-t -l -m -d"\
-    "-n> options\n"\
-    "  -c|--cleanup  :- Cleanups the existing provisioning (delete all volumes"\
-    "& pools)\n"\
-    "  -s|--show-prov:- Display current provisioning- only pools\n"\
-    "  -u|--update-fw:- \n"\
-    "  -v|--show-fw-ver:- \n"\
-    "  --show-license:- Display license details along with storage enclosure"\
-    "serial number and firmware version\n"\
-    "  -l|--load-license:- \n"\
-    echo -e " Sample commands:\n"\
-    "========================================================="
-    echo -e "\n"\
-    "1. To cleanup existing pools and provision with the default configuration"\
-    "for controller sati10b\n"\
-    "   with following credentials(user/password) - admin/!admin"
-    echo -e " \n\t $0 host -h 'sati10b' -u admin -p '!admin' prov -a -c"
-    echo -e "\n"\
-    "2. Create an adapt linear pool dg01 with disks ranging from 0.0 to 0.41"\
-    "for controller ip 192.168.1.1\n"\
-    "   with following credentials(user/password) - admin/!paswd"
-    echo -e "\n"\
-    " \n\t $0 host -h '192.168.1.1' -u admin -p '!paswd' prov -t linear -l"\
-    "adapt -m dg01 -d '0.0-41'\n"\
-    " \n\t Note: by default 8 volumes of equal size will also be created"\
-    "under the dg01 &\n"\
-    " \t       and mapped to all the initiators. To override this behavior\n"\
-    " \t       use -n arg under prov option to provide the no of volumes\n"\
-    " \t       to be created, e.g. shown below"
-    echo -e "\n"\
-    "3. Provision a raid6 virtual pool named 'a' for disks range"\
-    "'0.42-0.83' & create 5 volumes under it.\n"\
-    "   With controller host details as: (host: host.seagate.com, user:"\
-    "admin, passwd: !passwd)\n"\
-    " \n\t $0 host -h hostname -u admin -p '!passwd' prov -t virtual -l r6 -m"\
-    "a -d '0.42-0.83' -n 5"
-    echo -e "\n 4. Show the current provisioning on the controller"\
-    "host(host10.seagate.com, admin, !passwd)\n"\
-    " \n\t $0 host -h 'host.seagate.com' -u admin -p '!passwd' prov -s\n"
-    echo -e "\n 5. Show/List the disks on the controller"\
-    "host(host10.seagate.com, admin, !passwd)\n"\
-    " \n\t $0 host -h 'host.seagate.com' -u admin -p '!passwd' -s"
+    cat <<USAGE
+    where:
+    hostname      :- hostname or ip of the controller
+    username      :- username of the controller to be provisioned,
+                     user must have the manage role assigned to it
+    password      :- password for the <username>
+    pool-type     :- type of pool to be created - linear/virtual
+    level         :- pool configuration level .e.g. adapt, r6 etc
+                     supported levels: r1,r5,r6,r10,r50,adapt
+    pool-name     :- name of the pool to be created
+                     for the virtual pool type the pool-name can only be either
+                     'a' or 'b'
+    disk-range    :- range of disks e.g. '0.0-9', '0.42-83', '0.0-5,0.7-20,0.24'
+    no-of-vols    :- no of volumes to be created under the pool <pool-name>, the
+                     argument is optional, by default 8 volumes in a pool will
+                     be created
+    -a|--all      :- Provisions the controller with standard configuration:
+                     2 linear pools with 8 volumes per pool mapped to all
+                     the initiators.
+                     NOTE:- -a option is mutually exclusive to -t, -l, -m, -d
+                     and the -n options.
+    -c|--cleanup  :- Cleanups the existing provisioning (delete all pools)
+    -s|--show-prov:- Shows current provisioning on the enclosure
+    -u|--update-fw:- flash the provided firmware on the provided controller
+    -v|--show-fw-ver:- Shows the firmware version
+    --show-license:- Display license details along with storage enclosure
+                     serial number and firmware version
+    -l|--load-license:-
+
+    Sample commands:
+    =========================================================
+
+    1. To cleanup existing pools and provision with the default
+       configuration for controller sati10b with following
+       credentials(user/password) - admin/!admin
+
+       $0 host -h 'sati10b' -u admin -p '!admin' prov -a -c
+
+    2. Create an adapt linear pool dg01 with disks ranging from 0.0
+       to 0.41 for controller with ip 192.168.1.1 and with following
+       credentials(user/password) - admin/!paswd
+
+       $0 host -h '192.168.1.1' -u admin -p '!paswd' prov -t linear\
+            -l adapt -m dg01 -d '0.0-41'
+
+        Note: by default 8 volumes of equal size will also be created
+        under the dg01 & and mapped to all the initiators. To override
+        this behavior use -n arg under prov option to provide the no of
+        volumes to be created, e.g. shown below.
+
+    3. Provision a raid6 virtual pool named 'a' for disks range '0.42-0.83'
+       & create 5 volumes under it. With controller host details as:
+       host: host.seagate.com, user: admin, passwd: !passwd
+
+       $0 host -h hostname -u admin -p '!passwd' prov -t virtual -l r6 -m\
+            a -d '0.42-0.83' -n 5
+
+    4. Show the current provisioning on the controller host as:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' prov -s
+
+    5. Show/List the disks on the controller host as:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' -s
+USAGE
 }
 
 parse_hopts()
