@@ -96,3 +96,9 @@ Remove S3 iamcli:
 #------------------------------
 # Teardown S3IAMCLI End
 #------------------------------
+
+
+Delete s3server checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3server
+

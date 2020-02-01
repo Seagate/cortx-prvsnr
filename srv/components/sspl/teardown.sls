@@ -16,3 +16,8 @@ Remove flask:
 Delete EOSCore yum repo:
   pkgrepo.absent:
     - name: {{ defaults.sspl.repo.id }}
+
+Delete sspl checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
+

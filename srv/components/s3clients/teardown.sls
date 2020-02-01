@@ -18,3 +18,9 @@ Remove S3 iamcli:
       - s3iamcli
 #       # - s3iamcli-devel
 #       # - s3server-debuginfo
+
+
+Delete s3clients checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3clients
+
