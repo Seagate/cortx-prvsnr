@@ -27,3 +27,7 @@ Remove crontab:
     - name: /opt/statsd/csm-stats-collector 10
     - user: root
     - identifier: csm-stats-collector
+
+Delete csm configs:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm

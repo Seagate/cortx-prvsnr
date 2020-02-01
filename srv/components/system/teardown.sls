@@ -17,3 +17,8 @@ clean_yum_local:
 Delete Commons yum repo:
   pkgrepo.absent:
     - name: {{ defaults.commons.repo.id }}
+
+Delete system checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.system
+

@@ -8,3 +8,11 @@ include:
   # Clients
   - components.s3clients.awscli
   - components.s3clients.s3cmd
+
+
+Generate s3clients checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3clients
+    - makedirs: True
+    - create: True
+

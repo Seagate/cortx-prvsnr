@@ -16,3 +16,7 @@ Delete EOSCore yum repo:
 
 include:
   - components.misc_pkgs.lustre.teardown
+
+Delete eoscore checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.eoscore
