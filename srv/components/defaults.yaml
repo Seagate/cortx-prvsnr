@@ -1,7 +1,7 @@
 tmp_dir: /tmp
 
 {% set base_repo_url = "http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Production/" %}
-{% set eos_repo_url = "http://ci-storage.mero.colo.seagate.com/releases/eos/" %}
+{% set eos_repo_url = "http://ci-storage.mero.colo.seagate.com/releases/eos" %}
 {% set release = pillar['eos_release']['target_build'] %}
 
 base_repos:
@@ -74,3 +74,6 @@ csm:
   repo:
     id: "csm"
     url: {{ eos_repo_url  }}/{{ release }}
+  uploads_repo:
+    id: "csm_uploads"
+    url: {{ eos_repo_url }}/uploads/
