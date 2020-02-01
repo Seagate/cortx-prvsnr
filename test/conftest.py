@@ -12,7 +12,7 @@ import logging
 
 import test.helper as h
 from .helper import (
-    _docker_image_build, fixture_builder,
+    fixture_builder,
     safe_filename,
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
@@ -26,6 +26,7 @@ VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
 
 SSH_KEY_FILE_NAME = "id_rsa.test"
 
+# TODO 'base' level format is too different
 ENV_LEVELS_HIERARCHY = {
     'base': {
         'centos7.5.1804': {
@@ -45,7 +46,19 @@ ENV_LEVELS_HIERARCHY = {
     },
     'repos-installed': 'base',
     'salt-installed': 'repos-installed',
-    'singlenode-prvsnr-installed': 'salt-installed',
+    'singlenode-prvsnr-installed': {
+        'parent': 'salt-installed',
+        'docker': {
+            'build_type': 'commit',
+            'scripts': [
+                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_singlenode.sh local ''",
+                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_api_env.sh",
+                "rm -rf {repo_path}"
+            ]
+        }
+    },
+    'singlenode-test-integration-ready': 'singlenode-prvsnr-installed',
+    # only for vbox
     'singlenode-deploy-ready': {
         'parent': 'salt-installed',
         'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
@@ -527,6 +540,18 @@ def env_fixture_suffix(os_name, env_level):
 def build_docker_image_fixture(os_name, env_level):
 
     def docker_image(request, docker_client, project_path, tmpdir_session):
+        env_spec = ENV_LEVELS_HIERARCHY[env_level]
+        docker_spec = {}
+        build_type = 'dockerfile'
+
+        if env_level == 'base':
+            parent_env_level = None
+        elif type(env_spec) is dict:
+            parent_env_level = env_spec['parent']
+            docker_spec = env_spec.get('docker', {})
+            build_type = docker_spec.get('build_type', 'dockerfile')
+        else:
+            parent_env_level = env_spec
 
         def _image_short_id(image):
             return image.short_id.replace('sha256:', '')
@@ -544,18 +569,15 @@ def build_docker_image_fixture(os_name, env_level):
 
         def _parent_image_name():
             if env_level == 'base':
-                return ENV_LEVELS_HIERARCHY['base'][os_name]['docker']
+                # TODO image object would be necessary for 'commit' built_type
+                return env_spec[os_name]['docker'], None
             else:
-                env_spec = ENV_LEVELS_HIERARCHY[env_level]
-                p_env = (
-                    env_spec['parent'] if type(env_spec) is dict else env_spec
-                )
                 p_image = request.getfixturevalue(
                     "docker_image_{}".format(
-                        env_fixture_suffix(os_name, p_env)
+                        env_fixture_suffix(os_name, parent_env_level)
                     )
                 )
-                p_image_name = _image_name(p_image, os_name, p_env)
+                p_image_name = _image_name(p_image, os_name, parent_env_level)
                 if p_image_name not in p_image.tags:
                     logger.warning(
                         "parent image {} doesn't have expected tag {}"
@@ -563,28 +585,50 @@ def build_docker_image_fixture(os_name, env_level):
                     )
                     # TODO what if no tags at all, do we allow referencing by id ?
                     p_image_name = p_image.tags[0]
-                return p_image_name
+                return p_image_name, p_image
 
-        parent_image_name = _parent_image_name()
-
-        df_name = "Dockerfile.{}".format(env_level)
-        dockerfile = project_path / 'images' / 'docker' / df_name
-        dockerfile_tmpl = dockerfile.parent / (dockerfile.name + '.tmpl')
-
-        if dockerfile_tmpl.exists():
-            dockerfile_str = dockerfile_tmpl.read_text().format(parent=parent_image_name)
-        else:
-            dockerfile_str = dockerfile.read_text()
-
-        dockerfile = tmpdir_session / dockerfile.name
-        dockerfile.write_text(dockerfile_str)
+        parent_image_name, parent_image = _parent_image_name()
 
         # build image
         logger.info(
             "Building docker env '{}' for base env '{}'"
-            .format(env_level, base_env)
+            .format(env_level, os_name)
         )
-        image = _docker_image_build(docker_client, dockerfile, ctx=project_path)
+        if build_type == 'dockerfile':
+            df_name = "Dockerfile.{}".format(env_level)
+            dockerfile = project_path / 'images' / 'docker' / df_name
+            dockerfile_tmpl = dockerfile.parent / (dockerfile.name + '.tmpl')
+
+            if dockerfile_tmpl.exists():
+                dockerfile_str = dockerfile_tmpl.read_text().format(parent=parent_image_name)
+            else:
+                dockerfile_str = dockerfile.read_text()
+
+            dockerfile = tmpdir_session / dockerfile.name
+            dockerfile.write_text(dockerfile_str)
+            image = h._docker_image_build(docker_client, dockerfile, ctx=project_path)
+        else:  # image as container commit
+            assert parent_image is not None
+            remote = build_remote(
+                'docker',
+                request,
+                os_name,
+                env_level=parent_env_level,
+                base_level=parent_image
+            )
+
+            try:
+                mhost = discover_remote(request, remote)
+            except Exception:
+                remote.destoy()
+                raise
+
+            with mhost.remote as _:
+                # apply scripts to running container
+                for script in docker_spec.get('scripts', []):
+                    mhost.check_output(script.format(repo_path=mhost.repo))
+                # commit it to image
+                image = h._docker_container_commit(remote)
 
         # set image name
         if _image_name(image, os_name, env_level) not in image.tags:
@@ -1068,27 +1112,28 @@ def vagrant_default_ssh():
 
 
 def build_remote(
-    env_provider, request, os_name, env_level, label=None, **kwargs
+    env_provider, request, os_name, env_level, label=None, base_level=None, **kwargs
 ):
     base_name = h.remote_name(
         request.node.nodeid, request.scope, os_name, env_level, label=label
     )
 
-    logger.info(
-        "Building env-level '{}' for os '{}' with provider '{}'"
-        .format(env_level, os_name, env_provider)
-    )
-    # TODO return an object of a class
-    if env_provider == 'docker':
-        base_level = request.getfixturevalue(
-            "docker_image_{}".format(env_fixture_suffix(os_name, env_level))
+    if base_level is None:
+        logger.info(
+            "Building env-level '{}' for os '{}' with provider '{}'"
+            .format(env_level, os_name, env_provider)
         )
-    elif env_provider == 'vbox':
-        base_level = request.getfixturevalue(
-            "vagrant_box_{}".format(env_fixture_suffix(os_name, env_level))
-        )
-    else:
-        raise ValueError("unknown env provider {}".format(env_provider))
+        # TODO return an object of a class
+        if env_provider == 'docker':
+            base_level = request.getfixturevalue(
+                "docker_image_{}".format(env_fixture_suffix(os_name, env_level))
+            )
+        elif env_provider == 'vbox':
+            base_level = request.getfixturevalue(
+                "vagrant_box_{}".format(env_fixture_suffix(os_name, env_level))
+            )
+        else:
+            raise ValueError("unknown env provider {}".format(env_provider))
 
     tmpdir = request.getfixturevalue('tmpdir_' + request.scope)
 

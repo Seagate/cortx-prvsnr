@@ -11,5 +11,7 @@
 *.box
 *.ova
 .build
+build
 .boxes
 .eggs
+tmp

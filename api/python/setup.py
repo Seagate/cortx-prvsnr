@@ -15,7 +15,15 @@ metadata = {'__file__': os.path.join(here, 'provisioner', '__metadata__.py')}
 with open(metadata['__file__'], 'r') as f:
     exec(f.read(), metadata)
 
-tests_require = []
+tests_require = [
+    'pytest==5.1.1',
+    'testinfra==3.1.0',
+    'docker==4.0.2',
+    'flake8==3.7.8',
+    'pytest-xdist==1.29.0',
+    'pytest-timeout==1.3.4',
+]
+
 packages = ['provisioner']
 
 setup(
@@ -38,15 +46,20 @@ setup(
     package_dir={'provisioner': 'provisioner'},
     # package_data={'': ['LICENSE']},  # TODO
     # include_package_data=True,  # TODO
-    # zip_safe=False,  TODO
+    # zip_safe=False,  TODO,
+    entry_points={
+        'console_scripts': [
+            'provisioner = provisioner.__main__:main',
+        ],
+    },
     install_requires=[
         'PyYAML',
-        'salt==2019.2.0'
+        'salt==2019.2.0',
+        'attrs==19.1.0'
     ],  # TODO
     setup_requires=['pytest-runner'],
     extras_require={
         'test': tests_require
     },
-    tests_require=tests_require,
-    scripts=[]  # TODO
+    tests_require=tests_require
 )

@@ -1,7 +1,13 @@
-from .errors import BadPillarDataError, UnknownParamError
+from .errors import UnknownParamError
 from .config import PRVSNR_USER_PILLAR_DIR
 from .utils import load_yaml, dump_yaml
-from .salt import states_apply, pillar_refresh, pillar_get
+from .salt import (
+    auth_init as _auth_init,
+    pillar_get as _pillar_get,
+    states_apply, pillar_refresh
+)
+
+
 
 # TODO
 # - yaml file with
@@ -154,6 +160,14 @@ prvsnr_params = {
 
 
 
+def auth_init(username, password, eauth='pam'):
+    return _auth_init(username, password, eauth=eauth)
+
+
+def pillar_get(targets='*'):
+    return _pillar_get(targets=targets)
+
+
 #  - Notes:
 #       1. call salt pillar is good since salt will expand properly pillar itself
 #       2. if pillar != system state then we are bad
@@ -250,7 +264,7 @@ def set_params(targets='*', **params):
                 states_apply(states=states, targets=targets)
 
 
-def set_ntp(server=None, timezone=None):
+def set_ntp(server=None, timezone=None, targets='*'):
     params = {}
     if server is not None:
         params['ntp_server'] = server
@@ -268,7 +282,8 @@ def set_network(
     slave_gateway_ip=None,
     primary_hostname=None,
     slave_hostname=None,
-    dns_server=None
+    dns_server=None,
+    targets='*'
 ):
     params = {}
     if primary_mgmt_ip is not None:

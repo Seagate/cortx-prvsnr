@@ -81,6 +81,7 @@ def test_setup_provisioner_fail(mhost, run_script):
 #   - network is configured
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
+@pytest.mark.env_provider('vbox')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_setup_provisioner_singlenode(
     mhost, mlocalhost, ssh_config, remote, run_script
@@ -90,7 +91,7 @@ def test_setup_provisioner_singlenode(
     with_sudo = '' # TODO
 
     res = run_script(
-        "{} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
+        "-v {} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
         mhost=(mlocalhost if remote else mhost)
     )
     assert res.rc == 0
@@ -108,7 +109,7 @@ def test_setup_provisioner_singlenode(
     output = json.loads(res.stdout)
     expected = [
         "components.{}".format(st) for st in
-        ['system', 'ha.haproxy', 'misc_pkgs.openldap', 'misc_pkgs.build_ssl_cert_rpms', 'eoscore', 's3server', 'hare', 'sspl', 'csm']
+        ['system', 'misc_pkgs.build_ssl_cert_rpms', 'misc_pkgs.openldap', 'ha.haproxy', 'eoscore', 's3server', 'hare', 'post_setup', 'sspl', 'csm']
     ]
     assert output == {
         'eosnode-1': {
@@ -147,6 +148,7 @@ def check_setup_provisioner_results(mhosteosnode1):
 
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
+@pytest.mark.env_provider('vbox')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.inject_ssh_config(['eosnode1'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -160,7 +162,7 @@ def test_setup_provisioner_cluster(
     with_sudo = '' # TODO
 
     res = run_script(
-        "{} {} {} --eosnode-2 {} --repo-src {}".format(
+        "-v {} {} {} --eosnode-2 {} --repo-src {}".format(
             ssh_config, with_sudo, remote, mhosteosnode2.hostname, repo_src
         ),
         mhost=(mlocalhost if remote else mhosteosnode1)
@@ -171,6 +173,7 @@ def test_setup_provisioner_cluster(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
+@pytest.mark.env_provider('vbox')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 def test_setup_provisioner_cluster_with_salt_master_host_provided(
     mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script
@@ -184,7 +187,7 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     with_sudo = '' # TODO
 
     res = run_script(
-        "{} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(
+        "-v {} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(
             ssh_config, with_sudo, remote, mhosteosnode2.hostname,
             salt_server_ip
         ),

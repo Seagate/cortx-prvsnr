@@ -56,7 +56,7 @@ def _salt_client_cmd(*args, **kwargs):
         res = LocalClient().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic
-        raise SaltError(str(exc))
+        raise SaltError(repr(exc)) from exc
 
     # TODO is it a valid case actually ?
     if type(res) is not dict:

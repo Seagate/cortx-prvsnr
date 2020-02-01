@@ -536,7 +536,6 @@ def test_functions_check_host_in_ssh_config(run_script, mhost):
 #   - remote case is better to test from within virtual env as well
 #   - other cases: ip missed, ifconfig missed, hostname is 127.0.0.1
 @pytest.mark.isolated
-@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_collect_addrs(
     run_script, mhost, mlocalhost,
@@ -573,7 +572,6 @@ def test_functions_collect_addrs(
 
 
 @pytest.mark.isolated
-@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_check_host_reachable(
     run_script, mhost, mlocalhost,
@@ -609,7 +607,6 @@ def test_functions_check_host_reachable(
 #   - case when they have the same IP in some non-shared iface (vbox only case for now)
 #   - actually we don't need eos specific here, just two hosts
 @pytest.mark.isolated
-@pytest.mark.env_level('base')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.parametrize(
     "local",
@@ -660,7 +657,6 @@ def test_functions_get_reachable_host_names(
 
 # TODO check key for saltstack repo is imported
 @pytest.mark.isolated
-@pytest.mark.env_level('base')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_install_repos(
     run_script, mhost, mlocalhost,

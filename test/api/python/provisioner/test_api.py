@@ -1,6 +1,6 @@
 import pytest
 
-from api.python.provisioner import provisioner
+from api.python.provisioner import _api as api
 from api.python.provisioner.errors import UnknownParamError
 from api.python.provisioner.utils import load_yaml
 
@@ -11,24 +11,24 @@ from api.python.provisioner.utils import load_yaml
 @pytest.fixture(autouse=True)
 def pillar_dir(monkeypatch, tmpdir_function):
     pillar_dir = tmpdir_function / 'pillar'
-    monkeypatch.setattr(provisioner, 'PRVSNR_USER_PILLAR_DIR', pillar_dir)
+    monkeypatch.setattr(api, 'PRVSNR_USER_PILLAR_DIR', pillar_dir)
     return pillar_dir
 
 
-def test_provisioner_get_params_fails_for_unknown_param(monkeypatch):
-    monkeypatch.setattr(provisioner, 'prvsnr_params', {})
+def test_api_get_params_fails_for_unknown_param(monkeypatch):
+    monkeypatch.setattr(api, 'prvsnr_params', {})
     with pytest.raises(UnknownParamError):
-        provisioner.get_params('some-param')
+        api.get_params('some-param')
 
 
-def test_provisioner_get_params_succeeds(monkeypatch):
+def test_api_get_params_succeeds(monkeypatch):
     data = {'1': {'2': {'3': '4', '5': '6'}}}
 
     def pillar_get(*args, **kwargs):
         return {'some-node-id': data}
 
     monkeypatch.setattr(
-        provisioner, 'prvsnr_params', {
+        api, 'prvsnr_params', {
             'some-param': {
                 'pillar': {
                     'key_path': ('1', '2', '3')
@@ -43,25 +43,25 @@ def test_provisioner_get_params_succeeds(monkeypatch):
     )
 
     monkeypatch.setattr(
-        provisioner, 'pillar_get', pillar_get
+        api, 'pillar_get', pillar_get
     )
 
     # test single ones
-    assert provisioner.get_params('some-param') == {'some-param': '4'}
-    assert provisioner.get_params('some-param2') == {'some-param2': '6'}
+    assert api.get_params('some-param') == {'some-param': '4'}
+    assert api.get_params('some-param2') == {'some-param2': '6'}
     # test multiple
-    assert provisioner.get_params('some-param', 'some-param2') == {
+    assert api.get_params('some-param', 'some-param2') == {
         'some-param': '4', 'some-param2': '6'
     }
 
 
-def test_provisioner_set_params_fails_for_unknown_param(monkeypatch):
-    monkeypatch.setattr(provisioner, 'prvsnr_params', {})
+def test_api_set_params_fails_for_unknown_param(monkeypatch):
+    monkeypatch.setattr(api, 'prvsnr_params', {})
     with pytest.raises(UnknownParamError):
-        provisioner.set_params(some_param=1)
+        api.set_params(some_param=1)
 
 
-def test_provisioner_set_params_succeeds(monkeypatch, pillar_dir):
+def test_api_set_params_succeeds(monkeypatch, pillar_dir):
     pillar_refresh_called = 0
     states_apply_args = []
 
@@ -76,17 +76,17 @@ def test_provisioner_set_params_succeeds(monkeypatch, pillar_dir):
         )
 
     monkeypatch.setattr(
-        provisioner, 'pillar_refresh', pillar_refresh
+        api, 'pillar_refresh', pillar_refresh
     )
     monkeypatch.setattr(
-        provisioner, 'states_apply', states_apply
+        api, 'states_apply', states_apply
     )
 
     test_pillar = 'aaa/bbb/test.sls'
     test_pillar_path = pillar_dir / test_pillar
 
     monkeypatch.setattr(
-        provisioner, 'prvsnr_params', {
+        api, 'prvsnr_params', {
             'some-param': {
                 'states': {
                     'pre': [
@@ -115,7 +115,7 @@ def test_provisioner_set_params_succeeds(monkeypatch, pillar_dir):
         }
     )
 
-    provisioner.set_params(**{'some-param': 'some-value'})
+    api.set_params(**{'some-param': 'some-value'})
 
     # check that pillar file is created with expected data
     assert test_pillar_path.exists()
@@ -134,17 +134,17 @@ def test_provisioner_set_params_succeeds(monkeypatch, pillar_dir):
 
     # repeate the same but dir is already exists now
     test_pillar_path.unlink()
-    provisioner.set_params(**{'some-param': 'some-value'})
+    api.set_params(**{'some-param': 'some-value'})
 
     # check that pillar file is updated
-    provisioner.set_params(**{'some-param': 'some-new-value'})
+    api.set_params(**{'some-param': 'some-new-value'})
     pillar = load_yaml(test_pillar_path)
     assert pillar == {'1': {'2': {'3': 'some-new-value'}}}
 
     pillar_refresh_called = False
     states_apply_args = []
     # check multiple updates
-    provisioner.set_params(**{'some-param': 'value1', 'some-param2': 'value2'})
+    api.set_params(**{'some-param': 'value1', 'some-param2': 'value2'})
     pillar = load_yaml(test_pillar_path)
     assert pillar == {
         '1': {'2': {'3': 'value1'}, '4': 'value2'}
