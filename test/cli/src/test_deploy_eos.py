@@ -42,7 +42,7 @@ def test_deploy_eos_commands(
 
     if singlenode:
         expected_lines = [
-            'SALT-ARGS: -t 1800 eosnode-1 state.apply components.{}'.format(state)
+            'SALT-ARGS: eosnode-1 state.apply components.{}'.format(state)
             for state in ['system', 'ha.haproxy', 'misc_pkgs.openldap', 'misc_pkgs.build_ssl_cert_rpms', 'eoscore', 's3server', 'hare', 'sspl', 'csm']
         ]
     else:

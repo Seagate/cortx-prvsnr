@@ -6,10 +6,25 @@ to configure provisioned EOS stack.
 It uses saltstack client python API and should be called on the same machine where
 salt master is running.
 
+
+There are set of api levels:
+1. [base python api](#api) that communicates directly with underlying salt api
+2. provisioner [cli tool](#cli)
+3. python api that uses provisioner cli and acts as a thin alternative for base one
+
+
+The one may choose an api depending it their needs:
+* base python api is the best choice for python libraries and apps since
+  it can be utilized in usual way
+* python api over cli might be the better for python apps that are going
+  to be frozen since it doesn't have other python dependencies than system ones
+* cli is to be consumed by any non-python app & library as usual shell tool
+
+
 ## Requirements
 
 1. Should be called on the same machine where salt master is running
-2. Exteranl auth for salt should be respected `TODO`
+2. External auth for salt should be [respected](#authentication_initialization)
 
 
 ## Installation
@@ -42,14 +57,29 @@ During the installation the api package is placed in `/opt/seagate/eos-prvsnr/ap
 Also it is installed to global python3 environment and available for usual python imports.
 
 
-## Authentication Initialization
+## Configuration
+
+
+### Switching Python API
+
+By default base Provisioner Python API is enabled. To switch to Python CLI wrapper:
+
+
+```
+import provisioner
+
+provisioner.set_api('pycli')
+```
+
+
+### Authentication Initialization
 
 To be used by non-root user the API requires additional initialization:
 
 ```
-from provisioner.salt import auth_init
+import provisioner
 
-auth_init(username=username, password=password)
+provisioner.auth_init(username=username, password=password)
 ```
 
 where `username` is a name of the user that is added to `prvsnrusers` group.
@@ -62,29 +92,59 @@ pass his name along with his password to `auth_init`.
 
 ## Usage examples
 
+### Integration with apps going to be frozen
+
+Please use python api over cli if you use some python freezer to distribute
+your application (e.g. [pyinstaller](https://www.pyinstaller.org/)).
+
+There is a helper module `provisioner.freeze` that you might want to import
+to make the integration easier:
+
+```
+    import provisioner
+    import provisioner.freeze
+
+    pillar = provisioner.pillar_get()
+    ...
+```
+
+
 ### NTP configuration
 
 ```
-    from provisioner.errors import ProvisionerError
     from provisioner import get_params, set_ntp
 
     # get current values
-
-    try:
-        curr_params = get_params('ntp_server', 'ntp_timezone')
-    except ProvisionerError:
-        raise
+    curr_params = get_params('ntp_server', 'ntp_timezone')
 
     api_ntp_server = curr_params['ntp_server']
     api_ntp_timezone = curr_params['ntp_timezone']
 
     # set new ones
-
     new_ntp_server = '0.north-america.pool.ntp.org'
     new_ntp_timezone = 'Europe/Berlin'
 
-    try:
-        set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
-    except ProvisionerError:
-        raise
+    set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
 ```
+
+## CLI
+
+Provisioner provides CLI tool `provisioner` that allows one to interact with system configuration manager
+via shell.
+
+### CLI Installation
+
+The tool `provisioner` becomes available once the provisioner api module is [installed](#installation)
+in your system or python virtual environtment.
+
+### CLI Usage
+
+CLI wraps provisioner api. Please refer to its usage help `provisioner --help` for more details.
+
+#### Passing crdedentials to CLI
+
+To pass authnetication for non-root users you will likely need to provider credentials to CLI.
+There are multiple options how to do that:
+1. using stdin: `echo <password> | provisioner --username <username> --password -`
+2. as env variable `PRVSNR_PASSWORD`: `PRVSNR_PASSWORD=<password> provisioner --username <username>`
+3. (insecure) as command line argument: `provisioner --username <username> --password <password>`

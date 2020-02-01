@@ -862,12 +862,15 @@ function install_provisioner {
             else  # do raw archive with uncommitted/untracked changes otherwise
                 tar -zcf "$_repo_archive_path" \
                     --exclude=".build" \
+                    --exclude="build" \
                     --exclude=".boxes" \
+                    --exclude=".eggs" \
                     --exclude=".vdisks" \
                     --exclude=".vagrant" \
                     --exclude=".pytest_cache" \
                     --exclude="__pycache__" \
                     --exclude="packer_cache" \
+                    --exclude="tmp" \
                     -C "$repo_root_dir" .
             fi
 

@@ -2,7 +2,6 @@ import sys
 import os
 import re
 import csv
-from copy import deepcopy
 from pathlib import Path
 import attr
 import docker
@@ -12,7 +11,6 @@ from random import randrange
 from time import sleep
 
 import pytest
-from functools import wraps
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,12 +23,15 @@ PRVSNR_REPO_INSTALL_DIR = Path('/opt/seagate/eos-prvsnr')
 MAX_REMOTE_NAME_LEN = 80
 REPO_BUILD_DIRS = [
     '.build',
+    'build',
     '.boxes',
+    '.eggs',
     '.vdisks',
     '.vagrant',
     '.pytest_cache',
     '__pycache__',
-    'packer_cache'
+    'packer_cache',
+    'tmp'
 ]
 
 
@@ -129,7 +130,7 @@ class Container(Remote):
 
     def run(self):
         if self.container is not None:
-            raise RuntimeError("already running") #  some API error
+            raise RuntimeError("already running")  # some API error
 
         try:
             self.container = self.client.containers.run(
@@ -465,22 +466,23 @@ class VagrantBox:
                 "{} is not a file".format(value)
             )
 
+
 # just some common sense for now
-re_filename = re.compile(r'([^a-zA-Z0-9_.-])')
 def safe_filename(name):
+    re_filename = re.compile(r'([^a-zA-Z0-9_.-])')
     return re_filename.sub(r'_', name)
 
 
-re_remote_non_sanitized = re.compile(r'([^a-zA-Z0-9])')
 def sanitize_remote_name_part(name):
+    re_remote_non_sanitized = re.compile(r'([^a-zA-Z0-9])')
     return re_remote_non_sanitized.sub(r'', name)
 
 
 # TODO
 # - tests
 # - check chars at the beginning and end
-re_unsafe_remote_chars = re.compile(r'([^a-zA-Z0-9_.-])')
 def safe_remote_name(name):
+    re_unsafe_remote_chars = re.compile(r'([^a-zA-Z0-9_.-])')
     return re_unsafe_remote_chars.sub(r'_', name)[-MAX_REMOTE_NAME_LEN:]
 
 
@@ -496,8 +498,8 @@ def remote_name(test_node_id, scope, osname, env_level, label=None):
 # TODO
 # - tests
 # - check chars at the beginning and end
-re_container_name = re.compile(r'([^a-zA-Z0-9_.-])')
 def safe_docker_container_name(name):
+    re_container_name = re.compile(r'([^a-zA-Z0-9_.-])')
     return re_container_name.sub(r'_', name)[-MAX_REMOTE_NAME_LEN:]
 
 
@@ -513,9 +515,9 @@ def safe_vagrant_machine_name(name):
 # - better satisfy RFC 1123 (https://tools.ietf.org/html/rfc1123#page-13)
 # - ??? actually docker used to check hostnames but is not clear how it happens now
 #   (https://github.com/moby/moby/issues/20371, https://github.com/moby/moby/pull/20566)
-re_hostname = re.compile(r'([^a-zA-Z0-9-])')
-re_multiple_dahses = re.compile(r'-+')
 def safe_hostname(name):
+    re_hostname = re.compile(r'([^a-zA-Z0-9-])')
+    re_multiple_dahses = re.compile(r'-+')
     _s = re_hostname.sub('-', name)
     return re_multiple_dahses.sub('-', _s).lower()[-63:].lstrip('-')
 
@@ -593,6 +595,15 @@ def _docker_image_build(client, dockerfile, ctx, image_name=None):
         for line in output:
             logger.debug(line)
     return image
+
+
+def _docker_container_commit(container, repository=None, tag=None):
+    # commit an image from the running container
+    try:
+        return container.container.commit(repository=repository, tag=tag)
+    except Exception as exc:
+        print("Failed to commit docker image: {}".format(exc))
+        raise
 
 
 def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
