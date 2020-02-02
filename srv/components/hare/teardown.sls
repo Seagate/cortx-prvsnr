@@ -16,3 +16,7 @@ Delete Hare yum repo:
   pkgrepo.absent:
     - name: {{ defaults.hare.repo.id }}
 {% endif %}
+
+Remove hare checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.hare
