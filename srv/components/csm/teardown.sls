@@ -1,3 +1,5 @@
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
 include:
   - components.csm.stop
 
