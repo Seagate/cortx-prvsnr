@@ -53,7 +53,7 @@ Create Consul config directory:
 Create Consul agent config file:
   file.managed:
     - name: /etc/consul.d/consul.json
-    - source: salt://components/misc/consul/files/consul.json.j2
+    - source: salt://components/misc_pkgs/consul/files/consul.json.j2
     - mode: 640
     - template: jinja
     - user: consul
@@ -64,7 +64,7 @@ Create Consul agent config file:
 #Create Consul server config file:
 #  file.managed:
 #    - name: /etc/consul.d/consul_server.json
-#    - source: salt://components/misc/consul/files/consul_server.json.j2
+#    - source: salt://components/misc_pkgs/consul/files/consul_server.json.j2
 #    - mode: 640
 #    - template: jinja
 #    - user: consul
@@ -75,7 +75,7 @@ Create Consul agent config file:
 Create Consul Agent Service:
   file.managed:
     - name: /etc/systemd/system/consul.service
-    - source: salt://components/misc/consul/files/consul.service
+    - source: salt://components/misc_pkgs/consul/files/consul.service
     - makedirs: True
     - mode: 640
     - template: jinja

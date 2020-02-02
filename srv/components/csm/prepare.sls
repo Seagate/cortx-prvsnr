@@ -11,7 +11,7 @@ Add CSM repo:
 Copy stats collector:
   file.managed:
     - name: /opt/statsd/csm-stats-collector
-    - source: salt://components/misc/statsd/files/csm_stats_collector
+    - source: salt://components/misc_pkgs/statsd/files/csm_stats_collector
     - User: root
     - Group: root
     - mode: 755

@@ -31,14 +31,14 @@ Remove Consul agent config file:
 Remove Consul server config file:
   file.absent:
     - name: /etc/consul.d/consul_server.json
-    - source: salt://components/misc/consul/files/consul_server.json
+    - source: salt://components/misc_pkgs/consul/files/consul_server.json
     - mode: 640
     - template: jinja
 
 Remove Consul Agent Service:
   file.absent:
     - name: /etc/systemd/system/consul.service
-    - source: salt://components/misc/consul/files/consul.service
+    - source: salt://components/misc_pkgs/consul/files/consul.service
     - makedirs: True
     - mode: 644
 
