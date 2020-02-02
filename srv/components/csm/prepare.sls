@@ -20,6 +20,8 @@ Copy stats collector:
   file.managed:
     - name: /opt/statsd/csm-stats-collector
     - source: salt://components/csm/files/csm_stats_collector
+    - makedirs: True
+    - create: True
     - User: root
     - Group: root
     - mode: 755
@@ -28,6 +30,7 @@ Create Symlink:
   file.symlink:
     - name: /usr/bin/csm-stats-collector
     - target: /opt/statsd/csm-stats-collector
+    - makedirs: True
 
 Setup crontab:
   cron.present:
