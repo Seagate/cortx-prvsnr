@@ -6,11 +6,11 @@ include:
 Remove csm package:
   pkg.purged:
     - pkgs:
-      - eos_csm: latest
+      - eos_csm
 
 Remove CSM config:
   file.absent:
-    - /etc/csm/cluster.conf
+    - name: /etc/csm/cluster.conf
 
 Delete CSM yum repo:
   pkgrepo.absent:
