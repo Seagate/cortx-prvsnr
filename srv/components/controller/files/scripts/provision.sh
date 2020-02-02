@@ -8,17 +8,8 @@ script_dir=$(dirname $0)
 cmd_run()
 {
    _cmd=$1
-   _tmp_xml="$tmpdir/tmp.xml"
     echo "cmd_run(): running: '$remote_cmd $_cmd'" >> $logfile
-   $remote_cmd $_cmd > $_tmp_xml
-   ret=$?
-   echo "cmd_run():cmd ret val: $ret" >> $logfile
-   [ $ret -eq 0 ] || {
-       echo "Error running ssh command: $remote_cmd $_cmd"
-       echo "Recheck the host details and run the command again"
-       exit 1
-   }
-   cat $_tmp_xml | tail -n +2 | head -n -1 > $xml_doc
+   $remote_cmd $_cmd | tail -n +2 | head -n -1 > $xml_doc
    validate_xml
    # Check if command was successful or not
    cli_status_get

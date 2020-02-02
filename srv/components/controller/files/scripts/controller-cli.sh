@@ -32,9 +32,6 @@ export user=""
 export pass=""
 export host=""
 export ssh_tool="/usr/bin/sshpass"
-export ssh_base_cmd="/bin/ssh"
-export ssh_opts="-o UserKnownHostsFile=/dev/null\
-    -o StrictHostKeyChecking=no -o LogLevel=error"
 export ssh_cred=""
 export ssh_cmd=""
 export remote_cmd=""
@@ -168,7 +165,7 @@ parse_hopts()
   }
   echo "parse_hopts():$host, $user, $pass" >> $logfile
   ssh_cred="$ssh_tool -p $pass"
-  ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
+  ssh_cmd="ssh $user@$host"
   remote_cmd="$ssh_cred $ssh_cmd"
 }
 
@@ -342,6 +339,17 @@ parse_args()
     }
     echo "parse_args(): parsing done" >> $logfile
     return 0
+}
+
+reqd_pkgs_install()
+{
+    for pkg in "$@"; do
+        pkg_name=$(basename $pkg)
+        [ -f "$pkg" ] || {
+            echo "reqd_pkgs_install(): $pkg_name is not installed " >> $logfile
+            pkg_install $pkg_name
+        }
+    done
 }
 
 main()
