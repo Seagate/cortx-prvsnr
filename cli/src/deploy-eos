@@ -36,13 +36,13 @@ fi
 # apply states
 if [[ "$singlenode" == true ]]; then
     # TODO use salt orchestration
-    for state in system ha.haproxy misc_pkgs.openldap misc_pkgs.build_ssl_cert_rpms eoscore s3server hare sspl csm; do
-        l_info "Applying 'components.$state' for both nodes"
+    for state in system ha.haproxy misc_pkgs.build_ssl_cert_rpms misc_pkgs.openldap eoscore s3server hare sspl csm; do
+        l_info "Applying 'components.$state'"
         $cmd salt eosnode-1 state.apply components.$state $salt_opts
     done
 else
     # TODO use salt orchestration
-    for state in system ha.haproxy misc_pkgs.openldap; do
+    for state in system ha.haproxy; do
         l_info "Applying 'components.$state' for both nodes"
         $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
     done
@@ -54,7 +54,7 @@ else
     l_info "Applying 'components.misc_pkgs.build_ssl_cert_rpms' for eosnode-2"
     $cmd salt eosnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
 
-    for state in  eoscore s3server hare sspl csm; do
+    for state in  misc_pkgs.openldap eoscore s3server hare sspl csm; do
         l_info "Applying 'components.$state' for both nodes"
         $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
     done
