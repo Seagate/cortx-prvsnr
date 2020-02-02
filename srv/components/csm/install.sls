@@ -1,5 +1,5 @@
 Install ststsd utils:
-  pkg.installed
+  pkg.installed:
     - name: stats_utils
 
 Install csm package:
