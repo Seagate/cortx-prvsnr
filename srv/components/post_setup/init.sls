@@ -1,7 +1,3 @@
-Service sspl-ll running:
-  service.running:
-    - name: sspl-ll
-
 Service HAProxy running:
   service.running:
     - name: haproxy
