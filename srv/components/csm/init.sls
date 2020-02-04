@@ -1,13 +1,13 @@
 include:
   # Dependecies
-  - components.misc_pkgs.consul
+  # - components.misc_pkgs.consul
   - components.misc_pkgs.elasticsearch
   - components.misc_pkgs.kibana
   - components.misc_pkgs.statsd
   - components.misc_pkgs.nodejs
   # HA component
   - components.ha.corosync-pacemaker
-  # - components.sspl
+  # CSM Installation
   - components.csm.prepare
   - components.csm.install
   - components.csm.config
