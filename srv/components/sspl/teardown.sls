@@ -13,7 +13,7 @@ Remove flask:
   pip.removed:
     - name: flask
 
-Delete EOSCore yum repo:
+Delete sspl yum repo:
   pkgrepo.absent:
     - name: {{ defaults.sspl.repo.id }}
 
