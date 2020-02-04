@@ -47,19 +47,19 @@ else
         l_info "Applying 'components.$state' for both nodes"
         $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
     done
-
-    # External dependency provisioning
-    l_info "External dependency provisioning"
-    for state in misc_pkgs.build_ssl_cert_rpms ha.corosync-pacemaker ha.haproxy misc_pkgs.elasticsearch misc_pkgs.kibana misc_pkgs.nodejs misc_pkgs.openldap misc_pkgs.rabbitmq misc_pkgs.statsd; do
-        l_info "Applying 'components.$state' for both nodes"
-        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-    done
-
+    
     # Execute on eosnode-2 only if cert generation on eosnode-1 succeeds.
     l_info "Applying 'components.misc_pkgs.build_ssl_cert_rpms' for eosnode-1"
     $cmd salt eosnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
     l_info "Applying 'components.misc_pkgs.build_ssl_cert_rpms' for eosnode-2"
     $cmd salt eosnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
+
+    # External dependency provisioning
+    l_info "External dependency provisioning"
+    for state in ha.corosync-pacemaker ha.haproxy misc_pkgs.elasticsearch misc_pkgs.kibana misc_pkgs.nodejs misc_pkgs.openldap misc_pkgs.rabbitmq misc_pkgs.statsd; do
+        l_info "Applying 'components.$state' for both nodes"
+        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+    done
 
     # IO stack provisioning
     l_info "IO stack provisioning"
