@@ -817,7 +817,7 @@ pkg_install()
     yum install -q -y $_pkg > /dev/null 2>&1
     ret=$?
     [ $ret -eq 0 ] || {
-        echo "Error installing ftp"
+        echo "Error installing $_pkg"
         exit 1
     }
     echo "pkg_install(): $_pkg installed successfully" >> $logfile

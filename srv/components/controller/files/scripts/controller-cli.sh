@@ -31,6 +31,7 @@ export license_file=""
 export user=""
 export pass=""
 export host=""
+export bc_tool="/usr/bin/bc"
 export ssh_tool="/usr/bin/sshpass"
 export ssh_base_cmd="/bin/ssh"
 export ssh_opts="-o UserKnownHostsFile=/dev/null\
@@ -102,6 +103,8 @@ help()
     -v|--show-fw-ver:- Shows the firmware version
     --show-license:- Display license details along with storage enclosure
                      serial number and firmware version
+    -s|--show-disks:- List the available disks (with relevant details) on the
+                      controller.                 
     -l|--load-license:-
 
     Sample commands:
@@ -347,7 +350,7 @@ parse_args()
 main()
 {
     parse_args "$@"
-    reqd_pkgs_install "$ssh_tool" "$xml_cmd"
+    reqd_pkgs_install "$ssh_tool" "$xml_cmd" "$bc_tool"
     [ "$prov_optparse_done" = true ] && do_provision
     [ "$show_disks" = true ] && disks_list
     [ "$load_license" = true ] && fw_license_load
