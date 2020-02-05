@@ -1,3 +1,10 @@
+#!/bin/bash
+export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
+[ ! -d $logdir ] && mkdir -p $logdir
+
+export logfile=$logdir/controller.log
+[ -f $logfile ] && rm -rf $logfile
+
 usage()
 {
     cat <<USAGE
