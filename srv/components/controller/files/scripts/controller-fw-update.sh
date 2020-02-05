@@ -36,7 +36,8 @@ parse_args()
     [ $# -lt 7 ] && {
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
-    declare -a controllers=($1 $2)
+    cntrl_1=$1
+    cntrl_2=$2
     parse_opts $3 $4 $5 $6
     fw_bundle=$7
 }
@@ -44,7 +45,14 @@ parse_args()
 update_fw()
 {
     echo "update_fw(): no. of arguments-$#, arguments-$@" >> $fw_logfile
-    for controller in ${controllers[@]}; do
+    [ $# -lt 5 ] && {
+        echo "Insufficient arguments provided" && exit 1
+    }
+    declare -a _controllers=($1 $2)
+    _user=$3
+    _pass=$4
+    _fw_bundle=$5
+    for controller in ${_controllers[@]}; do
         source "$controller_script -h $controller -u $user -p "$pass" --update-fw $fw_bundle"
         [ $? -eq 1 ] && {
             echo "Error: Command execution failed"
@@ -55,7 +63,7 @@ update_fw()
 main()
 {
     parse_args "$@"
-    update_fw
+    update_fw $cntrl_1 $cntrl_2 $user $pass $fw_bundle
 }  
 
 main "$@"
