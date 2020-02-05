@@ -2,13 +2,13 @@
 export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
 [ ! -d $logdir ] && mkdir -p $logdir
 
-export logfile=$logdir/controller.log
+export fw_logfile=$logdir/controller-fw-update.log
 [ -f $logfile ] && rm -rf $logfile
 
 usage()
 {
     cat <<USAGE
-    $0 controller-1-ip controller-2-ip -u <username> -p '<password>'   
+    $0 controller-1-ip controller-2-ip -u <username> -p '<password>' <firmware_bundle_file>  
 USAGE
 }
 
@@ -16,7 +16,7 @@ parse_opts()
 {
     unset $user
     unset $pass
-    echo "parse_opts(): No. of arguments:$#, arguments=$@">> $logfile
+    echo "parse_opts(): No. of arguments:$#, arguments=$@">> $fw_logfile
     [ $# -lt 4 ] && {
         echo "Insufficient arguments provided" && usage && exit 1
     }
@@ -33,19 +33,29 @@ parse_opts()
 
 parse_args()
 {
-    [ $# -lt 6 ] && {
+    [ $# -lt 7 ] && {
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
-    cntrl_1=$1
-    cntrl_2=$2
-    shift 2
-    parse_opts "$@"
+    declare -a controllers=($1 $2)
+    parse_opts $3 $4 $5 $6
+    fw_bundle=$7
+}
+
+update_fw()
+{
+    echo "update_fw(): no. of arguments-$#, arguments-$@" >> $fw_logfile
+    for controller in ${controllers[@]}; do
+        source "$controller_script -h $controller -u $user -p "$pass" --update-fw $fw_bundle"
+        [ $? -eq 1 ] && {
+            echo "Error: Command execution failed"
+        }
+    done    
 }
 
 main()
 {
     parse_args "$@"
-    echo "Arguments: $cntrl_1 $cntrl_2 $user $pass"
+    update_fw
 }  
 
 main "$@"
