@@ -5,6 +5,8 @@ export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
 export fw_logfile=$logdir/controller-fw-update.log
 [ -f $logfile ] && rm -rf $logfile
 
+controller_script="/opt/seagate/eos-prvsnr/srv/components/controller/files/scripts/controller-cli.sh"
+
 usage()
 {
     cat <<USAGE

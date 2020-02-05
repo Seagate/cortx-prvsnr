@@ -861,7 +861,7 @@ fw_update()
     echo "Updating the firmware"
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
-    ftp_cmd_run "put $fw_bundle flash"
+    #ftp_cmd_run "put $fw_bundle flash"
 }
 
 fw_license_show()
