@@ -13,13 +13,9 @@ Backup multipath config:
 Copy multipath config:
   file.copy:
     - name: /etc/multipath.conf
-    - source: /usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf
+    - source: salt://components/system/storage/multipath/files/multipath.conf
     - force: True
     - makedirs: True
-
-Delay multipath start:
-  cmd.run:
-    - name: sleep 1
 
 Restart multipath service:
   service.running:
@@ -27,4 +23,10 @@ Restart multipath service:
     - enable: True
     - watch:
       - file: Copy multipath config
+
 # End Setup multipath
+
+Rescan SCSI:
+  module.run:
+    - scsi.rescan_all:
+      - host: 0
