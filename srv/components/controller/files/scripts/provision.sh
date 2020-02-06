@@ -858,7 +858,14 @@ fw_license_load()
 
 disable_pfu()
 {
-    echo "disable_pfu(): disabling PFU for controller $host"
+    _tmp_file="$tmpdir/pfu-details"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    _xml_obj_bt="status"
+    _xml_obj_plist=("response-type" "response")
+    echo "disable_pfu(): disabling PFU for $host" >> $logfile
+    cmd_run 'set advanced-settings partner-firmware-upgrade off'
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    cat $_tmp_file >> $logfile
 }
 
 fw_update()
