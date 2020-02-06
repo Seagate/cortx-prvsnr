@@ -858,7 +858,7 @@ fw_license_load()
 
 disable_pfu()
 {
-
+    return
 }
 
 fw_update()
