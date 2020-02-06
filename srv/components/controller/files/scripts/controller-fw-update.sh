@@ -20,45 +20,31 @@ usage()
         username             :- username of the controller to be provisioned,
                                 user must have the manage role assigned to it
         password             :- password for given username
-        firmware_bundle_file :- '.bundle' file for firmware update 
+        firmware_bundle      :- target firmware bundle to update the controller 
 USAGE
-}
-
-parse_opts()
-{
-    unset $user
-    unset $pass
-    echo "parse_opts(): No. of arguments:$#, arguments=$@">> $fw_logfile
-    [ $# -lt 4 ] && {
-        echo "Insufficient arguments provided" && usage && exit 1
-    }
-    while getopts 'u:p:' opt 
-    do
-        case $opt in
-            u) user="$OPTARG";;
-            p) pass="$OPTARG";;
-            ?) echo "Unrecognized option '$OPTARG'"; usage; exit 1;;
-            *) usage; exit 1;;
-        esac
-    done
-    [ -z "$user" -o -z "$pass" ] && {
-        echo "Error: proper input not provided for username/password" && usage && exit 1
-    }    
 }
 
 parse_args()
 {
-    [ $# -lt 9 ] && {
+    [ $# -lt 10 ] && {
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
-    [[ $1 != "-c1" && $3 != "-c2" ]] && {
-        echo "Error: proper input not provided for controllers" && usage && exit 1
-    }
-    cntrl_a=$2
-    cntrl_b=$4
-    parse_opts $5 $6 $7 $8
-    fw_bundle=$9
-    [ -z $cntrl_a -o -z $cntrl_b -o -z "$fw_bundle" ] && {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -c1)
+               controller_A=$2; shift 2 ;;
+            -c2)
+               controller_B=$2; shift 2 ;;
+            -u)
+               user=$2; shift 2 ;;
+            -p)
+               pass=$2; shift 2 ;;
+            -fw-bundle)
+               fw_bundle=$2; shift 2 ;;
+            *) echo "Invalid option $1"; exit 1;;      
+         esac
+    done
+    [ -z $controller_A -o -z $controller_B -o -z "$user" -o -z "$pass" -o -z "$fw_bundle" ] && {
         echo "Error: proper input not provided" && usage && exit 1
     }
 }
@@ -84,7 +70,7 @@ update_fw()
 main()
 {
     parse_args "$@"
-    update_fw $cntrl_a $cntrl_b $user $pass $fw_bundle
+    update_fw $controller_A $controller_B $user $pass $fw_bundle
 }  
 
 main "$@"

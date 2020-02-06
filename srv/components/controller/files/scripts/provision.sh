@@ -856,8 +856,13 @@ fw_license_load()
     ftp_cmd_run "put $license_file license"
 }
 
-fw_update()
+disable_pfu()
 {
+
+}
+
+fw_update()
+{ 
     echo "Updating the firmware"
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
