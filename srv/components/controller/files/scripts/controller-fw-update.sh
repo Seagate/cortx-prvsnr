@@ -51,7 +51,7 @@ parse_args()
     [ $# -lt 9 ] && {
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
-    [[ $1 != "-c1" -a $3 != "-c2" ]] && {
+    [[ $1 != "-c1" && $3 != "-c2" ]] && {
         echo "Error: proper input not provided" && usage && exit 1
     }
     cntrl_a=$2
