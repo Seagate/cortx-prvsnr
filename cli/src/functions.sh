@@ -736,6 +736,56 @@ EOF
     $_cmd bash -c "$_script"
 }
 
+#   install_sg3_utils [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Install sg3_utils either on the remote host or locally.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function install_sg3_utils {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Installing sg3_utils on '$_hostspec'"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    # Install sg3_util and rescan iSCSI devices.
+    yum install sg3_utils -y
+    rescan-scsi-bus.sh
+    
+EOF
+    # TODO install salt-ssh salt-syndic as well as eos-prvsnr rpm supposes
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Install SaltStack either on the remote host or locally.

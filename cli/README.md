@@ -23,7 +23,7 @@ It means they should be called in the following predefined order:
 
 Besides help options each script might be called using any of the following options:
 
-- `-r`/`--remote`: specifies the hostspec of the remote host. When passed the script performs its commands against remote host instead of the local one.
+- ~~`-r`/`--remote`: specifies the hostspec of the remote host. When passed the script performs its commands against remote host instead of the local one.~~
 - `-S`/`--singlenode`: turns on single mode installation. Makes sense not for all scripts.
 - `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
 - `-v`/`--verbose`: tells the script to be more verbose.
@@ -32,15 +32,14 @@ Besides help options each script might be called using any of the following opti
 [//]: #   (- `-n`/`--dry-run`: do not actually perform any changes)
 [//]: #   (- `-s`/`--sudo`: tells the script to use `sudo`.)
 
-#### Remote hosts configuration
+~~#### Remote hosts configuration~~
 
-If you have to deal with a remote host or even with a set of remote hosts you will likely want to prepare a ssh configuration file. The file might include hosts specification along with paths to private ssh keys, ssh connection parameters etc.
+~~If you have to deal with a remote host or even with a set of remote hosts you will likely want to prepare a ssh configuration file. The file might include hosts specification along with paths to private ssh keys, ssh connection parameters etc.~~
 
-For that case you can use `-F`/`--ssh-config` option along with `-r`/`--remote` to specify a remote host spec, e.g.:
+~~For that case you can use `-F`/`--ssh-config` option along with `-r`/`--remote` to specify a remote host spec, e.g.:~~
 
-```shell
-$ setup-provisioner -F ./ssh_config -r eosnode-1
-```
+$ `setup-provisioner -F ./ssh_config ` ~~`-r eosnode-1`~~
+
 
 where `./ssh_config` might look like:
 
@@ -68,7 +67,7 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 
 Besides [general](#common-options) set of options it expects the following ones:
 
-- `--eosnode-2=[user@]hostname`: sets host pecification of the eosnode-2. If missed default one is assumed: `eosnode-2`.
+- `--eosnode-2=[user@]hostname`: sets host specification of the eosnode-2. If missed default one is assumed: `eosnode-2`.
 - `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
@@ -87,7 +86,7 @@ For now that makes sense only for `gitlab` and if missed the latest tagged versi
 Configure cluster with a master on eosnode-1
 
 ```shell
-$ setup-provisioner -r eosnode-1 -F ./ssh_config --salt-master=<EOSNODE-1-IP>
+$ setup-provisioner -F ./ssh_config --salt-master=<EOSNODE-1-IP>
 ```
 
 ### configure-eos
