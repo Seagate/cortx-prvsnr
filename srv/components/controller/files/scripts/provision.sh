@@ -858,11 +858,12 @@ fw_license_load()
 
 disable_pfu()
 {
-    return
+    echo "disable_pfu(): disabling PFU for controller $host"
 }
 
 fw_update()
 { 
+    disable_pfu
     echo "Updating the firmware"
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
