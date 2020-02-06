@@ -1,6 +1,6 @@
 # Setup SWAP and /var/mero
-include:
-  - components.system.storage.multipath.teardown
+# include:
+#   - components.system.storage.multipath.teardown
 
 {% set node = grains['id'] %}
 Unmount metadata vol:
