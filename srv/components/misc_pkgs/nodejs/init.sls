@@ -1,4 +1,4 @@
-{% set node_version = 'v12.13.0' %}
+{% set node_version = pillar['commons']['version']['nodejs'] %}
 
 # Nodejs install
 Extract Node.js:
@@ -11,24 +11,24 @@ Extract Node.js:
     - clean: True
     - trim_output: True
 
-# System config
-Set nodejs in bash_profile:
-  file.blockreplace:
-    - name: ~/.bashrc
-    - marker_start: '# DO NOT EDIT: Nodejs binaries'
-    - marker_end: '# DO NOT EDIT: End'
-    - content: 'export PATH=/opt/nodejs/node-{{ node_version }}-linux-x64/bin:$PATH'
-    - append_if_not_found: True
-    - append_newline: True
-    - backup: False
-    - onchanges:
-      - Extract Node.js
+# # System config
+# Set nodejs in bash_profile:
+#   file.blockreplace:
+#     - name: ~/.bashrc
+#     - marker_start: '# DO NOT EDIT: Nodejs binaries'
+#     - marker_end: '# DO NOT EDIT: End'
+#     - content: 'export PATH=/opt/nodejs/node-{{ node_version }}-linux-x64/bin:$PATH'
+#     - append_if_not_found: True
+#     - append_newline: True
+#     - backup: False
+#     - onchanges:
+#       - Extract Node.js
 
-Source bash_profile for consul addition:
-  cmd.run:
-    - name: source ~/.bashrc
-    - watch:
-      - Set nodejs in bash_profile
+# Source bash_profile for consul addition:
+#   cmd.run:
+#     - name: source ~/.bashrc
+#     - watch:
+#       - Set nodejs in bash_profile
 
 # Sanity check
 Check nodejs version:
