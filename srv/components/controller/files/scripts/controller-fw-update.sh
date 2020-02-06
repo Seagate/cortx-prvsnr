@@ -42,7 +42,7 @@ parse_opts()
         esac
     done
     [ -z "$user" -o -z "$pass" ] && {
-        echo "Error: proper input not provided" && usage && exit 1
+        echo "Error: proper input not provided for username/password" && usage && exit 1
     }    
 }
 
@@ -52,7 +52,7 @@ parse_args()
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
     [[ $1 != "-c1" && $3 != "-c2" ]] && {
-        echo "Error: proper input not provided" && usage && exit 1
+        echo "Error: proper input not provided for controllers" && usage && exit 1
     }
     cntrl_a=$2
     cntrl_b=$4
