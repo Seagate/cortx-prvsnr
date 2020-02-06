@@ -2,20 +2,21 @@
 export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
 [ ! -d $logdir ] && mkdir -p $logdir
 
-export fw_logfile=$logdir/controller-fw-update.log
+export fw_logfile="$logdir/controller-fw-update.log"
 [ -f $fw_logfile ] && rm -rf $fw_logfile
 
-controller_script="/opt/seagate/eos-prvsnr/srv/components/controller/files/scripts/controller-cli.sh"
+script_dir="$PWD"
+controller_script="$script_dir/controller-cli.sh"
 
 usage()
 {
     cat <<USAGE
     Usage:
-    $0 <controller-1> <controller-2> -u <username> -p '<password>'\
+    $0 -c1 <controller-A> -c2 <controller-B> -u <username> -p '<password>'\
      <firmware_bundle_file>
     Where,
-        controller-1         :- hostname or ip address of controller-1
-        controller-2         :- hostname or ip address of controller-1
+        controller-A         :- hostname or ip address of controller-A
+        controller-B         :- hostname or ip address of controller-B
         username             :- username of the controller to be provisioned,
                                 user must have the manage role assigned to it
         password             :- password for given username
@@ -25,36 +26,38 @@ USAGE
 
 parse_opts()
 {
+    unset $cntrl_a
+    unset $cntrl_b
     unset $user
     unset $pass
     echo "parse_opts(): No. of arguments:$#, arguments=$@">> $fw_logfile
-    [ $# -lt 4 ] && {
+    [ $# -lt 8 ] && {
         echo "Insufficient arguments provided" && usage && exit 1
     }
-    while getopts 'u:p:' opt 
+    while getopts 'c1:c2:u:p:' opt 
     do
         case $opt in
+            c1) cntrl_a="$OPTARG";;
+            c2) cntrl_b="$OPTARG";;
             u) user="$OPTARG";;
             p) pass="$OPTARG";;
             ?) echo "Unrecognized option '$OPTARG'"; usage; exit 1;;
             *) usage; exit 1;;
         esac
     done
-    [ -z "$user" -o -z "$pass" ] && {
+    [ -z "$cntrl_a" -o -z "$cntrl_b" -o -z "$user" -o -z "$pass" ] && {
         echo "Error: proper input not provided" && usage && exit 1
     }    
 }
 
 parse_args()
 {
-    [ $# -lt 7 ] && {
+    [ $# -lt 9 ] && {
         echo "Error: Insufficient arguments provided" && usage && exit 1
     }
-    cntrl_1=$1
-    cntrl_2=$2
-    parse_opts $3 $4 $5 $6
-    fw_bundle=$7
-    [ -z "$cntrl_1" -o -z "$cntrl_2" -o -z "$fw_bundle" ] && {
+    parse_opts $1 $2 $3 $4 $5 $6 $7 $8
+    fw_bundle=$9
+    [ -z "$fw_bundle" ] && {
         echo "Error: proper input not provided" && usage && exit 1
     }
 }
@@ -80,7 +83,7 @@ update_fw()
 main()
 {
     parse_args "$@"
-    update_fw $cntrl_1 $cntrl_2 $user $pass $fw_bundle
+    update_fw $cntrl_a $cntrl_b $user $pass $fw_bundle
 }  
 
 main "$@"
