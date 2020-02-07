@@ -65,7 +65,6 @@ usage()
           [-t <pool-type> -l <level> -m <pool-name> -d <disk-range>]
           [-n <no-of-vols>] }]
          [-s|--show-disks]
-         [-u|--update-fw]
          [-v|--show-fw-ver]
          [--show-license]
          [-l|--load-license] 
@@ -99,7 +98,6 @@ help()
                      and the -n options.
     -c|--cleanup  :- Cleanups the existing provisioning (delete all pools)
     -s|--show-prov:- Shows current provisioning on the enclosure
-    -u|--update-fw:- flash the provided firmware on the provided controller
     -v|--show-fw-ver:- Shows the firmware version
     --show-license:- Display license details along with storage enclosure
                      serial number and firmware version
