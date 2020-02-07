@@ -60,6 +60,7 @@ update_fw()
     _pass=$4
     _fw_bundle=$5
     for _controller in "${_controllers[@]}"; do
+        echo "Updating firmware for $_controller" >> $fw_logfile
         $controller_script host -h $_controller -u $_user -p $_pass --update-fw $_fw_bundle
         [ $? -eq 1 ] && {
             echo "Error: Command execution failed"
