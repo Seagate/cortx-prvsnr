@@ -67,12 +67,6 @@ Remove s3server cert:
 #-------------------------
 # Teardown Common Runtime
 #-------------------------
-Stop rsyslog service:
-  service.dead:
-    - name: rsyslog
-    - enable: False
-    - init_delay: 2
-
 Remove common_runtime libraries:
   pkg.purged:
     - pkgs:
