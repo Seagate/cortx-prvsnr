@@ -52,7 +52,7 @@ path.logs: /var/log/elasticsearch
 #
 # Set the bind address to a specific IP (IPv4 or IPv6):
 #
-#network.host: {{ pillar["elasticsearch"]["network_host"] }}
+#network.host: "{{ pillar['elasticsearch']['network_host'] }}"
 #
 # Set a custom port for HTTP:
 #

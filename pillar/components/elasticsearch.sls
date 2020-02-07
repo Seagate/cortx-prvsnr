@@ -1,3 +1,3 @@
 elasticsearch:
   network_host: "localhost"
-  http_port: 9300
+  http_port: 9200
