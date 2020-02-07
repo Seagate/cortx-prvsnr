@@ -36,5 +36,3 @@ Check nodejs version:
     - name: /opt/nodejs/node-{{ node_version }}-linux-x64/bin/node -v
     - require:
       - Extract Node.js
-    - watch:
-      - Source bash_profile for consul addition
