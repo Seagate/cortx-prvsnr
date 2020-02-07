@@ -30,17 +30,19 @@ EOS Provisioner Command line interface. Provides utilities to deploy EOS Object 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli/utils
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
-#mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d
-mkdir -p /root/.ssh
 cp -pr cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
+
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
 cp -pr files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/
+
+mkdir -p %{buildroot}/etc/yum.repos.d
+cp -pr files/etc/yum.repos.d/* %{buildroot}/etc/yum.repos.d/
+
+mkdir -p %{buildroot}/root/.ssh
+cp -pr files/.ssh/* %{buildroot}/root/.ssh/
+
+#mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
 #cp -p files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
-cp -pr files/etc/yum.repos.d/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d/
-cp -pr files/.ssh/* /root/.ssh/
-chmod 755 /root/.ssh/
-chmod 600 /root/.ssh/id_rsa
 
 
 %clean
@@ -50,9 +52,12 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
-/opt/seagate/eos-prvsnr/files/etc
+/opt/seagate/eos-prvsnr/files/etc/modprobe.d
+/etc/yum.repos.d/
 /root/.ssh
 
 
+
 %post
-# TBD
+chmod 755 /root/.ssh/
+chmod 600 %{buildroot}/opt/seagate/eos-prvsnr/files/.ssh/id_rsa

@@ -4,6 +4,7 @@ Install ststsd utils:
 
 Install csm package:
   pkg.installed:
-    - name: eos_csm
-    - version: latest
+    - pkgs:
+      - eos-csm_agent: latest
+      - eos-csm_web: latest
     - refresh: True
