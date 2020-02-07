@@ -856,22 +856,16 @@ fw_license_load()
     ftp_cmd_run "put $license_file license"
 }
 
-disable_pfu()
+pfu_disable()
 {
-    _tmp_file="$tmpdir/pfu-details"
-    [ -f $_tmp_file ] && rm -rf $_tmp_file
-    _xml_obj_bt="status"
-    _xml_obj_plist=("response-type" "response")
     echo "disable_pfu(): disabling PFU for $host" >> $logfile
     cmd_run 'set advanced-settings partner-firmware-upgrade off'
-    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
-    cat $_tmp_file >> $logfile
 }
 
 fw_update()
 { 
-    disable_pfu
-    echo "Updating the firmware"
+    pfu_disable
+    echo "Updating the firmware on $host"
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
     ftp_cmd_run "put $fw_bundle flash"

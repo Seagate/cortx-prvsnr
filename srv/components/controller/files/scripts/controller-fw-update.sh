@@ -13,7 +13,7 @@ usage()
     cat <<USAGE
     Usage:
     $0 -c1 <controller-A> -c2 <controller-B> -u <username> -p '<password>'\
-    <firmware_bundle_file>
+    -F <firmware_bundle>
     Where,
         controller-A         :- hostname or ip address of controller-A
         controller-B         :- hostname or ip address of controller-B
@@ -39,12 +39,12 @@ parse_args()
                user=$2; shift 2 ;;
             -p)
                pass=$2; shift 2 ;;
-            -fw-bundle)
+            -F)
                fw_bundle=$2; shift 2 ;;
-            *) echo "Invalid option $1"; exit 1;;      
+            *) echo "Error: Invalid option $1"; exit 1;;      
          esac
     done
-    [ -z $controller_A -o -z $controller_B -o -z "$user" -o -z "$pass" -o -z "$fw_bundle" ] && {
+    [ -z "$controller_A" -o -z "$controller_B" -o -z "$user" -o -z "$pass" -o -z "$fw_bundle" ] && {
         echo "Error: proper input not provided" && usage && exit 1
     }
 }
@@ -53,13 +53,13 @@ update_fw()
 {
     echo "update_fw(): no. of arguments-$#, arguments-$@" >> $fw_logfile
     [ $# -lt 5 ] && {
-        echo "Insufficient arguments provided" && exit 1
+        echo "Error: Insufficient arguments provided" && exit 1
     }
     declare -a _controllers=($1 $2)
     _user=$3
     _pass=$4
     _fw_bundle=$5
-    for _controller in ${_controllers[@]}; do
+    for _controller in "${_controllers[@]}"; do
         $controller_script host -h $_controller -u $_user -p $_pass --update-fw $_fw_bundle
         [ $? -eq 1 ] && {
             echo "Error: Command execution failed"
