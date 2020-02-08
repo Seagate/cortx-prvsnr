@@ -35,8 +35,8 @@ cp -pr cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
 cp -pr files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/
 
-mkdir -p %{buildroot}/etc/yum.repos.d
-cp -pr files/etc/yum.repos.d/* %{buildroot}/etc/yum.repos.d/
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d
+cp -pr files/etc/yum.repos.d/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d/
 
 mkdir -p %{buildroot}/root/.ssh
 cp -pr files/.ssh/* %{buildroot}/root/.ssh/
@@ -53,7 +53,7 @@ rm -rf %{buildroot}
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
 /opt/seagate/eos-prvsnr/files/etc/modprobe.d
-/etc/yum.repos.d/
+/opt/seagate/eos-prvsnr/files/etc/yum.repos.d
 /root/.ssh
 
 
