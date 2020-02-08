@@ -209,7 +209,7 @@ Vagrant.configure("2") do |config|
         #run: "once",
         inline: <<-SHELL
           # Setup data0 network
-          sudo cp /opt/seagate/ees-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
+          sudo cp /opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
           echo IPADDR=#{node["data0"]}
           sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
