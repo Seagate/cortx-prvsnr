@@ -8,8 +8,8 @@ nodes:
           # XXX Hare should support lists of disks, not only globs
           path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
     m0_clients:
-      s3: 4
-      other: 0
+      s3: 11
+      other: 2
   {% endfor %}
 pools:
   - name: the pool

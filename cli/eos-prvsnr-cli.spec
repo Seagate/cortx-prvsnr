@@ -57,7 +57,6 @@ rm -rf %{buildroot}
 /root/.ssh
 
 
-
 %post
 chmod 755 /root/.ssh/
-chmod 600 %{buildroot}/opt/seagate/eos-prvsnr/files/.ssh/id_rsa_prvsnr
+chmod 600 /root/.ssh/id_rsa_prvsnr
