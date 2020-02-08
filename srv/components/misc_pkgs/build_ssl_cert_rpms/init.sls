@@ -27,7 +27,7 @@ include:
 
 Copy certs to non-primary:
   cmd.run:
-    - name: scp /opt/seagate/stx-s3-*.rpm pillar['cluster'][node_id]['hostname']:/opt/seagate/
+    - name: scp /opt/seagate/stx-s3-*.rpm {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/
 
 {%- endif -%}
 {%- endfor -%}
