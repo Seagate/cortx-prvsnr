@@ -4,7 +4,7 @@ include:
   - components.sspl.install
   - components.sspl.config
   - components.sspl.start
-  - components.sspl.sanity_check
+#  - components.sspl.sanity_check
 
 Generate sspl checkpoint flag:
   file.managed:
