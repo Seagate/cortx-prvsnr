@@ -31,4 +31,10 @@ Copy certs to non-primary:
 
 {%- endif -%}
 {%- endfor -%}
+{%- else -%}
+
+build_cert_rpms_non_primary_node:
+  test.show_notification:
+    - text: "No changes needed on non-primary node: {{ node }}"
+
 {% endif %}
