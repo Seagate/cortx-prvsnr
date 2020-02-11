@@ -55,10 +55,10 @@ else
     $cmd salt eosnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
 
     # Execute on eosnode-2 to be followed on eosnode-1.
-    l_info "Applying 'ha.corosync-pacemaker ' for eosnode-2"
-    $cmd salt eosnode-2 state.apply ha.corosync-pacemaker  $salt_opts
-    l_info "Applying 'ha.corosync-pacemaker ' for eosnode-1"
-    $cmd salt eosnode-1 state.apply ha.corosync-pacemaker  $salt_opts
+    l_info "Applying 'components.ha.corosync-pacemaker ' for eosnode-2"
+    $cmd salt eosnode-2 state.apply components.ha.corosync-pacemaker  $salt_opts
+    l_info "Applying 'components.ha.corosync-pacemaker ' for eosnode-1"
+    $cmd salt eosnode-1 state.apply components.ha.corosync-pacemaker  $salt_opts
 
     # External dependency provisioning
     l_info "External dependency provisioning"
