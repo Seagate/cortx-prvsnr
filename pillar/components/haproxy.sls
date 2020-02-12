@@ -9,4 +9,4 @@ haproxy:
             ssl_enabled: true
         s3server:
             ssl_enabled: true
-    nbproc: 4
+    nbproc: 12

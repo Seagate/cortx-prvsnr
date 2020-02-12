@@ -4,6 +4,11 @@
 include:
   - components.hare.stop
 
+
+Remove cluster yaml:
+  file.absent:
+    - name: /var/lib/hare/cluster.yaml
+{% endif %}
 Stage - Reset Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/hare/conf/setup.yaml', 'hare:reset')
@@ -15,7 +20,6 @@ Remove Hare:
 Delete Hare yum repo:
   pkgrepo.absent:
     - name: {{ defaults.hare.repo.id }}
-{% endif %}
 
 Remove hare checkpoint flag:
   file.absent:
