@@ -69,6 +69,12 @@ cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
 cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
 # adding prvsnrusers group
 groupadd prvsnrusers
+# set access rights api users
+mkdir -p /opt/seagate/eos-prvsnr/pillar/user/
+chown -R :prvsnrusers /opt/seagate/eos-prvsnr/pillar/user/
+chmod -R g+w /opt/seagate/eos-prvsnr/pillar/user
+chmod g+s /opt/seagate/eos-prvsnr/pillar/user
+
 # install api globally using pip
 pip3 install /opt/seagate/eos-prvsnr/api/python
 
