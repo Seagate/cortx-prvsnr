@@ -33,52 +33,51 @@ if [[ "$dry_run" == true ]]; then
     salt_opts="test=True"
 fi
 
+states=(
+# states to be applied in desired sequence
+    "system"
+    "system.storage"
+    "misc_pkgs.build_ssl_cert_rpms"
+    "ha.corosync-pacemaker"
+    "misc_pkgs.rsyslog"
+    "ha.haproxy"
+    "misc_pkgs.elasticsearch"
+    "misc_pkgs.kibana"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.openldap"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.statsd"
+    "misc_pkgs.lustre"
+    "eoscore"
+    "s3server"
+    "hare"
+    "sspl"
+    "csm"
+)
 # apply states
 if [[ "$singlenode" == true ]]; then
     # TODO use salt orchestration
-    for state in system system.storage misc_pkgs.build_ssl_cert_rpms ha.corosync-pacemaker misc_pkgs.rsyslog ha.haproxy misc_pkgs.elasticsearch misc_pkgs.kibana misc_pkgs.nodejs misc_pkgs.openldap misc_pkgs.rabbitmq misc_pkgs.statsd misc_pkgs.lustre eoscore s3server hare sspl csm; do
+    for state in "${states[@]}"; do
         l_info "Applying 'components.$state'"
         $cmd salt eosnode-1 state.apply components.$state $salt_opts
     done
 else
-    # Platform provisioning
-    l_info "Platform provisioning"
-    for state in system system.storage; do
-        l_info "Applying 'components.$state' for both nodes"
-        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-    done
-    
-    # Execute on eosnode-2 only if cert generation on eosnode-1 succeeds.
-    l_info "Applying 'components.misc_pkgs.build_ssl_cert_rpms' for eosnode-1"
-    $cmd salt eosnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
-    l_info "Applying 'components.misc_pkgs.build_ssl_cert_rpms' for eosnode-2"
-    $cmd salt eosnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms $salt_opts
+    for state in "${states[@]}"; do
+	if [[ "$state" == "ha.corosync-pacemaker" ]]; then
+            # TODO: Remove this sequence dependency
+            #       Take the cluster start part out of the component config
+	    #       and do it as part of bootstra-eos script similar to the
+	    #       'hctl bootstrap' command
 
-    # Execute on eosnode-2 to be followed on eosnode-1.
-    l_info "Applying 'components.ha.corosync-pacemaker ' for eosnode-2"
-    $cmd salt eosnode-2 state.apply components.ha.corosync-pacemaker  $salt_opts
-    l_info "Applying 'components.ha.corosync-pacemaker ' for eosnode-1"
-    $cmd salt eosnode-1 state.apply components.ha.corosync-pacemaker  $salt_opts
-
-    # External dependency provisioning
-    l_info "External dependency provisioning"
-    for state in misc_pkgs.rsyslog ha.haproxy misc_pkgs.elasticsearch misc_pkgs.kibana misc_pkgs.nodejs misc_pkgs.openldap misc_pkgs.rabbitmq misc_pkgs.statsd; do
-        l_info "Applying 'components.$state' for both nodes"
-        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-    done
-
-    # IO stack provisioning
-    l_info "IO stack provisioning"
-    for state in misc_pkgs.lustre eoscore s3server hare; do
-        l_info "Applying 'components.$state' for both nodes"
-        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-    done
-
-    # Management stack provisioning
-    l_info "Management stack provisioning"
-    for state in sspl csm; do
-        l_info "Applying 'components.$state' for both nodes"
-        $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+	    # Execute on eosnode-2 to be followed on eosnode-1.
+	    l_info "Applying 'components.$state' for eosnode-2"
+	    $cmd salt eosnode-2 state.apply ha.corosync-pacemaker  $salt_opts
+	    l_info "Applying 'components.$state' for eosnode-1"
+	    $cmd salt eosnode-1 state.apply ha.corosync-pacemaker  $salt_opts
+        else
+            l_info "Applying 'components.$state' for both nodes"
+            $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+	fi
     done
 fi
 
