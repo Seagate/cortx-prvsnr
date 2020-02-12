@@ -2,7 +2,7 @@ nodes:
   {% for node in pillar['cluster']['node_list'] %}
   - hostname: {{ pillar['cluster'][node]['hostname'] }}
     data_iface: {{ pillar['cluster'][node]['network']['data_if'] }}
-{% if salt['cmd.retcode']('lspci | grep "Ethernet controller: Mellanox Technologies MT27800 Family"') %}
+{% if not salt['cmd.retcode']('lspci | grep "Ethernet controller: Mellanox Technologies MT27800 Family"') %}
     data_iface_type: o2ib
 {% else %}
     data_iface_type: tcp
