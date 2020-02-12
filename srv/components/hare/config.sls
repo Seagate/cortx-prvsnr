@@ -1,8 +1,8 @@
 {% for hare_service in ('hare-hax.service', 'hare-consul-agent.service') %}
 {% if not salt['service.status']( hare_service ) %}
-Resetting failed {{ hare_service }}:
-  cmd.run:
-    - name: systemctl reset-failed {{ hare_service }}
+# Resetting failed {{ hare_service }}:
+#   cmd.run:
+#     - name: systemctl reset-failed {{ hare_service }}
 {% endif %}
 {% endfor %}
 
