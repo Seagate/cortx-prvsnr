@@ -12,6 +12,7 @@ base:
     - components.openldap
     - components.release
     - components.s3client
+    - components.s3server
     - components.system
     - user.*
     - ignore_missing: True

@@ -1,6 +1,0 @@
-[performance]
-gpgcheck=0
-enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/performance/
-name=performace
-# REF: https://jts.seagate.com/browse/EOS-5382

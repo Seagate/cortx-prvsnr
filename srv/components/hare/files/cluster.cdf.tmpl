@@ -2,13 +2,18 @@ nodes:
   {% for node in pillar['cluster']['node_list'] %}
   - hostname: {{ pillar['cluster'][node]['hostname'] }}
     data_iface: {{ pillar['cluster'][node]['network']['data_if'] }}
+{% if salt['cmd.retcode']('lspci | grep "Ethernet controller: Mellanox Technologies MT27800 Family"') %}
+    data_iface_type: o2ib
+{% else %}
+    data_iface_type: tcp
+{% endif %}
     m0_servers:
       - runs_confd: true
       - io_disks: 
           # XXX Hare should support lists of disks, not only globs
           path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
     m0_clients:
-      s3: 11
+      s3: {{ pillar['s3server']['no_of_inst'] }}
       other: 2
   {% endfor %}
 pools:

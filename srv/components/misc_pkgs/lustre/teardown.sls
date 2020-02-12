@@ -7,7 +7,6 @@ Remove Lustre:
     - pkgs:
       - kmod-lustre-client
       - lustre-client
-      # - lustre-client-devel
 
 Delete Lnet config file:
   file.absent:

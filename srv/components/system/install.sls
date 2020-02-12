@@ -1,7 +1,3 @@
-# update_yum_repos:
-#   module.run:
-#     - pkg.update:
-
 Install_base_packages:
   pkg.installed:
     - pkgs:
@@ -17,7 +13,6 @@ Install policy packages for SELinux:
       - policycoreutils-python
 
 # Install python-pip packages (version 2 and 3)
-# version 2 is needed for salt-minion's pip_state
 python-pip:
   pkg.installed:
     - pkgs:
@@ -25,3 +20,9 @@ python-pip:
     - reload_modules: True
     - bin_env: /usr/bin/pip
     - upgrade: True
+
+{% if salt['cmd.retcode']('lspci | grep "Ethernet controller: Mellanox Technologies MT27800 Family"') %}
+Install Mellanox card drivers:
+  pkg.installed:
+    - name: mlnx-ofed-all
+{% endif %}
