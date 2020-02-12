@@ -21,7 +21,7 @@ python-pip:
     - bin_env: /usr/bin/pip
     - upgrade: True
 
-{% if salt['cmd.retcode']('lspci | grep "Ethernet controller: Mellanox Technologies MT27800 Family"') %}
+{% if salt['cmd.run']('lspci -d"15b3:1017:0200"') %}
 Install Mellanox card drivers:
   pkg.installed:
     - name: mlnx-ofed-all
