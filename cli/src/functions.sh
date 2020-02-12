@@ -507,6 +507,47 @@ EOF
     $_cmd bash -c "$_script"
 }
 
+# Usage: setup_ssh <source host-spec> <remote host-spec> <ssh config file>
+# e.g setup_ssh "$hostspec" "$eosnode_2_hostspec" "$ssh_config"
+function setup_ssh {
+    set -eu
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+    local _script
+
+    local _hostspec1="${1:-}"
+    local _hostspec2="${2:-}"
+    local _ssh_config="${3:-}"
+    local _remotehost="$(cut -d' ' -f1 <<< "$(collect_addrs "$_hostspec2" "$_ssh_config")")"
+    local _cmd="$(build_command "$_hostspec1" "$_ssh_config" 2>/dev/null)"
+    local _filename="id_rsa"
+    local _path="/root/.ssh"
+
+! read -r -d '' _script << EOF
+    set -eux
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    if [ -f $path/$filename ]
+    then
+        echo "RSA key exists on $path/$filename, using existing file"
+    else
+        ssh-keygen -t rsa -f "$path/$filename"
+        echo "RSA key pair generated"
+    fi
+    ssh-copy-id -i "$path/$filename.pub" -o StrictHostKeyChecking=no  "$_remotehost"
+    echo "$?"
+EOF
+
+    if [[ -n "$_hostspec1" ]]; then
+        _script="'$_script'"
+    fi
+
+    ! $_cmd bash -c "$_script"
+}
 
 #   check_host_reachable <destination> [<hostspec> [<ssh-config>]]
 #
