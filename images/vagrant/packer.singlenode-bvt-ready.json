@@ -47,7 +47,7 @@
         "sed -i 's/python36/python3/g' /opt/seagate/eos-prvsnr/srv/components/system/install.sls",
         "systemctl restart rsyslog  # TODO check if it's really needed for sspl",
         "yum install -y gcc python3-devel && pip3 install zope pyinotify pika jsonschema # TODO remove that one EOS-4653 is fixed",
-	"sed -i 's/system.storage//g' ./deploy-eos",
+	"sed -i '/"system.storage"/d' ./deploy-eos",
         "bash ./deploy-eos -S -vv",
         "sed -i 's/python36/python3/g' /opt/seagate/eos-prvsnr/srv/components/s3clients/awscli/install.sls",
         "salt eosnode-1 state.apply components.s3clients",
