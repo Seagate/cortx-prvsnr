@@ -520,7 +520,7 @@ function setup_ssh {
     local _hostspec2="${2:-}"
     local _ssh_config="${3:-}"
     local _remotehost="$(cut -d' ' -f1 <<< "$(collect_addrs "$_hostspec2" "$_ssh_config")")"
-    local _cmd="$(build_command "$_hostspec1" "$_ssh_config" 2>/dev/null)"
+    local _cmd="$(build_command "$_hostspec1" "$_ssh_config" "true" 2>/dev/null)"
     local _filename="id_rsa"
     local _path="/root/.ssh"
 
@@ -535,7 +535,7 @@ function setup_ssh {
     then
         echo "RSA key exists on $path/$filename, using existing file"
     else
-        ssh-keygen -t rsa -f "$path/$filename"
+        ssh-keygen -t rsa
         echo "RSA key pair generated"
     fi
     ssh-copy-id -i "$path/$filename.pub" -o StrictHostKeyChecking=no  "$_remotehost"
