@@ -39,6 +39,6 @@ lo:
     - network: 127.0.0.0
     - broadcast: 127.255.255.255
 
-Reboot system:
-  module.run:
-    - system.reboot: []
+# Reboot system:
+#   module.run:
+#     - system.reboot: []
