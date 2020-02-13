@@ -9,6 +9,7 @@ cluster:
     network:
       mgmt_if: mgmt0                  # Management network interfaces for bonding
       data_if: data0                  # Management network interfaces for bonding
+      floating_ip:
       gateway_ip:                     # No Implementation
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
@@ -21,6 +22,7 @@ cluster:
     network:
       mgmt_if: mgmt0                  # Management network interfaces for bonding
       data_if: data0                  # Management network interfaces for bonding
+      floating_ip:
       gateway_ip:                     # No Implementation
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP

@@ -79,6 +79,13 @@ else
             $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
 	fi
     done
+
+    # EES ha provisioning
+    #l_info "Provision EES HA cluster"
+    #for state in ees_ha; do
+    #    l_info "Applying 'components.$state' for both nodes"
+    #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+    #done
 fi
 
 l_info "Done"
