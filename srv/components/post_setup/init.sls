@@ -22,4 +22,4 @@ include:
 # halond: running
 # sspl-ll: running
 # mero-kernel: running
-# lnet: dead running
+# lnet: dead

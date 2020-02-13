@@ -127,7 +127,7 @@ Vagrant.configure("2") do |config|
         vb.cpus = node['cpus']
 
         # Use differencing disk instead of cloning entire VDI
-        vb.linked_clone = false
+        vb.linked_clone = true
 
         ## Network configuration
         override.vm.network :private_network, ip: node['mgmt0'], virtualbox__intnet: "mgmt0"
@@ -214,10 +214,8 @@ Vagrant.configure("2") do |config|
           sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 
           touch /etc/salt/minion_id
-          sudo echo #{node["minion_id"]} > /etc/salt/minion_id
-          sudo sed -i 's/master: .*/master: 127.0.0.1/g' /etc/salt/minion
-
-          sudo salt-key -D
+          echo #{node["minion_id"]} |tee /etc/salt/minion_id
+          [ '#{node["minion_id"]}' == 'eosnode-1' ] && salt-key -D -y
           sudo systemctl restart salt-minion
           sleep 2
           sudo salt-key -A -y
