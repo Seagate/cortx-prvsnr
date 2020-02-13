@@ -1,5 +1,12 @@
+Hare requisites:
+  pkg.installed:
+    - pkgs:
+      - jq
+
 Install hare:
   pkg.installed:
-  - pkgs:
-    - jq
-    - hare: latest
+    - name: hare
+    - version: latest
+    - refresh: True
+    - require:
+      - pkg: Hare requisites

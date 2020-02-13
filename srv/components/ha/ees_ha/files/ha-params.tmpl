@@ -1,0 +1,8 @@
+iface: {{ pillar['cluster']['eosnode-1']['network']['data_if'] }} 
+ip1: {{ pillar['cluster']['eosnode-1']['network']['floating_ip'] }}
+ip2: {{ pillar['cluster']['eosnode-2']['network']['floating_ip'] }}
+left-node: {{ pillar['cluster']['eosnode-1']['hostname'] }}
+right-node: {{ pillar['cluster']['eosnode-2']['hostname'] }}
+left-volume: {{ pillar['cluster']['eosnode-1']['storage']['metadata_device'][0] }}2
+right-volume: {{ pillar['cluster']['eosnode-2']['storage']['metadata_device'][0] }}2
+skip-mkfs: true
