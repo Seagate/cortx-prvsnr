@@ -15,7 +15,7 @@ cluster:
         iface: 
           - eth1
         ipaddr: 172.19.10.101
-        netmask: 
+        netmask: 255.255.255.0
       gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
@@ -29,9 +29,9 @@ cluster:
       type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
       primary_mc:
         ip: 127.0.0.1
-        port: 8090
+        port: 80
       secondary_mc:
         ip: 127.0.0.1
-        port: 8090
+        port: 80
       user: user
       password: 'passwd'

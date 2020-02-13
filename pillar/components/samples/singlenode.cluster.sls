@@ -10,10 +10,12 @@ cluster:
         iface:
           - eth0
         ipaddr: 
+        netmask: 255.255.255.0
       data_nw:                  # Data network interfaces
         iface: 
           - eth1
         ipaddr: 
+        netmask: 255.255.255.0
       floating_ip:
       gateway_ip:               # Gateway IP of network
     storage:
