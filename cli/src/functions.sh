@@ -514,6 +514,7 @@ function setup_ssh {
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
     fi
+    
     local _script
 
     local _hostspec1="${1:-}"
@@ -525,7 +526,7 @@ function setup_ssh {
     local _path="/root/.ssh"
 
 ! read -r -d '' _script << EOF
-    set -eux
+    set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
@@ -535,7 +536,7 @@ function setup_ssh {
     then
         echo "RSA key exists on $path/$filename, using existing file"
     else
-        ssh-keygen -t rsa
+        ssh-keygen -q -t rsa -N '' -f "$path/$filename" 2>/dev/null <<< y >/dev/null;
         echo "RSA key pair generated"
     fi
     ssh-copy-id -i "$path/$filename.pub" -o StrictHostKeyChecking=no  "$_remotehost"

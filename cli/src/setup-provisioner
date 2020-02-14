@@ -137,6 +137,12 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
     fi
 fi
 
+# SETUP SSH
+
+setup_ssh "$hostspec" "$eosnode_2_hostspec" "$ssh_config"
+
+setup_ssh "$eosnode_2_hostspec" "$hostspec" "$ssh_config"
+
 # SETUP EOSNODE-1
 install_repos "$hostspec" "$ssh_config" "$sudo"
 
