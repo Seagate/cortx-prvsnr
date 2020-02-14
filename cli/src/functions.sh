@@ -532,15 +532,14 @@ function setup_ssh {
         set -x
     fi
 
-    if [ -f $path/$filename ]
+    if [ -f $_path/$_filename ]
     then
-        echo "RSA key exists on $path/$filename, using existing file"
+        echo "RSA key exists on $_path/$_filename, using existing file"
     else
-        ssh-keygen -q -t rsa -N '' -f "$path/$filename" 2>/dev/null <<< y >/dev/null;
+        ssh-keygen -q -t rsa -N '' -f "$_path/$_filename" 2>/dev/null <<< y >/dev/null;
         echo "RSA key pair generated"
     fi
-    ssh-copy-id -i "$path/$filename.pub" -o StrictHostKeyChecking=no  "$_remotehost"
-    echo "$?"
+    ssh-copy-id -i "$_path/$_filename.pub" -o StrictHostKeyChecking=no  "$_remotehost"
 EOF
 
     if [[ -n "$_hostspec1" ]]; then
