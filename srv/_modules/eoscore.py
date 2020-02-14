@@ -41,7 +41,7 @@ def conf_update(name='/etc/sysconfig/mero', ref_pillar='eoscore', type=None, bac
   with open(name, 'r+') as fd:
     file_contents = fd.read()
     for k, v in pillar_data.items():
-      file_contents = re.sub(r'(?<={0}=).+'.format(k), str(v), file_contents)
+      file_contents = re.sub(r'.?{0}=.+'.format(k), str(k) + '=' + str(v), file_contents)
       # for line in file_contents:
       #   if k in line:
       #     file_contents = re.sub(r'(?<=MERO_M0D_BELOG_SIZE=).+', v, file_contents)
