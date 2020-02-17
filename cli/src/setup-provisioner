@@ -8,6 +8,7 @@ INSTALLDIR="/opt/seagate/eos-prvsnr"
 EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
 eosnode_2_hostspec=eosnode-2
+hostspec=
 
 salt_master_hostname=
 prvsnr_repo_src=rpm
@@ -142,8 +143,6 @@ install_repos "$hostspec" "$ssh_config" "$sudo"
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
-install_sg3_utils "$hostspec" "$ssh_config" "$sudo"
-
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
 install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
@@ -151,6 +150,8 @@ install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_confi
 configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
 
 accept_salt_keys eosnode-1 "$hostspec" "$ssh_config" "$sudo"
+
+# configure_multipath eosnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
 # TODO use salt formulas instead
 # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
@@ -163,15 +164,15 @@ if [[ "$singlenode" != true ]]; then
 
     configure_firewall "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_sg3_utils "$eosnode_2_hostspec" "$ssh_config" "$sudo"
-
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
     install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
 
-    accept_salt_keys eosnode-2 "$hostspec" "$ssh_config" "$sudo"
+    accept_salt_keys eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo"
+
+    # configure_multipath eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false
 
     # TODO use salt formulas instead
     # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21

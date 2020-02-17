@@ -3,8 +3,7 @@
 Unmount metadata vol:
   mount.unmounted:
     - name: /var/mero
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-    - config: /etc/fstab
+    # - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - persist: True
 
 Unmount SWAP:
@@ -16,7 +15,7 @@ Remove swap:
     - mount.rm_fstab:
       - name: SWAP
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-  
+
 Remove partition:
   module.run:
     - partition.rm:
