@@ -786,6 +786,49 @@ EOF
     $_cmd bash -c "$_script"
 }
 
+#   configure_multipath [<minion-ids> [<hostspec> [<ssh-config> [<sudo>]]]]
+#
+#   Install and configure multipath either on the remote host or locally.
+#
+#   Args:
+#       minion-ids: a space separated list minion ids which keys should be accepted.
+#           Default: `eosnode-1`.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function configure_multipath {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _minion_id="$1"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+    local _master="${5:-true}"
+
+    local _multipath_config_file="/etc/multipath.conf"
+    local _multipath_config_repo_file="$repo_root_dir/files/etc/multipath.conf"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Installing and Configuring multipath '$_minion_id'"
+
+    if [[ $($_cmd rpm -qa salt-master) ]]; then
+        $_cmd salt -t $_timeout "$_minion_id" state.apply components.system.storage.multipath
+    fi
+
+    l_info  "Installing and Configuring multipath on $_minion_id complete."
+}
+
 #   install_salt [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Install SaltStack either on the remote host or locally.

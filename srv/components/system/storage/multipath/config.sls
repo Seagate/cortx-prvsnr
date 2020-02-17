@@ -10,23 +10,47 @@ Backup multipath config:
     - makedirs: True
 {% endif %}
 
+Stop multipath service:
+  service.dead:
+    - name: multipathd.service
+
 Copy multipath config:
-  file.copy:
+  file.managed:
     - name: /etc/multipath.conf
     - source: salt://components/system/storage/multipath/files/multipath.conf
     - force: True
     - makedirs: True
+    - require:
+      - service: Stop multipath service
 
-Restart multipath service:
+Flush multipath:
+  cmd.run:
+    - name: multipath -F
+
+Start multipath service:
   service.running:
     - name: multipathd.service
     - enable: True
     - watch:
       - file: Copy multipath config
 
-# End Setup multipath
+{%- if pillar['cluster'][grains['id']]['is_primary'] %}
+{%- for node_id in pillar['cluster']['node_list'] -%}
+{%- if not pillar['cluster'][node_id]['is_primary'] %}
+Copy multipath bindings to non-primary:
+  cmd.run:
+    - name: scp /etc/multipath/bindings {{ pillar['cluster'][node_id]['hostname'] }}:/etc/multipath/bindings
+{% endif %}
+{% endfor %}
+{% endif %}
 
-Rescan SCSI:
+Restart service multipath:
   module.run:
-    - scsi.rescan_all:
-      - host: 0
+    - service.restart:
+      - multipathd
+
+Update cluster.sls pillar:
+  module.run:
+    - cluster.storage_device_config: []
+
+# End Setup multipath

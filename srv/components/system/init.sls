@@ -4,6 +4,7 @@ include:
   - components.system.config
   - components.system.housekeeping
   - components.system.sanity_check
+  - components.system.firewall
   - components.system.logrotate
   - components.system.ntp
 
