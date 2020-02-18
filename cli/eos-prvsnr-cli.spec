@@ -44,6 +44,8 @@ cp -pr files/.ssh/* %{buildroot}/root/.ssh/
 #mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
 #cp -p files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
 
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
+cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 
 %clean
 rm -rf %{buildroot}
@@ -52,6 +54,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
+/opt/seagate/eos-prvsnr/files/etc/salt
 /opt/seagate/eos-prvsnr/files/etc/modprobe.d
 /opt/seagate/eos-prvsnr/files/etc/yum.repos.d
 /root/.ssh
@@ -60,3 +63,15 @@ rm -rf %{buildroot}
 %post
 chmod 755 /root/.ssh/
 chmod 600 /root/.ssh/id_rsa_prvsnr
+mv -f /etc/salt/master /etc/salt/master.org
+mv -f /etc/salt/minion /etc/salt/minion.org
+cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
+cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
+
+%postun
+mv -f /etc/salt/master.org /etc/salt/master
+mv -f /etc/salt/minion.org /etc/salt/minion
+rm -f /root/.ssh/id_rsa_prvsnr
+rm -f /root/.ssh/id_rsa_prvsnr.pub
+rm -f /root/.ssh/authorized_keys
+rm -f /root/.ssh/known_hosts
