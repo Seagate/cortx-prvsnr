@@ -139,9 +139,13 @@ fi
 
 # SETUP SSH
 
-setup_ssh "$hostspec" "$eosnode_2_hostspec" "$ssh_config"
+[[ `setup_ssh "$hostspec" "$eosnode_2_hostspec" "$ssh_config"` ]] || {
+    echo "SSH Error"; exit 1;
+}
 
-setup_ssh "$eosnode_2_hostspec" "$hostspec" "$ssh_config"
+[[ `setup_ssh "$eosnode_2_hostspec" "$hostspec" "$ssh_config"` ]] || {
+    echo "SSH Error"; exit 1;
+}    
 
 # SETUP EOSNODE-1
 install_repos "$hostspec" "$ssh_config" "$sudo"
