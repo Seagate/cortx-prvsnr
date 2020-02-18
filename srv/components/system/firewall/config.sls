@@ -112,7 +112,7 @@ data-zone:
       - nfs
       - s3
     - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['data_if'] }}
+      - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'] }}
     - rich_rules:
         - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
 
@@ -127,4 +127,4 @@ management-zone:
       - others
       - ssh
     - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['mgmt_if'] }}
+      - {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] }}

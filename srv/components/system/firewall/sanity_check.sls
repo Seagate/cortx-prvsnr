@@ -1,5 +1,5 @@
-{% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_if'] %}
-{% set data_if = pillar['cluster'][grains['id']]['network']['data_if'] %}
+{% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] %}
+{% set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'] %}
 
 Verify NIC opened for management-zone:
   cmd.run:
