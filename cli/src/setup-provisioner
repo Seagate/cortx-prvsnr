@@ -15,7 +15,7 @@ prvsnr_repo_src=rpm
 
 prvsnr_version=
 
-. $BASEDIR/functions.sh
+source $BASEDIR/functions.sh
 
 function usage {
   echo "\
