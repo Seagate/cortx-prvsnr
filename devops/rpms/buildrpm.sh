@@ -52,11 +52,9 @@ rm -rf eos-prvsnr*
 
 # Setup the source tar for rpm build
 mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/{files,pillar,srv,api}
-mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/salt
 mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/yum.repos.d
 cp -R ${BASEDIR}/../../pillar eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
 cp -R ${BASEDIR}/../../srv eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
-cp -R ${BASEDIR}/../../files/etc/salt/* eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/salt/
 cp -R ${BASEDIR}/../../api eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
 
 

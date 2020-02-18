@@ -39,10 +39,7 @@ rm -rf %{buildroot}
 # Create directories
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files,api}
 
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
-
 # Copy files
-cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr/
 cp -R api %{buildroot}/opt/seagate/eos-prvsnr/
@@ -55,7 +52,6 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
 
-/opt/seagate/eos-prvsnr/files/etc/salt
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/api
@@ -63,10 +59,6 @@ rm -rf %{buildroot}
 
 # TODO test
 %post
-mv -f /etc/salt/master /etc/salt/master.org
-mv -f /etc/salt/minion /etc/salt/minion.org
-cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
-cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
 # adding prvsnrusers group
 groupadd prvsnrusers
 # set access rights api users
@@ -83,9 +75,3 @@ pip3 install /opt/seagate/eos-prvsnr/api/python
 pip3 uninstall -y eos-prvsnr
 # removing prvsnrusers group
 groupdel prvsnrusers
-
-
-# TODO test
-%postun
-mv -f /etc/salt/master.org /etc/salt/master
-mv -f /etc/salt/minion.org /etc/salt/minion
