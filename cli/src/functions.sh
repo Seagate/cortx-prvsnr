@@ -998,6 +998,20 @@ EOF
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
+if [[ "$_repo_src" == "gitrepo" ]]; then
+    if ! grep gitlab ~/.ssh/config 1>/dev/null ; then 
+! read -r -d '' GITLAB <<- EOM
+    Host gitlab.mero.colo.seagate.com
+        User root
+        UserKnownHostsFile /dev/null
+        StrictHostKeyChecking no
+        IdentityFile /root/.ssh/id_rsa_prvsnr
+        IdentitiesOnly yes
+EOM
+        echo $GITLAB >> ~/.ssh/config
+    fi
+fi
+
 ! read -r -d '' _script << EOF
     set -eu
 
@@ -1012,6 +1026,18 @@ EOF
     if [[ "$_repo_src" == "gitlab" ]]; then
         pushd "$_installdir"
             curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
+        popd
+    elif [[ "$_repo_src" == "gitrepo" ]]; then
+        pushd "$_installdir"
+            yum install -y git
+            git init
+            if ! git remote show origin >/dev/null 2>&1 ; then
+                git remote add origin http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git
+            else
+                git remote set-url origin http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git
+            fi
+            git fetch origin
+            git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo

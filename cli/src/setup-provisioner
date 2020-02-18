@@ -35,7 +35,7 @@ $base_options_usage
 Options:
        --eosnode-2=[user@]hostname      eosnode-2 host specification,
                                          default: $eosnode_2_hostspec
-       --repo-src={local|gitlab|rpm}    the source for provisioner repo installation,
+       --repo-src={local|gitlab|gitrepo|rpm}    the source for provisioner repo installation,
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt master
                                          default: not specified
@@ -55,7 +55,7 @@ function options_parser {
             ;;
         --repo-src)
             case "$2" in
-                local|gitlab|rpm)
+                local|gitlab|gitrepo|rpm)
                     prvsnr_repo_src="$2"
                     ;;
                 *)
