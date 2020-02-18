@@ -49,7 +49,7 @@
         "systemctl restart rsyslog  # TODO check if it's really needed for sspl",
         "yum install -y gcc python3-devel && pip3 install zope pyinotify pika jsonschema # TODO remove that one EOS-4653 is fixed",
         "yum install sg3_utils -y",
-        "bash /usr/bin/rescan-scsi-bus.sh",
+        "rescan-scsi-bus.sh",
         "sed -i 's/hostname: eosnode-1/hostname: $(hostname)/g' /opt/seagate/eos-prvsnr/pillar/components/cluster.sls",
         "sed -i '/\"system.storage\"/d' ./deploy-eos",
         "bash ./deploy-eos -S -vv",
