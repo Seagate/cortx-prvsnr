@@ -23,9 +23,9 @@ Copy multipath config:
     - require:
       - service: Stop multipath service
 
-Flush multipath:
-  cmd.run:
-    - name: multipath -F
+# Flush multipath:
+#   cmd.run:
+#     - name: multipath -F
 
 Start multipath service:
   service.running:
