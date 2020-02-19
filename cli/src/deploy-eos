@@ -33,6 +33,10 @@ if [[ "$dry_run" == true ]]; then
     salt_opts="test=True"
 fi
 
+# Refresh salt pillar data
+l_info "Updating salt pillar data"
+$cmd salt "*" saltutil.refresh_pillar
+
 states=(
 # states to be applied in desired sequence
     "system"
