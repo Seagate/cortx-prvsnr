@@ -8,7 +8,7 @@ salt_nodes = [
   {
     "name" => "eosnode-1",
     "cpus" => 2,
-    "memory" => 4096,
+    "memory" => 2048,
     "mgmt0" => "172.16.10.101",
     "data0" => "172.19.10.101",
     "minion_id" => "eosnode-1"
@@ -16,7 +16,7 @@ salt_nodes = [
   {
     "name"=> "eosnode-2",
     "cpus"=> 2,
-    "memory"=> 4096,
+    "memory"=> 2048,
     "mgmt0" => "172.16.10.102",
     "data0" => "172.19.10.102",
     "minion_id" => "eosnode-2"
