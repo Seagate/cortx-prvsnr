@@ -896,6 +896,9 @@ EOF
 #           `gitlab` - installs from GitLab using the specified
 #               version `prvsnr-version`. If the version is not set
 #               uses the latest tagged one.
+#           `gitrepo` - establishes local git repo at `/opt/seagate/eos-prvsnr`
+#               pointing to remote repo on GitLab. This should help use switch between
+#               branches for validation of branched changes.
 #           `local` - copies local working copy of the repository, assumes
 #               that script is a part of it.
 #       prvsnr-version: The version of the EOS provisioner to install. Makes sense only
@@ -991,7 +994,7 @@ baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/$_prvsnr_version
 name=provisioner
 EOF
 
-    if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" ]]; then
+    if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" && "$_repo_src" != "gitrepo" ]]; then
         l_error "unsupported repo src: $_repo_src"
         exit 1
     fi
@@ -1038,6 +1041,7 @@ fi
             fi
             git fetch origin
             git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
+            # git clean -fdx        # Commented because there could be intentional changes in workspace.
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
