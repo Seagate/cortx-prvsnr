@@ -15,8 +15,7 @@ Public Zone:
       {% else %}
       - {{ pillar['cluster']['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['cluster']['storage_enclosure']['controller']['secondary_mc']['ip'] }}
       {% endif %}
-    - prune_services: False
-
+    - prune_services: False 
 saltmaster:
   firewalld.service:
     - name: saltmaster
@@ -111,8 +110,7 @@ data-zone:
       - mero
       - nfs
       - s3
-    - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'] }}
+    - interfaces: {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'] }}
     - rich_rules:
         - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
 
@@ -126,5 +124,4 @@ management-zone:
       - sspl
       - others
       - ssh
-    - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] }}
+    - interfaces: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] }}
