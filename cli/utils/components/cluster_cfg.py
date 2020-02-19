@@ -93,23 +93,23 @@ class ClusterCfg(BaseCfg):
                 )
 
                 input_msg = ("Enter management interface name ({0}): ".format(
-                    self.__options["cluster"][node]["network"]["mgmt_if"]
+                    self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"]
                 )
                 )
-                self.__options["cluster"][node]["network"]["mgmt_if"] = (
+                self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["network"]["mgmt_if"]
+                    self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"]
                 )
 
                 input_msg = ("Enter data interface name ({0}): ".format(
-                    self.__options["cluster"][node]["network"]["data_if"]
+                    self.__options["cluster"][node]["network"]["data_nw"]["iface"]
                 )
                 )
-                self.__options["cluster"][node]["network"]["data_if"] = (
+                self.__options["cluster"][node]["network"]["data_nw"]["iface"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["network"]["data_if"]
+                    self.__options["cluster"][node]["network"]["data_nw"]["iface"]
                 )
 
                 input_msg = ("Enter the default gateway ip ({0}): ".format(

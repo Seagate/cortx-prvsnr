@@ -34,8 +34,8 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
     assert res.rc == 0
 
     pillar_file_dict = yaml.safe_load(res.stdout)
-    assert pillar_file_dict['cluster']['eosnode-1']['network']['mgmt_if'] == 'lo'
-    assert pillar_file_dict['cluster']['eosnode-1']['network']['data_if'] == 'lo'
+    assert pillar_file_dict['cluster']['eosnode-1']['network']['mgmt_nw']['iface'] == 'lo'
+    assert pillar_file_dict['cluster']['eosnode-1']['network']['data_nw']['iface'] == 'lo'
     def_gateway = mhosteosnode1.check_output('ip route | grep default | head -1').split()[2]
     assert def_gateway
     assert pillar_file_dict['cluster']['eosnode-1']['network']['gateway_ip'] == def_gateway
@@ -110,8 +110,8 @@ def test_s3_sanity_singlenode_env(
 
     pillar_file_dict = yaml.safe_load(res.stdout)
 
-    assert pillar_file_dict['cluster']['eosnode-1']['network']['mgmt_if'] == mhosteosnode1.iface
-    assert pillar_file_dict['cluster']['eosnode-1']['network']['data_if'] == mhosteosnode1.iface
+    assert pillar_file_dict['cluster']['eosnode-1']['network']['mgmt_nw']['iface'] == mhosteosnode1.iface
+    assert pillar_file_dict['cluster']['eosnode-1']['network']['data_nw']['iface'] == mhosteosnode1.iface
     def_gateway = mhosteosnode1.check_output('ip route | grep default | head -1').split()[2]
     assert def_gateway
     assert pillar_file_dict['cluster']['eosnode-1']['network']['gateway_ip'] == def_gateway
