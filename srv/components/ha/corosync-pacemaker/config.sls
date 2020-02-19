@@ -5,10 +5,10 @@
 #    - name: sed -i "s/SELINUX=.*/SELINUX=disable/g" /etc/selinux/config
 #
 
-Disable firewall:
-  service.dead:
-    - name: firewalld
-    - enable: False 
+# Disable firewall:
+#   service.dead:
+#     - name: firewalld
+#     - enable: False 
 
 Enable corosync service:
   service.enabled:

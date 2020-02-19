@@ -1153,7 +1153,7 @@ EOF
 function configure_salt {
     set -eu
 
-    if [[ "$verbosity" -ge 2 ]]; then
+    if [[ "$verbosity" -ge "2" ]]; then
         set -x
     fi
 
@@ -1174,7 +1174,7 @@ function configure_salt {
 ! read -r -d '' _script << EOF
     set -eu
 
-    if [[ "$verbosity" -ge 2 ]]; then
+    if [[ "$verbosity" -ge "2" ]]; then
         set -x
     fi
 
@@ -1244,16 +1244,16 @@ EOF
 #       timeout: a time to wait until a minion becomes connected to master.
 #           Default: `false`.
 #
-function accept_salt_keys {
+function accept_salt_key {
     set -eu
 
-    if [[ "$verbosity" -ge 2 ]]; then
+    if [[ "$verbosity" -ge "2" ]]; then
         set -x
     fi
 
     local _script
 
-    local _ids="${1:-eosnode-1}"
+    local _id="${1:-eosnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
@@ -1261,56 +1261,43 @@ function accept_salt_keys {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Accepting minion ids $_ids on salt master '$_hostspec', timeout $_timeout"
+    l_info "Accepting minion id $_id on salt master '$_hostspec', timeout $_timeout"
 
 ! read -r -d '' _script << EOF
     set -eu
 
-    if [[ "$verbosity" -ge 2 ]]; then
+    if [[ "$verbosity" -ge "2" ]]; then
         set -x
     fi
 
-    for id in $_ids; do
-        try=1
-
-        echo -e "\\nINFO: waiting for minion \$id to become connected to master"
-        until salt-key --list all | grep \$id >/dev/null 2>&1
-        do
-            if [[ "\$try" -gt "$_timeout" ]]; then
-                echo -e "\\nERROR: minion \$id seems not connected after $_timeout seconds." >&2
-                salt-key --list all >&2
-                exit 1
-            fi
-            echo -n "."
-            try=\$(( \$try + 1 ))
-            sleep 1
-        done
-        echo -e "\\nINFO: Key \$id is connected."
-
-        # minion is connected but does not need acceptance
-        if [[ -z "\$(salt-key --list unaccepted | grep \$id 2>/dev/null)" ]]; then
-            echo -e "\\nINFO: no key acceptance is needed for minion \$id." >&2
-            salt-key --list all >&2
-            exit 0
+    try=1
+    echo -e "\\nINFO: waiting for minion $_id to become connected to master"
+    until salt-key --list-all | grep $_id >/dev/null 2>&1
+    do
+        if [[ "\$try" -gt "$_timeout" ]]; then
+            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds." >&2
+            salt-key --list-all >&2
+            exit 1
         fi
-
-        salt-key -y -a \$id
-        echo -e "\\nINFO: Key \$id is accepted."
-
-        # TODO move that to a separate API
-        echo -e "\\nINFO: waiting for minion \$id to become ready"
-        try=1; tries=10
-        until salt -t 1 \$id test.ping >/dev/null 2>&1
-        do
-            if [[ "\$try" -gt "\$tries" ]]; then
-                echo -e "\\nERROR: minion \$id seems still not ready after \$tries checks." >&2
-                exit 1
-            fi
-            echo -n "."
-            try=\$(( \$try + 1 ))
-        done
-        echo -e "\\nINFO: Minion \$id started."
+        echo -n "."
+        try=\$(( \$try + 1 ))
+        sleep 1
     done
+    echo -e "\\nINFO: Key $_id is connected."
+
+    # minion is connected but does not need acceptance
+    if [[ -z "\$(salt-key --list unaccepted | grep $_id 2>/dev/null)" ]]; then
+        echo -e "\\nINFO: no key acceptance is needed for minion $_id." >&2
+        salt-key --list-all >&2
+        exit 0
+    fi
+
+    salt-key -y -a $_id
+
+    if [[ -z "\$(salt-key --list accepted | grep $_id 2>/dev/null)" ]]; then
+        echo -e "\\nINFO: Key $_id is accepted." >&2
+        exit 0
+    fi
 EOF
 
     if [[ -n "$_hostspec" ]]; then
