@@ -124,4 +124,5 @@ management-zone:
       - sspl
       - others
       - ssh
+      - high-availability
     - interfaces: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] }}
