@@ -14,13 +14,13 @@
 #
 # Use a descriptive name for your cluster:
 #
-#cluster.name: my-application
+cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 #
 # ------------------------------------ Node ------------------------------------
 #
 # Use a descriptive name for the node:
 #
-#node.name: node-1
+node.name: {{ grains['host'] }}
 #
 # Add custom attributes to the node:
 #
@@ -52,11 +52,11 @@ path.logs: /var/log/elasticsearch
 #
 # Set the bind address to a specific IP (IPv4 or IPv6):
 #
-#network.host: "{{ pillar['elasticsearch']['network_host'] }}"
+network.host: {{ pillar['cluster'][grains["id"]]["network"]["mgmt_nw"]["ipaddr"] }}
 #
 # Set a custom port for HTTP:
 #
-#http.port: {{ pillar["elasticsearch"]["http_port"] }}
+http.port: {{ pillar["elasticsearch"]["http_port"] }}
 #
 # For more information, consult the network module documentation.
 #
@@ -65,11 +65,15 @@ path.logs: /var/log/elasticsearch
 # Pass an initial list of hosts to perform discovery when this node is started:
 # The default list of hosts is ["127.0.0.1", "[::1]"]
 #
-#discovery.seed_hosts: ["host1", "host2"]
+{%- set host_list = [] -%}
+{%- for node in pillar['cluster']['node_list'] -%}
+{{ host_list.append(pillar['cluster'][node]['hostname']) }}
+{%- endfor %}
+discovery.seed_hosts: {{ host_list }} 
 #
 # Bootstrap the cluster using an initial set of master-eligible nodes:
 #
-#cluster.initial_master_nodes: ["node-1", "node-2"]
+cluster.initial_master_nodes: {{ host_list }}
 #
 # For more information, consult the discovery and cluster formation module documentation.
 #
