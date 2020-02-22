@@ -44,7 +44,7 @@ setup(
     keywords='EOS Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
-    # package_data={'': ['LICENSE']},  # TODO
+    package_data={'provisioner': ['api_spec.yaml', 'params_spec.yaml']},  # TODO LICENSE, other
     # include_package_data=True,  # TODO
     # zip_safe=False,  TODO,
     entry_points={
@@ -54,8 +54,8 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt==2019.2.0',
-        'attrs==19.1.0'
+        'salt',
+        'attrs'
     ],  # TODO
     setup_requires=['pytest-runner'],
     extras_require={

@@ -1,5 +1,4 @@
 from . import set_api
-# TODO mark that to be ignored by flake8
-import provisioner._api_cli
+import provisioner._api_cli  # noqa: F401
 
 set_api('pycli')

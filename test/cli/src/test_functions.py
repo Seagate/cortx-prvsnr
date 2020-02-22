@@ -1196,7 +1196,7 @@ def test_functions_eos_pillar_update_and_load_default(
     pillar_new_key = 'test'
 
     # 1. prepare some valid pillar for the component
-        # TODO python3.6 ???
+    # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
         'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component

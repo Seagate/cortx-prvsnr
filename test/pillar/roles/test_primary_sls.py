@@ -1,12 +1,7 @@
-import os
 import pytest
 import json
-from pathlib import Path
 
 import logging
-import testinfra
-
-from test.helper import PRVSNR_REPO_INSTALL_DIR
 
 logger = logging.getLogger(__name__)
 

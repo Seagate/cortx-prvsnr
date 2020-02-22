@@ -1,5 +1,7 @@
 import importlib
 
+from .config import ALL_MINIONS
+
 _api = None
 
 api_types = {
@@ -25,21 +27,21 @@ def auth_init(username, password, eauth='pam'):
     return _api_call('auth_init', username, password, eauth=eauth)
 
 
-def pillar_get(targets='*'):
+def pillar_get(targets=ALL_MINIONS):
     return _api_call('pillar_get', targets=targets)
 
 
-def get_params(*params, targets='*'):
+def get_params(*params, targets=ALL_MINIONS):
     return _api_call(
         'get_params', *params, targets=targets
     )
 
 
-def set_params(targets='*', **params):
+def set_params(targets=ALL_MINIONS, **params):
     return _api_call('set_params', targets=targets, **params)
 
 
-def set_ntp(server=None, timezone=None, targets='*'):
+def set_ntp(server=None, timezone=None, targets=ALL_MINIONS):
     return _api_call(
         'set_ntp', server=server, timezone=timezone, targets=targets
     )
@@ -55,7 +57,7 @@ def set_network(
     primary_hostname=None,
     slave_hostname=None,
     dns_server=None,
-    targets='*'
+    targets=ALL_MINIONS
 ):
     return _api_call(
         'set_network',
@@ -69,4 +71,17 @@ def set_network(
         slave_hostname=slave_hostname,
         dns_server=dns_server,
         targets=targets
+    )
+
+
+def set_eosupdate_repo(release, targets, source=None):
+    return _api_call(
+        'set_eosupdate_repo',
+        release, source=source, targets=targets
+    )
+
+
+def eos_update(targets):
+    return _api_call(
+        'eos_update', targets=targets
     )

@@ -275,6 +275,11 @@ def pytest_configure(config):
                    "list of mocked system commands per host"
     )
     config.addinivalue_line(
+        "markers", "vagrant_default_ssh(string): mark test to use "
+                   "default ssh config provided by vagrant, "
+                   "default: True for single node env, False otherwise"
+    )
+    config.addinivalue_line(
         "markers", "eos_bvt: mark test as BVT one"
     )
 
@@ -497,7 +502,8 @@ def rpm_prvsnr(request, tmpdir_session):
             'cd {} && sh -x devops/rpms/buildrpm.sh'.format(mhost.repo)
         )
         rpm_remote_path = mhost.check_output(
-            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm | grep -v debug'
+            'ls ~/rpmbuild/RPMS/x86_64/{}*.rpm | grep -v debug'
+            .format(h.PRVSNR_PKG_NAME)
         )
         return _copy_to_local(
             mhost, Path(rpm_remote_path), tmpdir_session
@@ -514,7 +520,8 @@ def rpm_prvsnr_cli(request, tmpdir_session):
             'cd {} && sh -x cli/buildrpm.sh'.format(mhost.repo)
         )
         rpm_remote_path = mhost.check_output(
-            'ls ~/rpmbuild/RPMS/x86_64/eos-prvsnr*.rpm | grep -v debug'
+            'ls ~/rpmbuild/RPMS/x86_64/{}*.rpm | grep -v debug'
+            .format(h.PRVSNR_CLI_PKG_NAME)
         )
         return _copy_to_local(
             mhost, Path(rpm_remote_path), tmpdir_session
@@ -523,9 +530,9 @@ def rpm_prvsnr_cli(request, tmpdir_session):
 
 @pytest.fixture(autouse=True)
 def log_test_name(request):
-    logger.info('Test started: {}'.format(request.node.nodeid))
+    logger.debug('Test started: {}'.format(request.node.nodeid))
     yield
-    logger.info('Test finished: {}'.format(request.node.nodeid))
+    logger.debug('Test finished: {}'.format(request.node.nodeid))
 
 
 @pytest.fixture(scope='module')
@@ -1107,8 +1114,12 @@ def mlocalhost(localhost, request):
 
 
 @pytest.fixture
-def vagrant_default_ssh():
-    return False
+def vagrant_default_ssh(request, hosts):
+    res = (len(hosts) < 2)
+    marker = request.node.get_closest_marker('vagrant_default_ssh')
+    if marker:
+        res = marker.args[0]
+    return res
 
 
 def build_remote(

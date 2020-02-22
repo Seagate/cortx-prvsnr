@@ -3,6 +3,7 @@ import yaml
 from .errors import BadPillarDataError
 
 
+# TODO test
 def load_yaml_str(data):
     try:
         return yaml.safe_load(data)
@@ -10,6 +11,7 @@ def load_yaml_str(data):
         raise BadPillarDataError(str(exc))
 
 
+# TODO test
 def dump_yaml_str(data, width=1, indent=4):
     return yaml.dump(
         data,
@@ -20,6 +22,7 @@ def dump_yaml_str(data, width=1, indent=4):
     )
 
 
+# TODO test
 # TODO streamed read
 def load_yaml(path):
     try:
@@ -28,6 +31,7 @@ def load_yaml(path):
         raise BadPillarDataError(str(exc))
 
 
+# TODO test
 # TODO streamed write
 def dump_yaml(path, data):
     path.write_text(dump_yaml_str(data))

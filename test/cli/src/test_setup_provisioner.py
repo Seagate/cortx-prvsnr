@@ -119,10 +119,6 @@ def test_setup_provisioner_singlenode(
 
 
 def check_setup_provisioner_results(mhosteosnode1):
-    states_expected = [
-        "components.{}".format(st) for st in
-        ['system', 'ha.haproxy', 'misc_pkgs.openldap', 'misc_pkgs.build_ssl_cert_rpms', 'eoscore', 's3server', 'hare', 'sspl', 'csm']
-    ]
     top_sls_content = mhosteosnode1.check_output(
         'cat {}'.format(h.PRVSNR_REPO_INSTALL_DIR / 'srv/top.sls')
     )

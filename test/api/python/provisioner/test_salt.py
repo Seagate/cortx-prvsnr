@@ -1,7 +1,7 @@
 import pytest
 
-from api.python.provisioner import salt
-from api.python.provisioner.errors import SaltError
+from provisioner import salt
+from provisioner.errors import SaltError
 
 
 def generate_mock_class(cmd_f):
@@ -65,11 +65,11 @@ def test_salt_states_apply(monkeypatch):
     monkeypatch.setattr(salt, 'LocalClient', generate_mock_class(cmd))
 
     states_apply_res = None
-    salt.states_apply(['1', '2', '3'], targets='aaa')
+    salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
     assert states_apply_args == [
-        (('aaa', 'state.apply', ['1']), {'full_return': True}),
-        (('aaa', 'state.apply', ['2']), {'full_return': True}),
-        (('aaa', 'state.apply', ['3']), {'full_return': True})
+        (('aaa', 'state.apply', ['state1']), {'full_return': True}),
+        (('aaa', 'state.apply', ['state2']), {'full_return': True}),
+        (('aaa', 'state.apply', ['state3']), {'full_return': True})
     ]
 
     # fail case
@@ -85,13 +85,15 @@ def test_salt_states_apply(monkeypatch):
         }
     }
     with pytest.raises(SaltError) as excinfo:
-        salt.states_apply(['1', '2', '3'], targets='aaa')
+        salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
     assert str(excinfo.value) == (
         "Failed to apply state '{}': salt command failed: {}"
-        .format('1', {'some-node-id': {'some-task-id': 'some comment'}})
+        .format('state1', {'some-node-id': {'some-task-id': 'some comment'}})
     )
 
     # success case
     states_apply_res['some-node-id']['retcode'] = 0
-    res = salt.states_apply('2', targets='aaa')
-    assert res == {'2': {'some-node-id': states_apply_res['some-node-id']['ret']}}
+    res = salt.states_apply(['some.state'], targets='aaa')
+    assert res == {
+        'some.state': {'some-node-id': states_apply_res['some-node-id']['ret']}
+    }
