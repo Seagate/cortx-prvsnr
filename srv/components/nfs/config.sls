@@ -1,5 +1,5 @@
 {% set node = grains['id'] %}
-{% set data_if = pillar['cluster'][node]['network']['data_if'] %}
+{% set data_if = pillar['cluster'][node]['network']['data_nw']['iface'] %}
 
 Create index:
   cmd.run:
