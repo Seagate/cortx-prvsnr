@@ -1,0 +1,31 @@
+ntp:
+  _path: system.sls
+  server:   system/ntp/time_server
+  timezone: system/ntp/timezone
+network:
+  _path: cluster.sls
+  #dns_server:  # TODO not supported in states
+               #'key_path': ('cluster', 'eosnode-2', 'network', 'data_nw', 'ipaddr'),
+  # TODO use nested group to reduce copy-paste in paths
+  primary_hostname:     cluster/eosnode-1/hostname
+  primary_floating_ip:  cluster/eosnode-1/network/floating_ip
+  primary_gateway_ip:   cluster/eosnode-1/network/gateway_ip
+  primary_mgmt_ip:      cluster/eosnode-1/network/mgmt_nw/ipaddr
+  primary_mgmt_netmask: cluster/eosnode-1/network/mgmt_nw/netmask
+  primary_data_ip:      cluster/eosnode-1/network/data_nw/ipaddr
+  primary_data_netmask: cluster/eosnode-1/network/data_nw/netmask
+  slave_hostname:       cluster/eosnode-2/hostname
+  slave_floating_ip:    cluster/eosnode-2/network/floating_ip
+  slave_gateway_ip:     cluster/eosnode-2/network/gateway_ip
+  slave_mgmt_ip:        cluster/eosnode-2/network/mgmt_nw/ipaddr
+  slave_mgmt_netmask:   cluster/eosnode-2/network/mgmt_nw/netmask
+  slave_data_ip:        cluster/eosnode-2/network/data_nw/ipaddr
+  slave_data_netmask:   cluster/eosnode-2/network/data_nw/netmask
+eosupdate:
+  _path: release.sls
+  repos: eos_release/update/repos
+  repo:
+    _type: ParamDictItem
+    parent: eos_release/update/repos
+    key: release
+    value: source

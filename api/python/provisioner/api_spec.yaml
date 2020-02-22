@@ -1,0 +1,27 @@
+pillar_get:
+  type: PillarGet
+get_params:
+  type: Get
+  params_type: ParamsList
+set_ntp:
+  type: Set
+  params_type: NTP
+  states:
+    post:
+    - components.system.ntp.config
+    - components.system.ntp.stop
+    - components.system.ntp.start
+set_network:
+  type: Set
+  params_type: Network
+  states:
+    post:
+      - components.system.network
+set_eosupdate_repo:
+  type: Set
+  params_type: EOSUpdateRepo
+  states:
+    post:
+    - components.misc_pkgs.eosupdate.repo
+eos_update:
+  type: EOSUpdate

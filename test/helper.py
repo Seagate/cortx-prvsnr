@@ -18,7 +18,14 @@ logger = logging.getLogger(__name__)
 MODULE_DIR = Path(__file__).resolve().parent
 PROJECT_PATH = MODULE_DIR.parent
 
-PRVSNR_REPO_INSTALL_DIR = Path('/opt/seagate/eos-prvsnr')
+PROVISIONER_API_DIR = (PROJECT_PATH / 'api/python').resolve()
+sys.path.insert(0, str(PROVISIONER_API_DIR))
+from provisioner.config import *
+
+PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
+
+PRVSNR_PKG_NAME = 'eos-prvsnr'
+PRVSNR_CLI_PKG_NAME = 'eos-prvsnr-cli'
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80
 REPO_BUILD_DIRS = [

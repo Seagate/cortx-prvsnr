@@ -1,22 +1,11 @@
 import pytest
 import logging
+from pathlib import Path
+
+from .helper import install_provisioner_api
+from provisioner.config import PRVSNR_ROOT_DIR
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope='module')
-def env_level():
-    return 'singlenode-prvsnr-installed'
-
-
-@pytest.fixture
-def vagrant_default_ssh():
-    return True
-
-
-@pytest.fixture
-def env_provider():
-    return 'vbox'
 
 
 @pytest.fixture(params=["py", "cli", "pycli"])
@@ -24,80 +13,21 @@ def api_type(request):
     return request.param
 
 
-def install_provisioner_api(mhost):
-    mhost.check_output("pip3 install {}".format(mhost.repo / 'api/python'))
+@pytest.fixture
+def test_path():
+    return 'test/api/python/integration/test_api_inner.py'
 
 
 @pytest.fixture
-def prepare_test_env(request, hosts_meta):
-    # TODO limit to only necessary ones
-    for mhost in hosts_meta.values():
-        install_provisioner_api(mhost)
-        mhost.check_output("pip3 install pytest==5.1.1")  # TODO use requirements or setup.py
-        inner_tests_path = mhost.tmpdir / 'test.py'
-        mhost.check_output("cp -f {} {}".format(
-            mhost.repo / 'test/api/python/integration/test_integration_inner.py', inner_tests_path)
-        )
-        return inner_tests_path
-
-
-@pytest.fixture
-def run_test(request, api_type):
-    def f(mhost, curr_user=None, username=None, password=None, expected_exc=None):
-        inner_tests_path = request.getfixturevalue('prepare_test_env')
-
-        script = (
-            "TEST_API_TYPE={} pytest -l -q -s --log-cli-level warning --no-print-logs {}::{}"
-            .format(api_type, inner_tests_path, request.node.originalname)
-        )
-
-        if expected_exc:
-            script = "TEST_ERROR={} {}".format(expected_exc, script)
-
-        if username:
-            script = (
-                "TEST_USERNAME={} TEST_PASSWORD={} {}"
-                .format(username, password, script)
-            )
-
-            if curr_user:
-                script = (
-                    "su -l {} -c '{}'"
-                    .format(curr_user, script)
-                )
-
-        return mhost.check_output(script)
+def run_test(request, api_type, run_test, eos_hosts):
+    def f(*args, env=None, **kwargs):
+        if env is None:
+            env = {}
+        env['TEST_API_TYPE'] = api_type
+        env['TEST_MINION_ID'] = eos_hosts['eosnode1']['minion_id']
+        return run_test(*args, env=env, **kwargs)
 
     return f
-
-
-# TODO
-#   - timeout is high because of vbox env build,
-#     need to dseparate build logic fromAexplore ways how
-#     to separate that (less timeout if env is ready)
-# Note. ntpd service doesn't work in docker without additional tricks
-# (if it's actually possible)
-@pytest.mark.timeout(1200)
-@pytest.mark.isolated
-@pytest.mark.env_level('singlenode-prvsnr-installed')
-@pytest.mark.hosts(['eosnode1'])
-def test_ntp_configuration(
-    mhosteosnode1, run_test
-):
-    mhosteosnode1.check_output("yum install -y ntp")
-    run_test(mhosteosnode1)
-    # TODO
-    #   - run ntp.config state and check that nothing changed
-
-
-@pytest.mark.timeout(1200)
-@pytest.mark.skip(reason="EOS-1740")
-@pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
-def test_network_configuration(
-    mhosteosnode1, run_test
-):
-    run_test(mhosteosnode1)
 
 
 # TODO split to different tests per each test case
@@ -142,6 +72,82 @@ def test_external_auth(
     )
     run_test(mhosteosnode1, username=username, password=password)
     run_test(mhosteosnode1, curr_user=username, username=username, password=password)
+
+
+# TODO
+#   - timeout is high because of vbox env build,
+#     need to dseparate build logic fromAexplore ways how
+#     to separate that (less timeout if env is ready)
+# Note. ntpd service doesn't work in docker without additional tricks
+# (if it's actually possible)
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_ntp_configuration(
+    mhosteosnode1, run_test
+):
+    mhosteosnode1.check_output("yum install -y ntp")
+    run_test(mhosteosnode1)
+    # TODO
+    #   - run ntp.config state and check that nothing changed
+
+
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_network_configuration(
+    mhosteosnode1, run_test, eos_hosts, project_path
+):
+    mhosteosnode1.copy_to_host(
+        project_path / "pillar/components/samples/ees.cluster.sls",
+        host_path=Path(
+            "{}/pillar/components/cluster.sls"
+            .format(PRVSNR_ROOT_DIR)
+        )
+    )
+
+    mhosteosnode1.check_output(
+        "salt '{}' saltutil.refresh_pillar"
+        .format(eos_hosts['eosnode1']['minion_id'])
+    )
+
+    run_test(mhosteosnode1)
+
+
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_eosupdate_repo_configuration(
+    mhosteosnode1, run_test
+):
+    repo_dir = '/tmp/repo'
+    iso_path = '/tmp/repo.iso'
+
+    mhosteosnode1.check_output(
+        "mkdir -p {repo_dir}"
+        " && cp {rpm_path} {repo_dir}"
+        " && yum install -y createrepo genisoimage"
+        " && createrepo {repo_dir}"
+        " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
+        .format(
+            repo_dir=repo_dir,
+            rpm_path=mhosteosnode1.rpm_prvsnr,
+            iso_path=iso_path
+        )
+    )
+    run_test(mhosteosnode1, env={
+        'TEST_REPO_DIR': repo_dir,
+        'TEST_REPO_ISO_PATH': iso_path
+    })
+
+
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_eos_update(
+    mhosteosnode1, run_test
+):
+    run_test(mhosteosnode1)
 
 
 @pytest.mark.timeout(1200)

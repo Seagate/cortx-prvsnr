@@ -1,15 +1,17 @@
+import attr
 from salt.client import LocalClient
-from pprint import pprint
+from typing import List, Union
 
+from .config import ALL_MINIONS
 from .errors import SaltError
 
 _eauth = 'pam'
 _username = None
 _password = None
 
+
 # TODO
 #   - think about static salt client (one for the module)
-
 def auth_init(username, password, eauth='pam'):
     global _eauth
     global _username
@@ -17,7 +19,6 @@ def auth_init(username, password, eauth='pam'):
     _eauth = eauth
     _username = username
     _password = password
-
 
 
 # salt full return format (TODO ??? salt docs for that)
@@ -44,6 +45,15 @@ def auth_init(username, password, eauth='pam'):
     }
 }
 """
+
+
+# TODO tests
+@attr.s(auto_attribs=True, frozen=True)
+class State:
+    name: str = attr.ib(converter=str)
+
+    def __str__(self):
+        return self.name
 
 
 def _salt_client_cmd(*args, **kwargs):
@@ -83,7 +93,6 @@ def _salt_client_cmd(*args, **kwargs):
 
     if fails:
         # TODO better logging
-        pprint(res)
         # TODO add res to exception data
         raise SaltError(
             "salt command failed: {}".format(fails)
@@ -92,27 +101,37 @@ def _salt_client_cmd(*args, **kwargs):
     return results
 
 
-def pillar_get(targets='*'):
+def pillar_get(targets=ALL_MINIONS):
     return _salt_client_cmd(targets, 'pillar.items')
 
 
-def pillar_refresh(targets='*'):
+def pillar_refresh(targets=ALL_MINIONS):
     return _salt_client_cmd(targets, 'saltutil.refresh_pillar')
 
 
-def states_apply(states, targets='*'):
+def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
     ret = {}
 
+    # TODO multiple states at once
     for state in states:
-        # TODO multiple states at once
+        state = State(state)
         try:
-            res = _salt_client_cmd(targets, 'state.apply', [state])
+            res = _salt_client_cmd(targets, 'state.apply', [state.name])
         except SaltError as exc:
             raise SaltError(
                 "Failed to apply state '{}': {}"
                 .format(state, str(exc))
             )
         else:
-            ret[state] = res
+            ret[state.name] = res
 
     return ret
+
+
+# TODO tests
+@attr.s(auto_attribs=True)
+class StatesApplier:
+    @staticmethod
+    def apply(states: List[State], targets: str = ALL_MINIONS) -> None:
+        if states:
+            states_apply(states=states, targets=targets)

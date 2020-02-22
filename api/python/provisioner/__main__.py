@@ -11,6 +11,7 @@ import json
 import yaml
 
 import provisioner
+from provisioner.commands import commands
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,9 @@ DEF_LOGLEVEL = 'INFO'
 
 
 AuthArgs = attr.make_class("AuthArgs", ('username', 'password', 'eauth'))
-LogArgs = attr.make_class("LogArgs", ('output', 'loglevel', 'logformat', 'logstream', 'logmode'))
+LogArgs = attr.make_class(
+    "LogArgs", ('output', 'loglevel', 'logformat', 'logstream', 'logmode')
+)
 
 
 def _reset_logging():
@@ -49,7 +52,7 @@ def _set_logging(
     handler.setFormatter(logging.Formatter(logformat))
 
     root.addHandler(handler)
-    #logging.basicConfig(level=DEF_LOGLEVEL, format=DEF_LOGGING_FORMAT)
+    # logging.basicConfig(level=DEF_LOGLEVEL, format=DEF_LOGGING_FORMAT)
 
 
 def _parse_args():
@@ -102,7 +105,6 @@ def _parse_args():
         help="the mode to use to open log files"
     )
 
-
     parser = argparse.ArgumentParser(
         description="EOS Provisioner CLI",
         parents=[parser_common],
@@ -114,55 +116,38 @@ def _parse_args():
         description='valid subcommands'
     )
 
-    # pillar_get
-    _ = subparsers.add_parser(
-        'pillar_get', description='Get all pillar data',
-        help='pillar_get help', parents=[parser_common],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-
-    # get_params
-    subparser_get_params = subparsers.add_parser(
-        'get_params', description='Get parameters values',
-        help='get_params help', parents=[parser_common],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    subparser_get_params.add_argument(
-        'args', metavar='param', type=str, nargs='+',
-        help='a param name to get'
-    )
-
-    # set_ntp
-    subparser_set_ntp = subparsers.add_parser(
-        'set_ntp', description='NTP configuration',
-        help='set_ntp help', parents=[parser_common],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    subparser_set_ntp.add_argument(
-        "--server", metavar="STR", default=None,
-        help="ntp server ip"
-    )
-    subparser_set_ntp.add_argument(
-        "--timezone", metavar="STR", default=None,
-        help="ntp server timezone"
-    )
+    # TODO description and help strings
+    for cmd_name, cmd in commands.items():
+        subparser = subparsers.add_parser(
+            cmd_name, description='{} configuration'.format(cmd_name),
+            help='{} help'.format(cmd_name), parents=[parser_common],
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+        cmd.params_type.fill_parser(subparser)
 
     kwargs = vars(parser.parse_args())
-    fun = kwargs.pop('command')
-    if fun is None:
+    cmd = kwargs.pop('command')
+    if cmd is None:
         raise ValueError('command is required')
+    cmd = commands[cmd]
     args = kwargs.pop('args', [])
-    return fun, args, kwargs
+    return cmd, args, kwargs
 
 
 def main():
-    fun, args, kwargs = _parse_args()
+    cmd, args, kwargs = _parse_args()
 
     auth_args = AuthArgs(
-        **{k: kwargs.pop(k) for k in list(kwargs) if k in attr.fields_dict(AuthArgs)}
+        **{
+            k: kwargs.pop(k) for k in list(kwargs)
+            if k in attr.fields_dict(AuthArgs)
+        }
     )
     log_args = LogArgs(
-        **{k: kwargs.pop(k) for k in list(kwargs) if k in attr.fields_dict(LogArgs)}
+        **{
+            k: kwargs.pop(k) for k in list(kwargs)
+            if k in attr.fields_dict(LogArgs)
+        }
     )
 
     if auth_args.password == '-':
@@ -185,13 +170,11 @@ def main():
             logmode=log_args.logmode,
         )
     logger.debug(
-        "Parsed arguments: auth={}, log={}, fun={}, args={}, kwargs={}"
-        .format(auth_args, log_args, fun, args, kwargs)
+        "Parsed arguments: auth={}, log={}, cmd={}, args={}, kwargs={}"
+        .format(auth_args, log_args, cmd, args, kwargs)
     )
 
-    fun = getattr(provisioner, fun)
-
-    res = fun(*args, **kwargs)
+    res = cmd.run(*args, **kwargs)
 
     if res:
         if log_args.output == 'yaml':

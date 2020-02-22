@@ -31,8 +31,8 @@ def _api_call(fun, *args, **kwargs):
 
     cmd = ['provisioner', fun]
     for k, v in kwargs.items():
-        cmd.extend(['--{}'.format(k), v])
-    cmd.extend(list(args))
+        cmd.extend(['--{}'.format(k), str(v)])
+    cmd.extend([str(a) for a in args])
     logger.debug("Command: {}".format(cmd))
 
     try:
@@ -67,8 +67,11 @@ def auth_init(username, password, eauth='pam'):
     _password = password
 
 
+# TODO automate commands list discovering
 mod = sys.modules[__name__]
 for fun in [
-    'pillar_get', 'get_params', 'set_params', 'set_ntp', 'set_network'
+    'pillar_get', 'get_params', 'set_params',
+    'set_ntp', 'set_network', 'set_eosupdate_repo',
+    'eos_update'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

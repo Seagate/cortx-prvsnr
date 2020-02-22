@@ -159,11 +159,6 @@ def get_bvt_results(
 
 
 
-@pytest.fixture
-def vagrant_default_ssh():
-    return True
-
-
 @pytest.mark.timeout(3600)
 @pytest.mark.eos_bvt
 @pytest.mark.isolated
