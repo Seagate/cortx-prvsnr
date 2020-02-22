@@ -1,0 +1,12 @@
+{%- set nodes = pillar['cluster']['node_list'] -%}
+{%- do nodes.remove(grains['id']) -%}
+{%- set node_ip = nodes[0] -%}
+{%- set data_if = pillar['cluster'][node_ip]['network']['data_if'] -%}
+
+{%- for host, ip in salt['mine.get'](node_ip, 'data_ip_addrs').items() -%}
+DST={{ ip[0] }}
+{% endfor %}
+SRC={{ grains['ip4_interfaces'][data_if][0] }}
+TYPE=IPSEC
+ONBOOT=yes
+IKE_METHOD=PSK
