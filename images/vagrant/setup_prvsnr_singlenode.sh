@@ -21,6 +21,6 @@ cp -R * ../utils /opt/seagate/eos-prvsnr/cli
 
 configure_salt eosnode-1 '' '' '' true localhost
 
-accept_salt_keys eosnode-1
+accept_salt_key eosnode-1
 
 rm -rf /var/cache/yum

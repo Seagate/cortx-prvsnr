@@ -1,4 +1,3 @@
-import os
 import pytest
 import json
 import yaml
@@ -17,6 +16,16 @@ def env_level():
 @pytest.fixture(scope='module')
 def script_name():
     return 'setup-provisioner'
+
+
+@pytest.fixture
+def install_salt_config_files(project_path):
+    def _f(mhost):
+        mhost.copy_to_host(
+            project_path / 'files/etc/salt',
+            h.PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt'
+        )
+    return _f
 
 
 # TODO split
@@ -84,11 +93,14 @@ def test_setup_provisioner_fail(mhost, run_script):
 @pytest.mark.env_provider('vbox')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_setup_provisioner_singlenode(
-    mhost, mlocalhost, ssh_config, remote, run_script
+    mhost, mlocalhost, ssh_config, remote, run_script,
+    install_salt_config_files
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
     with_sudo = '' # TODO
+
+    install_salt_config_files(mhost)
 
     res = run_script(
         "-v {} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
@@ -103,17 +115,18 @@ def test_setup_provisioner_singlenode(
         res = mhost.run('salt eosnode-1 --out json --timeout 10 state.show_top')
         if res.rc == 0:
             break
-
     assert res.rc == 0
-
     output = json.loads(res.stdout)
-    expected = [
-        "components.{}".format(st) for st in
-        ['system', 'misc_pkgs.build_ssl_cert_rpms', 'misc_pkgs.openldap', 'ha.haproxy', 'eoscore', 's3server', 'hare', 'post_setup', 'sspl', 'csm']
-    ]
+
+    top_sls_content = mhost.check_output(
+        'cat {}'.format(h.PRVSNR_REPO_INSTALL_DIR / 'srv/top.sls')
+    )
+    top_sls_dict = yaml.safe_load(top_sls_content)
+    states_expected = top_sls_dict['base']['*']
+
     assert output == {
         'eosnode-1': {
-            'base': expected
+            'base': states_expected
         }
     }
 
@@ -151,11 +164,15 @@ def check_setup_provisioner_results(mhosteosnode1):
 @pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
 def test_setup_provisioner_cluster(
     mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost,
-    remote, repo_src, inject_ssh_config, run_script
+    remote, repo_src, inject_ssh_config, run_script,
+    install_salt_config_files
 ):
     remote = '--remote {}'.format(mhosteosnode1.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config)
     with_sudo = '' # TODO
+
+    if repo_src != 'rpm':
+        install_salt_config_files(mhosteosnode1)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --repo-src {}".format(
@@ -172,7 +189,8 @@ def test_setup_provisioner_cluster(
 @pytest.mark.env_provider('vbox')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 def test_setup_provisioner_cluster_with_salt_master_host_provided(
-    mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script
+    mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script,
+    install_salt_config_files
 ):
     salt_server_ip = mhosteosnode1.host.interface(
         mhosteosnode1.iface
@@ -181,6 +199,8 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     ssh_config = '--ssh-config {}'.format(ssh_config)
     remote = '--remote {}'.format(mhosteosnode1.hostname)
     with_sudo = '' # TODO
+
+    install_salt_config_files(mhosteosnode1)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(
