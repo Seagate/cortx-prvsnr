@@ -68,7 +68,7 @@ chmod -R g+w /opt/seagate/eos-prvsnr/pillar/user
 chmod g+s /opt/seagate/eos-prvsnr/pillar/user
 
 # install api globally using pip
-pip3 install /opt/seagate/eos-prvsnr/api/python
+pip3 install -U /opt/seagate/eos-prvsnr/api/python
 
 %preun
 # uninstall api globally using pip

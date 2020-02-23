@@ -4,7 +4,13 @@ import logging
 import test.helper as h
 
 
-RPM_CONTENT_PATHS = ['pillar', 'srv', 'files/etc/salt', 'api']
+RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
+RPM_CLI_CONTENT_PATHS = [
+    'cli/utils',
+    'files/etc/salt',
+    'files/etc/modprobe.d',
+    'files/etc/yum.repos.d'
+]
 PRVSNRUSERS_GROUP = 'prvsnrusers'
 
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
@@ -85,7 +91,15 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             mlocalhost.repo,
-            'cli/utils files/etc/modprobe.d files/etc/sysconfig/network-scripts files/etc/yum.repos.d',
+            ' '.join(RPM_CLI_CONTENT_PATHS),
+            ' -o '.join(excluded_dirs)
+        )
+    ).split()
+
+    expected_ssh = mlocalhost.check_output(
+        "cd {} && find .ssh \\( {} \\) -prune -o -type f -printf '%p\n'"
+        .format(
+            mlocalhost.repo / 'files',
             ' -o '.join(excluded_dirs)
         )
     ).split()
@@ -94,13 +108,29 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             h.PRVSNR_REPO_INSTALL_DIR,
-            'cli/utils files/etc/modprobe.d files/etc/sysconfig/network-scripts files/etc/yum.repos.d',
+            ' '.join(RPM_CLI_CONTENT_PATHS),
             ' -o '.join(['-name "__pycache__"'])
         )
     ).split()
 
+    installed_ssh = mhost.check_output(
+        "cd /root && find .ssh \\( {} \\) -prune -o -type f -printf '%p\n'"
+        .format(
+            ' -o '.join(['-name "__pycache__"'])
+        )
+    ).split()
+
+    try:
+        del installed_ssh[installed_ssh.index('.ssh/authorized_keys_test')]
+    except ValueError:
+        pass
+
+    expected += expected_ssh
+    installed += installed_ssh
+
     diff_expected = set(expected) - set(installed)
     diff_installed = set(installed) - set(expected)
+
     assert not diff_expected
     assert not diff_installed
 

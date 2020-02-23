@@ -1221,7 +1221,7 @@ EOF
 }
 
 
-#   accept_salt_keys [<minion-ids> [<hostspec> [<ssh-config> [<sudo> [<timeout>]]]]]
+#   accept_salt_key [<minion-ids> [<hostspec> [<ssh-config> [<sudo> [<timeout>]]]]]
 #
 #   Makes keys for the specified list of minions accepted by the salt master.
 #

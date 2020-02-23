@@ -1018,7 +1018,7 @@ def test_functions_configure_salt_master_host(
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.eos_spec({'': {'minion_id': 'some-minion-id', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_functions_accept_salt_keys_singlenode(
+def test_functions_accept_salt_key_singlenode(
     run_script, mhost, mlocalhost,
     ssh_config, remote, project_path,
     install_provisioner
@@ -1037,7 +1037,7 @@ def test_functions_accept_salt_keys_singlenode(
     assert res.rc == 0
 
     script = """
-        accept_salt_keys {} {} {} {}
+        accept_salt_key {} {} {} {}
     """.format(minion_id, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1058,7 +1058,7 @@ def test_functions_accept_salt_keys_singlenode(
     #    - more cases to cover: already rejected, denied
     # check how it works for already accepted key
     script = """
-        accept_salt_keys {} {} {} {}
+        accept_salt_key {} {} {} {}
     """.format(minion_id, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1073,7 +1073,7 @@ def test_functions_accept_salt_keys_singlenode(
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_functions_accept_salt_keys_cluster(
+def test_functions_accept_salt_key_cluster(
     run_script, mhosteosnode1, mhosteosnode2,
     mlocalhost, ssh_config, remote, project_path,
     install_provisioner, eos_spec
@@ -1107,15 +1107,14 @@ def test_functions_accept_salt_keys_cluster(
     hostspec = mhosteosnode1.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
 
-    script = """
-        accept_salt_keys "{} {}" {} {} {}
-    """.format(
-        eosnode1_minion_id, eosnode2_minion_id,
-        hostspec, ssh_config, with_sudo
-    )
-
-    res = run_script(script, mhost=(mlocalhost if remote else mhosteosnode1))
-    assert res.rc == 0
+    for _id in (eosnode1_minion_id, eosnode2_minion_id):
+        script = """
+            accept_salt_key {} {} {} {}
+        """.format(
+            _id, hostspec, ssh_config, with_sudo
+        )
+        res = run_script(script, mhost=(mlocalhost if remote else mhosteosnode1))
+        assert res.rc == 0
 
     output = mhosteosnode1.check_output("salt-key --out json --list all")
     output = json.loads(output)

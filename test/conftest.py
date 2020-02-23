@@ -152,6 +152,8 @@ class HostMeta:
             local_path = local_path.resolve()
             local_path.relative_to(tmpdir_local)  # ensure that it's inside tmpdir
 
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+
         h.localhost.check_output(
             "scp -r -F {} {}:{} {}".format(
                 self.ssh_config,
@@ -165,6 +167,11 @@ class HostMeta:
     def copy_to_host(self, local_path, host_path=None):
         if host_path is None:
             host_path = self.tmpdir / local_path.name
+
+        self.host.check_output(
+            "mkdir -p {}".format(host_path.parent)
+        )
+
         h.localhost.check_output(
             "scp -r -F {} {} {}:{}".format(
                 self.ssh_config,
@@ -1101,7 +1108,7 @@ def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in eos_hosts.items():
-        eos_primary_mhost.check_output(". {} && accept_salt_keys '{}'".format(
+        eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
             cli_dir / 'functions.sh', host_spec['minion_id'])
         )
 
