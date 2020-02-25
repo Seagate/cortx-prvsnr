@@ -30,7 +30,7 @@ Setup mgmt0 bonding:
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['mgmt_nw']['ipaddr'] }}
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: pillar['cluster'][node]['network']['data_nw']['netmask']
+    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
 {%- else %}
     - proto: dhcp

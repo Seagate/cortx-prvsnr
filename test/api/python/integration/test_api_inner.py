@@ -141,6 +141,16 @@ def test_network_configuration():
         targets=minion_id
     )
 
+    api_call(
+        'set_network',
+        primary_hostname='host1', primary_floating_ip='1.2.3.4', primary_gateway_ip='1.2.3.4',
+        primary_mgmt_ip='1.2.3.4', primary_mgmt_netmask='255.255.255.0', primary_data_ip='1.2.3.4',
+        primary_data_netmask='255.255.255.0',
+        slave_hostname='host2', slave_floating_ip='1.2.3.4', slave_gateway_ip='1.2.3.4',
+        slave_mgmt_ip='1.2.3.4', slave_mgmt_netmask='255.255.255.0', slave_data_ip='1.2.3.4',
+        slave_data_netmask='255.255.255.0',
+    )
+
     '''
     pillar = api_call('pillar_get')
 
