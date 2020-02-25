@@ -3,7 +3,12 @@
 {% else %}
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
 {%- endif -%}
-iface: {{ data_if }} 
+interface: {{ data_if }}
+{% if salt['cmd.run']('lspci -d 15b3:1017:0200') %}
+net-type: o2ib
+{% else %}
+net-type: tcp
+{% endif %}
 ip1: {{ pillar['cluster']['eosnode-1']['network']['floating_ip'] }}
 ip2: {{ pillar['cluster']['eosnode-2']['network']['floating_ip'] }}
 left-node: {{ pillar['cluster']['eosnode-1']['hostname'] }}
