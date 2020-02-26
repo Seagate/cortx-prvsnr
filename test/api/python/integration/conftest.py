@@ -1,8 +1,13 @@
 import pytest
+from pathlib import Path
 
 from .helper import install_provisioner_api
 
-collect_ignore = ["test_api_inner.py", "test_pillar_targets_inner.py"]
+collect_ignore = [
+    'test_api_inner.py',
+    'test_pillar_targets_inner.py',
+    'test_rollback_inner.py'
+]
 
 
 @pytest.fixture(scope='module')
@@ -16,20 +21,24 @@ def env_provider():
 
 
 @pytest.fixture
-def test_path():
-    raise NotImplementedError("define 'test_path' fixture")
+def test_path(request):
+    return str(request.fspath)
 
 
 @pytest.fixture
-def prepare_test_env(hosts_meta, test_path):
+def prepare_test_env(hosts_meta, project_path, test_path):
+    test_path = Path(str(test_path)).relative_to(project_path)
+    inner_test_src = test_path.parent / "{}_inner.py".format(test_path.stem)
+
     # TODO limit to only necessary ones
     for mhost in hosts_meta.values():
         install_provisioner_api(mhost)
         mhost.check_output("pip3 install pytest==5.1.1")  # TODO use requirements or setup.py
         inner_tests_path = mhost.tmpdir / 'test.py'
         mhost.check_output("cp -f {} {}".format(
-            mhost.repo / test_path, inner_tests_path)
-        )
+            mhost.repo / inner_test_src,
+            inner_tests_path
+        ))
         return inner_tests_path
 
 

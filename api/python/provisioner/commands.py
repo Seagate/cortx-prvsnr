@@ -7,7 +7,7 @@ import logging
 from .config import ALL_MINIONS
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
-from .salt import StatesApplier, State
+from .salt import StatesApplier, State, YumRollbackManager
 from provisioner import inputs
 
 _mod = sys.modules[__name__]
@@ -117,15 +117,32 @@ class EOSUpdate:
     def from_spec(cls):
         return cls()
 
-    def run(self, targets: str = ALL_MINIONS):
-        # TODO
-        #  - rollback
-        #  - update for provisioner itself
-        #  - update for other sw ???
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
-            state_name = "components.{}.update".format(component)
-            logger.info("Applying state {}".format(state_name))
-            StatesApplier.apply([state_name])
+    def run(self, targets):
+        # TODO:
+        #   - create a state instead
+        #   - what about apt and other non-yum pkd managers
+        #   (downgrade is another more generic option but it requires
+        #    exploration of depednecies that are updated)
+        #   - will fail for ALL_MINIONS and any other multi minion targeting
+        #     expression
+        # TODO check that targets matches only one minio, e.g 'test.ping'
+
+        with YumRollbackManager(targets, multiple_targets_ok=False):
+            # TODO
+            #  - update for provisioner itself
+            #  - update for other sw ???
+            for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
+                state_name = "components.{}.update".format(component)
+                logger.info(
+                    "Applying state {} on {}".format(state_name, targets)
+                )
+                try:
+                    StatesApplier.apply([state_name])
+                except Exception:
+                    logger.exception(
+                        "Failed to update {} on {}".format(component, targets)
+                    )
+                    raise
 
 
 commands = {}

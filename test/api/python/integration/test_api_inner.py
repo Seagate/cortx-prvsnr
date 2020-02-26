@@ -315,11 +315,22 @@ def test_eosupdate_repo_configuration():
             check_unmounted(mount_dir)
 
 
+def test_eos_update_vim():
+    api_call(
+        'set_eosupdate_repo',
+        '1.2.3',
+        source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',
+        targets=minion_id
+    )
+
+    api_call('eos_update', targets=minion_id)
+
+
 # TODO for now just tests that repo is installed and yum able to start installation (which will definitely fail)
 #   - install eos stack first from some release
 #   - set some newer release
 #   - call udpate
-def test_eos_update():
+def test_eos_update_eos_sw():
     api_call(
         'set_eosupdate_repo',
         '1.2.3',

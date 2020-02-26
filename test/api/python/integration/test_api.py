@@ -14,11 +14,6 @@ def api_type(request):
 
 
 @pytest.fixture
-def test_path():
-    return 'test/api/python/integration/test_api_inner.py'
-
-
-@pytest.fixture
 def run_test(request, api_type, run_test, eos_hosts):
     def f(*args, env=None, **kwargs):
         if env is None:
@@ -144,7 +139,17 @@ def test_eosupdate_repo_configuration(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_eos_update(
+def test_eos_update_vim(
+    mhosteosnode1, run_test
+):
+    mhosteosnode1.check_output('yum install -y vim')
+    run_test(mhosteosnode1)
+
+
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_eos_update_eos_sw(
     mhosteosnode1, run_test
 ):
     run_test(mhosteosnode1)
