@@ -8,6 +8,11 @@
     - enabled: True
     - type: slave
     - master: data0
+    - requires_in:
+      - Setup data0 bonding
+    - watch_in:
+      - Shutdown {{ iface }}
+
 
 Shutdown {{ iface }}:
   cmd.run:
