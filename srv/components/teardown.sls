@@ -16,3 +16,5 @@ include:
   - components.misc_pkgs.kibana.teardown
   - components.misc_pkgs.elasticsearch.teardown
   - components.misc_pkgs.build_ssl_cert_rpms.teardown
+  - components.system.storage.teardown
+  - components.system.teardown

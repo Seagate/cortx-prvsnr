@@ -1,7 +1,9 @@
 include:
   - components.system.logrotate.teardown
+  - components.system.ntp.teardown
+  - components.system.firewall.teardwon
 
-install_base_packages:
+Remove_base_packages:
   pkg.absent:
     - pkgs:
       - python2-pip
