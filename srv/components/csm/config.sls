@@ -1,9 +1,12 @@
-include:
-  - components.misc_pkgs.elasticsearch
-  - components.misc_pkgs.statsd
-
-
 #CSM Configuration and Initialization
-Initialize CSM setup:
+Stage - Post Install CSM:
   cmd.run:
-    - name: csm_setup init -f
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:post_install')
+
+Stage - Config CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:config')
+
+Stage - Init CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:init')

@@ -1,7 +1,11 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
+Stage - Reset CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:reset')
 
-include:
-  - components.csm.stop
+Remove statsd utils:
+  pkg.purged:
+    - name: stats_utils
 
 Remove csm package:
   pkg.purged:
@@ -9,31 +13,9 @@ Remove csm package:
       - eos-csm_agent
       - eos-csm_web
 
-Remove CSM configs:
-  file.absent:
-    - name: /etc/csm
-
 Delete CSM yum repo:
   pkgrepo.absent:
     - name: {{ defaults.csm.repo.id }}
-
-Remove stats collector:
-  file.absent:
-    - name: /opt/statsd/csm-stats-collector
-
-Remove Symlink:
-  file.absent:
-    - name: /usr/bin/csm-stats-collector
-    
-Remove crontab:
-  cron.absent:
-    - name: /opt/statsd/csm-stats-collector 10
-    - user: root
-    - identifier: csm-stats-collector
-
-Remove statsd utils:
-  pkg.purged:
-    - name: stats-utils
 
 Delete csm checkpoint flag:
   file.absent:
