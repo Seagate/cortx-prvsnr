@@ -133,9 +133,6 @@ class EOSUpdate:
             #  - update for other sw ???
             for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
                 state_name = "components.{}.update".format(component)
-                logger.info(
-                    "Applying state {} on {}".format(state_name, targets)
-                )
                 try:
                     StatesApplier.apply([state_name])
                 except Exception:
