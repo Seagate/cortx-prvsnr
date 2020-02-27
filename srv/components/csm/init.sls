@@ -7,12 +7,11 @@ include:
   - components.misc_pkgs.nodejs
   # HA component
   - components.ha.corosync-pacemaker
-  # CSM Installation
+  # CSM Component
   - components.csm.prepare
   - components.csm.install
   - components.csm.config
   - components.csm.start
-  - components.csm.housekeeping
   - components.csm.sanity_check
 
 Generate csm checkpoint flag:
