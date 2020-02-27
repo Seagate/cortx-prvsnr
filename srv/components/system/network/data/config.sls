@@ -8,6 +8,11 @@
     - enabled: True
     - type: slave
     - master: data0
+    - requires_in:
+      - Setup data0 bonding
+    - watch_in:
+      - Shutdown {{ iface }}
+
 
 Shutdown {{ iface }}:
   cmd.run:
@@ -31,7 +36,7 @@ Setup data0 bonding:
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: pillar['cluster'][node]['network']['data_nw']['netmask']
+    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
 {%- else %}
     - proto: dhcp

@@ -14,7 +14,7 @@ nodes:
 {% endif %}
     m0_servers:
       - runs_confd: true
-      - io_disks: 
+      - io_disks:
           # XXX Hare should support lists of disks, not only globs
           path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
     m0_clients:
@@ -24,5 +24,5 @@ nodes:
 pools:
   - name: the pool
     disks: all
-    data_units: 1 
+    data_units: 1
     parity_units: 0
