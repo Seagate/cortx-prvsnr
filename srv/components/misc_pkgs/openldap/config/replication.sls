@@ -1,26 +1,26 @@
-Open port389 for slapd:
-  iptables.insert:
-    - position: 1
-    - table: filter
-    - chain: INPUT
-    - jump: ACCEPT
-    - protocol: tcp
-    - match: tcp
-    - dport: 389
-    - family: ipv4
-    - save: True
+# Open port389 for slapd:
+#   iptables.insert:
+#     - position: 1
+#     - table: filter
+#     - chain: INPUT
+#     - jump: ACCEPT
+#     - protocol: tcp
+#     - match: tcp
+#     - dport: 389
+#     - family: ipv4
+#     - save: True
 
-Open port636 for slapd:
-  iptables.insert:
-    - position: 1
-    - table: filter
-    - chain: INPUT
-    - jump: ACCEPT
-    - protocol: tcp
-    - match: tcp
-    - dport: 636
-    - family: ipv4
-    - save: True
+# Open port636 for slapd:
+#   iptables.insert:
+#     - position: 1
+#     - table: filter
+#     - chain: INPUT
+#     - jump: ACCEPT
+#     - protocol: tcp
+#     - match: tcp
+#     - dport: 636
+#     - family: ipv4
+#     - save: True
 
 Configure openldap syncprov_mod:
   cmd.run:

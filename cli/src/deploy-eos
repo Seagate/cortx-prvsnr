@@ -20,6 +20,59 @@ $base_options_usage
 "
 }
 
+
+function run_states {
+    local states=${@}
+
+    # apply states
+    if [[ "$singlenode" == true ]]; then
+        # TODO use salt orchestration
+        for state in ${states[@]}; do
+            l_info "Applying 'components.$state'"
+            $cmd salt eosnode-1 state.apply components.$state $salt_opts
+
+            sleep 2     # Mindfulness break
+        done
+    else
+        for state in ${states[@]}; do
+            if [[ "$state" == "ha.corosync-pacemaker" ]]; then
+                    # TODO: Remove this sequence dependency
+                    #       Take the cluster start part out of the component config
+                #       and do it as part of bootstra-eos script similar to the
+                #       'hctl bootstrap' command
+
+                # Execute on eosnode-2 to be followed on eosnode-1.
+                l_info "Applying 'components.$state' for eosnode-2"
+                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
+                l_info "Applying 'components.$state' for eosnode-1"
+                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
+            elif if [[ "$state" == "misc_pkgs.openldap" ]]; then
+                # Execute on eosnode-2 to be followed on eosnode-1.
+                l_info "Applying 'components.$state' for eosnode-2"
+                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
+                l_info "Applying 'components.$state' for eosnode-1"
+                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
+            else
+                l_info "Applying 'components.$state' for both nodes"
+                $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+                sleep 2     # Mindfulness break
+            fi
+        done
+
+        # EES ha provisioning
+        #l_info "Provision EES HA cluster"
+        #for state in ees_ha; do
+        #    l_info "Applying 'components.$state' for both nodes"
+        #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+        #done
+    fi
+}
+
+
 parse_args '' '' '' '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -37,59 +90,53 @@ fi
 l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
-states=(
-# states to be applied in desired sequence
-    "system"
-    "system.storage"
-    "misc_pkgs.build_ssl_cert_rpms"
-    "ha.corosync-pacemaker"
-    "misc_pkgs.rsyslog"
-    "ha.haproxy"
-    "misc_pkgs.elasticsearch"
-    "misc_pkgs.kibana"
-    "misc_pkgs.nodejs"
-    "misc_pkgs.openldap"
-    "misc_pkgs.rabbitmq"
-    "misc_pkgs.statsd"
-    "misc_pkgs.lustre"
-    "eoscore"
-    "s3server"
-    "hare"
-    "sspl"
-    "csm"
-)
-# apply states
-if [[ "$singlenode" == true ]]; then
-    # TODO use salt orchestration
-    for state in "${states[@]}"; do
-        l_info "Applying 'components.$state'"
-        $cmd salt eosnode-1 state.apply components.$state $salt_opts
-    done
-else
-    for state in "${states[@]}"; do
-	if [[ "$state" == "ha.corosync-pacemaker" ]]; then
-            # TODO: Remove this sequence dependency
-            #       Take the cluster start part out of the component config
-	    #       and do it as part of bootstra-eos script similar to the
-	    #       'hctl bootstrap' command
+if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
+    prereq_states=(
+    # states to be applied in desired sequence
+        "system"
+        "system.storage"
+        "misc_pkgs.build_ssl_cert_rpms"
+        "ha.corosync-pacemaker"
+        "misc_pkgs.rsyslog"
+        "ha.haproxy"
+        "misc_pkgs.elasticsearch"
+        "misc_pkgs.kibana"
+        "misc_pkgs.nodejs"
+        "misc_pkgs.openldap"
+        "misc_pkgs.rabbitmq"
+        "misc_pkgs.statsd"
+        "misc_pkgs.lustre"
+    )
+    run_states "${prereq_states[@]}"
 
-	    # Execute on eosnode-2 to be followed on eosnode-1.
-	    l_info "Applying 'components.$state' for eosnode-2"
-	    $cmd salt eosnode-2 state.apply components.$state  $salt_opts
-	    l_info "Applying 'components.$state' for eosnode-1"
-	    $cmd salt eosnode-1 state.apply components.$state  $salt_opts
-        else
-            l_info "Applying 'components.$state' for both nodes"
-            $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-	fi
-    done
+    sleep 2
 
-    # EES ha provisioning
-    #l_info "Provision EES HA cluster"
-    #for state in ees_ha; do
-    #    l_info "Applying 'components.$state' for both nodes"
-    #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-    #done
+    # Reboot only if mellanox diver is installed
+    if [[ $(rpm -qi mlnx-ofed-all 1>/dev/null) -eq 0 ]]
+    then
+        salt "eosnode-2" system.reboot --async
+        salt "eosnode-1" system.reboot --async
+    fi
 fi
+
+if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
+    iopath_states=(
+    # states to be applied in desired sequence
+        "eoscore"
+        "s3server"
+        "hare"
+    )
+    run_states  "${iopath_states[@]}"
+fi
+
+if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.csm ]; then
+    controlpath_states=(
+    # states to be applied in desired sequence
+        "sspl"
+        "csm"
+    )
+    run_states "${controlpath_states[@]}"
+fi
+
 
 l_info "Done"
