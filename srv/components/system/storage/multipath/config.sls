@@ -34,23 +34,25 @@ Start multipath service:
     - watch:
       - file: Copy multipath config
 
-{%- if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
 {%- for node_id in pillar['cluster']['node_list'] -%}
 {%- if not pillar['cluster'][node_id]['is_primary'] %}
 Copy multipath bindings to non-primary:
   cmd.run:
     - name: scp /etc/multipath/bindings {{ pillar['cluster'][node_id]['hostname'] }}:/etc/multipath/bindings
-{% endif %}
+{%- endif %}
 {% endfor %}
-{% endif %}
+{%- endif %}
 
 Restart service multipath:
   module.run:
     - service.restart:
       - multipathd
 
+{% if pillar['cluster'][grains['id']]['is_primary'] %}
 Update cluster.sls pillar:
   module.run:
     - cluster.storage_device_config: []
+{% endif %}
 
 # End Setup multipath
