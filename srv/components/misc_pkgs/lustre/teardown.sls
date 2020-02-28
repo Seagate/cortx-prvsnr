@@ -15,3 +15,7 @@ Delete Lnet config file:
 Delete Lustre yum repo:
   pkgrepo.absent:
     - name: {{ defaults.lustre.repo.id }}
+
+Remove lustre checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.lustre
