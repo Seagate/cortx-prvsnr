@@ -1,4 +1,4 @@
 elasticsearch:
   cluster_name: elasticsearch_cluster 
-  network_host: 127.0.0.1
+  network_host: 0.0.0.0
   http_port: 9200
