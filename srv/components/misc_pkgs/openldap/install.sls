@@ -28,18 +28,36 @@ Backup slapd config file:
     - force: True
     - preserve: True
 
+
+{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) -%}
 Generate Slapdpasswds:
    cmd.run:
      - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap_gen_passwd.sh
+{% else -%}
+{% for node_id in pillar['cluster']['node_list'] %}
+{%- if pillar['cluster'][node_id]['is_primary'] %}
+SCP iam-admin.ldif:
+  cmd.run:
+    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+
+SCP cfg_ldap.ldif:
+  cmd.run:
+    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+{%- endif %}
+{% endfor %}
+{%- endif %}
+
 
 Stop slapd:
   service.dead:
     - name: slapd
 
-{% if 'mdb' in pillar['openldap']['backend_db'] -%}
+
+{% if 'mdb' in pillar['openldap']['backend_db'] %}
 Clean up old mdb ldiff file:
   file.absent:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
+
 
 Copy mdb ldiff file, if not present:
   file.copy:
@@ -48,11 +66,10 @@ Copy mdb ldiff file, if not present:
     - force: True
     - user: ldap
     - group: ldap
-    - require:
-      - Generate Slapdpasswds 
     - watch_in:
       - service: slapd
-{%- endif %}
+{% endif %}
+
 
 slapd:
   service.running:
