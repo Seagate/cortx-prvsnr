@@ -15,3 +15,7 @@ Delete Lnet config file:
 Delete Lustre yum repo:
   pkgrepo.absent:
     - name: {{ defaults.lustre.repo.id }}
+
+Delete Lustre commons repo:
+  pkgrepo.absent:
+    - name: {{ defaults.commons.repo.id }}

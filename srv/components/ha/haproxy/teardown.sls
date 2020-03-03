@@ -1,11 +1,11 @@
-Disable Slapd:
+Disable rsyslog:
   service.dead:
     - name: rsyslog
     - enable: False
 
 Remove haproxy config:
   file.absent:
-    - name: /etc/haproxy/haproxy.cfg
+    - name: /etc/haproxy
 
 Remove haproxy 503 error code to http file:
   file.absent:
@@ -35,7 +35,7 @@ Remove user haproxy:
   user.absent:
     - name: haproxy
     - purge: True
-    -  force: True
+    - force: True
 
 Reset selinux bool for haproxy:
   selinux.boolean:

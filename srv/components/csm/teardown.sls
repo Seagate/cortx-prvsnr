@@ -17,6 +17,10 @@ Delete CSM yum repo:
   pkgrepo.absent:
     - name: {{ defaults.csm.repo.id }}
 
+Delete CSM uploads repo:
+  pkgrepo.absent:
+    - name: {{ defaults.csm.uploads_repo.id }}
+
 Remove stats collector:
   file.absent:
     - name: /opt/statsd/csm-stats-collector
@@ -33,7 +37,11 @@ Remove crontab:
 
 Remove statsd utils:
   pkg.purged:
-    - name: stats-utils
+    - name: stats_utils
+
+Remove /opt/statsd-utils:
+  file.absent:
+    - name: /opt/statsd-utils
 
 Delete csm checkpoint flag:
   file.absent:

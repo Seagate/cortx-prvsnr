@@ -13,3 +13,7 @@ Disable firewall:
   service.dead:
     - name: firewalld
     - enable: False
+
+Remove firewall:
+  pkg.purged:
+    - name: firewall
