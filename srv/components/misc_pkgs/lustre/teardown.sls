@@ -19,3 +19,7 @@ Delete Lustre yum repo:
 Remove lustre checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.lustre
+
+Delete Lustre commons repo:
+  pkgrepo.absent:
+    - name: {{ defaults.commons.repo.id }}

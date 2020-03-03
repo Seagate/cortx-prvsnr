@@ -13,5 +13,11 @@ Remove management-zone:
 #TODO: 1. Use salt module to delete zone, if available.
 #      2. Reset other rules set in components.system.firewall.config
 
-include:
-  - components.system.firewall.stop
+Disable firewall:
+  service.dead:
+    - name: firewalld
+    - enable: False
+
+Remove firewall:
+  pkg.purged:
+    - name: firewall
