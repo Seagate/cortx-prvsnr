@@ -23,12 +23,22 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
+# Temporary patch to avoid regressions
+Create ha user:
+  user.absent:
+    - name: {{ pillar['corosync-pacemaker']['user'] }}
+    - purge: True
+    - force: True
+
 Create ha user:
   user.present:
     - name: {{ pillar['corosync-pacemaker']['user'] }}
     - password: {{ pillar['corosync-pacemaker']['password'] }}               # To be set using 'openssl passwd -1'
     - hash_password: True
-    - createhome: True
+    # Failsave to avoid home directory creation uncer /home
+    - home: /opt/seagate/eos/{{ pillar['corosync-pacemaker']['user'] }}      # Has no effect since createHome is False
+    - createhome: False
+    - shell: /sbin/nologin
     
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Authorize nodes:
