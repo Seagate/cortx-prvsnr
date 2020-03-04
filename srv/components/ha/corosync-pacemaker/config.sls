@@ -24,7 +24,7 @@ Start pcsd service:
     - enable: True
 
 # Temporary patch to avoid regressions
-Create ha user:
+Remove ha user:
   user.absent:
     - name: {{ pillar['corosync-pacemaker']['user'] }}
     - purge: True
