@@ -57,10 +57,6 @@ def _set_logging(
 
 def _parse_args():
     parser_common = argparse.ArgumentParser(add_help=False)
-    parser_common.add_argument(
-        "--targets", metavar="STR", default="*",
-        help="command's host targets"
-    )
 
     auth_group = parser_common.add_argument_group('authentication')
     auth_group.add_argument(
@@ -81,7 +77,7 @@ def _parse_args():
 
     log_group = parser_common.add_argument_group('output & logging')
     log_group.add_argument(
-        "--output", default="yaml", choices=['json', 'yaml'],
+        "--output", default="plain", choices=['plain', 'json', 'yaml'],
         help="output format"
     )
     log_group.add_argument(
@@ -123,6 +119,7 @@ def _parse_args():
             help='{} help'.format(cmd_name), parents=[parser_common],
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
+        cmd.fill_parser(subparser)
         cmd.params_type.fill_parser(subparser)
 
     kwargs = vars(parser.parse_args())
@@ -132,6 +129,71 @@ def _parse_args():
     cmd = commands[cmd]
     args = kwargs.pop('args', [])
     return cmd, args, kwargs
+
+
+def _output(data: str):
+    print(data)
+
+
+def _prepare_res(ret=None, exc=None):
+    return {
+        'ret': ret
+    } if exc is None else {
+        'exc': {
+            'type': type(exc).__name__,
+            'args': list(exc.args)
+        }
+    }
+
+
+def _prepare_output(output_type, res):
+    if output_type == 'plain':  # plain
+        return str(res)
+    elif output_type == 'yaml':
+        return yaml.dump(res, default_flow_style=False, canonical=False)
+    elif output_type == 'json':
+        return json.dumps(res, sort_keys=True, indent=4)
+    else:
+        ValueError('Unexpected output type {}'.format(output_type))
+
+
+def _run_cmd(cmd, output, *args, **kwargs):
+    '''
+    return format:
+
+    {
+        ret: None or <command return>
+        exc: None or {
+            type:
+            args:
+            kwargs:
+        }
+    }
+
+    '''
+
+    ret = {}
+    exc = None
+
+    try:
+        ret = cmd.run(*args, **kwargs)
+    except Exception as _exc:
+        exc = _exc
+    else:
+        if ret is None:
+            ret = ''
+    finally:
+        if output == 'plain':
+            if exc:
+                raise exc
+            else:
+                _output(str(ret))
+        else:
+            res = _prepare_res(ret, exc)
+            _output(_prepare_output(output, res))
+
+    if exc:
+        sys.exit(1)
 
 
 def main():
@@ -174,13 +236,7 @@ def main():
         .format(auth_args, log_args, cmd, args, kwargs)
     )
 
-    res = cmd.run(*args, **kwargs)
-
-    if res:
-        if log_args.output == 'yaml':
-            print(yaml.dump(res, default_flow_style=False, canonical=False))
-        else:  # json
-            print(json.dumps(res, sort_keys=True, indent=4))
+    _run_cmd(cmd, log_args.output, *args, **kwargs)
 
 
 if __name__ == "__main__":

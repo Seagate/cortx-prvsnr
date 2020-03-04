@@ -19,7 +19,7 @@ class Pillar(object):
                 self.__pillar_path = os.path.join('/','opt', 'seagate', 'eos-prvsnr', "pillar")
             else:
                 raise Exception("ERROR: eos-prvsnr installation is missing in: /opt/seagate/eos-prvsnr")
-        #Path to pillar file 
+        #Path to pillar file
         self.__pillar_path = os.path.join(self.__pillar_path, 'components', 'system.sls')
 
     def __enter__(self):

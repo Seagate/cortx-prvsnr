@@ -173,6 +173,7 @@ def test_setup_provisioner_cluster(
 
     if repo_src != 'rpm':
         install_salt_config_files(mhosteosnode1)
+        install_salt_config_files(mhosteosnode2)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --repo-src {}".format(
@@ -201,6 +202,7 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     with_sudo = '' # TODO
 
     install_salt_config_files(mhosteosnode1)
+    install_salt_config_files(mhosteosnode2)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(

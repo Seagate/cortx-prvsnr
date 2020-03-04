@@ -1,6 +1,5 @@
 import sys
 
-from .config import ALL_MINIONS
 from .salt import auth_init as _auth_init
 from .api_spec import api_spec
 from .commands import commands
@@ -21,9 +20,9 @@ def auth_init(username, password, eauth='pam'):
     return _auth_init(username, password, eauth=eauth)
 
 
-def run(command: str, *args, targets: str = ALL_MINIONS, **kwargs):
+def run(command: str, *args, **kwargs):
     cmd = commands[command]
-    return cmd.run(*args, targets=targets, **kwargs)
+    return cmd.run(*args, **kwargs)
 
 
 def _api_wrapper(fun):

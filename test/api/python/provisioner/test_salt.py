@@ -41,6 +41,7 @@ def test_salt_pillar_refresh(monkeypatch):
         pillar_refresh_args.append(
             (args, kwargs)
         )
+        return {'some-minion': 'some-data'}
 
     monkeypatch.setattr(salt, 'LocalClient', generate_mock_class(cmd))
 
@@ -64,7 +65,7 @@ def test_salt_states_apply(monkeypatch):
 
     monkeypatch.setattr(salt, 'LocalClient', generate_mock_class(cmd))
 
-    states_apply_res = None
+    states_apply_res = {'some-node': 'some-res'}
     salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
     assert states_apply_args == [
         (('aaa', 'state.apply', ['state1']), {'full_return': True}),

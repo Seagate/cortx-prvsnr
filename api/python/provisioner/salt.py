@@ -4,7 +4,7 @@ from typing import List, Union, Dict
 import logging
 
 from .config import ALL_MINIONS
-from .errors import SaltError
+from .errors import SaltError, SaltEmptyReturnError
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def _salt_client_cmd(*args, **kwargs):
         raise SaltError(repr(exc)) from exc
 
     if not res:
-        raise SaltError('salt returned nothing')
+        raise SaltEmptyReturnError
 
     # TODO is it a valid case actually ?
     if type(res) is not dict:
@@ -81,11 +81,16 @@ def _salt_client_cmd(*args, **kwargs):
     results = {}
     fails = {}
     for target, job_result in res.items():
-        ret = job_result['ret']
-        results[target] = ret
+        ret = job_result.get('ret') if type(job_result) is dict else None
+
+        if ret is None:
+            results[target] = job_result
+            continue
+        else:
+            results[target] = ret
 
         _fails = {}
-        if job_result['retcode'] != 0:
+        if job_result.get('retcode') != 0:
             salt_fun = args[1]
             if str(salt_fun).startswith('state.') and type(ret) is dict:
                 for task, tresult in ret.items():
@@ -155,8 +160,6 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
                     state, targets, res
                 )
             )
-        except SaltError:
-            raise
         except Exception as exc:
             raise SaltError(
                 "Failed to apply state '{}': {}"
@@ -190,12 +193,7 @@ class YumRollbackManager:
             targets=self.targets
         )
 
-        if not len(self.last_txn_ids):
-            raise ValueError(
-                "No targets matched for '{}'"
-                .format(self.targets)
-            )
-        elif (
+        if (
             not self.multiple_targets_ok
             and (len(self.last_txn_ids) > 1)
         ):
@@ -214,7 +212,7 @@ class YumRollbackManager:
         for target, txn_id in self._last_txn_ids.items():
             logger.info("Starting rollback on target {}".format(target))
             cmd_run(
-                "yum history rollback {}".format(txn_id),
+                "yum history rollback -y {}".format(txn_id),
                 targets=target
             )
             logger.info("Rollback on target {} is completed".format(target))

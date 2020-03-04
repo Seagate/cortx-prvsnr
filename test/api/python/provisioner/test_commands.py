@@ -70,9 +70,20 @@ def test_set_from_spec():
 def test_set_run(monkeypatch, some_param_gr):
     pre_states = [State('pre')]
     post_states = [State('post')]
-    set_cmd = commands.Set(some_param_gr, pre_states, post_states)
 
-    input_param = some_param_gr('new-value1', 'new-value2')
+    @attr.s(auto_attribs=True)
+    class SomeParamGroup(some_param_gr):
+        attr3: str = inputs.ParamGroupInputBase._attr_ib(
+            some_param_gr._param_group, default=''
+        )
+
+        @attr3.validator
+        def _check_attr3(self, attribute, value):
+            if type(value) is not str:
+                raise TypeError('attr3 should be str')
+
+    set_cmd = commands.Set(SomeParamGroup, pre_states, post_states)
+    input_param = SomeParamGroup('new-value1', 'new-value2')
 
     calls = []
 
@@ -115,6 +126,17 @@ def test_set_run(monkeypatch, some_param_gr):
     monkeypatch.setattr(
         commands, 'StatesApplier', StatesApplier
     )
+
+    # dry run
+    #   performs validation
+    with pytest.raises(TypeError) as excinfo:
+        set_cmd.run(1, 2, 3, dry_run=True)
+    assert str(excinfo.value) == 'attr3 should be str'
+    assert not calls
+
+    #   performs validation
+    set_cmd.run(input_param, dry_run=True)
+    assert not calls
 
     # happy path
     set_cmd.run(input_param)
@@ -170,13 +192,43 @@ def test_eosupdate_run(monkeypatch):
         def apply(*args, **kwargs):
             calls.append((StatesApplier.apply, args, kwargs))
 
+    class YumRollbackManager:
+        def __init__(self, *args, **kwargs):
+            calls.append((YumRollbackManager.__init__, args, kwargs))
+
+        def __enter__(self):
+            calls.append((YumRollbackManager.__enter__,))
+
+        def __exit__(self, *args, **kwargs):
+            calls.append((YumRollbackManager.__exit__,))
+
+    @property
+    def last_txn_ids(self):
+        return self._last_txn_ids
+
     monkeypatch.setattr(
         commands, 'StatesApplier', StatesApplier
     )
 
+    monkeypatch.setattr(
+        commands, 'YumRollbackManager', YumRollbackManager
+    )
+
     # happy path
-    eosupdate_cmd.run()
+    eosupdate_cmd.run('some-target')
     assert calls == [
-        (StatesApplier.apply, ("components.{}.update".format(component),), {})
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        (
+            YumRollbackManager.__init__,
+            ('some-target',),
+            {'multiple_targets_ok': True}
+        ),
+        (YumRollbackManager.__enter__,)
+    ] + [
+        (
+            StatesApplier.apply, (
+                ["components.{}.update".format(component)],
+            ), {}
+        ) for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+    ] + [
+        (YumRollbackManager.__exit__,)
     ]

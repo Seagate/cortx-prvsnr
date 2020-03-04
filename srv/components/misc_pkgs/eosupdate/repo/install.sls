@@ -19,4 +19,10 @@ eos_update_repo_added_{{ release }}:
         {% endif %}
     - gpgcheck: 0
 
+
+eos_update_repo_metadata_cleaned_{{ release }}:
+  cmd.run:
+    - name: yum --disablerepo="*" --enablerepo="eos_update_{{ release }}" clean metadata
+
+
 {% endmacro %}

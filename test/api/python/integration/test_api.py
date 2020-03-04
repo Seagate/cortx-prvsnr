@@ -66,7 +66,9 @@ def test_external_auth(
         .format(group, username)
     )
     run_test(mhosteosnode1, username=username, password=password)
-    run_test(mhosteosnode1, curr_user=username, username=username, password=password)
+    run_test(
+        mhosteosnode1, curr_user=username, username=username, password=password
+    )
 
 
 # TODO
@@ -136,14 +138,43 @@ def test_eosupdate_repo_configuration(
     })
 
 
+@pytest.mark.skip(reason="WIP")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_eos_update_vim(
-    mhosteosnode1, run_test
+def test_eosupdate_repo_configuration_for_reinstall(
+    mhosteosnode1, mlocalhost, run_test, rpm_build, request
 ):
-    mhosteosnode1.check_output('yum install -y vim')
-    run_test(mhosteosnode1)
+    repo_dir = '/tmp/repo'
+
+    mhosteosnode1.check_output(
+        "yum install -y {}".format(mhosteosnode1.rpm_prvsnr)
+    )
+
+    test_file_path = 'srv/components/test.sls'
+
+    def mhost_init_cb(mhost):
+        mhost.check_output(
+            'touch {}'.format(mhost.repo / test_file_path)
+        )
+
+    new_rpm = rpm_build(request, mlocalhost.tmpdir, cli=False)
+    new_rpm_remote = mhosteosnode1.copy_to_host(new_rpm)
+
+    mhosteosnode1.check_output(
+        "mkdir -p {repo_dir}"
+        " && cp {rpm_path} {repo_dir}"
+        " && yum install -y createrepo"
+        " && createrepo {repo_dir}"
+        .format(
+            repo_dir=repo_dir,
+            rpm_path=new_rpm_remote
+        )
+    )
+    run_test(mhosteosnode1, env={
+        'TEST_REPO_DIR': repo_dir,
+        'TEST_FILE_PATH': test_file_path
+    })
 
 
 @pytest.mark.timeout(1200)
@@ -162,7 +193,7 @@ def test_pyinstaller_approach(
     mhosteosnode1, tmpdir_function, request
 ):
     # Note. python system libarary dir
-    # python3 -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())'
+    # python3 -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())'  # noqa: E501
 
     import inspect
 

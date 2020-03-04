@@ -102,6 +102,7 @@ def test_eosupdate_repo(
 
         # INSTALL
         # set source for the release
+        # TODO check metadata was cleaned after installation
         update_spec['repos'][release] = (
             "file://{}".format(source) if source is repo_dir else source
         )

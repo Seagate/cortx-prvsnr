@@ -33,7 +33,8 @@ def prepare_test_env(hosts_meta, project_path, test_path):
     # TODO limit to only necessary ones
     for mhost in hosts_meta.values():
         install_provisioner_api(mhost)
-        mhost.check_output("pip3 install pytest==5.1.1")  # TODO use requirements or setup.py
+        # TODO use requirements or setup.py
+        mhost.check_output("pip3 install pytest==5.1.1")
         inner_tests_path = mhost.tmpdir / 'test.py'
         mhost.check_output("cp -f {} {}".format(
             mhost.repo / inner_test_src,
@@ -44,7 +45,10 @@ def prepare_test_env(hosts_meta, project_path, test_path):
 
 @pytest.fixture
 def run_test(request):
-    def f(mhost, curr_user=None, username=None, password=None, expected_exc=None, env=None):
+    def f(
+        mhost, curr_user=None, username=None, password=None,
+        expected_exc=None, env=None
+    ):
         inner_tests_path = request.getfixturevalue('prepare_test_env')
 
         script = (

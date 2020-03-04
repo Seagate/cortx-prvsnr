@@ -2,6 +2,7 @@ import os
 import logging
 import pytest
 import subprocess
+import json
 from pathlib import Path
 
 api_type = os.environ['TEST_API_TYPE']
@@ -17,8 +18,6 @@ def api_call(fun, *args, **kwargs):
         provisioner.set_api(api_type)
         return getattr(provisioner, fun)(*args, **kwargs)
     else:  # cli
-        import json
-
         _input = kwargs.pop('password', None)
         if _input is not None:
             kwargs['password'] = '-'
@@ -29,7 +28,11 @@ def api_call(fun, *args, **kwargs):
 
         cmd = ['provisioner', fun]
         for k, v in kwargs.items():
-            cmd.extend(['--{}'.format(k), str(v)])
+            k = '--{}'.format(k.replace('_', '-'))
+            if type(v) is not bool:
+                cmd.extend([k, str(v)])
+            elif v:
+                cmd.extend([k])
         cmd.extend([str(a) for a in args])
         logger.debug("Command: {}".format(cmd))
 
@@ -41,7 +44,7 @@ def api_call(fun, *args, **kwargs):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        return json.loads(res.stdout) if res.stdout else None
+        return json.loads(res.stdout)['ret'] if res.stdout else None
 
 
 def run_cmd(command, **kwargs):
@@ -86,7 +89,8 @@ def test_external_auth():
             api_call('pillar_get', **kwargs)
 
         assert expected_exc_str in str(
-            excinfo.value if api_type in ('py', 'pycli') else excinfo.value.stderr
+            excinfo.value if api_type in ('py', 'pycli') else
+            excinfo.value.stdout
         )
 
 
@@ -96,7 +100,9 @@ def test_ntp_configuration():
     pillar_ntp_server = pillar['eosnode-1']['system']['ntp']['time_server']
     pillar_ntp_timezone = pillar['eosnode-1']['system']['ntp']['timezone']
 
-    curr_params = api_call('get_params', 'ntp/server', 'ntp/timezone')[minion_id]
+    curr_params = api_call(
+        'get_params', 'ntp/server', 'ntp/timezone'
+    )[minion_id]
 
     api_ntp_server = curr_params['ntp/server']
     api_ntp_timezone = curr_params['ntp/timezone']
@@ -108,7 +114,9 @@ def test_ntp_configuration():
 
     api_call('set_ntp', server=new_ntp_server, timezone=new_ntp_timezone)
 
-    curr_params = api_call('get_params', 'ntp/server', 'ntp/timezone')[minion_id]
+    curr_params = api_call(
+        'get_params', 'ntp/server', 'ntp/timezone'
+    )[minion_id]
 
     api_ntp_server = curr_params['ntp/server']
     api_ntp_timezone = curr_params['ntp/timezone']
@@ -143,32 +151,56 @@ def test_network_configuration():
 
     api_call(
         'set_network',
-        primary_hostname='host1', primary_floating_ip='1.2.3.4', primary_gateway_ip='1.2.3.4',
-        primary_mgmt_ip='1.2.3.4', primary_mgmt_netmask='255.255.255.0', primary_data_ip='1.2.3.4',
+        primary_hostname='host1',
+        primary_floating_ip='1.2.3.4',
+        primary_gateway_ip='1.2.3.4',
+        primary_mgmt_ip='1.2.3.4',
+        primary_mgmt_netmask='255.255.255.0',
+        primary_data_ip='1.2.3.4',
         primary_data_netmask='255.255.255.0',
-        slave_hostname='host2', slave_floating_ip='1.2.3.4', slave_gateway_ip='1.2.3.4',
-        slave_mgmt_ip='1.2.3.4', slave_mgmt_netmask='255.255.255.0', slave_data_ip='1.2.3.4',
+        slave_hostname='host2',
+        slave_floating_ip='1.2.3.4',
+        slave_gateway_ip='1.2.3.4',
+        slave_mgmt_ip='1.2.3.4',
+        slave_mgmt_netmask='255.255.255.0',
+        slave_data_ip='1.2.3.4',
         slave_data_netmask='255.255.255.0',
     )
 
     '''
     pillar = api_call('pillar_get')
 
-    pillar_nw_primary_mgmt_ip = pillar['eosnode-1']['cluster']['eosnode-1']['network']['mgmt_nw']['ipaddr']
-    pillar_nw_primary_data_ip = pillar['eosnode-1']['cluster']['eosnode-1']['network']['data_nw']['ipaddr']
-    pillar_nw_primary_gateway_ip = pillar['eosnode-1']['cluster']['eosnode-1']['network']['gateway_ip']
-    pillar_nw_primary_hostname = pillar['eosnode-1']['cluster']['eosnode-1']['hostname']
+    pillar_nw_primary_mgmt_ip = pillar[
+        'eosnode-1'
+    ]['cluster']['eosnode-1']['network']['mgmt_nw']['ipaddr']
+    pillar_nw_primary_data_ip = pillar[
+        'eosnode-1'
+    ]['cluster']['eosnode-1']['network']['data_nw']['ipaddr']
+    pillar_nw_primary_gateway_ip = pillar[
+        'eosnode-1'
+    ]['cluster']['eosnode-1']['network']['gateway_ip']
+    pillar_nw_primary_hostname = pillar[
+        'eosnode-1'
+    ]['cluster']['eosnode-1']['hostname']
 
-    api_nw_primary_mgmt_ip = api_call('get_params', 'nw_primary_mgmt_ip')[minion_id]['nw_primary_mgmt_ip']
+    api_nw_primary_mgmt_ip = api_call(
+        'get_params', 'nw_primary_mgmt_ip'
+    )[minion_id]['nw_primary_mgmt_ip']
     assert pillar_nw_primary_mgmt_ip == api_nw_primary_mgmt_ip
 
-    api_nw_primary_data_ip = api_call('get_params', 'nw_primary_data_ip')[minion_id]['nw_primary_data_ip']
+    api_nw_primary_data_ip = api_call(
+        'get_params', 'nw_primary_data_ip'
+    )[minion_id]['nw_primary_data_ip']
     assert pillar_nw_primary_data_ip == api_nw_primary_data_ip
 
-    api_nw_primary_gateway_ip = api_call('get_params', 'nw_primary_gateway_ip')[minion_id]['nw_primary_gateway_ip']
+    api_nw_primary_gateway_ip = api_call(
+        'get_params', 'nw_primary_gateway_ip'
+    )[minion_id]['nw_primary_gateway_ip']
     assert pillar_nw_primary_gateway_ip == api_nw_primary_gateway_ip
 
-    api_nw_primary_hostname = api_call('get_params', 'nw_primary_hostname')[minion_id]['nw_primary_hostname']
+    api_nw_primary_hostname = api_call(
+        'get_params', 'nw_primary_hostname'
+    )[minion_id]['nw_primary_hostname']
     assert pillar_nw_primary_hostname == api_nw_primary_hostname
 
     # TODO what values is bettwe to use here ???
@@ -185,16 +217,24 @@ def test_network_configuration():
         primary_hostname=new_nw_primary_hostname
     )
 
-    api_nw_primary_mgmt_ip = api_call('get_params', 'nw_primary_mgmt_ip')[minion_id]['nw_primary_mgmt_ip']
+    api_nw_primary_mgmt_ip = api_call(
+        'get_params', 'nw_primary_mgmt_ip'
+    )[minion_id]['nw_primary_mgmt_ip']
     assert new_nw_primary_mgmt_ip == api_nw_primary_mgmt_ip
 
-    api_nw_primary_data_ip = api_call('get_params', 'nw_primary_data_ip')[minion_id]['nw_primary_data_ip']
+    api_nw_primary_data_ip = api_call(
+        'get_params', 'nw_primary_data_ip'
+    )[minion_id]['nw_primary_data_ip']
     assert new_nw_primary_data_ip == api_nw_primary_data_ip
 
-    api_nw_primary_gateway_ip = api_call('get_params', 'nw_primary_gateway_ip')[minion_id]['nw_primary_gateway_ip']
+    api_nw_primary_gateway_ip = api_call(
+        'get_params', 'nw_primary_gateway_ip'
+    )[minion_id]['nw_primary_gateway_ip']
     assert new_nw_primary_gateway_ip == api_nw_primary_gateway_ip
 
-    api_nw_primary_hostname = api_call('get_params', 'nw_primary_hostname')[minion_id]['nw_primary_hostname']
+    api_nw_primary_hostname = api_call(
+        'get_params', 'nw_primary_hostname'
+    )[minion_id]['nw_primary_hostname']
     assert new_nw_primary_hostname == api_nw_primary_hostname
     '''
 
@@ -202,6 +242,8 @@ def test_network_configuration():
 def test_eosupdate_repo_configuration():
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
+    base_repo_name = 'eos_update'
+    prvsnr_pkg_name = 'eos-prvsnr'
 
     def check_unmounted(mount_dir):
         # check the record is removed from the fstab
@@ -217,17 +259,69 @@ def test_eosupdate_repo_configuration():
         )
         assert res.returncode == 2
 
+    def check_not_installed(release, expected_repo_name, mount_dir=None):
+        curr_params = api_call(
+            'get_params', 'eosupdate/repos', targets=minion_id
+        )[minion_id]
+        assert curr_params['eosupdate/repos'][release] is None
+
+        curr_params = api_call(
+            'get_params', 'eosupdate/repo/{}'.format(release),
+            targets=minion_id
+        )[minion_id]
+        assert curr_params['eosupdate/repo/{}'.format(release)] is None
+
+        # check repo is not listed anymore
+        res = run_cmd(
+            'yum repolist enabled | grep {}'.format(expected_repo_name),
+            check=False
+        )
+        assert res.returncode == 1
+        # check no any update repo is listed
+        res = run_cmd(
+            'yum repolist enabled | grep {}'.format(base_repo_name),
+            check=False
+        )
+        assert res.returncode == 1
+
+        if mount_dir:
+            check_unmounted(mount_dir)
+
     pillar = api_call('pillar_get')
     pillar_params = pillar[minion_id]['eos_release']['update']
 
-    curr_params = api_call('get_params', 'eosupdate/repos', targets=minion_id)[minion_id]
+    curr_params = api_call(
+        'get_params', 'eosupdate/repos', targets=minion_id
+    )[minion_id]
     assert curr_params['eosupdate/repos'] == pillar_params['repos']
 
-    base_repo_name = 'eos_update'
-    prvsnr_cli_pkg_name = 'eos-prvsnr'
+    # dry run check for invalid source
+    if api_type == 'cli':
+        from subprocess import CalledProcessError
+        expected_exc = CalledProcessError
+    else:
+        from provisioner.errors import EOSUpdateRepoSourceError
+        expected_exc = EOSUpdateRepoSourceError
+
+    source = 'some/invalid/source'
+    with pytest.raises(expected_exc) as excinfo:
+        api_call(
+            'set_eosupdate_repo', '1.2.3',
+            source=source, targets=minion_id, dry_run=True
+        )
+    exc = excinfo.value
+    if api_type == 'cli':
+        exc = json.loads(exc.stdout)['exc']
+        assert exc['type'] == 'EOSUpdateRepoSourceError'
+        assert exc['args'] == [source, 'unexpected type of source']
+    else:
+        assert type(exc).__name__ == 'EOSUpdateRepoSourceError'
+        assert exc.source == source
+        assert exc.reason == 'unexpected type of source'
+
     for release, source, expected_rpm_name in [
-        ('1.2.3', repo_dir, prvsnr_cli_pkg_name),
-        ('1.2.4', iso_path, prvsnr_cli_pkg_name),
+        ('1.2.3', repo_dir, prvsnr_pkg_name),
+        ('1.2.4', iso_path, prvsnr_pkg_name),
         (
             '1.2.5',
             'http://mirror.ghettoforge.org/distributions/gf/el/7/gf/x86_64/',
@@ -241,23 +335,27 @@ def test_eosupdate_repo_configuration():
         else:
             mount_dir = None
 
+        expected_source = (
+            "file://{}".format(source) if source is repo_dir else source
+        )
+
         # INSTALL
         api_call(
             'set_eosupdate_repo', release, source=source, targets=minion_id
         )
 
-        expected_source = (
-            "file://{}".format(source) if source is repo_dir else source
-        )
-
-        curr_params = api_call('get_params', 'eosupdate/repos', targets=minion_id)[minion_id]
+        curr_params = api_call(
+            'get_params', 'eosupdate/repos', targets=minion_id
+        )[minion_id]
         assert curr_params['eosupdate/repos'][release] == expected_source
 
         curr_params = api_call(
             'get_params', 'eosupdate/repo/{}'.format(release),
             targets=minion_id
         )[minion_id]
-        assert curr_params['eosupdate/repo/{}'.format(release)] == expected_source
+        assert curr_params[
+            'eosupdate/repo/{}'.format(release)
+        ] == expected_source
 
         # check repo is enabled
         run_cmd(
@@ -288,45 +386,45 @@ def test_eosupdate_repo_configuration():
             source=undefined_value,
             targets=minion_id
         )
+        check_not_installed(release, expected_repo_name, mount_dir)
 
-        curr_params = api_call('get_params', 'eosupdate/repos', targets=minion_id)[minion_id]
-        assert curr_params['eosupdate/repos'][release] is None
-
-        curr_params = api_call(
-            'get_params', 'eosupdate/repo/{}'.format(release),
-            targets=minion_id
-        )[minion_id]
-        assert curr_params['eosupdate/repo/{}'.format(release)] is None
-
-        # check repo is not listed anymore
-        res = run_cmd(
-            'yum repolist enabled | grep {}'.format(expected_repo_name),
-            check=False
+        # dry run check
+        api_call(
+            'set_eosupdate_repo',
+            release,
+            source=source,
+            targets=minion_id,
+            dry_run=True
         )
-        assert res.returncode == 1
-        # check no any update repo is listed
-        res = run_cmd(
-            'yum repolist enabled | grep {}'.format(base_repo_name),
-            check=False
-        )
-        assert res.returncode == 1
-
-        if mount_dir:
-            check_unmounted(mount_dir)
+        #   verify that nothing has changed in the system
+        check_not_installed(release, expected_repo_name, mount_dir)
 
 
-def test_eos_update_vim():
+def test_eosupdate_repo_configuration_for_reinstall():
+    repo_dir = os.environ['TEST_REPO_DIR']
+    test_file_path = os.environ['TEST_FILE_PATH']
+    # base_repo_name = 'eos_update'
+    prvsnr_pkg_name = 'eos-prvsnr'
+
+    release = '1.2.3'
+    source = repo_dir
+    # expected_rpm_name = prvsnr_pkg_name
+
+    # INSTALL
     api_call(
-        'set_eosupdate_repo',
-        '1.2.3',
-        source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',
-        targets=minion_id
+        'set_eosupdate_repo', release, source=source, targets=minion_id
     )
 
-    api_call('eos_update', targets=minion_id)
+    run_cmd(
+        "yum reinstall {}".format(prvsnr_pkg_name)
+    )
+
+    from provisioner.config import PRVSNR_ROOT_DIR
+    assert (PRVSNR_ROOT_DIR / test_file_path).exists()
 
 
-# TODO for now just tests that repo is installed and yum able to start installation (which will definitely fail)
+# TODO for now just tests that repo is installed and yum able
+#      to start installation (which will definitely fail)
 #   - install eos stack first from some release
 #   - set some newer release
 #   - call udpate
@@ -334,7 +432,7 @@ def test_eos_update_eos_sw():
     api_call(
         'set_eosupdate_repo',
         '1.2.3',
-        source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',
+        source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',  # noqa: E501
         targets=minion_id
     )
 

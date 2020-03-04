@@ -2,6 +2,7 @@ import pytest
 import logging
 
 import test.helper as h
+import provisioner
 
 
 RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
@@ -58,11 +59,66 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
 
     # check post install sections
     # TODO check salt config files replacement
-    #   check that api is installed into python env
+    #   check that api is installed into python env and have proper version
     assert 'eos-prvsnr' in mhost.check_output('pip3 list')
-    mhost.check_output("python3 -c 'import provisioner'")
+    assert provisioner.__version__ == mhost.check_output(
+        "python3 -c 'import provisioner; print(provisioner.__version__)'"
+    )
+
     #   check that prvsnrusers groups is created
     assert PRVSNRUSERS_GROUP in mhost.check_output("cat /etc/group")
+
+    #   check that user pillar dir is created and has proper access rights (ACL)
+    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).exists
+    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).is_directory
+    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).group == PRVSNRUSERS_GROUP
+
+    mhost.check_output(
+        "mkdir -p {}".format(h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb')
+    )
+    mhost.check_output(
+        "touch {}".format(h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc.sls')
+    )
+    expected_dir_perms = "drwxrwsr-x+ root prvsnrusers"
+    dir_perms = mhost.check_output(
+        "find {} -type d -exec ls -lad {{}} \\;  | awk '{{print $1 FS $3 FS $4}}' | sort -u"
+        .format(h.PRVSNR_USER_PILLAR_DIR)
+    )
+    assert dir_perms == expected_dir_perms
+    expected_file_perms = "-rw-rw-r--+ root prvsnrusers"
+    file_perms = mhost.check_output(
+        "find {} -type f -exec ls -la {{}} \\;  | awk '{{print $1 FS $3 FS $4}}' | sort -u"
+        .format(h.PRVSNR_USER_PILLAR_DIR)
+    )
+    assert file_perms == expected_file_perms
+
+    # check that user not from the provisioner group can't write there
+    testuser = 'testuser'
+    mhost.check_output(
+        "adduser {0} && echo {1} | passwd --stdin {0}"
+        .format(testuser, 'somepass')
+    )
+    res = mhost.run(
+        "su -l {} -c 'touch {}'".format(
+            testuser,
+            h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc2.sls'
+        )
+    )
+    assert res.rc != 0
+    assert "Permission denied" in res.stderr
+
+    # check that user from the provisioner group can write there
+    mhost.check_output(
+        "usermod -a -G {0} {1}"
+        .format(PRVSNRUSERS_GROUP, testuser)
+    )
+    mhost.check_output(
+        "su -l {} -c 'touch {}'".format(
+            testuser,
+            h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc2.sls'
+        )
+    )
+
 
 
 @pytest.mark.isolated

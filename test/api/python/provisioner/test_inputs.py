@@ -1,14 +1,19 @@
 import pytest
 import attr
-from typing import Any
+from typing import Any, Union
+from pathlib import Path
 
+from provisioner.errors import EOSUpdateRepoSourceError
+from provisioner import values
 from provisioner.values import UNCHANGED
 from provisioner import inputs
 from provisioner.param import (
     Param, ParamDictItem
 )
 from provisioner.inputs import (
-    METADATA_PARAM_GROUP_KEY, METADATA_PARAM_DESCR,
+    METADATA_PARAM_GROUP_KEY,
+    METADATA_ARGPARSER,
+    AttrParserArgs,
     ParamsList,
     ParamGroupInputBase,
     NTP, Network,
@@ -62,9 +67,108 @@ def param_spec_mocked(monkeypatch, param_spec):
     return param_spec
 
 
+# AttrParserArgs tests
+def test_attr_parser_args_kwargs_keys_by_default():
+    SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type'))
+
+
+def test_attr_parser_args_kwargs_keys_for_boolean():
+    SC = attr.make_class("SC", {"x": attr.ib(type=bool, default=False)})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'help'))
+
+
+def test_attr_parser_args_name_for_optional():
+    SC = attr.make_class("SC", {"x": attr.ib(default=None)})
+    assert AttrParserArgs(attr.fields(SC).x).name == '--x'
+
+
+def test_attr_parser_args_name_for_optional_with_underscore():
+    SC = attr.make_class("SC", {"x_y": attr.ib(default=None)})
+    assert AttrParserArgs(attr.fields(SC).x_y).name == '--x-y'
+
+
+def test_attr_parser_args_name_for_positional():
+    SC = attr.make_class("SC", {"x": attr.ib()})
+    assert AttrParserArgs(attr.fields(SC).x).name == 'x'
+
+
+def test_attr_parser_args_action_by_default():
+    SC = attr.make_class("SC", {"x": attr.ib(default=None)})
+    assert AttrParserArgs(attr.fields(SC).x).action == 'store'
+
+
+def test_attr_parser_args_action_for_boolean():
+    SC = attr.make_class("SC", {"x": attr.ib(default=None, type=bool)})
+    assert AttrParserArgs(attr.fields(SC).x).action == 'store_true'
+
+
+def test_attr_parser_args_default_set():
+    SC = attr.make_class("SC", {"x": attr.ib(default=123)})
+    assert AttrParserArgs(attr.fields(SC).x).name == '--x'
+    assert AttrParserArgs(attr.fields(SC).x).default == 123
+
+
+def test_attr_parser_args_default_not_set():
+    SC = attr.make_class("SC", {"x": attr.ib()})
+    assert AttrParserArgs(attr.fields(SC).x).name == 'x'
+    assert AttrParserArgs(attr.fields(SC).x).default is None
+
+
+def test_attr_parser_args_type():
+    SC = attr.make_class("SC", {"x": attr.ib()})
+    assert AttrParserArgs(attr.fields(SC).x).type == values.value_from_str
+
+
+def test_attr_parser_args_no_metavar_for_positional():
+    SC = attr.make_class("SC", {"x": attr.ib()})
+    assert AttrParserArgs(attr.fields(SC).x).metavar is None
+
+
+def test_attr_parser_args_metavar_by_default_for_optional():
+    SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
+    assert AttrParserArgs(attr.fields(SC).x).metavar == 'STR'
+
+
+def test_attr_parser_args_metavar_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'metavar': 'SOME-METAVAR'
+                },
+            },
+            default='123'
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).metavar == 'SOME-METAVAR'
+
+
+def test_attr_parser_args_help_by_default_for_optional():
+    SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
+    assert AttrParserArgs(attr.fields(SC).x).help == ''
+
+
+def test_attr_parser_args_help_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'help': 'some help'
+                },
+            }
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).help == 'some help'
+
+
 # ParamsList tests
-
-
 def test_params_list_from_args(param_spec_mocked):
     params = [
         param_spec_mocked['some_param_gr/attr2'],
@@ -152,14 +256,14 @@ def test_param_dict_item_input_base_attr_ib():
     some_key_attr = attr.fields(SomeParamDictItem).some_key_attr
     assert some_key_attr.type is str
     assert some_key_attr.default is attr.NOTHING
-    assert some_key_attr.metadata[METADATA_PARAM_DESCR] == (
+    assert some_key_attr.metadata[METADATA_ARGPARSER]['help'] == (
         'some_key_attr descr'
     )
 
     some_value_attr = attr.fields(SomeParamDictItem).some_value_attr
     assert some_value_attr.type is str
     assert some_value_attr.default == UNCHANGED
-    assert some_value_attr.metadata[METADATA_PARAM_DESCR] == (
+    assert some_value_attr.metadata[METADATA_ARGPARSER]['help'] == (
         'some_value_attr descr'
     )
 
@@ -196,28 +300,62 @@ def test_eos_update_repo_attrs():
     assert fattr.default is attr.NOTHING
 
     fattr = attr.fields_dict(EOSUpdateRepo)['source']
-    assert fattr.type is str
+    assert fattr.type is Union[str, Path]
     assert fattr.default is UNCHANGED
 
 
-def test_eos_update_repo_source_validator(tmpdir_function):
+def test_eos_update_repo_source_init(tmpdir_function):
     some_release = '1.2.3'
 
-    res = EOSUpdateRepo(some_release, source=UNCHANGED)
+    # special value
+    for source in values._values.values():
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.source == source
 
+    res = EOSUpdateRepo(some_release, source=None)
+    assert res.source == UNCHANGED
+
+    # directory
     repo_dir = tmpdir_function / 'repo'
     repo_dir.mkdir()
     res = EOSUpdateRepo(some_release, source=str(repo_dir))
     assert res.source == "file://{}".format(repo_dir)
 
+    # iso file
     repo_iso = tmpdir_function / 'repo.iso'
     repo_iso.touch()
-    EOSUpdateRepo(some_release, source=str(repo_iso))
+    res = EOSUpdateRepo(some_release, source=repo_iso)
+    assert res.source == str(repo_iso)
 
+    # other existent file object
     non_iso_file = tmpdir_function / 'repo.file'
     non_iso_file.touch()
-    with pytest.raises(ValueError):
+    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
         EOSUpdateRepo(some_release, source=str(non_iso_file))
+    assert excinfo.value.source == str(non_iso_file)
+    assert excinfo.value.reason == 'not an iso file'
 
-    # any other case is treated as url
-    EOSUpdateRepo(some_release, source='any/other/case/treated/as/url')
+    # existent object but neither file nor dir
+    bad_object = '/dev/null'
+    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
+        EOSUpdateRepo(some_release, source=bad_object)
+    assert excinfo.value.source == bad_object
+    assert excinfo.value.reason == 'not a file or directory'
+
+    # urls are expected to start with http:// or https://
+    for source in ('http://some/http/url', 'https://some/http/url'):
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.source == source
+
+    # any other cases are treated as invalid
+    source = 'some/string'
+    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
+        res = EOSUpdateRepo(some_release, source=source)
+    assert excinfo.value.source == source
+    assert excinfo.value.reason == 'unexpected type of source'
+
+    # TODO non absolute existent one
+
+    # non canonical absolute path
+    res = EOSUpdateRepo(some_release, source=(repo_dir / '..' / 'repo.iso'))
+    assert res.source == str(repo_iso)

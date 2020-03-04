@@ -16,9 +16,9 @@ def set_api(api_type=DEFAULT_API_TYPE):
     """Sets api engine.
 
     :param api_type (optional): might be either ``py`` or ``pycli``. The former
-        is an ordinary python application that communicates directly with SaltStack
-        using its API. The latter is a wrapper over provisioner cli and suitable
-        to be used inside frozen python application.
+        is an ordinary python application that communicates directly with
+        SaltStack using its API. The latter is a wrapper over provisioner cli
+        and suitable to be used inside frozen python application.
     """
 
     global _api
@@ -58,11 +58,11 @@ def get_params(*params, targets=ALL_MINIONS):
     )
 
 
-def set_params(targets=ALL_MINIONS, **params):
-    return _api_call('set_params', targets=targets, **params)
+def set_params(targets=ALL_MINIONS, dry_run=False, **params):
+    return _api_call('set_params', targets=targets, dry_run=dry_run, **params)
 
 
-def set_ntp(server=None, timezone=None, targets=ALL_MINIONS):
+def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
     r"""Configures NTP client.
 
     :param server: (optional) NTP server domain or IP address.
@@ -83,18 +83,20 @@ def set_ntp(server=None, timezone=None, targets=ALL_MINIONS):
     """
 
     return _api_call(
-        'set_ntp', server=server, timezone=timezone, targets=targets
+        'set_ntp', server=server, timezone=timezone,
+        targets=targets, dry_run=dry_run
     )
 
 
-def set_network(**kwargs):
+def set_network(dry_run=False, **kwargs):
     r"""Configures network.
 
     :param primary_hostname: (optional) primary node hostname
     :param primary_floating_ip: (optional) primary node floating ip address
     :param primary_gateway_ip: (optional) primary node gateway ip address
     :param primary_mgmt_ip: (optional) primary node management iface ip address
-    :param primary_mgmt_netmask: (optional) primary node management iface netmask
+    :param primary_mgmt_netmask: (optional) primary node management
+        iface netmask
     :param primary_data_ip: (optional) primary node data iface ip address
     :param primary_data_netmask: (optional) primary node data iface netmask
     :param slave_hostname: (optional) slave node hostname
@@ -104,6 +106,7 @@ def set_network(**kwargs):
     :param slave_mgmt_netmask: (optional) slave node management iface netmask
     :param slave_data_ip: (optional) slave node data iface ip address
     :param slave_data_netmask: (optional) slave node data iface netmask
+    :param dry_run: (optional) validate only
     """
     # TODO better targettng: apply for nodes which need to be updated
     targets = kwargs.pop('targets', ALL_MINIONS)
@@ -111,29 +114,31 @@ def set_network(**kwargs):
         raise ValueError(
             'targets should be ALL_MINIONS, provided: {}'.format(targets)
         )
-    return _api_call('set_network', **kwargs, targets=targets)
+    return _api_call('set_network', **kwargs, targets=targets, dry_run=dry_run)
 
 
-def set_eosupdate_repo(release, targets, source=None):
+def set_eosupdate_repo(
+    release, source=None, targets=ALL_MINIONS, dry_run=False
+):
     r"""Configures update repository.
 
     Installs or removes a repository for EOS update release.
 
     :param release: An update repository release label
     :param targets: Host where to install repos
-    :param source: (optional) A path to a repository. Might be: a local directory,
-        a local iso file or an url to a remote repository. If not specified
-        then a repository for a ``release`` will be removed. If path to an iso file
-        is provide then it is mounted before installation and unmounted before
-        removal.
+    :param source: (optional) A path to a repository. Might be: a local
+        directory,  a local iso file or an url to a remote repository.
+        If not specified then a repository for a ``release`` will be removed.
+        If path to an iso file is provide then it is mounted before
+        installation and unmounted before removal.
     """
     return _api_call(
         'set_eosupdate_repo',
-        release, source=source, targets=targets
+        release, source=source, targets=targets, dry_run=dry_run
     )
 
 
-def eos_update(targets):
+def eos_update(targets=ALL_MINIONS):
     r"""Runs EOS software update logic.
 
     Updates EOS components one by one.

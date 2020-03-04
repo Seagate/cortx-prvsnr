@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_rollback(
+def test_yum_rollback_manager(
     mhosteosnode1, run_test, eos_hosts
 ):
     install_provisioner_api(mhosteosnode1)
