@@ -1,11 +1,11 @@
 Stage - Post Install SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/sspl/conf/setup.yaml', 'sspl:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:post_install')
 
 Stage - Configure SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/sspl/conf/setup.yaml', 'sspl:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:config')
 
 Stage - Initialize SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/sspl/conf/setup.yaml', 'sspl:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:init')
