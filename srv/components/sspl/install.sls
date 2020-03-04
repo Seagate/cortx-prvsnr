@@ -1,6 +1,6 @@
-Install sspl packages:
+Install eos-sspl packages:
   pkg.installed:
-    - name: sspl
+    - name: eos-sspl
     - version: latest
     - refresh: True
 
@@ -9,6 +9,8 @@ Install flask:
     - name: flask
     - version: 1.1.1
 
-Install sspl-test:
+Install eos-sspl-test:
   pkg.installed:
-    - name: sspl-test
+    - name: eos-sspl-test
+    - requires:
+      - Install flask
