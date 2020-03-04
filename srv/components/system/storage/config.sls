@@ -62,7 +62,7 @@ Make SWAP partition:
 Enable swap:
   mount.swap:
     - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    # - persist: True     # save in the fstab
+    - persist: False     # save in the fstab
     - require:
       - cmd: Make SWAP partition
 
@@ -83,7 +83,7 @@ Mount mero partition:
     - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
-    # - persist: True     # save in the fstab
+    - persist: False     # save in the fstab
     - mount: True
     - require:
       - module: Make metadata partition
