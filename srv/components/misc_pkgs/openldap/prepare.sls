@@ -20,7 +20,7 @@ Copy ldap replication config:
     - template: jinja
 {% endif %}
 
-# File copy operation
+# File copy operation on primary
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/files/cfg_ldap.ldif',
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif' },
@@ -30,7 +30,6 @@ Copy ldap replication config:
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/ldap_gen_passwd.sh' },
     { "src": 'salt://components/misc_pkgs/openldap/files/ssl/enable_ssl_openldap.sh',
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/enable_ssl_openldap.sh' },
-
     { "src": 'salt://components/misc_pkgs/openldap/files/cn={1}s3user.ldif',
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/cn={1}s3user.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/ldap-init.ldif',

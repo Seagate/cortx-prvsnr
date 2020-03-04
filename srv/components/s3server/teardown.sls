@@ -51,15 +51,6 @@ Remove S3Server under opt:
   file.absent:
     - name: /opt/seagate/s3server
 
-Remove s3openldap cert:
-  cmd.run:
-    - name: keytool -delete -noprompt -alias ldapcert -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate
-    - onlyif: test -f /etc/ssl/stx-s3/s3auth/s3authserver.jks
-
-Remove s3server cert:
-  cmd.run:
-    - name: keytool -delete -noprompt -alias s3 -trustcacerts -keystore /etc/ssl/stx-s3/s3auth/s3authserver.jks -storepass seagate
-    - onlyif: test -f /etc/ssl/stx-s3/s3auth/s3authserver.jks
 #-------------------------
 # Teardown S3Server End
 #-------------------------
