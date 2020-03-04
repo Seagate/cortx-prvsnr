@@ -4,7 +4,7 @@
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
 {%- endif -%}
 nodes:
-  {% for node in pillar['cluster']['node_list'] %}
+{% for node in pillar['cluster']['node_list'] %}
   - hostname: {{ pillar['cluster'][node]['hostname'] }}
     data_iface: {{ data_if }}
 {% if salt['cmd.run']('lspci -d"15b3:1017:0200"') %}
@@ -19,8 +19,12 @@ nodes:
           path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
     m0_clients:
       s3: {{ pillar['s3server']['no_of_inst'] }}
+{% if "physical" in grains['virtual'] %}
       other: 2
-  {% endfor %}
+{% else %}
+      other: 1
+{% endif %}  
+{% endfor %}
 pools:
   - name: the pool
     disks: all
