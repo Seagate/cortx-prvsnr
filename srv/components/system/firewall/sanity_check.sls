@@ -1,5 +1,13 @@
-{% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'] %}
-{% set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'] %}
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
+  {%- set data_if = 'data0' -%}
+{% else %}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
+{%- endif -%}
+{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
+  {%- set mgmt_if = 'mgmt0' -%}
+{% else %}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
+{%- endif -%}
 
 Verify NIC opened for management-zone:
   cmd.run:
@@ -21,9 +29,9 @@ Verify hare ports:
   cmd.run:
     - name: firewall-cmd --permanent --service hare --get-ports | grep -P '(?=.*?8300/tcp)(?=.*?8301/tcp)(?=.*?8302/tcp)(?=.*?8008/tcp)(?=.*?8500/tcp)^.*$'
 
-Verify mero ports:
+Verify lnet ports:
   cmd.run:
-    - name: firewall-cmd --permanent --service mero --get-ports | grep -P '(?=.*?988/tcp)^.*$'
+    - name: firewall-cmd --permanent --service lnet --get-ports | grep -P '(?=.*?988/tcp)^.*$'
 
 Verify nfs ports:
   cmd.run:
