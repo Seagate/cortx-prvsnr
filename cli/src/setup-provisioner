@@ -9,6 +9,7 @@ EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eo
 
 eosnode_2_hostspec=eosnode-2
 hostspec=
+eosnode_2_opt=false
 
 salt_master_hostname=
 prvsnr_repo_src=rpm
@@ -22,8 +23,9 @@ function usage {
 Usage: $0 [options] [ees-prvsnr-version]
 
 Installs the provisioner repository along with SaltStack
-on the hosts with bare OS installed, configures salt master/minion
-connections and makes some additional preliminary configuration.
+on the hosts with bare OS installed, sets up passwordless
+ssh configuration and configures salt master/minion connections
+and also makes some additional preliminary configuration.
 
 'ees-prvsnr-version' as an optional positional argument might specify
 the desired version of the provisioner to install. Makes sense for 'gitlab'
@@ -52,6 +54,7 @@ function options_parser {
     case "$1" in
         --eosnode-2)
             eosnode_2_hostspec="$2"
+            eosnode_2_opt=true
             ;;
         --repo-src)
             case "$2" in
@@ -93,21 +96,37 @@ if [[ "$verbosity" -ge 2 ]]; then
     set -x
 fi
 
+# -F and --eosnode-2 options shouldn't be provided together
+if [[ -n "$ssh_config" && $eosnode_2_opt == true ]]; then
+    l_error "$0: -F and --eosnode-2 options are mutually exclusive"
+    exit 1
+fi
+
+if [[ -n "$ssh_config" ]]; then
+    default_ssh_disabled=true
+else
+    if [[ $eosnode_2_opt == false ]]; then
+        l_error "$0: Please provide node 2 details using --eosnode-2 option"
+        l_error "OR use -F option to provide ssh config file"
+        exit 1
+    fi
+    setup_ssh
+    ssh_config="$default_ssh_conf"
+fi
 
 # CHECK EOSNODE-1/EOSNODE-2 OCCURENCE IN SSH-CONFIG
-if [[ -n "$hostspec" ]]; then
+if [[ -n "$hostspec" && $default_ssh_disabled == true ]]; then
     if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-        l_error "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
+        l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
         exit 1
     fi
 fi
-if [[ "$singlenode" == false ]]; then
+if [[ "$singlenode" == false && $default_ssh_disabled == true ]]; then
     if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-        l_error "eosnode-2 node ssh configuration is not found in ssh-config ($ssh_config)"
+        l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
         exit 1
     fi
 fi
-
 
 if [[ -z "$prvsnr_version" ]]; then
     if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
@@ -180,6 +199,19 @@ if [[ "$singlenode" != true ]]; then
     # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 fi
 
+#update hostname in cluster.sls
+if [[ -n "$eosnode_1_hostname" && -n "$eosnode_2_hostname" ]]; then
+    l_info "Updating hostnames in cluster pillar"
+    update_cluster_pillar_hostname "eosnode-1" "$eosnode_1_hostname"
+    update_cluster_pillar_hostname "eosnode-2" "$eosnode_2_hostname"
+fi
+
+#update target_build in release.sls
+if [[ -n "$prvsnr_version" ]]; then
+    l_info "Updating target build in release pillar"
+    update_release_pillar $prvsnr_version
+fi
+
 cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 target_minions='*'
 if [[ -n "$hostspec" ]]; then
@@ -192,5 +224,21 @@ if [[ "$singlenode" != true ]]; then
     # force salt to mine data
     $cmd salt "$target_minions" mine.update
 fi
+
+#TODO: Setup ssh passwordless configuration even when -F option is provided
+# if -F option is used, setup passwordless ssh at the end.
+#if [[ "$default_ssh_disabled" = "true" ]]; then
+    #TODO: Update default ssh config file from user provided config file
+    #eosnode_1_hostspec=eosnode-1
+    #if [[ -z "$(check_hostname_in_ssh_config "$eosnode_1_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+    #    l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
+    #    exit 1
+    #fi
+    #if [[ -z "$(check_hostname_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+    #    l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
+    #    exit 1
+    #fi
+    #ssh_setup
+#fi
 
 l_info "Done"

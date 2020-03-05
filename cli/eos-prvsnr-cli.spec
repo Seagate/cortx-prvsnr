@@ -61,8 +61,8 @@ rm -rf %{buildroot}
 
 
 %post
-chmod 755 /root/.ssh/
-chmod 600 /root/.ssh/id_rsa_prvsnr
+chmod 700 /root/.ssh/
+chmod 600 /root/.ssh/*
 mv -f /etc/salt/master /etc/salt/master.org
 mv -f /etc/salt/minion /etc/salt/minion.org
 cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
