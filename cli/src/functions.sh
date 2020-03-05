@@ -23,7 +23,10 @@ singlenode=false
 ssh_config=
 sudo=false
 verbosity=0
-
+default_ssh_conf="/root/.ssh/config"
+default_ssh_disabled="false"
+eosnode_1_hostname=
+eosnode_2_hostname=
 
 base_options_usage="\
   -h,  --help                     print this help and exit
@@ -427,6 +430,36 @@ function hostname_from_spec {
 }
 
 
+#   user_from_spec <hostspec>
+#
+#   Extracts and echoes user of the hostspec into stdout.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#
+#   Outputs:
+#       An extracted user value from hostpec.
+#
+function user_from_spec {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _hostspec="$1"
+    if [[ $_hostspec == *"@"* ]]; then
+        IFS='@' read -a _arr <<< $_hostspec
+        if [[ "${#_arr[@]}" -eq 2 ]]; then
+            _user="${_arr[0]}"
+        else
+            _user=
+        fi
+    fi
+    echo "$_user"
+}
+
+
 #   check_host_in_ssh_config <hostspec> <ssh-config>
 #
 #   Checks a hostname part of the specified hostspec in provided ssh config file
@@ -454,6 +487,21 @@ function check_host_in_ssh_config {
 
     if [[ -f "$_ssh_config" && -n "$_hostname" ]]; then
         echo "$(grep "^Host[[:space:]]\+$_hostname" "$_ssh_config")"
+    fi
+}
+
+function check_hostname_in_ssh_config {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _hostspec=$1
+    local _ssh_config=$1
+
+    if [[ -f "$_ssh_config" ]]; then
+        echo "$(grep -A1 -n "Host $_hostspec" $default_ssh_conf | tail -1 | cut -f1 -d-)"
     fi
 }
 
@@ -1452,4 +1500,144 @@ function eos_pillar_load_default {
     if [[ $($_cmd rpm -qa salt-master) ]]; then
         $_cmd salt "$_target_minions" saltutil.refresh_pillar
     fi
+}
+
+#   update_release_pillar <target_release>
+#   e.g. update_release_pillar integration/centos-7.7.1908/859 
+#
+#   Updates release pillar with provided target release
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       target_release: tartget release version for all the EOS components
+function update_release_pillar {
+    set -eu
+
+    local _release_ver="$1"
+    local _release_sls_path="pillar/components/release.sls"
+    
+    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
+        _release_sls="$(realpath $cli_scripts_dir/../$_release_sls_path)"
+    else
+        _release_sls="$(realpath $cli_scripts_dir/../../$_release_sls_path)"
+    fi
+    _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
+    sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
+}
+
+#   update_cluster_pillar_hostname <eosnode-#> <eosnode-# hostname>
+#   e.g. update_cluster_pillar_hostname eosnode-1  smc-vm1.colo.seagate.com
+#
+#   Updates cluster pillar with provided hostname for the provided eosnode
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       eosnode-#: eosnode-1 or eosnode-2
+#       eosnode-# hostname: hostname to be updated for eosnode-# in cluster.sls
+function update_cluster_pillar_hostname {
+    set -eu
+
+    local _node="$1"
+    local _host="$2"
+    local _cluster_sls_path="pillar/components/cluster.sls"
+    
+    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
+        _cluster_sls="$(realpath $cli_scripts_dir/../$_cluster_sls_path)"
+    else
+        _cluster_sls="$(realpath $cli_scripts_dir/../../$_cluster_sls_path)"
+    fi
+    _line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
+    sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
+}
+
+#  disable_default_sshconfig
+#
+#  Take backup of default ssh config file shipped with eos-prvsnr-cli rpm 
+function disable_default_sshconfig {
+    
+    if [[ -f "$default_ssh_conf" ]]; then
+        mv $default_ssh_conf ${default_ssh_conf}.bak
+    fi
+}
+
+#  enable_default_sshconfig
+#
+#  Restor the default ssh config file shipped with eos-prvsnr-cli rpm 
+function enable_default_sshconfig {
+    
+    if [[ -f "${default_ssh_conf}.bak" ]]; then
+        mv "${default_ssh_conf}.bak" $default_ssh_conf
+    fi
+}
+
+#  setup_ssh
+#
+#  Sets up passwordless ssh between the nodes provided in ssh config file.
+#
+#  Prerequisites:
+#     default ssh config file present at /root/.ssh/config
+function setup_ssh {
+    set -eu
+
+    l_info "Setting up passwordless ssh configuration"
+    eosnode_1_hostname=`hostnamectl | head -1 | awk '{ print $3 }'`
+    local _eosnode_1_user=`who | awk '{ print $1 }'`
+    eosnode_2_hostname=`hostname_from_spec $eosnode_2_hostspec`
+
+    #local _eosnode_2_user=`user_from_spec $eosnode_2_hostspec`
+    # Ensure user name is root on both the hosts.
+    #if [[ "$_eosnode_1_user" != "root" || "$_eosnode_2_user" != "root" ]]; then
+    #    l_error "This command requires user to be root"
+    #    l_error "Please rerun the command with root user"
+    #    exit 1
+    #fi
+
+    if [[ ! -f "$default_ssh_conf" ]]; then
+        l_error "ssh config file not found: $default_ssh_conf"
+        exit 1
+    fi
+
+    #Backup original ssh config file
+    cp "$default_ssh_conf" "${default_ssh_conf}.bak"
+
+    # update ssh_config file with eosnode-1 details
+    sed -i "s/Host eosnode-1 .*/Host eosnode-1 ${eosnode_1_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host eosnode-1" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    sed -ie "${line}s/.*/    HostName ${eosnode_1_hostname}/" $default_ssh_conf
+
+    # update ssh_config file with eosnode-2 details
+    sed -i "s/Host eosnode-2 .*/Host eosnode-2 ${eosnode_2_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host eosnode-2" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    sed -ie "${line}s/.*/    HostName ${eosnode_2_hostname}/" $default_ssh_conf
+
+    # Check if the ssh works without password from node-1 to node-2
+    ssh -q -o "ConnectTimeout=5" $eosnode_2_hostspec exit || {
+        l_error "$eosnode_2_hostspec not reachable"
+        l_error "Couldn't do the ssh passwordless setup from $eosnode_1_hostname to $eosnode_2_hostspec"
+        l_error "please provide correct hostname using --eosnode-2 option"
+        l_error " OR use -F option to provide the correct ssh config file"
+        #Backup original ssh config file
+        cp "${default_ssh_conf}.bak" "$default_ssh_conf"
+        exit 1
+    }
+
+    # Copy the updated ssh config file to second node
+    scp $default_ssh_conf $eosnode_2_hostspec:$default_ssh_conf
+
+    # Check if the ssh works without password from node-2 to node-1
+    ssh -q -o "ConnectTimeout=5" $eosnode_2_hostspec \
+        "ssh -q -o ConnectTimeout=5 eosnode-1 exit; exit" || {
+        l_error "$eosnode_1_hostspec is not reachable from $eosnode_2_hostspec"
+        l_error "Couldn't do the ssh passwordless setup"
+        l_error "Ensure the hosts are able to communicate with each other"
+        #Backup original ssh config file
+        cp "${default_ssh_conf}.bak" "$default_ssh_conf" 
+        exit 1
+    }
+    
+    echo "ssh passwordless setup done successfully"
 }
