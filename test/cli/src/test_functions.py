@@ -1135,7 +1135,15 @@ def test_functions_accept_salt_key_cluster(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
-    ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
+    [
+        'cluster',
+        # 'eoscore',  # TODO EOS-5940
+        # 'haproxy',
+        'release',
+        's3client',
+        # 's3server',
+        'sspl'
+    ]
 )
 def test_functions_eos_pillar_show_skeleton(
     run_script, mhost, mlocalhost,
@@ -1191,7 +1199,13 @@ def test_functions_eos_pillar_update_fail(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
-    ['cluster', 'eoscore', 'haproxy', 'release', 's3client']
+    [
+        'cluster',
+        # 'eoscore',  TODO EOS-5940
+        # 'haproxy',
+        'release',
+        's3client'
+    ]
     # Removed s3server and sspl EOS-4907
 )
 def test_functions_eos_pillar_update_and_load_default(

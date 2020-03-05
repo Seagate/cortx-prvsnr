@@ -10,23 +10,17 @@ from .base_cfg import BaseCfg
 
 
 class S3ClientCfg(BaseCfg):
-    __options = {}
-    __cfg_path = ""
-
 
     def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
 
         if cfg_path:
-            self.__cfg_path = cfg_path
+            self._cfg_path = cfg_path
         else:
-            self.__cfg_path = os.path.join(
+            self._cfg_path = os.path.join(
                 self._pillar_path,
                 "components",
                 "s3client.sls"
             )
-
-        if os.path.exists(self.__cfg_path):
-            self.__load_defaults()
 
         if arg_parser:
             self.__setup_args(arg_parser)
@@ -58,90 +52,81 @@ class S3ClientCfg(BaseCfg):
             help = 'Reset default values to a modified YAML file'
         )
 
-
-    def __load_defaults(self):
-
-        with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.safe_load(fd)
-        # print(json.dumps(self.__options, indent = 4))
-        # TODO validations for configs.
-
-
     def process_inputs(self, program_args: Namespace) -> bool:
 
         if program_args.interactive:
             input("\nAccepting interactive inputs for pillar/s3client.sls. Press any key to continue...")
 
             input_msg = ("S3Server FQDN ({0}): ".format(
-                    self.__options["s3client"]["s3server"]["fqdn"]
+                    self._options["s3client"]["s3server"]["fqdn"]
                 )
             )
-            self.__options["s3client"]["s3server"]["fqdn"] = (
+            self._options["s3client"]["s3server"]["fqdn"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["s3server"]["fqdn"]
+                self._options["s3client"]["s3server"]["fqdn"]
             )
 
             input_msg = ("S3Server IP ({0}): ".format(
-                    self.__options["s3client"]["s3server"]["ip"]
+                    self._options["s3client"]["s3server"]["ip"]
                 )
             )
-            self.__options["s3client"]["s3server"]["ip"] = (
+            self._options["s3client"]["s3server"]["ip"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["s3server"]["ip"]
+                self._options["s3client"]["s3server"]["ip"]
             )
 
             input_msg = ("S3 Access Key: ")
-            self.__options["s3client"]["access_key"] = (
+            self._options["s3client"]["access_key"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["access_key"]
+                self._options["s3client"]["access_key"]
             )
 
             input_msg = ("S3 Secret Key: ")
-            self.__options["s3client"]["secret_key"] = (
+            self._options["s3client"]["secret_key"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["secret_key"]
+                self._options["s3client"]["secret_key"]
             )
 
             input_msg = ("Region ({0}): ".format(
-                    self.__options["s3client"]["region"]
+                    self._options["s3client"]["region"]
                 )
             )
-            self.__options["s3client"]["region"] = (
+            self._options["s3client"]["region"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["region"]
+                self._options["s3client"]["region"]
             )
 
             input_msg = ("Output format ({0}): ".format(
-                    self.__options["s3client"]["output"]
+                    self._options["s3client"]["output"]
                 )
             )
-            self.__options["s3client"]["output"] = (
+            self._options["s3client"]["output"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["output"]
+                self._options["s3client"]["output"]
             )
 
             input_msg = ("S3 Endpoint ({0}): ".format(
-                    self.__options["s3client"]["s3endpoint"]
+                    self._options["s3client"]["s3endpoint"]
                 )
             )
-            self.__options["s3client"]["s3endpoint"] = (
+            self._options["s3client"]["s3endpoint"] = (
                 input(input_msg)
                 or
-                self.__options["s3client"]["s3endpoint"]
+                self._options["s3client"]["s3endpoint"]
             )
-            # print(json.dumps(self.__options, indent = 4))
+            # print(json.dumps(self._options, indent = 4))
             return True
 
         elif program_args.show_s3client_file_format:
             print(
                 yaml.safe_dump(
-                    self.__options,
+                    self._options,
                     stream=None,
                     default_flow_style=False,
                     canonical=False,
@@ -159,12 +144,12 @@ class S3ClientCfg(BaseCfg):
             new_options = {}
             with open(program_args.s3client_file, 'r') as fd:
                 new_options = yaml.safe_load(fd)
-                self.__options.update(new_options)
+                self._options.update(new_options)
             return True
 
         elif program_args.load_default:
-            if os.path.exists(self.__cfg_path+".bak"):
-                copy(self.__cfg_path+".bak",self.__cfg_path)
+            if os.path.exists(self._cfg_path+".bak"):
+                copy(self._cfg_path+".bak",self._cfg_path)
             else:
                 print("Error: No Backup File exists ")
             return False
@@ -174,16 +159,16 @@ class S3ClientCfg(BaseCfg):
 
     def pillar_backup(func):
         def backup(*args):
-            copy(args[0].__cfg_path,args[0].__cfg_path+".bak")
+            copy(args[0]._cfg_path,args[0]._cfg_path+".bak")
             return func(*args)
         return backup
 
 
     @pillar_backup
     def save(self):
-        with open(self.__cfg_path, 'w') as fd:
+        with open(self._cfg_path, 'w') as fd:
             yaml.safe_dump(
-                self.__options,
+                self._options,
                 stream=fd,
                 default_flow_style=False,
                 canonical=False,

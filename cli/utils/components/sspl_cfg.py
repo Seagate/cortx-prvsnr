@@ -10,22 +10,16 @@ from .base_cfg import BaseCfg
 
 
 class SSPLCfg(BaseCfg):
-    __options = {}
-    __cfg_path = ""
-
 
     def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
         if cfg_path:
-            self.__cfg_path = cfg_path
+            self._cfg_path = cfg_path
         else:
-            self.__cfg_path = os.path.join(
+            self._cfg_path = os.path.join(
                 self._pillar_path,
                 "components",
                 "sspl.sls"
             )
-
-        if os.path.exists(self.__cfg_path):
-            self.__load_defaults()
 
         if arg_parser:
             self.__setup_args(arg_parser)
@@ -53,14 +47,6 @@ class SSPLCfg(BaseCfg):
             help = 'Reset default values to a modified YAML file'
         )
 
-
-    def __load_defaults(self):
-        with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.safe_load(fd)
-        # print(json.dumps(self._release_options, indent = 4))
-        # TODO validations for configs.
-
-
     def __read_user_inputs(self, opt_tree: dict={}, parent: str='') -> dict:
         for k, v in opt_tree.items():
             if isinstance(v, dict):
@@ -77,7 +63,7 @@ class SSPLCfg(BaseCfg):
         if program_args.interactive:
             input("\nAccepting interactive inputs for pillar/sspl.sls. Press any key to continue...")
 
-            self.__options = self.__read_user_inputs(self.__options)
+            self._options = self.__read_user_inputs(self._options)
 
             # print(json.dumps(self._release_options, indent = 4))
             return True
@@ -85,7 +71,7 @@ class SSPLCfg(BaseCfg):
         elif program_args.show_sspl_file_format:
             print(
                 yaml.safe_dump(
-                    self.__options,
+                    self._options,
                     stream=None,
                     default_flow_style=False,
                     canonical=False,
@@ -103,12 +89,12 @@ class SSPLCfg(BaseCfg):
             new_options = {}
             with open(program_args.sspl_file, 'r') as fd:
                 new_options = yaml.safe_load(fd)
-                self.__options.update(new_options)
+                self._options.update(new_options)
             return True
 
         elif program_args.load_default:
-            if os.path.exists(self.__cfg_path+".bak"):
-                copy(self.__cfg_path+".bak",self.__cfg_path)
+            if os.path.exists(self._cfg_path+".bak"):
+                copy(self._cfg_path+".bak",self._cfg_path)
             else:
                 print("Error: No Backup File exists ")
             return False
@@ -118,16 +104,16 @@ class SSPLCfg(BaseCfg):
 
     def pillar_backup(func):
         def backup(*args):
-            copy(args[0].__cfg_path,args[0].__cfg_path+".bak")
+            copy(args[0]._cfg_path,args[0]._cfg_path+".bak")
             return func(*args)
         return backup
 
 
     @pillar_backup
     def save(self):
-        with open(self.__cfg_path, 'w') as fd:
+        with open(self._cfg_path, 'w') as fd:
             yaml.safe_dump(
-                self.__options,
+                self._options,
                 stream=fd,
                 default_flow_style=False,
                 canonical=False,
