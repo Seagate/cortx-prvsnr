@@ -41,17 +41,17 @@ def test_setup_provisioner_fail(mhost, run_script):
     assert res.rc == 5
     assert 'Incorrect repo source' in res.stdout
 
-    res = run_script("--remote eosnode-1")
-    assert res.rc == 1
-    assert 'eosnode-1 node ssh configuration is not found' in res.stdout
-
+    # CLUSTER - REMOTE - CUSTOM SSH - spec for master not in config
     res = run_script(
         "--ssh-config {} --remote some-hostspec".format(
             ssh_config
         )
     )
     assert res.rc == 1
-    assert 'eosnode-1 node ssh configuration is not found' in res.stdout
+    assert (
+        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        in res.stdout
+    )
 
     res = run_script(
         "--ssh-config {} --remote some-user@".format(
@@ -59,22 +59,45 @@ def test_setup_provisioner_fail(mhost, run_script):
         )
     )
     assert res.rc == 1
-    assert 'eosnode-1 node ssh configuration is not found' in res.stdout
+    assert (
+        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        in res.stdout
+    )
 
-    # eosnode-2
+    # CLUSTER - REMOTE - CUSTOM SSH - spec for slave not in config
     res = run_script(
-        "--eosnode-2 eosnode-2"
+        "--ssh-config {} --remote eosnode-1 --eosnode-2 some-hostspec".format(
+            ssh_config
+        )
     )
     assert res.rc == 1
-    assert 'eosnode-2 node ssh configuration is not found' in res.stdout
+    assert (
+        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        in res.stdout
+    )
 
+    res = run_script(
+        "--ssh-config {} --remote eosnode-1 --eosnode-2 some-user@".format(
+            ssh_config
+        )
+    )
+    assert res.rc == 1
+    assert (
+        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        in res.stdout
+    )
+
+    # CLUSTER - LOCAL - CUSTOM SSH - spec for slave not in config
     res = run_script(
         "--ssh-config {} --eosnode-2 some-hostspec".format(
             ssh_config
         )
     )
     assert res.rc == 1
-    assert 'eosnode-2 node ssh configuration is not found' in res.stdout
+    assert (
+        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        in res.stdout
+    )
 
     res = run_script(
         "--ssh-config {} --eosnode-2 some-user@".format(
@@ -82,7 +105,43 @@ def test_setup_provisioner_fail(mhost, run_script):
         )
     )
     assert res.rc == 1
-    assert 'eosnode-2 node ssh configuration is not found' in res.stdout
+    assert (
+        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        in res.stdout
+    )
+
+    # eosnode-2
+    #res = run_script(
+    #    "--eosnode-2 eosnode-2"
+    #)
+    #assert res.rc == 1
+    #assert (
+    #    'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+    #    in res.stdout
+    #)
+
+    # SINGLENODE - REMOTE - CUSTOM SSH - spec for master not in config
+    res = run_script(
+        "--singlenode --ssh-config {} --remote some-hostspec".format(
+            ssh_config
+        )
+    )
+    assert res.rc == 1
+    assert (
+        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        in res.stdout
+    )
+
+    res = run_script(
+        "--singlenode --ssh-config {} --remote some-user@".format(
+            ssh_config
+        )
+    )
+    assert res.rc == 1
+    assert (
+        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        in res.stdout
+    )
 
 
 # TODO
