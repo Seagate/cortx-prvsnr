@@ -18,9 +18,9 @@ Stop s3server service:
     - enable: False
     - init_delay: 2
 
-Remove S3Server:
+Remove eos-s3server:
   pkg.purged:
-    - name: s3server
+    - name: eos-s3server
 
 Remove s3server_uploads:
   pkg.purged:
@@ -72,11 +72,11 @@ Remove common_runtime libraries:
 #------------------------------
 # Teardown S3IAMCLI Start
 #------------------------------
-Remove S3 iamcli:
+Remove eos-s3iamcli:
   pkg.removed:
     - pkgs:
-      - s3iamcli
-#       # - s3iamcli-devel
+      - eos-s3iamcli
+#       # - eos-s3iamcli
 #       # - s3server-debuginfo
 #------------------------------
 # Teardown S3IAMCLI End
