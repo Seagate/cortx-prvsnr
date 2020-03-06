@@ -12,12 +12,11 @@ Remove client cert rpm:
   file.absent:
     - name: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
-Remove S3 iamcli:
+Remove eos-s3iamcli:
   pkg.removed:
     - pkgs:
-      - s3iamcli
-#       # - s3iamcli-devel
-#       # - s3server-debuginfo
+      - eos-s3iamcli
+      # - eos-s3iamcli-devel
 
 
 Delete s3clients checkpoint flag:

@@ -49,7 +49,7 @@ Create metadata partition:
 Ensure SWAP partition is unmounted:
   cmd.run:
     - name: swapoff -a && sleep 2
-    
+
 Make SWAP partition:
   cmd.run:
     - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 && sleep 5
@@ -62,7 +62,7 @@ Make SWAP partition:
 Enable swap:
   mount.swap:
     - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    - persist: False     # save in the fstab
+    - persist: False    # don't add /etc/fstab entry
     - require:
       - cmd: Make SWAP partition
 
@@ -83,7 +83,7 @@ Mount mero partition:
     - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - fstype: ext4
     - mkmnt: True       # create the mount point if it is otherwise not present
-    - persist: False     # save in the fstab
+    - persist: False    # don't add /etc/fstab entry
     - mount: True
     - require:
       - module: Make metadata partition
