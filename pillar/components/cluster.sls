@@ -5,18 +5,6 @@ cluster:
   eosnode-1:                        # minion ID for node-1. Should match one from node_list above.
     hostname: eosnode-1
     is_primary: true
-    network:
-      mgmt_nw:                  # Management network interfaces
-        iface:
-          - eth0
-        ipaddr: 
-        netmask: 
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 172.19.10.101
-        netmask: 255.255.0.0
-      gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
         - /dev/sdb

@@ -6,19 +6,6 @@ cluster:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
-    network:
-      mgmt_nw:                  # Management network interfaces
-        iface:
-          - eth0
-        ipaddr: 
-        netmask: 255.255.255.0
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 
-        netmask: 255.255.0.0
-      floating_ip:
-      gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
         - /dev/sdb
@@ -27,19 +14,6 @@ cluster:
   eosnode-2:
     hostname: eosnode-2
     is_primary: false
-    network:
-      mgmt_nw:                  # Management network interfaces
-        iface:
-          - eth0
-        ipaddr: 
-        netmask: 255.255.255.0
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 
-        netmask: 255.255.0.0
-      floating_ip:
-      gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
         - /dev/sdb
@@ -58,4 +32,3 @@ cluster:
         port: 80
       user: user
       password: 'passwd'
-
