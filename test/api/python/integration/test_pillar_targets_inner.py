@@ -1,5 +1,6 @@
 import os
 import logging
+import pytest
 
 import provisioner
 from provisioner.pillar import PillarUpdater, PillarResolver
@@ -35,7 +36,8 @@ def test_pillar_targets():
     pu = PillarUpdater(targets=minion_id_2)
     value_minion_2 = '1.2.3.6'
     pu.update(NTP(server=value_minion_2))
-    pu.apply()
+    with pytest.raises(provisioner.errors.SaltEmptyReturnError):
+        pu.apply()
     pr = PillarResolver(targets=minion_id)
     get_res = pr.get([ntp_server_param])
     #  value for minion_1 is not changed

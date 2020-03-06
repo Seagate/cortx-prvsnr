@@ -7,12 +7,42 @@ import logging
 from .config import ALL_MINIONS
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
-from .salt import StatesApplier, State
+from .salt import StatesApplier, State, YumRollbackManager
 from provisioner import inputs
 
 _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
 
+
+@attr.s(auto_attribs=True)
+class RunArgsBase:
+    targets: str = attr.ib(
+        default=ALL_MINIONS,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "command's host targets"
+            }
+        }
+    )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsUpdate(RunArgsBase):
+    dry_run: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "perform validation only"
+            }
+        }, default=False
+    )
+
+
+class CommandParserFillerMixin:
+    _run_args_type = RunArgsBase
+
+    @classmethod
+    def fill_parser(cls, parser):
+        inputs.ParserFiller.fill_parser(cls._run_args_type, parser)
 
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
@@ -24,7 +54,7 @@ logger = logging.getLogger(__name__)
 #     - salt.mine
 #     - periodical states apply
 @attr.s(auto_attribs=True)
-class PillarGet:
+class PillarGet(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
 
     # TODO input class type
@@ -37,7 +67,7 @@ class PillarGet:
 
 
 @attr.s(auto_attribs=True)
-class Get:
+class Get(CommandParserFillerMixin):
     params_type: Type[inputs.ParamsList] = inputs.ParamsList
 
     # TODO input class type
@@ -63,11 +93,13 @@ class Get:
 #       - per minion
 #       - ...
 @attr.s(auto_attribs=True)
-class Set:
+class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
     params_type: Type[inputs.ParamGroupInputBase]
     pre_states: List[State] = attr.Factory(list)
     post_states: List[State] = attr.Factory(list)
+
+    _run_args_type = RunArgsUpdate
 
     # TODO input class type
     @classmethod
@@ -83,11 +115,19 @@ class Set:
     # TODO
     # - class for pillar file
     # - caching (load once)
-    def run(self, *args, targets: str = ALL_MINIONS, **kwargs):
+    def run(
+        self, *args,
+        targets: str = ALL_MINIONS, dry_run: bool = False, **kwargs
+    ):
+        # static validation
         if len(args) == 1 and isinstance(args[0], self.params_type):
             params = args[0]
         else:
             params = self.params_type.from_args(*args, **kwargs)
+
+        # TODO dynamic validation
+        if dry_run:
+            return
 
         pillar_updater = PillarUpdater(targets)
 
@@ -109,23 +149,34 @@ class Set:
             raise
 
 
+# TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
-class EOSUpdate:
+class EOSUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
 
     @classmethod
     def from_spec(cls):
         return cls()
 
-    def run(self, targets: str = ALL_MINIONS):
-        # TODO
-        #  - rollback
-        #  - update for provisioner itself
-        #  - update for other sw ???
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
-            state_name = "components.{}.update".format(component)
-            logger.info("Applying state {}".format(state_name))
-            StatesApplier.apply([state_name])
+    def run(self, targets):
+        # TODO:
+        #   - create a state instead
+        #   - what about apt and other non-yum pkd managers
+        #   (downgrade is another more generic option but it requires
+        #    exploration of depednecies that are updated)
+        with YumRollbackManager(targets, multiple_targets_ok=True):
+            # TODO
+            #  - update for provisioner itself
+            #  - update for other sw ???
+            for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
+                state_name = "components.{}.update".format(component)
+                try:
+                    StatesApplier.apply([state_name])
+                except Exception:
+                    logger.exception(
+                        "Failed to update {} on {}".format(component, targets)
+                    )
+                    raise
 
 
 commands = {}

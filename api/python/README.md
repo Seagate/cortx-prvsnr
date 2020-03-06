@@ -148,3 +148,26 @@ There are multiple options how to do that:
 1. using stdin: `echo <password> | provisioner --username <username> --password -`
 2. as env variable `PRVSNR_PASSWORD`: `PRVSNR_PASSWORD=<password> provisioner --username <username>`
 3. (insecure) as command line argument: `provisioner --username <username> --password <password>`
+
+# Development
+
+## docstrings
+
+Pattern:
+
+```
+    """<title>
+
+    :param <name>: [(optional)] <descr>
+    [:type <name>: <types>]
+    :return: <descr>
+    [:rtype: <type>]
+
+    [
+    Usage::
+
+      >>> <python expressions>
+      <output>
+    ]
+    """
+```

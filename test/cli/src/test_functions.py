@@ -679,7 +679,13 @@ def test_functions_install_repos(
     assert h.hash_dir(yum_repos_path + '.bak', mhost.host) == vanilla_repos_hash
 
     local_repos_path = project_path / 'files/etc/yum.repos.d'
-    assert h.hash_dir(yum_repos_path, mhost.host) == h.hash_dir(local_repos_path)
+    try:
+        assert h.hash_dir(yum_repos_path, mhost.host) == h.hash_dir(local_repos_path)
+    except AssertionError:
+        remote_list = h.list_dir(yum_repos_path, mhost.host)
+        local_list = h.list_dir(local_repos_path)
+        assert remote_list == local_list
+        raise
 
     # install for the second time and check that
     # it warns regarding backup creation skip
@@ -689,6 +695,7 @@ def test_functions_install_repos(
 
 
 # relates to EOS-3247
+@pytest.mark.skip(reason='likely outdated')
 @pytest.mark.isolated
 @pytest.mark.env_level('repos-installed')
 def test_functions_systemd_libs_not_from_updates(mhost):
@@ -1128,7 +1135,15 @@ def test_functions_accept_salt_key_cluster(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
-    ['cluster', 'eoscore', 'haproxy', 'release', 's3client', 's3server', 'sspl']
+    [
+        'cluster',
+        # 'eoscore',  # TODO EOS-5940
+        # 'haproxy',
+        'release',
+        's3client',
+        # 's3server',
+        'sspl'
+    ]
 )
 def test_functions_eos_pillar_show_skeleton(
     run_script, mhost, mlocalhost,
@@ -1184,7 +1199,13 @@ def test_functions_eos_pillar_update_fail(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
-    ['cluster', 'eoscore', 'haproxy', 'release', 's3client']
+    [
+        'cluster',
+        # 'eoscore',  TODO EOS-5940
+        # 'haproxy',
+        'release',
+        's3client'
+    ]
     # Removed s3server and sspl EOS-4907
 )
 def test_functions_eos_pillar_update_and_load_default(

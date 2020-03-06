@@ -1341,11 +1341,21 @@ function accept_salt_key {
     fi
 
     salt-key -y -a $_id
+    echo -e "\\nINFO: Key $_id is accepted."
 
-    if [[ -z "\$(salt-key --list accepted | grep $_id 2>/dev/null)" ]]; then
-        echo -e "\\nINFO: Key $_id is accepted." >&2
-        exit 0
-    fi
+    # TODO move that to a separate API
+    echo -e "\\nINFO: waiting for minion $_id to become ready"
+    try=1; tries=10
+    until salt -t 1 $_id test.ping >/dev/null 2>&1
+    do
+        if [[ "\$try" -gt "\$tries" ]]; then
+            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks." >&2
+            exit 1
+        fi
+        echo -n "."
+        try=\$(( \$try + 1 ))
+    done
+    echo -e "\\nINFO: Minion $_id started."
 EOF
 
     if [[ -n "$_hostspec" ]]; then

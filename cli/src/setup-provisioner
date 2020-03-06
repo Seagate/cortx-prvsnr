@@ -96,37 +96,64 @@ if [[ "$verbosity" -ge 2 ]]; then
     set -x
 fi
 
-# -F and --eosnode-2 options shouldn't be provided together
-if [[ -n "$ssh_config" && $eosnode_2_opt == true ]]; then
-    l_error "$0: -F and --eosnode-2 options are mutually exclusive"
-    exit 1
-fi
+# cases:
+#
+#     CLUSTER
+#       REMOTE mode:
+#           DEFAULT ssh:
+#               - spec for SLAVE node might be any
+#               - ASSUME that ssh settings for both nodes are there
+#           CUSTOM ssh:
+#               - spec for SLAVE node might be any
+#               - VERIFY that ssh settings for both nodes are IN CONFIG
+#       LOCAL mode:
+#           DEFAULT ssh:
+#               - spec for SLAVE node might be any
+#               - ASSUME that ssh settings for slave node are there
+#           CUSTOM ssh:
+#               - spec for SLAVE node might be any
+#               - VERIFY that ssh settings for slave node are IN CONFIG
+#
+#     SINGLENODE
+#       REMOTE mode:
+#           DEFAULT ssh:
+#               - ASSUME that ssh settings for master are there
+#           CUSTOM ssh:
+#               - VERIFY master ssh settings are IN CONFIG
+#       LOCAL mode:
+#           - no needs for ssh
 
+# custom ssh config
 if [[ -n "$ssh_config" ]]; then
     default_ssh_disabled=true
 else
-    if [[ $eosnode_2_opt == false ]]; then
-        l_error "$0: Please provide node 2 details using --eosnode-2 option"
-        l_error "OR use -F option to provide ssh config file"
-        exit 1
+    if [[ "$singlenode" == false ]]; then
+        setup_ssh
+        # TODO test for that
+        ssh_config="$default_ssh_conf"
     fi
-    setup_ssh
-    ssh_config="$default_ssh_conf"
 fi
 
-# CHECK EOSNODE-1/EOSNODE-2 OCCURENCE IN SSH-CONFIG
-if [[ -n "$hostspec" && $default_ssh_disabled == true ]]; then
-    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-        l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
-        exit 1
+# CHECK EOSNODE-1/EOSNODE-2 OCCURENCE IN CUSTOM SSH-CONFIG
+if [[ $default_ssh_disabled == true ]]; then
+    if [[ -n "$hostspec" ]]; then
+        if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+            l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
+            exit 1
+        fi
+    fi
+    if [[ "$singlenode" == false ]]; then
+        if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+            l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
+            exit 1
+        fi
     fi
 fi
-if [[ "$singlenode" == false && $default_ssh_disabled == true ]]; then
-    if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-        l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
-        exit 1
-    fi
-fi
+
+# TODO
+#   - check that node(s) are reachable using provided ssh configuration
+#     and provide a user clear details if it's not true
+#   - tests for default ssh configuration for both singlenode and cluster modes
 
 if [[ -z "$prvsnr_version" ]]; then
     if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
@@ -136,7 +163,7 @@ if [[ -z "$prvsnr_version" ]]; then
     fi
 fi
 
-# TODO rpm case for now doesn't support selection per version, only latest one
+
 if [[ -z "$prvsnr_version" && "$prvsnr_repo_src" != "local" && "$prvsnr_repo_src" != "rpm" ]]; then
     l_error 'provisioner repo version is unknown'
     exit 1
@@ -186,7 +213,7 @@ if [[ "$singlenode" != true ]]; then
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
-    
+
     # Always use master hostspec to execute this step
     accept_salt_key eosnode-2 "$hostspec" "$ssh_config" "$sudo"
 

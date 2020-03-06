@@ -1,8 +1,8 @@
 import attr
-from typing import List, Union
+from typing import List, Union, Any
 from pathlib import Path
 
-from .errors import UnknownParamError
+from .errors import UnknownParamError, EOSUpdateRepoSourceError
 from .param import Param, ParamDictItem, KeyPath
 from .api_spec import param_spec
 from .values import (
@@ -11,7 +11,7 @@ from .values import (
 )
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
-METADATA_PARAM_DESCR = '_param_description'
+METADATA_ARGPARSER = '_param_argparser'
 
 
 @attr.s(auto_attribs=True)
@@ -21,22 +21,61 @@ class NoParams:
         pass
 
 
+@attr.s(auto_attribs=True)
+class AttrParserArgs:
+    attr: Any  # TODO typing
+
+    name: str = attr.ib(init=False, default=None)
+    action: str = attr.ib(init=False, default='store')
+    metavar: str = attr.ib(init=False, default=None)
+    default: str = attr.ib(init=False, default=None)
+    help: str = attr.ib(init=False, default='')
+    type: Any = attr.ib(init=False, default=None)  # TODO typing
+
+    def __attrs_post_init__(self):
+        self.name = self.attr.name
+
+        parser_args = self.attr.metadata.get(
+            METADATA_ARGPARSER, {}
+        )
+
+        if self.attr.type is bool:
+            self.action = 'store_true'
+
+        self.type = value_from_str
+
+        self.help = parser_args.get('help', self.help)
+
+        if self.attr.default is not attr.NOTHING:
+            # optional argument
+            self.name = '--' + self.name.replace('_', '-')
+            self.default = self.attr.default
+            self.metavar = (
+                parser_args.get('metavar')
+                or (self.attr.type.__name__ if self.attr.type else None)
+            )
+            if self.metavar:
+                self.metavar = self.metavar.upper()
+
+    @property
+    def kwargs(self):
+        def _filter(attr, value):
+            not_filter = ['attr', 'name']
+            if self.action == 'store_true':
+                not_filter.extend(['metavar', 'type', 'default'])
+            return attr.name not in not_filter
+
+        return attr.asdict(self, filter=_filter)
+
+
 # TODO test
 class ParserFiller:
+    @staticmethod
     def fill_parser(cls, parser):
         for _attr in attr.fields(cls):
-            name = _attr.name
-            kwargs = dict(
-                metavar=_attr.type.__name__.upper(),
-                type=value_from_str,
-                help=_attr.metadata.get(METADATA_PARAM_DESCR, '')
-            )
-            if _attr.default is not attr.NOTHING:
-                name = '--' + _attr.name
-                kwargs['default'] = _attr.default
-            else:
-                kwargs['metavar'] = None
-            parser.add_argument(name, **kwargs)
+            if METADATA_ARGPARSER in _attr.metadata:
+                args = AttrParserArgs(_attr)
+                parser.add_argument(args.name, **args.kwargs)
 
 
 @attr.s(auto_attribs=True)
@@ -108,12 +147,17 @@ class ParamGroupInputBase:
         ParserFiller.fill_parser(cls, parser)
 
     @staticmethod
-    def _attr_ib(param_group='', default=UNCHANGED, descr='', **kwargs):
+    def _attr_ib(
+        param_group='', default=UNCHANGED, descr='', metavar=None, **kwargs
+    ):
         return attr.ib(
             default=default,
             metadata={
                 METADATA_PARAM_GROUP_KEY: param_group,
-                METADATA_PARAM_DESCR: descr
+                METADATA_ARGPARSER: {
+                    'help': descr,
+                    'metavar': metavar
+                }
             },
             **kwargs
         )
@@ -211,11 +255,16 @@ class ParamDictItemInputBase:
         ParserFiller.fill_parser(cls, parser)
 
     @staticmethod
-    def _attr_ib(is_key=False, default=UNCHANGED, descr='', **kwargs):
+    def _attr_ib(
+        is_key=False, default=UNCHANGED, descr='', metavar=None, **kwargs
+    ):
         return attr.ib(
             default=attr.NOTHING if is_key else default,
             metadata={
-                METADATA_PARAM_DESCR: descr
+                METADATA_ARGPARSER: {
+                    'help': descr,
+                    'metavar': metavar
+                }
             },
             **kwargs
         )
@@ -228,36 +277,54 @@ class EOSUpdateRepo(ParamDictItemInputBase):
         is_key=True,
         descr=("release version")
     )
-    source: str = ParamDictItemInputBase._attr_ib(
+    source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
         descr=(
             "repo source, might be a local path to a repo folder or iso file"
             " or an url to a remote repo, "
             "{} might be used to remove the repo"
             .format(UNDEFINED)
+        ),
+        metavar='str',
+        converter=lambda v: (
+            UNCHANGED if v is None else (
+                v if is_special(v) or isinstance(v, Path) else str(v)
+            )
         )
     )
 
     @source.validator
     def _check_source(self, attribute, value):
-        if value is not None:
-            if is_special(value):
-                return
-            if type(value) is not str:
-                raise TypeError(
-                    'unexpected type {} of value {}'
-                    .format(type(value), value)
-                )
-            value = Path(value)
-            if value.exists():
-                if value.is_dir() or (
-                    value.is_file() and (value.suffix == '.iso')
-                ):
-                    return
-            else:  # treate as url TODO check url is valid or even is reachable
-                return
-            raise ValueError('value {} is not acceptable'.format(value))
+        if is_special(value):
+            return  # TODO does any special is expected here
+
+        if (
+            type(self.source) is str
+            and value.startswith(('http://', 'https://'))
+        ):
+            return
+
+        reason = None
+        _value = Path(str(value))
+        if _value.exists():
+            if _value.is_file():
+                if _value.suffix != '.iso':
+                    reason = 'not an iso file'
+            elif not _value.is_dir():
+                reason = 'not a file or directory'
+        else:
+            reason = 'unexpected type of source'
+
+        if reason:
+            raise EOSUpdateRepoSourceError(str(value), reason)
 
     def __attrs_post_init__(self):
-        if type(self.source) is str:
-            if Path(self.source).is_dir():
-                self.source = "file://{}".format(self.source)
+        if (
+            type(self.source) is str
+            and not self.source.startswith(('http://', 'https://'))
+        ):
+            self.source = Path(self.source)
+
+        if isinstance(self.source, Path):
+            self.source = self.source.resolve()
+            prefix = "file://" if self.source.is_dir() else ''
+            self.source = "{}{}".format(prefix, self.source)

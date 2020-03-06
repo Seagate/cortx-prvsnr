@@ -711,6 +711,15 @@ def collect_ip4_addrs(host):
     return res
 
 
+def list_dir(path, host=localhost):
+    res = host.check_output(
+        'bash -c "set -o pipefail; '
+        'cd {} && find . -type f -print | LANG=C sort"'
+        .format(path)
+    )
+    return res.split()
+
+
 # TODO requires md5sum and other system tools
 def hash_dir(path, host=localhost):
     res = host.check_output(
