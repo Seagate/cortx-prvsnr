@@ -12,9 +12,8 @@ Install certs:
     - sources:
       - stx-s3-client-certs: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
-Install s3iamcli:
+Install eos-s3iamcli:
   pkg.installed:
     - pkgs:
-      - s3iamcli: latest
-#       # - s3iamcli-devel
-#       # - s3server-debuginfo
+      - eos-s3iamcli: latest
+#       # - eos-s3iamcli-devel
