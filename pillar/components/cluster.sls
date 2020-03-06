@@ -15,7 +15,7 @@ cluster:
         iface: 
           - eth1
         ipaddr: 172.19.10.101
-        netmask: 255.255.255.0
+        netmask: 255.255.0.0
       gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP
