@@ -1,10 +1,12 @@
-{%- for node_id in pillar['cluster']['node_list'] %}
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+
 Remove authorized nodes:
   cmd.run:
-    - name: pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }}
-{%- endfor %}
+    - names: 
+      {%- for node_id in pillar['cluster']['node_list'] %}
+      - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }}
+      {%- endfor %}
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Destroy Cluster:
   cmd.run:
     - name: pcs cluster destroy
