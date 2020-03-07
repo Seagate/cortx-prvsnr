@@ -90,7 +90,7 @@ sspl:
 #    - watch:
 #      - Stop Firewald
 
-Start and enable Firewalld:
+Start and enable firewalld:
   service.running:
     - name: firewalld
     - enable: True
