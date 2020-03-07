@@ -3,6 +3,7 @@ cluster:
   node_list:
     - eosnode-1
     - eosnode-2
+  cluster_ip:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
