@@ -8,7 +8,7 @@ Remove_base_packages:
   - components.system.firewall.teardwon
 
 Remove_base_packages:
-  pkg.absent:
+  pkg.purged:
     - pkgs:
       - python2-pip
       - python36-pip
