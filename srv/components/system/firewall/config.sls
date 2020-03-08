@@ -137,7 +137,7 @@ Public data zone:
     - rich_rules:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
-      - Add data zone
+      - Add public data zone
       - haproxy
       - nfs
       - s3
@@ -159,7 +159,7 @@ Private data zone:
     - rich_rules:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
-      - Add data zone
+      - Add private data zone
       - hare
       - lnet
 
