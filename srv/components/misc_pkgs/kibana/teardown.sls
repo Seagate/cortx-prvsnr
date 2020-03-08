@@ -7,4 +7,6 @@ Remove kibana:
 
 Remove kibana config:
   file.absent:
-    - name: /etc/kibana/kibana.yml
+    - names:
+      - /etc/kibana
+      - /var/lib/kibana
