@@ -12,7 +12,11 @@ Public direct network:
     - onboot: yes
     - userctl: no
     - mtu: 9000
+<<<<<<< HEAD
 {% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
+=======
+{% if pillar['cluster'][node]['network']['data_nw']['ipaddr'][0] %}
+>>>>>>> EOS-5962: Direct network config.
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
@@ -35,7 +39,11 @@ Private direct network:
     - mtu: 9000
     - onboot: yes
     - userctl: no
+<<<<<<< HEAD
     - netmask: 255.255.255.0
+=======
+    - netmask: 255.255.255.248
+>>>>>>> EOS-5962: Direct network config.
     - proto: none
     - ipaddr: {{ pvt_ip }}
 

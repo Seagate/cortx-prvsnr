@@ -102,6 +102,7 @@ Start and enable firewalld:
     - reload: True
 
 Add public data zone:
+<<<<<<< HEAD
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
     - watch_in:
@@ -109,6 +110,15 @@ Add public data zone:
 
 Add private data zone:
   cmd.run:
+=======
+  cmd.run:
+    - name: firewall-cmd --permanent --new-zone public-data-zone
+    - watch_in:
+      - Start and enable firewalld
+
+Add private data zone:
+  cmd.run:
+>>>>>>> EOS-5962: Direct network config.
     - name: firewall-cmd --permanent --new-zone private-data-zone
     - watch_in:
       - Start and enable firewalld
@@ -137,7 +147,11 @@ Public data zone:
     - rich_rules:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
+<<<<<<< HEAD
       - Add public data zone
+=======
+      - Add data zone
+>>>>>>> EOS-5962: Direct network config.
       - haproxy
       - nfs
       - s3
@@ -159,7 +173,11 @@ Private data zone:
     - rich_rules:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
+<<<<<<< HEAD
       - Add private data zone
+=======
+      - Add data zone
+>>>>>>> EOS-5962: Direct network config.
       - hare
       - lnet
 
