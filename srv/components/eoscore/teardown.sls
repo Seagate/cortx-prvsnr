@@ -14,6 +14,12 @@ Delete EOSCore yum repo:
   pkgrepo.absent:
     - name: {{ defaults.eoscore.repo.id }}
 
+Remove configuration file:
+  file.absent:
+    - names: 
+      - /etc/sysconfig/mero
+      - /etc/sysconfig/mero.bak
+
 Delete eoscore checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.eoscore

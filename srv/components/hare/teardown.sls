@@ -4,18 +4,21 @@
 include:
   - components.hare.stop
 
-
 Remove cluster yaml:
   file.absent:
-    - name: /var/lib/hare/cluster.yaml
+    - name: /var/lib/hare
 {% endif %}
 Stage - Reset Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/hare/conf/setup.yaml', 'hare:reset')
 
 Remove Hare:
- pkg.purged:
-  - name: hare
+  pkg.purged:
+    - name: hare
+
+Remove jq:
+  pkg.purged:
+    - name: jq
 
 Delete Hare yum repo:
   pkgrepo.absent:
