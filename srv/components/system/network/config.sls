@@ -23,7 +23,7 @@ Network setup:
     - gateway: {{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}
     - gatewaydev: {{ mgmt_nw }}
     - require_reboot: True
-    - search: mero.colo.seagate.com
+    - search: {{ salt['pillar.get']("cluster:{0}:network:nw_search".format(grains['id']), 'pun.seagate.com') }}
 
 lo:
   network.managed:
