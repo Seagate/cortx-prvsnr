@@ -7,6 +7,8 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 . $BASEDIR/functions.sh
 
+run_ees_ha=true
+
 function usage {
   echo "\
 Usage: $0 [options]
@@ -17,9 +19,24 @@ Target host is considered to be an EOS SaltStack master.
 
 General options:
 $base_options_usage
+Options:
+       --no-ha      skip running the ees_ha component
 "
 }
 
+function options_parser {
+    set -eu
+
+    case "$1" in
+        --no-ha)
+            run_ees_ha=false
+            ;;
+        *)
+            l_error "Unknown option: $1"
+            usage
+            exit 5
+    esac
+}
 
 function run_states {
     local states=${@}
@@ -128,6 +145,12 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
         "hare"
     )
     run_states  "${iopath_states[@]}"
+fi
+
+if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
+    if [ $run_ees_ha == true ]; then
+        run_states  "ees_ha"
+    fi
 fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.csm ]; then

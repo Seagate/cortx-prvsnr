@@ -1,6 +1,3 @@
-include:
-  - components.hare.prepare
-
 Render ha input params template:
   file.managed:
     - name: /var/lib/hare/build-ees-ha-args.yaml
