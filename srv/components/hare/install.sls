@@ -1,3 +1,6 @@
+include:
+  - components.hare.prepare
+
 Hare requisites:
   pkg.installed:
     - pkgs:

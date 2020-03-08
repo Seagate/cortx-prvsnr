@@ -56,13 +56,18 @@ others:
       - 5162/tcp
       - 443/tcp
 
-s3:
+haproxy:
   firewalld.service:
-    - name: s3
+    - name: haproxy
     - ports:
       - 80/tcp
       - 8080/tcp
       - 443/tcp
+
+s3:
+  firewalld.service:
+    - name: s3
+    - ports:
       - 7081/tcp
       {% for port in range(8081, 8099) %}
       - {{ port }}/tcp
@@ -96,9 +101,15 @@ Start and enable firewalld:
     - enable: True
     - reload: True
 
-Add data zone:
+Add public data zone:
   cmd.run:
-    - name: firewall-cmd --permanent --new-zone data-zone
+    - name: firewall-cmd --permanent --new-zone public-data-zone
+    - watch_in:
+      - Start and enable firewalld
+
+Add private data zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --new-zone private-data-zone
     - watch_in:
       - Start and enable firewalld
 
@@ -113,13 +124,12 @@ Add management zone:
 {% else %}
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
 {%- endif -%}
-Data zone:
+Public data zone:
   firewalld.present:
-    - name: data-zone
+    - name: public-data-zone
     - default: True
     - services:
-      - hare
-      - lnet
+      - haproxy
       - nfs
       - s3
     - interfaces:
@@ -128,10 +138,30 @@ Data zone:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add data zone
-      - hare
-      - lnet
+      - haproxy
       - nfs
       - s3
+
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
+  {%- set data_if = 'data0' -%}
+{% else %}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] -%}
+{%- endif -%}
+Private data zone:
+  firewalld.present:
+    - name: private-data-zone
+    - default: True
+    - services:
+      - hare
+      - lnet
+    - interfaces:
+      - {{ data_if }}
+    - rich_rules:
+      - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
+    - require:
+      - Add data zone
+      - hare
+      - lnet
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
