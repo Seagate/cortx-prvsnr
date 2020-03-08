@@ -36,7 +36,11 @@ Remove pcs package:
       - pacemaker
       - corosync
 
+<<<<<<< HEAD
 Remove configuration directory:
+=======
+Remove configuration directory
+>>>>>>> EOS-4526: EES: Provisioner: FactorySetup: Teardown
   file.absent:
     - names:
       - /etc/corosync

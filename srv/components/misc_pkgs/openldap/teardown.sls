@@ -43,6 +43,7 @@ Remove user ldap:
     - purge: True
     - force: True
 
+<<<<<<< HEAD
 # Attention: Do not delete the /etc/openldap/certs dir at any cost
 # Remove ldap configurations:
 #   file.absent:
@@ -56,6 +57,11 @@ Reset permissions:
     - recurse:
       - user
       - group
+=======
+Remove ldap configurations:
+  file.absent:
+    - name: /etc/openldap
+>>>>>>> EOS-4526: EES: Provisioner: FactorySetup: Teardown
 
 Delete openldap checkpoint flag:
   file.absent:

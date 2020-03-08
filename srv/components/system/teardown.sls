@@ -1,7 +1,11 @@
 include:
   - components.system.logrotate.teardown
   - components.system.ntp.teardown
+<<<<<<< HEAD
   - components.system.firewall.teardown
+=======
+  - components.system.firewall.teardwon
+>>>>>>> EOS-4526: EES: Provisioner: FactorySetup: Teardown
 
 Remove_base_packages:
   pkg.purged:
