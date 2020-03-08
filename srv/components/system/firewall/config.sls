@@ -148,10 +148,14 @@ Public data zone:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
 <<<<<<< HEAD
+<<<<<<< HEAD
       - Add public data zone
 =======
       - Add data zone
 >>>>>>> EOS-5962: Direct network config.
+=======
+      - Add public data zone
+>>>>>>> Firewall fixes for Private network
       - haproxy
       - nfs
       - s3
@@ -174,10 +178,14 @@ Private data zone:
       - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
 <<<<<<< HEAD
+<<<<<<< HEAD
       - Add private data zone
 =======
       - Add data zone
 >>>>>>> EOS-5962: Direct network config.
+=======
+      - Add private data zone
+>>>>>>> Firewall fixes for Private network
       - hare
       - lnet
 
