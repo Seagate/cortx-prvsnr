@@ -1,4 +1,4 @@
-Install ststsd utils:
+Install statsd utils:
   pkg.installed:
     - name: stats_utils
 
