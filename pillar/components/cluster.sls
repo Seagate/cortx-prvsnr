@@ -1,4 +1,5 @@
 cluster:
+  cluster_ip:
   type: single                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
     - eosnode-1                     # minion ID for node-1

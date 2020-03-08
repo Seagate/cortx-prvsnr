@@ -1,4 +1,5 @@
 cluster:
+  cluster_ip:
   type: ees                           # single/ees/ecs
   node_list:
     - eosnode-1
