@@ -27,7 +27,7 @@ def conf_cmd(conf_file, conf_key):
         if isinstance(args, list):
           args = ' '.join(args)
 
-        ret_val = script_path + " " + args
+        ret_val = script_path + " " + str(args)
 
     except yaml.YAMLError as ymlerr:
       print("Error parsing yaml file {0}".format(ymlerr))
