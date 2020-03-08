@@ -70,111 +70,113 @@ class ClusterCfg(BaseCfg):
     def process_inputs(self, program_args: Namespace) -> bool:
         if program_args.interactive:
             input(
-                "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
-                
-                input_msg = ("Enter management interface name ({0}): ".format(
-                    self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"]
-                )
-                )
-                mgmt_if = input(input_msg)
-                # Get IP address of the mgmt interface for eosnode-1
-                mgmt_ip_node1 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-1 {0}'.format(mgmt_if)).read().strip()
-                if mgmt_ip_node1 = "Error":
-                    sys.exit ("Could not read ip address of {0} on node-1".format(mgmt_if))
+                "\nAccepting interactive inputs for network details, Press any key to continue...")
 
-                #update mgmt interface in dictionary
-                self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"] = (
-                    mgmt_if
-                    or
-                    self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"]
-                )
+            input_msg = ("Enter management interface name ({0}): ".format(
+                self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"]
+            )
+            )
+            mgmt_if = input(input_msg)
 
-                # update eosnode-1 mgmt ip address in dictionary
-                self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["ipaddr"] = mgmt_ip_node1
+            # Get IP address of the mgmt interface for eosnode-1
+            mgmt_ip_node1 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-1 {0}'.format(mgmt_if)).read().strip()
+            if mgmt_ip_node1 == "Error":
+                sys.exit ("Could not read ip address of {0} on node-1".format(mgmt_if))
 
-                # Get IP address of the mgmt interface for eosnode-2
-                mgmt_ip_node2 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-2 {0}'.format(mgmt_if)).read().strip()
-                if mgmt_ip_node1 = "Error":
-                    sys.exit ("Could not read ip address of {0} on node-2".format(mgmt_if))
+            #update mgmt interface in dictionary
+            self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"] = (
+                mgmt_if
+                or
+                self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["iface"]
+            )
 
-                # Update mgmt interface in dictionary
-                self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["iface"] = (
-                    mgmt_if
-                    or
-                    self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["iface"]
+            # update eosnode-1 mgmt ip address in dictionary
+            self.__options["cluster"]["eosnode-1"]["network"]["mgmt_nw"]["ipaddr"] = mgmt_ip_node1
 
-                # update eosnode-2 mgmt ip address in dictionary
-                self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["ipaddr"] = mgmt_ip_node2
-                
-                # Get data interface name from user
-                input_msg = ("Enter data interface name ({0}): ".format(
-                    self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"]
-                )
-                )
-                data_if = input(input_msg)
+            # Get IP address of the mgmt interface for eosnode-2
+            mgmt_ip_node2 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-2 {0}'.format(mgmt_if)).read().strip()
+            if mgmt_ip_node1 == "Error":
+                sys.exit ("Could not read ip address of {0} on node-2".format(mgmt_if))
 
-                # Get IP address of data interface on eosnode-1
-                data_ip_node1 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-1 {0}'.format(data_if)).read().strip()
-                if data_ip_node1 = "Error":
-                    sys.exit ("Could not read ip address of {0} on node-1".format(data_if))
+            # Update mgmt interface in dictionary
+            self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["iface"] = (
+                mgmt_if
+                or
+                self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["iface"]
+            )
 
-                # Update data interface in dictionary for eosnode-1
-                self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"] = (
-                    data_if
-                    or
-                    self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"]
-                )
+            # update eosnode-2 mgmt ip address in dictionary
+            self.__options["cluster"]["eosnode-2"]["network"]["mgmt_nw"]["ipaddr"] = mgmt_ip_node2
 
-                # update eosnode-1 data ip address in dictionary
-                self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["ipaddr"] = data_ip_node1
-                
-                # Get IP address of data interface on eosnode-2
-                data_ip_node2 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-2 {0}'.format(data_if)).read().strip()
-                if data_ip_node2 = "Error":
-                    sys.exit ("Could not read ip address of {0} on node-2".format(data_if))
-            
-                # Update data interface in dictionary for eosnode-2
-                self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["iface"] = (
-                    data_if
-                    or
-                    self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["iface"]
+            # Get data interface name from user
+            input_msg = ("Enter data interface name ({0}): ".format(
+                self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"]
+            )
+            )
+            data_if = input(input_msg)
 
-                # update eosnode-2 data ip address in dictionary
-                self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["ipaddr"] = data_ip_node2
+            # Get IP address of data interface on eosnode-1
+            data_ip_node1 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-1 {0}'.format(data_if)).read().strip()
+            if data_ip_node1 == "Error":
+                sys.exit ("Could not read ip address of {0} on node-1".format(data_if))
 
-                
-                input_msg = ("Enter floating ip address for eosnode-1 ({0}):".format(
-                    self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"]
-                )
-                )
-                floating_ip1 = input(input_msg)
-                self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"] = (
-                    floating_ip1
-                    or
-                    self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"]
-                )
+            # Update data interface in dictionary for eosnode-1
+            self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"] = (
+                data_if
+                or
+                self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["iface"]
+            )
 
-                input_msg = ("Enter floating ip address for eosnode-2 ({0}):".format(
-                    self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"]
-                )
-                )
-                floating_ip2 = input(input_msg)
-                self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"] = (
-                    floating_ip2
-                    or
-                    self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"]
-                )
+            # update eosnode-1 data ip address in dictionary
+            self.__options["cluster"]["eosnode-1"]["network"]["data_nw"]["ipaddr"] = data_ip_node1
 
-                input_msg = ("Enter VIP address ({0}):".format(
-                    self.__options["cluster"]["cluster_ip"]
-                )
-                )
-                vip = input(input_msg)
-                self.__options["cluster"]["cluster_ip"] = (
-                    vip
-                    or
-                    self.__options["cluster"]["cluster_ip"]
-                )
+            # Get IP address of data interface on eosnode-2
+            data_ip_node2 = os.popen('sh /opt/seagate/eos-prvsnr/cli/utils/get_ip.sh eosnode-2 {0}'.format(data_if)).read().strip()
+            if data_ip_node2 == "Error":
+                sys.exit ("Could not read ip address of {0} on node-2".format(data_if))
+
+            # Update data interface in dictionary for eosnode-2
+            self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["iface"] = (
+                data_if
+                or
+                self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["iface"]
+            )
+
+            # update eosnode-2 data ip address in dictionary
+            self.__options["cluster"]["eosnode-2"]["network"]["data_nw"]["ipaddr"] = data_ip_node2
+
+            input_msg = ("Enter floating ip address for eosnode-1 ({0}):".format(
+                self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"]
+            )
+            )
+            floating_ip1 = input(input_msg)
+            self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"] = (
+                floating_ip1
+                or
+                self.__options["cluster"]["eosnode-1"]["network"]["floating_ip"]
+            )
+
+            input_msg = ("Enter floating ip address for eosnode-2 ({0}):".format(
+                self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"]
+            )
+            )
+            floating_ip2 = input(input_msg)
+            self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"] = (
+                floating_ip2
+                or
+                self.__options["cluster"]["eosnode-2"]["network"]["floating_ip"]
+            )
+
+            input_msg = ("Enter VIP address ({0}):".format(
+                self.__options["cluster"]["cluster_ip"]
+            )
+            )
+            vip = input(input_msg)
+            self.__options["cluster"]["cluster_ip"] = (
+                vip
+                or
+                self.__options["cluster"]["cluster_ip"]
+            )
 
             # Process args for node_2
             # print(json.dumps(self.__options, indent = 4))
