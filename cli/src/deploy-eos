@@ -148,7 +148,11 @@ fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
     if [ $run_ees_ha == true ]; then
+<<<<<<< HEAD
         run_states  "ha.ees_ha"
+=======
+        run_states  "ees_ha"
+>>>>>>> M2: run ees_ha component in deploy_eos by default
     fi
 fi
 
