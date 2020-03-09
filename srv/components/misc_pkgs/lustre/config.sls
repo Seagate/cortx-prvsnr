@@ -7,7 +7,7 @@ Update lnet config file:
 {%- if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {%- set data_if = 'data0' -%}
 {% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] -%}
 {%- endif -%}
 
 Update lnet config file:
