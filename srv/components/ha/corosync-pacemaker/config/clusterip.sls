@@ -12,6 +12,11 @@ Create CIB for ClusterIP:
 #       - scope: None
 #       - extra_args: None
 
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
+  {%- set data_if = 'data0' -%}
+{% else %}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
+{%- endif -%}
 Setup ClusterIP resouce:
   cmd.run:
     - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic=data0 op monitor interval=30s
