@@ -1,4 +1,5 @@
 cluster:
+  cluster_ip:
   type: single        # single/ees/ecs
   node_list:
     - eosnode-1
@@ -15,7 +16,7 @@ cluster:
         iface: 
           - eth1
         ipaddr: 
-        netmask: 255.255.255.0
+        netmask: 255.255.0.0
       floating_ip:
       gateway_ip:               # Gateway IP of network
     storage:

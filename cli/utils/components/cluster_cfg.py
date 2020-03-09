@@ -10,35 +10,20 @@ from .base_cfg import BaseCfg
 
 
 class ClusterCfg(BaseCfg):
-    __options = {}
-    __cfg_path = ""
-
 
     def __init__(self, cfg_path: str=None, arg_parser: ArgumentParser=None):
 
         if cfg_path:
-            self.__cfg_path = cfg_path
+            self._cfg_path = cfg_path
         else:
-            self.__cfg_path = os.path.join(
+            self._cfg_path = os.path.join(
                 self._pillar_path,
                 "components",
                 "cluster.sls"
             )
 
-        if os.path.exists(self.__cfg_path):
-            self.__load_defaults()
-
         if arg_parser:
             self.__setup_args(arg_parser)
-
-
-    def __load_defaults(self):
-
-        with open(self.__cfg_path, 'r') as fd:
-            self.__options = yaml.safe_load(fd)
-        # print(json.dumps(self._mero_options, indent = 4))
-        # TODO validations for configs.
-
 
     def __setup_args(self, arg_parser=None):
 
@@ -71,85 +56,85 @@ class ClusterCfg(BaseCfg):
         if program_args.interactive:
             input(
                 "\nAccepting interactive inputs for pillar/cluster.sls. Press any key to continue...")
-            for node in self.__options["cluster"]["node_list"]:
+            for node in self._options["cluster"]["node_list"]:
                 input_msg = ("\nEnter hostname for ees {1} ({0}): ".format(
-                    self.__options["cluster"][node]["hostname"], node
+                    self._options["cluster"][node]["hostname"], node
                 )
                 )
-                self.__options["cluster"][node]["hostname"] = (
+                self._options["cluster"][node]["hostname"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["hostname"]
+                    self._options["cluster"][node]["hostname"]
                 )
 
                 input_msg = ("Is this a primary ees node? ({0}): ".format(
-                    self.__options["cluster"][node]["is_primary"]
+                    self._options["cluster"][node]["is_primary"]
                 )
                 )
-                self.__options["cluster"][node]["is_primary"] = (
+                self._options["cluster"][node]["is_primary"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["is_primary"]
+                    self._options["cluster"][node]["is_primary"]
                 )
 
                 input_msg = ("Enter management interface name ({0}): ".format(
-                    self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"]
+                    self._options["cluster"][node]["network"]["mgmt_nw"]["iface"]
                 )
                 )
-                self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"] = (
+                self._options["cluster"][node]["network"]["mgmt_nw"]["iface"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["network"]["mgmt_nw"]["iface"]
+                    self._options["cluster"][node]["network"]["mgmt_nw"]["iface"]
                 )
 
                 input_msg = ("Enter data interface name ({0}): ".format(
-                    self.__options["cluster"][node]["network"]["data_nw"]["iface"]
+                    self._options["cluster"][node]["network"]["data_nw"]["iface"]
                 )
                 )
-                self.__options["cluster"][node]["network"]["data_nw"]["iface"] = (
+                self._options["cluster"][node]["network"]["data_nw"]["iface"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["network"]["data_nw"]["iface"]
+                    self._options["cluster"][node]["network"]["data_nw"]["iface"]
                 )
 
                 input_msg = ("Enter the default gateway ip ({0}): ".format(
-                    self.__options["cluster"][node]["network"]["gateway_ip"]
+                    self._options["cluster"][node]["network"]["gateway_ip"]
                 )
                 )
-                self.__options["cluster"][node]["network"]["gateway_ip"] = (
+                self._options["cluster"][node]["network"]["gateway_ip"] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]["network"]["gateway_ip"]
+                    self._options["cluster"][node]["network"]["gateway_ip"]
                 )
 
                 input_msg = ("Enter the default metadata_device ({0}): ".format(
-                    self.__options["cluster"][node]['storage']["metadata_device"][0]
+                    self._options["cluster"][node]['storage']["metadata_device"][0]
                 )
                 )
-                self.__options["cluster"][node]['storage']["metadata_device"][0] = (
+                self._options["cluster"][node]['storage']["metadata_device"][0] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]['storage']["metadata_device"][0]
+                    self._options["cluster"][node]['storage']["metadata_device"][0]
                 )
 
                 input_msg = ("Enter the data disk device for {1} ({0}): ".format(
-                    self.__options["cluster"][node]['storage']["data_devices"][0], node
+                    self._options["cluster"][node]['storage']["data_devices"][0], node
                 )
                 )
-                self.__options["cluster"][node]['storage']["data_devices"][0] = (
+                self._options["cluster"][node]['storage']["data_devices"][0] = (
                     input(input_msg)
                     or
-                    self.__options["cluster"][node]['storage']["data_devices"][0]
+                    self._options["cluster"][node]['storage']["data_devices"][0]
                 )
 
             # Process args for node_2
-            # print(json.dumps(self.__options, indent = 4))
+            # print(json.dumps(self._options, indent = 4))
             return True
 
         elif program_args.show_cluster_file_format:
             print(
                 yaml.safe_dump(
-                    self.__options,
+                    self._options,
                     stream=None,
                     default_flow_style=False,
                     canonical=False,
@@ -166,12 +151,12 @@ class ClusterCfg(BaseCfg):
             new_options = {}
             with open(program_args.cluster_file, 'r') as fd:
                 new_options = yaml.safe_load(fd)
-            self.__options.update(new_options)
+            self._options.update(new_options)
             return True
 
         elif program_args.load_default:
-            if os.path.exists(self.__cfg_path+".bak"):
-                copy(self.__cfg_path+".bak",self.__cfg_path)
+            if os.path.exists(self._cfg_path+".bak"):
+                copy(self._cfg_path+".bak",self._cfg_path)
             else:
                 print("Error: No Backup File exists ")
             return False
@@ -181,15 +166,15 @@ class ClusterCfg(BaseCfg):
 
     def pillar_backup(func):
         def backup(*args):
-            copy(args[0].__cfg_path,args[0].__cfg_path+".bak")
+            copy(args[0]._cfg_path,args[0]._cfg_path+".bak")
             return func(*args)
         return backup
 
     @pillar_backup
     def save(self):
-        with open(self.__cfg_path, 'w') as fd:
+        with open(self._cfg_path, 'w') as fd:
             yaml.safe_dump(
-                self.__options,
+                self._options,
                 stream=fd,
                 default_flow_style=False,
                 canonical=False,

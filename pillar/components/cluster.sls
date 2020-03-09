@@ -1,4 +1,5 @@
 cluster:
+  cluster_ip:
   type: single                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
     - eosnode-1                     # minion ID for node-1
@@ -15,7 +16,7 @@ cluster:
         iface: 
           - eth1
         ipaddr: 172.19.10.101
-        netmask: 255.255.255.0
+        netmask: 255.255.0.0
       gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:              # Device for /var/mero and possibly SWAP

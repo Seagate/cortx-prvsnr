@@ -1,9 +1,12 @@
 import attr
 from salt.client import LocalClient
-from typing import List, Union
+from typing import List, Union, Dict
+import logging
 
 from .config import ALL_MINIONS
-from .errors import SaltError
+from .errors import SaltError, SaltEmptyReturnError
+
+logger = logging.getLogger(__name__)
 
 _eauth = 'pam'
 _username = None
@@ -68,6 +71,9 @@ def _salt_client_cmd(*args, **kwargs):
         # TODO too generic
         raise SaltError(repr(exc)) from exc
 
+    if not res:
+        raise SaltEmptyReturnError
+
     # TODO is it a valid case actually ?
     if type(res) is not dict:
         return res
@@ -75,11 +81,16 @@ def _salt_client_cmd(*args, **kwargs):
     results = {}
     fails = {}
     for target, job_result in res.items():
-        ret = job_result['ret']
-        results[target] = ret
+        ret = job_result.get('ret') if type(job_result) is dict else None
+
+        if ret is None:
+            results[target] = job_result
+            continue
+        else:
+            results[target] = ret
 
         _fails = {}
-        if job_result['retcode'] != 0:
+        if job_result.get('retcode') != 0:
             salt_fun = args[1]
             if str(salt_fun).startswith('state.') and type(ret) is dict:
                 for task, tresult in ret.items():
@@ -109,6 +120,28 @@ def pillar_refresh(targets=ALL_MINIONS):
     return _salt_client_cmd(targets, 'saltutil.refresh_pillar')
 
 
+# TODO test
+def function_run(fun, *args, targets=ALL_MINIONS, **kwargs):
+
+    return _salt_client_cmd(targets, fun, list(args), **kwargs)
+
+
+# TODO test
+def cmd_run(cmd, targets=ALL_MINIONS):
+    logger.info(
+        "Running command '{}' on '{}'".format(
+            cmd, targets
+        )
+    )
+    res = function_run('cmd.run', cmd, targets=targets)
+    logger.info(
+        "Run command '{}' on '{}', res {}".format(
+            cmd, targets, res
+        )
+    )
+    return res
+
+
 def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
     ret = {}
 
@@ -116,8 +149,18 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
     for state in states:
         state = State(state)
         try:
-            res = _salt_client_cmd(targets, 'state.apply', [state.name])
-        except SaltError as exc:
+            logger.info(
+                "Applying state {} on {}".format(
+                    state, targets
+                )
+            )
+            res = function_run('state.apply', state.name, targets=targets)
+            logger.info(
+                "Applied state {} on {}, res {}".format(
+                    state, targets, res
+                )
+            )
+        except Exception as exc:
             raise SaltError(
                 "Failed to apply state '{}': {}"
                 .format(state, str(exc))
@@ -134,4 +177,46 @@ class StatesApplier:
     @staticmethod
     def apply(states: List[State], targets: str = ALL_MINIONS) -> None:
         if states:
-            states_apply(states=states, targets=targets)
+            return states_apply(states=states, targets=targets)
+
+
+# TODO test
+@attr.s(auto_attribs=True)
+class YumRollbackManager:
+    targets: str = ALL_MINIONS
+    multiple_targets_ok: bool = False
+    _last_txn_ids: Dict = attr.ib(init=False, default=attr.Factory(dict))
+
+    def __enter__(self):
+        self._last_txn_ids = cmd_run(
+            "yum history | head -n 4 | tail -n1 | awk '{print $1}'",
+            targets=self.targets
+        )
+
+        if (
+            not self.multiple_targets_ok
+            and (len(self.last_txn_ids) > 1)
+        ):
+            raise ValueError(
+                "Multiple targetting is not expected, "
+                "matched targets: {} for '{}'"
+                .format(list(self.last_txn_ids), self.targets)
+            )
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if exc_type is None:
+            return
+
+        for target, txn_id in self._last_txn_ids.items():
+            logger.info("Starting rollback on target {}".format(target))
+            cmd_run(
+                "yum history rollback -y {}".format(txn_id),
+                targets=target
+            )
+            logger.info("Rollback on target {} is completed".format(target))
+
+    @property
+    def last_txn_ids(self):
+        return self._last_txn_ids

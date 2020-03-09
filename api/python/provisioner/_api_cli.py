@@ -3,7 +3,7 @@ import subprocess
 import json
 import logging
 
-from provisioner.errors import ProvisionerError
+from provisioner import errors
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +12,41 @@ _username = None
 _password = None
 
 
+def _run_cmd(cmd, **kwargs):
+    try:
+        res = subprocess.run(cmd, **kwargs)
+    # subprocess.run fails expectedly
+    except subprocess.CalledProcessError as exc:
+        res = json.loads(exc.stdout) if exc.stdout else {}
+        cli_exc = res.get('exc', {})
+        cli_exc_type, cli_exc_args = cli_exc.get('type'), cli_exc.get('args')
+
+        if cli_exc_args and cli_exc_type:
+            prvsnr_error_type = getattr(errors, cli_exc_type, None)
+            # cli fails expectedly
+            if prvsnr_error_type:
+                _exc = prvsnr_error_type(*cli_exc_args)
+            # cli fails unexpectedly - unexpected error
+            else:
+                _exc = errors.ProvisionerError(cli_exc_type, *cli_exc_args)
+        else:
+            # cli fails unexpectedly - unexpected output
+            _exc = errors.ProvisionerError(exc.stderr)
+        raise _exc from exc
+    # subprocess.run fails unexpectedly
+    except Exception as exc:
+        raise errors.ProvisionerError(repr(exc)) from exc
+    else:
+        _res = json.loads(res.stdout) if res.stdout else {}
+        try:
+            return _res['ret']
+        except KeyError:
+            raise errors.ProvisionerError(
+                'No return data found in {}'.format(res.stdout)
+            )
+
+
+# TODO test args preparation
 def _api_call(fun, *args, **kwargs):
     # do not expect ad-hoc credentials here
     kwargs.pop('password', None)
@@ -31,25 +66,23 @@ def _api_call(fun, *args, **kwargs):
 
     cmd = ['provisioner', fun]
     for k, v in kwargs.items():
-        cmd.extend(['--{}'.format(k), str(v)])
+        k = '--{}'.format(k.replace('_', '-'))
+        if type(v) is not bool:
+            cmd.extend([k, str(v)])
+        elif v:
+            cmd.extend([k])
+
     cmd.extend([str(a) for a in args])
     logger.debug("Command: {}".format(cmd))
 
-    try:
-        res = subprocess.run(
-            cmd,
-            input=_input,
-            check=True,
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-    except subprocess.CalledProcessError as exc:
-        raise ProvisionerError(exc.stderr) from exc
-    except Exception as exc:
-        raise ProvisionerError(repr(exc)) from exc
-    else:
-        return json.loads(res.stdout) if res.stdout else None
+    return _run_cmd(
+        cmd,
+        input=_input,
+        check=True,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
 
 def _api_wrapper(fun):

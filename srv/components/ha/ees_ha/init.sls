@@ -7,3 +7,9 @@ setup EES HA on non-primary node:
   test.show_notification:
     - text: "No changes needed on non-primary node"
 {% endif %}
+
+Generate ees_ha checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.ees_ha
+    - makedirs: True
+    - create: True

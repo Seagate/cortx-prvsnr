@@ -499,40 +499,55 @@ def _copy_to_local(mhost, host_path, tmpdir_local):
     return local_path
 
 
-# TODO DOCS
-@pytest.fixture(scope='session')
-def rpm_prvsnr(request, tmpdir_session):
-    mhost = _rpmbuild_mhost(request)
-    # TODO DOCS : example how to run machine out of fixture scope
-    with mhost.remote as _:
+def rpm_prvsnr_build(mhost):
+    mhost.check_output(
+        'cd {} && sh -x devops/rpms/buildrpm.sh'.format(mhost.repo)
+    )
+    return Path(
         mhost.check_output(
-            'cd {} && sh -x devops/rpms/buildrpm.sh'.format(mhost.repo)
-        )
-        rpm_remote_path = mhost.check_output(
             'ls ~/rpmbuild/RPMS/x86_64/{}*.rpm | grep -v debug'
             .format(h.PRVSNR_PKG_NAME)
         )
-        return _copy_to_local(
-            mhost, Path(rpm_remote_path), tmpdir_session
-        )
+    )
 
 
-# TODO DOCS
-@pytest.fixture(scope='session')
-def rpm_prvsnr_cli(request, tmpdir_session):
-    mhost = _rpmbuild_mhost(request)
-    # TODO DOCS : example how to run machine out of fixture scope
-    with mhost.remote as _:
+def rpm_prvsnr_cli_build(mhost):
+    mhost.check_output(
+        'cd {} && sh -x cli/buildrpm.sh'.format(mhost.repo)
+    )
+    return Path(
         mhost.check_output(
-            'cd {} && sh -x cli/buildrpm.sh'.format(mhost.repo)
-        )
-        rpm_remote_path = mhost.check_output(
             'ls ~/rpmbuild/RPMS/x86_64/{}*.rpm | grep -v debug'
             .format(h.PRVSNR_CLI_PKG_NAME)
         )
-        return _copy_to_local(
-            mhost, Path(rpm_remote_path), tmpdir_session
-        )
+    )
+
+
+@pytest.fixture(scope='session')
+def rpm_build():
+    def _f(request, tmpdir_local, cli=False, mhost_init_cb=None):
+        mhost = _rpmbuild_mhost(request)
+        # TODO DOCS : example how to run machine out of fixture scope
+        with mhost.remote as _:
+            if mhost_init_cb:
+                mhost_init_cb(mhost)
+            rpm_remote_path = (
+                rpm_prvsnr_cli_build(mhost) if cli else rpm_prvsnr_build(mhost)
+            )
+            return _copy_to_local(
+                mhost, rpm_remote_path, tmpdir_local
+            )
+    return _f
+
+
+@pytest.fixture(scope='session')
+def rpm_prvsnr(request, tmpdir_session, rpm_build):
+    return rpm_build(request, tmpdir_session, cli=False)
+
+
+@pytest.fixture(scope='session')
+def rpm_prvsnr_cli(request, tmpdir_session, rpm_build):
+    return rpm_build(request, tmpdir_session, cli=True)
 
 
 @pytest.fixture(autouse=True)

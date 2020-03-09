@@ -5,3 +5,7 @@ Remove statsd:
   pkg.purged:
     - pkgs:
       - statsd
+
+Remove statsd configuration:
+  file.absent:
+    - name: /etc/statsd

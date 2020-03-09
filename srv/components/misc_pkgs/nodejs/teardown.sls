@@ -3,11 +3,12 @@ Remove nodejs:
     - name: /opt/nodejs
 
 Remove nodejs from bash_profile:
-  file.blockreplace:
+  file.replace:
     - name: ~/.bashrc
-    - marker_start: '# DO NOT EDIT: Nodejs binaries'
-    - marker_end: '# DO NOT EDIT: End'
-    - content: ''
+    - pattern: "# DO NOT EDIT: Nodejs binaries.*?# DO NOT EDIT: End"
+    - flags: ['MULTILINE', 'DOTALL']
+    - repl: ''
+    - ignore_if_missing: True
 
 Source bash_profile for nodejs cleanup:
   cmd.run:

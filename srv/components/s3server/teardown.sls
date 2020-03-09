@@ -12,15 +12,15 @@
 #-------------------------
 # Teardown S3Server
 #-------------------------
-Stop s3server service:
+Stop s3authserver service:
   service.dead:
-    - name: s3server
+    - name: s3authserver
     - enable: False
     - init_delay: 2
 
-Remove S3Server:
+Remove eos-s3server:
   pkg.purged:
-    - name: s3server
+    - name: eos-s3server
 
 Remove s3server_uploads:
   pkg.purged:
@@ -65,6 +65,7 @@ Remove common_runtime libraries:
       - glog
       - gflags
       - yaml-cpp
+
 #------------------------------
 # Teardown Common Runtime End
 #------------------------------
@@ -72,16 +73,31 @@ Remove common_runtime libraries:
 #------------------------------
 # Teardown S3IAMCLI Start
 #------------------------------
-Remove S3 iamcli:
+Remove eos-s3iamcli:
   pkg.removed:
     - pkgs:
-      - s3iamcli
-#       # - s3iamcli-devel
+      - eos-s3iamcli
+#       # - eos-s3iamcli
 #       # - s3server-debuginfo
 #------------------------------
 # Teardown S3IAMCLI End
 #------------------------------
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+Remove s3server_uploads repo:
+  pkgrepo.absent:
+    - name: {{ defaults.s3server.uploads_repo.id }}
+
+Remove s3server repo:
+  pkgrepo.absent:
+    - name: {{ defaults.s3server.repo.id }}
+
+Remove s3 entries from /etc/hosts:
+ file.line:
+   - name: /etc/hosts
+   - match: '.*s3.seagate.com sts.seagate.com iam.seagate.com.*'
+   - mode: delete
 
 Delete s3server checkpoint flag:
   file.absent:

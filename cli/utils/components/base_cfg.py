@@ -8,6 +8,8 @@ from argparse import ArgumentParser, Namespace
 
 
 class BaseCfg(metaclass=ABCMeta):
+    __options = None
+    _cfg_path = ""
 
     _root_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -18,6 +20,21 @@ class BaseCfg(metaclass=ABCMeta):
         _root_path,
         "pillar"
     )
+
+    @property
+    def _options(self):
+        if self.__options is None:
+            self.__options = {}
+            if os.path.exists(self._cfg_path):
+                self.__load_defaults()
+        return self.__options
+
+    def __load_defaults(self):
+
+        with open(self._cfg_path, 'r') as fd:
+            self.__options = yaml.safe_load(fd)
+            # print(json.dumps(self._release_options, indent = 4))
+            # TODO validations for configs.
 
     @abstractmethod
     def process_inputs(self, program_args: Namespace) -> bool:
