@@ -1,3 +1,6 @@
+include:
+  - .start
+
 ntpd:
   firewalld.service:
     - name: ntpd 
@@ -52,9 +55,10 @@ others:
   firewalld.service:
     - name: others
     - ports:
-      - 5161/tcp
-      - 5162/tcp
-      - 443/tcp
+      # - 5161/tcp  # RabbitMQ over SSL
+      - 5162/tcp    # RabbitMQ
+      - 443/tcp     # HTTPS
+      - 25/tcp      # SMTP
 
 haproxy:
   firewalld.service:
@@ -88,36 +92,23 @@ sspl:
     - ports:
       - 8090/tcp
 
-# Not required, watch triggers reload
-#Stop Firewald:
-#  service.dead:
-#    - name: firewalld
-#    - watch:
-#      - Stop Firewald
-
-Start and enable firewalld:
-  service.running:
-    - name: firewalld
-    - enable: True
-    - reload: True
-
 Add public data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
     - watch_in:
-      - Start and enable firewalld
+      - Start and enable Firewalld service
 
 Add private data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone private-data-zone
     - watch_in:
-      - Start and enable firewalld
+      - Start and enable Firewalld service
 
 Add management zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone management-zone
     - watch_in:
-      - Start and enable firewalld
+      - Start and enable Firewalld service
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {%- set data_if = 'data0' -%}
@@ -127,15 +118,18 @@ Add management zone:
 Public data zone:
   firewalld.present:
     - name: public-data-zone
-    - default: True
+    - default: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
     - services:
       - haproxy
       - nfs
       - s3
     - interfaces:
       - {{ data_if }}
-    - rich_rules:
-      - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
+    # - rich_rules:
+    #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add public data zone
       - haproxy
@@ -150,14 +144,17 @@ Public data zone:
 Private data zone:
   firewalld.present:
     - name: private-data-zone
-    - default: True
+    - default: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
     - services:
       - hare
       - lnet
     - interfaces:
       - {{ data_if }}
-    - rich_rules:
-      - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
+    # - rich_rules:
+    #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add private data zone
       - hare
@@ -172,6 +169,8 @@ Management zone:
   firewalld.present:
     - name: management-zone
     - default: True
+    - prune_ports: True
+    - prune_services: True
     - services:
       - ntpd
       - saltmaster
