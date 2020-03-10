@@ -12,7 +12,7 @@ Public direct network:
     - onboot: yes
     - userctl: no
     - mtu: 9000
-{% if pillar['cluster'][node]['network']['data_nw']['ipaddr'][0] %}
+{% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
