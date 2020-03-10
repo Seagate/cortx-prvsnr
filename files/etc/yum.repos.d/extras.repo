@@ -1,6 +1,5 @@
 [extras]
 gpgcheck=0
 enabled=1
-baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Production/CentOS-7/custom/CentOS-7/CentOS-7-Extras/
+baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
 name=extras
-
