@@ -5,13 +5,6 @@ import sys
 import yaml
 
 from components.base_cfg import BaseCfg
-from components.cluster_cfg import ClusterCfg
-from components.eoscore_cfg import EOSCoreCfg
-from components.haproxy_cfg import HAProxyCfg
-from components.release_cfg import ReleaseCfg
-from components.s3client_cfg import S3ClientCfg
-from components.s3server_cfg import S3ServerCfg
-from components.sspl_cfg import SSPLCfg
 from components.generic_cfg import GenericCfg
 
 def __config_modules(arg_parser):
