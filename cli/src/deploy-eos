@@ -129,11 +129,10 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
     sleep 2
 
     # Reboot only if mellanox diver is installed
-    if [[ $(rpm -qi mlnx-ofed-all 1>/dev/null) == 0 ]]
-    then
+    rpm -qi mlnx-ofed-all > /dev/null 2>&1 && {
         salt "eosnode-2" system.reboot --async
         salt "eosnode-1" system.reboot --async
-    fi
+    }
     sleep 2
 fi
 
