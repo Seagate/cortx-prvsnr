@@ -103,7 +103,7 @@ class HostMeta:
     ssh_config = attr.ib()
     request = attr.ib()
 
-    label = attr.ib(default='')
+    label = attr.ib(converter=lambda v: '' if not v else v, default='')
     machine_name = attr.ib(default=None)
     hostname = attr.ib(default=None)
     iface = attr.ib(default=None)
