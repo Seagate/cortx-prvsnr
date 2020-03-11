@@ -10,19 +10,19 @@ Remove existing file:
 
 Configure OpenLDAP - Schema:
   cmd.run:
-    - name: ldapadd -x -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/cn\=\{1\}s3user.ldif
+    - name: ldapadd -x -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/cn\=\{1\}s3user.ldif -H ldapi:///
     - require:
       - Remove existing file
 
 Configure OpenLDAP - Base data:
   cmd.run:
-    - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap-init.ldif
+    - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap-init.ldif -H ldapi:///
     - require:
       - Configure OpenLDAP - Schema
 
 Configure OpenLDAP - Add IAM admin:
   cmd.run:
-    - name: ldapadd -x -D 'cn=admin,dc=seagate,dc=com' -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif
+    - name: ldapadd -x -D 'cn=admin,dc=seagate,dc=com' -w {{ pillar['openldap']['admin_passwd'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif -H ldapi:///
     - require:
       - Configure OpenLDAP - Base data
 
@@ -40,19 +40,19 @@ Configure OpenLDAP - Enable IAM constraints:
 
 Configure OpenLDAP - Load ppolicy schema:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /etc/openldap/schema/ppolicy.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /etc/openldap/schema/ppolicy.ldif -H ldapi:///
     - require:
       - Configure OpenLDAP - Enable IAM constraints
 
 Configure OpenLDAP - Load ppolicy module:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ppolicymodule.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ppolicymodule.ldif -H ldapi:///
     - require:
       - Configure OpenLDAP - Load ppolicy schema
 
 Configure OpenLDAP - Load ppolicy overlay:
   cmd.run:
-    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ppolicyoverlay.ldif
+    - name: ldapmodify -D "cn=admin,cn=config" -w {{ pillar['openldap']['admin_passwd'] }} -a -f /opt/seagate/eos-prvsnr/generated_configs/ldap/ppolicyoverlay.ldif -H ldapi:///
     - require:
       - Configure OpenLDAP - Load ppolicy module
 
