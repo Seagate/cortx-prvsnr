@@ -111,12 +111,28 @@ def test_network_configuration(
     run_test(mhosteosnode1)
 
 
+# TODO DOC example how to parametrize cluster/singlenode:
+# - dynamic markers
+# - dynamic fixtures
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.parametrize(
+    "cluster", [True, False], ids=['cluster', 'singlenode']
+)
 def test_eosupdate_repo_configuration(
-    mhosteosnode1, run_test
+    request, cluster, api_type
 ):
+    if cluster:
+        request.applymarker(pytest.mark.env_level('salt-installed'))
+        request.applymarker(pytest.mark.hosts(['eosnode1', 'eosnode2']))
+        request.getfixturevalue('configure_salt')
+        request.getfixturevalue('accept_salt_keys')
+    else:
+        request.applymarker(pytest.mark.hosts(['eosnode1']))
+
+    mhosteosnode1 = request.getfixturevalue('mhosteosnode1')
+    run_test = request.getfixturevalue('run_test')
+
     repo_dir = '/tmp/repo'
     iso_path = '/tmp/repo.iso'
 
@@ -133,8 +149,9 @@ def test_eosupdate_repo_configuration(
         )
     )
     run_test(mhosteosnode1, env={
+        'TEST_MODE': 'cluster' if cluster else 'singlenode',
         'TEST_REPO_DIR': repo_dir,
-        'TEST_REPO_ISO_PATH': iso_path
+        'TEST_REPO_ISO_PATH': iso_path,
     })
 
 

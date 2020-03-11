@@ -50,9 +50,9 @@ class Param:
 
 @attr.s(auto_attribs=True, frozen=True)
 class ParamDictItem(Param):
-    key: str
-    value: str
+    key: str = 'pillar_key'
+    value: str = 'pillar_value'
 
     @classmethod
-    def from_spec(cls, name, parent, key, value, _path):
-        return cls(name, pi_path=_path, pi_key=parent, key=key, value=value)
+    def from_spec(cls, name, parent, _path, **kwargs):
+        return cls(name, pi_path=_path, pi_key=parent, **kwargs)

@@ -1,13 +1,16 @@
 import sys
 import attr
-from typing import List, Dict, Type
+from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
 
-from .config import ALL_MINIONS
+from .config import ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
-from .salt import StatesApplier, State, YumRollbackManager
+from .salt import (
+    StatesApplier, StateFunExecuter, State,
+    YumRollbackManager
+)
 from provisioner import inputs
 
 _mod = sys.modules[__name__]
@@ -92,10 +95,17 @@ class Get(CommandParserFillerMixin):
 #       - per group (grains)
 #       - per minion
 #       - ...
+#
+# Implements the following:
+#   - update pillar related to some param(s)
+#   - call related states (before and after)
+#   - rollback if something goes wrong
 @attr.s(auto_attribs=True)
 class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
-    params_type: Type[inputs.ParamGroupInputBase]
+    params_type: Type[
+        Union[inputs.ParamGroupInputBase, inputs.ParamDictItemInputBase]
+    ]
     pre_states: List[State] = attr.Factory(list)
     post_states: List[State] = attr.Factory(list)
 
@@ -112,23 +122,7 @@ class Set(CommandParserFillerMixin):
             post_states=[State(state) for state in states.get('post', [])]
         )
 
-    # TODO
-    # - class for pillar file
-    # - caching (load once)
-    def run(
-        self, *args,
-        targets: str = ALL_MINIONS, dry_run: bool = False, **kwargs
-    ):
-        # static validation
-        if len(args) == 1 and isinstance(args[0], self.params_type):
-            params = args[0]
-        else:
-            params = self.params_type.from_args(*args, **kwargs)
-
-        # TODO dynamic validation
-        if dry_run:
-            return
-
+    def _run(self, params, targets):
         pillar_updater = PillarUpdater(targets)
 
         pillar_updater.update(params)
@@ -147,6 +141,79 @@ class Set(CommandParserFillerMixin):
             # if rollback happened
             StatesApplier.apply(self.post_states)
             raise
+
+    # TODO
+    # - class for pillar file
+    # - caching (load once)
+    def run(
+        self, *args,
+        targets: str = ALL_MINIONS, dry_run: bool = False, **kwargs
+    ):
+        # static validation
+        if len(args) == 1 and isinstance(args[0], self.params_type):
+            params = args[0]
+        else:
+            params = self.params_type.from_args(*args, **kwargs)
+
+        # TODO dynamic validation
+        if dry_run:
+            return
+
+        self._run(params, targets)
+
+
+# assumtions / limitations
+#   - support only for ALL_MINIONS targetting TODO ??? why do you think so
+#
+#
+
+# set/remove the repo:
+#   - call repo reset logic for minions:
+#       - remove repo config for yum
+#       - unmount repo if needed
+#       - remove repo dir/iso file if needed TODO
+#   - call repo reset logic for master:
+#       - remove local dir/file from salt user file root (if needed)
+@attr.s(auto_attribs=True)
+class SetEOSUpdateRepo(Set):
+    # TODO at least either pre or post should be defined
+    params_type: Type[inputs.EOSUpdateRepo] = inputs.EOSUpdateRepo
+
+    # TODO rollback
+    def _run(self, params: inputs.EOSUpdateRepo, targets: str):
+        # if local - copy the repo to salt user file root
+        if params.is_local():
+            dest = PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / params.release
+
+            # TODO consider to use symlink instead
+
+            if params.is_dir():
+                # TODO
+                #  - file.recurse expects only dirs from maste file roots
+                #    (salt://), need to find another alternative to respect
+                #    indempotence
+                # StateFunExecuter.execute(
+                #     'file.recurse',
+                #     source=str(params.source),
+                #     name=str(dest)
+                # )
+                StateFunExecuter.execute(
+                    'cmd.run',
+                    name=(
+                        "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
+                        .format(dest.parent, params.source, dest)
+                    )
+                )
+            else:  # iso file
+                StateFunExecuter.execute(
+                    'file.managed',
+                    source=str(params.source),
+                    name='{}.iso'.format(dest),
+                    makedirs=True
+                )
+
+        # call default set logic (set pillar, call related states)
+        super()._run(params, targets)
 
 
 # TODO consider to use RunArgsUpdate and support dry-run

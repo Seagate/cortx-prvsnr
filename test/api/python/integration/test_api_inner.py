@@ -47,16 +47,22 @@ def api_call(fun, *args, **kwargs):
         return json.loads(res.stdout)['ret'] if res.stdout else None
 
 
-def run_cmd(command, **kwargs):
-    _kwargs = dict(
-        shell=True,
-        check=True,
-        universal_newlines=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    _kwargs.update(kwargs)
-    return subprocess.run(command, **_kwargs)
+salt_client = None
+
+
+def run_cmd(command, retcodes=[0], **kwargs):
+    from salt.client import LocalClient
+    global salt_client
+
+    if not salt_client:
+        salt_client = LocalClient()
+
+    res = salt_client.cmd('*', 'cmd.run', [command], full_return=True)
+    if retcodes:
+        for _id, _res in res.items():
+            assert _res['retcode'] in retcodes
+
+    return res
 
 
 def test_external_auth():
@@ -239,7 +245,9 @@ def test_network_configuration():
     '''
 
 
+# TODO test for only one minion in cluster (not ALL_MINIONS)
 def test_eosupdate_repo_configuration():
+    # test_mode = os.environ['TEST_MODE']
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
     base_repo_name = 'eos_update'
@@ -247,42 +255,37 @@ def test_eosupdate_repo_configuration():
 
     def check_unmounted(mount_dir):
         # check the record is removed from the fstab
-        res = run_cmd(
+        run_cmd(
             'grep {} /etc/fstab'.format(mount_dir),
-            check=False
+            retcodes=[1]
         )
-        assert res.returncode == 1
         # check mount point dir doesn't exist
-        res = run_cmd(
+        run_cmd(
             'ls {}'.format(mount_dir),
-            check=False
+            retcodes=[2]
         )
-        assert res.returncode == 2
 
     def check_not_installed(release, expected_repo_name, mount_dir=None):
-        curr_params = api_call(
-            'get_params', 'eosupdate/repos', targets=minion_id
-        )[minion_id]
-        assert curr_params['eosupdate/repos'][release] is None
+        curr_params = api_call('get_params', 'eosupdate/repos')
+        for _id, _params in curr_params.items():
+            assert _params['eosupdate/repos'][release] is None
 
         curr_params = api_call(
             'get_params', 'eosupdate/repo/{}'.format(release),
-            targets=minion_id
-        )[minion_id]
-        assert curr_params['eosupdate/repo/{}'.format(release)] is None
+        )
+        for _id, _params in curr_params.items():
+            assert _params['eosupdate/repo/{}'.format(release)] is None
 
         # check repo is not listed anymore
-        res = run_cmd(
+        run_cmd(
             'yum repolist enabled | grep {}'.format(expected_repo_name),
-            check=False
+            retcodes=[1]
         )
-        assert res.returncode == 1
         # check no any update repo is listed
-        res = run_cmd(
+        run_cmd(
             'yum repolist enabled | grep {}'.format(base_repo_name),
-            check=False
+            retcodes=[1]
         )
-        assert res.returncode == 1
 
         if mount_dir:
             check_unmounted(mount_dir)
@@ -290,10 +293,9 @@ def test_eosupdate_repo_configuration():
     pillar = api_call('pillar_get')
     pillar_params = pillar[minion_id]['eos_release']['update']
 
-    curr_params = api_call(
-        'get_params', 'eosupdate/repos', targets=minion_id
-    )[minion_id]
-    assert curr_params['eosupdate/repos'] == pillar_params['repos']
+    curr_params = api_call('get_params', 'eosupdate/repos')
+    for _id, _params in curr_params.items():
+        assert _params['eosupdate/repos'] == pillar_params['repos']
 
     # dry run check for invalid source
     if api_type == 'cli':
@@ -307,7 +309,7 @@ def test_eosupdate_repo_configuration():
     with pytest.raises(expected_exc) as excinfo:
         api_call(
             'set_eosupdate_repo', '1.2.3',
-            source=source, targets=minion_id, dry_run=True
+            source=source, dry_run=True
         )
     exc = excinfo.value
     if api_type == 'cli':
@@ -331,31 +333,32 @@ def test_eosupdate_repo_configuration():
         expected_repo_name = '{}_{}'.format(base_repo_name, release)
 
         if source is iso_path:
-            mount_dir = Path(pillar_params['mount_base_dir']) / release
+            mount_dir = Path(pillar_params['base_dir']) / release
         else:
             mount_dir = None
 
         expected_source = (
-            "file://{}".format(source) if source is repo_dir else source
+            'dir' if source is repo_dir else
+            'iso' if source is iso_path else
+            source
         )
 
         # INSTALL
         api_call(
-            'set_eosupdate_repo', release, source=source, targets=minion_id
+            'set_eosupdate_repo', release, source=source
         )
 
-        curr_params = api_call(
-            'get_params', 'eosupdate/repos', targets=minion_id
-        )[minion_id]
-        assert curr_params['eosupdate/repos'][release] == expected_source
+        curr_params = api_call('get_params', 'eosupdate/repos')
+        for _id, _params in curr_params.items():
+            assert _params['eosupdate/repos'][release] == expected_source
 
         curr_params = api_call(
-            'get_params', 'eosupdate/repo/{}'.format(release),
-            targets=minion_id
-        )[minion_id]
-        assert curr_params[
-            'eosupdate/repo/{}'.format(release)
-        ] == expected_source
+            'get_params', 'eosupdate/repo/{}'.format(release)
+        )
+        for _id, _params in curr_params.items():
+            assert _params[
+                'eosupdate/repo/{}'.format(release)
+            ] == expected_source
 
         # check repo is enabled
         run_cmd(
@@ -365,7 +368,8 @@ def test_eosupdate_repo_configuration():
         res = run_cmd(
             'yum repolist enabled | grep {}'.format(base_repo_name)
         )
-        assert len(res.stdout.strip().split(os.linesep)) == 1
+        for _id, _res in res.items():
+            assert len(_res['ret'].strip().split(os.linesep)) == 1
         # check rpm is available
         run_cmd(
             "yum list available | grep '^{}.*{}$'"
@@ -383,8 +387,7 @@ def test_eosupdate_repo_configuration():
         api_call(
             'set_eosupdate_repo',
             release,
-            source=undefined_value,
-            targets=minion_id
+            source=undefined_value
         )
         check_not_installed(release, expected_repo_name, mount_dir)
 
@@ -393,7 +396,6 @@ def test_eosupdate_repo_configuration():
             'set_eosupdate_repo',
             release,
             source=source,
-            targets=minion_id,
             dry_run=True
         )
         #   verify that nothing has changed in the system

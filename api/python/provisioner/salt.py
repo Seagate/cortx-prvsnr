@@ -1,9 +1,10 @@
 import attr
-from salt.client import LocalClient
+import salt.config
+from salt.client import LocalClient, Caller
 from typing import List, Union, Dict
 import logging
 
-from .config import ALL_MINIONS
+from .config import ALL_MINIONS, LOCAL_MINION
 from .errors import SaltError, SaltEmptyReturnError
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,39 @@ logger = logging.getLogger(__name__)
 _eauth = 'pam'
 _username = None
 _password = None
+
+
+_salt_local_client = None
+_salt_caller = None
+_local_minion_id = None
+
+
+def salt_local_client():
+    global _salt_local_client
+    if not _salt_local_client:
+        _salt_local_client = LocalClient()
+    return _salt_local_client
+
+
+def salt_caller():
+    global _salt_caller
+    if not _salt_caller:
+        _salt_caller = Caller()
+    return _salt_caller
+
+
+def local_minion_id():
+    global _local_minion_id
+
+    if not _local_minion_id:
+        __opts__ = salt.config.minion_config('/etc/salt/minion')
+        __opts__['file_client'] = 'local'
+        caller = Caller(mopts=__opts__)
+        _local_minion_id = caller.cmd('grains.get', 'id')
+        if not _local_minion_id:
+            raise SaltError('Failed to get local minion id')
+
+    return _local_minion_id
 
 
 # TODO
@@ -59,14 +93,73 @@ class State:
         return self.name
 
 
-def _salt_client_cmd(*args, **kwargs):
+# TODO tests
+@attr.s(auto_attribs=True, frozen=True)
+class StateFun:
+    name: str = attr.ib(converter=str)
+
+    def __str__(self):
+        return self.name
+
+
+# TODO tests
+def _get_fails(ret: Dict):
+    fails = {}
+    for task, tresult in ret.items():
+        if not tresult['result']:
+            fails[task] = tresult['comment']
+    return fails
+
+
+# TODO tests
+def _salt_caller_cmd(*args, **kwargs):
     if _username or 'username' in kwargs:
         kwargs['eauth'] = kwargs.get('eauth', _eauth)
         kwargs['username'] = kwargs.get('username', _username)
         kwargs['password'] = kwargs.get('password', _password)
 
     try:
-        res = LocalClient().cmd(*args, full_return=True, **kwargs)
+        # TODO
+        #  - consider to use --local arg to reduce
+        #    unnecessary connections with master
+        res = salt_caller().cmd(*args, full_return=True, **kwargs)
+    except Exception as exc:
+        # TODO too generic
+        raise SaltError(repr(exc)) from exc
+
+    if not res:
+        raise SaltEmptyReturnError
+
+    # TODO is it a valid case actually ?
+    if type(res) is dict:
+        fails = _get_fails(res)
+
+        if fails:
+            # TODO better logging
+            # TODO add res to exception data
+            raise SaltError(
+                "salt command failed: {}".format(fails)
+            )
+
+    return res
+
+
+def _salt_client_cmd(*args, **kwargs):
+    _kwargs = {}
+
+    eauth = kwargs.pop('eauth', _eauth)
+    username = kwargs.pop('username', _username)
+    password = kwargs.pop('password', _password)
+
+    if username:
+        _kwargs['eauth'] = eauth
+        _kwargs['username'] = username
+        _kwargs['password'] = password
+
+    try:
+        res = salt_local_client().cmd(
+            *args, full_return=True, kwarg=kwargs, **_kwargs
+        )
     except Exception as exc:
         # TODO too generic
         raise SaltError(repr(exc)) from exc
@@ -93,9 +186,7 @@ def _salt_client_cmd(*args, **kwargs):
         if job_result.get('retcode') != 0:
             salt_fun = args[1]
             if str(salt_fun).startswith('state.') and type(ret) is dict:
-                for task, tresult in ret.items():
-                    if not tresult['result']:
-                        _fails[task] = tresult['comment']
+                _fails = _get_fails(ret)
             else:
                 _fails = ret
 
@@ -122,8 +213,15 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 # TODO test
 def function_run(fun, *args, targets=ALL_MINIONS, **kwargs):
+    if targets == LOCAL_MINION:
 
-    return _salt_client_cmd(targets, fun, list(args), **kwargs)
+        # XXX Caller works not smoothly, issues with ioloop, possibly
+        #     related one https://github.com/saltstack/salt/issues/46905
+        # return _salt_caller_cmd(fun, *args, **kwargs)
+
+        return _salt_client_cmd(local_minion_id(), fun, list(args), **kwargs)
+    else:
+        return _salt_client_cmd(targets, fun, list(args), **kwargs)
 
 
 # TODO test
@@ -172,12 +270,51 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
 
 
 # TODO tests
+def state_fun_execute(
+    fun: Union[str, StateFun], *args, targets=LOCAL_MINION, **kwargs
+):
+    # TODO multiple states at once
+    fun = StateFun(fun)
+    try:
+        logger.info(
+            "Executing state function {} on {}".format(
+                fun, targets
+            )
+        )
+        res = function_run(
+            'state.single', fun.name, *args, targets=targets, **kwargs
+        )
+        logger.info(
+            "Executed state function {} on {}, res {}".format(
+                fun, targets, res
+            )
+        )
+    except Exception as exc:
+        raise SaltError(
+            "Failed to execute state function '{}': {}"
+            .format(fun, str(exc))
+        )
+    else:
+        return res
+
+
+# TODO tests
 @attr.s(auto_attribs=True)
 class StatesApplier:
     @staticmethod
     def apply(states: List[State], targets: str = ALL_MINIONS) -> None:
         if states:
             return states_apply(states=states, targets=targets)
+
+
+# TODO tests
+@attr.s(auto_attribs=True)
+class StateFunExecuter:
+    @staticmethod
+    def execute(
+        fun: str, *args, targets: str = LOCAL_MINION, **kwargs
+    ) -> None:
+        return state_fun_execute(fun, *args, targets=targets, **kwargs)
 
 
 # TODO test

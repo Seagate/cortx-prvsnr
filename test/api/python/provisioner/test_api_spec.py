@@ -25,6 +25,10 @@ def test_process_param_spec():
                 'parent': 'key/path/attr5',
                 'key': 'key_name',
                 'value': 'value_name'
+            },
+            'item2': {
+                PARAM_TYPE_KEY: 'ParamDictItem',
+                'parent': 'key/path/attr5'
             }
         }
     }
@@ -39,6 +43,10 @@ def test_process_param_spec():
         param.ParamDictItem(
             'dict/item1', 'path4.sls', 'key/path/attr5',
             'key_name', 'value_name'
+        ),
+        param.ParamDictItem(
+            'dict/item2', 'path4.sls', 'key/path/attr5',
+            'pillar_key', 'pillar_value'
         )
     ]
 

@@ -307,7 +307,7 @@ def test_eos_update_repo_attrs():
 def test_eos_update_repo_source_init(tmpdir_function):
     some_release = '1.2.3'
 
-    # special value
+    # special values
     for source in values._values.values():
         res = EOSUpdateRepo(some_release, source=source)
         assert res.source == source
@@ -318,14 +318,16 @@ def test_eos_update_repo_source_init(tmpdir_function):
     # directory
     repo_dir = tmpdir_function / 'repo'
     repo_dir.mkdir()
-    res = EOSUpdateRepo(some_release, source=str(repo_dir))
-    assert res.source == "file://{}".format(repo_dir)
+    for source in (repo_dir, str(repo_dir)):
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.source == repo_dir
 
     # iso file
     repo_iso = tmpdir_function / 'repo.iso'
     repo_iso.touch()
-    res = EOSUpdateRepo(some_release, source=repo_iso)
-    assert res.source == str(repo_iso)
+    for source in (repo_iso, str(repo_iso)):
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.source == repo_iso
 
     # other existent file object
     non_iso_file = tmpdir_function / 'repo.file'
@@ -358,4 +360,78 @@ def test_eos_update_repo_source_init(tmpdir_function):
 
     # non canonical absolute path
     res = EOSUpdateRepo(some_release, source=(repo_dir / '..' / 'repo.iso'))
-    assert res.source == str(repo_iso)
+    assert res.source == repo_iso
+
+
+def test_eos_update_repo_pillar_key(tmpdir_function):
+    some_release = '1.2.3'
+
+    res = EOSUpdateRepo(some_release, source='http://some/http/url')
+    assert res.pillar_key == some_release
+
+
+def test_eos_update_repo_pillar_value(tmpdir_function):
+    some_release = '1.2.3'
+
+    repo_dir = tmpdir_function / 'repo'
+    repo_dir.mkdir()
+
+    repo_iso = tmpdir_function / 'repo.iso'
+    repo_iso.touch()
+
+    # special values
+    for source in values._values.values():
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.pillar_value == source
+
+    res = EOSUpdateRepo(some_release, source=None)
+    assert res.pillar_value == UNCHANGED
+
+    # directory
+    res = EOSUpdateRepo(some_release, source=repo_dir)
+    assert res.pillar_value == 'dir'
+
+    # iso file
+    res = EOSUpdateRepo(some_release, source=repo_iso)
+    assert res.pillar_value == 'iso'
+
+    # urls are expected to start with http:// or https://
+    for source in ('http://some/http/url', 'https://some/http/url'):
+        res = EOSUpdateRepo(some_release, source=source)
+        assert res.pillar_value == source
+
+
+def test_eos_update_repo_is_apis(tmpdir_function):
+    some_release = '1.2.3'
+
+    repo_dir = tmpdir_function / 'repo'
+    repo_dir.mkdir()
+
+    repo_iso = tmpdir_function / 'repo.iso'
+    repo_iso.touch()
+
+    res = None
+
+    def _check(*args):
+        for api in ('is_special', 'is_local', 'is_remote', 'is_dir', 'is_iso'):
+            assert getattr(res, api)() == (api in args)
+
+    # special values
+    for source in values._values.values():
+        res = EOSUpdateRepo(some_release, source=source)
+        _check('is_special')
+
+    res = EOSUpdateRepo(some_release, source=None)
+    _check('is_special')
+
+    # directory
+    res = EOSUpdateRepo(some_release, source=repo_dir)
+    _check('is_local', 'is_dir')
+
+    # iso file
+    res = EOSUpdateRepo(some_release, source=repo_iso)
+    _check('is_local', 'is_iso')
+
+    # urls
+    res = EOSUpdateRepo(some_release, source='https://some/http/url')
+    _check('is_remote')

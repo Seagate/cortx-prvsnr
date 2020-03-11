@@ -1264,6 +1264,7 @@ def discover_remote(
         _host,
         ssh_config,
         request,
+        label=host_fixture_label,
         machine_name=remote.name,
         iface=_iface
     )
