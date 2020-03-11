@@ -36,7 +36,7 @@ Remove pcs package:
       - pacemaker
       - corosync
 
-Remove configuration directory
+Remove configuration directory:
   file.absent:
     - names:
       - /etc/corosync
