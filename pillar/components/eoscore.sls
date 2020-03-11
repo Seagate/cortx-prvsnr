@@ -1,5 +1,4 @@
 eoscore:
-{% if "physical" in grains['virtual'] %}
     # Minimum rpc receive queue length
     MERO_M0D_MIN_RPC_RECVQ_LEN: 512
     # ioservice buffer pool configuration
@@ -27,4 +26,3 @@ eoscore:
     # How many log sets to keep for each service (between restarts)
     MERO_TRACED_KEEP_LOGS_NUM: 2
     MERO_M0D_BESEG_SIZE: 4294967296
-{% endif %}

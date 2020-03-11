@@ -35,7 +35,7 @@ Private direct network:
     - mtu: 9000
     - onboot: yes
     - userctl: no
-    - netmask: 255.255.255.248
+    - netmask: 255.255.255.0
     - proto: none
     - ipaddr: {{ pvt_ip }}
 
