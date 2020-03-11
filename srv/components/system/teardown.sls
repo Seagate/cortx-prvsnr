@@ -5,10 +5,6 @@ include:
 
 Remove_base_packages:
   pkg.purged:
-  - components.system.firewall.teardwon
-
-Remove_base_packages:
-  pkg.purged:
     - pkgs:
       - python2-pip
       - python36-pip
