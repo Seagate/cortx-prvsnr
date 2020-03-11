@@ -43,9 +43,19 @@ Remove user ldap:
     - purge: True
     - force: True
 
-Remove ldap configurations:
-  file.absent:
-    - name: /etc/openldap
+# Attention: Do not delete the /etc/openldap/certs dir at any cost
+# Remove ldap configurations:
+#   file.absent:
+#     - name: /etc/openldap
+
+Reset permissions:
+  file.directory:
+    - name: /etc/openldap/certs
+    - user: root
+    - group: root
+    - recurse:
+      - user
+      - group
 
 Delete openldap checkpoint flag:
   file.absent:
