@@ -14,13 +14,6 @@ Install certs:
       - stx-s3-certs: /opt/seagate/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
       - stx-s3-client-certs: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
-Backup ldap config file:
-  file.copy:
-    - name: /etc/openldap/ldap.conf.bak
-    - source: /etc/openldap/ldap.conf
-    - force: True
-    - preserve: True
-
 Backup slapd config file:
   file.copy:
     - name: /etc/sysconfig/slapd.bak
