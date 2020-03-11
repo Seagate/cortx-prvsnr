@@ -1,11 +1,7 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
-
-Remove authorized nodes:
+Clear Auth-tokens:
   cmd.run:
-    - names: 
-      {%- for node_id in pillar['cluster']['node_list'] %}
-      - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }}
-      {%- endfor %}
+    - name: pcs pcsd clear-auth
 
 Destroy Cluster:
   cmd.run:
