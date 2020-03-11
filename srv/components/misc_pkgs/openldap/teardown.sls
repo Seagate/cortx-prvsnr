@@ -43,6 +43,10 @@ Remove user ldap:
     - purge: True
     - force: True
 
+Remove ldap configurations:
+  file.absent:
+    - name: /etc/openldap
+
 Delete openldap checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.openldap

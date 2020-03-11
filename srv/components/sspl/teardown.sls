@@ -17,6 +17,16 @@ Delete sspl yum repo:
   pkgrepo.absent:
     - name: {{ defaults.sspl.repo.id }}
 
+Delete sspl_prereqs yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.sspl.uploads_repo.id }}
+
+Remove /opt/seagate/sspl configurations:
+  file.absent:
+    - names: 
+      - /opt/seagate/sspl
+      - /etc/sspl
+
 Delete sspl checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl

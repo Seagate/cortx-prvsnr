@@ -77,13 +77,13 @@ Make metadata partition:
         - module: Create metadata partition
 
 # Ensure /var/mero is mounted
-Mount mero partition:
-  mount.mounted:
-    - name: /var/mero
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-    - fstype: ext4
-    - mkmnt: True       # create the mount point if it is otherwise not present
-    - persist: False    # don't add /etc/fstab entry
-    - mount: True
-    - require:
-      - module: Make metadata partition
+# Mount mero partition:
+#   mount.mounted:
+#     - name: /var/mero
+#     - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+#     - fstype: ext4
+#     - mkmnt: True       # create the mount point if it is otherwise not present
+#     - persist: False    # don't add /etc/fstab entry
+#     - mount: True
+#     - require:
+#       - module: Make metadata partition

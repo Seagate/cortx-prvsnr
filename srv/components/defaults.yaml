@@ -7,13 +7,15 @@ tmp_dir: /tmp
 base_repos:
   centos_repos:
     - id: "base"
-      url: http://mirror.den1.denvercolo.net/CentOS/7.7.1908/os/x86_64/
+      # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/os/x86_64/
+      url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
     - id: "extras"
-      url: http://mirror.den1.denvercolo.net/CentOS/7.7.1908/extras/x86_64/
+      # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/extras/x86_64/
+      url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
   epel_repo:
     id: "epel"
-    url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
-    # url: http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/EPEL-7/
+    # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
+    url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
   saltstack_repo:
     id: "saltstack"
     url: http://repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0

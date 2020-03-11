@@ -1,4 +1,5 @@
 cluster:
+  cluster_ip:
   type: single                      # single/ees/ecs
   node_list:                        # List of nodes to be managed as part of this cluster
     - eosnode-1                     # minion ID for node-1
@@ -6,6 +7,8 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
+      pvt_nw_addr: 192.168.0.0
+      nw_search: pun.seagate.com
       mgmt_nw:                  # Management network interfaces
         iface:
           - eth0

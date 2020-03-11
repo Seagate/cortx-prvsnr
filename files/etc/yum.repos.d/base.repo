@@ -1,5 +1,5 @@
 [base]
 gpgcheck=0
 enabled=1
-baseurl=http://mirror.den1.denvercolo.net/CentOS/7.7.1908/os/x86_64/
+baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
 name=base

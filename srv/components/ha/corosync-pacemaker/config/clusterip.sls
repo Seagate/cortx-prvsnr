@@ -1,4 +1,5 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if pillar['cluster']['cluster_ip'] %}
 Create CIB for ClusterIP:
   cmd.run:
     - name: pcs cluster cib /tmp/loadbalance_cfg
@@ -11,9 +12,14 @@ Create CIB for ClusterIP:
 #       - scope: None
 #       - extra_args: None
 
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
+  {%- set data_if = 'data0' -%}
+{% else %}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
+{%- endif -%}
 Setup ClusterIP resouce:
   cmd.run:
-    - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['corosync-pacemaker']['cluster_ip'] }} nic=data0 op monitor interval=30s
+    - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic=data0 op monitor interval=30s
     - require:
       - Create CIB for ClusterIP
 
@@ -22,7 +28,7 @@ Setup ClusterIP resouce:
 #     - resource_id: ClusterIP
 #     - resource_type: "ocf:heartbeat:IPaddr2"
 #     - resource_options:
-#       - ip={{ pillar['corosync-pacemaker']['cluster_ip'] }}
+#       - ip={{ pillar['cluster']['cluster_ip'] }}
 #       - op monitor interval=30s
 #     - cibname: /tmp/loadbalance_cfg
 
@@ -50,4 +56,10 @@ Push CIB to all nodes:
 Remove CIB file:
   file.absent:
     - name: /tmp/loadbalance_cfg
+
+{% else %}}
+Missing ClusterIP:
+  test.fail_without_changes:
+    - name: ClusterIP is blank in Cluster.sls. Please udpate with valid IP and re-run.
+{% endif %}
 {% endif %}

@@ -1,6 +1,10 @@
-Remove data-zone:
+Remove public-data-zone:
   cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=data-zone
+    - name: firewall-cmd --permanent --delete-zone=public-data-zone
+
+Remove private-data-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=private-data-zone
 
 Remove management-zone:
   cmd.run:
