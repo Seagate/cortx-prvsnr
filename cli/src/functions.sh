@@ -1594,9 +1594,17 @@ function setup_ssh {
     set -eu
 
     l_info "Setting up passwordless ssh configuration"
-    eosnode_1_hostname=`hostnamectl | head -1 | awk '{ print $3 }'`
+    eosnode_1_hostname=`hostname -f`
     local _eosnode_1_user=`who | awk '{ print $1 }'`
     eosnode_2_hostname=`hostname_from_spec $eosnode_2_hostspec`
+
+    if [[ $eosnode_1_hostname != *"."* ]]; then
+        l_error "Short hostnames are not supported, please provide FQDN for eosnode-1"
+    fi
+
+    if [[ $eosnode_2_hostname != *"."* ]]; then
+        l_error "Short hostnames are not supported, please provide FQDN for eosnode-2"
+    fi
 
     #local _eosnode_2_user=`user_from_spec $eosnode_2_hostspec`
     # Ensure user name is root on both the hosts.
