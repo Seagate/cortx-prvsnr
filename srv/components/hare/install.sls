@@ -8,7 +8,7 @@ Hare requisites:
 
 Install hare:
   pkg.installed:
-    - name: hare
+    - name: eos-hare
     - version: latest
     - refresh: True
     - require:
