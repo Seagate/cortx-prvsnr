@@ -1,5 +1,6 @@
 include:
   - .start
+  - .stop
 
 # Ensure ssh works when the firwall servcie starts for the next time
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
@@ -22,17 +23,18 @@ public:
 Remove public-data-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=public-data-zone
+    - watch_in:
+      - Stop and disable Firewalld service
 
 Remove private-data-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=private-data-zone
+    - watch_in:
+      - Stop and disable Firewalld service
 
 Remove management-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=management-zone
-
-Stop and disable firewalld service:
-  service.dead:
-    - name: firewalld
-    - enable: False
+    - watch_in:
+      - Stop and disable Firewalld service
 
