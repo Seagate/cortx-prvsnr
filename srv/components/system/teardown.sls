@@ -1,7 +1,7 @@
 include:
   - components.system.logrotate.teardown
   - components.system.ntp.teardown
-  - components.system.firewall.teardown
+  - components.system.firewall.teardwon
 
 Remove_base_packages:
   pkg.purged:
