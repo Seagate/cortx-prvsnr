@@ -3,15 +3,33 @@
 
 {% for release, source in pillar['eos_release']['update']['repos'].items() %}
 
-    {% set mount_dir = '/'.join([pillar['eos_release']['update']['mount_base_dir'], release]) %}
+    {% set repo_dir = '/'.join(
+        [pillar['eos_release']['update']['base_dir'], release]) %}
 
     {% if source %}
 
-{{ repo_added(release, source, mount_dir) }}
+        {% if source.startswith(('http://', 'https://')) %}
+
+            {% set source_type = 'url' %}
+
+        {% elif source in ('iso', 'dir')  %}
+
+            {% set source_type = source %}
+            {% set source = repo_dir %}
+
+        {% else  %}
+
+unexpected_repo_source:
+  test.fail_without_changes:
+    - name: {{ source }}
+
+        {% endif %}
+
+{{ repo_added(release, source, source_type) }}
 
     {% else %}
 
-{{ repo_absent(release, mount_dir) }}
+{{ repo_absent(release, repo_dir) }}
 
     {% endif %}
 

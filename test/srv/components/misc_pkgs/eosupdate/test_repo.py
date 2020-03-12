@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 # TODO
 #  - might makes sense. to verify for cluster case as well
 #  - split into more focused scenarios
+#  - tests for states relations
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')  # mount makes docker inappropriate
 @pytest.mark.hosts(['eosnode1'])
@@ -80,8 +81,8 @@ def test_eosupdate_repo(
 
     base_repo_name = 'eos_update'
     for release, source, expected_rpm_name in [
-        ('1.2.3', repo_dir, h.PRVSNR_PKG_NAME),
-        ('1.2.4', iso_path, h.PRVSNR_PKG_NAME),
+        ('1.2.3', Path(repo_dir), h.PRVSNR_PKG_NAME),
+        ('1.2.4', Path(iso_path), h.PRVSNR_PKG_NAME),
         (
             '1.2.5',
             'http://mirror.ghettoforge.org/distributions/gf/el/7/gf/x86_64/',
@@ -90,8 +91,8 @@ def test_eosupdate_repo(
     ]:
         expected_repo_name = '{}_{}'.format(base_repo_name, release)
 
-        if source is iso_path:
-            mount_dir = Path(update_spec['mount_base_dir']) / release
+        if str(source) is iso_path:
+            mount_dir = Path(update_spec['base_dir']) / release
         else:
             mount_dir = None
 
@@ -102,10 +103,22 @@ def test_eosupdate_repo(
 
         # INSTALL
         # set source for the release
+        if isinstance(source, Path):
+            _source = h.PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / release
+            pillar_source = 'dir'
+
+            if source.suffix == '.iso':
+                _source = Path("{}.iso".format(_source))
+                pillar_source = 'iso'
+
+            mhosteosnode1.check_output('mkdir -p {}'.format(_source.parent))
+            mhosteosnode1.check_output('ln -s {} {}'.format(source, _source))
+            source = _source
+        else:
+            pillar_source = source
+
         # TODO check metadata was cleaned after installation
-        update_spec['repos'][release] = (
-            "file://{}".format(source) if source is repo_dir else source
-        )
+        update_spec['repos'][release] = pillar_source
         update_pillar()
         # apply states
         mhosteosnode1.check_output(
@@ -151,6 +164,9 @@ def test_eosupdate_repo(
 
         if mount_dir:
             check_unmounted(mount_dir)
+
+        if isinstance(source, Path):
+            mhosteosnode1.check_output('rm -rf {}'.format(source))
 
     # empty list of repos
     update_spec['repos'] = {}

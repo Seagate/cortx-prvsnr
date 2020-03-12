@@ -18,7 +18,7 @@ set_network:
     post:
       - components.system.network
 set_eosupdate_repo:
-  type: Set
+  type: SetEOSUpdateRepo
   params_type: EOSUpdateRepo
   states:
     post:

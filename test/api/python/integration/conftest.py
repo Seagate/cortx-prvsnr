@@ -26,33 +26,47 @@ def test_path(request):
 
 
 @pytest.fixture
-def prepare_test_env(hosts_meta, project_path, test_path):
-    test_path = Path(str(test_path)).relative_to(project_path)
-    inner_test_src = test_path.parent / "{}_inner.py".format(test_path.stem)
-
-    # TODO limit to only necessary ones
-    for mhost in hosts_meta.values():
-        install_provisioner_api(mhost)
-        # TODO use requirements or setup.py
-        mhost.check_output("pip3 install pytest==5.1.1")
-        inner_tests_path = mhost.tmpdir / 'test.py'
-        mhost.check_output("cp -f {} {}".format(
-            mhost.repo / inner_test_src,
-            inner_tests_path
-        ))
-        return inner_tests_path
+def test_host_hostname():
+    return 'eosnode-1'
 
 
 @pytest.fixture
-def run_test(request):
+def prepare_test_env(hosts_meta, project_path, test_path):
+
+    def _f(test_mhost):
+        _test_path = Path(str(test_path)).relative_to(project_path)
+        inner_test_src = (
+            _test_path.parent / "{}_inner.py".format(_test_path.stem)
+        )
+
+        # TODO limit to only necessary ones
+        for mhost in hosts_meta.values():
+            if mhost is test_mhost:
+                install_provisioner_api(mhost)
+                # TODO use requirements or setup.py
+                mhost.check_output("pip3 install pytest==5.1.1")
+                inner_tests_path = mhost.tmpdir / 'test.py'
+                mhost.check_output("cp -f {} {}".format(
+                    mhost.repo / inner_test_src,
+                    inner_tests_path
+                ))
+                return inner_tests_path
+
+        raise RuntimeError('no hosts matched')
+
+    return _f
+
+
+@pytest.fixture
+def run_test(request, prepare_test_env):
     def f(
         mhost, curr_user=None, username=None, password=None,
         expected_exc=None, env=None
     ):
-        inner_tests_path = request.getfixturevalue('prepare_test_env')
+        inner_tests_path = prepare_test_env(mhost)
 
         script = (
-            "pytest -l -q -s --log-cli-level warning --no-print-logs {}::{}"
+            "pytest -l -q -s --log-cli-level 0 -vv {}::{}"
             .format(
                 inner_tests_path,
                 request.node.originalname or request.node.name
