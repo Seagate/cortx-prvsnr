@@ -20,4 +20,8 @@ Disable firewall:
 
 Remove firewall:
   pkg.purged:
+<<<<<<< HEAD
     - name: firewall
+=======
+    - name: firewall
+>>>>>>> 33947d93218e05157ec0f243850f12a3a218b918
