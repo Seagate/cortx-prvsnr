@@ -126,6 +126,7 @@ Public data zone:
       - haproxy
       - nfs
       - s3
+      - high-availability
     - interfaces:
       - {{ data_if }}
     # - rich_rules:
@@ -151,6 +152,7 @@ Private data zone:
     - services:
       - hare
       - lnet
+      - high-availability
     - interfaces:
       - {{ data_if }}
     # - rich_rules:

@@ -1,18 +1,6 @@
 include:
   - .start
 
-Remove public-data-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=public-data-zone
-
-Remove private-data-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=private-data-zone
-
-Remove management-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=management-zone
-
 # Ensure ssh works when the firwall servcie starts for the next time
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
@@ -31,5 +19,20 @@ public:
     - watch_in:
       - Start and enable Firewalld service
 
-include:
-  - .stop
+Remove public-data-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=public-data-zone
+
+Remove private-data-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=private-data-zone
+
+Remove management-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=management-zone
+
+Stop and disable firewalld service:
+  service.dead:
+    - name: firewalld
+    - enable: False
+
