@@ -19,6 +19,18 @@ _salt_caller = None
 _local_minion_id = None
 
 
+def username():
+    return _username
+
+
+def password():
+    return _password
+
+
+def eauth():
+    return _eauth
+
+
 def salt_local_client():
     global _salt_local_client
     if not _salt_local_client:
@@ -83,6 +95,96 @@ def auth_init(username, password, eauth='pam'):
 }
 """
 
+# RunnerClient.cmd('jobs.print_job', ('20200312210442593007',), full_return=True, print_event=False) # noqa E501
+# TODO
+#   - ??? salt docs for that)
+#   - ??? how to get separate stderr and stdout
+"""
+IN PROGRESS
+
+{
+    "fun": "runner.jobs.print_job",
+    "jid": "20200312210508420587",
+    "user": "UNKNOWN",
+    "fun_args": [
+        "20200312210442593007"
+    ],
+    "_stamp": "2020-03-12T21:05:08.616156",
+    "return": {
+        "20200312210442593007": {
+            "Function": "cmd.run",
+            "Arguments": [
+                "sleep 30 && echo 123 && ls 123"
+            ],
+            "Target": "eosnode-1",
+            "Target-type": "glob",
+            "User": "root",
+            "Minions": [
+                "eosnode-1"
+            ],
+            "StartTime": "2020, Mar 12 21:04:42.593007",
+            "Result": {}
+        }
+    },
+    "success": true
+}
+
+FINISHED
+
+{
+    "fun": "runner.jobs.print_job",
+    "jid": "20200312205806533552",
+    "user": "UNKNOWN",
+    "fun_args": [
+        "20200312204750664984"
+    ],
+    "_stamp": "2020-03-12T20:58:06.760168",
+    "return": {
+        "20200312204750664984": {
+            "Function": "cmd.run",
+            "Arguments": [
+                "sleep 30 && echo 123 && ls 123"
+            ],
+            "Target": "eosnode-1",
+            "Target-type": "glob",
+            "User": "root",
+            "Minions": [
+                "eosnode-1"
+            ],
+            "StartTime": "2020, Mar 12 20:47:50.664984",
+            "Result": {
+                "eosnode-1": {
+                    "return": "123\nls: cannot access 123: No such file or directory", # noqa E501
+                    "retcode": 2,
+                    "success": false
+                }
+            }
+        }
+    },
+    "success": true
+}
+
+ERROR CASE (bad jid)
+
+{
+    "fun": "runner.jobs.print_job",
+    "jid": "20200312210108994035",
+    "user": "UNKNOWN",
+    "fun_args": [
+        2020031220475066498
+    ],
+    "_stamp": "2020-03-12T21:01:09.224500",
+    "return": {
+        "2020031220475066498": {
+            "Error": "Cannot contact returner or no job with this jid",
+            "StartTime": "",
+            "Result": {}
+        }
+    },
+    "success": true
+}
+"""
+
 
 # TODO tests
 @attr.s(auto_attribs=True, frozen=True)
@@ -113,6 +215,9 @@ def _get_fails(ret: Dict):
 
 # TODO tests
 def _salt_caller_cmd(*args, **kwargs):
+    # XXX salt's Caller doesn't support external_auth
+    #     and should be run under the same user as a minion
+    #     https://docs.saltstack.com/en/latest/ref/clients/#salt.client.Caller
     if _username or 'username' in kwargs:
         kwargs['eauth'] = kwargs.get('eauth', _eauth)
         kwargs['username'] = kwargs.get('username', _username)
@@ -157,9 +262,19 @@ def _salt_client_cmd(*args, **kwargs):
         _kwargs['password'] = password
 
     try:
-        res = salt_local_client().cmd(
-            *args, full_return=True, kwarg=kwargs, **_kwargs
-        )
+        if kwargs.pop('async', False):
+            res = salt_local_client().cmd_async(
+                *args, full_return=True, **kwargs
+            )
+            if res == 0:
+                raise SaltError(
+                    'Async API returned 0, args: {}, kwargs: {}'
+                    .format(args, kwargs)
+                )
+        else:
+            res = salt_local_client().cmd(
+                *args, full_return=True, kwarg=kwargs, **_kwargs
+            )
     except Exception as exc:
         # TODO too generic
         raise SaltError(repr(exc)) from exc

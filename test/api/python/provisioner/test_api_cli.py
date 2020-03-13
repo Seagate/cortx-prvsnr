@@ -75,29 +75,6 @@ class CliFailScenario:
         ),
         CliFailScenario(
             SaltError,
-            ProvisionerError,
-            lambda cli_exc: ('some-stderr-4',),
-            stdout=_prepare_output(
-                'json', {'ret': '123', 'exc': {'args': (1, 2)}}
-            ),
-            stderr='some-stderr-4'
-        ),
-        CliFailScenario(
-            SaltError,
-            ProvisionerError,
-            lambda cli_exc: ('some-stderr-5',),
-            stdout=_prepare_output(
-                'json', {'ret': '123', 'exc': {'type': 'SaltError'}}
-            ),
-            stderr='some-stderr-5'
-        ),
-        CliFailScenario(
-            RuntimeError,
-            ProvisionerError,
-            lambda cli_exc: (type(cli_exc).__name__, *cli_exc.args)
-        ),
-        CliFailScenario(
-            SaltError,
             SaltError
         )
     ],
@@ -105,9 +82,6 @@ class CliFailScenario:
         'unexpected_output_empty_str',
         'unexpected_output_empty_dict',
         'unexpected_output_no_exc',
-        'unexpected_output_no_exc_type',
-        'unexpected_output_no_exc_args',
-        'unexpected_exc_type',
         'expected'
     ]
 )
@@ -119,7 +93,7 @@ def test_api_cli_run_cmd_cli_fails(subprocess_runner, fail_scenario):
         1, 'some-command',
         output=(
             fail_scenario.stdout if fail_scenario.stdout is not None
-            else _prepare_output('json', _prepare_res(exc=exc))
+            else _prepare_output('json', _prepare_res('json', exc=exc))
         ),
         stderr=fail_scenario.stderr
     )
@@ -157,6 +131,8 @@ def test_api_cli_run_cmd_cli_succedes(subprocess_runner):
 
     # happy path
     subprocess_runner.res = subprocess.CompletedProcess(
-        [cmd_name], 0, stdout=_prepare_output('json', _prepare_res(ret=ret))
+        [cmd_name], 0, stdout=_prepare_output(
+            'json', _prepare_res('json', ret=ret)
+        )
     )
     assert api._run_cmd([cmd_name]) == ret

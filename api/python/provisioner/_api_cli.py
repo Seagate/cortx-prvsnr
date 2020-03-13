@@ -1,9 +1,9 @@
 import sys
 import subprocess
-import json
 import logging
 
 from provisioner import errors
+from provisioner import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -12,38 +12,57 @@ _username = None
 _password = None
 
 
+# TODO tests
+def api_args_to_cli(fun, *args, **kwargs):
+    res = [fun]
+    for k, v in kwargs.items():
+        k = '--{}'.format(k.replace('_', '-'))
+        if type(v) is not bool:
+            res.extend([k, str(v)])
+        elif v:
+            res.extend([k])
+
+    res.extend([str(a) for a in args])
+    logger.debug("Cli command args: {}".format(res))
+
+    return res
+
+
+# TODO tests
+def process_cli_result(
+    exc: Exception = None, stdout: str = None, stderr: str = None
+):
+    res = serialize.loads(stdout) if stdout else {}
+
+    if exc:
+        if stdout is None:
+            raise errors.ProvisionerError(repr(exc)) from exc
+        else:
+            _exc = res.get('exc', errors.ProvisionerError(stderr))
+            if exc:
+                raise _exc from exc
+            else:
+                raise _exc
+    else:
+        try:
+            return res['ret']
+        except KeyError:
+            raise errors.ProvisionerError(
+                'No return data found in {}'.format(stdout)
+            )
+
+
 def _run_cmd(cmd, **kwargs):
     try:
         res = subprocess.run(cmd, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:
-        res = json.loads(exc.stdout) if exc.stdout else {}
-        cli_exc = res.get('exc', {})
-        cli_exc_type, cli_exc_args = cli_exc.get('type'), cli_exc.get('args')
-
-        if cli_exc_args and cli_exc_type:
-            prvsnr_error_type = getattr(errors, cli_exc_type, None)
-            # cli fails expectedly
-            if prvsnr_error_type:
-                _exc = prvsnr_error_type(*cli_exc_args)
-            # cli fails unexpectedly - unexpected error
-            else:
-                _exc = errors.ProvisionerError(cli_exc_type, *cli_exc_args)
-        else:
-            # cli fails unexpectedly - unexpected output
-            _exc = errors.ProvisionerError(exc.stderr)
-        raise _exc from exc
+        return process_cli_result(exc, exc.stdout, exc.stderr)
     # subprocess.run fails unexpectedly
     except Exception as exc:
-        raise errors.ProvisionerError(repr(exc)) from exc
+        return process_cli_result(exc, None, None)
     else:
-        _res = json.loads(res.stdout) if res.stdout else {}
-        try:
-            return _res['ret']
-        except KeyError:
-            raise errors.ProvisionerError(
-                'No return data found in {}'.format(res.stdout)
-            )
+        return process_cli_result(None, res.stdout, res.stderr)
 
 
 # TODO test args preparation
@@ -64,16 +83,8 @@ def _api_call(fun, *args, **kwargs):
     kwargs['logstream'] = 'stderr'
     kwargs['output'] = 'json'
 
-    cmd = ['provisioner', fun]
-    for k, v in kwargs.items():
-        k = '--{}'.format(k.replace('_', '-'))
-        if type(v) is not bool:
-            cmd.extend([k, str(v)])
-        elif v:
-            cmd.extend([k])
-
-    cmd.extend([str(a) for a in args])
-    logger.debug("Command: {}".format(cmd))
+    cli_args = api_args_to_cli(fun, *args, **kwargs)
+    cmd = ['provisioner'] + cli_args
 
     return _run_cmd(
         cmd,
