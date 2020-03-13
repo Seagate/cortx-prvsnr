@@ -17,6 +17,12 @@ Create ha user:
   user.present:
     - name: {{ pillar['corosync-pacemaker']['user'] }}
     - password: {{ pillar['corosync-pacemaker']['password'] }}
+    - uid: 189
+    - gid: 189
+    - groups:
+      - haclient
+    - allow_uid_change: True
+    - allow_gid_change: True
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
