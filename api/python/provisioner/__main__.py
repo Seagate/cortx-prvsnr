@@ -7,11 +7,11 @@ import fileinput
 import sys
 import argparse
 import logging
-import json
 import yaml
 
 import provisioner
 from provisioner.commands import commands
+from provisioner import serialize
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def _output(data: str):
     print(data)
 
 
-def _prepare_res(ret=None, exc=None):
+def _prepare_res(output, ret=None, exc=None):
     return {
         'ret': ret
     } if exc is None else {
@@ -143,6 +143,8 @@ def _prepare_res(ret=None, exc=None):
             'type': type(exc).__name__,
             'args': list(exc.args)
         }
+    } if output == 'yaml' else {
+        'exc': exc
     }
 
 
@@ -152,7 +154,7 @@ def _prepare_output(output_type, res):
     elif output_type == 'yaml':
         return yaml.dump(res, default_flow_style=False, canonical=False)
     elif output_type == 'json':
-        return json.dumps(res, sort_keys=True, indent=4)
+        return serialize.dumps(res, sort_keys=True, indent=4)
     else:
         ValueError('Unexpected output type {}'.format(output_type))
 
@@ -189,7 +191,7 @@ def _run_cmd(cmd, output, *args, **kwargs):
             else:
                 _output(str(ret))
         else:
-            res = _prepare_res(ret, exc)
+            res = _prepare_res(output, ret, exc)
             _output(_prepare_output(output, res))
 
     if exc:
