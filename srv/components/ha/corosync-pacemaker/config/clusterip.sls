@@ -19,7 +19,7 @@ Create CIB for ClusterIP:
 {%- endif -%}
 Setup ClusterIP resouce:
   cmd.run:
-    - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic=data0 op monitor interval=30s
+    - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic={{ data_if }} op monitor interval=30s
     - require:
       - Create CIB for ClusterIP
 
@@ -34,7 +34,7 @@ Setup ClusterIP resouce:
 
 Clone ClusterIP:
   cmd.run:
-    - name: pcs -f /tmp/loadbalance_cfg resource clone ClusterIP clusterip_hash=sourceip clone-max=2 clone-node-max=2
+    - name: pcs -f /tmp/loadbalance_cfg resource clone ClusterIP clusterip_hash=sourceip-sourceport clone-max=2 clone-node-max=2 globally-unique=true
     - requries:
       - Setup ClusterIP resouce
 
