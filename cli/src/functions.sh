@@ -1030,7 +1030,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            _prvsnr_version="integration/$_os_release/last_successful"
+            _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
         fi
     fi
 
@@ -1038,7 +1038,7 @@ function install_provisioner {
 [provisioner]
 gpgcheck=0
 enabled=1
-baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/$_prvsnr_version
+baseurl="$_prvsnr_version"
 name=provisioner
 EOF
 

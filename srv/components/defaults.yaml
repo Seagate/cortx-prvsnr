@@ -2,7 +2,8 @@ tmp_dir: /tmp
 
 {% set base_repo_url = "http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Production/" %}
 {% set eos_repo_url = "http://ci-storage.mero.colo.seagate.com/releases/eos" %}
-{% set release = pillar['eos_release']['target_build'] %}
+{# {% set release = pillar['eos_release']['target_build'] %} #}
+{% set repo_url = pillar['eos_release']['target_build'] %}
 
 base_repos:
   centos_repos:
@@ -29,7 +30,7 @@ commons:
 sspl:
   repo:
     id: "sspl"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
@@ -38,22 +39,22 @@ sspl:
 lustre:
   repo:
     id: "lustre"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
 
 eoscore:
   repo:
     id: "eoscore"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
 
 hare:
   repo:
     id: "hare"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
 
 s3server:
   repo:
     id: "s3server"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
@@ -66,7 +67,7 @@ s3server:
 nfs:
   repo:
     id: "nfs"
-    url: {{ eos_repo_url }}/{{ release }}
+    url: {{ repo_url }}
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
@@ -75,7 +76,7 @@ nfs:
 csm:
   repo:
     id: "csm"
-    url: {{ eos_repo_url  }}/{{ release }}
+    url: {{ repo_url  }}
   uploads_repo:
     id: "csm_uploads"
     url: {{ eos_repo_url }}/uploads/
