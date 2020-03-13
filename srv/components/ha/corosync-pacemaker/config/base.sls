@@ -13,20 +13,6 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-Create ha user:
-  user.present:
-    - name: {{ pillar['corosync-pacemaker']['user'] }}
-    - password: {{ pillar['corosync-pacemaker']['password'] }}
-    - uid: 189
-    - gid: 189
-    - groups:
-      - haclient
-    - allow_uid_change: True
-    - allow_gid_change: True
-    - hash_password: True
-    - createhome: False
-    - shell: /sbin/nologin
-
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Authorize nodes:
   pcs.auth:
@@ -35,7 +21,7 @@ Authorize nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
       - {{ pillar['cluster'][node_id]['hostname'] }}
       {%- endfor %}
-    - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
+    - pcsuser: hacluster
     - pcspasswd: {{ pillar['corosync-pacemaker']['password'] }}
     - extra_args:
       - '--force'
