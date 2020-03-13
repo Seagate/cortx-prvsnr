@@ -1,49 +1,68 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+Create Certs user:
+  user.present:
+    - name: certs
+    - createhome: False
+    - shell: /sbin/nologin
 
-{% set rpm_root_dir = defaults.tmp_dir + "/s3certs/rpmbuild" %}
-{% set rpm_sources_dir = rpm_root_dir + "/SOURCES" %}
-{% set s3_certs_src = "stx-s3-certs-" + defaults.s3server.config.S3_VERSION + '-' + defaults.s3server.config.DEPLOY_TAG %}
+Create s3 certs directory:
+  file.directory:
+    - names:
+      - /etc/ssl/stx-s3/s3
+      - /etc/ssl/stx-s3/s3auth
+    - makedirs: True
+    - dir_mode: 755
+    - file_mode: 644
+    - user: certs
+    - group: certs
+    - recurse:
+      - user
+      - group
+      - mode
+    - require:
+      - user: Create Certs user
 
-Generate s3 certs:
+
+{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+Untar the Tar files:
+  archive.extracted:
+    - name: /opt/seagate/certs/
+    - source: /opt/seagate/tar_file.tar
+    - enforce_toplevel: False
+    - keep_source: True
+    - clean: False
+    - trim_output: True
+
+{%- for node_id in pillar['cluster']['node_list'] -%}
+{%- if not pillar['cluster'][node_id]['is_primary'] %}
+
+Copy certs to non-primary:
   cmd.run:
-    - name: /opt/seagate/s3server/ssl/generate_certificate.sh -f domain_input.conf
-    - cwd: {{ rpm_sources_dir }}/{{ s3_certs_src }}
+    - name: scp -r /opt/seagate/certs {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/
 
-Copy s3 certs:
-  cmd.run:
-    - name: cp -r s3_certs_sandbox/* .
-    - cwd: {{ rpm_sources_dir }}/{{ s3_certs_src }}
+{%- endif -%}
+{%- endfor -%}
+{% endif %}
 
-Remove sandbox:
+
+Copy certs to s3 and s3auth directories:
+  file.recurse:
+    - names:
+      - /etc/ssl/stx-s3/s3
+      - /etc/ssl/stx-s3/s3auth
+    - source: /opt/seagate/certs/*
+    - keep_source: False
+    - clean: False
+    - user: certs
+    - group certs 
+    - dir_mode: 755
+    - file_mode: 644
+
+Clean certs:
   file.absent:
-    - name: {{rpm_sources_dir}}/{{ s3_certs_src }}/s3_certs_sandbox
+    - name: /opt/seagate/certs
 
-Create archive:
-  module.run:
-    - archive.tar:
-      - options: czf
-      - tarfile: {{ s3_certs_src }}.tar.gz
-      - sources: {{ s3_certs_src }}
-      - cwd: {{ rpm_sources_dir }}
-
-Build s3server certs rpm:
-  cmd.run:
-    - name: rpmbuild -ba --define="_s3_certs_version {{ defaults.s3server.config.S3_VERSION }}" --define="_s3_certs_src {{ s3_certs_src }}" --define="_s3_domain_tag {{ defaults.s3server.config.S3_DOMAIN }}" --define="_s3_deploy_tag {{ defaults.s3server.config.DEPLOY_TAG }}" --define="_topdir {{ rpm_root_dir }}" /opt/seagate/s3server/s3certs/s3certs.spec
-    - cwd: {{ rpm_sources_dir }}
-
-Build s3client certs rpm:
-  cmd.run:
-    - name: rpmbuild -ba --define="_s3_certs_version {{ defaults.s3server.config.S3_VERSION }}" --define="_s3_certs_src {{ s3_certs_src }}" --define="_s3_domain_tag {{ defaults.s3server.config.S3_DOMAIN }}" --define="_s3_deploy_tag {{ defaults.s3server.config.DEPLOY_TAG }}" --define="_topdir {{ rpm_root_dir }}" /opt/seagate/s3server/s3certs/s3clientcerts.spec
-    - cwd: {{ rpm_sources_dir }}
-
-Copy s3server certs rpm:
-  cmd.run:
-    - name: cp {{ rpm_root_dir }}/RPMS/x86_64/stx-s3-certs-* /opt/seagate
-    - require:
-      - Build s3server certs rpm
-
-Copy s3server client client rpm:
-  cmd.run:
-    - name: cp {{ rpm_root_dir }}/RPMS/x86_64/stx-s3-client-certs-* /opt/seagate
-    - require:
-      - Build s3client certs rpm
+#Add haproxy user:
+#  module.run:
+#    - groupadd.adduser: 
+#      - name: certs
+#      - user: haproxy
