@@ -95,19 +95,19 @@ sspl:
 Add public data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
-    - listen_in:
+    - watch_in:
       - Start and enable Firewalld service
 
 Add private data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone private-data-zone
-    - listen_in:
+    - watch_in:
       - Start and enable Firewalld service
 
 Add management zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone management-zone
-    - listen_in:
+    - watch_in:
       - Start and enable Firewalld service
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
@@ -213,4 +213,4 @@ Public Zone:
       - Private data zone
       - Management zone
     - listen_in:
-      - Start and enable Firewalld service
+      - service: firewalld
