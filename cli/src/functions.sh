@@ -1247,13 +1247,12 @@ function configure_salt {
         if [[ -n "$_master_host" ]]; then
             sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion
         fi
-
+        
         if [[ "$_master" == true ]]; then
             cp -f files/etc/salt/grains.primary /etc/salt/grains
         else
             cp -f files/etc/salt/grains.slave /etc/salt/grains
         fi
-
         echo "$_minion_id" >/etc/salt/minion_id
 
         systemctl enable salt-minion
@@ -1659,3 +1658,141 @@ function setup_ssh {
     
     echo "ssh passwordless setup done successfully"
 }
+#   set_node_id <hostspec> [<ssh-config> [<sudo> ]]
+#
+#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#
+#   Prerequisites:
+#       - SaltStack is installed.
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function set_node_id {
+    set -eu
+
+    if [[ "$verbosity" -ge "2" ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+    local _installdir="${4:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "NodeID on $_hostspec"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge "2" ]]; then
+        set -x
+    fi
+
+    pushd "$_installdir"
+        if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/node_id" ]]; then
+            mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
+            echo "node_id: \$(uuidgen)" > /opt/seagate/eos-prvsnr/generated_configs/node_id
+        fi
+
+        if [[ -z "\$(grep "node_id" /etc/salt/grains 2>/dev/null)" ]]; then
+            cat /opt/seagate/eos-prvsnr/generated_configs/node_id >> /etc/salt/grains
+        fi
+
+        systemctl enable salt-minion
+        systemctl restart salt-minion
+    popd
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
+#   set_cluster_id <cluster_id> <hostspec> [<ssh-config> [<sudo> ]]
+#
+#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#
+#   Prerequisites:
+#       - SaltStack is installed.
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       cluster_id: ID of cluster to be set.
+#           Default: not set.
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#       installation-dir: destination installation directory.
+#           Default: /opt/seagate/eos-prvsnr
+#
+function set_cluster_id {
+    set -eu
+
+    if [[ "$verbosity" -ge "2" ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _cluster_uuid="${1:-}"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+
+    if [[ -z "$_cluster_uuid" ]]; then
+        l_error "Set cluster ID cannot be set as black on $_hostspec"
+        exit 1
+    fi
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    l_info "Set cluster ID on $_hostspec"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge "2" ]]; then
+        set -x
+    fi
+
+    pushd "$_installdir"
+        if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/cluster_id" ]]; then
+            mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
+            echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
+        fi
+
+        if [[ -z "\$(grep "cluster_id" /etc/salt/grains 2>/dev/null)" ]]; then
+            cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id >> /etc/salt/grains
+        fi
+
+        systemctl enable salt-minion
+        systemctl restart salt-minion
+    popd
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
+
