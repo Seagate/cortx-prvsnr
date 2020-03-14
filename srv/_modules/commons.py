@@ -6,15 +6,13 @@ def _update_dict(source_dict = {}, reference_dict = {}):
     source_dict: Dictionary built from component config file.
     reference_dict: Dictionary obtained from component pillar.
   """
-  if not (source_dict or reference_dict):
-    raise Exception("[ERROR   ]: Empty args passed to _modules/commons.py::_config_update")
+  if not (isinstance(source_dict, dict)or isinstance(reference_dict, dict) ):
+    raise Exception("[ERROR   ]: non dict args passed to _modules/commons.py::_config_update")
   
-  for key in list(source_dict.keys()):
-    if key in reference_dict:
-      if isinstance(source_dict[key], dict):
+  for key in list(reference_dict.keys()):
+    if( key in source_dict and isinstance(source_dict[key], dict) and
+         isinstance(reference_dict[key], dict)):
         _update_dict(source_dict[key], reference_dict[key])
-      else:
+    else:
         source_dict[key] = reference_dict[key]
-  
-  return source_dict
   
