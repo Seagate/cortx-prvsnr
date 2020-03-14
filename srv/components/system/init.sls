@@ -4,9 +4,9 @@ include:
   - components.system.config
   - components.system.housekeeping
   - components.system.sanity_check
-  - components.system.firewall
-  - components.system.logrotate
-  - components.system.ntp
+  # - components.system.firewall
+  # - components.system.logrotate
+  # - components.system.ntp
 
 Generate system checkpoint flag:
   file.managed:

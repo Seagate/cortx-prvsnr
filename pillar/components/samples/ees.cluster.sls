@@ -1,5 +1,6 @@
 cluster:
-  cluster_ip:
+  cluster_ip:                         # Cluster IP for HAProxy
+  mgmt_vip:                           # Management VIP for CSM
   type: ees                           # single/ees/ecs
   node_list:
     - eosnode-1
@@ -8,48 +9,52 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
-      pvt_nw_addr: 192.168.0.0
       nw_search: pun.seagate.com
-      mgmt_nw:                  # Management network interfaces
+      pvt_data_nw_addr: 192.168.0.0
+      mgmt_nw:                        # Management network interfaces
         iface:
-          - eth0
-        ipaddr: 
+          - eno1
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 
+      data_nw:                        # Data network interfaces
+        iface:
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-      roaming_ip:
-      gateway_ip:               # Gateway IP of network
+        roaming_ip:                   # If left blank it is auto-populated by components.system.network.direct
+                                      # Applies to private data network
+      gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
-        - /dev/sdb
+        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc
+        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
   eosnode-2:
     hostname: eosnode-2
     is_primary: false
     network:
-      pvt_nw_addr: 192.168.0.0
       nw_search: pun.seagate.com
-      mgmt_nw:                  # Management network interfaces
+      pvt_data_nw_addr: 192.168.10.0
+      mgmt_nw:                        # Management network interfaces
         iface:
-          - eth0
-        ipaddr: 
+          - eno1
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 
+      data_nw:                        # Data network interfaces
+        iface:
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-      roaming_ip:
-      gateway_ip:               # Gateway IP of network
+        roaming_ip:                   # If left blank it is auto-populated by components.system.network.direct
+                                      # Applies to private data network
+      gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
-        - /dev/sdb
+        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc
+        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS

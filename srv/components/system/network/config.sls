@@ -10,6 +10,8 @@ Kill dhclient:
     - requires:
       - service: Stop and disable NetworkManager service
 
+{% if pillar['cluster'][grains['id']]['network']['mgmt_nw']['ipaddr'] %}
+# Donot execute this block for DHCP settings on management network
 {% if 'mgmt0' in grains['ip4_interfaces'] %}
   {% set mgmt_nw = 'mgmt0' %}
 {% else %}
@@ -24,6 +26,7 @@ Network setup:
     - gatewaydev: {{ mgmt_nw }}
     - require_reboot: True
     - search: {{ salt['pillar.get']("cluster:{0}:network:nw_search".format(grains['id']), 'pun.seagate.com') }}
+{% endif %}
 
 lo:
   network.managed:
@@ -39,6 +42,7 @@ lo:
     - network: 127.0.0.0
     - broadcast: 127.255.255.255
 
+# Not requried
 # Reboot system:
 #   module.run:
 #     - system.reboot: []

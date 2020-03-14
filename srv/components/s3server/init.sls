@@ -1,8 +1,5 @@
+{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.s3server'.format(grains['id'])) %}
 include:
-  # - components.ha.haproxy
-  # - components.misc_pkgs.openldap
-  
-  # - components.ha.keepalived
   - components.s3server.prepare
   - components.s3server.install
   - components.s3server.config
@@ -16,3 +13,10 @@ Generate s3server checkpoint flag:
     - makedirs: True
     - create: True
 
+{%- else -%}
+
+S3Server already applied:
+  test.show_notification:
+    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.s3server.teardown' to reprovision these states."
+
+{%- endif -%}

@@ -1,5 +1,5 @@
 {% set node = grains['id'] %}
-
+{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.build_ssl_cert_rpms'.format(grains['id'])) %}
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(node), false) %}
 
 include:
@@ -32,9 +32,18 @@ Copy certs to non-primary:
 {%- endif -%}
 {%- endfor -%}
 {%- else -%}
-
 build_cert_rpms_non_primary_node:
   test.show_notification:
     - text: "No changes needed on non-primary node: {{ node }}"
+{% endif %}
 
+Generate openldap checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.build_ssl_cert_rpms
+    - makedirs: True
+    - create: True
+{%- else -%}
+SSL cert rpms built already:
+  test.show_notification:
+    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.misc_pkgs.build_ssl_cert_rpms.teardown' to reprovision these states."
 {% endif %}

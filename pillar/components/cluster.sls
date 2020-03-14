@@ -7,7 +7,7 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
-      pvt_nw_addr: 192.168.0.0
+      pvt_data_nw_addr: 192.168.0.0
       nw_search: pun.seagate.com
       mgmt_nw:                  # Management network interfaces
         iface:

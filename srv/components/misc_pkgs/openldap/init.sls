@@ -1,5 +1,4 @@
 {% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.openldap'.format(grains['id'])) %}
-
 include:
   - components.misc_pkgs.openldap.prepare
   - components.misc_pkgs.openldap.install
@@ -13,5 +12,8 @@ Generate openldap checkpoint flag:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.openldap
     - makedirs: True
     - create: True
-
+{%- else -%}
+OpenLDAP already applied:
+  test.show_notification:
+    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
 {% endif %}
