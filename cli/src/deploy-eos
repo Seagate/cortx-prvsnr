@@ -111,6 +111,7 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
     prereq_states=(
     # states to be applied in desired sequence
         "system"
+        "misc_pkgs.rsyslog"
         "system.firewall"
         "system.logrotate"
         "system.ntp"
@@ -118,7 +119,6 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
         "system.storage"
         "misc_pkgs.build_ssl_cert_rpms"
         "ha.corosync-pacemaker"
-        "misc_pkgs.rsyslog"
         "ha.haproxy"
         "misc_pkgs.elasticsearch"
         "misc_pkgs.kibana"

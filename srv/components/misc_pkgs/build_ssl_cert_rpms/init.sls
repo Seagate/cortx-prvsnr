@@ -45,5 +45,5 @@ Generate openldap checkpoint flag:
 {%- else -%}
 SSL cert rpms built already:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.misc_pkgs.build_ssl_cert_rpms.teardown' to reprovision these states."
+    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.build_ssl_cert_rpms.teardown' to reprovision these states."
 {% endif %}

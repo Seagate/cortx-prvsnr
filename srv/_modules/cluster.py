@@ -84,7 +84,7 @@ def nw_roaming_ip():
         _pillar_dict = yaml.safe_load(fd)
 
     for node in _pillar_dict["cluster"]["node_list"]:
-        pvt_nw = _pillar_dict['cluster'][node]['network']['pvt_data_nw_addr']
+        pvt_nw = _pillar_dict['cluster']['pvt_data_nw_addr']
         roaming_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), int(node.split('-')[1]) + 2)
         if None == _pillar_dict["cluster"][node]["network"]["data_nw"]["roaming_ip"]:
             _pillar_dict["cluster"][node]["network"]["data_nw"]["roaming_ip"] = roaming_ip

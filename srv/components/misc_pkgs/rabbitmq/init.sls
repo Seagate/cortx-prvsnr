@@ -12,5 +12,5 @@ Generate RabbitMQ checkpoint flag:
 {%- else -%}
 RabbitMQ already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.misc_pkgs.rabbitmq.teardown' to reprovision these states."
+    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.rabbitmq.teardown' to reprovision these states."
 {% endif %}

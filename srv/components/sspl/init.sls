@@ -1,6 +1,5 @@
 {% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.sspl'.format(grains['id'])) %}
 include:
-  - components.misc_pkgs.rabbitmq
   - components.sspl.prepare
   - components.sspl.install
   - components.sspl.config
@@ -17,6 +16,6 @@ Generate sspl checkpoint flag:
 
 SSPL already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ node }}. execute 'salt '*' state.apply components.sspl.teardown' to reprovision these states."
+    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.sspl.teardown' to reprovision these states."
 
 {%- endif -%}

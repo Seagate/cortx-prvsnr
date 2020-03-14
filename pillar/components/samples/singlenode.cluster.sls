@@ -1,5 +1,6 @@
 cluster:
   cluster_ip:
+  pvt_data_nw_addr: 192.168.0.0
   type: single        # single/ees/ecs
   node_list:
     - eosnode-1
@@ -7,7 +8,6 @@ cluster:
     hostname: eosnode-1
     is_primary: true
     network:
-      pvt_data_nw_addr: 192.168.0.0
       nw_search: pun.seagate.com
       mgmt_nw:                  # Management network interfaces
         iface:

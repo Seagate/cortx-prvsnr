@@ -22,7 +22,7 @@ Public direct network:
     - proto: dhcp
 {%- endif %}
 
-{% set pvt_nw = pillar['cluster'][grains['id']]['network']['pvt_data_nw_addr'] %}
+{% set pvt_nw = pillar['cluster']['pvt_data_nw_addr'] %}
 {% set pvt_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), grains['id'].split('-')[1]) %}
 Private direct network:
   network.managed:

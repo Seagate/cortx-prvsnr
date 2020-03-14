@@ -1,5 +1,6 @@
 cluster:
   cluster_ip:                         # Cluster IP for HAProxy
+  pvt_data_nw_addr: 192.168.0.0
   mgmt_vip:                           # Management VIP for CSM
   type: ees                           # single/ees/ecs
   node_list:
@@ -10,7 +11,6 @@ cluster:
     is_primary: true
     network:
       nw_search: pun.seagate.com
-      pvt_data_nw_addr: 192.168.0.0
       mgmt_nw:                        # Management network interfaces
         iface:
           - eno1
@@ -35,7 +35,6 @@ cluster:
     is_primary: false
     network:
       nw_search: pun.seagate.com
-      pvt_data_nw_addr: 192.168.10.0
       mgmt_nw:                        # Management network interfaces
         iface:
           - eno1
