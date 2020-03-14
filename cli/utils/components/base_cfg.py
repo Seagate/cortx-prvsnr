@@ -29,6 +29,11 @@ class BaseCfg(metaclass=ABCMeta):
                 self.__load_defaults()
         return self.__options
 
+    @_options.setter
+    def _options(self, value):
+        if isinstance(value, dict):
+            self.__options = value
+
     def __load_defaults(self):
 
         with open(self._cfg_path, 'r') as fd:
