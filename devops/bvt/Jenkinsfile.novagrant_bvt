@@ -11,8 +11,8 @@ Map config = [
 
 String eosRelease = params.eosRelease ?: 'integration/centos-7.7.1908/last_successful'
 String eosTestRepoVersion = params.eosTestRepoVersion ?: 'master'
-String eosnode1 = params.eosnode1 ?: None
-String eosnode1 = params.eosnode2 ?: None
+//String eosnode1 = params.eosnode1 ?: None
+//String eosnode1 = params.eosnode2 ?: None
 
 echo """
     EOS release is set to '$eosRelease'
