@@ -52,9 +52,9 @@ Closure dynamicValidation = {
 
     def test_err
 
-    String testReportFileNameXml = "pytest.xml"
-    String testReportFileNameLog = "pytest.log"
-    String testReportFileNamePlain = "pytest.out.txt"
+    String testReportFileNameXml = 'pytest.xml'
+    String testReportFileNameLog = 'pytest.log'
+    String testReportFileNamePlain = 'pytest.out.txt'
 
     String eosTestRepo = "https://seagit.okla.seagate.com/eos/qa/eos-test/repository/"
     String eosTestRepoArchive = 'eos-test.tgz'
