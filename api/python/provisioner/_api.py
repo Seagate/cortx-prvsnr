@@ -1,6 +1,7 @@
 import sys
 
-from .salt import auth_init as _auth_init, StateFunExecuter
+from .config import LOCAL_MINION
+from .salt import auth_init as _auth_init, function_run
 from ._api_cli import api_args_to_cli
 from .api_spec import api_spec
 from .commands import commands
@@ -27,15 +28,16 @@ def run(command: str, *args, **kwargs):
     kwargs.pop('username', None)
     kwargs.pop('eauth', None)
 
-    if kwargs.pop('async', False):
-        kwargs['loglevel'] = 'INFO'
-        kwargs['logstream'] = 'stderr'
-        kwargs['output'] = 'json'
-        cli_args = api_args_to_cli(command, *args, **kwargs)
-        cmd = ' '.join(['provisioner'] + cli_args)
+    nowait = kwargs.pop('nowait', False)
+    salt_job = nowait or kwargs.pop('salt_job', False)
 
-        return StateFunExecuter.execute(
-            'cmd.run', cmd
+    if salt_job:
+        return function_run(
+            'provisioner.{}'.format(command),
+            fun_args=args,
+            fun_kwargs=kwargs,
+            targets=LOCAL_MINION,
+            nowait=nowait
         )
     else:
         cmd = commands[command]

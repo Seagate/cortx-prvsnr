@@ -1,7 +1,7 @@
 import attr
 import salt.config
 from salt.client import LocalClient, Caller
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Tuple
 import logging
 
 from .config import ALL_MINIONS, LOCAL_MINION
@@ -249,31 +249,47 @@ def _salt_caller_cmd(*args, **kwargs):
     return res
 
 
-def _salt_client_cmd(*args, **kwargs):
-    _kwargs = {}
+def _salt_client_cmd(
+    targets, fun,
+    fun_args: Union[Tuple, None] = None,
+    fun_kwargs: Union[Dict, None] = None,
+    nowait=False,
+    **kwargs
+):
+    def _repr_inputs():
+        return (
+            'targets: {}, fun: {}, fun_args: {}, fun_kwargs: {}, kwargs: {}'
+            .format(targets, fun, fun_args, fun_kwargs, kwargs)
+        )
 
     eauth = kwargs.pop('eauth', _eauth)
     username = kwargs.pop('username', _username)
     password = kwargs.pop('password', _password)
 
-    if username:
-        _kwargs['eauth'] = eauth
-        _kwargs['username'] = username
-        _kwargs['password'] = password
+    if not fun_args:
+        fun_args = ()
 
+    if username:
+        kwargs['eauth'] = eauth
+        kwargs['username'] = username
+        kwargs['password'] = password
+
+    kwargs['full_return'] = True
     try:
         if kwargs.pop('async', False):
             res = salt_local_client().cmd_async(
-                *args, full_return=True, **kwargs
+                targets, fun, arg=fun_args,
+                kwarg=fun_kwargs, **kwargs
             )
             if res == 0:
                 raise SaltError(
-                    'Async API returned 0, args: {}, kwargs: {}'
-                    .format(args, kwargs)
+                    'Async API returned 0, inputs: {}'
+                    .format(_repr_inputs())
                 )
         else:
             res = salt_local_client().cmd(
-                *args, full_return=True, kwarg=kwargs, **_kwargs
+                targets, fun, arg=fun_args,
+                kwarg=fun_kwargs, **kwargs
             )
     except Exception as exc:
         # TODO too generic
@@ -299,7 +315,7 @@ def _salt_client_cmd(*args, **kwargs):
 
         _fails = {}
         if job_result.get('retcode') != 0:
-            salt_fun = args[1]
+            salt_fun = fun
             if str(salt_fun).startswith('state.') and type(ret) is dict:
                 _fails = _get_fails(ret)
             else:
@@ -327,16 +343,24 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 
 # TODO test
-def function_run(fun, *args, targets=ALL_MINIONS, **kwargs):
+def function_run(
+    fun,
+    targets=ALL_MINIONS,
+    fun_args: Union[Tuple, None] = None,
+    fun_kwargs: Union[Dict, None] = None,
+    **kwargs
+):
     if targets == LOCAL_MINION:
+        targets = local_minion_id()
 
-        # XXX Caller works not smoothly, issues with ioloop, possibly
-        #     related one https://github.com/saltstack/salt/issues/46905
-        # return _salt_caller_cmd(fun, *args, **kwargs)
+    # XXX Caller for local minion commands works not smoothly,
+    #     issues with ioloop, possibly related one
+    #     https://github.com/saltstack/salt/issues/46905
+    # return _salt_caller_cmd(fun, *args, **kwargs)
 
-        return _salt_client_cmd(local_minion_id(), fun, list(args), **kwargs)
-    else:
-        return _salt_client_cmd(targets, fun, list(args), **kwargs)
+    return _salt_client_cmd(
+        targets, fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
+    )
 
 
 # TODO test
@@ -346,7 +370,7 @@ def cmd_run(cmd, targets=ALL_MINIONS):
             cmd, targets
         )
     )
-    res = function_run('cmd.run', cmd, targets=targets)
+    res = function_run('cmd.run', fun_args=[cmd], targets=targets)
     logger.info(
         "Run command '{}' on '{}', res {}".format(
             cmd, targets, res
@@ -367,7 +391,9 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
                     state, targets
                 )
             )
-            res = function_run('state.apply', state.name, targets=targets)
+            res = function_run(
+                'state.apply', fun_args=[state.name], targets=targets
+            )
             logger.info(
                 "Applied state {} on {}, res {}".format(
                     state, targets, res
@@ -386,28 +412,38 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
 
 # TODO tests
 def state_fun_execute(
-    fun: Union[str, StateFun], *args, targets=LOCAL_MINION, **kwargs
+    state_fun: Union[str, StateFun],
+    targets: str = LOCAL_MINION,
+    fun_args: Union[List, Tuple, None] = None,
+    fun_kwargs: Union[Dict, None] = None,
+    **kwargs
 ):
     # TODO multiple states at once
-    fun = StateFun(fun)
+    state_fun = StateFun(state_fun)
     try:
         logger.info(
             "Executing state function {} on {}".format(
-                fun, targets
+                state_fun, targets
             )
         )
+        if not fun_args:
+            fun_args = ()
         res = function_run(
-            'state.single', fun.name, *args, targets=targets, **kwargs
+            'state.single',
+            targets=targets,
+            fun_args=[state_fun.name] + list(fun_args),
+            fun_kwargs=fun_kwargs,
+            **kwargs
         )
         logger.info(
             "Executed state function {} on {}, res {}".format(
-                fun, targets, res
+                state_fun, targets, res
             )
         )
     except Exception as exc:
         raise SaltError(
             "Failed to execute state function '{}': {}"
-            .format(fun, str(exc))
+            .format(state_fun, str(exc))
         )
     else:
         return res
@@ -427,9 +463,19 @@ class StatesApplier:
 class StateFunExecuter:
     @staticmethod
     def execute(
-        fun: str, *args, targets: str = LOCAL_MINION, **kwargs
+        fun: str,
+        targets: str = LOCAL_MINION,
+        fun_args: Union[Tuple, None] = None,
+        fun_kwargs: Union[Dict, None] = None,
+        **kwargs
     ) -> None:
-        return state_fun_execute(fun, *args, targets=targets, **kwargs)
+        return state_fun_execute(
+            fun,
+            targets=targets,
+            fun_args=fun_args,
+            fun_kwargs=fun_kwargs,
+            **kwargs
+        )
 
 
 # TODO test

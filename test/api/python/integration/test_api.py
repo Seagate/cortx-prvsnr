@@ -80,7 +80,7 @@ def test_external_auth(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_ntp_configuration(
+def test_set_ntp(
     mhosteosnode1, run_test
 ):
     mhosteosnode1.check_output("yum install -y ntp")
@@ -92,7 +92,7 @@ def test_ntp_configuration(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_network_configuration(
+def test_set_nw(
     mhosteosnode1, run_test, eos_hosts, project_path
 ):
     mhosteosnode1.copy_to_host(
@@ -119,7 +119,7 @@ def test_network_configuration(
 @pytest.mark.parametrize(
     "cluster", [True, False], ids=['cluster', 'singlenode']
 )
-def test_eosupdate_repo_configuration(
+def test_set_eosupdate_repo(
     request, cluster, api_type
 ):
     if cluster:
@@ -159,7 +159,7 @@ def test_eosupdate_repo_configuration(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_eosupdate_repo_configuration_for_reinstall(
+def test_set_eosupdate_repo_for_reinstall(
     mhosteosnode1, mlocalhost, run_test, rpm_build, request
 ):
     repo_dir = '/tmp/repo'
@@ -197,7 +197,7 @@ def test_eosupdate_repo_configuration_for_reinstall(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_eos_update_eos_sw(
+def test_eos_update(
     mhosteosnode1, run_test
 ):
     run_test(mhosteosnode1)

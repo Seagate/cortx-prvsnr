@@ -12,6 +12,7 @@ import yaml
 import provisioner
 from provisioner.commands import commands
 from provisioner import serialize
+from provisioner import _api
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,6 @@ def _parse_args():
     cmd = kwargs.pop('command')
     if cmd is None:
         raise ValueError('command is required')
-    cmd = commands[cmd]
     args = kwargs.pop('args', [])
     return cmd, args, kwargs
 
@@ -178,7 +178,7 @@ def _run_cmd(cmd, output, *args, **kwargs):
     exc = None
 
     try:
-        ret = cmd.run(*args, **kwargs)
+        ret = _api.run(cmd, *args, **kwargs)
     except Exception as _exc:
         exc = _exc
     else:

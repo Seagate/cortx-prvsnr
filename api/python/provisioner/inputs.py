@@ -9,6 +9,7 @@ from .values import (
     UNDEFINED, UNCHANGED, value_from_str,
     is_special
 )
+from .serialize import PrvsnrType
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
@@ -227,7 +228,7 @@ class Network(ParamGroupInputBase):
 # verify that attributes match _param_di during class declaration:
 #   - both attributes should satisfy _param_di
 #   - is_key might be replaced with checking attr name against _param_di.key
-class ParamDictItemInputBase:
+class ParamDictItemInputBase(PrvsnrType):
     _param_di = None
     _param = None
 
