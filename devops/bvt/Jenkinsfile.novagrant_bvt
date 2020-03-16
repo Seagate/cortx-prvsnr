@@ -69,7 +69,7 @@ Closure dynamicValidation = {
     pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --eos-release=$eosRelease"
     pytestArgs += " --bvt-repo-path=$eosTestRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
     //pytestArgs += " --eos-node1=$eosnode1 --eos-node2=$eosnode2"
-    String pytestTargets = "test/bvt"
+    String pytestTargets = "test/bvt/test_bvt_no_vagrant.py"
 
     try {
         
