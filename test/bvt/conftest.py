@@ -17,7 +17,14 @@ def pytest_addoption(parser):
         default='./bvt.job-results.tgz',
         help="path to tar gzipped archive with bvt test job result"
     )
-
+    parser.addoption(
+        "--eosnode1", action='store',
+        help="Eos host node1 - Master Node"
+    )
+    parser.addoption(
+        "--eosnode2", action='store'
+        help="Eos host node2 - Minion Node"
+    )
 
 @pytest.fixture(scope="session")
 def options_list(options_list):
