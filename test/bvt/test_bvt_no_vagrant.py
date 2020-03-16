@@ -30,7 +30,7 @@ def hosts_spec(hosts_spec):
     vbox_settings['data_disk_size'] = 20480
     return res
 
-@pytest.fixture(scope='module')
+#@pytest.fixture(scope='module')
 def env_provider(hosts)
 
 
