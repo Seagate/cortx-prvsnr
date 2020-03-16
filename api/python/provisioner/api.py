@@ -137,6 +137,25 @@ def set_eosupdate_repo(
         release, source=source, targets=targets, dry_run=dry_run
     )
 
+def set_ssl_certs(
+    source=None, targets=ALL_MINIONS, dry_run=False
+):
+    r"""Configures ssl certs
+
+    Installs or removes a repository for EOS update release.
+
+    :param targets: Host where to configure certs
+    :param source: (optional) A path to a repository. Might be: a local
+        directory,  a local iso file or an url to a remote repository.
+        If not specified then a repository for a ``release`` will be removed.
+        If path to an iso file is provide then it is mounted before
+        installation and unmounted before removal.
+    """
+    return _api_call(
+        'set_ssl_certs',
+        source=source, targets=targets, dry_run=dry_run
+    )
+
 
 def eos_update(targets=ALL_MINIONS):
     r"""Runs EOS software update logic.

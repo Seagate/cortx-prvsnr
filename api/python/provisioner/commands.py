@@ -178,6 +178,25 @@ class EOSUpdate(CommandParserFillerMixin):
                     )
                     raise
 
+# TODO consider to use RunArgsUpdate and support dry-run
+@attr.s(auto_attribs=True)
+class SSLCerts(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, targets):
+        state_name = "components.build_ssl_certs"
+        try:
+            StatesApplier.apply([state_name])
+        except Exception:
+            logger.exception(
+                "Failed to apply certs {} on {}".format(component, targets)
+            )
+            raise
+
 
 commands = {}
 for command_name, spec in api_spec.items():

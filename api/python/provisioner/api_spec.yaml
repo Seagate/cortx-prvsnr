@@ -25,3 +25,9 @@ set_eosupdate_repo:
     - components.misc_pkgs.eosupdate.repo
 eos_update:
   type: EOSUpdate
+set_ssl_certs:
+  type: Set
+  params_type: SSLcerts
+  states:
+    post:
+    - components.misc_pkgs.build_ssl_certs_rpms
