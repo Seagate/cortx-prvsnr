@@ -68,7 +68,7 @@ Closure dynamicValidation = {
     String pytestArgs = "-l -vv -s --log-cli-level info --junit-xml=$testReportFileNameXml"
     pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --eos-release=$eosRelease"
     pytestArgs += " --bvt-repo-path=$eosTestRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
-    pytestArgs += " --eos-node1=$eosnode1 --eos-node2=$eosnode2"
+    //pytestArgs += " --eos-node1=$eosnode1 --eos-node2=$eosnode2"
     String pytestTargets = "test/bvt"
 
     try {
