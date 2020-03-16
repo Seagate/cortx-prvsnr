@@ -20,7 +20,7 @@ cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 #
 # Use a descriptive name for the node:
 #
-node.name: {{ grains['host'] }}
+node.name: {{ grains['fqdn'] }}
 #
 # Add custom attributes to the node:
 #
