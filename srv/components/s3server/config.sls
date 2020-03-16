@@ -44,3 +44,10 @@ Append /etc/hosts:
     - content: {{ grains['ip4_interfaces'][data_if][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
     - location: end
     - mode: insert
+
+Add slapd.conf to /etc/rsyslog.d:
+  file.managed:
+    - name: /etc/rsyslog.d/slapd.conf
+    - source: /opt/seagate/s3/install/ldap/rsyslog.d/slapdlog.conf
+    - makedirs: True
+    - keep_source: True
