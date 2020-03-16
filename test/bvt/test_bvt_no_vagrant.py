@@ -31,7 +31,7 @@ def hosts_spec(hosts_spec):
     return res
 
 #@pytest.fixture(scope='module')
-def env_provider(hosts)
+#def env_provider(hosts)
 
 
 def ensure_hw_configuration(mhost, tmpdir):
