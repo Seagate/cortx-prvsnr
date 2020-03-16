@@ -22,7 +22,7 @@ def pytest_addoption(parser):
         help="Eos host node1 - Master Node"
     )
     parser.addoption(
-        "--eosnode2", action='store'
+        "--eosnode2", action='store',
         help="Eos host node2 - Minion Node"
     )
 
