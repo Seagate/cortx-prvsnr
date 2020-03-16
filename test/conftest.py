@@ -84,11 +84,11 @@ DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_EOS_SPEC = {
     'eosnode1': {
-        'hostname': 'eosnode-1',
+        'hostname': 'ssc-vm-c-047.colo.seagate.com',
         'minion_id': 'eosnode-1',
         'is_primary': True,
     }, 'eosnode2': {
-        'hostname': 'eosnode-2',
+        'hostname': 'ssc-vm-c-048.colo.seagate.com',
         'minion_id': 'eosnode-2',
         'is_primary': False,
     }

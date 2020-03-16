@@ -164,7 +164,7 @@ def get_bvt_results(
 @pytest.mark.timeout(3600)
 @pytest.mark.eos_bvt
 @pytest.mark.isolated
-#@pytest.mark.env_provider('vbox')
+@pytest.mark.env_provider('host')
 #@pytest.mark.env_level('singlenode-bvt-ready')
 @pytest.mark.hosts(['ssc-vm-c-047'])
 def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
