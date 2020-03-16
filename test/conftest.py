@@ -34,14 +34,16 @@ ENV_LEVELS_HIERARCHY = {
             'vagrant': {
                 'vm_box_name': 'geerlingguy/centos7',
                 'vm_box_version': '1.2.7'
-            }
+            },
+            'host': 'centos:7.5.1804'
         },
         'centos7.7.1908': {
             'docker': 'centos:7.7.1908',
             'vagrant': {
                 'vm_box_name': 'geerlingguy/centos7',
                 'vm_box_version': '1.2.17'
-            }
+            },
+            'host': 'centos:7.7.1908'
         }
     },
     'repos-installed': 'base',
@@ -84,11 +86,11 @@ DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_EOS_SPEC = {
     'eosnode1': {
-        'hostname': 'ssc-vm-c-047.colo.seagate.com',
+        'hostname': 'eosnode-1',
         'minion_id': 'eosnode-1',
         'is_primary': True,
     }, 'eosnode2': {
-        'hostname': 'ssc-vm-c-048.colo.seagate.com',
+        'hostname': 'eosnode-2',
         'minion_id': 'eosnode-2',
         'is_primary': False,
     }
@@ -303,6 +305,11 @@ prvsnr_pytest_options = {
         choices=['host', 'docker', 'vbox'],
         default='docker',
         help="test environment provider, defaults to docker"
+    ),
+    "hosts": dict(
+        action='store',
+        default=['eosnode1','eosnode2'],
+        help='Provisioner cluster node'
     ),
     "prvsnr-src": dict(
         action='store', choices=['rpm', 'gitlab', 'local'],

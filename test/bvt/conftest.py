@@ -18,11 +18,11 @@ def pytest_addoption(parser):
         help="path to tar gzipped archive with bvt test job result"
     )
     parser.addoption(
-        "--eosnode1", action='store',
+        "--eos-node1", action='store',
         help="Eos host node1 - Master Node"
     )
     parser.addoption(
-        "--eosnode2", action='store',
+        "--eos-node2", action='store',
         help="Eos host node2 - Minion Node"
     )
 
@@ -30,5 +30,5 @@ def pytest_addoption(parser):
 def options_list(options_list):
     return (
         options_list +
-        ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
+        ["bvt-repo-path", "bvt-test-targets", "bvt-results-path", "eos-node1", "eos-node2"]
     )
