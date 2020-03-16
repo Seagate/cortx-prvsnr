@@ -62,7 +62,7 @@ def set_params(targets=ALL_MINIONS, dry_run=False, **params):
     return _api_call('set_params', targets=targets, dry_run=dry_run, **params)
 
 
-def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
+def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False, nowait=False, salt_job=False):
     r"""Configures NTP client.
 
     :param server: (optional) NTP server domain or IP address.
@@ -84,7 +84,8 @@ def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
 
     return _api_call(
         'set_ntp', server=server, timezone=timezone,
-        targets=targets, dry_run=dry_run
+        targets=targets, dry_run=dry_run,
+        nowait=nowait, salt_job=salt_job
     )
 
 

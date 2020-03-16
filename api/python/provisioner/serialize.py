@@ -3,6 +3,8 @@ import functools
 from typing import Any
 from importlib import import_module
 
+from .errors import PrvsnrTypeDecodeError
+
 
 PRVSNR_TYPE_ATTR = '_prvsnr_type_'
 TO_ARGS_METHOD = 'to_args'
@@ -41,22 +43,33 @@ class PrvsnrType:
 class PrvsnrJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if hasattr(obj, PRVSNR_TYPE_ATTR) or isinstance(obj, Exception):
-            cls = type(obj)
-            res = {PRVSNR_TYPE_KEY: [cls.__module__, cls.__name__]}
+            try:
+                cls = type(obj)
+                res = {PRVSNR_TYPE_KEY: [cls.__module__, cls.__name__]}
 
-            if hasattr(obj, PRVSNR_TYPE_ATTR):
-                args, kwargs = getattr(
-                    obj, TO_ARGS_METHOD,
-                    functools.partial(PrvsnrType.to_args_default, obj)
-                )()
-            else:  # Exception
-                args, kwargs = PrvsnrType.to_args_default(obj)
+                if hasattr(obj, PRVSNR_TYPE_ATTR):
+                    args, kwargs = getattr(
+                        obj, TO_ARGS_METHOD,
+                        functools.partial(PrvsnrType.to_args_default, obj)
+                    )()
+                else:  # Exception
+                    args, kwargs = PrvsnrType.to_args_default(obj)
 
-            if args:
-                res[PRVSNR_ARGS_KEY] = args
-            if kwargs:
-                res[PRVSNR_KWARGS_KEY] = kwargs
-            return res
+                if args:
+                    res[PRVSNR_ARGS_KEY] = args
+                if kwargs:
+                    res[PRVSNR_KWARGS_KEY] = kwargs
+            # it is expected that encoder's 'default' method
+            # should either return an encodeable representation of an
+            # object or raise a TypeError
+            # https://docs.python.org/3.6/library/json.html#basic-usage
+            except Exception as exc:
+                raise TypeError(
+                    'Failed to encode object {}: error {}'
+                    .format(obj, exc)
+                )
+            else:
+                return res
 
         return super().default(obj)
 
@@ -64,24 +77,26 @@ class PrvsnrJSONEncoder(json.JSONEncoder):
 def json_prvsnr_type_hook(dct):
     prvsnr_type = dct.get(PRVSNR_TYPE_KEY, None)
     if prvsnr_type:
-        # TODO check wherther it's ok to raise these exceptions here
         try:
-            m_name, cls_name = prvsnr_type
-        except ValueError:
-            raise ValueError(
-                'value for {} should be a tuple or list with 2 items,'
-                ' provided: {}'
-                .format(PRVSNR_TYPE_KEY, prvsnr_type)
-            )
+            try:
+                m_name, cls_name = prvsnr_type
+            except ValueError:
+                raise ValueError(
+                    'value for {} should be an iterable with 2 items,'
+                    ' provided: {}'
+                    .format(PRVSNR_TYPE_KEY, prvsnr_type)
+                )
 
-        module = import_module(m_name)
-        cls = getattr(module, cls_name)
-        args = dct.get(PRVSNR_ARGS_KEY, ())
-        kwargs = dct.get(PRVSNR_KWARGS_KEY, {})
-        return getattr(
-            cls, FROM_ARGS_METHOD,
-            functools.partial(PrvsnrType.from_args_default, cls)
-        )(*args, **kwargs)
+            module = import_module(m_name)
+            cls = getattr(module, cls_name)
+            args = dct.get(PRVSNR_ARGS_KEY, ())
+            kwargs = dct.get(PRVSNR_KWARGS_KEY, {})
+            return getattr(
+                cls, FROM_ARGS_METHOD,
+                functools.partial(PrvsnrType.from_args_default, cls)
+            )(*args, **kwargs)
+        except Exception as exc:
+            raise PrvsnrTypeDecodeError(dct, exc)
 
     return dct
 

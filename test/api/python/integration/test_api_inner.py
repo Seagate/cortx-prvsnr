@@ -100,7 +100,7 @@ def test_external_auth():
         )
 
 
-def test_ntp_configuration():
+def test_set_ntp():
     pillar = api_call('pillar_get')
 
     pillar_ntp_server = pillar['eosnode-1']['system']['ntp']['time_server']
@@ -118,7 +118,10 @@ def test_ntp_configuration():
     new_ntp_server = '0.north-america.pool.ntp.org'
     new_ntp_timezone = 'Europe/Berlin'
 
-    api_call('set_ntp', server=new_ntp_server, timezone=new_ntp_timezone)
+    api_call(
+        'set_ntp', server=new_ntp_server, timezone=new_ntp_timezone,
+        salt_job=True
+    )
 
     curr_params = api_call(
         'get_params', 'ntp/server', 'ntp/timezone'
@@ -131,7 +134,7 @@ def test_ntp_configuration():
 
 
 # TODO slave params
-def test_network_configuration():
+def test_set_nw():
     params = (
         'primary_hostname',
         'primary_floating_ip',
@@ -246,7 +249,7 @@ def test_network_configuration():
 
 
 # TODO test for only one minion in cluster (not ALL_MINIONS)
-def test_eosupdate_repo_configuration():
+def test_set_eosupdate_repo():
     # test_mode = os.environ['TEST_MODE']
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
@@ -402,7 +405,7 @@ def test_eosupdate_repo_configuration():
         check_not_installed(release, expected_repo_name, mount_dir)
 
 
-def test_eosupdate_repo_configuration_for_reinstall():
+def test_set_eosupdate_repo_for_reinstall():
     repo_dir = os.environ['TEST_REPO_DIR']
     test_file_path = os.environ['TEST_FILE_PATH']
     # base_repo_name = 'eos_update'
@@ -430,7 +433,7 @@ def test_eosupdate_repo_configuration_for_reinstall():
 #   - install eos stack first from some release
 #   - set some newer release
 #   - call udpate
-def test_eos_update_eos_sw():
+def test_eos_update():
     api_call(
         'set_eosupdate_repo',
         '1.2.3',

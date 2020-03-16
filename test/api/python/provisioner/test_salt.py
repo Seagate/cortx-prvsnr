@@ -47,7 +47,10 @@ def test_salt_pillar_get(monkeypatch):
     res = salt.pillar_get(targets='aaa')
 
     assert pillar_get_args == [
-        (('aaa', 'pillar.items'), {'kwarg': {}, 'full_return': True}),
+        (
+            ('aaa', 'pillar.items'),
+            {'arg': (), 'kwarg': None, 'full_return': True}
+        )
     ]
     assert res == {'1': {'2': '3'}}
 
@@ -70,7 +73,7 @@ def test_salt_pillar_refresh(monkeypatch):
     assert pillar_refresh_args == [
         (
             ('aaa', 'saltutil.refresh_pillar'),
-            {'kwarg': {}, 'full_return': True}
+            {'arg': (), 'kwarg': None, 'full_return': True}
         ),
     ]
 
@@ -97,16 +100,16 @@ def test_salt_states_apply(monkeypatch):
     salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
     assert states_apply_args == [
         (
-            ('aaa', 'state.apply', ['state1']),
-            {'kwarg': {}, 'full_return': True}
+            ('aaa', 'state.apply'),
+            {'arg': ['state1'], 'kwarg': None, 'full_return': True}
         ),
         (
-            ('aaa', 'state.apply', ['state2']),
-            {'kwarg': {}, 'full_return': True}
+            ('aaa', 'state.apply'),
+            {'arg': ['state2'], 'kwarg': None, 'full_return': True}
         ),
         (
-            ('aaa', 'state.apply', ['state3']),
-            {'kwarg': {}, 'full_return': True}
+            ('aaa', 'state.apply'),
+            {'arg': ['state3'], 'kwarg': None, 'full_return': True}
         )
     ]
 
@@ -168,23 +171,37 @@ def test_salt_state_fun_execute(monkeypatch, local_minion_id):
     local_client_args = []
     local_client_res = {'some-res'}
     salt.state_fun_execute(
-        'state_fun1', 'some_arg', some_kwarg=1, targets='aaa'
+        'state_fun1',
+        fun_args=['some_arg'],
+        fun_kwargs=dict(some_kwarg=1),
+        targets='aaa'
     )
     assert local_client_args == [
         (
-            ('aaa', 'state.single', ['state_fun1', 'some_arg']),
-            {'kwarg': {'some_kwarg': 1}, 'full_return': True}
+            ('aaa', 'state.single'),
+            {
+                'arg': ['state_fun1', 'some_arg'],
+                'kwarg': {'some_kwarg': 1},
+                'full_return': True
+            }
         )
     ]
 
     local_client_args = []
     salt.state_fun_execute(
-        'state_fun1', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
+        'state_fun1',
+        fun_args=['some_arg'],
+        fun_kwargs=dict(some_kwarg=1),
+        targets=LOCAL_MINION
     )
     assert local_client_args == [
         (
-            (local_minion_id, 'state.single', ['state_fun1', 'some_arg']),
-            {'kwarg': {'some_kwarg': 1}, 'full_return': True}
+            (local_minion_id, 'state.single'),
+            {
+                'arg': ['state_fun1', 'some_arg'],
+                'kwarg': {'some_kwarg': 1},
+                'full_return': True
+            }
         ),
     ]
 
@@ -202,7 +219,10 @@ def test_salt_state_fun_execute(monkeypatch, local_minion_id):
     }
     with pytest.raises(SaltError) as excinfo:
         salt.state_fun_execute(
-            'state_fun1', 'some_arg', some_kwarg=1, targets='aaa'
+            'state_fun1',
+            fun_args=['some_arg'],
+            fun_kwargs=dict(some_kwarg=1),
+            targets='aaa'
         )
     assert str(excinfo.value) == (
         "Failed to execute state function '{}': salt command failed: {}"
@@ -213,7 +233,10 @@ def test_salt_state_fun_execute(monkeypatch, local_minion_id):
     )
     with pytest.raises(SaltError) as excinfo:
         salt.state_fun_execute(
-            'state_fun1', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
+            'state_fun1',
+            fun_args=['some_arg'],
+            fun_kwargs=dict(some_kwarg=1),
+            targets=LOCAL_MINION
         )
     assert str(excinfo.value) == (
         "Failed to execute state function '{}': salt command failed: {}"
@@ -226,13 +249,19 @@ def test_salt_state_fun_execute(monkeypatch, local_minion_id):
     local_client_res['some-node-id']['retcode'] = 0
     # local_client_res['some-node-id']['ret']['some-task-id']['result'] = True
     res = salt.state_fun_execute(
-        'some.state', 'some_arg', some_kwarg=1, targets='aaa'
+        'some.state',
+        fun_args=['some_arg'],
+        fun_kwargs=dict(some_kwarg=1),
+        targets='aaa'
     )
     assert res == {
         'some-node-id': local_client_res['some-node-id']['ret']
     }
     res = salt.state_fun_execute(
-        'some.state', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
+        'some.state',
+        fun_args=['some_arg'],
+        fun_kwargs=dict(some_kwarg=1),
+        targets=LOCAL_MINION
     )
     assert res == {
         'some-node-id': local_client_res['some-node-id']['ret']

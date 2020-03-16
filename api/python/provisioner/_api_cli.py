@@ -83,6 +83,8 @@ def _api_call(fun, *args, **kwargs):
     kwargs['logstream'] = 'stderr'
     kwargs['output'] = 'json'
 
+    kwargs['salt_job'] = True
+
     cli_args = api_args_to_cli(fun, *args, **kwargs)
     cmd = ['provisioner'] + cli_args
 

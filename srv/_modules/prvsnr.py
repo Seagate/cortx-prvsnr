@@ -56,13 +56,18 @@ def _api_wrapper(fun):
         _kwargs['loglevel'] = 'INFO'
         _kwargs['logstream'] = 'stderr'
         _kwargs['output'] = 'json'
+
+        # don't make sense here
+        for k in ('async', 'salt_job', 'username', 'password', 'eauth'):
+            _kwargs.pop(k, None)
+
         cli_args = api_args_to_cli(fun, *args, **_kwargs)
         cmd = ' '.join(['provisioner'] + cli_args)
-        res = __salt__['cmd.run'](cmd)
-        import json
-        return json.loads(res)
+        return __salt__['cmd.run'](cmd)
+
     return f
 
 
+mod = sys.modules[__name__]
 for fun in api_spec:
     setattr(mod, fun, _api_wrapper(fun))

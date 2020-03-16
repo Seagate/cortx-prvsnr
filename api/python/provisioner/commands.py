@@ -38,6 +38,20 @@ class RunArgsUpdate(RunArgsBase):
             }
         }, default=False
     )
+    salt_job: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "run the command as a salt job"
+            }
+        }, default=False
+    )
+    nowait: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "run the command as a salt job in async mode"
+            }
+        }, default=False
+    )
 
 
 class CommandParserFillerMixin:
@@ -147,8 +161,15 @@ class Set(CommandParserFillerMixin):
     # - caching (load once)
     def run(
         self, *args,
-        targets: str = ALL_MINIONS, dry_run: bool = False, **kwargs
+        targets: str = ALL_MINIONS, **kwargs
     ):
+        run_args = RunArgsUpdate(
+            **{
+                k: kwargs.pop(k) for k in list(kwargs)
+                if k in attr.fields_dict(RunArgsUpdate)
+            }
+        )
+
         # static validation
         if len(args) == 1 and isinstance(args[0], self.params_type):
             params = args[0]
@@ -156,7 +177,7 @@ class Set(CommandParserFillerMixin):
             params = self.params_type.from_args(*args, **kwargs)
 
         # TODO dynamic validation
-        if dry_run:
+        if run_args.dry_run:
             return
 
         self._run(params, targets)
