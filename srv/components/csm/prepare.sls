@@ -15,3 +15,9 @@ Add CSM repo:
     - humanname: csm
     - baseurl: {{ defaults.csm.repo.url }}
     - gpgcheck: 0
+
+Add csm user to certs group:
+  group.present:
+    - name: certs
+    - addusers:
+      - csm

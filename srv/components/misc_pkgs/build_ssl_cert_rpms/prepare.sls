@@ -1,47 +1,21 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+Create Certs user:
+  user.present:
+    - name: certs
 
-{% set rpm_sources_dir = defaults.tmp_dir + "/s3certs/rpmbuild/SOURCES/" %}
-{% set s3_certs_src = "stx-s3-certs-" + defaults.s3server.config.S3_VERSION + '-' + defaults.s3server.config.DEPLOY_TAG %}
-
-Copy s3 utils:
-  file.recurse:
-    - name: /opt/seagate/s3server/
-    - source: salt://components/misc_pkgs/build_ssl_cert_rpms/files/
-    - user: root
-    - group: root
-    - file_mode: 750
-    - dir_mode: 640
-    - keep_source: False
-    - clean: True
-    - replace: True
-    - template: jinja
-
-Clean slate:
-  file.absent:
-    - name: {{ rpm_sources_dir }}
-
-Create rpm sources dir:
+Create s3 certs directory:
   file.directory:
-    - name: {{ rpm_sources_dir }}
-    - user: root
-    - group: root
-    - dir_mode: 640
-    - file_mode: 750
-    - recurse:
-      - user
-      - group
-      - mode
-    - clean: True
+    - names:
+      - /etc/ssl/stx-s3/s3
+      - /etc/ssl/stx-s3/s3auth
     - makedirs: True
-
-Ensure s3 certs dir:
-  file.directory:
-    - name: {{ rpm_sources_dir }}/{{ s3_certs_src }}
-    - user: root
-    - group: root
-    - dir_mode: 640
-    - file_mode: 750
+    - dir_mode: 755
+    - file_mode: 644
+    - user: certs
+    - group: certs
     - recurse:
       - user
       - group
       - mode
+    - require:
+      - user: Create Certs user
+

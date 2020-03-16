@@ -15,3 +15,10 @@ Set selinux bool for haproxy:
 Clean existing logrotate configuration:
   file.absent:
     - name: /etc/cron.daily/logrotate
+
+Add haproxy user to certs group:
+  group.present:
+    - name: certs
+    - addusers:
+      - haproxy
+
