@@ -1,3 +1,3 @@
 include:
-  #- components.system.config.setup_hosts
+  - components.system.config.hosts
   - components.system.config.sshd
