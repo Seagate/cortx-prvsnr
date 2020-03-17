@@ -33,6 +33,7 @@ Open https port for s3server:
     - family: ipv4
     - save: True
 
+<<<<<<< HEAD
 # Append /etc/hosts:
 #   file.line:
 #     - name: /etc/hosts
@@ -44,3 +45,10 @@ Open https port for s3server:
 # {%- endif %}
 #     - location: end
 #     - mode: insert
+
+Add slapd.conf to /etc/rsyslog.d:
+  file.managed:
+    - name: /etc/rsyslog.d/slapd.conf
+    - source: /opt/seagate/s3/install/ldap/rsyslog.d/slapdlog.conf
+    - makedirs: True
+    - keep_source: True
