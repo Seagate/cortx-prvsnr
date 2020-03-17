@@ -4,7 +4,7 @@ from typing import List, Dict, Type
 from copy import deepcopy
 import logging
 
-from .config import ALL_MINIONS
+from .config import ALL_MINIONS,PRVSNR_PILLAR_DIR
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
 from .salt import StatesApplier, State, YumRollbackManager
@@ -23,6 +23,24 @@ class RunArgsBase:
                 'help': "command's host targets"
             }
         }
+    )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsSSLCerts(RunArgsBase):
+    restart: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "restart flag"
+            }
+        }, default=False
+    )
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "ssl certs source"
+            }
+        }, default=False
     )
 
 
@@ -180,15 +198,17 @@ class EOSUpdate(CommandParserFillerMixin):
 
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
-class SSLCerts(CommandParserFillerMixin):
+class SetSSLCerts(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
-
+    _run_args_type = RunArgsSSLCerts
     @classmethod
     def from_spec(cls):
         return cls()
 
-    def run(self, targets):
+    def run(self, *args, **kwargs):
         state_name = "components.build_ssl_certs"
+        import pdb;pdb.set_trace()
+        PRVSNR_PILLAR_DIR
         try:
             StatesApplier.apply([state_name])
         except Exception:
@@ -196,7 +216,6 @@ class SSLCerts(CommandParserFillerMixin):
                 "Failed to apply certs {} on {}".format(component, targets)
             )
             raise
-
 
 commands = {}
 for command_name, spec in api_spec.items():
