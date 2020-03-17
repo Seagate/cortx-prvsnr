@@ -306,16 +306,6 @@ prvsnr_pytest_options = {
         default='docker',
         help="test environment provider, defaults to docker"
     ),
-    "eos-node1": dict(
-        action='store',
-        default='eosnode1',
-        help='Provisioner eos-node1(master)'
-    ),
-    "eos-node2": dict(
-        action='store',
-        default='eosnode2',
-        help='Provisioner eos-node2(minion)'
-    ),
     "prvsnr-src": dict(
         action='store', choices=['rpm', 'gitlab', 'local'],
         default='rpm',
@@ -981,11 +971,12 @@ def ssh_config(request, tmpdir_function):
 
 @pytest.fixture
 def hosts(request):
-    hosts = ['']
-    marker = request.node.get_closest_marker('hosts')
-    if marker:
-        hosts = marker.args[0]
-
+    hosts = []
+    #marker = request.node.get_closest_marker('hosts')
+    #if marker:
+    #    hosts = marker.args[0]
+    hosts.append(request.config.getoption('eos-node1'))
+    #hosts.append(request.config.getoption('eos-node2'))
     return hosts
 
 
@@ -1051,6 +1042,12 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 def eos_spec(request):
     marker = request.node.get_closest_marker('eos_spec')
     spec = marker.args[0] if marker else DEFAULT_EOS_SPEC
+    node1 = request.config.getoption('eos-node1')
+    node2 = request.config.getoption('eos-node2')
+    if node1 != 'eosnode1':
+        DEFAULT_EOS_SPEC['eosnode1']['hostname'] = node1
+        DEFAULT_EOS_SPEC['eosnode2']['hostname'] = node2
+        spec = DEFAULT_EOS_SPEC
     return spec
 
 

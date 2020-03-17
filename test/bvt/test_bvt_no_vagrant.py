@@ -166,7 +166,7 @@ def get_bvt_results(
 @pytest.mark.isolated
 @pytest.mark.env_provider('host')
 #@pytest.mark.env_level('singlenode-bvt-ready')
-@pytest.mark.hosts(['ssc-vm-c-047'])
+#@pytest.mark.hosts(['ssc-vm-c-047'])
 def test_bvt(mlocalhost, request, tmpdir_function):
     eosnode1 = Path(request.config.getoption("eos_node1"))
     eosnode2 = Path(request.config.getoption("eos_node2"))
