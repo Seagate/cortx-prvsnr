@@ -1,13 +1,4 @@
 {% if pillar["cluster"][grains["id"]]["is_primary"] %}
-Untar the Tar files:
-  archive.extracted:
-    - name: /opt/seagate/certs/
-    - source: /opt/seagate/tar_file.tar
-    - enforce_toplevel: False
-    - keep_source: True
-    - clean: False
-    - trim_output: True
-
 {%- for node_id in pillar['cluster']['node_list'] -%}
 {%- if not pillar['cluster'][node_id]['is_primary'] %}
 
