@@ -1139,7 +1139,7 @@ def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
     eos_primary_mhost.check_output("salt '*' mine.update")
 
 
-@pytest.fixture
+@pytest.fixture(callable=True)
 def mlocalhost(localhost, request):
     return LocalHostMeta(None, localhost, None, request, label=None, iface='lo')
 
