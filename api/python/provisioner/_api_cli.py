@@ -81,7 +81,7 @@ def _api_call(fun, *args, **kwargs):
         check=True,
         universal_newlines=True,
         stdout=subprocess.PIPE,
-        utderr=subprocess.PIPE
+        stderr=subprocess.PIPE
     )
 
 
