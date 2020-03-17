@@ -306,10 +306,15 @@ prvsnr_pytest_options = {
         default='docker',
         help="test environment provider, defaults to docker"
     ),
-    "hosts": dict(
+    "eos-node1": dict(
         action='store',
-        default=['eosnode1','eosnode2'],
-        help='Provisioner cluster node'
+        default='eosnode1',
+        help='Provisioner eos-node1(master)'
+    ),
+    "eos-node2": dict(
+        action='store',
+        default='eosnode2',
+        help='Provisioner eos-node2(minion)'
     ),
     "prvsnr-src": dict(
         action='store', choices=['rpm', 'gitlab', 'local'],
