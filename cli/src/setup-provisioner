@@ -43,6 +43,7 @@ Options:
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt master
                                          default: not specified
+       -S,  --singlenode               switch to single node mode setup
 "
 }
 

@@ -63,14 +63,8 @@ rm -rf %{buildroot}
 %post
 chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
-mv -f /etc/salt/master /etc/salt/master.org
-mv -f /etc/salt/minion /etc/salt/minion.org
-cp -p /opt/seagate/eos-prvsnr/files/etc/salt/master /etc/salt/master
-cp -p /opt/seagate/eos-prvsnr/files/etc/salt/minion /etc/salt/minion
 
 %postun
-mv -f /etc/salt/master.org /etc/salt/master
-mv -f /etc/salt/minion.org /etc/salt/minion
 rm -f /root/.ssh/id_rsa_prvsnr
 rm -f /root/.ssh/id_rsa_prvsnr.pub
 rm -f /root/.ssh/authorized_keys

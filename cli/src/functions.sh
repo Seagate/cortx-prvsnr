@@ -31,7 +31,6 @@ eosnode_2_hostname=
 base_options_usage="\
   -h,  --help                     print this help and exit
   -r,  --remote [user@]hostname   remote host specification
-  -S,  --singlenode               switch to single node mode setup
   -F,  --ssh-config FILE          alternative path to ssh configuration file
   -v,  --verbose                  be more verbose
 "
