@@ -108,8 +108,8 @@ l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
 ha_states=(
-    "ha.corosync-pacemaker"
     "ha.ees_ha"
+    "ha.corosync-pacemaker"
 )
 teardown_states "$(ha_states)"
 controlpath_states=(
@@ -121,16 +121,16 @@ teardown_states "${controlpath_states[@]}"
 
 iopath_states=(
 # states to be applied in desired sequence
-    "s3server"
     "hare"
+    "s3server"
     "eoscore"
+    "misc_pkgs.lustre"
 )
 teardown_states  "${iopath_states[@]}"
 
 
 prereq_states=(
 # states to be applied in desired sequence
-    "misc_pkgs.lustre"
     "misc_pkgs.statsd"
     "misc_pkgs.rabbitmq"
     "misc_pkgs.openldap"
