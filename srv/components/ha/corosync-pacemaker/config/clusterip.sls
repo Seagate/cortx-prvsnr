@@ -1,9 +1,16 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
 {% if pillar['cluster']['cluster_ip'] %}
+Ensure ClusterIP absent before creating:
+  cmd.run:
+    - name: pcs resource delete ClusterIP
+    - onlyif: pcs resource show ClusterIP
+
 Create CIB for ClusterIP:
   cmd.run:
     - name: pcs cluster cib /tmp/loadbalance_cfg
     - unless: pcs resource show ClusterIP
+    - require:
+      - Ensure ClusterIP absent before creating
 
 # Create CIB for ClusterIP:
 #   pcs.cib_present:
