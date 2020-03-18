@@ -1,13 +1,5 @@
+{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.csm'.format(grains['id'])) %}
 include:
-  # Dependecies
-  # - components.misc_pkgs.consul
-  - components.misc_pkgs.elasticsearch
-  - components.misc_pkgs.kibana
-  - components.misc_pkgs.statsd
-  - components.misc_pkgs.nodejs
-  # HA component
-  - components.ha.corosync-pacemaker
-  # CSM Component
   - components.csm.prepare
   - components.csm.install
   - components.csm.config
@@ -19,3 +11,8 @@ Generate csm checkpoint flag:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm
     - makedirs: True
     - create: True
+{%- else -%}
+CSM already applied:
+  test.show_notification:
+    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
+{% endif %}

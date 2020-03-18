@@ -1,0 +1,103 @@
+cluster:
+  cluster_ip:
+  type: ees                           # single/ees/ecs
+  node_list:
+    - eosnode-1
+    - eosnode-2
+  cluster_ip:
+  eosnode-1:
+    hostname: eosnode-1
+    is_primary: true
+    network:
+      pvt_nw_addr: 192.168.0.0
+      nw_search: pun.seagate.com
+      mgmt_nw:                  # Management network interfaces
+        iface:
+          - eth0
+        ipaddr:
+        netmask: 255.255.0.0
+      data_nw:                  # Data network interfaces
+        iface:
+          - eth1
+        ipaddr:
+        netmask: 255.255.0.0
+      roaming_ip:
+      gateway_ip:               # Gateway IP of network
+    storage:
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc
+  eosnode-2:
+    hostname: eosnode-2
+    is_primary: false
+    network:
+      pvt_nw_addr: 192.168.0.0
+      nw_search: pun.seagate.com
+      mgmt_nw:                  # Management network interfaces
+        iface:
+          - eth0
+        ipaddr:
+        netmask: 255.255.0.0
+      data_nw:                  # Data network interfaces
+        iface:
+          - eth1
+        ipaddr:
+        netmask: 255.255.0.0
+      roaming_ip:
+      gateway_ip:               # Gateway IP of network
+    storage:
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc
+  storage_enclosure:
+    id: storage_node_1            # equivalent to fqdn for server node
+    type: 5U84                    # Type of enclosure. E.g. 5U84/PODS
+    controller:
+      type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
+      primary_mc:
+        ip: 127.0.0.1
+        port: 80
+      secondary_mc:
+        ip: 127.0.0.1
+        port: 80
+      user: user
+      password: 'passwd'
+s3client:
+    access_key: testing123
+    output: text
+    region: US
+    s3endpoint: s3.seagate.com
+    s3server:
+        fqdn: null
+        iam_admin_passwd: ldapadmin
+        iam_admin_user: sgiamadmin
+        ip: null
+    secret_key: null
+release:
+    update:
+        mount_base_dir: /opt/seagate/eos/updates777
+        repos: {}
+corosync-pacemaker:
+  user: hacluster
+  password: hacluster
+  cluster_name: eos_cluster
+elasticsearch:
+  cluster_name: elasticsearch_cluster
+  network_host: 0.0.0.0
+  http_port: 9200
+commons:
+  version:
+    erlang: latest
+    rabbitmq: latest
+    nodejs: v12.13.0
+openldap:
+  admin_passwd: "seagate"
+  iam_admin_user: "sgiamadmin"
+  iam_admin_passwd: "ldapadmin"
+  backend_db: mdb
+system:
+  ntp:
+    time_server: time.seagate.com
+    timezone: UTC

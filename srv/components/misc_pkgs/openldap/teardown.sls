@@ -27,8 +27,6 @@ Remove pkgs:
    '/etc/sysconfig/slapd',
    '/etc/sysconfig/slapd.bak',
    '/etc/openldap/slapd.d',
-   '/etc/openldap/ldap.conf',
-   '/etc/openldap/ldap.conf.bak',
    '/opt/seagate/eos-prvsnr/generated_configs/ldap'
  ] %}
 {{ filename }}:

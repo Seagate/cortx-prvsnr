@@ -5,60 +5,67 @@ import sys
 import yaml
 
 from components.base_cfg import BaseCfg
-from components.cluster_cfg import ClusterCfg
-from components.eoscore_cfg import EOSCoreCfg
-from components.haproxy_cfg import HAProxyCfg
-from components.release_cfg import ReleaseCfg
-from components.s3client_cfg import S3ClientCfg
-from components.s3server_cfg import S3ServerCfg
-from components.sspl_cfg import SSPLCfg
-
+from components.generic_cfg import GenericCfg
 
 def __config_modules(arg_parser):
     # TODO: Dynamically load modules from ./utils/components as generator
     # Define component modules and setup args
 
     module_map = {
-        'cluster': ClusterCfg(
+        'cluster': GenericCfg(
+            component='cluster',
             arg_parser=arg_parser.add_parser(
                 'cluster',
                 help='modify provisioning data for cluster config.'
             )
         ),
-        'eoscore': EOSCoreCfg(
+        'eoscore': GenericCfg(
+            component='eoscore',
             arg_parser=arg_parser.add_parser(
                 'eoscore',
                 help='modify provisioning data for eoscore config.'
             )
         ),
-        'haproxy': HAProxyCfg(
+        'haproxy': GenericCfg(
+            component='haproxy',
             arg_parser=arg_parser.add_parser(
                 'haproxy',
                 help='modify provisioning data for haproxy config.'
             )
         ),
-        'release': ReleaseCfg(
+        'release': GenericCfg(
+            component='release',
             arg_parser=arg_parser.add_parser(
                 'release',
                 help='modify provisioning data for release config.'
             )
         ),
-        's3client': S3ClientCfg(
+        's3client': GenericCfg(
+            component='s3client',
             arg_parser=arg_parser.add_parser(
                 's3client',
                 help='modify provisioning data for s3client config.'
             )
         ),
-        's3server': S3ServerCfg(
+        's3server': GenericCfg(
+            component='s3server',
             arg_parser=arg_parser.add_parser(
                 's3server',
                 help='modify provisioning data for s3server config.'
             )
         ),
-        'sspl': SSPLCfg(
+        'sspl': GenericCfg(
+            component='sspl',
             arg_parser=arg_parser.add_parser(
                 'sspl',
                 help='modify provisioning data for sspl config.'
+            )
+        ),
+        'global': GenericCfg(
+            component='global',
+            arg_parser=arg_parser.add_parser(
+                'global',
+                help='modify provisioning data for all config.'
             )
         )
     }
@@ -94,10 +101,10 @@ def execute():
         # print("Processing component object: {0}".format(k))
         if parser.subparser_name and 'all' in parser.subparser_name:
             if v.process_inputs(parser):
-                v.save()
+                v.save("global")
         elif parser.subparser_name and (k in parser.subparser_name):
-            if v.process_inputs(parser):
-                v.save()
+            if v.process_inputs(k, parser):
+                v.save(k)
             break
 
 

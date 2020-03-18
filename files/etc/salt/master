@@ -687,6 +687,7 @@ file_roots:
   base:
     - /opt/seagate/eos-prvsnr/srv
     - /opt/seagate/ees-prvsnr/srv
+    - /opt/seagate/eos-prvsnr/srv_user
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.

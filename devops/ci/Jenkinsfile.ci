@@ -139,7 +139,7 @@ try {
         stage('Build / Test') {
             if (config.dynamicValidation) {
                 nodeWrapper(config.nodeLabel) {
-                    timeout(120) {
+                    timeout(180) {
                         dynamicValidation()
                     }
                 }

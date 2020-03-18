@@ -4,6 +4,3 @@ Remove EOS-HA resources:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/hare/conf/setup-ha.yaml', 'hare:reset')
     - order: 1
 {% endif %}
-
-include:
-  - components.hare.teardown

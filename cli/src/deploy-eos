@@ -111,10 +111,14 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
     prereq_states=(
     # states to be applied in desired sequence
         "system"
+        "misc_pkgs.rsyslog"
+        "system.firewall"
+        "system.logrotate"
+        "system.ntp"
+        # "system.mlnx_driver"
         "system.storage"
         "misc_pkgs.build_ssl_cert_rpms"
         "ha.corosync-pacemaker"
-        "misc_pkgs.rsyslog"
         "ha.haproxy"
         "misc_pkgs.elasticsearch"
         "misc_pkgs.kibana"
@@ -129,11 +133,11 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
     sleep 2
 
     # Reboot only if mellanox diver is installed
-    rpm -qi mlnx-ofed-all > /dev/null 2>&1 && {
-        salt "eosnode-2" system.reboot --async
-        salt "eosnode-1" system.reboot --async
-    }
-    sleep 2
+    # rpm -qi mlnx-ofed-all > /dev/null 2>&1 && {
+    #     salt "eosnode-2" system.reboot --async
+    #     salt "eosnode-1" system.reboot --async
+    # }
+    # sleep 2
 fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then

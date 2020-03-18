@@ -27,5 +27,3 @@ eosupdate:
   repo:
     _type: ParamDictItem
     parent: eos_release/update/repos
-    key: release
-    value: source

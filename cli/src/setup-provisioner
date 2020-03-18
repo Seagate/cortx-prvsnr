@@ -16,6 +16,8 @@ prvsnr_repo_src=rpm
 
 prvsnr_version=
 
+cluster_id=$(uuidgen)
+
 source $BASEDIR/functions.sh
 
 function usage {
@@ -41,6 +43,7 @@ Options:
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt master
                                          default: not specified
+       -S,  --singlenode               switch to single node mode setup
 "
 }
 
@@ -191,11 +194,15 @@ configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
-configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true localhost "$INSTALLDIR"
+configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true "$salt_master_hostname" "$INSTALLDIR"
 
 accept_salt_key eosnode-1 "$hostspec" "$ssh_config" "$sudo"
 
 install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
+
+set_node_id "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
+set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # configure_multipath eosnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
@@ -213,11 +220,14 @@ if [[ "$singlenode" != true ]]; then
     install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
 
     configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
-
     # Always use master hostspec to execute this step
     accept_salt_key eosnode-2 "$hostspec" "$ssh_config" "$sudo"
 
     install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
+
+    set_node_id "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
+    set_cluster_id "$cluster_id" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
     # configure_multipath eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false
 

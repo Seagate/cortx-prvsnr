@@ -326,5 +326,29 @@ class EOSUpdateRepo(ParamDictItemInputBase):
 
         if isinstance(self.source, Path):
             self.source = self.source.resolve()
-            prefix = "file://" if self.source.is_dir() else ''
-            self.source = "{}{}".format(prefix, self.source)
+
+    @property
+    def pillar_key(self):
+        return self.release
+
+    @property
+    def pillar_value(self):
+        if self.is_special() or self.is_remote():
+            return self.source
+        else:
+            return 'iso' if self.source.is_file() else 'dir'
+
+    def is_special(self):
+        return is_special(self.source)
+
+    def is_local(self):
+        return not self.is_special() and isinstance(self.source, Path)
+
+    def is_remote(self):
+        return not (self.is_special() or self.is_local())
+
+    def is_dir(self):
+        return self.is_local() and self.source.is_dir()
+
+    def is_iso(self):
+        return self.is_local() and self.source.is_file()

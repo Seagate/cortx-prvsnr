@@ -1,2 +1,3 @@
-# include:
-  # - components.system.config.setup_hosts
+include:
+  - components.system.config.hosts
+  - components.system.config.sshd
