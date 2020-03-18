@@ -170,7 +170,7 @@ def get_bvt_results(
 def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     eosnode1 = Path(request.config.getoption("eos_node1"))
     eosnode2 = Path(request.config.getoption("eos_node2"))
-    #mhosteosnode1 = mlocalhost(eosnode1,request)
+    mhosteosnode1 = LocalHostMeta(None, eosnode1, None, request, label=None, iface='lo')
     eos_release = mhosteosnode1.check_output(
         "grep target_build '{}'"
         .format(h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls')
