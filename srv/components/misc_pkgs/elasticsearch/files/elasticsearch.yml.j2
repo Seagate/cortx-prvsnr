@@ -20,7 +20,7 @@ cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 #
 # Use a descriptive name for the node:
 #
-node.name: {{ grains['fqdn'] }}
+node.name: {{ grains['id'] }}
 #
 # Add custom attributes to the node:
 #
@@ -65,15 +65,11 @@ http.port: {{ pillar["elasticsearch"]["http_port"] }}
 # Pass an initial list of hosts to perform discovery when this node is started:
 # The default list of hosts is ["127.0.0.1", "[::1]"]
 #
-{%- set host_list = [] -%}
-{%- for node in pillar['cluster']['node_list'] -%}
-{{ host_list.append(pillar['cluster'][node]['hostname']) }}
-{%- endfor %}
-discovery.seed_hosts: {{ host_list }} 
+discovery.seed_hosts: {{ pillar['cluster']['node_list'] }} 
 #
 # Bootstrap the cluster using an initial set of master-eligible nodes:
 #
-cluster.initial_master_nodes: {{ host_list }}
+cluster.initial_master_nodes: {{ pillar['cluster']['node_list'] }}
 #
 # For more information, consult the discovery and cluster formation module documentation.
 #
