@@ -30,7 +30,6 @@ eosnode_2_hostname=
 
 base_options_usage="\
   -h,  --help                     print this help and exit
-  -r,  --remote [user@]hostname   remote host specification
   -F,  --ssh-config FILE          alternative path to ssh configuration file
   -v,  --verbose                  be more verbose
 "
@@ -256,7 +255,7 @@ function parse_args {
         _opts=$_opts$_add_opts
     fi
 
-    local _long_opts=dry-run,help,remote:,singlenode,ssh-config:,sudo,verbose
+    local _long_opts=dry-run,help,remote:,ssh-config:,sudo,verbose
     if [[ -n $_add_long_opts ]]; then
         _long_opts=$_long_opts,$_add_long_opts
     fi
@@ -285,10 +284,10 @@ function parse_args {
                 hostspec="$2"
                 shift 2
                 ;;
-            -S|--singlenode)
-                singlenode=true
-                shift
-                ;;
+            # -S|--singlenode)
+            #     singlenode=true
+            #     shift
+            #     ;;
             -F|--ssh-config)
                 ssh_config="$2"
                 if [[ ! -f "$ssh_config" ]]; then
