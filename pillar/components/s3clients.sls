@@ -1,7 +1,6 @@
 s3client:
   s3server:
-    fqdn: 
-    ip:         # Optional if FQDN is under DNS
+    ip:
     iam_admin_user: "sgiamadmin"
     iam_admin_passwd: "ldapadmin"
   access_key: 
