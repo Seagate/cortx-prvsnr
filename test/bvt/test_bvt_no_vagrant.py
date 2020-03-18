@@ -6,6 +6,7 @@ import yaml
 from copy import deepcopy
 
 import test.helper as h
+import test.config as config
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +171,7 @@ def get_bvt_results(
 def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     eosnode1 = Path(request.config.getoption("eos_node1"))
     eosnode2 = Path(request.config.getoption("eos_node2"))
-    mhosteosnode1 = LocalHostMeta(None, eosnode1, None, request, label=None, iface='lo')
+    mhosteosnode1 = config.LocalHostMeta(None, eosnode1, None, request, label=None, iface='lo')
     eos_release = mhosteosnode1.check_output(
         "grep target_build '{}'"
         .format(h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls')
