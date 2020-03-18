@@ -8,21 +8,18 @@ Copy certs to non-primary:
 
 {%- endif -%}
 {%- endfor -%}
+{% else %}
+Wait for certs to be received:
+  cmd.run:
+    - name: sleep 5
 {% endif %}
 
 
 Copy certs to s3 and s3auth directories:
-  file.recurse:
+  cmd.run:
     - names:
-      - /etc/ssl/stx-s3/s3
-      - /etc/ssl/stx-s3/s3auth
-    - source: /opt/seagate/certs/*
-    - keep_source: False
-    - clean: False
-    - user: certs
-    - group certs 
-    - dir_mode: 755
-    - file_mode: 644
+      - cp -r /opt/seagate/certs/* /etc/ssl/stx-s3/s3/
+      - cp -r /opt/seagate/certs/* /etc/ssl/stx-s3/s3auth/
 
 Clean certs:
   file.absent:
