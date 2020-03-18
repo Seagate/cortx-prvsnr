@@ -1,9 +1,3 @@
-Remove existing certs:
-  pkg.removed:
-    - pkgs:
-      - stx-s3-certs
-      - stx-s3-client-certs
-
 Create tmp dir:
   file.directory:
     - name: /opt/seagate/eos-prvsnr/generated_configs/ldap
