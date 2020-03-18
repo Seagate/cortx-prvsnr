@@ -45,6 +45,12 @@ Create metadata partition:
       - start: 50%
       - end: 100%
 
+Refresh partition:
+  module.run:
+    - partition.probe: []
+  cmd.run:
+    - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath*
+
 # Make SWAP
 Ensure SWAP partition is unmounted:
   cmd.run:
