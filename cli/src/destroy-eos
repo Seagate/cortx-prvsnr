@@ -46,46 +46,32 @@ function teardown_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             l_info "Applying 'components.$state'.teardown"
-            $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts
-
+            $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts || {
+                true
+            }
             sleep 2     # Mindfulness break
         done
     else
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
-                    # TODO: Remove this sequence dependency
-                    #       Take the cluster start part out of the component config
-                #       and do it as part of bootstra-eos script similar to the
-                #       'hctl bootstrap' command
-
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts
+                l_info "Applying 'components.$state.teardown' for eosnode-1"
+                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || {
+                    true
+                }
                 sleep 2     # Mindfulness break
-                # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts
-                sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" ]]; then
-                # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts
-                sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts
+                l_info "Applying 'components.$state.teardown' for eosnode-2"
+                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || {
+                    true
+                }
                 sleep 2     # Mindfulness break
             else
-                l_info "Applying 'components.$state' for both nodes"
-                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts
+                l_info "Applying 'components.$state.teardown' for both nodes"
+                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts || {
+                    true
+                }
                 sleep 2     # Mindfulness break
             fi
         done
-
-        # EES ha provisioning
-        #l_info "Provision EES HA cluster"
-        #for state in ees_ha; do
-        #    l_info "Applying 'components.$state' for both nodes"
-        #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-        #done
     fi
 }
 
