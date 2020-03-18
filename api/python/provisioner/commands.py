@@ -274,12 +274,12 @@ class SetSSLCerts(CommandParserFillerMixin):
         return cls()
 
     def run(self, *args, **kwargs):
-        state_name = "components.misc_pkgs.build_ssl_certs"
+        state_name = "components.misc_pkgs.build_ssl_cert_rpms"
         dest = PRVSNR_CERTS_DIR
         StateFunExecuter.execute(
             'cmd.run',
             name=(
-                "mkdir -p {0} && cp -R {1} {0} && rm -rf {1}"
+                "rm -rf {0} && mkdir -p {0} && cp -R {1} {0} && rm -rf {1}"
                 .format(dest, kwargs["source"])
             )
         )
