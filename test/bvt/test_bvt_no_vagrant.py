@@ -169,8 +169,8 @@ def get_bvt_results(
 #@pytest.mark.env_level('singlenode-bvt-ready')
 @pytest.mark.hosts()
 def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
-    eosnode1 = Path(request.config.getoption("eos_node1"))
-    eosnode2 = Path(request.config.getoption("eos_node2"))
+    eosnode1 = request.config.getoption("eos_node1")
+    eosnode2 = request.config.getoption("eos_node2")
     mhosteosnode1 = config.LocalHostMeta(None, eosnode1, None, request, label=None, iface='lo')
     eos_release = mhosteosnode1.check_output(
         "grep target_build '{}'"
