@@ -6,7 +6,7 @@ import yaml
 from copy import deepcopy
 
 import test.helper as h
-import test.config as config
+import test.conftest as config
 
 logger = logging.getLogger(__name__)
 
