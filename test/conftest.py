@@ -422,6 +422,23 @@ def hosts_spec(request):
         }
     }
 
+@pytest.fixture(scope='session')
+def host_spec(request):
+    return {
+        'eosnode1': {
+            'remote': {
+                'hostname': request.config.getoption("eos_node1"),
+            },
+            'minion_id': 'eosnode-1',
+            'is_primary': True,
+        }, 'eosnode2': {
+            'remote': {
+                'hostname': request.config.getoption("eos_node1"),
+            },
+            'minion_id': 'eosnode-2',
+            'is_primary': False,
+        }
+    }
 
 # TODO multi platforms case
 @pytest.fixture(scope="session")
@@ -897,6 +914,22 @@ def docker_container(request, docker_client, base_env, env_level, hosts_spec):
     ) as remote:
         yield remote
 
+def host_machine(request, base_env, hosts_spec):
+    label = request.fixturename[len('host_{}'.format(request.scope)):]
+    try:
+        hostname = host_spec[label]['remote']['hostname']
+    except KeyError:
+        hostname = None
+
+    with build_remote(
+            'host', request, base_env, env_level, label=label,
+            hostname=hostname
+        ) as remote:
+            yield remote
+            logger.info(
+                "Destroying remote '{}'".format(remote.name)
+            )
+
 
 def vagrant_machine(
     request, base_env, env_level, vagrantfile_tmpl, hosts_spec
@@ -1154,7 +1187,7 @@ def vagrant_default_ssh(request, hosts):
 
 
 def build_remote(
-    env_provider, request, os_name, env_level, label=None, base_level=None, **kwargs
+    env_provider, request, os_name, env_level=None, label=None, base_level=None, **kwargs
 ):
     base_name = h.remote_name(
         request.node.nodeid, request.scope, os_name, env_level, label=label
@@ -1229,6 +1262,7 @@ def discover_remote(
         _iface = 'enp0s8'
         if request.getfixturevalue('vagrant_default_ssh'):
             _ssh_config = remote.ssh_config().replace(remote.name, remote.hostname)
+    elif env_provider == 'host':
 
     else:
         raise ValueError(
@@ -1313,8 +1347,8 @@ def build_mhost_fixture(label=None, module_name=__name__):
         name_with_scope=False
     )
     def mhost(localhost, request, tmpdir_function, hosts_meta, env_provider):
-        if env_provider == 'host':
-            return request.getfixturevalue('mlocalhost')
+        #if env_provider == 'host':
+        #    return request.getfixturevalue('mlocalhost')
 
         scope = (
             'function' if request.node.get_closest_marker('isolated')
@@ -1332,13 +1366,16 @@ def build_mhost_fixture(label=None, module_name=__name__):
             remote = request.getfixturevalue(
                 remote_fixtures[scope]['docker'].__name__
             )
-        else:
+        elif env_provider == 'vbox':
             # TODO skip if vagrant or packer or virtualbox is not installed
             # pytest.skip()
             remote = request.getfixturevalue(
                 remote_fixtures[scope]['vagrant'].__name__
             )
+        else:
+            remote = request.getfixturevalue(
 
+            )
         logger.info(
             "Discovering remote '{}'".format(remote.name)
         )

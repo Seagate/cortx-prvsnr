@@ -629,6 +629,8 @@ def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
                 box=base_level,
                 *args, **kwargs
             )
+        elif provider =='host':
+            
         else:
             raise RuntimeError('unknown provider')
 
