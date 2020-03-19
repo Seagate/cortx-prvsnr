@@ -85,6 +85,7 @@ class Get(CommandParserFillerMixin):
         pillar_resolver = PillarResolver(targets=targets)
         res_raw = pillar_resolver.get(params)
         res = {}
+        logger.info("Fetching requested params from pillar data..")
         for minion_id, data in res_raw.items():
             res[minion_id] = {str(p.name): v for p, v in data.items()}
         return res
@@ -131,16 +132,18 @@ class Set(CommandParserFillerMixin):
             try:
                 pillar_updater.apply()
                 StatesApplier.apply(self.post_states)
-            except Exception:
+            except Exception as exc:
                 # TODO more solid rollback
                 pillar_updater.rollback()
                 pillar_updater.apply()
-                raise
-        except Exception:
+                logger.exception(exc)
+                #raise exc
+        except Exception as exc:
             # treat post as restoration for pre, apply
             # if rollback happened
             StatesApplier.apply(self.post_states)
-            raise
+            logger.exception(exc)
+            #raise exc
 
     # TODO
     # - class for pillar file
@@ -238,12 +241,13 @@ class EOSUpdate(CommandParserFillerMixin):
             for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
                 state_name = "components.{}.update".format(component)
                 try:
+                    logger.info("Updating {} on {}".format(component, targets))
                     StatesApplier.apply([state_name])
                 except Exception:
                     logger.exception(
                         "Failed to update {} on {}".format(component, targets)
                     )
-                    raise
+                    #raise
 
 
 commands = {}

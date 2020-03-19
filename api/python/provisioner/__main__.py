@@ -125,13 +125,15 @@ def _parse_args():
     kwargs = vars(parser.parse_args())
     cmd = kwargs.pop('command')
     if cmd is None:
-        raise ValueError('command is required')
+        logger.error("ValueError: command is required")
+        #raise ValueError('command is required')
     cmd = commands[cmd]
     args = kwargs.pop('args', [])
     return cmd, args, kwargs
 
 
 def _output(data: str):
+    logger.info("Response {}".format(data))
     print(data)
 
 
@@ -154,7 +156,8 @@ def _prepare_output(output_type, res):
     elif output_type == 'json':
         return json.dumps(res, sort_keys=True, indent=4)
     else:
-        ValueError('Unexpected output type {}'.format(output_type))
+        logger.error("ValueError: Unexpected output type {}".fromat(output_type))
+        #ValueError('Unexpected output type {}'.format(output_type))
 
 
 def _run_cmd(cmd, output, *args, **kwargs):
@@ -176,15 +179,18 @@ def _run_cmd(cmd, output, *args, **kwargs):
     exc = None
 
     try:
+        logger.info("Sending request to {}..".format(cmd))
         ret = cmd.run(*args, **kwargs)
     except Exception as _exc:
         exc = _exc
     else:
         if ret is None:
+            logger.warning("None returned from {}".fromat(cmd))
             ret = ''
     finally:
         if output == 'plain':
             if exc:
+                logger.exception(exc)
                 raise exc
             else:
                 _output(str(ret))

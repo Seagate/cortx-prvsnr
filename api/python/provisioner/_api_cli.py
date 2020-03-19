@@ -14,6 +14,7 @@ _password = None
 
 def _run_cmd(cmd, **kwargs):
     try:
+        logger.info("Execuiting {}".format(cmd))
         res = subprocess.run(cmd, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:
@@ -32,18 +33,21 @@ def _run_cmd(cmd, **kwargs):
         else:
             # cli fails unexpectedly - unexpected output
             _exc = errors.ProvisionerError(exc.stderr)
-        raise _exc from exc
+        logger.exception(_exec)
+        #raise _exc from exc
     # subprocess.run fails unexpectedly
     except Exception as exc:
-        raise errors.ProvisionerError(repr(exc)) from exc
+        logger.exception(exc)
+        #raise errors.ProvisionerError(repr(exc)) from exc
     else:
         _res = json.loads(res.stdout) if res.stdout else {}
         try:
             return _res['ret']
         except KeyError:
-            raise errors.ProvisionerError(
-                'No return data found in {}'.format(res.stdout)
-            )
+            logger.error("ProvisionerError: No return data found in {}".format(res.stdout))
+            #raise errors.ProvisionerError(
+            #    'No return data found in {}'.format(res.stdout)
+            #)
 
 
 # TODO test args preparation
@@ -73,7 +77,7 @@ def _api_call(fun, *args, **kwargs):
             cmd.extend([k])
 
     cmd.extend([str(a) for a in args])
-    logger.debug("Command: {}".format(cmd))
+    logger.debug("Executing Command: {}".format(cmd))
 
     return _run_cmd(
         cmd,
