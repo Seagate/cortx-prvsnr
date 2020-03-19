@@ -73,6 +73,9 @@ function options_parser {
         --salt-master)
             salt_master_hostname="$2"
             ;;
+        -S|--singlenode)
+            singlenode=true
+            ;;
         *)
             l_error "Unknown option: $1"
             exit 5

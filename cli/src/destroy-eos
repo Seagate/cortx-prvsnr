@@ -107,55 +107,48 @@ fi
 l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.csm ]; then
-    controlpath_states=(
-    # states to be applied in desired sequence
-        "csm"
-        "sspl"
-    )
-    teardown_states "${controlpath_states[@]}"
-fi
+ha_states=(
+    "ha.ees_ha"
+    "ha.corosync-pacemaker"
+)
+teardown_states "$(ha_states)"
+controlpath_states=(
+# states to be applied in desired sequence
+    "csm"
+    "sspl"
+)
+teardown_states "${controlpath_states[@]}"
 
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
-    if [ $run_ees_ha == true ]; then
-        teardown_states  "ha.ees_ha"
-    fi
-fi
+iopath_states=(
+# states to be applied in desired sequence
+    "hare"
+    "s3server"
+    "eoscore"
+    "misc_pkgs.lustre"
+)
+teardown_states  "${iopath_states[@]}"
 
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
-    iopath_states=(
-    # states to be applied in desired sequence
-        "s3server"
-        "hare"
-        "eoscore"
-    )
-    teardown_states  "${iopath_states[@]}"
-fi
 
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
-    prereq_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.lustre"
-        "misc_pkgs.statsd"
-        "misc_pkgs.rabbitmq"
-        "misc_pkgs.openldap"
-        "misc_pkgs.nodejs"
-        "misc_pkgs.kibana"
-        "misc_pkgs.elasticsearch"
-        "ha.haproxy"
-        "ha.corosync-pacemaker"
-        "misc_pkgs.build_ssl_cert_rpms"
-        "system.storage"
-        "system.mlnx_driver"
-        "system.ntp"
-        "system.logrotate"
-        "system.firewall"
-        "misc_pkgs.rsyslog"
-        "system"
-    )
-    teardown_states "${prereq_states[@]}"
+prereq_states=(
+# states to be applied in desired sequence
+    "misc_pkgs.statsd"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.openldap"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.kibana"
+    "misc_pkgs.elasticsearch"
+    "ha.haproxy"
+    "misc_pkgs.build_ssl_cert_rpms"
+    "system.storage"
+    "system.mlnx_driver"
+    "system.ntp"
+    "system.logrotate"
+    "system.firewall"
+    "misc_pkgs.rsyslog"
+    "system"
+)
+teardown_states "${prereq_states[@]}"
 
-    sleep 2
-fi
+sleep 2
 
 l_info "Done"

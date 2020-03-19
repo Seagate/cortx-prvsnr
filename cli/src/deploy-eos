@@ -21,6 +21,7 @@ General options:
 $base_options_usage
 Options:
        --no-ha      skip running the ees_ha component
+       -S,  --singlenode               switch to single node mode setup
 "
 }
 
@@ -30,6 +31,9 @@ function options_parser {
     case "$1" in
         --no-ha)
             run_ees_ha=false
+            ;;
+        -S|--singlenode)
+            singlenode=true
             ;;
         *)
             l_error "Unknown option: $1"
@@ -118,7 +122,6 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
         # "system.mlnx_driver"
         "system.storage"
         "misc_pkgs.build_ssl_cert_rpms"
-        "ha.corosync-pacemaker"
         "ha.haproxy"
         "misc_pkgs.elasticsearch"
         "misc_pkgs.kibana"
@@ -126,7 +129,6 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
         "misc_pkgs.openldap"
         "misc_pkgs.rabbitmq"
         "misc_pkgs.statsd"
-        "misc_pkgs.lustre"
     )
     run_states "${prereq_states[@]}"
 
@@ -143,6 +145,7 @@ fi
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
     iopath_states=(
     # states to be applied in desired sequence
+        "misc_pkgs.lustre"
         "eoscore"
         "s3server"
         "hare"
@@ -152,7 +155,12 @@ fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
     if [ $run_ees_ha == true ]; then
-        run_states  "ha.ees_ha"
+        ha_states=(
+        # states to be applied in desired sequence
+            "ha.corosync-pacemaker"
+            "ha.ees_ha"
+        )
+        run_states "${ha_states[@]}"
     fi
 fi
 
