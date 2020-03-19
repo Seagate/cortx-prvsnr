@@ -50,8 +50,4 @@ Add slapd.conf to /etc/rsyslog.d:
     - name: /etc/rsyslog.d/slapd.conf
     - source: /opt/seagate/s3/install/ldap/rsyslog.d/slapdlog.conf
     - makedirs: True
-<<<<<<< HEAD
     - keep_source: True
-=======
-    - keep_source: True
->>>>>>> dev
