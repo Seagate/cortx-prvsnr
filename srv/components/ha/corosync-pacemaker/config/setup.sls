@@ -1,10 +1,7 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Setup Cluster:
   pcs.cluster_setup:
-    - nodes:
-      {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['hostname'] }}
-      {%- endfor %}
+    - nodes: {{ pillar['cluster']['node_list'] }}
     - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
     - extra_args:
       - '--start'

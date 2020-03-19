@@ -25,10 +25,7 @@ Create ha user:
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
-    - nodes:
-      {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['hostname'] }}
-      {%- endfor %}
+    - nodes: {{ pillar['cluster']['node_list'] }}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
     - pcspasswd: {{ pillar['corosync-pacemaker']['password'] }}
     - extra_args:
