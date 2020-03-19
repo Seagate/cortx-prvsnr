@@ -1,4 +1,7 @@
 import importlib
+import logging
+import sys 
+import logging.handlers
 
 from .config import ALL_MINIONS
 
@@ -11,6 +14,18 @@ api_types = {
 
 DEFAULT_API_TYPE = 'py'
 
+logger = logging.getLogger(__name__)
+
+DEF_LOGGING_FORMAT = ("%(asctime)s - %(name)s - %(levelname)s - "
+                      "[%(filename)s:%(lineno)d]: %(message)s")
+DEF_LOGLEVEL = 'DEBUG'
+
+root = logging.getLogger()
+root.setLevel(0)
+handler = logging.handlers.SysLogHandler(facility='local1')
+handler.setLevel(DEF_LOGLEVEL)
+handler.setFormatter(logging.Formatter(DEF_LOGGING_FORMAT))
+root.addHandler(handler)
 
 def set_api(api_type=DEFAULT_API_TYPE):
     """Sets api engine.
@@ -22,11 +37,14 @@ def set_api(api_type=DEFAULT_API_TYPE):
     """
 
     global _api
+    logger.info("Requesting to set API type to {}..".format(api_type))
     _api = importlib.import_module(api_types[api_type])
+    logger.info("API type successfully set to {}".format(api_type))
 
 
 def _api_call(fun, *args, **kwargs):
     if _api is None:
+        logger.warning("API type is not set!!")
         set_api()
     return getattr(_api, fun)(*args, **kwargs)
 
@@ -44,22 +62,31 @@ def auth_init(username, password, eauth='pam'):
     :param eauth: An authentication scheme to use for a user authentication.
         Default is ``pam``. (*Note* the only option for now)
     """
-
-    return _api_call('auth_init', username, password, eauth='pam')
+    logger.info("Requesting to authenticate {} user..")
+    res=_api_call('auth_init', username, password, eauth='pam')
+    logger.info("Authentication successful!! {}".format(res))
 
 
 def pillar_get(targets=ALL_MINIONS):
-    return _api_call('pillar_get', targets=targets)
-
+    logger.info("Requesting pillar data of *..")
+    res=_api_call('pillar_get', targets=targets)
+    logger.info("Response pillar data: \n {}".format(res))
+    return res
 
 def get_params(*params, targets=ALL_MINIONS):
-    return _api_call(
+    logger.info("Requesting {} params data of *..".format(*params))
+    res=_api_call(
         'get_params', *params, targets=targets
     )
+    logger.info("Response params data: \n {}".format(res))
+    return res
 
 
 def set_params(targets=ALL_MINIONS, dry_run=False, **params):
-    return _api_call('set_params', targets=targets, dry_run=dry_run, **params)
+    logger.info("Requesting to set {} params for *..".format(*params))
+    res=_api_call('set_params', targets=targets, dry_run=dry_run, **params)
+    logger.info("Response params data: \n {}".format(res))
+    return res
 
 
 def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
@@ -81,11 +108,13 @@ def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
         set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
 
     """
-
-    return _api_call(
+    logger.info("Requesting to configure NTP with {} time server and {} timezone..".format(server,timezone))
+    res=_api_call(
         'set_ntp', server=server, timezone=timezone,
         targets=targets, dry_run=dry_run
     )
+    logger.info("Response time data: \n {}".format(res))
+    return res
 
 
 def set_network(dry_run=False, **kwargs):
@@ -110,11 +139,15 @@ def set_network(dry_run=False, **kwargs):
     """
     # TODO better targettng: apply for nodes which need to be updated
     targets = kwargs.pop('targets', ALL_MINIONS)
+    logger.info("Requesting to configure the network..")
     if targets != ALL_MINIONS:
-        raise ValueError(
-            'targets should be ALL_MINIONS, provided: {}'.format(targets)
-        )
-    return _api_call('set_network', **kwargs, targets=targets, dry_run=dry_run)
+        logger.error("ValueError: targets should be ALL_MINIONS, provided: {}".format(targets))
+        #raise ValueError(
+        #    'targets should be ALL_MINIONS, provided: {}'.format(targets)
+        #)
+    res=_api_call('set_network', **kwargs, targets=targets, dry_run=dry_run)
+    logger.info("Response network configuration: \n {}".format(res))
+    return res
 
 
 def set_eosupdate_repo(
@@ -132,10 +165,13 @@ def set_eosupdate_repo(
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
     """
-    return _api_call(
+    logger.info("Requesting to update eos repository with {}..".format(release))
+    res=_api_call(
         'set_eosupdate_repo',
         release, source=source, targets=targets, dry_run=dry_run
     )
+    logger.info("Response EOSUpdateRepo: \n {}".format(res))
+    return res
 
 
 def eos_update(targets=ALL_MINIONS):
@@ -145,7 +181,8 @@ def eos_update(targets=ALL_MINIONS):
 
     :param targets: A host to update.
     """
-
-    return _api_call(
+    logger.info("Requesting to update EOS stack..")
+    res=_api_call(
         'eos_update', targets=targets
     )
+    logger.info("Response from EOSUpdate: \n {}".format(res))

@@ -1,3 +1,6 @@
+import sys
+import logging
+
 from typing import Dict
 from pathlib import Path
 
@@ -11,6 +14,7 @@ PARAMS_SPEC_PATH = MODULE_DIR / 'params_spec.yaml'
 PILLAR_PATH_KEY = '_path'
 PARAM_TYPE_KEY = '_type'
 
+logger = logging.getLogger(__name__)
 
 def process_param_spec(
     spec: Dict, parent: Path = None, path: Path = None, dest: dict = None
@@ -36,16 +40,19 @@ def process_param_spec(
                     dest[pname] = _type.from_spec(pname, **value)
             elif type(value) is str:
                 if path is None:
-                    raise ValueError(
-                        'pillar path for {} is unknown'.format(pname)
-                    )
+                    logger.error("ValueError: Pillar path for {} is unknown".format(pname))
+                    #raise ValueError(
+                    #    'pillar path for {} is unknown'.format(pname)
+                    #)
                 if pname in dest:
-                    raise ValueError('duplicate entry {}'.format(pname))
+                    logger.error("ValueEror: Duplicate entry {}".format(pname))
+                    #raise ValueError('duplicate entry {}'.format(pname))
                 dest[pname] = param.Param(
                     pname, pi_path=path, pi_key=param.KeyPath(value)
                 )
             else:
-                TypeError('{}'.format(type(value)))
+                logger.error("TypeError occurred {}".format(type(value)))
+                #TypeError('{}'.format(type(value)))
 
     return dest
 

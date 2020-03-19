@@ -1,4 +1,7 @@
 import attr
+import sys 
+import logging
+
 from typing import List, Union, Any
 from pathlib import Path
 
@@ -13,6 +16,7 @@ from .values import (
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
+logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class NoParams:
@@ -100,7 +104,8 @@ class ParamsList:
                         param_di.pi_key / key_path.leaf
                     )
                 else:
-                    raise UnknownParamError(str(key_path))
+                    logger.error("UnknownParamError {} occured!!".format(str(key_path)))
+                    #raise UnknownParamError(str(key_path))
             params.append(param)
         return cls(params)
 
@@ -130,7 +135,8 @@ class ParamGroupInputBase:
             try:
                 _attr = attr.fields_dict(cls)[attr_name]
             except KeyError:
-                raise ValueError('unknown attr {}'.format(attr_name))
+                logger.exception("unknown attr {}".format(attr_name))
+                #raise ValueError('unknown attr {}'.format(attr_name))
             else:
                 full_path = "{}/{}".format(
                     _attr.metadata.get(METADATA_PARAM_GROUP_KEY, ''), attr_name
@@ -315,7 +321,8 @@ class EOSUpdateRepo(ParamDictItemInputBase):
             reason = 'unexpected type of source'
 
         if reason:
-            raise EOSUpdateRepoSourceError(str(value), reason)
+            logger.error("EOSUpdateRepoSourceError occured !! {} is {}",format(str(value),reason))
+            #raise EOSUpdateRepoSourceError(str(value), reason)
 
     def __attrs_post_init__(self):
         if (
