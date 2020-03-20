@@ -45,7 +45,7 @@ def _run_cmd(cmd, **kwargs):
             return _res['ret']
         except KeyError:
             logger.error(
-                "No return data found ib {}".format(res.stdout)
+                "No return data found in {}".format(res.stdout)
             )
             raise errors.ProvisionerError(
                 'No return data found in {}'.format(res.stdout)

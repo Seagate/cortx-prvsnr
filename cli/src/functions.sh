@@ -1841,7 +1841,7 @@ function configure_provisioner_api_logs {
     
     #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
     cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
-    systemctl restart rsyslog
+    systemctl restart rsyslog && systemctl enable rsyslog
 
 EOF
 
