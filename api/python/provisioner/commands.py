@@ -42,17 +42,17 @@ class RunArgsUpdate(RunArgsBase):
 
 @attr.s(auto_attribs=True)
 class RunArgsSSLCerts(RunArgsUpdate):
-    restart: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "restart flag"
-            }
-        }, default=False
-    )
     source: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "ssl certs source"
+            }
+        }
+    )
+    restart: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "restart flag"
             }
         }, default=False
     )
@@ -273,7 +273,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     def from_spec(cls):
         return cls()
 
-    def run(self, *args, **kwargs):
+    def run(self, source, restart=False, dry_run=False):
         state_name = "components.misc_pkgs.build_ssl_cert_rpms"
         dest = PRVSNR_CERTS_DIR
         StateFunExecuter.execute(
