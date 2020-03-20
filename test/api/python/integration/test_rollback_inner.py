@@ -10,7 +10,7 @@ def test_yum_rollback_manager():
     minion_id = os.environ['TEST_MINION_ID']
 
     some_minion_id = 'some_minion_id'
-    with pytest.raises(errors.SaltEmptyReturnError) as excinfo:
+    with pytest.raises(errors.SaltNoReturnError) as excinfo:
         with YumRollbackManager(some_minion_id) as rb_manager:
             pass
 

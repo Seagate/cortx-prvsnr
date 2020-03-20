@@ -9,7 +9,8 @@ from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
 from .salt import (
     StatesApplier, StateFunExecuter, State,
-    YumRollbackManager
+    YumRollbackManager,
+    SaltJobsRunner
 )
 from provisioner import inputs
 
@@ -38,19 +39,16 @@ class RunArgsUpdate(RunArgsBase):
             }
         }, default=False
     )
-    salt_job: bool = attr.ib(
+
+
+@attr.s(auto_attribs=True)
+class RunArgsGetResult:
+    cmd_id: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "run the command as a salt job"
+                'help': "provisioner command ID"
             }
-        }, default=False
-    )
-    nowait: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "run the command as a salt job in async mode"
-            }
-        }, default=False
+        }
     )
 
 
@@ -60,6 +58,18 @@ class CommandParserFillerMixin:
     @classmethod
     def fill_parser(cls, parser):
         inputs.ParserFiller.fill_parser(cls._run_args_type, parser)
+
+    # TODO tests
+    @classmethod
+    def pop_run_args(cls, kwargs):
+        run_args = cls._run_args_type(
+            **{
+                k: kwargs.pop(k) for k in list(kwargs)
+                if k in attr.fields_dict(cls._run_args_type)
+            }
+        )
+        return run_args
+
 
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
@@ -94,9 +104,11 @@ class Get(CommandParserFillerMixin):
     ):
         return cls(params_type=getattr(inputs, params_type))
 
-    def run(self, *args, targets: str = ALL_MINIONS, **kwargs):
+    def run(self, *args, **kwargs):
+        # TODO tests
+        run_args = self.pop_run_args(kwargs)
         params = self.params_type.from_args(*args, **kwargs)
-        pillar_resolver = PillarResolver(targets=targets)
+        pillar_resolver = PillarResolver(targets=run_args.targets)
         res_raw = pillar_resolver.get(params)
         res = {}
         for minion_id, data in res_raw.items():
@@ -159,16 +171,9 @@ class Set(CommandParserFillerMixin):
     # TODO
     # - class for pillar file
     # - caching (load once)
-    def run(
-        self, *args,
-        targets: str = ALL_MINIONS, **kwargs
-    ):
-        run_args = RunArgsUpdate(
-            **{
-                k: kwargs.pop(k) for k in list(kwargs)
-                if k in attr.fields_dict(RunArgsUpdate)
-            }
-        )
+    def run(self, *args, **kwargs):
+        logger.info('command {} staring ... {}')
+        run_args = self.pop_run_args(kwargs)
 
         # static validation
         if len(args) == 1 and isinstance(args[0], self.params_type):
@@ -180,7 +185,8 @@ class Set(CommandParserFillerMixin):
         if run_args.dry_run:
             return
 
-        self._run(params, targets)
+        self._run(params, run_args.targets)
+        logger.debug('command {} finished staring ... {}')
 
 
 # assumtions / limitations
@@ -259,12 +265,25 @@ class EOSUpdate(CommandParserFillerMixin):
             for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
                 state_name = "components.{}.update".format(component)
                 try:
-                    StatesApplier.apply([state_name])
+                    StatesApplier.apply([state_name], targets)
                 except Exception:
                     logger.exception(
                         "Failed to update {} on {}".format(component, targets)
                     )
                     raise
+
+
+@attr.s(auto_attribs=True)
+class GetResult(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsGetResult
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, cmd_id: str):
+        return SaltJobsRunner.prvsnr_job_result(cmd_id)
 
 
 commands = {}

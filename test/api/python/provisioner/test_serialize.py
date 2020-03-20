@@ -40,6 +40,8 @@ class SomePrvsnrClass2(PrvsnrType):
 
 def test_decode_wrong_prvsnr_type():
     dct = {"_prvsnr_type_": ["ValueError"], "args": [123]}
+    assert loads(json.dumps(dct), strict=False) == dct
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct))
 
@@ -55,6 +57,8 @@ def test_decode_wrong_prvsnr_type():
 
 def test_decode_unknown_module():
     dct = {"_prvsnr_type_": ["__somemodule__", "ValueError"], "args": [123]}
+    assert loads(json.dumps(dct), strict=False) == dct
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct))
 
@@ -65,6 +69,8 @@ def test_decode_unknown_module():
 
 def test_decode_unknown_cls():
     dct = {"_prvsnr_type_": ["builtins", "SomeClass"], "args": [123]}
+    assert loads(json.dumps(dct), strict=False) == dct
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct))
 
@@ -79,6 +85,8 @@ def test_decode_unknown_cls():
 def test_decode_cls_with_wrong_args():
     # missed attr1
     dct1 = {"_prvsnr_type_": ["test_serialize", "SomePrvsnrClass1"]}
+    assert loads(json.dumps(dct1), strict=False) == dct1
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct1))
     assert excinfo.value.spec == dct1
@@ -90,6 +98,8 @@ def test_decode_cls_with_wrong_args():
 
     # missed attr1
     dct2 = {"_prvsnr_type_": ["test_serialize", "SomePrvsnrClass1"], "kwargs": {"attr2": "1.2.3"}}  # noqa: E501
+    assert loads(json.dumps(dct2), strict=False) == dct2
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct2))
     assert excinfo.value.spec == dct2
@@ -101,6 +111,8 @@ def test_decode_cls_with_wrong_args():
 
     # unknown attr4
     dct3 = {"_prvsnr_type_": ["test_serialize", "SomePrvsnrClass1"], "kwargs": {"attr4": "1.2.3"}}  # noqa: E501
+    assert loads(json.dumps(dct3), strict=False) == dct3
+
     with pytest.raises(PrvsnrTypeDecodeError) as excinfo:
         loads(json.dumps(dct3))
     assert excinfo.value.spec == dct3

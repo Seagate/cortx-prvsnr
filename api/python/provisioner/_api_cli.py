@@ -30,25 +30,28 @@ def api_args_to_cli(fun, *args, **kwargs):
 
 # TODO tests
 def process_cli_result(
-    exc: Exception = None, stdout: str = None, stderr: str = None
+    stdout: str = None, stderr: str = None
 ):
-    res = serialize.loads(stdout) if stdout else {}
+    try:
+        res = serialize.loads(stdout) if stdout else {}
+    except errors.PrvsnrTypeDecodeError:
+        logger.exception('Failed to decode provisioner output')
+        res = serialize.loads(stdout, strict=False)
 
-    if exc:
-        if stdout is None:
-            raise errors.ProvisionerError(repr(exc)) from exc
-        else:
-            _exc = res.get('exc', errors.ProvisionerError(stderr))
-            if exc:
-                raise _exc from exc
-            else:
-                raise _exc
+    if type(res) is not dict:
+        raise errors.ProvisionerError(
+            'Unexpected result {}'.format(stdout)
+        )
+
+    if 'exc' in res:
+        raise res['exc']
     else:
         try:
             return res['ret']
         except KeyError:
             raise errors.ProvisionerError(
-                'No return data found in {}'.format(stdout)
+                "No return data found in '{}', stderr: '{}'"
+                .format(stdout, stderr)
             )
 
 
@@ -57,12 +60,12 @@ def _run_cmd(cmd, **kwargs):
         res = subprocess.run(cmd, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:
-        return process_cli_result(exc, exc.stdout, exc.stderr)
+        return process_cli_result(exc.stdout, exc.stderr)
     # subprocess.run fails unexpectedly
     except Exception as exc:
-        return process_cli_result(exc, None, None)
+        raise errors.ProvisionerError(repr(exc)) from exc
     else:
-        return process_cli_result(None, res.stdout, res.stderr)
+        return process_cli_result(res.stdout, res.stderr)
 
 
 # TODO test args preparation
@@ -82,8 +85,6 @@ def _api_call(fun, *args, **kwargs):
     kwargs['loglevel'] = 'INFO'
     kwargs['logstream'] = 'stderr'
     kwargs['output'] = 'json'
-
-    kwargs['salt_job'] = True
 
     cli_args = api_args_to_cli(fun, *args, **kwargs)
     cmd = ['provisioner'] + cli_args
@@ -118,6 +119,6 @@ mod = sys.modules[__name__]
 for fun in [
     'pillar_get', 'get_params', 'set_params',
     'set_ntp', 'set_network', 'set_eosupdate_repo',
-    'eos_update'
+    'eos_update', 'get_result'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
