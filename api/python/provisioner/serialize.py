@@ -23,7 +23,7 @@ class PrvsnrType:
 
     @staticmethod
     def to_args_default(obj) -> Any:
-        if isinstance(obj, Exception):
+        if isinstance(obj, Exception) and not hasattr(obj, PRVSNR_TYPE_ATTR):
             return ((obj.args), None)
         else:
             return (None, obj.__dict__)
@@ -74,7 +74,7 @@ class PrvsnrJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def json_prvsnr_type_hook(dct):
+def json_prvsnr_type_hook(dct, strict=True):
     prvsnr_type = dct.get(PRVSNR_TYPE_KEY, None)
     if prvsnr_type:
         try:
@@ -96,13 +96,15 @@ def json_prvsnr_type_hook(dct):
                 functools.partial(PrvsnrType.from_args_default, cls)
             )(*args, **kwargs)
         except Exception as exc:
-            raise PrvsnrTypeDecodeError(dct, exc)
-
+            if strict:
+                raise PrvsnrTypeDecodeError(dct, exc)
     return dct
 
 
-def loads(s, *args, **kwargs):
-    kwargs['object_hook'] = json_prvsnr_type_hook
+def loads(s, strict=True, *args, **kwargs):
+    kwargs['object_hook'] = functools.partial(
+        json_prvsnr_type_hook, strict=strict
+    )
     return json.loads(s, *args, **kwargs)
 
 

@@ -53,17 +53,19 @@ def __virtual__():
 def _api_wrapper(fun):
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
-        _kwargs['loglevel'] = 'INFO'
-        _kwargs['logstream'] = 'stderr'
+        # TODO config logger if needed
         _kwargs['output'] = 'json'
 
         # don't make sense here
-        for k in ('async', 'salt_job', 'username', 'password', 'eauth'):
+        for k in ('nowait', 'username', 'password', 'eauth'):
             _kwargs.pop(k, None)
+
+        # turn of salt job mode as well to prevent infinite api loop
+        env = {'PRVSNR_SALT_JOB': 'no'}
 
         cli_args = api_args_to_cli(fun, *args, **_kwargs)
         cmd = ' '.join(['provisioner'] + cli_args)
-        return __salt__['cmd.run'](cmd)
+        return __salt__['cmd.run'](cmd, env=env)
 
     return f
 

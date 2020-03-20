@@ -13,14 +13,43 @@ def api_type(request):
     return request.param
 
 
+@pytest.fixture(params=["sync", "salt_sync", "salt_async"])
+def api_run_mode(request):
+    return request.param
+
+
 @pytest.fixture
-def run_test(request, api_type, run_test, eos_hosts):
-    def f(*args, env=None, **kwargs):
+def run_test(
+    request, api_type, api_run_mode, run_test, eos_hosts, project_path
+):
+    def f(mhost, *args, env=None, **kwargs):
         if env is None:
             env = {}
+
+        minion_id = eos_hosts['eosnode1']['minion_id']
+
         env['TEST_API_TYPE'] = api_type
-        env['TEST_MINION_ID'] = eos_hosts['eosnode1']['minion_id']
-        return run_test(*args, env=env, **kwargs)
+        env['TEST_MINION_ID'] = minion_id
+
+        if api_run_mode == 'salt_async':
+            env['TEST_RUN_ASYNC'] = 'yes'
+
+        if api_run_mode == 'sync':
+            env['PRVSNR_SALT_JOB'] = 'no'
+        else:
+            env['PRVSNR_SALT_JOB'] = 'yes'
+            mhost.copy_to_host(
+                project_path / 'srv/_modules/prvsnr.py',
+                PRVSNR_ROOT_DIR / 'srv/_modules/prvsnr.py'
+            )
+            mhost.check_output(
+                "salt-run saltutil.sync_modules"
+            )
+            mhost.check_output(
+                "salt '{}' saltutil.sync_modules".format(minion_id)
+            )
+
+        return run_test(mhost, *args, env=env, **kwargs)
 
     return f
 
@@ -120,7 +149,7 @@ def test_set_nw(
     "cluster", [True, False], ids=['cluster', 'singlenode']
 )
 def test_set_eosupdate_repo(
-    request, cluster, api_type
+    request, cluster, api_type, api_run_mode
 ):
     if cluster:
         request.applymarker(pytest.mark.env_level('salt-installed'))

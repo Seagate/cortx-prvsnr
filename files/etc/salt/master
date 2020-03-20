@@ -410,6 +410,7 @@ external_auth:
     prvsnrusers%:
       - '*':
         - '.*'
+      - '@runner'  # to allow access to all runner modules
 
 # Time (in seconds) for a newly generated token to live. Default: 12 hours
 #token_expire: 43200

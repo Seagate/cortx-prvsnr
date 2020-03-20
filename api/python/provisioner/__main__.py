@@ -8,11 +8,13 @@ import sys
 import argparse
 import logging
 import yaml
+from typing import Union, Any
 
 import provisioner
 from provisioner.commands import commands
 from provisioner import serialize
 from provisioner import _api
+from provisioner import runner
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +104,11 @@ def _parse_args():
         help="the mode to use to open log files"
     )
 
+    cmd_runner_group = parser_common.add_argument_group(
+        'common command running arguments'
+    )
+    runner.SimpleRunner.fill_parser(cmd_runner_group)
+
     parser = argparse.ArgumentParser(
         description="EOS Provisioner CLI",
         parents=[parser_common],
@@ -156,10 +163,11 @@ def _prepare_output(output_type, res):
     elif output_type == 'json':
         return serialize.dumps(res, sort_keys=True, indent=4)
     else:
-        ValueError('Unexpected output type {}'.format(output_type))
+        raise ValueError('Unexpected output type {}'.format(output_type))
 
 
-def _run_cmd(cmd, output, *args, **kwargs):
+# TODO type for cmd Any
+def _run_cmd(cmd: Union[str, Any], output, *args, **kwargs):
     '''
     return format:
 
@@ -178,7 +186,10 @@ def _run_cmd(cmd, output, *args, **kwargs):
     exc = None
 
     try:
-        ret = _api.run(cmd, *args, **kwargs)
+        if type(cmd) is str:
+            ret = _api.run(cmd, *args, **kwargs)
+        else:
+            ret = cmd.run(*args, **kwargs)
     except Exception as _exc:
         exc = _exc
     else:

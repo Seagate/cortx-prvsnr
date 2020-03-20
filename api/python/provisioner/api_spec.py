@@ -45,7 +45,7 @@ def process_param_spec(
                     pname, pi_path=path, pi_key=param.KeyPath(value)
                 )
             else:
-                TypeError('{}'.format(type(value)))
+                raise TypeError('{}'.format(type(value)))
 
     return dest
 

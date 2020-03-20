@@ -39,6 +39,9 @@ def test_api_cli_run_cmd_subprocess_run_fails_unexpectedly(subprocess_runner):
 
     assert excinfo.value.args == (repr(exc),)
 
+    # check 'raise ... from' expression is used
+    assert excinfo.value.__cause__ is subprocess_runner.res
+
 
 @attr.s(auto_attribs=True)
 class CliFailScenario:
@@ -55,23 +58,20 @@ class CliFailScenario:
         CliFailScenario(
             SaltError,
             ProvisionerError,
-            lambda cli_exc: ('some-stderr-1',),
+            lambda cli_exc: (
+                "No return data found in '', stderr: 'some-stderr-1'",
+            ),
             stdout='',
             stderr='some-stderr-1'
         ),
         CliFailScenario(
             SaltError,
             ProvisionerError,
-            lambda cli_exc: ('some-stderr-2',),
+            lambda cli_exc: (
+                "No return data found in '{}', stderr: 'some-stderr-2'",
+            ),
             stdout=_prepare_output('json', {}),
             stderr='some-stderr-2'
-        ),
-        CliFailScenario(
-            SaltError,
-            ProvisionerError,
-            lambda cli_exc: ('some-stderr-3',),
-            stdout=_prepare_output('json', {'ret': '123'}),
-            stderr='some-stderr-3'
         ),
         CliFailScenario(
             SaltError,
@@ -81,7 +81,6 @@ class CliFailScenario:
     ids=[
         'unexpected_output_empty_str',
         'unexpected_output_empty_dict',
-        'unexpected_output_no_exc',
         'expected'
     ]
 )
@@ -104,9 +103,6 @@ def test_api_cli_run_cmd_cli_fails(subprocess_runner, fail_scenario):
         api._run_cmd([subprocess_exc.cmd])
 
     assert excinfo.value.args == fail_scenario.expected_exc_args_cb(exc)
-
-    # check 'raise ... from' expression is used
-    assert excinfo.value.__cause__ is subprocess_runner.res
 
 
 def test_api_cli_run_cmd_cli_succedes(subprocess_runner):

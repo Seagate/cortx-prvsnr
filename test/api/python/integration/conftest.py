@@ -66,7 +66,8 @@ def run_test(request, prepare_test_env):
         inner_tests_path = prepare_test_env(mhost)
 
         script = (
-            "pytest -l -q -s --log-cli-level 0 -vv {}::{}"
+            # "pytest -l -q -s --log-cli-level 0 -vv {}::{}"
+            "pytest -l -q -s --log-cli-level warning --no-print-logs {}::{}"
             .format(
                 inner_tests_path,
                 request.node.originalname or request.node.name
