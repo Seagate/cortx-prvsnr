@@ -1,4 +1,3 @@
-import sys
 import logging
 import attr
 from typing import Any, List, Dict, Union, Tuple
@@ -17,6 +16,7 @@ from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
 
 logger = logging.getLogger(__name__)
+
 
 @attr.s(auto_attribs=True)
 class PillarEntry:
@@ -178,7 +178,7 @@ class PillarUpdater:
     ) -> None:
         if self._p_entries:
             logger.error("RuntimeError: Update already started")
-            #raise RuntimeError("Update already started")
+            raise RuntimeError("Update already started")
 
         for data in params:
             for param, value in data:
@@ -187,14 +187,16 @@ class PillarUpdater:
                 if value is not UNCHANGED:
                     if value is MISSED:
                         logger.error(
-                              "ValueError: Total removal of a pillar entry is not allowed, key_path: {}"
+                              "ValueError: Total removal of a pillar "
+                              "entry is not allowed, "
+                              "key_path: {}"
                               .format(p_entry.key_path)
                         )
-                        #raise ValueError(
-                        #    "Total removal of a pillar entry is not allowed, "
-                        #    "key_path: {}"
-                        #    .format(p_entry.key_path)
-                        #)
+                        raise ValueError(
+                            "Total removal of a pillar entry is not allowed, "
+                            "key_path: {}"
+                            .format(p_entry.key_path)
+                        )
 
                     if value is UNDEFINED:
                         value = None
@@ -203,14 +205,15 @@ class PillarUpdater:
                         #      get the value from pillar files since a call
                         #      to pillar.items can't help here
                         logger.error(
-                              "NotImplementedError: Reset to factory default is not yet supported,key_path: {}"
+                              "NotImplementedError: Reset to factory default "
+                              "is not yet supported, key_path: {}"
                               .format(p_entry.key_path)
                         )
-                        #raise NotImplementedError(
-                        #    "Reset to factory default is not yet supported, "
-                        #    "key_path: {}"
-                        #    .format(p_entry.key_path)
-                        #)
+                        raise NotImplementedError(
+                            "Reset to factory default is not yet supported, "
+                            "key_path: {}"
+                            .format(p_entry.key_path)
+                        )
 
                     p_entry.set(value)
 
