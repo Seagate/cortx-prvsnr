@@ -105,8 +105,7 @@ class ParamsList:
                     )
                 else:
                     logger.error(
-                        "UnknownParamError {} occured!!"
-                        .format(str(key_path))
+                        "Failed to load parameters"
                     )
                     raise UnknownParamError(str(key_path))
             params.append(param)
@@ -138,7 +137,7 @@ class ParamGroupInputBase:
             try:
                 _attr = attr.fields_dict(cls)[attr_name]
             except KeyError:
-                logger.exception("unknown attr {}".format(attr_name))
+                logger.error("unknown attr {}".format(attr_name))
                 raise ValueError('unknown attr {}'.format(attr_name))
             else:
                 full_path = "{}/{}".format(
@@ -325,7 +324,7 @@ class EOSUpdateRepo(ParamDictItemInputBase):
 
         if reason:
             logger.error(
-                "EOSUpdateRepoSourceError occured !! {} is {}"
+                "Invalid source {}: {}"
                 .format(str(value), reason)
             )
             raise EOSUpdateRepoSourceError(str(value), reason)

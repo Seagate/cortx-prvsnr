@@ -11,7 +11,7 @@ def load_yaml_str(data):
     try:
         return yaml.safe_load(data)
     except yaml.YAMLError as exc:
-        logger.exception("BadPillarDataError ocuured !! {}".format(exc))
+        logger.exception("Failed to load pillar data")
         raise BadPillarDataError(str(exc))
 
 
@@ -32,7 +32,7 @@ def load_yaml(path):
     try:
         return load_yaml_str(path.read_text())
     except yaml.YAMLError as exc:
-        logger.exception(exc)
+        logger.exception("Failed to load pillar data")
         raise BadPillarDataError(str(exc))
 
 
