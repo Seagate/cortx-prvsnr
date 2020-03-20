@@ -648,7 +648,7 @@ class YumRollbackManager:
 
     def __enter__(self):
         self._last_txn_ids = cmd_run(
-            "yum history | head -n 4 | tail -n1 | awk '{print $1}'",
+            "yum history | grep ID -A 2 | tail -n1 | awk '{print $1}'",
             targets=self.targets
         )
 
