@@ -55,20 +55,14 @@ function teardown_states {
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
                 l_info "Applying 'components.$state.teardown' for eosnode-1"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || {
-                    true
-                }
+                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Applying 'components.$state.teardown' for eosnode-2"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || {
-                    true
-                }
+                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state.teardown' for both nodes"
-                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts || {
-                    true
-                }
+                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
         done
