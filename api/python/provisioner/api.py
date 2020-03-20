@@ -1,6 +1,4 @@
 import importlib
-import logging
-import logging.handlers
 
 from .config import ALL_MINIONS
 
@@ -12,19 +10,6 @@ api_types = {
 }
 
 DEFAULT_API_TYPE = 'py'
-
-logger = logging.getLogger(__name__)
-
-DEF_LOGGING_FORMAT = ("%(asctime)s - %(name)s - %(levelname)s - "
-                      "[%(filename)s:%(lineno)d]: %(message)s")
-DEF_LOGLEVEL = 'DEBUG'
-
-root = logging.getLogger()
-root.setLevel(0)
-handler = logging.handlers.SysLogHandler(facility='local1')
-handler.setLevel(DEF_LOGLEVEL)
-handler.setFormatter(logging.Formatter(DEF_LOGGING_FORMAT))
-root.addHandler(handler)
 
 
 def set_api(api_type=DEFAULT_API_TYPE):
@@ -59,6 +44,7 @@ def auth_init(username, password, eauth='pam'):
     :param eauth: An authentication scheme to use for a user authentication.
         Default is ``pam``. (*Note* the only option for now)
     """
+    
     return _api_call('auth_init', username, password, eauth='pam')
 
 

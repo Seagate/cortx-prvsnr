@@ -127,7 +127,7 @@ def _parse_args():
     kwargs = vars(parser.parse_args())
     cmd = kwargs.pop('command')
     if cmd is None:
-        logger.error("ValueError: command is required")
+        logger.error("Command is required")
         raise ValueError('command is required')
     cmd = commands[cmd]
     args = kwargs.pop('args', [])
@@ -159,7 +159,7 @@ def _prepare_output(output_type, res):
         return json.dumps(res, sort_keys=True, indent=4)
     else:
         logger.error(
-            "ValueError: Unexpected output type {}"
+            "Unexpected output type {}"
             .fromat(output_type)
         )
         ValueError('Unexpected output type {}'.format(output_type))

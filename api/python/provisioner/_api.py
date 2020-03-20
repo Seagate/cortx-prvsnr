@@ -25,7 +25,7 @@ def auth_init(username, password, eauth='pam'):
 
 def run(command: str, *args, **kwargs):
     cmd = commands[command]
-    logger.debug("Execuiting command {}".format(cmd))
+    logger.debug("Executing command {}".format(cmd))
     return cmd.run(*args, **kwargs)
 
 

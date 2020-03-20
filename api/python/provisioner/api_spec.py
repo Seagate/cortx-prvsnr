@@ -41,20 +41,20 @@ def process_param_spec(
             elif type(value) is str:
                 if path is None:
                     logger.error(
-                        "ValueError: Pillar path for {} is unknown"
+                        "Pillar path for {} is unknown"
                         .format(pname)
                     )
                     raise ValueError(
                         'pillar path for {} is unknown'.format(pname)
                     )
                 if pname in dest:
-                    logger.error("ValueEror: Duplicate entry {}".format(pname))
+                    logger.error("Duplicate entry {}".format(pname))
                     raise ValueError('duplicate entry {}'.format(pname))
                 dest[pname] = param.Param(
                     pname, pi_path=path, pi_key=param.KeyPath(value)
                 )
             else:
-                logger.error("TypeError occurred {}".format(type(value)))
+                logger.error("Failed to update {}".format(type(value)))
                 TypeError('{}'.format(type(value)))
 
     return dest

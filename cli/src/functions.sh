@@ -1836,6 +1836,9 @@ function configure_provisioner_api_logs {
         set -x
     fi
 
+    #Install rsyslog
+    yum -y install rsyslog
+    
     #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
     cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
     systemctl restart rsyslog
