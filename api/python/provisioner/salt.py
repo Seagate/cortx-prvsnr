@@ -1,5 +1,4 @@
 import logging
-import sys
 import attr
 import salt.config
 from salt.client import LocalClient, Caller
@@ -44,7 +43,7 @@ def local_minion_id():
         _local_minion_id = caller.cmd('grains.get', 'id')
         if not _local_minion_id:
             logger.error("Failed to get local minion id")
-            #raise SaltError('Failed to get local minion id')
+            raise SaltError('Failed to get local minion id')
 
     return _local_minion_id
 
@@ -128,11 +127,11 @@ def _salt_caller_cmd(*args, **kwargs):
     except Exception as exc:
         # TODO too generic
         logger.exception(exc)
-        #raise SaltError(repr(exc)) from exc
+        raise SaltError(repr(exc)) from exc
 
     if not res:
         logger.exception("SaltEmptyReturnError occured!!.")
-        #raise SaltEmptyReturnError
+        raise SaltEmptyReturnError
 
     # TODO is it a valid case actually ?
     if type(res) is dict:
@@ -142,9 +141,9 @@ def _salt_caller_cmd(*args, **kwargs):
             # TODO better logging
             # TODO add res to exception data
             logger.error("SaltError: salt command failed: {}".format(fails))
-            #raise SaltError(
-            #    "salt command failed: {}".format(fails)
-            #)
+            raise SaltError(
+                "salt command failed: {}".format(fails)
+            )
 
     return res
 
@@ -168,11 +167,11 @@ def _salt_client_cmd(*args, **kwargs):
     except Exception as exc:
         # TODO too generic
         logger.exception(exc)
-        #raise SaltError(repr(exc)) from exc
+        raise SaltError(repr(exc)) from exc
 
     if not res:
         logger.error("SaltEmptyReturnError: No minions matched the target")
-        #raise SaltEmptyReturnError
+        raise SaltEmptyReturnError
 
     # TODO is it a valid case actually ?
     if type(res) is not dict:
@@ -204,9 +203,9 @@ def _salt_client_cmd(*args, **kwargs):
         # TODO better logging
         # TODO add res to exception data
         logger.error("SaltError: salt command failed: {}".format(fails))
-        #raise SaltError(
-        #    "salt command failed: {}".format(fails)
-        #)
+        raise SaltError(
+            "salt command failed: {}".format(fails)
+        )
 
     return results
 
@@ -267,11 +266,14 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
                 )
             )
         except Exception as exc:
-            logger.exception("Failed to apply state '{}': {}".format(state, str(exc)))
-            #raise SaltError(
-            #    "Failed to apply state '{}': {}"
-            #    .format(state, str(exc))
-            #)
+            logger.exception(
+                "Failed to apply state '{}': {}"
+                .format(state, str(exc))
+            )
+            raise SaltError(
+                "Failed to apply state '{}': {}"
+                .format(state, str(exc))
+            )
         else:
             ret[state.name] = res
 
@@ -299,11 +301,14 @@ def state_fun_execute(
             )
         )
     except Exception as exc:
-        logger.exception("Failed to execute state function '{}': {}".format(fun, str(exc)))
-        #raise SaltError(
-        #    "Failed to execute state function '{}': {}"
-        #    .format(fun, str(exc))
-        #)
+        logger.exception(
+            "Failed to execute state function '{}': {}"
+            .format(fun, str(exc))
+        )
+        raise SaltError(
+            "Failed to execute state function '{}': {}"
+            .format(fun, str(exc))
+        )
     else:
         return res
 
@@ -345,14 +350,15 @@ class YumRollbackManager:
             and (len(self.last_txn_ids) > 1)
         ):
             logger.error(
-                 "ValueError: Multiple targetting is not expected, matched targets: {} for '{}'"
+                 "ValueError: Multiple targetting is not expected, "
+                 "matched targets: {} for '{}'"
+                 .format(list(self.last_txn_ids), self.targets)
+            )
+            raise ValueError(
+                "Multiple targetting is not expected, "
+                "matched targets: {} for '{}'"
                 .format(list(self.last_txn_ids), self.targets)
             )
-            #raise ValueError(
-            #    "Multiple targetting is not expected, "
-            #    "matched targets: {} for '{}'"
-            #    .format(list(self.last_txn_ids), self.targets)
-            #)
 
         return self
 

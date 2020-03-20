@@ -1,10 +1,10 @@
 import yaml
-import sys
 import logging
 
 from .errors import BadPillarDataError
 
 logger = logging.getLogger(__name__)
+
 
 # TODO test
 def load_yaml_str(data):
@@ -12,7 +12,7 @@ def load_yaml_str(data):
         return yaml.safe_load(data)
     except yaml.YAMLError as exc:
         logger.exception("BadPillarDataError ocuured !! {}".format(exc))
-        #raise BadPillarDataError(str(exc))
+        raise BadPillarDataError(str(exc))
 
 
 # TODO test
@@ -33,7 +33,7 @@ def load_yaml(path):
         return load_yaml_str(path.read_text())
     except yaml.YAMLError as exc:
         logger.exception(exc)
-        #raise BadPillarDataError(str(exc))
+        raise BadPillarDataError(str(exc))
 
 
 # TODO test

@@ -1794,3 +1794,55 @@ EOF
     $_cmd bash -c "$_script"
 }
 
+#   configure_provisioner_api_logs [<hostspec> [<ssh-config> [<sudo> [<insrallation-dir>]]]]
+#
+#   Configures rsyslog to capture provisioner logs in custom log file i.e /var/log/provisioner/prvsnr.log
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function configure_provisioner_api_logs {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+    local _installdir="${4:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    local _prvsnrfwd_conf_src
+    _prvsnrfwd_conf_src="$_installdir/files/syslogconfig/prvsnrfwd.conf"
+
+    l_info "Configuring rsyslog to capture provsioner api logs '$_hostspec'"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
+    cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
+    systemctl restart rsyslog
+
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script"
+}
