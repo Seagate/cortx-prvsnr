@@ -1,4 +1,4 @@
-Start and enable Firewalld service:
+Start and enable firewalld service:
   service.running:
     - name: firewalld
     - enable: True

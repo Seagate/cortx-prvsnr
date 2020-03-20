@@ -10,31 +10,42 @@ include:
 {%- endif -%}
 public:
   firewalld.present:
-    - name: public
+    - name: trusted
     - default: True
-    - masquerade: False
-    - ports:
-      - 22/tcp
-    - interfaces:
-      - {{ mgmt_if }}
-    - watch_in:
-      - Start and enable Firewalld service
+    - prune_ports: False
+    - prune_services: False
+    - prune_interfaces: False
+    - require:
+      - Start and enable firewalld service
 
 Remove public-data-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=public-data-zone
+    - onlyif: firewall-cmd --get-zones | grep public-data-zone
+    - require:
+      - Start and enable firewalld service
+      - public
     - watch_in:
       - Stop and disable Firewalld service
 
-Remove private-data-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=private-data-zone
-    - watch_in:
-      - Stop and disable Firewalld service
+{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
+# Remove private-data-zone:
+#   cmd.run:
+#     - name: firewall-cmd --permanent --delete-zone=private-data-zone
+#     - onlyif: firewall-cmd --get-zones | grep private-data-zone
+#     - require:
+#       - Start and enable firewalld service
+#       - public
+#     - watch_in:
+#       - Stop and disable Firewalld service
+{% endif %}
 
-Remove management-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=management-zone
-    - watch_in:
-      - Stop and disable Firewalld service
-
+# Remove management-zone:
+#   cmd.run:
+#     - name: firewall-cmd --permanent --delete-zone=management-zone
+#     - onlyif: firewall-cmd --get-zones | grep management-zone
+#     - require:
+#       - Start and enable firewalld service
+#       - public
+#     - watch_in:
+#       - Stop and disable Firewalld service

@@ -23,16 +23,23 @@ csm:
       - 8102/tcp
       - 8103/tcp
 
+consul:
+  firewalld.service:
+    - name: consul
+    - ports:
+      - 8300/tcp
+      - 8301/tcp
+      - 8301/udp
+      - 8302/tcp
+      - 8302/udp
+      - 8500/tcp
+      - 8600/tcp
+      - 8600/udp
+
 hare:
   firewalld.service:
     - name: hare
     - ports:
-      - 8500/tcp
-      - 8300/tcp
-      - 8301/tcp
-      - 8302/tcp
-      - 8301/udp
-      - 8302/udp
       - 8008/tcp
 
 lnet:
@@ -95,26 +102,37 @@ sspl:
 Add public data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
+    - unless: firewall-cmd --get-zones | grep public-data-zone
     - watch_in:
-      - Start and enable Firewalld service
-
-Add private data zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --new-zone private-data-zone
-    - watch_in:
-      - Start and enable Firewalld service
-
-Add management zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --new-zone management-zone
-    - watch_in:
-      - Start and enable Firewalld service
+      - Start and enable firewalld service
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-  {%- set data_if = 'data0' -%}
+Data-zone:
+  firewalld.present:
+    - name: public-data-zone
+    - interfaces:
+      - data0
+    - default: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
+    - services:
+      - haproxy
+      - nfs
+      - hare
+      - high-availability
+      - lnet
+      - s3
+    - require:
+      - Add public data zone
+      - haproxy
+      - nfs
+      - hare
+      - high-availability
+      - lnet
+      - s3
+
 {% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
-{%- endif -%}
 Public data zone:
   firewalld.present:
     - name: public-data-zone
@@ -123,64 +141,91 @@ Public data zone:
     - prune_services: True
     - prune_interfaces: True
     - services:
+      - hare
       - haproxy
       - nfs
-      - s3
-      - high-availability
     - interfaces:
-      - {{ data_if }}
+      - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
     # - rich_rules:
     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add public data zone
+      - hare
       - haproxy
       - nfs
-      - s3
 
-{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-  {%- set data_if = 'data0' -%}
-{% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] -%}
-{%- endif -%}
 Private data zone:
   firewalld.present:
-    - name: private-data-zone
-    - default: False
-    - prune_ports: True
-    - prune_services: True
-    - prune_interfaces: True
-    - services:
-      - hare
-      - lnet
-      - high-availability
+    - name: private
     - interfaces:
-      - {{ data_if }}
-    # - rich_rules:
-    #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
-    - require:
-      - Add private data zone
-      - hare
-      - lnet
+      - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+    - default: False
+    - masquerade: False
+    - prune_ports: False
+    - prune_services: False
+    - prune_interfaces: False
+
+# Add private data zone:
+#   cmd.run:
+#     - name: firewall-cmd --permanent --new-zone private-data-zone
+#     - unless: firewall-cmd --get-zones | grep private-data-zone
+#     - watch_in:
+#       - Start and enable firewalld service
+
+# Private data zone:
+#   firewalld.present:
+#     - name: private-data-zone
+#     - default: False
+#     - prune_ports: True
+#     - prune_services: True
+#     - prune_interfaces: True
+#     - services:
+#       - hare
+#       - high-availability
+#       - lnet
+#       - s3
+#     - interfaces:
+#       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+#     # - rich_rules:
+#     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
+#     - require:
+#       - Add private data zone
+#       - hare
+#       - high-availability
+#       - lnet
+#       - s3
+{%- endif -%}
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
 {% else %}
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
-{%- endif -%}
+{% endif %}
+# Add management zone:
+#   cmd.run:
+#     - name: firewall-cmd --permanent --new-zone management-zone
+#     - unless: firewall-cmd --get-zones | grep management-zone
+#     - watch_in:
+#       - Start and enable firewalld service
+
 Management zone:
   firewalld.present:
-    - name: management-zone
+    - name: public
+    - block_icmp:
+      - echo-reply
+      - echo-request
     - default: True
     - prune_ports: True
     - prune_services: True
     - services:
+      - high-availability
+      - consul
+      - csm
       - ntpd
       - saltmaster
-      - csm
       - sspl
       - others
       - ssh
-      - high-availability
     - interfaces:
       - {{ mgmt_if }}
     - port_fwd:
@@ -190,27 +235,37 @@ Management zone:
       - {{ pillar['cluster']['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['cluster']['storage_enclosure']['controller']['secondary_mc']['ip'] }}
       {% endif %}
     - require:
-      - Add management zone
+      # - Add management zone
       - ntpd
       - saltmaster
       - csm
       - sspl
       - others
 
-Public Zone:
+# Public Zone:
+#   firewalld.present:
+#     - name: public
+#     - block_icmp:
+#       - echo-reply
+#       - echo-request
+#     - masquerade: True
+#     - prune_services: False
+#     - prune_ports: True
+#     - prune_interfaces: True
+#     - require:
+#       - Public data zone
+#       - Management zone
+#     - watch_in:
+#       - service: Start and enable firewalld service
+
+# No restrictions for localhost
+Localhost:
   firewalld.present:
-    - name: public
-    - block_icmp:
-      - echo-reply
-      - echo-request
-    - masquerade: True
+    - name: trusted
+    - interfaces:
+      - lo
+    - default: False
+    - masquerade: False
+    - prune_ports: False
     - prune_services: False
-    - prune_ports: True
     - prune_interfaces: True
-    - require:
-      - Add management zone
-      - Public data zone
-      - Private data zone
-      - Management zone
-    - listen_in:
-      - service: firewalld
