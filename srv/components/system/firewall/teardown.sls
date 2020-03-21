@@ -29,6 +29,18 @@ Remove public-data-zone:
       - Stop and disable Firewalld service
 
 {% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
+Remove public data interfaces:
+  cmd.run:
+    - name: firewall-cmd --remove-interface=data --zone=public-data-zone --permanent
+{% else %}
+Remove public and private data interfaces:
+  cmd.run:
+    - names: 
+      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }} --zone=public-data-zone --permanent
+      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=private --permanent
+{% endif %}
+
+#{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 # Remove private-data-zone:
 #   cmd.run:
 #     - name: firewall-cmd --permanent --delete-zone=private-data-zone
@@ -38,7 +50,7 @@ Remove public-data-zone:
 #       - public
 #     - watch_in:
 #       - Stop and disable Firewalld service
-{% endif %}
+#{% endif %}
 
 # Remove management-zone:
 #   cmd.run:

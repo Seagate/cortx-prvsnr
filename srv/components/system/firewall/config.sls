@@ -132,6 +132,20 @@ Data-zone:
       - lnet
       - s3
 
+# No restrictions for localhost
+Localhost:
+  firewalld.present:
+    - name: trusted
+    - interfaces:
+      - lo
+    - sources:
+      - 127.0.0.0/24
+    - default: False
+    - masquerade: False
+    - prune_ports: False
+    - prune_services: False
+    - prune_interfaces: False
+
 {% else %}
 Public data zone:
   firewalld.present:
@@ -156,10 +170,13 @@ Public data zone:
 
 Private data zone:
   firewalld.present:
-    - name: private
+    - name: trusted
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
     - default: False
+    - sources:
+      - 127.0.0.0/24
+      - 192.168.0.0/16
     - masquerade: False
     - prune_ports: False
     - prune_services: False
@@ -258,14 +275,3 @@ Management zone:
 #     - watch_in:
 #       - service: Start and enable firewalld service
 
-# No restrictions for localhost
-Localhost:
-  firewalld.present:
-    - name: trusted
-    - interfaces:
-      - lo
-    - default: False
-    - masquerade: False
-    - prune_ports: False
-    - prune_services: False
-    - prune_interfaces: True

@@ -20,7 +20,7 @@ Verify NIC opened for public-data-zone:
 {% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 Verify NIC opened for private-data-zone:
   cmd.run:
-    - name: firewall-cmd --permanent --zone=private --list-interfaces | grep {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+    - name: firewall-cmd --permanent --zone=trusted  --list-interfaces | grep {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
 {% endif %}
 
 Verify saltmaster ports:
