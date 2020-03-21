@@ -135,11 +135,13 @@ class Set(CommandParserFillerMixin):
                 # TODO more solid rollback
                 pillar_updater.rollback()
                 pillar_updater.apply()
+                logger.exception('Failed to apply changes')
                 raise
         except Exception:
             # treat post as restoration for pre, apply
             # if rollback happened
             StatesApplier.apply(self.post_states)
+            logger.exception('Failed to apply changes')
             raise
 
     # TODO
@@ -238,6 +240,7 @@ class EOSUpdate(CommandParserFillerMixin):
             for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
                 state_name = "components.{}.update".format(component)
                 try:
+                    logger.info("Updating {} on {}".format(component, targets))
                     StatesApplier.apply([state_name])
                 except Exception:
                     logger.exception(

@@ -44,7 +44,7 @@ def auth_init(username, password, eauth='pam'):
     :param eauth: An authentication scheme to use for a user authentication.
         Default is ``pam``. (*Note* the only option for now)
     """
-
+    
     return _api_call('auth_init', username, password, eauth='pam')
 
 
@@ -81,7 +81,6 @@ def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
         set_ntp(server=new_ntp_server, timezone=new_ntp_timezone)
 
     """
-
     return _api_call(
         'set_ntp', server=server, timezone=timezone,
         targets=targets, dry_run=dry_run
@@ -145,7 +144,6 @@ def eos_update(targets=ALL_MINIONS):
 
     :param targets: A host to update.
     """
-
     return _api_call(
         'eos_update', targets=targets
     )

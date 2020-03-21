@@ -1,8 +1,8 @@
+import logging
 import attr
 import salt.config
 from salt.client import LocalClient, Caller
 from typing import List, Union, Dict
-import logging
 
 from .config import ALL_MINIONS, LOCAL_MINION
 from .errors import SaltError, SaltEmptyReturnError
@@ -42,6 +42,7 @@ def local_minion_id():
         caller = Caller(mopts=__opts__)
         _local_minion_id = caller.cmd('grains.get', 'id')
         if not _local_minion_id:
+            logger.error("Failed to get local minion id")
             raise SaltError('Failed to get local minion id')
 
     return _local_minion_id
@@ -125,9 +126,11 @@ def _salt_caller_cmd(*args, **kwargs):
         res = salt_caller().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic
+        logger.exception("No result returned from salt")
         raise SaltError(repr(exc)) from exc
 
     if not res:
+        logger.exception("No result returned from salt")
         raise SaltEmptyReturnError
 
     # TODO is it a valid case actually ?
@@ -137,6 +140,7 @@ def _salt_caller_cmd(*args, **kwargs):
         if fails:
             # TODO better logging
             # TODO add res to exception data
+            logger.error("Salt command failed: {}".format(fails))
             raise SaltError(
                 "salt command failed: {}".format(fails)
             )
@@ -162,9 +166,11 @@ def _salt_client_cmd(*args, **kwargs):
         )
     except Exception as exc:
         # TODO too generic
+        logger.exception("No result returned from salt")
         raise SaltError(repr(exc)) from exc
 
     if not res:
+        logger.error("No result returned from salt")
         raise SaltEmptyReturnError
 
     # TODO is it a valid case actually ?
@@ -196,6 +202,7 @@ def _salt_client_cmd(*args, **kwargs):
     if fails:
         # TODO better logging
         # TODO add res to exception data
+        logger.error("salt command failed: {}".format(fails))
         raise SaltError(
             "salt command failed: {}".format(fails)
         )
@@ -259,6 +266,10 @@ def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
                 )
             )
         except Exception as exc:
+            logger.exception(
+                "Failed to apply state {}"
+                .format(state)
+            )
             raise SaltError(
                 "Failed to apply state '{}': {}"
                 .format(state, str(exc))
@@ -290,6 +301,10 @@ def state_fun_execute(
             )
         )
     except Exception as exc:
+        logger.exception(
+            "Failed to execute state function '{}': {}"
+            .format(fun)
+        )
         raise SaltError(
             "Failed to execute state function '{}': {}"
             .format(fun, str(exc))
@@ -334,6 +349,11 @@ class YumRollbackManager:
             not self.multiple_targets_ok
             and (len(self.last_txn_ids) > 1)
         ):
+            logger.error(
+                "Multiple targetting is not expected, "
+                "matched targets: {} for '{}'"
+                .format(list(self.last_txn_ids), self.targets)
+            )
             raise ValueError(
                 "Multiple targetting is not expected, "
                 "matched targets: {} for '{}'"

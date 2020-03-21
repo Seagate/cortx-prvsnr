@@ -1,4 +1,5 @@
 import sys
+import logging
 
 from .salt import auth_init as _auth_init
 from .api_spec import api_spec
@@ -15,6 +16,8 @@ from .commands import commands
 # - action might require a set of preliminary steps - hard
 #   to describe using generic spec (yaml)
 
+logger = logging.getLogger(__name__)
+
 
 def auth_init(username, password, eauth='pam'):
     return _auth_init(username, password, eauth=eauth)
@@ -22,6 +25,7 @@ def auth_init(username, password, eauth='pam'):
 
 def run(command: str, *args, **kwargs):
     cmd = commands[command]
+    logger.debug("Executing command {}".format(cmd))
     return cmd.run(*args, **kwargs)
 
 

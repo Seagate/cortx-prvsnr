@@ -45,6 +45,8 @@ def _set_logging(
 
     if logstream in ('stderr', 'stdout'):
         handler = logging.StreamHandler(getattr(sys, logstream))
+    elif logstream == 'rsyslog':
+        handler = logging.handlers.SysLogHandler(facility='local1')
     else:  # consider path to file
         handler = logging.FileHandler(logstream, mode=logmode)
 
@@ -92,7 +94,7 @@ def _parse_args():
     log_group.add_argument(
         "--logstream", default=None, metavar='STR',
         help=(
-            "path to log file, 'stderr' and 'stdout' might be passed "
+            "rsyslog, path to log file, 'stderr' and 'stdout' might be passed "
             "as special values to stream logs to console"
         )
     )
@@ -125,6 +127,7 @@ def _parse_args():
     kwargs = vars(parser.parse_args())
     cmd = kwargs.pop('command')
     if cmd is None:
+        logger.error("Command is required")
         raise ValueError('command is required')
     cmd = commands[cmd]
     args = kwargs.pop('args', [])
@@ -132,6 +135,7 @@ def _parse_args():
 
 
 def _output(data: str):
+    logger.debug("CLI output: {}".format(data))
     print(data)
 
 
@@ -154,6 +158,10 @@ def _prepare_output(output_type, res):
     elif output_type == 'json':
         return json.dumps(res, sort_keys=True, indent=4)
     else:
+        logger.error(
+            "Unexpected output type {}"
+            .fromat(output_type)
+        )
         ValueError('Unexpected output type {}'.format(output_type))
 
 
@@ -176,6 +184,7 @@ def _run_cmd(cmd, output, *args, **kwargs):
     exc = None
 
     try:
+        logger.debug("Executing {}..".format(cmd))
         ret = cmd.run(*args, **kwargs)
     except Exception as _exc:
         exc = _exc
