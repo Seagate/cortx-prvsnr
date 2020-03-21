@@ -249,7 +249,18 @@ def main():
         .format(auth_args, log_args, cmd, args, kwargs)
     )
 
-    _run_cmd(cmd, log_args.output, *args, **kwargs)
+    # TODO IMPROVE
+    # TODO TEST
+    cmd_obj = commands[cmd]
+    _args = list(args)
+    args, kwargs = runner.SimpleRunner.extract_positional_args(kwargs)
+    _args[0:0] = args
+    args, kwargs = cmd_obj.extract_positional_args(kwargs)
+    _args[0:0] = args
+    args, kwargs = cmd_obj.params_type.extract_positional_args(kwargs)
+    _args[0:0] = args
+
+    _run_cmd(cmd, log_args.output, *_args, **kwargs)
 
 
 if __name__ == "__main__":
