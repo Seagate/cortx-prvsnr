@@ -21,6 +21,10 @@ class NoParams:
     def fill_parser(cls, parser):
         pass
 
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
+
 
 @attr.s(auto_attribs=True)
 class AttrParserArgs:
@@ -78,6 +82,15 @@ class ParserFiller:
                 args = AttrParserArgs(_attr)
                 parser.add_argument(args.name, **args.kwargs)
 
+    @staticmethod
+    def extract_positional_args(cls, kwargs):
+        _args = []
+        for _attr in attr.fields(cls):
+            if METADATA_ARGPARSER in _attr.metadata:
+                if _attr.default is attr.NOTHING and _attr.name in kwargs:
+                    _args.append(kwargs.pop(_attr.name))
+        return _args, kwargs
+
 
 @attr.s(auto_attribs=True)
 class ParamsList:
@@ -111,6 +124,10 @@ class ParamsList:
             'args', metavar='param', type=str, nargs='+',
             help='a param name to get'
         )
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
 
 
 class ParamGroupInputBase:
@@ -146,6 +163,10 @@ class ParamGroupInputBase:
     @classmethod
     def fill_parser(cls, parser):
         ParserFiller.fill_parser(cls, parser)
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return ParserFiller.extract_positional_args(cls, kwargs)
 
     @staticmethod
     def _attr_ib(
@@ -254,6 +275,10 @@ class ParamDictItemInputBase(PrvsnrType):
     @classmethod
     def fill_parser(cls, parser):
         ParserFiller.fill_parser(cls, parser)
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return ParserFiller.extract_positional_args(cls, kwargs)
 
     @staticmethod
     def _attr_ib(

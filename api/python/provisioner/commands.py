@@ -59,6 +59,12 @@ class CommandParserFillerMixin:
     def fill_parser(cls, parser):
         inputs.ParserFiller.fill_parser(cls._run_args_type, parser)
 
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return inputs.ParserFiller.extract_positional_args(
+            cls._run_args_type, kwargs
+        )
+
     # TODO tests
     @classmethod
     def pop_run_args(cls, kwargs):
@@ -221,22 +227,28 @@ class SetEOSUpdateRepo(Set):
                 #    indempotence
                 # StateFunExecuter.execute(
                 #     'file.recurse',
-                #     source=str(params.source),
-                #     name=str(dest)
+                #     fun_kwargs=dict(
+                #       source=str(params.source),
+                #       name=str(dest)
+                #     )
                 # )
                 StateFunExecuter.execute(
                     'cmd.run',
-                    name=(
-                        "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
-                        .format(dest.parent, params.source, dest)
+                    fun_kwargs=dict(
+                        name=(
+                            "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
+                            .format(dest.parent, params.source, dest)
+                        )
                     )
                 )
             else:  # iso file
                 StateFunExecuter.execute(
                     'file.managed',
-                    source=str(params.source),
-                    name='{}.iso'.format(dest),
-                    makedirs=True
+                    fun_kwargs=dict(
+                        source=str(params.source),
+                        name='{}.iso'.format(dest),
+                        makedirs=True
+                    )
                 )
 
         # call default set logic (set pillar, call related states)

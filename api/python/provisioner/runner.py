@@ -23,6 +23,10 @@ class SimpleRunner:
     def fill_parser(cls, parser):
         inputs.ParserFiller.fill_parser(cls, parser)
 
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return inputs.ParserFiller.extract_positional_args(cls, kwargs)
+
     # TODO TYPING
     def run(self, command: Union[str, Any], *args, **kwargs):
 
