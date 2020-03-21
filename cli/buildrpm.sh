@@ -59,6 +59,7 @@ pushd ~/rpmbuild/SOURCES/
     mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
     mkdir -p ${DEST_DIR}/files/etc/yum.repos.d/
     mkdir -p ${DEST_DIR}/files/.ssh/
+    mkdir -p ${DEST_DIR}/files/syslogcofig/
     cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
     cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
     cp -pr ${BASEDIR}/../files/etc/salt/* ${DEST_DIR}/files/etc/salt
@@ -66,6 +67,7 @@ pushd ~/rpmbuild/SOURCES/
     cp -p ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d/* ${DEST_DIR}/files/etc/yum.repos.d/
     cp -pr ${BASEDIR}/../files/.ssh/* ${DEST_DIR}/files/.ssh/
+    cp -pr ${BASEDIR}/../files/syslogcofig/* ${DEST_DIR}/files/syslogcofig/
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
