@@ -162,6 +162,19 @@ def eos_update(targets=ALL_MINIONS, nowait=False):
     )
 
 
+def fw_update(source, dry_run=False, nowait=False):
+    r"""Runs EOS firmware update logic.
+
+    :param source: A path to a new firmware
+    :param dry_run: (optional) validate only. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'fw_update', source, dry_run=dry_run, nowait=nowait
+    )
+
+
 def get_result(cmd_id: str):
     r"""Returns result of previously scheduled command
 

@@ -25,5 +25,7 @@ set_eosupdate_repo:
     - components.misc_pkgs.eosupdate.repo
 eos_update:
   type: EOSUpdate
+fw_update:
+  type: FWUpdate
 get_result:
   type: GetResult

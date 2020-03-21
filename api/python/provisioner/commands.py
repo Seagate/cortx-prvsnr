@@ -3,8 +3,13 @@ import attr
 from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
+from pathlib import Path
 
-from .config import ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR
+from .config import (
+    ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
+    PRVSNR_FILEROOTS_DIR, LOCAL_MINION
+)
+from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
 from .salt import (
@@ -32,6 +37,25 @@ class RunArgsBase:
 
 @attr.s(auto_attribs=True)
 class RunArgsUpdate(RunArgsBase):
+    dry_run: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "perform validation only"
+            }
+        }, default=False
+    )
+
+
+# TODO DRY
+@attr.s(auto_attribs=True)
+class RunArgsFWUpdate:
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "a path to FW update"
+            }
+        }
+    )
     dry_run: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -283,6 +307,53 @@ class EOSUpdate(CommandParserFillerMixin):
                         "Failed to update {} on {}".format(component, targets)
                     )
                     raise
+
+
+@attr.s(auto_attribs=True)
+class FWUpdate(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsFWUpdate
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, source, dry_run=False):
+        source = Path(source).resolve()
+
+        if not source.is_file():
+            raise ValueError('{} is not a file'.format(source))
+
+        if dry_run:
+            return
+
+        script = (
+            PRVSNR_FILEROOTS_DIR /
+            'components/controller/files/script/controller_cli.sh'
+        )
+        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
+        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = next(iter(pillar.values()))
+
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "{script} host -h {ip} -u {user} -p {passwd} "
+                    "--update-fw {source}"
+                    .format(
+                        script=script,
+                        ip=pillar[ip],
+                        user=pillar[user],
+                        passwd=pillar[passwd],
+                        source=source
+                    )
+                )
+            )
+        )
 
 
 @attr.s(auto_attribs=True)

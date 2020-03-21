@@ -192,7 +192,10 @@ class SaltClientResult:
         fails = {}
         for task, tresult in ret.items():
             if not tresult['result']:
-                fails[task] = tresult['comment']
+                fails[task] = {
+                    'comment': tresult.get('comment'),
+                    'changes': tresult.get('changes')
+                }
         return fails
 
 
