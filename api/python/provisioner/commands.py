@@ -132,16 +132,16 @@ class Set(CommandParserFillerMixin):
                 pillar_updater.apply()
                 StatesApplier.apply(self.post_states)
             except Exception:
+                logger.exception('Failed to apply changes')
                 # TODO more solid rollback
                 pillar_updater.rollback()
                 pillar_updater.apply()
-                logger.exception('Failed to apply changes')
                 raise
         except Exception:
+            logger.exception('Failed to apply changes')
             # treat post as restoration for pre, apply
             # if rollback happened
             StatesApplier.apply(self.post_states)
-            logger.exception('Failed to apply changes')
             raise
 
     # TODO

@@ -126,7 +126,7 @@ def _salt_caller_cmd(*args, **kwargs):
         res = salt_caller().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic
-        logger.exception("No result returned from salt")
+        logger.exception("Salt command failed, result out of the scope")
         raise SaltError(repr(exc)) from exc
 
     if not res:
@@ -166,7 +166,7 @@ def _salt_client_cmd(*args, **kwargs):
         )
     except Exception as exc:
         # TODO too generic
-        logger.exception("No result returned from salt")
+        logger.exception("Salt command failed, result out of the scope")
         raise SaltError(repr(exc)) from exc
 
     if not res:
@@ -302,7 +302,7 @@ def state_fun_execute(
         )
     except Exception as exc:
         logger.exception(
-            "Failed to execute state function '{}': {}"
+            "Failed to execute state function '{}'"
             .format(fun)
         )
         raise SaltError(
