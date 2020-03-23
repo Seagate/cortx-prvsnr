@@ -148,6 +148,24 @@ def set_eosupdate_repo(
     )
 
 
+def set_ssl_certs(
+    source, restart=False, targets=ALL_MINIONS, dry_run=False
+):
+    r"""Configures ssl certs
+
+    Installs or removes a repository for EOS update release.
+
+    :param targets: Host where to configure certs
+    :param source: (optional) A path to pem file. Might be: a local
+    :param restart: switch to restart services
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+    return _api_call(
+        'set_ssl_certs',
+        source, restart=restart, targets=targets, dry_run=dry_run
+    )
+
+
 def eos_update(targets=ALL_MINIONS, nowait=False):
     r"""Runs EOS software update logic.
 

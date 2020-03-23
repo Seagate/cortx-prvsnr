@@ -76,6 +76,34 @@ class RunArgsGetResult:
     )
 
 
+@attr.s(auto_attribs=True)
+class RunArgsSSLCerts:
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "ssl certs source"
+            }
+        }
+    )
+    restart: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "restart flag"
+            }
+        }, default=False
+    )
+    dry_run: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "perform validation only"
+            }
+        }, default=False
+    )
+    targets: str = attr.ib(
+        init=False, default=ALL_MINIONS
+    )
+
+
 class CommandParserFillerMixin:
     _run_args_type = RunArgsBase
 
