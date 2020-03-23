@@ -30,6 +30,12 @@ Setup ClusterIP resouce:
     - require:
       - Create CIB for ClusterIP
 
+Add stickiness metadata to ClusterIP resource:
+  cmd.run:
+    - name: pcs -f /tmp/loadbalance_cfg resource meta ClusterIP resource-stickiness=0
+    - require:
+      - Setup ClusterIP resouce
+
 # Setup ClusterIP resouce:
 #   pcs.resource_present:
 #     - resource_id: ClusterIP

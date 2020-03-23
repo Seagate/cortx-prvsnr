@@ -3,7 +3,7 @@ import logging
 
 from .salt import auth_init as _auth_init
 from .api_spec import api_spec
-from .commands import commands
+from .runner import SimpleRunner
 
 
 # TODO
@@ -23,10 +23,13 @@ def auth_init(username, password, eauth='pam'):
     return _auth_init(username, password, eauth=eauth)
 
 
-def run(command: str, *args, **kwargs):
-    cmd = commands[command]
-    logger.debug("Executing command {}".format(cmd))
-    return cmd.run(*args, **kwargs)
+def run(command: str, *args, nowait=False, **kwargs):
+    # do not expect ad-hoc credentials here
+    kwargs.pop('password', None)
+    kwargs.pop('username', None)
+    kwargs.pop('eauth', None)
+    logger.debug("Executing command {}".format(command))
+    return SimpleRunner(nowait=nowait).run(command, *args, **kwargs)
 
 
 def _api_wrapper(fun):

@@ -2,7 +2,7 @@
 
 set -eux
 
-pip3_package="$(repoquery --qf='%{name}' --pkgnarrow=all 'python3-pip')"
+pip3_package="$(repoquery --qf='%{name}' --pkgnarrow=all 'python3-pip' | head -n1)"
 
 if [[ -z "$pip3_package" ]]; then
     pip3_package="$(repoquery --qf='%{name}' --pkgnarrow=all 'python36-pip')"

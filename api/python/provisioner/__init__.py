@@ -15,7 +15,7 @@ from .__metadata__ import (  # noqa: F401
 from .api import (
     set_api, auth_init, pillar_get,
     get_params, set_params, set_ntp, set_network,
-    set_eosupdate_repo, eos_update
+    set_eosupdate_repo, eos_update, get_result
 )
 
 from .values import (
@@ -29,7 +29,7 @@ from .config import (
 __all__ = [
     'set_api', 'auth_init', 'pillar_get',
     'get_params', 'set_params', 'set_ntp', 'set_network',
-    'set_eosupdate_repo', 'eos_update',
+    'set_eosupdate_repo', 'eos_update', 'get_result',
     'UNCHANGED', 'DEFAULT', 'UNDEFINED', 'MISSED',
     'ALL_HOSTS', 'ALL_MINIONS'
 ]

@@ -7,11 +7,14 @@ import fileinput
 import sys
 import argparse
 import logging
-import json
 import yaml
+from typing import Union, Any
 
 import provisioner
 from provisioner.commands import commands
+from provisioner import serialize
+from provisioner import _api
+from provisioner import runner
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +106,11 @@ def _parse_args():
         help="the mode to use to open log files"
     )
 
+    cmd_runner_group = parser_common.add_argument_group(
+        'common command running arguments'
+    )
+    runner.SimpleRunner.fill_parser(cmd_runner_group)
+
     parser = argparse.ArgumentParser(
         description="EOS Provisioner CLI",
         parents=[parser_common],
@@ -129,7 +137,6 @@ def _parse_args():
     if cmd is None:
         logger.error("Command is required")
         raise ValueError('command is required')
-    cmd = commands[cmd]
     args = kwargs.pop('args', [])
     return cmd, args, kwargs
 
@@ -139,7 +146,7 @@ def _output(data: str):
     print(data)
 
 
-def _prepare_res(ret=None, exc=None):
+def _prepare_res(output, ret=None, exc=None):
     return {
         'ret': ret
     } if exc is None else {
@@ -147,6 +154,8 @@ def _prepare_res(ret=None, exc=None):
             'type': type(exc).__name__,
             'args': list(exc.args)
         }
+    } if output == 'yaml' else {
+        'exc': exc
     }
 
 
@@ -156,16 +165,17 @@ def _prepare_output(output_type, res):
     elif output_type == 'yaml':
         return yaml.dump(res, default_flow_style=False, canonical=False)
     elif output_type == 'json':
-        return json.dumps(res, sort_keys=True, indent=4)
+        return serialize.dumps(res, sort_keys=True, indent=4)
     else:
         logger.error(
             "Unexpected output type {}"
             .fromat(output_type)
         )
-        ValueError('Unexpected output type {}'.format(output_type))
+        raise ValueError('Unexpected output type {}'.format(output_type))
 
 
-def _run_cmd(cmd, output, *args, **kwargs):
+# TODO type for cmd Any
+def _run_cmd(cmd: Union[str, Any], output, *args, **kwargs):
     '''
     return format:
 
@@ -185,7 +195,10 @@ def _run_cmd(cmd, output, *args, **kwargs):
 
     try:
         logger.debug("Executing {}..".format(cmd))
-        ret = cmd.run(*args, **kwargs)
+        if type(cmd) is str:
+            ret = _api.run(cmd, *args, **kwargs)
+        else:
+            ret = cmd.run(*args, **kwargs)
     except Exception as _exc:
         exc = _exc
     else:
@@ -198,7 +211,7 @@ def _run_cmd(cmd, output, *args, **kwargs):
             else:
                 _output(str(ret))
         else:
-            res = _prepare_res(ret, exc)
+            res = _prepare_res(output, ret, exc)
             _output(_prepare_output(output, res))
 
     if exc:
@@ -245,7 +258,18 @@ def main():
         .format(auth_args, log_args, cmd, args, kwargs)
     )
 
-    _run_cmd(cmd, log_args.output, *args, **kwargs)
+    # TODO IMPROVE
+    # TODO TEST
+    cmd_obj = commands[cmd]
+    _args = list(args)
+    args, kwargs = runner.SimpleRunner.extract_positional_args(kwargs)
+    _args[0:0] = args
+    args, kwargs = cmd_obj.extract_positional_args(kwargs)
+    _args[0:0] = args
+    args, kwargs = cmd_obj.params_type.extract_positional_args(kwargs)
+    _args[0:0] = args
+
+    _run_cmd(cmd, log_args.output, *_args, **kwargs)
 
 
 if __name__ == "__main__":

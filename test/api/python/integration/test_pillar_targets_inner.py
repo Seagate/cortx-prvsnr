@@ -36,7 +36,7 @@ def test_pillar_targets():
     pu = PillarUpdater(targets=minion_id_2)
     value_minion_2 = '1.2.3.6'
     pu.update(NTP(server=value_minion_2))
-    with pytest.raises(provisioner.errors.SaltEmptyReturnError):
+    with pytest.raises(provisioner.errors.SaltNoReturnError):
         pu.apply()
     pr = PillarResolver(targets=minion_id)
     get_res = pr.get([ntp_server_param])

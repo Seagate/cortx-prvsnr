@@ -11,6 +11,7 @@ from .values import (
     UNDEFINED, UNCHANGED, value_from_str,
     is_special
 )
+from .serialize import PrvsnrType
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
@@ -23,6 +24,10 @@ class NoParams:
     @classmethod
     def fill_parser(cls, parser):
         pass
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
 
 
 @attr.s(auto_attribs=True)
@@ -81,6 +86,15 @@ class ParserFiller:
                 args = AttrParserArgs(_attr)
                 parser.add_argument(args.name, **args.kwargs)
 
+    @staticmethod
+    def extract_positional_args(cls, kwargs):
+        _args = []
+        for _attr in attr.fields(cls):
+            if METADATA_ARGPARSER in _attr.metadata:
+                if _attr.default is attr.NOTHING and _attr.name in kwargs:
+                    _args.append(kwargs.pop(_attr.name))
+        return _args, kwargs
+
 
 @attr.s(auto_attribs=True)
 class ParamsList:
@@ -118,6 +132,10 @@ class ParamsList:
             help='a param name to get'
         )
 
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
+
 
 class ParamGroupInputBase:
     _param_group = None
@@ -153,6 +171,10 @@ class ParamGroupInputBase:
     @classmethod
     def fill_parser(cls, parser):
         ParserFiller.fill_parser(cls, parser)
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return ParserFiller.extract_positional_args(cls, kwargs)
 
     @staticmethod
     def _attr_ib(
@@ -235,7 +257,7 @@ class Network(ParamGroupInputBase):
 # verify that attributes match _param_di during class declaration:
 #   - both attributes should satisfy _param_di
 #   - is_key might be replaced with checking attr name against _param_di.key
-class ParamDictItemInputBase:
+class ParamDictItemInputBase(PrvsnrType):
     _param_di = None
     _param = None
 
@@ -261,6 +283,10 @@ class ParamDictItemInputBase:
     @classmethod
     def fill_parser(cls, parser):
         ParserFiller.fill_parser(cls, parser)
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return ParserFiller.extract_positional_args(cls, kwargs)
 
     @staticmethod
     def _attr_ib(
