@@ -13,6 +13,7 @@ base:
     - components.misc_pkgs.openldap
     - components.misc_pkgs.rabbitmq
     - components.misc_pkgs.statsd
+    - components.misc_pkgs.ssl_certs
     # IO Stack
     - components.misc_pkgs.lustre
     - components.eoscore

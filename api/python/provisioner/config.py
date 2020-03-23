@@ -24,3 +24,4 @@ ALL_MINIONS = '*'
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
+PRVSNR_CERTS_DIR = Path('/opt/seagate/eos-prvsnr/generated_configs/ssl/certs')

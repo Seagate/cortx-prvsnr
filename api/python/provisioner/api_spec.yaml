@@ -29,3 +29,5 @@ fw_update:
   type: FWUpdate
 get_result:
   type: GetResult
+set_ssl_certs:
+  type: SetSSLCerts

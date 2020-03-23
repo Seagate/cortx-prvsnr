@@ -1,4 +1,4 @@
-s3client:
+s3clients:
   s3server:
     ip:
     iam_admin_user: "sgiamadmin"

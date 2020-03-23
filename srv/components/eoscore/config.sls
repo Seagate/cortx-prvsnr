@@ -1,10 +1,10 @@
 {% if "physical" in grains['virtual'] %}
-Override EOSCore config from pillar data:
-  module.run:
-    - eoscore.conf_update:
-      - name: /etc/sysconfig/mero
-      - ref_pillar: eoscore
-      - backup: True
+# Override EOSCore config from pillar data:
+#   module.run:
+#     - eoscore.conf_update:
+#       - name: /etc/sysconfig/mero
+#       - ref_pillar: eoscore
+#       - backup: True
 {% endif %}
 
 Stage - Post Install Core:

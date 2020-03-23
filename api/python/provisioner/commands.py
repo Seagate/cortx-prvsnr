@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
-    PRVSNR_FILEROOTS_DIR, LOCAL_MINION
+    PRVSNR_FILEROOTS_DIR, LOCAL_MINION, PRVSNR_CERTS_DIR
 )
 from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
@@ -74,6 +74,34 @@ class RunArgsGetResult:
             }
         }
     )
+
+@attr.s(auto_attribs=True)
+class RunArgsSSLCerts:
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "ssl certs source"
+            }
+        }
+    )
+    restart: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "restart flag"
+            }
+        }, default=False
+    )
+    dry_run: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "perform validation only"
+            }
+        }, default=False
+    )
+    targets: str = attr.ib(
+        init=False, default=ALL_MINIONS
+    )
+
 
 
 @attr.s(auto_attribs=True)
@@ -396,6 +424,84 @@ class GetResult(CommandParserFillerMixin):
 
     def run(self, cmd_id: str):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
+
+# TODO consider to use RunArgsUpdate and support dry-run
+@attr.s(auto_attribs=True)
+class SetSSLCerts(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsSSLCerts
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, source, targets=ALL_MINIONS, restart=False, dry_run=False):
+        state_name = "components.misc_pkgs.ssl_certs"
+        dest = PRVSNR_CERTS_DIR
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "rm -rf {0} && mkdir -p {0} && cp -R {1} {0}"
+                    .format(dest, source)
+                )
+            )
+        )
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "scp -ri ~/.ssh/config {0} eosnode-2:{0}"
+                    .format(dest.parent)
+                )
+            )
+        )
+        try:
+            StatesApplier.apply([state_name])
+        except Exception:
+            logger.exception(
+                "Failed to apply certs"
+            )
+            raise
+
+# TODO consider to use RunArgsUpdate and support dry-run
+@attr.s(auto_attribs=True)
+class SetSSLCerts(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsSSLCerts
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, source, targets=ALL_MINIONS, restart=False, dry_run=False):
+        state_name = "components.misc_pkgs.ssl_certs"
+        dest = PRVSNR_CERTS_DIR
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "rm -rf {0} && mkdir -p {0} && cp -R {1} {0}"
+                    .format(dest, source)
+                )
+            )
+        )
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "scp -ri ~/.ssh/config {0} eosnode-2:{0}"
+                    .format(dest.parent)
+                )
+            )
+        )
+        try:
+            StatesApplier.apply([state_name])
+        except Exception:
+            logger.exception(
+                "Failed to apply certs"
+            )
+            raise
 
 
 # TODO TEST

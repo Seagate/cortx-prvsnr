@@ -10,3 +10,7 @@ Remove kibana config:
     - names:
       - /etc/kibana
       - /var/lib/kibana
+
+Delete kibana checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.kibana

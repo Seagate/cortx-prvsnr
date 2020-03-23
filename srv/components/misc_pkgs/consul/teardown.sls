@@ -49,3 +49,7 @@ Reload service daemons post consul-agent.service removal:
 Remove Consul user:
   user.absent:
     - name: consul
+
+Delete consul checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.consul

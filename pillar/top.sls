@@ -12,7 +12,7 @@ base:
     - components.haproxy
     - components.openldap
     - components.release
-    - components.s3client
+    - components.s3clients
     - components.s3server
     - components.system
     - components.sspl
