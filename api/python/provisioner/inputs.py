@@ -105,7 +105,7 @@ class ParamsList:
                     )
                 else:
                     logger.error(
-                        "Failed to load parameters"
+                        "Unknown param {}".format(key_path)
                     )
                     raise UnknownParamError(str(key_path))
             params.append(param)
