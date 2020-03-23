@@ -6,8 +6,8 @@
 Remove Packages:
   pkg.purged:
     - pkgs:
-      - openssl-libs
-      - openssl
+#      - openssl-libs       # Removing this breaks yum, ssh. Hence don't uncomment.
+#      - openssl            # Removing this breaks yum, ssh. Hence don't uncomment.
       - rpm-build
       - java-1.8.0-openjdk-headless.x86_64
 
