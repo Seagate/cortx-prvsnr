@@ -44,17 +44,17 @@ def auth_init(username, password, eauth='pam'):
     :param eauth: An authentication scheme to use for a user authentication.
         Default is ``pam``. (*Note* the only option for now)
     """
-    
+
     return _api_call('auth_init', username, password, eauth='pam')
 
 
-def pillar_get(targets=ALL_MINIONS):
-    return _api_call('pillar_get', targets=targets)
+def pillar_get(targets=ALL_MINIONS, nowait=False):
+    return _api_call('pillar_get', targets=targets, nowait=nowait)
 
 
-def get_params(*params, targets=ALL_MINIONS):
+def get_params(*params, targets=ALL_MINIONS, nowait=False):
     return _api_call(
-        'get_params', *params, targets=targets
+        'get_params', *params, targets=targets, nowait=nowait
     )
 
 
@@ -62,12 +62,16 @@ def set_params(targets=ALL_MINIONS, dry_run=False, **params):
     return _api_call('set_params', targets=targets, dry_run=dry_run, **params)
 
 
-def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
+def set_ntp(
+    server=None, timezone=None, targets=ALL_MINIONS,
+    dry_run=False, nowait=False
+):
     r"""Configures NTP client.
 
     :param server: (optional) NTP server domain or IP address.
     :param timezone: (optional) Host time zone.
     :param targets: (optional) Host targets. Default: ``ALL_MINIONS``
+    :param nowait: (optional) Run asynchronously. Default: False
 
     Example:
     .. highlight:: python
@@ -83,11 +87,11 @@ def set_ntp(server=None, timezone=None, targets=ALL_MINIONS, dry_run=False):
     """
     return _api_call(
         'set_ntp', server=server, timezone=timezone,
-        targets=targets, dry_run=dry_run
+        targets=targets, dry_run=dry_run, nowait=nowait
     )
 
 
-def set_network(dry_run=False, **kwargs):
+def set_network(dry_run=False, nowait=False, **kwargs):
     r"""Configures network.
 
     :param primary_hostname: (optional) primary node hostname
@@ -105,7 +109,8 @@ def set_network(dry_run=False, **kwargs):
     :param slave_mgmt_netmask: (optional) slave node management iface netmask
     :param slave_data_ip: (optional) slave node data iface ip address
     :param slave_data_netmask: (optional) slave node data iface netmask
-    :param dry_run: (optional) validate only
+    :param dry_run: (optional) validate only. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
     """
     # TODO better targettng: apply for nodes which need to be updated
     targets = kwargs.pop('targets', ALL_MINIONS)
@@ -113,11 +118,14 @@ def set_network(dry_run=False, **kwargs):
         raise ValueError(
             'targets should be ALL_MINIONS, provided: {}'.format(targets)
         )
-    return _api_call('set_network', **kwargs, targets=targets, dry_run=dry_run)
+    return _api_call(
+        'set_network', targets=targets,
+        dry_run=dry_run, nowait=nowait, **kwargs
+    )
 
 
 def set_eosupdate_repo(
-    release, source=None, targets=ALL_MINIONS, dry_run=False
+    release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
 ):
     r"""Configures update repository.
 
@@ -130,20 +138,33 @@ def set_eosupdate_repo(
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
+    :param dry_run: (optional) validate only. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
         'set_eosupdate_repo',
-        release, source=source, targets=targets, dry_run=dry_run
+        release, source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
 
 
-def eos_update(targets=ALL_MINIONS):
+def eos_update(targets=ALL_MINIONS, nowait=False):
     r"""Runs EOS software update logic.
 
     Updates EOS components one by one.
 
-    :param targets: A host to update.
+    :param targets: (optional) A host to update. Default: all minions
+    :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
-        'eos_update', targets=targets
+        'eos_update', targets=targets, nowait=nowait
+    )
+
+
+def get_result(cmd_id: str):
+    r"""Returns result of previously scheduled command
+
+    :param cmd_id: Command id
+    """
+    return _api_call(
+        'get_result', cmd_id
     )

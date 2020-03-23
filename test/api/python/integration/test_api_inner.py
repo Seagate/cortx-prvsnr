@@ -3,16 +3,24 @@ import logging
 import pytest
 import subprocess
 import json
+import time
+from provisioner import errors
 from pathlib import Path
 
 api_type = os.environ['TEST_API_TYPE']
 assert api_type in ('py', 'cli', 'pycli')
 minion_id = os.environ['TEST_MINION_ID']
+nowait = (os.getenv('TEST_RUN_ASYNC', 'no') == 'yes')
+get_result_tries = int(os.getenv('TEST_GET_RESULT_TRIES', 10))
+salt_job = nowait or (os.getenv('PRVSNR_SALT_JOB', 'no') == 'yes')
 
 logger = logging.getLogger(__name__)
 
 
-def api_call(fun, *args, **kwargs):
+def _api_call(fun, *args, **kwargs):
+    if fun not in ('auth_init', 'get_result'):
+        kwargs['nowait'] = nowait
+
     if api_type in ('py', 'pycli'):
         import provisioner
         provisioner.set_api(api_type)
@@ -45,6 +53,27 @@ def api_call(fun, *args, **kwargs):
             stderr=subprocess.PIPE
         )
         return json.loads(res.stdout)['ret'] if res.stdout else None
+
+
+def api_call(fun, *args, **kwargs):
+    res = _api_call(fun, *args, **kwargs)
+    if (fun not in ('auth_init', 'get_result')) and nowait:
+        tries = 0
+        while True:
+            tries += 1
+            # print(
+            #   'Try {} for fun {}, args {}, kwargs {}'
+            #   .format(tries, fun, args, kwargs)
+            # )
+            try:
+                return _api_call('get_result', res)
+            except errors.PrvsnrCmdNotFinishedError:
+                if tries < get_result_tries:
+                    time.sleep(1)
+                else:
+                    raise
+    else:
+        return res
 
 
 salt_client = None
@@ -81,12 +110,9 @@ def test_external_auth():
     if expected_exc_str is None:
         api_call('pillar_get', **kwargs)
     else:
-        if api_type == 'py':
-            from provisioner.errors import SaltError
-            expected_exc = SaltError
-        elif api_type == 'pycli':
-            from provisioner.errors import ProvisionerError
-            expected_exc = ProvisionerError
+        if api_type in ('py', 'pycli'):
+            from provisioner.errors import SaltError, SaltCmdRunError
+            expected_exc = SaltCmdRunError if salt_job else SaltError
         else:  # cli
             from subprocess import CalledProcessError
             expected_exc = CalledProcessError
@@ -95,12 +121,12 @@ def test_external_auth():
             api_call('pillar_get', **kwargs)
 
         assert expected_exc_str in str(
-            excinfo.value if api_type in ('py', 'pycli') else
+            type(excinfo.value.reason) if api_type in ('py', 'pycli') else
             excinfo.value.stdout
         )
 
 
-def test_ntp_configuration():
+def test_set_ntp():
     pillar = api_call('pillar_get')
 
     pillar_ntp_server = pillar['eosnode-1']['system']['ntp']['time_server']
@@ -118,7 +144,9 @@ def test_ntp_configuration():
     new_ntp_server = '0.north-america.pool.ntp.org'
     new_ntp_timezone = 'Europe/Berlin'
 
-    api_call('set_ntp', server=new_ntp_server, timezone=new_ntp_timezone)
+    api_call(
+        'set_ntp', server=new_ntp_server, timezone=new_ntp_timezone
+    )
 
     curr_params = api_call(
         'get_params', 'ntp/server', 'ntp/timezone'
@@ -131,7 +159,7 @@ def test_ntp_configuration():
 
 
 # TODO slave params
-def test_network_configuration():
+def test_set_nw():
     params = (
         'primary_hostname',
         'primary_floating_ip',
@@ -155,6 +183,7 @@ def test_network_configuration():
         targets=minion_id
     )
 
+    '''
     api_call(
         'set_network',
         primary_hostname='host1',
@@ -173,7 +202,6 @@ def test_network_configuration():
         slave_data_netmask='255.255.255.0',
     )
 
-    '''
     pillar = api_call('pillar_get')
 
     pillar_nw_primary_mgmt_ip = pillar[
@@ -246,7 +274,7 @@ def test_network_configuration():
 
 
 # TODO test for only one minion in cluster (not ALL_MINIONS)
-def test_eosupdate_repo_configuration():
+def test_set_eosupdate_repo():
     # test_mode = os.environ['TEST_MODE']
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
@@ -402,7 +430,7 @@ def test_eosupdate_repo_configuration():
         check_not_installed(release, expected_repo_name, mount_dir)
 
 
-def test_eosupdate_repo_configuration_for_reinstall():
+def test_set_eosupdate_repo_for_reinstall():
     repo_dir = os.environ['TEST_REPO_DIR']
     test_file_path = os.environ['TEST_FILE_PATH']
     # base_repo_name = 'eos_update'
@@ -430,7 +458,7 @@ def test_eosupdate_repo_configuration_for_reinstall():
 #   - install eos stack first from some release
 #   - set some newer release
 #   - call udpate
-def test_eos_update_eos_sw():
+def test_eos_update():
     api_call(
         'set_eosupdate_repo',
         '1.2.3',

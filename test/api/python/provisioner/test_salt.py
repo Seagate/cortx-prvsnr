@@ -1,22 +1,26 @@
 import pytest
+import functools
 
 from provisioner import salt
-from provisioner.errors import SaltError
+from provisioner.errors import (
+    SaltCmdRunError, SaltNoReturnError, SaltCmdResultError,
+    ProvisionerError
+)
 from provisioner.config import LOCAL_MINION
+from provisioner import UNCHANGED, MISSED
 
 
-def generate_local_client_mock(cmd_f):
-    class LocalClient:
+def generate_salt_client_mock(cmd_f, cmd_async_f=None):
+    class SomeClient:
         def cmd(self, *args, **kwargs):
             return cmd_f(*args, **kwargs)
-    return LocalClient
 
-
-def generate_caller_mock(cmd_f):
-    class Caller:
-        def cmd(self, *args, **kwargs):
+        def cmd_sync(self, *args, **kwargs):
             return cmd_f(*args, **kwargs)
-    return Caller
+
+        def cmd_async(self, *args, **kwargs):
+            return cmd_async_f(*args, **kwargs)
+    return SomeClient
 
 
 @pytest.fixture(autouse=True)
@@ -28,212 +32,723 @@ def local_minion_id(monkeypatch):
     return local_minion_id
 
 
-def test_salt_pillar_get(monkeypatch):
-    pillar_get_args = []
-    pillar_get_res = {}
+@pytest.fixture(autouse=True)
+def patch_logging(monkeypatch):
+    for log_f in ('warning', 'info'):
+        monkeypatch.setattr(
+            salt.logger, log_f, lambda *args, **kwargs: None
+        )
+
+
+def test_salt_runner_cmd(monkeypatch, patch_logging):
+    salt_cmd_args = []
+    salt_cmd_res = {}
+    exc = None
 
     def cmd(*args, **kwargs):
-        nonlocal pillar_get_args
-        pillar_get_args.append(
+        nonlocal salt_cmd_args
+        if exc:
+            raise exc
+        salt_cmd_args.append(
             (args, kwargs)
         )
-        return pillar_get_res
+        return salt_cmd_res
 
     monkeypatch.setattr(
-        salt, '_salt_local_client', generate_local_client_mock(cmd)()
+        salt, '_salt_runner_client',
+        generate_salt_client_mock(cmd, functools.partial(cmd, _async=True))()
     )
 
-    pillar_get_res = {'1': {'ret': {'2': '3'}, 'retcode': 0}}
-    res = salt.pillar_get(targets='aaa')
+    # TEST ARGS PASSED
+    fun = 'some_fun'
+    fun_args = None
+    fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=2)
+    nowait = False
+    kwargs = dict(some_key1=3, some_key2=4)
+    salt_cmd_good_res = {
+        'jid': '12345',
+        '_stamp': 'some-timestamp',
+        'fun': 'some.fun',
+        'user': 'some-user',
+        'success': True,
+        'return': 'some-return'
+    }
+    salt_cmd_res = salt_cmd_good_res
 
-    assert pillar_get_args == [
-        (('aaa', 'pillar.items'), {'kwarg': {}, 'full_return': True}),
+    def _call():
+        nonlocal salt_cmd_args
+        salt_cmd_args = []
+        return salt._salt_runner_cmd(
+            fun, fun_args, fun_kwargs,
+            nowait=nowait, **kwargs
+        )
+
+    def _check_exc_attrs(exc, _locals):
+        _kwargs = dict(_locals['kwargs'])
+        _kwargs['full_return'] = True
+        _kwargs['print_event'] = False
+
+        for attr in (
+            'fun', 'fun_args', 'fun_kwargs', 'nowait'
+        ):
+            assert getattr(exc.cmd_args, attr) == _locals[attr]
+        assert exc.cmd_args.kw == _kwargs
+
+    salt_cmd_args = []
+    _call()
+    assert salt_cmd_args == [
+        (
+            (fun,),
+            dict(
+                arg=(), kwarg=fun_kwargs, print_event=False,
+                full_return=True, **kwargs
+            )
+        )
     ]
-    assert res == {'1': {'2': '3'}}
+
+    salt_cmd_args = []
+    fun_args = ('fun_args1', 'fun_args2')
+    _call()
+    assert salt_cmd_args == [
+        (
+            (fun,),
+            dict(
+                arg=fun_args, kwarg=fun_kwargs, print_event=False,
+                full_return=True, **kwargs
+            )
+        )
+    ]
+
+    nowait = True
+    salt_cmd_args = []
+    with pytest.raises(NotImplementedError):
+        _call()
+    nowait = False
+
+    # TEST ERRORS RAISED
+    #   some exception during run
+    exc = ValueError('some error')
+    with pytest.raises(SaltCmdRunError) as excinfo:
+        _call()
+    assert excinfo.value.reason is exc
+    _check_exc_attrs(excinfo.value, locals())
+    exc = None
+
+    #   falsy res
+    for salt_cmd_res in (0, {}, [], False):
+        with pytest.raises(SaltNoReturnError) as excinfo:
+            _call()
+        assert (
+                excinfo.value.reason == (
+                    'Empty salt result: {}'
+                    .format(salt_cmd_res)
+                )
+        )
+        _check_exc_attrs(excinfo.value, locals())
+
+    #   non-dict results
+    salt_cmd_res = [1, 2, 3]
+    with pytest.raises(SaltCmdRunError) as excinfo:
+        _call()
+    assert (
+        excinfo.value.reason == (
+            'RunnerClient result type is not a dictionary: {}'
+            .format(type(salt_cmd_res))
+        )
+    )
+    _check_exc_attrs(excinfo.value, locals())
+
+    # raise on fail
+    salt_cmd_res = salt_cmd_good_res
+    salt_cmd_res['success'] = False
+    with pytest.raises(SaltCmdResultError) as excinfo:
+        _call()
+    assert (
+        excinfo.value.reason == salt_cmd_res['return']
+    )
+    _check_exc_attrs(excinfo.value, locals())
+
+
+def test_salt_client_cmd(monkeypatch):
+    salt_cmd_args = []
+    salt_cmd_res = {}
+    exc = None
+
+    def cmd(*args, **kwargs):
+        nonlocal salt_cmd_args
+        if exc:
+            raise exc
+        salt_cmd_args.append(
+            (args, kwargs)
+        )
+        return salt_cmd_res
+
+    monkeypatch.setattr(
+        salt, '_salt_local_client',
+        generate_salt_client_mock(cmd, functools.partial(cmd, _async=True))()
+    )
+
+    # TEST ARGS PASSED
+    targets = 'some-targets'
+    fun = 'some_fun'
+    fun_args = None
+    fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=2)
+    nowait = False
+    kwargs = dict(some_key1=3, some_key2=4)
+    salt_cmd_res = {'some-node': 'some-res'}
+
+    def _call():
+        nonlocal salt_cmd_args
+        salt_cmd_args = []
+        return salt._salt_client_cmd(
+            targets, fun, fun_args, fun_kwargs,
+            nowait=nowait, **kwargs
+        )
+
+    def _check_exc_attrs(exc, _locals):
+        _kwargs = dict(_locals['kwargs'])
+        _kwargs['full_return'] = True
+
+        for attr in (
+            'targets', 'fun', 'fun_args', 'fun_kwargs', 'nowait'
+        ):
+            assert getattr(exc.cmd_args, attr) == _locals[attr]
+        assert exc.cmd_args.kw == _kwargs
+
+    salt_cmd_args = []
+    _call()
+    assert salt_cmd_args == [
+        (
+            (targets, fun),
+            dict(arg=(), kwarg=fun_kwargs, full_return=True, **kwargs)
+        )
+    ]
+
+    salt_cmd_args = []
+    fun_args = ('fun_args1', 'fun_args2')
+    _call()
+    assert salt_cmd_args == [
+        (
+            (targets, fun),
+            dict(arg=fun_args, kwarg=fun_kwargs, full_return=True, **kwargs)
+        )
+    ]
+
+    nowait = True
+    salt_cmd_args = []
+    salt_cmd_res = {'some-node': 'some-res'}
+    _call()
+    assert salt_cmd_args == [
+        (
+            (targets, fun),
+            dict(
+                arg=fun_args, kwarg=fun_kwargs,
+                full_return=True, _async=True, **kwargs
+            )
+        )
+    ]
+
+    # TEST ERRORS RAISED
+    #   some exception during run
+    exc = ValueError('some error')
+    with pytest.raises(SaltCmdRunError) as excinfo:
+        _call()
+    assert excinfo.value.reason is exc
+    _check_exc_attrs(excinfo.value, locals())
+    exc = None
+
+    #   falsy res for async run
+    for nowait in (True, False):
+        for salt_cmd_res in (0, {}, [], False):
+            with pytest.raises(SaltNoReturnError) as excinfo:
+                _call()
+            assert (
+                    excinfo.value.reason == (
+                        'Async API returned empty result: {}'
+                        .format(salt_cmd_res)
+                    ) if nowait else (
+                        'Empty salt result: {}'
+                        .format(salt_cmd_res)
+                    )
+            )
+            _check_exc_attrs(excinfo.value, locals())
+
+    #   return with errors
+    nowait = False
+    salt_cmd_res = {
+        'some-node-id': {
+            'ret': {
+                'some-task-id': {
+                    'result': False,
+                    'comment': 'some comment'
+                }
+            },
+            'retcode': 1
+        }
+    }
+    #       non-state function
+    fun = 'somefun'
+    with pytest.raises(SaltCmdResultError) as excinfo:
+        _call()
+    assert excinfo.value.reason == {
+        'some-node-id': salt_cmd_res['some-node-id']['ret']
+    }
+    _check_exc_attrs(excinfo.value, locals())
+
+    #       state function
+    fun = 'state.something'
+    with pytest.raises(SaltCmdResultError) as excinfo:
+        _call()
+    _fails = {
+        'some-node-id': {
+            'some-task-id': salt_cmd_res[
+                'some-node-id'
+            ]['ret']['some-task-id']['comment']
+        }
+    }
+    assert excinfo.value.reason == _fails
+    _check_exc_attrs(excinfo.value, locals())
+
+    # test return
+    #   async result
+    nowait = True
+    salt_cmd_res = 'some-result'
+    res = _call()
+    assert res == salt_cmd_res
+    nowait = False
+
+    #   non dict salt result
+    for val in ('some-result', ['some-result']):
+        salt_cmd_res = val
+        res = _call()
+        assert res == salt_cmd_res
+
+    #   result for a minion has 'ret' key
+    salt_cmd_res = {
+        'some-node-id': {
+            'ret': {
+                'some-task-id': {
+                    'result': False,
+                    'comment': 'some comment'
+                }
+            },
+            'retcode': 0
+        }
+    }
+    res = _call()
+    assert res == {
+        'some-node-id': salt_cmd_res['some-node-id']['ret']
+    }
+
+    #   result for a minion doesn't have 'ret' key
+    salt_cmd_res = {
+        'some-node-id': {
+            'some-result'
+        }
+    }
+    res = _call()
+    assert res == salt_cmd_res
+
+    #   a combination of two previous
+    salt_cmd_res = {
+        'some-node-id1': {
+            'ret': {
+                'some-task-id': {
+                    'result': False,
+                    'comment': 'some comment'
+                }
+            },
+            'retcode': 0
+        },
+        'some-node-id2': {
+            'some-result'
+        }
+    }
+    res = _call()
+    assert res == {
+        'some-node-id1': salt_cmd_res['some-node-id1']['ret'],
+        'some-node-id2': salt_cmd_res['some-node-id2'],
+    }
+
+    #   the same case but 'return' instead of 'ret'
+    salt_cmd_res = {
+        'some-node-id1': {
+            'return': {
+                'some-task-id': {
+                    'result': False,
+                    'comment': 'some comment'
+                }
+            },
+            'retcode': 0
+        },
+        'some-node-id2': {
+            'some-result'
+        }
+    }
+    res = _call()
+    assert res == {
+        'some-node-id1': salt_cmd_res['some-node-id1']['return'],
+        'some-node-id2': salt_cmd_res['some-node-id2'],
+    }
+
+
+def test_salt_function_run(monkeypatch, local_minion_id):
+    _salt_client_cmd_args = []
+
+    def _salt_client_cmd(*args, **kwargs):
+        nonlocal _salt_client_cmd_args
+        _salt_client_cmd_args.append(
+            (args, kwargs)
+        )
+
+    monkeypatch.setattr(
+        salt, '_salt_client_cmd', _salt_client_cmd
+    )
+
+    fun = 'some_state_fun1'
+    fun_args = ('fun_args1', 'fun_args2')
+    fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=2)
+    kwargs = dict(some_key1=3, some_key2=4)
+
+    _salt_client_cmd_args = []
+    targets = 'some-targets'
+    salt.function_run(
+        fun,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        targets=targets,
+        **kwargs
+    )
+    assert _salt_client_cmd_args == [
+        (
+            (targets, fun),
+            dict(
+                fun_args=fun_args,
+                fun_kwargs=fun_kwargs,
+                **kwargs
+            )
+        )
+    ]
+
+    _salt_client_cmd_args = []
+    targets = LOCAL_MINION
+    salt.function_run(
+        fun,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        targets=targets,
+        **kwargs
+    )
+    assert _salt_client_cmd_args == [
+        (
+            (local_minion_id, fun),
+            dict(
+                fun_args=fun_args,
+                fun_kwargs=fun_kwargs,
+                **kwargs
+            )
+        )
+    ]
+
+
+def test_salt_pillar_get(monkeypatch):
+    function_run_args = []
+
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
+            (args, kwargs)
+        )
+
+    monkeypatch.setattr(
+        salt, 'function_run', function_run
+    )
+
+    targets = 'some-targets'
+
+    function_run_args = []
+    salt.pillar_get(
+        targets=targets
+    )
+    assert function_run_args == [
+        (
+            ('pillar.items',),
+            dict(
+                targets=targets
+            )
+        )
+    ]
 
 
 def test_salt_pillar_refresh(monkeypatch):
-    pillar_refresh_args = []
+    function_run_args = []
 
-    def cmd(*args, **kwargs):
-        nonlocal pillar_refresh_args
-        pillar_refresh_args.append(
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
             (args, kwargs)
         )
-        return {'some-minion': 'some-data'}
 
     monkeypatch.setattr(
-        salt, '_salt_local_client', generate_local_client_mock(cmd)()
+        salt, 'function_run', function_run
     )
 
-    salt.pillar_refresh(targets='aaa')
-    assert pillar_refresh_args == [
+    targets = 'some-targets'
+
+    function_run_args = []
+    salt.pillar_refresh(
+        targets=targets
+    )
+    assert function_run_args == [
         (
-            ('aaa', 'saltutil.refresh_pillar'),
-            {'kwarg': {}, 'full_return': True}
-        ),
+            ('saltutil.refresh_pillar',),
+            dict(
+                targets=targets
+            )
+        )
     ]
+
+
+def test_salt_cmd_run(monkeypatch):
+    function_run_args = []
+
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
+            (args, kwargs)
+        )
+
+    monkeypatch.setattr(
+        salt, 'function_run', function_run
+    )
+
+    targets = 'some-targets'
+    cmd = 'some_command'
+
+    function_run_args = []
+    salt.cmd_run(
+        cmd,
+        targets=targets,
+    )
+    assert function_run_args == [
+        (
+            ('cmd.run',),
+            dict(
+                fun_args=[cmd],
+                targets=targets,
+            )
+        )
+    ]
+
+
+def test_salt_process_provisioner_cmd_res(monkeypatch, local_minion_id):
+    monkeypatch.setattr(
+        salt, 'process_cli_result', lambda res: res
+    )
+
+    res = 'some-res'
+    with pytest.raises(ProvisionerError) as excinfo:
+        salt.process_provisioner_cmd_res(res)
+    assert str(excinfo.value) == (
+        'Expected a dictionary, provided: {}, {}'
+        .format(type(res), res)
+    )
+
+    res = {'some-key': 'some-res'}
+    with pytest.raises(ProvisionerError) as excinfo:
+        salt.process_provisioner_cmd_res(res)
+    assert str(excinfo.value) == (
+        'local minion id {} is not in the results: {}'
+        .format(local_minion_id, res)
+    )
+
+    res = {local_minion_id: 'some-result'}
+    ret = salt.process_provisioner_cmd_res(res)
+    assert ret == 'some-result'
+
+
+def test_salt_provisioner_cmd(monkeypatch, local_minion_id):
+    function_run_args = []
+    function_run_res = {}
+
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
+            (args, kwargs)
+        )
+        if isinstance(function_run_res, Exception):
+            raise function_run_res
+        else:
+            return function_run_res
+
+    monkeypatch.setattr(
+        salt, 'function_run', function_run
+    )
+
+    monkeypatch.setattr(
+        salt, 'process_provisioner_cmd_res',
+        lambda res: res
+    )
+
+    # arguments passed to function_run
+    cmd = 'some_command'
+    fun_args = ('fun_args1', 'fun_args2', UNCHANGED)
+    fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=MISSED)
+    kwargs = dict(some_key1=3, some_key2=4)
+
+    #   default fun_args and fun_kwargs
+    function_run_args = []
+    salt.provisioner_cmd(
+        cmd,
+        **kwargs
+    )
+    assert function_run_args == [
+        (
+            ('provisioner.{}'.format(cmd),),
+            dict(
+                fun_args=None,
+                fun_kwargs=None,
+                targets=local_minion_id,
+                nowait=False,
+                **kwargs
+            )
+        )
+    ]
+
+    #   some more complex case
+    function_run_args = []
+    salt.provisioner_cmd(
+        cmd,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        **kwargs
+    )
+    assert function_run_args == [
+        (
+            ('provisioner.{}'.format(cmd),),
+            dict(
+                fun_args=['fun_args1', 'fun_args2', 'PRVSNR_UNCHANGED'],
+                fun_kwargs=dict(fun_kwargs1=1, fun_kwargs2='PRVSNR_MISSED'),
+                targets=local_minion_id,
+                nowait=False,
+                **kwargs
+            )
+        )
+    ]
+
+    # results with errors
+    function_run_res = SaltCmdResultError(
+        'some-cmd-args', {local_minion_id: 'some-res'}
+    )
+    #   sync
+    assert salt.provisioner_cmd(
+        cmd,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        **kwargs
+    ) == function_run_res.reason
+
+    #   async
+    with pytest.raises(ProvisionerError) as excinfo:
+        salt.provisioner_cmd(
+            cmd,
+            fun_args=fun_args,
+            fun_kwargs=fun_kwargs,
+            nowait=True,
+            **kwargs
+        )
+    assert str(excinfo.value) == (
+        'SaltClientResult is unexpected here: {!r}'.format(function_run_res)
+    )
+
+    # results no errors
+    #   sync
+    function_run_res = {local_minion_id: 'some-res'}
+    assert salt.provisioner_cmd(
+        cmd,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        **kwargs
+    ) == function_run_res
+
+    #   async
+    function_run_res = {local_minion_id: 'some-res'}
+    assert salt.provisioner_cmd(
+        cmd,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        nowait=True,
+        **kwargs
+    ) == function_run_res
 
 
 # TODO
 #   - split into separate tests
 #   - add tests for Caller (targets=LOCAL_MINION)
 def test_salt_states_apply(monkeypatch):
-    states_apply_args = []
-    states_apply_res = {}
+    function_run_args = []
 
-    def cmd(*args, **kwargs):
-        nonlocal states_apply_args
-        states_apply_args.append(
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
             (args, kwargs)
         )
-        return states_apply_res
 
     monkeypatch.setattr(
-        salt, '_salt_local_client', generate_local_client_mock(cmd)()
+        salt, 'function_run', function_run
     )
 
-    states_apply_res = {'some-node': 'some-res'}
-    salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
-    assert states_apply_args == [
+    targets = 'some-targets'
+    states = ['state1', 'state2', 'state3']
+
+    function_run_args = []
+    salt.states_apply(states, targets=targets)
+    assert function_run_args == [
         (
-            ('aaa', 'state.apply', ['state1']),
-            {'kwarg': {}, 'full_return': True}
-        ),
-        (
-            ('aaa', 'state.apply', ['state2']),
-            {'kwarg': {}, 'full_return': True}
-        ),
-        (
-            ('aaa', 'state.apply', ['state3']),
-            {'kwarg': {}, 'full_return': True}
-        )
+            ('state.apply',),
+            dict(
+                fun_args=[state],
+                targets=targets,
+            )
+        ) for state in states
     ]
 
-    # fail case
-    states_apply_res = {
-        'some-node-id': {
-            'ret': {
-                'some-task-id': {
-                    'result': False,
-                    'comment': 'some comment'
-                }
-            },
-            'retcode': 1
-        }
-    }
-    with pytest.raises(SaltError) as excinfo:
-        salt.states_apply(['state1', 'state2', 'state3'], targets='aaa')
-    assert str(excinfo.value) == (
-        "Failed to apply state '{}': salt command failed: {}"
-        .format('state1', {'some-node-id': {'some-task-id': 'some comment'}})
-    )
 
-    # success case
-    states_apply_res['some-node-id']['retcode'] = 0
-    res = salt.states_apply(['some.state'], targets='aaa')
-    assert res == {
-        'some.state': {'some-node-id': states_apply_res['some-node-id']['ret']}
-    }
+def test_salt_state_fun_execute(monkeypatch):
+    function_run_args = []
 
-
-def test_salt_state_fun_execute(monkeypatch, local_minion_id):
-    caller_args = []
-    caller_res = {}
-
-    local_client_args = []
-    local_client_res = {}
-
-    def cmd_caller(*args, **kwargs):
-        nonlocal caller_args
-        caller_args.append(
+    def function_run(*args, **kwargs):
+        nonlocal function_run_args
+        function_run_args.append(
             (args, kwargs)
         )
-        return caller_res
-
-    def cmd_local(*args, **kwargs):
-        nonlocal local_client_args
-        local_client_args.append(
-            (args, kwargs)
-        )
-        return local_client_res
 
     monkeypatch.setattr(
-        salt, '_salt_local_client', generate_local_client_mock(cmd_local)()
-    )
-    monkeypatch.setattr(
-        salt, '_salt_caller', generate_caller_mock(cmd_caller)()
+        salt, 'function_run', function_run
     )
 
-    local_client_args = []
-    local_client_res = {'some-res'}
+    targets = 'some-targets'
+    state_fun = 'some_state_fun1'
+    fun_args = ('fun_args1', 'fun_args2')
+    fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=2)
+    kwargs = dict(some_key1=3, some_key2=4)
+
+    function_run_args = []
     salt.state_fun_execute(
-        'state_fun1', 'some_arg', some_kwarg=1, targets='aaa'
+        state_fun,
+        fun_args=fun_args,
+        fun_kwargs=fun_kwargs,
+        targets=targets,
+        **kwargs
     )
-    assert local_client_args == [
+    assert function_run_args == [
         (
-            ('aaa', 'state.single', ['state_fun1', 'some_arg']),
-            {'kwarg': {'some_kwarg': 1}, 'full_return': True}
+            ('state.single',),
+            dict(
+                fun_args=([state_fun] + list(fun_args)),
+                fun_kwargs=fun_kwargs,
+                targets=targets,
+                **dict(nowait=False, **kwargs)
+            )
         )
     ]
-
-    local_client_args = []
-    salt.state_fun_execute(
-        'state_fun1', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
-    )
-    assert local_client_args == [
-        (
-            (local_minion_id, 'state.single', ['state_fun1', 'some_arg']),
-            {'kwarg': {'some_kwarg': 1}, 'full_return': True}
-        ),
-    ]
-
-    # fail case
-    local_client_res = {
-        'some-node-id': {
-            'ret': {
-                'some-task-id': {
-                    'result': False,
-                    'comment': 'some comment'
-                }
-            },
-            'retcode': 1
-        }
-    }
-    with pytest.raises(SaltError) as excinfo:
-        salt.state_fun_execute(
-            'state_fun1', 'some_arg', some_kwarg=1, targets='aaa'
-        )
-    assert str(excinfo.value) == (
-        "Failed to execute state function '{}': salt command failed: {}"
-        .format(
-            'state_fun1',
-            {'some-node-id': {'some-task-id': 'some comment'}}
-        )
-    )
-    with pytest.raises(SaltError) as excinfo:
-        salt.state_fun_execute(
-            'state_fun1', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
-        )
-    assert str(excinfo.value) == (
-        "Failed to execute state function '{}': salt command failed: {}"
-        .format(
-            'state_fun1', {'some-node-id': {'some-task-id': 'some comment'}}
-        )
-    )
-
-    # success case
-    local_client_res['some-node-id']['retcode'] = 0
-    # local_client_res['some-node-id']['ret']['some-task-id']['result'] = True
-    res = salt.state_fun_execute(
-        'some.state', 'some_arg', some_kwarg=1, targets='aaa'
-    )
-    assert res == {
-        'some-node-id': local_client_res['some-node-id']['ret']
-    }
-    res = salt.state_fun_execute(
-        'some.state', 'some_arg', some_kwarg=1, targets=LOCAL_MINION
-    )
-    assert res == {
-        'some-node-id': local_client_res['some-node-id']['ret']
-    }

@@ -25,3 +25,5 @@ set_eosupdate_repo:
     - components.misc_pkgs.eosupdate.repo
 eos_update:
   type: EOSUpdate
+get_result:
+  type: GetResult

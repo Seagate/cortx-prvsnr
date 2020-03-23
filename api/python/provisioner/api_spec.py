@@ -55,7 +55,7 @@ def process_param_spec(
                 )
             else:
                 logger.error("Failed to update {}".format(type(value)))
-                TypeError('{}'.format(type(value)))
+                raise TypeError('{}'.format(type(value)))
 
     return dest
 

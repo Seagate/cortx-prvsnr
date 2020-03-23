@@ -4,6 +4,7 @@ _values = {}
 
 
 class _Singletone:
+    _prvsnr_type_ = True
     _instance = None
 
     def __new__(cls):

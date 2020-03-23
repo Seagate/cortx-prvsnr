@@ -1,10 +1,11 @@
 import pytest
 import yaml
-import json
+
 import attr
 from typing import Any
 
 from provisioner import __main__
+from provisioner import serialize
 from provisioner.__main__ import _run_cmd
 
 
@@ -53,14 +54,18 @@ def test_run_cmd_exc(outputter, output_type):
         if output_type == 'yaml':
             output = yaml.safe_load(outputter.res)
         else:  # json
-            output = json.loads(outputter.res)
+            output = serialize.loads(outputter.res)
 
-        assert output == {
-            'exc': {
-                'type': type(exc).__name__,
-                'args': list(exc.args)
+        if output_type == 'yaml':
+            assert output == {
+                'exc': {
+                    'type': type(exc).__name__,
+                    'args': list(exc.args)
+                }
             }
-        }
+        else:  # json
+            assert list(output) == ['exc']
+            assert output['exc'].args == exc.args
 
 
 @pytest.mark.parametrize("output_type", ['plain', 'json', 'yaml'])
@@ -78,7 +83,7 @@ def test_run_cmd_ok(outputter, output_type):
         if output_type == 'yaml':
             output = yaml.safe_load(outputter.res)
         else:  # json
-            output = json.loads(outputter.res)
+            output = serialize.loads(outputter.res)
 
         assert output == {
             'ret': ret,
