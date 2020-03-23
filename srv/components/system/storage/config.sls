@@ -68,7 +68,7 @@ Make SWAP partition:
 Enable swap:
   mount.swap:
     - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    - persist: False    # don't add /etc/fstab entry
+    - persist: True    # don't add /etc/fstab entry
     - require:
       - cmd: Make SWAP partition
 
