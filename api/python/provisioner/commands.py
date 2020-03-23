@@ -337,6 +337,7 @@ class EOSUpdate(CommandParserFillerMixin):
                     raise
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -395,6 +396,46 @@ class GetResult(CommandParserFillerMixin):
 
     def run(self, cmd_id: str):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
+
+
+# TODO TEST
+@attr.s(auto_attribs=True)
+class SetSSLCerts(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsSSLCerts
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, source, targets=ALL_MINIONS, restart=False, dry_run=False):
+        state_name = "components.misc_pkgs.ssl_certs"
+        dest = PRVSNR_CERTS_DIR
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "rm -rf {0} && mkdir -p {0} && cp -R {1} {0}"
+                    .format(dest, source)
+                )
+            )
+        )
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "scp -ri ~/.ssh/config {0} eosnode-2:{0}"
+                    .format(dest.parent)
+                )
+            )
+        )
+        try:
+            StatesApplier.apply([state_name])
+        except Exception:
+            logger.exception(
+                "Failed to apply certs"
+            )
+            raise
 
 
 commands = {}

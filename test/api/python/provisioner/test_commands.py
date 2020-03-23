@@ -226,7 +226,7 @@ def test_eosupdate_run(monkeypatch):
     ] + [
         (
             StatesApplier.apply, (
-                ["components.{}.update".format(component)],
+                ["components.{}.update".format(component)], 'some-target'
             ), {}
         ) for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
     ] + [
