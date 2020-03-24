@@ -46,4 +46,5 @@ Delete csm checkpoint flag:
 Add csm user to certs group:
   group.present:
     - name: certs
-    - delusers: csm
+    - delusers:
+      - csm

@@ -52,4 +52,5 @@ Reset selinux bool for httpd:
 Remove haproxy user to certs group:
   group.present:
     - name: certs
-    - delusers: haproxy
+    - delusers:
+      - haproxy

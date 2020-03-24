@@ -8,14 +8,14 @@ Install common runtime libraries:
       - gflags
       - glog
 
-Install from s3server_uploads packages:
-  pkg.installed:
-    - pkgs:
-      - python34-boto3
-      - python34-botocore
-      - python34-jmespath
-      - python34-s3transfer
-      - python34-xmltodict
+# Install from s3server_uploads packages:
+#   pkg.installed:
+#     - pkgs:
+#       - python34-boto3
+#       - python34-botocore
+#       - python34-jmespath
+#       - python34-s3transfer
+#       - python34-xmltodict
 
 Install s3server package:
   pkg.installed:

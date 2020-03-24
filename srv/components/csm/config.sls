@@ -2,7 +2,8 @@
 Add csm user to certs group:
   group.present:
     - name: certs
-    - addusers: csm
+    - addusers:
+      - csm
 
 Stage - Post Install CSM:
   cmd.run:

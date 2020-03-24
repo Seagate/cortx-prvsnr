@@ -1,3 +1,4 @@
+{% if salt['service.running']('firewalld') %}
 Remove public-data-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=public-data-zone
@@ -15,3 +16,4 @@ Remove management-zone:
 
 include:
   - components.system.firewall.stop
+{% endif %}

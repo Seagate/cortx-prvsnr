@@ -1,7 +1,8 @@
 Create certs group:
   group.present:
     - name: certs
-    - addusers: root
+    - addusers:
+      - root
 
 Create s3 certs directory:
   file.directory:
@@ -17,5 +18,5 @@ Create s3 certs directory:
       - group
       - mode
     - require:
-      - user: Create Certs user
+      - Create certs group
 
