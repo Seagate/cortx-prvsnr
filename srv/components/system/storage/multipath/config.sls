@@ -55,4 +55,7 @@ Update cluster.sls pillar:
     - cluster.storage_device_config: []
 {% endif %}
 
+include:
+  - components.system.prepare
+
 # End Setup multipath

@@ -1,6 +1,7 @@
-Create Certs user:
-  user.present:
+Create certs group:
+  group.present:
     - name: certs
+    - addusers: root
 
 Create s3 certs directory:
   file.directory:
@@ -9,7 +10,7 @@ Create s3 certs directory:
     - makedirs: True
     - dir_mode: 750
     - file_mode: 640
-    - user: certs
+    - user: root
     - group: certs
     - recurse:
       - user

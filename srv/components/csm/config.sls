@@ -1,4 +1,9 @@
 #CSM Configuration and Initialization
+Add csm user to certs group:
+  group.present:
+    - name: certs
+    - addusers: csm
+
 Stage - Post Install CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:post_install')

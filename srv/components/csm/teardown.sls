@@ -42,3 +42,8 @@ Remove /opt/statsd-utils:
 Delete csm checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm
+
+Add csm user to certs group:
+  group.present:
+    - name: certs
+    - delusers: csm

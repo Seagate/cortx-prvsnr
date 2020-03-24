@@ -15,7 +15,6 @@ Copy certs to destination:
     - source: /opt/seagate/eos-prvsnr/generated_configs/ssl/certs/stx.pem
     - force: True
     - makedirs: True
-    - user: certs
     - group: certs
     - mode: 440
 

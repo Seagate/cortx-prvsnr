@@ -1,3 +1,8 @@
+Add haproxy user to certs group:
+  group.present:
+    - name: certs
+    - addusers: haproxy
+
 Setup HAProxy config:
   file.managed:
     - name: /etc/haproxy/haproxy.cfg

@@ -48,3 +48,8 @@ Reset selinux bool for httpd:
     - name: httpd_can_network_connect
     - value: false
     - persist: True
+
+Remove haproxy user to certs group:
+  group.present:
+    - name: certs
+    - delusers: haproxy

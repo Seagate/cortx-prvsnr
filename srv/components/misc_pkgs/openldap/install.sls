@@ -8,12 +8,6 @@ Update to latest selinux-policy:
   pkg.installed:
     - name: selinux-policy
 
-Install certs:
-  pkg.installed:
-    - sources:
-      - stx-s3-certs: /opt/seagate/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
-      - stx-s3-client-certs: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
-
 Backup slapd config file:
   file.copy:
     - name: /etc/sysconfig/slapd.bak

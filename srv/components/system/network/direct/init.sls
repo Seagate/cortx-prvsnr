@@ -1,4 +1,6 @@
 {% set node = grains['id'] %}
+include:
+  - components.system.prepare
 
 # Setup network for data interfaces
 Public direct network:
@@ -42,8 +44,6 @@ Private direct network:
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 Update roaming IPs in cluster.sls pillar:
   module.run:
-    - saltutil.sync_all: []
-    - saltutil.refresh_modules: []
     - cluster.nw_roaming_ip: []
     - saltutil.refresh_pillar: []
 {% endif %}

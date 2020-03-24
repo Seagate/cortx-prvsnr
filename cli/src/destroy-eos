@@ -9,6 +9,42 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 run_ees_ha=true
 
+ha_states=(
+    "ha.ees_ha"
+    "ha.corosync-pacemaker"
+)
+
+controlpath_states=(
+# states to be applied in desired sequence
+    "csm"
+    "sspl"
+)
+
+iopath_states=(
+# states to be applied in desired sequence
+    "hare"
+    "s3server"
+    "eoscore"
+    "misc_pkgs.lustre"
+)
+
+prereq_states=(
+# states to be applied in desired sequence
+    "misc_pkgs.statsd"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.openldap"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.kibana"
+    "misc_pkgs.elasticsearch"
+    "ha.haproxy"
+    "system.storage"
+    "system.ntp"
+    "system.logrotate"
+    "system.firewall"
+    "misc_pkgs.rsyslog"
+    "system"
+)
+
 function usage {
   echo "\
 Usage: $0 [options]
@@ -58,24 +94,19 @@ function teardown_states {
                 #       and do it as part of bootstra-eos script similar to the
                 #       'hctl bootstrap' command
 
+                l_info "Force destroying PCS cluster to speed-up teardown"
+                pcs cluster destroy --force || true
+
                 l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts
+                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 # Execute on eosnode-2 to be followed on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts
-                sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" ]]; then
-                # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts
-                sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts
+                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state' for both nodes"
-                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts
+                $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
         done
@@ -107,46 +138,13 @@ fi
 l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
-ha_states=(
-    "ha.ees_ha"
-    "ha.corosync-pacemaker"
-)
-teardown_states "$(ha_states)"
-controlpath_states=(
-# states to be applied in desired sequence
-    "csm"
-    "sspl"
-)
+
+teardown_states "${ha_states[@]}"
+
 teardown_states "${controlpath_states[@]}"
 
-iopath_states=(
-# states to be applied in desired sequence
-    "hare"
-    "s3server"
-    "eoscore"
-    "misc_pkgs.lustre"
-)
 teardown_states  "${iopath_states[@]}"
 
-
-prereq_states=(
-# states to be applied in desired sequence
-    "misc_pkgs.statsd"
-    "misc_pkgs.rabbitmq"
-    "misc_pkgs.openldap"
-    "misc_pkgs.nodejs"
-    "misc_pkgs.kibana"
-    "misc_pkgs.elasticsearch"
-    "ha.haproxy"
-    "misc_pkgs.build_ssl_cert_rpms"
-    "system.storage"
-    "system.mlnx_driver"
-    "system.ntp"
-    "system.logrotate"
-    "system.firewall"
-    "misc_pkgs.rsyslog"
-    "system"
-)
 teardown_states "${prereq_states[@]}"
 
 sleep 2

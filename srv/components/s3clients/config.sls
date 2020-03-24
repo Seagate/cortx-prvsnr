@@ -3,7 +3,7 @@ Append /etc/hosts:
     - name: /etc/hosts
     - mode: ensure
     - content: {{ pillar['s3clients']['s3server']['ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
-    - after: "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    - after: "::1.+localhost.+"
 
 
 # Generate base credentials:

@@ -9,6 +9,44 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 run_ees_ha=true
 
+prereq_states=(
+    # states to be applied in desired sequence
+        "system"
+        "misc_pkgs.rsyslog"
+        "system.firewall"
+        "system.logrotate"
+        "system.ntp"
+        "system.storage"
+        "misc_pkgs.ssl_certs"
+        "ha.haproxy"
+        "misc_pkgs.elasticsearch"
+        "misc_pkgs.kibana"
+        "misc_pkgs.nodejs"
+        "misc_pkgs.openldap"
+        "misc_pkgs.rabbitmq"
+        "misc_pkgs.statsd"
+    )
+
+iopath_states=(
+    # states to be applied in desired sequence
+        "misc_pkgs.lustre"
+        "eoscore"
+        "s3server"
+        "hare"
+    )
+
+ha_states=(
+    # states to be applied in desired sequence
+        "ha.corosync-pacemaker"
+        "ha.ees_ha"
+    )
+
+controlpath_states=(
+    # states to be applied in desired sequence
+        "sspl"
+        "csm"
+    )
+
 function usage {
   echo "\
 Usage: $0 [options]
@@ -20,7 +58,6 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       --no-ha      skip running the ees_ha component
        -S,  --singlenode               switch to single node mode setup
 "
 }
@@ -29,9 +66,6 @@ function options_parser {
     set -eu
 
     case "$1" in
-        --no-ha)
-            run_ees_ha=false
-            ;;
         -S|--singlenode)
             singlenode=true
             ;;
@@ -51,7 +85,6 @@ function run_states {
         for state in ${states[@]}; do
             l_info "Applying 'components.$state'"
             $cmd salt eosnode-1 state.apply components.$state $salt_opts
-
             sleep 2     # Mindfulness break
         done
     else
@@ -109,27 +142,12 @@ fi
 
 # Refresh salt pillar data
 l_info "Updating salt pillar data"
+$cmd salt "*" saltutil.sync_all
 $cmd salt "*" saltutil.refresh_pillar
+$cmd salt "*" saltutil.refresh_grains
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
-    prereq_states=(
-    # states to be applied in desired sequence
-        "system"
-        "misc_pkgs.rsyslog"
-        "system.firewall"
-        "system.logrotate"
-        "system.ntp"
-        # "system.mlnx_driver"
-        "system.storage"
-        "misc_pkgs.build_ssl_cert_rpms"
-        "ha.haproxy"
-        "misc_pkgs.elasticsearch"
-        "misc_pkgs.kibana"
-        "misc_pkgs.nodejs"
-        "misc_pkgs.openldap"
-        "misc_pkgs.rabbitmq"
-        "misc_pkgs.statsd"
-    )
+    
     run_states "${prereq_states[@]}"
 
     sleep 2
@@ -143,33 +161,14 @@ if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
 fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
-    iopath_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.lustre"
-        "eoscore"
-        "s3server"
-        "hare"
-    )
     run_states  "${iopath_states[@]}"
 fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
-    if [ $run_ees_ha == true ]; then
-        ha_states=(
-        # states to be applied in desired sequence
-            "ha.corosync-pacemaker"
-            "ha.ees_ha"
-        )
-        run_states "${ha_states[@]}"
-    fi
+    run_states "${ha_states[@]}"
 fi
 
 if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.csm ]; then
-    controlpath_states=(
-    # states to be applied in desired sequence
-        "sspl"
-        "csm"
-    )
     run_states "${controlpath_states[@]}"
 fi
 
