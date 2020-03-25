@@ -307,13 +307,27 @@ def _salt_runner_cmd(
 
     _set_auth(cmd_args.kw)
 
+    eauth = 'username' in cmd_args.kw
+    if not eauth:
+        if nowait:
+            raise NotImplementedError(
+                'async calls without external auth for RunnerClient'
+                ' are not supported yet'
+            )
+        cmd_args.kw['print_event'] = False
+        cmd_args.kw['full_return'] = True
+
     try:
-        _cmd_f = (
-            salt_runner_client().cmd_async if nowait
-            else salt_runner_client().cmd_sync
-        )
-        low = dict(fun=fun, **cmd_args.kwargs)
-        salt_res = _cmd_f(low, full_return=True)
+        if eauth:
+            _cmd_f = (
+                salt_runner_client().cmd_async if nowait
+                else salt_runner_client().cmd_sync
+            )
+            low = dict(fun=fun, **cmd_args.kwargs)
+            salt_res = _cmd_f(low, full_return=True)
+        else:
+            _cmd_f = salt_runner_client().cmd
+            salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
         raise SaltCmdRunError(cmd_args, exc) from exc
 
@@ -333,15 +347,17 @@ def _salt_runner_cmd(
     if nowait:
         return salt_res
 
-    if 'data' not in salt_res:
-        raise SaltCmdRunError(
-            cmd_args, (
-                'no data key in RunnerClient result dictionary: {}'
-                .format(salt_res)
+    if eauth:
+        if 'data' not in salt_res:
+            raise SaltCmdRunError(
+                cmd_args, (
+                    'no data key in RunnerClient result dictionary: {}'
+                    .format(salt_res)
+                )
             )
-        )
-
-    res = SaltRunnerResult.from_salt_res(salt_res['data'])
+        res = SaltRunnerResult.from_salt_res(salt_res['data'])
+    else:
+        res = SaltRunnerResult.from_salt_res(salt_res)
 
     if res.success:
         return res.result

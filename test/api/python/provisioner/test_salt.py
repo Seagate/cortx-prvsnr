@@ -40,7 +40,8 @@ def patch_logging(request):
     request.getfixturevalue('patch_logging')
 
 
-def test_salt_runner_cmd(monkeypatch):
+@pytest.mark.parametrize("eauth", [True, False], ids=['eauth', 'root'])
+def test_salt_runner_cmd(monkeypatch, eauth):
     salt_cmd_args = []
     salt_cmd_res = {}
     exc = None
@@ -65,16 +66,23 @@ def test_salt_runner_cmd(monkeypatch):
     fun_kwargs = dict(fun_kwargs1=1, fun_kwargs2=2)
     nowait = False
     kwargs = dict(some_key1=3, some_key2=4)
-    salt_cmd_good_res = {
-        'data': {
-            'jid': '12345',
-            '_stamp': 'some-timestamp',
-            'fun': 'some.fun',
-            'user': 'some-user',
-            'success': True,
-            'return': 'some-return'
-        }
+    if eauth:
+        kwargs.update(dict(username='user', password='passwd', eauth='pam'))
+    salt_cmd_base_result = {
+        'jid': '12345',
+        '_stamp': 'some-timestamp',
+        'fun': 'some.fun',
+        'user': 'some-user',
+        'success': True,
+        'return': 'some-return'
     }
+    if eauth:
+        salt_cmd_good_res = {
+            'data': salt_cmd_base_result
+        }
+    else:
+        salt_cmd_good_res = salt_cmd_base_result
+
     salt_cmd_res = salt_cmd_good_res
 
     def _call():
@@ -87,6 +95,9 @@ def test_salt_runner_cmd(monkeypatch):
 
     def _check_exc_attrs(exc, _locals):
         _kwargs = dict(_locals['kwargs'])
+        if not eauth:
+            _kwargs['print_event'] = False
+            _kwargs['full_return'] = True
 
         for attr in (
             'fun', 'fun_args', 'fun_kwargs', 'nowait'
@@ -96,38 +107,62 @@ def test_salt_runner_cmd(monkeypatch):
 
     salt_cmd_args = []
     _call()
-    assert salt_cmd_args == [
-        (
+    if eauth:
+        assert salt_cmd_args == [
             (
-                dict(
-                    fun=fun,
-                    arg=(), kwarg=fun_kwargs,
-                    **kwargs
+                (
+                    dict(
+                        fun=fun,
+                        arg=(), kwarg=fun_kwargs,
+                        **kwargs
+                    ),
                 ),
-            ),
-            dict(
-                full_return=True
+                dict(
+                    full_return=True
+                )
             )
-        )
-    ]
+        ]
+    else:
+        assert salt_cmd_args == [
+            (
+                (fun,),
+                dict(
+                    arg=(), kwarg=fun_kwargs,
+                    full_return=True, print_event=False,
+                    **kwargs
+                )
+            )
+        ]
 
     salt_cmd_args = []
     fun_args = ('fun_args1', 'fun_args2')
     _call()
-    assert salt_cmd_args == [
-        (
+    if eauth:
+        assert salt_cmd_args == [
             (
-                dict(
-                    fun=fun,
-                    arg=fun_args, kwarg=fun_kwargs,
-                    **kwargs
+                (
+                    dict(
+                        fun=fun,
+                        arg=fun_args, kwarg=fun_kwargs,
+                        **kwargs
+                    ),
                 ),
-            ),
-            dict(
-                full_return=True
-            ),
-        )
-    ]
+                dict(
+                    full_return=True
+                ),
+            )
+        ]
+    else:
+        assert salt_cmd_args == [
+            (
+                (fun,),
+                dict(
+                    arg=fun_args, kwarg=fun_kwargs,
+                    full_return=True, print_event=False,
+                    **kwargs
+                )
+            )
+        ]
 
     nowait = True
     salt_cmd_args = []
@@ -170,12 +205,20 @@ def test_salt_runner_cmd(monkeypatch):
 
     # raise on fail
     salt_cmd_res = salt_cmd_good_res
-    salt_cmd_res['data']['success'] = False
+    if eauth:
+        salt_cmd_res['data']['success'] = False
+    else:
+        salt_cmd_res['success'] = False
     with pytest.raises(SaltCmdResultError) as excinfo:
         _call()
-    assert (
-        excinfo.value.reason == salt_cmd_res['data']['return']
-    )
+    if eauth:
+        assert (
+            excinfo.value.reason == salt_cmd_res['data']['return']
+        )
+    else:
+        assert (
+            excinfo.value.reason == salt_cmd_res['return']
+        )
     _check_exc_attrs(excinfo.value, locals())
 
 

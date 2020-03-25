@@ -23,6 +23,7 @@ DEF_LOGGING_FORMAT = ("%(asctime)s - %(name)s - %(levelname)s - "
 DEF_LOGLEVEL = 'INFO'
 
 
+GeneralArgs = attr.make_class("GeneralArgs", ('version',))
 AuthArgs = attr.make_class("AuthArgs", ('username', 'password', 'eauth'))
 LogArgs = attr.make_class(
     "LogArgs", ('output', 'loglevel', 'logformat', 'logstream', 'logmode')
@@ -62,6 +63,12 @@ def _set_logging(
 
 def _parse_args():
     parser_common = argparse.ArgumentParser(add_help=False)
+
+    general_group = parser_common.add_argument_group('general')
+    general_group.add_argument(
+        "--version", action='store_true',
+        help="show version and quit"
+    )
 
     auth_group = parser_common.add_argument_group('authentication')
     auth_group.add_argument(
@@ -134,9 +141,6 @@ def _parse_args():
 
     kwargs = vars(parser.parse_args())
     cmd = kwargs.pop('command')
-    if cmd is None:
-        logger.error("Command is required")
-        raise ValueError('command is required')
     args = kwargs.pop('args', [])
     return cmd, args, kwargs
 
@@ -221,6 +225,12 @@ def _run_cmd(cmd: Union[str, Any], output, *args, **kwargs):
 def main():
     cmd, args, kwargs = _parse_args()
 
+    general_args = GeneralArgs(
+        **{
+            k: kwargs.pop(k) for k in list(kwargs)
+            if k in attr.fields_dict(GeneralArgs)
+        }
+    )
     auth_args = AuthArgs(
         **{
             k: kwargs.pop(k) for k in list(kwargs)
@@ -233,6 +243,14 @@ def main():
             if k in attr.fields_dict(LogArgs)
         }
     )
+
+    if general_args.version:
+        print(provisioner.__version__)
+        sys.exit(0)
+
+    if cmd is None:
+        logger.error("Command is required")
+        raise ValueError('command is required')
 
     if auth_args.password == '-':
         auth_args.password = next(fileinput.input(['-'])).rstrip()

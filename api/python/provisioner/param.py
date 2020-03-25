@@ -40,7 +40,9 @@ class KeyPath:
 # (http://www.attrs.org/en/stable/hashing.html)
 @attr.s(auto_attribs=True, frozen=True)
 class Param:
+    # TODO IMPROVE make optionl for internal usage
     name: KeyPath = attr.ib(converter=KeyPath)
+    # TODO IMPROVE make optionl for internal usage
     pi_path: Path = attr.ib(converter=Path)
     pi_key: KeyPath = attr.ib(converter=KeyPath)
 
