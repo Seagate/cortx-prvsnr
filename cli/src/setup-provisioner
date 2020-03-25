@@ -96,7 +96,7 @@ function positional_args_parser {
 }
 
 
-parse_args '' 'eosnode-2:,repo-src:,salt-master:' options_parser positional_args_parser "$@"
+parse_args 'S' 'eosnode-2:,repo-src:,salt-master:,singlenode' options_parser positional_args_parser "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -213,6 +213,7 @@ set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
 # configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
+configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP EOSNODE-2
 if [[ "$singlenode" != true ]]; then

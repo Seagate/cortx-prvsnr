@@ -149,8 +149,9 @@ def test_pillar_updater_ensure_exists(tmpdir_function):
     assert f2.exists()
 
 
+@pytest.mark.patch_logging([(pillar, ('error',))])
 def test_pillar_updater_update_values(
-    some_param_gr, test_pillar
+    some_param_gr, test_pillar, patch_logging
 ):
     fpath = some_param_gr.param_spec('attr1').pi_path.name
 

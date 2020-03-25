@@ -44,11 +44,16 @@ def process_cli_result(
         )
 
     if 'exc' in res:
+        logger.error("Provisioner CLI failed: {}".format(res['exc']))
         raise res['exc']
     else:
         try:
             return res['ret']
         except KeyError:
+            logger.error(
+                "No return data found in '{}', stderr: '{}'"
+                .format(stdout, stderr)
+            )
             raise errors.ProvisionerError(
                 "No return data found in '{}', stderr: '{}'"
                 .format(stdout, stderr)
@@ -57,12 +62,14 @@ def process_cli_result(
 
 def _run_cmd(cmd, **kwargs):
     try:
+        logger.debug("Executing command {}".format(cmd))
         res = subprocess.run(cmd, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:
         return process_cli_result(exc.stdout, exc.stderr)
     # subprocess.run fails unexpectedly
     except Exception as exc:
+        logger.exception("Failed to execute command")
         raise errors.ProvisionerError(repr(exc)) from exc
     else:
         return process_cli_result(res.stdout, res.stderr)

@@ -72,8 +72,28 @@ class SaltJob:
         return not self.error  # FIXME
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
-class SaltRunnerArgs:
+class SaltArgsMixin:
+    @property
+    def args(self):
+        return (self.fun,)
+
+    @property
+    def kwargs(self):
+        return dict(arg=self.fun_args, kwarg=self.fun_kwargs, **self.kw)
+
+    def __str__(self):
+        _dct = attr.asdict(self)
+        if 'password' in _dct['kw']:
+            _dct['kw']['password'] = '*' * 7
+
+        _self_safe = type(self)(**_dct)
+        return str(attr.asdict(_self_safe))
+
+
+@attr.s(auto_attribs=True)
+class SaltRunnerArgs(SaltArgsMixin):
     _prvsnr_type_ = True
 
     fun: str = attr.ib(converter=str)
@@ -85,14 +105,6 @@ class SaltRunnerArgs:
     )
     nowait: bool = False
     kw: Dict = attr.Factory(dict)
-
-    @property
-    def args(self):
-        return (self.fun,)
-
-    @property
-    def kwargs(self):
-        return dict(arg=self.fun_args, kwarg=self.fun_kwargs, **self.kw)
 
 
 @attr.s(auto_attribs=True)
@@ -119,7 +131,7 @@ class SaltRunnerResult:
 
 
 @attr.s(auto_attribs=True)
-class SaltClientArgs:
+class SaltClientArgs(SaltArgsMixin):
     _prvsnr_type_ = True
 
     targets: str = attr.ib(converter=str)
@@ -136,10 +148,6 @@ class SaltClientArgs:
     @property
     def args(self):
         return (self.targets, self.fun)
-
-    @property
-    def kwargs(self):
-        return dict(arg=self.fun_args, kwarg=self.fun_kwargs, **self.kw)
 
 
 # TODO TYPE
@@ -248,6 +256,7 @@ def local_minion_id():
     if not _local_minion_id:
         _local_minion_id = salt_caller_local().cmd('grains.get', 'id')
         if not _local_minion_id:
+            logger.error("Failed to get local minion id")
             raise SaltError('Failed to get local minion id')
 
     return _local_minion_id
@@ -356,9 +365,13 @@ def runner_function_run(
         )
     )
 
-    res = _salt_runner_cmd(
-        fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
-    )
+    try:
+        res = _salt_runner_cmd(
+            fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
+        )
+    except Exception:
+        logger.exception("Salt runner command failed")
+        raise
 
     logger.info(
         "Runner function '{}' resulted in {}".format(
@@ -438,9 +451,13 @@ def function_run(
         )
     )
 
-    res = _salt_client_cmd(
-        targets, fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
-    )
+    try:
+        res = _salt_client_cmd(
+            targets, fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
+        )
+    except Exception:
+        logger.exception("Salt client command failed")
+        raise
 
     logger.info(
         "Function '{}' on '{}' resulted in {}".format(
@@ -659,6 +676,11 @@ class YumRollbackManager:
             not self.multiple_targets_ok
             and (len(self.last_txn_ids) > 1)
         ):
+            logger.error(
+                "Multiple targetting is not expected, "
+                "matched targets: {} for '{}'"
+                .format(list(self.last_txn_ids), self.targets)
+            )
             raise ValueError(
                 "Multiple targetting is not expected, "
                 "matched targets: {} for '{}'"

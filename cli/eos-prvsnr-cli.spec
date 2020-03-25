@@ -47,6 +47,10 @@ cp -pr files/.ssh/* %{buildroot}/root/.ssh/
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
 cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig
+cp files/syslogconfig/* %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig/
+
+
 %clean
 rm -rf %{buildroot}
 
@@ -57,6 +61,7 @@ rm -rf %{buildroot}
 /opt/seagate/eos-prvsnr/files/etc/salt
 /opt/seagate/eos-prvsnr/files/etc/modprobe.d
 /opt/seagate/eos-prvsnr/files/etc/yum.repos.d
+/opt/seagate/eos-prvsnr/files/syslogconfig
 /root/.ssh
 
 

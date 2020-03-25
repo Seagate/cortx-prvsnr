@@ -1,4 +1,5 @@
 import sys
+import logging
 
 from .salt import auth_init as _auth_init
 from .api_spec import api_spec
@@ -15,6 +16,8 @@ from .runner import SimpleRunner
 # - action might require a set of preliminary steps - hard
 #   to describe using generic spec (yaml)
 
+logger = logging.getLogger(__name__)
+
 
 def auth_init(username, password, eauth='pam'):
     return _auth_init(username, password, eauth=eauth)
@@ -25,6 +28,7 @@ def run(command: str, *args, nowait=False, **kwargs):
     kwargs.pop('password', None)
     kwargs.pop('username', None)
     kwargs.pop('eauth', None)
+    logger.debug("Executing command {}".format(command))
     return SimpleRunner(nowait=nowait).run(command, *args, **kwargs)
 
 

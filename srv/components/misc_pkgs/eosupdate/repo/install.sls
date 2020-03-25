@@ -6,7 +6,7 @@
 
         {% set iso_path = source + '.iso' %}
 
-copy_repo_iso:
+copy_repo_iso_{{ release }}:
   file.managed:
     - name: {{ iso_path }}
     - source: salt://misc_pkgs/eosupdate/repo/files/{{ release }}.iso
@@ -20,7 +20,7 @@ copy_repo_iso:
     {% elif source_type == 'dir' %}
 
 
-copy_repo_dir:
+copy_repo_dir_{{ release }}:
   file.recurse:
     - name: {{ source }}
     - source: salt://misc_pkgs/eosupdate/repo/files/{{ release }}

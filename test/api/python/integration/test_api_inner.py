@@ -309,11 +309,6 @@ def test_set_eosupdate_repo():
             'yum repolist enabled | grep {}'.format(expected_repo_name),
             retcodes=[1]
         )
-        # check no any update repo is listed
-        run_cmd(
-            'yum repolist enabled | grep {}'.format(base_repo_name),
-            retcodes=[1]
-        )
 
         if mount_dir:
             check_unmounted(mount_dir)
@@ -341,9 +336,11 @@ def test_set_eosupdate_repo():
         )
     exc = excinfo.value
     if api_type == 'cli':
-        exc = json.loads(exc.stdout)['exc']
-        assert exc['type'] == 'EOSUpdateRepoSourceError'
-        assert exc['args'] == [source, 'unexpected type of source']
+        from provisioner import serialize, errors
+        exc = serialize.loads(exc.stdout)['exc']
+        assert type(exc) is errors.EOSUpdateRepoSourceError
+        assert exc.source == source
+        assert exc.reason == 'unexpected type of source'
     else:
         assert type(exc).__name__ == 'EOSUpdateRepoSourceError'
         assert exc.source == source
@@ -418,6 +415,11 @@ def test_set_eosupdate_repo():
             source=undefined_value
         )
         check_not_installed(release, expected_repo_name, mount_dir)
+        # check no any update repo is listed
+        run_cmd(
+            'yum repolist enabled | grep {}'.format(base_repo_name),
+            retcodes=[1]
+        )
 
         # dry run check
         api_call(
@@ -428,6 +430,75 @@ def test_set_eosupdate_repo():
         )
         #   verify that nothing has changed in the system
         check_not_installed(release, expected_repo_name, mount_dir)
+        # check no any update repo is listed
+        run_cmd(
+            'yum repolist enabled | grep {}'.format(base_repo_name),
+            retcodes=[1]
+        )
+
+    # two repos concurrently
+    for release, source, expected_rpm_name in [
+        ('1.2.5', repo_dir, prvsnr_pkg_name),
+        ('1.2.6', iso_path, prvsnr_pkg_name),
+        ('1.2.7', repo_dir, prvsnr_pkg_name),
+        ('1.2.8', iso_path, prvsnr_pkg_name)
+    ]:
+        expected_repo_name = '{}_{}'.format(base_repo_name, release)
+
+        if source is iso_path:
+            mount_dir = Path(pillar_params['base_dir']) / release
+        else:
+            mount_dir = None
+
+        # INSTALL
+        api_call(
+            'set_eosupdate_repo', release, source=source
+        )
+
+        # check repo is enabled
+        run_cmd(
+            'yum repolist enabled | grep {}'.format(expected_repo_name)
+        )
+
+    res = run_cmd(
+        'yum repolist enabled | grep {}'.format(base_repo_name)
+    )
+    for _id, _res in res.items():
+        assert len(_res['ret'].strip().split(os.linesep)) == 4
+
+    for release, source, expected_rpm_name in [
+        ('1.2.5', repo_dir, prvsnr_pkg_name),
+        ('1.2.6', iso_path, prvsnr_pkg_name),
+        ('1.2.7', repo_dir, prvsnr_pkg_name),
+        ('1.2.8', iso_path, prvsnr_pkg_name)
+    ]:
+
+        expected_repo_name = '{}_{}'.format(base_repo_name, release)
+
+        if source is iso_path:
+            mount_dir = Path(pillar_params['base_dir']) / release
+        else:
+            mount_dir = None
+
+        if api_type in ('py', 'pycli'):
+            from provisioner import UNDEFINED
+            undefined_value = UNDEFINED
+        else:
+            undefined_value = 'PRVSNR_UNDEFINED'
+
+        # REMOVE
+        # TODO UNDEFINED
+        api_call(
+            'set_eosupdate_repo',
+            release,
+            source=undefined_value
+        )
+        check_not_installed(release, expected_repo_name, mount_dir)
+
+    run_cmd(
+        'yum repolist enabled | grep {}'.format(base_repo_name),
+        retcodes=[1]
+    )
 
 
 def test_set_eosupdate_repo_for_reinstall():

@@ -2,6 +2,7 @@ import docker
 import time
 import json
 import attr
+from typing import Iterable
 from pathlib import Path
 from collections import defaultdict
 
@@ -289,6 +290,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "eos_bvt: mark test as BVT one"
     )
+    config.addinivalue_line(
+        "markers", "patch_logging: mark test as expected patched logging"
+    )
 
 
 prvsnr_pytest_options = {
@@ -384,6 +388,21 @@ def env_provider(request):
     if marker:
         res = marker.args[0]
     return res
+
+
+@pytest.fixture
+def patch_logging(request, monkeypatch):
+    marker = request.node.get_closest_marker('patch_logging')
+    if marker:
+        res = marker.args[0]
+    else:
+        return
+
+    for module, levels in res:
+        for log_f in levels:
+            monkeypatch.setattr(
+                getattr(module, 'logger'), log_f, lambda *args, **kwargs: None
+            )
 
 
 @pytest.fixture(scope='session')

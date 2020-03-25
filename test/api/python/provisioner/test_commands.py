@@ -67,7 +67,8 @@ def test_set_from_spec():
     assert get_cmd.post_states == [State(st) for st in states['post']]
 
 
-def test_set_run(monkeypatch, some_param_gr):
+@pytest.mark.patch_logging([(commands, ('error',))])
+def test_set_run(monkeypatch, some_param_gr, patch_logging):
     pre_states = [State('pre')]
     post_states = [State('post')]
 
@@ -182,7 +183,8 @@ def test_set_run(monkeypatch, some_param_gr):
     ]
 
 
-def test_eosupdate_run(monkeypatch):
+@pytest.mark.patch_logging([(commands, ('info',))])
+def test_eosupdate_run(monkeypatch, patch_logging):
     calls = []
     eosupdate_cmd = commands.EOSUpdate()
 

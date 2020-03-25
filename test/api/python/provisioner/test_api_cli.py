@@ -27,7 +27,10 @@ def subprocess_runner(monkeypatch):
     return _subprocess_runner
 
 
-def test_api_cli_run_cmd_subprocess_run_fails_unexpectedly(subprocess_runner):
+@pytest.mark.patch_logging([(api, ('error',))])
+def test_api_cli_run_cmd_subprocess_run_fails_unexpectedly(
+    subprocess_runner, patch_logging
+):
     cmd_name = 'some-command'
     exc_args = ('some-error',)
     exc = ValueError(*exc_args)
@@ -84,7 +87,10 @@ class CliFailScenario:
         'expected'
     ]
 )
-def test_api_cli_run_cmd_cli_fails(subprocess_runner, fail_scenario):
+@pytest.mark.patch_logging([(api, ('error',))])
+def test_api_cli_run_cmd_cli_fails(
+    subprocess_runner, fail_scenario, patch_logging
+):
     exc_args = ('some-error',)
     exc = fail_scenario.cli_exc_type(*exc_args)
 
@@ -105,7 +111,8 @@ def test_api_cli_run_cmd_cli_fails(subprocess_runner, fail_scenario):
     assert excinfo.value.args == fail_scenario.expected_exc_args_cb(exc)
 
 
-def test_api_cli_run_cmd_cli_succedes(subprocess_runner):
+@pytest.mark.patch_logging([(api, ('error',))])
+def test_api_cli_run_cmd_cli_succedes(subprocess_runner, patch_logging):
     cmd_name = 'some-command'
     ret = {
         'some-key1': 'some-value1',

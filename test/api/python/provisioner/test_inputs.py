@@ -304,7 +304,8 @@ def test_eos_update_repo_attrs():
     assert fattr.default is UNCHANGED
 
 
-def test_eos_update_repo_source_init(tmpdir_function):
+@pytest.mark.patch_logging([(inputs, ('error',))])
+def test_eos_update_repo_source_init(tmpdir_function, patch_logging):
     some_release = '1.2.3'
 
     # special values

@@ -33,14 +33,14 @@ def local_minion_id(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def patch_logging(monkeypatch):
-    for log_f in ('warning', 'info'):
-        monkeypatch.setattr(
-            salt.logger, log_f, lambda *args, **kwargs: None
-        )
+def patch_logging(request):
+    request.applymarker(pytest.mark.patch_logging(
+        [(salt, ('warning', 'info'))]
+    ))
+    request.getfixturevalue('patch_logging')
 
 
-def test_salt_runner_cmd(monkeypatch, patch_logging):
+def test_salt_runner_cmd(monkeypatch):
     salt_cmd_args = []
     salt_cmd_res = {}
     exc = None
@@ -66,12 +66,14 @@ def test_salt_runner_cmd(monkeypatch, patch_logging):
     nowait = False
     kwargs = dict(some_key1=3, some_key2=4)
     salt_cmd_good_res = {
-        'jid': '12345',
-        '_stamp': 'some-timestamp',
-        'fun': 'some.fun',
-        'user': 'some-user',
-        'success': True,
-        'return': 'some-return'
+        'data': {
+            'jid': '12345',
+            '_stamp': 'some-timestamp',
+            'fun': 'some.fun',
+            'user': 'some-user',
+            'success': True,
+            'return': 'some-return'
+        }
     }
     salt_cmd_res = salt_cmd_good_res
 
@@ -85,8 +87,6 @@ def test_salt_runner_cmd(monkeypatch, patch_logging):
 
     def _check_exc_attrs(exc, _locals):
         _kwargs = dict(_locals['kwargs'])
-        _kwargs['full_return'] = True
-        _kwargs['print_event'] = False
 
         for attr in (
             'fun', 'fun_args', 'fun_kwargs', 'nowait'
@@ -98,10 +98,15 @@ def test_salt_runner_cmd(monkeypatch, patch_logging):
     _call()
     assert salt_cmd_args == [
         (
-            (fun,),
+            (
+                dict(
+                    fun=fun,
+                    arg=(), kwarg=fun_kwargs,
+                    **kwargs
+                ),
+            ),
             dict(
-                arg=(), kwarg=fun_kwargs, print_event=False,
-                full_return=True, **kwargs
+                full_return=True
             )
         )
     ]
@@ -111,11 +116,16 @@ def test_salt_runner_cmd(monkeypatch, patch_logging):
     _call()
     assert salt_cmd_args == [
         (
-            (fun,),
+            (
+                dict(
+                    fun=fun,
+                    arg=fun_args, kwarg=fun_kwargs,
+                    **kwargs
+                ),
+            ),
             dict(
-                arg=fun_args, kwarg=fun_kwargs, print_event=False,
-                full_return=True, **kwargs
-            )
+                full_return=True
+            ),
         )
     ]
 
@@ -160,11 +170,11 @@ def test_salt_runner_cmd(monkeypatch, patch_logging):
 
     # raise on fail
     salt_cmd_res = salt_cmd_good_res
-    salt_cmd_res['success'] = False
+    salt_cmd_res['data']['success'] = False
     with pytest.raises(SaltCmdResultError) as excinfo:
         _call()
     assert (
-        excinfo.value.reason == salt_cmd_res['return']
+        excinfo.value.reason == salt_cmd_res['data']['return']
     )
     _check_exc_attrs(excinfo.value, locals())
 
@@ -301,9 +311,10 @@ def test_salt_client_cmd(monkeypatch):
         _call()
     _fails = {
         'some-node-id': {
-            'some-task-id': salt_cmd_res[
-                'some-node-id'
-            ]['ret']['some-task-id']['comment']
+            'some-task-id': {
+                'comment': 'some comment',
+                'changes': None
+            }
         }
     }
     assert excinfo.value.reason == _fails
