@@ -149,7 +149,7 @@ def set_eosupdate_repo(
 
 
 def set_ssl_certs(
-    source, restart=False, dry_run=False
+    source, restart=False, dry_run=False, nowait=True
 ):
     r"""Configures ssl certs
 
@@ -161,7 +161,7 @@ def set_ssl_certs(
     """
     return _api_call(
         'set_ssl_certs',
-        source, restart=restart, dry_run=dry_run
+        source, restart=restart, dry_run=dry_run, nowait=nowait
     )
 
 
