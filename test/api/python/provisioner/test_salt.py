@@ -35,7 +35,7 @@ def local_minion_id(monkeypatch):
 @pytest.fixture(autouse=True)
 def patch_logging(request):
     request.applymarker(pytest.mark.patch_logging(
-        [(salt, ('warning', 'info'))]
+        [(salt, ('error', 'warning', 'info'))]
     ))
     request.getfixturevalue('patch_logging')
 
@@ -203,7 +203,34 @@ def test_salt_runner_cmd(monkeypatch, eauth):
     )
     _check_exc_attrs(excinfo.value, locals())
 
-    # raise on fail
+    #   unexpected result format - no data field at top (eauth only)
+    if eauth:
+        salt_cmd_res = {'some-key': 'some-value'}
+        with pytest.raises(SaltCmdRunError) as excinfo:
+            _call()
+        assert (
+            excinfo.value.reason == (
+                'no data key in RunnerClient result dictionary: {}'
+                .format(salt_cmd_res)
+            )
+        )
+        _check_exc_attrs(excinfo.value, locals())
+
+    #   unexpected result format - missed expected fields
+    salt_cmd_res = {'some-key': 'some-value'}
+    if eauth:
+        salt_cmd_res = {'data': salt_cmd_res}
+    with pytest.raises(SaltCmdRunError) as excinfo:
+        _call()
+    assert (
+        excinfo.value.reason == (
+            'Failed to parse salt runner result: {}'
+            .format(salt_cmd_res)
+        )
+    )
+    _check_exc_attrs(excinfo.value, locals())
+
+    #    raise on fail
     salt_cmd_res = salt_cmd_good_res
     if eauth:
         salt_cmd_res['data']['success'] = False

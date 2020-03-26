@@ -2,7 +2,6 @@ import os
 import logging
 import pytest
 import subprocess
-import json
 import time
 from provisioner import errors
 from pathlib import Path
@@ -11,7 +10,7 @@ api_type = os.environ['TEST_API_TYPE']
 assert api_type in ('py', 'cli', 'pycli')
 minion_id = os.environ['TEST_MINION_ID']
 nowait = (os.getenv('TEST_RUN_ASYNC', 'no') == 'yes')
-get_result_tries = int(os.getenv('TEST_GET_RESULT_TRIES', 10))
+get_result_tries = int(os.getenv('TEST_GET_RESULT_TRIES', 30))
 salt_job = nowait or (os.getenv('PRVSNR_SALT_JOB', 'no') == 'yes')
 
 logger = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ def _api_call(fun, *args, **kwargs):
         provisioner.set_api(api_type)
         return getattr(provisioner, fun)(*args, **kwargs)
     else:  # cli
+        from provisioner._api_cli import process_cli_result
         _input = kwargs.pop('password', None)
         if _input is not None:
             kwargs['password'] = '-'
@@ -44,18 +44,24 @@ def _api_call(fun, *args, **kwargs):
         cmd.extend([str(a) for a in args])
         logger.debug("Command: {}".format(cmd))
 
-        res = subprocess.run(
-            cmd,
-            input=_input,
-            check=True,
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        return json.loads(res.stdout)['ret'] if res.stdout else None
+        try:
+            res = subprocess.run(
+                cmd,
+                input=_input,
+                check=True,
+                universal_newlines=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as exc:
+            return process_cli_result(exc.stdout, exc.stderr)
+        else:
+            return process_cli_result(res.stdout, res.stderr)
 
 
 def api_call(fun, *args, **kwargs):
+    username = kwargs.get('username')
+    password = kwargs.get('password')
     res = _api_call(fun, *args, **kwargs)
     if (fun not in ('auth_init', 'get_result')) and nowait:
         tries = 0
@@ -66,7 +72,13 @@ def api_call(fun, *args, **kwargs):
             #   .format(tries, fun, args, kwargs)
             # )
             try:
-                return _api_call('get_result', res)
+                _kwargs = {}
+                if username:
+                    _kwargs['username'] = username
+                    _kwargs['password'] = password
+                return _api_call(
+                    'get_result', res, **_kwargs
+                )
             except errors.PrvsnrCmdNotFinishedError:
                 if tries < get_result_tries:
                     time.sleep(1)
@@ -110,20 +122,13 @@ def test_external_auth():
     if expected_exc_str is None:
         api_call('pillar_get', **kwargs)
     else:
-        if api_type in ('py', 'pycli'):
-            from provisioner.errors import SaltError, SaltCmdRunError
-            expected_exc = SaltCmdRunError if salt_job else SaltError
-        else:  # cli
-            from subprocess import CalledProcessError
-            expected_exc = CalledProcessError
+        from provisioner.errors import SaltError, SaltCmdRunError
+        expected_exc = SaltCmdRunError if salt_job else SaltError
 
         with pytest.raises(expected_exc) as excinfo:
             api_call('pillar_get', **kwargs)
 
-        assert expected_exc_str in str(
-            type(excinfo.value.reason) if api_type in ('py', 'pycli') else
-            excinfo.value.stdout
-        )
+        assert expected_exc_str in str(type(excinfo.value.reason))
 
 
 def test_set_ntp():
@@ -321,12 +326,8 @@ def test_set_eosupdate_repo():
         assert _params['eosupdate/repos'] == pillar_params['repos']
 
     # dry run check for invalid source
-    if api_type == 'cli':
-        from subprocess import CalledProcessError
-        expected_exc = CalledProcessError
-    else:
-        from provisioner.errors import EOSUpdateRepoSourceError
-        expected_exc = EOSUpdateRepoSourceError
+    from provisioner.errors import EOSUpdateRepoSourceError
+    expected_exc = EOSUpdateRepoSourceError
 
     source = 'some/invalid/source'
     with pytest.raises(expected_exc) as excinfo:
@@ -335,16 +336,8 @@ def test_set_eosupdate_repo():
             source=source, dry_run=True
         )
     exc = excinfo.value
-    if api_type == 'cli':
-        from provisioner import serialize, errors
-        exc = serialize.loads(exc.stdout)['exc']
-        assert type(exc) is errors.EOSUpdateRepoSourceError
-        assert exc.source == source
-        assert exc.reason == 'unexpected type of source'
-    else:
-        assert type(exc).__name__ == 'EOSUpdateRepoSourceError'
-        assert exc.source == source
-        assert exc.reason == 'unexpected type of source'
+    assert exc.source == source
+    assert exc.reason == 'unexpected type of source'
 
     for release, source, expected_rpm_name in [
         ('1.2.3', repo_dir, prvsnr_pkg_name),
