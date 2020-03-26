@@ -92,6 +92,7 @@ class SaltArgsMixin:
         return str(attr.asdict(_self_safe))
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class SaltRunnerArgs(SaltArgsMixin):
     _prvsnr_type_ = True
@@ -107,15 +108,16 @@ class SaltRunnerArgs(SaltArgsMixin):
     kw: Dict = attr.Factory(dict)
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class SaltRunnerResult:
     _prvsnr_type_ = True
 
     jid: str
-    stamp: str
     fun: str
     success: bool
     result: Any
+    stamp: str = ''
     user: str = ''
     fun_args: List = attr.Factory(list)
 
@@ -130,6 +132,7 @@ class SaltRunnerResult:
         return cls(**_data)
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class SaltClientArgs(SaltArgsMixin):
     _prvsnr_type_ = True
@@ -151,6 +154,7 @@ class SaltClientArgs(SaltArgsMixin):
 
 
 # TODO TYPE
+# TODO TEST
 @attr.s(auto_attribs=True)
 class SaltClientResult:
     _prvsnr_type_ = True
@@ -195,7 +199,7 @@ class SaltClientResult:
             if _fails:
                 self.fails[target] = _fails
 
-        # TODO tests
+        # TODO TESTS
     def _get_state_fails(self, ret: Dict):
         fails = {}
         for task, tresult in ret.items():
@@ -355,9 +359,16 @@ def _salt_runner_cmd(
                     .format(salt_res)
                 )
             )
-        res = SaltRunnerResult.from_salt_res(salt_res['data'])
+        res = salt_res['data']
     else:
-        res = SaltRunnerResult.from_salt_res(salt_res)
+        res = salt_res
+
+    try:
+        res = SaltRunnerResult.from_salt_res(res)
+    except TypeError:
+        msg = 'Failed to parse salt runner result: {}'.format(salt_res)
+        logger.exception(msg)
+        raise SaltCmdRunError(cmd_args, msg)
 
     if res.success:
         return res.result
