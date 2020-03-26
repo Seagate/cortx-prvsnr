@@ -44,7 +44,7 @@ def process_cli_result(
         )
 
     if 'exc' in res:
-        logger.error("Provisioner CLI failed: {}".format(res['exc']))
+        logger.error("Provisioner CLI failed: {!r}".format(res['exc']))
         raise res['exc']
     else:
         try:
@@ -89,8 +89,9 @@ def _api_call(fun, *args, **kwargs):
         kwargs['password'] = '-'
         kwargs['eauth'] = _eauth
 
-    kwargs['loglevel'] = 'INFO'
-    kwargs['logstream'] = 'stderr'
+    kwargs['logstream'] = 'rsyslog'
+    # TODO IMPROVE make configurable, think about default value
+    kwargs['loglevel'] = 'DEBUG'
     kwargs['output'] = 'json'
 
     cli_args = api_args_to_cli(fun, *args, **kwargs)

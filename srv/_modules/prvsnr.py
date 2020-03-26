@@ -53,8 +53,11 @@ def __virtual__():
 def _api_wrapper(fun):
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
-        # TODO config logger if needed
+
         _kwargs['output'] = 'json'
+        _kwargs['logstream'] = 'rsyslog'
+        # TODO IMPROVE make configurable, think about default value
+        _kwargs['loglevel'] = 'DEBUG'
 
         # don't make sense here
         for k in ('nowait', 'username', 'password', 'eauth'):

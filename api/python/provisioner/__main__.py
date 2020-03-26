@@ -18,7 +18,7 @@ from provisioner import runner
 
 logger = logging.getLogger(__name__)
 
-DEF_LOGGING_FORMAT = ("%(asctime)s - %(name)s - %(levelname)s - "
+DEF_LOGGING_FORMAT = ("%(asctime)s - %(thread)d - %(name)s - %(levelname)s - "
                       "[%(filename)s:%(lineno)d]: %(message)s")
 DEF_LOGLEVEL = 'INFO'
 
