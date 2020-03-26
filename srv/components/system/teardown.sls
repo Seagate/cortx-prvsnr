@@ -1,8 +1,3 @@
-include:
-  - components.system.logrotate.teardown
-  - components.system.ntp.teardown
-  - components.system.firewall.teardown
-
 Remove_base_packages:
   pkg.purged:
     - pkgs:

@@ -26,13 +26,3 @@ Mask ip6tables:
 Mask ebtables:
   service.masked:
     - name: ebtables
-
-# Enable Firewalld
-Unmask Firewall service:
-  service.unmasked:
-    - name: firewalld
-
-Start and enable Firewall service:
-  service.running:
-    - name: firewalld
-    - enable: True

@@ -15,7 +15,6 @@ s3authserver:
   service.running:
     - init_delay: 2
 
-
 # Append /etc/hosts:
 #   file.line:
 #     - name: /etc/hosts
