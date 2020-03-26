@@ -15,3 +15,11 @@ Add CSM repo:
     - humanname: csm
     - baseurl: {{ defaults.csm.repo.url }}
     - gpgcheck: 0
+
+Render CSM ha input params template:
+  file.managed:
+    - name: /var/lib/hare/build-ees-ha-csm-args.yaml
+    - source: salt://components/csm/files/ha-params.tmpl
+    - template: jinja
+    - mode: 444
+    - makedirs: True
