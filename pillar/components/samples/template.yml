@@ -13,15 +13,17 @@ cluster:
       nw_search: pun.seagate.com
       mgmt_nw:                  # Management network interfaces
         iface:
-          - eth0
+          - eno1
         ipaddr:
         netmask: 255.255.0.0
       data_nw:                  # Data network interfaces
         iface:
-          - eth1
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
         ipaddr:
         netmask: 255.255.0.0
-      roaming_ip:
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
+        roaming_ip: 192.168.0.3       # Applies to private data network
       gateway_ip:               # Gateway IP of network
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
@@ -36,14 +38,17 @@ cluster:
       nw_search: pun.seagate.com
       mgmt_nw:                  # Management network interfaces
         iface:
-          - eth0
+          - eno1
         ipaddr:
         netmask: 255.255.0.0
       data_nw:                  # Data network interfaces
         iface:
-          - eth1
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
         ipaddr:
         netmask: 255.255.0.0
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
+        roaming_ip: 192.168.0.3       # Applies to private data network
       roaming_ip:
       gateway_ip:               # Gateway IP of network
     storage:

@@ -2,6 +2,13 @@
 include:
   - components.system.prepare
 
+{#{% if pillar['cluster'][grains['id']]['is_primary'] %}#}
+# Update roaming IPs in cluster.sls pillar:
+#   module.run:
+#     - cluster.nw_roaming_ip: []
+#     - saltutil.refresh_pillar: []
+{#{% endif %}#}
+
 # Setup network for data interfaces
 Public direct network:
   network.managed:
@@ -24,26 +31,20 @@ Public direct network:
     - proto: dhcp
 {%- endif %}
 
-{% set pvt_nw = pillar['cluster']['pvt_data_nw_addr'] %}
-{% set pvt_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), grains['id'].split('-')[1]) %}
+{#{% set pvt_nw = pillar['cluster']['pvt_data_nw_addr'] %}#}
+{#{% set pvt_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), grains['id'].split('-')[1]) %}#}
 Private direct network:
   network.managed:
     - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
+    - enabled: True
     - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
     - type: eth
-    - enabled: True
-    - nm_controlled: no
-    - userctl: no
-    - mtu: 9000
     - onboot: yes
-    - userctl: no
-    - netmask: 255.255.255.0
     - proto: none
-    - ipaddr: {{ pvt_ip }}
-
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
-Update roaming IPs in cluster.sls pillar:
-  module.run:
-    - cluster.nw_roaming_ip: []
-    - saltutil.refresh_pillar: []
-{% endif %}
+    - defroute: no
+    - nm_controlled: no
+    - mtu: 9000
+    - peerdns: no
+    - userctl: no
+    - prefix: 24
+    - ipaddr: {{ pillar['cluster'][grains['id']]['network']['data_nw']['pvt_ip_addr'] }}

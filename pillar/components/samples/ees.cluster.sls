@@ -22,8 +22,8 @@ cluster:
           - enp175s0f1                      # Private Data (direct connect)
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        roaming_ip:                   # If left blank it is auto-populated by components.system.network.direct
-                                      # Applies to private data network
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
+        roaming_ip: 192.168.0.3       # Applies to private data network                                      
       gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
@@ -46,8 +46,8 @@ cluster:
           - enp175s0f1                      # Private Data (direct connect)
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        roaming_ip:                   # If left blank it is auto-populated by components.system.network.direct
-                                      # Applies to private data network
+        pvt_ip_addr: 192.168.0.2      # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.4       # Applies to private data network
       gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP

@@ -1,30 +1,59 @@
 cluster:
-  cluster_ip:
+  cluster_ip:                         # Cluster IP for HAProxy
   pvt_data_nw_addr: 192.168.0.0
-  type: single                      # single/ees/ecs
-  node_list:                        # List of nodes to be managed as part of this cluster
-    - eosnode-1                     # minion ID for node-1
-  eosnode-1:                        # minion ID for node-1. Should match one from node_list above.
+  mgmt_vip:                           # Management VIP for CSM
+  type: ees                           # single/ees/ecs
+  node_list:
+    - eosnode-1
+    - eosnode-2
+  eosnode-1:
     hostname: eosnode-1
     is_primary: true
     network:
       nw_search: pun.seagate.com
-      mgmt_nw:                  # Management network interfaces
+      mgmt_nw:                        # Management network interfaces
         iface:
-          - eth0
-        ipaddr: 
-        netmask: 
-      data_nw:                  # Data network interfaces
-        iface: 
-          - eth1
-        ipaddr: 172.19.10.101
+          - eno1
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-      gateway_ip:               # Gateway IP of network
+      data_nw:                        # Data network interfaces
+        iface:
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
+        ipaddr:                       # DHCP is assumed if left blank
+        netmask: 255.255.0.0
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
+        roaming_ip: 192.168.0.3       # Applies to private data network
+      gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
-      metadata_device:              # Device for /var/mero and possibly SWAP
-        - /dev/sdb
-      data_devices:                 # Data device/LUN from storage enclosure
-        - /dev/sdc
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
+  eosnode-2:
+    hostname: eosnode-2
+    is_primary: false
+    network:
+      nw_search: pun.seagate.com
+      mgmt_nw:                        # Management network interfaces
+        iface:
+          - eno1
+        ipaddr:                       # DHCP is assumed if left blank
+        netmask: 255.255.0.0
+      data_nw:                        # Data network interfaces
+        iface:
+          - enp175s0f0                      # Public Data
+          - enp175s0f1                      # Private Data (direct connect)
+        ipaddr:                       # DHCP is assumed if left blank
+        netmask: 255.255.0.0
+        pvt_ip_addr: 192.168.0.2      # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.4       # Applies to private data network
+      gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
+    storage:
+      metadata_device:                # Device for /var/mero and possibly SWAP
+        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
+      data_devices:                   # Data device/LUN from storage enclosure
+        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS

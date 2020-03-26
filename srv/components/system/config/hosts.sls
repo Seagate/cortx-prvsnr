@@ -6,9 +6,7 @@ hostsfile:
         ::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
         -------------------------------------------------------------------------------
         {% for node in pillar['cluster']['node_list'] %}
-        {% set pvt_nw = pillar['cluster']['pvt_data_nw_addr'] %}
-        {% set pvt_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), node.split('-')[1]) %}
-        {{ pvt_ip }}   {{ node }}
+        {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node }}
         {% endfor %}
         
     - user: root

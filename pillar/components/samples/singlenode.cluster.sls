@@ -18,7 +18,9 @@ cluster:
         iface: 
           - eth1
         ipaddr: 
-        netmask: 255.255.252.0
+        netmask: 255.255.0.0
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
+        roaming_ip: 192.168.0.3       # Applies to private data network
       floating_ip:
       gateway_ip:               # Gateway IP of network
     storage:
