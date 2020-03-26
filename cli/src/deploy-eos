@@ -110,6 +110,14 @@ function run_states {
                 l_info "Applying 'components.$state' for eosnode-1"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
+            elif [[ "$state" == "misc_pkgs.rabbitmq" ]]; then
+                # Execute on eosnode-2 to be followed on eosnode-1.
+                l_info "Applying 'components.$state' for eosnode-1"
+                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
+                l_info "Applying 'components.$state' for eosnode-2"
+                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
+                sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
