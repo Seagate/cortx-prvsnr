@@ -11,6 +11,8 @@ run_ees_ha=true
 
 prereq_states=(
     # states to be applied in desired sequence
+        "system.storage.multipath"
+        "system.network.direct"
         "system"
         "misc_pkgs.rsyslog"
         "system.firewall"
