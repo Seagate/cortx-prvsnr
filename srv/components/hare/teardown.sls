@@ -14,7 +14,7 @@ Remove cluster yaml:
 
 Remove Hare:
   pkg.purged:
-    - name: hare
+    - name: eos-hare
 
 Remove jq:
   pkg.purged:

@@ -7,7 +7,10 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 . $BASEDIR/functions.sh
 
-run_ees_ha=true
+run_all=true
+ha_states=false
+io_states=false
+ctrlpath_states=false
 
 ha_states=(
     "ha.ees_ha"
@@ -56,7 +59,9 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       --no-ha      skip running the ees_ha component
+       --ha-states       run only teardown of ha components
+       --iopath-states   run only teardown of iopath components
+       --ctrlpath-states run only teardown of control path components
 "
 }
 
@@ -64,8 +69,17 @@ function options_parser {
     set -eu
 
     case "$1" in
-        --no-ha)
-            run_ees_ha=false
+        --ha-states)
+            ha_states=true
+            run_all=false
+            ;;
+        --iopath-states)
+            io_states=true
+            run_all=false
+            ;;
+        --ctrlpath-states)
+            ctrlpath_states=true
+            run_all=false
             ;;
         *)
             l_error "Unknown option: $1"
@@ -97,15 +111,15 @@ function teardown_states {
                 l_info "Force destroying PCS cluster to speed-up teardown"
                 pcs cluster destroy --force || true
 
-                l_info "Applying 'components.$state' for eosnode-1"
+                l_info "Applying 'components.$state.teardown' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-2"
+                l_info "Applying 'components.$state.teardown' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
-                l_info "Applying 'components.$state' for both nodes"
+                l_info "Applying 'components.$state.teardown' for both nodes"
                 $cmd salt eosnode-[1,2] state.apply components.$state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
@@ -139,13 +153,25 @@ l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
 
-teardown_states "${ha_states[@]}"
+if [[ "$run_all" == true ]]; then
+    teardown_states "${ha_states[@]}"
+    teardown_states "${controlpath_states[@]}"
+    teardown_states  "${iopath_states[@]}"
+    teardown_states "${prereq_states[@]}"
+fi
 
-teardown_states "${controlpath_states[@]}"
-
-teardown_states  "${iopath_states[@]}"
-
-teardown_states "${prereq_states[@]}"
+if [[ "$ha_states" == true ]]; then
+    l_info "tearing down the ha states"
+    teardown_states "${ha_states[@]}"
+fi
+if [[ "$io_states" == true ]]; then
+    l_info "tearing down the io path states"
+    teardown_states  "${iopath_states[@]}"
+fi
+if [[ "$ctrlpath_states" == true ]]; then
+    l_info "tearing down the control path states"
+    teardown_states "${controlpath_states[@]}"
+fi
 
 sleep 2
 

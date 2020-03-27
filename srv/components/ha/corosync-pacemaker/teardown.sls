@@ -8,12 +8,12 @@ Remove authorized nodes:
   cmd.run:
     - names: 
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }}
+      - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }} --force || true
       {%- endfor %}
 
 Destroy Cluster:
   cmd.run:
-    - name: pcs cluster destroy
+    - name: pcs cluster destroy --force || true
 {% endif %}
 
 Remove user and group:

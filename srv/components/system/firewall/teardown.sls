@@ -1,4 +1,4 @@
-{% if salt['service.running']('firewalld') %}
+{% if salt['service.status']('firewalld') %}
 
 # Ensure ssh works when the firwall servcie starts for the next time
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
