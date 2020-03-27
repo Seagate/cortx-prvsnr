@@ -1,3 +1,9 @@
+{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+Stage - Post Install S3Server:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/s3server/conf/setup.yaml', 's3server:post_install')
+{% endif %}
+
 Encrypt ldap password:
   cmd.run:
     - name: /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh -l {{ pillar['openldap']['iam_admin_passwd'] }} -p /opt/seagate/auth/resources/authserver.properties
@@ -8,30 +14,6 @@ Encrypt ldap password:
 s3authserver:
   service.running:
     - init_delay: 2
-
-Open http port for s3server:
-  iptables.insert:
-    - position: 1
-    - table: filter
-    - chain: INPUT
-    - jump: ACCEPT
-    - protocol: tcp
-    - match: tcp
-    - dport: 80
-    - family: ipv4
-    - save: True
-
-Open https port for s3server:
-  iptables.insert:
-    - position: 1
-    - table: filter
-    - chain: INPUT
-    - jump: ACCEPT
-    - protocol: tcp
-    - match: tcp
-    - dport: 443
-    - family: ipv4
-    - save: True
 
 # Append /etc/hosts:
 #   file.line:
