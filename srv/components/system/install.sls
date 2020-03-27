@@ -20,3 +20,7 @@ python-pip:
     - reload_modules: True
     - bin_env: /usr/bin/pip
     - upgrade: True
+
+Install eos-py-utils:           # Package for cryptography
+  pkg.installed:
+    - name: eos-py-utils
