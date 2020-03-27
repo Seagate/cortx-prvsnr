@@ -58,6 +58,7 @@ pushd ~/rpmbuild/SOURCES/
     mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
     mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
     mkdir -p ${DEST_DIR}/files/etc/yum.repos.d/
+    mkdir -p ${DEST_DIR}/files/conf/
     mkdir -p ${DEST_DIR}/files/.ssh/
     mkdir -p ${DEST_DIR}/files/syslogconfig/
     cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
@@ -68,6 +69,7 @@ pushd ~/rpmbuild/SOURCES/
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d/* ${DEST_DIR}/files/etc/yum.repos.d/
     cp -pr ${BASEDIR}/../files/.ssh/* ${DEST_DIR}/files/.ssh/
     cp -pr ${BASEDIR}/../files/syslogconfig/* ${DEST_DIR}/files/syslogconfig/
+    cp -pr ${BASEDIR}/../files/conf/* ${DEST_DIR}/files/conf/
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
