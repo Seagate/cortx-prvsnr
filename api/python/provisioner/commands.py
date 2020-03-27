@@ -475,6 +475,22 @@ class SetSSLCerts(CommandParserFillerMixin):
             raise
 
 
+@attr.s(auto_attribs=True)
+class RebootServer(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, targets):
+        return function_run(
+            'system.reboot',
+            targets=targets
+        )
+
+
 commands = {}
 for command_name, spec in api_spec.items():
     spec = deepcopy(api_spec[command_name])  # TODO

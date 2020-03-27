@@ -225,3 +225,15 @@ def get_node_id(targets=ALL_MINIONS, nowait=False):
     return _api_call(
         'get_node_id', targets=targets, nowait=nowait
     )
+
+
+def reboot_server(targets=ALL_MINIONS, nowait=False):
+    r"""Reboots the servers
+
+    :param targets: (optional) A host to shutdown. Default: all minions
+    :param: nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'reboot_server', targets=targets, nowait=nowait
+    )

@@ -35,3 +35,5 @@ get_cluster_id:
   type: GetClusterId
 get_node_id:
   type: GetNodeId
+reboot_server:
+  type: RebootServer
