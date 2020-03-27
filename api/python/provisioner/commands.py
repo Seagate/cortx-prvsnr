@@ -16,12 +16,17 @@ from .api_spec import api_spec
 from .salt import (
     StatesApplier, StateFunExecuter, State,
     YumRollbackManager,
-    SaltJobsRunner
+    SaltJobsRunner, function_run
 )
 from provisioner import inputs
 
 _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
+
+
+@attr.s(auto_attribs=True)
+class RunArgsEmpty:
+    pass
 
 
 @attr.s(auto_attribs=True)
@@ -395,6 +400,39 @@ class GetResult(CommandParserFillerMixin):
 
     def run(self, cmd_id: str):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
+
+
+@attr.s(auto_attribs=True)
+class GetClusterId(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsEmpty
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self):
+        return list(function_run(
+            'grains.get',
+            fun_args=['cluster_id']
+        ).values())[0]
+
+
+@attr.s(auto_attribs=True)
+class GetNodeId(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self, targets):
+        return function_run(
+            'grains.get',
+            fun_args=['node_id'],
+            targets=targets
+        )
 
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)

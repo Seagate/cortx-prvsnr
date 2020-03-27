@@ -201,3 +201,27 @@ def get_result(cmd_id: str):
     return _api_call(
         'get_result', cmd_id
     )
+
+
+def get_cluster_id(nowait=False):
+    r"""Retruns cluster ID
+
+    :param: nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'get_cluster_id', nowait=nowait
+    )
+
+
+def get_node_id(targets=ALL_MINIONS, nowait=False):
+    r"""Retruns node ID
+
+    :param: targets: (optional) A host to find node ID.
+        Default: ``ALL_MINIONS``
+    :param: nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'get_node_id', targets=targets, nowait=nowait
+    )

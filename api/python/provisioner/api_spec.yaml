@@ -31,3 +31,7 @@ get_result:
   type: GetResult
 set_ssl_certs:
   type: SetSSLCerts
+get_cluster_id:
+  type: GetClusterId
+get_node_id:
+  type: GetNodeId

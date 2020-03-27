@@ -127,6 +127,7 @@ mod = sys.modules[__name__]
 for fun in [
     'pillar_get', 'get_params', 'set_params',
     'set_ntp', 'set_network', 'set_eosupdate_repo',
-    'eos_update', 'set_ssl_certs', 'fw_update', 'get_result'
+    'eos_update', 'set_ssl_certs', 'fw_update', 'get_result',
+    'get_cluster_id', 'get_node_id'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
