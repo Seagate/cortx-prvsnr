@@ -1,6 +1,8 @@
 import errno
 import os
 import sys
+import json
+import salt.client
 
 if "2." in sys.version:
   from ConfigParser import ConfigParser, ParsingError, MissingSectionHeaderError
@@ -138,3 +140,18 @@ def _inject_storage_enclosure(config_dict={}):
     config_dict['STORAGE_ENCLOSURE']['secondary_controller_port'] = cluster_pillar['storage_enclosure']['controller']['secondary_mc']['port']
   
   return config_dict
+
+def health_map_schema(file_path = "/tmp/resource_health_view.json"):
+  local = salt.client.LocalClient()
+  data = local.cmd('*', 'file.read', [file_path])
+  node1_data = json.loads(data["eosnode-1"])
+  node2_data = json.loads(data["eosnode-2"])
+  node2_fqdn = ""
+  for key in node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].keys():
+    node2_fqdn = key
+
+  for key in node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].keys():
+    node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"][key].update(node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"][node2_fqdn])
+  local.cmd('*', 'file.write', [file_path, json.dumps(node1_data, indent=4)])
+  return True
+
