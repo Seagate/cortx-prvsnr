@@ -34,10 +34,10 @@ cluster:
     controller:
       type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
       primary_mc:
-        ip: 127.0.0.1
+        ip: 10.0.0.2
         port: 80
       secondary_mc:
-        ip: 127.0.0.1
+        ip: 10.0.0.3
         port: 80
-      user: user
+      user: manage
       password: 'passwd'
