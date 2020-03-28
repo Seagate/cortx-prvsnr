@@ -3,11 +3,10 @@ import json
 import os.path
 import yaml
 from shutil import copy
-
+import salt.client
 from argparse import ArgumentParser, Namespace
-from  srv._modules.commons import _update_dict
 from .base_cfg import BaseCfg
-
+from eos.utils.security.cipher import Cipher
 
 class GenericCfg(BaseCfg):
 
@@ -112,7 +111,7 @@ class GenericCfg(BaseCfg):
             new_options = {}
             with open(program_args.file, 'r') as fd:
                 new_options = yaml.safe_load(fd)
-                _update_dict(self._options, new_options)
+                self._options.update(new_options)
             return True
 
         elif program_args.load_default:
@@ -131,9 +130,19 @@ class GenericCfg(BaseCfg):
                 copy(args[1],args[1]+".bak")
             return func(*args)
         return backup
-
+    
+    def encrypt_all_password_field(self, data, key):
+        for k, v in data.items():
+            if isinstance(v, dict):
+                data[k] = self.encrypt_all_password_field(v, key)
+            else:
+                if v and ( "secret" in k):
+                    data[k] = str(Cipher.encrypt(key, bytes(v,'utf8')),'utf-8')
+        return data
+ 
     @pillar_backup
-    def store_in_file(self, path, data):
+    def store_in_file(self, path, data, key):
+        self.encrypt_all_password_field(data, key)
         with open(path, 'w') as fd:
             yaml.safe_dump(
                 data,
@@ -148,6 +157,7 @@ class GenericCfg(BaseCfg):
     def save(self, component):
         data = {}
         sls_file = self._cfg_path 
+        cluster_id = salt.client.Caller().function('grains.get', 'cluster_id')
         if component == "global":
             for key, value in self._options.items():
                 data = {} 
@@ -157,10 +167,11 @@ class GenericCfg(BaseCfg):
                 "components",
                 f"{key}.sls"
             )
-
-                self.store_in_file(sls_file, data)
+                cipher_key = Cipher.generate_key(cluster_id, key)
+                self.store_in_file(sls_file, data, cipher_key)
         else:
-            self.store_in_file(sls_file, self._options)     
+            cipher_key = Cipher.generate_key(cluster_id, component)
+            self.store_in_file(sls_file, self._options, cipher_key)     
 
     def validate(self, schema_dict: dict, pillar_dict: dict) -> bool:
         pass

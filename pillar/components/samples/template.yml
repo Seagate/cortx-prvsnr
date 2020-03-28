@@ -10,7 +10,6 @@ cluster:
   node_list:
     - eosnode-1
     - eosnode-2
-  cluster_ip:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
@@ -79,9 +78,10 @@ s3client:
     region: US
     s3endpoint: s3.seagate.com
     s3server:
+        iam_admin:
+            user: sgiamadmin
+            secret: ldapadmin
         fqdn: null
-        iam_admin_passwd: ldapadmin
-        iam_admin_user: sgiamadmin
         ip: null
     secret_key: null
 release:
@@ -90,7 +90,7 @@ release:
         repos: {}
 corosync-pacemaker:
   user: hacluster
-  password: hacluster
+  secret: hacluster
   cluster_name: eos_cluster
 elasticsearch:
   cluster_name: elasticsearch_cluster
@@ -102,11 +102,19 @@ commons:
     rabbitmq: latest
     nodejs: v12.13.0
 openldap:
-  admin_passwd: "seagate"
-  iam_admin_user: "sgiamadmin"
-  iam_admin_passwd: "ldapadmin"
-  backend_db: mdb
+    admin:
+        secret: seagate
+    iam_admin:
+        user: sgiamadmin
+        secret: ldapadmin
+    backend_db: mdb
 system:
   ntp:
     time_server: time.seagate.com
     timezone: UTC
+sspl:
+    rmq:
+        user: sspluser
+        secret: sspl4ever
+    healthmappath: /tmp/resource_health_view.json
+

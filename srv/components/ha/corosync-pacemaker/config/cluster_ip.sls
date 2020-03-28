@@ -1,16 +1,16 @@
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
+  {%- set data_if = 'data0' -%}
+{% else %}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
+{%- endif -%}
+
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
 {% if pillar['cluster']['cluster_ip'] %}
-Ensure ClusterIP absent before creating:
-  cmd.run:
-    - name: pcs resource delete ClusterIP
-    - onlyif: pcs resource show ClusterIP
-
+{% if 0 != salt['cmd.retcode']('pcs resource show ClusterIP') %}
 Create CIB for ClusterIP:
   cmd.run:
     - name: pcs cluster cib /tmp/loadbalance_cfg
     - unless: pcs resource show ClusterIP
-    - require:
-      - Ensure ClusterIP absent before creating
 
 # Create CIB for ClusterIP:
 #   pcs.cib_present:
@@ -19,11 +19,6 @@ Create CIB for ClusterIP:
 #       - scope: None
 #       - extra_args: None
 
-{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
-  {%- set data_if = 'data0' -%}
-{% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
-{%- endif -%}
 Setup ClusterIP resouce:
   cmd.run:
     - name: pcs -f /tmp/loadbalance_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic={{ data_if }} op monitor interval=30s
@@ -70,7 +65,12 @@ Remove CIB file:
   file.absent:
     - name: /tmp/loadbalance_cfg
 
-{% else %}}
+{% else %}
+Update ClusterIP resouce:
+  cmd.run:
+    - name: pcs resource update ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic={{ data_if }} op monitor interval=30s
+{% endif %}
+{% else %}
 Missing ClusterIP:
   test.fail_without_changes:
     - name: ClusterIP is blank in Cluster.sls. Please udpate with valid IP and re-run.
