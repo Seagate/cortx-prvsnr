@@ -121,7 +121,7 @@ Add public data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
     - unless: firewall-cmd --get-zones | grep public-data-zone
-    - watch_in:
+    - listen_in:
       - Start and enable firewalld service
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
@@ -149,7 +149,6 @@ Data-zone:
       - haproxy
       - nfs
       - hare
-      - high-availability
       - lnet
       - s3
       - www
@@ -234,7 +233,6 @@ Private data zone:
 #     - require:
 #       - Add private data zone
 #       - hare
-#       - high-availability
 #       - lnet
 #       - s3
 {%- endif -%}
@@ -308,3 +306,7 @@ Management zone:
 #     - watch_in:
 #       - service: Start and enable firewalld service
 
+Restart firewalld:
+  module.run:
+    - service.restart:
+      - firewalld
