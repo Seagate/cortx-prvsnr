@@ -6,7 +6,8 @@ from .helper import install_provisioner_api
 collect_ignore = [
     'test_api_inner.py',
     'test_pillar_targets_inner.py',
-    'test_rollback_inner.py'
+    'test_rollback_inner.py',
+    'test_hare_inner.py'
 ]
 
 

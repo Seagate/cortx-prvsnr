@@ -204,9 +204,15 @@ def test_eosupdate_run(monkeypatch, patch_logging):
         def __exit__(self, *args, **kwargs):
             calls.append((YumRollbackManager.__exit__,))
 
-    @property
-    def last_txn_ids(self):
-        return self._last_txn_ids
+        @property
+        def last_txn_ids(self):
+            return self._last_txn_ids
+
+    def ensure_cluster_is_stopped():
+        calls.append('ensure_cluster_is_stopped')
+
+    def ensure_cluster_is_started():
+        calls.append('ensure_cluster_is_started')
 
     monkeypatch.setattr(
         commands, 'StatesApplier', StatesApplier
@@ -214,6 +220,14 @@ def test_eosupdate_run(monkeypatch, patch_logging):
 
     monkeypatch.setattr(
         commands, 'YumRollbackManager', YumRollbackManager
+    )
+
+    monkeypatch.setattr(
+        commands, 'ensure_cluster_is_stopped', ensure_cluster_is_stopped
+    )
+
+    monkeypatch.setattr(
+        commands, 'ensure_cluster_is_started', ensure_cluster_is_started
     )
 
     # happy path
@@ -224,7 +238,8 @@ def test_eosupdate_run(monkeypatch, patch_logging):
             ('some-target',),
             {'multiple_targets_ok': True}
         ),
-        (YumRollbackManager.__enter__,)
+        (YumRollbackManager.__enter__,),
+        'ensure_cluster_is_stopped'
     ] + [
         (
             StatesApplier.apply, (
@@ -232,5 +247,6 @@ def test_eosupdate_run(monkeypatch, patch_logging):
             ), {}
         ) for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
     ] + [
+        'ensure_cluster_is_started',
         (YumRollbackManager.__exit__,)
     ]

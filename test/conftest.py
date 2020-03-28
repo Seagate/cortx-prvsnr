@@ -1016,7 +1016,11 @@ def mock_hosts(hosts, request, mlocalhost):
                 mhost = request.getfixturevalue(fixture_name)
                 assert mhost is not mlocalhost  # TODO more clever check
                 for cmd in cmds:
-                    mock_system_cmd(mhost.host, cmd)
+                    if type(cmd) is dict:
+                        cmd, cmd_mock = next(iter(cmd.items()))
+                    else:
+                        cmd_mock = None
+                    mock_system_cmd(mhost.host, cmd, cmd_mock=cmd_mock)
                     mocked[fixture_name].append(cmd)
         yield
     finally:

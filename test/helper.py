@@ -529,7 +529,7 @@ def safe_hostname(name):
     return re_multiple_dahses.sub('-', _s).lower()[-63:].lstrip('-')
 
 
-def mock_system_cmd(host, cmd, bin_path='/usr/local/bin'):
+def mock_system_cmd(host, cmd, cmd_mock=None, bin_path='/usr/local/bin'):
     # TODO might not work in some cases
     cmd_orig = host.run('which {}'.format(cmd))
     if cmd_orig.rc == 0:
@@ -537,10 +537,10 @@ def mock_system_cmd(host, cmd, bin_path='/usr/local/bin'):
         host.check_output('mv -f {0} {0}.bak'.format(cmd_orig))
 
     # TODO shell quotes interpreting might impact expected output
-    cmd_mock = (
-        '#!/bin/bash\n'
-        'echo {}-ARGS: "$@"'
-    ).format(cmd.upper())
+    if cmd_mock is None:
+        cmd_mock = 'echo {}-ARGS: "$@"'.format(cmd.upper())
+
+    cmd_mock = '#!/bin/bash\n{}'.format(cmd_mock)
     cmd_path = Path(bin_path) / cmd
     host.check_output("echo -e '{}'>{}".format(cmd_mock, cmd_path))
     host.check_output("chmod +x {}".format(cmd_path))

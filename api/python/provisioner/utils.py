@@ -1,7 +1,10 @@
 import yaml
 import logging
+import time
 
-from .errors import BadPillarDataError
+from .errors import (
+    BadPillarDataError, ProvisionerError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,3 +43,21 @@ def load_yaml(path):
 # TODO streamed write
 def dump_yaml(path, data):
     path.write_text(dump_yaml_str(data))
+
+
+# TODO IMPROVE:
+#   - exceptions in check callback
+def ensure(check_cb, tries=10, wait=1, name=None):
+    ntry = 0
+    while True:
+        ntry += 1
+        logger.debug(
+            'Try #{}/{} for {}'
+            .format(ntry, tries, name or check_cb.__name__)
+        )
+        if check_cb():
+            return
+        elif ntry < tries:
+            time.sleep(wait)
+        else:
+            raise ProvisionerError('no more tries')

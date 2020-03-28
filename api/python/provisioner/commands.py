@@ -18,6 +18,9 @@ from .salt import (
     YumRollbackManager,
     SaltJobsRunner, function_run
 )
+from .hare import (
+    ensure_cluster_is_stopped, ensure_cluster_is_started
+)
 from provisioner import inputs
 
 _mod = sys.modules[__name__]
@@ -325,20 +328,31 @@ class EOSUpdate(CommandParserFillerMixin):
         #   - what about apt and other non-yum pkd managers
         #   (downgrade is another more generic option but it requires
         #    exploration of depednecies that are updated)
-        with YumRollbackManager(targets, multiple_targets_ok=True):
-            # TODO
-            #  - update for provisioner itself
-            #  - update for other sw ???
-            for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
-                state_name = "components.{}.update".format(component)
-                try:
-                    logger.info("Updating {} on {}".format(component, targets))
-                    StatesApplier.apply([state_name], targets)
-                except Exception:
-                    logger.exception(
-                        "Failed to update {} on {}".format(component, targets)
-                    )
-                    raise
+        try:
+            with YumRollbackManager(targets, multiple_targets_ok=True):
+                # TODO
+                #  - update for provisioner itself
+                #  - update for other sw ???
+                ensure_cluster_is_stopped()
+                for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
+                    state_name = "components.{}.update".format(component)
+                    try:
+                        logger.info("Updating {} on {}".format(component, targets))
+                        StatesApplier.apply([state_name], targets)
+                    except Exception:
+                        logger.exception(
+                            "Failed to update {} on {}".format(component, targets)
+                        )
+                        raise
+                ensure_cluster_is_started()
+        except Exception as exc:
+            logger.exception('Update failed')
+            try:
+                ensure_cluster_is_started()
+            except Exception:
+                logger.exception('Failed to start cluster after failed update')
+            # TODO IMPROVE
+            raise
 
 
 # TODO TEST
