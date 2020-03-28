@@ -121,7 +121,7 @@ Add public data zone:
   cmd.run:
     - name: firewall-cmd --permanent --new-zone public-data-zone
     - unless: firewall-cmd --get-zones | grep public-data-zone
-    - listen_in:
+    - watch_in:
       - Start and enable firewalld service
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
