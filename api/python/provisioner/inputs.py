@@ -158,8 +158,11 @@ class ParamGroupInputBase:
                 logger.error("unknown attr {}".format(attr_name))
                 raise ValueError('unknown attr {}'.format(attr_name))
             else:
-                full_path = "{}/{}".format(
-                    _attr.metadata.get(METADATA_PARAM_GROUP_KEY, ''), attr_name
+                # TODO TEST
+                param_group = _attr.metadata.get(METADATA_PARAM_GROUP_KEY, '')
+                full_path = (
+                    "{}/{}".format(param_group, attr_name) if param_group
+                    else attr_name
                 )
                 cls._spec[attr_name] = param_spec[full_path]
         return cls._spec[attr_name]
@@ -209,6 +212,18 @@ class NTP(ParamGroupInputBase):
 class Network(ParamGroupInputBase):
     _param_group = 'network'
     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
+    cluster_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="cluster ip address for public data network"
+    )
+    mgmt_vip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="virtual ip address for management network"
+    )
+    dns_servers: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="list of dns servers"
+    )
+    search_domains: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="list of search domains"
+    )
     primary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node hostname"
     )
@@ -230,27 +245,49 @@ class Network(ParamGroupInputBase):
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data iface netmask"
     )
-    slave_hostname: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node hostname"
+    secondary_hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node hostname"
     )
-    slave_floating_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node floating IP"
+    secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node floating IP"
     )
-    slave_gateway_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node gateway IP"
+    secondary_gateway_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node gateway IP"
     )
-    slave_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node management iface IP"
+    secondary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node management iface IP"
     )
-    slave_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node management iface netmask"
+    secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node management iface netmask"
     )
-    slave_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node node data iface IP"
+    secondary_data_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node node data iface IP"
     )
-    slave_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="slave node data iface netmask"
+    secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data iface netmask"
     )
+
+
+# # TODO TEST
+# @attr.s(auto_attribs=True)
+# class ClusterIP(ParamGroupInputBase):
+#     _param_group = 'network'
+#     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
+#     cluster_ip: str = ParamGroupInputBase._attr_ib(
+#         _param_group, descr="cluster ip address for public data network",
+#         default=attr.NOTHING
+#     )
+
+
+# # TODO TEST
+# @attr.s(auto_attribs=True)
+# class MgmtVIP(ParamGroupInputBase):
+#     _param_group = 'network'
+#     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
+#     mgmt_vip: str = ParamGroupInputBase._attr_ib(
+#         _param_group, descr="virtual ip address for management network",
+#         default=attr.NOTHING
+#     )
 
 
 # TODO

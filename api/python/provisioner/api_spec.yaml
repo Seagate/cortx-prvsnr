@@ -16,7 +16,22 @@ set_network:
   params_type: Network
   states:
     post:
-      - components.system.network
+      - components.system.network.config
+      - components.system.network.data.direct
+      - components.ha.corosync-pacemaker.config.cluster_ip
+      - components.ha.corosync-pacemaker.config.mgmt_vip
+# set_cluster_ip:
+#   type: Set
+#   params_type: ClusterIP
+#   states:
+#     post:
+#       - components.ha.corosync-pacemaker.config.cluster_ip
+# set_mgmt_vip:
+#   type: Set
+#   params_type: MgmtVIP
+#   states:
+#     post:
+#       - components.ha.corosync-pacemaker.config.mgmt_vip
 set_eosupdate_repo:
   type: SetEOSUpdateRepo
   params_type: EOSUpdateRepo

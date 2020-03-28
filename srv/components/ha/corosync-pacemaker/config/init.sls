@@ -2,5 +2,5 @@ include:
   - .base
   - .setup
 {% if "physical" in grains['virtual'] %}
-  - .clusterip
+  - .cluster_ip
 {% endif %}

@@ -416,6 +416,7 @@ class GetResult(CommandParserFillerMixin):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class GetClusterId(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -432,6 +433,7 @@ class GetClusterId(CommandParserFillerMixin):
         ).values())[0]
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class GetNodeId(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -448,6 +450,7 @@ class GetNodeId(CommandParserFillerMixin):
             targets=targets
         )
 
+# TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SetSSLCerts(CommandParserFillerMixin):
@@ -489,6 +492,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             raise
 
 
+# TODO TEST
 @attr.s(auto_attribs=True)
 class RebootServer(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams

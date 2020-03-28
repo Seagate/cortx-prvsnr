@@ -163,7 +163,7 @@ def test_set_ntp():
     assert new_ntp_timezone == api_ntp_timezone
 
 
-# TODO slave params
+# TODO secondary params
 def test_set_nw():
     params = (
         'primary_hostname',
@@ -173,13 +173,13 @@ def test_set_nw():
         'primary_mgmt_netmask',
         'primary_data_ip',
         'primary_data_netmask',
-        'slave_hostname',
-        'slave_floating_ip',
-        'slave_gateway_ip',
-        'slave_mgmt_ip',
-        'slave_mgmt_netmask',
-        'slave_data_ip',
-        'slave_data_netmask'
+        'secondary_hostname',
+        'secondary_floating_ip',
+        'secondary_gateway_ip',
+        'secondary_mgmt_ip',
+        'secondary_mgmt_netmask',
+        'secondary_data_ip',
+        'secondary_data_netmask'
     )
 
     api_call(
@@ -198,13 +198,13 @@ def test_set_nw():
         primary_mgmt_netmask='255.255.255.0',
         primary_data_ip='1.2.3.4',
         primary_data_netmask='255.255.255.0',
-        slave_hostname='host2',
-        slave_floating_ip='1.2.3.4',
-        slave_gateway_ip='1.2.3.4',
-        slave_mgmt_ip='1.2.3.4',
-        slave_mgmt_netmask='255.255.255.0',
-        slave_data_ip='1.2.3.4',
-        slave_data_netmask='255.255.255.0',
+        secondary_hostname='host2',
+        secondary_floating_ip='1.2.3.4',
+        secondary_gateway_ip='1.2.3.4',
+        secondary_mgmt_ip='1.2.3.4',
+        secondary_mgmt_netmask='255.255.255.0',
+        secondary_data_ip='1.2.3.4',
+        secondary_data_netmask='255.255.255.0',
     )
 
     pillar = api_call('pillar_get')

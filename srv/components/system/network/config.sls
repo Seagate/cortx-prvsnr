@@ -1,32 +1,30 @@
-include:
-  - components.system.network.install
+{# {% if pillar['cluster'][grains['id']]['network']['mgmt_nw']['ipaddr'] %}#}
+# # Donot execute this block for DHCP settings on management network
+{# {% if 'mgmt0' in grains['ip4_interfaces'] %}#}
+{#   {% set mgmt_nw = 'mgmt0' %}#}
+{# {% else %}#}
+{#   {% set mgmt_nw = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] %}#}
+{# {% endif %}#}
+# Network setup:
+#   network.system:
+#     - enabled: True
+#     - hostname: {{ grains['fqdn'] }}
+#     - apply_hostname: True
+#     - gateway: {{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}
+#     - gatewaydev: {{ mgmt_nw }}
+#     - require_reboot: True
+{# {% endif %}#}
 
-# Disabling NetworkManager doesn't kill dhclient process.
-# If not killed explicitly, it causes network restart to fail: COSTOR-439
-Kill dhclient:
-  cmd.run:
-    - name: pkill -SIGTERM dhclient
-    - onlyif: pgrep dhclient
-    - requires:
-      - service: Stop and disable NetworkManager service
-
-{% if pillar['cluster'][grains['id']]['network']['mgmt_nw']['ipaddr'] %}
-# Donot execute this block for DHCP settings on management network
-{% if 'mgmt0' in grains['ip4_interfaces'] %}
-  {% set mgmt_nw = 'mgmt0' %}
-{% else %}
-  {% set mgmt_nw = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] %}
-{% endif %}
-Network setup:
-  network.system:
-    - enabled: True
-    - hostname: {{ grains['fqdn'] }}
-    - apply_hostname: True
-    - gateway: {{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}
-    - gatewaydev: {{ mgmt_nw }}
-    - require_reboot: True
-    - search: {{ salt['pillar.get']("cluster:{0}:network:nw_search".format(grains['id']), 'pun.seagate.com') }}
-{% endif %}
+Modify resolv.conf:
+  file.managed
+    - name: /etc/resolv.conf
+    - source: salt://components/system/network/files/resolv.conf
+    - user: root
+    - group: root
+    - mode: 644
+    - replace: True
+    - create: True
+    - allow_empty: True
 
 lo:
   network.managed:

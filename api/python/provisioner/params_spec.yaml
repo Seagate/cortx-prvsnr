@@ -4,8 +4,12 @@ ntp:
   timezone: system/ntp/timezone
 network:
   _path: cluster.sls
+  cluster_ip:           cluster/cluster_ip
+  mgmt_vip:             cluster/mgmt_vip
+  dns_servers:          cluster/dns_servers
+  search_domains:       cluster/search_domains
   #dns_server:  # TODO not supported in states
-               #'key_path': ('cluster', 'eosnode-2', 'network', 'data_nw', 'ipaddr'),
+  #'key_path': ('cluster', 'eosnode-2', 'network', 'data_nw', 'ipaddr'),
   # TODO use nested group to reduce copy-paste in paths
   primary_hostname:     cluster/eosnode-1/hostname
   primary_floating_ip:  cluster/eosnode-1/network/floating_ip
@@ -14,13 +18,13 @@ network:
   primary_mgmt_netmask: cluster/eosnode-1/network/mgmt_nw/netmask
   primary_data_ip:      cluster/eosnode-1/network/data_nw/ipaddr
   primary_data_netmask: cluster/eosnode-1/network/data_nw/netmask
-  slave_hostname:       cluster/eosnode-2/hostname
-  slave_floating_ip:    cluster/eosnode-2/network/floating_ip
-  slave_gateway_ip:     cluster/eosnode-2/network/gateway_ip
-  slave_mgmt_ip:        cluster/eosnode-2/network/mgmt_nw/ipaddr
-  slave_mgmt_netmask:   cluster/eosnode-2/network/mgmt_nw/netmask
-  slave_data_ip:        cluster/eosnode-2/network/data_nw/ipaddr
-  slave_data_netmask:   cluster/eosnode-2/network/data_nw/netmask
+  secondary_hostname:       cluster/eosnode-2/hostname
+  secondary_floating_ip:    cluster/eosnode-2/network/floating_ip
+  secondary_gateway_ip:     cluster/eosnode-2/network/gateway_ip
+  secondary_mgmt_ip:        cluster/eosnode-2/network/mgmt_nw/ipaddr
+  secondary_mgmt_netmask:   cluster/eosnode-2/network/mgmt_nw/netmask
+  secondary_data_ip:        cluster/eosnode-2/network/data_nw/ipaddr
+  secondary_data_netmask:   cluster/eosnode-2/network/data_nw/netmask
 eosupdate:
   _path: release.sls
   repos: eos_release/update/repos

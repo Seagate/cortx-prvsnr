@@ -17,3 +17,12 @@ Remove NetworkManager package:
 Remove lan0:
   file.absent:
     - name: /etc/sysconfig/network-scripts/ifcfg-lan0
+
+# Disabling NetworkManager doesn't kill dhclient process.
+# If not killed explicitly, it causes network restart to fail: COSTOR-439
+Kill dhclient:
+  cmd.run:
+    - name: pkill -SIGTERM dhclient
+    - onlyif: pgrep dhclient
+    - requires:
+      - service: Stop and disable NetworkManager service

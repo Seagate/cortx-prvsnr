@@ -1,6 +1,6 @@
 import importlib
 
-from .config import ALL_MINIONS
+from .config import ALL_MINIONS, LOCAL_MINION
 
 _api = None
 
@@ -94,7 +94,11 @@ def set_ntp(
 
 def set_network(dry_run=False, nowait=False, **kwargs):
     r"""Configures network.
-
+    
+    :param cluster_ip: (optional) cluster ip address for public data network
+    :param mgmt_vip: (optional) virtual ip address for management network
+    :param dns_servers: (optional) list of dns servers
+    :param search_domains: (optional) list of search domains
     :param primary_hostname: (optional) primary node hostname
     :param primary_floating_ip: (optional) primary node floating ip address
     :param primary_gateway_ip: (optional) primary node gateway ip address
@@ -103,13 +107,13 @@ def set_network(dry_run=False, nowait=False, **kwargs):
         iface netmask
     :param primary_data_ip: (optional) primary node data iface ip address
     :param primary_data_netmask: (optional) primary node data iface netmask
-    :param slave_hostname: (optional) slave node hostname
-    :param slave_floating_ip: (optional) slave node floating ip address
-    :param slave_gateway_ip: (optional) slave node gateway ip address
-    :param slave_mgmt_ip: (optional) slave node management iface ip address
-    :param slave_mgmt_netmask: (optional) slave node management iface netmask
-    :param slave_data_ip: (optional) slave node data iface ip address
-    :param slave_data_netmask: (optional) slave node data iface netmask
+    :param secondary_hostname: (optional) secondary node hostname
+    :param secondary_floating_ip: (optional) secondary node floating ip address
+    :param secondary_gateway_ip: (optional) secondary node gateway ip address
+    :param secondary_mgmt_ip: (optional) secondary node management iface ip address
+    :param secondary_mgmt_netmask: (optional) secondary node management iface netmask
+    :param secondary_data_ip: (optional) secondary node data iface ip address
+    :param secondary_data_netmask: (optional) secondary node data iface netmask
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """
@@ -123,6 +127,34 @@ def set_network(dry_run=False, nowait=False, **kwargs):
         'set_network', targets=targets,
         dry_run=dry_run, nowait=nowait, **kwargs
     )
+
+
+# def set_cluster_ip(cluster_ip, dry_run=False, nowait=False):
+#     r"""Configures network.
+
+#     :param cluster_ip: cluster ip address for public data network
+#     :param dry_run: (optional) validate only. Default: False
+#     :param nowait: (optional) Run asynchronously. Default: False
+#     """
+#     # TODO better targettng: apply for nodes which need to be updated
+#     return _api_call(
+#         'set_cluster_ip', cluster_ip,
+#         targets=LOCAL_MINION, dry_run=dry_run, nowait=nowait
+#     )
+
+
+# def set_mgmt_vip(mgmt_vip, dry_run=False, nowait=False):
+#     r"""Configures network.
+
+#     :param mgmt_vip: virtual ip address for management network
+#     :param dry_run: (optional) validate only. Default: False
+#     :param nowait: (optional) Run asynchronously. Default: False
+#     """
+#     # TODO better targettng: apply for nodes which need to be updated
+#     return _api_call(
+#         'set_mgmt_vip', mgmt_vip,
+#         targets=LOCAL_MINION, dry_run=dry_run, nowait=nowait
+#     )
 
 
 def set_eosupdate_repo(
