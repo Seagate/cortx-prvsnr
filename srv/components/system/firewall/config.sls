@@ -1,28 +1,6 @@
 include:
   - .start
 
-ntpd:
-  firewalld.service:
-    - name: ntpd 
-    - ports:
-      - 123/udp
-
-saltmaster:
-  firewalld.service:
-    - name: saltmaster
-    - ports:
-      - 4505/tcp
-      - 4506/tcp
-
-csm:
-  firewalld.service:
-    - name: csm
-    - ports:
-      - 8100/tcp
-      - 8101/tcp
-      - 8102/tcp
-      - 8103/tcp
-
 consul:
   firewalld.service:
     - name: consul
@@ -35,6 +13,26 @@ consul:
       - 8302/tcp
       - 8302/udp
       - 8300/tcp
+
+csm:
+  firewalld.service:
+    - name: csm
+    - ports:
+      - 28100/tcp
+      - 28101/tcp
+      - 28102/tcp
+      - 28103/tcp
+
+elasticsearch:
+  firewalld.service:
+    - name: elasticsearch
+    - ports:
+      - 9200/tcp
+      - 9300/tcp
+
+haproxy:
+  firewalld.service:
+    - name: haproxy
 
 hare:
   firewalld.service:
@@ -58,6 +56,18 @@ nfs:
       - 892/tcp
       - 875/tcp
 
+ntpd:
+  firewalld.service:
+    - name: ntpd 
+    - ports:
+      - 123/udp
+
+others:
+  firewalld.service:
+    - name: others
+    - ports:
+      - 25/tcp      # SMTP
+
 rabbitmq:
   firewalld.service:
     - name: rabbitmq
@@ -70,28 +80,6 @@ rabbitmq:
       - {{ port }}/tcp    # CLI tools (Erlang distribution client ports) for communication with nodes
 {% endfor %}
       - 15672/tcp         #  HTTP API clients, management UI and rabbitmqadmin
-
-uds:
-  firewalld.service:
-    - name: uds
-    - ports:
-      - 5000/tcp
-
-others:
-  firewalld.service:
-    - name: others
-    - ports:
-      - 25/tcp      # SMTP
-
-www:
-  firewalld.service:
-    - ports:
-      - 80/tcp
-      - 443/tcp     # HTTPS
-
-haproxy:
-  firewalld.service:
-    - name: haproxy
 
 s3:
   firewalld.service:
@@ -111,11 +99,32 @@ s3:
       - 389/tcp
       - 636/tcp
 
+saltmaster:
+  firewalld.service:
+    - name: saltmaster
+    - ports:
+      - 4505/tcp
+      - 4506/tcp
+
 sspl:
   firewalld.service:
     - name: sspl
     - ports:
       - 8090/tcp
+
+uds:
+  firewalld.service:
+    - name: uds
+    - ports:
+      - 5000/tcp
+
+
+www:
+  firewalld.service:
+    - ports:
+      - 80/tcp
+      - 443/tcp     # HTTPS
+
 
 Add public data zone:
   cmd.run:
@@ -259,14 +268,15 @@ Management zone:
     - prune_ports: True
     - prune_services: True
     - services:
-      - high-availability
       - consul
       - csm
+      - elasticsearch
+      - high-availability
       - ntpd
+      - others
+      - rabbitmq
       - saltmaster
       - sspl
-      - rabbitmq
-      - others
       - ssh
       - uds
       - www
@@ -282,11 +292,12 @@ Management zone:
       # - Add management zone
       - consul
       - csm
+      - elasticsearch
       - ntpd
+      - others
+      - rabbitmq
       - saltmaster
       - sspl
-      - rabbitmq
-      - others
       - uds
       - www
 
