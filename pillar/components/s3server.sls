@@ -1,6 +1,5 @@
 s3server:
-{% if "physical" in grains['virtual'] %}
+    version:
+        eos-s3server: latest
+        eos-s3iamcli: latest
     no_of_inst: 11
-{% else %}
-    no_of_inst: 1
-{% endif %}

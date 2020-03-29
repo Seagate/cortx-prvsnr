@@ -20,12 +20,12 @@ Install common runtime libraries:
 Install s3server package:
   pkg.installed:
     - name: eos-s3server
-    - version: latest
+    - version: {{ pillar['s3server']['version']['eos-s3server'] }}
     - refresh: True
 
 Install eos-s3iamcli:
   pkg.installed:
     - pkgs:
-      - eos-s3iamcli: latest
+      - eos-s3iamcli: {{ pillar['s3server']['version']['eos-s3iamcli'] }}
       # - s3iamcli-devel
       # - s3server-debuginfo

@@ -18,7 +18,11 @@ nodes:
           # XXX Hare should support lists of disks, not only globs
           path_glob: "{{ pillar['cluster'][node]['storage']['data_devices'][0] }}"
     m0_clients:
+{% if "physical" in grains['virtual'] %}
       s3: {{ pillar['s3server']['no_of_inst'] }}
+{% else %}
+      s3: 1
+{% endif %}
 {% if "physical" in grains['virtual'] %}
       other: 2
 {% else %}
