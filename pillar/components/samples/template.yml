@@ -117,4 +117,6 @@ sspl:
         user: sspluser
         secret: sspl4ever
     healthmappath: /tmp/resource_health_view.json
-
+uds:
+  version:
+    uds-pyi: latest

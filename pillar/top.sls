@@ -16,6 +16,7 @@ base:
     - components.s3server
     - components.system
     - components.sspl
+    - components.uds
     - user.groups.all.*                     # user all minions vars
   {{ grains.id }}:
     - ignore_missing: True
