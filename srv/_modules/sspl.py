@@ -142,16 +142,13 @@ def _inject_storage_enclosure(config_dict={}):
   return config_dict
 
 def health_map_schema(file_path = "/tmp/resource_health_view.json"):
+  health_schema_path = "/opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json"
   local = salt.client.LocalClient()
   data = local.cmd('*', 'file.read', [file_path])
   node1_data = json.loads(data["eosnode-1"])
   node2_data = json.loads(data["eosnode-2"])
-  node2_fqdn = ""
-  for key in node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].keys():
-    node2_fqdn = key
-
-  for key in node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].keys():
-    node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"][key].update(node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"][node2_fqdn])
-  local.cmd('*', 'file.write', [file_path, json.dumps(node1_data, indent=4)])
+  node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].update(node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"])
+  local.cmd('*', 'file.mkdir',["/opt/seagate/eos-prvsnr/generated_configs/healthmap"])
+  local.cmd('*', 'file.write', [health_schema_path, json.dumps(node1_data, indent=4)])
   return True
 
