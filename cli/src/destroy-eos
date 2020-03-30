@@ -11,6 +11,7 @@ run_all=true
 ha_states=false
 io_states=false
 ctrlpath_states=false
+remove_prvsnr=false
 
 ha_states=(
     "ha.ees_ha"
@@ -19,7 +20,6 @@ ha_states=(
 
 controlpath_states=(
 # states to be applied in desired sequence
-    "csm"
     "sspl"
 )
 
@@ -62,6 +62,7 @@ Options:
        --ha-states       run only teardown of ha components
        --iopath-states   run only teardown of iopath components
        --ctrlpath-states run only teardown of control path components
+       --remove-prvsnr   run only teardown of control path components
 "
 }
 
@@ -79,6 +80,10 @@ function options_parser {
             ;;
         --ctrlpath-states)
             ctrlpath_states=true
+            run_all=false
+            ;;
+        --remove-prvsnr)
+            remove_prvsnr=true
             run_all=false
             ;;
         *)
@@ -103,18 +108,9 @@ function teardown_states {
     else
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
-                    # TODO: Remove this sequence dependency
-                    #       Take the cluster start part out of the component config
-                #       and do it as part of bootstra-eos script similar to the
-                #       'hctl bootstrap' command
-
-                l_info "Force destroying PCS cluster to speed-up teardown"
-                pcs cluster destroy --force || true
-
                 l_info "Applying 'components.$state.teardown' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-                # Execute on eosnode-2 to be followed on eosnode-1.
                 l_info "Applying 'components.$state.teardown' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
@@ -124,18 +120,11 @@ function teardown_states {
                 sleep 2     # Mindfulness break
             fi
         done
-
-        # EES ha provisioning
-        #l_info "Provision EES HA cluster"
-        #for state in ees_ha; do
-        #    l_info "Applying 'components.$state' for both nodes"
-        #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-        #done
     fi
 }
 
 
-parse_args '' '' '' '' "$@"
+parse_args '' 'ha-states,iopath-states,ctrlpath-states,remove-prvsnr' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -164,15 +153,33 @@ if [[ "$ha_states" == true ]]; then
     l_info "tearing down the ha states"
     teardown_states "${ha_states[@]}"
 fi
-if [[ "$io_states" == true ]]; then
-    l_info "tearing down the io path states"
-    teardown_states  "${iopath_states[@]}"
-fi
+
 if [[ "$ctrlpath_states" == true ]]; then
     l_info "tearing down the control path states"
     teardown_states "${controlpath_states[@]}"
 fi
 
-sleep 2
+if [[ "$io_states" == true ]]; then
+    l_info "tearing down the io path states"
+    teardown_states  "${iopath_states[@]}"
+fi
+
+
+if [[ "$remove_prvsnr" == true ]]; then
+    l_info "Cleaning up Provisioner"
+    salt '*' cmd.run "/usr/sbin/partprobe /dev/disk/by-id/dm-name-mpath*" || true
+    l_info "Removing eos-prvsnr package from both nodes"
+    salt '*' pkg.remove eos-prvsnr || true
+
+    l_info "Removing prvsnr-cli and salt packages from node-2"
+    ssh eosnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; rm -rf /etc/salt; rm -rf /opt/seagate"
+
+    l_info "Removing salt packages from node-1"
+    yum remove -y salt* || true
+    rm -rf /etc/salt; rm -rf /opt/seagate
+
+    sleep 2
+    l_info "Please run following command to complete the Operation: yum remove -y eos-prvsnr-cli "
+fi
 
 l_info "Done"

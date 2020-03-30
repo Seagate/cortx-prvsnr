@@ -74,7 +74,4 @@ chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
 
 %postun
-rm -f /root/.ssh/id_rsa_prvsnr
-rm -f /root/.ssh/id_rsa_prvsnr.pub
-rm -f /root/.ssh/authorized_keys
-rm -f /root/.ssh/known_hosts
+#TDB

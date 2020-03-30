@@ -80,4 +80,8 @@ pip3 install -U /opt/seagate/eos-prvsnr/api/python
 # uninstall api globally using pip
 pip3 uninstall -y eos-prvsnr
 # removing prvsnrusers group
-groupdel prvsnrusers
+if grep -q $group /etc/group
+then
+    echo "Removing group prvsnrusers"
+    groupdel prvsnrusers
+fi

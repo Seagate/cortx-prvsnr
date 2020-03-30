@@ -1,26 +1,24 @@
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
-Unmount metadata vol:
-  mount.unmounted:
-    - name: /var/mero
-    # - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-    - persist: True
 
 Unmount SWAP:
   cmd.run:
-    - name: swapoff -a
+    - name: swapoff {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
 
 Remove swap:
   module.run:
     - mount.rm_fstab:
-      - name: SWAP
+      - name: none
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
 
-Remove partition:
+Delete swap partition:
   module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - minor: 2
+
+Delete /var/mero partition:
+  module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - minor: 1

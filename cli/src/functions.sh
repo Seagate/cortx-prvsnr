@@ -761,7 +761,7 @@ function configure_firewall {
 
     #Disable iptables-services
     systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
-    systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
+    #systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
     systemctl stop ebtables && systemctl disable ebtables && systemctl mask ebtables
 
     #Install and start firewalld

@@ -7,7 +7,11 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 . $BASEDIR/functions.sh
 
-run_ees_ha=true
+run_all=true
+prereq_states=false
+io_states=false
+ha_states=false
+ctrlpath_states=false
 
 prereq_states=(
     # states to be applied in desired sequence
@@ -62,8 +66,13 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode               switch to single node mode setup
+       --prereq-states             deploy only prereq states (components.misc_pkgs)
+       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
+       --ctrlpath-states           deploy only control path states (sspl & csm)
 "
 }
+
 
 function options_parser {
     set -eu
@@ -71,6 +80,22 @@ function options_parser {
     case "$1" in
         -S|--singlenode)
             singlenode=true
+            ;;
+        --prereq-states)
+            prereq_states=true
+            run_all=false
+            ;;
+        --iopath-states)
+            io_states=true
+            run_all=false
+            ;;
+        --ha-states)
+            ha_states=true
+            run_all=false
+            ;;
+        --ctrlpath-states)
+            ctrlpath_states=true
+            run_all=false
             ;;
         *)
             l_error "Unknown option: $1"
@@ -92,42 +117,21 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" ]]; then
-                    # TODO: Remove this sequence dependency
-                    #       Take the cluster start part out of the component config
-                #       and do it as part of bootstra-eos script similar to the
-                #       'hctl bootstrap' command
-
-                # Execute on eosnode-2 to be followed on eosnode-1.
+            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
+                # Execute first on eosnode-2 then on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
                 l_info "Applying 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" ]]; then
-                # Execute on eosnode-2 to be followed on eosnode-1.
+            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
+                # Execute first on eosnode-1 then on eosnode-2.
                 l_info "Applying 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
                 l_info "Applying 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
-                sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.rabbitmq" ]]; then
-                # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
-                sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
-                sleep 2     # Mindfulness break
-            elif [[ "$state" == "sspl" ]]; then
-                # Execute on eosnode-2 to be followed on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
-                sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state' for both nodes"
@@ -135,18 +139,11 @@ function run_states {
                 sleep 2     # Mindfulness break
             fi
         done
-
-        # EES ha provisioning
-        #l_info "Provision EES HA cluster"
-        #for state in ees_ha; do
-        #    l_info "Applying 'components.$state' for both nodes"
-        #    $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
-        #done
     fi
 }
 
 
-parse_args 'S' 'singlenode' options_parser '' "$@"
+parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -165,31 +162,32 @@ $cmd salt "*" saltutil.sync_all
 $cmd salt "*" saltutil.refresh_pillar
 $cmd salt "*" saltutil.refresh_grains
 
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.lustre ]; then
-    
+
+if [[ "$run_all" == true ]]; then
     run_states "${prereq_states[@]}"
-
-    sleep 2
-
-    # Reboot only if mellanox diver is installed
-    # rpm -qi mlnx-ofed-all > /dev/null 2>&1 && {
-    #     salt "eosnode-2" system.reboot --async
-    #     salt "eosnode-1" system.reboot --async
-    # }
-    # sleep 2
-fi
-
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.hare ]; then
     run_states  "${iopath_states[@]}"
-fi
-
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.ees_ha ]; then
     run_states "${ha_states[@]}"
-fi
-
-if [ ! -e /opt/seagate/eos-prvsnr/generated_configs/*.csm ]; then
     run_states "${controlpath_states[@]}"
 fi
 
+if [[ "$prereq_states" == true ]]; then
+    l_info "Deploying the prereq states"
+    run_states  "${prereq_states[@]}"
+fi
+
+if [[ "$io_states" == true ]]; then
+    l_info "Deploying the io path states"
+    run_states  "${iopath_states[@]}"
+fi
+
+if [[ "$ha_states" == true ]]; then
+    l_info "Deploying the ha states"
+    run_states "${ha_states[@]}"
+fi
+
+if [[ "$ctrlpath_states" == true ]]; then
+    l_info "Deploying the control path states"
+    run_states "${controlpath_states[@]}"
+fi
 
 l_info "Done"

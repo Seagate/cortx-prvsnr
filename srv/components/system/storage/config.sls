@@ -1,21 +1,3 @@
-# Setup raid on identified devices
-# setup_mdraid:
-#   raid.present:
-#     - name: /dev/md0
-#     - level: 1
-#     - devices:
-#       # identifying of disks should be automated
-#       - /dev/sdbt
-#       - /dev/sdbu
-
-# Was requried for some SSPL ticket: COSTOR-625
-# modify_mdadm_conf:
-#   cmd.run:
-#     - name: mdadm --detail --scan | tee /etc/mdadm.conf
-#     - unless: grep "$(mdadm --detail --scan)" /etc/mdadm.conf
-# End setup RAID
-
-
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
 
@@ -47,9 +29,10 @@ Create metadata partition:
 
 Refresh partition:
   cmd.run:
-    - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath*
+    - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath* || true
   module.run:
-    - partition.probe: []
+    - partition.probe:
+      - {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
 
 # Make SWAP
 Ensure SWAP partition is unmounted:
@@ -81,15 +64,3 @@ Make metadata partition:
       - label: eos_metadata
       - require:
         - module: Create metadata partition
-
-# Ensure /var/mero is mounted
-# Mount mero partition:
-#   mount.mounted:
-#     - name: /var/mero
-#     - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-#     - fstype: ext4
-#     - mkmnt: True       # create the mount point if it is otherwise not present
-#     - persist: False    # don't add /etc/fstab entry
-#     - mount: True
-#     - require:
-#       - module: Make metadata partition
