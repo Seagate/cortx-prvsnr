@@ -5,6 +5,7 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 
+from .errors import BadPillarDataError
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
@@ -22,6 +23,7 @@ from .hare import (
     ensure_cluster_is_stopped, ensure_cluster_is_started
 )
 from provisioner import inputs
+from provisioner import values
 
 _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
@@ -376,19 +378,25 @@ class FWUpdate(CommandParserFillerMixin):
         if not source.is_file():
             raise ValueError('{} is not a file'.format(source))
 
-        if dry_run:
-            return
-
         script = (
             PRVSNR_FILEROOTS_DIR /
-            'components/controller/files/script/controller-cli.sh'
+            'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'secret')
+        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
+
+        for param in (ip, user, passwd):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.pi_key)
+                )
+
+        if dry_run:
+            return
 
         StateFunExecuter.execute(
             'cmd.run',
@@ -488,6 +496,12 @@ class SetSSLCerts(CommandParserFillerMixin):
             )
         )
 
+        for param in (ip, user, passwd):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.pi_key)
+                )
+
         try:
             StatesApplier.apply([state_name])
         except Exception:
@@ -514,6 +528,7 @@ class RebootServer(CommandParserFillerMixin):
         )
 
 
+# TODO IMPROVE dry-run mode
 @attr.s(auto_attribs=True)
 class RebootController(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -531,10 +546,16 @@ class RebootController(CommandParserFillerMixin):
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
+
+        for param in (ip, user, passwd):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.pi_key)
+                )
 
         StateFunExecuter.execute(
             'cmd.run',
@@ -553,6 +574,7 @@ class RebootController(CommandParserFillerMixin):
         )
 
 
+# TODO IMPROVE dry-run mode
 @attr.s(auto_attribs=True)
 class ShutdownController(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -570,8 +592,8 @@ class ShutdownController(CommandParserFillerMixin):
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
