@@ -1,6 +1,6 @@
 import importlib
 
-from .config import ALL_MINIONS, LOCAL_MINION
+from .config import ALL_MINIONS
 
 _api = None
 
@@ -94,7 +94,7 @@ def set_ntp(
 
 def set_network(dry_run=False, nowait=False, **kwargs):
     r"""Configures network.
-    
+
     :param cluster_ip: (optional) cluster ip address for public data network
     :param mgmt_vip: (optional) virtual ip address for management network
     :param dns_servers: (optional) list of dns servers
@@ -110,8 +110,10 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param secondary_hostname: (optional) secondary node hostname
     :param secondary_floating_ip: (optional) secondary node floating ip address
     :param secondary_gateway_ip: (optional) secondary node gateway ip address
-    :param secondary_mgmt_ip: (optional) secondary node management iface ip address
-    :param secondary_mgmt_netmask: (optional) secondary node management iface netmask
+    :param secondary_mgmt_ip: (optional) secondary node management
+        iface ip address
+    :param secondary_mgmt_netmask: (optional) secondary node management
+        iface netmask
     :param secondary_data_ip: (optional) secondary node data iface ip address
     :param secondary_data_netmask: (optional) secondary node data iface netmask
     :param dry_run: (optional) validate only. Default: False
