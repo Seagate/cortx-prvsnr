@@ -334,18 +334,23 @@ class EOSUpdate(CommandParserFillerMixin):
                 #  - update for provisioner itself
                 #  - update for other sw ???
                 ensure_cluster_is_stopped()
-                for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm'):
+                for component in (
+                    'eoscore', 's3server', 'hare', 'sspl', 'csm'
+                ):
                     state_name = "components.{}.update".format(component)
                     try:
-                        logger.info("Updating {} on {}".format(component, targets))
+                        logger.info(
+                            "Updating {} on {}".format(component, targets)
+                        )
                         StatesApplier.apply([state_name], targets)
                     except Exception:
                         logger.exception(
-                            "Failed to update {} on {}".format(component, targets)
+                            "Failed to update {} on {}"
+                            .format(component, targets)
                         )
                         raise
                 ensure_cluster_is_started()
-        except Exception as exc:
+        except Exception:
             logger.exception('Update failed')
             try:
                 ensure_cluster_is_started()
@@ -376,7 +381,7 @@ class FWUpdate(CommandParserFillerMixin):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
-            'components/controller/files/script/controller_cli.sh'
+            'components/controller/files/script/controller-cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
@@ -522,7 +527,7 @@ class RebootController(CommandParserFillerMixin):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
-            'components/controller/files/scripts/controller_cli.sh'
+            'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
@@ -547,7 +552,7 @@ class RebootController(CommandParserFillerMixin):
             )
         )
 
-        
+
 @attr.s(auto_attribs=True)
 class ShutdownController(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
@@ -561,7 +566,7 @@ class ShutdownController(CommandParserFillerMixin):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
-            'components/controller/files/scripts/controller_cli.sh'
+            'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
