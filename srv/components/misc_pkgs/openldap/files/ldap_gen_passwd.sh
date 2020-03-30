@@ -1,8 +1,8 @@
 {%- set db = pillar['openldap']['backend_db'] -%}
 #!/bin/bash
 
-ROOTDNPASSWORD="{{ salt['pillar.get']('openldap:admin_passwd', "seagate") }}"
-LDAPADMINPASS="{{ salt['pillar.get']('openldap:iam_admin_passwd', "ldapadmin") }}"
+ROOTDNPASSWORD="{{ salt['pillar.get']('openldap:admin:secret', "seagate") }}"
+LDAPADMINPASS="{{ salt['pillar.get']('openldap:iam_admin:secret', "ldapadmin") }}"
 
 SHA=$(slappasswd -s $ROOTDNPASSWORD)
 ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')

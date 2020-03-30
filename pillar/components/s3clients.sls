@@ -1,10 +1,11 @@
 s3clients:
+  access_key: 
+  output: text      # json/text/table
+  region: US
   s3server:
     ip:
-    iam_admin_user: "sgiamadmin"
-    iam_admin_passwd: "ldapadmin"
-  access_key: 
-  secret_key: 
-  region: US
-  output: text      # json/text/table
+    iam_admin:
+      user: "sgiamadmin"
+      secret: "ldapadmin"
   s3endpoint: s3.seagate.com
+  secret_key: 

@@ -43,4 +43,4 @@ cluster:
         ip: 10.0.0.3
         port: 80
       user: manage
-      password: 'passwd'
+      secret: 'passwd'

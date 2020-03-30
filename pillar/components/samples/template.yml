@@ -72,7 +72,7 @@ cluster:
         ip: 10.0.0.3
         port: 80
       user: manage
-      password: 'passwd'
+      secret: 'passwd'
 s3client:
     access_key: testing123
     output: text
@@ -80,8 +80,9 @@ s3client:
     s3endpoint: s3.seagate.com
     s3server:
         fqdn: null
-        iam_admin_passwd: ldapadmin
-        iam_admin_user: sgiamadmin
+        iam_admin:
+          secret: ldapadmin
+          user: sgiamadmin
         ip: null
     secret_key: null
 release:
@@ -90,7 +91,7 @@ release:
         repos: {}
 corosync-pacemaker:
   user: hacluster
-  password: hacluster
+  secret: hacluster
   cluster_name: eos_cluster
 elasticsearch:
   cluster_name: elasticsearch_cluster
@@ -102,9 +103,11 @@ commons:
     rabbitmq: latest
     nodejs: v12.13.0
 openldap:
-  admin_passwd: "seagate"
-  iam_admin_user: "sgiamadmin"
-  iam_admin_passwd: "ldapadmin"
+  admin:
+    secret: "seagate"
+  iam_admin:
+    user: "sgiamadmin"
+    secret: "ldapadmin"
   backend_db: mdb
 system:
   ntp:

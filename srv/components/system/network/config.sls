@@ -5,6 +5,7 @@
 {# {% else %}#}
 {#   {% set mgmt_nw = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] %}#}
 {# {% endif %}#}
+{#{% if pillar['cluster'][grains['id']]['network']['gateway_ip'] %}#}
 # Network setup:
 #   network.system:
 #     - enabled: True
@@ -13,6 +14,11 @@
 #     - gateway: {{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}
 #     - gatewaydev: {{ mgmt_nw }}
 #     - require_reboot: True
+{#{% else %}#}
+# Network config failure:
+#   test.fail_without_changes:
+#     - name: Network configuration in absense of Gateway IP results in node inaccessibility.
+{#{% endif %}#}
 {# {% endif %}#}
 
 Modify resolv.conf:

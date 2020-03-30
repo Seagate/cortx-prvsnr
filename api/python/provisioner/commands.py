@@ -381,7 +381,7 @@ class FWUpdate(CommandParserFillerMixin):
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
         user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 

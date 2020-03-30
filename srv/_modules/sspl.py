@@ -124,8 +124,8 @@ def _inject_storage_enclosure(config_dict={}):
   if cluster_pillar['storage_enclosure']['controller']['user']:
     config_dict['STORAGE_ENCLOSURE']['user'] = cluster_pillar['storage_enclosure']['controller']['user']
   
-  if cluster_pillar['storage_enclosure']['controller']['password']:
-    config_dict['STORAGE_ENCLOSURE']['password'] = cluster_pillar['storage_enclosure']['controller']['password']
+  if cluster_pillar['storage_enclosure']['controller']['secret']:
+    config_dict['STORAGE_ENCLOSURE']['secret'] = cluster_pillar['storage_enclosure']['controller']['secret']
   
   if cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']:
     config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']

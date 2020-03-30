@@ -1,4 +1,4 @@
 corosync-pacemaker:
   user: hacluster
-  password: hacluster
+  secret: hacluster
   cluster_name: eos_cluster

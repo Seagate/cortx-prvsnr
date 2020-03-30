@@ -1,5 +1,7 @@
 openldap:
-  admin_passwd: "seagate"
-  iam_admin_user: "sgiamadmin"
-  iam_admin_passwd: "ldapadmin"
+  admin:
+    secret: "seagate"
   backend_db: mdb
+  iam_admin:
+    user: "sgiamadmin"
+    secret: "ldapadmin"

@@ -16,7 +16,7 @@ Start pcsd service:
 Create ha user:
   user.present:
     - name: {{ pillar['corosync-pacemaker']['user'] }}
-    - password: {{ pillar['corosync-pacemaker']['password'] }}
+    - password: {{ pillar['corosync-pacemaker']['secret'] }}
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
@@ -30,7 +30,7 @@ Authorize nodes:
       - {{ pillar['cluster'][node_id]['hostname'] }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
-    - pcspasswd: {{ pillar['corosync-pacemaker']['password'] }}
+    - pcspasswd: {{ pillar['corosync-pacemaker']['secret'] }}
     - extra_args:
       - '--force'
     - require:

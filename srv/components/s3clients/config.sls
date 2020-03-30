@@ -8,5 +8,5 @@ Append /etc/hosts:
 
 # Generate base credentials:
 #   cmd.run:
-#     - name: /bin/s3iamcli createaccount -n s3user -e s3user@seagate.com --ldapuser {{ pillar['s3clients']['s3server']['iam_admin_user'] }} --ldappasswd {{ pillar['s3clients']['s3server']['iam_admin_passwd'] }}  | tee /opt/seagate/.s3-client-credentials
+#     - name: /bin/s3iamcli createaccount -n s3user -e s3user@seagate.com --ldapuser {{ pillar['s3clients']['s3server']['iam_admin']['user'] }} --ldappasswd {{ pillar['s3clients']['s3server']['iam_admin']['secret'] }}  | tee /opt/seagate/.s3-client-credentials
 #     - only_if: test -f /bin/s3iamcli
