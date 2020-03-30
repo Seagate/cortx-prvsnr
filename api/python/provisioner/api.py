@@ -269,3 +269,25 @@ def reboot_server(targets=ALL_MINIONS, nowait=False):
     return _api_call(
         'reboot_server', targets=targets, nowait=nowait
     )
+
+
+def reboot_controller(nowait=False):
+    r"""Reboot the controller.
+
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'reboot_controller', nowait=nowait
+    )
+
+
+def shutdown_controller(nowait=False):
+    r"""Shutdown the controller.
+
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'shutdown_controller', nowait=nowait
+    )
