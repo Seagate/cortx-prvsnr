@@ -509,6 +509,84 @@ class RebootServer(CommandParserFillerMixin):
         )
 
 
+@attr.s(auto_attribs=True)
+class RebootController(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsEmpty
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self):
+
+        script = (
+            PRVSNR_FILEROOTS_DIR /
+            'components/controller/files/scripts/controller_cli.sh'
+        )
+        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
+		ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = next(iter(pillar.values()))
+
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "{script} host -h {ip} -u {user} -p {passwd} "
+                    "--restart"
+                    .format(
+                        script=script,
+                        ip=pillar[ip],
+                        user=pillar[user],
+                        passwd=pillar[passwd],
+                    )
+                )
+            )
+        )
+
+        
+@attr.s(auto_attribs=True)
+class ShutdownController(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsEmpty
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self):
+
+        script = (
+            PRVSNR_FILEROOTS_DIR /
+            'components/controller/files/scripts/controller_cli.sh'
+        )
+        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
+		ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
+        passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = next(iter(pillar.values()))
+
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "{script} host -h {ip} -u {user} -p {passwd} "
+                    "--shutdown"
+                    .format(
+                        script=script,
+                        ip=pillar[ip],
+                        user=pillar[user],
+                        passwd=pillar[passwd],
+                    )
+                )
+            )
+        )
+
+
 commands = {}
 for command_name, spec in api_spec.items():
     spec = deepcopy(api_spec[command_name])  # TODO
