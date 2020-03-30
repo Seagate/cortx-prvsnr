@@ -52,3 +52,7 @@ get_node_id:
   type: GetNodeId
 reboot_server:
   type: RebootServer
+reboot_controller:
+  type: RebootController
+shutdown_controller:
+  type: ShutdownController

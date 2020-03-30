@@ -128,6 +128,7 @@ for fun in [
     'pillar_get', 'get_params', 'set_params',
     'set_ntp', 'set_network', 'set_eosupdate_repo',
     'eos_update', 'set_ssl_certs', 'fw_update', 'get_result',
-    'get_cluster_id', 'get_node_id', 'reboot_server'
+    'get_cluster_id', 'get_node_id', 'reboot_server',
+    'reboot_controller', 'shutdown_controller'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
