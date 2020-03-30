@@ -525,7 +525,7 @@ class RebootController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller_cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
-		ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
+        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
         user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
         passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -564,7 +564,7 @@ class ShutdownController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller_cli.sh'
         )
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
-		ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
+        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
         user = Param('ip', 'cluster.sls', controller_pi_path / 'user')
         passwd = Param('ip', 'cluster.sls', controller_pi_path / 'password')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
