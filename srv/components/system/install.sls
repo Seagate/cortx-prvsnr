@@ -21,12 +21,6 @@ python-pip:
     - bin_env: /usr/bin/pip
     - upgrade: True
 
-Install cryptography:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-
 Install eos-py-utils:           # Package for cryptography
   pkg.installed:
     - name: eos-py-utils

@@ -1,8 +1,4 @@
 sspl:
-  rmq:
-      user: rmq
-      secret: rmq
-  healthmappath: /tmp/resource_health_view.json
   role: eos
   Version: 1.0.0
   SSPL-LL_SETTING:

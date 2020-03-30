@@ -1,10 +1,8 @@
+{%- set db = pillar['openldap']['backend_db'] -%}
 #!/bin/bash
 
-{% set openldap_admin_secret = salt['lyveutil.decrypt'](salt['pillar.get']('openldap:admin:secret', "seagate"), 'openldap') %}
-{% set openldap_iam_secret = salt['lyveutil.decrypt'](salt['pillar.get']('openldap:iam_admin:secret', "ldapadmin"), 'openldap') %}
-
-ROOTDNPASSWORD="{{ openldap_admin_secret }}"
-LDAPADMINPASS="{{ openldap_iam_secret }}"
+ROOTDNPASSWORD="{{ salt['pillar.get']('openldap:admin_passwd', "seagate") }}"
+LDAPADMINPASS="{{ salt['pillar.get']('openldap:iam_admin_passwd', "ldapadmin") }}"
 
 SHA=$(slappasswd -s $ROOTDNPASSWORD)
 ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')
@@ -12,8 +10,7 @@ EXPR='s/olcRootPW: *.*/olcRootPW: '$ESC_SHA'/g'
 CFG_FILE=/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif
 sed -i "$EXPR" $CFG_FILE
 
-{%- set db = pillar['openldap']['backend_db'] -%}
-{% if 'mdb' in db -%}
+{% if 'mdb' in pillar['openldap']['backend_db'] -%}
 # CFG_FILE=/opt/seagate/eos-prvsnr/generated_configs/ldap/olcDatabase={2}{{db}}.ldif
 # sed -i "$EXPR" $CFG_FILE
 {%- endif %}
