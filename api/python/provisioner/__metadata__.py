@@ -1,5 +1,5 @@
 __title__ = 'eos-prvsnr'
-__version__ = '0.12.0'
+__version__ = '0.13.0'
 __author__ = "Seagate"
 __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'
