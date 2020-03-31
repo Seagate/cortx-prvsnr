@@ -27,6 +27,10 @@ export cleanup=false
 export show_prov=false
 export show_license=false
 export load_license=false
+export restart_ctrl_opt=false
+export shutdown_ctrl_opt=false
+export restart_ctrl_name=""
+export shutdown_ctrl_name=""
 export license_file=""
 export user=""
 export pass=""
@@ -66,9 +70,11 @@ usage()
           [-n <no-of-vols>] }]
          [-s|--show-disks]
          [-u|--update-fw]
+         [--restart-ctrl <a|b>]
+         [--shutdown-ctrl <a|b>]
          [-v|--show-fw-ver]
          [--show-license]
-         [-l|--load-license] 
+         [-l|--load-license]
          [-h|--help]
 USAGE
 }
@@ -104,7 +110,11 @@ help()
     --show-license:- Display license details along with storage enclosure
                      serial number and firmware version
     -s|--show-disks:- List the available disks (with relevant details) on the
-                      controller.                 
+                      controller.
+    --restart-ctrl:- Restarts the specified controller (a|b), if second option
+                     is blank both controllers will be restarted
+    --shutdown-ctrl:- Shutdown the controller (a|b), if second option is ommited
+                      then both the controllers will be shutdown
     -l|--load-license:-
 
     Sample commands:
@@ -144,6 +154,27 @@ help()
        host10.seagate.com, admin, !passwd
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' -s
+
+    6. Restart the controller a:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' --restart-ctrl a
+
+    7. Restart both the controller:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' --restart-ctrl
+
+    8. Shutdown the controller a:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl a
+
+    9. Restart both the controller:
+       host10.seagate.com, admin, !passwd
+
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl
+
 USAGE
 }
 
@@ -331,6 +362,55 @@ parse_args()
                     echo "Error: License file not provided" && exit 1;
                 license_file="$2"
                 shift 2 ;;
+            --restart-ctrl)
+                echo "parse_args(): restart ctrl" >> $logfile
+                [ "$prov_optparse_done" = true ] &&
+                    echo "Error: firmware and prov options are not supported"\
+                        "together.." && exit 1
+                [ "$shutdown_ctrl_opt" = true ] &&
+                    echo "Error: Restart and shutdown options are not supported"\
+                        "together.." && exit 1
+                restart_ctrl_opt=true
+                [ -z "$2" ] && {
+                    restart_ctrl_name="both";
+                    shift;
+                } || {
+                    if
+                    [ "$2" != 'a' ] || [ "$2" != 'A'] ||
+                    [ "$2" != 'b' ] || [ "$2" != 'B']
+                    then
+                        echo "Error: Invalid controller name provided"
+                        exit 1
+                    fi
+                    restart_ctrl_name="$2"
+                    shift 2
+                 }
+                ;;
+            --shutdown-ctrl)
+                echo "parse_args(): shutdown ctrl" >> $logfile
+                [ "$prov_optparse_done" = true ] &&
+                    echo "Error: firmware and prov options are not supported"\
+                        "together.." && exit 1
+                [ "$restart_ctrl_opt" = true ] &&
+                    echo "Error: Restart and shutdown options are not supported"\
+                        "together.." && exit 1
+                shutdown_ctrl_opt=true
+                [ -z "$2" ] && {
+                    shutdown_ctrl_name="both";
+                    shift;
+                } || {
+                    if
+                    [ "$2" != 'a' ] || [ "$2" != 'A'] ||
+                    [ "$2" != 'b' ] || [ "$2" != 'B']
+                    then
+                        echo "Error: Invalid controller name provided"
+                        exit 1
+                    fi
+                    shutdown_ctrl_name="$2"
+                    shift 2
+                 }
+                ;;
+
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
@@ -357,6 +437,8 @@ main()
     [ "$update_fw" = true ] && fw_update
     [ "$show_fw_ver" = true ] && fw_ver_get
     [ "$show_license" = true ] && fw_license_show
+    [ "$restart_ctrl_opt" = true ] && ctrl_shutdown
+    [ "$shutdown_ctrl_opt" = true ] && ctrl_restart
 
     rm -rf $tmpdir $xml_doc
 }

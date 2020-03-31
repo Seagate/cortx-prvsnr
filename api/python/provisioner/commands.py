@@ -562,12 +562,14 @@ class RebootController(CommandParserFillerMixin):
             fun_kwargs=dict(
                 name=(
                     "{script} host -h {ip} -u {user} -p {passwd} "
-                    "--restart"
+                    "--restart-ctrl {target_ctrl}"
                     .format(
                         script=script,
                         ip=pillar[ip],
                         user=pillar[user],
                         passwd=pillar[passwd],
+                        #TODO: target_ctrl user input value, can be either "a", "b" or "both"
+                        # target_ctrl=,
                     )
                 )
             )
@@ -602,12 +604,14 @@ class ShutdownController(CommandParserFillerMixin):
             fun_kwargs=dict(
                 name=(
                     "{script} host -h {ip} -u {user} -p {passwd} "
-                    "--shutdown"
+                    "--shutdown-ctrl {target_ctrl}"
                     .format(
                         script=script,
                         ip=pillar[ip],
                         user=pillar[user],
                         passwd=pillar[passwd],
+                        #TODO:target_ctrl, user input value, can be either "a", "b" or "both"
+                        #target_ctrl=,
                     )
                 )
             )
