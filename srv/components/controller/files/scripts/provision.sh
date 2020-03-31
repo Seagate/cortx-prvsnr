@@ -871,6 +871,22 @@ fw_license_show()
     sc_license_get
 }
 
+ctrl_shutdown()
+{
+    echo "ctrl_shutdown(): Entry" >> $logfile
+    echo "ctrl_shutdown(): running command 'shutdown sc $restart_ctrl_name'" >> $logfile
+    cmd_run 'shutdown sc $restart_ctrl_name' > $xml_doc
+    cli_status_get $xml_doc
+}
+
+ctrl_restart()
+{
+    echo "ctrl_restart(): Entry" >> $logfile
+    echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'" >> $logfile
+    cmd_run 'restart sc $restart_ctrl_name' > $xml_doc
+    cli_status_get $xml_doc
+}
+
 disks_list()
 {
     _dskinfo=$tmpdir/dskinfo
