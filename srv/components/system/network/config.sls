@@ -9,10 +9,10 @@
 # Network setup:
 #   network.system:
 #     - enabled: True
-#     - hostname: {{ grains['fqdn'] }}
+#     - hostname: {#{{ grains['fqdn'] }}#}
 #     - apply_hostname: True
-#     - gateway: {{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}
-#     - gatewaydev: {{ mgmt_nw }}
+#     - gateway: {#{{ salt['pillar.get']("cluster:{0}:network:gateway_ip".format(grains['id']), grains['ip4_gw']) }}#}
+#     - gatewaydev: {#{{ mgmt_nw }}#}
 #     - require_reboot: True
 {#{% else %}#}
 # Network config failure:
@@ -22,9 +22,10 @@
 {# {% endif %}#}
 
 Modify resolv.conf:
-  file.managed
+  file.managed:
     - name: /etc/resolv.conf
     - source: salt://components/system/network/files/resolv.conf
+    - template: jinja
     - user: root
     - group: root
     - mode: 644

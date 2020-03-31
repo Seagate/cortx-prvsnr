@@ -6,6 +6,10 @@
 {% else %}
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
 {%- endif -%}
+include:
+  - .start
+  - .stop
+
 public:
   firewalld.present:
     - name: trusted
@@ -15,6 +19,8 @@ public:
     - prune_interfaces: False
     - require:
       - Start and enable firewalld service
+    - watch_in:
+      - Stop and disable Firewalld service
 
 Remove public-data-zone:
   cmd.run:
@@ -26,16 +32,24 @@ Remove public-data-zone:
     - watch_in:
       - Stop and disable Firewalld service
 
-{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
+{% if ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 Remove public data interfaces:
   cmd.run:
     - name: firewall-cmd --remove-interface=data --zone=public-data-zone --permanent
+    - require:
+      - Start and enable firewalld service
+    - watch_in:
+      - Stop and disable Firewalld service
 {% else %}
 Remove public and private data interfaces:
   cmd.run:
     - names: 
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }} --zone=public-data-zone --permanent
-      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=private --permanent
+      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=trusted --permanent
+    - require:
+      - Start and enable firewalld service
+    - watch_in:
+      - Stop and disable Firewalld service
 {% endif %}
 
 #{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
@@ -60,6 +74,4 @@ Remove public and private data interfaces:
 #     - watch_in:
 #       - Stop and disable Firewalld service
 
-include:
-  - .stop
 {% endif %}

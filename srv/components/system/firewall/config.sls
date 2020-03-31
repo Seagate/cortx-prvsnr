@@ -81,6 +81,13 @@ rabbitmq:
 {% endfor %}
       - 15672/tcp         #  HTTP API clients, management UI and rabbitmqadmin
 
+openldap:
+  firewalld.service:
+    - name: openldap
+    - ports:
+      - 389/tcp     # over insecure channel
+      # - 636/tcp     # over secure channel
+
 s3:
   firewalld.service:
     - name: s3
@@ -96,8 +103,6 @@ s3:
       - 9080/tcp
       - 9443/tcp
       - 9086/tcp
-      - 389/tcp
-      - 636/tcp
 
 saltmaster:
   firewalld.service:
@@ -118,13 +123,11 @@ uds:
     - ports:
       - 5000/tcp
 
-
 www:
   firewalld.service:
     - ports:
       - 80/tcp
       - 443/tcp     # HTTPS
-
 
 Add public data zone:
   cmd.run:
@@ -273,6 +276,7 @@ Management zone:
       - elasticsearch
       - high-availability
       - ntpd
+      - openldap
       - others
       - rabbitmq
       - saltmaster
@@ -294,6 +298,7 @@ Management zone:
       - csm
       - elasticsearch
       - ntpd
+      - openldap
       - others
       - rabbitmq
       - saltmaster

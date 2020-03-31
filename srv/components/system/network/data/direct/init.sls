@@ -21,6 +21,7 @@ Public direct network:
     - onboot: yes
     - userctl: no
     - mtu: 9000
+    - defroute: no
 {% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}

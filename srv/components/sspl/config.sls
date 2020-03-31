@@ -32,7 +32,6 @@ Run Health Schema on minion:
     - name: /opt/seagate/eos/sspl/lib/resource_health_view -n --path "/tmp/"
 {% endif %}
  
-
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:init')

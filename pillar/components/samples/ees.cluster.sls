@@ -4,8 +4,13 @@ cluster:
   mgmt_vip:                           # Management VIP for CSM
   search_domains:
     - pun.seagate.com
+    - colo.seagate.com
+    - eos.colo.seagate.com
   dns_servers:
-    - 
+    - 10.237.10.253
+    - 10.237.10.254
+    - 10.230.240.51
+    - 10.230.240.52
   type: ees                           # single/ees/ecs
   node_list:
     - eosnode-1

@@ -3,8 +3,13 @@ cluster:
   pvt_data_nw_addr: 192.168.0.0
   search_domains:
     - pun.seagate.com
+    - colo.seagate.com
+    - eos.colo.seagate.com
   dns_servers:
-    - 
+    - 10.237.10.253
+    - 10.237.10.254
+    - 10.230.240.51
+    - 10.230.240.52
   type: single        # single/ees/ecs
   node_list:
     - eosnode-1

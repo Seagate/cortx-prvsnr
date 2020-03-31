@@ -1,6 +1,15 @@
 include:
   - components.misc_pkgs.rabbitmq.start
 
+# logrotate.d config: DO NOT REMOVE
+Setup logrotate policy for rabbitmq-server:
+  file.managed:
+  - name: /etc/logrotate.d/rabbitmq-server
+  - source: salt://components/misc_pkgs/rabbitmq/files/rabbitmq-server
+  - keep_source: True
+  - user: root
+  - group: root
+
 Copy Erlang cookie:
   file.managed:
     - name: /var/lib/rabbitmq/.erlang.cookie
