@@ -170,7 +170,11 @@ help()
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl a
 
+<<<<<<< HEAD
     9. Shutdown both the controller:
+=======
+    9. Restart both the controller:
+>>>>>>> 0a27294304fed6e3fb871b4c7f49cb703dc175ea
        host10.seagate.com, admin, !passwd
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl
