@@ -10,7 +10,7 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 run_all=true
 prereq_states=false
 io_states=false
-ha_states=false
+run_ha_states=false
 ctrlpath_states=false
 
 prereq_states=(
@@ -90,7 +90,7 @@ function options_parser {
             run_all=false
             ;;
         --ha-states)
-            ha_states=true
+            run_ha_states=true
             run_all=false
             ;;
         --ctrlpath-states)
@@ -180,7 +180,7 @@ if [[ "$io_states" == true ]]; then
     run_states  "${iopath_states[@]}"
 fi
 
-if [[ "$ha_states" == true ]]; then
+if [[ "$run_ha_states" == true ]]; then
     l_info "Deploying the ha states"
     run_states "${ha_states[@]}"
 fi
