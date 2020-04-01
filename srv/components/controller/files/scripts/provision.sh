@@ -874,14 +874,20 @@ fw_license_show()
 ctrl_shutdown()
 {
     echo "ctrl_shutdown(): Entry" >> $logfile
-    echo "ctrl_shutdown(): running command 'shutdown sc $restart_ctrl_name'" >> $logfile
-    cmd_run 'shutdown sc $restart_ctrl_name' > $xml_doc
+    if [[ "$shutdown_ctrl_name" = "A" || "$shutdown_ctrl_name" = "B" ]]; then
+        shutdown_ctrl_name=$(echo $shutdown_ctrl_name | tr '[:upper:]' '[:lower:]')
+    fi
+    echo "ctrl_shutdown(): running command 'shutdown sc $shutdown_ctrl_name'" >> $logfile
+    cmd_run 'shutdown sc $shutdown_ctrl_name' > $xml_doc
     cli_status_get $xml_doc
 }
 
 ctrl_restart()
 {
     echo "ctrl_restart(): Entry" >> $logfile
+    if [[ "$restart_ctrl_name" = "A" || "$restart_ctrl_name" = "B" ]]; then
+        restart_ctrl_name=$(echo $restart_ctrl_name | tr '[:upper:]' '[:lower:]')
+    fi
     echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'" >> $logfile
     cmd_run 'restart sc $restart_ctrl_name' > $xml_doc
     cli_status_get $xml_doc

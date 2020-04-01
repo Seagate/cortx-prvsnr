@@ -170,7 +170,7 @@ help()
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl a
 
-    9. Restart both the controller:
+    9. Shutdown both the controller:
        host10.seagate.com, admin, !passwd
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl
@@ -375,10 +375,8 @@ parse_args()
                     restart_ctrl_name="both";
                     shift;
                 } || {
-                    if
-                    [ "$2" != 'a' ] || [ "$2" != 'A'] ||
-                    [ "$2" != 'b' ] || [ "$2" != 'B']
-                    then
+                    if [[ "$2" != 'a' && "$2" != 'A' ]] &&
+                       [[ "$2" != 'b' && "$2" != 'B' ]]; then
                         echo "Error: Invalid controller name provided"
                         exit 1
                     fi
@@ -399,10 +397,8 @@ parse_args()
                     shutdown_ctrl_name="both";
                     shift;
                 } || {
-                    if
-                    [ "$2" != 'a' ] || [ "$2" != 'A'] ||
-                    [ "$2" != 'b' ] || [ "$2" != 'B']
-                    then
+                    if [[ "$2" != 'a' && "$2" != 'A' ]] &&
+                       [[ "$2" != 'b' && "$2" != 'B' ]]; then
                         echo "Error: Invalid controller name provided"
                         exit 1
                     fi
@@ -419,7 +415,8 @@ parse_args()
 
     [ "$prov_optparse_done" = false -a "$show_disks" = false -a\
         "$show_license" = false -a "$load_license" = false -a\
-        "$show_fw_ver" = false -a "$update_fw" = false ] && {
+        "$show_fw_ver" = false -a "$update_fw" = false -a\
+        "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false ] && {
         echo "Error: Incomplete arguments provided, exiting.."
         exit 1
     }
@@ -437,8 +434,8 @@ main()
     [ "$update_fw" = true ] && fw_update
     [ "$show_fw_ver" = true ] && fw_ver_get
     [ "$show_license" = true ] && fw_license_show
-    [ "$restart_ctrl_opt" = true ] && ctrl_shutdown
-    [ "$shutdown_ctrl_opt" = true ] && ctrl_restart
+    [ "$restart_ctrl_opt" = true ] && ctrl_restart
+    [ "$shutdown_ctrl_opt" = true ] && ctrl_shutdown
 
     rm -rf $tmpdir $xml_doc
 }
