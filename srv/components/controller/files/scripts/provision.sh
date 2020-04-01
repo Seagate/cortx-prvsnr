@@ -856,8 +856,54 @@ fw_license_load()
     ftp_cmd_run "put $license_file license"
 }
 
+is_pfu_enabled()
+{
+    _tmp_file="$tmpdir/is_pfu_enabled"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    # objects name in the xml
+    _xml_obj_bt="advanced-settings-table"
+    _xml_obj_plist=("partner-firmware-upgrade")
+    # run command to get the details of advanced settings params
+    echo "Getting advanced setting details.." >> $logfile
+    cmd_run 'show advanced-settings'
+    echo "Checking if pfu is enabled" >> $logfile
+
+    # parse xml to get required values of properties
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "is_pfu_enabled(): No pfu setting found" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    ret=$(grep -q "Enabled" $_tmp_file)
+    if [[ $ret -eq 0 ]]; then
+        echo "Enabled"
+    else
+        echo "Disabled"
+    fi
+}
+
+pfu_enable()
+{
+    _tmp_file="$tmpdir/pfu_enable"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    echo "pfu_enable(): Checking if PFU is enabled" >> $logfile
+    is_pfu_enabled > $_tmp_file
+    grep -q "Enabled" $_tmp_file || {
+        echo "pfu_enable(): PFU disabled, enabling PFU" >> $logfile
+        cmd_run 'set advanced-settings partner-firmware-upgrade on'
+        is_pfu_enabled > $_tmp_file
+        echo "pfu_enable(): Checking if PFU got enabled" >> $logfile
+        grep -q "Enabled" $_tmp_file || {
+           echo "pfu_enable(): Error: Could not enable PFU"
+           exit 1
+        }
+    } && echo "pfu_enable(): PFU is already enabled" >> $logfile
+}
+
 fw_update()
 {
+    pfu_enable
     echo "Updating the firmware"
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
