@@ -19,3 +19,25 @@ Delete system checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.system
 
+Remove added journald configuration:
+  file.replace:
+    - name: /etc/systemd/journald.conf
+    - pattern: "^Storage=persistent.*?MaxRetentionSec=1week"
+    - flags: ['MULTILINE', 'DOTALL']
+    - repl: ''
+    - ignore_if_missing: True
+
+restart systemd-journald:
+  module.run:
+    - service.restart:
+      - systemd-journald
+
+Remove /var/log/journal:
+  file.absent:
+    - name: /var/log/journal
+
+Restart systemd-journald:
+  module.run:
+    - service.restart:
+      - systemd-journald
+
