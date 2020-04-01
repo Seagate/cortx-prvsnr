@@ -27,3 +27,5 @@ ALL_MINIONS = '*'
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
+
+CONTROLLERS = 'both'
