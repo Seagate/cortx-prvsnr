@@ -582,8 +582,6 @@ class RebootController(CommandParserFillerMixin):
                         user=pillar[user],
                         passwd=pillar[passwd],
                         target_ctrl=target_ctrl
-                        #TODO: target_ctrl user input value, can be either "a", "b" or "both"
-                        # target_ctrl=,
                     )
                 )
             )
@@ -631,8 +629,6 @@ class ShutdownController(CommandParserFillerMixin):
                         user=pillar[user],
                         passwd=pillar[passwd],
                         target_ctrl=target_ctrl
-                        #TODO:target_ctrl, user input value, can be either "a", "b" or "both"
-                        #target_ctrl=,
                     )
                 )
             )
