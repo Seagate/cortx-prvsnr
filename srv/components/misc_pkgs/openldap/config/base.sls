@@ -62,6 +62,10 @@ Configure OpenLDAP - password policy:
     - require:
       - Configure OpenLDAP - Load ppolicy overlay
 
+Configure OpenLDAP - Enable openldap log:
+  cmd.run:
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin']['secret'] }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/slapdlog.ldif
+
 # Update openldap SSL certificates:
 #   cmd.run:
 #     - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/enable_ssl_openldap.sh -cafile /etc/ssl/stx-s3/openldap/ca.crt -certfile /etc/ssl/stx-s3/openldap/s3openldap.crt -keyfile /etc/ssl/stx-s3/openldap/s3openldap.key
