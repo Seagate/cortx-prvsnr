@@ -1,6 +1,6 @@
 import importlib
 
-from .config import ALL_MINIONS
+from .config import ALL_MINIONS, CONTROLLERS
 
 _api = None
 
@@ -273,23 +273,25 @@ def reboot_server(targets=ALL_MINIONS, nowait=False):
     )
 
 
-def reboot_controller(nowait=False):
+def reboot_controller(target_ctrl=CONTROLLERS, nowait=False):
     r"""Reboot the controller.
 
+    :param target_ctrl: (optional) controller to reboot. Default: both
     :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
-        'reboot_controller', nowait=nowait
+        'reboot_controller', target_ctrl=target_ctrl, nowait=nowait
     )
 
 
-def shutdown_controller(nowait=False):
+def shutdown_controller(target_ctrl=CONTROLLERS, nowait=False):
     r"""Shutdown the controller.
 
+    :param target_ctrl: (optional) controller to reboot. Default: both
     :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
-        'shutdown_controller', nowait=nowait
+        'shutdown_controller', target_ctrl=target_ctrl, nowait=nowait
     )

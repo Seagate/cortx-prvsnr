@@ -9,7 +9,8 @@ from .errors import BadPillarDataError
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
-    PRVSNR_USER_FILES_SSL_CERTS_FILE
+    PRVSNR_USER_FILES_SSL_CERTS_FILE,
+    CONTROLLERS
 )
 from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
@@ -109,6 +110,18 @@ class RunArgsSSLCerts:
                 'help': "perform validation only"
             }
         }, default=False
+    )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsController:
+    target_ctrl: str = attr.ib(
+        default=CONTROLLERS,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target controller"
+            }
+        }
     )
 
 
@@ -532,13 +545,13 @@ class RebootServer(CommandParserFillerMixin):
 @attr.s(auto_attribs=True)
 class RebootController(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsEmpty
+    _run_args_type = RunArgsController
 
     @classmethod
     def from_spec(cls):
         return cls()
 
-    def run(self):
+    def run(self, target_ctrl):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
@@ -568,6 +581,7 @@ class RebootController(CommandParserFillerMixin):
                         ip=pillar[ip],
                         user=pillar[user],
                         passwd=pillar[passwd],
+                        target_ctrl=target_ctrl
                         #TODO: target_ctrl user input value, can be either "a", "b" or "both"
                         # target_ctrl=,
                     )
@@ -580,13 +594,13 @@ class RebootController(CommandParserFillerMixin):
 @attr.s(auto_attribs=True)
 class ShutdownController(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsEmpty
+    _run_args_type = RunArgsController
 
     @classmethod
     def from_spec(cls):
         return cls()
 
-    def run(self):
+    def run(self, target_ctrl):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
@@ -599,6 +613,12 @@ class ShutdownController(CommandParserFillerMixin):
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
+        for param in (ip, user, passwd):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.pi_key)
+                )
+
         StateFunExecuter.execute(
             'cmd.run',
             fun_kwargs=dict(
@@ -610,6 +630,7 @@ class ShutdownController(CommandParserFillerMixin):
                         ip=pillar[ip],
                         user=pillar[user],
                         passwd=pillar[passwd],
+                        target_ctrl=target_ctrl
                         #TODO:target_ctrl, user input value, can be either "a", "b" or "both"
                         #target_ctrl=,
                     )
