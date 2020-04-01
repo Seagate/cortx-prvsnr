@@ -52,6 +52,7 @@ controlpath_states=(
     # states to be applied in desired sequence
         "sspl"
         "csm"
+        "post_setup"
     )
 
 function usage {
