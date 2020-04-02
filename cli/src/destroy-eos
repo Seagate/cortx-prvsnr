@@ -8,7 +8,7 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 . $BASEDIR/functions.sh
 
 run_all=true
-ha_states=false
+run_ha_states=false
 io_states=false
 ctrlpath_states=false
 remove_prvsnr=false
@@ -20,6 +20,8 @@ ha_states=(
 
 controlpath_states=(
 # states to be applied in desired sequence
+    "post_setup"
+    "csm"
     "sspl"
 )
 
@@ -71,7 +73,7 @@ function options_parser {
 
     case "$1" in
         --ha-states)
-            ha_states=true
+            run_ha_states=true
             run_all=false
             ;;
         --iopath-states)
@@ -107,12 +109,19 @@ function teardown_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" ]]; then
+            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
                 l_info "Applying 'components.$state.teardown' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Applying 'components.$state.teardown' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
+                sleep 2     # Mindfulness break
+            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
+                l_info "Applying 'components.$state.teardown' for eosnode-2"
+                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
+                sleep 2     # Mindfulness break
+                l_info "Applying 'components.$state.teardown' for eosnode-1"
+                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state.teardown' for both nodes"
@@ -143,15 +152,10 @@ $cmd salt "*" saltutil.refresh_pillar
 
 
 if [[ "$run_all" == true ]]; then
-    teardown_states "${ha_states[@]}"
     teardown_states "${controlpath_states[@]}"
-    teardown_states  "${iopath_states[@]}"
-    teardown_states "${prereq_states[@]}"
-fi
-
-if [[ "$ha_states" == true ]]; then
-    l_info "tearing down the ha states"
     teardown_states "${ha_states[@]}"
+    teardown_states "${iopath_states[@]}"
+    teardown_states "${prereq_states[@]}"
 fi
 
 if [[ "$ctrlpath_states" == true ]]; then
@@ -159,11 +163,26 @@ if [[ "$ctrlpath_states" == true ]]; then
     teardown_states "${controlpath_states[@]}"
 fi
 
+if [[ "$run_ha_states" == true ]]; then
+    l_info "tearing down the ha states"
+    teardown_states "${ha_states[@]}"
+fi
+
 if [[ "$io_states" == true ]]; then
     l_info "tearing down the io path states"
     teardown_states  "${iopath_states[@]}"
 fi
 
+if [[ "$run_all" == true || "$run_ha_states" == true ]]; then
+    l_info "Cleaning up the failed-services on both nodes"
+    salt '*' cmd.run "systemctl reset-failed"
+
+    l_info "Cleaning up the failed-services on both nodes"
+    systemctl list-units --state=running | grep hare-consul-agent &&
+        systemctl stop hare-consul-agent || true
+    ssh eosnode-2 " systemctl list-units --state=running | grep\
+        hare-consul-agent && systemctl stop hare-consul-agent"
+fi
 
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
@@ -179,7 +198,8 @@ if [[ "$remove_prvsnr" == true ]]; then
     rm -rf /etc/salt; rm -rf /opt/seagate
 
     sleep 2
-    l_info "Please run following command to complete the Operation: yum remove -y eos-prvsnr-cli "
+    l_info "Please run following command to complete the Operation:"
+    echo "'yum remove -y eos-prvsnr-cli'"
 fi
 
 l_info "Done"

@@ -31,8 +31,7 @@ Refresh partition:
   cmd.run:
     - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath* || true
   module.run:
-    - partition.probe:
-      - {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+    - partition.probe: []
 
 # Make SWAP
 Ensure SWAP partition is unmounted:
