@@ -511,12 +511,6 @@ class SetSSLCerts(CommandParserFillerMixin):
             )
         )
 
-        for param in (ip, user, passwd):
-            if not pillar[param] or pillar[param] is values.MISSED:
-                raise BadPillarDataError(
-                    'value for {} is not specified'.format(param.pi_key)
-                )
-
         try:
             StatesApplier.apply([state_name])
         except Exception:
