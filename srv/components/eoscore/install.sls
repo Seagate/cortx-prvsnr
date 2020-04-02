@@ -1,6 +1,6 @@
 Install EOSCore:
   pkg.installed:
     - pkgs:
-      - mero: latest
+      - eos-core: latest
       # - mero-debuginfo
     - refresh: True

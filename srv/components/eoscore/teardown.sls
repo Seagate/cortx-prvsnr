@@ -7,7 +7,7 @@ Stage - Reset Core:
 Remove EOSCore package:
   pkg.purged:
     - pkgs:
-      - mero
+      - eos-core
       # - mero-debuginfo
 
 Delete EOSCore yum repo:
