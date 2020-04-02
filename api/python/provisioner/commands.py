@@ -10,7 +10,7 @@ from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
-    CONTROLLERS
+    CONTROLLER_BOTH
 )
 from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
@@ -116,10 +116,11 @@ class RunArgsSSLCerts:
 @attr.s(auto_attribs=True)
 class RunArgsController:
     target_ctrl: str = attr.ib(
-        default=CONTROLLERS,
+        default=CONTROLLER_BOTH,
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "target controller"
+                # TODO specify only a/b/both as valid choices
             }
         }
     )
@@ -551,7 +552,7 @@ class RebootController(CommandParserFillerMixin):
     def from_spec(cls):
         return cls()
 
-    def run(self, target_ctrl):
+    def run(self, target_ctrl: str = CONTROLLER_BOTH):
 
         script = (
             PRVSNR_FILEROOTS_DIR /
@@ -598,7 +599,7 @@ class ShutdownController(CommandParserFillerMixin):
     def from_spec(cls):
         return cls()
 
-    def run(self, target_ctrl):
+    def run(self, target_ctrl: str = CONTROLLER_BOTH):
 
         script = (
             PRVSNR_FILEROOTS_DIR /

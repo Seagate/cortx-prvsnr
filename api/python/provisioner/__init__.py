@@ -33,7 +33,7 @@ __all__ = [
     'get_params', 'set_params', 'set_ntp', 'set_network',
     'set_eosupdate_repo', 'eos_update', 'set_ssl_certs', 'fw_update',
     'get_result', 'get_cluster_id', 'get_node_id', 'reboot_server',
-    'reboot_controller', 'shutdown_controller'
+    'reboot_controller', 'shutdown_controller',
     'UNCHANGED', 'DEFAULT', 'UNDEFINED', 'MISSED',
     'ALL_HOSTS', 'ALL_MINIONS'
 ]
