@@ -603,6 +603,7 @@ class ShutdownController(CommandParserFillerMixin):
         controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
         ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
         user = Param('user', 'cluster.sls', controller_pi_path / 'user')
+        # TODO IMPROVE improve Param to hide secrets
         passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
