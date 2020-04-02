@@ -264,9 +264,6 @@ Private data zone:
 Management zone:
   firewalld.present:
     - name: public
-    - block_icmp:
-      - echo-reply
-      - echo-request
     - default: True
     - prune_ports: True
     - prune_services: True
