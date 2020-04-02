@@ -120,7 +120,8 @@ class RunArgsController:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "target controller"
-                # TODO specify only a/b/both as valid choices
+                # TODO IMPROVE use argparse choises to limit
+                #      valid vales only to a/b/both
             }
         }
     )
