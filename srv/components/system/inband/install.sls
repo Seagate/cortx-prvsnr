@@ -1,3 +1,3 @@
 Install scsi-network-relay driver:
-  pkg.install:
+  pkg.installed:
     - name: scsi-network-relay

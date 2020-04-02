@@ -54,6 +54,8 @@ Copy ldap replication config:
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/ppolicyoverlay.ldif'},
     { "src": 'salt://components/misc_pkgs/openldap/files/test_data.ldif',
       "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/test_data.ldif' },
+    { "src": 'salt://components/misc_pkgs/openldap/files/slapdlog.ldif',
+      "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/slapdlog.ldif' },
     ]
 %}
 {{ filename.dest }}:

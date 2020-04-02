@@ -52,6 +52,7 @@ controlpath_states=(
     # states to be applied in desired sequence
         "sspl"
         "csm"
+        "post_setup"
     )
 
 function usage {
@@ -173,6 +174,11 @@ fi
 if [[ "$prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
     run_states  "${prereq_states[@]}"
+fi
+
+if [[ "$io_states" == true || "$run_ha_states" == true ]]; then
+    l_info "Recreating the metadata partitions"
+    salt '*' state.apply components.system.storage
 fi
 
 if [[ "$io_states" == true ]]; then
