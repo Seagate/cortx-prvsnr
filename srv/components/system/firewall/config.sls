@@ -23,6 +23,12 @@ csm:
       - 28102/tcp
       - 28103/tcp
 
+dhclient:
+  firewalld.service:
+    - name: dhclient
+    - ports:
+      - 68/udp
+
 elasticsearch:
   firewalld.service:
     - name: elasticsearch
@@ -62,9 +68,9 @@ ntpd:
     - ports:
       - 123/udp
 
-others:
+smtp:
   firewalld.service:
-    - name: others
+    - name: smtp
     - ports:
       - 25/tcp      # SMTP
 
@@ -148,6 +154,7 @@ Data-zone:
     - prune_interfaces: True
     - services:
       - consul
+      - dhclient
       - haproxy
       - nfs
       - hare
@@ -158,6 +165,7 @@ Data-zone:
     - require:
       - Add public data zone
       - consul
+      - dhclient
       - haproxy
       - nfs
       - hare
@@ -189,6 +197,7 @@ Public data zone:
     - prune_interfaces: True
     - services:
       - consul
+      - dhclient
       - hare
       - haproxy
       - nfs
@@ -200,6 +209,7 @@ Public data zone:
     - require:
       - Add public data zone
       - consul
+      - dhclient
       - hare
       - haproxy
       - nfs
@@ -269,12 +279,13 @@ Management zone:
     - prune_services: True
     - services:
       - consul
+      - dhclient
       - csm
       - elasticsearch
       - high-availability
       - ntpd
       - openldap
-      - others
+      - smtp
       - rabbitmq
       - saltmaster
       - sspl
@@ -292,11 +303,12 @@ Management zone:
     - require:
       # - Add management zone
       - consul
+      - dhclient
       - csm
       - elasticsearch
       - ntpd
       - openldap
-      - others
+      - smtp
       - rabbitmq
       - saltmaster
       - sspl
