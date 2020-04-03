@@ -21,6 +21,7 @@
 {#{% endif %}#}
 {# {% endif %}#}
 
+{% if ((pillar['cluster']['search_domains']) and (pillar['cluster']['dns_servers'])) %}
 Modify resolv.conf:
   file.managed:
     - name: /etc/resolv.conf
@@ -32,20 +33,21 @@ Modify resolv.conf:
     - replace: True
     - create: True
     - allow_empty: True
+{% endif %}
 
-lo:
-  network.managed:
-    - name: lo
-    - enabled: True
-    - type: eth
-    - nm_controlled: no
-    - userctl: no
-    - ipv6_autoconf: no
-    - enable_ipv6: true
-    - ipaddr: 127.0.0.1
-    - netmask: 255.0.0.0
-    - network: 127.0.0.0
-    - broadcast: 127.255.255.255
+# lo:
+#   network.managed:
+#     - name: lo
+#     - enabled: True
+#     - type: eth
+#     - nm_controlled: no
+#     - userctl: no
+#     - ipv6_autoconf: no
+#     - enable_ipv6: true
+#     - ipaddr: 127.0.0.1
+#     - netmask: 255.0.0.0
+#     - network: 127.0.0.0
+#     - broadcast: 127.255.255.255
 
 # Not requried
 # Reboot system:
