@@ -4,7 +4,7 @@ sspl:
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
     message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor"
+    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor"
     actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
     degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler"
   SYSTEM_INFORMATION:
@@ -27,7 +27,7 @@ sspl:
     exchange_name: "sspl-in"
     routing_key: "actuator-req-key"
     username: "sspluser"
-    password: "gAAAAABebhpiEnRxeA3xKLEjAXAsgNENSpIYOsuQ0sHOoJmdYiCiHb5DEHdx_mwyNV7oL6Zb2J0oGQP_Bcuy9j_CwgEK6swXwQ=="
+    password: "gAAAAABehkY0is--q2sOErCNQtM_cvgkvyquaun88KvUO20TcFkPG92d84g8BLIKkHlgTOGmo09IS4YwgymMawIjWj8SCJH55A=="
     primary_rabbitmq_host: "localhost"
   RABBITMQEGRESSPROCESSOR:
     virtual_host: "SSPL"
@@ -38,7 +38,7 @@ sspl:
     ack_exchange_name: "sspl-out"
     ack_routing_key: "actuator-resp-key"
     username: "sspluser"
-    password: "gAAAAABebhpiEnRxeA3xKLEjAXAsgNENSpIYOsuQ0sHOoJmdYiCiHb5DEHdx_mwyNV7oL6Zb2J0oGQP_Bcuy9j_CwgEK6swXwQ=="
+    password: "gAAAAABehkY0is--q2sOErCNQtM_cvgkvyquaun88KvUO20TcFkPG92d84g8BLIKkHlgTOGmo09IS4YwgymMawIjWj8SCJH55A=="
     message_signature_username: "sspl-ll"
     message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
     message_signature_expires: "3600"
@@ -50,7 +50,7 @@ sspl:
     exchange_name: "sspl-in"
     routing_key: "iem-key"
     username: "sspluser"
-    password: "gAAAAABebhpiEnRxeA3xKLEjAXAsgNENSpIYOsuQ0sHOoJmdYiCiHb5DEHdx_mwyNV7oL6Zb2J0oGQP_Bcuy9j_CwgEK6swXwQ=="
+    password: "gAAAAABehkY0is--q2sOErCNQtM_cvgkvyquaun88KvUO20TcFkPG92d84g8BLIKkHlgTOGmo09IS4YwgymMawIjWj8SCJH55A=="
     primary_rabbitmq_host: "localhost"
   RABBITMQCLUSTER:
     cluster_nodes: "localhost"
@@ -85,7 +85,7 @@ sspl:
     pass: "admin"
   SMTPSETTING:
     smptserver: "mailhost.seagate.com"
-    recipient: "malhar.vora@seagate.com"
+    recipient: "example@seagate.com"
     smtp_port: "25"
   LOGEMAILER:
     priority: "LOG_ERR"
@@ -98,7 +98,7 @@ sspl:
     secondary_controller_ip: "127.0.0.1"
     secondary_controller_port: "28200"
     user: "xxxxx"
-    password: "gAAAAABebhrVg8SWJf9d5suLyYupSQ77BqQdOCfFshWHtmc4_xJLNstgmeIX6bO19vwNb7zYrJElMuvX5FxY75hvZUlrQtcB0w=="
+    password: "gAAAAABehkmVHStx337AN2g6OTALqA5BNejmWD6Nu__25DgYzauLz6iGLLCDzqs71pP7Z5AV-oEvnOPGKomJiTzyPwOHnmylEQ=="
     mgmt_interface: "cliapi"
   REALSTORSENSORS:
     polling_frequency: "30"
@@ -117,6 +117,8 @@ sspl:
     threaded: "true"
     polling_interval: "30"
   REALSTORLOGICALVOLUMESENSOR:
+    threaded: "true"
+  REALSTORENCLOSURESENSOR:
     threaded: "true"
   IEMSENSOR:
     threaded: "true"
