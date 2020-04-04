@@ -538,12 +538,14 @@ function collect_addrs {
         set -x
     fi
 
-    yum -y install iproute >&2
+    # yum -y install iproute >&2
 
-    ip_list="\$(ip addr show scope global up | sed -n "s/.*inet \([^/]\+\).*/\1/p" || true)"
-    ifconfig_list="\$(ifconfig 2>/dev/null | sed -n "s/.*inet \([^ ]\+\).*/\1/p" | grep -v 127.0.0.1 || true)"
-    hostname="\$(hostname | grep -v 127.0.0.1 || true)"
-    echo \$ip_list \$ifconfig_list \$hostname | awk "{for(i = 1; i<=NF; i++) {print \\\$i}}" | sort -u | paste -sd " " -
+    # ip_list="\$(ip addr show scope global up | sed -n "s/.*inet \([^/]\+\).*/\1/p" || true)"
+    # ifconfig_list="\$(ifconfig 2>/dev/null | sed -n "s/.*inet \([^ ]\+\).*/\1/p" | grep -v 127.0.0.1 || true)"
+    # hostname="\$(hostname | grep -v 127.0.0.1 || true)"
+    # echo \$ip_list \$ifconfig_list \$hostname | awk "{for(i = 1; i<=NF; i++) {print \\\$i}}" | sort -u | paste -sd " " -
+
+    hostname --fqdn
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -1050,12 +1052,12 @@ EOF
 if [[ "$_repo_src" == "gitrepo" ]]; then
     if ! grep gitlab ~/.ssh/config 1>/dev/null ; then
 ! read -r -d '' GITLAB <<- EOM
-    Host gitlab.mero.colo.seagate.com
-        User root
-        UserKnownHostsFile /dev/null
-        StrictHostKeyChecking no
-        IdentityFile /root/.ssh/id_rsa_prvsnr
-        IdentitiesOnly yes
+Host gitlab.mero.colo.seagate.com
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
 EOM
         echo $GITLAB >> ~/.ssh/config
     fi
