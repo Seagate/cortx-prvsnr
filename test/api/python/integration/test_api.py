@@ -2,7 +2,7 @@ import pytest
 import logging
 from pathlib import Path
 
-from .helper import install_provisioner_api
+from test.helper import install_provisioner_api
 from provisioner.config import PRVSNR_ROOT_DIR
 
 logger = logging.getLogger(__name__)

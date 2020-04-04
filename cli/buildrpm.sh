@@ -53,7 +53,7 @@ pushd ~/rpmbuild/SOURCES/
 
     DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
     # Setup the source tar for rpm build
-    mkdir -p ${DEST_DIR}/cli/utils
+    mkdir -p ${DEST_DIR}/cli
     mkdir -p ${DEST_DIR}/files/etc/salt
     mkdir -p ${DEST_DIR}/files/etc/sysconfig/network-scripts
     mkdir -p ${DEST_DIR}/files/etc/modprobe.d/
@@ -62,7 +62,6 @@ pushd ~/rpmbuild/SOURCES/
     mkdir -p ${DEST_DIR}/files/.ssh/
     mkdir -p ${DEST_DIR}/files/syslogconfig/
     cp -pr ${BASEDIR}/src/* ${DEST_DIR}/cli
-    cp -pr ${BASEDIR}/utils/* ${DEST_DIR}/cli/utils
     cp -pr ${BASEDIR}/../files/etc/salt/* ${DEST_DIR}/files/etc/salt
     # cp -pr ${BASEDIR}/../files/etc/sysconfig/network-scripts/ifcfg-* ${DEST_DIR}/files/etc/sysconfig/network-scripts/
     cp -p ${BASEDIR}/../files/etc/modprobe.d/bonding.conf ${DEST_DIR}/files/etc/modprobe.d/bonding.conf

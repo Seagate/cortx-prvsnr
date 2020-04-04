@@ -44,6 +44,7 @@
         "sed -i \"s/HostName eosnode-1/HostName $(hostname)/g\" /root/.ssh/config",
         "cd /opt/seagate/eos-prvsnr/cli",
         "bash ./setup-provisioner -S -vv --repo-src rpm \"{{user `prvsnr_release`}}\"",
+        "pip3 install -U /opt/seagate/eos-prvsnr/api/python",
         "bash /tmp/setup_pillar_singlenode.sh \"{{user `mgmt_if`}}\" \"{{user `data_if`}}\"  \"{{user `mgmt_device`}}\" \"{{user `data_device`}}\" \"{{user `eos_release`}}\"",
         "sed -i 's/python36/python3/g' /opt/seagate/eos-prvsnr/srv/components/system/install.sls",
         "systemctl restart rsyslog  # TODO check if it's really needed for sspl",

@@ -821,7 +821,7 @@ function install_sg3_utils {
     # Install sg3_util and rescan iSCSI devices.
     yum install sg3_utils -y
     rescan-scsi-bus.sh
-    
+
 EOF
     # TODO install salt-ssh salt-syndic as well as eos-prvsnr rpm supposes
 
@@ -1048,7 +1048,7 @@ EOF
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
 if [[ "$_repo_src" == "gitrepo" ]]; then
-    if ! grep gitlab ~/.ssh/config 1>/dev/null ; then 
+    if ! grep gitlab ~/.ssh/config 1>/dev/null ; then
 ! read -r -d '' GITLAB <<- EOM
     Host gitlab.mero.colo.seagate.com
         User root
@@ -1245,11 +1245,11 @@ function configure_salt {
         if [[ -n "$_master_host" ]]; then
             sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion
         fi
-        
+
         if [[ "$_master" == true ]]; then
             cp -f files/etc/salt/grains.primary /etc/salt/grains
         else
-            cp -f files/etc/salt/grains.slave /etc/salt/grains
+            cp -f files/etc/salt/grains.secondary /etc/salt/grains
         fi
         echo "$_minion_id" >/etc/salt/minion_id
 
@@ -1365,7 +1365,7 @@ EOF
 
 #   eos_pillar_show_skeleton <component> [<hostspec> [<ssh-config> [<sudo>]]]
 #
-#   Calls `configure-eos.py` util either locally or remotely to dump a skeleton
+#   Calls provisioner api cli either locally or remotely to dump a skeleton
 #   of the configuration yaml for the specified `component`.
 #
 #   Prerequisites:
@@ -1397,13 +1397,13 @@ function eos_pillar_show_skeleton {
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --show-${_component}-file-format
+    $_cmd provisioner configure_eos ${_component} --show
 }
 
 
 #   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
-#   Calls `configure-eos.py` util either locally or remotely to update
+#   Calls provisioner api cli either locally or remotely to update
 #   the configuration yaml for the specified `component` using `file-path`
 #   as a source.
 #
@@ -1453,7 +1453,7 @@ function eos_pillar_update {
     fi
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --${_component}-file $_file_path
+    $_cmd provisioner configure_eos ${_component} --source $_file_path
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then
@@ -1469,7 +1469,7 @@ function eos_pillar_update {
 
 #   eos_pillar_load_default <component> [<hostspec> [<ssh-config> [<sudo>]]]
 #
-#   Calls `configure-eos.py` util either locally or remotely to reset
+#   Calls provisioner api cli either locally or remotely to reset
 #   to a default state the configuration yaml for the specified `component`.
 #
 #   Prerequisites:
@@ -1496,7 +1496,7 @@ function eos_pillar_load_default {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
 
-    $_cmd python3.6 /opt/seagate/eos-prvsnr/cli/utils/configure-eos.py ${_component} --load-default
+    $_cmd provisioner configure_eos ${_component} --reset
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then
@@ -1510,7 +1510,7 @@ function eos_pillar_load_default {
 }
 
 #   update_release_pillar <target_release>
-#   e.g. update_release_pillar integration/centos-7.7.1908/859 
+#   e.g. update_release_pillar integration/centos-7.7.1908/859
 #
 #   Updates release pillar with provided target release
 #
@@ -1524,7 +1524,7 @@ function update_release_pillar {
 
     local _release_ver="$1"
     local _release_sls_path="pillar/components/release.sls"
-    
+
     if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
         _release_sls="$(realpath $cli_scripts_dir/../$_release_sls_path)"
     else
@@ -1551,7 +1551,7 @@ function update_cluster_pillar_hostname {
     local _node="$1"
     local _host="$2"
     local _cluster_sls_path="pillar/components/cluster.sls"
-    
+
     if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
         _cluster_sls="$(realpath $cli_scripts_dir/../$_cluster_sls_path)"
     else
@@ -1563,9 +1563,9 @@ function update_cluster_pillar_hostname {
 
 #  disable_default_sshconfig
 #
-#  Take backup of default ssh config file shipped with eos-prvsnr-cli rpm 
+#  Take backup of default ssh config file shipped with eos-prvsnr-cli rpm
 function disable_default_sshconfig {
-    
+
     if [[ -f "$default_ssh_conf" ]]; then
         mv $default_ssh_conf ${default_ssh_conf}.bak
     fi
@@ -1573,9 +1573,9 @@ function disable_default_sshconfig {
 
 #  enable_default_sshconfig
 #
-#  Restor the default ssh config file shipped with eos-prvsnr-cli rpm 
+#  Restor the default ssh config file shipped with eos-prvsnr-cli rpm
 function enable_default_sshconfig {
-    
+
     if [[ -f "${default_ssh_conf}.bak" ]]; then
         mv "${default_ssh_conf}.bak" $default_ssh_conf
     fi
@@ -1650,10 +1650,10 @@ function setup_ssh {
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
         #Backup original ssh config file
-        cp "${default_ssh_conf}.bak" "$default_ssh_conf" 
+        cp "${default_ssh_conf}.bak" "$default_ssh_conf"
         exit 1
     }
-    
+
     echo "ssh passwordless setup done successfully"
 }
 #   set_node_id <hostspec> [<ssh-config> [<sudo> ]]
@@ -1838,7 +1838,7 @@ function configure_provisioner_api_logs {
 
     #Install rsyslog
     yum -y install rsyslog
-    
+
     #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
     cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
     systemctl restart rsyslog && systemctl enable rsyslog

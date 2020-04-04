@@ -350,6 +350,11 @@ def test_set_eosupdate_repo():
     ]:
         expected_repo_name = '{}_{}'.format(base_repo_name, release)
 
+        # to check that base_dir will be created during repo install
+        run_cmd(
+            'rm -rf {}'.format(pillar_params['base_dir'])
+        )
+
         if source is iso_path:
             mount_dir = Path(pillar_params['base_dir']) / release
         else:

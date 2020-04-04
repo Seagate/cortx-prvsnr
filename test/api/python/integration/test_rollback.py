@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from .helper import install_provisioner_api
+from test.helper import install_provisioner_api
 
 logger = logging.getLogger(__name__)
 

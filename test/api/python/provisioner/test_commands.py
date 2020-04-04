@@ -1,11 +1,14 @@
 import pytest
 import attr
+import builtins
 
 from provisioner import (
-    commands, inputs, ALL_MINIONS
+    pillar, commands, inputs, ALL_MINIONS
 )
 from provisioner.salt import State
 from provisioner.values import MISSED
+
+from .helper import mock_fun_echo, mock_fun_result
 
 
 def test_get_from_spec(monkeypatch):
@@ -250,3 +253,68 @@ def test_eosupdate_run(monkeypatch, patch_logging):
         'ensure_cluster_is_started',
         (YumRollbackManager.__exit__,)
     ]
+
+
+def test_configure_eos(monkeypatch):
+    mock_res = {}
+
+    some_pillar = {
+        1: {
+            2: 3,
+            4: [5, 6]
+        }
+    }
+
+    monkeypatch.setattr(
+        commands, 'dump_yaml_str', mock_fun_echo(mock_res, 'dump_yaml_str')
+    )
+
+    monkeypatch.setattr(
+        commands, 'load_yaml', mock_fun_result(
+            lambda *args, **kwargs: some_pillar, mock_res, 'load_yaml'
+        )
+    )
+
+    monkeypatch.setattr(
+        builtins, 'print', mock_fun_echo(mock_res, 'print')
+    )
+
+    monkeypatch.setattr(
+        pillar.PillarUpdater, 'component_pillar',
+        mock_fun_echo(mock_res, 'component_pillar')
+    )
+
+    cmd = commands.ConfigureEOS()
+
+    component = 'component1'
+
+    # show
+    cmd.run(component, show=True)
+    assert list(mock_res) == [
+        'component_pillar', 'dump_yaml_str', 'print'
+    ]
+    component_pillar_res = (
+        (component,), dict(show=True, reset=False, pillar=None)
+    )
+    dump_yaml_str_res = ((component_pillar_res,), {})
+    assert mock_res['component_pillar'].args_all == component_pillar_res
+    assert mock_res['dump_yaml_str'].args_all == dump_yaml_str_res
+    assert mock_res['print'].args_all == ((dump_yaml_str_res,), {})
+
+    # reset
+    mock_res.clear()
+    cmd.run(component, reset=True)
+    assert list(mock_res) == ['component_pillar']
+    assert mock_res['component_pillar'].args_all == (
+        (component,), dict(show=False, reset=True, pillar=None)
+    )
+
+    # set
+    mock_res.clear()
+    some_source = 'some_source'
+    cmd.run(component, source=some_source)
+    assert list(mock_res) == ['load_yaml', 'component_pillar']
+    assert mock_res['load_yaml'].args_all == ((some_source,), {})
+    assert mock_res['component_pillar'].args_all == (
+        (component,), dict(show=False, reset=False, pillar=some_pillar)
+    )

@@ -10,6 +10,7 @@ copy_repo_iso_{{ release }}:
   file.managed:
     - name: {{ iso_path }}
     - source: salt://misc_pkgs/eosupdate/repo/files/{{ release }}.iso
+    - makedirs: True
     - require_in:
       - eos_update_repo_iso_mounted_{{ release }}
       - eos_update_repo_added_{{ release }}

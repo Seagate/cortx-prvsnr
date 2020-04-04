@@ -242,10 +242,10 @@ def test_network():
         'primary_data_ip',
         'primary_gateway_ip',
         'primary_hostname',
-        'slave_mgmt_ip',
-        'slave_data_ip',
-        'slave_gateway_ip',
-        'slave_hostname'
+        'secondary_mgmt_ip',
+        'secondary_data_ip',
+        'secondary_gateway_ip',
+        'secondary_hostname'
      ):
         fattr = attr.fields_dict(Network)[f]
         assert fattr.type is str

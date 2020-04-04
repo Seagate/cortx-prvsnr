@@ -48,6 +48,17 @@ def auth_init(username, password, eauth='pam'):
     return _api_call('auth_init', username, password, eauth='pam')
 
 
+def get_result(cmd_id: str):
+    r"""Returns result of previously scheduled command
+
+    :param cmd_id: Command id
+    """
+
+    return _api_call(
+        'get_result', cmd_id
+    )
+
+
 def pillar_get(targets=ALL_MINIONS, nowait=False):
     return _api_call('pillar_get', targets=targets, nowait=nowait)
 
@@ -226,21 +237,10 @@ def fw_update(source, dry_run=False, nowait=False):
     )
 
 
-def get_result(cmd_id: str):
-    r"""Returns result of previously scheduled command
-
-    :param cmd_id: Command id
-    """
-
-    return _api_call(
-        'get_result', cmd_id
-    )
-
-
 def get_cluster_id(nowait=False):
     r"""Retruns cluster ID
 
-    :param: nowait: (optional) Run asynchronously. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
@@ -251,9 +251,9 @@ def get_cluster_id(nowait=False):
 def get_node_id(targets=ALL_MINIONS, nowait=False):
     r"""Retruns node ID
 
-    :param: targets: (optional) A host to find node ID.
+    :param targets: (optional) A host to find node ID.
         Default: ``ALL_MINIONS``
-    :param: nowait: (optional) Run asynchronously. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
@@ -265,7 +265,7 @@ def reboot_server(targets=ALL_MINIONS, nowait=False):
     r"""Reboots the servers
 
     :param targets: (optional) A host to shutdown. Default: all minions
-    :param: nowait: (optional) Run asynchronously. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
@@ -294,4 +294,29 @@ def shutdown_controller(target_ctrl=CONTROLLER_BOTH, nowait=False):
 
     return _api_call(
         'shutdown_controller', target_ctrl=target_ctrl, nowait=nowait
+    )
+
+
+def configure_eos(
+    component, source=None, show=False, reset=False, nowait=False
+):
+    r"""Reboots the servers
+
+    Updates or resolves configuration for specified EOS component
+    depending on passed arguments:
+      - if ``source`` is True then returns current component's pillar
+      - if ``reset`` is True than reset the component's pillar to default state
+      - otherwise ``source`` should be specified and will be set as a pillar
+        for the component
+
+    :param component: EOS component to configure
+    :param source: (optional) A yaml file to apply. Default: None
+    :param show: (optional) Dump current configuration. Default: False
+    :param reset: (optional) Reset configuration to the factory state
+        to default state. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'configure_eos', component, source=source, show=show, reset=reset
     )

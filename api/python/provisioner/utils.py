@@ -1,6 +1,7 @@
 import yaml
 import logging
 import time
+from pathlib import Path
 
 from .errors import (
     BadPillarDataError, ProvisionerError
@@ -19,19 +20,28 @@ def load_yaml_str(data):
 
 
 # TODO test
-def dump_yaml_str(data, width=1, indent=4):
-    return yaml.dump(
+def dump_yaml_str(
+    data,
+    width=1,
+    indent=4,
+    default_flow_style=False,
+    canonical=False,
+    **kwargs
+):
+    return yaml.safe_dump(
         data,
-        default_flow_style=False,
-        canonical=False,
+        default_flow_style=default_flow_style,
+        canonical=canonical,
         width=width,
-        indent=indent
+        indent=indent,
+        **kwargs
     )
 
 
 # TODO test
 # TODO streamed read
 def load_yaml(path):
+    path = Path(str(path))
     try:
         return load_yaml_str(path.read_text())
     except yaml.YAMLError as exc:
@@ -41,8 +51,9 @@ def load_yaml(path):
 
 # TODO test
 # TODO streamed write
-def dump_yaml(path, data):
-    path.write_text(dump_yaml_str(data))
+def dump_yaml(path, data, **kwargs):
+    path = Path(str(path))
+    path.write_text(dump_yaml_str(data, **kwargs))
 
 
 # TODO IMPROVE:

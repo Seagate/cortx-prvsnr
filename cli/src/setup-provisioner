@@ -107,18 +107,18 @@ fi
 #     CLUSTER
 #       REMOTE mode:
 #           DEFAULT ssh:
-#               - spec for SLAVE node might be any
+#               - spec for SECONDARY node might be any
 #               - ASSUME that ssh settings for both nodes are there
 #           CUSTOM ssh:
-#               - spec for SLAVE node might be any
+#               - spec for SECONDARY node might be any
 #               - VERIFY that ssh settings for both nodes are IN CONFIG
 #       LOCAL mode:
 #           DEFAULT ssh:
-#               - spec for SLAVE node might be any
-#               - ASSUME that ssh settings for slave node are there
+#               - spec for SECONDARY node might be any
+#               - ASSUME that ssh settings for secondary node are there
 #           CUSTOM ssh:
-#               - spec for SLAVE node might be any
-#               - VERIFY that ssh settings for slave node are IN CONFIG
+#               - spec for SECONDARY node might be any
+#               - VERIFY that ssh settings for secondary node are IN CONFIG
 #
 #     SINGLENODE
 #       REMOTE mode:

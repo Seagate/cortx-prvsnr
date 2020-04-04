@@ -64,7 +64,7 @@ def test_setup_provisioner_fail(mhost, run_script):
         in res.stdout
     )
 
-    # CLUSTER - REMOTE - CUSTOM SSH - spec for slave not in config
+    # CLUSTER - REMOTE - CUSTOM SSH - spec for secondary not in config
     res = run_script(
         "--ssh-config {} --remote eosnode-1 --eosnode-2 some-hostspec".format(
             ssh_config
@@ -87,7 +87,7 @@ def test_setup_provisioner_fail(mhost, run_script):
         in res.stdout
     )
 
-    # CLUSTER - LOCAL - CUSTOM SSH - spec for slave not in config
+    # CLUSTER - LOCAL - CUSTOM SSH - spec for secondary not in config
     res = run_script(
         "--ssh-config {} --eosnode-2 some-hostspec".format(
             ssh_config

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # assumptions:
+# - provisioner api is installed
 # - current directory is a provisioner cli directory (TODO improve)
 
 set -eux

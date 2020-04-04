@@ -10,8 +10,10 @@ from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
+    PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH
 )
+from .utils import load_yaml, dump_yaml_str
 from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
@@ -30,13 +32,7 @@ _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
 
 
-@attr.s(auto_attribs=True)
-class RunArgsEmpty:
-    pass
-
-
-@attr.s(auto_attribs=True)
-class RunArgsBase:
+class RunArgs:
     targets: str = attr.ib(
         default=ALL_MINIONS,
         metadata={
@@ -45,10 +41,6 @@ class RunArgsBase:
             }
         }
     )
-
-
-@attr.s(auto_attribs=True)
-class RunArgsUpdate(RunArgsBase):
     dry_run: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -57,6 +49,21 @@ class RunArgsUpdate(RunArgsBase):
         }, default=False
     )
 
+
+@attr.s(auto_attribs=True)
+class RunArgsEmpty:
+    pass
+
+
+@attr.s(auto_attribs=True)
+class RunArgsBase:
+    targets: str = RunArgs.targets
+
+
+@attr.s(auto_attribs=True)
+class RunArgsUpdate:
+    targets: str = RunArgs.targets
+    dry_run: bool = RunArgs.dry_run
 
 # TODO DRY
 @attr.s(auto_attribs=True)
@@ -68,13 +75,7 @@ class RunArgsFWUpdate:
             }
         }
     )
-    dry_run: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "perform validation only"
-            }
-        }, default=False
-    )
+    dry_run: bool = RunArgs.dry_run
 
 
 @attr.s(auto_attribs=True)
@@ -104,10 +105,38 @@ class RunArgsSSLCerts:
             }
         }, default=False
     )
-    dry_run: bool = attr.ib(
+    dry_run: bool = RunArgs.dry_run
+
+
+@attr.s(auto_attribs=True)
+class RunArgsConfigureEOS:
+    component: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "perform validation only"
+                'help': "EOS component to configure",
+                'choices': PRVSNR_EOS_COMPONENTS
+            }
+        }
+    )
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "a yaml file to apply"
+            }
+        },
+        default=None
+    )
+    show: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "dump current configuration"
+            }
+        }, default=False
+    )
+    reset: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "reset configuration to the factory state"
             }
         }, default=False
     )
@@ -135,21 +164,14 @@ class CommandParserFillerMixin:
         inputs.ParserFiller.fill_parser(cls._run_args_type, parser)
 
     @classmethod
+    def from_spec(cls):
+        return cls()
+
+    @classmethod
     def extract_positional_args(cls, kwargs):
         return inputs.ParserFiller.extract_positional_args(
             cls._run_args_type, kwargs
         )
-
-    # TODO tests
-    @classmethod
-    def pop_run_args(cls, kwargs):
-        run_args = cls._run_args_type(
-            **{
-                k: kwargs.pop(k) for k in list(kwargs)
-                if k in attr.fields_dict(cls._run_args_type)
-            }
-        )
-        return run_args
 
 
 #  - Notes:
@@ -164,11 +186,6 @@ class CommandParserFillerMixin:
 @attr.s(auto_attribs=True)
 class PillarGet(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
-
-    # TODO input class type
-    @classmethod
-    def from_spec(cls):
-        return cls()
 
     def run(self, targets: str = ALL_MINIONS):
         return PillarResolver(targets=targets).pillar
@@ -185,11 +202,10 @@ class Get(CommandParserFillerMixin):
     ):
         return cls(params_type=getattr(inputs, params_type))
 
-    def run(self, *args, **kwargs):
+    def run(self, *args, targets=ALL_MINIONS, **kwargs):
         # TODO tests
-        run_args = self.pop_run_args(kwargs)
         params = self.params_type.from_args(*args, **kwargs)
-        pillar_resolver = PillarResolver(targets=run_args.targets)
+        pillar_resolver = PillarResolver(targets=targets)
         res_raw = pillar_resolver.get(params)
         res = {}
         for minion_id, data in res_raw.items():
@@ -254,9 +270,7 @@ class Set(CommandParserFillerMixin):
     # TODO
     # - class for pillar file
     # - caching (load once)
-    def run(self, *args, **kwargs):
-        run_args = self.pop_run_args(kwargs)
-
+    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
         # static validation
         if len(args) == 1 and isinstance(args[0], self.params_type):
             params = args[0]
@@ -264,10 +278,10 @@ class Set(CommandParserFillerMixin):
             params = self.params_type.from_args(*args, **kwargs)
 
         # TODO dynamic validation
-        if run_args.dry_run:
+        if dry_run:
             return
 
-        self._run(params, run_args.targets)
+        self._run(params, targets)
 
 
 # assumtions / limitations
@@ -335,10 +349,6 @@ class SetEOSUpdateRepo(Set):
 class EOSUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
 
-    @classmethod
-    def from_spec(cls):
-        return cls()
-
     def run(self, targets):
         # TODO:
         #   - create a state instead
@@ -382,10 +392,6 @@ class EOSUpdate(CommandParserFillerMixin):
 class FWUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsFWUpdate
-
-    @classmethod
-    def from_spec(cls):
-        return cls()
 
     def run(self, source, dry_run=False):
         source = Path(source).resolve()
@@ -436,10 +442,6 @@ class GetResult(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsGetResult
 
-    @classmethod
-    def from_spec(cls):
-        return cls()
-
     def run(self, cmd_id: str):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
 
@@ -449,10 +451,6 @@ class GetResult(CommandParserFillerMixin):
 class GetClusterId(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsEmpty
-
-    @classmethod
-    def from_spec(cls):
-        return cls()
 
     def run(self):
         return list(function_run(
@@ -467,10 +465,6 @@ class GetNodeId(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
 
-    @classmethod
-    def from_spec(cls):
-        return cls()
-
     def run(self, targets):
         return function_run(
             'grains.get',
@@ -484,10 +478,6 @@ class GetNodeId(CommandParserFillerMixin):
 class SetSSLCerts(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
-
-    @classmethod
-    def from_spec(cls):
-        return cls()
 
     def run(self, source, restart=False, dry_run=False):
 
@@ -525,10 +515,6 @@ class SetSSLCerts(CommandParserFillerMixin):
 class RebootServer(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
-
-    @classmethod
-    def from_spec(cls):
-        return cls()
 
     def run(self, targets):
         return function_run(
@@ -630,6 +616,27 @@ class ShutdownController(CommandParserFillerMixin):
                 )
             )
         )
+
+
+@attr.s(auto_attribs=True)
+class ConfigureEOS(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsConfigureEOS
+
+    def run(
+        self, component, source=None, show=False, reset=False
+    ):
+        if source and not (show or reset):
+            pillar = load_yaml(source)
+        else:
+            pillar = None
+
+        res = PillarUpdater().component_pillar(
+            component, show=show, reset=reset, pillar=pillar
+        )
+
+        if show:
+            print(dump_yaml_str(res))
 
 
 commands = {}

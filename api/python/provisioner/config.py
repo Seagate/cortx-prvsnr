@@ -28,6 +28,25 @@ LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 
+# TODO ??? make that dynamic (based on pillar structure)
+PRVSNR_EOS_COMPONENTS = [
+    'cluster',
+    'commons',
+    'controller',
+    'corosync-pacemaker',
+    'elasticsearch',
+    'eoscore',
+    'haproxy',
+    'keepalived',
+    'openldap',
+    'release',
+    's3clients',
+    's3server',
+    'sspl',
+    'system',
+    'uds'
+]
+
 CONTROLLER_A = 'a'
 CONTROLLER_B = 'b'
 CONTROLLER_BOTH = 'both'

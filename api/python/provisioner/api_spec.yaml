@@ -1,3 +1,5 @@
+get_result:
+  type: GetResult
 pillar_get:
   type: PillarGet
 get_params:
@@ -42,8 +44,6 @@ eos_update:
   type: EOSUpdate
 fw_update:
   type: FWUpdate
-get_result:
-  type: GetResult
 set_ssl_certs:
   type: SetSSLCerts
 get_cluster_id:
@@ -56,3 +56,5 @@ reboot_controller:
   type: RebootController
 shutdown_controller:
   type: ShutdownController
+configure_eos:
+  type: ConfigureEOS

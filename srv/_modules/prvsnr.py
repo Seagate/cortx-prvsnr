@@ -1,10 +1,10 @@
-__virtualname__ = 'provisioner'
+import sys
 
+__virtualname__ = 'provisioner'
 
 try:
     import provisioner
 except ImportError:
-    import sys
     import subprocess
     from pathlib import Path
     # TODO pip3 installs provisioner to /usr/local/lib/python3.6/site-packages
@@ -29,14 +29,13 @@ else:
 
 
 if HAS_PROVISIONER:
-    from provisioner._api_cli import api_args_to_cli
     from provisioner.api_spec import api_spec
+    mod = sys.modules[__name__]
+    for fun in api_spec:
+        setattr(mod, fun, _api_wrapper(fun))
 
 
 def __virtual__():
-    '''
-    only load cheese if enzymes are available
-    '''
     if HAS_PROVISIONER:
         return __virtualname__
     else:
@@ -51,6 +50,7 @@ def __virtual__():
 
 # TODO generate docs
 def _api_wrapper(fun):
+    from provisioner._api_cli import api_args_to_cli
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
 
@@ -71,8 +71,3 @@ def _api_wrapper(fun):
         return __salt__['cmd.run'](cmd, env=env)
 
     return f
-
-
-mod = sys.modules[__name__]
-for fun in api_spec:
-    setattr(mod, fun, _api_wrapper(fun))

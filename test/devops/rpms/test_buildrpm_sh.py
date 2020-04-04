@@ -1,5 +1,5 @@
 import pytest
-import logging
+import yaml
 
 import test.helper as h
 import provisioner
@@ -7,12 +7,12 @@ import provisioner
 
 RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
 RPM_CLI_CONTENT_PATHS = [
-    'cli/utils',
     'files/etc/salt',
     'files/etc/modprobe.d',
     'files/etc/yum.repos.d'
 ]
 PRVSNRUSERS_GROUP = 'prvsnrusers'
+
 
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
     pass
@@ -42,7 +42,9 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
         )
     ).split()
 
-    excluded = ['-name "{}"'.format(e) for e in ['__pycache__', '*.pyc', '*.pyo']]
+    excluded = [
+        '-name "{}"'.format(e) for e in ['__pycache__', '*.pyc', '*.pyo']
+    ]
     installed = mhost.check_output(
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
@@ -68,10 +70,13 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     #   check that prvsnrusers groups is created
     assert PRVSNRUSERS_GROUP in mhost.check_output("cat /etc/group")
 
-    #   check that user pillar dir is created and has proper access rights (ACL)
+    #   check that user pillar dir is created
+    #   and has proper access rights (ACL)
     assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).exists
     assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).is_directory
-    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).group == PRVSNRUSERS_GROUP
+    assert mhost.host.file(
+        str(h.PRVSNR_USER_PILLAR_DIR)
+    ).group == PRVSNRUSERS_GROUP
 
     mhost.check_output(
         "mkdir -p {}".format(h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb')
@@ -81,13 +86,15 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     )
     expected_dir_perms = "drwxrwsr-x+ root prvsnrusers"
     dir_perms = mhost.check_output(
-        "find {} -type d -exec ls -lad {{}} \\;  | awk '{{print $1 FS $3 FS $4}}' | sort -u"
+        "find {} -type d -exec ls -lad {{}} \\;  | "
+        "awk '{{print $1 FS $3 FS $4}}' | sort -u"
         .format(h.PRVSNR_USER_PILLAR_DIR)
     )
     assert dir_perms == expected_dir_perms
     expected_file_perms = "-rw-rw-r--+ root prvsnrusers"
     file_perms = mhost.check_output(
-        "find {} -type f -exec ls -la {{}} \\;  | awk '{{print $1 FS $3 FS $4}}' | sort -u"
+        "find {} -type f -exec ls -la {{}} \\;  | "
+        "awk '{{print $1 FS $3 FS $4}}' | sort -u"
         .format(h.PRVSNR_USER_PILLAR_DIR)
     )
     assert file_perms == expected_file_perms
@@ -120,7 +127,6 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     )
 
 
-
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_removal(mhost, mlocalhost):
@@ -131,6 +137,43 @@ def test_rpm_prvsnr_removal(mhost, mlocalhost):
     assert 'eos-prvsnr' not in mhost.check_output('pip3 list')
     #   check that prvsnrusers groups is absent
     assert PRVSNRUSERS_GROUP not in mhost.check_output("cat /etc/group")
+
+
+@pytest.mark.isolated
+@pytest.mark.verifies('EOS-6021')
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_reinstall_retains_configuration(
+    mhost, mlocalhost, tmpdir_function
+):
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+
+    cluster_config_str = mhost.check_output(
+        'provisioner configure_eos cluster --show'
+    ).strip()
+    cluster_config_dict = yaml.safe_load(cluster_config_str)
+
+    new_dns_servers = ['1.2.3.4']
+    cluster_config_dict['dns_servers'] = new_dns_servers
+
+    tmp_file = tmpdir_function / 'cluster.sls'
+    tmp_file.write_text(
+        yaml.dump(
+            cluster_config_dict, default_flow_style=False, canonical=False
+        )
+    )
+    tmp_file_remote = mhost.copy_to_host(tmp_file)
+
+    mhost.check_output(
+        'provisioner configure_eos cluster --source {}'.format(tmp_file_remote)
+    )
+
+    mhost.check_output('yum reinstall -y {}'.format(mhost.rpm_prvsnr))
+    cluster_config_str = mhost.check_output(
+        'provisioner configure_eos cluster --show'
+    ).strip()
+    cluster_config_dict_new = yaml.safe_load(cluster_config_str)
+
+    assert cluster_config_dict_new == cluster_config_dict
 
 
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):
@@ -200,7 +243,8 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
     ).split()
 
     installed = mhost.check_output(
-        "cd {} && find . -maxdepth 1 \\( {} \\) -prune -o -type f -printf '%p\n'"
+        "cd {} && find . -maxdepth 1 \\( {} \\) "
+        "-prune -o -type f -printf '%p\n'"
         .format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli',
             ' -o '.join(['-name "__pycache__"'])

@@ -767,3 +767,7 @@ def bootstrap_eos(mhost):
         .format(PRVSNR_REPO_INSTALL_DIR / 'cli/bootstrap-eos')
     )
     ensure_mero_is_online(mhost)
+
+
+def install_provisioner_api(mhost):
+    mhost.check_output("pip3 install {}".format(mhost.repo / 'api/python'))

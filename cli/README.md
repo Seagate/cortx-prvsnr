@@ -291,8 +291,8 @@ Steps are exactly the same with the only difference: all scripts calls should in
 
 **Note 1**: since primary node is a localhost the following requires to be run under `root` user.
 
-**Note 2**: Cluster installation for both local and remote modes requires ssh configuration since even for a local installation slave node is supposed to be a remote host. At the same time:
-- configuation is required only for the slave node
+**Note 2**: Cluster installation for both local and remote modes requires ssh configuration since even for a local installation secondary node is supposed to be a remote host. At the same time:
+- configuation is required only for the secondary node
 - only `setup-provisioner` should be supplied with the configuration file. Other scripts will perform local operations only.
 
 Please refer to [Singlenode remote installation](#singlenode-remote-installation) regarding the details.
@@ -309,7 +309,7 @@ Host eosnode-2
     IdentitiesOnly yes
 ```
 
-1. `setup-provisioner -F ./ssh_config --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the slave one)
+1. `setup-provisioner -F ./ssh_config --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the secondary one)
 2. `configure-eos -p cluster >./cluster.sls`
 3. ... edit `./cluster.sls` manually ...
 4. `configure-eos -f ./cluster.sls cluster`
@@ -324,7 +324,7 @@ Host eosnode-2
 #### Cluster remote installation
 
 **Note**. The differences with the [local cluster installation](#cluster-local-installation) are:
-- ssh config file should include specifications for both primary and slave node
+- ssh config file should include specifications for both primary and secondary node
 - all scripts require remote connections specification (e.g. `-r eosnode-1 -F ./ssh_config`)
 
 Example of a ssh-config file:

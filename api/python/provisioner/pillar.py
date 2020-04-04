@@ -9,6 +9,7 @@ from .salt import pillar_get, pillar_refresh
 from .param import KeyPath, Param
 from .config import (
     ALL_MINIONS,
+    PRVSNR_PILLAR_DIR,
     PRVSNR_USER_PI_ALL_HOSTS_DIR,
     PRVSNR_USER_PI_HOST_DIR_TMPL
 )
@@ -94,7 +95,8 @@ class PillarUpdater:
     _pillars: Dict = attr.Factory(dict)
     _p_entries: List[PillarEntry] = attr.Factory(list)
 
-    def ensure_exists(self, path: Path):
+    @staticmethod
+    def ensure_exists(path: Path):
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
@@ -239,3 +241,29 @@ class PillarUpdater:
     @staticmethod
     def refresh(targets: str = ALL_MINIONS):
         return pillar_refresh(targets=targets)
+
+    @classmethod
+    def component_pillar(
+        cls,
+        component,
+        show: bool = False,
+        reset: bool = False,
+        pillar: Dict = None
+    ):
+        path = (
+            PRVSNR_USER_PI_ALL_HOSTS_DIR /
+            '{}.sls'.format(component)
+        )
+        if show:
+            if not path.exists():
+                path = (
+                    PRVSNR_PILLAR_DIR / 'components' /
+                    '{}.sls'.format(component)
+                )
+            return load_yaml(path)
+        elif reset:
+            if path.exists():
+                path.unlink()
+        elif pillar:
+            cls.ensure_exists(path)
+            dump_yaml(path, pillar)

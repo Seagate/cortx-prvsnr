@@ -984,7 +984,7 @@ def test_functions_configure_salt(
     output = mhost.host.check_output('salt-call --local --out json grains.items')
     grains = json.loads(output)['local']
     assert 'roles' in grains
-    assert grains['roles'] == ['primary'] if master else ['slave']
+    assert grains['roles'] == ['primary'] if master else ['secondary']
     assert grains['id'] == minion_id
 
 
@@ -1140,7 +1140,7 @@ def test_functions_accept_salt_key_cluster(
         # 'eoscore',  # TODO EOS-5940
         # 'haproxy',
         'release',
-        's3client',
+        's3clients',
         # 's3server',
         'sspl'
     ]
@@ -1150,10 +1150,12 @@ def test_functions_eos_pillar_show_skeleton(
     ssh_config, remote, component, project_path,
     install_provisioner
 ):
+    h.install_provisioner_api(mhost)
+
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
+        'provisioner configure_eos {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
@@ -1204,7 +1206,7 @@ def test_functions_eos_pillar_update_fail(
         # 'eoscore',  TODO EOS-5940
         # 'haproxy',
         'release',
-        's3client'
+        's3clients'
     ]
     # Removed s3server and sspl EOS-4907
 )
@@ -1215,10 +1217,11 @@ def test_functions_eos_pillar_update_and_load_default(
 ):
     pillar_new_key = 'test'
 
+    h.install_provisioner_api(mhost)
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        'python3.6 {0}/configure-eos.py {1} --show-{1}-file-format'.format(
+        'provisioner configure_eos {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
@@ -1257,8 +1260,9 @@ def test_functions_eos_pillar_update_and_load_default(
     assert res.rc == 0
 
     tmp_file_content = (mlocalhost if remote else mhost).check_output('cat {}'.format(tmp_file))
-    current_pillar = h.PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / component_pillar
-    pillar_file_content = mhost.check_output('cat {}'.format(current_pillar))
+    current_def_pillar = h.PRVSNR_PILLAR_DIR / 'components' / component_pillar
+    current_user_pillar = h.PRVSNR_USER_PI_ALL_HOSTS_DIR / component_pillar
+    pillar_file_content = mhost.check_output('cat {}'.format(current_user_pillar))
 
     tmp_file_dict = yaml.safe_load(tmp_file_content)
     pillar_file_dict = yaml.safe_load(pillar_file_content)
@@ -1284,7 +1288,7 @@ def test_functions_eos_pillar_update_and_load_default(
     # 5. verify
     assert res.rc == 0
 
-    pillar_file_content = mhost.check_output('cat {}'.format(current_pillar))
+    pillar_file_content = mhost.check_output('cat {}'.format(current_def_pillar))
     pillar_file_dict = yaml.safe_load(pillar_file_content)
     del new_pillar_dict[pillar_new_key]
     assert new_pillar_dict == pillar_file_dict

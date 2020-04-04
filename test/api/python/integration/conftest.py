@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 
-from .helper import install_provisioner_api
+from test.helper import install_provisioner_api
 
 collect_ignore = [
     'test_api_inner.py',

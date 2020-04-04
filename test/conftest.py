@@ -293,6 +293,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "patch_logging: mark test as expected patched logging"
     )
+    config.addinivalue_line(
+        "markers", "verifies: mark test as verifying specified issues"
+    )
+
 
 
 prvsnr_pytest_options = {

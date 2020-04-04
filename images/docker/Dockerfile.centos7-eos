@@ -44,7 +44,6 @@ RUN yum install -y salt-minion \
 COPY files/etc/salt/minion_masterless /etc/salt/minion
 COPY pillar /opt/seagate/eos-prvsnr/pillar/
 COPY srv /opt/seagate/eos-prvsnr/srv/
-COPY cli/utils /opt/seagate/eos-prvsnr/cli/utils/
 
 # TODO should be a part of salt (rsyslog, sudo)
 RUN yum install -y net-tools rsyslog sudo \

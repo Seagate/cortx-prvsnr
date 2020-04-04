@@ -38,6 +38,7 @@ class AttrParserArgs:
     action: str = attr.ib(init=False, default='store')
     metavar: str = attr.ib(init=False, default=None)
     default: str = attr.ib(init=False, default=None)
+    choices: List = attr.ib(init=False, default=None)
     help: str = attr.ib(init=False, default='')
     type: Any = attr.ib(init=False, default=None)  # TODO typing
 
@@ -47,6 +48,9 @@ class AttrParserArgs:
         parser_args = self.attr.metadata.get(
             METADATA_ARGPARSER, {}
         )
+
+        if parser_args.get('choices'):
+            self.choices = parser_args.get('choices')
 
         if self.attr.type is bool:
             self.action = 'store_true'
@@ -72,6 +76,8 @@ class AttrParserArgs:
             not_filter = ['attr', 'name']
             if self.action == 'store_true':
                 not_filter.extend(['metavar', 'type', 'default'])
+            if self.choices is None:
+                not_filter.append('choices')
             return attr.name not in not_filter
 
         return attr.asdict(self, filter=_filter)

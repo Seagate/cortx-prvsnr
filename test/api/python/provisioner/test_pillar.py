@@ -11,6 +11,8 @@ from provisioner.pillar import (
     PillarEntry, PillarResolver, PillarUpdater
 )
 
+from .helper import mock_fun_echo
+
 
 def test_pillar_entry_get():
     pillar = {'1': {'2': '3'}}
@@ -270,3 +272,59 @@ def test_pillar_updater_refresh(monkeypatch):
 
     PillarUpdater.refresh()
     assert pillar_refresh_called == 1
+
+
+def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
+    mock_res = {}
+
+    some_pillar = {
+        1: {
+            2: 3,
+            4: [5, 6]
+        }
+    }
+
+    default_pillar_dir = tmpdir_function / 'default'
+    user_pillar_dir = tmpdir_function / 'user'
+
+    monkeypatch.setattr(pillar, 'PRVSNR_PILLAR_DIR', default_pillar_dir)
+    monkeypatch.setattr(
+        pillar, 'PRVSNR_USER_PI_ALL_HOSTS_DIR', user_pillar_dir
+    )
+
+    monkeypatch.setattr(
+        pillar, 'dump_yaml', mock_fun_echo(mock_res)
+    )
+
+    monkeypatch.setattr(
+        pillar, 'load_yaml', mock_fun_echo(mock_res)
+    )
+
+    component = 'component1'
+    default_pillar_path = (
+        default_pillar_dir / 'components/{}.sls'.format(component)
+    )
+    user_pillar_path = user_pillar_dir / '{}.sls'.format(component)
+
+    # show (no user pillar)
+    _ = PillarUpdater().component_pillar(component, show=True)
+    assert mock_res[None].args_all == ((default_pillar_path,), {})
+
+    # show (with user pillar)
+    PillarUpdater.ensure_exists(user_pillar_path)
+    _ = PillarUpdater().component_pillar(component, show=True)
+    assert mock_res[None].args_all == ((user_pillar_path,), {})
+
+    # reset for existent
+    _ = PillarUpdater().component_pillar(component, reset=True)
+    assert not user_pillar_path.exists()
+
+    # reset for non-existent won't fail
+    _ = PillarUpdater().component_pillar(component, reset=True)
+
+    # set
+    component = 'component2'
+    user_pillar_path = user_pillar_dir / '{}.sls'.format(component)
+    _ = PillarUpdater().component_pillar(component, pillar=some_pillar)
+    assert user_pillar_path.exists()
+    assert mock_res[None].args_all == ((user_pillar_path, some_pillar), {})

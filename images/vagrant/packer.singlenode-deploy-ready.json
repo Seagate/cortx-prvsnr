@@ -49,6 +49,7 @@
         "set -ex",
         "mkdir -p /tmp/ees-prvsnr",
         "tar -zxf /tmp/repo.tgz -C /tmp/ees-prvsnr",
+        "pip3 install -U /tmp/ees-prvsnr/api/python",
         "cd /tmp/ees-prvsnr/cli/src",
         "bash ../../images/vagrant/setup_prvsnr_singlenode.sh \"{{user `prvsnr_src`}}\" \"{{user `prvsnr_release`}}\"",
         "bash ../../images/vagrant/setup_pillar_singlenode.sh \"{{user `mgmt_if`}}\" \"{{user `data_if`}}\" '' '' \"{{user `eos_release`}}\"",
