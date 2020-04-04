@@ -53,6 +53,7 @@ controlpath_states=(
         "sspl"
         "csm"
         "post_setup"
+        "uds"
     )
 
 function usage {
@@ -126,7 +127,10 @@ function run_states {
                 l_info "Applying 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
+            elif [[ "$state" == "misc_pkgs.openldap"
+                || "$state" == "misc_pkgs.rabbitmq"
+                || "$state" == "system.storage.multipath"
+                ]]; then
                 # Execute first on eosnode-1 then on eosnode-2.
                 l_info "Applying 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
