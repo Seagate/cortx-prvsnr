@@ -1,7 +1,9 @@
 import sys
 import subprocess
 import logging
+from typing import List
 
+import provisioner
 from provisioner import errors
 from provisioner import serialize
 
@@ -12,15 +14,19 @@ _username = None
 _password = None
 
 
-# TODO tests
 def api_args_to_cli(fun, *args, **kwargs):
     res = [fun]
     for k, v in kwargs.items():
         k = '--{}'.format(k.replace('_', '-'))
-        if type(v) is not bool:
+        if type(v) is bool:
+            if v:
+                res.extend([k])
+        else:
+            if v is None:
+                v = provisioner.NONE
+            elif isinstance(v, List):
+                v = serialize.dumps(v)
             res.extend([k, str(v)])
-        elif v:
-            res.extend([k])
 
     res.extend([str(a) for a in args])
     logger.debug("Cli command args: {}".format(res))

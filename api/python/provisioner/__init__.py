@@ -22,7 +22,7 @@ from .api import (  # noqa: F401
 )
 
 from .values import (  # noqa: F401
-    UNCHANGED, DEFAULT, UNDEFINED, MISSED
+    UNCHANGED, DEFAULT, UNDEFINED, MISSED, NONE
 )
 
 from .config import (  # noqa: F401
@@ -36,6 +36,6 @@ __all__ = [
     'get_cluster_id', 'get_node_id', 'reboot_server',
     'reboot_controller', 'shutdown_controller',
     'configure_eos',
-    'UNCHANGED', 'DEFAULT', 'UNDEFINED', 'MISSED',
+    'UNCHANGED', 'DEFAULT', 'UNDEFINED', 'MISSED', 'NONE',
     'ALL_HOSTS', 'ALL_MINIONS'
 ]

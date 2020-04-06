@@ -7,6 +7,7 @@ import json
 from provisioner import _api_cli as api
 from provisioner.__main__ import _prepare_res, _prepare_output
 from provisioner.errors import ProvisionerError, SaltError
+from provisioner import NONE
 
 
 @attr.s(auto_attribs=True)
@@ -25,6 +26,30 @@ def subprocess_runner(monkeypatch):
     _subprocess_runner = SubprocessRunner()
     monkeypatch.setattr(subprocess, 'run', _subprocess_runner)
     return _subprocess_runner
+
+
+# TODO IMPROVE split
+@pytest.mark.patch_logging([(api, ('debug',))])
+def test_api_cli_api_args_to_cli(patch_logging):
+    fun = 'some-fun'
+    # positional
+    assert api.api_args_to_cli(fun, 'arg1', 'arg2') == [fun, 'arg1', 'arg2']
+    # optional basic
+    assert api.api_args_to_cli(fun, arg1=123) == [fun, '--arg1', '123']
+    # optional '-' and '_'
+    assert api.api_args_to_cli(fun, some_arg1=123) == [
+        fun, '--some-arg1', '123'
+    ]
+    # optional True bool
+    assert api.api_args_to_cli(fun, arg1=True) == [fun, '--arg1']
+    # optional True bool
+    assert api.api_args_to_cli(fun, arg1=False) == [fun]
+    # optional None
+    assert api.api_args_to_cli(fun, arg1=None) == [fun, '--arg1', str(NONE)]
+    # optional List
+    assert api.api_args_to_cli(
+        fun, arg1=[1, 2, '3']
+    ) == [fun, '--arg1', '[1, 2, "3"]']
 
 
 @pytest.mark.patch_logging([(api, ('error',))])

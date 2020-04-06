@@ -34,13 +34,18 @@ def test_pillar_entry_set():
     pe.set('5')
     assert pe.get() == '4'
 
+    # new key
     pe = PillarEntry('1/5', pillar)
-
     pe.set('6')
     assert pillar['1']['5'] == '6'
     assert pe.get() == '6'
 
-    pillar = {'1': {'2': '3'}}
+    # list value
+    pe = PillarEntry('1/5', pillar)
+    list_v = [1, 2, '3']
+    pe.set(list_v)
+    assert pillar['1']['5'] == list_v
+    assert pe.get() == list_v
 
 
 def test_pillar_entry_rollback():

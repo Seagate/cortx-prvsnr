@@ -1,6 +1,7 @@
 import attr
 import logging
 
+import functools
 from typing import List, Union, Any
 from pathlib import Path
 
@@ -8,10 +9,10 @@ from .errors import UnknownParamError, EOSUpdateRepoSourceError
 from .param import Param, ParamDictItem, KeyPath
 from .api_spec import param_spec
 from .values import (
-    UNDEFINED, UNCHANGED, value_from_str,
+    UNDEFINED, UNCHANGED, NONE, value_from_str,
     is_special
 )
-from .serialize import PrvsnrType
+from .serialize import PrvsnrType, loads
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
@@ -55,7 +56,12 @@ class AttrParserArgs:
         if self.attr.type is bool:
             self.action = 'store_true'
 
-        self.type = value_from_str
+        self.type = parser_args.get(
+            'type',
+            functools.partial(
+                self.value_from_str, v_type=self.attr.type
+            )
+        )
 
         self.help = parser_args.get('help', self.help)
 
@@ -82,14 +88,31 @@ class AttrParserArgs:
 
         return attr.asdict(self, filter=_filter)
 
+    @classmethod
+    def value_from_str(cls, value, v_type=None):
+        _value = value_from_str(value)
+        if _value is NONE:
+            _value = None
+        elif isinstance(_value, str):
+            if v_type is List:
+                _value = loads(value)
+        return _value
+
+
+class ParamAttrParserArgs(AttrParserArgs):
+    @classmethod
+    def value_from_str(cls, value, v_type=None):
+        _value = super().value_from_str(value, v_type=v_type)
+        return UNCHANGED if _value is None else _value
+
 
 # TODO test
 class ParserFiller:
     @staticmethod
-    def fill_parser(cls, parser):
+    def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
         for _attr in attr.fields(cls):
             if METADATA_ARGPARSER in _attr.metadata:
-                args = AttrParserArgs(_attr)
+                args = attr_parser_cls(_attr)
                 parser.add_argument(args.name, **args.kwargs)
 
     @staticmethod
@@ -179,7 +202,7 @@ class ParamGroupInputBase:
 
     @classmethod
     def fill_parser(cls, parser):
-        ParserFiller.fill_parser(cls, parser)
+        ParserFiller.fill_parser(cls, parser, ParamAttrParserArgs)
 
     @classmethod
     def extract_positional_args(cls, kwargs):
@@ -224,11 +247,11 @@ class Network(ParamGroupInputBase):
     mgmt_vip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="virtual ip address for management network"
     )
-    dns_servers: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="list of dns servers"
+    dns_servers: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="list of dns servers as json"
     )
-    search_domains: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="list of search domains"
+    search_domains: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="list of search domains as json"
     )
     primary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node hostname"
@@ -325,7 +348,7 @@ class ParamDictItemInputBase(PrvsnrType):
 
     @classmethod
     def fill_parser(cls, parser):
-        ParserFiller.fill_parser(cls, parser)
+        ParserFiller.fill_parser(cls, parser, ParamAttrParserArgs)
 
     @classmethod
     def extract_positional_args(cls, kwargs):

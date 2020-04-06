@@ -33,10 +33,15 @@ class _Missed(_Singletone):
     pass
 
 
+class _None(_Singletone):
+    pass
+
+
 UNCHANGED = _Unchanged()
 DEFAULT = _Default()
 UNDEFINED = _Undefined()
 MISSED = _Missed()
+NONE = _None()
 
 
 def value_from_str(value: str):

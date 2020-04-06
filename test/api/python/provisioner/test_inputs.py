@@ -1,7 +1,9 @@
 import pytest
+import argparse
 import attr
-from typing import Any, Union
+from typing import Union, List
 from pathlib import Path
+import functools
 
 from provisioner.errors import EOSUpdateRepoSourceError
 from provisioner import values
@@ -14,6 +16,7 @@ from provisioner.inputs import (
     METADATA_PARAM_GROUP_KEY,
     METADATA_ARGPARSER,
     AttrParserArgs,
+    ParamAttrParserArgs,
     ParamsList,
     ParamGroupInputBase,
     NTP, Network,
@@ -39,7 +42,7 @@ test_param_spec = {
 @attr.s(auto_attribs=True)
 class SomeParamGroup(ParamGroupInputBase):
     _param_group = 'some_param_gr'
-    attr1: Any = ParamGroupInputBase._attr_ib(_param_group)
+    attr1: str = ParamGroupInputBase._attr_ib(_param_group)
     attr2: int = ParamGroupInputBase._attr_ib(_param_group, default=1)
 
 
@@ -119,9 +122,31 @@ def test_attr_parser_args_default_not_set():
     assert AttrParserArgs(attr.fields(SC).x).default is None
 
 
-def test_attr_parser_args_type():
+def test_attr_parser_args_type_default():
     SC = attr.make_class("SC", {"x": attr.ib()})
-    assert AttrParserArgs(attr.fields(SC).x).type == values.value_from_str
+    attr_parser_type = AttrParserArgs(attr.fields(SC).x).type
+    assert type(attr_parser_type) is functools.partial
+    assert attr_parser_type.func == AttrParserArgs.value_from_str
+    assert attr_parser_type.args == ()
+    assert attr_parser_type.keywords == dict(v_type=attr.fields(SC).x.type)
+
+
+def test_attr_parser_args_type_custom():
+    def some_fun(value):
+        pass
+
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'type': some_fun
+                },
+            },
+            default='123'
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).type == some_fun
 
 
 def test_attr_parser_args_no_metavar_for_positional():
@@ -168,6 +193,17 @@ def test_attr_parser_args_help_from_metadata_for_optional():
     assert AttrParserArgs(attr.fields(SC).x).help == 'some help'
 
 
+def test_attr_parser_args_value_from_str():
+    assert AttrParserArgs.value_from_str('PRVSNR_NONE') is None
+    assert AttrParserArgs.value_from_str(
+        '["1", "2", "3"]', v_type=List
+    ) == ['1', '2', '3']
+
+
+def test_param_attr_parser_args_value_from_str():
+    assert ParamAttrParserArgs.value_from_str('PRVSNR_NONE') == UNCHANGED
+
+
 # ParamsList tests
 def test_params_list_from_args(param_spec_mocked):
     params = [
@@ -193,9 +229,10 @@ def test_params_list_iter(param_spec_mocked):
     assert [p for p in params] == params.params
 
 
+# ParamGroupInputBase tests
 def test_param_group_input_base_attr_ib():
     attr1 = attr.fields(SomeParamGroup).attr1
-    assert attr1.type is Any
+    assert attr1.type is str
     assert attr1.default is UNCHANGED
     assert attr1.metadata[METADATA_PARAM_GROUP_KEY] == 'some_param_gr'
 
@@ -227,6 +264,18 @@ def test_param_group_input_base_iter(param_spec_mocked):
         assert value == getattr(test, param.name.leaf)
 
 
+# TODO IMPROVE more cases
+def test_param_group_input_base_fill_parser(param_spec_mocked):
+    parser = argparse.ArgumentParser()
+    SomeParamGroup.fill_parser(parser)
+    args = parser.parse_args(
+        '--attr1 PRVSNR_NONE --attr2 PRVSNR_UNCHANGED'.split()
+    )
+    assert args.attr1 == UNCHANGED
+    assert args.attr2 == UNCHANGED
+
+
+# NTP tests
 def test_ntp():
     assert NTP._param_group == 'ntp'
     for f in ('server', 'timezone'):
@@ -252,6 +301,7 @@ def test_network():
         assert fattr.default is UNCHANGED
 
 
+# ParamDictItemInputBase tests
 def test_param_dict_item_input_base_attr_ib():
     some_key_attr = attr.fields(SomeParamDictItem).some_key_attr
     assert some_key_attr.type is str
@@ -292,6 +342,21 @@ def test_param_dict_item_input_base_iter(param_spec_mocked):
         next(_iter)
 
 
+# TODO IMPROVE more cases
+def test_param_dict_item_input_base_fill_parser(param_spec_mocked):
+    parser = argparse.ArgumentParser()
+    SomeParamDictItem.fill_parser(parser)
+
+    args = parser.parse_args('some-key --some-value-attr PRVSNR_NONE'.split())
+    assert args.some_value_attr == UNCHANGED
+
+    args = parser.parse_args(
+        'some-key --some-value-attr PRVSNR_UNCHANGED'.split()
+    )
+    assert args.some_value_attr == UNCHANGED
+
+
+# EOSUpdateRepo teste
 def test_eos_update_repo_attrs():
     assert EOSUpdateRepo._param_di == inputs.param_spec['eosupdate/repo']
 

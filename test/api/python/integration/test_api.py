@@ -121,7 +121,7 @@ def test_set_ntp(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])
-def test_set_nw(
+def test_set_network(
     mhosteosnode1, run_test, eos_hosts, project_path
 ):
     mhosteosnode1.copy_to_host(

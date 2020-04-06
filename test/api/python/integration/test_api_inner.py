@@ -164,7 +164,7 @@ def test_set_ntp():
 
 
 # TODO secondary params
-def test_set_nw():
+def test_set_network():
     params = (
         'primary_hostname',
         'primary_floating_ip',
