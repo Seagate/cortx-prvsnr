@@ -8,7 +8,6 @@ cluster:
   node_list:
     - eosnode-1
     - eosnode-2
-  cluster_ip:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
@@ -77,6 +76,9 @@ s3client:
     region: US
     s3endpoint: s3.seagate.com
     s3server:
+        iam_admin:
+            user: sgiamadmin
+            secret: ldapadmin
         fqdn: null
         iam_admin:
           secret: ldapadmin

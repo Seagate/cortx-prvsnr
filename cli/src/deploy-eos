@@ -13,24 +13,27 @@ io_states=false
 run_ha_states=false
 ctrlpath_states=false
 
+system_states=(
+    "system"
+    "system.storage.multipath"
+    "system.network"
+    "system.network.data.direct"
+    "misc_pkgs.rsyslog"
+    "system.firewall"
+    "system.logrotate"
+    "system.ntp"
+    "system.storage"
+)
+
 prereq_states=(
     # states to be applied in desired sequence
-        "system.storage.multipath"
-        "system.network"
-        "system.network.data.direct"
-        "system"
-        "misc_pkgs.rsyslog"
-        "system.firewall"
-        "system.logrotate"
-        "system.ntp"
-        "system.storage"
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
-        "misc_pkgs.elasticsearch"
-        "misc_pkgs.kibana"
-        "misc_pkgs.nodejs"
         "misc_pkgs.openldap"
         "misc_pkgs.rabbitmq"
+        "misc_pkgs.nodejs"
+        "misc_pkgs.elasticsearch"
+        "misc_pkgs.kibana"
         "misc_pkgs.statsd"
     )
 
@@ -147,6 +150,19 @@ function run_states {
     fi
 }
 
+function update_salt {
+    # Refresh salt pillar data
+    l_info "Updating Salt data"
+    $cmd salt "*" saltutil.sync_all
+    $cmd salt "*" saltutil.refresh_pillar
+    $cmd salt "*" saltutil.refresh_grains
+}
+
+function encrypt_pillar {
+    # Encrypt passwords in pillar data
+    l_info "Encrypting salt pillar data"
+    python3 /opt/seagate/eos-prvsnr/cli/utils/pillar_encrypt.py
+}
 
 parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
 
@@ -161,12 +177,10 @@ if [[ "$dry_run" == true ]]; then
     salt_opts="test=True"
 fi
 
-# Refresh salt pillar data
-l_info "Updating salt pillar data"
-$cmd salt "*" saltutil.sync_all
-$cmd salt "*" saltutil.refresh_pillar
-$cmd salt "*" saltutil.refresh_grains
-
+update_salt
+run_states "${system_states[@]}"
+encrypt_pillar
+update_salt
 
 if [[ "$run_all" == true ]]; then
     run_states "${prereq_states[@]}"

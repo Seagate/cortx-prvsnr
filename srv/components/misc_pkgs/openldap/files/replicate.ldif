@@ -42,7 +42,7 @@ olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
   provider=ldap://{{ hostname }}:389/
   bindmethod=simple
   binddn="cn=admin,dc=seagate,dc=com"
-  credentials={{ salt['pillar.get']('openldap:admin:secret', "seagate") }}
+  credentials={{ salt['lyveutil.decrypt'](salt['pillar.get']('openldap:admin:secret', "seagate"),'openldap') }}
   searchbase="dc=seagate,dc=com"
   scope=sub
   schemachecking=on
