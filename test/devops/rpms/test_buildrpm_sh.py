@@ -4,6 +4,7 @@ import yaml
 import test.helper as h
 import provisioner
 
+from test.helper import PRVSNRUSERS_GROUP
 
 RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
 RPM_CLI_CONTENT_PATHS = [
@@ -11,7 +12,6 @@ RPM_CLI_CONTENT_PATHS = [
     'files/etc/modprobe.d',
     'files/etc/yum.repos.d'
 ]
-PRVSNRUSERS_GROUP = 'prvsnrusers'
 
 
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
@@ -62,13 +62,14 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     # check post install sections
     # TODO check salt config files replacement
     #   check that api is installed into python env and have proper version
-    assert 'eos-prvsnr' in mhost.check_output('pip3 list')
-    assert provisioner.__version__ == mhost.check_output(
-        "python3 -c 'import provisioner; print(provisioner.__version__)'"
-    )
+    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
+    assert provisioner.__title__ in pip_packages
+    assert pip_packages[provisioner.__title__][
+        'version'
+    ] == provisioner.__version__
 
     #   check that prvsnrusers groups is created
-    assert PRVSNRUSERS_GROUP in mhost.check_output("cat /etc/group")
+    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
 
     #   check that user pillar dir is created
     #   and has proper access rights (ACL)
@@ -134,9 +135,10 @@ def test_rpm_prvsnr_removal(mhost, mlocalhost):
     mhost.check_output('yum remove -y eos-prvsnr')
     # TODO check salt config files restoration
     #   check that api is removed from python env
-    assert 'eos-prvsnr' not in mhost.check_output('pip3 list')
-    #   check that prvsnrusers groups is absent
-    assert PRVSNRUSERS_GROUP not in mhost.check_output("cat /etc/group")
+    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
+    assert provisioner.__title__ not in pip_packages
+    #   check that prvsnrusers group still exists
+    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
 
 
 @pytest.mark.isolated

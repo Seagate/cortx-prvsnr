@@ -60,7 +60,8 @@ rm -rf %{buildroot}
 # TODO test
 %post
 # adding prvsnrusers group
-groupadd prvsnrusers
+echo "Creating group 'prvsnrusers'..."
+groupadd -f prvsnrusers
 # set access rights for api users
 #    user file root
 mkdir -p /opt/seagate/eos-prvsnr/srv_user
@@ -79,9 +80,3 @@ pip3 install -U /opt/seagate/eos-prvsnr/api/python
 %preun
 # uninstall api globally using pip
 pip3 uninstall -y eos-prvsnr
-# removing prvsnrusers group
-if grep -q $group /etc/group
-then
-    echo "Removing group prvsnrusers"
-    groupdel prvsnrusers
-fi

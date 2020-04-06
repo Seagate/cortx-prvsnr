@@ -1158,6 +1158,12 @@ def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
 
 
 @pytest.fixture
+def sync_salt_modules(eos_primary_mhost, install_provisioner):
+    eos_primary_mhost.check_output("salt '*' saltutil.sync_modules")
+    eos_primary_mhost.check_output("salt-run saltutil.sync_modules")
+
+
+@pytest.fixture
 def mlocalhost(localhost, request):
     return LocalHostMeta(None, localhost, None, request, label=None, iface='lo')
 
