@@ -200,7 +200,9 @@ Public data zone:
       - dhclient
       - hare
       - haproxy
+      - high-availability
       - nfs
+      - ssh
       - www
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
