@@ -4,7 +4,7 @@ include:
   - components.system.storage.install
   - components.system.storage.config
 
-Generate system checkpoint flag:
+Generate storage checkpoint flag:
   file.managed:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.storage
     - makedirs: True
