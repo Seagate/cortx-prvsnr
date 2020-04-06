@@ -260,11 +260,11 @@ if [[ -n "$hostspec" ]]; then
 fi
 
 # TODO test that
-if [[ "$singlenode" != true ]]; then
-    l_info "Triggering salt data mining"
-    # force salt to mine data
-    $cmd salt "$target_minions" mine.update
-fi
+# if [[ "$singlenode" != true ]]; then
+#     l_info "Triggering salt data mining"
+#     # force salt to mine data
+#     $cmd salt "$target_minions" mine.update
+# fi
 
 #TODO: Setup ssh passwordless configuration even when -F option is provided
 # if -F option is used, setup passwordless ssh at the end.
