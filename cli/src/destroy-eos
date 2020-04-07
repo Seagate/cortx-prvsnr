@@ -21,6 +21,7 @@ ha_states=(
 controlpath_states=(
 # states to be applied in desired sequence
     "post_setup"
+    "uds"
     "csm"
     "sspl"
 )
