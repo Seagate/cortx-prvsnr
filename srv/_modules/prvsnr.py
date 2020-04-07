@@ -28,26 +28,6 @@ else:
     HAS_PROVISIONER = True
 
 
-if HAS_PROVISIONER:
-    from provisioner.api_spec import api_spec
-    mod = sys.modules[__name__]
-    for fun in api_spec:
-        setattr(mod, fun, _api_wrapper(fun))
-
-
-def __virtual__():
-    if HAS_PROVISIONER:
-        return __virtualname__
-    else:
-        return (
-            False,
-            (
-                'The provisioner execution module cannot be loaded:'
-                ' provisioner package unavailable.'
-            )
-        )
-
-
 # TODO generate docs
 def _api_wrapper(fun):
     from provisioner._api_cli import api_args_to_cli
@@ -71,3 +51,23 @@ def _api_wrapper(fun):
         return __salt__['cmd.run'](cmd, env=env)
 
     return f
+
+
+if HAS_PROVISIONER:
+    from provisioner.api_spec import api_spec
+    mod = sys.modules[__name__]
+    for fun in api_spec:
+        setattr(mod, fun, _api_wrapper(fun))
+
+
+def __virtual__():
+    if HAS_PROVISIONER:
+        return __virtualname__
+    else:
+        return (
+            False,
+            (
+                'The provisioner execution module cannot be loaded:'
+                ' provisioner package unavailable.'
+            )
+        )
