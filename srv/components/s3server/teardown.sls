@@ -1,13 +1,14 @@
 #-------------------------
-# Teardown haproxy/openldap
+# Teardown S3backgroundelete
 #-------------------------
-# include:
-#   - components.misc_pkgs.openldap.teardown
-#   - components.ha.haproxy.teardown
-#   - components.ha.keepalived.teardown
-#-------------------------
-# Teardown haproxy/openldap
-#-------------------------
+
+
+{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+Stage - Post Install S3Server:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/s3server/conf/setup.yaml', 's3server:reset')
+{% endif %}
+
 
 #-------------------------
 # Teardown S3Server
@@ -21,7 +22,7 @@ Stop s3authserver service:
 Remove eos-s3server:
   pkg.purged:
     - name: eos-s3server
-
+    
 Remove s3server_uploads:
   pkg.purged:
     - pkgs:
@@ -93,13 +94,6 @@ Remove s3server repo:
   pkgrepo.absent:
     - name: {{ defaults.s3server.repo.id }}
 
-Remove s3 entries from /etc/hosts:
- file.line:
-   - name: /etc/hosts
-   - match: '.*s3.seagate.com sts.seagate.com iam.seagate.com.*'
-   - mode: delete
-
 Delete s3server checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3server
-
