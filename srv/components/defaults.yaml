@@ -80,3 +80,8 @@ csm:
   uploads_repo:
     id: "csm_uploads"
     url: {{ eos_repo_url }}/uploads/
+
+uds:
+  repo:
+    id: "uds"
+    url: {{ repo_url  }}
