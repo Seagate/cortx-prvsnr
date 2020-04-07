@@ -31,14 +31,6 @@ Remove crontab:
     - user: root
     - identifier: csm-stats-collector
 
-Remove statsd utils:
-  pkg.purged:
-    - name: stats_utils
-
-Remove /opt/statsd-utils:
-  file.absent:
-    - name: /opt/statsd-utils
-
 Delete csm checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm

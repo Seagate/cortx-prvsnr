@@ -1,7 +1,3 @@
-Install statsd utils:
-  pkg.installed:
-    - name: stats_utils
-
 Install csm package:
   pkg.installed:
     - pkgs:
