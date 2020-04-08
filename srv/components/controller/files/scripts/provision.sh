@@ -1,6 +1,8 @@
 #!/bin/bash
 script_dir=$(dirname $0)
 
+ftp_log="$logdir/fw_upgrade.log"
+
 # run_cli_cmd()
 # Arg1: cli command to run on enclosure, e.g. 'show version'
 # Arg2: The element to be searched from the xml output of arg1 command.
@@ -841,7 +843,7 @@ ftp_cmd_run()
     echo "ftp_cmd_run(): cmd: $_cmd" >> $logfile
     reqd_pkgs_install $ftp_cmd
     echo "ftp_cmd_run(): starting ftp session" >> $logfile
-$ftp_cmd -in $host <<EOF
+$ftp_cmd -inv $host > $ftp_log  <<EOF 
 user $user "$pass"
 $_cmd
 bye
@@ -854,6 +856,51 @@ fw_license_load()
     [ -z $license_file ] && echo "Error: No firmware bundle provided" &&
         exit 1
     ftp_cmd_run "put $license_file license"
+}
+
+is_ftp_enabled()
+{
+    _tmp_file="$tmpdir/is_ftp_enabled"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    # objects name in the xml
+    _xml_obj_bt="security-communications-protocols"
+    _xml_obj_plist=("ftp")
+    # run command to get the details of advanced settings params
+    echo "is_ftp_enabled():Getting protocols details.." >> $logfile
+    cmd_run 'show protocols'
+    echo "is_ftp_enabled():Checking if ftp is enabled" >> $logfile
+
+    # parse xml to get required values of properties
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "is_ftp_enabled(): No ftp setting found" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    ret=$(grep -q "Enabled" $_tmp_file)
+    if [[ $ret -eq 0 ]]; then
+        echo "Enabled"
+    else
+        echo "Disabled"
+    fi
+}
+
+ftp_enable()
+{
+    _tmp_file="$tmpdir/ftp_enable"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    echo "ftp_enable(): Checking if ftp is enabled" >> $logfile
+    is_ftp_enabled > $_tmp_file
+    grep -q "Enabled" $_tmp_file || {
+        echo "ftp_enable(): ftp disabled, enabling ftp" >> $logfile
+        cmd_run 'set protocols ftp on'
+        is_ftp_enabled > $_tmp_file
+        echo "ftp_enable(): Checking if ftp got enabled" >> $logfile
+        grep -q "Enabled" $_tmp_file || {
+           echo "ftp_enable(): Error: Could not enable ftp"
+           exit 1
+        }
+    } && echo "ftp_enable(): ftp is already enabled" >> $logfile
 }
 
 is_pfu_enabled()
@@ -901,13 +948,66 @@ pfu_enable()
     } && echo "pfu_enable(): PFU is already enabled" >> $logfile
 }
 
+fw_upgrade_health_check()
+{
+    _tmp_file="$tmpdir/fw_upgrade_health_check"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    # objects name in the xml
+    _xml_obj_bt="code-load-readiness"
+    _xml_obj_plist=("overall-health")
+    # run command to get the details of advanced settings params
+    echo "fw_upgrade_health_check():Getting upgrade health status" >> $logfile
+    cmd_run 'check firmware-upgrade-health'
+    echo "fw_upgrade_health_check():Checking if health is ok" >> $logfile
+
+    # parse xml to get required values of properties
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "fw_upgrade_health_check(): No status found" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    grep -q "Pass" $_tmp_file && {
+        echo "fw_upgrade_health_check():Pass" >> $logfile
+    } || {
+        echo "fw_upgrade_health_check():Fail" >> $logfile
+        echo "Error: Controller is not in healthy state" 2>&1 | tee -a $logfile
+        echo "Error: Aborting firware upgrade" 2>&1 | tee -a $logfile
+        exit 1
+    }
+}
+
 fw_update()
 {
+    _error=0
+    
+    fw_upgrade_health_check
     pfu_enable
-    echo "Updating the firmware"
+    ftp_enable
+    echo "Updating the firmware on host: $host" >> $logfile
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
     ftp_cmd_run "put $fw_bundle flash"
+
+    grep -v 230 $ftp_log | grep -iq fail && {
+        echo "Error: Firmware upgrade failed1"
+        echo "Check '$ftp_log' for more details, exiting" 2>&1 | tee -a $logfile
+        exit 1
+    } || {
+        grep -q "Codeload completed successfully." $ftp_log && {
+            grep -q "Partner: Codeload completed successfully." $ftp_log && {
+                grep -q "RETURN_CODE: 8" $ftp_log || _error=1
+            } || _error=1
+        } || _error=1
+    }
+    [ $_error -eq 1 ] && {
+        echo "Error: Firmware upgrade failed"
+        echo "Check $ftp_log for more details, exiting" 2>&1 | tee -a $logfile
+        exit 1
+    } || {
+        echo "ftp_cmd_run(): firmware is updated successfully" 2>&1 | tee -a $logfile
+        echo "Check '$ftp_log' for detailed log" 2>&1 | tee -a $logfile
+    }
 }
 
 fw_license_show()
@@ -924,7 +1024,9 @@ ctrl_shutdown()
         shutdown_ctrl_name=$(echo $shutdown_ctrl_name | tr '[:upper:]' '[:lower:]')
     fi
     echo "ctrl_shutdown(): running command 'shutdown sc $shutdown_ctrl_name'" >> $logfile
-    cmd_run 'shutdown sc $shutdown_ctrl_name' > $xml_doc
+    #TODO: Enable it when lab access is resotred.
+    #      This is disabled as it needs physical presence in lab to restart the controller
+    #cmd_run 'shutdown sc $shutdown_ctrl_name' > $xml_doc
     cli_status_get $xml_doc
 }
 
@@ -935,6 +1037,7 @@ ctrl_restart()
         restart_ctrl_name=$(echo $restart_ctrl_name | tr '[:upper:]' '[:lower:]')
     fi
     echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'" >> $logfile
+    echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'"
     cmd_run 'restart sc $restart_ctrl_name' > $xml_doc
     cli_status_get $xml_doc
 }
