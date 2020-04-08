@@ -11,7 +11,3 @@ Set selinux bool for haproxy:
     - value: 1
     - persist: True
 {% endif %}
-
-Clean existing logrotate configuration:
-  file.absent:
-    - name: /etc/cron.daily/logrotate
