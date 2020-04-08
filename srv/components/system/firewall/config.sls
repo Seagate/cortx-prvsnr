@@ -204,6 +204,7 @@ Public data zone:
       - nfs
       - ssh
       - www
+      - s3
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
     # - rich_rules:
@@ -216,6 +217,7 @@ Public data zone:
       - haproxy
       - nfs
       - www
+      - s3
 
 Private data zone:
   firewalld.present:
