@@ -42,11 +42,11 @@ iopath_states=(
         "misc_pkgs.lustre"
         "eoscore"
         "s3server"
-        "hare"
     )
 
 ha_states=(
     # states to be applied in desired sequence
+        "hare"
         "ha.corosync-pacemaker"
         "ha.ees_ha"
     )

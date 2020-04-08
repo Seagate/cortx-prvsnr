@@ -16,6 +16,7 @@ remove_prvsnr=false
 ha_states=(
     "ha.ees_ha"
     "ha.corosync-pacemaker"
+    "hare"
 )
 
 controlpath_states=(
@@ -28,7 +29,6 @@ controlpath_states=(
 
 iopath_states=(
 # states to be applied in desired sequence
-    "hare"
     "s3server"
     "eoscore"
     "misc_pkgs.lustre"
@@ -182,7 +182,7 @@ if [[ "$run_all" == true || "$run_ha_states" == true ]]; then
     systemctl list-units --state=running | grep hare-consul-agent &&
         systemctl stop hare-consul-agent || true
     ssh eosnode-2 " systemctl list-units --state=running | grep\
-        hare-consul-agent && systemctl stop hare-consul-agent"
+        hare-consul-agent && systemctl stop hare-consul-agent" || true
 fi
 
 if [[ "$remove_prvsnr" == true ]]; then
