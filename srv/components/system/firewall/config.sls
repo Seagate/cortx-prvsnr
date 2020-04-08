@@ -117,12 +117,6 @@ saltmaster:
       - 4505/tcp
       - 4506/tcp
 
-sspl:
-  firewalld.service:
-    - name: sspl
-    - ports:
-      - 8090/tcp
-
 uds:
   firewalld.service:
     - name: uds
