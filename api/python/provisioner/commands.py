@@ -360,7 +360,6 @@ class EOSUpdate(CommandParserFillerMixin):
                 # TODO
                 #  - update for provisioner itself
                 #  - update for other sw ???
-                ensure_cluster_is_stopped()
                 for component in (
                     'eoscore', 's3server', 'hare', 'sspl', 'csm'
                 ):
