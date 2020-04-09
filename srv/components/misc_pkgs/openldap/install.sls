@@ -38,7 +38,7 @@ Stop slapd:
   service.dead:
     - name: slapd
 
-Add password file to ldap group
+Add password file to ldap group:
   cmd.run:
     - name: chgrp ldap /etc/openldap/certs/password
     - onlyif: grep -q $group /etc/group && test -f /etc/openldap/certs/password
