@@ -54,7 +54,3 @@ Verify openldap ports:
 Verify s3 ports:
   cmd.run:
     - name: firewall-cmd --permanent --service s3 --get-ports | grep -P '(?=.*?7081/tcp)(?=.*?514/tcp)(?=.*?8125/tcp)(?=.*?6379/tcp)(?=.*?9080/tcp)(?=.*?9443/tcp)(?=.*?9086/tcp)(?=.*?80(8[1-9]))(?=.*?80(9[0-9]))^.*$'
-
-#Verify sspl ports:
-#  cmd.run:
-#    - name: firewall-cmd --permanent --service sspl --get-ports | grep -P '(?=.*?8090/tcp)^.*$'

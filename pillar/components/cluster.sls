@@ -11,6 +11,10 @@ cluster:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
+    bmc:
+      ip: 
+      user: ADMIN
+      secret: 'adminBMC!'
     network:
       mgmt_nw:                        # Management network interfaces
         iface:
@@ -34,6 +38,10 @@ cluster:
   eosnode-2:
     hostname: eosnode-2
     is_primary: false
+    bmc:
+      ip: 
+      user: ADMIN
+      secret: 'adminBMC!'
     network:
       mgmt_nw:                        # Management network interfaces
         iface:
@@ -50,10 +58,10 @@ cluster:
         roaming_ip: 192.168.0.4       # Applies to private data network
       gateway_ip:                     # Gateway IP of network. Not requried for DHCP.
     storage:
-      metadata_device:                # Device for /var/mero and possibly SWAP
-        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
-      data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
+      metadata_device:              # Device for /var/mero and possibly SWAP
+        - /dev/sdb
+      data_devices:                 # Data device/LUN from storage enclosure
+        - /dev/sdc
   storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
     type: 5U84                    # Type of enclosure. E.g. 5U84/PODS

@@ -1,4 +1,9 @@
 #Configurations for Corosync and Pacemaker Setup
+Add hacluster user to haclient group:
+  group.present:
+    - name: haclient
+    - addusers:
+      - {{ pillar['corosync-pacemaker']['user'] }}
 
 Enable corosync service:
   service.enabled:
@@ -45,8 +50,8 @@ Ignore the Quorum Policy:
     - prop: no-quorum-policy
     - value: ignore
 
-Disable STONITH:
+Enable STONITH:
   pcs.prop_has_value:
     - prop: stonith-enabled
-    - value: false
+    - value: true
 {% endif %}

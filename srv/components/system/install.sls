@@ -31,6 +31,8 @@ Install cryptography python package:
     - name: cryptography
     - bin_env: /usr/bin/pip3
     - target: /usr/lib64/python3.6/site-packages/
+    - require:
+      - Ensure cryptography python package absent
 
 Install eos-py-utils:           # Package for cryptography
   pkg.installed:

@@ -119,6 +119,7 @@ color: True
 # cli_summary value to True. (False by default.)
 #
 #cli_summary: False
+cli_summary: True
 
 # Set the directory used to hold unix sockets:
 #sock_dir: /var/run/salt/master

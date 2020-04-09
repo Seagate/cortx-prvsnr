@@ -1052,12 +1052,14 @@ EOF
 if [[ "$_repo_src" == "gitrepo" ]]; then
     if ! grep gitlab ~/.ssh/config 1>/dev/null ; then
 ! read -r -d '' GITLAB <<- EOM
+
 Host gitlab.mero.colo.seagate.com
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
     IdentityFile /root/.ssh/id_rsa_prvsnr
     IdentitiesOnly yes
+
 EOM
         echo $GITLAB >> ~/.ssh/config
     fi
@@ -1082,11 +1084,11 @@ fi
         pushd "$_installdir"
             yum install -y git
             git init
-            if ! git remote show origin >/dev/null 2>&1 ; then
-                git remote add origin http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git
-            else
-                git remote set-url origin http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git
+            if git remote show >/dev/null 2>&1 ; then
+                git remote remove origin
             fi
+            
+            git remote add origin ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git
             git fetch origin
             git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
             # git clean -fdx        # Commented because there could be intentional changes in workspace.
@@ -1852,4 +1854,57 @@ EOF
     fi
 
     $_cmd bash -c "$_script"
+}
+
+#   update_bmc_ip <eosnode-#>
+#   e.g. update_bmc_ip eosnode-1
+#
+#   Updates cluster pillar with provided hostname for the provided eosnode
+#
+#   Prerequisites:
+#       - The provisioner repo is installed.
+#
+#   Args:
+#       eosnode-#: eosnode-1 or eosnode-2
+#       eosnode-# hostname: hostname to be updated for eosnode-# in cluster.sls
+function update_bmc_ip {
+    set -eu
+
+    if [[ "$verbosity" -ge "2" ]]; then
+        set -x
+    fi
+
+    local _node="${1:-eosnode-1}"
+    local _hostspec="${2:-}"
+    local _ssh_config="${3:-}"
+    local _sudo="${4:-false}"
+    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+
+    local _cluster_sls_path="${_installdir}/pillar/components/cluster.sls"
+
+    # Install ipmitool package
+    if [[ -n "$_hostspec" ]]; then
+        ${_cmd} "yum install -y ipmitool"
+    else
+        yum install -y ipmitool
+    fi
+
+    l_info "Acquire BMC IP on NodeID: ${_hostspec}"
+
+    local _ip_line=""
+    if [[ -n "$_hostspec" ]]; then
+        _ip_line=$($_cmd "ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+'")
+    else
+        _ip_line=$(ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
+    fi
+
+    local _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
+    l_info "BMC_IP: ${_ip}"
+
+    _line=$(grep -A4 -n ${_node}: $_cluster_sls_path | tail -1 | cut -f1 -d-)
+    l_debug "Line number: ${_line}"
+    sed -ie "${_line}s/.*/      ip: ${_ip}/" $_cluster_sls_path
 }

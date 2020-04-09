@@ -4,3 +4,4 @@ Install runtime libraries:
       - corosync
       - pacemaker
       - pcs
+      - fence-agents-ipmilan    # For fencing

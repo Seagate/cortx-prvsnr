@@ -10,3 +10,7 @@ Remove multipath service:
 Remove multipath config:
   file.absent:
     - name: /etc/multipath.conf
+
+Delete multipath checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.multipath

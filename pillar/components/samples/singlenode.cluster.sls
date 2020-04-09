@@ -9,6 +9,10 @@ cluster:
   eosnode-1:
     hostname: eosnode-1
     is_primary: true
+    bmc:
+      ip: 
+      user: ADMIN
+      secret: 'adminBMC!'
     network:
       mgmt_nw:                  # Management network interfaces
         iface:

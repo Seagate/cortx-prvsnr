@@ -213,6 +213,8 @@ set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
 # configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
+update_bmc_ip "eosnode-1" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
 configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP EOSNODE-2
@@ -238,6 +240,8 @@ if [[ "$singlenode" != true ]]; then
     # TODO use salt formulas instead
     # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
     # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+
+    update_bmc_ip "eosnode-2" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 fi
 
 #update hostname in cluster.sls

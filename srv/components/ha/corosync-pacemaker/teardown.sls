@@ -35,6 +35,7 @@ Remove pcs package:
       - pcs
       - pacemaker
       - corosync
+      - fence-agents-ipmilan
 
 # Remove configuration directory:
 #   file.absent:
