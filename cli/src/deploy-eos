@@ -8,10 +8,10 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 . $BASEDIR/functions.sh
 
 run_all=true
-prereq_states=false
-io_states=false
+run_prereq_states=false
+run_io_states=false
 run_ha_states=false
-ctrlpath_states=false
+run_ctrlpath_states=false
 
 system_states=(
     "system"
@@ -87,11 +87,11 @@ function options_parser {
             singlenode=true
             ;;
         --prereq-states)
-            prereq_states=true
+            run_prereq_states=true
             run_all=false
             ;;
         --iopath-states)
-            io_states=true
+            run_io_states=true
             run_all=false
             ;;
         --ha-states)
@@ -99,7 +99,7 @@ function options_parser {
             run_all=false
             ;;
         --ctrlpath-states)
-            ctrlpath_states=true
+            run_ctrlpath_states=true
             run_all=false
             ;;
         *)
@@ -189,17 +189,17 @@ if [[ "$run_all" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
-if [[ "$prereq_states" == true ]]; then
+if [[ "$run_prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
     run_states  "${prereq_states[@]}"
 fi
 
-if [[ "$io_states" == true || "$run_ha_states" == true ]]; then
+if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
     salt '*' state.apply components.system.storage
 fi
 
-if [[ "$io_states" == true ]]; then
+if [[ "$run_io_states" == true ]]; then
     l_info "Deploying the io path states"
     run_states  "${iopath_states[@]}"
 fi
@@ -209,7 +209,7 @@ if [[ "$run_ha_states" == true ]]; then
     run_states "${ha_states[@]}"
 fi
 
-if [[ "$ctrlpath_states" == true ]]; then
+if [[ "$run_ctrlpath_states" == true ]]; then
     l_info "Deploying the control path states"
     run_states "${controlpath_states[@]}"
 fi
