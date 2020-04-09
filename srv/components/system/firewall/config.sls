@@ -286,7 +286,6 @@ Management zone:
       - smtp
       - rabbitmq
       - saltmaster
-      - sspl
       - ssh
       - uds
       - www
@@ -309,7 +308,6 @@ Management zone:
       - smtp
       - rabbitmq
       - saltmaster
-      - sspl
       - uds
       - www
 
