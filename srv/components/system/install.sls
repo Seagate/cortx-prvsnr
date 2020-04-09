@@ -21,6 +21,11 @@ python-pip:
     - bin_env: /usr/bin/pip
     - upgrade: True
 
+Ensure cryptography python package absent:
+  pip.removed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+
 Install cryptography python package:
   pip.installed:
     - name: cryptography

@@ -1,10 +1,19 @@
-Remove_base_packages:
+# Remove_base_packages:
+#   pkg.purged:
+#     - pkgs:
+#       - python2-pip
+#       - python36-pip
+#       - vi-enhanced
+#       - tmux
+
+Remove cryptography pip package:
+  pip.removed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+
+Remove eos-py-utils pip package:
   pkg.purged:
-    - pkgs:
-      - python2-pip
-      - python36-pip
-      # - vi-enhanced
-      # - tmux
+    - name: eos-py-utils
 
 clean_yum_local:
   cmd.run:
