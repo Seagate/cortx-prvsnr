@@ -34,17 +34,19 @@ SCP cfg_ldap.ldif:
 {% endfor %}
 {%- endif %}
 
-
 Stop slapd:
   service.dead:
     - name: slapd
 
+Add password file to ldap group
+  cmd.run:
+    - name: chgrp ldap /etc/openldap/certs/password
+    - onlyif: grep -q $group /etc/group && test -f /etc/openldap/certs/password
 
 {% if 'mdb' in pillar['openldap']['backend_db'] %}
 Clean up old mdb ldiff file:
   file.absent:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
-
 
 Copy mdb ldiff file, if not present:
   file.copy:
