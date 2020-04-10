@@ -33,6 +33,10 @@ Modify resolv.conf:
     - replace: True
     - create: True
     - allow_empty: True
+{% else %}
+No nw config to apply:
+  test.show_notification:
+    - text: "dns_servers and search_domains are not specified in cluster.sls"
 {% endif %}
 
 # lo:
