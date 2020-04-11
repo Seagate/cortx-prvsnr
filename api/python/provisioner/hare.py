@@ -34,7 +34,8 @@ def check_cluster_is_online():
 
 def ensure_cluster_is_stopped(tries=30, wait=1):
     cluster_stop()
-    ensure(check_cluster_is_offline, tries=tries, wait=wait)
+    # no additional checks are needed since
+    # cluster stop is a sync operation
 
 
 def ensure_cluster_is_started(tries=30, wait=10):
