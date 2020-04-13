@@ -1,3 +1,5 @@
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
 Remove uds package:
   pkg.purged:
     - name: uds
