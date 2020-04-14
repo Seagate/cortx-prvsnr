@@ -10,9 +10,10 @@ Ensure ClusterIP absent before creating:
 {% else %}
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
 {%- endif -%}
+{%- set mac_addr = grains['hwaddr_interfaces'][data_if] -%}
 Setup ClusterIP resouce:
   cmd.run:
-    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} nic={{ data_if }} op monitor interval=30s
+    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} mac=$(echo "01:00:5e:`echo {{ mac_addr }} | cut -d ":" -f 1-3`") nic={{ data_if }} op monitor interval=30s
 
 Add stickiness metadata to ClusterIP resource:
   cmd.run:
