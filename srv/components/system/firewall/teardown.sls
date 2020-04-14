@@ -22,20 +22,11 @@ public:
     - watch_in:
       - Stop and disable Firewalld service
 
-Remove public-data-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=public-data-zone
-    - onlyif: firewall-cmd --get-zones | grep public-data-zone
-    - require:
-      - Start and enable firewalld service
-      - public
-    - watch_in:
-      - Stop and disable Firewalld service
-
 {% if ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 Remove public data interfaces:
   cmd.run:
-    - name: firewall-cmd --remove-interface=data --zone=public-data-zone --permanent
+    - name: firewall-cmd --remove-interface=data0 --zone=public-data-zone --permanent
+    - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service
     - watch_in:
@@ -46,11 +37,22 @@ Remove public and private data interfaces:
     - names: 
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }} --zone=public-data-zone --permanent
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=trusted --permanent
+    - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service
     - watch_in:
       - Stop and disable Firewalld service
 {% endif %}
+
+Remove public-data-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=public-data-zone
+    - onlyif: firewall-cmd --get-zones | grep public-data-zone
+    - require:
+      - Start and enable firewalld service
+      - public
+    - watch_in:
+      - Stop and disable Firewalld service
 
 #{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 # Remove private-data-zone:
