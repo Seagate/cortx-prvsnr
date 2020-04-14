@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+log_file="prvsnr-cli.log"
 
 # rpm package places scripts in parent folder
 if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
@@ -82,12 +83,15 @@ function log {
     case "$_level" in
         trace)
             _verbosity=2
+            _level=trace
             ;;
         debug)
             _verbosity=1
+            _level=debug
             ;;
         info)
             _verbosity=0
+            _level=info
             ;;
         warn)
             _verbosity=0
@@ -97,6 +101,7 @@ function log {
         error)
             _verbosity=0
             _error=true
+            _level=error
             ;;
         *)
             l_error "Unknown log level: $_level"
@@ -106,12 +111,14 @@ function log {
 
     if [[ "$verbosity" -ge "$_verbosity" ]]; then
         _level=$(echo "$_level" | tr '[:lower:]' '[:upper:]')
-        _message="$_level: $_message"
+        _message="[$_level    $(date +'%b %e %R ')]: $_message"
 
         if [[ "$_error" == true ]]; then
-            >&2 echo "$_message"
+            # Echo message to stderr
+            echo "$_message" >> "$LOG_FILE"
+            logger -t PRVSNR -is "$_message"
         else
-            echo "$_message"
+            echo "$_message" | tee -a "$LOG_FILE"
         fi
     fi
 }
@@ -700,7 +707,7 @@ function install_repos {
     if [[ -d "$_repo_base_dir" && ! -d "$_repo_base_dir_backup" ]]; then
         cp -R "$_repo_base_dir" "$_repo_base_dir_backup"
     else
-        echo -e "\\nWARNING: skip backup creation since backup already exists" >&2
+        echo -e "\\nWARNING: skip backup creation since backup already exists" | tee -a "$log_file" >&2
     fi
 
     rm -rf "$_repo_base_dir"
@@ -1320,43 +1327,43 @@ function accept_salt_key {
     fi
 
     try=1
-    echo -e "\\nINFO: waiting for minion $_id to become connected to master"
+    echo -e "\\nINFO: waiting for minion $_id to become connected to master" | tee -a "$log_file"
     until salt-key --list-all | grep $_id >/dev/null 2>&1
     do
         if [[ "\$try" -gt "$_timeout" ]]; then
-            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds." >&2
+            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds." | tee -a "$log_file" >&2
             salt-key --list-all >&2
             exit 1
         fi
-        echo -n "."
+        echo -n "." | tee -a "$log_file"
         try=\$(( \$try + 1 ))
         sleep 1
     done
-    echo -e "\\nINFO: Key $_id is connected."
+    echo -e "\\nINFO: Key $_id is connected." | tee -a "$log_file"
 
     # minion is connected but does not need acceptance
     if [[ -z "\$(salt-key --list unaccepted | grep $_id 2>/dev/null)" ]]; then
-        echo -e "\\nINFO: no key acceptance is needed for minion $_id." >&2
+        echo -e "\\nINFO: no key acceptance is needed for minion $_id." | tee -a "$log_file" >&2
         salt-key --list-all >&2
         exit 0
     fi
 
     salt-key -y -a $_id
-    echo -e "\\nINFO: Key $_id is accepted."
+    echo -e "\\nINFO: Key $_id is accepted." | tee -a "$log_file"
 
     # TODO move that to a separate API
-    echo -e "\\nINFO: waiting for minion $_id to become ready"
+    echo -e "\\nINFO: waiting for minion $_id to become ready" | tee -a "$log_file"
     try=1; tries=10
     until salt -t 1 $_id test.ping >/dev/null 2>&1
     do
         if [[ "\$try" -gt "\$tries" ]]; then
-            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks." >&2
+            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks." | tee -a "$log_file" >&2
             exit 1
         fi
-        echo -n "."
+        echo -n "." | tee -a "$log_file"
         try=\$(( \$try + 1 ))
     done
-    echo -e "\\nINFO: Minion $_id started."
+    echo -e "\\nINFO: Minion $_id started." | tee -a "$log_file"
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -1657,8 +1664,8 @@ function setup_ssh {
         cp "${default_ssh_conf}.bak" "$default_ssh_conf"
         exit 1
     }
-
-    echo "ssh passwordless setup done successfully"
+    
+    echo "ssh passwordless setup done successfully" | tee -a "$log_file"
 }
 #   set_node_id <hostspec> [<ssh-config> [<sudo> ]]
 #

@@ -5,6 +5,10 @@ set -eu
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
+export LOG_FILE=/opt/seagate/cortx/eos-prvsnr/log/deploy-eos.log
+mkdir -p $(dirname "${LOG_FILE}")
+/usr/bin/true > ${LOG_FILE}
+
 . $BASEDIR/functions.sh
 
 run_all=true

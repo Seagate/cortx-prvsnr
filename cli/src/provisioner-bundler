@@ -1,32 +1,103 @@
 #!/usr/bin/env python3
+import argparse
+import logging
+import os
+import shutil
 import sys
 import tarfile
-import os
-import argparse
+
+logging.basicConfig(
+        datefmt='%m/%d/%Y %I:%M:%S %p %z',
+        filename="/opt/seagate/cortx/eos-prvsnr/log/provisioner-bundler.log",
+        filemode='w',
+        format="[%(levelname)s - %(asctime)s]: %(message)s",
+        level=logging.ERROR
+    )   
+
+
+def __cleanup_directory(directory):
+    """
+    Clean contents of directory.
+    """
+    for file_elem in os.listdir(directory):
+        cleanup_file_elem = os.path.join(directory, file_elem)
+        try:
+            if os.path.isfile(cleanup_file_elem):
+                os.remove(cleanup_file_elem)
+            elif os.path.isdir(cleanup_file_elem):
+                shutil.rmtree(cleanup_file_elem)
+        except Exception as e:
+            logging.exception(e)
+            sys.exit(1)
+
 
 def parse_args():
-    parser=argparse.ArgumentParser(description='''Bundle provisioner logs ''')
+    parser = argparse.ArgumentParser(description='''Bundle provisioner logs ''')
     parser.add_argument('bundle_id', help='Unique bundle id')
     parser.add_argument('path', help='Path to store the created bundle', nargs='?', default="/var/seagate/eos/support_bundle/")
     args=parser.parse_args()
     return args
 
+
 def prepare_target_file(args):
+    """
+    Prepares location for tar file
+    """
     try:
-        component="provisioner"
+        component = "provisioner"
         target_path=os.path.join(args.path, args.bundle_id, component)
         print(target_path)
-        os.makedirs(target_path,exist_ok=True)
-        target_file=target_path+'/'+component+'_'+args.bundle_id+'.tar.gz'
+        os.makedirs(target_path, exist_ok=True)
+
+        # remove old entries if path already exists
+        __cleanup_directory(target_path)
+        
+        collect_prvsnr_logs(target_path)
+
+        target_file = os.path.join(target_path, component + '_' + args.bundle_id + '.tar.gz')
+        
         return target_file
-    except:
-        print("ERROR: Unable to create component specific directory!!")
+    except Exception as e:
+        logging.exception(e)
         sys.exit(1)
 
-def make_tarfile(output_filename, source_dir):
-    with tarfile.open(output_filename, "w:gz") as tar:
-        tar.add(source_dir, arcname=os.path.basename(source_dir))
 
-args=parse_args()
-target_file=prepare_target_file(args)
-make_tarfile(target_file, '/var/log/provisioner/')
+def collect_prvsnr_logs(target_path):
+    """
+    Collect provisioner logs for Support Bundle.
+        - /var/log/salt/
+        - /opt/seagate/cortx/eos-prvsnr/log/
+    """
+    # Copy Salt Logs
+    shutil.copytree(
+        src = "/var/log/salt",
+        dst = target_path
+    )
+
+    # Copy Provisioner logs
+    shutil.copytree(
+        src = "/opt/seagate/cortx/eos-prvsnr/log",
+        dst = target_path
+    )
+
+
+def make_tarfile(output_filename, source_dir):
+    """
+    Create a tar bundle.
+    """
+    try:
+        with tarfile.open(output_filename, "w:gz") as tar:
+            tar.add(source_dir, arcname=os.path.basename(source_dir))
+    except Exception as e:
+        logging.exception(e)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        args = parse_args()
+        target_file = prepare_target_file(args)
+        make_tarfile(target_file, '/opt/seagate/cortx/eos-prvsnr/log/')
+    except KeyboardInterrupt as e:
+        print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
+        sys.exit(1)

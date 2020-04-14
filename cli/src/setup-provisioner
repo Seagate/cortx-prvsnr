@@ -7,6 +7,10 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 INSTALLDIR="/opt/seagate/eos-prvsnr"
 EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
+export LOG_FILE=/opt/seagate/cortx/eos-prvsnr/log/setup-provisioner.log
+mkdir -p $(dirname "${LOG_FILE}")
+/usr/bin/true > ${LOG_FILE}
+
 eosnode_2_hostspec=eosnode-2
 hostspec=
 eosnode_2_opt=false
@@ -18,7 +22,7 @@ prvsnr_version=
 
 cluster_id=$(uuidgen)
 
-source $BASEDIR/functions.sh
+. $BASEDIR/functions.sh
 
 function usage {
   echo "\
