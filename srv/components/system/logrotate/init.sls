@@ -1,4 +1,5 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.logrotate'.format(grains['id'])) %}include:
+{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.logrotate'.format(grains['id'])) %}
+include:
   - components.system.logrotate.install
   - components.system.logrotate.config
 

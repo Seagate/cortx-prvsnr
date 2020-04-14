@@ -10,4 +10,7 @@ Remove_ntp_package:
 Remove ntp configutations:
   file.absent:
     - name: /etc/ntp
-...
+
+Delete ntp checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.ntp

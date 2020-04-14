@@ -13,3 +13,7 @@ Remove nodejs from bash_profile:
 Source bash_profile for nodejs cleanup:
   cmd.run:
     - name: source ~/.bashrc
+
+Delete nodejs checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.nodejs

@@ -75,3 +75,7 @@ Remove public and private data interfaces:
 #       - Stop and disable Firewalld service
 
 {% endif %}
+
+Delete firewall checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.firewall

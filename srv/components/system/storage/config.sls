@@ -40,7 +40,7 @@ Ensure SWAP partition is unmounted:
 
 Make SWAP partition:
   cmd.run:
-    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 && sleep 5
+    - name: mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 && sleep 5
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - require:
       - module: Create swap partition

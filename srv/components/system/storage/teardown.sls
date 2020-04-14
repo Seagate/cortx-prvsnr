@@ -5,6 +5,11 @@ Unmount SWAP:
   cmd.run:
     - name: swapoff {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 ||true
 
+Unmount /var/mero:
+  cmd.run:
+    - name: umount /var/mero || true
+    - onlyif: mount | grep mero
+
 Remove swap:
   module.run:
     - mount.rm_fstab:
