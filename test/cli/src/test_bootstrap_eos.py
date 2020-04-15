@@ -20,6 +20,7 @@ def script_name():
 
 
 # isolated is required since parametrization is used
+@pytest.mark.skip('not maintained')
 @pytest.mark.isolated
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])

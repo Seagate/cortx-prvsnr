@@ -1,6 +1,7 @@
 import pytest
 import attr
 import builtins
+import typing
 
 from provisioner import (
     pillar, commands, inputs, ALL_MINIONS
@@ -9,6 +10,19 @@ from provisioner.salt import State
 from provisioner.values import MISSED
 
 from .helper import mock_fun_echo, mock_fun_result
+
+
+def test_run_args_types():
+    assert typing.get_type_hints(commands.RunArgs) == {
+        'targets': str,
+        'dry_run': bool
+    }
+
+
+def test_run_args_base_types():
+    assert typing.get_type_hints(commands.RunArgsBase) == {
+        'targets': str
+    }
 
 
 def test_get_from_spec(monkeypatch):

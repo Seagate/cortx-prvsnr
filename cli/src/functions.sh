@@ -535,6 +535,7 @@ function collect_addrs {
 
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
+    local _hostname_only="${3:-false}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" 2>/dev/null)"
 
@@ -545,14 +546,16 @@ function collect_addrs {
         set -x
     fi
 
-    # yum -y install iproute >&2
+    if [[ "$_hostname_only" == true ]]; then
+        hostname --fqdn
+    else
+        yum -y install iproute >&2
 
-    # ip_list="\$(ip addr show scope global up | sed -n "s/.*inet \([^/]\+\).*/\1/p" || true)"
-    # ifconfig_list="\$(ifconfig 2>/dev/null | sed -n "s/.*inet \([^ ]\+\).*/\1/p" | grep -v 127.0.0.1 || true)"
-    # hostname="\$(hostname | grep -v 127.0.0.1 || true)"
-    # echo \$ip_list \$ifconfig_list \$hostname | awk "{for(i = 1; i<=NF; i++) {print \\\$i}}" | sort -u | paste -sd " " -
-
-    hostname --fqdn
+        ip_list="\$(ip addr show scope global up | sed -n "s/.*inet \([^/]\+\).*/\1/p" || true)"
+        ifconfig_list="\$(ifconfig 2>/dev/null | sed -n "s/.*inet \([^ ]\+\).*/\1/p" | grep -v 127.0.0.1 || true)"
+        hostname="\$(hostname | grep -v 127.0.0.1 || true)"
+        echo \$ip_list \$ifconfig_list \$hostname | awk "{for(i = 1; i<=NF; i++) {print \\\$i}}" | sort -u | paste -sd " " -
+    fi
 EOF
 
     if [[ -n "$_hostspec" ]]; then
@@ -612,7 +615,7 @@ EOF
 
 
 
-#   get_reachable_host_names <hostspec1> <ssh-config> [<hostspec2>]
+#   get_reachable_names <hostspec1> <ssh-config> [<hostspec2>]
 #
 #   Collect names of the host specified by `hostspec1` reachable from
 #   the another host specified by `hostspec2`.
@@ -623,7 +626,7 @@ EOF
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
 #           Default: not set.
-function get_reachable_host_names {
+function get_reachable_names {
     set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
@@ -633,6 +636,7 @@ function get_reachable_host_names {
     local _hostspec1="${1:-}"
     local _hostspec2="${2:-}"
     local _ssh_config="${3:-}"
+    local _hostname_only="${4:-false}"
 
     local _res=()
 
@@ -641,8 +645,8 @@ function get_reachable_host_names {
         exit 1
     fi
 
-    _host1_addrs="$(collect_addrs "$_hostspec1" "$_ssh_config")"
-    _host2_addrs="$(collect_addrs "$_hostspec2" "$_ssh_config")"
+    _host1_addrs="$(collect_addrs "$_hostspec1" "$_ssh_config" $_hostname_only)"
+    _host2_addrs="$(collect_addrs "$_hostspec2" "$_ssh_config" $_hostname_only)"
 
     for _addr in $_host1_addrs; do
         if [[ "$_host2_addrs" == *"$_addr"* ]]; then
@@ -655,7 +659,7 @@ function get_reachable_host_names {
         fi
     done
 
-    echo "${_res[*]}"
+    echo "${_res[*]+"${_res[*]}"}"
 }
 
 
@@ -1221,7 +1225,7 @@ function configure_salt {
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
     local _master="${5:-true}"
-    local _master_host="${6:-}"
+    local _master_host="${6:-eosnode-1}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
@@ -1239,7 +1243,7 @@ function configure_salt {
         # re-config salt master
         if [[ ! -f /etc/salt/master.org ]]; then
             mv -f /etc/salt/master /etc/salt/master.org
-            cp files/etc/salt/master /etc/salt/master
+            cp srv/components/provisioner/salt_master/files/master /etc/salt/master
         fi
 
         if [[ "$_master" == true ]]; then
@@ -1250,7 +1254,7 @@ function configure_salt {
         # re-config salt minion
         if [[ ! -f /etc/salt/minion.org ]]; then
             mv -f /etc/salt/minion /etc/salt/minion.org
-            cp files/etc/salt/minion /etc/salt/minion
+            cp srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
         fi
 
         if [[ -n "$_master_host" ]]; then
@@ -1258,9 +1262,9 @@ function configure_salt {
         fi
 
         if [[ "$_master" == true ]]; then
-            cp -f files/etc/salt/grains.primary /etc/salt/grains
+            cp -f srv/components/provisioner/salt_minion/files/grains.primary /etc/salt/grains
         else
-            cp -f files/etc/salt/grains.secondary /etc/salt/grains
+            cp -f srv/components/provisioner/salt_minion/files/grains.secondary /etc/salt/grains
         fi
         echo "$_minion_id" >/etc/salt/minion_id
 

@@ -37,12 +37,16 @@ rm -rf %{buildroot}
 
 %install
 # Create directories
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/{pillar,srv,files,api}
+mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files
+mkdir -p %{buildroot}/opt/seagate/eos/eos-prvsnr
 
 # Copy files
-cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr/
-cp -R srv %{buildroot}/opt/seagate/eos-prvsnr/
-cp -R api %{buildroot}/opt/seagate/eos-prvsnr/
+cp -R cli %{buildroot}/opt/seagate/eos-prvsnr
+cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr
+cp -R srv %{buildroot}/opt/seagate/eos-prvsnr
+cp -R api %{buildroot}/opt/seagate/eos-prvsnr
+cp -R files/syslogconfig %{buildroot}/opt/seagate/eos-prvsnr/files
+cp -R files/conf %{buildroot}/opt/seagate/eos/eos-prvsnr
 
 
 %clean
@@ -51,10 +55,12 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
-
+/opt/seagate/eos-prvsnr/cli
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/api
+/opt/seagate/eos-prvsnr/files/syslogconfig
+/opt/seagate/eos/eos-prvsnr/conf
 
 
 # TODO test

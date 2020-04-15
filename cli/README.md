@@ -72,7 +72,10 @@ Besides [general](#common-options) set of options it expects the following ones:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
   - `rpm` to install from using rpm package (default).
-- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master. By default it is not set the script will try to discover it itself. As a final fallback the default value will be used (it is specified in salt minion's [config file](../files/etc/salt/minion) and is `eosnode-1` for now).
+- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master.
+  By default it is not set the script will try to discover it itself. As a final fallback the default
+  value will be used (it is specified in salt minion's [config file](../srv/components/provisioner/salt_minion/files/minion)
+  and is `eosnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.
 For now that makes sense only for `gitlab` and if missed the latest tagged version would be installed.

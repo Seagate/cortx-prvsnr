@@ -30,10 +30,10 @@ sudo rm -rf /var/cache/yum
 sudo yum install -y salt-ssh salt-minion salt-master
 
 # Update master config
-sudo cp ${BASEDIR}/files/etc/salt/minion /etc/salt/minion
+sudo cp ${BASEDIR}/srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
 sudo sed -i "s/master:.*/master: $(hostname)/g" /etc/salt/minion
 # Update master config
-sudo cp ${BASEDIR}/files/etc/salt/master /etc/salt/master
+sudo cp ${BASEDIR}/srv/components/provisioner/salt_master/files/master /etc/salt/master
 
 sudo systemctl enable salt-master
 sudo systemctl restart salt-master

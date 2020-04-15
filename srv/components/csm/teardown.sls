@@ -35,7 +35,14 @@ Delete csm checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm
 
-Add csm user to certs group:
+# TODO TEST
+Remove csm user from prvsnrusers group:
+  group.present:
+    - name: prvsnrusers
+    - delusers:
+      - csm
+
+Remove csm user from certs group:
   group.present:
     - name: certs
     - delusers:

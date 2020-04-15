@@ -5,7 +5,7 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 
-from .errors import BadPillarDataError
+from .errors import BadPillarDataError, SWUpdateError
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
@@ -25,6 +25,10 @@ from .salt import (
 from .hare import (
     ensure_cluster_is_stopped, ensure_cluster_is_started
 )
+from .salt_master import (
+    config_salt_master, ensure_salt_master_is_running
+)
+from .salt_minion import config_salt_minions
 from provisioner import inputs
 from provisioner import values
 
@@ -350,41 +354,83 @@ class EOSUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, targets):
+
+        def _update_component(component):
+            state_name = "components.{}.update".format(component)
+            try:
+                logger.info(
+                    "Updating {} on {}".format(component, targets)
+                )
+                StatesApplier.apply([state_name], targets)
+            except Exception:
+                logger.exception(
+                    "Failed to update {} on {}"
+                    .format(component, targets)
+                )
+                raise
+
         # TODO:
         #   - create a state instead
         #   - what about apt and other non-yum pkd managers
         #   (downgrade is another more generic option but it requires
         #    exploration of depednecies that are updated)
+        # TODO IMPROVE minions might be stopped here in case of rollback,
+        #      options: set up temp ssh config and rollback yum + minion config
+        #      via ssh as a fallback
         try:
-            with YumRollbackManager(targets, multiple_targets_ok=True):
-                # TODO
-                #  - update for provisioner itself
-                #  - update for other sw ???
+            with YumRollbackManager(
+                targets, multiple_targets_ok=True
+            ) as rollback_ctx:
                 ensure_cluster_is_stopped()
+
+                # provisioner update
+                _update_component('provisioner')
+                config_salt_master()
+                config_salt_minions()
+
+                # update other components
                 for component in (
                     'eoscore', 's3server', 'hare', 'sspl', 'csm'
                 ):
-                    state_name = "components.{}.update".format(component)
-                    try:
-                        logger.info(
-                            "Updating {} on {}".format(component, targets)
-                        )
-                        StatesApplier.apply([state_name], targets)
-                    except Exception:
-                        logger.exception(
-                            "Failed to update {} on {}"
-                            .format(component, targets)
-                        )
-                        raise
+                    _update_component(component)
+
                 ensure_cluster_is_started()
-        except Exception:
+        except Exception as update_exc:
+            # TODO TEST
             logger.exception('Update failed')
-            try:
-                ensure_cluster_is_started()
-            except Exception:
-                logger.exception('Failed to start cluster after failed update')
+            rollback_error = None
+
+            if rollback_ctx.rollback_error:
+                logger.error(
+                    'Yum Rollback failed: {}'
+                    .format(rollback_ctx.rollback_error)
+                )
+                rollback_error = rollback_ctx.rollback_error
+            else:
+                # here yum changes have been reverted
+                try:
+                    # ensure previous configuration for salt
+                    ensure_salt_master_is_running()
+                    config_salt_master()
+                    config_salt_minions()
+                except Exception as exc:
+                    logger.exception(
+                        'Failed to restore SaltStack configuration'
+                    )
+                    rollback_error = exc
+                else:
+                    try:
+                        ensure_cluster_is_started()
+                    except Exception as exc:
+                        logger.exception(
+                            'Failed to start cluster after rollback'
+                        )
+                        rollback_error = exc
+
             # TODO IMPROVE
-            raise
+            raise SWUpdateError(
+                repr(update_exc), rollback_error=rollback_error
+            ) from update_exc
 
 
 # TODO TEST

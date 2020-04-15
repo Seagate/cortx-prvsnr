@@ -48,22 +48,25 @@ echo "Using [GIT_VER=${GIT_VER}] ..."
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 
-rm -rf eos-prvsnr*
+    rm -rf eos-prvsnr*
 
-# Setup the source tar for rpm build
-mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/{files,pillar,srv,api}
-mkdir -p eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/files/etc/yum.repos.d
-cp -R ${BASEDIR}/../../pillar eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
-cp -R ${BASEDIR}/../../srv eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
-cp -R ${BASEDIR}/../../api eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}/
+    # Setup the source tar for rpm build
+    DEST_DIRNAME=eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    mkdir -p ${DEST_DIRNAME}/{cli,files,pillar,srv,api}
+    cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIRNAME}/cli
+    cp -R ${BASEDIR}/../../files/conf ${DEST_DIRNAME}/files
+    cp -R ${BASEDIR}/../../files/syslogconfig ${DEST_DIRNAME}/files
+    cp -R ${BASEDIR}/../../pillar ${DEST_DIRNAME}
+    cp -R ${BASEDIR}/../../srv ${DEST_DIRNAME}
+    cp -R ${BASEDIR}/../../api ${DEST_DIRNAME}
 
 
-tar -zcvf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}.tar.gz eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
-rm -rf eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    tar -zcvf ${DEST_DIRNAME}.tar.gz ${DEST_DIRNAME}
+    rm -rf ${DEST_DIRNAME}
 
-yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
+    yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
 
-rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr.spec
+    rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr.spec
 
 popd
 

@@ -225,7 +225,10 @@ def eauth():
 
 def salt_local_client():
     global _salt_local_client
-    if not _salt_local_client:
+    # TODO IMPROVE in case of minion retsart old handler will
+    #      lead to Authentication error, so always recreate it
+    #      as a workaround for now
+    if not _salt_local_client or True:
         _salt_local_client = LocalClient()
     return _salt_local_client
 
@@ -692,6 +695,7 @@ class YumRollbackManager:
     targets: str = ALL_MINIONS
     multiple_targets_ok: bool = False
     _last_txn_ids: Dict = attr.ib(init=False, default=attr.Factory(dict))
+    _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
     def __enter__(self):
         self._last_txn_ids = cmd_run(
@@ -720,17 +724,28 @@ class YumRollbackManager:
         if exc_type is None:
             return
 
-        for target, txn_id in self._last_txn_ids.items():
-            logger.info("Starting rollback on target {}".format(target))
-            cmd_run(
-                "yum history rollback -y {}".format(txn_id),
-                targets=target
-            )
-            logger.info("Rollback on target {} is completed".format(target))
+        try:
+            # TODO IMPROVE minion might be stopped at that moment,
+            #      option - use some ssh fallback
+            for target, txn_id in self._last_txn_ids.items():
+                logger.info("Starting rollback on target {}".format(target))
+                cmd_run(
+                    "yum history rollback -y {}".format(txn_id),
+                    targets=target
+                )
+                logger.info(
+                    "Rollback on target {} is completed".format(target)
+                )
+        except Exception as exc:
+            self._rollback_error = exc
 
     @property
     def last_txn_ids(self):
         return self._last_txn_ids
+
+    @property
+    def rollback_error(self):
+        return self._rollback_error
 
 
 # SALT RESULT FORMATS

@@ -152,14 +152,11 @@ def test_setup_provisioner_fail(mhost, run_script):
 @pytest.mark.env_provider('vbox')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_setup_provisioner_singlenode(
-    mhost, mlocalhost, ssh_config, remote, run_script,
-    install_salt_config_files
+    mhost, mlocalhost, ssh_config, remote, run_script
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
     with_sudo = '' # TODO
-
-    install_salt_config_files(mhost)
 
     res = run_script(
         "-v {} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
@@ -223,16 +220,11 @@ def check_setup_provisioner_results(mhosteosnode1):
 @pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
 def test_setup_provisioner_cluster(
     mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost,
-    remote, repo_src, inject_ssh_config, run_script,
-    install_salt_config_files
+    remote, repo_src, inject_ssh_config, run_script
 ):
     remote = '--remote {}'.format(mhosteosnode1.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config)
     with_sudo = '' # TODO
-
-    if repo_src != 'rpm':
-        install_salt_config_files(mhosteosnode1)
-        install_salt_config_files(mhosteosnode2)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --repo-src {}".format(
@@ -249,8 +241,7 @@ def test_setup_provisioner_cluster(
 @pytest.mark.env_provider('vbox')
 @pytest.mark.hosts(['eosnode1', 'eosnode2'])
 def test_setup_provisioner_cluster_with_salt_master_host_provided(
-    mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script,
-    install_salt_config_files
+    mhosteosnode1, mhosteosnode2, ssh_config, mlocalhost, run_script
 ):
     salt_server_ip = mhosteosnode1.host.interface(
         mhosteosnode1.iface
@@ -259,9 +250,6 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     ssh_config = '--ssh-config {}'.format(ssh_config)
     remote = '--remote {}'.format(mhosteosnode1.hostname)
     with_sudo = '' # TODO
-
-    install_salt_config_files(mhosteosnode1)
-    install_salt_config_files(mhosteosnode2)
 
     res = run_script(
         "-v {} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(

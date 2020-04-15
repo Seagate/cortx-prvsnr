@@ -59,12 +59,18 @@ def dump_yaml(path, data, **kwargs):
 # TODO IMPROVE:
 #   - exceptions in check callback
 def ensure(check_cb, tries=10, wait=1, name=None):
+    if name is None:
+        try:
+            name = check_cb.__name__
+        except AttributeError:
+            name = str(check_cb)
+
     ntry = 0
     while True:
         ntry += 1
         logger.debug(
             'Try #{}/{} for {}'
-            .format(ntry, tries, name or check_cb.__name__)
+            .format(ntry, tries, name)
         )
         if check_cb():
             return

@@ -90,3 +90,24 @@ class PrvsnrCmdNotFoundError(ProvisionerError):
 
 class PrvsnrCmdNotFinishedError(ProvisionerError):
     pass
+
+
+# TODO TEST
+class SWUpdateError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: str, rollback_error=None):
+        self.reason = reason
+        self.rollback_error = rollback_error
+
+    def __str__(self):
+        return (
+            'update failed: {}, rollback status {}'
+            .format(
+                self.reason,
+                (
+                    'done' if self.rollback_error is None
+                    else repr(self.rollback_error)
+                )
+            )
+        )

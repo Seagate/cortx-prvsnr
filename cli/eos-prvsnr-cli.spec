@@ -32,8 +32,8 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/cli
 cp -pr cli/* %{buildroot}/opt/seagate/eos-prvsnr/cli/
 
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
-cp -pr files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/
+#mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d
+#cp -pr files/etc/modprobe.d/bonding.conf %{buildroot}/opt/seagate/eos-prvsnr/files/etc/modprobe.d/
 
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d
 cp -pr files/etc/yum.repos.d/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/yum.repos.d/
@@ -43,9 +43,6 @@ cp -pr files/.ssh/* %{buildroot}/root/.ssh/
 
 #mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
 #cp -p files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
-
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt
-cp -R files/etc/salt/* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/salt/
 
 mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig
 cp files/syslogconfig/* %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig/
@@ -61,8 +58,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
-/opt/seagate/eos-prvsnr/files/etc/salt
-/opt/seagate/eos-prvsnr/files/etc/modprobe.d
+#/opt/seagate/eos-prvsnr/files/etc/modprobe.d
 /opt/seagate/eos-prvsnr/files/etc/yum.repos.d
 /opt/seagate/eos-prvsnr/files/syslogconfig
 /opt/seagate/eos/eos-prvsnr/conf

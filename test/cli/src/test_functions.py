@@ -257,6 +257,7 @@ def test_functions_parse_args_parses_dry_run(parse_args):
         assert "dry-run=<true>" in res.stdout
 
 
+@pytest.mark.skip(reason="obsolete")
 def test_functions_parse_args_parses_singlenode(parse_args):
     for arg in ('-S', '--singlenode'):
         res = parse_args(arg, before_script="verbosity=1")
@@ -306,11 +307,11 @@ def test_functions_base_options_usage(run_script):
     assert res.rc == 0
 
     for opt in (
-        # disabled by EOS-2410
+        # disabled by EOS-2410 and later changes
         # '-n,  --dry-run',
         '-h,  --help',
-        '-r,  --remote [user@]hostname',
-        '-S,  --singlenode',
+        # '-r,  --remote [user@]hostname',
+        #'-S,  --singlenode',
         '-F,  --ssh-config FILE',
         # disabled by EOS-2410
         #  '-s,  --sudo',
@@ -444,6 +445,7 @@ def test_functions_parse_args_passes_fails_in_positional_args_cb(parse_args):
     assert res.rc == 77
 
 
+@pytest.mark.skip('obsolete')
 def test_functions_parse_args_calls_positional_args_cb(parse_args):
     before_script = """
         function positional_args_cb {
@@ -547,14 +549,23 @@ def test_functions_collect_addrs(
     ssh_config = ssh_config if remote else "''"
 
     script = """
+        collect_addrs {} {} true
+    """.format(hostspec, ssh_config)
+
+    res = run_script(script, mhost=meta, stderr_to_stdout=False)
+    assert res.rc == 0
+    collected = res.stdout.strip().split()
+
+    expected = [mhost.hostname]
+    assert set(collected) == set(expected)
+
+    script = """
         collect_addrs {} {}
     """.format(hostspec, ssh_config)
 
     res = run_script(script, mhost=meta, stderr_to_stdout=False)
     assert res.rc == 0
-
     collected = res.stdout.strip().split()
-    expected = [mhost.hostname]
 
     ifaces = mhost.check_output(
         "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
@@ -613,7 +624,7 @@ def test_functions_check_host_reachable(
     ['eosnode1', 'eosnode2', None],
     ids=['run_on_itself', 'run_on_target', 'run_on_other']
 )
-def test_functions_get_reachable_host_names(
+def test_functions_get_reachable_names(
     run_script, mhosteosnode1, mhosteosnode2,
     mlocalhost, ssh_config, local, project_path,
     inject_ssh_config, request
@@ -635,7 +646,7 @@ def test_functions_get_reachable_host_names(
             hostspec2 = "''"
 
     script = """
-        get_reachable_host_names {} {} {}
+        get_reachable_names {} {} {}
     """.format(hostspec1, hostspec2, _ssh_config)
 
     res = run_script(
@@ -961,15 +972,24 @@ def test_functions_configure_salt(
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
 
+
     mhost.check_output(
         'diff -q {} /etc/salt/master'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/master'
+            h.PRVSNR_REPO_INSTALL_DIR /
+            'srv/components/provisioner/salt_master/files/master'
         )
     )
+
+    minion_config_source = (
+        h.PRVSNR_REPO_INSTALL_DIR /
+        'srv/components/provisioner/salt_minion/files/minion'
+    )
     mhost.check_output(
-        'diff -q {} /etc/salt/minion'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'files/etc/salt/minion'
-        )
+        'sed -i "s/^master: .*/master: eosnode-1/g" {}'
+        .format(minion_config_source)
+    )
+    mhost.check_output(
+        'diff -q {} /etc/salt/minion'.format(minion_config_source)
     )
     assert mhost.check_output('cat /etc/salt/minion_id') == minion_id
     # TODO ensure that serviceses were actually restarted
