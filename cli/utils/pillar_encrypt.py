@@ -6,11 +6,17 @@ import os
 import salt.client
 import sys
 import yaml
+import logging
 
 from shutil import copy
 
 from eos.utils.security.cipher import Cipher, CipherInvalidToken
 
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('/opt/seagate/cortx/eos-prvsnr/log/pillar-encrypt.log', mode='w')
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter("[%(levelname)s - %(asctime)s]: %(message)s"))
+logger.addHandler(handler)
 
 class PillarEncrypt(object):
 
@@ -87,7 +93,7 @@ class PillarEncrypt(object):
         cluster_id = salt.client.Caller().function('grains.get', 'cluster_id')
         
         with os.scandir(self.__pillar_path) as dir_elements:
-            for file_element in dir_elements:
+            for file_element.is_file() and file_element.name.endswith('.sls'):
                 if file_element.is_file():
                     # print(f"SLS file: {file_element.name}")
                     sls_file = os.path.join(
@@ -95,30 +101,33 @@ class PillarEncrypt(object):
                         f"{file_element.name}"
                     )
 
-                    if not '.bak' in sls_file:
-                        self.__load(sls_file)
-            
-                        cipher_key = Cipher.generate_key(
-                                        cluster_id,
-                                        list(self.__options.keys())[0]
-                                    )
-
-                        if flag.decrypt:
-                            self.__options.update(
-                                self.__decrypt_all_password_field(
-                                    self.__options,
-                                    cipher_key
+                    self.__load(sls_file)
+        
+                    cipher_key = Cipher.generate_key(
+                                    cluster_id,
+                                    list(self.__options.keys())[0]
                                 )
-                            )
-                        else:
-                            self.__options.update(
-                                self.__encrypt_all_password_field(
-                                    self.__options,
-                                    cipher_key
-                                )
-                            )
 
-                        self.__save(sls_file)
+                    if flag.decrypt:
+                        logger.info("Decryption started for {}".format(file_element.name))
+                        self.__options.update(
+                            self.__decrypt_all_password_field(
+                                self.__options,
+                                cipher_key
+                            )
+                        )
+                    else:
+                        logger.info("Encryption started for {}".format(file_element.name))
+                        self.__options.update(
+                            self.__encrypt_all_password_field(
+                                self.__options,
+                                cipher_key
+                            )
+                        )
+
+                    self.__save(sls_file)
+                    
+        logger.info("DONE")
 
 
 if __name__ == "__main__":
