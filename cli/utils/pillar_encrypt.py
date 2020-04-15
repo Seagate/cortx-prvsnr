@@ -93,8 +93,8 @@ class PillarEncrypt(object):
         cluster_id = salt.client.Caller().function('grains.get', 'cluster_id')
         
         with os.scandir(self.__pillar_path) as dir_elements:
-            for file_element.is_file() and file_element.name.endswith('.sls'):
-                if file_element.is_file():
+            for file_element in dir_elements:
+                if file_element.is_file() and file_element.name.endswith('.sls'):
                     # print(f"SLS file: {file_element.name}")
                     sls_file = os.path.join(
                         self.__pillar_path,
@@ -126,7 +126,7 @@ class PillarEncrypt(object):
                         )
 
                     self.__save(sls_file)
-                    
+
         logger.info("DONE")
 
 
