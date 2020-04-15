@@ -428,6 +428,15 @@ main()
 {
     parse_args "$@"
     reqd_pkgs_install "$ssh_tool" "$xml_cmd" "$bc_tool"
+
+    # Decrypt the password. Required only for commands received from api
+    if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
+        || "$shutdown_ctrl_opt" = true ]]; then
+        echo "main(): Decrypting the password received from api" >> $logfile
+        pass=`salt-call lyveutil.decrypt ${pass} cluster --output=newline_values_only`
+        echo "main(): decrypted password: $pass" >> $logfile
+    fi
+
     [ "$prov_optparse_done" = true ] && do_provision
     [ "$show_disks" = true ] && disks_list
     [ "$load_license" = true ] && fw_license_load
