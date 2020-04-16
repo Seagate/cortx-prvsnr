@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-log_file="prvsnr-cli.log"
+log_file="$LOG_FILE"
 
 # rpm package places scripts in parent folder
 if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then

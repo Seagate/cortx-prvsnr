@@ -165,7 +165,8 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/eos-prvsnr/cli/utils/pillar_encrypt.py
+    python3 /opt/seagate/eos-prvsnr/cli/pillar_encrypt.py
+    update_salt
 }
 
 parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
@@ -184,7 +185,6 @@ fi
 update_salt
 run_states "${system_states[@]}"
 encrypt_pillar
-update_salt
 
 if [[ "$run_all" == true ]]; then
     run_states "${prereq_states[@]}"
