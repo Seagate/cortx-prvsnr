@@ -53,7 +53,8 @@ pushd ~/rpmbuild/SOURCES/
     # Setup the source tar for rpm build
     DEST_DIRNAME=eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
     mkdir -p ${DEST_DIRNAME}/{cli,files,pillar,srv,api}
-    cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIRNAME}/cli
+    cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIRNAME}/cli    
+    cp -pr ${BASEDIR}/../../cli/utils ${DEST_DIR}/cli/utils
     cp -R ${BASEDIR}/../../files/conf ${DEST_DIRNAME}/files
     cp -R ${BASEDIR}/../../files/syslogconfig ${DEST_DIRNAME}/files
     cp -R ${BASEDIR}/../../pillar ${DEST_DIRNAME}
