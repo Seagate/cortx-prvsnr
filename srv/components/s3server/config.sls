@@ -15,17 +15,14 @@ s3authserver:
   service.running:
     - init_delay: 2
 
-# Append /etc/hosts:
-#   file.line:
-#     - name: /etc/hosts
-# {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
-#   {%- set data_if = 'data0' %}
-#     - content: {{ grains['ip4_interfaces'][data_if][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com sts.cloud.seagate.com
-# {% else %}
-#     - content: {{ pillar['cluster']['cluster_ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
-# {%- endif %}
-#     - location: end
-#     - mode: insert
+
+Append /etc/hosts:
+  file.line:
+    - name: /etc/hosts
+    - content: {{ pillar['cluster']['cluster_ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+    - location : end
+    - mode: insert
+
 
 Add slapd.conf to /etc/rsyslog.d:
   file.managed:
