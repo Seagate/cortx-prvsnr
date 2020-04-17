@@ -19,15 +19,24 @@ from provisioner import runner
 logger = logging.getLogger(__name__)
 
 DEF_LOGGING_FORMAT = ("%(asctime)s - %(thread)d - %(name)s - %(levelname)s - "
-                      "[%(filename)s:%(lineno)d]: %(message)s")
+                      "[%(filename)s:%(lineno)d]: cmd:%(prvsnrcmd)s %(message)s")
 DEF_LOGLEVEL = 'INFO'
 
 
 GeneralArgs = attr.make_class("GeneralArgs", ('version',))
 AuthArgs = attr.make_class("AuthArgs", ('username', 'password', 'eauth'))
 LogArgs = attr.make_class(
-    "LogArgs", ('output', 'loglevel', 'logformat', 'logstream', 'logmode')
+    "LogArgs", ('output', 'loglevel', 'logstream', 'logmode')
 )
+
+
+class CommandFilter(logging.Filter):
+    def __init__(self, cmd):
+        self.cmd = cmd
+
+    def filter(self, record):
+        record.prvsnrcmd = self.cmd
+        return True
 
 
 def _reset_logging():
@@ -38,6 +47,7 @@ def _reset_logging():
 
 
 def _set_logging(
+    cmd,
     loglevel=DEF_LOGLEVEL,
     logformat=DEF_LOGGING_FORMAT,
     logstream='stderr',
@@ -45,6 +55,7 @@ def _set_logging(
 ):
     _reset_logging()
     root = logging.getLogger()
+    cmdfilter = CommandFilter(cmd)
     root.setLevel(0)
 
     if logstream in ('stderr', 'stdout'):
@@ -54,6 +65,7 @@ def _set_logging(
     else:  # consider path to file
         handler = logging.FileHandler(logstream, mode=logmode)
 
+    handler.addFilter(cmdfilter)
     handler.setLevel(loglevel)
     handler.setFormatter(logging.Formatter(logformat))
 
@@ -95,10 +107,6 @@ def _parse_args():
     log_group.add_argument(
         "--loglevel", default=DEF_LOGLEVEL,
         choices=['DEBUG', 'INFO', 'WARN', 'ERROR'],
-        help="logging level"
-    )
-    log_group.add_argument(
-        "--logformat", default=DEF_LOGGING_FORMAT, metavar='STR',
         help="logging level"
     )
     log_group.add_argument(
@@ -266,10 +274,10 @@ def main():
 
     if log_args.logstream:
         _set_logging(
+            cmd=cmd,
             loglevel=log_args.loglevel,
-            logformat=log_args.logformat,
             logstream=log_args.logstream,
-            logmode=log_args.logmode,
+            logmode=log_args.logmode
         )
     logger.debug(
         "Parsed arguments: auth={}, log={}, cmd={}, args={}, kwargs={}"
