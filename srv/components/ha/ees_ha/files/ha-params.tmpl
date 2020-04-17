@@ -11,8 +11,8 @@ net-type: tcp
 {% endif %}
 ip1: {{ pillar['cluster']['srvnode-1']['network']['data_nw']['roaming_ip'] }}
 ip2: {{ pillar['cluster']['srvnode-2']['network']['data_nw']['roaming_ip'] }}
-left-node: {{ pillar['cluster']['srvnode-1']['hostname'] }}
-right-node: {{ pillar['cluster']['srvnode-2']['hostname'] }}
+left-node: srvnode-1
+right-node: srvnode-2
 {% if "physical" in grains['virtual'] %}
 left-volume: {{ pillar['cluster']['srvnode-1']['storage']['metadata_device'][0] }}5
 right-volume: {{ pillar['cluster']['srvnode-2']['storage']['metadata_device'][0] }}5

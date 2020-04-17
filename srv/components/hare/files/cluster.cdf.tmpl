@@ -5,7 +5,7 @@
 {%- endif -%}
 nodes:
 {% for node in pillar['cluster']['node_list'] %}
-  - hostname: {{ pillar['cluster'][node]['hostname'] }}
+  - hostname: {{ node }}
     data_iface: {{ data_if }}
 {% if salt['cmd.run']('lspci -d"15b3:1017:0200"') %}
     data_iface_type: o2ib
