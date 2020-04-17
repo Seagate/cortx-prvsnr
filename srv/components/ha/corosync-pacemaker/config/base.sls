@@ -24,7 +24,7 @@ Authorize nodes:
     - name: pcs_auth__auth
     - nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['hostname'] }}
+      - {{ node_id }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
     - pcspasswd: {{ salt['lyveutil.decrypt'](pillar['corosync-pacemaker']['secret'],'corosync-pacemaker') }}
@@ -37,7 +37,7 @@ Setup Cluster:
   pcs.cluster_setup:
     - nodes:
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ pillar['cluster'][node_id]['hostname'] }}
+      - {{ node_id }}
       {%- endfor %}
     - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
     - extra_args:
