@@ -54,9 +54,11 @@ Enable swap:
     - require:
       - cmd: Make SWAP partition
 
-# Format metadata partition
-Format xfs on metadata partition:
-  cmd.run:
-    - name: mkfs.xfs -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-    - require:
-      - module: Create metadata partition
+Make metadata partition:
+  module.run:
+    - extfs.mkfs:
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+      - fs_type: ext4
+      - label: eos_metadata
+      - require:
+        - module: Create metadata partition
