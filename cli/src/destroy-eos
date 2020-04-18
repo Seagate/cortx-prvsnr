@@ -129,7 +129,8 @@ function teardown_states {
                 l_info "Applying 'components.$state.teardown' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
+            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq"
+                    || "$state" == "system.storage.multipath" ]]; then
                 l_info "Applying 'components.$state.teardown' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break

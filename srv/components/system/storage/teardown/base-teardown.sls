@@ -30,7 +30,3 @@ Refresh partition:
   module.run:
     - partition.probe: []
 
-Delete storage checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.storage
-

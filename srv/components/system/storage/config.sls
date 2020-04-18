@@ -62,3 +62,14 @@ Make metadata partition:
       - label: eos_metadata
       - require:
         - module: Create metadata partition
+
+{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+Update partition tables of both nodes:
+  cmd.run:
+    - name: sleep 10; timeout -k 10 30 partprobe || true; ssh eosnode-2 "timeout -k 10 30 partprobe || true"
+
+Update partition tables of primary node:
+  cmd.run:
+    - name: timeout -k 10 30 partprobe || true
+{% endif %}
+
