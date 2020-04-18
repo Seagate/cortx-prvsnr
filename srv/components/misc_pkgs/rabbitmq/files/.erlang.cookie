@@ -1,1 +1,1 @@
-KPTKYAMFBFSRGZKEUSKI
+{{ pillar["rabbitmq"]["erlang_cookie"] }}

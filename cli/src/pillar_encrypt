@@ -54,7 +54,7 @@ class PillarEncrypt(object):
             if isinstance(val, dict):
                 data[key] = self.__encrypt_all_password_field(val, cipher_key)
             else:
-                if ("secret" in key) and (val):
+                if (("secret" in key) or ("password" in key)) and (val):
                     try:
                         (Cipher.decrypt(cipher_key, val.encode("utf-8"))).decode("utf-8")
                         data[key] = val
@@ -69,7 +69,7 @@ class PillarEncrypt(object):
             if isinstance(val, dict):
                 data[key] = self.__decrypt_all_password_field(val, cipher_key)
             else:
-                if ("secret" in key) and (val):
+                if (("secret" in key) or ("password" in key)) and (val):
                     try:
                         data[key] = (Cipher.decrypt(cipher_key, val.encode("utf-8"))).decode("utf-8")
                     except CipherInvalidToken:

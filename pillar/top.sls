@@ -14,8 +14,11 @@ base:
     - components.release
     - components.s3clients
     - components.s3server
+    - components.storage_enclosure
     - components.system
     - components.sspl
+    - components.rabbitmq
+    - components.rsyslog
     - components.uds
     - user.groups.all.*                     # user all minions vars
   {{ grains.id }}:

@@ -119,27 +119,23 @@ def _write_ini(ini_file, config_dict):
 def _inject_storage_enclosure(config_dict={}):
   """Inject data for storage enclosure from pillar/components/cluster.sls
   """
-  cluster_pillar = __pillar__['cluster']
+  storage_enclosure = __pillar__['storage_enclosure']['controller']
 
-  if cluster_pillar['storage_enclosure']['controller']['user']:
-    config_dict['STORAGE_ENCLOSURE']['user'] = cluster_pillar['storage_enclosure']['controller']['user']
-  
-  if cluster_pillar['storage_enclosure']['controller']['secret']:
-    config_dict['STORAGE_ENCLOSURE']['secret'] = cluster_pillar['storage_enclosure']['controller']['secret']
-  
-  if cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']:
-    config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = cluster_pillar['storage_enclosure']['controller']['primary_mc']['ip']
-    
-  if cluster_pillar['storage_enclosure']['controller']['primary_mc']['port']:
-    config_dict['STORAGE_ENCLOSURE']['primary_controller_port'] = cluster_pillar['storage_enclosure']['controller']['primary_mc']['port']
-
-  if cluster_pillar['storage_enclosure']['controller']['secondary_mc']['ip']:
-    config_dict['STORAGE_ENCLOSURE']['secondary_controller_ip'] = cluster_pillar['storage_enclosure']['controller']['secondary_mc']['ip']
-
-  if cluster_pillar['storage_enclosure']['controller']['secondary_mc']['port']:
-    config_dict['STORAGE_ENCLOSURE']['secondary_controller_port'] = cluster_pillar['storage_enclosure']['controller']['secondary_mc']['port']
+  if storage_enclosure['user']:
+    config_dict['STORAGE_ENCLOSURE']['user'] = storage_enclosure['user']
+  if storage_enclosure['secret']:
+    config_dict['STORAGE_ENCLOSURE']['secret'] = storage_enclosure['secret']
+  if storage_enclosure['primary_mc']['ip']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = storage_enclosure['primary_mc']['ip']
+  if storage_enclosure['primary_mc']['port']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_port'] = storage_enclosure['primary_mc']['port']
+  if storage_enclosure['secondary_mc']['ip']:
+    config_dict['STORAGE_ENCLOSURE']['secondary_controller_ip'] = storage_enclosure['secondary_mc']['ip']
+  if storage_enclosure['secondary_mc']['port']:
+    config_dict['STORAGE_ENCLOSURE']['secondary_controller_port'] = storage_enclosure['secondary_mc']['port']
   
   return config_dict
+
 
 def health_map_schema(file_path = "/tmp/resource_health_view.json"):
   health_schema_path = "/opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json"
@@ -151,4 +147,3 @@ def health_map_schema(file_path = "/tmp/resource_health_view.json"):
   local.cmd('*', 'file.mkdir',["/opt/seagate/eos-prvsnr/generated_configs/healthmap"])
   local.cmd('*', 'file.write', [health_schema_path, json.dumps(node1_data, indent=4)])
   return True
-

@@ -1095,7 +1095,7 @@ fi
         pushd "$_installdir"
             yum install -y git
             git init
-            if git remote show >/dev/null 2>&1 ; then
+            if git remote show origin ; then
                 git remote remove origin
             fi
             

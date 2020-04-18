@@ -20,6 +20,7 @@ Copy Erlang cookie:
     - makedirs: True
     - dir_mode: 755
     - force: true
+    - template: jinja
     - watch_in:
       - Start RabbitMQ service
 
@@ -42,7 +43,6 @@ Start rabbitmq app:
 {%- endif %}
 {%- endif %}
 {%- endfor %}
-
 
 Join rabbitmq minion to master:
   cmd.run:
