@@ -53,5 +53,10 @@ Ignore the Quorum Policy:
 Enable STONITH:
   pcs.prop_has_value:
     - prop: stonith-enabled
+{% if pillar['cluster'][grains['id']]['bmc']['ip'] %}
     - value: true
+{% else %}
+    - value: false
 {% endif %}
+
+{%- endif -%}

@@ -1,6 +1,8 @@
 {% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.multipath'.format(grains['id'])) %}
 include:
+{% if "physical" in grains['virtual'] %}
   - components.system.storage.teardown.tidy-up
+{% endif %}
   - components.system.storage.multipath.prepare
   - components.system.storage.multipath.install
   - components.system.storage.multipath.config

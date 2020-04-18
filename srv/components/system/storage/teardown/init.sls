@@ -1,6 +1,8 @@
 include:
   - .base-teardown
+{% if "physical" in grains['virtual'] %}
   - .tidy-up
+{% endif %}
 
 Mount default OS swap device:
   cmd.run:

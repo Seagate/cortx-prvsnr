@@ -1913,9 +1913,13 @@ function update_bmc_ip {
     fi
 
     local _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
-    l_info "BMC_IP: ${_ip}"
 
-    _line=$(grep -A4 -n ${_node}: $_cluster_sls_path | tail -1 | cut -f1 -d-)
-    l_debug "Line number: ${_line}"
-    sed -ie "${_line}s/.*/      ip: ${_ip}/" $_cluster_sls_path
+    if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
+        l_info "BMC_IP: ${_ip}"
+        _line=$(grep -A4 -n ${_node}: $_cluster_sls_path | tail -1 | cut -f1 -d-)
+        l_debug "Line number: ${_line}"
+        sed -ie "${_line}s/.*/      ip: ${_ip}/" $_cluster_sls_path
+    else
+        l_info "BMC_IP is not configured"
+    fi
 }
