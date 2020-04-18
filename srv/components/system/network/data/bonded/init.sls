@@ -1,4 +1,8 @@
 {% set node = grains['id'] %}
+Ensure bonding config for data bond:
+  file.managed:
+    - name: /etc/modprobe.d/bonding.conf
+    - content: options bonding max_bonds=0
 
 # Setup network for data interfaces
 {% for iface in pillar['cluster'][node]['network']['data_nw']['iface'] %}
@@ -12,7 +16,6 @@
       - Setup data0 bonding
     - watch_in:
       - Shutdown {{ iface }}
-
 
 Shutdown {{ iface }}:
   cmd.run:

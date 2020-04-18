@@ -18,16 +18,17 @@ run_ha_states=false
 run_ctrlpath_states=false
 
 system_states=(
-    "system"
-    "system.storage.multipath"
-    "system.network"
-    "system.network.data.direct"
-    "misc_pkgs.rsyslog"
-    "system.firewall"
-    "system.logrotate"
-    "system.ntp"
-    "system.storage"
-)
+    # states to be applied in desired sequence
+        "system"
+        "system.storage.multipath"
+        "system.network"
+        "system.network.data.direct"
+        "misc_pkgs.rsyslog"
+        "system.firewall"
+        "system.logrotate"
+        "system.ntp"
+        "system.storage"
+    )
 
 prereq_states=(
     # states to be applied in desired sequence
@@ -165,7 +166,7 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/eos-prvsnr/cli/pillar_encrypt.py
+    python3 /opt/seagate/eos-prvsnr/cli/pillar_encrypt
     update_salt
 }
 

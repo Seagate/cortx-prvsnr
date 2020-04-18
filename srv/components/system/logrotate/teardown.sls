@@ -14,3 +14,7 @@
 # Remove logrotate package:
 #   pkg.purged:
 #     - name: logrotate
+
+Delete firewall checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.logrotate

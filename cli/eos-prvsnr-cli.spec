@@ -58,7 +58,6 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/cli/%{name}.yaml
 /opt/seagate/eos-prvsnr/cli
-#/opt/seagate/eos-prvsnr/files/etc/modprobe.d
 /opt/seagate/eos-prvsnr/files/etc/yum.repos.d
 /opt/seagate/eos-prvsnr/files/syslogconfig
 /opt/seagate/eos/eos-prvsnr/conf

@@ -16,6 +16,6 @@ Generate sspl checkpoint flag:
 
 SSPL already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.sspl.teardown' to reprovision these states."
+    - text: "SSPL states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.sspl.teardown' to reprovision these states."
 
 {%- endif -%}

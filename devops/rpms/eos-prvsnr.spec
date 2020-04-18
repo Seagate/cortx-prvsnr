@@ -41,7 +41,7 @@ mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files
 mkdir -p %{buildroot}/opt/seagate/eos/eos-prvsnr
 
 # Copy files
-cp -R cli %{buildroot}/opt/seagate/eos-prvsnr
+#cp -R cli %{buildroot}/opt/seagate/eos-prvsnr
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr
 cp -R api %{buildroot}/opt/seagate/eos-prvsnr
@@ -55,7 +55,7 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
-/opt/seagate/eos-prvsnr/cli
+#/opt/seagate/eos-prvsnr/cli
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/api

@@ -39,21 +39,29 @@ iopath_states=(
 )
 
 prereq_states=(
-# states to be applied in desired sequence
-    "misc_pkgs.statsd"
-    "misc_pkgs.rabbitmq"
-    "misc_pkgs.openldap"
-    "misc_pkgs.nodejs"
-    "misc_pkgs.kibana"
-    "misc_pkgs.elasticsearch"
-    "ha.haproxy"
-    "system.storage"
-    "system.ntp"
-    "system.logrotate"
-    "system.firewall"
-    "misc_pkgs.rsyslog"
-    "system"
-)
+    # states to be applied in desired sequence
+        "misc_pkgs.statsd"
+        "misc_pkgs.kibana"
+        "misc_pkgs.elasticsearch"
+        "misc_pkgs.nodejs"
+        "misc_pkgs.rabbitmq"
+        "misc_pkgs.openldap"
+        "ha.haproxy"
+        "misc_pkgs.ssl_certs"
+    )
+
+system_states=(
+    # states to be applied in desired sequence
+        "system.storage"
+        "system.ntp"
+        "system.logrotate"
+        "system.firewall"
+        "misc_pkgs.rsyslog"
+        "system.network.data.direct"
+        "system.network"
+        "system.storage.multipath"
+        "system"
+    )
 
 function usage {
   echo "\
@@ -194,6 +202,7 @@ if [[ "$remove_prvsnr" == true ]]; then
     salt '*' cmd.run "/usr/sbin/partprobe /dev/disk/by-id/dm-name-mpath*" || true
     l_info "Removing eos-prvsnr package from both nodes"
     salt '*' pkg.remove eos-prvsnr || true
+    salt '*' file.absent  || true
 
     l_info "Removing prvsnr-cli and salt packages from node-2"
     ssh eosnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; rm -rf /etc/salt; rm -rf /opt/seagate"

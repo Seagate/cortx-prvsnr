@@ -30,4 +30,3 @@ Remove /opt/seagate/sspl configurations:
 Delete sspl checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
-
