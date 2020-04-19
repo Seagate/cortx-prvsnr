@@ -20,28 +20,28 @@ Create EFI partition:
   module.run:
     - partition.mkpartfs:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-        - part_type: primary
-        - fs_type: fat32
-        - start: 0%
-        - end: 256MB
+      - part_type: primary
+      - fs_type: fat32
+      - start: 0%
+      - end: 256MB
 
 # /boot  (note: this is partition #2)
 Create boot partition:
   module.run:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-        - part_type: primary
-        - start: 256MB
-        - end: 1GB
+      - part_type: primary
+      - start: 256MB
+      - end: 1GB
 
 # The rest of the OS partitions (except /var/crash) (note: this is partition #3)
 Create OS partition:
   module.run:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-        - part_type: primary
-        - start: 1GB
-        - end: 1TB
+      - part_type: primary
+      - start: 1GB
+      - end: 1TB
 
 # /var/crash (not under RAID or LVM control; size ~1TB; note: this is partition #4)
 Create var_crash partition:
