@@ -31,6 +31,7 @@ Create boot partition:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
+      - fs_type: ext2
       - start: 256MB
       - end: 1GB
 
@@ -40,6 +41,7 @@ Create OS partition:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
+      - fs_type: ext2
       - start: 1GB
       - end: 1TB
 
@@ -49,6 +51,7 @@ Create var_crash partition:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
+      - fs_type: ext2
       - start: 1TB
       - end: 2TB
 # done with the OS partitions
@@ -66,9 +69,10 @@ Create swap partition:
 # Create partition for Metadata (note: this is partition #6)
 Create metadata partition:
   module.run:
-    - partition.mkpart:
+    - partition.mkpartfs:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
+      - fs_type: ext4
       - start: 50%
       - end: 100%
 
@@ -84,7 +88,8 @@ Make EFI partition:
 Make boot RAID:
   module.run:
     - partition.toggle:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - 2
       - flag: raid
     - require:
       - module: Create boot partition
@@ -93,15 +98,17 @@ Make boot RAID:
 Make ROOT RAID:
   module.run:
     - partition.toggle:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}3
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - 3
       - flag: raid
     - require:
       - module: Create OS partition
 
 # Create /var/crash
 Format xfs on var_crash partition:
-  cmd.run:
-    - name: mkfs.xfs -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
+  module.run:
+    - xfs.mkfs:
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
     - require:
       - module: Create var_crash partition
 
@@ -149,6 +156,7 @@ Create metadata partition:
     - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
+      - fs_type: ext4
       - start: 50%
       - end: 100%
 
