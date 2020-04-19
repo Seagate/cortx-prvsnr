@@ -699,6 +699,8 @@ function install_repos {
 
 ! read -r -d '' _script << EOF
     set -eu
+    mkdir -p $(dirname "${log_file}")
+    /usr/bin/true > ${log_file}
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
