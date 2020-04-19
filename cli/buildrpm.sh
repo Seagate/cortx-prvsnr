@@ -66,7 +66,7 @@ pushd ~/rpmbuild/SOURCES/
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d/* ${DEST_DIR}/files/etc/yum.repos.d/
     cp -pr ${BASEDIR}/../files/.ssh/* ${DEST_DIR}/files/.ssh/
     cp -pr ${BASEDIR}/../files/syslogconfig/* ${DEST_DIR}/files/syslogconfig/
-    cp -pr ${BASEDIR}/../files/conf/* ${DEST_DIR}/files/conf/
+    # cp -pr ${BASEDIR}/../files/conf/* ${DEST_DIR}/files/conf/
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
