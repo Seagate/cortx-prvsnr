@@ -14,7 +14,7 @@ mkdir -p $(dirname "${LOG_FILE}")
 . $BASEDIR/functions.sh
 
 function trap_handler {
-  echo "For more details see $LOG_FILE"
+  echo "For detailed error logs, please see: $LOG_FILE"
 } 
 
 run_all=true
@@ -191,10 +191,10 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 update_salt
-run_states "${system_states[@]}"
 encrypt_pillar
 
 if [[ "$run_all" == true ]]; then
+    run_states "${system_states[@]}"
     run_states "${prereq_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
@@ -226,4 +226,5 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
+l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
