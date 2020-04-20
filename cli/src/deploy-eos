@@ -176,6 +176,12 @@ function encrypt_pillar {
     update_salt
 }
 
+function install_eos_utils {
+    l_info "Installing eos-py-utils"
+    salt '*' state.apply components.system.prepare $salt_opts
+    salt '*' state.apply components.system.install $salt_opts
+}
+
 parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -191,6 +197,7 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 update_salt
+install_eos_utils
 encrypt_pillar
 
 if [[ "$run_all" == true ]]; then
