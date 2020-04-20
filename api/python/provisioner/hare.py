@@ -22,6 +22,33 @@ def cluster_start():
     return next(iter(res.values()))
 
 
+def cluster_maintenance(
+    enable: bool, timeout: int = 600, verbose: bool = True, background=False
+):
+    cmd = [
+        'hctl node',
+        'maintenance' if enable else 'unmaintenance',
+        '--all',
+        '--timeout-sec={}'.format(timeout)
+    ]
+
+    if verbose:
+        cmd.insert(1, '--verbose')
+
+    res = cmd_run(' '.join(cmd), targets=LOCAL_MINION, background=background)
+    return next(iter(res.values()))
+
+
+def cluster_maintenance_enable(**kwargs):
+    return cluster_maintenance(True, **kwargs)
+
+
+def cluster_maintenance_disable(**kwargs):
+    return cluster_maintenance(False, **kwargs)
+
+
+# TODO IMPROVE may lead to errors for stpopped cluster like:
+#      "Error: cluster is not currently running on this node"
 def check_cluster_is_offline():
     ret = cluster_status()
     return ('OFFLINE:' in ret)

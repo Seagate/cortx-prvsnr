@@ -5,7 +5,14 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 
-from .errors import BadPillarDataError, SWUpdateError
+from .errors import (
+    BadPillarDataError,
+    SWUpdateError,
+    SWUpdateFatalError,
+    ClusterMaintenanceEnableError,
+    SWStackUpdateError,
+    ClusterMaintenanceDisableError
+)
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
@@ -23,7 +30,7 @@ from .salt import (
     SaltJobsRunner, function_run
 )
 from .hare import (
-    ensure_cluster_is_stopped, ensure_cluster_is_started
+    cluster_maintenance_enable, cluster_maintenance_disable
 )
 from .salt_master import (
     config_salt_master, ensure_salt_master_is_running
@@ -354,6 +361,7 @@ class EOSUpdate(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, targets):
+        # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
 
         def _update_component(component):
             state_name = "components.{}.update".format(component)
@@ -377,59 +385,99 @@ class EOSUpdate(CommandParserFillerMixin):
         # TODO IMPROVE minions might be stopped here in case of rollback,
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
+        rollback_ctx = None
         try:
             with YumRollbackManager(
                 targets, multiple_targets_ok=True
             ) as rollback_ctx:
-                ensure_cluster_is_stopped()
+                try:
+                    cluster_maintenance_enable()
+                except Exception as exc:
+                    raise ClusterMaintenanceEnableError(exc) from exc
 
-                # provisioner update
-                _update_component('provisioner')
-                config_salt_master()
-                config_salt_minions()
+                try:
+                    # provisioner update
+                    _update_component('provisioner')
+                    config_salt_master()
+                    config_salt_minions()
 
-                # update other components
-                for component in (
-                    'eoscore', 's3server', 'hare', 'sspl', 'csm'
-                ):
-                    _update_component(component)
+                    # update other components
+                    for component in (
+                        'eoscore', 's3server', 'hare', 'sspl', 'csm'
+                    ):
+                        _update_component(component)
+                except Exception as exc:
+                    raise SWStackUpdateError(exc) from exc
 
-                ensure_cluster_is_started()
+                # SW stack now in "updated" state
+                try:
+                    cluster_maintenance_disable()
+                except Exception as exc:
+                    raise ClusterMaintenanceDisableError(exc) from exc
+
         except Exception as update_exc:
             # TODO TEST
-            logger.exception('Update failed')
-            rollback_error = None
+            logger.exception('SW Update failed')
 
-            if rollback_ctx.rollback_error:
+            rollback_error = (
+                None if rollback_ctx is None else rollback_ctx.rollback_error
+            )
+            final_error_t = SWUpdateError
+
+            if rollback_error:
+                # unrecoverable state: SW stack is in intermediate state,
+                # no sense to start the cluster ??? verify TODO IMPROVE
                 logger.error(
                     'Yum Rollback failed: {}'
                     .format(rollback_ctx.rollback_error)
                 )
-                rollback_error = rollback_ctx.rollback_error
+                final_error_t = SWUpdateFatalError
             else:
-                # here yum changes have been reverted
-                try:
-                    # ensure previous configuration for salt
-                    ensure_salt_master_is_running()
-                    config_salt_master()
-                    config_salt_minions()
-                except Exception as exc:
-                    logger.exception(
-                        'Failed to restore SaltStack configuration'
-                    )
-                    rollback_error = exc
-                else:
+                # yum changes reverted now
+                if isinstance(update_exc, ClusterMaintenanceEnableError):
+                    # failed to activate maintenance, cluster will likely
+                    # fail to start - fail gracefully:  disable
+                    # maintenance in the background
+                    cluster_maintenance_disable(background=True)
+                elif isinstance(
+                    update_exc,
+                    (SWStackUpdateError, ClusterMaintenanceDisableError)
+                ):
+                    # rollback provisioner related configuration
                     try:
-                        ensure_cluster_is_started()
+                        # ensure previous configuration for salt
+                        ensure_salt_master_is_running()
+                        config_salt_master()
+                        config_salt_minions()
                     except Exception as exc:
+                        # unrecoverable state: SW stack is in intermediate
+                        # state, no sense to start the cluster
                         logger.exception(
-                            'Failed to start cluster after rollback'
+                            'Failed to restore SaltStack configuration'
                         )
                         rollback_error = exc
+                        final_error_t = SWUpdateFatalError
+                    else:
+                        # SW stack now in "initial" state
+                        try:
+                            cluster_maintenance_disable()
+                        except Exception as exc:
+                            # unrecoverable state: SW stack is in initial
+                            # state but cluster failed to start
+                            logger.exception(
+                                'Failed to start cluster after rollback'
+                            )
+                            rollback_error = exc
+                            final_error_t = SWUpdateFatalError
+                        # update failed but node is in initial state
+                        # and looks functional
+                else:
+                    # logic error
+                    logger.warning('Unexpected error: {!r}'.format(update_exc))
 
             # TODO IMPROVE
-            raise SWUpdateError(
-                repr(update_exc), rollback_error=rollback_error
+            raise final_error_t(
+                update_exc, rollback_error=rollback_error
             ) from update_exc
 
 

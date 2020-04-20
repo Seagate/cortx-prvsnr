@@ -17,7 +17,7 @@ install_provisioner "$prvsnr_src" "$prvsnr_release" '' '' '' true
 
 # FIXME workaround
 mkdir -p /opt/seagate/eos-prvsnr/cli
-cp -R * ../utils /opt/seagate/eos-prvsnr/cli
+cp -R * /opt/seagate/eos-prvsnr/cli
 
 configure_salt eosnode-1 '' '' '' true localhost
 

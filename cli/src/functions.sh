@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-log_file="$LOG_FILE"
+log_file="${LOG_FILE:-/dev/null}"
 
 # rpm package places scripts in parent folder
 if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
@@ -115,10 +115,10 @@ function log {
 
         if [[ "$_error" == true ]]; then
             # Echo message to stderr
-            echo "$_message" >> "$LOG_FILE"
+            echo "$_message" >> "$log_file"
             logger -t PRVSNR -is "$_message"
         else
-            echo "$_message" | tee -a "$LOG_FILE"
+            echo "$_message" | tee -a "$log_file"
         fi
     fi
 }
