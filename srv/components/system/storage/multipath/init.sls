@@ -1,3 +1,4 @@
+{% if "physical" in grains['virtual'] %}
 {% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.multipath'.format(grains['id'])) %}
 include:
 {% if "physical" in grains['virtual'] %}
@@ -16,4 +17,10 @@ Generate multipath checkpoint flag:
 multipath already applied:
   test.show_notification:
     - text: "multipath states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.multipath.teardown' to reprovision these states."
+{% endif %}
+{%- else -%}
+multipath wont be applied on VM:
+  test.show_notification:
+    - text: "multipath states wont be applied on VM node: {{ grains['id'] }}. Data and metadata disks are to be manually configured."
+
 {% endif %}
