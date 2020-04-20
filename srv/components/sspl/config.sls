@@ -50,7 +50,7 @@ Stage - Configure SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:config')
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+{% if pillar['cluster']['type'] is 'ees' and pillar["cluster"][grains["id"]]["is_primary"] %}
 Run Health Schema on minion:
   cmd.run:
     - name: /opt/seagate/eos/sspl/lib/resource_health_view -n --path "/tmp/"
