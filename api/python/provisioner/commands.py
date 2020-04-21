@@ -449,10 +449,10 @@ class FWUpdate(CommandParserFillerMixin):
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
-        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
@@ -585,10 +585,10 @@ class RebootController(CommandParserFillerMixin):
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
-        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
-        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
@@ -632,11 +632,11 @@ class ShutdownController(CommandParserFillerMixin):
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-        controller_pi_path = KeyPath('cluster/storage_enclosure/controller')
-        ip = Param('ip', 'cluster.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'cluster.sls', controller_pi_path / 'user')
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
         # TODO IMPROVE improve Param to hide secrets
-        passwd = Param('passwd', 'cluster.sls', controller_pi_path / 'secret')
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
