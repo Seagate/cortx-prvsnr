@@ -16,7 +16,7 @@ Add CSM repo:
     - baseurl: {{ defaults.csm.repo.url }}
     - gpgcheck: 0
 
-{% if pillar['cluster']['type'] is 'ees' %}
+{% if pillar['cluster']['type'] ==  'ees' %}
 Render CSM ha input params template:
   file.managed:
     - name: /var/lib/hare/build-ees-ha-csm-args.yaml
