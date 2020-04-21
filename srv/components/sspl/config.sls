@@ -60,7 +60,7 @@ Run Health Schema on minion:
 #   cmd.run:
 #     - name: /opt/seagate/eos/sspl/lib/resource_health_view -n -e --path "/tmp/"
 
-{% if pillar['cluster']['type'] == 'ees' %}
+{% if 'ees' in pillar['cluster']['type'] %}
 Merge healthschema:
   module.run:
     - sspl.health_map_schema:
