@@ -22,30 +22,30 @@ Remove eos-s3server:
   pkg.purged:
     - name: eos-s3server
 
-Remove s3server_uploads:
-  pkg.purged:
-    - pkgs:
-      - python34-jmespath
-      - python34-botocore
-      - python34-s3transfer
-      - python34-boto3
-      - python34-xmltodict
+#Remove s3server_uploads:
+#  pkg.purged:
+#    - pkgs:
+#      - python34-jmespath
+#      - python34-botocore
+#      - python34-s3transfer
+#      - python34-boto3
+#      - python34-xmltodict
 
-Remove /tmp/s3certs:
-  file.absent:
-    - name: /tmp/s3certs
+#Remove /tmp/s3certs:
+#  file.absent:
+#    - name: /tmp/s3certs
 
-Delete directory /opt/s3server/ssl:
-  file.absent:
-    - name: /opt/seagate/s3server/ssl
+#Delete directory /opt/s3server/ssl:
+#  file.absent:
+#    - name: /opt/seagate/s3server/ssl
 
-Delete directory /opt/s3server/s3certs:
-  file.absent:
-    - name: /opt/seagate/s3server/s3certs
+#Delete directory /opt/s3server/s3certs:
+#  file.absent:
+#    - name: /opt/seagate/s3server/s3certs
 
-Remove working directory for S3 server:
-  file.absent:
-    - name: /var/seagate/s3
+#Remove working directory for S3 server:
+#  file.absent:
+#    - name: /var/seagate/s3
 
 Remove S3Server under opt:
   file.absent:

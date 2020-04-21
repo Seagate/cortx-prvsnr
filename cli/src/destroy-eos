@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -eu
+set -euE
+
+trap trap_handler ERR
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
@@ -10,6 +12,10 @@ mkdir -p $(dirname "${LOG_FILE}")
 /usr/bin/true > ${LOG_FILE}
 
 . $BASEDIR/functions.sh
+
+function trap_handler {
+  echo "For more details see $LOG_FILE"
+} 
 
 run_all=true
 run_ha_states=false
@@ -217,4 +223,5 @@ if [[ "$remove_prvsnr" == true ]]; then
     echo "'yum remove -y eos-prvsnr-cli'"
 fi
 
+l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

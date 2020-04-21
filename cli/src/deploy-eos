@@ -14,7 +14,7 @@ mkdir -p $(dirname "${LOG_FILE}")
 . $BASEDIR/functions.sh
 
 function trap_handler {
-  echo "For more details see $LOG_FILE"
+  echo "For detailed error logs, please see: $LOG_FILE"
 } 
 
 run_all=true
@@ -187,6 +187,12 @@ function encrypt_pillar {
     update_salt
 }
 
+function install_eos_utils {
+    l_info "Installing eos-py-utils"
+    salt '*' state.apply components.system.prepare $salt_opts
+    salt '*' state.apply components.system.install $salt_opts
+}
+
 parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -202,10 +208,11 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 update_salt
-run_states "${system_states[@]}"
+install_eos_utils
 encrypt_pillar
 
 if [[ "$run_all" == true ]]; then
+    run_states "${system_states[@]}"
     run_states "${prereq_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
@@ -237,4 +244,5 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
+l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

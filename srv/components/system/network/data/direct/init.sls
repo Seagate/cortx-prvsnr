@@ -41,11 +41,15 @@ Private direct network:
     - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
     - type: eth
     - onboot: yes
-    - proto: none
     - defroute: no
     - nm_controlled: no
     - mtu: 9000
     - peerdns: no
     - userctl: no
     - prefix: 24
-    - ipaddr: {{ pillar['cluster'][grains['id']]['network']['data_nw']['pvt_ip_addr'] }}
+{% if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
+    - proto: none
+    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}
+{%- else %}
+    - proto: dhcp
+{%- endif %}
