@@ -257,6 +257,9 @@ if [[ -n "$eosnode_1_hostname" && -n "$eosnode_2_hostname" ]]; then
     l_info "Updating hostnames in cluster pillar"
     update_cluster_pillar_hostname "eosnode-1" "$eosnode_1_hostname"
     update_cluster_pillar_hostname "eosnode-2" "$eosnode_2_hostname"
+else
+    l_info "Updating hostname in cluster pillar"
+    update_cluster_pillar_hostname "eosnode-1" `hostname -f`
 fi
 
 #update target_build in release.sls
