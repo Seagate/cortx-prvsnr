@@ -239,17 +239,17 @@ if [[ "$remove_prvsnr" == true ]]; then
 
     sleep 2
     l_info "Removing remaining eos packages from node-2"
-    ssh eosnode-2 "for pkg in `rpm -qa | grep eos`; do\
-        echo 'INFO: Removing $pkg'; yum -q remove -y $pkg; done\
-        rm -rf /opt/seagate*"
+    ssh eosnode-2 'for pkg in `rpm -qa | grep eos`; do\
+        echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
+        rm -rf /opt/seagate*'
 
     l_info "Removing remaining eos packages from node-1"
     for pkg in `rpm -qa | grep eos`; do\
         echo 'INFO: Removing $pkg'; yum -q remove -y $pkg; done
 
-    l_info "Removing /opt/seagate directory"
+    l_info "Removing /opt/seagate directory from node-1"
     rm -rf /opt/seagate
 fi
 
-l_info "The detailed logs can be seen at: $LOG_FILE"
+l_info "Success!! The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
