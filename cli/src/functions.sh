@@ -1333,50 +1333,50 @@ function accept_salt_key {
     fi
 
     try=1
-    echo -e "\\nINFO: waiting for minion $_id to become connected to master" | tee -a "$log_file"
+    echo -e "\\nINFO: waiting for minion $_id to become connected to master"
     until salt-key --list-all | grep $_id >/dev/null 2>&1
     do
         if [[ "\$try" -gt "$_timeout" ]]; then
-            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds." | tee -a "$log_file" >&2
+            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds."
             salt-key --list-all >&2
             exit 1
         fi
-        echo -n "." | tee -a "$log_file"
+        echo -n "."
         try=\$(( \$try + 1 ))
         sleep 1
     done
-    echo -e "\\nINFO: Key $_id is connected." | tee -a "$log_file"
+    echo -e "\\nINFO: Key $_id is connected."
 
     # minion is connected but does not need acceptance
     if [[ -z "\$(salt-key --list unaccepted | grep $_id 2>/dev/null)" ]]; then
-        echo -e "\\nINFO: no key acceptance is needed for minion $_id." | tee -a "$log_file" >&2
+        echo -e "\\nINFO: no key acceptance is needed for minion $_id."
         salt-key --list-all >&2
         exit 0
     fi
 
     salt-key -y -a $_id
-    echo -e "\\nINFO: Key $_id is accepted." | tee -a "$log_file"
+    echo -e "\\nINFO: Key $_id is accepted."
 
     # TODO move that to a separate API
-    echo -e "\\nINFO: waiting for minion $_id to become ready" | tee -a "$log_file"
+    echo -e "\\nINFO: waiting for minion $_id to become ready"
     try=1; tries=10
     until salt -t 1 $_id test.ping >/dev/null 2>&1
     do
         if [[ "\$try" -gt "\$tries" ]]; then
-            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks." | tee -a "$log_file" >&2
+            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks."
             exit 1
         fi
-        echo -n "." | tee -a "$log_file"
+        echo -n "."
         try=\$(( \$try + 1 ))
     done
-    echo -e "\\nINFO: Minion $_id started." | tee -a "$log_file"
+    echo -e "\\nINFO: Minion $_id started." 
 EOF
 
     if [[ -n "$_hostspec" ]]; then
         _script="'$_script'"
     fi
 
-    $_cmd bash -c "$_script"
+    $_cmd bash -c "$_script" 2>&1| tee -a "$log_file"
 }
 
 
@@ -1735,7 +1735,7 @@ EOF
         _script="'$_script'"
     fi
 
-    $_cmd bash -c "$_script"
+    $_cmd bash -c "$_script" 2>&1| tee -a "$log_file"
 }
 
 #   set_cluster_id <cluster_id> <hostspec> [<ssh-config> [<sudo> ]]

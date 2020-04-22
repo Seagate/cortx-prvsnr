@@ -6,7 +6,6 @@ Sync data:
     - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []
 
-
 cleanup_yum_repos_dir:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/*.repo
@@ -16,6 +15,11 @@ Reset EPEL:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/epel.repo.*
     - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
+
+Configure yum:
+  file.managed:
+    - name: /etc/yum.conf
+    - source: salt://components/system/files/etc/yum.conf
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 {% for repo in defaults.base_repos.centos_repos %}
