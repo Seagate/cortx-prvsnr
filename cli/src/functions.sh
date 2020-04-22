@@ -1774,13 +1774,13 @@ function set_cluster_id {
     local _installdir="${5:-/opt/seagate/eos-prvsnr}"
 
     if [[ -z "$_cluster_uuid" ]]; then
-        l_error "Set cluster ID cannot be set as black on $_hostspec"
+        l_error "Set cluster ID cannot be set as blank on $_hostspec"
         exit 1
     fi
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Set cluster ID on $_hostspec"
+    l_info "Set cluster ID (${_cluster_uuid}) on $_hostspec"
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -1792,11 +1792,13 @@ function set_cluster_id {
     pushd "$_installdir"
         if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/cluster_id" ]]; then
             mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
-            echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
         fi
+        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
 
         if [[ -z "\$(grep "cluster_id" /etc/salt/grains 2>/dev/null)" ]]; then
             cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id >> /etc/salt/grains
+        else
+            sed -i "s/cluster_id:.*/cluster_id: ${_cluster_uuid}/g" /etc/salt/grains
         fi
 
         systemctl enable salt-minion
@@ -1810,7 +1812,6 @@ EOF
 
     $_cmd bash -c "$_script"
 }
-
 
 
 #   configure_provisioner_api_logs [<hostspec> [<ssh-config> [<sudo> [<insrallation-dir>]]]]
