@@ -3,6 +3,11 @@
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 log_file="${LOG_FILE:-/dev/null}"
 
+if [[ ! -e "$log_file" ]]; then
+    mkdir -p $(dirname "${log_file}")
+    touch "${log_file}"
+fi
+
 # rpm package places scripts in parent folder
 if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
     repo_root_dir="$(realpath $cli_scripts_dir/../)"
@@ -115,6 +120,8 @@ function log {
 
         if [[ "$_error" == true ]]; then
             # Echo message to stderr
+            # TODO IMPROVE one-line command
+            >&2 echo "$_message"
             echo "$_message" >> "$log_file"
             logger -t PRVSNR -is "$_message"
         else
@@ -700,7 +707,7 @@ function install_repos {
 ! read -r -d '' _script << EOF
     set -eu
     mkdir -p $(dirname "${log_file}")
-    /usr/bin/true > ${log_file}
+    /usr/bin/true > "${log_file}"
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
@@ -1100,7 +1107,7 @@ fi
             if git remote show origin ; then
                 git remote remove origin
             fi
-            
+
             git remote add origin ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git
             git fetch origin
             git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
@@ -1816,7 +1823,11 @@ EOF
 
 #   configure_provisioner_api_logs [<hostspec> [<ssh-config> [<sudo> [<insrallation-dir>]]]]
 #
-#   Configures rsyslog to capture provisioner logs in custom log file i.e /var/log/provisioner/prvsnr.log
+#   Configures rsyslog to capture provisioner logs in custom log file
+#
+#   TODO IMPROVE this function is not necessary since we have
+#        components.provisioner.config for the same logic,
+#        should be a part of salt based provisioner configuration
 #
 #   Args:
 #       hostspec: remote host specification in the format [user@]hostname.
@@ -1842,9 +1853,6 @@ function configure_provisioner_api_logs {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    local _prvsnrfwd_conf_src
-    _prvsnrfwd_conf_src="$_installdir/files/syslogconfig/prvsnrfwd.conf"
-
     l_info "Configuring rsyslog to capture provsioner api logs '$_hostspec'"
 
 ! read -r -d '' _script << EOF
@@ -1854,13 +1862,11 @@ function configure_provisioner_api_logs {
         set -x
     fi
 
-    #Install rsyslog
+    # TODO IMPROVE seems not necessary here
+    # Install rsyslog
     yum -y install rsyslog
 
-    #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
-    cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
-    systemctl restart rsyslog && systemctl enable rsyslog
-
+    salt-call state.apply components.provisioner.config
 EOF
 
     if [[ -n "$_hostspec" ]]; then

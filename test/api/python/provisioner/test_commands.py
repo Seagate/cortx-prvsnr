@@ -364,6 +364,9 @@ def test_eosupdate_run_sw_stack_update_failed(
             calls['ensure_salt_master_is_running'](),
             calls['config_salt_master'](),
             calls['config_salt_minions'](),
+            calls['StatesApplier'].apply(
+                ["components.provisioner.config"], 'some-target'
+            ),
             calls['cluster_maintenance_disable']()
         ])
     assert mock_manager.mock_calls == expected_calls
@@ -424,6 +427,9 @@ def test_eosupdate_run_maintenance_disable_failed(
             calls['ensure_salt_master_is_running'](),
             calls['config_salt_master'](),
             calls['config_salt_minions'](),
+            calls['StatesApplier'].apply(
+                ["components.provisioner.config"], 'some-target'
+            ),
             calls['cluster_maintenance_disable']()
         ])
 

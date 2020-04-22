@@ -45,7 +45,6 @@ mkdir -p %{buildroot}/opt/seagate/eos/eos-prvsnr
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr
 cp -R api %{buildroot}/opt/seagate/eos-prvsnr
-cp -R files/syslogconfig %{buildroot}/opt/seagate/eos-prvsnr/files
 cp -R files/conf %{buildroot}/opt/seagate/eos/eos-prvsnr
 
 
@@ -59,7 +58,6 @@ rm -rf %{buildroot}
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/api
-/opt/seagate/eos-prvsnr/files/syslogconfig
 /opt/seagate/eos/eos-prvsnr/conf
 
 
@@ -84,5 +82,7 @@ setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/pillar/user
 pip3 install -U /opt/seagate/eos-prvsnr/api/python
 
 %preun
-# uninstall api globally using pip
-pip3 uninstall -y eos-prvsnr
+# uninstall api globally using pip (only for pkg uninstall)
+if [ $1 -eq 0 ] ; then
+    pip3 uninstall -y eos-prvsnr
+fi

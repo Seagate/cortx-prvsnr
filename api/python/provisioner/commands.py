@@ -449,6 +449,7 @@ class EOSUpdate(CommandParserFillerMixin):
                         ensure_salt_master_is_running()
                         config_salt_master()
                         config_salt_minions()
+                        StatesApplier.apply(["components.provisioner.config"], targets)
                     except Exception as exc:
                         # unrecoverable state: SW stack is in intermediate
                         # state, no sense to start the cluster

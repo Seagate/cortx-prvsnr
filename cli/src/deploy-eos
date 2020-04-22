@@ -7,15 +7,14 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-export LOG_FILE=/var/log/seagate/provisioner/deploy-eos.log
-mkdir -p $(dirname "${LOG_FILE}")
-/usr/bin/true > ${LOG_FILE}
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+export LOG_FILE
 
 . $BASEDIR/functions.sh
 
 function trap_handler {
   echo "For detailed error logs, please see: $LOG_FILE"
-} 
+}
 
 run_all=true
 run_system_states=false

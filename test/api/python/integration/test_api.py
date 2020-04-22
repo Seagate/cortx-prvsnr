@@ -204,7 +204,9 @@ def test_set_eosupdate_repo_for_reinstall(
             'touch {}'.format(mhost.repo / test_file_path)
         )
 
-    new_rpm = rpm_build(request, mlocalhost.tmpdir, cli=False)
+    new_rpm = rpm_build(
+        request, mlocalhost.tmpdir, cli=False, mhost_init_cb=mhost_init_cb
+    )
     new_rpm_remote = mhosteosnode1.copy_to_host(new_rpm)
 
     mhosteosnode1.check_output(

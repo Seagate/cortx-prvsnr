@@ -55,7 +55,6 @@ pushd ~/rpmbuild/SOURCES/
     mkdir -p ${DEST_DIRNAME}/{cli,files,pillar,srv,api}
     # cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIRNAME}/cli
     cp -R ${BASEDIR}/../../files/conf ${DEST_DIRNAME}/files
-    cp -R ${BASEDIR}/../../files/syslogconfig ${DEST_DIRNAME}/files
     cp -R ${BASEDIR}/../../pillar ${DEST_DIRNAME}
     cp -R ${BASEDIR}/../../srv ${DEST_DIRNAME}
     cp -R ${BASEDIR}/../../api ${DEST_DIRNAME}
