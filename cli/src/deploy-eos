@@ -27,13 +27,13 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.storage.multipath"
+         "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"
         "system.logrotate"
         "system.ntp"
-        "system.storage"
     )
 
 prereq_states=(
@@ -137,7 +137,8 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
+            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl"
+                || "$state" == "system.storage" ]]; then
                 # Execute first on eosnode-2 then on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
