@@ -7,7 +7,6 @@ from pathlib import Path
 
 from .errors import (
     BadPillarDataError,
-    PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
     ClusterMaintenanceEnableError,
@@ -21,35 +20,24 @@ from .config import (
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH
 )
-from .utils import (
-    load_yaml, dump_yaml_str
-)
-from .pillar import (
-    KeyPath,
-    PillarKey,
-    PillarUpdater,
-    PillarResolver
-)
+from .utils import load_yaml, dump_yaml_str
+from .param import KeyPath, Param
+from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
 from .salt import (
-    StatesApplier,
-    StateFunExecuter,
-    State,
+    StatesApplier, StateFunExecuter, State,
     YumRollbackManager,
-    SaltJobsRunner,
-    function_run,
-    copy_to_file_roots
+    SaltJobsRunner, function_run
 )
 from .hare import (
-    cluster_maintenance_enable,
-    cluster_maintenance_disable
+    cluster_maintenance_enable, cluster_maintenance_disable
 )
 from .salt_master import (
-    config_salt_master,
-    ensure_salt_master_is_running
+    config_salt_master, ensure_salt_master_is_running
 )
 from .salt_minion import config_salt_minions
-from . import inputs, values
+from provisioner import inputs
+from provisioner import values
 
 _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
@@ -208,106 +196,31 @@ class CommandParserFillerMixin:
 #     - periodical states apply
 @attr.s(auto_attribs=True)
 class PillarGet(CommandParserFillerMixin):
-    input_type: Type[inputs.PillarKeysList] = inputs.PillarKeysList
+    params_type: Type[inputs.NoParams] = inputs.NoParams
 
-    @classmethod
-    def from_spec(
-        cls, input_type: str = 'PillarKeysList'
-    ):
-        return cls(input_type=getattr(inputs, input_type))
-
-    def run(self, *args, targets: str = ALL_MINIONS, **kwargs):
-        pi_keys = self.input_type.from_args(*args, **kwargs)
-        pillar_resolver = PillarResolver(targets=targets)
-
-        if len(pi_keys):
-            res_raw = pillar_resolver.get(pi_keys)
-            res = {}
-            for minion_id, data in res_raw.items():
-                res[minion_id] = {str(pk): v for pk, v in data.items()}
-            return res
-        else:
-            return pillar_resolver.pillar
-
-
-@attr.s(auto_attribs=True)
-class PillarSet(CommandParserFillerMixin):
-    # TODO at least either pre or post should be defined
-    input_type: Type[inputs.PillarInputBase] = inputs.PillarInputBase
-
-    _run_args_type = RunArgsUpdate
-
-    # TODO input class type
-    @classmethod
-    def from_spec(
-        cls, input_type: str = 'PillarInputBase'
-    ):
-        return cls(
-            input_type=getattr(inputs, input_type)
-        )
-
-    # TODO
-    # - class for pillar file
-    # - caching (load once)
-    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
-        # static validation
-        if len(args) == 1 and isinstance(args[0], self.input_type):
-            input_data = args[0]
-        else:
-            input_data = self.input_type.from_args(*args, **kwargs)
-
-        # TODO dynamic validation
-        if dry_run:
-            return
-
-        exc = None
-        rollback_exc = None
-
-        try:
-            pillar_updater = PillarUpdater(targets)
-            pillar_updater.update(input_data)
-
-            try:
-                pillar_updater.apply()
-            except Exception:
-                try:
-                    # TODO more solid rollback:
-                    #   - rollback might be not needed at all
-                    #   - or needed partually
-                    pillar_updater.rollback()
-                    pillar_updater.apply()
-                except Exception as _exc:
-                    rollback_exc = _exc
-                raise
-        except Exception as _exc:
-            exc = _exc
-            logger.exception('Pillar set failed')
-        finally:
-            if exc:
-                raise PillarSetError(
-                    reason=exc, rollback_error=rollback_exc
-                )
+    def run(self, targets: str = ALL_MINIONS):
+        return PillarResolver(targets=targets).pillar
 
 
 @attr.s(auto_attribs=True)
 class Get(CommandParserFillerMixin):
-    input_type: Type[inputs.ParamsList] = inputs.ParamsList
+    params_type: Type[inputs.ParamsList] = inputs.ParamsList
 
     # TODO input class type
     @classmethod
     def from_spec(
-        cls, input_type: str = 'ParamsList'
+        cls, params_type: str = 'ParamsList'
     ):
-        return cls(input_type=getattr(inputs, input_type))
+        return cls(params_type=getattr(inputs, params_type))
 
     def run(self, *args, targets=ALL_MINIONS, **kwargs):
         # TODO tests
-        params = self.input_type.from_args(*args, **kwargs)
+        params = self.params_type.from_args(*args, **kwargs)
         pillar_resolver = PillarResolver(targets=targets)
         res_raw = pillar_resolver.get(params)
         res = {}
         for minion_id, data in res_raw.items():
-            res[minion_id] = {str(p): v for p, v in data.items()}
+            res[minion_id] = {str(p.name): v for p, v in data.items()}
         return res
 
 
@@ -324,7 +237,7 @@ class Get(CommandParserFillerMixin):
 @attr.s(auto_attribs=True)
 class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
-    input_type: Type[
+    params_type: Type[
         Union[inputs.ParamGroupInputBase, inputs.ParamDictItemInputBase]
     ]
     pre_states: List[State] = attr.Factory(list)
@@ -335,10 +248,10 @@ class Set(CommandParserFillerMixin):
     # TODO input class type
     @classmethod
     def from_spec(
-        cls, input_type: str, states: Dict
+        cls, params_type: str, states: Dict
     ):
         return cls(
-            input_type=getattr(inputs, input_type),
+            params_type=getattr(inputs, params_type),
             pre_states=[State(state) for state in states.get('pre', [])],
             post_states=[State(state) for state in states.get('post', [])]
         )
@@ -370,10 +283,10 @@ class Set(CommandParserFillerMixin):
     # - caching (load once)
     def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
         # static validation
-        if len(args) == 1 and isinstance(args[0], self.input_type):
+        if len(args) == 1 and isinstance(args[0], self.params_type):
             params = args[0]
         else:
-            params = self.input_type.from_args(*args, **kwargs)
+            params = self.params_type.from_args(*args, **kwargs)
 
         # TODO dynamic validation
         if dry_run:
@@ -397,19 +310,46 @@ class Set(CommandParserFillerMixin):
 @attr.s(auto_attribs=True)
 class SetEOSUpdateRepo(Set):
     # TODO at least either pre or post should be defined
-    input_type: Type[inputs.EOSUpdateRepo] = inputs.EOSUpdateRepo
+    params_type: Type[inputs.EOSUpdateRepo] = inputs.EOSUpdateRepo
 
     # TODO rollback
     def _run(self, params: inputs.EOSUpdateRepo, targets: str):
         # if local - copy the repo to salt user file root
-        # TODO consider to use symlink instead
         if params.is_local():
             dest = PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / params.release
 
-            if not params.is_dir():  # iso file
-                dest = dest.with_name(dest.name + '.iso')
+            # TODO consider to use symlink instead
 
-            copy_to_file_roots(params.source, dest)
+            if params.is_dir():
+                # TODO
+                #  - file.recurse expects only dirs from maste file roots
+                #    (salt://), need to find another alternative to respect
+                #    indempotence
+                # StateFunExecuter.execute(
+                #     'file.recurse',
+                #     fun_kwargs=dict(
+                #       source=str(params.source),
+                #       name=str(dest)
+                #     )
+                # )
+                StateFunExecuter.execute(
+                    'cmd.run',
+                    fun_kwargs=dict(
+                        name=(
+                            "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
+                            .format(dest.parent, params.source, dest)
+                        )
+                    )
+                )
+            else:  # iso file
+                StateFunExecuter.execute(
+                    'file.managed',
+                    fun_kwargs=dict(
+                        source=str(params.source),
+                        name='{}.iso'.format(dest),
+                        makedirs=True
+                    )
+                )
 
         # call default set logic (set pillar, call related states)
         super()._run(params, targets)
@@ -418,7 +358,7 @@ class SetEOSUpdateRepo(Set):
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class EOSUpdate(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, targets):
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
@@ -447,11 +387,6 @@ class EOSUpdate(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         try:
-            # ensure update repos are configured
-            StatesApplier.apply(
-                ['components.misc_pkgs.eosupdate.repo'], targets
-            )
-
             with YumRollbackManager(
                 targets, multiple_targets_ok=True
             ) as rollback_ctx:
@@ -514,9 +449,6 @@ class EOSUpdate(CommandParserFillerMixin):
                         ensure_salt_master_is_running()
                         config_salt_master()
                         config_salt_minions()
-                        StatesApplier.apply(
-                            ["components.provisioner.config"], targets
-                        )
                     except Exception as exc:
                         # unrecoverable state: SW stack is in intermediate
                         # state, no sense to start the cluster
@@ -540,8 +472,8 @@ class EOSUpdate(CommandParserFillerMixin):
                         # update failed but node is in initial state
                         # and looks functional
                 else:
-                    # TODO TEST unit for that case
-                    pass  # it might be update repo set issue
+                    # logic error
+                    logger.warning('Unexpected error: {!r}'.format(update_exc))
 
             # TODO IMPROVE
             raise final_error_t(
@@ -552,7 +484,7 @@ class EOSUpdate(CommandParserFillerMixin):
 # TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsFWUpdate
 
     def run(self, source, dry_run=False):
@@ -565,19 +497,17 @@ class FWUpdate(CommandParserFillerMixin):
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
-        passwd = PillarKey(controller_pi_path / 'secret')
-
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
         for param in (ip, user, passwd):
             if not pillar[param] or pillar[param] is values.MISSED:
                 raise BadPillarDataError(
-                    'value for {} is not specified'.format(param.keypath)
+                    'value for {} is not specified'.format(param.pi_key)
                 )
 
         if dry_run:
@@ -603,7 +533,7 @@ class FWUpdate(CommandParserFillerMixin):
 
 @attr.s(auto_attribs=True)
 class GetResult(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsGetResult
 
     def run(self, cmd_id: str):
@@ -613,7 +543,7 @@ class GetResult(CommandParserFillerMixin):
 # TODO TEST
 @attr.s(auto_attribs=True)
 class GetClusterId(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsEmpty
 
     def run(self):
@@ -626,7 +556,7 @@ class GetClusterId(CommandParserFillerMixin):
 # TODO TEST
 @attr.s(auto_attribs=True)
 class GetNodeId(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
 
     def run(self, targets):
@@ -640,7 +570,7 @@ class GetNodeId(CommandParserFillerMixin):
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SetSSLCerts(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
     def run(self, source, restart=False, dry_run=False):
@@ -652,23 +582,32 @@ class SetSSLCerts(CommandParserFillerMixin):
 
         if dry_run:
             return
-
+        #move cluster to maintenance mode
         try:
             cluster_maintenance_enable()
         except Exception as exc:
             raise ClusterMaintenanceEnableError(exc) from exc
-
+        
+        state_name = "components.misc_pkgs.ssl_certs"
+        dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
         # TODO create backup and add timestamp to backups
-        copy_to_file_roots(source, PRVSNR_USER_FILES_SSL_CERTS_FILE)
+        StateFunExecuter.execute(
+            "file.managed",
+            fun_kwargs=dict(
+                source=str(source),
+                name=str(dest),
+                makedirs=True
+            )
+        )
 
         try:
-            StatesApplier.apply(["components.misc_pkgs.ssl_certs"])
+            StatesApplier.apply([state_name])
         except Exception:
             logger.exception(
                 "Failed to apply certs"
             )
             raise
-
+        #disable cluster maintenance mode
         try:
             cluster_maintenance_disable()
         except Exception as exc:
@@ -678,7 +617,7 @@ class SetSSLCerts(CommandParserFillerMixin):
 # TODO TEST
 @attr.s(auto_attribs=True)
 class RebootServer(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
 
     def run(self, targets):
@@ -691,7 +630,7 @@ class RebootServer(CommandParserFillerMixin):
 # TODO IMPROVE dry-run mode
 @attr.s(auto_attribs=True)
 class RebootController(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsController
 
     @classmethod
@@ -704,19 +643,17 @@ class RebootController(CommandParserFillerMixin):
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
-        passwd = PillarKey(controller_pi_path / 'secret')
-
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
         for param in (ip, user, passwd):
             if not pillar[param] or pillar[param] is values.MISSED:
                 raise BadPillarDataError(
-                    'value for {} is not specified'.format(param.keypath)
+                    'value for {} is not specified'.format(param.pi_key)
                 )
 
         StateFunExecuter.execute(
@@ -740,7 +677,7 @@ class RebootController(CommandParserFillerMixin):
 # TODO IMPROVE dry-run mode
 @attr.s(auto_attribs=True)
 class ShutdownController(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsController
 
     @classmethod
@@ -748,23 +685,23 @@ class ShutdownController(CommandParserFillerMixin):
         return cls()
 
     def run(self, target_ctrl: str = CONTROLLER_BOTH):
+
         script = (
             PRVSNR_FILEROOTS_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
-
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
-        passwd = PillarKey(controller_pi_path / 'secret')
-
+        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
+        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        # TODO IMPROVE improve Param to hide secrets
+        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
         for param in (ip, user, passwd):
             if not pillar[param] or pillar[param] is values.MISSED:
                 raise BadPillarDataError(
-                    'value for {} is not specified'.format(param.keypath)
+                    'value for {} is not specified'.format(param.pi_key)
                 )
 
         StateFunExecuter.execute(
@@ -787,7 +724,7 @@ class ShutdownController(CommandParserFillerMixin):
 
 @attr.s(auto_attribs=True)
 class ConfigureEOS(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureEOS
 
     def run(
