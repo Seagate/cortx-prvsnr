@@ -137,8 +137,11 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl"
-                || "$state" == "system.storage" ]]; then
+            if [[ "$state" == "ha.corosync-pacemaker" 
+                || "$state" == "system.storage" 
+                || "$state" == "sspl"
+                || "$state" == "csm"
+                ]]; then
                 # Execute first on eosnode-2 then on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
