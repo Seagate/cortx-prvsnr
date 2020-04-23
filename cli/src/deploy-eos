@@ -199,8 +199,9 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
+update_salt
+
 if [[ "$run_all" == true ]]; then
-    update_salt
     run_states "${system_states[@]}"
     encrypt_pillar
 
@@ -212,38 +213,32 @@ fi
 
 if [[ "$run_system_states" == true ]]; then
     l_info "Deploying the system states"
-    update_salt
     run_states "${system_states[@]}"
     encrypt_pillar
 fi
 
 if [[ "$run_prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
-    update_salt
     run_states  "${prereq_states[@]}"
 fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    update_salt
     salt '*' state.apply components.system.storage
 fi
 
 if [[ "$run_io_states" == true ]]; then
     l_info "Deploying the io path states"
-    update_salt
     run_states  "${iopath_states[@]}"
 fi
 
 if [[ "$run_ha_states" == true ]]; then
     l_info "Deploying the ha states"
-    update_salt
     run_states "${ha_states[@]}"
 fi
 
 if [[ "$run_ctrlpath_states" == true ]]; then
     l_info "Deploying the control path states"
-    update_salt
     run_states "${controlpath_states[@]}"
 fi
 
