@@ -22,6 +22,7 @@ run_prereq_states=false
 run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
+no_ha=true
 
 system_states=(
     # states to be applied in desired sequence
@@ -144,6 +145,15 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
+            if [[ "$no_ha" == true ]]; then
+                if [[ "$state" == "ha.corosync-pacemaker" 
+                    || "$state" == "ha.ees_ha"
+                    || "$state" == "post_setup"
+                    ]]; then
+                    l_info "HA state 'components.$state' not to be applied for --no-ha option"
+                    continue
+                fi
+            fi
             if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
                 # Execute first on eosnode-2 then on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
@@ -167,6 +177,10 @@ function run_states {
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
+            fi
+            if [[ "$state" == "hare" && "$no_ha" == true ]]; then
+                l_info "Bootstraping cluster"
+                hctl bootstrap --mkfs /var/lib/hare/cluster.yaml
             fi
         done
     fi
@@ -210,18 +224,20 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 update_salt
 install_eos_utils
 encrypt_pillar
+hostnamectl status | grep Chassis | grep -q server && no_ha=false 
+
 
 if [[ "$run_all" == true ]]; then
     run_states "${system_states[@]}"
     run_states "${prereq_states[@]}"
-    run_states  "${iopath_states[@]}"
+    run_states "${iopath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${controlpath_states[@]}"
 fi
 
 if [[ "$run_prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
-    run_states  "${prereq_states[@]}"
+    run_states "${prereq_states[@]}"
 fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
@@ -231,7 +247,7 @@ fi
 
 if [[ "$run_io_states" == true ]]; then
     l_info "Deploying the io path states"
-    run_states  "${iopath_states[@]}"
+    run_states "${iopath_states[@]}"
 fi
 
 if [[ "$run_ha_states" == true ]]; then
