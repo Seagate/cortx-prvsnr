@@ -31,4 +31,8 @@ Create tidy-up script:
 Cleanup stale partitions:
   cmd.run:
     - name: bash /tmp/storage-tidy-up.sh || true
+
+Housekeeping:
+  file.absent:
+      - name: /tmp/storage-tidy-up.sh
 {% endif %}
