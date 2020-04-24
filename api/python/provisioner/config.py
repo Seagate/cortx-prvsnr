@@ -11,6 +11,7 @@ PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR = (
 PRVSNR_USER_FILES_SSL_CERTS_FILE = (
     PRVSNR_USER_FILEROOTS_DIR / 'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
+SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
 # reflects pillar/top.sls
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
