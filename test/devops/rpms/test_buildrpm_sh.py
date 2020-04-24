@@ -8,10 +8,39 @@ from test.helper import PRVSNRUSERS_GROUP
 
 RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
 RPM_CLI_CONTENT_PATHS = [
-    'files/etc/salt',
-    'files/etc/modprobe.d',
+    'cli/src',
+    'files/.ssh',
     'files/etc/yum.repos.d'
 ]
+
+
+def check_ssh_configuration(mhost, mlocalhost):
+    # check .ssh dir
+    assert mhost.host.file('/root/.ssh').exists
+    assert mhost.check_output(
+        "cd /root && find . -type d -name .ssh -perm 700 -printf '%p\n'"
+    )
+
+    # check .ssh files
+    expected = mlocalhost.check_output(
+        "cd {} && find .ssh -type f -printf '%p\n'"
+        .format(mlocalhost.repo / 'files')
+    ).split()
+
+    installed = mhost.check_output(
+        "cd /root && find .ssh -type f -perm 600 -printf '%p\n'"
+    ).split()
+
+    try:
+        del installed[installed.index('.ssh/authorized_keys_test')]
+    except ValueError:
+        pass
+
+    diff_expected = set(expected) - set(installed)
+    diff_installed = set(installed) - set(expected)
+
+    assert not diff_expected
+    assert not diff_installed
 
 
 def check_provisioner_api_installation(mhost, api_version=None):
@@ -100,6 +129,10 @@ def test_rpm_prvsnr_depends_on_salt_2019_2_0(mhost):
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_installation(mhost, mlocalhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+
+    # TODO IMPROVE
+    #       - update logic (list of files to check)
+    #       - resolve list of files/dirs dynamically
 
     # check paths that were installed
     excluded = ['-name "{}"'.format(e) for e in h.REPO_BUILD_DIRS]
@@ -236,14 +269,6 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
         )
     ).split()
 
-    expected_ssh = mlocalhost.check_output(
-        "cd {} && find .ssh \\( {} \\) -prune -o -type f -printf '%p\n'"
-        .format(
-            mlocalhost.repo / 'files',
-            ' -o '.join(excluded_dirs)
-        )
-    ).split()
-
     installed = mhost.check_output(
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
@@ -253,42 +278,27 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
         )
     ).split()
 
-    installed_ssh = mhost.check_output(
-        "cd /root && find .ssh \\( {} \\) -prune -o -type f -printf '%p\n'"
-        .format(
-            ' -o '.join(['-name "__pycache__"'])
-        )
-    ).split()
-
-    try:
-        del installed_ssh[installed_ssh.index('.ssh/authorized_keys_test')]
-    except ValueError:
-        pass
-
-    expected += expected_ssh
-    installed += installed_ssh
-
     diff_expected = set(expected) - set(installed)
     diff_installed = set(installed) - set(expected)
 
     assert not diff_expected
     assert not diff_installed
 
-    # TODO need to fix rpm structure for cli scripts
+    # check post install section
+    #   cli scripts are copied to production location
     expected = mlocalhost.check_output(
         "cd {} && find . \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             mlocalhost.repo / 'cli/src',
-            ' -o '.join(excluded_dirs)
+            ' -o '.join(excluded_dirs + ["-name '*.swp'"])
         )
     ).split()
 
     installed = mhost.check_output(
-        "cd {} && find . -maxdepth 1 \\( {} \\) "
-        "-prune -o -type f -printf '%p\n'"
+        "cd {} && find . \\( {} \\) -prune -o -type f -printf '%p\n'"
         .format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli',
-            ' -o '.join(['-name "__pycache__"'])
+            ' -o '.join(['-name "__pycache__"', '-name src'])
         )
     ).split()
 
@@ -296,3 +306,22 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
     diff_installed = set(installed) - set(expected)
     assert not diff_expected
     assert not diff_installed
+
+    #   ssh is configured
+    check_ssh_configuration(mhost, mlocalhost)
+
+
+@pytest.mark.isolated
+@pytest.mark.verifies('EOS-7327')
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_installation_over_cli(mhost):
+    cli_file = mhost.host.file(
+        str(h.PRVSNR_ROOT_DIR / 'cli/setup-provisioner')
+    )
+
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_cli))
+    mtime1 = cli_file.mtime
+
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+    mtime2 = cli_file.mtime
+    assert mtime2 > mtime1

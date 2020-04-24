@@ -41,7 +41,7 @@ mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files
 mkdir -p %{buildroot}/opt/seagate/eos/eos-prvsnr
 
 # Copy files
-#cp -R cli %{buildroot}/opt/seagate/eos-prvsnr
+cp -R cli %{buildroot}/opt/seagate/eos-prvsnr
 cp -R pillar %{buildroot}/opt/seagate/eos-prvsnr
 cp -R srv %{buildroot}/opt/seagate/eos-prvsnr
 cp -R api %{buildroot}/opt/seagate/eos-prvsnr
@@ -54,31 +54,33 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/eos-prvsnr/%{name}.yaml
-#/opt/seagate/eos-prvsnr/cli
+/opt/seagate/eos-prvsnr/cli
+/opt/seagate/eos-prvsnr/files
 /opt/seagate/eos-prvsnr/pillar
 /opt/seagate/eos-prvsnr/srv
 /opt/seagate/eos-prvsnr/api
 /opt/seagate/eos/eos-prvsnr/conf
 
 
-# TODO test
 %post
-# adding prvsnrusers group
+
+# set api
+#   adding prvsnrusers group
 echo "Creating group 'prvsnrusers'..."
 groupadd -f prvsnrusers
-# set access rights for api users
-#    user file root
+#   set access rights for api users
+#       user file root
 mkdir -p /opt/seagate/eos-prvsnr/srv_user
 chown -R :prvsnrusers /opt/seagate/eos-prvsnr/srv_user
 chmod -R g+rws /opt/seagate/eos-prvsnr/srv_user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/srv_user
-#    user pillar
+#       user pillar
 mkdir -p /opt/seagate/eos-prvsnr/pillar/user
 chown -R :prvsnrusers /opt/seagate/eos-prvsnr/pillar/user
 chmod -R g+rws /opt/seagate/eos-prvsnr/pillar/user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/pillar/user
 
-# install api globally using pip
+#   install api globally using pip
 pip3 install -U /opt/seagate/eos-prvsnr/api/python
 
 chown -R :prvsnrusers /opt/seagate/eos-prvsnr/cli
