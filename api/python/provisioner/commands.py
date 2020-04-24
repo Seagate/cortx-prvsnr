@@ -584,6 +584,11 @@ class SetSSLCerts(CommandParserFillerMixin):
         if dry_run:
             return
 
+        try:
+            cluster_maintenance_enable()
+        except Exception as exc:
+            raise ClusterMaintenanceEnableError(exc) from exc
+
         state_name = "components.misc_pkgs.ssl_certs"
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
         # TODO create backup and add timestamp to backups
@@ -603,6 +608,11 @@ class SetSSLCerts(CommandParserFillerMixin):
                 "Failed to apply certs"
             )
             raise
+
+        try:
+            cluster_maintenance_disable()
+        except Exception as exc:
+            raise ClusterMaintenanceDisableError(exc) from exc
 
 
 # TODO TEST
