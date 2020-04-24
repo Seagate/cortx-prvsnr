@@ -16,8 +16,12 @@ Create tidy-up script:
           echo "Runnign swapoff -a on eosnode-2 node"
           ssh eosnode-2 "timeout -k 10 30 swapoff -a || true"
           echo "Cleaning up partitions"
-          for dev in `ls /dev/mapper/mpath* | grep '[1-2]$' | rev | cut -c 2- | rev | sort -u`
+          for dev in `ls /dev/mapper/mpath* | grep '[1-6]$' | rev | cut -c 2- | rev | sort -u`
           do
+            timeout -k 10 30 parted -s $dev rm 6 || true
+            timeout -k 10 30 parted -s $dev rm 5 || true
+            timeout -k 10 30 parted -s $dev rm 4 || true
+            timeout -k 10 30 parted -s $dev rm 3 || true
             timeout -k 10 30 parted -s $dev rm 2 || true
             timeout -k 10 30 parted -s $dev rm 1 || true
           done
