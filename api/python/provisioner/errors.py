@@ -181,3 +181,15 @@ class SWUpdateFatalError(SWUpdateError):
 
     def __str__(self):
         return "FATAL: {}".format(super().__str__())
+
+
+class SSLCertsUpdateError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'SSL Cert update failed: {!r}'.format(self)
+        )
