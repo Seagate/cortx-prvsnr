@@ -580,6 +580,7 @@ class SetSSLCerts(CommandParserFillerMixin):
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
         time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        state_name = "components.misc_pkgs.ssl_certs"
         backup_file_name = dest.parent.joinpath( 
             time_stamp + "_" + str(dest.name))
 
@@ -604,8 +605,6 @@ class SetSSLCerts(CommandParserFillerMixin):
             except Exception as exc:
                 raise ClusterMaintenanceEnableError(exc) from exc
        
-            state_name = "components.misc_pkgs.ssl_certs"
-            # TODO create backup and add timestamp to backups
             StateFunExecuter.execute(
                 "file.managed",
                 fun_kwargs=dict(
@@ -629,6 +628,7 @@ class SetSSLCerts(CommandParserFillerMixin):
 
         except Exception as ssl_exc:
             logger.exception('SSL Certs Updation Failed')
+            
             if isinstance(update_exc, ClusterMaintenanceEnableError):
                 cluster_maintenance_disable(background=True)
 
