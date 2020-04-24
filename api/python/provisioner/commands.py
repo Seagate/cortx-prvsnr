@@ -3,6 +3,7 @@ import attr
 from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
+from datetime import datetime
 from pathlib import Path
 
 from .errors import (
@@ -18,7 +19,8 @@ from .config import (
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_EOS_COMPONENTS,
-    CONTROLLER_BOTH
+    CONTROLLER_BOTH,
+    SSL_CERTS_FILE
 )
 from .utils import load_yaml, dump_yaml_str
 from .param import KeyPath, Param
@@ -576,42 +578,91 @@ class SetSSLCerts(CommandParserFillerMixin):
     def run(self, source, restart=False, dry_run=False):
 
         source = Path(source).resolve()
+        dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
+        time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        backup_file_name = dest.parent.joinpath( 
+            time_stamp + "_" + str(dest.name))
 
         if not source.is_file():
             raise ValueError('{} is not a file'.format(source))
 
         if dry_run:
             return
-        #move cluster to maintenance mode
-        try:
-            cluster_maintenance_enable()
-        except Exception as exc:
-            raise ClusterMaintenanceEnableError(exc) from exc
-        
-        state_name = "components.misc_pkgs.ssl_certs"
-        dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
-        # TODO create backup and add timestamp to backups
+        #backup old ssl certs to provisioner user files
         StateFunExecuter.execute(
             "file.managed",
             fun_kwargs=dict(
-                source=str(source),
-                name=str(dest),
+                source=str(SSL_CERTS_FILE),
+                name=str(backup_file_name),
                 makedirs=True
             )
-        )
-
+        )        
         try:
-            StatesApplier.apply([state_name])
-        except Exception:
-            logger.exception(
-                "Failed to apply certs"
+            #move cluster to maintenance mode
+            try:
+                cluster_maintenance_enable()
+            except Exception as exc:
+                raise ClusterMaintenanceEnableError(exc) from exc
+       
+            state_name = "components.misc_pkgs.ssl_certs"
+            # TODO create backup and add timestamp to backups
+            StateFunExecuter.execute(
+                "file.managed",
+                fun_kwargs=dict(
+                    source=str(source),
+                    name=str(dest),
+                    makedirs=True
+                )
             )
-            raise
-        #disable cluster maintenance mode
-        try:
-            cluster_maintenance_disable()
-        except Exception as exc:
-            raise ClusterMaintenanceDisableError(exc) from exc
+            try:
+                StatesApplier.apply([state_name])
+            except Exception as exc:
+                logger.exception(
+                    "Failed to apply certs")
+                raise SSLCertsUpdateError(exc) from exc
+
+            #disable cluster maintenance mode
+            try:
+                cluster_maintenance_disable()
+            except Exception as exc:
+                raise ClusterMaintenanceDisableError(exc) from exc
+
+        except Exception as ssl_exc:
+            logger.exception('SSL Certs Updation Failed')
+            if isinstance(update_exc, ClusterMaintenanceEnableError):
+                cluster_maintenance_disable(background=True)
+
+            elif isinstance(ssl_exc,
+                (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
+                
+                logger.info('Restoring old ssl cert ')
+            
+                StateFunExecuter.execute(
+                    "file.rename",
+                    fun_kwargs=dict(
+                        source=str(backup_file_name),
+                        name=str(dest),
+                        force=True,
+                        makedirs=True
+                    )
+                )
+                try:
+                    StatesApplier.apply([state_name])
+                except Exception as exc:
+                    logger.exception(
+                        "Failed to apply certs")
+                    raise SSLCertsUpdateError(exc) from exc
+                else:
+                    try:
+                        cluster_maintenance_disable()
+                    except Exception as exc:
+                        logger.exception(
+                            "Failed to recover Cluster after rollback")
+                        raise ClusterMaintenanceDisableError(exc) from exc
+            else: 
+                logger.warning('Unexpected error: {!r}'.format(ssl_exc))
+
+        
 
 
 # TODO TEST
