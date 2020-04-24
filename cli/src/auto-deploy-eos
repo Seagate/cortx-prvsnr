@@ -12,7 +12,8 @@ trap trap_handler ERR
 
 trap_handler ()
 {
-    echo "Detailed error log is kept at: $logfile"
+    echo -e "\n***** FAILED!!*****" 2>&1 | tee -a $logfile
+    echo "Detailed error log is kept at: $logfile" 2>&1 | tee -a $logfile
     exit 1
 }
 
@@ -246,7 +247,7 @@ install_config_prvsnr()
     sleep 1
     echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
         "--eosnode-2='$eosnode_2_host' '$tgt_build'" 2>&1 | tee -a $logfile
-    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --eosnode-2="$eosnode_2_host" "$tgt_build" >> $logfile
+    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --eosnode-2="$eosnode_2_host" "$tgt_build" 2>&1 | tee -a $logfile
     echo "Done" 2>&1 | tee -a $logfile
 }
 
@@ -362,5 +363,6 @@ update_pillar
 echo -e "\n\t***** INFO: Running deploy-eos *****"
 sh /opt/seagate/eos-prvsnr/cli/deploy-eos -v
 
-echo -e "\nSUCCESS! Check following logs to see the complete logs of auto-deploy-eos: $logfile"
+echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $logfile
+echo " Check following logs to see the complete logs of auto-deploy-eos: $logfile" 2>&1 | tee -a $logfile
 echo "Done"
