@@ -32,6 +32,7 @@ Setup logrotate cron for haproxy to run hourly:
     - source: salt://components/ha/haproxy/files/logrotate/logrotate
     - keep_source: False
     - makedirs: True
+    - mode: '0744'
 
 Setup haproxy config to enable logs:
   file.managed:
