@@ -1,3 +1,4 @@
-include:
-  - .install
-  - .run
+rsyslog_running:
+  service.running:
+    - name: rsyslog.service
+    - enable: True

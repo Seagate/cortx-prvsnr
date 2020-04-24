@@ -13,6 +13,12 @@ Downgrade elasticsearch to 6.8.8:
     - name: yum downgrade -y elasticsearch
 {% endif %}
 
+Install rsyslog extras:
+  pkg.installed:
+    - pkgs:
+      - rsyslog-elasticsearch: {{ pillar ['commons']['version']['rsyslog-elasticsearch'] }}
+      - rsyslog-mmjsonparse: {{ pillar ['commons']['version']['rsyslog-mmjsonparse'] }}
+
 # Install elasticsearch:
 #   pkg.installed:
 #     - sources:
