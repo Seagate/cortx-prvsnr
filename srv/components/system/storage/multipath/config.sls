@@ -1,3 +1,6 @@
+include:
+  - components.system.prepare
+
 {%
   if salt['file.file_exists']('/etc/multipath.conf')
   and not salt['file.file_exists']('/etc/multipath.conf.org') 
@@ -54,9 +57,8 @@ Restart service multipath:
 Update cluster.sls pillar:
   module.run:
     - cluster.storage_device_config: []
+    - watch_in:
+      - Sync data
 {% endif %}
-
-include:
-  - components.system.prepare
 
 # End Setup multipath

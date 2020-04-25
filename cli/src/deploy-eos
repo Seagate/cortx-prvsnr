@@ -81,11 +81,12 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       -S,  --singlenode               switch to single node mode setup
+       -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
        --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
+       --system-states             deploy only system states
 "
 }
 
@@ -184,7 +185,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
+parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x

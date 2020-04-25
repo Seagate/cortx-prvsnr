@@ -16,7 +16,6 @@ Add sspl yum repo:
     - baseurl: {{ defaults.sspl.repo.url }}
     - gpgcheck: 0
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
 Add common config - system information to Consul:
   cmd.run:
     - name: |
@@ -26,7 +25,7 @@ Add common config - system information to Consul:
         /opt/seagate/eos/hare/bin/consul kv put system_information/site_id 001
         /opt/seagate/eos/hare/bin/consul kv put system_information/rack_id 001
         /opt/seagate/eos/hare/bin/consul kv put system_information/cluster_id {{ grains['cluster_id'] }}
-        /opt/seagate/eos/hare/bin/consul kv put system_information/node_id {{ grains['node_id'] }}
+        /opt/seagate/eos/hare/bin/consul kv put system_information/{{ grains['id'] }}_id {{ grains['node_id'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_host {{ pillar['rsyslog']['host'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_port {{ pillar['rsyslog']['port'] }}
 
@@ -55,8 +54,3 @@ Add common config - storage enclosure to Consul:
         /opt/seagate/eos/hare/bin/consul kv put storage_enclosure/controller/secondary_mc/port {{ pillar['storage_enclosure']['controller']['secondary_mc']['port'] }}
         /opt/seagate/eos/hare/bin/consul kv put storage_enclosure/controller/user {{ pillar['storage_enclosure']['controller']['user'] }}
         /opt/seagate/eos/hare/bin/consul kv put storage_enclosure/controller/password {{ pillar['storage_enclosure']['controller']['secret'] }}
-{% else %}
-Consul not applicable on secondary:
-  test.show_notification:
-    - text: Consul config updates are applicable only on primary node and not on secondary node.
-{% endif %}

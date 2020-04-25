@@ -45,7 +45,7 @@ def storage_device_config():
             return True
         
         metadata_device = list()
-        metadata_device.append(f"/dev/disk/by-id/dm-name-{device_list[0]}")
+        metadata_device.append("/dev/disk/by-id/dm-name-{0}".format(device_list[0]))
         _pillar_dict["cluster"][node]["storage"]["metadata_device"] = metadata_device
         data_device = list()
         data_device.append("/dev/disk/by-id/dm-name-mpath[" + ",".join(list(map(lambda x: x[5:], device_list[1:]))) + "]")
