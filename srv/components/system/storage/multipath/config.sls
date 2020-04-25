@@ -1,21 +1,11 @@
 include:
-  - components.system.prepare
-
-{%
-  if salt['file.file_exists']('/etc/multipath.conf')
-  and not salt['file.file_exists']('/etc/multipath.conf.org') 
-%}
-Backup multipath config:
-  file.copy:
-    - name: /etc/multipath.conf.org
-    - source: /etc/multipath.conf
-    - force: True
-    - makedirs: True
-{% endif %}
+  - components.system.storage.multipath.install
 
 Stop multipath service:
   service.dead:
     - name: multipathd.service
+    - require:
+      - Install multipath
 
 Copy multipath config:
   file.managed:
@@ -24,7 +14,8 @@ Copy multipath config:
     - force: True
     - makedirs: True
     - require:
-      - service: Stop multipath service
+      - Install multipath
+      - Stop multipath service
 
 # Flush multipath:
 #   cmd.run:
@@ -48,17 +39,23 @@ Copy multipath bindings to non-primary:
 {% endfor %}
 {%- endif %}
 
-Restart service multipath:
-  module.run:
-    - service.restart:
-      - multipathd
-
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 Update cluster.sls pillar:
   module.run:
     - cluster.storage_device_config: []
-    - watch_in:
-      - Sync data
+    - saltutil.refresh_pillar: []
+    - require:
+      - Start multipath service
+{% else %}
+Update cluster.sls pillar:
+  test.show_notification:
+    - text: Update pillar doesn't work on Secondary node.
 {% endif %}
 
+Restart service multipath:
+  module.run:
+    - service.restart:
+      - multipathd
+    - require:
+      - Update cluster.sls pillar
 # End Setup multipath
