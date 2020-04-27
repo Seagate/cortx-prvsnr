@@ -1,3 +1,7 @@
+include:
+  - components.misc_pkgs.elasticsearch.install
+  - components.misc_pkgs.rsyslog
+
 Configure Elasticsearch:
   file.managed:
     - name: /etc/elasticsearch/elasticsearch.yml
@@ -23,3 +27,16 @@ Set data auto-replication:
     - data: '{"index":{"number_of_replicas":"2","auto_expand_replicas":"2-all"}}'
     - raise_error: True
 {% endif %}
+
+Load rsyslog module for elasticsearch:
+  file.line:
+    - name: /etc/rsyslog.conf
+    - after: "#### MODULES ####"
+    - content: |
+        # load omelasticsearch to redirect logs to elasticsearch
+        module(load="omelasticsearch")
+    - mode: ensure
+    - require:
+      - Install rsyslog extras
+    - watch_in:
+      - service: Start rsyslog

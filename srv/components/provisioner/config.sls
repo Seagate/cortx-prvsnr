@@ -8,4 +8,4 @@ provisioner_rsyslog_conf_updated:
     - source: salt://components/provisioner/files/prvsnrfwd.conf
     - makedirs: True
     - watch_in:
-      - service: rsyslog_running
+      - service: Start rsyslog
