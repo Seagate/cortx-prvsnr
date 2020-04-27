@@ -14,3 +14,7 @@ Remove multipath config:
 Delete multipath checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.multipath
+
+Remove multipath conf file:
+  file.absent:
+    - name: /etc/multipath.conf

@@ -132,7 +132,9 @@ def test_functions_log_fails_for_wrong_level(run_script):
     script = "log {} message".format(level)
     res = run_script(script, stderr_to_stdout=False)
     assert res.rc == 5
-    assert res.stderr == "ERROR: Unknown log level: {}\n".format(level)
+    # TODO IMPROVE use regex
+    assert "ERROR".format(level) in res.stderr
+    assert "Unknown log level: {}".format(level) in res.stderr
 
 
 def test_functions_log_levels(run_script):
@@ -162,8 +164,10 @@ def test_functions_log_levels(run_script):
                 stream = (
                     res.stderr if level in ('warn', 'error') else res.stdout
                 )
+                # TODO IMPROVE
                 _level = ('warning' if level == 'warn' else level)
-                assert stream.count("{}: {}\n".format(_level.upper(), message)) == 2
+                assert stream.count("{}".format(_level.upper())) == (1 if level in ('warn', 'error') and verbosity == 2 else 2)
+                assert stream.count("{}".format(message)) == (10 if level in ('warn', 'error') and verbosity == 2 else 2)
 
 
 def test_functions_log_helpers(run_script):
@@ -191,9 +195,11 @@ def test_functions_log_helpers(run_script):
             else:
                 stream = (
                     res.stderr if level in ('warn', 'error') else res.stdout
-                )
+                ).split(os.linesep)
                 level = ('warning' if level == 'warn' else level)
-                assert "{}: {}".format(level.upper(), message) in stream.split(os.linesep)
+                # TODO IMPROVE use regex
+                assert level.upper() in stream[-2]
+                assert message in stream[-2]
 
 
 def test_functions_parse_args_succeeds_for_help(parse_args):

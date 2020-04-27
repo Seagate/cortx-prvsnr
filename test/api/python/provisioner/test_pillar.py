@@ -280,7 +280,7 @@ def test_pillar_updater_refresh(monkeypatch):
 
 
 def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
-    mock_res = {}
+    mock_res = []
 
     some_pillar = {
         1: {
@@ -298,11 +298,11 @@ def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
     )
 
     monkeypatch.setattr(
-        pillar, 'dump_yaml', mock_fun_echo(mock_res)
+        pillar, 'dump_yaml', mock_fun_echo(mock_res, 'dump_yaml')
     )
 
     monkeypatch.setattr(
-        pillar, 'load_yaml', mock_fun_echo(mock_res)
+        pillar, 'load_yaml', mock_fun_echo(mock_res, 'load_yaml')
     )
 
     component = 'component1'
@@ -313,12 +313,15 @@ def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
 
     # show (no user pillar)
     _ = PillarUpdater().component_pillar(component, show=True)
-    assert mock_res[None].args_all == ((default_pillar_path,), {})
+    assert [res.key for res in mock_res] == ['load_yaml']
+    assert mock_res[0].args_all == ((default_pillar_path,), {})
 
     # show (with user pillar)
+    mock_res[:] = []
     PillarUpdater.ensure_exists(user_pillar_path)
     _ = PillarUpdater().component_pillar(component, show=True)
-    assert mock_res[None].args_all == ((user_pillar_path,), {})
+    assert [res.key for res in mock_res] == ['load_yaml']
+    assert mock_res[0].args_all == ((user_pillar_path,), {})
 
     # reset for existent
     _ = PillarUpdater().component_pillar(component, reset=True)
@@ -328,8 +331,10 @@ def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
     _ = PillarUpdater().component_pillar(component, reset=True)
 
     # set
+    mock_res[:] = []
     component = 'component2'
     user_pillar_path = user_pillar_dir / '{}.sls'.format(component)
     _ = PillarUpdater().component_pillar(component, pillar=some_pillar)
     assert user_pillar_path.exists()
-    assert mock_res[None].args_all == ((user_pillar_path, some_pillar), {})
+    assert [res.key for res in mock_res] == ['dump_yaml']
+    assert mock_res[0].args_all == ((user_pillar_path, some_pillar), {})

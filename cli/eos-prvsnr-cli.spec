@@ -44,9 +44,6 @@ cp -pr files/.ssh/* %{buildroot}/root/.ssh/
 #mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts
 #cp -p files/etc/sysconfig/network-scripts/ifcfg-* %{buildroot}/opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/
 
-mkdir -p %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig
-cp files/syslogconfig/* %{buildroot}/opt/seagate/eos-prvsnr/files/syslogconfig/
-
 #mkdir -p %{buildroot}/opt/seagate/eos/eos-prvsnr/conf
 #cp files/conf/* %{buildroot}/opt/seagate/eos/eos-prvsnr/conf/
 
@@ -60,7 +57,6 @@ rm -rf %{buildroot}
 #/opt/seagate/eos/eos-prvsnr/conf
 /opt/seagate/eos-prvsnr/cli
 /opt/seagate/eos-prvsnr/files/etc/yum.repos.d
-/opt/seagate/eos-prvsnr/files/syslogconfig
 /root/.ssh
 
 
