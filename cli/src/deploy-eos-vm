@@ -186,7 +186,7 @@ fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
 update_salt
-hostnamectl status | grep Chassis | grep -q server {
+hostnamectl status | grep Chassis | grep -q server && {
     echo "This script is specifically for VM deployment.For HW please run deploy-eos" 
     exit 1
 }
@@ -224,4 +224,4 @@ fi
 
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
-lx_info "Done"
+l_info "Done"

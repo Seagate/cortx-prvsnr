@@ -17,19 +17,19 @@ cluster:
     network:
       mgmt_nw:                        # Management network interfaces
         iface:
-          - eno1
+          - eth0
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
+          - eth2                # Public Data
+          - eth1                # Private Data (direct connect)
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
-        roaming_ip: 192.168.0.3       # Applies to private data network                                      
+        pvt_ip_addr:               # Fixed IP of Private Data Network 
+        roaming_ip:                # Applies to private data network                                      
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
