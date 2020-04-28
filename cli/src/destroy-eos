@@ -79,7 +79,6 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       -S,  --singlenode               switch to single node mode setup
        --ha-states       run only teardown of ha components
        --iopath-states   run only teardown of iopath components
        --ctrlpath-states run only teardown of control path components
@@ -93,9 +92,6 @@ function options_parser {
     set -eu
 
     case "$1" in
-        -S|--singlenode)
-            singlenode=true
-            ;;
         --ha-states)
             run_ha_states=true
             run_all=false
@@ -134,20 +130,10 @@ function teardown_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker"
-                || "$state" == "ha.ees_ha"
-                || "$state" == "post_setup"
-                ]]; then
-                l_info "HA state 'components.$state.teardown' not to be applied for single node setup"
-            else
-                l_info "Applying 'components.$state.teardown'"
-                if [[ "$state" == "hare" ]]; then
-                    l_info "Shutting down cluster"
-                    hctl shutdown || true
-                fi
-                $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts || true
-                sleep 2     # Mindfulness break
-            fi
+            l_info "Removing $state"
+            $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts
+
+            sleep 2     # Mindfulness break
         done
     else
         for state in ${states[@]}; do
@@ -175,7 +161,7 @@ function teardown_states {
     fi
 }
 
-parse_args 'S' 'singlenode,ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
+parse_args '' 'ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -234,24 +220,18 @@ if [[ "$run_all" == true || "$run_ha_states" == true ]]; then
     l_info "Cleaning up the failed-services on both nodes"
     systemctl list-units --state=running | grep hare-consul-agent &&
         systemctl stop hare-consul-agent || true
-    if [[ "$singlenode" != true ]]; then
-        ssh eosnode-2 " systemctl list-units --state=running | grep\
-            hare-consul-agent && systemctl stop hare-consul-agent" || true
-    fi
+    ssh eosnode-2 " systemctl list-units --state=running | grep\
+        hare-consul-agent && systemctl stop hare-consul-agent" || true
 fi
 
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
-    hostnamectl status | grep Chassis | grep -q server && {
-        salt '*' cmd.run "/usr/sbin/partprobe /dev/disk/by-id/dm-name-mpath*" || true
-    }
     l_info "Removing eos-prvsnr package from both nodes"
     salt '*' pkg.remove eos-prvsnr || true
-    salt '*' file.absent  || true
-    if [[ "$singlenode" != true ]]; then
-        l_info "Removing prvsnr-cli and salt packages from node-2"
-        ssh eosnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; rm -rf /etc/salt; rm -rf /opt/seagate"
-    fi
+
+    l_info "Removing salt packages from node-2"
+    ssh eosnode-2 "yum remove -y salt* || true; rm -rf /etc/salt"
+
     l_info "Removing salt packages from node-1"
     yum remove -y salt* || true
     rm -rf /etc/salt;
