@@ -254,6 +254,9 @@ def test_eosupdate_run_happy_path(patch_logging, mocker, mock_eosupdate):
     # happy path
     commands.EOSUpdate().run('some-target')
     expected_calls = [
+        calls['StatesApplier'].apply(
+            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        ),
         calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
         calls['cluster_maintenance_enable'](),
@@ -289,6 +292,9 @@ def test_eosupdate_run_maintenance_enable_failed(
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is None
     expected_calls = [
+        calls['StatesApplier'].apply(
+            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        ),
         calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
         calls['cluster_maintenance_enable'](),
@@ -340,6 +346,9 @@ def test_eosupdate_run_sw_stack_update_failed(
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is rollback_error
     expected_calls = [
+        calls['StatesApplier'].apply(
+            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        ),
         calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
         calls['cluster_maintenance_enable'](),
@@ -400,6 +409,9 @@ def test_eosupdate_run_maintenance_disable_failed(
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is rollback_error
     expected_calls = [
+        calls['StatesApplier'].apply(
+            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        ),
         calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
         calls['cluster_maintenance_enable'](),
@@ -479,6 +491,9 @@ def test_eosupdate_run_post_rollback_fail(
     assert exc.rollback_error is post_rollback_exc
 
     expected_calls = [
+        calls['StatesApplier'].apply(
+            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        ),
         calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
         calls['cluster_maintenance_enable'](),
@@ -496,6 +511,14 @@ def test_eosupdate_run_post_rollback_fail(
     expected_calls.extend([
         calls[stage]() for stage in post_rollback_stages[:(_idx + 1)]
     ])
+
+    # TODO IMPROVE
+    if post_rollback_stages[_idx] == 'cluster_maintenance_disable':
+        expected_calls.insert(
+            -1, calls['StatesApplier'].apply(
+                ["components.provisioner.config"], 'some-target'
+            )
+        )
 
     assert mock_manager.mock_calls == expected_calls
 

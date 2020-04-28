@@ -5,11 +5,10 @@ PRVSNR_ROOT_DIR = Path('/opt/seagate/eos-prvsnr')
 # reflects master file_roots configuration
 PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_USER_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv_user'
-PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR = (
-    PRVSNR_USER_FILEROOTS_DIR / 'misc_pkgs/eosupdate/repo/files'
-)
-PRVSNR_USER_FILES_SSL_CERTS_FILE = (
-    PRVSNR_USER_FILEROOTS_DIR / 'components/misc_pkgs/ssl_certs/files/stx.pem'
+#    relative paths
+PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR = Path('misc_pkgs/eosupdate/repo/files')
+PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
+    'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
 
 # reflects pillar/top.sls
