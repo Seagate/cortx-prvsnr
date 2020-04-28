@@ -1,0 +1,107 @@
+#!/bin/sh
+
+
+function get_pillar_data {
+    local l_key=${1:-}
+
+    if [[ $# -gt 1 ]]; then
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        exit 2
+    elif [[ $# -eq 0 ]]; then
+        echo "[ERROR] $0: This function expects an argument."
+        exit 1
+    fi
+
+    local l_val=$(salt-call pillar.get ${l_key} --output=newline_values_only)
+    echo ${l_val}
+}
+
+#   shutdown_node.
+#
+#   Prerequisites:
+#       - SaltStack is available.
+#
+#   Args:
+#       node: One of the following:
+#           `node1` - Shutdown eosnode-1
+#           `node2` - Shutdown eosnode-2
+#           `both`  - Shutdown both nodes
+#
+function shutdown_node {
+      set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _node="${1:-both}"
+
+    if [[ $# -gt 1 ]]; then
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        exit 2
+    fi
+
+    if [[ "$_node" != "node1" && "$_node" != "node2" && "$_node" != "both" ]]; then
+        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument."
+        exit 1
+    fi
+
+    if [[ "$_node" == "node1" ]]; then
+        salt eosnode-1 system.shutdown 5 --async
+    elif [[ "$_node" == "node2" ]]; then
+        salt eosnode-2 system.shutdown 5 --async
+    else
+        salt "*" system.shutdown 5 --async
+    fi
+}
+
+#   shutdown_controller.
+#
+#   Prerequisites:
+#       - SaltStack is available.
+#
+#   Args:
+#       node: One of the following:
+#           `a` - Shutdown Controller-A
+#           `b` - Shutdown Controller-B
+#           `both`  - Shutdown both nodes
+#
+function shutdown_controller {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _node="${1:-both}"
+
+    if [[ $# -gt 1 ]]; then
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        exit 2
+    fi
+
+    if [[ "$_node" != "a" && "$_node" != "b" && "$_node" != "both" ]]; then
+        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument."
+        exit 1
+    fi
+
+    local ctrl_cli="/opt/seagate/eos-prvsnr/srv/components/controller/files/scripts/controller-cli.sh"
+    
+    local ctrl_user=$(get_pillar_data storage_enclosure:controller:user)
+    local ctrl_secret=$(get_pillar_data storage_enclosure:controller:secret)
+    local ctrl_ip=$(get_pillar_data storage_enclosure:controller:primary_mc:ip)
+    if [[ "$(salt-call grains.get id --output=newline_values_only)" == "eosnode-2" ]]; then
+        ctrl_ip=$(get_pillar_data storage_enclosure:controller:secondary_mc:ip)
+    fi
+
+    if [[ "$_node" == "node1" ]]; then
+        ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --restart-ctrl a
+        # ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --shutdown-ctrl a
+    elif [[ "$_node" == "node2" ]]; then
+        ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --restart-ctrl a
+        # ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --shutdown-ctrl a
+    else
+        ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --restart-ctrl
+        # ${ctrl_cli} host -h "${ctrl_ip}" -u "${ctrl_user}" -p "${ctrl_secret}" --shutdown-ctrl
+    fi
+}
