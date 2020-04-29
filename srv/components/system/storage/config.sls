@@ -43,7 +43,7 @@ Create OS partition:
       - part_type: primary
       - fs_type: ext2
       - start: 1GB
-      - end: 1TB
+      - end: 5%
 
 # /var/crash (not under RAID or LVM control; size ~1TB; note: this is partition #4)
 Create var_crash partition:
@@ -52,8 +52,8 @@ Create var_crash partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext2
-      - start: 1TB
-      - end: 2TB
+      - start: 6%
+      - end: 10%
 # done with the OS partitions
 
 # Create partition for SWAP (note: this is partition #5)
@@ -63,7 +63,7 @@ Create swap partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: linux-swap
-      - start: 2TB
+      - start: 11%
       - end: 50%
 
 # Create partition for Metadata (note: this is partition #6)
@@ -73,7 +73,7 @@ Create metadata partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext4
-      - start: 50%
+      - start: 51%
       - end: 100%
 
 # Begin partitioning
