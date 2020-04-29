@@ -21,13 +21,6 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-Start multipath service:
-  service.running:
-    - name: multipathd.service
-    - enable: True
-    - watch:
-      - file: Copy multipath config
-
 {% if not pillar['cluster'][grains['id']]['is_primary'] -%}
 {%- for node_id in pillar['cluster']['node_list'] -%}
 {%- if pillar['cluster'][node_id]['is_primary'] %}
@@ -38,6 +31,13 @@ Copy multipath bindings to non-primary:
 {%- endif %}
 {% endfor %}
 {%- endif %}
+
+Start multipath service:
+  service.running:
+    - name: multipathd.service
+    - enable: True
+    - watch:
+      - file: Copy multipath config
 
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 Update cluster.sls pillar:
