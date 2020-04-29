@@ -13,7 +13,7 @@ Remove haproxy 503 error code to http file:
 
 Remove haproxy config to enable logs:
   file.absent:
-    - name: /etc/rsyslog.d/haproxy.conf
+    - name: /etc/rsyslog.d/2-haproxy.conf
 
 Remove logrotate config for haproxy to run hourly:
   file.absent:
