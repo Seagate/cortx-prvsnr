@@ -105,12 +105,14 @@ Make ROOT RAID:
       - module: Create OS partition
 
 # Create /var/crash
-Format xfs on var_crash partition:
+Make var_crash partition:
   module.run:
-    - xfs.mkfs:
+    - extfs.mkfs:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
-    - require:
-      - module: Create var_crash partition
+      - fs_type: ext4
+      - label: varcrash
+      - require:
+        - module: Create var_crash partition
 
 # Format SWAP
 Make SWAP partition:
