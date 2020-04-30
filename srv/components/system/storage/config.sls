@@ -195,7 +195,7 @@ Refresh partition:
     - partition.probe: []
 
 # Refresh
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if 'ees' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
 Update partition tables of both nodes:
   cmd.run:
     - name: sleep 10; timeout -k 10 30 partprobe || true; ssh eosnode-2 "timeout -k 10 30 partprobe || true"
