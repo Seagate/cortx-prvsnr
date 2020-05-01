@@ -1,3 +1,2 @@
-provisioner:
-    support_bundle:
-        - /opt/seagate/eos-prvsnr/cli/provisioner-bundler
+support_bundle:
+    - /opt/seagate/eos-prvsnr/cli/provisioner-bundler
