@@ -147,4 +147,6 @@ def health_map_schema(healthmap_path = "/opt/seagate/eos-prvsnr/generated_config
   node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].update(node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"])
   local.cmd('*', 'file.mkdir',[str(Path(healthmap_path).parent)])
   local.cmd('*', 'file.write', [healthmap_path, json.dumps(node1_data, indent=4)])
+  # TODO use salt formulas, CSM suggested to have 777 permission just for hotfix
+  local.cmd('*', 'cmd.run', ['chmod 777 {}'.format(healthmap_path)])
   return True
