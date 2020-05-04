@@ -68,6 +68,7 @@ controlpath_states=(
         "csm"
         "uds"
         "post_setup"
+        "ha.cortx-ha"
     )
 
 function usage {

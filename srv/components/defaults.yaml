@@ -54,6 +54,11 @@ hare:
     id: "hare"
     url: {{ repo_url }}
 
+cortx_ha:
+  repo:
+    id: "cortx-ha"
+    url: {{ repo_url }}
+
 s3server:
   repo:
     id: "s3server"
