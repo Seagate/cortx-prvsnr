@@ -1,7 +1,12 @@
 #!/bin/bash
 
 cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-log_file="$LOG_FILE"
+log_file="${LOG_FILE:-/dev/null}"
+
+if [[ ! -e "$log_file" ]]; then
+    mkdir -p $(dirname "${log_file}")
+    touch "${log_file}"
+fi
 
 # rpm package places scripts in parent folder
 if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
@@ -115,10 +120,12 @@ function log {
 
         if [[ "$_error" == true ]]; then
             # Echo message to stderr
-            echo "$_message" >> "$LOG_FILE"
+            # TODO IMPROVE one-line command
+            >&2 echo "$_message"
+            echo "$_message" >> "$log_file"
             logger -t PRVSNR -is "$_message"
         else
-            echo "$_message" | tee -a "$LOG_FILE"
+            echo "$_message" | tee -a "$log_file"
         fi
     fi
 }
@@ -700,7 +707,7 @@ function install_repos {
 ! read -r -d '' _script << EOF
     set -eu
     mkdir -p $(dirname "${log_file}")
-    /usr/bin/true > ${log_file}
+    /usr/bin/true > "${log_file}"
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
@@ -1100,7 +1107,7 @@ fi
             if git remote show origin ; then
                 git remote remove origin
             fi
-            
+
             git remote add origin ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git
             git fetch origin
             git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
@@ -1333,50 +1340,50 @@ function accept_salt_key {
     fi
 
     try=1
-    echo -e "\\nINFO: waiting for minion $_id to become connected to master" | tee -a "$log_file"
+    echo -e "\\nINFO: waiting for minion $_id to become connected to master"
     until salt-key --list-all | grep $_id >/dev/null 2>&1
     do
         if [[ "\$try" -gt "$_timeout" ]]; then
-            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds." | tee -a "$log_file" >&2
+            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds."
             salt-key --list-all >&2
             exit 1
         fi
-        echo -n "." | tee -a "$log_file"
+        echo -n "."
         try=\$(( \$try + 1 ))
         sleep 1
     done
-    echo -e "\\nINFO: Key $_id is connected." | tee -a "$log_file"
+    echo -e "\\nINFO: Key $_id is connected."
 
     # minion is connected but does not need acceptance
     if [[ -z "\$(salt-key --list unaccepted | grep $_id 2>/dev/null)" ]]; then
-        echo -e "\\nINFO: no key acceptance is needed for minion $_id." | tee -a "$log_file" >&2
+        echo -e "\\nINFO: no key acceptance is needed for minion $_id."
         salt-key --list-all >&2
         exit 0
     fi
 
     salt-key -y -a $_id
-    echo -e "\\nINFO: Key $_id is accepted." | tee -a "$log_file"
+    echo -e "\\nINFO: Key $_id is accepted."
 
     # TODO move that to a separate API
-    echo -e "\\nINFO: waiting for minion $_id to become ready" | tee -a "$log_file"
+    echo -e "\\nINFO: waiting for minion $_id to become ready"
     try=1; tries=10
     until salt -t 1 $_id test.ping >/dev/null 2>&1
     do
         if [[ "\$try" -gt "\$tries" ]]; then
-            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks." | tee -a "$log_file" >&2
+            echo -e "\\nERROR: minion $_id seems still not ready after \$tries checks."
             exit 1
         fi
-        echo -n "." | tee -a "$log_file"
+        echo -n "."
         try=\$(( \$try + 1 ))
     done
-    echo -e "\\nINFO: Minion $_id started." | tee -a "$log_file"
+    echo -e "\\nINFO: Minion $_id started." 
 EOF
 
     if [[ -n "$_hostspec" ]]; then
         _script="'$_script'"
     fi
 
-    $_cmd bash -c "$_script"
+    $_cmd bash -c "$_script" 2>&1| tee -a "$log_file"
 }
 
 
@@ -1735,7 +1742,7 @@ EOF
         _script="'$_script'"
     fi
 
-    $_cmd bash -c "$_script"
+    $_cmd bash -c "$_script" 2>&1| tee -a "$log_file"
 }
 
 #   set_cluster_id <cluster_id> <hostspec> [<ssh-config> [<sudo> ]]
@@ -1774,13 +1781,13 @@ function set_cluster_id {
     local _installdir="${5:-/opt/seagate/eos-prvsnr}"
 
     if [[ -z "$_cluster_uuid" ]]; then
-        l_error "Set cluster ID cannot be set as black on $_hostspec"
+        l_error "Set cluster ID cannot be set as blank on $_hostspec"
         exit 1
     fi
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Set cluster ID on $_hostspec"
+    l_info "Set cluster ID (${_cluster_uuid}) on $_hostspec"
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -1792,11 +1799,13 @@ function set_cluster_id {
     pushd "$_installdir"
         if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/cluster_id" ]]; then
             mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
-            echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
         fi
+        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
 
         if [[ -z "\$(grep "cluster_id" /etc/salt/grains 2>/dev/null)" ]]; then
             cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id >> /etc/salt/grains
+        else
+            sed -i "s/cluster_id:.*/cluster_id: ${_cluster_uuid}/g" /etc/salt/grains
         fi
 
         systemctl enable salt-minion
@@ -1812,10 +1821,13 @@ EOF
 }
 
 
-
 #   configure_provisioner_api_logs [<hostspec> [<ssh-config> [<sudo> [<insrallation-dir>]]]]
 #
-#   Configures rsyslog to capture provisioner logs in custom log file i.e /var/log/provisioner/prvsnr.log
+#   Configures rsyslog to capture provisioner logs in custom log file
+#
+#   TODO IMPROVE this function is not necessary since we have
+#        components.provisioner.config for the same logic,
+#        should be a part of salt based provisioner configuration
 #
 #   Args:
 #       hostspec: remote host specification in the format [user@]hostname.
@@ -1841,9 +1853,6 @@ function configure_provisioner_api_logs {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    local _prvsnrfwd_conf_src
-    _prvsnrfwd_conf_src="$_installdir/files/syslogconfig/prvsnrfwd.conf"
-
     l_info "Configuring rsyslog to capture provsioner api logs '$_hostspec'"
 
 ! read -r -d '' _script << EOF
@@ -1853,13 +1862,11 @@ function configure_provisioner_api_logs {
         set -x
     fi
 
-    #Install rsyslog
+    # TODO IMPROVE seems not necessary here
+    # Install rsyslog
     yum -y install rsyslog
 
-    #Add /etc/rsyslog.d/prvsnrfwd.conf and restart rsyslog
-    cp "$_prvsnrfwd_conf_src" /etc/rsyslog.d/2-prvsnrfwd.conf
-    systemctl restart rsyslog && systemctl enable rsyslog
-
+    salt-call state.apply components.provisioner.config
 EOF
 
     if [[ -n "$_hostspec" ]]; then

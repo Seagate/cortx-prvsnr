@@ -22,6 +22,7 @@ tests_require = [
     'flake8==3.7.8',
     'pytest-xdist==1.29.0',
     'pytest-timeout==1.3.4',
+    'pytest-mock==3.1.0',
 ]
 
 packages = ['provisioner']

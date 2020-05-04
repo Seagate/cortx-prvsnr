@@ -115,7 +115,7 @@ Format xfs on var_crash partition:
 # Format SWAP
 Make SWAP partition:
   cmd.run:
-    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5 && sleep 5
+    - name: mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5 && sleep 5
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
     - require:
       - module: Create swap partition
@@ -195,7 +195,7 @@ Refresh partition:
     - partition.probe: []
 
 # Refresh
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if 'ees' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
 Update partition tables of both nodes:
   cmd.run:
     - name: sleep 10; timeout -k 10 30 partprobe || true; ssh eosnode-2 "timeout -k 10 30 partprobe || true"

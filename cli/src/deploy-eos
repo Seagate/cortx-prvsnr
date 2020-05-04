@@ -7,17 +7,17 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-export LOG_FILE=/opt/seagate/cortx/eos-prvsnr/log/deploy-eos.log
-mkdir -p $(dirname "${LOG_FILE}")
-/usr/bin/true > ${LOG_FILE}
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+export LOG_FILE
 
 . $BASEDIR/functions.sh
 
 function trap_handler {
   echo "For detailed error logs, please see: $LOG_FILE"
-} 
+}
 
 run_all=true
+run_system_states=false
 run_prereq_states=false
 run_io_states=false
 run_ha_states=false
@@ -27,13 +27,13 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.storage.multipath"
+         "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"
         "system.logrotate"
         "system.ntp"
-        "system.storage"
     )
 
 prereq_states=(
@@ -81,11 +81,12 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       -S,  --singlenode               switch to single node mode setup
+       -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
        --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
+       --system-states             deploy only system states
 "
 }
 
@@ -96,6 +97,10 @@ function options_parser {
     case "$1" in
         -S|--singlenode)
             singlenode=true
+            ;;
+        --system-states)
+            run_system_states=true
+            run_all=false
             ;;
         --prereq-states)
             run_prereq_states=true
@@ -127,24 +132,17 @@ function run_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker"
-                || "$state" == "ha.ees_ha"
-                || "$state" == "post_setup"
-                ]]; then
-                l_info "HA state 'components.$state' not to be applied for single node setup"
-            else
-                l_info "Applying 'components.$state'"
-                $cmd salt eosnode-1 state.apply components.$state $salt_opts
-                if [[ "$state" == "hare" ]]; then
-                    l_info "Bootstraping cluster"
-                    hctl bootstrap --mkfs /var/lib/hare/cluster.yaml 
-                fi
-                sleep 2     # Mindfulness break
-            fi
+            l_info "Applying 'components.$state'"
+            $cmd salt eosnode-1 state.apply components.$state $salt_opts
+            sleep 2     # Mindfulness break
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
+            if [[ "$state" == "ha.corosync-pacemaker" 
+                || "$state" == "system.storage" 
+                || "$state" == "sspl"
+                || "$state" == "csm"
+                ]]; then
                 # Execute first on eosnode-2 then on eosnode-1.
                 l_info "Applying 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
@@ -187,13 +185,7 @@ function encrypt_pillar {
     update_salt
 }
 
-function install_eos_utils {
-    l_info "Installing eos-py-utils"
-    salt '*' state.apply components.system.prepare $salt_opts
-    salt '*' state.apply components.system.install $salt_opts
-}
-
-parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states' options_parser '' "$@"
+parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -207,16 +199,25 @@ if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
+
 update_salt
-install_eos_utils
-encrypt_pillar
 
 if [[ "$run_all" == true ]]; then
+    salt "*" cmd.run "rescan-scsi-bus.sh || true"
     run_states "${system_states[@]}"
+    encrypt_pillar
+
     run_states "${prereq_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${controlpath_states[@]}"
+fi
+
+if [[ "$run_system_states" == true ]]; then
+    l_info "Deploying the system states"
+    salt "*" cmd.run "rescan-scsi-bus.sh || true"
+    run_states "${system_states[@]}"
+    encrypt_pillar
 fi
 
 if [[ "$run_prereq_states" == true ]]; then
@@ -244,5 +245,6 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
+l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

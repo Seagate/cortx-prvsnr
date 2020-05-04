@@ -507,8 +507,13 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 
 # TODO test
-def cmd_run(cmd, targets=ALL_MINIONS):
-    return function_run('cmd.run', fun_args=[cmd], targets=targets)
+def cmd_run(cmd, targets=ALL_MINIONS, background=False):
+    return function_run(
+        'cmd.run',
+        fun_args=[cmd],
+        fun_kwargs=dict(bg=background),
+        targets=targets
+    )
 
 
 # TODO TEST

@@ -56,8 +56,10 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         return salt_cmd_res
 
     monkeypatch.setattr(
-        salt, '_salt_runner_client',
-        generate_salt_client_mock(cmd, functools.partial(cmd, _async=True))()
+        salt, 'salt_runner_client',
+        lambda: generate_salt_client_mock(
+            cmd, functools.partial(cmd, _async=True)
+        )()
     )
 
     # TEST ARGS PASSED
@@ -264,8 +266,10 @@ def test_salt_client_cmd(monkeypatch):
         return salt_cmd_res
 
     monkeypatch.setattr(
-        salt, '_salt_local_client',
-        generate_salt_client_mock(cmd, functools.partial(cmd, _async=True))()
+        salt, 'salt_local_client',
+        lambda: generate_salt_client_mock(
+            cmd, functools.partial(cmd, _async=True)
+        )()
     )
 
     # TEST ARGS PASSED
@@ -617,6 +621,7 @@ def test_salt_cmd_run(monkeypatch):
             dict(
                 fun_args=[cmd],
                 targets=targets,
+                fun_kwargs=dict(bg=False)
             )
         )
     ]

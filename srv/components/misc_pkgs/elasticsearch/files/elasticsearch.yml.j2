@@ -14,13 +14,13 @@
 #
 # Use a descriptive name for your cluster:
 #
-cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
+#cluster.name: my-application
 #
 # ------------------------------------ Node ------------------------------------
 #
 # Use a descriptive name for the node:
 #
-node.name: {{ grains['id'] }}
+#node.name: node-1
 #
 # Add custom attributes to the node:
 #
@@ -30,11 +30,11 @@ node.name: {{ grains['id'] }}
 #
 # Path to directory where to store the data (separate multiple locations by comma):
 #
-path.data: /var/lib/elasticsearch
+#path.data: /var/lib/elasticsearch
 #
 # Path to log files:
 #
-path.logs: /var/log/elasticsearch
+#path.logs: /var/log/elasticsearch
 #
 # ----------------------------------- Memory -----------------------------------
 #
@@ -52,26 +52,26 @@ path.logs: /var/log/elasticsearch
 #
 # Set the bind address to a specific IP (IPv4 or IPv6):
 #
-network.host: {{ pillar["elasticsearch"]["network_host"] }}
+#network.host: 192.168.0.1
 #
 # Set a custom port for HTTP:
 #
-http.port: {{ pillar["elasticsearch"]["http_port"] }}
+#http.port: 9200
 #
 # For more information, consult the network module documentation.
 #
 # --------------------------------- Discovery ----------------------------------
 #
-# Pass an initial list of hosts to perform discovery when this node is started:
+# Pass an initial list of hosts to perform discovery when new node is started:
 # The default list of hosts is ["127.0.0.1", "[::1]"]
 #
-discovery.seed_hosts: {{ pillar['cluster']['node_list'] }} 
+#discovery.zen.ping.unicast.hosts: ["host1", "host2"]
 #
-# Bootstrap the cluster using an initial set of master-eligible nodes:
+# Prevent the "split brain" by configuring the majority of nodes (total number of master-eligible nodes / 2 + 1):
 #
-cluster.initial_master_nodes: {{ pillar['cluster']['node_list'] }}
+#discovery.zen.minimum_master_nodes:
 #
-# For more information, consult the discovery and cluster formation module documentation.
+# For more information, consult the zen discovery module documentation.
 #
 # ---------------------------------- Gateway -----------------------------------
 #
@@ -86,3 +86,11 @@ cluster.initial_master_nodes: {{ pillar['cluster']['node_list'] }}
 # Require explicit names when deleting indices:
 #
 #action.destructive_requires_name: true
+
+cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
+network.host: {{ pillar['elasticsearch']['network_host'] }}
+http.port: {{ pillar['elasticsearch']['http_port'] }}
+discovery.zen.ping.unicast.hosts: {{ pillar['cluster']['node_list'] }}
+discovery.zen.minimum_master_nodes: 1
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch

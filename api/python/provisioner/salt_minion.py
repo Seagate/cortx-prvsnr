@@ -78,6 +78,7 @@ def config_salt_minions(targets=ALL_MINIONS):
             tries=10, wait=1
         )
 
-    # Note. sync_all in a state doesn't work as expected even following the salt docs
+    # Note. sync_all in a state doesn't work as expected even
+    # following the salt docs
     # https://docs.saltstack.com/en/latest/ref/modules/all/salt.modules.saltutil.html#salt.modules.saltutil.sync_all
     function_run('saltutil.sync_all', targets=targets)

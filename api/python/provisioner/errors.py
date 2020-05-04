@@ -74,7 +74,7 @@ class EOSUpdateRepoSourceError(ProvisionerError, ValueError):
 
     def __str__(self):
         return (
-            'repo source {} is not acceptable, reason: {}'
+            'repo source {} is not acceptable, reason: {!r}'
             .format(self.source, self.reason)
         )
 
@@ -93,6 +93,47 @@ class PrvsnrCmdNotFinishedError(ProvisionerError):
 
 
 # TODO TEST
+class ClusterMaintenanceError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, enable: bool, reason: Union[Exception, str]):
+        self.enable = enable
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to {} cluster maintenance, reason: {!r}'
+            .format('enable' if self.enable else 'disable', self.reason)
+        )
+
+
+# TODO TEST
+class ClusterMaintenanceEnableError(ClusterMaintenanceError):
+    def __init__(self, reason: Union[Exception, str]):
+        super().__init__(True, reason)
+
+
+# TODO TEST
+class ClusterMaintenanceDisableError(ClusterMaintenanceError):
+    def __init__(self, reason: Union[Exception, str]):
+        super().__init__(False, reason)
+
+
+# TODO TEST
+class SWStackUpdateError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to update SW stack, reason: {!r}'
+            .format(self.reason)
+        )
+
+
+# TODO TEST
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -102,12 +143,20 @@ class SWUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'update failed: {}, rollback status {}'
-            .format(
-                self.reason,
-                (
-                    'done' if self.rollback_error is None
-                    else repr(self.rollback_error)
-                )
-            )
+            'update failed: {!r}'.format(self)
         )
+
+    def __repr__(self):
+        return (
+            "{}(reason={!r}, rollback_error={!r})"
+            .format(self.__class__.__name__, self.reason, self.rollback_error)
+        )
+
+
+# TODO TEST
+class SWUpdateFatalError(SWUpdateError):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return "FATAL: {}".format(super().__str__())

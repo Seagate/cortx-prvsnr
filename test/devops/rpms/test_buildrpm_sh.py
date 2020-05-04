@@ -14,59 +14,15 @@ RPM_CLI_CONTENT_PATHS = [
 ]
 
 
-def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
-    pass
+def check_provisioner_api_installation(mhost, api_version=None):
+    if api_version is None:
+        api_version = provisioner.__version__
 
-
-@pytest.mark.isolated
-@pytest.mark.env_level('base')
-def test_rpm_prvsnr_depends_on_salt_2019_2_0(mhost):
-    depends = mhost.check_output('rpm -qpR {}'.format(mhost.rpm_prvsnr))
-    assert 'salt-master = 2019.2.0\n' in depends
-    assert 'salt-minion = 2019.2.0\n' in depends
-
-
-@pytest.mark.isolated
-@pytest.mark.env_level('salt-installed')
-def test_rpm_prvsnr_installation(mhost, mlocalhost):
-    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
-
-    # check paths that were installed
-    excluded = ['-name "{}"'.format(e) for e in h.REPO_BUILD_DIRS]
-    expected = mlocalhost.check_output(
-        "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
-        .format(
-            mlocalhost.repo,
-            ' '.join(RPM_CONTENT_PATHS),
-            ' -o '.join(excluded)
-        )
-    ).split()
-
-    excluded = [
-        '-name "{}"'.format(e) for e in ['__pycache__', '*.pyc', '*.pyo']
-    ]
-    installed = mhost.check_output(
-        "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
-        .format(
-            h.PRVSNR_REPO_INSTALL_DIR,
-            ' '.join(RPM_CONTENT_PATHS),
-            ' -o '.join(excluded)
-        )
-    ).split()
-
-    diff_expected = set(expected) - set(installed)
-    diff_installed = set(installed) - set(expected)
-    assert not diff_expected
-    assert not diff_installed
-
-    # check post install sections
-    # TODO check salt config files replacement
-    #   check that api is installed into python env and have proper version
     pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
     assert provisioner.__title__ in pip_packages
     assert pip_packages[provisioner.__title__][
         'version'
-    ] == provisioner.__version__
+    ] == api_version
 
     #   check that prvsnrusers groups is created
     assert mhost.host.group(PRVSNRUSERS_GROUP).exists
@@ -128,6 +84,57 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     )
 
 
+def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
+    pass
+
+
+@pytest.mark.isolated
+@pytest.mark.env_level('base')
+def test_rpm_prvsnr_depends_on_salt_2019_2_0(mhost):
+    depends = mhost.check_output('rpm -qpR {}'.format(mhost.rpm_prvsnr))
+    assert 'salt-master = 2019.2.0\n' in depends
+    assert 'salt-minion = 2019.2.0\n' in depends
+
+
+@pytest.mark.isolated
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_installation(mhost, mlocalhost):
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+
+    # check paths that were installed
+    excluded = ['-name "{}"'.format(e) for e in h.REPO_BUILD_DIRS]
+    expected = mlocalhost.check_output(
+        "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
+        .format(
+            mlocalhost.repo,
+            ' '.join(RPM_CONTENT_PATHS),
+            ' -o '.join(excluded)
+        )
+    ).split()
+
+    excluded = [
+        '-name "{}"'.format(e) for e in ['__pycache__', '*.pyc', '*.pyo']
+    ]
+    installed = mhost.check_output(
+        "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
+        .format(
+            h.PRVSNR_REPO_INSTALL_DIR,
+            ' '.join(RPM_CONTENT_PATHS),
+            ' -o '.join(excluded)
+        )
+    ).split()
+
+    diff_expected = set(expected) - set(installed)
+    diff_installed = set(installed) - set(expected)
+    assert not diff_expected
+    assert not diff_installed
+
+    # check post install sections
+    # TODO check salt config files replacement
+    #   check that api is installed into python env and have proper version
+    check_provisioner_api_installation(mhost)
+
+
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_removal(mhost, mlocalhost):
@@ -176,6 +183,38 @@ def test_rpm_prvsnr_reinstall_retains_configuration(
     cluster_config_dict_new = yaml.safe_load(cluster_config_str)
 
     assert cluster_config_dict_new == cluster_config_dict
+
+
+@pytest.mark.isolated
+@pytest.mark.verifies('EOS-7327')
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_provioner_is_available_after_update(
+    mhost, mlocalhost, tmpdir_function, rpm_build, request
+):
+    version = provisioner.__version__
+    parts = version.split('.')
+    parts[0] = str(int(parts[0]) + 1)
+    new_version = '.'.join(parts)
+
+    def mhost_init_cb(mhost):
+        mhost.check_output(
+            "sed -i 's/__version__ = .*/__version__ = \"{}\"/g' {}"
+            .format(
+                new_version,
+                mhost.repo / 'api/python/provisioner/__metadata__.py'
+            )
+        )
+
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+
+    new_rpm = rpm_build(
+        request, tmpdir_function,
+        mhost_init_cb=mhost_init_cb, cli=False, release_number=2
+    )
+    new_rpm_remote = mhost.copy_to_host(new_rpm)
+
+    mhost.check_output('yum install -y {}'.format(new_rpm_remote))
+    check_provisioner_api_installation(mhost, api_version=new_version)
 
 
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):

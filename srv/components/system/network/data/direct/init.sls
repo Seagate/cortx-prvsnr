@@ -20,7 +20,9 @@ Public direct network:
     - userctl: no
     - onboot: yes
     - userctl: no
+{% if "physical" in grains['virtual'] %}
     - mtu: 9000
+{% endif %}
     - defroute: no
 {% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
     - proto: none
@@ -28,6 +30,9 @@ Public direct network:
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
+{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
+{% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}
@@ -43,7 +48,9 @@ Private direct network:
     - onboot: yes
     - defroute: no
     - nm_controlled: no
+{% if "physical" in grains['virtual'] %}
     - mtu: 9000
+{% endif %}
     - peerdns: no
     - userctl: no
     - prefix: 24

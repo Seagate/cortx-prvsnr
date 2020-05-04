@@ -2,6 +2,7 @@ import pytest
 import json
 import yaml
 import logging
+import functools
 
 import test.helper as h
 
@@ -16,6 +17,15 @@ def env_level():
 @pytest.fixture(scope='module')
 def script_name():
     return 'setup-provisioner'
+
+
+@pytest.fixture
+def run_script(run_script, tmpdir_function):
+    return functools.partial(
+        run_script, env=dict(
+            LOG_FILE='{}'.format(tmpdir_function / 'setup-provisioner.log')
+        )
+    )
 
 
 @pytest.fixture
@@ -160,6 +170,7 @@ def test_setup_provisioner_singlenode(
 
     res = run_script(
         "-v {} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
+        trace=True,
         mhost=(mlocalhost if remote else mhost)
     )
     assert res.rc == 0

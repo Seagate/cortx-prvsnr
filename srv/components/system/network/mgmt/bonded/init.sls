@@ -1,4 +1,9 @@
-{%- if pillar['cluster'][grains['id']]['network']['gateway_ip'] %}
+{%- if (pillar['cluster'][node]['network']['mgmt_nw']['ipaddr']) and (not pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway']) %}
+Management network config failure:
+  test.fail_without_changes:
+    - name: Static network configuration in absense of Gateway IP would result in node inaccessibility.
+{% endif %}
+
 {% set node = grains['id'] %}
 
 Ensure bonding config for management bond:
@@ -28,6 +33,7 @@ Setup mgmt0 bonding:
     - enabled: True
     - nm_controlled: no
     - userctl: no
+    - defroute: yes
     # - slaves: em1 em2
     - mtu: 1500
     - mode: active-backup
@@ -38,15 +44,12 @@ Setup mgmt0 bonding:
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
+{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] }}
+{% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}
 
 include:
   - components.system.network.config
-
-{% else %}
-Management network config failure:
-  test.fail_without_changes:
-    - name: Network configuration in absense of Gateway IP results in node inaccessibility.
-{% endif %}

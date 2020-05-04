@@ -433,8 +433,11 @@ main()
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
         || "$shutdown_ctrl_opt" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
-        pass=`salt-call lyveutil.decrypt ${pass} cluster --output=newline_values_only`
+        pass=`salt-call lyveutil.decrypt ${pass} storage_enclosure --output=newline_values_only`
         echo "main(): decrypted password: $pass" >> $logfile
+        ssh_cred="$ssh_tool -p $pass"
+        ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
+        remote_cmd="$ssh_cred $ssh_cmd"
     fi
 
     [ "$prov_optparse_done" = true ] && do_provision
