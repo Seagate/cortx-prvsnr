@@ -7,7 +7,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos-vm.log}"
 export LOG_FILE
 
 . $BASEDIR/functions.sh
@@ -66,9 +66,9 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs EOS stack and configures eos services either on remote host or locally.
+Installs EOS stack and configures eos services either on VM environment.
 
-Target host is considered to be an EOS SaltStack master.
+Must be run from primary node for Dual node and from VM itself for single node.
 
 General options:
 $base_options_usage
@@ -119,37 +119,37 @@ function run_states {
     for state in ${states[@]}; do
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
-            l_info "Applying 'components.$state'"
+            l_info "Installing 'components.$state'"
             $cmd salt eosnode-1 state.apply components.$state $salt_opts
             sleep 2     # Mindfulness break
         else
             if [[ "$state" == "sspl" ]]; then
                 # Execute first on eosnode-2 then on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-2"
+                l_info "Installing 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-1"
+                l_info "Installing 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "misc_pkgs.openldap"
                 || "$state" == "misc_pkgs.rabbitmq"
                 ]]; then
                 # Execute first on eosnode-1 then on eosnode-2.
-                l_info "Applying 'components.$state' for eosnode-1"
+                l_info "Installing 'components.$state' for eosnode-1"
                 $cmd salt eosnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-2"
+                l_info "Installing 'components.$state' for eosnode-2"
                 $cmd salt eosnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
-                l_info "Applying 'components.$state' for both nodes"
-                $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+                l_info "Installing 'components.$state' for both nodes"
+                $cmd salt "*" state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
             fi
         fi
         if [[ "$state" == "hare" ]]; then
             l_info "Bootstraping cluster"
-            hctl bootstrap --mkfs /var/lib/hare/cluster.yaml
+            hctl bootstrap --mkfs /var/lib/hare/cluster.yaml >>$LOG_FILE 2>&1
         fi
 
     done

@@ -18,6 +18,7 @@ Merge healthschema:
   module.run:
     - sspl.health_map_schema:
       - healthmap_path: {{ pillar["sspl"]["healthmappath"] }}
+{% endif %}
 
 {% else %}
 Run Health Schema on minion:
