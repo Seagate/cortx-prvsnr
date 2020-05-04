@@ -31,6 +31,7 @@ Setup data0 bonding:
     - nm_controlled: no
     - userctl: no
     - mtu: 9000
+    - defroute: no
     - mode: 802.3ad
     - miimon: 100
     - lacp_rate: fast
@@ -41,6 +42,10 @@ Setup data0 bonding:
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
+{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
+{% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}
+

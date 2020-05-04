@@ -572,7 +572,6 @@ mine_interval: 60
 file_roots:
   base:
     - /opt/seagate/eos-prvsnr/srv
-    - /opt/seagate/ees-prvsnr/srv
 
 # Uncomment the line below if you do not want the file_server to follow
 # symlinks when walking the filesystem tree. This is set to True
@@ -615,7 +614,6 @@ file_roots:
 pillar_roots:
   base:
     - /opt/seagate/eos-prvsnr/pillar
-    - /opt/seagate/ees-prvsnr/pillar
 
 
 # Set a hard-limit on the size of the files that can be pushed to the master.
@@ -723,12 +721,12 @@ pillar_roots:
 # location. Remote logging works best when configured to use rsyslogd(8) (e.g.:
 # ``file:///dev/log``), with rsyslogd(8) configured for network logging. The URI
 # format is: <file|udp|tcp>://<host|socketpath>:<port-if-required>/<log-facility>
-log_file: /opt/seagate/cortx/eos-prvsnr/log/salt_minion.log
 #log_file: file:///dev/log
 #log_file: udp://loghost:10514
 #
 #log_file: /var/log/salt/minion
 #key_logfile: /var/log/salt/key
+log_file: /var/log/seagate/provisioner/salt_minion.log
 
 # The level of messages to send to the console.
 # One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.

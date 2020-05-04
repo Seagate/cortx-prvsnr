@@ -22,7 +22,7 @@ sed -i "s~mgmt_if: .*~mgmt_if: $mgmt_if~g" "$pillar_file_tmp"
 sed -i "s~data_if: .*~data_if: $data_if~g" "$pillar_file_tmp"
 sed -i "s~/dev/sdb.*~$mgmt_device~g" "$pillar_file_tmp"
 sed -i "s~/dev/sdc.*~$data_device~g" "$pillar_file_tmp"
-sed -i "s~gateway_ip: .*~gateway_ip: $default_gateway~g" "$pillar_file_tmp"
+sed -i "s~gateway: .*~gateway: $default_gateway~g" "$pillar_file_tmp"
 cat "$pillar_file_tmp"
 bash ./configure-eos -vv -f "$pillar_file_tmp" cluster
 

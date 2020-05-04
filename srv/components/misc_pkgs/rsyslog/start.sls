@@ -1,7 +1,7 @@
 include:
   - components.misc_pkgs.rsyslog.install
 
-Ensure rsyslog started:
+Start rsyslog:
   service.running:
     - name: rsyslog.service
     - enable: True

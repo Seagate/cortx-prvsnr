@@ -7,9 +7,8 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-export LOG_FILE=/var/log/seagate/provisioner/destroy-eos.log
-mkdir -p $(dirname "${LOG_FILE}")
-/usr/bin/true > ${LOG_FILE}
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos.log}"
+export LOG_FILE
 
 . $BASEDIR/functions.sh
 
@@ -239,17 +238,17 @@ if [[ "$remove_prvsnr" == true ]]; then
 
     sleep 2
     l_info "Removing remaining eos packages from node-2"
-    ssh eosnode-2 "for pkg in `rpm -qa | grep eos`; do\
-        echo 'INFO: Removing $pkg'; yum -q remove -y $pkg; done\
-        rm -rf /opt/seagate*"
+    ssh eosnode-2 'for pkg in `rpm -qa | grep eos`; do\
+        echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
+        rm -rf /opt/seagate*; rm -rf /root/.ssh/*'
 
     l_info "Removing remaining eos packages from node-1"
     for pkg in `rpm -qa | grep eos`; do\
-        echo 'INFO: Removing $pkg'; yum -q remove -y $pkg; done
+        echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done
 
-    l_info "Removing /opt/seagate directory"
-    rm -rf /opt/seagate
+    l_info "Removing /opt/seagate directory from node-1"
+    rm -rf /opt/seagate; rm -rf /root/.ssh/*
 fi
 
-l_info "The detailed logs can be seen at: $LOG_FILE"
+l_info "Success!! The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

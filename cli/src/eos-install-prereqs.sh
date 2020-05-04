@@ -2,9 +2,13 @@
 
 set -eu
 
-export LOG_FILE=/var/log/seagate/provisioner/deploy-eos.log
-mkdir -p $(dirname "${LOG_FILE}")
-/usr/bin/true > ${LOG_FILE}
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/eos-install-prereqs.log}"
+export LOG_FILE
+
+if [[ ! -e "$LOG_FILE" ]]; then
+    mkdir -p $(dirname "${LOG_FILE}")
+    touch "${LOG_FILE}"
+fi
 
 if [[ $# -gt 0 ]]; then
     if [[ "$1" = "no-reboot" ]]; then
