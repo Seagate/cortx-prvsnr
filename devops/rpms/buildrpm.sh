@@ -51,17 +51,17 @@ pushd ~/rpmbuild/SOURCES/
     rm -rf eos-prvsnr*
 
     # Setup the source tar for rpm build
-    DEST_DIRNAME=eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
-    mkdir -p ${DEST_DIRNAME}/{cli,files,pillar,srv,api}
-    # cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIRNAME}/cli
-    cp -R ${BASEDIR}/../../files/conf ${DEST_DIRNAME}/files
-    cp -R ${BASEDIR}/../../pillar ${DEST_DIRNAME}
-    cp -R ${BASEDIR}/../../srv ${DEST_DIRNAME}
-    cp -R ${BASEDIR}/../../api ${DEST_DIRNAME}
+    DEST_DIR=eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    mkdir -p ${DEST_DIR}/{cli,files/etc,pillar,srv,api}
+    cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIR}/cli
+    cp -R ${BASEDIR}/../../files/conf ${DEST_DIR}/files
+    cp -R ${BASEDIR}/../../pillar ${DEST_DIR}
+    cp -R ${BASEDIR}/../../srv ${DEST_DIR}
+    cp -R ${BASEDIR}/../../api ${DEST_DIR}
 
 
-    tar -zcvf ${DEST_DIRNAME}.tar.gz ${DEST_DIRNAME}
-    rm -rf ${DEST_DIRNAME}
+    tar -zcvf ${DEST_DIR}.tar.gz ${DEST_DIR}
+    rm -rf ${DEST_DIR}
 
     yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
 

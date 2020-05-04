@@ -70,7 +70,7 @@ Optional Arguments:
    -B  <IP ADDRESS>     IP address of controller B (default 10.0.0.3)
    -U  <USER NAME>      User for controller (default 'manage')
    -P  <PASSWORD>       Password for controller (default 'passwd')
-   -b  <BMC PASSWORD>   User for BMC. Default ADMIN
+   -b  <BMC PASSWORD>   User for BMC. Default ADMIN.
    -m  <BMC PASSWORD>   Password for BMC. Default adminBMC!
 "
 }
@@ -396,10 +396,6 @@ update_pillar()
 
 install_config_prvsnr
 update_pillar
-
-# Run deploy_eos
-echo -e "\n\t***** INFO: Running deploy-eos *****"
-sh /opt/seagate/eos-prvsnr/cli/deploy-eos -v
 
 echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $logfile
 echo " Check following logs to see the complete logs of auto-deploy-eos: $logfile" 2>&1 | tee -a $logfile

@@ -203,7 +203,7 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 update_salt
 
 if [[ "$run_all" == true ]]; then
-    salt "*" cmd.run "rescan-scsi-bus.sh || true"
+    salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     encrypt_pillar
 
@@ -215,7 +215,7 @@ fi
 
 if [[ "$run_system_states" == true ]]; then
     l_info "Deploying the system states"
-    salt "*" cmd.run "rescan-scsi-bus.sh || true"
+    salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     encrypt_pillar
 fi

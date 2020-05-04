@@ -17,8 +17,8 @@ Run Health Schema on master:
 Merge healthschema:
   module.run:
     - sspl.health_map_schema:
-      - file_path: "/tmp/resource_health_view.json"
-{% endif %}
+      - healthmap_path: {{ pillar["sspl"]["healthmappath"] }}
+
 {% else %}
 Run Health Schema on minion:
   cmd.run:

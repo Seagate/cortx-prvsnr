@@ -1,4 +1,5 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% set logfile = "/var/log/seagate/provisioner/sanity_tests.log" %}
 Create SSPL Sanity test script:
   file.managed:
       - name: /tmp/sspl-sanity.sh
