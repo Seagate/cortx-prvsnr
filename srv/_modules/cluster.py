@@ -42,7 +42,7 @@ def storage_device_config():
         
         if device_list == []:
             # Do nothing, probably a VM
-            return True
+            return False
         
         metadata_device = list()
         metadata_device.append("/dev/disk/by-id/dm-name-{0}".format(device_list[0]))
