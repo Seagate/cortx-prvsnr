@@ -1,0 +1,109 @@
+#!/bin/sh
+set -eu
+
+export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+truncate -s 0 ${LOG_FILE}
+
+# TODO: replace 192.168.0.X with pillar values from cluster.sls
+
+function update_ssh_config {
+    if [[ "eosnode-1" == $(cat /etc/salt/minion_id) ]]; then
+        echo "Updating localhost in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        # Replace node-1 entry
+        local primary_host=$(hostname)
+        # echo ${primary_host}
+        local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "s|Host eosnode-1.*|Host eosnode-1 ${primary_host}|" /root/.ssh/config
+        sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
+        echo "Updated localhost in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+
+        # Replace node-2 entry
+        echo "Updating remote host in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.2 "hostname")
+        # echo ${secondary_host}
+        local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "s|Host eosnode-2.*|Host eosnode-2 ${secondary_host}|" /root/.ssh/config
+        sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
+        echo "Updated remote host in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+    else
+        echo "Updating localhost in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        # Replace node-1 entry
+        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.1 "hostname")
+        # echo ${primary_host}
+        local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "s|Host eosnode-1.*|Host eosnode-1 ${primary_host}|" /root/.ssh/config
+        sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
+        echo "Updated localhost in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+
+        # Replace node-2 entry
+        echo "Updating remote host in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        local secondary_host=$(hostname)
+        # echo ${secondary_host}
+        local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "s|Host eosnode-2.*|Host eosnode-2 ${secondary_host}|" /root/.ssh/config
+        sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
+        echo "Updated remote host in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+    fi
+}
+
+function update_salt_minion {
+
+    if [[ "eosnode-1" == $(cat /etc/salt/minion_id) ]]; then
+        local host=$(hostname)
+        local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        
+        echo "Updated master in /etc/salt/minion on primary node"|tee -a ${LOG_FILE}
+        sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
+
+        echo "Updating master in /etc/salt/minion on secondary node"|tee -a ${LOG_FILE}
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" eosnode-2 "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
+        echo "Updated master in /etc/salt/minion on node"|tee -a ${LOG_FILE}
+        
+        # It's safe to restart service on both nodes
+        echo "Restarting salt-minion on primary node"|tee -a ${LOG_FILE}
+        systemctl restart salt-minion
+        echo "Restarting salt-minion on secondary node"|tee -a ${LOG_FILE}
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" eosnode-2 "systemctl restart salt-minion"
+        echo "Restarted salt-minion on nodes"|tee -a ${LOG_FILE}
+
+        sleep 5
+
+        salt-key -L
+        salt-key -A -y
+
+        sleep 5
+    fi
+}
+
+function update_cluster_sls {
+    if [[ "eosnode-1" == $(cat /etc/salt/minion_id) ]]; then
+        echo "Updating cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+        # Replace node-1 entry
+        local primary_host=$(hostname)
+        # echo ${primary_host}
+        local line_to_replace=$(grep -m1 -noP "eosnode-1:" ${PRVSNR_ROOT}/pillar/components/cluster.sls|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${PRVSNR_ROOT}/pillar/components/cluster.sls
+        echo "Updated cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+
+        # Replace node-2 entry
+        echo "Updating cluster.sls for node-2 hostname on primary node"|tee -a ${LOG_FILE}
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.2 "hostname")
+        # echo ${secondary_host}
+        local line_to_replace=$(grep -m1 -noP "eosnode-2:" ${PRVSNR_ROOT}/pillar/components/cluster.sls|tail -1|cut -d: -f1)
+        # echo ${line_to_replace}
+        sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${PRVSNR_ROOT}/pillar/components/cluster.sls
+        echo "Updated cluster.sls for node-2 hostname on primary node"|tee -a ${LOG_FILE}
+
+        echo "Refreshing salt pillar from primary node"|tee -a ${LOG_FILE}
+        sleep 5
+        salt "*" saltutil.refresh_pillar
+        echo "Refreshed cluster.sls from primary node"|tee -a ${LOG_FILE}
+    fi
+}
