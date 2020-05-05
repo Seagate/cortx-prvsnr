@@ -3,18 +3,21 @@ set -eu
 
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
+
+. ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
+
+# Perform basic system check
+check_boxing_flag
+check_hostname
+check_pvt_data_connectivity
+check_mgmt_ip
 
 # Update /root/.ssh/config file with hosts
 update_ssh_config
 update_salt_minion
 update_cluster_sls
+recover_rabbitmq_cluster
 
-# # Update RabbitMQ cluster
-# salt "eosnode-1" state.apply components.misc_pkgs.rabbitmq
-# salt "eosnode-2" state.apply components.misc_pkgs.rabbitmq
-
-# # Update SSPL init
-# salt "*" state.apply components.s3server.config
-# salt "*" state.apply components.sspl.config
-# salt "*" state.apply components.csm.config
+# Unboxing SUCCESS
+remove_boxing_flag

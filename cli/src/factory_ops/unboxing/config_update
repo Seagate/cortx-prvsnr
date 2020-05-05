@@ -1,11 +1,18 @@
 #!/bin/sh
+
+# Functions in this file address following:
+#   1. Updates /root/.ssh/config file 
+#   2. Update cluster.sls with hostnames obtained for node-1 and node-2 
+#   3. Update /etc/salt/minion for hostname
+#   4. Start rabbitmq cluster   <= Currently handled in init
 set -eu
 
 export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_config_update.log}"
 truncate -s 0 ${LOG_FILE}
 
-# TODO: replace 192.168.0.X with pillar values from cluster.sls
+export private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/components/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
+export private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/components/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
 
 function update_ssh_config {
     if [[ "eosnode-1" == $(cat /etc/salt/minion_id) ]]; then
@@ -21,7 +28,7 @@ function update_ssh_config {
 
         # Replace node-2 entry
         echo "Updating remote host in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.2 "hostname")
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -31,7 +38,7 @@ function update_ssh_config {
     else
         echo "Updating localhost in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
         # Replace node-1 entry
-        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.1 "hostname")
+        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_1} "hostname")
         # echo ${primary_host}
         local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -62,14 +69,14 @@ function update_salt_minion {
         sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
 
         echo "Updating master in /etc/salt/minion on secondary node"|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" eosnode-2 "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
         echo "Updated master in /etc/salt/minion on node"|tee -a ${LOG_FILE}
         
         # It's safe to restart service on both nodes
         echo "Restarting salt-minion on primary node"|tee -a ${LOG_FILE}
         systemctl restart salt-minion
         echo "Restarting salt-minion on secondary node"|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" eosnode-2 "systemctl restart salt-minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-minion"
         echo "Restarted salt-minion on nodes"|tee -a ${LOG_FILE}
 
         sleep 5
@@ -94,7 +101,7 @@ function update_cluster_sls {
 
         # Replace node-2 entry
         echo "Updating cluster.sls for node-2 hostname on primary node"|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" 192.168.0.2 "hostname")
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m1 -noP "eosnode-2:" ${PRVSNR_ROOT}/pillar/components/cluster.sls|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -106,4 +113,15 @@ function update_cluster_sls {
         salt "*" saltutil.refresh_pillar
         echo "Refreshed cluster.sls from primary node"|tee -a ${LOG_FILE}
     fi
+}
+
+function recover_rabbitmq_cluster {
+    # # Update RabbitMQ cluster
+    # salt "eosnode-1" state.apply components.misc_pkgs.rabbitmq
+    # salt "eosnode-2" state.apply components.misc_pkgs.rabbitmq
+
+    # # Update SSPL init
+    # salt "*" state.apply components.s3server.config
+    # salt "*" state.apply components.sspl.config
+    # salt "*" state.apply components.csm.config
 }
