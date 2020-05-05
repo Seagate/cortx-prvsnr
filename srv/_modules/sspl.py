@@ -142,8 +142,8 @@ def health_map_schema(healthmap_path = "/opt/seagate/eos-prvsnr/generated_config
   file_path = "/tmp/resource_health_view.json"
   local = salt.client.LocalClient()
   data = local.cmd('*', 'file.read', [file_path])
-  node1_data = json.loads(data["eosnode-1"])
-  node2_data = json.loads(data["eosnode-2"])
+  node1_data = json.loads(data["srvnode-1"])
+  node2_data = json.loads(data["srvnode-2"])
   node1_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"].update(node2_data["cluster"]["sites"]["1"]["rack"]["1"]["nodes"])
   local.cmd('*', 'file.mkdir',[str(Path(healthmap_path).parent)])
   local.cmd('*', 'file.write', [healthmap_path, json.dumps(node1_data, indent=4)])
