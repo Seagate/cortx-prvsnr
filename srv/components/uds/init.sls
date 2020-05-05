@@ -1,3 +1,4 @@
 include:
   - .prepare
   - .install
+  - .config
