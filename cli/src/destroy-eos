@@ -131,26 +131,26 @@ function teardown_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             l_info "Removing $state"
-            $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts
+            $cmd salt srvnode-1 state.apply components.$state.teardown $salt_opts
 
             sleep 2     # Mindfulness break
         done
     else
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
-                l_info "Removing $state from eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq"
                     || "$state" == "system.storage.multipath" ]]; then
-                l_info "Removing $state from eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Removing $state from both nodes"
@@ -220,7 +220,7 @@ if [[ "$run_all" == true || "$run_ha_states" == true ]]; then
     l_info "Cleaning up the failed-services on both nodes"
     systemctl list-units --state=running | grep hare-consul-agent &&
         systemctl stop hare-consul-agent || true
-    ssh eosnode-2 " systemctl list-units --state=running | grep\
+    ssh srvnode-2 " systemctl list-units --state=running | grep\
         hare-consul-agent && systemctl stop hare-consul-agent" || true
 fi
 
@@ -230,7 +230,7 @@ if [[ "$remove_prvsnr" == true ]]; then
     salt '*' pkg.remove eos-prvsnr || true
 
     l_info "Removing salt packages from node-2"
-    ssh eosnode-2 "yum remove -y salt* || true; rm -rf /etc/salt"
+    ssh srvnode-2 "yum remove -y salt* || true; rm -rf /etc/salt"
 
     l_info "Removing salt packages from node-1"
     yum remove -y salt* || true
@@ -238,7 +238,7 @@ if [[ "$remove_prvsnr" == true ]]; then
 
     sleep 2
     l_info "Removing remaining eos packages from node-2"
-    ssh eosnode-2 'for pkg in `rpm -qa | grep eos`; do\
+    ssh srvnode-2 'for pkg in `rpm -qa | grep eos`; do\
         echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
         rm -rf /opt/seagate*; rm -rf /root/.ssh/*'
 

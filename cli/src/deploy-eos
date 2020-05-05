@@ -134,7 +134,7 @@ function run_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             l_info "Applying 'components.$state'"
-            $cmd salt eosnode-1 state.apply components.$state $salt_opts
+            $cmd salt srvnode-1 state.apply components.$state $salt_opts
             sleep 2     # Mindfulness break
         done
     else
@@ -144,27 +144,27 @@ function run_states {
                 || "$state" == "sspl"
                 || "$state" == "csm"
                 ]]; then
-                # Execute first on eosnode-2 then on eosnode-1.
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
+                # Execute first on srvnode-2 then on srvnode-1.
+                l_info "Applying 'components.$state' for srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
+                l_info "Applying 'components.$state' for srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "misc_pkgs.openldap"
                 || "$state" == "misc_pkgs.rabbitmq"
                 || "$state" == "system.storage.multipath"
                 ]]; then
-                # Execute first on eosnode-1 then on eosnode-2.
-                l_info "Applying 'components.$state' for eosnode-1"
-                $cmd salt eosnode-1 state.apply components.$state  $salt_opts
+                # Execute first on srvnode-1 then on srvnode-2.
+                l_info "Applying 'components.$state' for srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for eosnode-2"
-                $cmd salt eosnode-2 state.apply components.$state  $salt_opts
+                l_info "Applying 'components.$state' for srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying 'components.$state' for both nodes"
-                $cmd salt eosnode-[1,2] state.apply components.$state $salt_opts
+                $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
             fi
         done

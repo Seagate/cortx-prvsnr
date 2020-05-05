@@ -5,5 +5,5 @@
 {%- endif -%}
 interface: {{ mgmt_if }}
 vip: {{ pillar['cluster']['mgmt_vip'] }}
-left-node: {{ pillar['cluster']['eosnode-1']['hostname'] }}
-right-node: {{ pillar['cluster']['eosnode-2']['hostname'] }}
+left-node: {{ pillar['cluster']['srvnode-1']['hostname'] }}
+right-node: {{ pillar['cluster']['srvnode-2']['hostname'] }}

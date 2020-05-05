@@ -40,8 +40,8 @@ def test_bootstrap_eos_commands(
     )
     assert res.rc == 0
 
-    eosnode_1_line = "SALT-ARGS: eosnode-1 state.apply components.post_setup"
-    eosnode_2_line = "SALT-ARGS: eosnode-2 state.apply components.post_setup"
+    eosnode_1_line = "SALT-ARGS: srvnode-1 state.apply components.post_setup"
+    eosnode_2_line = "SALT-ARGS: srvnode-2 state.apply components.post_setup"
 
     if singlenode:
         expected_lines = [

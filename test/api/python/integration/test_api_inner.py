@@ -134,8 +134,8 @@ def test_external_auth():
 def test_set_ntp():
     pillar = api_call('pillar_get')
 
-    pillar_ntp_server = pillar['eosnode-1']['system']['ntp']['time_server']
-    pillar_ntp_timezone = pillar['eosnode-1']['system']['ntp']['timezone']
+    pillar_ntp_server = pillar['srvnode-1']['system']['ntp']['time_server']
+    pillar_ntp_timezone = pillar['srvnode-1']['system']['ntp']['timezone']
 
     curr_params = api_call(
         'get_params', 'ntp/server', 'ntp/timezone'
@@ -210,17 +210,17 @@ def test_set_network():
     pillar = api_call('pillar_get')
 
     pillar_nw_primary_mgmt_ip = pillar[
-        'eosnode-1'
-    ]['cluster']['eosnode-1']['network']['mgmt_nw']['ipaddr']
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['network']['mgmt_nw']['ipaddr']
     pillar_nw_primary_data_ip = pillar[
-        'eosnode-1'
-    ]['cluster']['eosnode-1']['network']['data_nw']['ipaddr']
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['network']['data_nw']['ipaddr']
     pillar_nw_primary_gateway_ip = pillar[
-        'eosnode-1'
-    ]['cluster']['eosnode-1']['network']['gateway_ip']
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['network']['gateway_ip']
     pillar_nw_primary_hostname = pillar[
-        'eosnode-1'
-    ]['cluster']['eosnode-1']['hostname']
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['hostname']
 
     api_nw_primary_mgmt_ip = api_call(
         'get_params', 'nw_primary_mgmt_ip'

@@ -86,10 +86,10 @@ if [[ "$verbosity" -ge 2 ]]; then
     set -x
 fi
 
-# check eosnode-1 occurence in ssh-config
+# check srvnode-1 occurence in ssh-config
 if [[ -n "$hostspec" ]]; then
     if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-        l_error "eosnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
+        l_error "srvnode-1 node ssh configuration is not found in ssh-config ($ssh_config)"
         exit 1
     fi
 fi
@@ -105,5 +105,5 @@ elif [[ -z "$file_path" ]]; then
     exit 1
 fi
 
-# update pillar on eosnode-1
+# update pillar on srvnode-1
 eos_pillar_update "$component" "$file_path" "$hostspec" "$ssh_config" "$sudo"

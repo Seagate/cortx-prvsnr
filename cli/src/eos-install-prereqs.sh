@@ -21,12 +21,12 @@ if [[ $# -gt 0 ]]; then
 fi
 
 echo "Checking If the hostnames are ok" 2>&1 | tee ${LOG_FILE}
-eosnode_hostname=`hostname -f`
-if [[ $eosnode_hostname != *"."* ]]; then
+srvnode_hostname=`hostname -f`
+if [[ $srvnode_hostname != *"."* ]]; then
       echo "ERROR: 'hostname -f' did not return the FQDN, please set FQDN and retry."  2>&1 | tee ${LOG_FILE}
       exit 1
 fi
-echo "INFO: hostname is OK: $eosnode_hostname" 2>&1 | tee ${LOG_FILE}
+echo "INFO: hostname is OK: $srvnode_hostname" 2>&1 | tee ${LOG_FILE}
 
 echo "INFO: Checking if kernel version is correct" 2>&1 | tee ${LOG_FILE}
 kernel_version=`uname -r`

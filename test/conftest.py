@@ -86,12 +86,12 @@ DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_EOS_SPEC = {
     'eosnode1': {
-        'hostname': 'eosnode-1',
-        'minion_id': 'eosnode-1',
+        'hostname': 'srvnode-1',
+        'minion_id': 'srvnode-1',
         'is_primary': True,
     }, 'eosnode2': {
-        'hostname': 'eosnode-2',
-        'minion_id': 'eosnode-2',
+        'hostname': 'srvnode-2',
+        'minion_id': 'srvnode-2',
         'is_primary': False,
     }
 }
@@ -415,7 +415,7 @@ def hosts_spec(request):
     return {
         'eosnode1': {
             'remote': {
-                'hostname': 'eosnode-1',
+                'hostname': 'srvnode-1',
                 'specific': {
                     'vbox': {
                         'memory': 4096,
@@ -425,11 +425,11 @@ def hosts_spec(request):
                     }
                 }
             },
-            'minion_id': 'eosnode-1',
+            'minion_id': 'srvnode-1',
             'is_primary': True,
         }, 'eosnode2': {
             'remote': {
-                'hostname': 'eosnode-2',
+                'hostname': 'srvnode-2',
                 'specific': {
                     'vbox': {
                         'memory': 4096,
@@ -439,7 +439,7 @@ def hosts_spec(request):
                     }
                 }
             },
-            'minion_id': 'eosnode-2',
+            'minion_id': 'srvnode-2',
             'is_primary': False,
         }
     }
