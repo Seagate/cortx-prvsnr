@@ -1,7 +1,6 @@
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
 
-
 {% if "physical" in grains['virtual'] %}
 # /boot/efi  (note: this is partition #1)
 Remove EFI partition:
@@ -25,42 +24,39 @@ Remove OS partition:
       - minor: 3
 
 # /var/crash (not under RAID or LVM control; size ~1TB; note: this is partition #4)
-Remove var_crash partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 4
+# Remove var_crash partition:
+#   module.run:
+#     - partition.rm:
+#       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+#       - minor: 4
 # done with the OS partitions
 
 Unmount SWAP:
   module.run:
     - mount.swapoff:
-      - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
+      - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
 
 Remove swap from fstab:
   module.run:
     - mount.rm_fstab:
       - name: none
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
-    # - onlyif: grep {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5 /etc/fstab
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
 
 Remove swap partition:
   module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 5
-    # - onlyif: lsblk | grep `echo {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2 | cut -d/ -f5 | cut -d- -f3`
+      - minor: 4
 
 Unmount /var/mero partition:
   mount.unmounted:
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}6
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
 
 Remove /var/mero partition:
   module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 6
-    # - onlyif: lsblk | grep `echo {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 | cut -d/ -f5 | cut -d- -f3`
+      - minor: 5
 {% else %}
 Unmount SWAP:
   module.run:
