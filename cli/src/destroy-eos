@@ -32,6 +32,7 @@ ha_states=(
 
 controlpath_states=(
 # states to be applied in desired sequence
+    "ha.cortx-ha"
     "post_setup"
     "uds"
     "csm"
