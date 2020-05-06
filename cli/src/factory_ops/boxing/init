@@ -7,13 +7,17 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 . $BASEDIR/shutdown
+. $BASEDIR/prepare
 
 function trap_handler {
   echo "For detailed error logs, please see: $LOG_FILE"
 }
 
 # Prepare shutdown
-
+stop_rabbitmq_cluster
+stop_services
+backup_files
+boxing_flag
 
 # Shutdown HA
 
