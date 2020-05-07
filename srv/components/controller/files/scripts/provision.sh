@@ -1023,10 +1023,10 @@ ctrl_shutdown()
     if [[ "$shutdown_ctrl_name" = "A" || "$shutdown_ctrl_name" = "B" ]]; then
         shutdown_ctrl_name=$(echo $shutdown_ctrl_name | tr '[:upper:]' '[:lower:]')
     fi
-    echo "ctrl_shutdown(): running command 'shutdown sc $shutdown_ctrl_name'" >> $logfile
+    echo "ctrl_shutdown(): running command 'shutdown $shutdown_ctrl_name'" >> $logfile
     #TODO: Enable it when lab access is resotred.
     #      This is disabled as it needs physical presence in lab to restart the controller
-    #cmd_run 'shutdown sc $shutdown_ctrl_name' > $xml_doc
+    #cmd_run 'shutdown $shutdown_ctrl_name' > $xml_doc
     cli_status_get $xml_doc
 }
 

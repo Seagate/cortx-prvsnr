@@ -6,10 +6,10 @@ cluster:
   dns_servers:                        # Do not update
   type: ees                           # single/ees/ecs
   node_list:
-    - eosnode-1
-    - eosnode-2
-  eosnode-1:
-    hostname: eosnode-1
+    - srvnode-1
+    - srvnode-2
+  srvnode-1:
+    hostname: srvnode-1
     is_primary: true
     bmc:
       ip: 
@@ -36,8 +36,8 @@ cluster:
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc                    # Auto-populated by components.system.storage.multipath
-  eosnode-2:
-    hostname: eosnode-2
+  srvnode-2:
+    hostname: srvnode-2
     is_primary: false
     bmc:
       ip: 

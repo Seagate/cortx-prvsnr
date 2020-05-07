@@ -19,8 +19,8 @@ install_provisioner "$prvsnr_src" "$prvsnr_release" '' '' '' true
 mkdir -p /opt/seagate/eos-prvsnr/cli
 cp -R * /opt/seagate/eos-prvsnr/cli
 
-configure_salt eosnode-1 '' '' '' true localhost
+configure_salt srvnode-1 '' '' '' true localhost
 
-accept_salt_key eosnode-1
+accept_salt_key srvnode-1
 
 rm -rf /var/cache/yum

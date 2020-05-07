@@ -1,4 +1,4 @@
 corosync-pacemaker:
-  cluster_name: eos_cluster
+  cluster_name: cortx_cluster
   user: hacluster
   secret: Seagate123

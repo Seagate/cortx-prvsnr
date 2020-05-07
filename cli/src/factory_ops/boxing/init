@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -euE
+
+SCRIPT_PATH=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT_PATH")
+
+. $BASEDIR/prov_tasks
+. $BASEDIR/shutdown
+
+# Prepare shutdown
+stop_rabbitmq_cluster
+stop_services
+backup_files
+boxing_flag
+
+# Shutdown HA
+pcs cluster stop --all
+
+# Create flag file
+
+# Power-off sequence
+shutdown_controller
+shutdown_node

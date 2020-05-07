@@ -11,10 +11,10 @@ Create tidy-up script:
       - mode: 755
       - contents: |
           #!/bin/bash
-          echo "Runnign swapoff -a on current node(eosnode-1)"
+          echo "Runnign swapoff -a on current node(srvnode-1)"
           timeout -k 10 30 swapoff -a ||true
-          echo "Runnign swapoff -a on eosnode-2 node"
-          ssh eosnode-2 "timeout -k 10 30 swapoff -a || true"
+          echo "Runnign swapoff -a on srvnode-2 node"
+          ssh srvnode-2 "timeout -k 10 30 swapoff -a || true"
           echo "Cleaning up partitions"
           for dev in `ls /dev/mapper/mpath* | grep '[1-6]$' | rev | cut -c 2- | rev | sort -u`
           do
@@ -25,11 +25,11 @@ Create tidy-up script:
             timeout -k 10 30 parted -s $dev rm 2 || true
             timeout -k 10 30 parted -s $dev rm 1 || true
           done
-          echo "Running partprobe on eosnode-1"
+          echo "Running partprobe on srvnode-1"
           timeout -k 10 30 partprobe || true
-          echo "Running partprobe on eosnode-2"
-          ssh eosnode-2 "timeout -k 10 30 partprobe || true"
-          echo "Running partprobe again on eosnode-1"
+          echo "Running partprobe on srvnode-2"
+          ssh srvnode-2 "timeout -k 10 30 partprobe || true"
+          echo "Running partprobe again on srvnode-1"
           timeout -k 10 30 partprobe || true
 
 Cleanup stale partitions:

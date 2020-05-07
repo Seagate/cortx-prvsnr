@@ -7,3 +7,21 @@ Add uds yum repo:
     - humanname: uds
     - baseurl: {{ defaults.uds.repo.url }}
     - gpgcheck: 0
+
+Create /var/csm directory:
+  file.directory:
+    - name: /var/csm
+    - makedirs: True
+    - mode: 700
+    - user: csm
+    - group: csm
+
+Create /var/csm/tls directory:
+  file.directory:
+    - name: /var/csm/tls
+    - makedirs: True
+    - mode: 700
+    - user: csm
+    - group: csm
+
+

@@ -9,15 +9,15 @@ net-type: o2ib
 {% else %}
 net-type: tcp
 {% endif %}
-ip1: {{ pillar['cluster']['eosnode-1']['network']['data_nw']['roaming_ip'] }}
-ip2: {{ pillar['cluster']['eosnode-2']['network']['data_nw']['roaming_ip'] }}
-left-node: {{ pillar['cluster']['eosnode-1']['hostname'] }}
-right-node: {{ pillar['cluster']['eosnode-2']['hostname'] }}
+ip1: {{ pillar['cluster']['srvnode-1']['network']['data_nw']['roaming_ip'] }}
+ip2: {{ pillar['cluster']['srvnode-2']['network']['data_nw']['roaming_ip'] }}
+left-node: {{ pillar['cluster']['srvnode-1']['hostname'] }}
+right-node: {{ pillar['cluster']['srvnode-2']['hostname'] }}
 {% if "physical" in grains['virtual'] %}
-left-volume: {{ pillar['cluster']['eosnode-1']['storage']['metadata_device'][0] }}6
-right-volume: {{ pillar['cluster']['eosnode-2']['storage']['metadata_device'][0] }}6
+left-volume: {{ pillar['cluster']['srvnode-1']['storage']['metadata_device'][0] }}5
+right-volume: {{ pillar['cluster']['srvnode-2']['storage']['metadata_device'][0] }}5
 {% else %}
-left-volume: {{ pillar['cluster']['eosnode-1']['storage']['metadata_device'][0] }}2
-right-volume: {{ pillar['cluster']['eosnode-2']['storage']['metadata_device'][0] }}2
+left-volume: {{ pillar['cluster']['srvnode-1']['storage']['metadata_device'][0] }}2
+right-volume: {{ pillar['cluster']['srvnode-2']['storage']['metadata_device'][0] }}2
 {% endif %}
 skip-mkfs: true

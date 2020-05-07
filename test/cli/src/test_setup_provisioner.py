@@ -43,7 +43,7 @@ def install_salt_config_files(project_path):
 def test_setup_provisioner_fail(mhost, run_script):
     ssh_config = '/tmp/ssh_config'
     mhost.check_output(
-        "echo -e 'Host eosnode-1\n\nHost eosnode-2' >{}"
+        "echo -e 'Host srvnode-1\n\nHost srvnode-2' >{}"
         .format(ssh_config)
     )
 
@@ -59,7 +59,7 @@ def test_setup_provisioner_fail(mhost, run_script):
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-1 in ssh-config'
         in res.stdout
     )
 
@@ -70,63 +70,63 @@ def test_setup_provisioner_fail(mhost, run_script):
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-1 in ssh-config'
         in res.stdout
     )
 
     # CLUSTER - REMOTE - CUSTOM SSH - spec for secondary not in config
     res = run_script(
-        "--ssh-config {} --remote eosnode-1 --eosnode-2 some-hostspec".format(
+        "--ssh-config {} --remote srvnode-1 --srvnode-2 some-hostspec".format(
             ssh_config
         )
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-2 in ssh-config'
         in res.stdout
     )
 
     res = run_script(
-        "--ssh-config {} --remote eosnode-1 --eosnode-2 some-user@".format(
+        "--ssh-config {} --remote srvnode-1 --srvnode-2 some-user@".format(
             ssh_config
         )
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-2 in ssh-config'
         in res.stdout
     )
 
     # CLUSTER - LOCAL - CUSTOM SSH - spec for secondary not in config
     res = run_script(
-        "--ssh-config {} --eosnode-2 some-hostspec".format(
+        "--ssh-config {} --srvnode-2 some-hostspec".format(
             ssh_config
         )
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-2 in ssh-config'
         in res.stdout
     )
 
     res = run_script(
-        "--ssh-config {} --eosnode-2 some-user@".format(
+        "--ssh-config {} --srvnode-2 some-user@".format(
             ssh_config
         )
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-2 in ssh-config'
         in res.stdout
     )
 
-    # eosnode-2
+    # srvnode-2
     #res = run_script(
-    #    "--eosnode-2 eosnode-2"
+    #    "--srvnode-2 srvnode-2"
     #)
     #assert res.rc == 1
     #assert (
-    #    'Invalid ssh configuration provided for eosnode-2 in ssh-config'
+    #    'Invalid ssh configuration provided for srvnode-2 in ssh-config'
     #    in res.stdout
     #)
 
@@ -138,7 +138,7 @@ def test_setup_provisioner_fail(mhost, run_script):
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-1 in ssh-config'
         in res.stdout
     )
 
@@ -149,7 +149,7 @@ def test_setup_provisioner_fail(mhost, run_script):
     )
     assert res.rc == 1
     assert (
-        'Invalid ssh configuration provided for eosnode-1 in ssh-config'
+        'Invalid ssh configuration provided for srvnode-1 in ssh-config'
         in res.stdout
     )
 
@@ -179,7 +179,7 @@ def test_setup_provisioner_singlenode(
     # TODO timeout make sense, not so good - makes test unstable,
     #      also it has some strange behaviour
     for _try in range(2):
-        res = mhost.run('salt eosnode-1 --out json --timeout 10 state.show_top')
+        res = mhost.run('salt srvnode-1 --out json --timeout 10 state.show_top')
         if res.rc == 0:
             break
     assert res.rc == 0
@@ -192,7 +192,7 @@ def test_setup_provisioner_singlenode(
     states_expected = top_sls_dict['base']['*']
 
     assert output == {
-        'eosnode-1': {
+        'srvnode-1': {
             'base': states_expected
         }
     }
@@ -205,7 +205,7 @@ def check_setup_provisioner_results(mhosteosnode1):
     top_sls_dict = yaml.safe_load(top_sls_content)
     states_expected = top_sls_dict['base']['*']
 
-    for minion_id in ('eosnode-1', 'eosnode-2'):
+    for minion_id in ('srvnode-1', 'srvnode-2'):
         # check states listed
         # TODO timeout make sense, not so good - makes test unstable,
         #      also it has some strange behaviour
@@ -238,7 +238,7 @@ def test_setup_provisioner_cluster(
     with_sudo = '' # TODO
 
     res = run_script(
-        "-v {} {} {} --eosnode-2 {} --repo-src {}".format(
+        "-v {} {} {} --srvnode-2 {} --repo-src {}".format(
             ssh_config, with_sudo, remote, mhosteosnode2.hostname, repo_src
         ),
         mhost=(mlocalhost if remote else mhosteosnode1)
@@ -263,7 +263,7 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     with_sudo = '' # TODO
 
     res = run_script(
-        "-v {} {} {} --eosnode-2 {} --salt-master {} --repo-src local".format(
+        "-v {} {} {} --srvnode-2 {} --salt-master {} --repo-src local".format(
             ssh_config, with_sudo, remote, mhosteosnode2.hostname,
             salt_server_ip
         ),

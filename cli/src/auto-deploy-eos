@@ -17,8 +17,8 @@ trap_handler ()
     exit 1
 }
 
-eosnode_2_host=
-eosnode_2_passwd=
+srvnode_2_host=
+srvnode_2_passwd=
 cluster_ip=
 mgmt_vip=
 pub_din=
@@ -31,8 +31,8 @@ ctrl_user=
 ctrl_passwd=
 tgt_build=
 
-eosnode_2_host_opt=false
-eosnode_2_passwd_opt=false
+srvnode_2_host_opt=false
+srvnode_2_passwd_opt=false
 cluster_ip_opt=false
 mgmt_vip_opt=false
 pub_din_opt=false
@@ -49,7 +49,7 @@ usage()
 {
     echo "\
 Usage:
-auto-deploy-eos { -s <secondary node hostname (eosnode-2)> -p <password for sec node>
+auto-deploy-eos { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
                   -C <cluster-ip> -V <management VIP>
                   -t <target build url for EOS>
                   [Optional Arguments] }
@@ -100,16 +100,16 @@ while [[ $# -gt 0 ]]; do
         -h|--help) usage; help; exit 0
         ;;
         -s)
-            eosnode_2_host_opt=true
+            srvnode_2_host_opt=true
             [ -z "$2" ] &&
-                echo "Error: eosnode-2 not provided" && exit 1;
-            eosnode_2_host="$2"
+                echo "Error: srvnode-2 not provided" && exit 1;
+            srvnode_2_host="$2"
             shift 2 ;;
         -p)
-            eosnode_2_passwd_opt=true
+            srvnode_2_passwd_opt=true
             [ -z "$2" ] &&
-                echo "Error: eosnode-2 password not provided" && exit 1;
-            eosnode_2_passwd="$2"
+                echo "Error: srvnode-2 password not provided" && exit 1;
+            srvnode_2_passwd="$2"
             shift 2 ;;
         -C)
             cluster_ip_opt=true
@@ -194,8 +194,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ "$eosnode_2_host_opt" == false ||
-      "$eosnode_2_passwd_opt" == false ||
+if [[ "$srvnode_2_host_opt" == false ||
+      "$srvnode_2_passwd_opt" == false ||
       "$cluster_ip_opt" == false || 
       "$mgmt_vip_opt" == false ||
       "$tgt_build_opt" == false ]]; then
@@ -210,8 +210,8 @@ ssh_base_cmd="/bin/ssh"
 ssh_opts="-o UserKnownHostsFile=/dev/null\
     -o StrictHostKeyChecking=no -o LogLevel=error"
 user=root
-ssh_cred="$ssh_tool -p $eosnode_2_passwd"
-ssh_cmd="$ssh_base_cmd $ssh_opts $user@$eosnode_2_host"
+ssh_cred="$ssh_tool -p $srvnode_2_passwd"
+ssh_cmd="$ssh_base_cmd $ssh_opts $user@$srvnode_2_host"
 remote_cmd="$ssh_cred $ssh_cmd"
 
 ssh_tool_pkg=$(basename $ssh_tool)
@@ -225,7 +225,7 @@ install_prvsnr_cli()
     # Install eos-prvsnr-cli rpm from ci-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" >> $logfile
-    if [[ "$target_node" = "eosnode-1" ]]; then
+    if [[ "$target_node" = "srvnode-1" ]]; then
         rpm -qa | grep -q eos && {
             echo "ERROR: eos packages are already installed"
             echo "Please clean-up previous installtion from both the nodes and retry"
@@ -254,18 +254,18 @@ install_config_prvsnr()
     set -eu
     echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $logfile
     sleep 1
-    install_prvsnr_cli "eosnode-2"
+    install_prvsnr_cli "srvnode-2"
 
     echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $logfile
     sleep 1
-    install_prvsnr_cli "eosnode-1"
+    install_prvsnr_cli "srvnode-1"
 
     # Run setup provisioner
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $logfile
     sleep 1
     echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-        "--eosnode-2='$eosnode_2_host' '$tgt_build'" 2>&1 | tee -a $logfile
-    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --eosnode-2="$eosnode_2_host" "$tgt_build" 2>&1 | tee -a $logfile
+        "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $logfile
+    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $logfile
     echo "Done" 2>&1 | tee -a $logfile
 }
 

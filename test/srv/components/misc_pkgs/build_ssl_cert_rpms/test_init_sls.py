@@ -17,7 +17,7 @@ def test_build_ssl_cert_rpms_appliance(
     # enable cluster setup
     # TODO improve later once we have more flexible state parametrization per roles
     mhosteosnode1.check_output(
-        "sed -i 's/# - eosnode-2/- eosnode-2/g' {}".format(
+        "sed -i 's/# - srvnode-2/- srvnode-2/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
         )
     )

@@ -1,15 +1,15 @@
-eosnode-1:
+srvnode-1:
     host: 172.19.10.101
     user: root
     timeout: 60
     minion_opts:
-        id: eosnode-1
+        id: srvnode-1
         roles: server-node
 
-eosnode-2:
+srvnode-2:
     host: 172.19.10.101
     user: root
     timeout: 60
     minion_opts:
-        id: eosnode-2
+        id: srvnode-2
         roles: server-node
