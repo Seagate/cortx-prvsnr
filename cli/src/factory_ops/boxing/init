@@ -2,16 +2,11 @@
 
 set -euE
 
-trap trap_handler ERR
-
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
-. $BASEDIR/shutdown
-. $BASEDIR/prepare
 
-function trap_handler {
-  echo "For detailed error logs, please see: $LOG_FILE"
-}
+. $BASEDIR/prov_tasks
+. $BASEDIR/shutdown
 
 # Prepare shutdown
 stop_rabbitmq_cluster
@@ -20,8 +15,10 @@ backup_files
 boxing_flag
 
 # Shutdown HA
+pcs cluster stop --all
 
+# Create flag file
 
 # Power-off sequence
-shutdown_node
 shutdown_controller
+shutdown_node

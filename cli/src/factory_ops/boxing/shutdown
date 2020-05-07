@@ -1,14 +1,24 @@
 #!/bin/sh
+set -euE
 
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_shutdown.log}"
+truncate -s 0 ${LOG_FILE}
+
+function trap_handler {
+  echo "For detailed error logs, please see: $LOG_FILE"
+}
+trap trap_handler ERR
 
 function get_pillar_data {
+    echo "INFO: getting pillar data from both nodes." | tee -a ${LOG_FILE}
+
     local l_key=${1:-}
 
     if [[ $# -gt 1 ]]; then
-        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
         exit 2
     elif [[ $# -eq 0 ]]; then
-        echo "[ERROR] $0: This function expects an argument."
+        echo "[ERROR] $0: This function expects an argument." | tee -a ${LOG_FILE}
         exit 1
     fi
 
@@ -28,7 +38,7 @@ function get_pillar_data {
 #           `both`  - Shutdown both nodes
 #
 function shutdown_node {
-      set -eu
+    echo "INFO: Shutdown either or both nodes." | tee -a ${LOG_FILE}
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
@@ -37,12 +47,12 @@ function shutdown_node {
     local _node="${1:-both}"
 
     if [[ $# -gt 1 ]]; then
-        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
         exit 2
     fi
 
     if [[ "$_node" != "node1" && "$_node" != "node2" && "$_node" != "both" ]]; then
-        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument."
+        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument." | tee -a ${LOG_FILE}
         exit 1
     fi
 
@@ -67,7 +77,7 @@ function shutdown_node {
 #           `both`  - Shutdown both nodes
 #
 function shutdown_controller {
-    set -eu
+    echo "INFO: Shutdown either or both nodes." | tee -a ${LOG_FILE}
 
     if [[ "$verbosity" -ge 2 ]]; then
         set -x
@@ -76,12 +86,12 @@ function shutdown_controller {
     local _node="${1:-both}"
 
     if [[ $# -gt 1 ]]; then
-        echo "[ERROR] $0: Only one positional argument is expected, provided: $@"
+        echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
         exit 2
     fi
 
     if [[ "$_node" != "a" && "$_node" != "b" && "$_node" != "both" ]]; then
-        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument."
+        echo "ERROR: This function accepts only 'node1', 'node2' or 'both' as an argument." | tee -a ${LOG_FILE}
         exit 1
     fi
 
