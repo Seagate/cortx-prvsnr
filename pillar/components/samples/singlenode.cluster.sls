@@ -6,9 +6,9 @@ cluster:
   dns_servers:                        # Do not update
   type: single                           # single/ees/ecs
   node_list:
-    - eosnode-1
-  eosnode-1:
-    hostname: eosnode-1
+    - srvnode-1
+  srvnode-1:
+    hostname: srvnode-1
     is_primary: true
     bmc:
       ip: 
