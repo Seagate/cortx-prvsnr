@@ -7,7 +7,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos-vm.log}"
 export LOG_FILE
 
 . $BASEDIR/functions.sh
@@ -17,7 +17,6 @@ function trap_handler {
 } 
 
 run_all=true
-run_ha_states=false
 io_states=false
 ctrlpath_states=false
 remove_prereqs=false
@@ -66,19 +65,19 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs EOS stack and configures eos services either on remote host or locally.
+Removes EOS stack and configures eos services on VM environment.
 
-Target host is considered to be an EOS SaltStack master.
+Must be run from primary node for Dual node and from VM itself for single node.
 
 General options:
 $base_options_usage
 Options:
-       -S,  --singlenode               switch to single node mode setup
-       --iopath-states   run only teardown of iopath components
-       --ctrlpath-states run only teardown of control path components
-       --remove-prvsnr   run only teardown of control path components
-       --prereq-states  run only teardown of control path components
-       --system-states   run only teardown of control path components
+       -S,  --singlenode     switch to single node mode setup
+       --iopath-states       remove only teardown of iopath components
+       --ctrlpath-states     remove only teardown of control path components
+       --remove-prvsnr       remove only teardown of control path components
+       --prereq-states       remove only teardown of control path components
+       --system-states       remove only teardown of control path components
 "
 }
 
@@ -122,12 +121,12 @@ function teardown_states {
     # apply states
     for state in ${states[@]}; do
         if [[ "$state" == "hare" ]]; then
-            l_info "Applying 'components.$state.teardown'"
-            hctl shutdown || true
+            l_info "Removing 'components.$state.teardown'"
+            hctl shutdown || true $log_opts 
         fi
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
-            l_info "Applying 'components.$state.teardown'"
+            l_info "Removing 'components.$state.teardown'"
             $cmd salt eosnode-1 state.apply components.$state.teardown $salt_opts || true
             sleep 2     # Mindfulness break
         else
@@ -164,6 +163,7 @@ cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 
 salt_opts=
 salt_opts_dry_run=
+log_opts=">>$LOG_FILE 2>&1"
 if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
@@ -202,7 +202,7 @@ fi
 
 if [[ "$run_all" == true || "$io_states" == true ]]; then
     l_info "Cleaning up the failed-services on both nodes"
-    salt '*' cmd.run "systemctl reset-failed"
+    salt '*' cmd.run "systemctl reset-failed" $salt_opts
 
     l_info "Cleaning up the failed-services on both nodes"
     systemctl list-units --state=running | grep hare-consul-agent &&
@@ -216,14 +216,14 @@ fi
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
     l_info "Removing eos-prvsnr package from both nodes"
-    salt '*' pkg.remove eos-prvsnr || true
-    salt '*' file.absent  || true
+    salt '*' pkg.remove eos-prvsnr $salt_opts || true
+    salt '*' file.absent $salt_opts || true
     if [[ "$singlenode" != true ]]; then
         l_info "Removing prvsnr-cli and salt packages from node-2"
         ssh eosnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; rm -rf /etc/salt; rm -rf /opt/seagate"
     fi
     l_info "Removing salt packages from node-1"
-    yum remove -y salt* || true
+    yum remove -y salt* || true $log_opts
     rm -rf /etc/salt;
 
     sleep 2
@@ -240,5 +240,6 @@ if [[ "$remove_prvsnr" == true ]]; then
     rm -rf /opt/seagate; rm -rf /root/.ssh/*
 fi
 
-l_info "Success!! The detailed logs can be seen at: $LOG_FILE"
+l_info "***** SUCCESS! *****"
+l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

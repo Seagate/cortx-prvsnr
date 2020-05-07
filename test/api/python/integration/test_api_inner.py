@@ -286,12 +286,14 @@ def test_set_eosupdate_repo():
     base_repo_name = 'eos_update'
     prvsnr_pkg_name = 'eos-prvsnr'
 
-    def check_unmounted(mount_dir):
-        # check the record is removed from the fstab
+    def check_mount_not_in_fstab(mount_dir):
         run_cmd(
             'grep {} /etc/fstab'.format(mount_dir),
             retcodes=[1]
         )
+
+    def check_unmounted(mount_dir):
+        check_mount_not_in_fstab(mount_dir)
         # check mount point dir doesn't exist
         run_cmd(
             'ls {}'.format(mount_dir),
@@ -382,6 +384,9 @@ def test_set_eosupdate_repo():
             assert _params[
                 'eosupdate/repo/{}'.format(release)
             ] == expected_source
+
+        if mount_dir:
+            check_mount_not_in_fstab(mount_dir)
 
         # check repo is enabled
         run_cmd(

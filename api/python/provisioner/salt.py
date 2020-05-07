@@ -3,9 +3,13 @@ import salt.config
 from salt.client import LocalClient, Caller
 from salt.runner import RunnerClient
 from typing import List, Union, Dict, Tuple, Iterable, Any
+from pathlib import Path
 import logging
 
-from .config import ALL_MINIONS, LOCAL_MINION
+from .config import (
+   ALL_MINIONS, LOCAL_MINION,
+   PRVSNR_USER_FILEROOTS_DIR
+)
 from .errors import (
     ProvisionerError,
     SaltError, SaltNoReturnError,
@@ -609,6 +613,52 @@ def state_fun_execute(
         fun_args=[state_fun.name] + list(fun_args or []),
         fun_kwargs=fun_kwargs,
         **kwargs
+    )
+
+
+# TODO TEST
+def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
+    source = Path(str(source))
+    dest = PRVSNR_USER_FILEROOTS_DIR / dest
+
+    if not source.exists():
+        raise ValueError('{} not found'.format(source))
+
+    if source.is_dir():
+        # TODO
+        #  - file.recurse expects only dirs from maste file roots
+        #    (salt://), need to find another alternative to respect
+        #    indempotence
+        # StateFunExecuter.execute(
+        #     'file.recurse',
+        #     fun_kwargs=dict(
+        #       source=str(params.source),
+        #       name=str(dest)
+        #     )
+        # )
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
+                    .format(dest.parent, source, dest)
+                )
+            )
+        )
+    else:
+        StateFunExecuter.execute(
+            'file.managed',
+            fun_kwargs=dict(
+                source=str(source),
+                name=str(dest),
+                makedirs=True
+            )
+        )
+
+    # ensure it would be visible for Salt master / minions
+    runner_function_run(
+        'fileserver.clear_file_list_cache',
+        fun_kwargs=dict(backend='roots')
     )
 
 

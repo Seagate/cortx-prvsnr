@@ -6,6 +6,6 @@ eos_update_repo_iso_mounted_{{ release }}:
     - device: {{ source }}
     - mkmnt: True
     - fstype: iso9660
-    - persist: True
+    - persist: False
 
 {% endmacro %}

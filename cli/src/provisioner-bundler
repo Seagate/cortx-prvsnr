@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import tarfile
+import distutils.dir_util
 
 logging.basicConfig(
         datefmt='%m/%d/%Y %I:%M:%S %p %z',
@@ -56,7 +57,7 @@ def prepare_target_file(args):
 
         target_file = os.path.join(target_path, component + '_' + args.bundle_id + '.tar.gz')
         
-        return target_file
+        return target_file,target_path
     except Exception as e:
         logging.exception(e)
         sys.exit(1)
@@ -69,13 +70,13 @@ def collect_prvsnr_logs(target_path):
         - /opt/seagate/cortx/eos-prvsnr/log/
     """
     # Copy Salt Logs
-    shutil.copytree(
+    distutils.dir_util.copy_tree(
         src = "/var/log/salt",
         dst = target_path
     )
 
     # Copy Provisioner logs
-    shutil.copytree(
+    distutils.dir_util.copy_tree(
         src = "/opt/seagate/cortx/eos-prvsnr/log",
         dst = target_path
     )
@@ -96,8 +97,8 @@ def make_tarfile(output_filename, source_dir):
 if __name__ == "__main__":
     try:
         args = parse_args()
-        target_file = prepare_target_file(args)
-        make_tarfile(target_file, '/opt/seagate/cortx/eos-prvsnr/log/')
+        target_file, target_path = prepare_target_file(args)
+        make_tarfile(target_file, target_path)
     except KeyboardInterrupt as e:
         print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
         sys.exit(1)
