@@ -14,7 +14,8 @@ Add CSM repo:
     - enabled: True
     - humanname: csm
     - baseurl: {{ defaults.csm.repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.csm.repo.gpgkey }}
 
 Render CSM ha input params template:
   file.managed:
