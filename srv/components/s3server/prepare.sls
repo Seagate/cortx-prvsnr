@@ -13,7 +13,8 @@ Add s3server yum repo:
     - name: {{ defaults.s3server.repo.id }}
     - enabled: True
     - baseurl: {{ defaults.s3server.repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.s3server.repo.gpgkey }}
 
 Create working directory for S3 server:
   file.directory:

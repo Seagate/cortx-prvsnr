@@ -6,4 +6,5 @@ Add EOSCore yum repo:
     - enabled: True
     - humanname: eoscore
     - baseurl: {{ defaults.eoscore.repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.eoscore.repo.gpgkey }}

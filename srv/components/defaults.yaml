@@ -34,6 +34,7 @@ sspl:
   repo:
     id: "sspl"
     url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
@@ -48,16 +49,19 @@ eoscore:
   repo:
     id: "eoscore"
     url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 
 hare:
   repo:
     id: "hare"
     url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 
 s3server:
   repo:
     id: "s3server"
     url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
@@ -71,6 +75,7 @@ nfs:
   repo:
     id: "nfs"
     url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
@@ -80,6 +85,7 @@ csm:
   repo:
     id: "csm"
     url: {{ repo_url  }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
     id: "csm_uploads"
     url: {{ eos_repo_url }}/uploads/
@@ -88,3 +94,4 @@ uds:
   repo:
     id: "uds"
     url: {{ repo_url  }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
