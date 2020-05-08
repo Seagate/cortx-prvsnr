@@ -15,7 +15,7 @@ def test_provisioner_config_sls(
 ):
     minion_id = eos_hosts['eosnode1']['minion_id']
     config_state = 'components.provisioner.config'
-    config_file_path = '/etc/rsyslog.d/2-prvsnrfwd.conf'
+    config_file_path = '/etc/rsyslog.d/prvsnrfwd.conf'
 
     host = mhosteosnode1.host
     config_file = host.file(config_file_path)
