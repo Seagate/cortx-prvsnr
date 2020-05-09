@@ -20,15 +20,10 @@ logger.addHandler(handler)
 
 class PillarEncrypt(object):
 
-    __options = {}
-    __root_path = os.path.join('/', 'opt', 'seagate', 'eos-prvsnr')
 
-    __pillar_path = os.path.join(
-        __root_path,
-        "pillar",
-        "components"
-    )
-
+    def __init__(self):
+        self.__options = {}
+        self.__root_path = os.path.join('/', 'opt', 'seagate', 'eos-prvsnr')
 
     def __load(self, sls_file):
         # No need to check file before open as we know, it exists.
@@ -79,25 +74,32 @@ class PillarEncrypt(object):
         return data
 
 
-    def execute(self):
+    def execute(self, pillar_path):
+        pillar_dir = os.path.join(
+            self.__root_path,
+            pillar_path
+        )
+        
         arg_parser = argparse.ArgumentParser(
             description='Encrypt passwords in Salt Pillar data.'
         )
+
         arg_parser.add_argument(
             '-d', '--decrypt',
             help='Decrypt passwords in provisioning data.',
             action="store_true"
         )
+        
         flag = arg_parser.parse_args()
 
         cluster_id = salt.client.Caller().function('grains.get', 'cluster_id')
         
-        with os.scandir(self.__pillar_path) as dir_elements:
+        with os.scandir(pillar_dir) as dir_elements:
             for file_element in dir_elements:
                 if file_element.is_file() and file_element.name.endswith('.sls'):
                     # print(f"SLS file: {file_element.name}")
                     sls_file = os.path.join(
-                        self.__pillar_path,
+                        pillar_dir,
                         f"{file_element.name}"
                     )
 
@@ -132,7 +134,9 @@ class PillarEncrypt(object):
 
 if __name__ == "__main__":
     try:
-        PillarEncrypt().execute()
+        for pillar_path in (os.path.join('pillar', 'components'), os.path.join("pillar", "user", "groups", "all")):
+            # Ensure pillars in all paths are encrypted
+            PillarEncrypt().execute(pillar_path)
     except KeyboardInterrupt as e:
         print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
         sys.exit(1)

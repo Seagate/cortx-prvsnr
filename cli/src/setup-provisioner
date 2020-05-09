@@ -270,6 +270,10 @@ if [[ -n "$hostspec" ]]; then
     target_minions="'*'"
 fi
 
+l_info "Backup pillar to user space."
+mkdir -p /opt/seagate/eos-prvsnr/pillar/user/groups/all
+cp -pr /opt/seagate/eos-prvsnr/pillar/components/*.sls /opt/seagate/eos-prvsnr/pillar/user/groups/all/
+
 # TODO test that
 # if [[ "$singlenode" != true ]]; then
 #     l_info "Triggering salt data mining"

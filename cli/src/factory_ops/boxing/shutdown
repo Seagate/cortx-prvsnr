@@ -28,10 +28,6 @@ trap trap_handler ERR
 function shutdown_node {
     echo "INFO: Shutdown either or both nodes." | tee -a ${LOG_FILE}
 
-    if [[ "$verbosity" -ge 2 ]]; then
-        set -x
-    fi
-
     local _node="${1:-both}"
 
     if [[ $# -gt 1 ]]; then
@@ -66,10 +62,6 @@ function shutdown_node {
 #
 function shutdown_controller {
     echo "INFO: Shutdown either or both nodes." | tee -a ${LOG_FILE}
-
-    if [[ "$verbosity" -ge 2 ]]; then
-        set -x
-    fi
 
     local _node="${1:-both}"
 
