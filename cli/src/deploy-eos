@@ -27,7 +27,7 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.storage.multipath"
-         "system.storage"
+        "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
