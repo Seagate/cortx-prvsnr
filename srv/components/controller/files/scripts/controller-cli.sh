@@ -89,8 +89,8 @@ help()
                      user must have the manage role assigned to it
     password      :- password for the <username>
     pool-type     :- type of pool to be created - linear/virtual
-    level         :- pool configuration level .e.g. adapt, r6 etc
-                     supported levels: r1,r5,r6,r10,r50,adapt
+    level         :- pool configuration level .e.g. adapt etc
+                     supported levels: adapt
     pool-name     :- name of the pool to be created
                      for the virtual pool type the pool-name can only be either
                      'a' or 'b'
