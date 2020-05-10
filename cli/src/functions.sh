@@ -1902,8 +1902,10 @@ function update_bmc_ip {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-
-    local _cluster_sls_path="${_installdir}/pillar/components/cluster.sls"
+    local _cluster_sls_path=${_installdir}/pillar/components/cluster.sls
+    if [[ -f "${_installdir}/pillar/user/groups/all/cluster.sls" ]]; then
+        _cluster_sls_path=${_installdir}/pillar/user/groups/all/cluster.sls
+    fi
 
     # Install ipmitool package
     if [[ -n "$_hostspec" ]]; then
@@ -1925,9 +1927,9 @@ function update_bmc_ip {
 
     if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
         l_info "BMC_IP: ${_ip}"
-        _line=$(grep -A4 -n ${_node}: $_cluster_sls_path | tail -1 | cut -f1 -d-)
+        _line=$(grep -m1 -A10 -n "${_node}:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d- -f1|tr -d [:space:])
         l_debug "Line number: ${_line}"
-        sed -ie "${_line}s/.*/      ip: ${_ip}/" $_cluster_sls_path
+        sed -i "${_line},/ip:*/ s|ip:.*|ip: ${_ip}|" $_cluster_sls_path
     else
         l_info "BMC_IP is not configured"
     fi
