@@ -5,6 +5,7 @@ Add uds yum repo:
     - name: {{ defaults.uds.repo.id }}
     - enabled: True
     - humanname: uds
+    - baseurl: {{ defaults.uds.repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.uds.repo.gpgkey }}
 
