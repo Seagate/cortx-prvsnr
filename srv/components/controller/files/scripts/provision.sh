@@ -1032,7 +1032,7 @@ fw_update()
         exit 1
     } || {
         echo "ftp_cmd_run(): firmware is updated successfully" 2>&1 | tee -a $logfile
-        echo "Check '$ftp_log' for detailed log" 2>&1 | tee -a $logfile
+        echo "The detailed logs are kept at: '$ftp_log'" 2>&1 | tee -a $logfile
     }
 }
 

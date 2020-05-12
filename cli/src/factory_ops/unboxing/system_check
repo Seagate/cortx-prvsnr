@@ -13,13 +13,15 @@
 # NOTE: pick value of public_data_ip from cluster.sls
 set -euE
 
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_system_check.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+truncate -s 0 ${LOG_FILE}
+
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
 . ${BASEDIR}/../utils
 
 export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_system_check.log}"
-truncate -s 0 ${LOG_FILE}
 
 function trap_handler {
   echo "For detailed error logs, please see: $LOG_FILE"
