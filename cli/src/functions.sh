@@ -31,8 +31,8 @@ sudo=false
 verbosity=0
 default_ssh_conf="/root/.ssh/config"
 default_ssh_disabled="false"
-eosnode_1_hostname=
-eosnode_2_hostname=
+srvnode_1_hostname=
+srvnode_2_hostname=
 
 base_options_usage="\
   -h,  --help                     print this help and exit
@@ -860,7 +860,7 @@ EOF
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
-#           Default: `eosnode-1`.
+#           Default: `srvnode-1`.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1234,7 +1234,7 @@ function configure_salt {
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
     local _master="${5:-true}"
-    local _master_host="${6:-eosnode-1}"
+    local _master_host="${6:-srvnode-1}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
@@ -1303,7 +1303,7 @@ EOF
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
-#           Default: `eosnode-1`.
+#           Default: `srvnode-1`.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1322,7 +1322,7 @@ function accept_salt_key {
 
     local _script
 
-    local _id="${1:-eosnode-1}"
+    local _id="${1:-srvnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
@@ -1558,17 +1558,17 @@ function update_release_pillar {
     sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
 }
 
-#   update_cluster_pillar_hostname <eosnode-#> <eosnode-# hostname>
-#   e.g. update_cluster_pillar_hostname eosnode-1  smc-vm1.colo.seagate.com
+#   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
+#   e.g. update_cluster_pillar_hostname srvnode-1  smc-vm1.colo.seagate.com
 #
-#   Updates cluster pillar with provided hostname for the provided eosnode
+#   Updates cluster pillar with provided hostname for the provided srvnode
 #
 #   Prerequisites:
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       eosnode-#: eosnode-1 or eosnode-2
-#       eosnode-# hostname: hostname to be updated for eosnode-# in cluster.sls
+#       srvnode-#: srvnode-1 or srvnode-2
+#       srvnode-# hostname: hostname to be updated for srvnode-# in cluster.sls
 function update_cluster_pillar_hostname {
     set -eu
 
@@ -1615,21 +1615,21 @@ function setup_ssh {
     set -eu
 
     l_info "Setting up passwordless ssh configuration"
-    eosnode_1_hostname=`hostname -f`
-    local _eosnode_1_user=`who | awk '{ print $1 }'`
-    eosnode_2_hostname=`hostname_from_spec $eosnode_2_hostspec`
+    srvnode_1_hostname=`hostname -f`
+    local _srvnode_1_user=`who | awk '{ print $1 }'`
+    srvnode_2_hostname=`hostname_from_spec $srvnode_2_hostspec`
 
-    if [[ $eosnode_1_hostname != *"."* ]]; then
-        l_error "Short hostnames are not supported, please provide FQDN for eosnode-1"
+    if [[ $srvnode_1_hostname != *"."* ]]; then
+        l_error "Short hostnames are not supported, please provide FQDN for srvnode-1"
     fi
 
-    if [[ $eosnode_2_hostname != *"."* ]]; then
-        l_error "Short hostnames are not supported, please provide FQDN for eosnode-2"
+    if [[ $srvnode_2_hostname != *"."* ]]; then
+        l_error "Short hostnames are not supported, please provide FQDN for srvnode-2"
     fi
 
-    #local _eosnode_2_user=`user_from_spec $eosnode_2_hostspec`
+    #local _srvnode_2_user=`user_from_spec $srvnode_2_hostspec`
     # Ensure user name is root on both the hosts.
-    #if [[ "$_eosnode_1_user" != "root" || "$_eosnode_2_user" != "root" ]]; then
+    #if [[ "$_srvnode_1_user" != "root" || "$_srvnode_2_user" != "root" ]]; then
     #    l_error "This command requires user to be root"
     #    l_error "Please rerun the command with root user"
     #    exit 1
@@ -1643,21 +1643,21 @@ function setup_ssh {
     #Backup original ssh config file
     cp "$default_ssh_conf" "${default_ssh_conf}.bak"
 
-    # update ssh_config file with eosnode-1 details
-    sed -i "s/Host eosnode-1 .*/Host eosnode-1 ${eosnode_1_hostname}/" $default_ssh_conf
-    line=`grep -A1 -n "Host eosnode-1" $default_ssh_conf | tail -1 | cut -f1 -d-`
-    sed -ie "${line}s/.*/    HostName ${eosnode_1_hostname}/" $default_ssh_conf
+    # update ssh_config file with srvnode-1 details
+    sed -i "s/Host srvnode-1 .*/Host srvnode-1 ${srvnode_1_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host srvnode-1" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    sed -ie "${line}s/.*/    HostName ${srvnode_1_hostname}/" $default_ssh_conf
 
-    # update ssh_config file with eosnode-2 details
-    sed -i "s/Host eosnode-2 .*/Host eosnode-2 ${eosnode_2_hostname}/" $default_ssh_conf
-    line=`grep -A1 -n "Host eosnode-2" $default_ssh_conf | tail -1 | cut -f1 -d-`
-    sed -ie "${line}s/.*/    HostName ${eosnode_2_hostname}/" $default_ssh_conf
+    # update ssh_config file with srvnode-2 details
+    sed -i "s/Host srvnode-2 .*/Host srvnode-2 ${srvnode_2_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host srvnode-2" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    sed -ie "${line}s/.*/    HostName ${srvnode_2_hostname}/" $default_ssh_conf
 
     # Check if the ssh works without password from node-1 to node-2
-    ssh -q -o "ConnectTimeout=5" $eosnode_2_hostspec exit || {
-        l_error "$eosnode_2_hostspec not reachable"
-        l_error "Couldn't do the ssh passwordless setup from $eosnode_1_hostname to $eosnode_2_hostspec"
-        l_error "please provide correct hostname using --eosnode-2 option"
+    ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec exit || {
+        l_error "$srvnode_2_hostspec not reachable"
+        l_error "Couldn't do the ssh passwordless setup from $srvnode_1_hostname to $srvnode_2_hostspec"
+        l_error "please provide correct hostname using --srvnode-2 option"
         l_error " OR use -F option to provide the correct ssh config file"
         #Backup original ssh config file
         cp "${default_ssh_conf}.bak" "$default_ssh_conf"
@@ -1665,12 +1665,12 @@ function setup_ssh {
     }
 
     # Copy the updated ssh config file to second node
-    scp $default_ssh_conf $eosnode_2_hostspec:$default_ssh_conf
+    scp $default_ssh_conf $srvnode_2_hostspec:$default_ssh_conf
 
     # Check if the ssh works without password from node-2 to node-1
-    ssh -q -o "ConnectTimeout=5" $eosnode_2_hostspec \
-        "ssh -q -o ConnectTimeout=5 eosnode-1 exit; exit" || {
-        l_error "$eosnode_1_hostspec is not reachable from $eosnode_2_hostspec"
+    ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec \
+        "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
+        l_error "$srvnode_1_hostspec is not reachable from $srvnode_2_hostspec"
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
         #Backup original ssh config file
@@ -1876,17 +1876,17 @@ EOF
     $_cmd bash -c "$_script"
 }
 
-#   update_bmc_ip <eosnode-#>
-#   e.g. update_bmc_ip eosnode-1
+#   update_bmc_ip <srvnode-#>
+#   e.g. update_bmc_ip srvnode-1
 #
-#   Updates cluster pillar with provided hostname for the provided eosnode
+#   Updates cluster pillar with provided hostname for the provided srvnode
 #
 #   Prerequisites:
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       eosnode-#: eosnode-1 or eosnode-2
-#       eosnode-# hostname: hostname to be updated for eosnode-# in cluster.sls
+#       srvnode-#: srvnode-1 or srvnode-2
+#       srvnode-# hostname: hostname to be updated for srvnode-# in cluster.sls
 function update_bmc_ip {
     set -eu
 
@@ -1894,7 +1894,7 @@ function update_bmc_ip {
         set -x
     fi
 
-    local _node="${1:-eosnode-1}"
+    local _node="${1:-srvnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
@@ -1902,8 +1902,10 @@ function update_bmc_ip {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-
-    local _cluster_sls_path="${_installdir}/pillar/components/cluster.sls"
+    local _cluster_sls_path=${_installdir}/pillar/components/cluster.sls
+    if [[ -f "${_installdir}/pillar/user/groups/all/cluster.sls" ]]; then
+        _cluster_sls_path=${_installdir}/pillar/user/groups/all/cluster.sls
+    fi
 
     # Install ipmitool package
     if [[ -n "$_hostspec" ]]; then
@@ -1925,9 +1927,9 @@ function update_bmc_ip {
 
     if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
         l_info "BMC_IP: ${_ip}"
-        _line=$(grep -A4 -n ${_node}: $_cluster_sls_path | tail -1 | cut -f1 -d-)
+        _line=$(grep -m1 -A10 -n "${_node}:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d- -f1|tr -d [:space:])
         l_debug "Line number: ${_line}"
-        sed -ie "${_line}s/.*/      ip: ${_ip}/" $_cluster_sls_path
+        sed -i "${_line},/ip:*/ s|ip:.*|ip: ${_ip}|" $_cluster_sls_path
     else
         l_info "BMC_IP is not configured"
     fi

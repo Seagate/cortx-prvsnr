@@ -29,7 +29,7 @@
         "cd /tmp/ees-prvsnr/cli/src",
         "chmod u+x bootstrap-eos start-eos",
         "set -o pipefail",
-        "hostname eosnode-1",
+        "hostname srvnode-1",
         "./bootstrap-eos -vv -S 2>&1 | tee /tmp/bootstrap-eos.logs",
         "./start-eos -vv -S 2>&1 | tee /tmp/start-eos.logs"
       ]

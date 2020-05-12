@@ -28,7 +28,9 @@ Copy Erlang cookie:
 
 Start rabbitmq app:
   cmd.run:
-    - name: rabbitmqctl start_app
+    - name: |
+        rabbitmqctl stop_app
+        rabbitmqctl start_app
     - require:
       - Start RabbitMQ service
       - Copy Erlang cookie

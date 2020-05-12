@@ -10,9 +10,9 @@ EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eo
 LOG_FILE="${LOG_FILE:-/opt/seagate/cortx/eos-prvsnr/log/setup-provisioner.log}"
 export LOG_FILE
 
-eosnode_2_hostspec=eosnode-2
+srvnode_2_hostspec=srvnode-2
 hostspec=
-eosnode_2_opt=false
+srvnode_2_opt=false
 
 salt_master_hostname=
 prvsnr_repo_src=rpm
@@ -40,8 +40,8 @@ General options:
 $base_options_usage
 
 Options:
-       --eosnode-2=[user@]hostname      eosnode-2 host specification,
-                                         default: $eosnode_2_hostspec
+       --srvnode-2=[user@]hostname      srvnode-2 host specification,
+                                         default: $srvnode_2_hostspec
        --repo-src={local|gitlab|gitrepo|rpm}    the source for provisioner repo installation,
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt master
@@ -58,9 +58,9 @@ function options_parser {
     set -eu
 
     case "$1" in
-        --eosnode-2)
-            eosnode_2_hostspec="$2"
-            eosnode_2_opt=true
+        --srvnode-2)
+            srvnode_2_hostspec="$2"
+            srvnode_2_opt=true
             ;;
         --repo-src)
             case "$2" in
@@ -99,7 +99,7 @@ function positional_args_parser {
 }
 
 
-parse_args 'S' 'eosnode-2:,repo-src:,salt-master:,singlenode' options_parser positional_args_parser "$@"
+parse_args 'S' 'srvnode-2:,repo-src:,salt-master:,singlenode' options_parser positional_args_parser "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -143,17 +143,17 @@ else
     fi
 fi
 
-# CHECK EOSNODE-1/EOSNODE-2 OCCURENCE IN CUSTOM SSH-CONFIG
+# CHECK srvnode-1/srvnode-2 OCCURENCE IN CUSTOM SSH-CONFIG
 if [[ $default_ssh_disabled == true ]]; then
     if [[ -n "$hostspec" ]]; then
         if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-            l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
+            l_error "Invalid ssh configuration provided for srvnode-1 in ssh-config ($ssh_config)"
             exit 1
         fi
     fi
     if [[ "$singlenode" == false ]]; then
-        if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-            l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
+        if [[ -z "$ssh_config" || -z "$(check_host_in_ssh_config "$srvnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+            l_error "Invalid ssh configuration provided for srvnode-2 in ssh-config ($ssh_config)"
             exit 1
         fi
     fi
@@ -180,8 +180,8 @@ fi
 
 
 if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
-    l_info 'trying to auto-detect salt master host for eosnode-2'
-    _reachable_names="$(get_reachable_names "$hostspec" "$eosnode_2_hostspec" "$ssh_config" true)"
+    l_info 'trying to auto-detect salt master host for srvnode-2'
+    _reachable_names="$(get_reachable_names "$hostspec" "$srvnode_2_hostspec" "$ssh_config" true)"
 
     if [[ -z "$_reachable_names" ]]; then
         l_warn "reachable salt master hostname hasn't been detected"
@@ -193,7 +193,7 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
     fi
 fi
 
-# SETUP EOSNODE-1
+# SETUP SRVNODE-1
 install_repos "$hostspec" "$ssh_config" "$sudo"
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
@@ -202,60 +202,60 @@ install_salt "$hostspec" "$ssh_config" "$sudo"
 
 install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
-configure_salt eosnode-1 "$hostspec" "$ssh_config" "$sudo" true 127.0.0.1 "$INSTALLDIR"
+configure_salt srvnode-1 "$hostspec" "$ssh_config" "$sudo" true 127.0.0.1 "$INSTALLDIR"
 
-accept_salt_key eosnode-1 "$hostspec" "$ssh_config" "$sudo"
+accept_salt_key srvnode-1 "$hostspec" "$ssh_config" "$sudo"
 
 set_node_id "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
-# configure_multipath eosnode-1 "$hostspec" "$ssh_config" "$sudo" true
+# configure_multipath srvnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
 # TODO use salt formulas instead
 # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
 # configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 hostnamectl status | grep Chassis | grep -q server && {
-    update_bmc_ip "eosnode-1" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    update_bmc_ip "srvnode-1" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 }
 
 configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
-# SETUP EOSNODE-2
+# SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
-    install_repos "$eosnode_2_hostspec" "$ssh_config" "$sudo"
+    install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
-    configure_firewall "$eosnode_2_hostspec" "$ssh_config" "$sudo"
+    configure_firewall "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_salt "$eosnode_2_hostspec" "$ssh_config" "$sudo"
+    install_salt "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
+    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
-    configure_salt eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
+    configure_salt srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
     # Always use master hostspec to execute this step
-    accept_salt_key eosnode-2 "$hostspec" "$ssh_config" "$sudo"
+    accept_salt_key srvnode-2 "$hostspec" "$ssh_config" "$sudo"
 
-    set_node_id "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    set_node_id "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
-    set_cluster_id "$cluster_id" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    set_cluster_id "$cluster_id" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
-    # configure_multipath eosnode-2 "$eosnode_2_hostspec" "$ssh_config" "$sudo" false
+    # configure_multipath srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false
 
     # TODO use salt formulas instead
     # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
-    # configure_network "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+    # configure_network "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
     hostnamectl status | grep Chassis | grep -q server && {
-        update_bmc_ip "eosnode-2" "$eosnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
+        update_bmc_ip "srvnode-2" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
     } 
 fi
 
 #update hostname in cluster.sls
-if [[ -n "$eosnode_1_hostname" && -n "$eosnode_2_hostname" ]]; then
+if [[ -n "$srvnode_1_hostname" && -n "$srvnode_2_hostname" ]]; then
     l_info "Updating hostnames in cluster pillar"
-    update_cluster_pillar_hostname "eosnode-1" "$eosnode_1_hostname"
-    update_cluster_pillar_hostname "eosnode-2" "$eosnode_2_hostname"
+    update_cluster_pillar_hostname "srvnode-1" "$srvnode_1_hostname"
+    update_cluster_pillar_hostname "srvnode-2" "$srvnode_2_hostname"
 fi
 
 #update target_build in release.sls
@@ -281,13 +281,13 @@ fi
 # if -F option is used, setup passwordless ssh at the end.
 #if [[ "$default_ssh_disabled" = "true" ]]; then
     #TODO: Update default ssh config file from user provided config file
-    #eosnode_1_hostspec=eosnode-1
-    #if [[ -z "$(check_hostname_in_ssh_config "$eosnode_1_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-    #    l_error "Invalid ssh configuration provided for eosnode-1 in ssh-config ($ssh_config)"
+    #srvnode_1_hostspec=srvnode-1
+    #if [[ -z "$(check_hostname_in_ssh_config "$srvnode_1_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+    #    l_error "Invalid ssh configuration provided for srvnode-1 in ssh-config ($ssh_config)"
     #    exit 1
     #fi
-    #if [[ -z "$(check_hostname_in_ssh_config "$eosnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
-    #    l_error "Invalid ssh configuration provided for eosnode-2 in ssh-config ($ssh_config)"
+    #if [[ -z "$(check_hostname_in_ssh_config "$srvnode_2_hostspec" "$ssh_config" 2>/dev/null)" ]]; then
+    #    l_error "Invalid ssh configuration provided for srvnode-2 in ssh-config ($ssh_config)"
     #    exit 1
     #fi
     #ssh_setup

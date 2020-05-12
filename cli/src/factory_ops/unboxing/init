@@ -1,0 +1,30 @@
+#!/bin/sh
+set -euE
+
+BASEDIR=$(dirname "${BASH_SOURCE}")
+
+. ${BASEDIR}/system_check
+. ${BASEDIR}/config_update
+
+# Proceed only if boxing flag set
+check_boxing_flag
+
+# Check salt services is required as one of initial steps
+# This is requried to fetch pillar data on master node
+check_salt_services 
+
+# Perform basic system check
+check_hostname
+check_pvt_data_connectivity
+check_mgmt_ip
+
+# Update /root/.ssh/config file with hosts
+update_ssh_config
+update_salt_minion
+update_cluster_sls
+recover_rabbitmq_cluster
+
+pcs cluster start --all
+
+# Unboxing SUCCESS
+remove_boxing_flag

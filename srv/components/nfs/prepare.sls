@@ -8,13 +8,14 @@ Add nfs_prereqs yum repo:
     - baseurl: {{ defaults.nfs.uploads_repo.url }}
     - gpgcheck: 0
 
-# Add nfs yum repo:
-#   pkgrepo.managed:
-#     - name: {{ defaults.nfs.repo.id }}
-#     - enabled: True
-#     - humanname: nfs
-#     - baseurl: {{ defaults.nfs.repo.url }}
-#     - gpgcheck: 0
+Add nfs yum repo:
+  pkgrepo.managed:
+    - name: {{ defaults.nfs.repo.id }}
+    - enabled: True
+    - humanname: nfs
+    - baseurl: {{ defaults.nfs.repo.url }}
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.nfs.repo.gpgkey }}
 
 Copy kvsns.ini file:
   file.managed:

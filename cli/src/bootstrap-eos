@@ -35,14 +35,14 @@ fi
 
 # apply states
 if [[ "$singlenode" == true ]]; then
-    l_info "Applying 'components.post_setup' for eosnode-1 (singlenode)"
-    $cmd salt eosnode-1 state.apply components.post_setup $salt_opts
+    l_info "Applying 'components.post_setup' for srvnode-1 (singlenode)"
+    $cmd salt srvnode-1 state.apply components.post_setup $salt_opts
 else
-    l_info "Applying 'components.post_setup' for eosnode-2"
-    $cmd salt eosnode-2 state.apply components.post_setup $salt_opts
+    l_info "Applying 'components.post_setup' for srvnode-2"
+    $cmd salt srvnode-2 state.apply components.post_setup $salt_opts
 
-    l_info "Applying 'components.post_setup' for eosnode-1"
-    $cmd salt eosnode-1 state.apply components.post_setup $salt_opts
+    l_info "Applying 'components.post_setup' for srvnode-1"
+    $cmd salt srvnode-1 state.apply components.post_setup $salt_opts
 fi
 
 l_info "Done"

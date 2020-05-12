@@ -887,7 +887,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 
 
 @pytest.mark.isolated
-@pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
+@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.env_level('network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("nm_installed", [True, False], ids=['nm_installed', 'nm_not_installed'])
@@ -991,7 +991,7 @@ def test_functions_configure_salt(
         'srv/components/provisioner/salt_minion/files/minion'
     )
     mhost.check_output(
-        'sed -i "s/^master: .*/master: eosnode-1/g" {}'
+        'sed -i "s/^master: .*/master: srvnode-1/g" {}'
         .format(minion_config_source)
     )
     mhost.check_output(
@@ -1016,7 +1016,7 @@ def test_functions_configure_salt(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
+@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master_host", [None, 'some-master-host'], ids=['default_master', 'custom_master'])
 def test_functions_configure_salt_master_host(
@@ -1024,7 +1024,7 @@ def test_functions_configure_salt_master_host(
     ssh_config, remote, master_host, project_path,
     install_provisioner
 ):
-    default_eos_salt_master = 'eosnode-1'
+    default_eos_salt_master = 'srvnode-1'
 
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
@@ -1119,7 +1119,7 @@ def test_functions_accept_salt_key_cluster(
         mhosteosnode1.iface
     ).addresses[0]
 
-    # configure eosnode-1
+    # configure srvnode-1
     script = """
         configure_salt {} '' '' {} true localhost
     """.format(
@@ -1128,7 +1128,7 @@ def test_functions_accept_salt_key_cluster(
     res = run_script(script, mhost=mhosteosnode1)
     assert res.rc == 0
 
-    # configure eosnode-2
+    # configure srvnode-2
     script = """
         configure_salt {} '' '' {} false {}
     """.format(
@@ -1157,7 +1157,7 @@ def test_functions_accept_salt_key_cluster(
 # (TODO might need to improve)
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
+@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
@@ -1204,7 +1204,7 @@ def test_functions_eos_pillar_show_skeleton(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
+@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 def test_functions_eos_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
 ):
@@ -1222,7 +1222,7 @@ def test_functions_eos_pillar_update_fail(
 #     to split into separate tests
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'eosnode-1', 'is_primary': True}})
+@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(

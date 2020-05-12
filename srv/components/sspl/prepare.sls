@@ -14,7 +14,8 @@ Add sspl yum repo:
     - enabled: True
     - humanname: sspl
     - baseurl: {{ defaults.sspl.repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.sspl.repo.gpgkey }}
 
 Add common config - system information to Consul:
   cmd.run:
@@ -25,7 +26,7 @@ Add common config - system information to Consul:
         /opt/seagate/eos/hare/bin/consul kv put system_information/site_id 001
         /opt/seagate/eos/hare/bin/consul kv put system_information/rack_id 001
         /opt/seagate/eos/hare/bin/consul kv put system_information/cluster_id {{ grains['cluster_id'] }}
-        /opt/seagate/eos/hare/bin/consul kv put system_information/{{ grains['id'] }}_id {{ grains['node_id'] }}
+        /opt/seagate/eos/hare/bin/consul kv put system_information/{{ grains['id'] }}/node_id {{ grains['node_id'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_host {{ pillar['rsyslog']['host'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_port {{ pillar['rsyslog']['port'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/healthmappath {{ pillar['sspl']['healthmappath'] }}
@@ -39,12 +40,12 @@ Add common config - rabbitmq cluster to Consul:
 Add common config - BMC to Consul:
   cmd.run:
     - name: |
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-1/ip {{ pillar['cluster']['eosnode-1']['bmc']['ip'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-1/user {{ pillar['cluster']['eosnode-1']['bmc']['user'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-1/secret {{ pillar['cluster']['eosnode-1']['bmc']['secret'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-2/ip {{ pillar['cluster']['eosnode-2']['bmc']['ip'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-2/user {{ pillar['cluster']['eosnode-2']['bmc']['user'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/eosnode-2/secret {{ pillar['cluster']['eosnode-2']['bmc']['secret'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-1/ip {{ pillar['cluster']['srvnode-1']['bmc']['ip'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-1/user {{ pillar['cluster']['srvnode-1']['bmc']['user'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-1/secret {{ pillar['cluster']['srvnode-1']['bmc']['secret'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-2/ip {{ pillar['cluster']['srvnode-2']['bmc']['ip'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-2/user {{ pillar['cluster']['srvnode-2']['bmc']['user'] }}
+        /opt/seagate/eos/hare/bin/consul kv put bmc/srvnode-2/secret {{ pillar['cluster']['srvnode-2']['bmc']['secret'] }}
 
 Add common config - storage enclosure to Consul:
   cmd.run:

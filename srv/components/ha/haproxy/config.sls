@@ -36,7 +36,7 @@ Setup logrotate cron for haproxy to run hourly:
 
 Setup haproxy config to enable logs:
   file.managed:
-    - name: /etc/rsyslog.d/2-haproxy.conf
+    - name: /etc/rsyslog.d/haproxy.conf
     - source: salt://components/ha/haproxy/files/rsyslog.d/haproxy.conf
     - makedirs: True
     - keep_source: False

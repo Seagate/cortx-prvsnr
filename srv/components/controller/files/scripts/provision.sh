@@ -9,13 +9,21 @@ ftp_log="$logdir/fw_upgrade.log"
 # e.g. run_cli_cmd 'show version' 
 cmd_run()
 {
-   _cmd=$1
+   _cmd="$1"
    _tmp_xml="$tmpdir/tmp.xml"
     echo "cmd_run(): running: '$remote_cmd $_cmd'" >> $logfile
-   $remote_cmd $_cmd > $_tmp_xml
+   echo $_cmd | grep -q -E "restart|shutdown" && {
+       timeout -k9 -s6 20s $remote_cmd $_cmd > $_tmp_xml
+   } || {
+       $remote_cmd $_cmd > $_tmp_xml 
+   }
    ret=$?
    echo "cmd_run():cmd ret val: $ret" >> $logfile
    [ $ret -eq 0 ] || {
+       # Don't exit on controller restart or shutdown
+       # On successful restart or shutdown there will
+       # be no response from the enclosure, handle it.
+       echo $_cmd | grep -q -E "restart|shutdown" && return $ret
        echo "Error running ssh command: $remote_cmd $_cmd"
        echo "Recheck the host details and run the command again"
        exit 1
@@ -39,8 +47,9 @@ license_check()
 
     # run command to get the available ports
     echo "Checking licenses.."
-    echo "license_check(): Running command: 'show license'" >> $logfile
-    cmd_run 'show license'
+    _cmd="show license"
+    echo "license_check(): Running command: '$_cmd'" >> $logfile
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $object_basetype "${property_list[@]}" > $tmp_file
 
@@ -76,9 +85,10 @@ active_ports_get()
     echo "active_ports_get(): Entry" >> $logfile
     echo "active_ports_get(): property_list=${property_list[@]}" >> $logfile
 
-    echo "active_ports_get(): running command: 'show ports'" >> $logfile
+    _cmd="show ports"
+    echo "active_ports_get(): running command: '$_cmd'" >> $logfile
     # run command to get the available ports
-    cmd_run 'show ports'
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $object_basetype "${property_list[@]}" > $_tmpfile
 
@@ -115,9 +125,10 @@ cleanup_provisioning()
     for pool in `cat $_pools | tail -n+3 | awk '{ print $1 }'`
     do
         echo "Deleting pool $pool"
+        _cmd="delete pools prompt yes $pool"
         echo "cleanup_provisioning(): running command:"\
-            "'delete pools prompt yes $pool'" >> $logfile
-        cmd_run "delete pools prompt yes $pool"
+            "'$_cmd'" >> $logfile
+        cmd_run "$_cmd"
         echo "Pool $pool deleted successfully"
     done
 
@@ -212,9 +223,10 @@ pools_info_get()
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     [ -f $_pools ] && rm -rf $_pools
 
+    _cmd="show pools"
     echo "pools_info_get(): Entry" >> $logfile
-    echo "pools_info_get(): running command: show pools" >> $logfile
-    cmd_run 'show pools'
+    echo "pools_info_get(): running command: '$_cmd'" >> $logfile
+    cmd_run "$_cmd" 
     parse_xml $xml_doc $_bt "${_pl[@]}" > $_tmp_file
     [ -s $_tmp_file ] || {
         echo "pools_info_get(): No pools found on the controller" >> $logfile
@@ -246,10 +258,11 @@ disk_groups_get()
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     [ -f $_dgs ] && rm -rf $_dgs
 
+    _cmd="show disk-groups"
     echo "disk_groups_get(): Entry" >> $logfile
-    echo "disk_groups_get(): running command: show disk-groups" >> $logfile
+    echo "disk_groups_get(): running command: '$_cmd'" >> $logfile
     # run command to get the pools
-    cmd_run 'show disk-groups'
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $_bt "${_pl[@]}" > $_tmp_file
     echo "disks_group_get(): Checking and printing the $_tmp_file" >> $logfile
@@ -284,10 +297,11 @@ volumes_get()
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     [ -f $_dgs ] && rm -rf $_dgs
 
+    _cmd="show volumes"
     echo "volumes_get(): Entry" >> $logfile
-    echo "volumes_get(): running command: show volumes" >> $logfile
+    echo "volumes_get(): running command: '$_cmd'" >> $logfile
     # run command to get the pools
-    cmd_run 'show volumes'
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $_bt "${_pl[@]}" > $_tmp_file
     echo "volumes_get(): Checking parsed output" >> $logfile
@@ -322,10 +336,11 @@ disks_info_get()
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     [ -f $_disks ] && rm -rf $_disks
 
+    _cmd="show disks"
     echo "disks_get(): Entry" >> $logfile
-    echo "disks_get(): running command: show disks" >> $logfile
+    echo "disks_get(): running command: $_cmd" >> $logfile
     # run command to get the disks
-    cmd_run 'show disks'
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $_bt "${_pl[@]}" > $_tmp_file
     echo "disks_get(): Checking parsed output" >> $logfile
@@ -439,19 +454,21 @@ provisioning_info_get()
 remove_dg()
 {
     _dg=$1
+    _cmd="remove disk-group $_dg"
     echo "remove_dg(): Entry" >> $logfile
-    echo "remove_dg(): running command 'remove disk-group $_dg'" >> $logfile
+    echo "remove_dg(): running command '$_cmd'" >> $logfile
 
-    cmd_run 'remove disk-group $_dg' > $xml_doc
+    cmd_run "$_cmd" > $xml_doc
     cli_status_get $xml_doc
 }
 
 remove_pool()
 {
     _pool=$1
+    _cmd="delete pools $_pool"
     echo "remove_pool(): Entry" >> $logfile
-    echo "remove_pool(): running command 'delete pools $_pool'" >> $logfile
-    cmd_run 'delete pools $_pool' > $xml_doc
+    echo "remove_pool(): running command '$_cmd'" >> $logfile
+    cmd_run "$_cmd" > $xml_doc
     cli_status_get $xml_doc
 }
 
@@ -581,9 +598,10 @@ base_lun_get()
     _luns="$tmpdir/luns"
     _bt="volume-view-mappings"
     _pl=("lun")
+    _cmd="show volume-maps"
 
-    echo "base_lun_get(): running command 'show volume-maps'" >> $logfile
-    cmd_run 'show volume-maps'
+    echo "base_lun_get(): running command '$_cmd'" >> $logfile
+    cmd_run "$_cmd"
     parse_xml $xml_doc $_bt "${_pl[@]}" > $_luns
     echo "base_lun_get(): -------- luns -------" >> $logfile
     cat $_luns >> $logfile
@@ -724,9 +742,10 @@ fw_ver_get()
     echo "fw_ver_get(): Entry" >> $logfile
     _xml_obj_bt="versions"
     _xml_obj_plist=("bundle-version")
+    _cmd="show configuration"
 
-    echo "fw_ver_get(): running command: show configuration" >> $logfile
-    cmd_run 'show configuration'
+    echo "fw_ver_get(): running command: $_cmd" >> $logfile
+    cmd_run "$_cmd"
     parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
     [ -s $_tmp_file ] || {
         echo "fw_ver_get(): Couldn't get the firmware version" >> $logfile
@@ -757,9 +776,10 @@ midplane_serial_get()
     echo "midplane_serial_get(): Entry" >> $logfile
     _xml_obj_bt="system"
     _xml_obj_plist=("midplane-serial-number")
+    _cmd="show system"
 
-    echo "midplane_serial_get(): running command: show system" >> $logfile
-    cmd_run 'show system'
+    echo "midplane_serial_get(): running command: $_cmd" >> $logfile
+    cmd_run "$_cmd"
     parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
     [ -s $_tmp_file ] || {
         echo "midplane_serial_get(): Couldn't get the midplane serial " >> $logfile
@@ -791,9 +811,10 @@ sc_license_get()
     echo "sc_license_get(): Getting licenses "${_xml_obj_plist[@]}"" >> $logfile
 
     # run command to get the license details
+    _cmd="show license"
     echo "Getting license details.." >> $logfile
-    echo "sc_license_get(): Running command: 'show license'" >> $logfile
-    cmd_run 'show license'
+    echo "sc_license_get(): Running command: '$_cmd'" >> $logfile
+    cmd_run "$_cmd"
     # parse xml to get required values of properties
     parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
     [ -s $_tmp_file ] || {
@@ -867,7 +888,8 @@ is_ftp_enabled()
     _xml_obj_plist=("ftp")
     # run command to get the details of advanced settings params
     echo "is_ftp_enabled():Getting protocols details.." >> $logfile
-    cmd_run 'show protocols'
+    _cmd="show protocols"
+    cmd_run "$_cmd"
     echo "is_ftp_enabled():Checking if ftp is enabled" >> $logfile
 
     # parse xml to get required values of properties
@@ -893,7 +915,8 @@ ftp_enable()
     is_ftp_enabled > $_tmp_file
     grep -q "Enabled" $_tmp_file || {
         echo "ftp_enable(): ftp disabled, enabling ftp" >> $logfile
-        cmd_run 'set protocols ftp on'
+        _cmd="set protocols ftp on"
+        cmd_run "$_cmd"
         is_ftp_enabled > $_tmp_file
         echo "ftp_enable(): Checking if ftp got enabled" >> $logfile
         grep -q "Enabled" $_tmp_file || {
@@ -912,7 +935,8 @@ is_pfu_enabled()
     _xml_obj_plist=("partner-firmware-upgrade")
     # run command to get the details of advanced settings params
     echo "Getting advanced setting details.." >> $logfile
-    cmd_run 'show advanced-settings'
+    _cmd="show advanced-settings"
+    cmd_run "$_cmd"
     echo "Checking if pfu is enabled" >> $logfile
 
     # parse xml to get required values of properties
@@ -938,7 +962,8 @@ pfu_enable()
     is_pfu_enabled > $_tmp_file
     grep -q "Enabled" $_tmp_file || {
         echo "pfu_enable(): PFU disabled, enabling PFU" >> $logfile
-        cmd_run 'set advanced-settings partner-firmware-upgrade on'
+        _cmd="set advanced-settings partner-firmware-upgrade on"
+        cmd_run "$_cmd"
         is_pfu_enabled > $_tmp_file
         echo "pfu_enable(): Checking if PFU got enabled" >> $logfile
         grep -q "Enabled" $_tmp_file || {
@@ -957,7 +982,8 @@ fw_upgrade_health_check()
     _xml_obj_plist=("overall-health")
     # run command to get the details of advanced settings params
     echo "fw_upgrade_health_check():Getting upgrade health status" >> $logfile
-    cmd_run 'check firmware-upgrade-health'
+    _cmd="check firmware-upgrade-health"
+    cmd_run "$_cmd"
     echo "fw_upgrade_health_check():Checking if health is ok" >> $logfile
 
     # parse xml to get required values of properties
@@ -1023,11 +1049,31 @@ ctrl_shutdown()
     if [[ "$shutdown_ctrl_name" = "A" || "$shutdown_ctrl_name" = "B" ]]; then
         shutdown_ctrl_name=$(echo $shutdown_ctrl_name | tr '[:upper:]' '[:lower:]')
     fi
-    echo "ctrl_shutdown(): running command 'shutdown sc $shutdown_ctrl_name'" >> $logfile
+    _cmd="shutdown $shutdown_ctrl_name"
+    echo "ctrl_shutdown(): running command '$_cmd'" >> $logfile
+    echo "Shutting down the storage enclosre: '$restart_ctrl_name'"
     #TODO: Enable it when lab access is resotred.
     #      This is disabled as it needs physical presence in lab to restart the controller
-    #cmd_run 'shutdown sc $shutdown_ctrl_name' > $xml_doc
-    cli_status_get $xml_doc
+    #cmd_run "$_cmd" > $xml_doc || {
+    #    try=1
+    #    _timeout=300
+    #    echo "waiting for controller to shutdown" 2>&1 | tee -a $logfile
+    #    until ! ping -c 1 $host 2>&1 > /dev/null
+    #    do
+    #        if [[ "$try" -gt "$_timeout" ]]; then
+    #            echo -ne " timeout!"
+    #            echo -e "\nController did not shut down after $_timeout seconds"
+    #            echo "Please check the status manually"
+    #            exit 1
+    #        fi
+    #        echo -ne "."
+    #        try=$(( $try + 1 ))
+    #        sleep 4
+    #    done
+    #    echo -ne " done!"
+    #    echo -e "\nController is shutdown successfully" 2>&1 | tee -a $logfile
+    #    exit 0
+    #}
 }
 
 ctrl_restart()
@@ -1036,10 +1082,29 @@ ctrl_restart()
     if [[ "$restart_ctrl_name" = "A" || "$restart_ctrl_name" = "B" ]]; then
         restart_ctrl_name=$(echo $restart_ctrl_name | tr '[:upper:]' '[:lower:]')
     fi
-    echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'" >> $logfile
-    echo "ctrl_restart(): running command 'restart sc $restart_ctrl_name'"
-    cmd_run 'restart sc $restart_ctrl_name' > $xml_doc
-    cli_status_get $xml_doc
+    _cmd="restart sc $restart_ctrl_name"
+    echo "ctrl_restart(): running command '$_cmd'" >> $logfile
+    echo "Restarting controller: '$restart_ctrl_name'"
+    cmd_run "$_cmd" > $xml_doc || {
+        try=1
+        _timeout=300
+        echo "waiting for controller to come up" 2>&1 | tee -a $logfile
+        until ping -c 1 $host 2>&1 > /dev/null
+        do
+            if [[ "$try" -gt "$_timeout" ]]; then
+                echo -ne " timeout!"
+                echo -e "\nController did not come up after $_timeout seconds"
+                echo "Please check the status manually"
+                exit 1
+            fi
+            echo -ne "."
+            try=$(( $try + 1 ))
+            sleep 4
+        done
+        echo -ne " done!"
+        echo -e "\nController restarted successfully" 2>&1 | tee -a $logfile
+        exit 0
+    }
 }
 
 disks_list()

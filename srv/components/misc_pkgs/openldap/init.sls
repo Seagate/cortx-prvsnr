@@ -5,7 +5,6 @@ include:
   - components.misc_pkgs.openldap.config
   - components.misc_pkgs.openldap.housekeeping
   - components.misc_pkgs.openldap.sanity_check
-  - components.misc_pkgs.openldap.sanity_check
 
 Generate openldap checkpoint flag:
   file.managed:

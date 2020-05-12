@@ -28,7 +28,7 @@ def test_path(request):
 
 @pytest.fixture
 def test_host_hostname():
-    return 'eosnode-1'
+    return 'srvnode-1'
 
 
 @pytest.fixture
