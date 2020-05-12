@@ -8,9 +8,9 @@ sspl:
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
     message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor"
+    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor"
     actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
-    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler"
+    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "EES"
@@ -25,6 +25,10 @@ sspl:
     sspl_log_file_path: "/var/log/eos/sspl/sspl.log"
     syslog_host: "localhost"
     syslog_port: "514"
+  SASPORTSENSOR:
+    threaded: "true"
+    probe: sysfs
+    polling_frequency: "30"
   LOGGINGPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "iem-queue"

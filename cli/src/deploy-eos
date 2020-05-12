@@ -27,7 +27,7 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.storage.multipath"
-         "system.storage"
+        "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
@@ -200,6 +200,10 @@ if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
+
+l_info "Backup pillar to user space."
+mkdir -p /opt/seagate/eos-prvsnr/pillar/user/groups/all
+cp -pr /opt/seagate/eos-prvsnr/pillar/components/*.sls /opt/seagate/eos-prvsnr/pillar/user/groups/all/
 
 update_salt
 

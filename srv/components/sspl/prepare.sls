@@ -14,7 +14,8 @@ Add sspl yum repo:
     - enabled: True
     - humanname: sspl
     - baseurl: {{ defaults.sspl.repo.url }}
-    - gpgcheck: 0
+    - gpgcheck: 1
+    - gpgkey: {{ defaults.sspl.repo.gpgkey }}
 
 Add common config - system information to Consul:
   cmd.run:
