@@ -1,13 +1,13 @@
 #!/bin/bash
 
 script_dir=$(dirname $0)
-export logdir="/opt/seagate/eos-prvsnr/generated_configs/sc"
+export logdir="/var/log/seagate/provisioner/"
 [ ! -d $logdir ] && mkdir -p $logdir
 
-export tmpdir="$logdir/tmp"
+export tmpdir="$logdir/_ctrl_cli_tmp"
 [ ! -d $tmpdir ] && mkdir -p $tmpdir
 
-export logfile=$logdir/controller.log
+export logfile=$logdir/controller-cli.log
 [ -f $logfile ] && rm -rf $logfile
 
 source $script_dir/provision.sh
@@ -450,6 +450,8 @@ main()
     [ "$shutdown_ctrl_opt" = true ] && ctrl_shutdown
 
     rm -rf $tmpdir $xml_doc
+    echo "***** SUCCESS! *****" 2>&1 | tee -a $logfile
+    echo "The detailed logs are kept at: $logfile"
 }
 
 main "$@"

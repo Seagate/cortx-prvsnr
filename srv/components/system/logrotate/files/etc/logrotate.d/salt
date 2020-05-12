@@ -1,4 +1,4 @@
-/var/log/salt/master {
+/var/log/seagate/provisioner/salt_master.log {
     yearly
     missingok
     rotate 3
@@ -7,7 +7,7 @@
     size 30k
 }
 
-/var/log/salt/minion {
+/var/log/seagate/provisioner/salt_minion.log {
     yearly
     missingok
     rotate 3
