@@ -29,7 +29,8 @@ from .api_spec import api_spec
 from .salt import (
     StatesApplier, StateFunExecuter, State,
     YumRollbackManager,
-    SaltJobsRunner, function_run
+    SaltJobsRunner, function_run,
+    copy_to_file_roots
 )
 from .hare import (
     cluster_maintenance_enable, cluster_maintenance_disable
@@ -317,41 +318,14 @@ class SetEOSUpdateRepo(Set):
     # TODO rollback
     def _run(self, params: inputs.EOSUpdateRepo, targets: str):
         # if local - copy the repo to salt user file root
+        # TODO consider to use symlink instead
         if params.is_local():
             dest = PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / params.release
 
-            # TODO consider to use symlink instead
+            if not params.is_dir():  # iso file
+                dest = dest.with_name(dest.name + '.iso')
 
-            if params.is_dir():
-                # TODO
-                #  - file.recurse expects only dirs from maste file roots
-                #    (salt://), need to find another alternative to respect
-                #    indempotence
-                # StateFunExecuter.execute(
-                #     'file.recurse',
-                #     fun_kwargs=dict(
-                #       source=str(params.source),
-                #       name=str(dest)
-                #     )
-                # )
-                StateFunExecuter.execute(
-                    'cmd.run',
-                    fun_kwargs=dict(
-                        name=(
-                            "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
-                            .format(dest.parent, params.source, dest)
-                        )
-                    )
-                )
-            else:  # iso file
-                StateFunExecuter.execute(
-                    'file.managed',
-                    fun_kwargs=dict(
-                        source=str(params.source),
-                        name='{}.iso'.format(dest),
-                        makedirs=True
-                    )
-                )
+            copy_to_file_roots(params.source, dest)
 
         # call default set logic (set pillar, call related states)
         super()._run(params, targets)
@@ -389,6 +363,11 @@ class EOSUpdate(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         try:
+            # ensure update repos are configured
+            StatesApplier.apply(
+                ['components.misc_pkgs.eosupdate.repo'], targets
+            )
+
             with YumRollbackManager(
                 targets, multiple_targets_ok=True
             ) as rollback_ctx:
@@ -451,6 +430,9 @@ class EOSUpdate(CommandParserFillerMixin):
                         ensure_salt_master_is_running()
                         config_salt_master()
                         config_salt_minions()
+                        StatesApplier.apply(
+                            ["components.provisioner.config"], targets
+                        )
                     except Exception as exc:
                         # unrecoverable state: SW stack is in intermediate
                         # state, no sense to start the cluster
@@ -474,8 +456,8 @@ class EOSUpdate(CommandParserFillerMixin):
                         # update failed but node is in initial state
                         # and looks functional
                 else:
-                    # logic error
-                    logger.warning('Unexpected error: {!r}'.format(update_exc))
+                    # TODO TEST unit for that case
+                    pass  # it might be update repo set issue
 
             # TODO IMPROVE
             raise final_error_t(
@@ -500,9 +482,18 @@ class FWUpdate(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
-        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
+        ip = Param(
+            'ip', 'storage_enclosure.sls',
+            controller_pi_path / 'primary_mc/ip'
+        )
+        user = Param(
+            'user', 'storage_enclosure.sls',
+            controller_pi_path / 'user'
+        )
+        passwd = Param(
+            'passwd', 'storage_enclosure.sls',
+            controller_pi_path / 'secret'
+        )
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
@@ -589,15 +580,10 @@ class SetSSLCerts(CommandParserFillerMixin):
 
         if dry_run:
             return
+
         #backup old ssl certs to provisioner user files
-        StateFunExecuter.execute(
-            "file.managed",
-            fun_kwargs=dict(
-                source=str(SSL_CERTS_FILE),
-                name=str(backup_file_name),
-                makedirs=True
-            )
-        )        
+        copy_to_file_roots(SSL_CERTS_FILE, backup_file_name)
+
         try:
             #move cluster to maintenance mode
             try:
@@ -605,14 +591,8 @@ class SetSSLCerts(CommandParserFillerMixin):
             except Exception as exc:
                 raise ClusterMaintenanceEnableError(exc) from exc
        
-            StateFunExecuter.execute(
-                "file.managed",
-                fun_kwargs=dict(
-                    source=str(source),
-                    name=str(dest),
-                    makedirs=True
-                )
-            )
+            copy_to_file_roots(source, PRVSNR_USER_FILES_SSL_CERTS_FILE) 
+
             try:
                 StatesApplier.apply([state_name])
             except Exception as exc:
@@ -635,17 +615,9 @@ class SetSSLCerts(CommandParserFillerMixin):
             elif isinstance(ssl_exc,
                 (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
                 
-                logger.info('Restoring old ssl cert ')
-            
-                StateFunExecuter.execute(
-                    "file.rename",
-                    fun_kwargs=dict(
-                        source=str(backup_file_name),
-                        name=str(dest),
-                        force=True,
-                        makedirs=True
-                    )
-                )
+                logger.info('Restoring old SSL cert ')
+                # restores old cert  
+                copy_to_file_roots(str(backup_file_name),str(dest)) 
                 try:
                     StatesApplier.apply([state_name])
                 except Exception as exc:
@@ -662,7 +634,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else: 
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-        
+            raise ssl_exc
 
 
 # TODO TEST
@@ -695,9 +667,18 @@ class RebootController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
-        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
+        ip = Param(
+            'ip', 'storage_enclosure.sls',
+            controller_pi_path / 'primary_mc/ip'
+        )
+        user = Param(
+            'user', 'storage_enclosure.sls',
+            controller_pi_path / 'user'
+        )
+        passwd = Param(
+            'passwd', 'storage_enclosure.sls',
+            controller_pi_path / 'secret'
+        )
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
@@ -742,10 +723,19 @@ class ShutdownController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = Param('ip', 'storage_enclosure.sls', controller_pi_path / 'primary_mc/ip')
-        user = Param('user', 'storage_enclosure.sls', controller_pi_path / 'user')
+        ip = Param(
+            'ip', 'storage_enclosure.sls',
+            controller_pi_path / 'primary_mc/ip'
+        )
+        user = Param(
+            'user', 'storage_enclosure.sls',
+            controller_pi_path / 'user'
+        )
         # TODO IMPROVE improve Param to hide secrets
-        passwd = Param('passwd', 'storage_enclosure.sls', controller_pi_path / 'secret')
+        passwd = Param(
+            'passwd', 'storage_enclosure.sls',
+            controller_pi_path / 'secret'
+        )
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
 
