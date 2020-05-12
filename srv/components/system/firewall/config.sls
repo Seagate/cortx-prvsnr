@@ -122,6 +122,9 @@ uds:
     - name: uds
     - ports:
       - 5000/tcp
+      - 3535/tcp  #3535 & 4000 ports are used to expose websocket servers
+      - 4000/tcp
+      - 5125/udp  #UDS advertises remote volumes over UDP multicast over this port
 
 www:
   firewalld.service:
