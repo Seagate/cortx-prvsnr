@@ -6,8 +6,6 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
 truncate -s 0 ${LOG_FILE}
 
 function get_pillar_data {
-    echo "INFO: getting pillar data from both nodes." | tee -a ${LOG_FILE}
-
     local l_key=${1:-}
 
     if [[ $# -gt 1 ]]; then

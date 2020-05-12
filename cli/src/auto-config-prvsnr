@@ -4,18 +4,20 @@
 
 set -euE
 
-logfile="/var/log/seagate/provisioner/auto-deploy-eos.log"
-mkdir -p $(dirname "${logfile}")
-/usr/bin/true > $logfile
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/auto-deploy-eos.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+# /usr/bin/true > $LOG_FILE
+truncate -s 0 ${LOG_FILE}
 
-trap trap_handler ERR
+PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 
 trap_handler ()
 {
-    echo -e "\n***** FAILED!!*****" 2>&1 | tee -a $logfile
-    echo "Detailed error log is kept at: $logfile" 2>&1 | tee -a $logfile
+    echo -e "\n***** FAILED!!*****" 2>&1 | tee -a $LOG_FILE
+    echo "Detailed error log is kept at: $LOG_FILE" 2>&1 | tee -a $LOG_FILE
     exit 1
 }
+trap trap_handler ERR
 
 srvnode_2_host=
 srvnode_2_passwd=
@@ -30,6 +32,11 @@ ctrl_b_ip=
 ctrl_user=
 ctrl_passwd=
 tgt_build=
+bmc1_user=
+bmc1_passwd=
+bmc2_user=
+bmc2_passwd=
+
 
 srvnode_2_host_opt=false
 srvnode_2_passwd_opt=false
@@ -44,6 +51,10 @@ ctrl_b_ip_opt=false
 ctrl_user_opt=false
 ctrl_passwd_opt=false   
 tgt_build_opt=false
+bmc1_user_opt=false
+bmc1_passwd_opt=false
+bmc2_user_opt=false
+bmc2_passwd_opt=false
 
 usage()
 {
@@ -55,23 +66,26 @@ auto-deploy-eos { -s <secondary node hostname (srvnode-2)> -p <password for sec 
                   [Optional Arguments] }
 
 Optional Arguments:
-   -n  <NETWORK IF>     Public n/w interface name (default enp175s0f0)
-   -N  <NETWORK IF>     Private n/w interface name (default enp175s0f1).
-                        Network interface for direct connect.
-   -i  <IP ADDRESS>     IP address for public n/w interface name on node-1.
-                        This IP will be assigned to the n/w interface
-                        provided with -n option.
-                        Omit this option if ip is already set by DHCP
-   -I  <IP ADDRESS>     IP address for public n/w interface name on node-2,
-                        This IP will be assigned to the n/w interface name
-                        provided with -N option.
-                        Omit this option if ip is already set by DHCP.
-   -A  <IP ADDRESS>     IP address of controller A (default 10.0.0.2)
-   -B  <IP ADDRESS>     IP address of controller B (default 10.0.0.3)
-   -U  <USER NAME>      User for controller (default 'manage')
-   -P  <PASSWORD>       Password for controller (default 'passwd')
-   -b  <BMC PASSWORD>   User for BMC. Default ADMIN.
-   -m  <BMC PASSWORD>   Password for BMC. Default adminBMC!
+   -n    <NETWORK IF>     Public n/w interface name (default enp175s0f0)
+   -N    <NETWORK IF>     Private n/w interface name (default enp175s0f1).
+                          Network interface for direct connect.
+   -i    <IP ADDRESS>     IP address for public n/w interface name on node-1.
+                          This IP will be assigned to the n/w interface
+                          provided with -n option.
+                          Omit this option if ip is already set by DHCP
+   -I    <IP ADDRESS>     IP address for public n/w interface name on node-2,
+                          This IP will be assigned to the n/w interface name
+                          provided with -N option.
+                          Omit this option if ip is already set by DHCP.
+   -A    <IP ADDRESS>     IP address of controller A (default 10.0.0.2)
+   -B    <IP ADDRESS>     IP address of controller B (default 10.0.0.3)
+   -U    <USER NAME>      User for controller (default 'manage')
+   -P    <PASSWORD>       Password for controller (default 'passwd')
+
+   --b1  <BMC USER>       BMC User for Node-1. Default ADMIN
+   --m1  <BMC PASSWORD>   BMC Password for Node-1. Default adminBMC!
+   --b2  <BMC USER>       BMC User for Node-2. Default ADMIN
+   --m2  <BMC PASSWORD>   BMC Password for Node-2. Default adminBMC!
 "
 }
 
@@ -177,18 +191,31 @@ while [[ $# -gt 0 ]]; do
                 echo "Error: Target build not provided" && exit 1;
             tgt_build="$2"
             shift 2 ;;
-        -m)
-            bmc_passwd_opt=true
+        --m1)
+            bmc1_passwd_opt=true
             [ -z "$2" ] &&
-                echo "Error: BMC password not provided" && exit 1;
-            bmc_passwd="$2"
+                echo "Error: BMC password for node-1 not provided" && exit 1;
+            bmc1_passwd="$2"
             shift 2 ;;
-        -b)
-            bmc_user_opt=true
+        --b1)
+            bmc1_user_opt=true
             [ -z "$2" ] &&
-                echo "Error: BMC user not provided" && exit 1;
-            bmc_user="$2"
+                echo "Error: BMC user for node-1 not provided" && exit 1;
+            bmc1_user="$2"
             shift 2 ;;
+        --m2)
+            bmc2_passwd_opt=true
+            [ -z "$2" ] &&
+                echo "Error: BMC password for node-2 not provided" && exit 1;
+            bmc2_passwd="$2"
+            shift 2 ;;
+        --b2)
+            bmc2_user_opt=true
+            [ -z "$2" ] &&
+                echo "Error: BMC user for node-2 not provided" && exit 1;
+            bmc2_user="$2"
+            shift 2 ;;
+
 
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
@@ -224,7 +251,7 @@ install_prvsnr_cli()
 {
     # Install eos-prvsnr-cli rpm from ci-storage and install it on both nodes
     target_node="$1"
-    echo "Target Node: $target_node" >> $logfile
+    echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
     if [[ "$target_node" = "srvnode-1" ]]; then
         rpm -qa | grep -q eos && {
             echo "ERROR: eos packages are already installed"
@@ -246,46 +273,48 @@ $remote_cmd <<EOF
     systemctl stop firewalld || true
 
 EOF
-
 }
 
 install_config_prvsnr()
 {
     set -eu
-    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $logfile
+    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     install_prvsnr_cli "srvnode-2"
 
-    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $logfile
+    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     install_prvsnr_cli "srvnode-1"
 
     # Run setup provisioner
-    echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $logfile
+    echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-        "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $logfile
-    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $logfile
-    echo "Done" 2>&1 | tee -a $logfile
+        "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $LOG_FILE
+    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
+    echo "Done" 2>&1 | tee -a $LOG_FILE
 }
 
 update_pillar()
 {
     # Update cluster.sls
-    echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $logfile
+    echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
 
-    _cluster_sls_path="/opt/seagate/eos-prvsnr/pillar/components/cluster.sls"
-    cp $_cluster_sls_path ${_cluster_sls_path}.orig
+    local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
+    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
+        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
+    fi
+    cp $_cluster_sls_path ${_cluster_sls_path}.org
 
     #Update cluster_ip
-    echo "Updating cluster_ip" >> $logfile
+    echo "Updating cluster_ip" 2>&1|tee -a $LOG_FILE
 
     field="cluster_ip" 
     line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
     sed -ie "${line}s/.*/  cluster_ip: ${cluster_ip}/" $_cluster_sls_path
 
     #Update mgmt_vip
-    echo "Updating mgmt_vip">> $logfile
+    echo "Updating mgmt_vip" 2>&1|tee -a $LOG_FILE
 
     field="mgmt_vip"
     line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
@@ -293,57 +322,65 @@ update_pillar()
 
     #Update interface names
     if [[ "$pub_din_opt" == true ]]; then
-        echo "Updating interface names" >> $logfile
+        echo "Updating interface names" 2>&1|tee -a $LOG_FILE
         sed -i -e "s/enp175s0f0/${pub_din}/g" $_cluster_sls_path
     fi
 
     if [[ "$pvt_din_opt" == true ]]; then
-        echo "Updating interface names" >> $logfile
+        echo "Updating interface names" 2>&1|tee -a $LOG_FILE
         sed -i -e "s/enp175s0f1/${pvt_din}/g" $_cluster_sls_path
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
-        echo "Updating interface ip ($pub_dip1) for node1">> $logfile
+        echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
         line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
         sed -ie "${line_node1_ip}s/.*/        ipaddr: ${pub_dip1}/" $_cluster_sls_path
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
-        echo "Updating interface ip ($pub_dip2) for node2">> $logfile
+        echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
         line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
         sed -ie "${line_node2_ip}s/.*/        ipaddr: ${pub_dip2}/" $_cluster_sls_path
     fi
 
-    if [[ "$bmc_user_opt" == true ]]; then
-        echo "Updating BMC user ($bmc_user)">> $logfile
+    if [[ "$bmc1_user_opt" == true ]]; then
         #Node1
+        echo "Updating BMC user ($bmc1_user) for node-1" 2>&1|tee -a $LOG_FILE
         line_n1_bmc_user=`grep -A2 -n "bmc:"  $_cluster_sls_path | grep "user:" | cut -d- -f1 | head -1`
-        sed -ie "${line_n1_bmc_user}s/.*/      user: ${bmc_user}/" $_cluster_sls_path
+        sed -ie "${line_n1_bmc_user}s/.*/      user: ${bmc1_user}/" $_cluster_sls_path
+    fi
+    
+    if [[ "$bmc2_user_opt" == true ]]; then
         #Node2
+        echo "Updating BMC user ($bmc2_user) for node-2" 2>&1|tee -a $LOG_FILE
         line_n2_bmc_user=`grep -A2 -n "bmc:"  $_cluster_sls_path | grep "user:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_n2_bmc_user}s/.*/      user: ${bmc_user}/" $_cluster_sls_path
+        sed -ie "${line_n2_bmc_user}s/.*/      user: ${bmc2_user}/" $_cluster_sls_path
     fi
 
-    if [[ "$bmc_passwd_opt" == true ]]; then
-        echo "Updating BMC password ($bmc_passwd)">> $logfile
+    if [[ "$bmc1_passwd_opt" == true ]]; then
+        echo "Updating BMC password ($bmc1_passwd) for node-1" 2>&1|tee -a $LOG_FILE
         #Node1
         line_n1_bmc_passwd=`grep -A3 -n "bmc:"  $_cluster_sls_path | grep "secret:" | cut -d- -f1 | head -1`
-        sed -ie "${line_n1_bmc_passwd}s/.*/      secret: ${bmc_passwd}/" $_cluster_sls_path
+        sed -ie "${line_n1_bmc_passwd}s/.*/      secret: ${bmc1_passwd}/" $_cluster_sls_path
+    fi
+    
+    if [[ "$bmc2_passwd_opt" == true ]]; then
+        echo "Updating BMC password ($bmc2_passwd) for node-2" 2>&1|tee -a $LOG_FILE
         #Node2
         line_n2_bmc_passwd=`grep -A3 -n "bmc:"  $_cluster_sls_path | grep "secret:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_n2_bmc_passwd}s/.*/      secret: ${bmc_passwd}/" $_cluster_sls_path
+        sed -ie "${line_n2_bmc_passwd}s/.*/      secret: ${bmc2_passwd}/" $_cluster_sls_path
     fi
 
     #Update storage_enclosure pillar
-    echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $logfile
+    echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
     _storage_sls_path="/opt/seagate/eos-prvsnr/pillar/components/storage_enclosure.sls"
     cp $_storage_sls_path ${_storage_sls_path}.orig
 
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
-        echo "Updating controller_ip1">> $logfile
+        echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
         field="primary_mc"
         line=`grep -A1 -n "${field}:" $_storage_sls_path | tail -1 | cut -f1 -d-`
         sed -ie "${line}s/.*/      ip: ${ctrl_a_ip}/" $_storage_sls_path
@@ -351,7 +388,7 @@ update_pillar()
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
-        echo "Updating controller_ip2">> $logfile
+        echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
         field="secondary_mc"
         line=`grep -A1 -n "${field}:" $_storage_sls_path | tail -1 | cut -f1 -d-`
         sed -ie "${line}s/.*/      ip: ${ctrl_b_ip}/" $_storage_sls_path
@@ -359,7 +396,7 @@ update_pillar()
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
-        echo "Updating controller user">> $logfile
+        echo "Updating controller user" 2>&1|tee -a $LOG_FILE
         field="user"
         line=`grep -n "${field}" $_storage_sls_path | cut -f1 -d:`
         sed -ie "${line}s/.*/    user: '${ctrl_user}'/" $_storage_sls_path
@@ -367,36 +404,36 @@ update_pillar()
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
-        echo "Updating controller_passwd" >> $logfile
+        echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
         field="secret: 'passwd'"
         line=`grep -n "${field}" $_storage_sls_path | cut -f1 -d:`
         sed -ie "${line}s/.*/    secret: '${ctrl_passwd}'/" $_storage_sls_path
     fi
 
     # Update s3client.sls
-    echo "Updating s3clients.sls">> $logfile
+    echo "Updating s3clients.sls" 2>&1|tee -a $LOG_FILE
 
     _s3client_sls_path="/opt/seagate/eos-prvsnr/pillar/components/s3clients.sls"
     cp $_s3client_sls_path ${_s3client_sls_path}.orig
 
     #Update cluster_ip in s3clients
-    echo "Updating ip in s3clients">> $logfile
+    echo "Updating ip in s3clients" 2>&1|tee -a $LOG_FILE
     field="ip" 
     line=`grep -n "${field}:" $_s3client_sls_path | cut -f1 -d:`
     sed -ie "${line}s/.*/    ip: ${cluster_ip}/" $_s3client_sls_path
 
-    echo -e "\n\t ***** DEBUG: Updated pillars *****" >> $logfile
-    echo -e "\n\t cluster.sls"  >> $logfile
-    cat $_cluster_sls_path >> $logfile
-    echo -e "\n\t s3client.sls"  >> $logfile
-    cat $_storage_sls_path >> $logfile
-    echo -e "\n\t s3client.sls"  >> $logfile
-    cat $_s3client_sls_path >> $logfile
+    echo -e "\n\t ***** DEBUG: Updated pillars *****" 2>&1|tee -a $LOG_FILE
+    echo -e "\n\t cluster.sls" 2>&1|tee -a $LOG_FILE
+    cat $_cluster_sls_path 2>&1|tee -a $LOG_FILE
+    echo -e "\n\t s3client.sls" 2>&1|tee -a $LOG_FILE
+    cat $_storage_sls_path 2>&1|tee -a $LOG_FILE
+    echo -e "\n\t s3client.sls" 2>&1|tee -a $LOG_FILE
+    cat $_s3client_sls_path 2>&1|tee -a $LOG_FILE
 }
 
 install_config_prvsnr
 update_pillar
 
-echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $logfile
-echo " Check following logs to see the complete logs of auto-deploy-eos: $logfile" 2>&1 | tee -a $logfile
+echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $LOG_FILE
+echo " Check following logs to see the complete logs of auto-deploy-eos: $LOG_FILE" 2>&1 | tee -a $LOG_FILE
 echo "Done"
