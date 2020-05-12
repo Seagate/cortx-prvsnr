@@ -165,10 +165,16 @@ class SWUpdateFatalError(SWUpdateError):
 class SSLCertsUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, reason: Union[Exception, str]):
+    def __init__(self, reason: str, rollback_error=None):
         self.reason = reason
+        self.rollback_error = rollback_error
 
     def __str__(self):
         return (
             'SSL Cert update failed: {!r}'.format(self)
+        )
+    def __repr__(self):
+        return (
+            "{}(reason={!r}, rollback_error={!r})"
+            .format(self.__class__.__name__, self.reason, self.rollback_error)
         )
