@@ -592,24 +592,24 @@ class SetSSLCerts(CommandParserFillerMixin):
                 raise ClusterMaintenanceEnableError(exc) from exc
        
             copy_to_file_roots(source, PRVSNR_USER_FILES_SSL_CERTS_FILE) 
-
+            logger.info('Cluster maintenance mode enabled')
             try:
                 StatesApplier.apply([state_name])
             except Exception as exc:
                 logger.exception(
                     "Failed to apply certs")
                 raise SSLCertsUpdateError(exc) from exc
-
+            logger.info('SSL Certs Updated')
             #disable cluster maintenance mode
             try:
                 cluster_maintenance_disable()
             except Exception as exc:
                 raise ClusterMaintenanceDisableError(exc) from exc
-
+            logger.info('Cluster recovered from maintenance mode')
         except Exception as ssl_exc:
             logger.exception('SSL Certs Updation Failed')
-            
-            if isinstance(update_exc, ClusterMaintenanceEnableError):
+            rollback_exc = None
+            if isinstance(ssl_exc, ClusterMaintenanceEnableError):
                 cluster_maintenance_disable(background=True)
 
             elif isinstance(ssl_exc,
@@ -623,18 +623,18 @@ class SetSSLCerts(CommandParserFillerMixin):
                 except Exception as exc:
                     logger.exception(
                         "Failed to apply certs")
-                    raise SSLCertsUpdateError(exc) from exc
+                    rollback_exc = exc
                 else:
                     try:
                         cluster_maintenance_disable()
                     except Exception as exc:
                         logger.exception(
                             "Failed to recover Cluster after rollback")
-                        raise ClusterMaintenanceDisableError(exc) from exc
+                        rollback_exc = exc
             else: 
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise ssl_exc
+            raise SSLCertsUpdateError(ssl_exc, rollback_exc = rollback_exc)
 
 
 # TODO TEST
