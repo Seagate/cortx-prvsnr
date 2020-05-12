@@ -61,6 +61,15 @@ rm -rf %{buildroot}
 
 
 %post
+# TODO test
+# TODO IMPROVE current workaround is to prevent conflicts
+#              with provisioner main rpm instllation
+cp -fpr /opt/seagate/eos-prvsnr/cli/src/* /opt/seagate/eos-prvsnr/cli
+chmod -R 755 /opt/seagate/eos-prvsnr/cli
+
+# TODO test
+mkdir -p /root/.ssh
+cp -pr /opt/seagate/eos-prvsnr/files/.ssh/* /root/.ssh/
 chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
 

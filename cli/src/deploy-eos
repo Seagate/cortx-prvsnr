@@ -173,9 +173,16 @@ function run_states {
 function update_salt {
     # Refresh salt pillar data
     l_info "Updating Salt data"
+    l_info "Syncing states"
     $cmd salt "*" saltutil.sync_all $salt_opts
+    sleep 2
+    l_info "Refreshing pillars"
+    sleep 2
     $cmd salt "*" saltutil.refresh_pillar $salt_opts
+    l_info "Refreshing grains"
+    sleep 2
     $cmd salt "*" saltutil.refresh_grains $salt_opts
+    sleep 2
 }
 
 function encrypt_pillar {

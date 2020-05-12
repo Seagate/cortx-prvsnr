@@ -1,6 +1,9 @@
 #!/bin/sh
-
 set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -8,15 +11,20 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . $BASEDIR/shutdown
 
 # Prepare shutdown
+# Shutdown HA
+if command -v pcs ; then
+    pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
+else
+    echo "[ERROR    ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
+fi
+
+# Provisioner tasks
 stop_rabbitmq_cluster
 stop_services
 backup_files
-boxing_flag
-
-# Shutdown HA
-pcs cluster stop --all
 
 # Create flag file
+boxing_flag
 
 # Power-off sequence
 shutdown_controller
