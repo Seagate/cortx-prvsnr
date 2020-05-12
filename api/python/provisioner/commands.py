@@ -698,17 +698,9 @@ class SetSSLCerts(CommandParserFillerMixin):
             elif isinstance(ssl_exc,
                 (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
                 
-                logger.info('Restoring old ssl cert ')
-            
-                StateFunExecuter.execute(
-                    "file.rename",
-                    fun_kwargs=dict(
-                        source=str(backup_file_name),
-                        name=str(dest),
-                        force=True,
-                        makedirs=True
-                    )
-                )
+                logger.info('Restoring old SSL cert ')
+                # restores old cert  
+                copy_to_file_roots(str(backup_file_name),str(dest)) 
                 try:
                     StatesApplier.apply([state_name])
                 except Exception as exc:
@@ -725,7 +717,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else: 
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-        
+            raise ssl_exc
 
 
 # TODO TEST
