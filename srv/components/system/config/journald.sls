@@ -12,9 +12,6 @@ Update journald configuration:
     - name: /etc/systemd/journald.conf
     - text: |
         Storage=persistent
-        SystemMaxUse=200M
-        MaxFileSec=1week
-        MaxRetentionSec=1week
 
 Restart systemd-journald:
   module.run:
