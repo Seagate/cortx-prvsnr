@@ -1,4 +1,3 @@
-
 stop s3authserver:
   service.dead:
     - name: s3authserver

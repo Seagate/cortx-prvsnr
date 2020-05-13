@@ -1,4 +1,3 @@
-
 Update /etc/hosts:
   file.managed:
     - name: /etc/hosts

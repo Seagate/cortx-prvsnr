@@ -90,4 +90,3 @@ Remove /var/mero partition:
 Refresh partition:
   module.run:
     - partition.probe: []
-

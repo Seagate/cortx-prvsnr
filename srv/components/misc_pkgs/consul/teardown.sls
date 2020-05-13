@@ -19,11 +19,11 @@ Source bash_profile for consul cleanup:
 Remove Consul data directory:
   file.absent:
     - name: /opt/consul/data
-    
+
 Remove Consul config directory:
   file.absent:
     - name: /etc/consul.d
-    
+
 Remove Consul agent config file:
   file.absent:
     - name: /etc/consul.d/consul.json

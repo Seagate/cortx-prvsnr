@@ -64,7 +64,7 @@ nfs:
 
 ntpd:
   firewalld.service:
-    - name: ntpd 
+    - name: ntpd
     - ports:
       - 123/udp
 

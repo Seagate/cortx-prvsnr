@@ -6,7 +6,7 @@ Configure openldap syncprov:
   cmd.run:
     - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/eos-prvsnr/generated_configs/ldap/syncprov.ldif
     - require:
-      - Configure openldap syncprov_mod 
+      - Configure openldap syncprov_mod
 
 Configure openldap replication:
   cmd.run:

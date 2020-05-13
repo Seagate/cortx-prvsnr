@@ -1,3 +1,3 @@
 Start ipsec tunnel connection:
-  cmd.run: 
+  cmd.run:
     - name: /sbin/ifup ipsec-data0

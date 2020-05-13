@@ -6,7 +6,7 @@ Destroy resource ClusterIP:
 
 Remove authorized nodes:
   cmd.run:
-    - names: 
+    - names:
       {%- for node_id in pillar['cluster']['node_list'] %}
       - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }} --force || true
       {%- endfor %}
@@ -48,7 +48,7 @@ Remove corosync-pacemaker data:
     - names:
       - /var/lib/corosync
       - /var/lib/pacemaker
-      - /var/lib/pcsd 
+      - /var/lib/pcsd
 
 # Enable and Start Firewall:
 #   cmd.run:

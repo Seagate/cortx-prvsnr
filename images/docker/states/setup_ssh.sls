@@ -3,7 +3,7 @@ setup_ssh:
     - pkgs:
       - openssh-server
       - openssh-clients
-  cmd.run: 
+  cmd.run:
     - sed -i 's/#UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g' /etc/ssh/sshd_config
     - sed -i 's/^#\?AuthorizedKeysFile.*/AuthorizedKeysFile .ssh\/authorized_keys .ssh\/authorized_keys_test/g' /etc/ssh/sshd_config
     - systemctl enable sshd.service

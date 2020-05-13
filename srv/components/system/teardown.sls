@@ -48,4 +48,3 @@ Restart systemd-journald:
   module.run:
     - service.restart:
       - systemd-journald
-

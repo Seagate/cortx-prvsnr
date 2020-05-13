@@ -15,4 +15,3 @@ Generate s3clients checkpoint flag:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3clients
     - makedirs: True
     - create: True
-

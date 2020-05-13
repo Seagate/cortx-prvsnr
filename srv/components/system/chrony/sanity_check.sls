@@ -1,6 +1,6 @@
 Check ntp source:
   cmd.run:
-    - name: chronyc sources 
+    - name: chronyc sources
 
 Check chrony setup:
   cmd.run:
