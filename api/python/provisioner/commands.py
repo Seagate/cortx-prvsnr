@@ -572,8 +572,6 @@ class SetSSLCerts(CommandParserFillerMixin):
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
         time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         state_name = "components.misc_pkgs.ssl_certs"
-        backup_file_name = dest.parent.joinpath( 
-            time_stamp + "_" + str(dest.name))
 
         if not source.is_file():
             raise ValueError('{} is not a file'.format(source))
@@ -582,30 +580,34 @@ class SetSSLCerts(CommandParserFillerMixin):
             return
 
         #backup old ssl certs to provisioner user files
-        copy_to_file_roots(SSL_CERTS_FILE, backup_file_name)
+        backup_file_name = copy_to_file_roots(SSL_CERTS_FILE, 
+            dest.parent / '{}_{}'.format(time_stamp, dest.name))
 
         try:
             #move cluster to maintenance mode
             try:
                 cluster_maintenance_enable()
+                logger.info('Cluster maintenance mode enabled')
             except Exception as exc:
                 raise ClusterMaintenanceEnableError(exc) from exc
        
-            copy_to_file_roots(source, PRVSNR_USER_FILES_SSL_CERTS_FILE) 
-            logger.info('Cluster maintenance mode enabled')
+            copy_to_file_roots(source, dest) 
+            
             try:
                 StatesApplier.apply([state_name])
+                logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
                     "Failed to apply certs")
                 raise SSLCertsUpdateError(exc) from exc
-            logger.info('SSL Certs Updated')
+            
             #disable cluster maintenance mode
             try:
                 cluster_maintenance_disable()
+                logger.info('Cluster recovered from maintenance mode')
             except Exception as exc:
                 raise ClusterMaintenanceDisableError(exc) from exc
-            logger.info('Cluster recovered from maintenance mode')
+            
         except Exception as ssl_exc:
             logger.exception('SSL Certs Updation Failed')
             rollback_exc = None
@@ -617,12 +619,13 @@ class SetSSLCerts(CommandParserFillerMixin):
                 
                 logger.info('Restoring old SSL cert ')
                 # restores old cert  
-                copy_to_file_roots(str(backup_file_name),str(dest)) 
+                copy_to_file_roots(backup_file_name, dest) 
+
                 try:
                     StatesApplier.apply([state_name])
                 except Exception as exc:
                     logger.exception(
-                        "Failed to apply certs")
+                        "Failed to apply backedup certs")
                     rollback_exc = exc
                 else:
                     try:

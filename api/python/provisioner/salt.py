@@ -660,6 +660,7 @@ def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
         'fileserver.clear_file_list_cache',
         fun_kwargs=dict(backend='roots')
     )
+    return dest
 
 
 # TODO tests
