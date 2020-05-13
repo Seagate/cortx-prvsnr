@@ -30,7 +30,10 @@ recover_rabbitmq_cluster
 
 # Shutdown HA
 if command -v pcs ; then
+    echo "INFO: Initiating HA cluster start..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Reverting from maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
 fi
