@@ -27,13 +27,25 @@ update_ssh_config
 update_salt_minion
 update_cluster_sls
 recover_rabbitmq_cluster
+salt "*" state.apply components.s3server.config 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}
 
 # Shutdown HA
 if command -v pcs ; then
+    echo "INFO: Initiating HA cluster start..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Reverting from maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
 fi
+
+# Update SSPL init
+salt "srvnode-2" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}
 
 # Unboxing SUCCESS
 remove_boxing_flag
