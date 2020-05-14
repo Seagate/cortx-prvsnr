@@ -579,10 +579,6 @@ class SetSSLCerts(CommandParserFillerMixin):
         if dry_run:
             return
 
-        #backup old ssl certs to provisioner user files
-        backup_file_name = copy_to_file_roots(SSL_CERTS_FILE, 
-            dest.parent / '{}_{}'.format(time_stamp, dest.name))
-
         try:
             #move cluster to maintenance mode
             try:
@@ -594,6 +590,9 @@ class SetSSLCerts(CommandParserFillerMixin):
             copy_to_file_roots(source, dest) 
             
             try:
+                #backup old ssl certs to provisioner user files
+                backup_file_name = copy_to_file_roots(SSL_CERTS_FILE,
+                    dest.parent / '{}_{}'.format(time_stamp, dest.name))
                 StatesApplier.apply([state_name])
                 logger.info('SSL Certs Updated')
             except Exception as exc:
