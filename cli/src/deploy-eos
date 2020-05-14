@@ -12,6 +12,8 @@ export LOG_FILE
 
 . $BASEDIR/functions.sh
 
+l_info "***** Running $0 *****" 
+
 function trap_handler {
   echo "For detailed error logs, please see: $LOG_FILE"
 }
@@ -207,10 +209,6 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
-l_info "Backup pillar to user space."
-mkdir -p /opt/seagate/eos-prvsnr/pillar/user/groups/all
-cp -pr /opt/seagate/eos-prvsnr/pillar/components/*.sls /opt/seagate/eos-prvsnr/pillar/user/groups/all/
-
 update_salt
 
 if [[ "$run_all" == true ]]; then
@@ -238,7 +236,7 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage
+    salt '*' state.apply components.system.storage $salt_opts
 fi
 
 if [[ "$run_io_states" == true ]]; then
@@ -255,6 +253,12 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     l_info "Deploying the control path states"
     run_states "${controlpath_states[@]}"
 fi
+
+l_info "Backing up pillar files to user space."
+mkdir -p /opt/seagate/eos-prvsnr/pillar/user/groups/all
+cp -r /opt/seagate/eos-prvsnr/pillar/components/*.sls /opt/seagate/eos-prvsnr/pillar/user/groups/all/
+chown -R :prvsnrusers /opt/seagate/eos-prvsnr/pillar/user
+chmod -R 664 /opt/seagate/eos-prvsnr/pillar/user/groups/all/*.sls
 
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
