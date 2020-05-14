@@ -11,15 +11,6 @@ Create tmp dir:
     - makedirs: True
     - force: True
 
-{% if pillar['cluster']['type'] == "ees" %}
-Copy ldap replication config:
-  file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/ldap/replicate.ldif
-    - source: salt://components/misc_pkgs/openldap/files/replicate.ldif
-    - keep_source: False
-    - template: jinja
-{% endif %}
-
 # File copy operation on primary
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/files/cfg_ldap.ldif',
