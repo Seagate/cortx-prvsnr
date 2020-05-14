@@ -616,11 +616,10 @@ class SetSSLCerts(CommandParserFillerMixin):
             elif isinstance(ssl_exc,
                 (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
                 
-                logger.info('Restoring old SSL cert ')
-                # restores old cert  
-                copy_to_file_roots(backup_file_name, dest) 
-
                 try:
+                    logger.info('Restoring old SSL cert ')
+                    # restores old cert
+                    copy_to_file_roots(backup_file_name, dest)
                     StatesApplier.apply([state_name])
                 except Exception as exc:
                     logger.exception(
