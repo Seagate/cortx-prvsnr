@@ -1,5 +1,10 @@
 from pathlib import Path
 
+# TODO
+#  - rename to defaults.py or constants.py or ...
+#  - then rename base.py to config.py
+#  - remove PRVSNR_ prefix
+
 PRVSNR_ROOT_DIR = Path('/opt/seagate/eos-prvsnr')
 
 # reflects master file_roots configuration
@@ -59,3 +64,32 @@ CONTROLLER_B = 'b'
 CONTROLLER_BOTH = 'both'
 
 PRVSNRUSERS_GROUP = 'prvsnrusers'
+
+PRVSNR_CLI_MACHINE_OUTPUT = ('json', 'yaml')
+PRVSNR_CLI_OUTPUT = tuple(list(PRVSNR_CLI_MACHINE_OUTPUT) + ['plain'])
+PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
+
+PRVSNR_CONFIG_FILE = 'provisioner.conf'
+
+# logging
+LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
+if not LOG_ROOT_DIR.exists():
+    LOG_ROOT_DIR = Path('.').resolve()
+
+LOG_NULL_HANDLER = '_null'
+LOG_CONSOLE_HANDLER = 'console'
+LOG_FILE_HANDLER = 'logfile'
+LOG_CMD_FILTER = 'cmd_filter'
+#   logfile habdler for the following commands
+#   will be enabled forcibly
+LOG_FORCED_LOGFILE_CMDS = [
+    'set_network',
+    'set_eosupdate_repo',
+    'eos_update',
+    'fw_update',
+    'set_ssl_certs',
+    'reboot_server',
+    'reboot_controller',
+    'shutdown_controller',
+    'create_user'
+]

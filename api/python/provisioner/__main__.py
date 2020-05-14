@@ -5,162 +5,36 @@ import attr
 import os
 import fileinput
 import sys
-import argparse
 import logging
 import yaml
+import threading
+from datetime import datetime
 from typing import Union, Any
 
-import provisioner
-from provisioner.commands import commands
-from provisioner import serialize
-from provisioner import _api
-from provisioner import runner
+from . import (
+    __version__,
+    config,
+    auth_init,
+    serialize,
+    _api,
+    runner,
+    log
+)
+from .commands import commands
+from .base import prvsnr_config
+
+from . import cli_parser
 
 logger = logging.getLogger(__name__)
 
-DEF_LOGGING_FORMAT = (
-    "%(asctime)s - %(thread)d - %(name)s - %(levelname)s - "
-    "[%(filename)s:%(lineno)d]: cmd:%(prvsnrcmd)s %(message)s"
-)
-DEF_LOGLEVEL = 'INFO'
-
+output_type = prvsnr_config.env['PRVSNR_OUTPUT']
+log_args = None
 
 GeneralArgs = attr.make_class("GeneralArgs", ('version',))
 AuthArgs = attr.make_class("AuthArgs", ('username', 'password', 'eauth'))
-LogArgs = attr.make_class(
-    "LogArgs", ('output', 'loglevel', 'logstream', 'logmode')
-)
 
 
-class CommandFilter(logging.Filter):
-    def __init__(self, cmd):
-        self.cmd = cmd
-
-    def filter(self, record):
-        record.prvsnrcmd = self.cmd
-        return True
-
-
-def _reset_logging():
-    for handler in logging.root.handlers[:]:
-        handler.flush()
-        logging.root.removeHandler(handler)
-        handler.close()
-
-
-def _set_logging(
-    cmd,
-    loglevel=DEF_LOGLEVEL,
-    logformat=DEF_LOGGING_FORMAT,
-    logstream='stderr',
-    logmode='a'
-):
-    _reset_logging()
-    root = logging.getLogger()
-    cmdfilter = CommandFilter(cmd)
-    root.setLevel(0)
-
-    if logstream in ('stderr', 'stdout'):
-        handler = logging.StreamHandler(getattr(sys, logstream))
-    elif logstream == 'rsyslog':
-        handler = logging.handlers.SysLogHandler(facility='local1')
-    else:  # consider path to file
-        handler = logging.FileHandler(logstream, mode=logmode)
-
-    handler.addFilter(cmdfilter)
-    handler.setLevel(loglevel)
-    handler.setFormatter(logging.Formatter(logformat))
-
-    root.addHandler(handler)
-    # logging.basicConfig(level=DEF_LOGLEVEL, format=DEF_LOGGING_FORMAT)
-
-
-def _parse_args():
-    parser_common = argparse.ArgumentParser(add_help=False)
-
-    general_group = parser_common.add_argument_group('general')
-    general_group.add_argument(
-        "--version", action='store_true',
-        help="show version and quit"
-    )
-
-    auth_group = parser_common.add_argument_group('authentication')
-    auth_group.add_argument(
-        "--username", metavar="STR", default=None,
-        help="username"
-    )
-    auth_group.add_argument(
-        "--password", metavar="STR", default=None,
-        help=(
-            "password, '-' means read from stdin. "
-            "Another option is to use PRVSNR_PASSWORD env variable"
-        )
-    )
-    auth_group.add_argument(
-        "--eauth", default='pam', choices=['pam', 'ldap'],
-        help="type of external authentication to use"
-    )
-
-    log_group = parser_common.add_argument_group('output & logging')
-    log_group.add_argument(
-        "--output", default="plain", choices=['plain', 'json', 'yaml'],
-        help="output format"
-    )
-    log_group.add_argument(
-        "--loglevel", default=DEF_LOGLEVEL,
-        choices=['DEBUG', 'INFO', 'WARN', 'ERROR'],
-        help="logging level"
-    )
-    log_group.add_argument(
-        "--logstream", default=None, metavar='STR',
-        help=(
-            "rsyslog, path to log file, 'stderr' and 'stdout' might be passed "
-            "as special values to stream logs to console"
-        )
-    )
-    log_group.add_argument(
-        "--logmode", default='a', metavar='STR',
-        help="the mode to use to open log files"
-    )
-
-    cmd_runner_group = parser_common.add_argument_group(
-        'common command running arguments'
-    )
-    runner.SimpleRunner.fill_parser(cmd_runner_group)
-
-    parser = argparse.ArgumentParser(
-        description="EOS Provisioner CLI",
-        parents=[parser_common],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    subparsers = parser.add_subparsers(
-        dest='command',
-        title='sub commands',
-        description='valid subcommands'
-    )
-
-    # TODO description and help strings
-    for cmd_name, cmd in commands.items():
-        subparser = subparsers.add_parser(
-            cmd_name, description='{} configuration'.format(cmd_name),
-            help='{} help'.format(cmd_name), parents=[parser_common],
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
-        )
-        cmd.fill_parser(subparser)
-        cmd.input_type.fill_parser(subparser)
-
-    kwargs = vars(parser.parse_args())
-    cmd = kwargs.pop('command')
-    args = kwargs.pop('args', [])
-    return cmd, args, kwargs
-
-
-def _output(data: str):
-    logger.debug("CLI output: {}".format(data))
-    print(data)
-
-
-def _prepare_res(output, ret=None, exc=None):
+def prepare_res(output_type, ret=None, exc=None):
     return {
         'ret': ret
     } if exc is None else {
@@ -168,11 +42,12 @@ def _prepare_res(output, ret=None, exc=None):
             'type': type(exc).__name__,
             'args': list(exc.args)
         }
-    } if output == 'yaml' else {
+    } if output_type == 'yaml' else {
         'exc': exc
     }
 
 
+# TODO TEST
 def _prepare_output(output_type, res):
     if output_type == 'plain':  # plain
         return str(res)
@@ -182,83 +57,99 @@ def _prepare_output(output_type, res):
         return serialize.dumps(res, sort_keys=True, indent=4)
     else:
         logger.error(
-            "Unexpected output type {}"
-            .fromat(output_type)
+            "Unexpected output type {}".format(output_type)
         )
         raise ValueError('Unexpected output type {}'.format(output_type))
 
 
-# TODO type for cmd Any
-def _run_cmd(cmd: Union[str, Any], output, *args, **kwargs):
-    '''
-    return format:
+def output_res(output_type, res):
+    data = _prepare_output(output_type, res)
+    logger.debug("CLI output: {}".format(data))
+    print(data)
 
-    {
-        ret: None or <command return>
-        exc: None or {
-            type:
-            args:
-            kwargs:
-        }
-    }
 
-    '''
-
-    ret = {}
-    exc = None
-
-    try:
-        logger.debug("Executing {}..".format(cmd))
-        if type(cmd) is str:
-            ret = _api.run(cmd, *args, **kwargs)
-        else:
-            ret = cmd.run(*args, **kwargs)
-    except Exception as _exc:
-        exc = _exc
+# TODO TEST
+# TODO TYPE for cmd Any
+def _run_cmd(cmd: Union[str, Any], *args, **kwargs):
+    logger.debug("Executing {}..".format(cmd))
+    if type(cmd) is str:
+        return _api.run(cmd, *args, **kwargs)
     else:
-        if ret is None:
-            ret = ''
-    finally:
-        if output == 'plain':
-            if exc:
-                raise exc
-            else:
-                _output(str(ret))
-        else:
-            res = _prepare_res(output, ret, exc)
-            _output(_prepare_output(output, res))
-
-    if exc:
-        sys.exit(1)
+        return cmd.run(*args, **kwargs)
 
 
-def main():
-    cmd, args, kwargs = _parse_args()
+def _generate_logfile_filename(cmd):
+    ts = datetime.now().strftime("%Y%m%dT%H:%M:%S")
+    threadid = threading.get_ident()
+    pid = os.getpid()
+    return (config.LOG_ROOT_DIR / f'{cmd}.{ts}.{pid}.{threadid}.log')
+
+
+def _set_logging(output_type, log_args=None):
+    if log_args is None:
+        log_args = log.LogArgs()
+
+    # forcing some log settings based on output type
+    #   disable console log handler for machine readable output
+    if output_type in config.PRVSNR_CLI_MACHINE_OUTPUT:
+        if hasattr(log_args, config.LOG_CONSOLE_HANDLER):
+            setattr(log_args, config.LOG_CONSOLE_HANDLER, False)
+
+    # forcibly enable and configure rotation file logging
+    # for most important commands
+    if getattr(log_args, 'cmd', None) in config.LOG_FORCED_LOGFILE_CMDS:
+        if hasattr(log_args, config.LOG_FILE_HANDLER):
+            # enable
+            setattr(log_args, config.LOG_FILE_HANDLER, True)
+            # set file to log if default value is set
+            filename_attr = f'{config.LOG_FILE_HANDLER}_filename'
+            if (
+                getattr(log_args, filename_attr) ==
+                attr.fields_dict(type(log_args))[filename_attr].default
+            ):
+                filename = _generate_logfile_filename(log_args.cmd)
+                setattr(log_args, filename_attr, str(filename))
+            log_args.update_handlers()
+
+    # TODO IMPROVE change a copy
+    log.set_logging(log_args)
+
+
+# TODO TEST
+def _main():
+    global output_type
+
+    parsed_args = cli_parser.parse_args()
+
+    output_type = parsed_args.kwargs.pop('output')
+
+    log_args = log.LogArgs(
+        cmd=parsed_args.cmd,
+        **{
+            k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
+            if k in attr.fields_dict(log.LogArgs)
+        }
+    )
+
+    _set_logging(output_type, log_args)
 
     general_args = GeneralArgs(
         **{
-            k: kwargs.pop(k) for k in list(kwargs)
+            k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
             if k in attr.fields_dict(GeneralArgs)
         }
     )
     auth_args = AuthArgs(
         **{
-            k: kwargs.pop(k) for k in list(kwargs)
+            k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
             if k in attr.fields_dict(AuthArgs)
-        }
-    )
-    log_args = LogArgs(
-        **{
-            k: kwargs.pop(k) for k in list(kwargs)
-            if k in attr.fields_dict(LogArgs)
         }
     )
 
     if general_args.version:
-        print(provisioner.__version__)
-        sys.exit(0)
+        return __version__
 
-    if cmd is None:
+    if parsed_args.cmd is None:
         logger.error("Command is required")
         raise ValueError('command is required')
 
@@ -268,36 +159,77 @@ def main():
         auth_args.password = os.environ.get('PRVSNR_PASSWORD')
 
     if auth_args.username:
-        provisioner.auth_init(
+        auth_init(
             username=auth_args.username,
             password=auth_args.password,
             eauth=auth_args.eauth
         )
 
-    if log_args.logstream:
-        _set_logging(
-            cmd=cmd,
-            loglevel=log_args.loglevel,
-            logstream=log_args.logstream,
-            logmode=log_args.logmode
-        )
     logger.debug(
-        "Parsed arguments: auth={}, log={}, cmd={}, args={}, kwargs={}"
-        .format(auth_args, log_args, cmd, args, kwargs)
+        f'Parsed arguments: auth={auth_args}, log={log_args}, '
+        'cmd={parsed_args.cmd}, args={parsed_args.args}, '
+        'kwargs={parsed_args.kwargs}'
     )
 
     # TODO IMPROVE
     # TODO TEST
-    cmd_obj = commands[cmd]
-    _args = list(args)
-    args, kwargs = runner.SimpleRunner.extract_positional_args(kwargs)
+    cmd_obj = commands[parsed_args.cmd]
+    _args = list(parsed_args.args)
+    args, kwargs = runner.SimpleRunner.extract_positional_args(
+        parsed_args.kwargs
+    )
     _args[0:0] = args
     args, kwargs = cmd_obj.extract_positional_args(kwargs)
     _args[0:0] = args
     args, kwargs = cmd_obj.input_type.extract_positional_args(kwargs)
     _args[0:0] = args
 
-    _run_cmd(cmd, log_args.output, *_args, **kwargs)
+    return _run_cmd(parsed_args.cmd, *_args, **kwargs)
+
+
+def main():
+    ret = None
+    exc = None
+
+    try:
+        _set_logging(output_type)   # default logging
+        ret = _main()
+    except BaseException as _exc:
+        exc = _exc
+
+        # no sense to dump errors regarding exit
+        if isinstance(_exc, SystemExit):
+            if not exc.code:
+                exc = None
+            raise
+        else:
+            logger.exception('provisioner failed')
+            sys.exit(1)
+    finally:
+        '''
+        return format:
+
+        {
+            ret: None or <command return>
+            exc: None or {
+                type:
+                args:
+                kwargs:
+            }
+        }
+
+        '''
+        if ret is None:
+            ret = ''
+
+        if output_type == 'plain':
+            if not exc:
+                output_res('plain', ret)
+        else:
+            output_res(
+                output_type,
+                prepare_res(output_type, ret=ret, exc=exc)
+            )
 
 
 if __name__ == "__main__":

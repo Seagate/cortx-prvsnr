@@ -2,7 +2,7 @@ import pytest
 import attr
 
 from provisioner import (
-    ALL_MINIONS, param, pillar, inputs
+    ALL_MINIONS, param, pillar, inputs, log
 )
 
 
@@ -117,3 +117,15 @@ def some_param_di(monkeypatch, param_spec):
     )
 
     return SomeParamDictItem
+
+
+@pytest.fixture
+def mock_manager(mocker):
+    return mocker.MagicMock()
+
+
+@pytest.fixture
+def log_args_builder(mocker, request):
+    def _f(log_config):
+        return log.build_log_args_cls(log_config)
+    return _f

@@ -627,7 +627,7 @@ def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
 
     if source.is_dir():
         # TODO
-        #  - file.recurse expects only dirs from maste file roots
+        #  - file.recurse expects only dirs from master file roots
         #    (salt://), need to find another alternative to respect
         #    indempotence
         # StateFunExecuter.execute(

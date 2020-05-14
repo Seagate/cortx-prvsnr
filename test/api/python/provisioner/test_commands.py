@@ -437,7 +437,7 @@ def test_commands_Set_run(monkeypatch, some_param_gr, patch_logging):
 def mock_eosupdate(mocker):
     calls = {}
     mocks = {}
-    mock_manager = mocker.MagicMock()
+    mock_manager = mocker.MagicMock()  # TODO DOC
 
     for fun in (
         'YumRollbackManager',
@@ -449,6 +449,7 @@ def mock_eosupdate(mocker):
         'ensure_salt_master_is_running'
     ):
         mock = mocker.patch.object(commands, fun, autospec=True)
+        # TODO DOC
         # TODO IMPROVE ??? is it documented somewhere - patch returns
         #       <class 'function'> but not a Mock child for functions
         #       or methods if autospec is True
@@ -464,6 +465,7 @@ def mock_eosupdate(mocker):
         'YumRollbackManager'
     ].return_value.__enter__.return_value
 
+    # TODO DOC attaching propery mock to a mock
     type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
         return_value=None
     )

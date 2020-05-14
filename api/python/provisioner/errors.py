@@ -7,6 +7,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerCliError(ProvisionerError):
+    pass
+
+
 class BadPillarDataError(ProvisionerError):
     pass
 

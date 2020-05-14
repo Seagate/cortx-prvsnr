@@ -32,6 +32,7 @@ def local_minion_id(monkeypatch):
     return local_minion_id
 
 
+# TODO DOC
 @pytest.fixture(autouse=True)
 def patch_logging(request):
     request.applymarker(pytest.mark.patch_logging(
