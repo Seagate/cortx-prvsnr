@@ -1,12 +1,9 @@
-import os
 import pytest
 import json
-
 import logging
 
-from test.helper import PRVSNR_REPO_INSTALL_DIR
-
 logger = logging.getLogger(__name__)
+
 
 # TODO might makes sense to verify for cluster case as well
 @pytest.mark.isolated

@@ -2,7 +2,6 @@ import docker
 import time
 import json
 import attr
-from typing import Iterable
 from pathlib import Path
 from collections import defaultdict
 
@@ -297,7 +296,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "verifies: mark test as verifying specified issues"
     )
-
 
 
 prvsnr_pytest_options = {
@@ -1291,21 +1289,21 @@ def discover_remote(
     if _ssh_config is None:
         ssh_key = request.getfixturevalue('ssh_key')
         _ssh_config = (
-                "Host {}\n"
-                "  Hostname {}\n"
-                "  Port 22\n"
-                "  User {}\n"
-                "  UserKnownHostsFile /dev/null\n"
-                "  StrictHostKeyChecking no\n"
-                "  IdentityFile {}\n"
-                "  IdentitiesOnly yes\n"
-                "  LogLevel FATAL\n"
-            ).format(
-                _hostname,
-                _host.interface(_iface).addresses[0],
-                'root',
-                str(ssh_key)
-            )
+            "Host {}\n"
+            "  Hostname {}\n"
+            "  Port 22\n"
+            "  User {}\n"
+            "  UserKnownHostsFile /dev/null\n"
+            "  StrictHostKeyChecking no\n"
+            "  IdentityFile {}\n"
+            "  IdentitiesOnly yes\n"
+            "  LogLevel FATAL\n"
+        ).format(
+            _hostname,
+            _host.interface(_iface).addresses[0],
+            'root',
+            str(ssh_key)
+        )
 
     with ssh_config.open('a') as f:
         f.write(_ssh_config)

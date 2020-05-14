@@ -4,6 +4,7 @@ from yaml import safe_dump
 
 from test.helper import PRVSNRUSERS_GROUP
 
+
 # TODO might makes sense to verify for cluster case as well
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])

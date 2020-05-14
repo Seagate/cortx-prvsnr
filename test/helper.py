@@ -9,10 +9,10 @@ import testinfra
 from abc import ABC, abstractmethod
 from random import randrange
 from time import sleep
-
+from provisioner.config import PRVSNR_ROOT_DIR
 import pytest
-
 import logging
+
 logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -20,7 +20,6 @@ PROJECT_PATH = MODULE_DIR.parent
 
 PROVISIONER_API_DIR = (PROJECT_PATH / 'api/python').resolve()
 sys.path.insert(0, str(PROVISIONER_API_DIR))
-from provisioner.config import *
 
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
@@ -222,6 +221,7 @@ class VagrantParsedRow:
         row = next(csv.reader([self._row]))
         self.ts, self.target, self.data_type = row[:3]
         self.data = row[3:]
+
 
 # TODO check packer is available
 @attr.s
@@ -466,6 +466,7 @@ class VagrantBox:
         converter=lambda v: v.resolve() if v else None,
         default=None
     )
+
     @path.validator
     def _check_path(self, attribute, value):
         if value and (not value.is_file):
@@ -614,7 +615,7 @@ def _docker_container_commit(container, repository=None, tag=None):
 
 
 def run_remote(provider, base_level, base_name, tmpdir, *args, **kwargs):
-    base_name = base_name[-(MAX_REMOTE_NAME_LEN-3):]
+    base_name = base_name[-(MAX_REMOTE_NAME_LEN - 3):]
 
     for i in range(3):  # just three tries
         _id = randrange(100)

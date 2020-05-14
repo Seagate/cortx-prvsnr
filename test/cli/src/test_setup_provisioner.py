@@ -121,14 +121,14 @@ def test_setup_provisioner_fail(mhost, run_script):
     )
 
     # srvnode-2
-    #res = run_script(
-    #    "--srvnode-2 srvnode-2"
-    #)
-    #assert res.rc == 1
-    #assert (
-    #    'Invalid ssh configuration provided for srvnode-2 in ssh-config'
-    #    in res.stdout
-    #)
+    # res = run_script(
+    #     "--srvnode-2 srvnode-2"
+    # )
+    # assert res.rc == 1
+    # assert (
+    #     'Invalid ssh configuration provided for srvnode-2 in ssh-config'
+    #     in res.stdout
+    # )
 
     # SINGLENODE - REMOTE - CUSTOM SSH - spec for master not in config
     res = run_script(
@@ -166,7 +166,7 @@ def test_setup_provisioner_singlenode(
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "-v {} {} {} --repo-src local --singlenode".format(ssh_config, with_sudo, remote),
@@ -235,7 +235,7 @@ def test_setup_provisioner_cluster(
 ):
     remote = '--remote {}'.format(mhosteosnode1.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config)
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "-v {} {} {} --srvnode-2 {} --repo-src {}".format(
@@ -260,7 +260,7 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
 
     ssh_config = '--ssh-config {}'.format(ssh_config)
     remote = '--remote {}'.format(mhosteosnode1.hostname)
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "-v {} {} {} --srvnode-2 {} --salt-master {} --repo-src local".format(

@@ -1,6 +1,5 @@
 import os
 import pytest
-import json
 import logging
 
 
@@ -29,7 +28,7 @@ def test_start_eos_commands(
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "{} {} {} {}".format(

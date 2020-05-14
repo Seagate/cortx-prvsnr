@@ -37,9 +37,7 @@ def test_configure_eos_show(
 
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        'provisioner configure_eos {} --show'.format(component)
     )
 
     remote = '--remote {}'.format(mhost.hostname) if remote else ''

@@ -2,6 +2,7 @@ import pytest
 
 import test.cli.src.helper as h
 
+
 @pytest.fixture
 def run_script(mlocalhost, tmpdir_function, request):
     def _f(

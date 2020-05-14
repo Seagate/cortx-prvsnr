@@ -3,10 +3,8 @@ import pytest
 import json
 import yaml
 import functools
-from pathlib import Path
 
 import logging
-import testinfra
 
 import test.helper as h
 from .helper import run_script as _run_script
@@ -133,7 +131,7 @@ def test_functions_log_fails_for_wrong_level(run_script):
     res = run_script(script, stderr_to_stdout=False)
     assert res.rc == 5
     # TODO IMPROVE use regex
-    assert "ERROR".format(level) in res.stderr
+    assert "ERROR: {}".format(level) in res.stderr
     assert "Unknown log level: {}".format(level) in res.stderr
 
 
@@ -203,7 +201,7 @@ def test_functions_log_helpers(run_script):
 
 
 def test_functions_parse_args_succeeds_for_help(parse_args):
-    for arg in ('-h',  '--help'):
+    for arg in ('-h', '--help'):
         assert parse_args(arg).rc == 0
 
 
@@ -212,14 +210,14 @@ def test_functions_parse_args_fails_due_to_unknown_arg(parse_args):
 
 
 def test_functions_parse_args_fails_due_to_bad_ssh_config(parse_args):
-    for arg in ('-F',  '--ssh-config'):
+    for arg in ('-F', '--ssh-config'):
         assert parse_args(arg).rc == 2
         assert parse_args(arg, '/tmp').rc == 5
         assert parse_args(arg, '/tmp/some-non-existent-file').rc == 5
 
 
 def test_functions_parse_args_fails_due_to_missed_host_spec(parse_args):
-    for arg in ('-r',  '--remote'):
+    for arg in ('-r', '--remote'):
         assert parse_args(arg).rc == 2
 
 
@@ -317,7 +315,7 @@ def test_functions_base_options_usage(run_script):
         # '-n,  --dry-run',
         '-h,  --help',
         # '-r,  --remote [user@]hostname',
-        #'-S,  --singlenode',
+        # '-S,  --singlenode',
         '-F,  --ssh-config FILE',
         # disabled by EOS-2410
         #  '-s,  --sudo',
@@ -684,7 +682,7 @@ def test_functions_install_repos(
 
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_repos {} {} {}
@@ -736,7 +734,7 @@ def test_functions_install_provisioner(
     prvsnr_version = EOS_RELEASE_TEST_TAG
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_provisioner {} {} {} {} {}
@@ -774,7 +772,7 @@ def test_functions_install_provisioner_rpm(
     prvsnr_version = "''" if version is None else version
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_provisioner rpm {} {} {} {}
@@ -811,7 +809,7 @@ def test_functions_install_provisioner_local(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     prvsnr_version = version
     if prvsnr_version is None:
@@ -866,7 +864,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_singlenode = 'true' if singlenode else 'false'
 
     prvsnr_version = 'HEAD'
@@ -901,7 +899,7 @@ def test_functions_configure_network(
 
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         configure_network {} {} {}
@@ -937,7 +935,7 @@ def test_functions_install_salt(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_salt {} {} {}
@@ -968,7 +966,7 @@ def test_functions_configure_salt(
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_master = 'true' if master else 'false'
 
     script = """
@@ -977,7 +975,6 @@ def test_functions_configure_salt(
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
-
 
     mhost.check_output(
         'diff -q {} /etc/salt/master'.format(
@@ -1029,7 +1026,7 @@ def test_functions_configure_salt_master_host(
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     _master_host = "''" if master_host is None else master_host
 
@@ -1059,7 +1056,7 @@ def test_functions_accept_salt_key_singlenode(
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_master = 'true'
 
     script = """
@@ -1113,7 +1110,7 @@ def test_functions_accept_salt_key_cluster(
 ):
     eosnode1_minion_id = eos_spec['eosnode1']['minion_id']
     eosnode2_minion_id = eos_spec['eosnode2']['minion_id']
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     salt_server_ip = mhosteosnode1.host.interface(
         mhosteosnode1.iface
@@ -1121,7 +1118,7 @@ def test_functions_accept_salt_key_cluster(
 
     # configure srvnode-1
     script = """
-        configure_salt {} '' '' {} true localhost
+        configure_salt {} '' '' {} true {} localhost
     """.format(
         eosnode1_minion_id, with_sudo, salt_server_ip
     )
@@ -1153,6 +1150,7 @@ def test_functions_accept_salt_key_cluster(
     output = json.loads(output)
     assert set(output['minions']) == set([eosnode1_minion_id, eosnode2_minion_id])
 
+
 # Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)
 @pytest.mark.isolated
@@ -1181,15 +1179,13 @@ def test_functions_eos_pillar_show_skeleton(
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        'provisioner configure_eos {} --show'.format(component)
     )
 
     # 2. call the script
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         eos_pillar_show_skeleton {} {} {} {}
@@ -1247,9 +1243,7 @@ def test_functions_eos_pillar_update_and_load_default(
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        'provisioner configure_eos {} --show'.format(component)
     )
     new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
     new_pillar_dict.update({pillar_new_key: "temporary"})
@@ -1274,7 +1268,7 @@ def test_functions_eos_pillar_update_and_load_default(
     # 2. call the update script
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         eos_pillar_update {} {} {} {} {}

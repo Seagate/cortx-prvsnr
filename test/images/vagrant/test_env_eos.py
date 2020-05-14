@@ -4,8 +4,6 @@ import yaml
 
 import test.helper as h
 
-from test.cli.src.conftest import run_script
-
 logger = logging.getLogger(__name__)
 
 
@@ -75,7 +73,6 @@ def test_singlenode_eos_deployed_env(mhosteosnode1, request):
     #     'bash -ex {}'
     #     .format(mhosteosnode1.repo / 'sanity_tests/s3-sanity.sh')
     # )
-
 
 
 @pytest.mark.skip
