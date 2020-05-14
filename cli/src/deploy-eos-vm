@@ -166,7 +166,7 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/eos-prvsnr/cli/pillar_encrypt
+    python3 /opt/seagate/eos-prvsnr/cli/src/pillar_encrypt
     update_salt
 }
 
