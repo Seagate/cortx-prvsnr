@@ -1,3 +1,12 @@
+{% if pillar['cluster']['type'] == "ees" %}
+Copy ldap replication config:
+  file.managed:
+    - name: /opt/seagate/eos-prvsnr/generated_configs/ldap/replicate.ldif
+    - source: salt://components/misc_pkgs/openldap/files/replicate.ldif
+    - keep_source: False
+    - template: jinja
+{% endif %}
+
 Configure openldap syncprov_mod:
   cmd.run:
     - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/eos-prvsnr/generated_configs/ldap/syncprov_mod.ldif
