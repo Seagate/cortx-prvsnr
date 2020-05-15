@@ -224,6 +224,8 @@ fi
 
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
+    l_info "Removing prvsnr api logs configuration from node-1"
+    salt 'srvnode-1' state.apply components.provisioner.teardown
     l_info "Removing eos-prvsnr package from both nodes"
     salt '*' pkg.remove eos-prvsnr $salt_opts || true 
 
