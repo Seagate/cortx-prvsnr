@@ -83,6 +83,9 @@ setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/pillar/user
 #   install api globally using pip
 pip3 install -U /opt/seagate/eos-prvsnr/api/python
 
+chown -R :prvsnrusers /opt/seagate/eos-prvsnr/cli
+chmod -R 750 /opt/seagate/eos-prvsnr/cli
+
 %preun
 # uninstall api globally using pip (only for pkg uninstall)
 if [ $1 -eq 0 ] ; then
