@@ -39,9 +39,9 @@ def check_salt_master_is_restarted(pid_before):
         # "ActiveState": "active",
         # "SubState": "running",
         return (
-            res['ActiveState'] == 'active' and
-            res['SubState'] == 'running' and
-            res['MainPID'] != pid_before
+            res['ActiveState'] == 'active'
+            and res['SubState'] == 'running'
+            and res['MainPID'] != pid_before
         )
 
 

@@ -186,10 +186,10 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         with pytest.raises(SaltNoReturnError) as excinfo:
             _call()
         assert (
-                excinfo.value.reason == (
-                    'Empty salt result: {}'
+            excinfo.value.reason == (
+                'Empty salt result: {}'
                     .format(salt_cmd_res)
-                )
+            )
         )
         _check_exc_attrs(excinfo.value, locals())
 
@@ -347,13 +347,13 @@ def test_salt_client_cmd(monkeypatch):
             with pytest.raises(SaltNoReturnError) as excinfo:
                 _call()
             assert (
-                    excinfo.value.reason == (
-                        'Async API returned empty result: {}'
-                        .format(salt_cmd_res)
-                    ) if nowait else (
-                        'Empty salt result: {}'
-                        .format(salt_cmd_res)
-                    )
+                excinfo.value.reason == (
+                    'Async API returned empty result: {}'
+                    .format(salt_cmd_res)
+                ) if nowait else (
+                    'Empty salt result: {}'
+                    .format(salt_cmd_res)
+                )
             )
             _check_exc_attrs(excinfo.value, locals())
 

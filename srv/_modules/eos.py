@@ -22,7 +22,7 @@ def conf_update(name, ref_pillar, type=None, backup=True):
   # print("Pillar ref: {0}".format(ref_pillar))
 
   pillar_dict = _read_pillar(ref_pillar)
-  #print("Pillar dict: {0}".format(pillar_dict))
+  # print("Pillar dict: {0}".format(pillar_dict))
   config_dict = None
   if type and 'YAML' in type.upper():
     config_dict = _read_yaml(name)
@@ -30,11 +30,12 @@ def conf_update(name, ref_pillar, type=None, backup=True):
     config_dict = _read_ini(name)
   else:
     config_dict = _read_config_file(name)
-  #print("Config file dict: {0}".format(config_dict))
+  # print("Config file dict: {0}".format(config_dict))
   with open(name, 'w') as fd:
     yaml.dump(pillar_dict, fd, default_flow_style=False, width=1, indent=4)
 
   return True if config_dict else False
+
 
 # def _read_config_file(config_filename: str) -> dict:
 def _read_config_file(config_filename):
@@ -52,6 +53,7 @@ def _read_config_file(config_filename):
 
   return config_data
 
+
 # def _read_yaml(config_filename: str) -> dict:
 def _read_yaml(config_filename):
   import yaml
@@ -59,7 +61,7 @@ def _read_yaml(config_filename):
   try:
     with open(config_filename, 'r') as fd:
       yaml_to_dict = yaml.safe_load(fd)
-      #print(yaml_to_dict)
+      # print(yaml_to_dict)
       return yaml_to_dict
   except yaml.YAMLError as ex:
     # print(ex)
@@ -70,6 +72,7 @@ def _read_yaml(config_filename):
     ==================================================
     """
     raise Exception(msg)
+
 
 # def _read_ini(config_filename: str) -> dict:
 def _read_ini(config_filename):
@@ -110,9 +113,9 @@ def _read_ini(config_filename):
   print("INI file read as: {0}".format(ini_to_dict))
   return ini_to_dict
 
+
 # def _read_pillar(ref_component_pillar: str) -> dict:
 def _read_pillar(ref_component_pillar):
-  from collections import OrderedDict
   from json import loads, dumps
   pillar_data = __pillar__[ref_component_pillar]
   pillar_dict = loads(dumps(dict(pillar_data)))

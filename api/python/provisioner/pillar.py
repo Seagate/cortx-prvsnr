@@ -189,10 +189,10 @@ class PillarUpdater:
                 if value is not UNCHANGED:
                     if value is MISSED:
                         logger.error(
-                              "Total removal of a pillar "
-                              "entry is not allowed, "
-                              "key_path: {}"
-                              .format(p_entry.key_path)
+                            "Total removal of a pillar "
+                            "entry is not allowed, "
+                            "key_path: {}"
+                            .format(p_entry.key_path)
                         )
                         raise ValueError(
                             "Total removal of a pillar entry is not allowed, "
@@ -207,9 +207,9 @@ class PillarUpdater:
                         #      get the value from pillar files since a call
                         #      to pillar.items can't help here
                         logger.error(
-                              "Reset to factory default "
-                              "is not yet supported, key_path: {}"
-                              .format(p_entry.key_path)
+                            "Reset to factory default "
+                            "is not yet supported, key_path: {}"
+                            .format(p_entry.key_path)
                         )
                         raise NotImplementedError(
                             "Reset to factory default is not yet supported, "

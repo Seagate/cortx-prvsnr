@@ -7,8 +7,8 @@ from pathlib import Path
 import logging
 
 from .config import (
-   ALL_MINIONS, LOCAL_MINION,
-   PRVSNR_USER_FILEROOTS_DIR
+    ALL_MINIONS, LOCAL_MINION,
+    PRVSNR_USER_FILEROOTS_DIR
 )
 from .errors import (
     ProvisionerError,
@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 _eauth = 'pam'
 _username = None
 _password = None
-
-
 _salt_local_client = None
 _salt_runner_client = None
 _salt_caller = None
@@ -49,6 +47,7 @@ class StateFun:
 
     def __str__(self):
         return self.name
+
 
 # TODO check default values
 @attr.s(auto_attribs=True)

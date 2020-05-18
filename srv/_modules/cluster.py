@@ -5,11 +5,11 @@
 import errno
 import os
 import subprocess
-import sys
 import yaml
 import time
 
 from shutil import copyfile
+
 
 def storage_device_config():
     _pillar_path = '/opt/seagate/eos-prvsnr/pillar/user/groups/all/cluster.sls'
@@ -22,7 +22,7 @@ def storage_device_config():
                 os.strerror(errno.ENOENT),
                 _pillar_path
             )
-    
+
     if not os.path.exists(_pillar_path + '.bak'):
         copyfile(_pillar_path, _pillar_path + '.bak')
 
@@ -42,31 +42,31 @@ def storage_device_config():
         _sleep_time = 5
         while device_list == []:
             device_list = subprocess.Popen([cmd],
-                                            shell=True,
-                                            stdout=subprocess.PIPE
-                                        ).stdout.read().decode("utf-8").splitlines()
+                shell=True,
+                stdout=subprocess.PIPE
+            ).stdout.read().decode("utf-8").splitlines()
             if device_list == []:
-                if ( _count == 0 ):
+                if (_count == 0):
                     print("[ INFO ] Waiting for multipath device to come up..")
 
-                if ( _count >= _timeout ):
+                if (_count >= _timeout):
                     break
                 else:
                     time.sleep(_sleep_time)
                     _tmp_cmd = "multipath -ll | grep prio=50 -B2|grep mpath | wc -l"
                     _mpath_devs = subprocess.Popen([_tmp_cmd],
-                                                    shell=True,
-                                                    stdout=subprocess.PIPE
+                        shell=True,
+                        stdout=subprocess.PIPE
                     ).stdout.read().decode("utf-8")
 
-                    if ( int(_mpath_devs) > 0 ):
+                    if (int(_mpath_devs) > 0):
                         print("[ INFO ] Found multipath devices!")
                     else:
                         print(".")
                     _count = _count + _sleep_time
 
         if device_list == []:
-            print ("[ ERROR ] multipath devices don't exist.")
+            print("[ ERROR ] multipath devices don't exist.")
             return False
 
         metadata_device = list()
@@ -79,7 +79,7 @@ def storage_device_config():
         yaml.dump(
             _pillar_dict,
             stream=fd,
-            default_flow_style = False,
+            default_flow_style=False,
             canonical=False,
             width=1,
             indent=4
@@ -99,7 +99,7 @@ def nw_roaming_ip():
                 os.strerror(errno.ENOENT),
                 _pillar_path
             )
-    
+
     if not os.path.exists(_pillar_path + '.bak'):
         copyfile(_pillar_path, _pillar_path + '.bak')
 
@@ -110,17 +110,17 @@ def nw_roaming_ip():
     for node in _pillar_dict["cluster"]["node_list"]:
         pvt_nw = _pillar_dict['cluster']['pvt_data_nw_addr']
         roaming_ip = ("{0}.{1}").format('.'.join(pvt_nw.split('.')[:3]), int(node.split('-')[1]) + 2)
-        if None == _pillar_dict["cluster"][node]["network"]["data_nw"]["roaming_ip"]:
+        if _pillar_dict["cluster"][node]["network"]["data_nw"]["roaming_ip"] is None:
             _pillar_dict["cluster"][node]["network"]["data_nw"]["roaming_ip"] = roaming_ip
         else:
             # Honour user override
             return True
- 
+
     with open(_pillar_path, 'w') as fd:
         yaml.dump(
             _pillar_dict,
             stream=fd,
-            default_flow_style = False,
+            default_flow_style=False,
             canonical=False,
             width=1,
             indent=4

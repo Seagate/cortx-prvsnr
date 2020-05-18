@@ -295,7 +295,7 @@ def test_network():
         'secondary_data_ip',
         'secondary_gateway_ip',
         'secondary_hostname'
-     ):
+    ):
         fattr = attr.fields_dict(Network)[f]
         assert fattr.type is str
         assert fattr.default is UNCHANGED

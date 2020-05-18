@@ -1,7 +1,7 @@
 import os
 import sys
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 # TODO check python version
 
@@ -41,7 +41,7 @@ setup(
     license=metadata['__license__'],
     classifiers=[
         "Programming Language :: Python :: 3.6"  # TODO test and declare others
-    ], # TODO
+    ],  # TODO
     keywords='EOS Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},

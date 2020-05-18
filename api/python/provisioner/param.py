@@ -2,6 +2,7 @@ import attr
 from typing import Dict
 from pathlib import Path
 
+
 # TODO explore more options of hashing
 # (http://www.attrs.org/en/stable/hashing.html)
 @attr.s(auto_attribs=True, frozen=True)

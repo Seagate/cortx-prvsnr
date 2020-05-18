@@ -1,5 +1,5 @@
 import pytest
-import argparse
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -22,6 +22,5 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session")
 def options_list(options_list):
     return (
-        options_list +
-        ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
+        options_list + ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
     )

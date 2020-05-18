@@ -31,7 +31,6 @@ def hosts_spec(hosts_spec):
     return res
 
 
-
 def ensure_hw_configuration(mhost, tmpdir):
     logger.info("Ensuring HW configuration...")
     lsblk_res = mhost.check_output("lsblk -l -d -S -p -n -b --output NAME,SIZE,TRAN | grep 'sas'")
@@ -156,7 +155,6 @@ def get_bvt_results(
     _local_path = mhost.copy_from_host(remote_path)
     mlocalhost.check_output('cp -fv {} {}'.format(_local_path, local_path))
     logger.info("Stored results as '{}'".format(local_path))
-
 
 
 @pytest.mark.timeout(3600)
