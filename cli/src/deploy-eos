@@ -15,7 +15,8 @@ export LOG_FILE
 l_info "***** Running $0 *****" 
 
 function trap_handler {
-  echo "For detailed error logs, please see: $LOG_FILE"
+    echo "***** FAILED!! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
 }
 
 run_all=true
@@ -40,6 +41,7 @@ system_states=(
 
 prereq_states=(
     # states to be applied in desired sequence
+        "misc_pkgs.rhel_sos"
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
         "misc_pkgs.openldap"
