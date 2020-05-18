@@ -8,10 +8,9 @@ from utils.pillar import Pillar
 
 class NTP(object):
 
-    #local client instance to send commands to minion
-    def __init__(self, cfg_path: str=None):
+    # local client instance to send commands to minion
+    def __init__(self, cfg_path: str = None):
         self.__local_client = salt.client.LocalClient()
-
 
     def update_pillar(self, time_dict: dict):
         with Pillar() as pillar:
@@ -23,28 +22,26 @@ class NTP(object):
             # Update pillar
             pillar.pillar_data = data
 
-
     def refresh_ntpd(self):
 
-        #prvsnr_client instance to send commands to minion
+        # prvsnr_client instance to send commands to minion
         prvsnr_client = salt.client.LocalClient()
 
-        #Apply configuration modification salt state
+        # Apply configuration modification salt state
         ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.ntp.config'])
         for val in ret_val.values():
             for task in val.values():
-                if task['result']==False:
-                        raise Exception("ERROR: NTP configuration update failed, " + task['comment'])
+                if task['result'] is False:
+                    raise Exception("ERROR: NTP configuration update failed, " + task['comment'])
 
-        #Apply service restart salt state
+        # Apply service restart salt state
         ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.ntp.update'])
         for val in ret_val.values():
             for task in val.values():
-                if task['result']==False:
-                        raise Exception("ERROR: NTP restart failed, " + task['comment'])
+                if task['result'] is False:
+                    raise Exception("ERROR: NTP restart failed, " + task['comment'])
 
         return True
-        
 
     def execute(self, time_dict: dict):
         # Stages
@@ -61,8 +58,6 @@ class NTP(object):
 
         # Refresh NTPd service
         self.refresh_ntpd()
-
-
 
 if __name__ == "__main__":
 

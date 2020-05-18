@@ -77,6 +77,7 @@ class RunArgsUpdate:
     targets: str = RunArgs.targets
     dry_run: bool = RunArgs.dry_run
 
+
 # TODO DRY
 @attr.s(auto_attribs=True)
 class RunArgsFWUpdate:
@@ -556,6 +557,7 @@ class GetNodeId(CommandParserFillerMixin):
             fun_args=['node_id'],
             targets=targets
         )
+
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run

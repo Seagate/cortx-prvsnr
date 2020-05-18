@@ -31,6 +31,7 @@ else:
 # TODO generate docs
 def _api_wrapper(fun):
     from provisioner._api_cli import api_args_to_cli
+
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
 

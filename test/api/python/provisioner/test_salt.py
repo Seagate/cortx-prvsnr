@@ -188,7 +188,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         assert (
             excinfo.value.reason == (
                 'Empty salt result: {}'
-                    .format(salt_cmd_res)
+                .format(salt_cmd_res)
             )
         )
         _check_exc_attrs(excinfo.value, locals())
