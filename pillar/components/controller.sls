@@ -8,20 +8,20 @@ storage_mc:
       disks_range: 0.0-41
       nvols: 8
       size: 10TB
-      mappings: 
-        map_vols: no  #yes/no 
+      mappings:
+        map_vols: no  #yes/no
         host_initiator1:
           id: #0x21000024ff6c505d # initiator id
           access_mode: rw  #options: ro, rw, na
         host_initiator2:
-          id: #0x21000024ff6c505d # initiator id 
+          id: #0x21000024ff6c505d # initiator id
           access_mode: rw  #options: ro, rw, na
     poolB:
       type: virtual #virtual or lenear
       disks_range: 0.0-41
       nvols: 8
       size: 10TB
-      mappings: 
+      mappings:
         map_vols: no
         host_initiator1:
           id: #0x21000024ff6c505d # initiator id

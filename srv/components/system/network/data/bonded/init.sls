@@ -48,4 +48,3 @@ Setup data0 bonding:
 {%- else %}
     - proto: dhcp
 {%- endif %}
-

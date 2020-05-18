@@ -13,7 +13,7 @@ Remove Packages:
 
 Remove certs:
   file.absent:
-    - names: 
+    - names:
       - {{ rpm_sources_dir }}
       - /opt/seagate/stx-s3-certs-1.0-1_s3dev.x86_64.rpm
       - /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm

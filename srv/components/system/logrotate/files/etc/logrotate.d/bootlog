@@ -5,4 +5,5 @@
     rotate 7
     notifempty
     size 1M
+    compress
 }

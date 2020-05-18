@@ -7,20 +7,12 @@ import os
 import subprocess
 import sys
 import yaml
+import time
 
 from shutil import copyfile
 
 def storage_device_config():
-    _pillar_path = '/opt/seagate/eos-prvsnr/pillar/user/groups/all/cluster.sls'
-    if not os.path.exists(_pillar_path):
-        _pillar_path = '/opt/seagate/eos-prvsnr/pillar/components/cluster.sls'
-        if not os.path.exists(_pillar_path):
-            print("[ERROR   ] Cluster file {0} doesn't exist.".format(_pillar_path))
-            raise FileNotFoundError(
-                errno.ENOENT,
-                os.strerror(errno.ENOENT),
-                _pillar_path
-            )
+    _pillar_path = '/opt/seagate/eos-prvsnr/pillar/components/cluster.sls'
     
     if not os.path.exists(_pillar_path + '.bak'):
         copyfile(_pillar_path, _pillar_path + '.bak')
@@ -34,16 +26,40 @@ def storage_device_config():
             cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
-        
-        device_list = subprocess.Popen([cmd],
-                                        shell=True,
-                                        stdout=subprocess.PIPE
-                                    ).stdout.read().decode("utf-8").splitlines()
-        
+
+        device_list = []
+        _timeout = 60
+        _count = 0
+        _sleep_time = 5
+        while device_list == []:
+            device_list = subprocess.Popen([cmd],
+                                            shell=True,
+                                            stdout=subprocess.PIPE
+                                        ).stdout.read().decode("utf-8").splitlines()
+            if device_list == []:
+                if ( _count == 0 ):
+                    print("[ INFO ] Waiting for multipath device to come up..")
+
+                if ( _count >= _timeout ):
+                    break
+                else:
+                    time.sleep(_sleep_time)
+                    _tmp_cmd = "multipath -ll | grep prio=50 -B2|grep mpath | wc -l"
+                    _mpath_devs = subprocess.Popen([_tmp_cmd],
+                                                    shell=True,
+                                                    stdout=subprocess.PIPE
+                    ).stdout.read().decode("utf-8")
+
+                    if ( int(_mpath_devs) > 0 ):
+                        print("[ INFO ] Found multipath devices!")
+                    else:
+                        print(".")
+                    _count = _count + _sleep_time
+
         if device_list == []:
-            # Do nothing, probably a VM
+            print ("[ ERROR ] multipath devices don't exist.")
             return False
-        
+
         metadata_device = list()
         metadata_device.append("/dev/disk/by-id/dm-name-{0}".format(device_list[0]))
         _pillar_dict["cluster"][node]["storage"]["metadata_device"] = metadata_device

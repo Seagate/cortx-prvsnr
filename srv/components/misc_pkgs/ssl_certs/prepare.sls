@@ -19,4 +19,3 @@ Create s3 certs directory:
       - mode
     - require:
       - Create certs group
-

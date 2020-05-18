@@ -12,6 +12,8 @@ export LOG_FILE
 
 . $BASEDIR/functions.sh
 
+l_info "***** Running $0 *****" 
+
 function trap_handler {
   echo "For more details see $LOG_FILE"
 } 
@@ -177,10 +179,6 @@ if [[ "$dry_run" == true ]]; then
 fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
-# Refresh salt pillar data
-l_info "Updating salt pillar data"
-$cmd salt "*" saltutil.refresh_pillar
-
 if [[ "$run_all" == true ]]; then
     teardown_states "${controlpath_states[@]}"
     teardown_states "${ha_states[@]}"
@@ -216,7 +214,7 @@ fi
 
 if [[ "$run_all" == true || "$run_ha_states" == true ]]; then
     l_info "Cleaning up the failed-services on both nodes"
-    salt '*' cmd.run "systemctl reset-failed"
+    salt '*' cmd.run "systemctl reset-failed" $salt_opts
 
     l_info "Cleaning up the failed-services on both nodes"
     systemctl list-units --state=running | grep hare-consul-agent &&
@@ -227,8 +225,10 @@ fi
 
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
+    l_info "Removing prvsnr api logs configuration from node-1"
+    salt 'srvnode-1' state.apply components.provisioner.teardown
     l_info "Removing eos-prvsnr package from both nodes"
-    salt '*' pkg.remove eos-prvsnr || true
+    salt '*' pkg.remove eos-prvsnr $salt_opts || true 
 
     l_info "Removing salt packages from node-2"
     ssh srvnode-2 "yum remove -y salt* || true; rm -rf /etc/salt"
@@ -251,5 +251,6 @@ if [[ "$remove_prvsnr" == true ]]; then
     rm -rf /opt/seagate; rm -rf /root/.ssh/*
 fi
 
-l_info "Success!! The detailed logs can be seen at: $LOG_FILE"
+l_info "***** SUCCESS! *****"
+l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"

@@ -17,7 +17,7 @@ Set consul in bash_profile:
 Source bash_profile for nodejs addition:
   cmd.run:
     - name: source ~/.bashrc
-    - require: 
+    - require:
       - Set consul in bash_profile
 
 Reload service daemons for consul-agent.service:

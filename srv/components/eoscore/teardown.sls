@@ -16,7 +16,7 @@ Delete EOSCore yum repo:
 
 Remove configuration file:
   file.absent:
-    - names: 
+    - names:
       - /etc/sysconfig/mero
       - /etc/sysconfig/mero.bak
 

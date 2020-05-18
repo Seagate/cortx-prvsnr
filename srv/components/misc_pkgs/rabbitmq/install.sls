@@ -2,7 +2,7 @@
 Install RabbitMQ prereqs:
   pkg.installed:
     - pkgs:
-      - erlang: {{ pillar ['commons']['version']['erlang'] }} 
+      - erlang: {{ pillar ['commons']['version']['erlang'] }}
 
 # RabbitMQ from: https://github.com/rabbitmq/rabbitmq-server/releases
 Install RabbitMQ:

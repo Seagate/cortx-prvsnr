@@ -4,4 +4,3 @@ start corosync-pacemaker:
   cmd.run:
     - name: pcs cluster start --all
 {% endif %}
-

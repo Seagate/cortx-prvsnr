@@ -1,32 +1,32 @@
 ntp:
   _path: system.sls
-  server:   system/ntp/time_server
+  server: system/ntp/time_server
   timezone: system/ntp/timezone
 network:
   _path: cluster.sls
-  cluster_ip:           cluster/cluster_ip
-  mgmt_vip:             cluster/mgmt_vip
-  dns_servers:          cluster/dns_servers
-  search_domains:       cluster/search_domains
-  #dns_server:  # TODO not supported in states
+  cluster_ip: cluster/cluster_ip
+  mgmt_vip: cluster/mgmt_vip
+  dns_servers: cluster/dns_servers
+  search_domains: cluster/search_domains
+  #dns_server: # TODO not supported in states
   #'key_path': ('cluster', 'srvnode-2', 'network', 'data_nw', 'ipaddr'),
   # TODO use nested group to reduce copy-paste in paths
-  primary_hostname:     cluster/srvnode-1/hostname
-  primary_floating_ip:  cluster/srvnode-1/network/floating_ip
-  primary_mgmt_ip:      cluster/srvnode-1/network/mgmt_nw/ipaddr
+  primary_hostname: cluster/srvnode-1/hostname
+  primary_floating_ip: cluster/srvnode-1/network/floating_ip
+  primary_mgmt_ip: cluster/srvnode-1/network/mgmt_nw/ipaddr
   primary_mgmt_netmask: cluster/srvnode-1/network/mgmt_nw/netmask
-  primary_mgmt_gateway:   cluster/srvnode-1/network/mgmt_nw/gateway
-  primary_data_ip:      cluster/srvnode-1/network/data_nw/ipaddr
+  primary_mgmt_gateway: cluster/srvnode-1/network/mgmt_nw/gateway
+  primary_data_ip: cluster/srvnode-1/network/data_nw/ipaddr
   primary_data_netmask: cluster/srvnode-1/network/data_nw/netmask
-  primary_data_gateway:      cluster/srvnode-1/network/data_nw/gateway
-  secondary_hostname:       cluster/srvnode-2/hostname
-  secondary_floating_ip:    cluster/srvnode-2/network/floating_ip
-  secondary_mgmt_ip:        cluster/srvnode-2/network/mgmt_nw/ipaddr
-  secondary_mgmt_netmask:   cluster/srvnode-2/network/mgmt_nw/netmask
-  secondary_mgmt_gateway:     cluster/srvnode-2/network/mgmt_nw/gateway
-  secondary_data_ip:        cluster/srvnode-2/network/data_nw/ipaddr
-  secondary_data_netmask:   cluster/srvnode-2/network/data_nw/netmask
-  secondary_data_gateway:   cluster/srvnode-2/network/data_nw/gateway
+  primary_data_gateway: cluster/srvnode-1/network/data_nw/gateway
+  secondary_hostname: cluster/srvnode-2/hostname
+  secondary_floating_ip: cluster/srvnode-2/network/floating_ip
+  secondary_mgmt_ip: cluster/srvnode-2/network/mgmt_nw/ipaddr
+  secondary_mgmt_netmask: cluster/srvnode-2/network/mgmt_nw/netmask
+  secondary_mgmt_gateway: cluster/srvnode-2/network/mgmt_nw/gateway
+  secondary_data_ip: cluster/srvnode-2/network/data_nw/ipaddr
+  secondary_data_netmask: cluster/srvnode-2/network/data_nw/netmask
+  secondary_data_gateway: cluster/srvnode-2/network/data_nw/gateway
 eosupdate:
   _path: release.sls
   repos: eos_release/update/repos

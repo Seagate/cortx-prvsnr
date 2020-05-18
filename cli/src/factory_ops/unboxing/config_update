@@ -33,7 +33,7 @@ trap trap_handler ERR
 
 function update_ssh_config {
     if [[ "srvnode-1" == $(cat /etc/salt/minion_id) ]]; then
-        echo "Updating localhost in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        echo "Updating localhost in /root/.ssh/config on primary node" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(hostname)
         # echo ${primary_host}
@@ -41,19 +41,19 @@ function update_ssh_config {
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-1.*|Host srvnode-1 ${primary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
-        echo "Updated localhost in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        echo "Updated localhost in /root/.ssh/config on primary node" 2>&1|tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo "Updating remote host in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        echo "Updating remote host in /root/.ssh/config on primary node" 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-2.*|Host srvnode-2 ${secondary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
-        echo "Updated remote host in /root/.ssh/config on primary node"|tee -a ${LOG_FILE}
+        echo "Updated remote host in /root/.ssh/config on primary node" 2>&1|tee -a ${LOG_FILE}
     else
-        echo "Updating localhost in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        echo "Updating localhost in /root/.ssh/config on secondary node" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_1} "hostname")
         # echo ${primary_host}
@@ -61,17 +61,17 @@ function update_ssh_config {
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-1.*|Host srvnode-1 ${primary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
-        echo "Updated localhost in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        echo "Updated localhost in /root/.ssh/config on secondary node" 2>&1|tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo "Updating remote host in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        echo "Updating remote host in /root/.ssh/config on secondary node" 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(hostname)
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-2.*|Host srvnode-2 ${secondary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
-        echo "Updated remote host in /root/.ssh/config on secondary node"|tee -a ${LOG_FILE}
+        echo "Updated remote host in /root/.ssh/config on secondary node" 2>&1|tee -a ${LOG_FILE}
     fi
 }
 
@@ -82,19 +82,19 @@ function update_salt_minion {
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         
-        echo "Updated master in /etc/salt/minion on primary node"|tee -a ${LOG_FILE}
+        echo "Updated master in /etc/salt/minion on primary node" 2>&1|tee -a ${LOG_FILE}
         sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
 
-        echo "Updating master in /etc/salt/minion on secondary node"|tee -a ${LOG_FILE}
+        echo "Updating master in /etc/salt/minion on secondary node" 2>&1|tee -a ${LOG_FILE}
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
-        echo "Updated master in /etc/salt/minion on node"|tee -a ${LOG_FILE}
+        echo "Updated master in /etc/salt/minion on node" 2>&1|tee -a ${LOG_FILE}
         
         # It's safe to restart service on both nodes
-        echo "Restarting salt-minion on primary node"|tee -a ${LOG_FILE}
+        echo "Restarting salt-minion on primary node" 2>&1|tee -a ${LOG_FILE}
         systemctl restart salt-minion
-        echo "Restarting salt-minion on secondary node"|tee -a ${LOG_FILE}
+        echo "Restarting salt-minion on secondary node" 2>&1|tee -a ${LOG_FILE}
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-minion"
-        echo "Restarted salt-minion on nodes"|tee -a ${LOG_FILE}
+        echo "Restarted salt-minion on nodes" 2>&1|tee -a ${LOG_FILE}
 
         sleep 5
 
@@ -112,7 +112,7 @@ function update_cluster_sls {
     fi
 
     if [[ "srvnode-1" == $(cat /etc/salt/minion_id) ]]; then
-        echo "Updating cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+        echo "Updating cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         # Hostname
         local primary_host=$(hostname)
@@ -120,48 +120,43 @@ function update_cluster_sls {
         local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
-        echo "Updated cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+        echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
         # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
             update_bmc_ip "srvnode-1"
         }
 
         # Replace node-2 entry
         # Hostname
-        echo "Updating cluster.sls for node-2 hostname on primary node"|tee -a ${LOG_FILE}
+        echo "Updating cluster.sls for node-2 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
-        echo "Updated cluster.sls for node-2 hostname on primary node"|tee -a ${LOG_FILE}
+        echo "Updated cluster.sls for node-2 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
         # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node"|tee -a ${LOG_FILE}
+        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
             update_bmc_ip "srvnode-2" "srvnode-2"
         }
 
-        echo "Refreshing salt pillar from primary node"|tee -a ${LOG_FILE}
+        echo "Refreshing salt pillar from primary node" 2>&1|tee -a ${LOG_FILE}
         sleep 5
         salt "*" saltutil.refresh_pillar
-        echo "Refreshed cluster.sls from primary node"|tee -a ${LOG_FILE}
+        echo "Refreshed cluster.sls from primary node" 2>&1|tee -a ${LOG_FILE}
     fi
 }
 
 function recover_rabbitmq_cluster {
     # # Update RabbitMQ cluster
-    salt "srvnode-1" state.apply components.misc_pkgs.rabbitmq
-    salt "srvnode-2" state.apply components.misc_pkgs.rabbitmq
-
-    # # Update SSPL init
-    salt "*" state.apply components.s3server.config
-    salt "*" state.apply components.sspl.config
-    salt "*" state.apply components.csm.config
+    salt "srvnode-1" state.apply components.misc_pkgs.rabbitmq 2>&1|tee -a ${LOG_FILE}
+    salt "srvnode-2" state.apply components.misc_pkgs.rabbitmq 2>&1|tee -a ${LOG_FILE}
 }
 
 function remove_boxing_flag {

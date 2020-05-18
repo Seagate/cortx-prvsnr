@@ -13,6 +13,9 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 # Prepare shutdown
 # Shutdown HA
 if command -v pcs ; then
+    echo "INFO: Starting maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    hctl node maintenance --all 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
 else
     echo "[ERROR    ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
