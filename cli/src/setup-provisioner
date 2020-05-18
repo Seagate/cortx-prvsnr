@@ -2,13 +2,16 @@
 
 set -eu
 
+trap trap_handler ERR
+
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 INSTALLDIR="/opt/seagate/eos-prvsnr"
 EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
 
-LOG_FILE="${LOG_FILE:-/opt/seagate/cortx/eos-prvsnr/log/setup-provisioner.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/setup-provisioner.log}"
 export LOG_FILE
+
 
 srvnode_2_hostspec=srvnode-2
 hostspec=
@@ -22,6 +25,13 @@ prvsnr_version=
 cluster_id=$(uuidgen)
 
 . $BASEDIR/functions.sh
+
+l_info "***** Running $0 *****"
+
+function trap_handler {
+    echo "***** FAILED!! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+}
 
 function usage {
   echo "\
@@ -194,7 +204,11 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
 fi
 
 # SETUP SRVNODE-1
-install_repos "$hostspec" "$ssh_config" "$sudo"
+grep -q "Red Hat" /etc/*-release && {
+    install_salt_repo "$hostspec" "$ssh_config" "$sudo"
+} || {
+    install_repos "$hostspec" "$ssh_config" "$sudo"
+}
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
@@ -224,7 +238,11 @@ configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
-    install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
+    grep -q "Red Hat" /etc/*-release && {
+        install_salt_repo "$hostspec" "$ssh_config" "$sudo"
+    } || {
+        install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
+    }
 
     configure_firewall "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
@@ -294,3 +312,5 @@ fi
 #fi
 
 l_info "Done"
+l_info "***** SUCCESS! *****"
+l_info "The detailed logs can be seen at: $LOG_FILE"

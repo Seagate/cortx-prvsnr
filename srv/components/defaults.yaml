@@ -100,3 +100,8 @@ uds:
     id: "uds"
     url: {{ repo_url  }}
     gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+
+uploads_rhel:
+  repo:
+    id: "uploads_rhel"
+    url: {{ eos_repo_url }}/uploads_rhel

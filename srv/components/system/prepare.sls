@@ -6,6 +6,24 @@ Sync data:
     - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+{% if "RedHat" in grains['os'] %}
+
+# Add repo for HA
+Add uploads_rhel yum repo:
+  pkgrepo.managed:
+    - name: {{ defaults.uploads_rhel.repo.id }}
+    - enabled: True
+    - humanname: uploads_rhel
+    - baseurl: {{ defaults.uploads_rhel.repo.url }}
+    - gpgcheck: 0
+
+{% else %}
+# Adding repos here are redundent thing.
+# These repos get added in prereq-script, setup-provisioner
+#TODO Remove redundency
+ 
 cleanup_yum_repos_dir:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/*.repo
@@ -21,7 +39,7 @@ Configure yum:
     - name: /etc/yum.conf
     - source: salt://components/system/files/etc/yum.conf
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
   pkgrepo.managed:
@@ -54,6 +72,8 @@ Add commons yum repo:
     - baseurl: {{ defaults.commons.repo.url }}
     - gpgcheck: 0
 
+{% endif %}
+
 clean_yum_local:
   cmd.run:
     - name: yum clean all
@@ -61,3 +81,4 @@ clean_yum_local:
 clean_yum_cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
+

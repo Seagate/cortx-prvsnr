@@ -745,6 +745,81 @@ EOF
     fi
 }
 
+#   install_salt_repo [<hostspec> [<ssh-config> [<sudo>]]]
+#
+#   Install salt repository either on the remote host or locally.
+#   The function assumes that '../../files/etc/yum.repos.d/saltstack.repo' exists.
+#
+#   Args:
+#       hostspec: remote host specification in the format [user@]hostname.
+#           Default: not set.
+#       ssh-config: path to an alternative ssh-config file.
+#           Default: not set.
+#       sudo: a flag to use sudo. Expected values: `true` or `false`.
+#           Default: `false`.
+#
+function install_salt_repo {
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    local _script
+
+    local _hostspec="${1:-}"
+    local _ssh_config="${2:-}"
+    local _sudo="${3:-false}"
+
+    local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
+
+    local _repo_base_dir="/etc/yum.repos.d"
+    local _repo_base_dir_backup="/etc/yum.repos.d.bak"
+    local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
+    local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
+    local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
+
+    l_info "Installing Salt repository '$_hostspec'"
+
+! read -r -d '' _script << EOF
+    set -eu
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    # config custom repos
+    yum clean expire-cache
+    rm -rf /var/cache/yum
+
+    if [[ -f "$_salt_repo_file" && ! -f "$_salt_repo_bak_file" ]]; then
+        cp "$_salt_repo_file" "$_salt_repo_bak_file"
+    else
+        echo -e "\\nWARNING: skip backup creation since backup already exists"
+    fi
+
+    rm -rf "$_repo_base_dir"
+
+    # TODO a temporary fix since later version (2019.2.1) is buggy
+    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+
+    if [[ -z "$_hostspec" ]]; then
+        cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
+    fi
+EOF
+
+    if [[ -n "$_hostspec" ]]; then
+        _script="'$_script'"
+    fi
+
+    $_cmd bash -c "$_script" 2>&1 | tee -a ${LOG_FILE}
+
+    if [[ -n "$_hostspec" ]]; then
+        scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir/"
+    fi
+}
+
 #   configure_firewall [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Open firewall ports for saltstack either on the remote host or locally.
