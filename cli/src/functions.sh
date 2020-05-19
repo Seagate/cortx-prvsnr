@@ -798,8 +798,6 @@ function install_salt_repo {
         echo -e "\\nWARNING: skip backup creation since backup already exists"
     fi
 
-    rm -rf "$_repo_base_dir"
-
     # TODO a temporary fix since later version (2019.2.1) is buggy
     # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
     rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
