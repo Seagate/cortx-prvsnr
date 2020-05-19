@@ -14,7 +14,7 @@ Add CSM repo:
     - enabled: True
     - humanname: csm
     - baseurl: {{ defaults.csm.repo.url }}
-    - gpgcheck: 1
+    - gpgcheck: 0
     - gpgkey: {{ defaults.csm.repo.gpgkey }}
 
 {% if 'ees' in pillar['cluster']['type'] %}

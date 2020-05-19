@@ -6,7 +6,7 @@ Add hare yum repo:
     - enabled: True
     - humanname: hare
     - baseurl: {{ defaults.hare.repo.url }}
-    - gpgcheck: 1
+    - gpgcheck: 0
     - gpgkey: {{ defaults.hare.repo.gpgkey }}
 
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
