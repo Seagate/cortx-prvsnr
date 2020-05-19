@@ -1,6 +1,5 @@
 import os.path
 import re
-import sys
 
 from shutil import copyfile
 
@@ -46,7 +45,7 @@ def conf_update(name='/etc/sysconfig/mero', ref_pillar='eoscore', type=None, bac
             # for line in file_contents:
             #     if k in line:
             #         file_contents = re.sub(r'(?<=MERO_M0D_BELOG_SIZE=).+', v, file_contents)
-  
+
     with open(name, 'w') as fd:
         fd.write(file_contents)
 

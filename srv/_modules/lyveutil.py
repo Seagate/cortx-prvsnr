@@ -2,7 +2,7 @@
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
 # salt-call lyveutil.decrypt "secret" "component"
 
-from eos.utils.security.cipher import cipher
+from eos.utils.security.cipher import Cipher
 
 
 def decrypt(secret, component):

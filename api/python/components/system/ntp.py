@@ -59,6 +59,7 @@ class NTP(object):
         # Refresh NTPd service
         self.refresh_ntpd()
 
+
 if __name__ == "__main__":
 
     time_data = """
