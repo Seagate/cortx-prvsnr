@@ -38,10 +38,13 @@ PRVSNR_EOS_COMPONENTS = [
     'haproxy',
     'keepalived',
     'openldap',
+    'rabbitmq.sls',
     'release',
+    'rsyslog.sls',
     's3clients',
     's3server',
     'sspl',
+    'storage_enclosure.sls',
     'system',
     'uds'
 ]

@@ -59,8 +59,17 @@ def get_result(cmd_id: str):
     )
 
 
-def pillar_get(targets=ALL_MINIONS, nowait=False):
-    return _api_call('pillar_get', targets=targets, nowait=nowait)
+def pillar_get(*keypaths, targets=ALL_MINIONS, nowait=False):
+    return _api_call(
+        'pillar_get', *keypaths, targets=targets, nowait=nowait
+    )
+
+
+def pillar_set(keypath, value, fpath=None, targets=ALL_MINIONS, nowait=False):
+    return _api_call(
+        'pillar_set', keypath, value, fpath=fpath,
+        targets=targets, nowait=nowait
+    )
 
 
 def get_params(*params, targets=ALL_MINIONS, nowait=False):

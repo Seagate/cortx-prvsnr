@@ -147,7 +147,7 @@ def _parse_args():
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
         cmd.fill_parser(subparser)
-        cmd.params_type.fill_parser(subparser)
+        cmd.input_type.fill_parser(subparser)
 
     kwargs = vars(parser.parse_args())
     cmd = kwargs.pop('command')
@@ -294,7 +294,7 @@ def main():
     _args[0:0] = args
     args, kwargs = cmd_obj.extract_positional_args(kwargs)
     _args[0:0] = args
-    args, kwargs = cmd_obj.params_type.extract_positional_args(kwargs)
+    args, kwargs = cmd_obj.input_type.extract_positional_args(kwargs)
     _args[0:0] = args
 
     _run_cmd(cmd, log_args.output, *_args, **kwargs)

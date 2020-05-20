@@ -1,50 +1,34 @@
 import attr
-from typing import Dict
+from typing import Union, Tuple
 from pathlib import Path
 
+from .pillar import KeyPath, PillarKeyAPI, PillarKey
+
+
+# TODO TEST
 # TODO explore more options of hashing
 # (http://www.attrs.org/en/stable/hashing.html)
 @attr.s(auto_attribs=True, frozen=True)
-class KeyPath:
-    _path: Path = attr.ib(converter=lambda v: Path(str(v)))
-
-    def __str__(self):
-        return str(self._path)
-
-    def __truediv__(self, key):
-        return KeyPath(self._path / key)
-
-    def parent_dict(self, key_dict: Dict, fix_missing=True):
-        res = key_dict
-        for key in self._path.parts[:-1]:  # TODO optimize
-            # ensure key exists
-            if key not in res:
-                if fix_missing:
-                    res[key] = {}
-            res = res[key]
-        return res
-
-    @property
-    def parent(self):
-        return KeyPath(self._path.parent)
-
-    @property
-    def leaf(self):
-        return self._path.name
-
-    def value(self, key_dict: Dict):
-        return self.parent_dict(key_dict, fix_missing=False)[self.leaf]
-
-
-# TODO explore more options of hashing
-# (http://www.attrs.org/en/stable/hashing.html)
-@attr.s(auto_attribs=True, frozen=True)
-class Param:
-    # TODO IMPROVE make optionl for internal usage
+class Param(PillarKeyAPI):
     name: KeyPath = attr.ib(converter=KeyPath)
-    # TODO IMPROVE make optionl for internal usage
-    pi_path: Path = attr.ib(converter=Path)
-    pi_key: KeyPath = attr.ib(converter=KeyPath)
+    _pi_key: Union[PillarKey, str, Tuple[str, str]] = attr.ib(
+        converter=(
+            lambda k: (
+                PillarKey(str(k)) if isinstance(k, (str, Path, KeyPath)) else
+                PillarKey(*k) if type(k) is tuple else
+                k
+            )
+        ),
+        validator=attr.validators.instance_of(PillarKey)
+    )
+
+    @property
+    def keypath(self):
+        return self._pi_key.keypath
+
+    @property
+    def fpath(self):
+        return self._pi_key.fpath
 
     def __str__(self):
         return str(self.name)
@@ -57,4 +41,6 @@ class ParamDictItem(Param):
 
     @classmethod
     def from_spec(cls, name, parent, _path, **kwargs):
-        return cls(name, pi_path=_path, pi_key=parent, **kwargs)
+        return cls(
+            name, pi_key=PillarKey(fpath=_path, keypath=parent), **kwargs
+        )

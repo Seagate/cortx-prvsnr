@@ -1,9 +1,11 @@
+# flake8: noqa
 import os
 import yaml
 import shutil
 import salt.client
 
-class Pillar(object):
+# TODO DEPRECATED
+class _Pillar(object):
     __options = dict()
     __pillar_path = os.path.join(
         '/',

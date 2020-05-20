@@ -8,20 +8,111 @@ from provisioner import (
     pillar, ALL_MINIONS, UNCHANGED, DEFAULT, MISSED, UNDEFINED
 )
 from provisioner.pillar import (
+    KeyPath, PillarKeyAPI, PillarKey,
     PillarEntry, PillarResolver, PillarUpdater
 )
 
 from .helper import mock_fun_echo
 
+# TODO tests for validators and converters
 
-def test_pillar_entry_get():
+# ### KeyPath ###
+
+
+def test_pillar_KeyPath_init():
+    with pytest.raises(TypeError):
+        KeyPath(None)
+
+
+def test_pillar_KeyPath_to_str():
+    path = '1/2/3/4/5'
+    assert str(KeyPath(path)) == str(Path(path))
+
+
+def test_pillar_KeyPath_truediv():
+    path = '1/2/3/4/5'
+    assert KeyPath(path) / '6' == KeyPath(Path(path) / '6')
+
+
+def test_pillar_KeyPath_parent_dict():
+    key_dict = {'1': {'2': '3'}}
+    assert KeyPath('1/2').parent_dict(key_dict) is key_dict['1']
+
+    with pytest.raises(KeyError):
+        KeyPath('1/4/5').parent_dict(key_dict, fix_missing=False)
+
+    assert KeyPath('1/4/5').parent_dict(key_dict) is key_dict['1']['4']
+
+
+def test_pillar_KeyPath_parent():
+    assert KeyPath('1/2/3/4').parent == KeyPath('1/2/3')
+
+
+def test_pillar_KeyPath_leaf():
+    assert KeyPath('1/2').leaf == '2'
+
+
+def test_pillar_KeyPath_value():
+    key_dict = {'1': {'2': '3'}}
+    assert KeyPath('1/2').value(key_dict) == '3'
+
+    with pytest.raises(KeyError):
+        KeyPath('1/3').value(key_dict)
+
+
+def test_pillar_KeyPath_is_hashable():
+    hash(KeyPath('1/2/3'))
+
+
+# ### PillarKey ###
+
+def test_pillar_PillarKey_mro():
+    assert issubclass(PillarKey, PillarKeyAPI)
+
+
+def test_pillar_PillarKey_init():
+    keypath = '1/2/3/4/5'
+    assert PillarKey(keypath) == PillarKey(keypath, '1.sls')
+    assert PillarKey(keypath, 'some.sls').fpath == Path('some.sls')
+    assert PillarKey(keypath, Path('some.sls')).fpath == Path('some.sls')
+    assert PillarKey(keypath) == PillarKey(KeyPath(keypath))
+    # short keypath
+    assert PillarKey('1') == PillarKey('1', '1.sls')
+    # incorrect keypaths
+    with pytest.raises(TypeError):
+        PillarKey(None)
+    for kp in ('', '.', '/'):
+        with pytest.raises(ValueError):
+            PillarKey(kp)
+
+
+def test_pillar_PillarKey_to_str():
+    keypath = '1/2/3/4/5'
+    assert str(PillarKey(keypath)) == keypath
+
+
+# TODO TEST
+@pytest.mark.skip(reason='not implemented')
+def test_pillar_PillarKeysList_fill_parser():
+    raise NotImplementedError
+
+
+# TODO TEST
+@pytest.mark.skip(reason='not implemented')
+def test_pillar_PillarKeysList_extract_positional_args():
+    raise NotImplementedError
+
+
+# ### PillarEntry ###
+
+def test_pillar_PillarEntry_get():
     pillar = {'1': {'2': '3'}}
 
     assert PillarEntry('1/2', pillar).get() == '3'
     assert PillarEntry('1/4', pillar).get() == MISSED
 
 
-def test_pillar_entry_set():
+def test_pillar_PillarEntry_set():
     pillar = {'1': {'2': '3'}}
 
     pe = PillarEntry('1/2', pillar)
@@ -48,7 +139,7 @@ def test_pillar_entry_set():
     assert pe.get() == list_v
 
 
-def test_pillar_entry_rollback():
+def test_pillar_PillarEntry_rollback():
     pillar = {'1': {'2': '3'}}
 
     pe = PillarEntry('1/2', pillar)
@@ -76,9 +167,9 @@ def test_pillar_entry_rollback():
 
 
 def test_pillar_resolver(test_pillar):
-    param1 = Param('some-param', 'aaa.sls', '1/2/3')
-    param2 = Param('some-param2', 'aaa.sls', '1/2/5')
-    param3 = Param('some-param2', 'aaa.sls', '1/di_parent/8')
+    param1 = Param('some-param', ('1/2/3', 'aaa.sls'))
+    param2 = Param('some-param2', ('1/2/5', 'aaa.sls'))
+    param3 = Param('some-param2', ('1/di_parent/8', 'aaa.sls'))
 
     _iter = iter(test_pillar)
     minion_id_1 = next(_iter)
@@ -160,7 +251,7 @@ def test_pillar_updater_ensure_exists(tmpdir_function):
 def test_pillar_updater_update_values(
     some_param_gr, test_pillar, patch_logging
 ):
-    fpath = some_param_gr.param_spec('attr1').pi_path.name
+    fpath = some_param_gr.param_spec('attr1').fpath.name
 
     # UNCHANGED
     pu = PillarUpdater()
@@ -210,9 +301,9 @@ def test_pillar_updater_update_rollback_dump(
     attr2_param = some_param_gr.param_spec('attr2')
     attr3_param = input_param_di.param_spec()
 
-    f1 = pillar_dir / attr1_param.pi_path.name
-    f2 = pillar_dir / attr2_param.pi_path.name
-    f3 = pillar_dir / attr3_param.pi_path.name
+    f1 = pillar_dir / attr1_param.fpath.name
+    f2 = pillar_dir / attr2_param.fpath.name
+    f3 = pillar_dir / attr3_param.fpath.name
 
     pillar_data = {'1': {'2': {'3': '4', '5': '6'}, 'di_parent': {}}}
     dump_yaml(f1, pillar_data)

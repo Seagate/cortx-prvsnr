@@ -2,12 +2,16 @@ get_result:
   type: GetResult
 pillar_get:
   type: PillarGet
+  input_type: PillarKeysList
+pillar_set:
+  type: PillarSet
+  input_type: PillarInputBase
 get_params:
   type: Get
-  params_type: ParamsList
+  input_type: ParamsList
 set_ntp:
   type: Set
-  params_type: NTP
+  input_type: NTP
   states:
     post:
     - components.system.ntp.config
@@ -15,7 +19,7 @@ set_ntp:
     - components.system.ntp.start
 set_network:
   type: Set
-  params_type: Network
+  input_type: Network
   states:
     post:
       - components.system.network.config
@@ -24,19 +28,19 @@ set_network:
       - components.ha.corosync-pacemaker.config.mgmt_vip
 # set_cluster_ip:
 #   type: Set
-#   params_type: ClusterIP
+#   input_type: ClusterIP
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.cluster_ip
 # set_mgmt_vip:
 #   type: Set
-#   params_type: MgmtVIP
+#   input_type: MgmtVIP
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
 set_eosupdate_repo:
   type: SetEOSUpdateRepo
-  params_type: EOSUpdateRepo
+  input_type: EOSUpdateRepo
   states:
     post:
     - components.misc_pkgs.eosupdate.repo

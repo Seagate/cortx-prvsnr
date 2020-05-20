@@ -1,7 +1,7 @@
 import sys
 import subprocess
 import logging
-from typing import List
+from typing import List, Dict
 
 import provisioner
 from provisioner import errors
@@ -14,6 +14,14 @@ _username = None
 _password = None
 
 
+def value_to_str(v):
+    if v is None:
+        v = provisioner.NONE
+    elif isinstance(v, (List, Dict)):
+        v = serialize.dumps(v)
+    return str(v)
+
+
 def api_args_to_cli(fun, *args, **kwargs):
     res = [fun]
     for k, v in kwargs.items():
@@ -22,13 +30,9 @@ def api_args_to_cli(fun, *args, **kwargs):
             if v:
                 res.extend([k])
         else:
-            if v is None:
-                v = provisioner.NONE
-            elif isinstance(v, List):
-                v = serialize.dumps(v)
-            res.extend([k, str(v)])
+            res.extend([k, value_to_str(v)])
 
-    res.extend([str(a) for a in args])
+    res.extend([value_to_str(a) for a in args])
     logger.debug("Cli command args: {}".format(res))
 
     return res
@@ -38,16 +42,18 @@ def api_args_to_cli(fun, *args, **kwargs):
 def process_cli_result(
     stdout: str = None, stderr: str = None
 ):
+    res = None
     try:
-        res = serialize.loads(stdout) if stdout else {}
-    except errors.PrvsnrTypeDecodeError:
-        logger.exception('Failed to decode provisioner output')
-        res = serialize.loads(stdout, strict=False)
+        try:
+            res = serialize.loads(stdout) if stdout else {}
+        except errors.PrvsnrTypeDecodeError:
+            logger.exception('Failed to decode provisioner output')
+            res = serialize.loads(stdout, strict=False)
+    except Exception:
+        logger.exception(f"Unexpected result: {stdout}")
 
     if type(res) is not dict:
-        raise errors.ProvisionerError(
-            'Unexpected result {}'.format(stdout)
-        )
+        raise errors.ProvisionerError(f'Unexpected result {stdout}')
 
     if 'exc' in res:
         logger.error("Provisioner CLI failed: {!r}".format(res['exc']))
@@ -131,11 +137,22 @@ def auth_init(username, password, eauth='pam'):
 # TODO automate commands list discovering
 mod = sys.modules[__name__]
 for fun in [
-    'get_result', 'pillar_get', 'get_params', 'set_params',
-    'set_ntp', 'set_network', 'set_eosupdate_repo',
-    'eos_update', 'set_ssl_certs', 'fw_update',
-    'get_cluster_id', 'get_node_id', 'reboot_server',
-    'reboot_controller', 'shutdown_controller',
+    'get_result',
+    'pillar_get',
+    'pillar_set',
+    'get_params',
+    'set_params',
+    'set_ntp',
+    'set_network',
+    'set_eosupdate_repo',
+    'eos_update',
+    'set_ssl_certs',
+    'fw_update',
+    'get_cluster_id',
+    'get_node_id',
+    'reboot_server',
+    'reboot_controller',
+    'shutdown_controller',
     'configure_eos'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

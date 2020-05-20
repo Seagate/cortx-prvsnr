@@ -1,22 +1,118 @@
 import logging
 import attr
-from typing import Any, List, Dict, Union, Tuple
+from abc import ABC, abstractmethod
+from typing import Any, List, Dict, Tuple, Iterable, Union
 from copy import deepcopy
 from pathlib import Path
 
 from .utils import load_yaml, dump_yaml
 from .salt import pillar_get, pillar_refresh
-from .param import KeyPath, Param
 from .config import (
     ALL_MINIONS,
     PRVSNR_PILLAR_DIR,
     PRVSNR_USER_PI_ALL_HOSTS_DIR,
     PRVSNR_USER_PI_HOST_DIR_TMPL
 )
-from .inputs import ParamGroupInputBase, ParamDictItemInputBase
+# from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
 
 logger = logging.getLogger(__name__)
+
+
+# TODO explore more options of hashing
+# (http://www.attrs.org/en/stable/hashing.html)
+@attr.s(auto_attribs=True, frozen=True)
+class KeyPath:
+    # TODO DOC good way of converter - validator combination
+    _path: Path = attr.ib(
+        converter=(lambda v: None if v is None else Path(str(v))),
+        validator=attr.validators.instance_of(Path)
+    )
+
+    def __str__(self):
+        return str(self._path)
+
+    def __truediv__(self, key):
+        return KeyPath(self._path / key)
+
+    def parent_dict(self, key_dict: Dict, fix_missing=True):
+        res = key_dict
+        for key in self._path.parts[:-1]:  # TODO optimize
+            # ensure key exists
+            if key not in res:
+                if fix_missing:
+                    res[key] = {}
+            res = res[key]
+        return res
+
+    @property
+    def parent(self):
+        return KeyPath(self._path.parent)
+
+    @property
+    def leaf(self):
+        return self._path.name
+
+    def value(self, key_dict: Dict):
+        return self.parent_dict(key_dict, fix_missing=False)[self.leaf]
+
+
+class PillarKeyAPI(ABC):
+    @property
+    def keypath(self):
+        pass
+
+    @property
+    def fpath(self):
+        pass
+
+
+# TODO explore more options of hashing
+# (http://www.attrs.org/en/stable/hashing.html)
+@attr.s(auto_attribs=True, frozen=True)
+class PillarKey(PillarKeyAPI):
+    _keypath: Union[KeyPath, str] = attr.ib(converter=KeyPath)
+    _fpath: Path = attr.ib(
+        converter=(lambda p: Path(str(p)) if p else p),
+        default=None
+    )
+
+    def __attrs_post_init__(self):
+        # TODO IMPROVE add validator instead
+        keypath = Path(str(self._keypath))
+        parents = keypath.parents
+        if not len(parents):
+            raise ValueError(f"keypath {keypath} is incorrect")
+
+        # <top-level-parent>.sls
+        if self._fpath is None:
+            fname = (
+                keypath if len(parents) == 1 else parents[len(parents) - 2]
+            ).name
+            # Note. a documented workaround:
+            #   https://www.attrs.org/en/stable/init.html#post-init-hook
+            object.__setattr__(
+                self, '_fpath', Path(
+                    f"{fname}.sls"
+                )
+            )
+
+    @property
+    def keypath(self):
+        return self._keypath
+
+    @property
+    def fpath(self):
+        return self._fpath
+
+    def __str__(self):
+        return str(self.keypath)
+
+
+class PillarItemsAPI(ABC):
+    @abstractmethod
+    def pillar_items(self) -> Iterable[Tuple[PillarKeyAPI, Any]]:
+        ...
 
 
 @attr.s(auto_attribs=True)
@@ -73,13 +169,13 @@ class PillarResolver:
             self._pillar = pillar_get(targets=self.targets)
         return self._pillar
 
-    def get(self, params: List[Param]):  # TODO return value
+    def get(self, pi_keys: Iterable[PillarKeyAPI]):  # TODO return value
         # TODO provide results per target
         # - for now just use the first target's pillar value
         res = {}
         for minion_id, pillar in self.pillar.items():
             res[minion_id] = {
-                p: PillarEntry(p.pi_key, pillar).get() for p in params
+                pk: PillarEntry(pk.keypath, pillar).get() for pk in pi_keys
             }
         return res
 
@@ -174,17 +270,18 @@ class PillarUpdater:
             self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
         return self._pillars[_path]
 
-    def update(
-        self,
-        *params: Tuple[Union[ParamGroupInputBase, ParamDictItemInputBase], ...]
-    ) -> None:
+    # TODO IMPROVE add option to verify updated pillar
+    #      (resolve actual pillar data after update)
+    def update(self, *pi_groups: Tuple[PillarItemsAPI, ...]) -> None:
         if self._p_entries:
             logger.error("Update already started")
             raise RuntimeError("Update already started")
 
-        for data in params:
-            for param, value in data:
-                p_entry = PillarEntry(param.pi_key, self.pillar(param.pi_path))
+        for pi_group in pi_groups:
+            for pi_key, value in pi_group.pillar_items():
+                p_entry = PillarEntry(
+                    pi_key.keypath, self.pillar(pi_key.fpath)
+                )
 
                 if value is not UNCHANGED:
                     if value is MISSED:
