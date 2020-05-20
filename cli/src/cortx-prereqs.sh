@@ -228,8 +228,10 @@ else
             cat ${repos_enabled} | grep ID: | grep -q EOS_EPEL && {
                 echo "INFO: EOS_EPEL repository is enabled from Satellite subscription" 2>&1 | tee -a ${LOG_FILE}
             } || {
-                echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
-                yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
+                #echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
+                echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}
+                #yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
+                create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
             }
             cat ${repos_all} | grep -q rhel-ha-for-rhel-7-server-rpms && {
                 echo -n "INFO: RHEL HA repository is available from subscription, enabling it...." 2>&1 | tee -a ${LOG_FILE}
@@ -243,7 +245,10 @@ else
             # Create commons repo for installing mellanox drivers
             echo "INFO: Enabling repo for in house built commons packages for Cortx" 2>&1 | tee -a ${LOG_FILE}
             create_commons_repo_rhel "cortx_local_commons_rhel" "$url_local_repo_commons_rhel"
-
+            
+            echo "INFO: Taking backup of /etc/yum.repos.d/*.repo to ${_bkpdir}"
+            yes | cp -rf /etc/yum.repos.d/*.repo ${_bkpdir}
+            
             #echo "INFO: Installing yum-plugin-versionlock" 2>&1 | tee ${LOG_FILE}
             #yum install -y yum-plugin-versionlock
             #echo "INFO: Restricting the kernel updates to current kernel version" 2>&1 | tee -a ${LOG_FILE}

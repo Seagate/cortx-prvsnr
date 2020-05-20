@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -euE
 
 trap trap_handler ERR
 
@@ -239,7 +239,7 @@ configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 # SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
     grep -q "Red Hat" /etc/*-release && {
-        install_salt_repo "$hostspec" "$ssh_config" "$sudo"
+        install_salt_repo "$srvnode_2_hostspec" "$ssh_config" "$sudo"
     } || {
         install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
     }
