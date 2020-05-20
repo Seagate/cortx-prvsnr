@@ -62,3 +62,5 @@ shutdown_controller:
   type: ShutdownController
 configure_eos:
   type: ConfigureEOS
+create_user:
+  type: CreateUser

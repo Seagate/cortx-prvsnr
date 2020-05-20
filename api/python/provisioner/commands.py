@@ -19,7 +19,8 @@ from .config import (
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_EOS_COMPONENTS,
-    CONTROLLER_BOTH
+    CONTROLLER_BOTH,
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
 )
 from .utils import (
     load_yaml, dump_yaml_str
@@ -87,6 +88,7 @@ class RunArgsBase:
 class RunArgsUpdate:
     targets: str = RunArgs.targets
     dry_run: bool = RunArgs.dry_run
+
 
 # TODO DRY
 @attr.s(auto_attribs=True)
@@ -177,6 +179,25 @@ class RunArgsController:
             }
         }
     )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsUser:
+    uname: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "name of the user"
+            }
+        }
+    )
+    passwd: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "password for the user"
+            }
+        }
+    )
+    targets: str = RunArgs.targets
 
 
 class CommandParserFillerMixin:
@@ -636,6 +657,7 @@ class GetNodeId(CommandParserFillerMixin):
             targets=targets
         )
 
+
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
@@ -804,6 +826,146 @@ class ConfigureEOS(CommandParserFillerMixin):
 
         if show:
             print(dump_yaml_str(res))
+
+
+@attr.s(auto_attribs=True)
+class CreateUser(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsUser
+
+    def run(self, uname, passwd, targets: str = ALL_MINIONS):
+
+        if not SEAGATE_USER_HOME_DIR.exists():
+            raise ValueError('/opt/seagate/users directory missing')
+
+        home_dir = SEAGATE_USER_HOME_DIR / uname
+        ssh_dir = home_dir / '.ssh'
+
+        user_fileroots_dir = Path(
+            PRVSNR_FILEROOTS_DIR /
+            SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+        )
+
+        keyfile = user_fileroots_dir / f'id_rsa_{uname}'
+        keyfile_pub = keyfile.with_name(f'{keyfile.name}.pub')
+
+        nodes = PillarKey('cluster/node_list')
+
+        nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
+        nodelist_pillar = next(iter(nodelist_pillar.values()))
+
+        if (not nodelist_pillar[nodes] or
+                nodelist_pillar[nodes] is values.MISSED):
+            raise BadPillarDataError(
+                'value for {} is not specified'.format(nodes.pi_key)
+            )
+
+        def _prepare_user_fileroots_dir():
+            StateFunExecuter.execute(
+                'file.directory',
+                fun_kwargs=dict(
+                    name=str(user_fileroots_dir),
+                    makedirs=True
+                )
+            )
+
+        def _generate_ssh_keys():
+            StateFunExecuter.execute(
+                'cmd.run',
+                fun_kwargs=dict(
+                    name=(
+                        f"ssh-keygen -f {keyfile} "
+                        "-q -C '' -N '' "
+                        "-t rsa -b 4096 <<< y"
+                    )
+                )
+            )
+            StateFunExecuter.execute(
+                'ssh_auth.present',
+                fun_kwargs=dict(
+                    # name param is mandetory and expects ssh key
+                    # but ssh key is passed as source file hence name=None
+                    name=None,
+                    user=uname,
+                    source=str(keyfile_pub),
+                    config=str(user_fileroots_dir / 'authorized_keys')
+                )
+            )
+
+        def _generate_ssh_config():
+            for node in nodelist_pillar[nodes]:
+                hostname = PillarKey(
+                    'cluster/'+node+'/hostname'
+                )
+
+                hostname_pillar = PillarResolver(LOCAL_MINION).get([hostname])
+                hostname_pillar = next(iter(hostname_pillar.values()))
+
+                if (not hostname_pillar[hostname] or
+                        hostname_pillar[hostname] is values.MISSED):
+                    raise BadPillarDataError(
+                        'value for {} is not specified'.format(hostname.pi_key)
+                    )
+
+                ssh_config = f'''Host {node} {hostname_pillar[hostname]}
+    Hostname {hostname_pillar[hostname]}
+    User {uname}
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile {ssh_dir}/{keyfile.name}
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes'''
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=str(user_fileroots_dir / 'config'),
+                        text=ssh_config
+                    )
+                )
+
+        def _copy_minion_nodes():
+            StateFunExecuter.execute(
+                'file.recurse',
+                fun_kwargs=dict(
+                    name=str(ssh_dir),
+                    source=str(
+                        'salt://' +
+                        SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+                    ),
+                    user=uname,
+                    group=uname,
+                    file_mode='600',
+                    dir_mode='700'
+                ),
+                targets=targets
+            )
+
+        def _passwordless_ssh():
+            _prepare_user_fileroots_dir()
+            _generate_ssh_keys()
+            _generate_ssh_config()
+            _copy_minion_nodes()
+
+        StateFunExecuter.execute(
+            'user.present',
+            fun_kwargs=dict(
+                name=uname,
+                password=passwd,
+                hash_password=True,
+                home=str(home_dir),
+                groups=['wheel']
+            ),
+            targets=targets
+        )
+        logger.info(
+            'Setting up passowrdless ssh for {uname} user on both the nodes'
+            .format(
+                uname=uname
+            )
+        )
+        _passwordless_ssh()
 
 
 commands = {}

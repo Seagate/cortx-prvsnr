@@ -153,6 +153,7 @@ for fun in [
     'reboot_server',
     'reboot_controller',
     'shutdown_controller',
-    'configure_eos'
+    'configure_eos',
+    'create_user'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

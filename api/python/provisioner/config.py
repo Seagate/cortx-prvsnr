@@ -22,6 +22,11 @@ PRVSNR_USER_PI_HOST_DIR_TMPL = str(
     PRVSNR_USER_PILLAR_DIR / 'minions/{minion_id}'
 )
 
+SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
+SEAGATE_USER_FILEROOTS_DIR_TMPL = str(
+    'components/provisioner/files/users/{uname}'
+)
+
 ALL_MINIONS = '*'
 LOCAL_MINION = '__local__'
 
@@ -38,13 +43,13 @@ PRVSNR_EOS_COMPONENTS = [
     'haproxy',
     'keepalived',
     'openldap',
-    'rabbitmq.sls',
+    'rabbitmq',
     'release',
-    'rsyslog.sls',
+    'rsyslog',
     's3clients',
     's3server',
     'sspl',
-    'storage_enclosure.sls',
+    'storage_enclosure',
     'system',
     'uds'
 ]

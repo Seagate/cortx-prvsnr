@@ -31,7 +31,8 @@ from .api import (  # noqa: F401
     reboot_server,
     reboot_controller,
     shutdown_controller,
-    configure_eos
+    configure_eos,
+    create_user
 )
 
 from .values import (  # noqa: F401
@@ -62,6 +63,7 @@ __all__ = [
     'reboot_controller',
     'shutdown_controller',
     'configure_eos',
+    'create_user',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',
