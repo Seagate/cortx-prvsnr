@@ -1,5 +1,6 @@
 {% if "RedHat" in grains['os'] %}
-Install sos:
-  pkg.installed:
-    - name: sos
+include:
+  - .prepare
+  - .install
+  - .config
 {% endif %}
