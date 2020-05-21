@@ -9,10 +9,10 @@ tmpdir="/tmp/_cortx_prereqs_"
 mkdir -p $tmpdir
 
 # Repo url for in house built commons packages Non RHEL systems
-url_local_repo_commons="http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/"
+url_local_repo_commons="http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/"
 
 # Repo url for in house built commons packages for RHEL systems
-url_local_repo_commons_rhel="http://ci-storage.mero.colo.seagate.com/releases/eos/uploads_rhel/"
+url_local_repo_commons_rhel="http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/"
 
 # Repo url for in house built HA packages for RHEL systems
 url_local_repo_rhel_ha="http://ci-storage.mero.colo.seagate.com/releases/eos/rhel_local_ha/"
@@ -239,12 +239,12 @@ else
                 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
             } || {
                 echo "INFO: Creating repo for in house built HA packages" 2>&1 | tee -a ${LOG_FILE}
-                create_commons_repo_rhel "cortx_local_rhel_ha" "$url_local_repo_rhel_ha"
+                create_commons_repo_rhel "cortx_rhel_ha" "$url_local_repo_rhel_ha"
             }
 
             # Create commons repo for installing mellanox drivers
             echo "INFO: Enabling repo for in house built commons packages for Cortx" 2>&1 | tee -a ${LOG_FILE}
-            create_commons_repo_rhel "cortx_local_commons_rhel" "$url_local_repo_commons_rhel"
+            create_commons_repo_rhel "cortx_commons" "$url_local_repo_commons_rhel"
             
             echo "INFO: Taking backup of /etc/yum.repos.d/*.repo to ${_bkpdir}"
             yes | cp -rf /etc/yum.repos.d/*.repo ${_bkpdir}
