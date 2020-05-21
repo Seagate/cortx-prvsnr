@@ -5,3 +5,6 @@ eos_release:
         repos: {}  # dictionary with (release, source) pairs,
                    # source should be either an url (starts with 'http://' or 'https://')
                    # or one of special values: 'dir', 'iso'
+    commons:
+        RedHat: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
+        CentOS: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/

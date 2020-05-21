@@ -8,18 +8,8 @@ Sync data:
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% if "RedHat" in grains['os'] %}
+{% if not "RedHat" in grains['os'] %}
 
-# Add repo for HA
-Add uploads_rhel yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.uploads_rhel.repo.id }}
-    - enabled: True
-    - humanname: uploads_rhel
-    - baseurl: {{ defaults.uploads_rhel.repo.url }}
-    - gpgcheck: 0
-
-{% else %}
 # Adding repos here are redundent thing.
 # These repos get added in prereq-script, setup-provisioner
 #TODO Remove redundency
@@ -64,6 +54,8 @@ add_saltsatck_repo:
     - gpgcheck: 1
     - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
 
+{% endif %}
+
 Add commons yum repo:
   pkgrepo.managed:
     - name: {{ defaults.commons.repo.id }}
@@ -72,8 +64,6 @@ Add commons yum repo:
     - baseurl: {{ defaults.commons.repo.url }}
     - gpgcheck: 0
 
-{% endif %}
-
 clean_yum_local:
   cmd.run:
     - name: yum clean all
@@ -81,4 +71,3 @@ clean_yum_local:
 clean_yum_cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
-

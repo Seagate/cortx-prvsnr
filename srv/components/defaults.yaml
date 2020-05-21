@@ -1,9 +1,13 @@
 tmp_dir: /tmp
 
 {% set base_repo_url = "http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Production/" %}
-{% set eos_repo_url = "http://ci-storage.mero.colo.seagate.com/releases/eos" %}
-{# {% set release = pillar['eos_release']['target_build'] %} #}
 {% set repo_url = pillar['eos_release']['target_build'] %}
+
+{% if "RedHat" in grains['os'] %}
+{% set cortx_commons_url = pillar['eos_release']['commons']['RedHat'] %}
+{% else %}
+{% set cortx_commons_url = pillar['eos_release']['commons']['CentOS'] %}
+{% endif %}
 
 base_repos:
   centos_repos:
@@ -27,8 +31,8 @@ base_repos:
 commons:
   repo:
   # Binaries from external sources
-    id: "commons"
-    url: {{ eos_repo_url }}/uploads
+    id: "cortx_commons"
+    url: {{ cortx_commons_url }}
 
 sspl:
   repo:
@@ -38,7 +42,7 @@ sspl:
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
-    url: {{ eos_repo_url }}/sspl_uploads
+    url: {{ cortx_commons_url }}
 
 lustre:
   repo:
@@ -65,7 +69,7 @@ s3server:
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
-    url: {{ eos_repo_url }}/s3server_uploads
+    url: {{ cortx_commons_url }}
   config:
     DEPLOY_TAG: "s3dev"
     S3_VERSION: "1.0"
@@ -79,7 +83,7 @@ nfs:
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
-    url: {{ eos_repo_url }}/nfs_uploads/
+    url: {{ cortx_commons_url }}
 
 csm:
   repo:
@@ -88,15 +92,10 @@ csm:
     gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
     id: "csm_uploads"
-    url: {{ eos_repo_url }}/uploads/
+    url: {{ cortx_commons_url }}
 
 uds:
   repo:
     id: "uds"
     url: {{ repo_url  }}
     gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
-
-uploads_rhel:
-  repo:
-    id: "uploads_rhel"
-    url: {{ eos_repo_url }}/uploads_rhel
