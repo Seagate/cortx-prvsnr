@@ -9,7 +9,7 @@ Management network config failure:
 Ensure bonding config for management bond:
   file.managed:
     - name: /etc/modprobe.d/bonding.conf
-    - content: options bonding max_bonds=0
+    - contents: options bonding max_bonds=0
 
 # Setup network for management interfaces
 {% for iface in pillar['cluster'][node]['network']['mgmt_nw']['iface'] %}

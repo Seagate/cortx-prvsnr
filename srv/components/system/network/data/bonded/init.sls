@@ -2,7 +2,7 @@
 Ensure bonding config for data bond:
   file.managed:
     - name: /etc/modprobe.d/bonding.conf
-    - content: options bonding max_bonds=0
+    - contents: options bonding max_bonds=0
 
 # Setup network for data interfaces
 {% for iface in pillar['cluster'][node]['network']['data_nw']['iface'] %}
