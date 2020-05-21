@@ -30,6 +30,14 @@ Copy plugin to /usr/local/bin:
     - require:
       - Enable plugin rabbitmq_management
 
+Set RabbitMQ environment:
+  file.managed:
+    - name: /etc/rabbitmq/rabbitmq-env.conf
+    - contents: NODENAME=rabbit@{{ grains['id'] }}
+    - user: rabbitmq
+    - group: rabbitmq
+    - mode: 644
+
 # logrotate.d config: DO NOT REMOVE
 Setup logrotate policy for rabbitmq-server:
   file.managed:
