@@ -24,7 +24,9 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 
 function trap_handler {
-  echo "For detailed error logs, please see: $LOG_FILE"
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
 }
 trap trap_handler ERR
 
