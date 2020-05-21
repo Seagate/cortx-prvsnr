@@ -8,7 +8,7 @@ How can I contribute:
   - improve documentation
   - improve testing coverage
 
-And the last but the most improtant thing is to raise a merge
+And the last but the most important thing is to raise a merge
 request with any changes listed above.
 
 
@@ -36,8 +36,8 @@ Each merge request should pass a list of checks before it can be merged:
 ### Code Review
 
 The goal of the code review process is to ensure that a request:
-- follows some good practicies of the project
-- doesn't break any existing logics
+- follows some good practices of the project
+- doesn't break any existing logic
 - addresses the actual topic of the requests
 - does that in an optimal way
 - and covers all that with a good set of automated tests
@@ -49,10 +49,10 @@ Who reviews:
 
 How to ask for a review:
 - please mark the request as WIP if it's not ready for the review
-- unmark WIP and mention in the comment OR assign the request to a reviewer(s)
+- remove WIP mark and mention in the comment OR assign the request to a reviewer(s)
   when the request is ready
 - if code review has not happened for a more than few days please feel free
-  to re-reassign or mention other reviewr(s)
+  to re-reassign or mention other reviewer(s)
 
 
 ### Automatic Verification
@@ -67,5 +67,5 @@ It includes:
     - unit testing
     - integration testing
 
-A rule of thunb for any contributor is to verify that all these checks
+A rule of thumb for any contributor is to verify that all these checks
 are passed locally before pushing changes to the remote.
