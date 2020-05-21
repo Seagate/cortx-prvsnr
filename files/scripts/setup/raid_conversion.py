@@ -63,7 +63,7 @@ def get_partition(disk_name) -> str:
 ### Queries
 
 def query_multipath_devices():
-  return [ "/dev/mapper/" + x for x in sh_lines("multipath -ll -v 1").stdout]
+  return ["/dev/mapper/" + x for x in sh_lines("multipath -ll -v 1").stdout]
 
 
 def query_pvs_devices():
@@ -109,6 +109,7 @@ class RaidArray:
     result_size = sh(f"mdadm -Q --detail {self.name} | grep 'Array Size'")
     if result_size.stderr:
       return None
+
     return re.search(r':\s+([0-9]+)\s', result_size.stdout).group(1)
 
   def ensure_valid(self, required_device_no):
@@ -129,6 +130,14 @@ class RaidArray:
     result = sh(f"mdadm {self.name} --remove {device_name}")
     return not result.stderr
 
+  def zero_superblock(self, device_name):
+    result = sh(f"mdadm --zero-superblock {device_name}")
+    return not result.stderr
+
+  def add_device(self, device_name):
+    result = sh(f"mdadm {self.name} -a {device_name}")
+    return not result.stderr
+
 
 class MountManager:
   @property
@@ -147,10 +156,16 @@ class MountManager:
     return next((x["device"] for x in self.mounts_list if x["mount_point"] == mount_point), None)
 
   def mount(self, mount_point, device, fs):
-    pass
+    result = fs(f"mount -t {fs} -o fmask=0077,dmask=0077 {device} {mount_point}")
+    return not result.stderr
+
+  def persistent_mount(self, mount_point, device, fs):
+    # TODO: implement
+    return mount(mount_point, device, fs)
 
   def unmount(self, mount_point):
     pass
+
 
 class PartitionList:
   partitions = []
@@ -167,6 +182,7 @@ class PartitionList:
     return PartitionList([x for x in self.partitions if "raid" not in x["flags"]])
 
   def match_to(self, right_partitions) -> dict:
+    """ Matches own partitions to same-sized partitions of `right_partitions` """
     debug(f"Matching {self.partitions} with {right_partitions.partitions}")
 
     right_tmp = right_partitions.partitions.copy()
@@ -236,19 +252,29 @@ def resolve_partitions(primary_disk, enclosure_disk):
   }
 
 def move_boot_efi(primary_id, enclosure_id):
-  # create a filesystem on `enclosure_id`
-  # sync the contents
-  # unmount /boot/efi2
-  # mount /boot/efi2 at `enclosure_id` (persistently!)
-  # set up a regular task for /boot/efi and /boot/efi2 synchronization
-  pass
+  return
+  # TODO: ensure that old /boot/efi2 is removed from fstab 
+
+  mount_mgr = MountManager()
+  sh(f"mkdosfs -F 16 {enclosure_id}")
+  mount_mgr.unmount('/boot/efi2')
+  mount_mgr.persistent_mount('/boot/efi2', enclosure_id, 'vfat')
+  sh("rsync -acHAX /boot/efi/* /boot/efi2/")
+  
+  # TODO: set up a regular task for /boot/efi and /boot/efi2 synchronization
   
 def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
   return
-  raid_array.fail_device(secondary_id)
-  raid_array.remove_device(secondary_id)
-  # add enclosure_id to raid_array
-  # wait until the synchronization is complete
+
+  info(f"Removing old disks from {raid_array.name}") 
+  for secondary_id in raid_array.filter_devices(secondary_disk):
+    raid_array.fail_device(secondary_id)
+    raid_array.remove_device(secondary_id)
+
+  info(f"Adding {enclosure_id} to {raid_array.name}")
+  raid_array.zero_superblock(enclosure_id)
+  raid_array.add_device(enclosure_id)
+  # TODO: wait until the synchronization is complete
 
 def setup_swap(secondary_disk):
   # re-partition the secondary disk
@@ -260,10 +286,11 @@ def setup_swap(secondary_disk):
 # TODO: ensure that multipath is built into initramfs!!!
 
 ensure(check_root(), "Script must be run by a root user")
-md0 = RaidArray("/dev/md0")
-md1 = RaidArray("/dev/md1")
 
+md0 = RaidArray("/dev/md0")
 md0.ensure_valid(2)
+
+md1 = RaidArray("/dev/md1")
 md1.ensure_valid(2)
 
 pvs_devices = query_pvs_devices()
@@ -299,12 +326,20 @@ info(f"Target enclosure disk: {enclosure_disk}")
 
 partitions = resolve_partitions(primary_disk, enclosure_disk)
 
+info("Moving /boot/efi2 partition")
 move_boot_efi(primary_disk + partitions["efi"][0], enclosure_disk + partitions["efi"][1])
+
+info("Moving /boot partition")
 move_raid_partition(md0, primary_disk + partitions["boot"][0],
   secondary_disk,
   enclosure_disk + partitions["boot"][1])
+
+info("Moving LVM partition")
 move_raid_partition(md1, primary_disk + partitions["lvm"][0],
   secondary_disk,
   enclosure_disk + partitions["lvm"][1])
+
+info(f"Settting up swap on {secondary_disk}")
+# TODO: remove swap from the primary drive as well?
 setup_swap(secondary_disk)
 
