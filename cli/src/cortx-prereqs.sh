@@ -178,7 +178,12 @@ else
         echo "INFO: Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
         subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
         subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
-        if [[ "$subc_list" = "Subscribed" && "$subc_status" = "Current" ]]; then
+        if echo "$subc_list" | grep -q "Subscribed"; then
+            if [[  "$subc_status" != "Current" ]]; then
+                echo -e "\nERROR: RedHat subscription manager is disabled." 2>&1 | tee -a ${LOG_FILE}
+                echo "       Please register the system with Subscription Manager and rerun the command." 2>&1 | tee -a ${LOG_FILE}
+                exit 1
+            fi
             # Ensure required repos are enabled in subscription
             echo "INFO: subscription-manager is enabled." 2>&1 | tee -a ${LOG_FILE}
             repos_list=(
