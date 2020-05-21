@@ -29,7 +29,7 @@ else
 fi
 
 # Provisioner tasks
-stop_rabbitmq_cluster
+#stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
 backup_files
 
