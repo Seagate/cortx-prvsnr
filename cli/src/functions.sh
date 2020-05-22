@@ -1937,8 +1937,10 @@ function configure_provisioner_api_logs {
 
     # TODO IMPROVE seems not necessary here
     # Install rsyslog
-    yum -y install rsyslog
+    #yum -y install rsyslog         # Installs rsyslog 8.24 from base
 
+    # Preapare to install rsyslog 8.40 from common_uploads repo
+    salt-call state.apply components.system.prepare
     salt-call state.apply components.provisioner.config
 EOF
 
