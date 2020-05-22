@@ -288,6 +288,14 @@ hostnamectl status | grep Chassis | grep -q server && {
     /usr/bin/rescan-scsi-bus.sh -a 2>&1 | tee -a ${LOG_FILE}
 }
 
+echo -n "INFO: Disabling default time syncronization mechanism...." 2>&1 | tee -a ${LOG_FILE}
+if [ `rpm -qa chrony` ]; then
+    systemctl stop chronyd && systemctl disable chronyd &>> ${LOG_FILE}
+    yum remove -y chrony &>> ${LOG_FILE}
+fi
+echo "Done." 2>&1 | tee -a ${LOG_FILE}
+
+
 echo -e "\n***** SUCCESS!!! *****" 2>&1 | tee -a ${LOG_FILE}
 echo "For more details see: $LOG_FILE"
 if [[ "$do_reboot" == true ]]; then
