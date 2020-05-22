@@ -6,6 +6,14 @@ Sync data:
     - saltutil.refresh_modules: []
     - saltutil.refresh_pillar: []
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+{% if not "RedHat" in grains['os'] %}
+
+# Adding repos here are redundent thing.
+# These repos get added in prereq-script, setup-provisioner
+#TODO Remove redundency
+ 
 cleanup_yum_repos_dir:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/*.repo
@@ -21,7 +29,7 @@ Configure yum:
     - name: /etc/yum.conf
     - source: salt://components/system/files/etc/yum.conf
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
   pkgrepo.managed:
@@ -45,6 +53,8 @@ add_saltsatck_repo:
     - baseurl: {{ defaults.base_repos.saltstack_repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
+
+{% endif %}
 
 Add commons yum repo:
   pkgrepo.managed:

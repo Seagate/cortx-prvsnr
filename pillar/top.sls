@@ -20,6 +20,7 @@ base:
     - components.rabbitmq
     - components.rsyslog
     - components.uds
+    - components.lustre
     - user.groups.all.*                     # user all minions vars
   {{ grains.id }}:
     - ignore_missing: True

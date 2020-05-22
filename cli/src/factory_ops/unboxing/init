@@ -5,10 +5,72 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
+function trap_handler {
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
+}
+trap trap_handler ERR
+
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
+
+function usage {
+    echo "\
+    
+    Usage:
+        /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M <management_vip> -C <cluster_vip>
+
+    Command Args:
+        -M      <management_vip>    Static vip on management network
+        -C      <cluster_vip>       Static vip on data network
+    "
+}
+
+function help {
+  echo "\
+    ----------- Caveats -------------
+    1. The command must be run from primary node in the cluster.
+    2. User must provide:
+        a. Management VIP:  Static vip on management network
+        b. Cluster VIP:     Static vip on data network
+
+    -------- Sample command ---------
+    /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 172.19.100.100 -C 10.20.100.201
+    "
+}
+
+function die {
+    echo >&2 "$@"
+    usage
+    exit 1
+}
+
+# Argument validation
+[[ $# -eq 4 ]] || die "Incorrect or no arguments provided."
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help) usage; help; exit 0
+        ;;
+
+        -C)
+            [ -z "$2" ] && die "Error: Cluster VIP not provided";
+            cluster_vip="$2"
+            shift 2
+            ;;
+
+        -M)
+            [ -z "$2" ] && die "Error: Management VIP not provided";
+            management_vip="$2"
+            shift 2
+            ;;
+    
+        *) echo "Invalid option $1"; usage; exit 1;;
+    esac
+done
 
 # Proceed only if boxing flag set
 check_boxing_flag
@@ -25,8 +87,11 @@ check_mgmt_ip
 # Update /root/.ssh/config file with hosts
 update_ssh_config
 update_salt_minion
-update_cluster_sls
+update_cluster_sls "${management_vip}" "${cluster_vip}"
 recover_rabbitmq_cluster
+salt "*" state.apply components.s3server.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
 
 # Shutdown HA
 if command -v pcs ; then
@@ -34,15 +99,36 @@ if command -v pcs ; then
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Reverting from maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+
+    # Update ClusterIP
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip
+    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    sleep 5     # Mindfulness break
+
+    # Update Management_vip
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_ip
+    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    sleep 5     # Mindfulness break
+
+    # Re-run Stonith
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith
+    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    sleep 5     # Mindfulness break...Breathe in...Breathe out
+
+    echo "Thank you for your patience... Apreciate it!"
+
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
 fi
 
 # Update SSPL init
-salt "srvnode-2" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}
-salt "srvnode-2" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+
+# lock unboxing user
+lock_unboxing_user
 
 # Unboxing SUCCESS
 remove_boxing_flag

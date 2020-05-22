@@ -118,7 +118,7 @@ Make ROOT RAID:
 # Format SWAP
 Make SWAP partition:
   cmd.run:
-    - name: mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4 && sleep 5
+    - name: sleep 10 && mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4 && sleep 5
     - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
     - require:
       - module: Create swap partition

@@ -32,7 +32,7 @@ function trap_handler {
 trap trap_handler ERR
 
 function update_ssh_config {
-    if [[ "srvnode-1" == $(cat /etc/salt/minion_id) ]]; then
+    if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
         echo "Updating localhost in /root/.ssh/config on primary node" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(hostname)
@@ -77,7 +77,7 @@ function update_ssh_config {
 
 function update_salt_minion {
 
-    if [[ "srvnode-1" == $(cat /etc/salt/minion_id) ]]; then
+    if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
         local host=$(hostname)
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -106,12 +106,23 @@ function update_salt_minion {
 }
 
 function update_cluster_sls {
+    local mgmt_vip={1:-}
+    local cluster_vip={2:-}
+
     local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
     if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
         _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
     fi
 
-    if [[ "srvnode-1" == $(cat /etc/salt/minion_id) ]]; then
+    if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
+        echo "Updating cluster.sls for Management VIP on primary node" 2>&1|tee -a ${LOG_FILE}
+        local line_to_replace=$(grep -m1 -n "mgmt_vip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
+        sed -i "${line_to_replace},/mgmt_vip:*/ s|mgmt_vip:.*|mgmt_vip: ${mgmt_vip}|" ${_cluster_sls_path}
+
+        echo "Updating cluster.sls for Cluster VIP on primary node" 2>&1|tee -a ${LOG_FILE}
+        local line_to_replace=$(grep -m1 -n "cluster_ip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
+        sed -i "${line_to_replace},/cluster_ip:*/ s|cluster_ip:.*|cluster_ip: ${cluster_vip}|" ${_cluster_sls_path}
+
         echo "Updating cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         # Hostname
@@ -157,6 +168,44 @@ function recover_rabbitmq_cluster {
     # # Update RabbitMQ cluster
     salt "srvnode-1" state.apply components.misc_pkgs.rabbitmq 2>&1|tee -a ${LOG_FILE}
     salt "srvnode-2" state.apply components.misc_pkgs.rabbitmq 2>&1|tee -a ${LOG_FILE}
+}
+
+function lock_unboxing_user {
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+    echo "Validate the following as part of unboxing process."
+    
+    echo "Check if all IP addresses have been assigned"
+    echo "Command: ip a"
+
+    echo "Check if system has been assigned a hostname"
+    echo "Command: hostname -f"
+
+    echo "Check HA cluster is up. [All resources should show as started. Check for fails.]"
+    echo "Command: pcs status"
+
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+
+    echo -n "Does Unboxing look good (y/n)? "
+    read answer
+
+    if [ "$answer" != "${answer#[Yy]}" ] ;then
+        passwd --lock cortxub
+
+        echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+        echo "NOTE: "
+        echo "The system is ready for use."
+        echo "User cortxub has been locked and can no longer be used for login."
+        echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+        
+    else
+        echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+        echo "NOTE: "
+        echo "User feels unboxing is incomplete."
+        echo "Exiting unboxing process..."
+        echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+
+        exit 10
+    fi
 }
 
 function remove_boxing_flag {
