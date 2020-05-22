@@ -31,8 +31,7 @@ Delete system checkpoint flag:
 Remove added journald configuration:
   file.replace:
     - name: /etc/systemd/journald.conf
-    - pattern: "^Storage=persistent.*?MaxRetentionSec=1week"
-    - flags: ['MULTILINE', 'DOTALL']
+    - pattern: "^Storage=persistent"
     - repl: ''
     - ignore_if_missing: True
 
@@ -49,4 +48,3 @@ Restart systemd-journald:
   module.run:
     - service.restart:
       - systemd-journald
-

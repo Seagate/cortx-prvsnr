@@ -24,7 +24,7 @@ Remove stats collector:
 Remove Symlink:
   file.absent:
     - name: /usr/bin/csm-stats-collector
-    
+
 Remove crontab:
   cron.absent:
     - name: /opt/statsd/csm-stats-collector 10

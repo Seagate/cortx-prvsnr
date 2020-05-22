@@ -1,7 +1,7 @@
 Configure OpenLDAP - Base config:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif
-    
+
 Remove existing file:
   cmd.run:
     - name: rm -f /etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif

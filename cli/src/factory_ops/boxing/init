@@ -1,6 +1,16 @@
 #!/bin/sh
-
 set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+truncate -s 0 ${LOG_FILE}
+
+function trap_handler {
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
+}
+trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -8,15 +18,26 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . $BASEDIR/shutdown
 
 # Prepare shutdown
-stop_rabbitmq_cluster
+# Shutdown HA
+if command -v pcs ; then
+    echo "INFO: Starting maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
+    pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
+else
+    echo "[ERROR    ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
+fi
+
+# Provisioner tasks
+#stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
 backup_files
-boxing_flag
 
-# Shutdown HA
-pcs cluster stop --all
+# Create user for unboxing
+create_unboxing_user
 
 # Create flag file
+boxing_flag
 
 # Power-off sequence
 shutdown_controller

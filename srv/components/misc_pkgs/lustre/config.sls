@@ -15,9 +15,9 @@ Update lnet config file:
     - name: /etc/modprobe.d/lnet.conf
     - contents:
 {% if salt['cmd.run']('lspci -d"15b3:1017:0200"') %}
-      - options lnet networks=o2ib({{ data_if }})  config_on_load=1
+      - options lnet networks=o2ib({{ data_if }})  config_on_load=1  lnet_peer_discovery_disabled=1
 {% else %}
-      - options lnet networks=tcp({{ data_if }})  config_on_load=1
+      - options lnet networks=tcp({{ data_if }})  config_on_load=1  lnet_peer_discovery_disabled=1
 {% endif %}
     - user: root
     - group: root

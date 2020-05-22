@@ -7,3 +7,10 @@ yaml-files:
   - '*.yml'
   - '.yamllint'
   - '*.sls'
+
+rules:
+  comments: disable
+  comments-indentation: disable
+  document-start: disable
+  line-length: disable
+  truthy: disable

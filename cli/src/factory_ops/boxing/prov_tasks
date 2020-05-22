@@ -9,24 +9,29 @@
 #       b. /etc/multipath.conf 
 #   6. Unmount /var/mero and SWAP? (This should be ideally taken care of by OS shutdown)
 #   7. Cleanup /tmp 
-#   8. Create boxing flag file on primary node:
+#   8. Create unboxing user.
+#   9. Create boxing flag file on primary node:
 #       /opt/seagate/eos-prvsnr/generated_config/boxed
 #       Creating file on only one node ensures that the unboxing is executed only on primary node.
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}"
+mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
 function trap_handler {
-  echo "For detailed error logs, please see: $LOG_FILE"
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
 }
 trap trap_handler ERR
 
 function stop_rabbitmq_cluster {
     echo "INFO: Removing RabbitMQ from both nodes." | tee -a ${LOG_FILE}
     
-    #salt "*" cmd.run "rabbitmqctl stop_app"
-    salt "*" state.apply components.rabbitmq.teardown || (echo "ERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE})
+    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown || (
+        echo "ERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
+    )
 
     echo "INFO: Removed RabbitMQ from both nodes." | tee -a ${LOG_FILE}
 }
@@ -34,7 +39,7 @@ function stop_rabbitmq_cluster {
 function stop_services {
     echo "INFO: Stop LNET from both nodes if active." | tee -a ${LOG_FILE}
 
-    echo "Stopping lnet on both nodes"
+    echo "INFO: Stopping lnet on both nodes" | tee -a ${LOG_FILE}
     salt "*" service.stop lnet || (echo "ERROR: Failed to stop LNET from both nodes." | tee -a ${LOG_FILE})
 
     echo "INFO: Stopped LNET from both nodes if active." | tee -a ${LOG_FILE}
@@ -47,9 +52,34 @@ function backup_files {
         "/etc/multipath/bindings"
         "/etc/multipath.conf"
     )
-    for file in "${bkp_file_list[@]}"; do cp $file $file.bak done
+    for file in "${bkp_file_list[@]}"; do
+        cp $file $file.bak
+    done
 
     echo "INFO: Backed up files on both nodes." | tee -a ${LOG_FILE}
+}
+
+function create_unboxing_user {
+    if ! command -v mkpasswd >/dev/null ; then
+        # Install required package if missing
+        yum install -y expect >/dev/null
+    fi
+    
+    SECRET=$(mkpasswd -l 10 -d 3 -c 3 -C 3 -s 0)
+    useradd --base-dir /tmp --inactive 2 --groups sys --shell /usr/bin/bash  --no-create-home --password $(openssl passwd -1 ${SECRET}) cortxub
+    passwd -e cortxub
+    
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+    echo "NOTE: Store this information for unboxing."
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+    
+    echo "System MAC: $(cat /sys/class/net/eno1/address)" 2>&1 | tee -a ${LOG_FILE}
+    echo "USERNAME:   cortxub" 2>&1 | tee -a ${LOG_FILE}
+    echo "PASSWORD:   ${SECRET}" 2>&1 | tee -a ${LOG_FILE}
+ 
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+    echo "NOTE: Password expires on first login." 2>&1 | tee -a ${LOG_FILE}
+    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function boxing_flag {

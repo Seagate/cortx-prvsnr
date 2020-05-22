@@ -25,4 +25,3 @@ rabbitmq:
       message_signature_expires: "3600"
       iem_route_exchange_name: "sspl-out"
       primary_rabbitmq_host: "localhost"
-  

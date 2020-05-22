@@ -12,7 +12,7 @@ cluster:
     hostname: srvnode-1
     is_primary: true
     bmc:
-      ip: 
+      ip:
       user: ADMIN
       secret: 'adminBMC!'
     network:
@@ -29,8 +29,8 @@ cluster:
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network 
-        roaming_ip: 192.168.0.3       # Applies to private data network                                      
+        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
       metadata_device:                # Device for /var/mero and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
@@ -40,7 +40,7 @@ cluster:
     hostname: srvnode-2
     is_primary: false
     bmc:
-      ip: 
+      ip:
       user: ADMIN
       secret: 'adminBMC!'
     network:
@@ -78,24 +78,21 @@ storage_enclosure:
     user: manage
     secret: 'passwd'
 s3client:
-    access_key: testing123
-    output: text
-    region: US
-    s3endpoint: s3.seagate.com
-    s3server:
-        iam_admin:
-            user: sgiamadmin
-            secret: ldapadmin
-        fqdn: null
-        iam_admin:
-          secret: ldapadmin
-          user: sgiamadmin
-        ip: null
-    secret_key: null
+  access_key: testing123
+  output: text
+  region: US
+  s3endpoint: s3.seagate.com
+  s3server:
+    iam_admin:
+      user: sgiamadmin
+      secret: ldapadmin
+    fqdn: null
+    ip: null
+  secret_key: null
 release:
-    update:
-        mount_base_dir: /opt/seagate/eos/updates777
-        repos: {}
+  update:
+    mount_base_dir: /opt/seagate/eos/updates777
+    repos: {}
 corosync-pacemaker:
   user: hacluster
   secret: hacluster
@@ -121,10 +118,10 @@ system:
     time_server: time.seagate.com
     timezone: UTC
 sspl:
-    rmq:
-        user: sspluser
-        secret: sspl4ever
-    healthmappath: /tmp/resource_health_view.json
+  rmq:
+    user: sspluser
+    secret: sspl4ever
+  healthmappath: /tmp/resource_health_view.json
 uds:
   version:
     uds-pyi: latest

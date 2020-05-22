@@ -259,8 +259,11 @@ class Network(ParamGroupInputBase):
     primary_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node floating IP"
     )
-    primary_gateway_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node gateway IP"
+    primary_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data gateway IP"
+    )
+    primary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node mgmt gateway IP"
     )
     primary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node management iface IP"
@@ -280,8 +283,11 @@ class Network(ParamGroupInputBase):
     secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node floating IP"
     )
-    secondary_gateway_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node gateway IP"
+    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data gateway IP"
+    )
+    secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node mgmt gateway IP"
     )
     secondary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node management iface IP"

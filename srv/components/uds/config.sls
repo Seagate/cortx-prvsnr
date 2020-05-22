@@ -5,7 +5,7 @@ Add USL native.key file:
     - mode: 600
     - user: csm
     - group: csm
-    
+
 Add USL native.crt file:
   file.managed:
     - source: salt://components/uds/files/tls/native.crt
@@ -13,5 +13,3 @@ Add USL native.crt file:
     - mode: 600
     - user: csm
     - group: csm
-
-

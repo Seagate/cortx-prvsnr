@@ -34,7 +34,7 @@ Remove public data interfaces:
 {% else %}
 Remove public and private data interfaces:
   cmd.run:
-    - names: 
+    - names:
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }} --zone=public-data-zone --permanent
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=trusted --permanent
     - onlyif: firewall-cmd --get-zones | grep public-data-zone

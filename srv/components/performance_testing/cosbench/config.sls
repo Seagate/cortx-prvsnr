@@ -1,8 +1,7 @@
-
 Update /etc/hosts:
   file.managed:
     - name: /etc/hosts
-    - content:
+    - contents:
       - {{ salt['pillar.get']('s3client:s3server:ip', '127.0.0.1') }}  seagatebucket.s3.seagate.com seagate-bucket.s3.seagate.com
        seagatebucket123.s3.seagate.com seagate.bucket.s3.seagate.com
       - {{ salt['pillar.get']('s3client:s3server:ip', '127.0.0.1') }}  s3-us-west-2.seagate.com seagatebucket.s3-us-west-2.seagate.com

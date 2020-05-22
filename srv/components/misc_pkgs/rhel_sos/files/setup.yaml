@@ -1,0 +1,3 @@
+sosreport:
+    generate_report:
+        - /opt/seagate/eos-prvsnr/cli/sos-generate
