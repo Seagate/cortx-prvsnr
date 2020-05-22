@@ -4,17 +4,17 @@
 # -- check that /boot is mounted on md0 (DONE)
 # -- check LVM config (+-)
 # -- whether the procedure has already been done (+-)
-# Identify the correct volume
+# Identify the correct volume (+-)
 # Identify the disks (DONE)
 # Do not forget to compare partitions sizes?? Create partitions??
-# Unmount /boot/efi2
+# Unmount /boot/efi2 (DONE)
+# Mount /boot/efi2 (DONE)
+# Sync /boot/efi and /boot/efi2 (DONE)
+# Setup perioric synchronization of /boot/efi and /boot/efi2
 # Move md0 and md1
-# Mount /boot/efi2 (permanently? via /etc/fstab?)
-# Sync /boot/efi and /boot/efi2
-# Set up a cron script for auto-sync
 # Create swap partition on the second hard drive
 
-
+from datetime import datetime
 import subprocess
 import sys
 import re
@@ -75,6 +75,23 @@ def query_pvs_devices():
   for line in raw_result.stdout:
     result.append(re.split(r'\s{2,}', line)[2])
   return result
+
+
+def query_disk_uuid(disk):
+  #if disk.startswith('/dev/dm') or disk.startswith('/dev/mapper'):
+  #  return sh(f"sudo dmsetup info {disk} " + " | grep 'UUID:' | awk '{print $2}'").stdout.strip()
+  #else:
+   output = sh(f"blkid -p {disk}").stdout
+   match = re.search(r'PARTUUID="([^\s]+)"', output)
+   if match:
+     return 'PARTUUID=' + match.group(1)
+   match = re.search(r'PART_ENTRY_UUID="([^\s]+)"', output)
+   if match:
+     return 'PART_ENTRY_UUID=' + match.group(1)
+   match = re.search(r'\sUUID="([^\s]+)"', output)
+   if match:
+     return 'UUID=' + match.group(1)
+   return None
 
 
 class RaidArray:
@@ -139,6 +156,68 @@ class RaidArray:
     return not result.stderr
 
 
+class FstabManager:
+  @property
+  def fstab_list(self):
+    lines = []
+    with open('/etc/fstab') as f:
+      for line in f.readlines():
+        parsed = self.parse_line(line)
+        if parsed:
+          lines.append(parsed)
+    return lines
+
+  def parse_line(self, line):
+    line = line.strip()
+    if line.startswith('#'):
+      return None
+    columns = re.split(r'\s+', line)
+    if len(columns) != 6:
+      return None
+    return {
+      'fs_spec': columns[0],
+      'fs_file': columns[1],
+      'fs_vfstype': columns[2]
+    }
+
+  def create_line(self, fs_spec, fs_file, fs_vfstype,
+                    fs_mntops='defaults', fs_freq='0', fs_passno='0'):
+    return f"{fs_spec}\t{fs_file}\t\t{fs_vfstype}\t{fs_mntops}\t{fs_freq} {fs_passno}"
+
+  def unmount(self, mount_point):
+    new_contents = ''
+    with open('/etc/fstab', 'r+') as f:
+      for line in f.readlines():
+        parsed = self.parse_line(line)
+        if parsed and parsed['fs_file'] == mount_point:
+          new_contents += '#'
+        new_contents += line
+
+      f.seek(0, 0)
+      f.write(new_contents)
+      f.truncate()
+
+  def mount(self, fs_spec, fs_file, *args, **kwargs):
+    new_line = self.create_line(fs_spec, fs_file, *args, **kwargs)
+    if any(x['fs_file'] == fs_file for x in self.fstab_list):
+      debug(f'Attempting to mount {fs_file} while it is already in /etc/fstab')
+      return
+
+    new_contents = ''
+    with open('/etc/fstab', 'r+') as f:
+      for line in f.readlines():
+        parsed = self.parse_line(line)
+        new_contents += line
+      new_contents = new_contents.strip() + f"\n{new_line}\n"
+      
+      f.seek(0,0)
+      f.write(new_contents)
+      f.truncate()
+
+  def backup_fstab(self):
+    sh('cp -f /etc/fstab /etc/fstab.bak' + (datetime.now().isoformat()))
+
+
 class MountManager:
   @property
   def mounts_list(self):
@@ -152,19 +231,24 @@ class MountManager:
       result.append({ "device": columns[0], "mount_point": columns[1] })
     return result
 
+  def is_mounted(self, mount_point):
+    return self.query_device(mount_point) is not None
+
   def query_device(self, mount_point):
     return next((x["device"] for x in self.mounts_list if x["mount_point"] == mount_point), None)
 
   def mount(self, mount_point, device, fs):
-    result = fs(f"mount -t {fs} -o fmask=0077,dmask=0077 {device} {mount_point}")
+    if self.is_mounted(mount_point):
+      return False
+    result = sh(f"mount -t {fs} -o fmask=0077,dmask=0077 {device} {mount_point}")
     return not result.stderr
 
-  def persistent_mount(self, mount_point, device, fs):
-    # TODO: implement
-    return mount(mount_point, device, fs)
-
   def unmount(self, mount_point):
-    pass
+    if self.is_mounted(mount_point):
+      sh(f"umount {mount_point}")
+      
+  def reload_mounts(self):
+    sh("mount -a")
 
 
 class PartitionList:
@@ -251,18 +335,25 @@ def resolve_partitions(primary_disk, enclosure_disk):
     "lvm": [lvm_partition, encl_lvm_partition]
   }
 
-def move_boot_efi(primary_id, enclosure_id):
-  return
-  # TODO: ensure that old /boot/efi2 is removed from fstab 
 
+def move_boot_efi(primary_id, enclosure_id):
+  fstab_mgr = FstabManager()
   mount_mgr = MountManager()
-  sh(f"mkdosfs -F 16 {enclosure_id}")
+
   mount_mgr.unmount('/boot/efi2')
-  mount_mgr.persistent_mount('/boot/efi2', enclosure_id, 'vfat')
+  fstab_mgr.unmount('/boot/efi2')
+  
+  sh(f"mkdosfs -F 16 {enclosure_id}")
+  
+  info(f"Mounting /boot/efi2 at {enclosure_id}")
+  fstab_mgr.mount(enclosure_id, '/boot/efi2', 'vfat', fs_mntops='umask=0077')
+  mount_mgr.reload_mounts()
+  
   sh("rsync -acHAX /boot/efi/* /boot/efi2/")
-  
+  info(f"/boot/efi/ synchronization is complete")
   # TODO: set up a regular task for /boot/efi and /boot/efi2 synchronization
-  
+
+
 def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
   return
 
@@ -276,10 +367,12 @@ def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
   raid_array.add_device(enclosure_id)
   # TODO: wait until the synchronization is complete
 
+
 def setup_swap(secondary_disk):
   # re-partition the secondary disk
   # set up swap (persistently)
   pass
+
 
 ### Script 
 
@@ -325,6 +418,9 @@ enclosure_disk = query_multipath_devices()[0]
 info(f"Target enclosure disk: {enclosure_disk}")
 
 partitions = resolve_partitions(primary_disk, enclosure_disk)
+
+fstab_mgr = FstabManager()
+fstab_mgr.backup_fstab()
 
 info("Moving /boot/efi2 partition")
 move_boot_efi(primary_disk + partitions["efi"][0], enclosure_disk + partitions["efi"][1])
