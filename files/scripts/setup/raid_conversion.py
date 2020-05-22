@@ -14,15 +14,17 @@
 # Move md0 and md1
 # Create swap partition on the second hard drive
 
-from datetime import datetime
 import subprocess
 import sys
 import re
+import time
+from datetime import datetime
 from collections import namedtuple
 
 ShResponse = namedtuple('ShResponse', 'stdout stderr')
 
 def sh(command):
+  print("\033[93m# " + command + "\033[0m")
   result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   return ShResponse(
     stderr=result.stderr.decode('utf-8'),
@@ -51,7 +53,7 @@ def check_root() -> bool:
   return sh_lines("id -u").stdout[0] == "0"
 
 def strip_disk(disk_name) -> str:
-  if disk_name.startswith("/dev/sd"):
+  if disk_name.startswith("/dev/sd") or disk_name.startswith("/dev/mapper/mpath"):
     return re.sub('\d*$', '', disk_name)
   return disk_name
 
@@ -77,9 +79,15 @@ def query_pvs_devices():
   return result
 
 
+def disk_to_canonical_name(disk):
+  if disk.startswith('/dev/dm'):
+    return '/dev/mapper/' + sh(f"dmsetup info {disk} " + " | grep 'Name:' | awk '{print $2}'").stdout.strip()
+  return disk
+
+
 def query_disk_uuid(disk):
   #if disk.startswith('/dev/dm') or disk.startswith('/dev/mapper'):
-  #  return sh(f"sudo dmsetup info {disk} " + " | grep 'UUID:' | awk '{print $2}'").stdout.strip()
+  #  return sh(f"dmsetup info {disk} " + " | grep 'UUID:' | awk '{print $2}'").stdout.strip()
   #else:
    output = sh(f"blkid -p {disk}").stdout
    match = re.search(r'PARTUUID="([^\s]+)"', output)
@@ -115,28 +123,35 @@ class RaidArray:
 
   @property
   def state(self):
-    result_state = sh(f"mdadm -Q --detail {self.name} | grep 'State'")
+    result_state = sh(f"mdadm -Q --detail {self.name} | grep 'State :'")
     if result_state.stderr:
       return None
 
-    return re.search(r':\s+([^\s]+)\s', result_state.stdout).group(1)
+    return re.search(r':\s+([^\n]+)', result_state.stdout).group(1).strip()
 
   @property
   def array_size(self):
     result_size = sh(f"mdadm -Q --detail {self.name} | grep 'Array Size'")
     if result_size.stderr:
       return None
-
     return re.search(r':\s+([0-9]+)\s', result_size.stdout).group(1)
+
+  @property
+  def total_devices(self):
+    result_size = sh(f"mdadm -Q --detail {self.name} | grep 'Total Devices'")
+    if result_size.stderr:
+      return None
+    return int(re.search(r':\s+([0-9]+)\s', result_size.stdout).group(1))
 
   def ensure_valid(self, required_device_no):
     state = self.state
     ensure(state, f"{self.name} must be present")
     ensure(state in ['active', 'clean'], f"{self.name} must be clean or active")
-    ensure(len(self.devices) == required_device_no, f"{self.name} must have exactly {required_device_no} raid devices")
+    ensure(self.total_devices == required_device_no, f"{self.name} must have exactly {required_device_no} raid devices")
 
   def filter_devices(self, device_name):
-    return [x["device"] for x in self.devices if strip_disk(x["device"]) == strip_disk(device_name)]
+    target_stripped = strip_disk(disk_to_canonical_name(device_name))
+    return [x["device"] for x in self.devices if strip_disk(disk_to_canonical_name(x["device"])) == target_stripped]
 
   def fail_device(self, device_name):
     ensure(device_name in self.filter_devices(device_name), f"{device_name} must be included in {self.name}")
@@ -355,17 +370,21 @@ def move_boot_efi(primary_id, enclosure_id):
 
 
 def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
-  return
-
-  info(f"Removing old disks from {raid_array.name}") 
+  info(f"Removing old disks from {raid_array.name}")
   for secondary_id in raid_array.filter_devices(secondary_disk):
+    info(f".. removing {secondary_id}")
     raid_array.fail_device(secondary_id)
     raid_array.remove_device(secondary_id)
 
   info(f"Adding {enclosure_id} to {raid_array.name}")
   raid_array.zero_superblock(enclosure_id)
   raid_array.add_device(enclosure_id)
-  # TODO: wait until the synchronization is complete
+  info(f"Waiting for rebuild to complete..")
+  
+  time.sleep(5)
+  while "recovering" in raid_array.state:
+    time.sleep(15)
+  info(f"Rebuilding is complete")
 
 
 def setup_swap(secondary_disk):
@@ -409,9 +428,9 @@ info(f"Primary HDD: {primary_disk}")
 info(f"Secondary HDD: {secondary_disk}")
 
 ensure(md0.filter_devices(primary_disk), "Disk with /boot/efi must be included in /dev/md0")
-#ensure(md0.filter_devices(secondary_disk), "Disk with /boot/efi2 must be included in /dev/md0")
+ensure(md0.filter_devices(secondary_disk), "Disk with /boot/efi2 must be included in /dev/md0")
 ensure(md1.filter_devices(primary_disk), "Disk with /boot/efi must be included in /dev/md1")
-#ensure(md1.filter_devices(secondary_disk), "Disk with /boot/efi2 must be included in /dev/md1")
+ensure(md1.filter_devices(secondary_disk), "Disk with /boot/efi2 must be included in /dev/md1")
 
 # TODO: implement the disk-picking algorithm
 enclosure_disk = query_multipath_devices()[0]
@@ -421,6 +440,7 @@ partitions = resolve_partitions(primary_disk, enclosure_disk)
 
 fstab_mgr = FstabManager()
 fstab_mgr.backup_fstab()
+
 
 info("Moving /boot/efi2 partition")
 move_boot_efi(primary_disk + partitions["efi"][0], enclosure_disk + partitions["efi"][1])
