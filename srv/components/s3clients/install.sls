@@ -1,11 +1,11 @@
 Install requisites:
   pkg.installed:
     - pkgs:
-      - python34-boto3
-      - python34-botocore
-      - python34-jmespath
-      - python34-s3transfer
-      - python34-xmltodict
+      - python36-boto3
+      - python36-botocore
+      - python36-jmespath
+      - python36-s3transfer
+      - python36-xmltodict
 
 # Install certs:
 #   pkg.installed:
