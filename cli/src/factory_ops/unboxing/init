@@ -122,10 +122,10 @@ else
 fi
 
 # Update SSPL init
-salt "srvnode-2" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.prepare 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
 
 # lock unboxing user
 lock_unboxing_user
