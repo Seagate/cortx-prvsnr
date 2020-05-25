@@ -39,7 +39,7 @@ Merge healthschema:
 Run Health Schema:
   cmd.run:
     - name: /opt/seagate/eos/sspl/lib/resource_health_view -n --path "/tmp/"
-    - requrie:
+    - require:
       - Stage - Configure SSPL
 {% endif %}
 {% endif %} 
@@ -47,5 +47,3 @@ Run Health Schema:
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:init')
-    - require:
-      - Run Health Schema
