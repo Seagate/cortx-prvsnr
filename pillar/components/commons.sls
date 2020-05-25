@@ -1,4 +1,7 @@
 commons:
+  cortx_commons:
+    RedHat: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
+    CentOS: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/
   version:
     erlang: latest
     elasticsearch: 6.8.8-1
