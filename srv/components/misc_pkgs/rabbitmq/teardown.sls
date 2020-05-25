@@ -14,6 +14,10 @@ Remove /var/lib/rabbitmq:
   file.absent:
     - name: /var/lib/rabbitmq
 
+Remove plugin executable rabbitmqadmin:
+  file.absent:
+    - name: /usr/local/bin/rabbitmqadmin
+
 Remove /etc/rabbitmq:
   file.absent:
     - name: /etc/rabbitmq
