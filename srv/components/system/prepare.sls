@@ -8,7 +8,7 @@ Sync data:
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% if not "RedHat" in grains['os'] %}
+{% if (not "RedHat" in grains['os']) or (salt['cmd.run']('subscription-manager list|grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
 
 # Adding repos here are redundent thing.
 # These repos get added in prereq-script, setup-provisioner
@@ -23,12 +23,6 @@ Reset EPEL:
   cmd.run:
     - name: rm -rf /etc/yum.repos.d/epel.repo.*
     - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
-
-Configure yum:
-  file.managed:
-    - name: /etc/yum.conf
-    - source: salt://components/system/files/etc/yum.conf
-
 
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
@@ -55,6 +49,11 @@ add_saltsatck_repo:
     - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
 
 {% endif %}
+
+Configure yum:
+  file.managed:
+    - name: /etc/yum.conf
+    - source: salt://components/system/files/etc/yum.conf
 
 Add commons yum repo:
   pkgrepo.managed:

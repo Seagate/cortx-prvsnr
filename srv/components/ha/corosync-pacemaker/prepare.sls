@@ -5,3 +5,10 @@ Create ha user:
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
+
+Disable SSL:
+  file.managed:
+    - name: /etc/python/cert-verification.cfg
+    - contents: |
+        [https]
+        verify=disable

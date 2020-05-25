@@ -61,8 +61,8 @@ iopath_states=(
 
 ha_states=(
     # states to be applied in desired sequence
-        "hare"
         "ha.corosync-pacemaker"
+        "hare"
         "ha.ees_ha"
     )
 
