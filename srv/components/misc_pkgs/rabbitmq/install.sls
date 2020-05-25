@@ -10,3 +10,7 @@ Install RabbitMQ:
     - name: rabbitmq-server
     - version: {{ pillar ['commons']['version']['rabbitmq'] }}
     - refresh: True
+
+Enable plugin:
+  rabbitmq_plugin.enabled:
+    - name: rabbitmq_management
