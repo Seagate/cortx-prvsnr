@@ -4,20 +4,20 @@ tmp_dir: /tmp
 {% set repo_url = pillar['eos_release']['target_build'] %}
 
 {% if "RedHat" in grains['os'] %}
-{% set cortx_commons_url = pillar['eos_release']['commons']['RedHat'] %}
+{% set cortx_commons_url = pillar['commons']['cortx_commons']['RedHat'] %}
 {% else %}
-{% set cortx_commons_url = pillar['eos_release']['commons']['CentOS'] %}
+{% set cortx_commons_url = pillar['commons']['cortx_commons']['CentOS'] %}
 {% endif %}
 
 base_repos:
   centos_repos:
-    - id: "base"
+    - id: "cortx_platform_base"
       # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/os/x86_64/
       url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
-    - id: "extras"
+    - id: "cortx_platform_extras"
       # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/extras/x86_64/
       url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
-    - id: "updates"
+    - id: "cortx_platform_updates"
       # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/updates/x86_64/
       url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Updates/
   epel_repo:

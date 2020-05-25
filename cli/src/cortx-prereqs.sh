@@ -100,37 +100,48 @@ EOF
 
 create_commons_repos()
 {
-    _repo="/etc/yum.repos.d/cortx_platform_commons.repo"
+    cortx_commons_url="${1:http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/}"
+    _repo="/etc/yum.repos.d/cortx_commons.repo"
     echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
-    _url="$1"
-cat <<EOF > ${_repo}
-[cortx-platform-commons]
-name=lyve-platform-commons
+cat <<EOL > ${_repo}
+[cortx_commons]
+name=cortx_commons
 gpgcheck=0
 enabled=1
-baseurl=$_url
+baseurl=$cortx_commons_url
+EOL
 
-[cortx-platform-base]
-name=lyve-platform-base
+    _repo="/etc/yum.repos.d/cortx_platform_base.repo"
+    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+cat <<EOL > ${_repo}
+[cortx_platform_base]
+name=cortx_platform_base
 gpgcheck=0
 enabled=1
 baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
+EOL
 
-[cortx-platform-epel]
-name=lyve-platform-epel
-gpgcheck=0
-enabled=1
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
-
-[cortx-platform-extras]
-name=lyve-platform-extras
+    _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
+    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+cat <<EOL > ${_repo}
+[cortx_platform_extras]
+name=cortx_platform_extras
 gpgcheck=0
 enabled=1
 baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
+EOL
 
-EOF
+    _repo="/etc/yum.repos.d/epel.repo"
+    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+cat <<EOL > ${_repo}
+[epel]
+name=epel
+gpgcheck=0
+enabled=1
+baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
+EOL
+
     echo "Done." 2>&1 | tee -a ${LOG_FILE}
-
 }
 
 parse_args "$@"

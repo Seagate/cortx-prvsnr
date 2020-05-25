@@ -81,12 +81,13 @@ Target host is considered to be an EOS SaltStack master.
 General options:
 $base_options_usage
 Options:
-       --ha-states       run only teardown of ha components
-       --iopath-states   run only teardown of iopath components
-       --ctrlpath-states run only teardown of control path components
-       --remove-prvsnr   run only teardown of control path components
-       --prereq-states  run only teardown of control path components
-       --system-states   run only teardown of control path components
+       --ha-states          run only teardown of ha components
+       --iopath-states      run only teardown of iopath components
+       --ctrlpath-states    run only teardown of control path components
+       --remove-prvsnr      run teardown to remove eos-prvsnr, eos-prvsnr-cli
+                            and related dependencies.
+       --prereq-states      run only teardown of prerequisite components
+       --system-states      run only teardown of system components
 "
 }
 

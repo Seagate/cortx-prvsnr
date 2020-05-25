@@ -1,5 +1,5 @@
-[commons]
+[cortx_commons]
 gpgcheck=0
 enabled=1
 baseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/
-name=commons
+name=cortx_commons
