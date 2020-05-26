@@ -1,5 +1,21 @@
 include:
-  - components.misc_pkgs.rabbitmq.start
+  - .install
+  - .start
+
+Enable plugin rabbitmq_management:
+  rabbitmq_plugin.enabled:
+    - name: rabbitmq_management
+    - require:
+      - Install RabbitMQ
+    - watch_in:
+      - Start RabbitMQ service
+
+Copy plugin to /usr/local/bin:
+  cmd.run:
+    - name: cp $(find /var/lib/rabbitmq/ -name rabbitmqadmin) /usr/local/bin/rabbitmqadmin && chmod a+x /usr/local/bin/rabbitmqadmin
+    - unless: test -f /usr/local/bin/rabbitmqadmin
+    - require:
+      - Enable plugin rabbitmq_management
 
 # logrotate.d config: DO NOT REMOVE
 Setup logrotate policy for rabbitmq-server:
@@ -9,6 +25,8 @@ Setup logrotate policy for rabbitmq-server:
   - keep_source: True
   - user: root
   - group: root
+  - requrie:
+    - Install RabbitMQ
 
 Copy Erlang cookie:
   file.managed:
@@ -21,6 +39,8 @@ Copy Erlang cookie:
     - dir_mode: 755
     - force: true
     - template: jinja
+    - require:
+      - Install RabbitMQ prereqs
     - watch_in:
       - Start RabbitMQ service
 
@@ -32,8 +52,9 @@ Start rabbitmq app:
         rabbitmqctl stop_app
         rabbitmqctl start_app
     - require:
-      - Start RabbitMQ service
       - Copy Erlang cookie
+      - Install RabbitMQ
+      - Start RabbitMQ service
 
 {% else %}
 
@@ -53,6 +74,7 @@ Join rabbitmq minion to master:
         rabbitmqctl join_cluster rabbit@{{ master_host["host"] }}
         rabbitmqctl start_app
     - require:
-      - Start RabbitMQ service
       - Copy Erlang cookie
+      - Install RabbitMQ
+      - Start RabbitMQ service
 {% endif %}
