@@ -1,0 +1,145 @@
+#!/bin/sh
+set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/storage_metadata_reset.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+# truncate -s 0 ${LOG_FILE}
+
+function trap_handler {
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
+}
+trap trap_handler ERR
+
+BASEDIR=$(dirname "${BASH_SOURCE}")
+
+function _lerror {
+    local msg=${1}
+    echo "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
+function _linfo {
+    local msg=${1}
+    echo "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
+function user_confirmation {
+    _linfo "*****************************************************************"
+    _linfo "***************************  WARNING  ***************************"
+    _linfo "*****************************************************************"
+    _linfo "You are about to wipeout data on storage."
+    _linfo "You need to acknowlege you understand what you are about to do."
+    _linfo ""
+    echo ""
+    echo "  Acknowkedgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo ""
+    echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
+    echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
+    read answer
+    echo "     Answer: ${answer}" > ${LOG_FILE}
+    echo ""
+    _linfo "*****************************************************************"
+
+    if [ "$answer" == "${answer#[Yy]}" ] ;then
+        _linfo "User has decided to abort. Good decision..."
+        _linfo "*****************************************************************"
+        exit 10
+    else
+        _linfo "User has decided to proceed with data destruction."
+    fi
+    _linfo "*****************************************************************"
+}
+
+function trigger_hare_reset {
+    echo "[INFO] Starting metadata destroy using Hare utility: hare-m0reset." 2>&1 | tee -a ${LOG_FILE}
+    . /opt/seagate/eos/hare/libexec/hare-m0reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+        _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
+    )
+    _linfo "Metadata destroy operation complete."
+}
+
+function ensure_cluster_health {
+    _linfo "Capture status output for HA cluster"
+    hctl node status --full > /tmp/hctl_cluster_health.json
+
+    _linfo "[INFO  ] Checking nodes online."
+
+    attempt=0
+    while /usr/bin/true; do
+        if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
+            # Cluster is Online, we are part happy but would continue further with checks
+            _linfo "Cluster is Online, we are part happy but would continue further with checks."
+
+            configured=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f1)
+            disabled=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f4 | cut -d '(' -f2)
+            running_node1=$(jq .nodes[0].resources_running /tmp/hctl_cluster_health.json)
+            running_node2=$(jq .nodes[1].resources_running /tmp/hctl_cluster_health.json)
+            # running=$(jq .resources.statistics.started /tmp/hctl_cluster_health.json)
+            running=$(( running_node1 + running_node2 ))
+            stopped=$(jq .resources.statistics.stopped /tmp/hctl_cluster_health.json)
+
+            configured=${configured:-0}
+            disabled=${disabled:-0}
+            running=${running:-0}
+            stopped=${stopped:-0}
+
+            if [[ "${running}" == "$(( configured - disabled ))" ]]; then
+                if [[ "0" == "${stopped}" ]]; then
+                    _linfo "Cluster is Online and all services have started."
+                    
+                    # Break the loop
+                    break
+                else
+                    _linfo "Cluster is Online, we are part happy as it seems few services are disabled."
+
+                    echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
+                    read answer
+
+                    if [ "$answer" != "${answer#[Yy]}" ] ;then
+                        _linfo "User has decided to proceed with the current HA status."
+                        # Break the loop and proceed
+                        break
+                    else
+                        _linfo "User has decided to proceed with wait. Re-attempting in 5 secs."{LOG_FILE}
+                    fi
+                fi
+            fi
+
+        else
+            _lerror "One or more node in cluster is/are Offline. Attempt: ${attempt}"
+            
+            # Increment attempt count
+            attempt=$(( attempt+1 ))
+
+            # Try 10 attempts and give-up
+            if [[ ${attempt} -ge 10 ]]; then
+                _lerror "One or more node in cluster is/are Offline."
+                _lerror "Giving up after 10 attempts."
+                exit 10
+            fi
+        fi
+    done
+} 
+
+function trigger_s3_cleanup {
+    if [[ -f "/opt/seagate/eos/s3server/reset/reset_s3.sh" ]]; then
+        sh /opt/seagate/eos/s3server/reset/reset_s3.sh --check-motr-cleanup --cleanup-rabbitmq 2>&1 | tee -a ${LOG_FILE}|| (
+            _lerror "Script */opt/seagate/eos/s3server/reset/reset_s3.sh* failed to execute. Check log file: ${LOG_FILE}"
+        )
+    else
+        _lerror "S3 reset script not found."
+    fi
+}
+
+ensure_cluster_health
+user_confirmation
+trigger_hare_reset
+ensure_cluster_health
+trigger_s3_cleanup
+
+_linfo "*****************************************************************"
+_linfo "Done!"
+_linfo "*****************************************************************"
+_linfo ""
+_linfo ""
