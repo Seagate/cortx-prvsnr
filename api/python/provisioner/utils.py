@@ -1,6 +1,7 @@
 import yaml
 import logging
 import time
+from typing import Tuple, Union
 from pathlib import Path
 
 from .errors import (
@@ -58,7 +59,10 @@ def dump_yaml(path, data, **kwargs):
 
 # TODO IMPROVE:
 #   - exceptions in check callback
-def ensure(check_cb, tries=10, wait=1, name=None):
+def ensure(
+    check_cb, tries=10, wait=1, name=None,
+    expected_exc: Union[Tuple, Exception, None] = None
+):
     if name is None:
         try:
             name = check_cb.__name__
@@ -67,14 +71,30 @@ def ensure(check_cb, tries=10, wait=1, name=None):
 
     ntry = 0
     while True:
+        exc = None
         ntry += 1
         logger.debug(
             'Try #{}/{} for {}'
             .format(ntry, tries, name)
         )
-        if check_cb():
-            return
-        elif ntry < tries:
+
+        try:
+            if check_cb():
+                return
+        except Exception as _exc:
+            if expected_exc and isinstance(_exc, expected_exc):
+                logger.info(
+                    'Try #{}/{} for {} failed: {!r}'
+                    .format(ntry, tries, name, _exc)
+                )
+                exc = _exc
+            else:
+                raise
+
+        if ntry < tries:
             time.sleep(wait)
         else:
-            raise ProvisionerError('no more tries')
+            if exc:
+                raise exc
+            else:
+                raise ProvisionerError('no more tries')
