@@ -8,7 +8,7 @@ Sync data:
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% if (not "RedHat" in grains['os']) or (salt['cmd.run']('subscription-manager list|grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
+{% if (not "RedHat" in grains['os']) or (not salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
 
 # Adding repos here are redundent thing.
 # These repos get added in prereq-script, setup-provisioner
