@@ -5,6 +5,7 @@
 /var/log/seagate/provisioner/unboxing.log
 /var/log/seagate/provisioner/controller-cli.log
 /var/log/seagate/provisioner/provisioner-bundler.log
+/var/log/seagate/provisioner/storage_metadata_reset.log
 /var/log/seagate/provisioner/salt_master.log
 /var/log/seagate/provisioner/salt_minion.log {
     monthly
