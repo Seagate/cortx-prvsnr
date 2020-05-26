@@ -4,7 +4,8 @@ from provisioner import errors
 from provisioner import utils
 
 
-@pytest.mark.patch_logging([(utils, ('debug',))])
+# TODO IMPROVE split
+@pytest.mark.patch_logging([(utils, ('debug', 'info'))])
 def test_ensure(monkeypatch, patch_logging):
 
     wait = 0
@@ -22,6 +23,39 @@ def test_ensure(monkeypatch, patch_logging):
 
     with pytest.raises(errors.ProvisionerError):
         utils.ensure(check_cb, tries=21, wait=3)
+
+    assert ntries == 21
+    assert wait == 3
+
+    def check_cb():
+        nonlocal ntries
+        ntries += 1
+        raise TypeError('some error')
+
+    wait = 0
+    ntries = 0
+    with pytest.raises(TypeError):
+        utils.ensure(check_cb, tries=21, wait=3)
+
+    assert ntries == 1
+    assert wait == 0
+
+    wait = 0
+    ntries = 0
+    with pytest.raises(TypeError):
+        utils.ensure(
+            check_cb, tries=21, wait=3, expected_exc=TypeError
+        )
+
+    assert ntries == 21
+    assert wait == 3
+
+    wait = 0
+    ntries = 0
+    with pytest.raises(TypeError):
+        utils.ensure(
+            check_cb, tries=21, wait=3, expected_exc=(TypeError, ValueError)
+        )
 
     assert ntries == 21
     assert wait == 3

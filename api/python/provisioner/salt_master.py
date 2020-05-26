@@ -1,8 +1,15 @@
 import functools
+import time
 
 from .salt import runner_function_run
+from .salt_minion import (
+    list_minions,
+    check_salt_minions_are_ready
+)
 from .utils import ensure
-from .errors import SaltCmdRunError
+from .errors import (
+    SaltCmdRunError, SaltCmdResultError
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,12 +52,35 @@ def check_salt_master_is_restarted(pid_before):
         )
 
 
+def check_salt_master_is_responded():
+    try:
+        # TODO IMPROVE ??? consider another function to run
+        runner_function_run(
+            'manage.status', fun_kwargs=dict(
+                timeout=1, gather_job_timeout=1
+            )
+        )
+    except SaltCmdResultError as exc:
+        if 'Salt request timed out. The master is not responding' in str(exc):
+            logger.info(
+                'salt-master is not yet responding: {}'.format(exc)
+            )
+            return False
+        else:
+            raise
+    else:
+        return True
+
+
+# TODO TEST
 def config_salt_master():
     # get salt master PID
     res = runner_function_run(
         'salt.cmd', fun_args=('service.show', 'salt-master')
     )
     pid = res['MainPID']
+
+    up_minions = list_minions()
 
     # apply new configuration
     res = runner_function_run(
@@ -63,9 +93,26 @@ def config_salt_master():
     # XXX might be moved to rollback part
     # on configuration changes - expect salt master is going to be restarted
     if changes:
+        # TODO IMPROVE ??? better logic
+        # small delay might help to avoid noise in the logs since
+        # not responded yet master will cause some excpetions which
+        # we are going to supress initially
+        time.sleep(10)
+
         ensure(
             functools.partial(check_salt_master_is_restarted, pid),
             tries=30, wait=1
+        )
+        ensure(
+            check_salt_master_is_responded,
+            tries=30, wait=1
+        )
+        # ensure that minions reconnected
+        # (keeping in mind that minion may try to reconnect only once ina few minutes)
+        # TODO IMPROVE make more dynamic based on actual minions configuration
+        ensure(
+            functools.partial(check_salt_minions_are_ready, up_minions),
+            tries=20, wait=30
         )
 
 

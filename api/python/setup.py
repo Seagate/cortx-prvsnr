@@ -55,7 +55,7 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt',
+        'salt==3000.3',  # FIXME 2019.2.0 is buggy, TODO update salt packages for provisioner setup rpm as well
         'attrs'
     ],  # TODO
     setup_requires=['pytest-runner'],

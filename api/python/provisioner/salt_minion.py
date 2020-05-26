@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import logging
 import functools
 
@@ -17,22 +17,33 @@ logger = logging.getLogger(__name__)
 # case 3: logic fails if minion config is malformed
 
 
+# TODO TEST
+def list_minions():
+    # TODO optimize timeouts
+    res = runner_function_run(
+        'manage.up', fun_kwargs=dict(
+            timeout=1, gather_job_timeout=1
+        )
+    )
+    return list(res)
+
+
+# TODO TEST
+def check_salt_minions_are_ready(targets: List):
+    ready = list_minions()
+    return not (set(targets) - set(ready))
+
+
 # FIXME
 # 1) slat-minion might start even with malformed config
 #   - ??? but sometimes fail
 
+
+# TODO TEST
 def check_salt_minions_restarted(pids: Dict):
     targets = list(pids)
-    _targets = ','.join(targets)
-    # TODO IMPROVE in case of non-exitent minion
-    #      salt will complain only to stdout and returns 0,
-    #      so we won't get that, need better handling
-    res = runner_function_run(
-        'manage.up', fun_kwargs=dict(
-            tgt=_targets, timeout=1, gather_job_timeout=1
-        )
-    )
-    if set(targets) == set(res):
+    if check_salt_minions_are_ready(targets):
+        _targets = ','.join(targets)
         res = function_run(
             'service.show', fun_args=('salt-minion',),
             targets=_targets, timeout=10
@@ -50,12 +61,20 @@ def config_salt_minions(targets=ALL_MINIONS):
         'service.show', fun_args=('salt-minion',),
         targets=targets, timeout=10
     )
-    pids = {minion_id: _res['MainPID'] for minion_id, _res in res.items()}
 
     minions = list(res)
 
     if not minions:
         raise ProvisionerError('no minions found')
+
+    pids = {
+        minion_id: _res['MainPID'] for minion_id, _res in res.items()
+        if type(_res) is dict
+    }
+
+    not_running = set(res) - set(pids)
+    if len(not_running):
+        raise ProvisionerError(f'{not_running} minions are not running')
 
     # apply new configuration
     res = StatesApplier.apply(
