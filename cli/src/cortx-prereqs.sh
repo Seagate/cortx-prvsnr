@@ -100,7 +100,7 @@ EOF
 
 create_commons_repos()
 {
-    cortx_commons_url="${1:http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/}"
+    cortx_commons_url="${1:-$url_local_repo_commons}"
     _repo="/etc/yum.repos.d/cortx_commons.repo"
     echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
