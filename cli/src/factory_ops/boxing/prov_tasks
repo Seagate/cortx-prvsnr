@@ -19,6 +19,8 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}
 mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
+salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -27,26 +29,24 @@ function trap_handler {
 trap trap_handler ERR
 
 function stop_rabbitmq_cluster {
-    echo "INFO: Removing RabbitMQ from both nodes." | tee -a ${LOG_FILE}
-    
-    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown || (
-        echo "ERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
-    )
+    echo -n "INFO: Removing RabbitMQ from both nodes....." | tee -a ${LOG_FILE}
 
-    echo "INFO: Removed RabbitMQ from both nodes." | tee -a ${LOG_FILE}
+    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown ${salt_opts} || (
+        echo -e "\nERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
+    ) && ( echo "Done" | tee -a ${LOG_FILE} )
 }
 
 function stop_services {
     echo "INFO: Stop LNET from both nodes if active." | tee -a ${LOG_FILE}
 
     echo "INFO: Stopping lnet on both nodes" | tee -a ${LOG_FILE}
-    salt "*" service.stop lnet || (echo "ERROR: Failed to stop LNET from both nodes." | tee -a ${LOG_FILE})
+    salt "*" service.stop lnet ${salt_opts} || (echo "ERROR: Failed to stop LNET from both nodes." | tee -a ${LOG_FILE})
 
     echo "INFO: Stopped LNET from both nodes if active." | tee -a ${LOG_FILE}
 }
 
 function backup_files {
-    echo "INFO: Backing up files on both nodes." | tee -a ${LOG_FILE}
+    echo -n "INFO: Backing up files on both nodes....." | tee -a ${LOG_FILE}
 
     bkp_file_list=(
         "/etc/multipath/bindings"
@@ -56,7 +56,7 @@ function backup_files {
         cp $file $file.bak
     done
 
-    echo "INFO: Backed up files on both nodes." | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }
 
 function create_unboxing_user {
@@ -85,7 +85,7 @@ function create_unboxing_user {
 function boxing_flag {
     #Flag file is created only on primary node,
     # as this helps to ensure unboxing is executed only on primary node.
-    echo "INFO: Creating flag file on primary node." | tee -a ${LOG_FILE}
+    echo -n "INFO: Creating flag file on primary node....." | tee -a ${LOG_FILE}
 
     local file_name="/opt/seagate/cortx/provisioner/generated_config/boxed"
     
@@ -96,5 +96,5 @@ function boxing_flag {
         echo $timestamp > $file_name
     fi
 
-    echo "INFO: Created flag file on primary node." | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }
