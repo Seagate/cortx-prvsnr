@@ -23,7 +23,7 @@ def cluster_start():
 
 
 def cluster_maintenance(
-    enable: bool, timeout: int = 600, verbose: bool = True, background=False
+    enable: bool, timeout: int = 600, verbose: bool = False, background=False
 ):
     cmd = [
         'hctl node',
