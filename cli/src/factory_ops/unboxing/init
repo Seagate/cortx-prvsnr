@@ -3,7 +3,6 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -21,7 +20,7 @@ function usage {
     echo "\
     
     Usage:
-        /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M <management_vip> -C <cluster_vip>
+        $0 -M <management_vip> -C <cluster_vip>
 
     Command Args:
         -M      <management_vip>    Static vip on management network
@@ -72,6 +71,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 # Proceed only if boxing flag set
 check_boxing_flag
 
@@ -89,9 +89,9 @@ update_ssh_config
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}"
 recover_rabbitmq_cluster
-salt "*" state.apply components.s3server.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
 
 # Shutdown HA
 if command -v pcs ; then
@@ -101,17 +101,18 @@ if command -v pcs ; then
     hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 
     # Update ClusterIP
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break
 
     # Update Management_vip
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip
+
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_ip ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break
 
     # Re-run Stonith
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break...Breathe in...Breathe out
 
@@ -122,10 +123,10 @@ else
 fi
 
 # Update SSPL init
-salt "srvnode-2" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
 
 # lock unboxing user
 lock_unboxing_user
