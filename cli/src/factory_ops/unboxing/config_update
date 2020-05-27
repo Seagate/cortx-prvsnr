@@ -106,8 +106,8 @@ function update_salt_minion {
 }
 
 function update_cluster_sls {
-    local mgmt_vip={1:-}
-    local cluster_vip={2:-}
+    local mgmt_vip=${1:-}
+    local cluster_vip=${2:-}
 
     local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
     if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
