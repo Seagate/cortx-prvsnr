@@ -35,7 +35,12 @@ def cluster_maintenance(
     if verbose:
         cmd.insert(1, '--verbose')
 
-    res = cmd_run(' '.join(cmd), targets=LOCAL_MINION, background=background)
+    res = cmd_run(
+        ' '.join(cmd),
+        targets=LOCAL_MINION,
+        background=background,
+        timeout=(timeout + 60)
+    )
     return next(iter(res.values()))
 
 

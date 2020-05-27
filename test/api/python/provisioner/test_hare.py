@@ -41,31 +41,31 @@ def test_cluster_maintenance(monkeypatch):
     res = hare.cluster_maintenance(True)
     assert res == (
         ('hctl node maintenance --all --timeout-sec=600',),
-        dict(targets=LOCAL_MINION, background=False)
+        dict(targets=LOCAL_MINION, background=False, timeout=660)
     )
 
     res = hare.cluster_maintenance(True, verbose=False)
     assert res == (
         ('hctl node maintenance --all --timeout-sec=600',),
-        dict(targets=LOCAL_MINION, background=False)
+        dict(targets=LOCAL_MINION, background=False, timeout=660)
     )
 
     res = hare.cluster_maintenance(True, timeout=123)
     assert res == (
         ('hctl node maintenance --all --timeout-sec=123',),
-        dict(targets=LOCAL_MINION, background=False)
+        dict(targets=LOCAL_MINION, background=False, timeout=183)
     )
 
     res = hare.cluster_maintenance(True, background=True)
     assert res == (
         ('hctl node maintenance --all --timeout-sec=600',),
-        dict(targets=LOCAL_MINION, background=True)
+        dict(targets=LOCAL_MINION, background=True, timeout=660)
     )
 
     res = hare.cluster_maintenance(False)
     assert res == (
         ('hctl node unmaintenance --all --timeout-sec=600',),
-        dict(targets=LOCAL_MINION, background=False)
+        dict(targets=LOCAL_MINION, background=False, timeout=660)
     )
 
 
