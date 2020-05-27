@@ -89,29 +89,44 @@ update_ssh_config
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}"
 recover_rabbitmq_cluster
+
+echo -n "Configuring s3 on both nodes.........." | tee -a ${LOG_FILE}
 salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "Configuring CSM on secondary node....." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "Configuring CSM on primary node......" | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
 
 # Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Initiating HA cluster start..." 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Starting cluster" 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
-    echo "INFO: Reverting from maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
+
+    echo "INFO: Reverting from maintenance mode" 2>&1 | tee -a ${LOG_FILE}
     hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 
     # Update ClusterIP
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip${salt_opts}
-    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    echo "INFO: Setting up Cluster VIP" | tee -a ${LOG_FILE}
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+    echo "*** Mindfulness break...Breathe in...And...Breathe out ***" | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
 
     # Update Management_vip
 
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_ip ${salt_opts}
+    echo "INFO: Setting up Management VIP" | tee -a ${LOG_FILE}
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break
 
     # Re-run Stonith
+    echo "INFO: Setting up Stonith" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break...Breathe in...Breathe out
@@ -123,10 +138,21 @@ else
 fi
 
 # Update SSPL init
-salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+echo -n "INFO: Configuring SSPL on primary node........................" | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "INFO: Configuring SSPL on secondary node......................" | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "INFO: Configuring SSPL Health Schema on secondary node........." | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "INFO: Configuring SSPL Health Schema on primary node..........." | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
