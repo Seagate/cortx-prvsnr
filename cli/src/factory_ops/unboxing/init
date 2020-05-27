@@ -106,7 +106,7 @@ if command -v pcs ; then
     sleep 5     # Mindfulness break
 
     # Update Management_vip
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_ip
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break
 
