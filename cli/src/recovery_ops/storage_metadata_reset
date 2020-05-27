@@ -37,7 +37,7 @@ function user_confirmation {
     echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
     echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
     read answer
-    echo "     Answer: ${answer}" > ${LOG_FILE}
+    echo "     Answer: ${answer}" >> ${LOG_FILE}
     echo ""
     _linfo "*****************************************************************"
 
