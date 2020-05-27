@@ -122,7 +122,7 @@ function teardown_states {
     for state in ${states[@]}; do
         if [[ "$state" == "hare" ]]; then
             l_info "Removing 'components.$state.teardown'"
-            hctl shutdown || true $log_opts 
+            hctl shutdown || true 2>&1|tee ${LOG_FILE}
         fi
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
@@ -163,7 +163,6 @@ cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
 
 salt_opts=
 salt_opts_dry_run=
-log_opts=">>$LOG_FILE 2>&1"
 if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
@@ -220,10 +219,11 @@ if [[ "$remove_prvsnr" == true ]]; then
     salt '*' file.absent $salt_opts || true
     if [[ "$singlenode" != true ]]; then
         l_info "Removing prvsnr-cli and salt packages from node-2"
-        ssh srvnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; rm -rf /etc/salt; rm -rf /opt/seagate"
+        ssh srvnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; 
+            rm -rf /etc/salt; rm -rf /opt/seagate" 2>&1|tee ${LOG_FILE}
     fi
     l_info "Removing salt packages from node-1"
-    yum remove -y salt* || true $log_opts
+    yum remove -y salt* || true 2>&1|tee ${LOG_FILE}
     rm -rf /etc/salt;
 
     sleep 2
