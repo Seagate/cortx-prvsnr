@@ -16,29 +16,29 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 function _lerror {
     local msg=${1}
-    echo "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function _linfo {
     local msg=${1}
-    echo "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function user_confirmation {
     _linfo "*****************************************************************"
     _linfo "***************************  WARNING  ***************************"
     _linfo "*****************************************************************"
-    _linfo "You are about to wipeout data on storage."
-    _linfo "You acknowledge that you understand, what you are about to do."
-    _linfo ""
-    echo ""
-    echo "  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
-    echo ""
-    echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
-    echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You acknowledge that you understand, what you are about to do." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo -e ""
+    echo -e "##    You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -n "##    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
     read answer
-    echo "       Answer: ${answer}" >> ${LOG_FILE}
-    echo ""
+    echo -e "##       Answer: ${answer}" >> ${LOG_FILE}
+    echo -e ""
     _linfo "*****************************************************************"
 
     if [ "$answer" == "${answer#[Yy]}" ] ;then
@@ -56,7 +56,7 @@ function trigger_hare_reset {
     _linfo "Starting metadata reset using Hare utility: hare-m0reset."
     _linfo "*****************************************************************"
     
-    bash /opt/seagate/eos/hare/libexec/hare-m0reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+    bash /opt/seagate/eos/hare/libexec/prov-m0-reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
         _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
     )
 
@@ -113,22 +113,29 @@ function ensure_cluster_health {
                         sleep 10
                     fi
                 fi
+            else
+                _linfo "Something's not right. All resources are not started..."
+
+                if [[ ${attempt} -ge 10 ]]; then
+                    _lerror "Giving up after ${attempt} attempts."
+                    exit 20
+                fi
             fi
 
         else
-            _lerror "One or more node in cluster is/are Offline. Attempt: ${attempt}"
+            _lerror "One or more nodes in cluster is/are Offline. Attempt: ${attempt}"
             
-            # Increment attempt count
-            attempt=$(( attempt+1 ))
-            sleep 10
-
             # Try 10 attempts and give-up
             if [[ ${attempt} -ge 10 ]]; then
-                _lerror "One or more node in cluster is/are Offline."
+                _lerror "One or more nodes in cluster is/are Offline."
                 _lerror "Giving up after 10 attempts."
                 exit 10
             fi
         fi
+
+        # Increment attempt count
+        attempt=$(( attempt+1 ))
+        sleep 10
     done
 
     _linfo "*****************************************************************"
@@ -158,7 +165,7 @@ ensure_cluster_health
 trigger_s3_cleanup
 
 _linfo "*****************************************************************"
-_linfo "Storage reset on the cluster was SUCCESSFUL!"
+_linfo "Done! The metadata has been completely erased."
 _linfo "Cluster is ready for use..."
 _linfo "Detailed logs available at: "
 _linfo "        ${LOG_FILE}"
