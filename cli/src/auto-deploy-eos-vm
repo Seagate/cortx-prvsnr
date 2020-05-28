@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
             srvnode_2_passwd="$2"
             shift 2 ;;
         -S)
-	        singlenode=true
+	    singlenode=true
             shift 1 ;;
         -t)
             tgt_build_opt=true
@@ -129,36 +129,36 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-	    curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
-		echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
+	curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
+	echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
         yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
         systemctl stop firewalld || true
         return 0
     else
-		echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
+	echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
 	
-		$remote_cmd <<-EOF
-			set -eu
-			rpm -qa | grep -q eos && {
-			echo "ERROR: eos packages are already installed"
-			echo "Please clean-up previous installtion from both the nodes and retry"
-			exit 1
-			}
-			curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
-			echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
-			yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
-			systemctl stop firewalld || true
+	$remote_cmd <<-EOF
+	    set -eu
+	    rpm -qa | grep -q eos && {
+	    echo "ERROR: eos packages are already installed"
+	    echo "Please clean-up previous installtion from both the nodes and retry"
+	    exit 1
+	    }
+	    curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
+	    echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
+	    yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+	    systemctl stop firewalld || true
 
-		EOF
+	EOF
     fi
 }
 
 install_config_prvsnr()
 {   if [[ "$singlenode" == false ]]; then
-		set -eu
-		echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
-		sleep 1
-		install_prvsnr_cli "srvnode-2"
+	set -eu
+	echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
+	sleep 1
+	install_prvsnr_cli "srvnode-2"
     fi
     echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
@@ -168,13 +168,13 @@ install_config_prvsnr()
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     if [[ "$singlenode" == false ]]; then
-	    echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-		        "--srvnode-2='$srvnode_2_host' --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
-	    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
-	    echo "Done" 2>&1 | tee -a $LOG_FILE
+	echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
+	        "--srvnode-2='$srvnode_2_host' --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
+	sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
+	echo "Done" 2>&1 | tee -a $LOG_FILE
     else
-	    echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-	            "-S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
+	echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
+	        "-S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
         sh /opt/seagate/eos-prvsnr/cli/setup-provisioner -S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
         echo "Done" 2>&1 | tee -a $LOG_FILE
     fi	
@@ -193,7 +193,7 @@ update_pillar()
 	
 	# Update hostname if singlenode
 	if [[ "$singlenode" == false ]]; then
-		sed -i "s/hostname: srvnode-1/hostname: ${srvnode_1_host}/g" $_cluster_sls_path
+	    sed -i "s/hostname: srvnode-1/hostname: ${srvnode_1_host}/g" $_cluster_sls_path
 	fi	
 	
     # Update Mgmt and data interface
@@ -215,10 +215,10 @@ update_pillar()
     do
         if [ $meta_disk == 0 ] ; then
             meta_disk=1
-			sed -i "s/sdb/${i}/g" $_cluster_sls_path;
-		else
-			sed -i "s/sdc/${i}/g" $_cluster_sls_path;
-		fi
+	    sed -i "s/sdb/${i}/g" $_cluster_sls_path;
+	else
+	    sed -i "s/sdc/${i}/g" $_cluster_sls_path;
+	fi
     done
 	
     # Update release.sls
