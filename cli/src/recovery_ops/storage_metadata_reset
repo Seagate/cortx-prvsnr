@@ -29,15 +29,15 @@ function user_confirmation {
     _linfo "***************************  WARNING  ***************************"
     _linfo "*****************************************************************"
     _linfo "You are about to wipeout data on storage."
-    _linfo "You need to acknowlege you understand what you are about to do."
+    _linfo "You acknowledge that you understand, what you are about to do."
     _linfo ""
     echo ""
-    echo "  Acknowkedgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo "  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
     echo ""
     echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
     echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
     read answer
-    echo "     Answer: ${answer}" >> ${LOG_FILE}
+    echo "       Answer: ${answer}" >> ${LOG_FILE}
     echo ""
     _linfo "*****************************************************************"
 
@@ -66,7 +66,7 @@ function trigger_hare_reset {
 
 function ensure_cluster_health {
     _linfo "*****************************************************************"
-    _linfo "Performng HA cluster health-check."
+    _linfo "Performing HA cluster health-check."
     _linfo "*****************************************************************"
     hctl node status --full > /tmp/hctl_cluster_health.json
 
@@ -159,8 +159,9 @@ trigger_s3_cleanup
 
 _linfo "*****************************************************************"
 _linfo "Storage reset on the cluster was SUCCESSFUL!"
-_linfo "CLuster is ready for use..."
-_linfo "Detailed logs available at: ${LOG_FILE}"
+_linfo "Cluster is ready for use..."
+_linfo "Detailed logs available at: "
+_linfo "        ${LOG_FILE}"
 _linfo "*****************************************************************"
 _linfo ""
 _linfo ""
