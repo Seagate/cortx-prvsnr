@@ -2,7 +2,7 @@ sspl:
   healthmappath: /opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json
   rmq:
     user: rmq
-    secret: rmq
+    secret: "B4kf1T6Qso"
   role: eos
   Version: 1.0.0
   SSPL-LL_SETTING:
