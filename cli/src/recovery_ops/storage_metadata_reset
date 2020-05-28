@@ -28,17 +28,18 @@ function user_confirmation {
     _linfo "*****************************************************************"
     _linfo "***************************  WARNING  ***************************"
     _linfo "*****************************************************************"
-    echo -e "" 2>&1 | tee -a ${LOG_FILE}
-    echo -e "##  You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
-    echo -e "##  You acknowledge that you understand, what you are about to do." 2>&1 | tee -a ${LOG_FILE}
-    echo -e "" 2>&1 | tee -a ${LOG_FILE}
-    echo -e "##  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
-    echo -e ""
-    echo -e "##    You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
-    echo -n "##    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
+
+    _linfo "You are about to wipeout data on storage."
+    _linfo "You acknowledge that you understand, what you are about to do."
+    _linfo ""
+    echo ""
+    echo "  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo ""
+    echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
+    echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
     read answer
-    echo -e "##       Answer: ${answer}" >> ${LOG_FILE}
-    echo -e ""
+    echo "       Answer: ${answer}" >> ${LOG_FILE}
+    echo ""
     _linfo "*****************************************************************"
 
     if [ "$answer" == "${answer#[Yy]}" ] ;then
@@ -165,7 +166,7 @@ ensure_cluster_health
 trigger_s3_cleanup
 
 _linfo "*****************************************************************"
-_linfo "Done! The metadata has been completely erased."
+_linfo "Storage reset on the cluster was SUCCESSFUL!"
 _linfo "Cluster is ready for use..."
 _linfo "Detailed logs available at: "
 _linfo "        ${LOG_FILE}"
