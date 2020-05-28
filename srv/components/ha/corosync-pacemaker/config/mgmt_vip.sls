@@ -1,4 +1,4 @@
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if grains['is_primary'] -%}
 {%- if pillar['cluster']['mgmt_vip'] %}
 Update Management VIP:
   cmd.run:

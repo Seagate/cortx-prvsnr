@@ -10,9 +10,7 @@ cluster:
     - srvnode-2
   srvnode-1:
     hostname: srvnode-1
-    is_primary: true
     bmc:
-      ip:
       user: ADMIN
       secret: 'adminBMC!'
     network:
@@ -38,9 +36,7 @@ cluster:
         - /dev/sdc                    # Auto-populated by components.system.storage.multipath
   srvnode-2:
     hostname: srvnode-2
-    is_primary: false
     bmc:
-      ip:
       user: ADMIN
       secret: 'adminBMC!'
     network:

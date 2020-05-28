@@ -22,6 +22,7 @@ base:
     - components.uds
     - components.lustre
     - user.groups.all.*                     # user all minions vars
+    - roles.bmc_ip
   {{ grains.id }}:
     - ignore_missing: True
     - minions.{{ grains.id }}.*             # default per-minion vars

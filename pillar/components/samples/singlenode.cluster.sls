@@ -9,9 +9,7 @@ cluster:
     - srvnode-1
   srvnode-1:
     hostname: srvnode-1
-    is_primary: true
     bmc:
-      ip:
       user: ADMIN
       secret: 'adminBMC!'
     network:

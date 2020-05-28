@@ -1,5 +1,4 @@
-{% set node_id = grains['id'] %}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
+{% if grains['is_primary'] %}
 Create tidy-up script:
   file.managed:
       - name: /tmp/storage-tidy-up.sh

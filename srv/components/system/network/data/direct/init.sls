@@ -2,7 +2,7 @@
 include:
   - components.system.prepare
 
-{#{% if pillar['cluster'][grains['id']]['is_primary'] %}#}
+{#{% if grains['is_primary'] %}#}
 # Update roaming IPs in cluster.sls pillar:
 #   module.run:
 #     - cluster.nw_roaming_ip: []

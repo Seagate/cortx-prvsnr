@@ -1,10 +1,13 @@
 mine_functions:
   data_ip_addrs:
     - mine_function: network.ip_addrs
-    - data0
+    - eth1
   mgmt_ip_addrs:
     - mine_function: network.ip_addrs
-    - mgmt0
+    - eth0
+  bmc_ip:
+    mine_function: grains.get
+    key: bmc_ip
 
   # mgmt_ip:
   #   - mine_function: grains.get

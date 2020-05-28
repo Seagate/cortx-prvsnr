@@ -20,7 +20,7 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if grains['is_primary'] -%}
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
