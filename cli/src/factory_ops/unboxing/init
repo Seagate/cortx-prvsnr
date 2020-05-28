@@ -88,19 +88,20 @@ check_mgmt_ip
 update_ssh_config
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}"
-recover_rabbitmq_cluster
 
-echo -n "Configuring s3 on both nodes.........." | tee -a ${LOG_FILE}
-salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+#recover_rabbitmq_cluster   # Re-provision rabbitmq cluster. Not required.
 
-echo -n "Configuring CSM on secondary node....." | tee -a ${LOG_FILE}
-salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+#echo -n "Configuring s3 on both nodes.........." | tee -a ${LOG_FILE}
+#salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
-echo -n "Configuring CSM on primary node......" | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+#echo -n "Configuring CSM on secondary node....." | tee -a ${LOG_FILE}
+#salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
+
+#echo -n "Configuring CSM on primary node......" | tee -a ${LOG_FILE}
+#salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
 # Shutdown HA
 if command -v pcs ; then
@@ -146,13 +147,13 @@ echo -n "INFO: Configuring SSPL on secondary node......................" | tee -
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Done." | tee -a ${LOG_FILE}
 
-echo -n "INFO: Configuring SSPL Health Schema on secondary node........." | tee -a ${LOG_FILE}
-salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+#echo -n "INFO: Configuring SSPL Health Schema on secondary node........." | tee -a ${LOG_FILE}
+#salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
-echo -n "INFO: Configuring SSPL Health Schema on primary node..........." | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+#echo -n "INFO: Configuring SSPL Health Schema on primary node..........." | tee -a ${LOG_FILE}
+#salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
