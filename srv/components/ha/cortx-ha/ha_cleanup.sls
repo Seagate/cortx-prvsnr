@@ -1,4 +1,4 @@
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if grains['is_primary'] %}
 include:
   - components.ha.ees_ha.prepare
 

@@ -1,4 +1,4 @@
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if grains['is_primary'] -%}
 Destroy resource ClusterIP:
   cmd.run:
     - name: pcs resource delete ClusterIP

@@ -1,4 +1,4 @@
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+{% if grains["is_primary"] %}
 Stage - Post Install S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/s3server/conf/setup.yaml', 's3server:post_install')

@@ -44,7 +44,7 @@ Copy Erlang cookie:
     - watch_in:
       - Start RabbitMQ service
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] -%}
+{% if grains["is_primary"] -%}
 
 Start rabbitmq app:
   cmd.run:

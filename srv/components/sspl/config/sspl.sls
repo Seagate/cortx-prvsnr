@@ -17,7 +17,7 @@ Stage - Configure SSPL:
     - require:
       - Stage - Post Install SSPL
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+{% if grains["is_primary"] %}
 # run health schema on master for both node and enclosure and for minion only for node health.
 Run Health Schema:
   cmd.run:

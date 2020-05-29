@@ -16,22 +16,18 @@ Backup slapd config file:
     - preserve: True
 
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) -%}
+{% if salt["grains.get"]('is_primary'), false) -%}
 Generate Slapdpasswds:
    cmd.run:
      - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap_gen_passwd.sh
 {% else -%}
-{% for node_id in pillar['cluster']['node_list'] %}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
 SCP iam-admin.ldif:
   cmd.run:
-    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+    - name: scp -r {{ grains["master"] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
 
 SCP cfg_ldap.ldif:
   cmd.run:
-    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
-{%- endif %}
-{% endfor %}
+    - name: scp -r {{ grains["master"] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
 {%- endif %}
 
 Stop slapd:

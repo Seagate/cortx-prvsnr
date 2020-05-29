@@ -1,6 +1,6 @@
 {% set node = grains['id'] %}
 {% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.build_ssl_cert_rpms'.format(grains['id'])) %}
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(node), false) %}
+{% if salt["grains.get"]('is_primary', false) %}
 
 include:
   - components.misc_pkgs.build_ssl_cert_rpms.install
