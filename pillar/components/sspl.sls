@@ -46,7 +46,7 @@ sspl:
     max_drivemanager_events: "14"
     max_drivemanager_event_interval: "10"
   NODEDATAMSGHANDLER:
-    transmit_interval: "300"
+    transmit_interval: "10"
     units: "MB"
     disk_usage_threshold: "80"
     cpu_usage_threshold: "80"
