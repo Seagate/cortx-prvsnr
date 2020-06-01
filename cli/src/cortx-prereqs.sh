@@ -295,7 +295,7 @@ else
     }
 fi
 
-echo -n "INFO: Cleaning yum cache............................................" 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 hostnamectl status | grep Chassis | grep -q server && {
