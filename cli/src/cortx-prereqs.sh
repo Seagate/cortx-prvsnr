@@ -15,7 +15,7 @@ url_local_repo_commons="http://ssc-nfs-server1.colo.seagate.com/releases/eos/upl
 url_local_repo_commons_rhel="http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/"
 
 # Repo url for in house built HA packages for RHEL systems
-url_local_repo_rhel_ha="http://ci-storage.mero.colo.seagate.com/releases/eos/rhel_local_ha/"
+#url_local_repo_rhel_ha="http://ci-storage.mero.colo.seagate.com/releases/eos/rhel_local_ha/"
 
 function trap_handler {
     rm -rf $tmpdir || true
@@ -85,7 +85,7 @@ create_commons_repo_rhel()
     _repo_name="$1"
     _url="$2"
     _repo="/etc/yum.repos.d/${_repo_name}.repo"
-    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+    echo -ne "\tCreating ${_repo}.................." 2>&1 | tee -a ${LOG_FILE}
 
 cat <<EOF > ${_repo}
 [$_repo_name]
@@ -102,7 +102,7 @@ create_commons_repos()
 {
     cortx_commons_url="${1:-$url_local_repo_commons}"
     _repo="/etc/yum.repos.d/cortx_commons.repo"
-    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+    echo -ne "\tCreating ${_repo}................." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_commons]
 name=cortx_commons
@@ -110,9 +110,9 @@ gpgcheck=0
 enabled=1
 baseurl=$cortx_commons_url
 EOL
-
+    echo "Done" | tee -a ${LOG_FILE}
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
-    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+    echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_base]
 name=cortx_platform_base
@@ -120,9 +120,10 @@ gpgcheck=0
 enabled=1
 baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
 EOL
+    echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
-    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+    echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}}
 cat <<EOL > ${_repo}
 [cortx_platform_extras]
 name=cortx_platform_extras
@@ -130,9 +131,11 @@ gpgcheck=0
 enabled=1
 baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
 EOL
+    echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/epel.repo"
-    echo -ne "\tCreating ${_repo}......" 2>&1 | tee -a ${LOG_FILE}
+    echo -ne "\tCreating ${_repo}.........................." 2>&1 | tee -a ${LOG_FILE}
+
 cat <<EOL > ${_repo}
 [epel]
 name=epel
@@ -148,7 +151,8 @@ parse_args "$@"
 
 echo "***** Running $0 *****" 2>&1 | tee -a ${LOG_FILE}
 
-echo -n "INFO: Checking hostnames......" 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Checking hostnames........................................" 2>&1 | tee -a ${LOG_FILE}
+
 srvnode_hostname=`hostname -f`
 if [[ $srvnode_hostname != *"."* ]]; then
     echo -e "\nERROR: 'hostname -f' did not return the FQDN, please set FQDN and retry." 2>&1 | tee -a ${LOG_FILE}
@@ -157,7 +161,8 @@ else
     echo "Ok." 2>&1 | tee -a ${LOG_FILE}
 fi
 
-echo -n "INFO: Checking if kernel version is correct...... " 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Checking if kernel version is correct....................." 2>&1 | tee -a ${LOG_FILE}
+
 kernel_version=`uname -r`
 if [[ "$kernel_version" != '3.10.0-1062.el7.x86_64' ]]; then
     echo "ERROR: Kernel version is wrong. Required: 3.10.0-1062.el7.x86_64, installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
@@ -168,7 +173,8 @@ fi
 
 if [[ "$disable_sub_mgr_opt" == true ]]; then
     grep -q "Red Hat" /etc/*-release && {
-        echo -n "INFO: disabling the Red Hat Subscription Manager......" 2>&1 | tee -a ${LOG_FILE}
+        echo -n "INFO: disabling the Red Hat Subscription Manager................" 2>&1 | tee -a ${LOG_FILE}
+
         subscription-manager auto-attach --disable || true
         subscription-manager remove --all || true
         subscription-manager unregister || true
@@ -206,7 +212,8 @@ else
             )
             subscription-manager config --rhsm.manage_repos=1
             echo "INFO: Checking available repos through subscription" 2>&1 | tee -a ${LOG_FILE}
-            echo -ne "\t This might take some time......"
+            echo -ne "\t This might take some time..................................." | tee -a ${LOG_FILE}
+
             repos_all="${tmpdir}/repos.all"
             repos_enabled="${tmpdir}/repos.enabled"
             subscription-manager repos --list > ${repos_all}
@@ -237,7 +244,7 @@ else
 
             #Set repo for Mellanox drivers
             cat ${repos_enabled} | grep ID: | grep -q EOS_Mellanox && {
-                echo -n "INFO: Disabling Mellanox repository from Satellite subscription....." 2>&1 | tee -a ${LOG_FILE}
+                echo -n "INFO: Disabling Mellanox repository from Satellite subscription..." 2>&1 | tee -a ${LOG_FILE}
                 subscription-manager repos --disable=EOS_Mellanox* >> ${LOG_FILE}
                 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
             }
@@ -254,8 +261,15 @@ else
                 subscription-manager repos --enable rhel-ha-for-rhel-7-server-rpms >> ${LOG_FILE}
                 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
             } || {
-                echo "INFO: Creating repo for in house built HA packages" 2>&1 | tee -a ${LOG_FILE}
-                create_commons_repo_rhel "cortx_rhel_ha" "$url_local_repo_rhel_ha"
+                echo "ERROR: RHEL HA license is not available... Can not proceed" | tee -a ${LOG_FILE}
+                echo "Please:" | tee -a ${LOG_FILE}
+                echo "   1. Install RHEL High Availability license on the cluster nodes & rerun the command" | tee -a ${LOG_FILE}
+                echo "       OR" | tee -a ${LOG_FILE}
+                echo "   2. Disable subscription manager. Rerun the command with --disable-sub-mgr option" | tee -a ${LOG_FILE}
+                echo "exiting..." | tee -a ${LOG_FILE}
+                exit 1
+                #echo "INFO: Creating repo for in house built HA packages" 2>&1 | tee -a ${LOG_FILE}
+                #create_commons_repo_rhel "cortx_rhel_ha" "$url_local_repo_rhel_ha"
             }
 
             # Create commons repo for installing mellanox drivers
@@ -281,25 +295,25 @@ else
     }
 fi
 
-echo -n "INFO: Cleaning yum cache......" 2>&1 | tee -a ${LOG_FILE}
-yum clean all > ${LOG_FILE}
+echo -n "INFO: Cleaning yum cache............................................" 2>&1 | tee -a ${LOG_FILE}
+yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 hostnamectl status | grep Chassis | grep -q server && {
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {
         echo "INFO: Installing Mellanox drivers" 2>&1 | tee -a ${LOG_FILE}
-        yum install -y mlnx-ofed-all mlnx-fw-updater
+        yum install -y mlnx-ofed-all mlnx-fw-updater 2>&1 | tee -a ${LOG_FILE}
         echo "INFO: Rebooting the system now" 2>&1 | tee -a ${LOG_FILE}
         do_reboot=true
     }
     echo "INFO: Installing sg3_utils" 2>&1 | tee -a ${LOG_FILE}
     yum install -y sg3_utils 2>&1 | tee -a ${LOG_FILE}
-    echo "INFO: Scanning SCSI bus" >> ${LOG_FILE}
-    /usr/bin/rescan-scsi-bus.sh -a 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Scanning SCSI bus............................................" | tee -a ${LOG_FILE}
+    /usr/bin/rescan-scsi-bus.sh -a >> ${LOG_FILE}
 }
 
-echo -n "INFO: Disabling default time syncronization mechanism...." 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Disabling default time syncronization mechanism..........." 2>&1 | tee -a ${LOG_FILE}
 if [ `rpm -qa chrony` ]; then
     systemctl stop chronyd && systemctl disable chronyd &>> ${LOG_FILE}
     yum remove -y chrony &>> ${LOG_FILE}
