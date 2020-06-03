@@ -382,6 +382,34 @@ class Set(CommandParserFillerMixin):
         self._run(params, targets)
 
 
+@attr.s(auto_attribs=True)
+class SetNetwork(Set):
+
+    # TODO rollback
+    def _run(self, params: inputs.ParamGroupInputBase, targets=ALL_MINIONS):
+        try:
+            #move cluster to maintenance mode
+            try:
+                cluster_maintenance_enable()
+                logger.info('Cluster maintenance mode enabled')
+            except Exception as exc:
+                raise ClusterMaintenanceEnableError(exc) from exc
+
+            # call default set logic (set pillar, call related states)
+            super()._run(params, targets)
+
+            try:
+                cluster_maintenance_disable()
+                logger.info('Cluster recovered from maintenance mode')
+            except Exception as exc:
+                raise ClusterMaintenanceDisableError(exc) from exc
+
+        except Exception as exc:
+            logger.info('Failed to apply network changes')
+            cluster_maintenance_disable(background=True)
+            raise exc
+
+
 # assumtions / limitations
 #   - support only for ALL_MINIONS targetting TODO ??? why do you think so
 #

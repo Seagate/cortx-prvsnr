@@ -18,7 +18,7 @@ set_ntp:
     - components.system.ntp.stop
     - components.system.ntp.start
 set_network:
-  type: Set
+  type: SetNetwork
   input_type: Network
   states:
     post:
