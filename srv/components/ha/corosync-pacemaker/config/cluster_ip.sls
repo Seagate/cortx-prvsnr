@@ -35,5 +35,5 @@ Missing ClusterIP:
 {% else %}
 No Cluster IP application:
   test.show_notification:
-    - text: "Cluster IP application only applies to primary node. There's no execution on secondary node"
+    - text: "Cluster IP application applies only to primary node. There's no execution on secondary node"
 {% endif %}

@@ -1,3 +1,13 @@
+# HA user has to be updated for setting new password.
+# This has to happen only after pacemaker is installed.
+Update ha user:
+  user.present:
+    - name: {{ pillar['corosync-pacemaker']['user'] }}
+    - password: {{ salt['lyveutil.decrypt'](pillar['corosync-pacemaker']['secret'], 'corosync-pacemaker') }}
+    - hash_password: True
+    - createhome: False
+    - shell: /sbin/nologin
+
 #Configurations for Corosync and Pacemaker Setup
 Add hacluster user to haclient group:
   group.present:
@@ -60,5 +70,8 @@ Enable STONITH:
 {% else %}
     - value: false
 {% endif %}
-
+{% else %}
+No Cluster Setup:
+  test.show_notification:
+    - text: "Cluster setup applies only to primary node. There's no Cluster setup operation on secondary node"
 {%- endif -%}
