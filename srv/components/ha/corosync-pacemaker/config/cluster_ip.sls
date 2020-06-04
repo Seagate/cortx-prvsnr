@@ -23,7 +23,7 @@ Add stickiness metadata to ClusterIP resource:
 
 Clone ClusterIP:
   cmd.run:
-    - name: pcs resource clone ClusterIP clusterip_hash=sourceip-sourceport clone-max=2 clone-node-max=2 globally-unique=false
+    - name: pcs resource clone ClusterIP clusterip_hash=sourceip-sourceport clone-max=2 clone-node-max=2 globally-unique=true
     - requries:
       - Setup ClusterIP resouce
 
