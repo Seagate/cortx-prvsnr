@@ -1,6 +1,18 @@
-Setup time zone:
-  timezone.system:
-    - name: {{ pillar['system']['ntp']['timezone'] }}
+include:
+  - .install
+  - .start
+
+
+Update HW clock sync:
+  file.managed:
+    - name: /etc/sysconfig/ntpdate
+    - source: salt://components/system/ntp/files/ntpdate.conf
+    - makedirs: True
+    - keep_source: True
+    - require:
+      - ntp_package
+    - watch_in:
+      - ntp_service
 
 Setup NTP config file:
   file.managed:
@@ -9,3 +21,15 @@ Setup NTP config file:
     - makedirs: True
     - keep_source: True
     - template: jinja
+    - require: 
+      - ntp_package
+    - watch_in:
+      - ntp_service
+
+Setup time zone:
+  timezone.system:
+    - name: {{ pillar['system']['ntp']['timezone'] }}
+    - require:
+      - Setup NTP config file
+    - watch_in:
+      - ntp_service
