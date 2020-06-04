@@ -10,17 +10,25 @@ Remove RabbitMQ prereqs:
   pkg.purged:
     - name: erlang
 
-Remove /var/lib/rabbitmq:
-  file.absent:
-    - name: /var/lib/rabbitmq
-
 Remove plugin executable rabbitmqadmin:
   file.absent:
     - name: /usr/local/bin/rabbitmqadmin
 
+Remove /var/lib/rabbitmq:
+  file.absent:
+    - name: /var/lib/rabbitmq
+
+Remove /usr/lib/rabbitmq:
+  file.absent:
+    - name: /usr/lib/rabbitmq
+
 Remove /etc/rabbitmq:
   file.absent:
     - name: /etc/rabbitmq
+
+Remove rabbitmq logs:
+  file.absent:
+    - name: /var/log/rabbitmq
 
 Delete rabbitmq checkpoint flag:
   file.absent:
