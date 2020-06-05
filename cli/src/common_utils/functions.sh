@@ -1743,7 +1743,7 @@ function setup_ssh {
     # Check if the ssh works without password from node-2 to node-1
     ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec \
         "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
-        l_error "$srvnode_1_hostspec is not reachable from $srvnode_2_hostspec"
+        l_error "$srvnode_1_hostname is not reachable from $srvnode_2_hostspec"
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
         #Backup original ssh config file
