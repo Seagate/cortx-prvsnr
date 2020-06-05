@@ -72,11 +72,12 @@ function create_unboxing_user {
         echo "ERROR: Cortx cluster is not configured on this node" | tee -a ${LOG_FILE}
     fi
 
-    id $_user > /dev/null || {
-        echo "INFO: Creating user for first time login" | tee -a ${LOG_FILE}
-        useradd --base-dir /tmp --inactive 2 --groups sys --shell /usr/bin/bash  --no-create-home --password $(openssl passwd -1 ${_secret}) cortxub
-        passwd -e $_user
+    id $_user > /dev/null && {
+        userdel -r -f $_user
     }
+    echo "INFO: Creating user for first time login" | tee -a ${LOG_FILE}
+    useradd --base-dir /tmp --inactive 2 --groups wheel --shell /usr/bin/bash --password $(openssl passwd -1 ${_secret}) cortxub
+    passwd -e $_user
 
     ###### Server A #####
     echo -n "INFO: Getting serial numbers and mac addresses for server A.........." | tee -a ${LOG_FILE}
@@ -115,6 +116,9 @@ NOTE: Store following information for unboxing.
 *                                                *
 *                                                *
 **************************************************
+
+
+**************************************************
 *    CORTX credentials for initial setup         *
 -------------------------------------------------*
   user     : $_user
@@ -123,12 +127,18 @@ NOTE: Store following information for unboxing.
   NOTE: Password expires on first login.    
 
 **************************************************
+
+
+**************************************************
 *                 Server A                       *
 *------------------------------------------------*
   Serial Number            : $_serial_a           
   Management Interface MAC : $_mac_mgmt_a
   BMC Interface MAC        : $_mac_bmc_a
   Data Interface MAC       : $_mac_data_a
+
+**************************************************
+
 
 **************************************************
 *                 Server B                       *
@@ -145,6 +155,17 @@ EOL
     echo -e "\n\
 NOTE: The above system details are required for unboxing and is stored at: $_output_file
       Please replace SystemID with actual System ID in the file name before shipping." | tee -a ${LOG_FILE}
+
+    echo -e "\nThe cluster nodes are going to shutdown now, please copy the above details\n" | tee -a ${LOG_FILE}
+
+    while true; do
+        read -p "Have you copied the above details?" _ans
+        case $_ans in
+            [Yy]* ) break;;
+            [Nn]* ) echo "Please copy and press y to proceed..."; continue;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
 }
 
 

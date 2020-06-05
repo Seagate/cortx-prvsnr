@@ -13,6 +13,9 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+. $BASEDIR/prov_tasks
+. $BASEDIR/shutdown
+
 # Check if Boxing flag file is present
 box_flag_file="/opt/seagate/cortx/provisioner/generated_config/boxed"
 if [[ -f $box_flag_file ]]; then
@@ -21,13 +24,10 @@ if [[ -f $box_flag_file ]]; then
     exit 0
 fi
 
-. $BASEDIR/prov_tasks
-. $BASEDIR/shutdown
-
 # Prepare shutdown
 # Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Starting maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
