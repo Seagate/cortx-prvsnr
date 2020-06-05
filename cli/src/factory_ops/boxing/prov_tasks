@@ -156,7 +156,7 @@ EOL
 NOTE: The above system details are required for unboxing and is stored at: $_output_file
       Please replace SystemID with actual System ID in the file name before shipping." | tee -a ${LOG_FILE}
 
-    echo -e "\nThe cluster nodes are going to shutdown now, please copy the above details\n" >> ${LOG_FILE}
+    echo -e "\nThe cluster nodes are going to shutdown now, please copy the above details\n" | tee -a ${LOG_FILE}
 
     while true; do
         read -p "Have you copied the above details?" _ans

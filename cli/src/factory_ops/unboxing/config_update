@@ -214,7 +214,7 @@ function remove_boxing_flag {
     else
         echo "\
 ERROR: Boxing command was not run
-       Please ensure that the the boxing sequence was done before doing unboxing.
+       Please ensure that the boxing sequence was done before doing unboxing.
 ***** FAILED!! *****
 The detailed logs are kept at: ${LOG_FILE}" | tee -a ${LOG_FILE}
     fi

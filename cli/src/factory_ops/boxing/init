@@ -27,7 +27,7 @@ fi
 # Prepare shutdown
 # Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Starting maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
