@@ -160,3 +160,8 @@ lock_unboxing_user
 
 # Unboxing SUCCESS
 remove_boxing_flag
+
+echo "\
+***** SUCCESS! *****
+The detailed logs can be seen at: $LOG_FILE
+Done." | tee -a ${LOG_FILE}

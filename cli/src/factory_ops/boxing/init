@@ -13,6 +13,9 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+. $BASEDIR/prov_tasks
+. $BASEDIR/shutdown
+
 # Check if Boxing flag file is present
 box_flag_file="/opt/seagate/cortx/provisioner/generated_config/boxed"
 if [[ -f $box_flag_file ]]; then
@@ -20,9 +23,6 @@ if [[ -f $box_flag_file ]]; then
     create_unboxing_user
     exit 0
 fi
-
-. $BASEDIR/prov_tasks
-. $BASEDIR/shutdown
 
 # Prepare shutdown
 # Shutdown HA
