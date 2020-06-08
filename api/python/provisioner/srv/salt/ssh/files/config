@@ -1,0 +1,14 @@
+{% for node_id, node in pillar['node_specs'].items() %}
+
+Host {{ node_id }} {{ node_id }}.colo.seagate.com
+    HostName {{ node['host'] }}
+    Port {{ node['port'] }}
+    User {{ node['user'] }}
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+
+{% endfor %}

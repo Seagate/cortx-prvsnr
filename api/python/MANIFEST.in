@@ -1,0 +1,5 @@
+# TODO LICENSE, other
+include provisioner/api_spec.yaml
+include provisioner/params_spec.yaml
+include provisioner/provisioner.conf
+graft provisioner/srv

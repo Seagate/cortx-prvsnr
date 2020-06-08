@@ -1,4 +1,4 @@
-[saltstack]
+[saltstack-repo]
 name=SaltStack repo for RHEL/CentOS $releasever
 baseurl=https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
 enabled=1

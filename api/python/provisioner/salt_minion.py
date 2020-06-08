@@ -34,6 +34,12 @@ def check_salt_minions_are_ready(targets: List):
     return not (set(targets) - set(ready))
 
 
+def ensure_salt_minions_are_ready(targets: List):
+    ensure(
+        functools.partial(check_salt_minions_are_ready, targets),
+        tries=20, wait=30
+    )
+
 # FIXME
 # 1) slat-minion might start even with malformed config
 #   - ??? but sometimes fail
