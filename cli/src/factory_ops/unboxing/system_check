@@ -19,7 +19,7 @@ truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
-. ${BASEDIR}/../utils
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
 
 export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 
