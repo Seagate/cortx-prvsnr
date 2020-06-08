@@ -13,6 +13,7 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
 . $BASEDIR/prov_tasks
 . $BASEDIR/shutdown
 
@@ -25,6 +26,8 @@ if [[ -f $box_flag_file ]]; then
 fi
 
 # Prepare shutdown
+ensure_healthy_cluster
+
 # Shutdown HA
 if command -v pcs ; then
     echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}

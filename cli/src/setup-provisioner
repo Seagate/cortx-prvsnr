@@ -24,7 +24,7 @@ prvsnr_version=
 
 cluster_id=$(uuidgen)
 
-. $BASEDIR/functions.sh
+. $BASEDIR/common_utils/functions.sh
 
 l_info "***** Running $0 *****"
 

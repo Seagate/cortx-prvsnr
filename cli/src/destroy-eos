@@ -10,7 +10,7 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos.log}"
 export LOG_FILE
 
-. $BASEDIR/functions.sh
+. $BASEDIR/common_utils/functions.sh
 
 l_info "***** Running $0 *****" 
 
