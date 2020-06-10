@@ -36,16 +36,18 @@ def test_process_param_spec():
     res = process_param_spec(spec)
 
     params = [
-        param.Param('group1/attr1', 'path1.sls', 'key/path/attr1'),
-        param.Param('group1/attr2', 'path1.sls', 'key/path/attr2'),
-        param.Param('group2/attr3', 'path2.sls', 'key/path/attr3'),
-        param.Param('group2/subgroup21/attr4', 'path3.sls', 'key/path/attr4'),
+        param.Param('group1/attr1', ('key/path/attr1', 'path1.sls')),
+        param.Param('group1/attr2', ('key/path/attr2', 'path1.sls')),
+        param.Param('group2/attr3', ('key/path/attr3', 'path2.sls')),
+        param.Param(
+            'group2/subgroup21/attr4', ('key/path/attr4', 'path3.sls')
+        ),
         param.ParamDictItem(
-            'dict/item1', 'path4.sls', 'key/path/attr5',
+            'dict/item1', ('key/path/attr5', 'path4.sls'),
             'key_name', 'value_name'
         ),
         param.ParamDictItem(
-            'dict/item2', 'path4.sls', 'key/path/attr5',
+            'dict/item2', ('key/path/attr5', 'path4.sls'),
             'pillar_key', 'pillar_value'
         )
     ]

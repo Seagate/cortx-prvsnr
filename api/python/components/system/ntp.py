@@ -1,12 +1,14 @@
+# flake8: noqa
 import json
 import sys
 
 import salt.client
 
-from utils.pillar import Pillar
+from utils.pillar import _Pillar
 
 
-class NTP(object):
+# TODO DEPRECATED
+class _NTP(object):
 
     #local client instance to send commands to minion
     def __init__(self, cfg_path: str=None):
@@ -14,7 +16,7 @@ class NTP(object):
 
 
     def update_pillar(self, time_dict: dict):
-        with Pillar() as pillar:
+        with _Pillar() as pillar:
             data = pillar.pillar_data
 
             data['system']['ntp']['time_server'] = time_dict['time_server']

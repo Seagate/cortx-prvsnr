@@ -1,5 +1,10 @@
 import sys
 
+# HOW TO DEBUG:
+# - set a breakpoint: import pdb; pdb.set_trace()
+# - salt-run saltutil.sync_modules
+# - salt-run cmd.cmd provisioner.<fun> ... <args>
+
 __virtualname__ = 'provisioner'
 
 try:
@@ -31,6 +36,11 @@ else:
 # TODO generate docs
 def _api_wrapper(fun):
     from provisioner._api_cli import api_args_to_cli
+    from shlex import quote
+
+    # TODO subprocess.list2cmdline is an another option
+    #      but it is not documented as API
+
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
 
@@ -46,9 +56,10 @@ def _api_wrapper(fun):
         # turn of salt job mode as well to prevent infinite api loop
         env = {'PRVSNR_SALT_JOB': 'no'}
 
-        cli_args = api_args_to_cli(fun, *args, **_kwargs)
-        cmd = ' '.join(['provisioner'] + cli_args)
-        return __salt__['cmd.run'](cmd, env=env)
+        cmd = ['provisioner']
+        cmd.extend(api_args_to_cli(fun, *args, **_kwargs))
+        cmd = [quote(p) for p in cmd]
+        return __salt__['cmd.run'](' '.join(cmd), env=env)
 
     return f
 

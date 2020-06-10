@@ -3,7 +3,6 @@ import logging
 import pytest
 import subprocess
 import time
-from provisioner import errors
 from pathlib import Path
 
 api_type = os.environ['TEST_API_TYPE']
@@ -25,7 +24,9 @@ def _api_call(fun, *args, **kwargs):
         provisioner.set_api(api_type)
         return getattr(provisioner, fun)(*args, **kwargs)
     else:  # cli
-        from provisioner._api_cli import process_cli_result
+        from provisioner._api_cli import (
+            api_args_to_cli, process_cli_result
+        )
         _input = kwargs.pop('password', None)
         if _input is not None:
             kwargs['password'] = '-'
@@ -34,14 +35,8 @@ def _api_call(fun, *args, **kwargs):
         kwargs['logstream'] = 'stderr'
         kwargs['output'] = 'json'
 
-        cmd = ['provisioner', fun]
-        for k, v in kwargs.items():
-            k = '--{}'.format(k.replace('_', '-'))
-            if type(v) is not bool:
-                cmd.extend([k, str(v)])
-            elif v:
-                cmd.extend([k])
-        cmd.extend([str(a) for a in args])
+        cmd = ['provisioner']
+        cmd.extend(api_args_to_cli(fun, *args, **kwargs))
         logger.debug("Command: {}".format(cmd))
 
         try:
@@ -60,6 +55,8 @@ def _api_call(fun, *args, **kwargs):
 
 
 def api_call(fun, *args, **kwargs):
+    from provisioner.errors import PrvsnrCmdNotFinishedError
+
     username = kwargs.get('username')
     password = kwargs.get('password')
     res = _api_call(fun, *args, **kwargs)
@@ -79,7 +76,7 @@ def api_call(fun, *args, **kwargs):
                 return _api_call(
                     'get_result', res, **_kwargs
                 )
-            except errors.PrvsnrCmdNotFinishedError:
+            except PrvsnrCmdNotFinishedError:
                 if tries < get_result_tries:
                     time.sleep(1)
                 else:
@@ -131,6 +128,102 @@ def test_external_auth():
         assert expected_exc_str in str(type(excinfo.value.reason))
 
 
+# TODO multiminion case verification
+# TODO test pillar_get without params
+def test_pillar_get_set():
+    from provisioner.config import (
+        PRVSNR_PILLAR_DIR,
+        PRVSNR_USER_PI_HOST_DIR_TMPL,
+        PRVSNR_USER_PI_ALL_HOSTS_DIR
+    )
+
+    kp_simple = 'test/simple'
+    kp_dict = 'test/dict'
+    kp_list = 'test/list'
+
+    test_pillar_sls = Path(f"{PRVSNR_PILLAR_DIR}/components/cluster.sls")
+    test_pillar_sls_data = test_pillar_sls.read_text()
+
+    pillar = api_call('pillar_get')
+    pillar_partial = api_call(
+        'pillar_get', kp_simple, kp_dict,  kp_list
+    )
+
+    for m_id, data in pillar.items():
+        assert data['test']['simple'] == pillar_partial[m_id][kp_simple]
+        assert data['test']['dict'] == pillar_partial[m_id][kp_dict]
+        assert data['test']['list'] == pillar_partial[m_id][kp_list]
+
+    # default targetting
+    for kp, value in (
+        (kp_simple, 2),
+        (kp_dict, {'2': {'3': 44}}),
+        (kp_list, ['a', 'b', '3', 2, {'1': 0}]),
+    ):
+        assert pillar_partial[minion_id][kp] != value
+
+        api_call('pillar_set', kp, value)
+        new_pillar = api_call('pillar_get', kp)
+
+        # pillar was properly updated
+        assert new_pillar[minion_id][kp] == value
+        # test pillar file in default location is unchanged
+        assert test_pillar_sls.read_text() == test_pillar_sls_data
+
+    # check pillar sls file
+    assert (PRVSNR_USER_PI_ALL_HOSTS_DIR / 'test.sls').exists()
+
+    pillar_partial = api_call(
+        'pillar_get', kp_simple, kp_dict,  kp_list
+    )
+
+    # specific minion targetting
+    # someminion_id = 'someminion'
+    for kp, value in (
+        (kp_simple, 3),
+        (kp_dict, {'2': {'3': 444}}),
+        (kp_list, ['aa', 'bb', '33', 22, {'11': 0}]),
+    ):
+        assert pillar_partial[minion_id][kp] != value
+
+        # TODO check with another minion
+        # targetting another minion
+        # api_call('pillar_set', kp, value, targets=someminion_id)
+        # new_pillar = api_call('pillar_get', kp)
+        # pillar for this minion wasn't updated
+        # assert new_pillar[minion_id][kp] == pillar_partial[minion_id][kp]
+
+        # targetting this minion
+        api_call('pillar_set', kp, value, targets=minion_id)
+        new_pillar = api_call('pillar_get', kp)
+        # pillar was properly updated
+        assert new_pillar[minion_id][kp] == value
+
+        # test pillar file in default location is unchanged
+        assert test_pillar_sls.read_text() == test_pillar_sls_data
+
+    # check pillar sls files
+    # assert (
+    #     PRVSNR_USER_PI_HOST_DIR_TMPL.format(
+    #       minion_id=someminion_id
+    #     ) / 'test.sls'
+    # ).exists()
+    assert (
+        Path(
+            PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=minion_id)
+        ) / 'test.sls'
+    ).exists()
+
+    # fpath verification
+    fpath = 'test2.sls'
+    api_call('pillar_set', kp, value, fpath=fpath)
+    assert (PRVSNR_USER_PI_ALL_HOSTS_DIR / fpath).exists()
+    api_call('pillar_set', kp, value, fpath=fpath, targets=minion_id)
+    assert (
+        Path(PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=minion_id)) / fpath
+    ).exists()
+
+
 def test_set_ntp():
     pillar = api_call('pillar_get')
 
@@ -163,28 +256,12 @@ def test_set_ntp():
     assert new_ntp_timezone == api_ntp_timezone
 
 
-# TODO secondary params
+# TODO IMPROVE need a good scenario, for now just gets values
 def test_set_network():
-    params = (
-        'primary_hostname',
-        'primary_floating_ip',
-        'primary_gateway_ip',
-        'primary_mgmt_ip',
-        'primary_mgmt_netmask',
-        'primary_data_ip',
-        'primary_data_netmask',
-        'secondary_hostname',
-        'secondary_floating_ip',
-        'secondary_gateway_ip',
-        'secondary_mgmt_ip',
-        'secondary_mgmt_netmask',
-        'secondary_data_ip',
-        'secondary_data_netmask'
-    )
-
+    from provisioner.api_spec import param_spec
     api_call(
         'get_params',
-        *["network/{}".format(p) for p in params],
+        *[p for p in param_spec if str(Path(p).parent) == 'network'],
         targets=minion_id
     )
 

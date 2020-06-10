@@ -2,6 +2,19 @@ include:
   - .install
   - .start
 
+
+Set RabbitMQ environment:
+  file.managed:
+    - name: /etc/rabbitmq/rabbitmq-env.conf
+    - contents: NODENAME=rabbit@{{ grains['id'] }}
+    - user: rabbitmq
+    - group: rabbitmq
+    - mode: 644
+    - require:
+      - Install RabbitMQ
+    - watch_in:
+      - Start RabbitMQ service
+
 Enable plugin rabbitmq_management:
   rabbitmq_plugin.enabled:
     - name: rabbitmq_management
@@ -51,27 +64,20 @@ Start rabbitmq app:
     - name: |
         rabbitmqctl stop_app
         rabbitmqctl start_app
+        rabbitmqctl set_cluster_name rabbitmq-cluster
     - require:
       - Copy Erlang cookie
       - Install RabbitMQ
       - Start RabbitMQ service
 
-{% else %}
 
-# We need this to assign master hostname
-{% set master_host={"host": ""} %}
-{%- for node_id in pillar['cluster']['node_list'] %}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
-{%- if master_host.update({"host": pillar["cluster"][node_id]["hostname"].split(".")[0]}) %}
-{%- endif %}
-{%- endif %}
-{%- endfor %}
+{% else %}
 
 Join rabbitmq minion to master:
   cmd.run:
     - name: |
         rabbitmqctl stop_app
-        rabbitmqctl join_cluster rabbit@{{ master_host["host"] }}
+        rabbitmqctl join_cluster rabbit@srvnode-1
         rabbitmqctl start_app
     - require:
       - Copy Erlang cookie

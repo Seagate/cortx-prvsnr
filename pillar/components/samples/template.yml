@@ -85,7 +85,7 @@ s3client:
   s3server:
     iam_admin:
       user: sgiamadmin
-      secret: ldapadmin
+      secret: "B4kf1T6Qso"
     fqdn: null
     ip: null
   secret_key: null
@@ -95,7 +95,7 @@ release:
     repos: {}
 corosync-pacemaker:
   user: hacluster
-  secret: hacluster
+  secret: "B4kf1T6Qso"
   cluster_name: eos_cluster
 elasticsearch:
   cluster_name: elasticsearch_cluster
@@ -115,10 +115,10 @@ commons:
     rsyslog-mmjsonparse: 8.40.0-1.el7
 openldap:
   admin:
-    secret: "seagate"
+    secret: "B4kf1T6Qso"
   iam_admin:
     user: "sgiamadmin"
-    secret: "ldapadmin"
+    secret: "B4kf1T6Qso"
   backend_db: mdb
 system:
   ntp:
@@ -127,7 +127,7 @@ system:
 sspl:
   rmq:
     user: sspluser
-    secret: sspl4ever
+    secret: "B4kf1T6Qso"
   healthmappath: /tmp/resource_health_view.json
 uds:
   version:

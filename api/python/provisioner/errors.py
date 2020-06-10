@@ -92,6 +92,26 @@ class PrvsnrCmdNotFinishedError(ProvisionerError):
     pass
 
 
+# TODO IMPROVE DRY
+class PillarSetError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[str, Exception], rollback_error=None):
+        self.reason = reason
+        self.rollback_error = rollback_error
+
+    def __str__(self):
+        return (
+            'pillar update failed: {!r}'.format(self)
+        )
+
+    def __repr__(self):
+        return (
+            "{}(reason={!r}, rollback_error={!r})"
+            .format(self.__class__.__name__, self.reason, self.rollback_error)
+        )
+
+
 # TODO TEST
 class ClusterMaintenanceError(ProvisionerError):
     _prvsnr_type_ = True
@@ -137,6 +157,7 @@ class SWStackUpdateError(ProvisionerError):
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
+    # FIXME reason might be an exception
     def __init__(self, reason: str, rollback_error=None):
         self.reason = reason
         self.rollback_error = rollback_error

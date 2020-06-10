@@ -1015,19 +1015,14 @@ fw_update()
         exit 1
     ftp_cmd_run "put $fw_bundle flash"
 
-    grep -v 230 $ftp_log | grep -iq fail && {
-        echo "Error: Firmware upgrade failed1"
-        echo "Check '$ftp_log' for more details, exiting" 2>&1 | tee -a $logfile
-        exit 1
-    } || {
-        grep -q "Codeload completed successfully." $ftp_log && {
-            grep -q "Partner: Codeload completed successfully." $ftp_log && {
-                grep -q "RETURN_CODE: 8" $ftp_log || _error=1
-            } || _error=1
+    grep -q "Codeload completed successfully." $ftp_log && {
+        grep -q "Partner: Codeload completed successfully." $ftp_log && {
+            grep -q "RETURN_CODE: 8" $ftp_log || _error=1
         } || _error=1
-    }
+    } || _error=1
+
     [ $_error -eq 1 ] && {
-        echo "Error: Firmware upgrade failed"
+        echo "Error: Firmware upgrade failed" | tee -a $logfile
         echo "Check $ftp_log for more details, exiting" 2>&1 | tee -a $logfile
         exit 1
     } || {

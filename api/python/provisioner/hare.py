@@ -23,7 +23,7 @@ def cluster_start():
 
 
 def cluster_maintenance(
-    enable: bool, timeout: int = 600, verbose: bool = True, background=False
+    enable: bool, timeout: int = 600, verbose: bool = False, background=False
 ):
     cmd = [
         'hctl node',
@@ -35,7 +35,12 @@ def cluster_maintenance(
     if verbose:
         cmd.insert(1, '--verbose')
 
-    res = cmd_run(' '.join(cmd), targets=LOCAL_MINION, background=background)
+    res = cmd_run(
+        ' '.join(cmd),
+        targets=LOCAL_MINION,
+        background=background,
+        timeout=(timeout + 60)
+    )
     return next(iter(res.values()))
 
 

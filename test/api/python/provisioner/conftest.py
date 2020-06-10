@@ -67,10 +67,10 @@ def test_pillar(monkeypatch):
 @pytest.fixture
 def param_spec(monkeypatch, pillar_dir, test_pillar):
 
-    param1 = param.Param('some_param_gr/attr1', 'aaa.sls', '1/2/3')
-    param2 = param.Param('some_param_gr/attr2', 'bbb.sls', '1/2/5')
+    param1 = param.Param('some_param_gr/attr1', ('1/2/3', 'aaa.sls'))
+    param2 = param.Param('some_param_gr/attr2', ('1/2/5', 'bbb.sls'))
     param3 = param.ParamDictItem(
-        'some_param_gr2/attr1', 'ccc.sls', '1/di_parent',
+        'some_param_gr2/attr1', ('1/di_parent', 'ccc.sls'),
         key='key_attr', value='value_attr'
     )
 

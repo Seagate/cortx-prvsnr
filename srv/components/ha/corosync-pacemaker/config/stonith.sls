@@ -28,4 +28,8 @@ Apply stonith for node-2:
   cmd.run:
     - name: pcs constraint location stonith-c2 avoids srvnode-2=INFINITY
 
+{% else %}
+No STONITH application:
+  test.show_notification:
+    - text: "STONITH application applies only to primary node. There's no execution on secondary node"
 {% endif %}

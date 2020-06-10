@@ -19,6 +19,8 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}
 mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
+salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -27,26 +29,24 @@ function trap_handler {
 trap trap_handler ERR
 
 function stop_rabbitmq_cluster {
-    echo "INFO: Removing RabbitMQ from both nodes." | tee -a ${LOG_FILE}
-    
-    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown || (
-        echo "ERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
-    )
+    echo -n "INFO: Removing RabbitMQ from both nodes....." | tee -a ${LOG_FILE}
 
-    echo "INFO: Removed RabbitMQ from both nodes." | tee -a ${LOG_FILE}
+    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown ${salt_opts} || (
+        echo -e "\nERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
+    ) && ( echo "Done" | tee -a ${LOG_FILE} )
 }
 
 function stop_services {
     echo "INFO: Stop LNET from both nodes if active." | tee -a ${LOG_FILE}
 
     echo "INFO: Stopping lnet on both nodes" | tee -a ${LOG_FILE}
-    salt "*" service.stop lnet || (echo "ERROR: Failed to stop LNET from both nodes." | tee -a ${LOG_FILE})
+    salt "*" service.stop lnet ${salt_opts} || (echo "ERROR: Failed to stop LNET from both nodes." | tee -a ${LOG_FILE})
 
     echo "INFO: Stopped LNET from both nodes if active." | tee -a ${LOG_FILE}
 }
 
 function backup_files {
-    echo "INFO: Backing up files on both nodes." | tee -a ${LOG_FILE}
+    echo -n "INFO: Backing up files on both nodes....." | tee -a ${LOG_FILE}
 
     bkp_file_list=(
         "/etc/multipath/bindings"
@@ -56,39 +56,126 @@ function backup_files {
         cp $file $file.bak
     done
 
-    echo "INFO: Backed up files on both nodes." | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }
 
 function create_unboxing_user {
-    if ! command -v mkpasswd >/dev/null ; then
-        # Install required package if missing
-        yum install -y expect >/dev/null
+    set -euE
+    _create_date=$(date '+%Y-%m-%d')
+    _output_file="/root/Lyve_rack_SystemID_${_create_date}.txt"
+    _user="cortxub"
+    _sceret=
+
+    if [[ -f /opt/seagate/eos-prvsnr/generated_configs/cluster_id ]]; then
+        _secret=`cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id | cut -d- -f 5`
+    else
+        echo "ERROR: Cortx cluster is not configured on this node" | tee -a ${LOG_FILE}
     fi
-    
-    SECRET=$(mkpasswd -l 10 -d 3 -c 3 -C 3 -s 0)
-    useradd --base-dir /tmp --inactive 2 --groups sys --shell /usr/bin/bash  --no-create-home --password $(openssl passwd -1 ${SECRET}) cortxub
-    passwd -e cortxub
-    
-    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
-    echo "NOTE: Store this information for unboxing."
-    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
-    
-    echo "System MAC: $(cat /sys/class/net/eno1/address)" 2>&1 | tee -a ${LOG_FILE}
-    echo "USERNAME:   cortxub" 2>&1 | tee -a ${LOG_FILE}
-    echo "PASSWORD:   ${SECRET}" 2>&1 | tee -a ${LOG_FILE}
- 
-    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
-    echo "NOTE: Password expires on first login." 2>&1 | tee -a ${LOG_FILE}
-    echo "**********************************************************" 2>&1 | tee -a ${LOG_FILE}
+
+    id $_user > /dev/null && {
+        userdel -r -f $_user
+    }
+    echo "INFO: Creating user for first time login" | tee -a ${LOG_FILE}
+    useradd --base-dir /tmp --inactive 2 --groups wheel --shell /usr/bin/bash --password $(openssl passwd -1 ${_secret}) cortxub
+    passwd -e $_user
+
+    ###### Server A #####
+    echo -n "INFO: Getting serial numbers and mac addresses for server A.........." | tee -a ${LOG_FILE}
+    _serial_a=`dmidecode -t system | grep Serial | cut -d: -f 2`
+    _mac_bmc_a=`ipmitool lan print | grep "MAC Address" | awk '{ print $4 }'`
+    #_interface_mgmt_a=`ip -o link show | awk -F': ' '{print $2}' | grep eno1`
+    _interface_mgmt_a="eno1"
+    _mac_mgmt_a=`cat /sys/class/net/${_interface_mgmt_a}/address`
+    _interface_data_a=`ip -o link show | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _mac_data_a=`cat /sys/class/net/${_interface_data_a}/address`
+    echo "Done" | tee -a ${LOG_FILE}
+
+    ###### Server B #####
+    echo -n "INFO: Getting serial numbers and mac addresses for server B.........." | tee -a ${LOG_FILE}
+    _serial_b=`ssh srvnode-2 "dmidecode -t system" | grep Serial | cut -d: -f 2`
+    _mac_bmc_b=`ssh srvnode-2 "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
+    #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
+    _interface_mgmt_b="eno1"
+    _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
+    _interface_data_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
+    echo "Done" | tee -a ${LOG_FILE}
+
+    echo "\
+**************************************************
+NOTE: Store following information for unboxing.
+**************************************************" 2>&1 | tee -a ${LOG_FILE}
+
+    cat <<EOL > ${_output_file}
+**************************************************
+*             Lyve Drive Rack                    *
+**************************************************
+*         Lyve Drive Rack System ID              *
+*------------------------------------------------* 
+*                                                *
+*                                                *
+*                                                *
+**************************************************
+
+
+**************************************************
+*    CORTX credentials for initial setup         *
+-------------------------------------------------*
+  user     : $_user
+  password : $_secret
+
+  NOTE: Password expires on first login.    
+
+**************************************************
+
+
+**************************************************
+*                 Server A                       *
+*------------------------------------------------*
+  Serial Number            : $_serial_a           
+  Management Interface MAC : $_mac_mgmt_a
+  BMC Interface MAC        : $_mac_bmc_a
+  Data Interface MAC       : $_mac_data_a
+
+**************************************************
+
+
+**************************************************
+*                 Server B                       *
+*------------------------------------------------*
+  Serial Number            : $_serial_b
+  Management Interface MAC : $_mac_mgmt_b
+  BMC Interface MAC        : $_mac_bmc_b
+  Data Interface MAC       : $_mac_data_b
+
+**************************************************
+EOL
+    cat ${_output_file} 2>&1 | tee -a ${LOG_FILE}
+
+    echo -e "\n\
+NOTE: The above system details are required for unboxing and is stored at: $_output_file
+      Please replace SystemID with actual System ID in the file name before shipping." | tee -a ${LOG_FILE}
+
+    echo -e "\nThe cluster nodes are going to shutdown now, please copy the above details\n" | tee -a ${LOG_FILE}
+
+    while true; do
+        read -p "Have you copied the above details?" _ans
+        case $_ans in
+            [Yy]* ) break;;
+            [Nn]* ) echo "Please copy and press y to proceed..."; continue;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
 }
+
 
 function boxing_flag {
     #Flag file is created only on primary node,
     # as this helps to ensure unboxing is executed only on primary node.
-    echo "INFO: Creating flag file on primary node." | tee -a ${LOG_FILE}
+    echo -n "INFO: Creating flag file on primary node....." | tee -a ${LOG_FILE}
 
-    local file_name="/opt/seagate/cortx/provisioner/generated_config/boxed"
-    
+    local file_name=${1:-/opt/seagate/cortx/provisioner/generated_config/boxed}
+
     if [ ! -f $file_name ]
     then
         timestamp=$(date "+%Y.%m.%d-%H.%M.%S")
@@ -96,5 +183,5 @@ function boxing_flag {
         echo $timestamp > $file_name
     fi
 
-    echo "INFO: Created flag file on primary node." | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }

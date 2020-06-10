@@ -108,7 +108,8 @@ def config_salt_master():
             tries=30, wait=1
         )
         # ensure that minions reconnected
-        # (keeping in mind that minion may try to reconnect only once ina few minutes)
+        # (keeping in mind that minion may try to reconnect only once
+        # in a few minutes)
         # TODO IMPROVE make more dynamic based on actual minions configuration
         ensure(
             functools.partial(check_salt_minions_are_ready, up_minions),

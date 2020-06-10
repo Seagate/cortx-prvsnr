@@ -5,6 +5,9 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/storage_metadata_reset
 mkdir -p $(dirname "${LOG_FILE}")
 # truncate -s 0 ${LOG_FILE}
 
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
+
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -16,29 +19,29 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 function _lerror {
     local msg=${1}
-    echo "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function _linfo {
     local msg=${1}
-    echo "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function user_confirmation {
     _linfo "*****************************************************************"
     _linfo "***************************  WARNING  ***************************"
     _linfo "*****************************************************************"
-    _linfo "You are about to wipeout data on storage."
-    _linfo "You need to acknowlege you understand what you are about to do."
-    _linfo ""
-    echo ""
-    echo "  Acknowkedgement:" 2>&1 | tee -a ${LOG_FILE}
-    echo ""
-    echo "    I really understand what I am doing and ok to destroy data." 2>&1 | tee -a ${LOG_FILE}
-    echo -n "    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You acknowledge that you understand, what you are about to do." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo -e ""
+    echo -e "##    You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -n "##    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
     read answer
-    echo "     Answer: ${answer}" >> ${LOG_FILE}
-    echo ""
+    echo -e "##       Answer: ${answer}" >> ${LOG_FILE}
+    echo -e ""
     _linfo "*****************************************************************"
 
     if [ "$answer" == "${answer#[Yy]}" ] ;then
@@ -56,83 +59,13 @@ function trigger_hare_reset {
     _linfo "Starting metadata reset using Hare utility: hare-m0reset."
     _linfo "*****************************************************************"
     
-    bash /opt/seagate/eos/hare/libexec/hare-m0reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+    bash /opt/seagate/eos/hare/libexec/prov-m0-reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
         _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
     )
 
     _linfo "Metadata reset operation complete."
     _linfo "*****************************************************************"
 }
-
-function ensure_cluster_health {
-    _linfo "*****************************************************************"
-    _linfo "Performng HA cluster health-check."
-    _linfo "*****************************************************************"
-    hctl node status --full > /tmp/hctl_cluster_health.json
-
-    _linfo "Checking nodes online."
-
-    attempt=0
-    while /usr/bin/true; do
-        if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
-            # Cluster is Online, we are part happy but would continue further with checks
-            _linfo " Cluster is Online, we are part happy.  "
-            _linfo " But, would continue further with few more checks. "
-
-            configured=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f1)
-            disabled=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f4 | cut -d '(' -f2)
-            running_node1=$(jq .nodes[0].resources_running /tmp/hctl_cluster_health.json)
-            running_node2=$(jq .nodes[1].resources_running /tmp/hctl_cluster_health.json)
-            # running=$(jq .resources.statistics.started /tmp/hctl_cluster_health.json)
-            running=$(( running_node1 + running_node2 ))
-            stopped=$(jq .resources.statistics.stopped /tmp/hctl_cluster_health.json)
-
-            configured=${configured:-0}
-            disabled=${disabled:-0}
-            running=${running:-0}
-            stopped=${stopped:-0}
-
-            if [[ "${running}" == "$(( configured - disabled ))" ]]; then
-                if [[ "0" == "${stopped}" ]]; then
-                    _linfo " Cluster is Online and all services have started. "
-                    
-                    # Break the loop
-                    break
-                else
-                    _linfo " Cluster is Online, we are part happy as it seems few services are disabled. "
-
-                    echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
-                    read answer
-
-                    if [ "$answer" != "${answer#[Yy]}" ] ;then
-                        _linfo "User has decided to proceed with the current HA status."
-                        # Break the loop and proceed
-                        break
-                    else
-                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."{LOG_FILE}
-                        sleep 10
-                    fi
-                fi
-            fi
-
-        else
-            _lerror "One or more node in cluster is/are Offline. Attempt: ${attempt}"
-            
-            # Increment attempt count
-            attempt=$(( attempt+1 ))
-            sleep 10
-
-            # Try 10 attempts and give-up
-            if [[ ${attempt} -ge 10 ]]; then
-                _lerror "One or more node in cluster is/are Offline."
-                _lerror "Giving up after 10 attempts."
-                exit 10
-            fi
-        fi
-    done
-
-    _linfo "*****************************************************************"
-} 
 
 function trigger_s3_cleanup {
 
@@ -151,16 +84,17 @@ function trigger_s3_cleanup {
     _linfo "*****************************************************************"
 }
 
-ensure_cluster_health
+ensure_healthy_cluster
 user_confirmation
 trigger_hare_reset
-ensure_cluster_health
+ensure_healthy_cluster
 trigger_s3_cleanup
 
 _linfo "*****************************************************************"
-_linfo "Storage reset on the cluster was SUCCESSFUL!"
-_linfo "CLuster is ready for use..."
-_linfo "Detailed logs available at: ${LOG_FILE}"
+_linfo "Done! The metadata has been completely erased."
+_linfo "Cluster is ready for use..."
+_linfo "Detailed logs available at: "
+_linfo "        ${LOG_FILE}"
 _linfo "*****************************************************************"
 _linfo ""
 _linfo ""

@@ -33,7 +33,11 @@ def subprocess_runner(monkeypatch):
 def test_api_cli_api_args_to_cli(patch_logging):
     fun = 'some-fun'
     # positional
-    assert api.api_args_to_cli(fun, 'arg1', 'arg2') == [fun, 'arg1', 'arg2']
+    assert api.api_args_to_cli(
+        fun, 'arg1', 'arg2', [1, 2, 3], {'4': {'5': 6}}
+    ) == [
+        fun, 'arg1', 'arg2', '[1, 2, 3]', '{"4": {"5": 6}}'
+    ]
     # optional basic
     assert api.api_args_to_cli(fun, arg1=123) == [fun, '--arg1', '123']
     # optional '-' and '_'
@@ -50,6 +54,10 @@ def test_api_cli_api_args_to_cli(patch_logging):
     assert api.api_args_to_cli(
         fun, arg1=[1, 2, '3']
     ) == [fun, '--arg1', '[1, 2, "3"]']
+    # optional Dict
+    assert api.api_args_to_cli(
+        fun, arg1={'1': {'2': 3, '4': '5'}}
+    ) == [fun, '--arg1', '{"1": {"2": 3, "4": "5"}}']
 
 
 @pytest.mark.patch_logging([(api, ('error',))])

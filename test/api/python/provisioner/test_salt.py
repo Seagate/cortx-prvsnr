@@ -621,7 +621,8 @@ def test_salt_cmd_run(monkeypatch):
             dict(
                 fun_args=[cmd],
                 targets=targets,
-                fun_kwargs=dict(bg=False)
+                fun_kwargs=dict(bg=False),
+                **dict(timeout=None)
             )
         )
     ]

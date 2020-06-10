@@ -69,10 +69,15 @@ def test_configure_eos_update_and_load_default(
     install_provisioner, run_script
 ):
     # Note. not parametrized per component since the test copies
-    #       test_functions.sh:test_functions_eos_pillar_update a lot
+    #       test_functions.sh:test_functions_eos_pillar_update_and_load_default
+    #       a lot
     component = 'cluster'
 
     h.install_provisioner_api(mhost)
+
+    # verify that the script accepts all pillar components
+    for comp in h.PRVSNR_EOS_COMPONENTS:
+        run_script("--show-file-format {}".format(comp), mhost=mhost)
 
     # 1. prepare some valid pillar for the component
     res = run_script("--show-file-format {}".format(component), mhost=mhost)

@@ -2,11 +2,14 @@ import attr
 import logging
 
 import functools
-from typing import List, Union, Any
+from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
 
 from .errors import UnknownParamError, EOSUpdateRepoSourceError
-from .param import Param, ParamDictItem, KeyPath
+from .pillar import (
+    KeyPath, PillarKeyAPI, PillarKey, PillarItemsAPI
+)
+from .param import Param, ParamDictItem
 from .api_spec import param_spec
 from .values import (
     UNDEFINED, UNCHANGED, NONE, value_from_str,
@@ -18,17 +21,6 @@ METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
 logger = logging.getLogger(__name__)
-
-
-@attr.s(auto_attribs=True)
-class NoParams:
-    @classmethod
-    def fill_parser(cls, parser):
-        pass
-
-    @classmethod
-    def extract_positional_args(cls, kwargs):
-        return (), kwargs
 
 
 @attr.s(auto_attribs=True)
@@ -94,12 +86,12 @@ class AttrParserArgs:
         if _value is NONE:
             _value = None
         elif isinstance(_value, str):
-            if v_type is List:
+            if (v_type is List) or (v_type == 'json'):
                 _value = loads(value)
         return _value
 
 
-class ParamAttrParserArgs(AttrParserArgs):
+class InputAttrParserArgs(AttrParserArgs):
     @classmethod
     def value_from_str(cls, value, v_type=None):
         _value = super().value_from_str(value, v_type=v_type)
@@ -126,6 +118,108 @@ class ParserFiller:
 
 
 @attr.s(auto_attribs=True)
+class NoParams:
+    @classmethod
+    def fill_parser(cls, parser):
+        pass
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class PillarKeysList:
+    _keys: List[PillarKey] = attr.Factory(list)
+
+    def __iter__(self):
+        return iter(self._keys)
+
+    def __len__(self):
+        return len(self._keys)
+
+    @classmethod
+    def from_args(
+        cls,
+        *args: Tuple[Union[str, Tuple[str, str]], ...]
+    ):
+        pi_keys = []
+        for arg in args:
+            if type(arg) is str:
+                pi_keys.append(PillarKey(arg))
+            elif type(arg) is tuple:
+                # TODO IMPROVE more checks for tuple types and len
+                pi_keys.append(PillarKey(*arg))
+            else:
+                raise TypeError(f"Unexpected type {type(arg)} of args {arg}")
+        return cls(pi_keys)
+
+    @classmethod
+    def fill_parser(cls, parser):
+        parser.add_argument(
+            'args', metavar='keypath', type=str, nargs='*',
+            help='a pillar key path'
+        )
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return (), kwargs
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class PillarInputBase(PillarItemsAPI):
+    keypath: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': 'pillar key path',
+                # 'metavar': 'value'
+            }
+        }
+    )
+    # TODO IMPROVE use some constant for json type
+    value: Any = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': 'pillar value',
+                'type': functools.partial(
+                    AttrParserArgs.value_from_str, v_type='json'
+                )
+                # 'metavar': 'value'
+            }
+        }
+    )
+    fpath: str = attr.ib(
+        default=None,
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    'file path relative to pillar roots, '
+                    'if not specified <key-path-top-level-part>.sls is used'
+                ),
+                # 'metavar': 'value'
+            }
+        }
+    )
+
+    def pillar_items(self) -> Iterable[Tuple[PillarKeyAPI, Any]]:
+        return (
+            (PillarKey(self.keypath, self.fpath), self.value),
+        )
+
+    @classmethod
+    def from_args(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def fill_parser(cls, parser):
+        ParserFiller.fill_parser(cls, parser, AttrParserArgs)
+
+    @classmethod
+    def extract_positional_args(cls, kwargs):
+        return ParserFiller.extract_positional_args(cls, kwargs)
+
+
+@attr.s(auto_attribs=True)
 class ParamsList:
     params: List[Param]
 
@@ -143,8 +237,7 @@ class ParamsList:
                 if isinstance(param_di, ParamDictItem):
                     param = Param(
                         key_path,
-                        param_di.pi_path,
-                        param_di.pi_key / key_path.leaf
+                        (param_di.keypath / key_path.leaf, param_di.fpath)
                     )
                 else:
                     logger.error(
@@ -166,11 +259,11 @@ class ParamsList:
         return (), kwargs
 
 
-class ParamGroupInputBase:
+class ParamGroupInputBase(PillarItemsAPI):
     _param_group = None
     _spec = None
 
-    def __iter__(self):  # TODO return type
+    def pillar_items(self):  # TODO return type
         res = {}
         for attr_name in attr.fields_dict(type(self)):
             res[self.param_spec(attr_name)] = getattr(self, attr_name)
@@ -202,7 +295,7 @@ class ParamGroupInputBase:
 
     @classmethod
     def fill_parser(cls, parser):
-        ParserFiller.fill_parser(cls, parser, ParamAttrParserArgs)
+        ParserFiller.fill_parser(cls, parser, InputAttrParserArgs)
 
     @classmethod
     def extract_positional_args(cls, kwargs):
@@ -329,11 +422,11 @@ class Network(ParamGroupInputBase):
 # verify that attributes match _param_di during class declaration:
 #   - both attributes should satisfy _param_di
 #   - is_key might be replaced with checking attr name against _param_di.key
-class ParamDictItemInputBase(PrvsnrType):
+class ParamDictItemInputBase(PrvsnrType, PillarItemsAPI):
     _param_di = None
     _param = None
 
-    def __iter__(self):  # TODO return type
+    def pillar_items(self):  # TODO return type
         return iter({
             self.param_spec(): getattr(self, self._param_di.value)
         }.items())
@@ -343,8 +436,7 @@ class ParamDictItemInputBase(PrvsnrType):
             key = getattr(self, self._param_di.key)
             self._param = Param(
                 self._param_di.name / key,
-                self._param_di.pi_path,
-                self._param_di.pi_key / key
+                (self._param_di.keypath / key, self._param_di.fpath)
             )
         return self._param
 
@@ -354,7 +446,7 @@ class ParamDictItemInputBase(PrvsnrType):
 
     @classmethod
     def fill_parser(cls, parser):
-        ParserFiller.fill_parser(cls, parser, ParamAttrParserArgs)
+        ParserFiller.fill_parser(cls, parser, InputAttrParserArgs)
 
     @classmethod
     def extract_positional_args(cls, kwargs):
