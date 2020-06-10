@@ -1,0 +1,237 @@
+#!/usr/bin/env groovy
+/**----------------------------------------------------------------------------------------------------------------------------------------
+ *  EOS Sanity Testing Jenkins Pipeline
+ *  ----------------------------------------------------------------------------------------------------------------------------------------
+ *  Owner           : RE Team
+ *  Description     : Automated Sanity testing in jenkins
+ *  Arguments       : 'build'
+ *                      - RPM Build Number to use for this automation , Default = last_successfull
+ *                      - RPM Build Location -> http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/       
+ *  Prerequisite    : 
+ *                      1. Sanity Testing VM Information
+ *                          - VM ID         -> MnageIQ VM Machine ID used for this testing
+ *                          - VM SnapshotID ->  ManageIQ VM Clean Snapshot ID
+ *                          - VM Machine root user name password
+ *                      2. ManageIQ access credentials to authenticate manageIQ API
+ *
+ *  Pipeline Process: 
+ *                       1. Provision Infra [ Stop the running VM -> Revert the VM state to clean snapshot -> Start VM ]
+ *                       2. Install EOS Stack using provisoner-cli
+ *                       3. Execute Sanity Testing test scripts
+ *------------------------------------------------------------------------------------------------------------------------------------------*/
+pipeline {
+
+    // Agent independent process so running on any agent wont cause problem
+    agent { label 'docker-nightly-node' }
+    
+    // Pipeline timeout 1h and added timestamp to jenkins log
+    options {
+        timeout(time: 90, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        timestamps() 
+    }
+
+    // Build number accepted as parameter to get particular build provisioner cli default -'last_successful'
+    parameters {  
+        string(name: 'build', defaultValue: 'last_successful', description: 'EOS Provisioner RPM Build Number')
+        
+        string(name: 'host', defaultValue: 'ssc-vm-0033.colo.seagate.com', description: '** DEV - ManageIQ VM ID')
+    }
+
+    // VM Inforamtions are maintained in a single location so we can easyly switch between multiple VM
+    environment {
+        INFRA_PROVISIONING=false 
+        STACK_PROVSN_STATUS=false
+
+        VM_HOST1_FQDN = "${host}"
+
+        //PROD
+        MANAGEIQ_TOKEN_CRED_ID="736373_manageiq_up"
+
+        VM_USER_PASS_CRED_ID="bb694996-b19f-4f1a-8686-46cc9ba7d120"
+    }
+
+    // Pipeline Execution
+    stages {
+
+        // Create infrastcrure required for further pipeline execution
+        stage('Prepare Test Infrastructure') {
+            when { expression { true } }
+            steps {
+                retry(2) {             
+                    script {
+                        ansiColor('xterm') {
+                            withCredentials([usernameColonPassword(credentialsId: '736373_manageiq_up', variable: 'manageiq_cred'),usernamePassword(credentialsId: "$VM_USER_PASS_CRED_ID", passwordVariable: 'pass', usernameVariable: 'user')]) {
+                                
+                                sh label: 'manageif_infra', returnStdout: true, script: """
+                                    yum install sshpass -y;
+
+                                    curl -s http://gitlab.mero.colo.seagate.com/re-poc/node-setup/raw/master/manageiq/setup.sh | bash /dev/stdin -h ${VM_HOST1_FQDN} -x ${manageiq_cred}
+                                """
+                                sh label: 'test_infra', returnStdout: true, script:"""
+                                    set -x
+                                    sleep 30;
+                                    sshpass -p '${pass}' ssh -o StrictHostKeyChecking=no -q $user@$VM_HOST1_FQDN exit;
+                                    if [ "\${?}" -eq 0 ];then
+                                        echo "SSH Connection Success Good To Go !!!";
+                                    else
+                                        echo "Unable to do SSH  !!!";
+                                        exit 1
+                                    fi
+                                """
+                            }
+                            INFRA_PROVISIONING=true
+                        }
+                    }
+                }
+            } 
+        }
+
+        // Setup EOS Stack required for sanity testing
+        stage('Provision EOS Stack') {
+            when { expression { INFRA_PROVISIONING == true } }
+            steps {             
+                script {
+                    ansiColor('xterm') {
+
+                        def remote = getTestMachine(VM_HOST1_FQDN)
+
+                        sshCommand remote: remote, failOnError: false, command: """
+                            curl -s http://gitlab.mero.colo.seagate.com/re-poc/node-setup/raw/master/single-node/install.sh | bash /dev/stdin -b ${build}
+                        """
+
+                        withCredentials([usernamePassword(credentialsId: "$VM_USER_PASS_CRED_ID", passwordVariable: 'pass', usernameVariable: 'user')]) { 
+
+                            sh label: 'download_log_files', returnStdout: true, script: """ 
+                                sshpass -p '${pass}' scp -r -o StrictHostKeyChecking=no root@${VM_HOST1_FQDN}:/tmp/seaget/log .
+                            """
+                        }
+
+                        if(fileExists('log/success')){
+                            echo("EOS STACK PROVISIONED SUCCESSFULLY")
+                            STACK_PROVSN_STATUS=true
+                        }else{
+                            echo("ERROR : FAILED TO PROVISON EOS STACK")
+                            currentBuild.result = 'FAILURE'
+                        }
+                    }
+                }
+            } 
+        }
+
+        // Execute Sanity testing test scripts
+        stage('Test EOS Stack') {
+            when { expression { STACK_PROVSN_STATUS == true } }
+            steps {             
+                script {
+                    ansiColor('xterm') {
+
+                        def remote = getTestMachine(VM_HOST1_FQDN)                           
+
+                        sshCommand remote: remote, command: """
+                            hctl status && hctl stop && hctl start && hctl status 2>&1 | tee hctl_stop_start_status.log;   
+                            salt '*' state.apply components.s3clients 2>&1 | tees3clients.log;  
+                            lsblk && df -h 2>&1 | tee disk_memory_status.log;
+                        """ 
+                    }
+                }
+            } 
+        }
+
+        stage('Generate Report'){
+            when { expression { INFRA_PROVISIONING == true } }
+            steps {             
+                script {
+                    ansiColor('xterm') {
+                        
+                        def statusHTML=""
+                        def failureLogHTML=""
+                        def releaseNotesHTML=""
+                        def buildLog = readFile('log/result.log')
+                        def lines = buildLog.split("\n")
+                        for(line in lines){
+                            if(line.contains("EXECUTION STATUS")){
+                                def status = (line.split(":")[1]).trim()
+                                def statusColor = (status == "FAILED") ? "background: LIGHTCORAL;" :""
+                                    
+                                def componentName = (line.split(":")[0]).trim()
+                                componentName = ((componentName.split("\\[")[1]).split("\\]")[0]).trim()
+                                
+                                statusHTML = statusHTML + '<tr><td style="border: 1px solid #AAAAAA;padding: 3px 2px;font-size: 13px;"><b>'+componentName+'</b></td><td style="border: 1px solid #AAAAAA;padding: 3px 2px;font-size: 13px;'+statusColor+'">'+status+'</td></tr>'
+                            }                            
+                        } 
+                        def failureLog = readFile('log/result.log')
+                        if(failureLog.contains("FAILURE CAUSE")){
+                            failureLog =  failureLog.replace("\n", "<br />")
+                            failureLogHTML = '<h2> Failure Log: </h2><p style="background-color: #eee;width: 70%;">'+failureLog+'</p>'
+                        }
+
+                        def releaseNotes = readFile('log/RELEASE_NOTES.log')
+                        if(releaseNotes.contains("RELEASE_BUILD")){
+                            releaseNotes =  releaseNotes.replace("\n", "<br />")
+                            releaseNotesHTML = '<h2> Release Notes: </h2><p style="background-color: #eee;width: 70%;">'+releaseNotes+'</p>'
+                        }
+
+                        def provisioner_log=BUILD_URL+"/artifact/log/setup_provnr.log"
+                        def result_log=BUILD_URL+"/artifact/log/result.log"
+
+                        def htmlReport ="""<!DOCTYPE html>
+                                            <html>
+                                            """+releaseNotesHTML+"""<br />
+                                            <h2>Sanity Test Result:</h2>
+                                            <table class="blueTable" style="font-family: Verdana, Geneva, sans-serif;border: 1px solid #1C6EA4;background-color: #EEEEEE;width: 50%;text-align: left;border-collapse: collapse;table-layout: fixed ;">
+                                            <thead style="background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);border-bottom: 2px solid #444444;">
+                                            <tr>
+                                            <th style="border: 1px solid #AAAAAA;padding: 3px 2px;font-size: 15px;font-weight: bold;color: #FFFFFF;border-left: none; width: 20%;">Execution Step</th>
+                                            <th style="border: 1px solid #AAAAAA;padding: 3px 2px;font-size: 15px;font-weight: bold;color: #FFFFFF;border-left: 2px solid #D0E4F5;width: 20%;">Status</th> 
+                                            </tr> 
+                                            </thead>
+                                            <tbody> """+statusHTML+"""</tbody></table></html>
+                                            <p>Test Machine: ${VM_HOST1_FQDN}</p></br>
+                                            <p>Build URL: <a href=${env.BUILD_URL}>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p></br>
+                                            <p>Build Log: <a href=${provisioner_log}>provisioner</a>, <a href=${result_log}>result</a></p></br>
+                                            """+failureLogHTML
+
+                        writeFile file: 'report.html', text: htmlReport
+
+                        publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '', reportFiles: 'report.html', reportName: "Sanity Testing Report [ Build:${build} ]", reportTitles: ''])
+                    
+                    
+                        env.ForEmailPlugin = env.WORKSPACE
+                        emailext mimeType: 'text/html',
+                        body: '${FILE, path="report.html"}',
+                        subject: 'Sanity Testing Result - Single Node - [ Build :'+build + ', Date :' +new Date().format("dd-MMM-yyyy") + ']',
+                        to: 'gowthaman.chinnathambi@seagate.com, shailesh.vaidya@seagate.com'
+                    }
+                }
+            } 
+        }
+
+    }
+
+    // Track Errors in the Build log
+    post { 
+        always {
+            ansiColor('xterm') {
+                archiveArtifacts artifacts: "**/*.log", onlyIfSuccessful: false 
+                cleanWs()
+            }
+        }
+    }
+}	
+
+
+// Method returns VM Host Information ( host, ssh cred)
+def getTestMachine(String host){
+
+    def remote = [:]
+    withCredentials([usernamePassword(credentialsId: "$VM_USER_PASS_CRED_ID", passwordVariable: 'pass', usernameVariable: 'user')]) {
+        remote.name = 'eos'
+        remote.host = host
+        remote.user =  user
+        remote.password = pass
+        remote.allowAnyHosts = true
+        remote.fileTransfer = 'scp'
+    }
+    return remote
+}

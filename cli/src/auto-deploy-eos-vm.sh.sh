@@ -22,21 +22,45 @@ srvnode_1_host=`hostname`
 srvnode_2_host=
 srvnode_2_passwd=
 tgt_build=
+cluster_ip=
+mgmt_vip=
+pvt_ip_addr1=
+pvt_ip_addr2=
 singlenode=false
 
 srvnode_2_host_opt=false
 srvnode_2_passwd_opt=false
 tgt_build_opt=false
+cluster_ip_opt=false
+mgmt_vip_opt=false
+pvt_ip_addr1_opt=false
+pvt_ip_addr2_opt=false
 
 usage()
 {
     echo "\
 Usage:
 For Dual Node:
-auto-deploy-eos { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+sh auto-deploy-eos-vm.sh -s <secondary node hostname (srvnode-2)> -p <password for sec node>
                   -t <target build url for EOS>
 For Single Node:
-auto-deploy-eos { -S -t <target build url for EOS> }
+sh auto-deploy-eos-vm.sh -S -t <target build url for EOS> 
+
+Optional Arguments:
+   -C	 <Hostname/IP> 	  Hostname/IP address for Public Data n/w interface.
+			  This IP will be assigned to the n/w interface
+                          provided with -C option.
+                          if you not provide this ip, cluster_ip will consider as null
+   -M	 <Hostname/IP> 	  Hostname/IP address for Management n/w interface.
+			  This IP will be assigned to the n/w interface
+			  provided with -M option.
+			  if you not provide this ip, mgmt_vip will consider as null
+   -i    <IP Address>     IP address for pvt data n/w interface name on node-1.
+                          This IP will be assigned to the eth1 n/w interface.
+                          if you not provide this ip, pvt_ip_addr will consider as null
+   -I    <IP Address>     IP address for pvt data n/w interface name on node-2,
+                          This IP will be assigned to the eth1 n/w interface name.
+                          if you not provide this ip, pvt_ip_addr will consider as null
 "
 }
 
@@ -49,10 +73,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ auto-deploy-eos -s ssc-vm-c-810.colo.seagate.com -p 'seagate'
-  -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-eos-vm.sh -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
 For Single Node:
-$ auto-deploy-eos -S -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-eos-vm.sh -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
 
 "
 }
@@ -76,6 +99,30 @@ while [[ $# -gt 0 ]]; do
         -S)
 	    singlenode=true
             shift 1 ;;
+        -C)
+            cluster_ip_opt=true
+            [ -z "$2" ] &&
+                echo "Error: Cluster ip is not provided" && exit 1;
+            cluster_ip="$2"
+            shift 2 ;;
+	-M)
+	    mgmt_vip_opt=true
+	    [ -z "$2" ] &&
+		echo "Error: Mgmt_vip is not provided" && exit 1;
+	    mgmt_vip="$2"
+	    shift 2 ;;
+	-i)
+	    pvt_ip_addr1_opt=true
+	    [ -z "$2" ] &&
+		echo "Error: srvnode-1 pvt_ip_addr for data not provided" && exit 1;
+	    pvt_ip_addr1="$2"
+	    shift 2 ;;
+	-I)
+	    pvt_ip_addr2_opt=true
+	    [ -z "$2" ] &&
+		echo "Error: srvnode-2 pvt_ip_addr for data not provided" && exit 1;
+	    pvt_ip_addr2="$2"
+	    shift 2 ;;
         -t)
             tgt_build_opt=true
             [ -z "$2" ] &&
@@ -135,7 +182,6 @@ install_prvsnr_cli()
         systemctl stop firewalld || true
         return 0
     else
-	echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
 	$remote_cmd <<-EOF
 	    set -eu
 	    rpm -qa | grep -q eos && {
@@ -153,10 +199,10 @@ install_prvsnr_cli()
 
 install_config_prvsnr()
 {   if [[ "$singlenode" == false ]]; then
-	    set -eu
-	    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
-	    sleep 1
-	    install_prvsnr_cli "srvnode-2"
+	set -eu
+	echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
+	sleep 1
+	install_prvsnr_cli "srvnode-2"
     fi
     echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
@@ -166,13 +212,13 @@ install_config_prvsnr()
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     if [[ "$singlenode" == false ]]; then
-	    echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-	            "--srvnode-2='$srvnode_2_host' --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
-	    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
-	    echo "Done" 2>&1 | tee -a $LOG_FILE
+	echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
+	        "--srvnode-2='$srvnode_2_host' --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
+	sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
+	echo "Done" 2>&1 | tee -a $LOG_FILE
     else
-	    echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
-	            "-S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
+	echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
+	        "-S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes" 2>&1 | tee -a $LOG_FILE
         sh /opt/seagate/eos-prvsnr/cli/setup-provisioner -S --salt-master="$srvnode_1_host" --repo-src=gitlab VM-fixes 2>&1 | tee -a $LOG_FILE
         echo "Done" 2>&1 | tee -a $LOG_FILE
     fi	
@@ -190,24 +236,54 @@ update_pillar()
     cp $_cluster_sls_path ${_cluster_sls_path}.org
 	
     # Update hostname if singlenode
-    if [[ "$singlenode" == false ]]; then
+    if [[ "$singlenode" == true ]]; then
         sed -i "s/hostname: srvnode-1/hostname: ${srvnode_1_host}/g" $_cluster_sls_path
     fi
 	
-    # Update Mgmt and data interface
-    echo "Update Mgmt and data interface" 2>&1|tee -a $LOG_FILE
+    # Updating Mgmt and data interface
+    echo -e "\n\t Update Mgmt and data interface" 2>&1|tee -a $LOG_FILE
     sed -ie "s/eno1/eth0/g" $_cluster_sls_path
     sed -ie "s/enp175s0f0/eth2/g" $_cluster_sls_path
     sed -ie "s/enp175s0f1/eth1/g" $_cluster_sls_path
     
-    # Removing pvt_ip_addr and roaming_ip
-    echo "Removing pvt_ip_addr and roaming_ip" 2>&1|tee -a $LOG_FILE
-    sed -i "s/\(^.*\)\(pvt_ip_addr:\)\(.*\)/\1pvt_ip_addr:/" $_cluster_sls_path
+    # Updating Cluster IP
+    if [[ "$cluster_ip_opt" == true ]]; then
+        echo -e "\n\t Updating Cluster IP " 2>&1|tee -a $LOG_FILE
+        field="cluster_ip" 
+        line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
+        sed -ie "${line}s/.*/  cluster_ip: ${cluster_ip}/" $_cluster_sls_path
+    fi
+
+    # Updating Mgmt VIP
+    if [[ "$mgmt_vip_opt" == true ]]; then
+        echo -e "\n\t Updating Mgmt VIP " 2>&1|tee -a $LOG_FILE
+        field="mgmt_vip"
+        line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
+        sed -ie "${line}s/.*/  mgmt_vip: ${mgmt_vip}/" $_cluster_sls_path
+    fi
+	
+    # Updating pvt_ip_addr and roaming_ip
+    echo -e "\n\t Updating pvt_ip_addr and roaming_ip " 2>&1|tee -a $LOG_FILE
+    if [[ "$pvt_ip_addr1_opt" == true ]]; then
+	line_pvt_ip_addr1=`grep -n -m 1 "pvt_ip_addr:" $_cluster_sls_path | cut -f1 -d:`;
+	sed -ie "${line_pvt_ip_addr1}s/.*/        pvt_ip_addr: ${pvt_ip_addr1}/" $_cluster_sls_path
+	if [[ "$pvt_ip_addr2_opt" == true ]]; then
+	    line_pvt_ip_addr2=`grep -n -m 2 "pvt_ip_addr:" $_cluster_sls_path | cut -f1 -d: | sed "1 d"`;
+	    sed -ie "${line_pvt_ip_addr2}s/.*/        pvt_ip_addr: ${pvt_ip_addr2}/" $_cluster_sls_path
+	fi
+    else
+	sed -i "s/\(^.*\)\(pvt_ip_addr:\)\(.*\)/\1pvt_ip_addr:/" $_cluster_sls_path
+    fi
     sed -i "s/\(^.*\)\(roaming_ip:\)\(.*\)/\1roaming_ip:/" $_cluster_sls_path
 	
     # Changing Meta and Data disks based on lsblk
-    echo "Changing Meta and Data disks based on lsblk" 2>&1|tee -a $LOG_FILE
-    disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3 | sed "1 d");
+    echo -e "\n\t Changing Meta and Data disks based on lsblk" 2>&1|tee -a $LOG_FILE
+    os_name=`cat /etc/redhat-release`
+    if grep -q "Red Hat" <<< $os_name ; then
+    	disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3);
+    else
+	disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3 | sed "1 d");
+    fi
     meta_disk=0
     line1=`grep -n -m 1 "sdc" $_cluster_sls_path | cut -f1 -d:`;
     if [[ "$singlenode" == false ]]; then
@@ -217,16 +293,17 @@ update_pillar()
     fi
     sed -i "${line1}d" $_cluster_sls_path;
     line1=$(($line1-1))
-    for i in $disks
+    for disk in $disks
     do
         if [ $meta_disk == 0 ] ; then
             meta_disk=1;
-            sed -i "s/sdb/${i}/g" $_cluster_sls_path;
+            sed -i "s/sdb/${disk}/g" $_cluster_sls_path;
         else
-            sed -i "${line1} a \        - \/dev\/${i}" $_cluster_sls_path;
+            sed -i "${line1} a \        - \/dev\/${disk}" $_cluster_sls_path;
             line1=$(($line1+1));
             if [[ "$singlenode" == false ]]; then
-                sed -i "${line2} a \        - \/dev\/${i}" $_cluster_sls_path;
+                sed -i "${line2} a \        - \/dev\/${disk}" $_cluster_sls_path;
+		line2=`grep -n -m 2 "${disk}" $_cluster_sls_path | cut -f1 -d: | sed "1 d"`
                 line2=$(($line2+1));
             fi
         fi
@@ -248,8 +325,10 @@ update_pillar
 echo -e "\n\t***** INFO: Running deploy-eos *****"
 sleep 5
 if [[ "$singlenode" == false ]]; then
+    curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
     sh /opt/seagate/eos-prvsnr/cli/src/deploy-eos-vm -v
 else
+    curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs-vm.sh | bash
     sh /opt/seagate/eos-prvsnr/cli/src/deploy-eos-vm -S
 fi
 echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $LOG_FILE

@@ -1,0 +1,17 @@
+[EPEL-7]
+gpgcheck=0
+enabled=1
+baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/EPEL-7/
+name=EPEL-7
+
+[extras-7_7_1908]
+gpgcheck=0
+enabled=1
+baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
+name=extras-7_7_1908
+
+[os-7_7_1908]
+gpgcheck=0
+enabled=1
+baseurl=http://eos-poc-katello1.mero.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
+name=os-7_7_1908
