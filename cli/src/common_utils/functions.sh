@@ -9,12 +9,12 @@ if [[ ! -e "$log_file" ]]; then
 fi
 
 # rpm package places scripts in parent folder
-if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-    repo_root_dir="$(realpath $cli_scripts_dir/../../)"
-else
+pparent_dir=$(cd $cli_scripts_dir/../ && pwd)
+if [[ "$(basename ${pparent_dir})" == 'src' ]]; then
     repo_root_dir="$(realpath $cli_scripts_dir/../../../)"
+else
+    repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
-
 
 # TODO API for error exit that might:
 #       - echos to stderr
