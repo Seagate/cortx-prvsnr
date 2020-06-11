@@ -1,6 +1,6 @@
-Install EOSCore:
+Install CortxMoto:
   pkg.installed:
     - pkgs:
-      - eos-core: latest
+      - cortx-moto: latest
       # - mero-debuginfo
     - refresh: True
