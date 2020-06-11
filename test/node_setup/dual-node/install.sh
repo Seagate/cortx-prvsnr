@@ -63,26 +63,26 @@ _deploy_dual(){
     echo "  Repository    : ${REPO}"
     echo "  Node 1 Host   : ${NODE1_HOST}" 
     echo "  Node 2 Host   : ${NODE2_HOST}"
-    if [[ $CLUSTER_IP -ne 'null' ]] then
+    if [ $CLUSTER_IP -ne 'null' ]; then
         echo "  CLUSTER_IP : ${CLUSTER_IP}"
     fi
-    if [[ $MGMT_VIP -ne 'null' ]] then
+    if [ $MGMT_VIP -ne 'null' ]; then
         echo "  MGMT_VIP : ${MGMT_VIP}"
     fi
-    if [[ $PVT_IP1 -ne 'null' ]] then
+    if [ $PVT_IP1 -ne 'null' ]; then
         echo "  PVT_IP for Host1: ${PVT_IP1}"
     fi
-    if [[ $PVT_IP2 -ne 'null' ]] then
+    if [ $PVT_IP2 -ne 'null' ]; then
         echo "  PVT_IP for Host2: ${PVT_IP2}"
     fi
     echo "================================================================================"
 
     wget http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/auto-deploy-eos-vm.sh
-    if [[ $CLUSTER_IP -ne 'null' && $MGMT_VIP -ne 'null' && $PVT_IP1 -ne 'null' && $PVT_IP2 -ne 'null' ]] then
+    if [ $CLUSTER_IP -ne 'null' && $MGMT_VIP -ne 'null' && $PVT_IP1 -ne 'null' && $PVT_IP2 -ne 'null' ]; then
         sh auto-deploy-eos-vm.sh -s ${NODE2_HOST} -p ${SSH_PASS} -C ${CLUSTER_IP} -M ${MGMT_VIP} -i ${PVT_IP1} -I ${PVT_IP2} -t ${REPO}
-    elif [[ $CLUSTER_IP -ne 'null' && $MGMT_VIP -ne 'null' && $PVT_IP1 == 'null' && $PVT_IP2 == 'null']] then
+    elif [ $CLUSTER_IP -ne 'null' && $MGMT_VIP -ne 'null' && $PVT_IP1 == 'null' && $PVT_IP2 == 'null']; then
         sh auto-deploy-eos-vm.sh -s ${NODE2_HOST} -p ${SSH_PASS} -C ${CLUSTER_IP} -M ${MGMT_VIP} -t ${REPO}
-    elif [[ $CLUSTER_IP == 'null' && $MGMT_VIP == 'null' && $PVT_IP1 != 'null' && $PVT_IP2 != 'null']] then
+    elif [ $CLUSTER_IP == 'null' && $MGMT_VIP == 'null' && $PVT_IP1 != 'null' && $PVT_IP2 != 'null']; then
         sh auto-deploy-eos-vm.sh -s ${NODE2_HOST} -p ${SSH_PASS} -i ${PVT_IP1} -I ${PVT_IP2} -t ${REPO}
     else
         sh auto-deploy-eos-vm.sh -s ${NODE2_HOST} -p ${SSH_PASS} -t ${REPO}
