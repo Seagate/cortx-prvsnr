@@ -1,9 +1,9 @@
 include:
   - .prepare
 
-Install eos-sspl packages:
+Install cortx-sspl packages:
   pkg.installed:
-    - name: eos-sspl
+    - name: cortx-sspl
     - version: latest
     - refresh: True
     - require:
@@ -14,9 +14,9 @@ Install flask:
     - name: flask
     - version: 1.1.1
 
-Install eos-sspl-test:
+Install cortx-sspl-test:
   pkg.installed:
-    - name: eos-sspl-test
-    - require:
+    - name: cortx-sspl-test
+    - requires:
       - Install flask
       - Install eos-sspl packages

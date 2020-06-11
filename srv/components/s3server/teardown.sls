@@ -19,9 +19,9 @@ Stop s3authserver service:
     - enable: False
     - init_delay: 2
 
-Remove eos-s3server:
+Remove cortx-s3server:
   pkg.purged:
-    - name: eos-s3server
+    - name: cortx-s3server
 
 #Remove s3server_uploads:
 #  pkg.purged:
@@ -74,11 +74,11 @@ Remove common_runtime libraries:
 #------------------------------
 # Teardown S3IAMCLI Start
 #------------------------------
-Remove eos-s3iamcli:
+Remove cortx-s3iamcli:
   pkg.removed:
     - pkgs:
-      - eos-s3iamcli
-#       # - eos-s3iamcli
+      - cortx-s3iamcli
+#       # - cortx-s3iamcli
 #       # - s3server-debuginfo
 #------------------------------
 # Teardown S3IAMCLI End

@@ -4,22 +4,22 @@ Stage - Reset Core:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/core/conf/setup.yaml', 'core:reset')
 
-Remove EOSCore package:
+Remove CortxMoto package:
   pkg.purged:
     - pkgs:
-      - eos-core
+      - cortx-moto
       # - mero-debuginfo
 
-Delete EOSCore yum repo:
+Delete CortxMoto yum repo:
   pkgrepo.absent:
-    - name: {{ defaults.eoscore.repo.id }}
+    - name: {{ defaults.cortxmoto.repo.id }}
 
 Remove configuration file:
   file.absent:
     - names:
-      - /etc/sysconfig/mero
-      - /etc/sysconfig/mero.bak
+      - /etc/sysconfig/moto
+      - /etc/sysconfig/moto.bak
 
-Delete eoscore checkpoint flag:
+Delete CortxMoto checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.eoscore
+    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.cortxmoto
