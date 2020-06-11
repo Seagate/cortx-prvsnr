@@ -6,8 +6,8 @@ Stage - Reset SSPL:
 Remove sspl packages:
   pkg.purged:
     - pkgs:
-      - eos-sspl
-      - eos-sspl-test
+      - cortx-sspl
+      - cortx-sspl-test
 
 Remove flask:
   pip.removed:
