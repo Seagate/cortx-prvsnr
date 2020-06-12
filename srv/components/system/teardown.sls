@@ -26,7 +26,7 @@ Delete Commons yum repo:
 
 Delete system checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.system
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
 
 Remove added journald configuration:
   file.replace:

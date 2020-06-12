@@ -15,4 +15,4 @@ Delete uds yum repo:
 
 Delete uds checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.uds
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.uds

@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.consul'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.consul'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.consul.prepare
   - components.misc_pkgs.consul.install
@@ -9,7 +9,7 @@ include:
 
 Generate Consul checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.consul
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.consul
     - makedirs: True
     - create: True
 {%- else -%}

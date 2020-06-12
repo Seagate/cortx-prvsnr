@@ -5,7 +5,7 @@ set -e
 if [[ -d '/opt/seagate/ees-prvsnr' ]]; then
   BASEDIR=/opt/seagate/ees-prvsnr
 else
-  BASEDIR=/opt/seagate/eos-prvsnr
+  BASEDIR=/opt/seagate/cortx/provisioner
 fi
 
 ################

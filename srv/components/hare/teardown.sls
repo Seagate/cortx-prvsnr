@@ -26,4 +26,4 @@ Delete Hare yum repo:
 
 Remove hare checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.hare
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.hare

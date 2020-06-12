@@ -5,7 +5,7 @@ __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'
 __maintainer_email__ = __author_email__
 __url__ = 'http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr'
-__description__ = 'Provisioner API for EOS components'
+__description__ = 'Provisioner API for CORTX components'
 __long_description__ = __description__
 __download_url__ = (
     "{0}/-/archive/${1}/${1}.tar.gz".format(__url__, __version__)  # TODO
