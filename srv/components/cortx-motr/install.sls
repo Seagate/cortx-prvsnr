@@ -1,6 +1,6 @@
-Install CortxMoto:
+Install CortxMotr:
   pkg.installed:
     - pkgs:
-      - cortx-moto: latest
+      - cortx-motr: latest
       # - mero-debuginfo
     - refresh: True
