@@ -12,7 +12,7 @@ Remove CortxMoto package:
 
 Delete CortxMoto yum repo:
   pkgrepo.absent:
-    - name: {{ defaults.cortxmoto.repo.id }}
+    - name: {{ defaults.cortx_moto.repo.id }}
 
 Remove configuration file:
   file.absent:
@@ -22,4 +22,4 @@ Remove configuration file:
 
 Delete CortxMoto checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.cortxmoto
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-moto

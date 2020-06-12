@@ -9,7 +9,7 @@ import commons
 
 # How to test:
 # $ salt-call saltutil.clear_cache
-# $ salt-call saltutil.sync_modules && salt-call s3server.conf_update "/opt/seagate/eos-prvsnr/srv/_modules/files/samples/s3config.yaml" s3server
+# $ salt-call saltutil.sync_modules && salt-call s3server.conf_update "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/s3config.yaml" s3server
 
 # def _read_pillar(ref_component_pillar: str) -> dict:
 def _read_pillar(ref_component_pillar):

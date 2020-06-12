@@ -52,4 +52,4 @@ Remove Consul user:
 
 Delete consul checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.consul
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.consul

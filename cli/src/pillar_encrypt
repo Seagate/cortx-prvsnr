@@ -24,7 +24,7 @@ class PillarEncrypt(object):
 
     def __init__(self):
         self.__options = {}
-        self.__root_path = os.path.join('/', 'opt', 'seagate', 'eos-prvsnr')
+        self.__root_path = os.path.join('/', 'opt', 'seagate', 'cortx', 'provisioner')
 
     def __load(self, sls_file):
         # No need to check file before open as we know, it exists.
