@@ -17,7 +17,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . ${BASEDIR}/../../common_utils/functions.sh
 
 
-PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 # private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")

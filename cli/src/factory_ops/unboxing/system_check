@@ -2,14 +2,14 @@
 
 # Functions in this file address following:
 #   1. Check boxing flag file and proceed only if boxing.<timestamp> file is present 
-#       /opt/seagate/eos-prvsnr/generated_config/boxing.<timestamp> 
+#       /opt/seagate/cortx/provisioner/generated_config/boxing.<timestamp> 
 #   2. Check if IP is available on management network interface on node. Wait till one is obtained. 
 #   3. Check if hostname is available on node. Wait till one is obtained. 
 #   4. Ping across nodes over direct network to check connectivity and fetch peer hostname. Wait till success. 
 #       From node-1 
-#       $ ping -c1 -I<public_data_ip> eosnode-2 
+#       $ ping -c1 -I<public_data_ip> srvnode-2 
 #       From node-2 
-#       $ ping -c1 -I<public_data_ip> eosnode-1 
+#       $ ping -c1 -I<public_data_ip> srvnode-1 
 # NOTE: pick value of public_data_ip from cluster.sls
 set -euE
 
@@ -21,7 +21,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
 
-export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+export PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 
 function trap_handler {
     echo "***** ERROR! *****"

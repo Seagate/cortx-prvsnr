@@ -5,7 +5,7 @@ from pathlib import Path
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
-PRVSNR_ROOT_DIR = Path('/opt/seagate/eos-prvsnr')
+PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 
 # reflects master file_roots configuration
 PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
@@ -44,7 +44,7 @@ PRVSNR_EOS_COMPONENTS = [
     'controller',
     'corosync-pacemaker',
     'elasticsearch',
-    'eoscore',
+    'cortx-moto',
     'haproxy',
     'keepalived',
     'openldap',

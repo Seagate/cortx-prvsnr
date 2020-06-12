@@ -49,9 +49,9 @@ lustre:
     id: "lustre"
     url: {{ repo_url }}
 
-eoscore:
+cortx_moto:
   repo:
-    id: "eoscore"
+    id: "cortx-moto"
     url: {{ repo_url }}
     gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 

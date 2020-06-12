@@ -82,7 +82,7 @@ function shutdown_controller {
         exit 1
     fi
 
-    local ctrl_cli="/opt/seagate/eos-prvsnr/srv/components/controller/files/scripts/controller-cli.sh"
+    local ctrl_cli="/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
     
     local ctrl_user=$(get_pillar_data storage_enclosure:controller:user)
     local ctrl_secret=$(get_pillar_data storage_enclosure:controller:secret)

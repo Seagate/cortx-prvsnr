@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.kibana'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.kibana'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.kibana.prepare
   - components.misc_pkgs.kibana.install
@@ -9,7 +9,7 @@ include:
 
 Generate Kibana checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.kibana
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kibana
     - makedirs: True
     - create: True
 {%- else -%}

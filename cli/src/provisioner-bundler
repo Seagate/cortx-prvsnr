@@ -35,7 +35,7 @@ def __cleanup_directory(directory):
 def parse_args():
     parser = argparse.ArgumentParser(description='''Bundle provisioner logs ''')
     parser.add_argument('bundle_id', help='Unique bundle id')
-    parser.add_argument('path', help='Path to store the created bundle', nargs='?', default="/var/seagate/eos/support_bundle/")
+    parser.add_argument('path', help='Path to store the created bundle', nargs='?', default="/var/seagate/cortx/support_bundle/")
     args=parser.parse_args()
     return args
 

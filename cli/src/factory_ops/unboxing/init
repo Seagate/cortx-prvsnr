@@ -37,7 +37,7 @@ function help {
         b. Data Network VIP:    Static vip on data network
 
     -------- Sample command ---------
-    /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 172.19.100.100 -C 10.20.100.201
+    /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 172.19.100.100 -C 10.20.100.201
     "
 }
 

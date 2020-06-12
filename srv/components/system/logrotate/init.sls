@@ -1,10 +1,10 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.logrotate'.format(grains['id'])) %}include:
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.logrotate'.format(grains['id'])) %}include:
   - components.system.logrotate.install
   - components.system.logrotate.config
 
 Generate logrotate checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.logrotate
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.logrotate
     - makedirs: True
     - create: True
 {%- else -%}

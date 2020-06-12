@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.sspl'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.sspl'.format(grains['id'])) %}
 include:
   - components.sspl.prepare
   - components.sspl.install
@@ -8,7 +8,7 @@ include:
 
 Generate sspl checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.sspl
     - makedirs: True
     - create: True
     - order: last
