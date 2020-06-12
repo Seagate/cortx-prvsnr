@@ -96,4 +96,4 @@ Remove s3server repo:
 
 Delete s3server checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3server
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3server

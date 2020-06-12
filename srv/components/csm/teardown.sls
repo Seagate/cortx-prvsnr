@@ -33,7 +33,7 @@ Remove crontab:
 
 Delete csm checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.csm
 
 # TODO TEST
 Remove csm user from prvsnrusers group:

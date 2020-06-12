@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.storage'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.storage'.format(grains['id'])) %}
 include:
   - components.system.storage.prepare
   - components.system.storage.install
@@ -6,7 +6,7 @@ include:
 
 Generate storage checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.storage
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.storage
     - makedirs: True
     - create: True
 {%- else -%}

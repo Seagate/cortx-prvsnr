@@ -11,7 +11,7 @@
 #   7. Cleanup /tmp 
 #   8. Create unboxing user.
 #   9. Create boxing flag file on primary node:
-#       /opt/seagate/eos-prvsnr/generated_config/boxed
+#       /opt/seagate/cortx/provisioner/generated_config/boxed
 #       Creating file on only one node ensures that the unboxing is executed only on primary node.
 set -euE
 
@@ -67,8 +67,8 @@ function create_unboxing_user {
     _user="cortxub"
     _sceret=
 
-    if [[ -f /opt/seagate/eos-prvsnr/generated_configs/cluster_id ]]; then
-        _secret=`cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id | cut -d- -f 5`
+    if [[ -f /opt/seagate/cortx/provisioner/generated_configs/cluster_id ]]; then
+        _secret=`cat /opt/seagate/cortx/provisioner/generated_configs/cluster_id | cut -d- -f 5`
     else
         echo "ERROR: Cortx cluster is not configured on this node" | tee -a ${LOG_FILE}
     fi

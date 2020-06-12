@@ -8,7 +8,7 @@ base:
     - components.commons
     - components.corosync-pacemaker
     - components.elasticsearch
-    - components.eoscore
+    - components.cortx-moto
     - components.haproxy
     - components.openldap
     - components.release

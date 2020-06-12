@@ -12,7 +12,7 @@ import time
 from shutil import copyfile
 
 def storage_device_config():
-    _pillar_path = '/opt/seagate/eos-prvsnr/pillar/components/cluster.sls'
+    _pillar_path = '/opt/seagate/cortx/provisioner/pillar/components/cluster.sls'
     
     if not os.path.exists(_pillar_path + '.bak'):
         copyfile(_pillar_path, _pillar_path + '.bak')
@@ -80,7 +80,7 @@ def storage_device_config():
 
 
 def nw_roaming_ip():
-    _pillar_path = '/opt/seagate/eos-prvsnr/pillar/components/cluster.sls'
+    _pillar_path = '/opt/seagate/cortx/provisioner/pillar/components/cluster.sls'
     if not os.path.exists(_pillar_path):
         _pillar_path = '/opt/seagate/ees-prvsnr/pillar/components/cluster.sls'
         if not os.path.exists(_pillar_path):

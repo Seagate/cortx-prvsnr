@@ -11,9 +11,9 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Stop all EOS services either on remote host or locally.
+Stop all CORTX services either on remote host or locally.
 
-Target host is considered to be an EOS SaltStack master.
+Target host is considered to be an CORTX SaltStack master.
 
 General options:
 $base_options_usage

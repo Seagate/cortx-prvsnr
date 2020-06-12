@@ -12,12 +12,12 @@ Remove client cert rpm:
   file.absent:
     - name: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
-Remove eos-s3iamcli:
+Remove cortx-s3iamcli:
   pkg.removed:
     - pkgs:
-      - eos-s3iamcli
-      # - eos-s3iamcli-devel
+      - cortx-s3iamcli
+      # - cortx-s3iamcli-devel
 
 Delete s3clients checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3clients
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3clients
