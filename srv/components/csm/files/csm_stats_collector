@@ -39,33 +39,33 @@ class Statsd(Stats):
 
 # Components to Pull data from
 
-class Mero:
+class Motr:
     @staticmethod
     def add_args(component_parser):
-        parser = component_parser.add_parser("mero",
-                    help = "provides mero capacity stats")
-        parser.set_defaults(component = Mero)
+        parser = component_parser.add_parser("motr",
+                    help = "provides motr capacity stats")
+        parser.set_defaults(component = Motr)
 
     @staticmethod
     def handle_stats(stats_client, args):
-        ''' Pull mero capacity '''
+        ''' Pull motr capacity '''
         try:
-            cmd = ['hctl', 'mero', 'status', '--json']
+            cmd = ['hctl', 'motr', 'status', '--json']
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             status_json = json.loads(p.communicate()[0])
             if status_json is None:
-                raise Exception("check hctl mero status")
+                raise Exception("check hctl motr status")
             else:
                 total_space = status_json["csrStats"]["_fs_stats"]["_fss_total_disk"]
                 free_space = status_json["csrStats"]["_fs_stats"]["_fss_free_disk"]
                 used_space = int(total_space) - int(free_space)
-                mero = {"mero.total_space": total_space,
-                    "mero.free_space": free_space,
-                    "mero.used_space": used_space }
-                for space in mero:
-                    stats_client.gauges_metric(space, mero[space])
+                motr = {"motr.total_space": total_space,
+                    "motr.free_space": free_space,
+                    "motr.used_space": used_space }
+                for space in motr:
+                    stats_client.gauges_metric(space, motr[space])
         except Exception as e:
-            syslog.syslog(syslog.LOG_ERR, 'Failed to collect Mero stats: %s. %s' %(e, traceback.format_exc()))
+            syslog.syslog(syslog.LOG_ERR, 'Failed to collect Motr stats: %s. %s' %(e, traceback.format_exc()))
 
 class Haproxy:
     # Keepalived conf file
@@ -140,10 +140,10 @@ def usage():
 Collect stats from different component..
 
 component:
-    mero
-        Info:       It provide mero capacity stats.
+    motr
+        Info:       It provide motr capacity stats.
         Example:
-            $./csm-stats-collector mero
+            $./csm-stats-collector motr
 
     haproxy
         Info:       It provide haproxy backends server stats.
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
 def cli():
     try:
-        component_dict = { "mero"    : Mero,
+        component_dict = { "motr"    : Motr,
                            "haproxy" : Haproxy }
 
         # Handle invalid component

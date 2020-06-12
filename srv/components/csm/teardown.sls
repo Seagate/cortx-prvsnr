@@ -1,7 +1,7 @@
 {% import_yaml 'components/defaults.yaml' as defaults %}
 Stage - Reset CSM:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/csm/conf/setup.yaml', 'csm:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:reset')
 
 Remove csm package:
   pkg.purged:
