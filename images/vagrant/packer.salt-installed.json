@@ -25,7 +25,7 @@
   "provisioners": [
     {
      "type": "file",
-     "source": "{{template_dir}}/../../cli/src/functions.sh",
+     "source": "{{template_dir}}/../../cli/src/common_utils/functions.sh",
      "destination": "/tmp/functions.sh"
     },
     {

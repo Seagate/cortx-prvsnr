@@ -133,6 +133,33 @@ class SWStackUpdateError(ProvisionerError):
         )
 
 
+# TODO TEST EOS-8940
+class HAPostUpdateError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to apply Hare post_update logic, reason: {!r}'
+            .format(self.reason)
+        )
+
+
+class ClusterNotHealthyError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to apply Hare post_update logic, reason: {!r}'
+            .format(self.reason)
+        )
+
+
 # TODO TEST
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True

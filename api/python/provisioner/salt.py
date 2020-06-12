@@ -2,7 +2,8 @@ import attr
 import salt.config
 from salt.client import LocalClient, Caller
 from salt.runner import RunnerClient
-from typing import List, Union, Dict, Tuple, Iterable, Any
+from typing import List, Union, Dict, Tuple, Iterable, Any, Callable, Optional
+from pathlib import Path
 import logging
 
 from .config import ALL_MINIONS, LOCAL_MINION
@@ -700,14 +701,31 @@ class SaltJobsRunner:
 class YumRollbackManager:
     targets: str = ALL_MINIONS
     multiple_targets_ok: bool = False
+    pre_rollback_cb: Optional[Callable] = None
     _last_txn_ids: Dict = attr.ib(init=False, default=attr.Factory(dict))
     _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
-    def __enter__(self):
-        self._last_txn_ids = cmd_run(
+    def _resolve_last_txn_ids(self):
+        return cmd_run(
             "yum history | grep ID -A 2 | tail -n1 | awk '{print $1}'",
             targets=self.targets
         )
+
+    def _yum_rollback(self):
+        # TODO IMPROVE minion might be stopped at that moment,
+        #      option - use some ssh fallback
+        for target, txn_id in self._last_txn_ids.items():
+            logger.info("Starting rollback on target {}".format(target))
+            cmd_run(
+                "yum history rollback -y {}".format(txn_id),
+                targets=target
+            )
+            logger.info(
+                "Rollback on target {} is completed".format(target)
+            )
+
+    def __enter__(self):
+        self._last_txn_ids = self._resolve_last_txn_ids()
 
         if (
             not self.multiple_targets_ok
@@ -730,18 +748,16 @@ class YumRollbackManager:
         if exc_type is None:
             return
 
+        # TODO TEST EOS-8940
+        if self.pre_rollback_cb:
+            try:
+                self.pre_rollback_cb(self, exc_type, exc_value, exc_traceback)
+            except Exception as exc:
+                self._rollback_error = exc
+                return
+
         try:
-            # TODO IMPROVE minion might be stopped at that moment,
-            #      option - use some ssh fallback
-            for target, txn_id in self._last_txn_ids.items():
-                logger.info("Starting rollback on target {}".format(target))
-                cmd_run(
-                    "yum history rollback -y {}".format(txn_id),
-                    targets=target
-                )
-                logger.info(
-                    "Rollback on target {} is completed".format(target)
-                )
+            self._yum_rollback()
         except Exception as exc:
             self._rollback_error = exc
 

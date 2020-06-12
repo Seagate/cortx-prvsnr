@@ -17,16 +17,6 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
-function _lerror {
-    local msg=${1}
-    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
-}
-
-function _linfo {
-    local msg=${1}
-    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
-}
-
 function user_confirmation {
     _linfo "*****************************************************************"
     _linfo "***************************  WARNING  ***************************"

@@ -74,6 +74,8 @@ def check_salt_master_is_responded():
 
 # TODO TEST
 def config_salt_master():
+    logger.info("Updating salt-master configuration")
+
     # get salt master PID
     res = runner_function_run(
         'salt.cmd', fun_args=('service.show', 'salt-master')
@@ -118,6 +120,7 @@ def config_salt_master():
 
 
 def ensure_salt_master_is_running():
+    logger.info("Ensuring salt-master is running")
     runner_function_run(
         'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
     )

@@ -1135,7 +1135,7 @@ def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request
             "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
             "{ssh_config} {sudo} {singlenode}\""
             .format(
-                script_path=(project_path / 'cli/src/functions.sh'),
+                script_path=(project_path / 'cli/src/common_utils/functions.sh'),
                 repo_src='local',
                 prvsnr_version="''",
                 hostspec=mhost.hostname,
@@ -1161,7 +1161,7 @@ def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request)
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(
             ". {} && configure_salt '{}' '' '' '' {} {}".format(
-                cli_dir / 'functions.sh', minion_id, is_primary, primary_host
+                cli_dir / 'common_utils/functions.sh', minion_id, is_primary, primary_host
             )
         )
 
@@ -1172,7 +1172,7 @@ def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
 
     for label, host_spec in eos_hosts.items():
         eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
-            cli_dir / 'functions.sh', host_spec['minion_id'])
+            cli_dir / 'common_utils/functions.sh', host_spec['minion_id'])
         )
 
     eos_primary_mhost.check_output("salt '*' mine.update")
