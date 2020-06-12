@@ -7,6 +7,6 @@ include:
 
 Generate nfs checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.nfs
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.nfs
     - makedirs: True
     - create: True

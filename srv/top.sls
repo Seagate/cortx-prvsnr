@@ -16,7 +16,7 @@ base:
     - components.misc_pkgs.ssl_certs
     # IO Stack
     - components.misc_pkgs.lustre
-    - components.eoscore
+    - components.cortx-moto
     - components.s3server
     - components.hare
     # Management Stack

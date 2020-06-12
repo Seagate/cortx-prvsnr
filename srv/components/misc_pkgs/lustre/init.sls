@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.lustre'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.lustre'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.lustre.prepare
   - components.misc_pkgs.lustre.install
@@ -8,7 +8,7 @@ include:
 
 Generate lustre checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.lustre
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.lustre
     - makedirs: True
     - create: True
 {%- else -%}

@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.s3server'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.s3server'.format(grains['id'])) %}
 include:
   - components.s3server.prepare
   - components.s3server.install
@@ -8,7 +8,7 @@ include:
 
 Generate s3server checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3server
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3server
     - makedirs: True
     - create: True
 
