@@ -19,7 +19,7 @@ truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
-. ${BASEDIR}/../utils
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
 
 export PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 
@@ -40,9 +40,12 @@ export private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_n
 function check_boxing_flag {
     if [[ -f '/opt/seagate/cortx/provisioner/generated_config/boxed' ]]
     then
-        echo "INFO: Boxed file found." | tee ${LOG_FILE}
+        echo "DEBUG: Boxed file found." >> ${LOG_FILE}
     else
-        echo "ERROR: Boxed file not found. Cannot initiate unboxing sequence." | tee ${LOG_FILE}
+        echo "\
+ERROR: Boxing command was not run
+       Please ensure that the boxing sequence was run successfully before running unboxing.
+***** FAILED!! *****" | tee -a ${LOG_FILE}
         exit 1
     fi
 }

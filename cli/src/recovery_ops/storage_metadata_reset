@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/storage_metadata_reset.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+# truncate -s 0 ${LOG_FILE}
+
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
+
+
+function trap_handler {
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
+}
+trap trap_handler ERR
+
+BASEDIR=$(dirname "${BASH_SOURCE}")
+
+function _lerror {
+    local msg=${1}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
+function _linfo {
+    local msg=${1}
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
+function user_confirmation {
+    _linfo "*****************************************************************"
+    _linfo "***************************  WARNING  ***************************"
+    _linfo "*****************************************************************"
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  You acknowledge that you understand, what you are about to do." 2>&1 | tee -a ${LOG_FILE}
+    echo -e "" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "##  Acknowledgement:" 2>&1 | tee -a ${LOG_FILE}
+    echo -e ""
+    echo -e "##    You are about to wipeout ALL data on storage." 2>&1 | tee -a ${LOG_FILE}
+    echo -n "##    Proceed (y/n)? " 2>&1 | tee -a ${LOG_FILE}
+    read answer
+    echo -e "##       Answer: ${answer}" >> ${LOG_FILE}
+    echo -e ""
+    _linfo "*****************************************************************"
+
+    if [ "$answer" == "${answer#[Yy]}" ] ;then
+        _linfo "User has decided to abort. Good decision..."
+        _linfo "*****************************************************************"
+        exit 10
+    else
+        _linfo "User has decided to proceed with data destruction."
+    fi
+    _linfo "*****************************************************************"
+}
+
+function trigger_hare_reset {
+    _linfo "*****************************************************************"
+    _linfo "Starting metadata reset using Hare utility: hare-m0reset."
+    _linfo "*****************************************************************"
+    
+    bash /opt/seagate/eos/hare/libexec/prov-m0-reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+        _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
+    )
+
+    _linfo "Metadata reset operation complete."
+    _linfo "*****************************************************************"
+}
+
+function trigger_s3_cleanup {
+
+    _linfo "*****************************************************************"
+    _linfo "Executing script: /opt/seagate/eos/s3server/reset/reset_s3.sh"
+    _linfo "*****************************************************************"
+
+    if [[ -f "/opt/seagate/eos/s3server/reset/reset_s3.sh" ]]; then
+        sh /opt/seagate/eos/s3server/reset/reset_s3.sh --check-motr-cleanup --cleanup-rabbitmq 2>&1 | tee -a ${LOG_FILE}|| (
+            _lerror "Script */opt/seagate/eos/s3server/reset/reset_s3.sh* failed to execute. Check log file: ${LOG_FILE}"
+        )
+    else
+        _lerror "S3 reset script not found."
+    fi
+
+    _linfo "*****************************************************************"
+}
+
+ensure_healthy_cluster
+user_confirmation
+trigger_hare_reset
+ensure_healthy_cluster
+trigger_s3_cleanup
+
+_linfo "*****************************************************************"
+_linfo "Done! The metadata has been completely erased."
+_linfo "Cluster is ready for use..."
+_linfo "Detailed logs available at: "
+_linfo "        ${LOG_FILE}"
+_linfo "*****************************************************************"
+_linfo ""
+_linfo ""

@@ -10,3 +10,5 @@ Install RabbitMQ:
     - name: rabbitmq-server
     - version: {{ pillar ['commons']['version']['rabbitmq'] }}
     - refresh: True
+    - require:
+      - Install RabbitMQ prereqs

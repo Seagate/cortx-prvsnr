@@ -8,21 +8,16 @@ Sync data:
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% if (not "RedHat" in grains['os']) or (salt['cmd.run']('subscription-manager list|grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
+{% if (not "RedHat" in grains['os']) or (not salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
 
 # Adding repos here are redundent thing.
 # These repos get added in prereq-script, setup-provisioner
 #TODO Remove redundency
  
-cleanup_yum_repos_dir:
+Cleanup yum repos directory:
   cmd.run:
-    - name: rm -rf /etc/yum.repos.d/*.repo
+    - name: rm -rf /etc/yum.repos.d/CentOS-*.repo
     - if: test -f /etc/yum.repos.d/CentOS-Base.repo
-
-Reset EPEL:
-  cmd.run:
-    - name: rm -rf /etc/yum.repos.d/epel.repo.*
-    - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
 
 {% for repo in defaults.base_repos.centos_repos %}
 add_{{repo.id}}_repo:
@@ -31,29 +26,40 @@ add_{{repo.id}}_repo:
     - humanname: {{ repo.id }}
     - baseurl: {{ repo.url }}
     - gpgcheck: 0
+    - require:
+      - Cleanup yum repos directory
 {% endfor %}
+{%- endif %}
 
-add_epel_repo:
+Configure yum:
+  file.managed:
+    - name: /etc/yum.conf
+    - source: salt://components/system/files/etc/yum.conf
+
+Reset EPEL:
+  cmd.run:
+    - name: rm -rf /etc/yum.repos.d/epel.repo.*
+    - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
+
+Add EPEL repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.epel_repo.id }}
     - humanname: epel
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
+    - requrie:
+      - Reset EPEL
+      - Configure yum
 
-add_saltsatck_repo:
+Add Saltsatck repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.saltstack_repo.id }}
     - humanname: saltstack
     - baseurl: {{ defaults.base_repos.saltstack_repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
-
-{% endif %}
-
-Configure yum:
-  file.managed:
-    - name: /etc/yum.conf
-    - source: salt://components/system/files/etc/yum.conf
+    - require:
+      - Add EPEL repo
 
 Add commons yum repo:
   pkgrepo.managed:
@@ -62,11 +68,19 @@ Add commons yum repo:
     - humanname: commons
     - baseurl: {{ defaults.commons.repo.url }}
     - gpgcheck: 0
+    - require:
+      - Add EPEL repo
 
-clean_yum_local:
+Clean yum local:
   cmd.run:
     - name: yum clean all
+    - require:
+      - Configure yum
+      - Add commons yum repo
+      - Add Saltsatck repo
+      - Add EPEL repo
 
-clean_yum_cache:
+Clean yum cache:
   cmd.run:
     - name: rm -rf /var/cache/yum
+    - requrie: Clean yum local

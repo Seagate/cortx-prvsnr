@@ -9,12 +9,12 @@ if [[ ! -e "$log_file" ]]; then
 fi
 
 # rpm package places scripts in parent folder
-if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-    repo_root_dir="$(realpath $cli_scripts_dir/../)"
+pparent_dir=$(cd $cli_scripts_dir/../ && pwd)
+if [[ "$(basename ${pparent_dir})" == 'src' ]]; then
+    repo_root_dir="$(realpath $cli_scripts_dir/../../../)"
 else
     repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
-
 
 # TODO API for error exit that might:
 #       - echos to stderr
@@ -814,7 +814,7 @@ EOF
     $_cmd bash -c "$_script" 2>&1 | tee -a ${LOG_FILE}
 
     if [[ -n "$_hostspec" ]]; then
-        scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir/"
+        scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
     fi
 }
 
@@ -1623,9 +1623,9 @@ function update_release_pillar {
     local _release_sls_path="pillar/components/release.sls"
 
     if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _release_sls="$(realpath $cli_scripts_dir/../$_release_sls_path)"
-    else
         _release_sls="$(realpath $cli_scripts_dir/../../$_release_sls_path)"
+    else
+        _release_sls="$(realpath $cli_scripts_dir/../../../$_release_sls_path)"
     fi
     _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
@@ -1650,9 +1650,9 @@ function update_cluster_pillar_hostname {
     local _cluster_sls_path="pillar/components/cluster.sls"
 
     if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _cluster_sls="$(realpath $cli_scripts_dir/../$_cluster_sls_path)"
-    else
         _cluster_sls="$(realpath $cli_scripts_dir/../../$_cluster_sls_path)"
+    else
+        _cluster_sls="$(realpath $cli_scripts_dir/../../../$_cluster_sls_path)"
     fi
     _line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
     sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls

@@ -45,7 +45,14 @@ setup(
     keywords='EOS Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
-    package_data={'provisioner': ['api_spec.yaml', 'params_spec.yaml']},  # TODO LICENSE, other
+    # TODO LICENSE, other
+    package_data={
+        'provisioner': [
+            'api_spec.yaml',
+            'params_spec.yaml',
+            'provisioner.conf'
+        ]
+    },
     # include_package_data=True,  # TODO
     # zip_safe=False,  TODO,
     entry_points={
@@ -55,7 +62,7 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt',
+        'salt==3000.3',  # FIXME 2019.2.0 is buggy, TODO update salt packages for provisioner setup rpm as well
         'attrs'
     ],  # TODO
     setup_requires=['pytest-runner'],

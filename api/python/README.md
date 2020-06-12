@@ -90,6 +90,78 @@ pass his name along with his password to `auth_init`.
 
 *TODO*
 
+## Output
+
+Supported output formats:
+  - plain
+  - json
+  - yaml
+
+Might be configured using (from lower to higher precedence):
+  - environment variable `PRVSNR_OUTPUT`, defaults to `plain`
+  - cli tool option `--output`, defaults to `PRVSNR_OUTPUT` env variable value
+
+## Logging
+
+Supported logging handlers (might be combined):
+- `console`: logs to either `stdout` or `stderr`
+- `rsyslog`: logs to rsyslog
+- `logfile`: logs to specified file with log rotation
+
+Supported logging formats:
+- `human` human friendly format oriented on progress output
+- `full` rich logging format with many fields good for logs exploration and debugging
+
+Ways of configuration:
+- configuration file (from lower to higher precedence):
+    - hardcoded logging configuration
+    - `<api package installation directory>/provisioner.conf`
+- cli tool options (overides configuration file options):
+    - common for all handlers:
+        - `--<handler>` - enables a `<handler>`
+        - `--no<handler>` - disables a `<handler>`
+        - `--<handler>-level {DEBUG|INFO|WARN|ERROR}` - sets logging level for a `<handler>`
+        - `--<handler>-formatter {human|full}` - sets logging format for a `<handler>`
+    - specific:
+        - `--console-stream {stderr|stdout}`
+        - `--logfile-filename <path>` path to a log file
+        - `--logfile-maxBytes <bytes>` max file size in bytes
+        - `--logfile-backupCount <number>` max backup log files number
+
+### Default settings
+
+Provisioner confiuration file:
+- `console` handler:
+    - enabled
+    - log format is `human`
+    - log level is `INFO`
+    - log stream is `stderr`
+- `rsyslog` handler:
+    - enabled
+    - log format is `full`
+    - log level is `DEBUG`
+- `logfile` handler:
+    - disabled
+    - log format is `full`
+    - log level is `DEBUG`
+    - `filename` is `./prvsnr-api.log`
+    - `maxBytes` is `10485760` (`10 MB`)
+    - `backupCount` is `10`
+
+Hardcoded configuration (used if no configuation file is found):
+- `console` handler is enabled with `full` format and `DEBUG` level
+
+### Additional CLI logging rules
+
+1. if `output` is set to machine readable one (`json`, `yaml`) then `console`
+   handler is disabled
+2. if api command is one of `LOG_FORCED_LOGFILE_CMDS` in [config.py](provisioner/config.py) then:
+    - `logfile` handler is enabled
+    - if no value for `filename` is provided then it is generated. Genarated
+      files are located in either `/var/log/seagate/provisioner` or in the current
+      directory if the former doesn't exist.
+
+
 ## Usage examples
 
 ### Integration with apps going to be frozen

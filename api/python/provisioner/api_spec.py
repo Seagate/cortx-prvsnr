@@ -50,9 +50,7 @@ def process_param_spec(
                 if pname in dest:
                     logger.error("Duplicate entry {}".format(pname))
                     raise ValueError('duplicate entry {}'.format(pname))
-                dest[pname] = param.Param(
-                    pname, pi_path=path, pi_key=param.KeyPath(value)
-                )
+                dest[pname] = param.Param(pname, (value, path))
             else:
                 logger.error("Failed to update {}".format(type(value)))
                 raise TypeError('{}'.format(type(value)))

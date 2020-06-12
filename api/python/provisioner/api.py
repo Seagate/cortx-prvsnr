@@ -59,8 +59,17 @@ def get_result(cmd_id: str):
     )
 
 
-def pillar_get(targets=ALL_MINIONS, nowait=False):
-    return _api_call('pillar_get', targets=targets, nowait=nowait)
+def pillar_get(*keypaths, targets=ALL_MINIONS, nowait=False):
+    return _api_call(
+        'pillar_get', *keypaths, targets=targets, nowait=nowait
+    )
+
+
+def pillar_set(keypath, value, fpath=None, targets=ALL_MINIONS, nowait=False):
+    return _api_call(
+        'pillar_set', keypath, value, fpath=fpath,
+        targets=targets, nowait=nowait
+    )
 
 
 def get_params(*params, targets=ALL_MINIONS, nowait=False):
@@ -321,4 +330,18 @@ def configure_eos(
 
     return _api_call(
         'configure_eos', component, source=source, show=show, reset=reset
+    )
+
+
+def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
+    r"""Creates an user.
+
+    :param uname: name of the user. Default: None
+    :param passwd: password for the user. Default: None
+    :param targets: (optional) targets to create user. Default: all minions
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+    return _api_call(
+        'create_user',
+        uname, passwd, targets=targets, nowait=nowait
     )

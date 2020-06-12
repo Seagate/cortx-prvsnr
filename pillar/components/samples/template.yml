@@ -85,7 +85,7 @@ s3client:
   s3server:
     iam_admin:
       user: sgiamadmin
-      secret: ldapadmin
+      secret: "B4kf1T6Qso"
     fqdn: null
     ip: null
   secret_key: null
@@ -95,23 +95,30 @@ release:
     repos: {}
 corosync-pacemaker:
   user: hacluster
-  secret: hacluster
+  secret: "B4kf1T6Qso"
   cluster_name: eos_cluster
 elasticsearch:
   cluster_name: elasticsearch_cluster
   network_host: 0.0.0.0
   http_port: 9200
 commons:
+  cortx_commons:
+    RedHat: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
+    CentOS: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/
   version:
     erlang: latest
+    elasticsearch: 6.8.8-1
     rabbitmq: latest
     nodejs: v12.13.0
+    rsyslog: 8.40.0-1.el7
+    rsyslog-elasticsearch: 8.40.0-1.el7
+    rsyslog-mmjsonparse: 8.40.0-1.el7
 openldap:
   admin:
-    secret: "seagate"
+    secret: "B4kf1T6Qso"
   iam_admin:
     user: "sgiamadmin"
-    secret: "ldapadmin"
+    secret: "B4kf1T6Qso"
   backend_db: mdb
 system:
   ntp:
@@ -120,7 +127,7 @@ system:
 sspl:
   rmq:
     user: sspluser
-    secret: sspl4ever
+    secret: "B4kf1T6Qso"
   healthmappath: /tmp/resource_health_view.json
 uds:
   version:

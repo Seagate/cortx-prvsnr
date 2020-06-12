@@ -4,12 +4,14 @@ import builtins
 import typing
 
 from provisioner.errors import (
+    PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
     ClusterMaintenanceDisableError
 )
+from provisioner import config
 from provisioner import (
     pillar, commands, inputs, ALL_MINIONS
 )
@@ -19,22 +21,244 @@ from provisioner.values import MISSED
 from .helper import mock_fun_echo, mock_fun_result
 
 
-def test_run_args_types():
+# HELPERS and FIXTURE
+
+@pytest.fixture(scope='module')
+def fw_source(tmpdir_module):
+    fw_source = tmpdir_module / 'somefile'
+    fw_source.touch()
+    return fw_source
+
+
+@pytest.fixture(scope='module')
+def controller_cli_script():
+    return (
+        config.PRVSNR_FILEROOTS_DIR /
+        'components/controller/files/scripts/controller-cli.sh'
+    )
+
+
+@pytest.fixture
+def storage_enclosure_data(mocker):
+    ip = '1.2.3.4'
+    user = 'someuser'
+    passwd = 'somepasswd'
+
+    test_pillar = dict(someminionid={
+        "storage_enclosure": {
+            "controller": {
+                "primary_mc": {
+                    "ip": f"{ip}"
+                },
+                "user": f"{user}",
+                "secret": f"{passwd}"
+            }
+        }
+    })
+
+    mocker.patch.object(
+        pillar, 'pillar_get', autospec=True, return_value=test_pillar
+    )
+
+    return (ip, user, passwd)
+
+
+@pytest.fixture
+def state_fun_executer_m(mocker):
+    return mocker.patch.object(
+        commands, 'StateFunExecuter', autospec=True
+    )
+
+
+# ### PillarGet ###
+
+def test_commands_RunArgs_types():
     assert typing.get_type_hints(commands.RunArgs) == {
         'targets': str,
         'dry_run': bool
     }
 
 
-def test_run_args_base_types():
+def test_commands_RunArgs_base_types():
     assert typing.get_type_hints(commands.RunArgsBase) == {
         'targets': str
     }
 
 
-def test_get_from_spec(monkeypatch):
+def test_commands_PillarGet_from_spec(monkeypatch):
+    get_cmd = commands.PillarGet.from_spec()
+    assert get_cmd.input_type is inputs.PillarKeysList
+
+    class PillarKeysListChild(inputs.PillarKeysList):
+        pass
+
+    monkeypatch.setattr(
+        inputs, 'PillarKeysListChild', PillarKeysListChild, raising=False
+    )
+
+    get_cmd = commands.PillarGet.from_spec(input_type='PillarKeysListChild')
+    assert get_cmd.input_type is PillarKeysListChild
+
+
+def test_commands_PillarGet_run(test_pillar):
+    get_cmd = commands.PillarGet.from_spec()
+
+    # all pillar
+    assert get_cmd.run() == test_pillar
+
+    # specific keys
+    pi_key1 = '1/2/3'
+    pi_key2 = '1/2/5'
+    pi_key3 = '1/di_parent/8'
+    pi_key4 = '1/di_parent/some_key'
+
+    get_cmd = commands.PillarGet()
+    res = get_cmd.run(pi_key1, pi_key2, pi_key3, pi_key4)
+
+    _iter = iter(test_pillar)
+    minion_id_1 = next(_iter)
+    minion_id_2 = next(_iter)
+
+    assert res == {
+        minion_id_1: {
+            pi_key1: test_pillar[minion_id_1]['1']['2']['3'],
+            pi_key2: test_pillar[minion_id_1]['1']['2']['5'],
+            pi_key3: MISSED,
+            pi_key4: MISSED
+        }, minion_id_2: {
+            pi_key1: test_pillar[minion_id_2]['1']['2']['3'],
+            pi_key2: test_pillar[minion_id_2]['1']['2']['5'],
+            pi_key3: test_pillar[minion_id_2]['1']['di_parent']['8'],
+            pi_key4: MISSED
+        }
+    }
+
+
+# ### PillarSet ###
+
+def test_commands_PillarSet_from_spec(monkeypatch):
+    get_cmd = commands.PillarSet.from_spec()
+    assert get_cmd.input_type is inputs.PillarInputBase
+
+    class PillarInputChild(inputs.PillarInputBase):
+        pass
+
+    monkeypatch.setattr(
+        inputs, 'PillarInputChild', PillarInputChild, raising=False
+    )
+
+    get_cmd = commands.PillarSet.from_spec(input_type='PillarInputChild')
+    assert get_cmd.input_type is PillarInputChild
+
+
+@pytest.mark.patch_logging([(commands, ('error',))])
+def test_commands_PillarSet_run_dry_run(patch_logging, mocker):
+    # TODO IMPROVE OR TODO DOC
+    # - PillarSet uses isinstance and it fails for PillarInputBase mocks:
+    #       TypeError: isinstance() arg 2 must be a type or tuple of types
+    #   options: mock only just 'from_args' method
+    #       - with autospec=True fails since classmethods
+    #         mocks are not callable for older version of mocker
+    #       - WORKS with autospec=False
+    from_args_m = mocker.patch.object(
+        commands.inputs.PillarInputBase, 'from_args'
+    )
+    pillar_updater_m = mocker.patch.object(
+        commands, 'PillarUpdater', autospec=True
+    )
+
+    set_cmd = commands.PillarSet()
+
+    keypath, value, fpath = '1/2/3', 456, '789.sls'
+
+    # inputs as first arg object
+    input_data = set_cmd.input_type(keypath, value, fpath=fpath)
+    set_cmd.run(input_data, dry_run=True)
+
+    from_args_m.assert_not_called()
+    pillar_updater_m.assert_not_called()
+
+    # inputs as a set of attrs
+    set_cmd.run(keypath, value, fpath=fpath, dry_run=True)
+    from_args_m.assert_called_once_with(keypath, value, fpath=fpath)
+    pillar_updater_m.assert_not_called()
+
+
+@pytest.mark.patch_logging([(commands, ('error',))])
+def test_commands_PillarSet_run_happy_path(patch_logging, mocker):
+    pillar_updater_m = mocker.patch.object(
+        commands, 'PillarUpdater', autospec=True
+    )
+
+    keypath, value, fpath = '1/2/3', 456, '789.sls'
+    targets = 'some-target'
+
+    inputs = commands.inputs.PillarInputBase(keypath, value, fpath=fpath)
+    set_cmd = commands.PillarSet()
+    set_cmd.run(inputs, targets=targets)
+
+    # TODO IMPROVE review mock call API for more accurate verification
+    assert pillar_updater_m.mock_calls == [
+        mocker.call(targets),
+        mocker.call().update(inputs),
+        mocker.call().apply(),
+    ]
+
+
+@pytest.mark.parametrize(
+    'rollback_exc', [None, TypeError('someerror')],
+    ids=['rollback_ok', 'rollback_failed']
+)
+def test_commands_PillarSet_run_fail_pillar_apply(mocker, rollback_exc):
+    mock_manager = mocker.MagicMock()
+
+    logger_m = mocker.patch.object(
+        commands, 'logger', autospec=False
+    )
+    pillar_updater_m = mocker.patch.object(
+        commands, 'PillarUpdater', autospec=True
+    )
+
+    mock_manager.attach_mock(logger_m, 'logger')
+    mock_manager.attach_mock(pillar_updater_m, 'pillar_updater')
+
+    exc = ValueError('someerror')
+    pillar_updater_m.return_value.apply.side_effect = [exc, mocker.DEFAULT]
+
+    if rollback_exc:
+        pillar_updater_m.return_value.rollback.side_effect = rollback_exc
+
+    inputs = commands.inputs.PillarInputBase('1/2/3', 456, fpath='789.sls')
+    targets = 'some-target'
+
+    set_cmd = commands.PillarSet()
+
+    with pytest.raises(PillarSetError) as excinfo:
+        set_cmd.run(inputs, targets=targets)
+
+    assert excinfo.value.reason is exc
+    assert excinfo.value.rollback_error is rollback_exc
+
+    expected_calls = [
+        mocker.call.pillar_updater(targets),
+        mocker.call.pillar_updater().update(inputs),
+        mocker.call.pillar_updater().apply(),
+        mocker.call.pillar_updater().rollback(),
+        mocker.call.logger.exception('Pillar set failed'),
+    ]
+
+    if rollback_exc is None:
+        expected_calls.insert(-1, mocker.call.pillar_updater().apply())
+
+    # TODO IMPROVE review mock call API for more accurate verification
+    assert mock_manager.mock_calls == expected_calls
+
+
+# ### Get ###
+
+def test_commands_Get_from_spec(monkeypatch):
     get_cmd = commands.Get.from_spec()
-    assert get_cmd.params_type is inputs.ParamsList
+    assert get_cmd.input_type is inputs.ParamsList
 
     class ParamsListChild(inputs.ParamsList):
         pass
@@ -43,11 +267,11 @@ def test_get_from_spec(monkeypatch):
         inputs, 'ParamsListChild', ParamsListChild, raising=False
     )
 
-    get_cmd = commands.Get.from_spec(params_type='ParamsListChild')
-    assert get_cmd.params_type is ParamsListChild
+    get_cmd = commands.Get.from_spec(input_type='ParamsListChild')
+    assert get_cmd.input_type is ParamsListChild
 
 
-def test_get_run(test_pillar, param_spec):
+def test_commands_Get_run(test_pillar, param_spec):
     get_cmd = commands.Get.from_spec()
     param1 = 'some_param_gr/attr1'
     param2 = 'some_param_gr/attr2'
@@ -76,7 +300,7 @@ def test_get_run(test_pillar, param_spec):
     }
 
 
-def test_set_from_spec():
+def test_commands_Set_from_spec():
     states = {
         'pre': [
             'some.pre.state'
@@ -85,14 +309,14 @@ def test_set_from_spec():
             'some.post.state'
         ],
     }
-    get_cmd = commands.Set.from_spec(params_type='NTP', states=states)
-    assert get_cmd.params_type is inputs.NTP
+    get_cmd = commands.Set.from_spec(input_type='NTP', states=states)
+    assert get_cmd.input_type is inputs.NTP
     assert get_cmd.pre_states == [State(st) for st in states['pre']]
     assert get_cmd.post_states == [State(st) for st in states['post']]
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_set_run(monkeypatch, some_param_gr, patch_logging):
+def test_commands_Set_run(monkeypatch, some_param_gr, patch_logging):
     pre_states = [State('pre')]
     post_states = [State('post')]
 
@@ -213,7 +437,7 @@ def test_set_run(monkeypatch, some_param_gr, patch_logging):
 def mock_eosupdate(mocker):
     calls = {}
     mocks = {}
-    mock_manager = mocker.MagicMock()
+    mock_manager = mocker.MagicMock()  # TODO DOC
 
     for fun in (
         'YumRollbackManager',
@@ -225,9 +449,10 @@ def mock_eosupdate(mocker):
         'ensure_salt_master_is_running'
     ):
         mock = mocker.patch.object(commands, fun, autospec=True)
+        # TODO DOC
         # TODO IMPROVE ??? is it documented somewhere - patch returns
         #       <class 'function'> but not a Mock child for functions
-        #       or methods if autpospec is True
+        #       or methods if autospec is True
         #      (https://github.com/python/cpython/blob/3.6/Lib/unittest/mock.py#L2185-L2188)  # noqa: E501
         #      but the mock is available as `.mock` property
         #      (https://github.com/python/cpython/blob/3.6/Lib/unittest/mock.py#L188)
@@ -240,6 +465,7 @@ def mock_eosupdate(mocker):
         'YumRollbackManager'
     ].return_value.__enter__.return_value
 
+    # TODO DOC attaching propery mock to a mock
     type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
         return_value=None
     )
@@ -248,7 +474,9 @@ def mock_eosupdate(mocker):
 
 
 @pytest.mark.patch_logging([(commands, ('info',))])
-def test_eosupdate_run_happy_path(patch_logging, mocker, mock_eosupdate):
+def test_commands_EOSUpdate_run_happy_path(
+    patch_logging, mocker, mock_eosupdate
+):
     mock_manager, mocks, calls = mock_eosupdate
 
     # happy path
@@ -277,7 +505,7 @@ def test_eosupdate_run_happy_path(patch_logging, mocker, mock_eosupdate):
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_eosupdate_run_maintenance_enable_failed(
+def test_commands_EOSUpdate_run_maintenance_enable_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -315,7 +543,7 @@ def test_eosupdate_run_maintenance_enable_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_eosupdate_run_sw_stack_update_failed(
+def test_commands_EOSUpdate_run_sw_stack_update_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -387,7 +615,7 @@ def test_eosupdate_run_sw_stack_update_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_eosupdate_run_maintenance_disable_failed(
+def test_commands_EOSUpdate_run_maintenance_disable_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -462,7 +690,7 @@ post_rollback_stages = [
     range(len(post_rollback_stages)),
     ids=post_rollback_stages
 )
-def test_eosupdate_run_post_rollback_fail(
+def test_commands_EOSUpdate_run_post_rollback_fail(
     patch_logging, mocker, mock_eosupdate, post_rollback_stage_idx
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -523,7 +751,7 @@ def test_eosupdate_run_post_rollback_fail(
     assert mock_manager.mock_calls == expected_calls
 
 
-def test_configure_eos(monkeypatch):
+def test_commands_ConfigureEOS(monkeypatch):
     mock_res = []
 
     some_pillar = {
@@ -587,4 +815,72 @@ def test_configure_eos(monkeypatch):
     assert mock_res[0].args_all == ((some_source,), {})
     assert mock_res[1].args_all == (
         (component,), dict(show=False, reset=False, pillar=some_pillar)
+    )
+
+
+# ### FWUpdate ###
+
+@pytest.mark.integration1
+def test_commands_FWUpdate_happy_path(
+    mocker, tmpdir_function, storage_enclosure_data, fw_source,
+    controller_cli_script, state_fun_executer_m
+):
+    ip, user, passwd = storage_enclosure_data
+
+    commands.FWUpdate().run(fw_source)
+
+    state_fun_executer_m.execute.assert_called_once_with(
+        'cmd.run',
+        fun_kwargs=dict(
+            name=(
+                f"{controller_cli_script} host -h {ip} "
+                f"-u {user} -p {passwd} --update-fw {fw_source}"
+            )
+        )
+    )
+
+
+# ### RebootController ###
+
+@pytest.mark.integration1
+def test_commands_RebootController_happy_path(
+    mocker, tmpdir_function, storage_enclosure_data,
+    controller_cli_script, state_fun_executer_m
+):
+    ip, user, passwd = storage_enclosure_data
+    target_ctrl = 'somectrl'
+
+    commands.RebootController().run(target_ctrl)
+
+    state_fun_executer_m.execute.assert_called_once_with(
+        'cmd.run',
+        fun_kwargs=dict(
+            name=(
+                f"{controller_cli_script} host -h {ip} "
+                f"-u {user} -p {passwd} --restart-ctrl {target_ctrl}"
+            )
+        )
+    )
+
+
+# ### ShutdownController ###
+
+@pytest.mark.integration1
+def test_commands_ShutdownController_happy_path(
+    mocker, tmpdir_function, storage_enclosure_data,
+    controller_cli_script, state_fun_executer_m
+):
+    ip, user, passwd = storage_enclosure_data
+    target_ctrl = 'somectrl'
+
+    commands.ShutdownController().run(target_ctrl)
+
+    state_fun_executer_m.execute.assert_called_once_with(
+        'cmd.run',
+        fun_kwargs=dict(
+            name=(
+                f"{controller_cli_script} host -h {ip} "
+                f"-u {user} -p {passwd} --shutdown-ctrl {target_ctrl}"
+            )
+        )
     )

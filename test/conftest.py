@@ -254,6 +254,22 @@ class LocalHostMeta(HostMeta):
 
 def pytest_configure(config):
     config.addinivalue_line(
+        "markers", "unit: mark test as a unit "
+                   "level testing scenario"
+    )
+    config.addinivalue_line(
+        "markers", "integration1: mark test as an integration "
+                   "level testing scenario with mocked env"
+    )
+    config.addinivalue_line(
+        "markers", "integration2: mark test as an integration "
+                   "level testing scenario without mocks"
+    )
+    config.addinivalue_line(
+        "markers", "system: mark test as an system "
+                   "level testing scenario"
+    )
+    config.addinivalue_line(
         "markers", "env_provider(string): mark test to be run "
                    "in the environment provided by the provider"
     )

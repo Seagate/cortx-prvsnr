@@ -7,7 +7,7 @@ truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
-. ${BASEDIR}/../utils
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
 
 
 function trap_handler {
@@ -30,7 +30,7 @@ trap trap_handler ERR
 #           `both`  - Shutdown both nodes
 #
 function shutdown_node {
-    echo "INFO: Shutdown either or both nodes." | tee -a ${LOG_FILE}
+    echo "DEBUG: Shutdown either or both nodes." >> ${LOG_FILE}
 
     local _node="${1:-both}"
 
@@ -52,7 +52,7 @@ function shutdown_node {
         salt srvnode-2 system.shutdown 1 --async
     else
         echo "INFO: Shutting down both nodes in 1 min." | tee -a ${LOG_FILE}
-        salt "*" system.shutdown 1 --async
+        salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
     fi
 }
 

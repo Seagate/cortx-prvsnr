@@ -3,9 +3,10 @@ import subprocess
 from typing import Any, Callable
 import attr
 import json
+import os
 
 from provisioner import _api_cli as api
-from provisioner.__main__ import _prepare_res, _prepare_output
+from provisioner.__main__ import prepare_res, _prepare_output
 from provisioner.errors import ProvisionerError, SaltError
 from provisioner import NONE
 
@@ -33,7 +34,11 @@ def subprocess_runner(monkeypatch):
 def test_api_cli_api_args_to_cli(patch_logging):
     fun = 'some-fun'
     # positional
-    assert api.api_args_to_cli(fun, 'arg1', 'arg2') == [fun, 'arg1', 'arg2']
+    assert api.api_args_to_cli(
+        fun, 'arg1', 'arg2', [1, 2, 3], {'4': {'5': 6}}
+    ) == [
+        fun, 'arg1', 'arg2', '[1, 2, 3]', '{"4": {"5": 6}}'
+    ]
     # optional basic
     assert api.api_args_to_cli(fun, arg1=123) == [fun, '--arg1', '123']
     # optional '-' and '_'
@@ -50,6 +55,10 @@ def test_api_cli_api_args_to_cli(patch_logging):
     assert api.api_args_to_cli(
         fun, arg1=[1, 2, '3']
     ) == [fun, '--arg1', '[1, 2, "3"]']
+    # optional Dict
+    assert api.api_args_to_cli(
+        fun, arg1={'1': {'2': 3, '4': '5'}}
+    ) == [fun, '--arg1', '{"1": {"2": 3, "4": "5"}}']
 
 
 @pytest.mark.patch_logging([(api, ('error',))])
@@ -123,7 +132,7 @@ def test_api_cli_run_cmd_cli_fails(
         1, 'some-command',
         output=(
             fail_scenario.stdout if fail_scenario.stdout is not None
-            else _prepare_output('json', _prepare_res('json', exc=exc))
+            else _prepare_output('json', prepare_res('json', exc=exc))
         ),
         stderr=fail_scenario.stderr
     )
@@ -160,7 +169,23 @@ def test_api_cli_run_cmd_cli_succedes(subprocess_runner, patch_logging):
     # happy path
     subprocess_runner.res = subprocess.CompletedProcess(
         [cmd_name], 0, stdout=_prepare_output(
-            'json', _prepare_res('json', ret=ret)
+            'json', prepare_res('json', ret=ret)
         )
     )
     assert api._run_cmd([cmd_name]) == ret
+
+
+@pytest.mark.patch_logging([(api, ('error',))])
+def test_api_cli_set_env(mocker, patch_logging):
+    cmd_name = 'some-command'
+    env = {'SOMEENV': 'somevalue'}
+    expected = os.environ.copy()
+    expected.update(env)
+
+    run_m = mocker.patch.object(api.subprocess, 'run', autospec=True)
+    mocker.patch.object(
+        api, 'process_cli_result', autospec=True
+    )
+
+    api._run_cmd([cmd_name], env=env)
+    run_m.assert_called_once_with([cmd_name], env=expected)

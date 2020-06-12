@@ -3,7 +3,6 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -14,13 +13,24 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
 . $BASEDIR/prov_tasks
 . $BASEDIR/shutdown
 
+# Check if Boxing flag file is present
+box_flag_file="/opt/seagate/cortx/provisioner/generated_config/boxed"
+if [[ -f $box_flag_file ]]; then
+    echo "INFO: Boxing script already run, printing system details required for unboxing" | tee -a ${LOG_FILE}
+    create_unboxing_user
+    exit 0
+fi
+
 # Prepare shutdown
+ensure_healthy_cluster
+
 # Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Starting maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
@@ -29,7 +39,7 @@ else
 fi
 
 # Provisioner tasks
-stop_rabbitmq_cluster
+#stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
 backup_files
 
@@ -37,7 +47,7 @@ backup_files
 create_unboxing_user
 
 # Create flag file
-boxing_flag
+boxing_flag $box_flag_file
 
 # Power-off sequence
 shutdown_controller

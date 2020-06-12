@@ -10,30 +10,37 @@ class _Singletone:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            _values[str(cls._instance)] = cls._instance
         return cls._instance
+
+
+class _PrvsnrValue(_Singletone):
+    def __new__(cls):
+        instance = super().__new__(cls)
+        if str(instance) not in _values:
+            _values[str(instance)] = instance
+        return instance
 
     def __repr__(self):
         return PRVSNR_VALUES_PREFIX + type(self).__name__.upper()[1:]
 
 
-class _Unchanged(_Singletone):
+class _Unchanged(_PrvsnrValue):
     pass
 
 
-class _Default(_Singletone):
+class _Default(_PrvsnrValue):
     pass
 
 
-class _Undefined(_Singletone):
+class _Undefined(_PrvsnrValue):
     pass
 
 
-class _Missed(_Singletone):
+class _Missed(_PrvsnrValue):
     pass
 
 
-class _None(_Singletone):
+class _None(_PrvsnrValue):
     pass
 
 

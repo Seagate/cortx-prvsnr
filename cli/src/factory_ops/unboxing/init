@@ -3,7 +3,6 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -21,11 +20,11 @@ function usage {
     echo "\
     
     Usage:
-        /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M <management_vip> -C <cluster_vip>
+        $0 -M <management_vip> -C <data_network_vip>
 
     Command Args:
         -M      <management_vip>    Static vip on management network
-        -C      <cluster_vip>       Static vip on data network
+        -C      <data_network_vip>  Static vip on data network
     "
 }
 
@@ -34,8 +33,8 @@ function help {
     ----------- Caveats -------------
     1. The command must be run from primary node in the cluster.
     2. User must provide:
-        a. Management VIP:  Static vip on management network
-        b. Cluster VIP:     Static vip on data network
+        a. Management VIP:      Static vip on management network
+        b. Data Network VIP:    Static vip on data network
 
     -------- Sample command ---------
     /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 172.19.100.100 -C 10.20.100.201
@@ -57,7 +56,7 @@ while [[ $# -gt 0 ]]; do
         ;;
 
         -C)
-            [ -z "$2" ] && die "Error: Cluster VIP not provided";
+            [ -z "$2" ] && die "Error: Data network VIP not provided";
             cluster_vip="$2"
             shift 2
             ;;
@@ -72,6 +71,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 # Proceed only if boxing flag set
 check_boxing_flag
 
@@ -88,30 +88,47 @@ check_mgmt_ip
 update_ssh_config
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}"
-recover_rabbitmq_cluster
-salt "*" state.apply components.s3server.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.csm.config 2>&1 | tee -a ${LOG_FILE}; sleep 5
+
+#recover_rabbitmq_cluster   # Re-provision rabbitmq cluster. Not required.
+
+#echo -n "Configuring s3 on both nodes.........." | tee -a ${LOG_FILE}
+#salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
+
+#echo -n "Configuring CSM on secondary node....." | tee -a ${LOG_FILE}
+#salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
+
+#echo -n "Configuring CSM on primary node......" | tee -a ${LOG_FILE}
+#salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
 # Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Initiating HA cluster start..." 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Starting cluster" 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
-    echo "INFO: Reverting from maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
+
+    echo "INFO: Reverting from maintenance mode" 2>&1 | tee -a ${LOG_FILE}
     hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 
     # Update ClusterIP
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip
-    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    echo "INFO: Setting up Data Network VIP" | tee -a ${LOG_FILE}
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+    echo "*** Mindfulness break...Breathe in...And...Breathe out ***" | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
 
     # Update Management_vip
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_ip
+
+    echo "INFO: Setting up Management VIP" | tee -a ${LOG_FILE}
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break
 
     # Re-run Stonith
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith
+    echo "INFO: Setting up Stonith" | tee -a ${LOG_FILE}
+    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
     echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
     sleep 5     # Mindfulness break...Breathe in...Breathe out
 
@@ -122,13 +139,29 @@ else
 fi
 
 # Update SSPL init
-salt "srvnode-2" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.commons 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-2" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
-salt "srvnode-1" state.apply components.sspl.config.sspl 2>&1 | tee -a ${LOG_FILE}; sleep 5
+echo -n "INFO: Configuring SSPL on primary node........................" | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+echo -n "INFO: Configuring SSPL on secondary node......................" | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+echo "Done." | tee -a ${LOG_FILE}
+
+#echo -n "INFO: Configuring SSPL Health Schema on secondary node........." | tee -a ${LOG_FILE}
+#salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
+
+#echo -n "INFO: Configuring SSPL Health Schema on primary node..........." | tee -a ${LOG_FILE}
+#salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
+#echo "Done." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
 
 # Unboxing SUCCESS
 remove_boxing_flag
+
+echo "\
+***** SUCCESS! *****
+The detailed logs can be seen at: $LOG_FILE
+Done." | tee -a ${LOG_FILE}

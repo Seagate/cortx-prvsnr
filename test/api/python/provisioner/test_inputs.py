@@ -16,24 +16,30 @@ from provisioner.inputs import (
     METADATA_PARAM_GROUP_KEY,
     METADATA_ARGPARSER,
     AttrParserArgs,
-    ParamAttrParserArgs,
+    InputAttrParserArgs,
+    PillarKeysList,
+    PillarInputBase,
     ParamsList,
     ParamGroupInputBase,
     NTP, Network,
     ParamDictItemInputBase,
     EOSUpdateRepo
 )
+from provisioner.pillar import PillarKey
+from provisioner.api_spec import param_spec as _param_spec
 
+
+# HELPERS and FIXTURES
 
 test_param_spec = {
     'some_param_gr/attr1': Param(
-        'some_param_gr/attr1', 'some-pi-path1', 'some-pi-key1'
+        'some_param_gr/attr1', ('some-pi-key1', 'some-pi-path1')
     ),
     'some_param_gr/attr2': Param(
-        'some_param_gr/attr2', 'some-pi-path2', 'some-pi-key2'
+        'some_param_gr/attr2', ('some-pi-key2', 'some-pi-path2')
     ),
     'some/dict/item1': ParamDictItem(
-        'some/dict/item1', 'some-pi-path3', 'some-pi-key3',
+        'some/dict/item1', ('some-pi-key3', 'some-pi-path3'),
         'some_key_attr', 'some_value_attr'
     )
 }
@@ -71,11 +77,46 @@ def param_spec_mocked(monkeypatch, param_spec):
 
 
 # AttrParserArgs tests
-def test_attr_parser_args_kwargs_keys_by_default():
+
+
+def test_inputs_AttrParserArgs_kwargs_keys_by_default():
     SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
     assert set(
         AttrParserArgs(attr.fields(SC).x).kwargs.keys()
     ) == set(('action', 'metavar', 'default', 'help', 'type'))
+
+
+def test_attr_parser_args_kwargs_keys_with_choices():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(choices='somechoices')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'choices'))
+
+
+def test_attr_parser_args_kwargs_keys_with_dest():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(dest='somedest')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'dest'))
+
+
+def test_attr_parser_args_kwargs_keys_with_const():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(const='someconst')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'const'))
 
 
 def test_attr_parser_args_kwargs_keys_for_boolean():
@@ -85,29 +126,54 @@ def test_attr_parser_args_kwargs_keys_for_boolean():
     ) == set(('action', 'help'))
 
 
+def test_attr_parser_args_kwargs_keys_for_store_false():
+    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
+        METADATA_ARGPARSER: dict(action='store_false')
+    })})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'help'))
+
+
+def test_attr_parser_args_kwargs_keys_for_store_const():
+    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
+        METADATA_ARGPARSER: dict(action='store_const')
+    })})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help'))
+
+
 def test_attr_parser_args_name_for_optional():
     SC = attr.make_class("SC", {"x": attr.ib(default=None)})
     assert AttrParserArgs(attr.fields(SC).x).name == '--x'
 
 
-def test_attr_parser_args_name_for_optional_with_underscore():
+def test_inputs_AttrParserArgs_name_for_optional_with_underscore():
     SC = attr.make_class("SC", {"x_y": attr.ib(default=None)})
     assert AttrParserArgs(attr.fields(SC).x_y).name == '--x-y'
 
 
-def test_attr_parser_args_name_for_positional():
+def test_inputs_AttrParserArgs_name_for_positional():
     SC = attr.make_class("SC", {"x": attr.ib()})
     assert AttrParserArgs(attr.fields(SC).x).name == 'x'
 
 
-def test_attr_parser_args_action_by_default():
+def test_inputs_AttrParserArgs_action_by_default():
     SC = attr.make_class("SC", {"x": attr.ib(default=None)})
     assert AttrParserArgs(attr.fields(SC).x).action == 'store'
 
 
-def test_attr_parser_args_action_for_boolean():
+def test_inputs_AttrParserArgs_action_for_boolean():
     SC = attr.make_class("SC", {"x": attr.ib(default=None, type=bool)})
     assert AttrParserArgs(attr.fields(SC).x).action == 'store_true'
+
+
+def test_attr_parser_args_action_specified():
+    SC = attr.make_class("SC", {"x": attr.ib(default=None, metadata={
+        METADATA_ARGPARSER: dict(action='someaction')
+    })})
+    assert AttrParserArgs(attr.fields(SC).x).action == 'someaction'
 
 
 def test_attr_parser_args_default_set():
@@ -116,13 +182,13 @@ def test_attr_parser_args_default_set():
     assert AttrParserArgs(attr.fields(SC).x).default == 123
 
 
-def test_attr_parser_args_default_not_set():
+def test_inputs_AttrParserArgs_default_not_set():
     SC = attr.make_class("SC", {"x": attr.ib()})
     assert AttrParserArgs(attr.fields(SC).x).name == 'x'
     assert AttrParserArgs(attr.fields(SC).x).default is None
 
 
-def test_attr_parser_args_type_default():
+def test_inputs_AttrParserArgs_type_default():
     SC = attr.make_class("SC", {"x": attr.ib()})
     attr_parser_type = AttrParserArgs(attr.fields(SC).x).type
     assert type(attr_parser_type) is functools.partial
@@ -131,7 +197,7 @@ def test_attr_parser_args_type_default():
     assert attr_parser_type.keywords == dict(v_type=attr.fields(SC).x.type)
 
 
-def test_attr_parser_args_type_custom():
+def test_inputs_AttrParserArgs_type_custom():
     def some_fun(value):
         pass
 
@@ -149,17 +215,17 @@ def test_attr_parser_args_type_custom():
     assert AttrParserArgs(attr.fields(SC).x).type == some_fun
 
 
-def test_attr_parser_args_no_metavar_for_positional():
+def test_inputs_AttrParserArgs_no_metavar_for_positional():
     SC = attr.make_class("SC", {"x": attr.ib()})
     assert AttrParserArgs(attr.fields(SC).x).metavar is None
 
 
-def test_attr_parser_args_metavar_by_default_for_optional():
+def test_inputs_AttrParserArgs_metavar_by_default_for_optional():
     SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
     assert AttrParserArgs(attr.fields(SC).x).metavar == 'STR'
 
 
-def test_attr_parser_args_metavar_from_metadata_for_optional():
+def test_inputs_AttrParserArgs_metavar_from_metadata_for_optional():
     SC = attr.make_class("SC", {
         "x": attr.ib(
             type=str,
@@ -174,12 +240,12 @@ def test_attr_parser_args_metavar_from_metadata_for_optional():
     assert AttrParserArgs(attr.fields(SC).x).metavar == 'SOME-METAVAR'
 
 
-def test_attr_parser_args_help_by_default_for_optional():
+def test_inputs_AttrParserArgs_help_by_default_for_optional():
     SC = attr.make_class("SC", {"x": attr.ib(type=str, default='123')})
     assert AttrParserArgs(attr.fields(SC).x).help == ''
 
 
-def test_attr_parser_args_help_from_metadata_for_optional():
+def test_inputs_AttrParserArgs_help_from_metadata_for_optional():
     SC = attr.make_class("SC", {
         "x": attr.ib(
             type=str,
@@ -193,25 +259,173 @@ def test_attr_parser_args_help_from_metadata_for_optional():
     assert AttrParserArgs(attr.fields(SC).x).help == 'some help'
 
 
+def test_attr_parser_args_dest_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'dest': 'somedest'
+                },
+            }
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).dest == 'somedest'
+
+
+def test_attr_parser_args_const_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'const': 'someconst'
+                },
+            }
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).const == 'someconst'
+
+
 def test_attr_parser_args_value_from_str():
     assert AttrParserArgs.value_from_str('PRVSNR_NONE') is None
     assert AttrParserArgs.value_from_str(
         '["1", "2", "3"]', v_type=List
     ) == ['1', '2', '3']
+    assert AttrParserArgs.value_from_str(
+        '["1", "2", "3"]', v_type='json'
+    ) == ['1', '2', '3']
+    assert AttrParserArgs.value_from_str(
+         '{"1": 2}', v_type='json'
+    ) == {'1': 2}
 
 
-def test_param_attr_parser_args_value_from_str():
-    assert ParamAttrParserArgs.value_from_str('PRVSNR_NONE') == UNCHANGED
+def test_InputAttrParserArgs_value_from_str():
+    assert InputAttrParserArgs.value_from_str('PRVSNR_NONE') == UNCHANGED
 
 
-# ParamsList tests
-def test_params_list_from_args(param_spec_mocked):
+# ### PillarKeysList ###
+
+def test_inputs_PillarKeysList_len():
+    assert len(PillarKeysList()) == 0
+    assert len(PillarKeysList([PillarKey('1'), PillarKey('2')])) == 2
+
+
+def test_inputs_PillarKeysList_iter():
+    pi_keys = [PillarKey('1'), PillarKey('2')]
+    pi_keys_list = PillarKeysList(pi_keys)
+    assert pi_keys == list(pi_keys_list)
+
+
+def test_inputs_PillarKeysList_from_args():
+    PillarKeysList.from_args('1', ('2', '3')) == PillarKeysList(
+        [PillarKey('1'), PillarKey('2', '3')]
+    )
+    with pytest.raises(TypeError):
+        PillarKeysList.from_args(['1', '2'])
+
+
+def test_inputs_PillarKeysList_fill_parser(param_spec_mocked):
+    parser = argparse.ArgumentParser()
+    PillarKeysList.fill_parser(parser)
+    args = parser.parse_args([])
+    assert args.args == []
+
+    args = parser.parse_args(
+        '123 456'.split()
+    )
+    assert args.args == ['123', '456']
+
+
+# ### PillarInputBase ###
+
+# TODO IMPROVE more checks for attrs
+def test_inputs_PillarInputBase_attrs():
+    fdict = attr.fields_dict(PillarInputBase)
+    type_fun = fdict['value'].metadata[METADATA_ARGPARSER]['type']
+    # TODO IMPROVE use mocks to verify that
+    #      value_from_str is called with v_type='json'
+    assert type_fun('123') == 123
+    assert type_fun('{"1" : 23}') == {'1': 23}
+
+
+def test_inputs_PillarInputBase_from_args():
+    keypath = '1/2/3'
+    value = 567
+    fpath = '890.sls'
+    test = PillarInputBase.from_args(
+        keypath, value, fpath=fpath
+    )
+    assert test.keypath == keypath
+    assert test.value == value
+    assert test.fpath == fpath
+
+    assert PillarInputBase.from_args(
+        keypath, value
+    ).fpath is None
+
+
+def test_inputs_PillarInputBase_iter(param_spec_mocked):
+    keypath = '1/2/3'
+    value = 567
+    fpath = '890.sls'
+    test = PillarInputBase.from_args(
+        keypath, value, fpath=fpath
+    )
+    assert test.pillar_items() == (
+        (PillarKey(keypath, fpath), value),
+    )
+
+
+# TODO IMPROVE more cases
+def test_inputs_PillarInputBase_fill_parser(param_spec_mocked):
+    parser = argparse.ArgumentParser()
+    PillarInputBase.fill_parser(parser)
+
+    args = parser.parse_args(
+        '123 456 --fpath 789.sls'.split()
+    )
+    assert args.keypath == '123'
+    assert args.value == 456
+    assert args.fpath == '789.sls'
+
+    args = parser.parse_args(
+        '123 456'.split()
+    )
+    assert args.keypath == '123'
+    assert args.value == 456
+    assert args.fpath is None
+
+    args = parser.parse_args(
+        '123 456 --fpath=PRVSNR_NONE'.split()
+    )
+    assert args.keypath == '123'
+    assert args.value == 456
+    assert args.fpath is None
+
+    args = parser.parse_args(
+        ['123', '[4, 5, 6]']
+    )
+    assert args.keypath == '123'
+    assert args.value == [4, 5, 6]
+    assert args.fpath is None
+
+    args = parser.parse_args(
+        ['123', '{"4": {"5": 6}}']
+    )
+    assert args.keypath == '123'
+    assert args.value == {"4": {"5": 6}}
+    assert args.fpath is None
+
+
+# ### ParamsList ###
+
+def test_inputs_ParamsList_from_args(param_spec_mocked):
     params = [
         param_spec_mocked['some_param_gr/attr2'],
         Param(
             param_spec_mocked['some/dict/item1'].name / 'key1',
-            'some-pi-path3',
-            'some-pi-key3/key1'
+            ('some-pi-key3/key1', 'some-pi-path3')
         )
     ]
     assert ParamsList.from_args(*[str(p) for p in params]).params == params
@@ -222,15 +436,17 @@ def test_params_list_from_args(param_spec_mocked):
     ).params == params + params
 
 
-def test_params_list_iter(param_spec_mocked):
+def test_inputs_ParamsList_iter(param_spec_mocked):
     params = ParamsList.from_args(
         'some_param_gr/attr1', 'some/dict/item1/some-key'
     )
     assert [p for p in params] == params.params
 
 
-# ParamGroupInputBase tests
-def test_param_group_input_base_attr_ib():
+# ### ParamGroupInputBase ###
+
+
+def test_inputs_ParamGroupInputBase_attr_ib():
     attr1 = attr.fields(SomeParamGroup).attr1
     assert attr1.type is str
     assert attr1.default is UNCHANGED
@@ -242,13 +458,13 @@ def test_param_group_input_base_attr_ib():
     assert attr2.metadata[METADATA_PARAM_GROUP_KEY] == 'some_param_gr'
 
 
-def test_param_group_input_base_from_args():
+def test_inputs_ParamGroupInputBase_from_args():
     test = SomeParamGroup.from_args(attr1='1234', attr2=5)
     assert test.attr1 == '1234'
     assert test.attr2 == 5
 
 
-def test_param_group_input_base_param_spec(param_spec_mocked):
+def test_inputs_ParamGroupInputBase_param_spec(param_spec_mocked):
     SomeParamGroup.param_spec('attr1') is param_spec_mocked[
         'some_param_gr/attr1'
     ]
@@ -257,15 +473,15 @@ def test_param_group_input_base_param_spec(param_spec_mocked):
     ]
 
 
-def test_param_group_input_base_iter(param_spec_mocked):
+def test_inputs_ParamGroupInputBase_iter(param_spec_mocked):
     test = SomeParamGroup('123', 45)
-    for param, value in test:
+    for param, value in test.pillar_items():
         assert param is param_spec_mocked[str(param.name)]
         assert value == getattr(test, param.name.leaf)
 
 
 # TODO IMPROVE more cases
-def test_param_group_input_base_fill_parser(param_spec_mocked):
+def test_inputs_ParamGroupInputBase_fill_parser(param_spec_mocked):
     parser = argparse.ArgumentParser()
     SomeParamGroup.fill_parser(parser)
     args = parser.parse_args(
@@ -275,34 +491,38 @@ def test_param_group_input_base_fill_parser(param_spec_mocked):
     assert args.attr2 == UNCHANGED
 
 
-# NTP tests
-def test_ntp():
+# ### NTP ###
+
+def test_inputs_NTP():
     assert NTP._param_group == 'ntp'
-    for f in ('server', 'timezone'):
-        fattr = attr.fields_dict(NTP)[f]
-        assert fattr.type is str
-        assert fattr.default is UNCHANGED
+    for param in _param_spec:
+        param = Path(param)
+        if str(param.parent) == NTP._param_group:
+            fattr = attr.fields_dict(NTP)[param.name]
+            assert fattr.type is str
+            assert fattr.default is UNCHANGED
 
 
-def test_network():
+# ### Network ###
+
+
+def test_inputs_NETWORK():
     assert Network._param_group == 'network'
-    for f in (
-        'primary_mgmt_ip',
-        'primary_data_ip',
-        'primary_gateway_ip',
-        'primary_hostname',
-        'secondary_mgmt_ip',
-        'secondary_data_ip',
-        'secondary_gateway_ip',
-        'secondary_hostname'
-     ):
-        fattr = attr.fields_dict(Network)[f]
-        assert fattr.type is str
-        assert fattr.default is UNCHANGED
+    for param in _param_spec:
+        param = Path(param)
+        if str(param.parent) == Network._param_group:
+            fattr = attr.fields_dict(Network)[param.name]
+            if param.name in ('dns_servers', 'search_domains'):
+                assert fattr.type is List
+            else:
+                assert fattr.type is str
+            assert fattr.default is UNCHANGED
 
 
 # ParamDictItemInputBase tests
-def test_param_dict_item_input_base_attr_ib():
+
+
+def test_inputs_ParamDictItemInputBaseattr_ib():
     some_key_attr = attr.fields(SomeParamDictItem).some_key_attr
     assert some_key_attr.type is str
     assert some_key_attr.default is attr.NOTHING
@@ -318,22 +538,22 @@ def test_param_dict_item_input_base_attr_ib():
     )
 
 
-def test_param_dict_item_input_base_from_args():
+def test_inputs_ParamDictItemInputBasefrom_args():
     test = SomeParamDictItem.from_args(some_key_attr='1234', some_value_attr=5)
     assert test.some_key_attr == '1234'
     assert test.some_value_attr == 5
 
 
-def test_param_dict_item_input_base_param_spec(param_spec_mocked):
+def test_inputs_ParamDictItemInputBaseparam_spec(param_spec_mocked):
     test = SomeParamDictItem(some_key_attr='1234', some_value_attr=5)
     assert test.param_spec() == Param(
-        'some/dict/item1/1234', 'some-pi-path3', 'some-pi-key3/1234'
+        'some/dict/item1/1234', ('some-pi-key3/1234', 'some-pi-path3')
     )
 
 
-def test_param_dict_item_input_base_iter(param_spec_mocked):
+def test_inputs_ParamDictItemInputBaseiter(param_spec_mocked):
     test = SomeParamDictItem('123', 45)
-    _iter = iter(test)
+    _iter = test.pillar_items()
     param, value = next(_iter)
     assert param == test.param_spec()
     assert value == 45
@@ -343,7 +563,7 @@ def test_param_dict_item_input_base_iter(param_spec_mocked):
 
 
 # TODO IMPROVE more cases
-def test_param_dict_item_input_base_fill_parser(param_spec_mocked):
+def test_inputs_ParamDictItemInputBasefill_parser(param_spec_mocked):
     parser = argparse.ArgumentParser()
     SomeParamDictItem.fill_parser(parser)
 
@@ -356,8 +576,9 @@ def test_param_dict_item_input_base_fill_parser(param_spec_mocked):
     assert args.some_value_attr == UNCHANGED
 
 
-# EOSUpdateRepo teste
-def test_eos_update_repo_attrs():
+# ### EOSUpdateRepo ###
+
+def test_inputs_EOSUpdateRepo_attrs():
     assert EOSUpdateRepo._param_di == inputs.param_spec['eosupdate/repo']
 
     fattr = attr.fields_dict(EOSUpdateRepo)['release']
@@ -370,7 +591,7 @@ def test_eos_update_repo_attrs():
 
 
 @pytest.mark.patch_logging([(inputs, ('error',))])
-def test_eos_update_repo_source_init(tmpdir_function, patch_logging):
+def test_inputs_EOSUpdateRepo_source_init(tmpdir_function, patch_logging):
     some_release = '1.2.3'
 
     # special values
@@ -429,14 +650,14 @@ def test_eos_update_repo_source_init(tmpdir_function, patch_logging):
     assert res.source == repo_iso
 
 
-def test_eos_update_repo_pillar_key(tmpdir_function):
+def test_inputs_EOSUpdateRepo_pillar_key(tmpdir_function):
     some_release = '1.2.3'
 
     res = EOSUpdateRepo(some_release, source='http://some/http/url')
     assert res.pillar_key == some_release
 
 
-def test_eos_update_repo_pillar_value(tmpdir_function):
+def test_inputs_EOSUpdateRepo_pillar_value(tmpdir_function):
     some_release = '1.2.3'
 
     repo_dir = tmpdir_function / 'repo'
@@ -467,7 +688,7 @@ def test_eos_update_repo_pillar_value(tmpdir_function):
         assert res.pillar_value == source
 
 
-def test_eos_update_repo_is_apis(tmpdir_function):
+def test_inputs_EOSUpdateRepo_is_apis(tmpdir_function):
     some_release = '1.2.3'
 
     repo_dir = tmpdir_function / 'repo'

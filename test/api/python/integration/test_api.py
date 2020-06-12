@@ -3,7 +3,8 @@ import logging
 from pathlib import Path
 
 from test.helper import install_provisioner_api
-from provisioner.config import PRVSNR_ROOT_DIR
+from provisioner.config import PRVSNR_ROOT_DIR, PRVSNR_PILLAR_DIR
+from provisioner.utils import dump_yaml
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,42 @@ def api_type(request):
 @pytest.fixture(params=["sync", "salt_sync", "salt_async"])
 def api_run_mode(request):
     return request.param
+
+
+@pytest.fixture
+def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
+
+    def _f(mhost):
+        test_pillar = {
+            'test': {
+                'simple': 1,
+                'dict': {
+                    "2": {
+                        "3": 4
+                    }
+                },
+                'list': [5, 6, 7]
+            }
+        }
+
+        tmp_file = tmpdir_function / 'test.sls'
+        dump_yaml(tmp_file, test_pillar)
+
+        # Note. cluster.sls is used as one of listed in pillar/top.sls
+        mhost.copy_to_host(
+            tmp_file,
+            host_path=Path(
+                "{}/components/cluster.sls"
+                .format(PRVSNR_PILLAR_DIR)
+            )
+        )
+
+        mhost.check_output(
+            "salt '{}' saltutil.refresh_pillar"
+            .format(eos_hosts['eosnode1']['minion_id'])
+        )
+
+    return _f
 
 
 @pytest.fixture
@@ -98,6 +135,16 @@ def test_external_auth(
     run_test(
         mhosteosnode1, curr_user=username, username=username, password=password
     )
+
+
+@pytest.mark.timeout(1200)
+@pytest.mark.isolated
+@pytest.mark.hosts(['eosnode1'])
+def test_pillar_get_set(
+    mhosteosnode1, run_test, test_pillar_sls
+):
+    test_pillar_sls(mhosteosnode1)
+    run_test(mhosteosnode1)
 
 
 # TODO

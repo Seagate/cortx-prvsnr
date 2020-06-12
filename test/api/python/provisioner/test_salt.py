@@ -32,6 +32,7 @@ def local_minion_id(monkeypatch):
     return local_minion_id
 
 
+# TODO DOC
 @pytest.fixture(autouse=True)
 def patch_logging(request):
     request.applymarker(pytest.mark.patch_logging(
@@ -621,7 +622,8 @@ def test_salt_cmd_run(monkeypatch):
             dict(
                 fun_args=[cmd],
                 targets=targets,
-                fun_kwargs=dict(bg=False)
+                fun_kwargs=dict(bg=False),
+                **dict(timeout=None)
             )
         )
     ]

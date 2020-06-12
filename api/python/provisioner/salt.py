@@ -511,12 +511,13 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 
 # TODO test
-def cmd_run(cmd, targets=ALL_MINIONS, background=False):
+def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
     return function_run(
         'cmd.run',
         fun_args=[cmd],
         fun_kwargs=dict(bg=background),
-        targets=targets
+        targets=targets,
+        timeout=timeout
     )
 
 
@@ -626,7 +627,7 @@ def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
 
     if source.is_dir():
         # TODO
-        #  - file.recurse expects only dirs from maste file roots
+        #  - file.recurse expects only dirs from master file roots
         #    (salt://), need to find another alternative to respect
         #    indempotence
         # StateFunExecuter.execute(

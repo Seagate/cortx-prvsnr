@@ -1,7 +1,7 @@
 openldap:
   admin:
-    secret: "seagate"
+    secret: "B4kf1T6Qso"
   backend_db: mdb
   iam_admin:
     user: "sgiamadmin"
-    secret: "ldapadmin"
+    secret: "B4kf1T6Qso"

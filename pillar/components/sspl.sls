@@ -2,7 +2,7 @@ sspl:
   healthmappath: /opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json
   rmq:
     user: rmq
-    secret: rmq
+    secret: "B4kf1T6Qso"
   role: eos
   Version: 1.0.0
   SSPL-LL_SETTING:
@@ -46,7 +46,7 @@ sspl:
     max_drivemanager_events: "14"
     max_drivemanager_event_interval: "10"
   NODEDATAMSGHANDLER:
-    transmit_interval: "300"
+    transmit_interval: "10"
     units: "MB"
     disk_usage_threshold: "80"
     cpu_usage_threshold: "80"
@@ -129,9 +129,9 @@ sspl:
     queue_name: "sensor-queue"
     exchange_name: "sspl-out"
     routing_key: "sensor-key"
-    ack_queue_name: "actuator-resp-queue"
+    ack_queue_name: "sensor-queue"
     ack_exchange_name: "sspl-out"
-    ack_routing_key: "actuator-resp-key"
+    ack_routing_key: "sensor-key"
     username: "sspluser"
     password: "sspl4ever"
     message_signature_username: "sspl-ll"
