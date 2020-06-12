@@ -6,13 +6,13 @@ include:
 
 Stage - Post Install SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
     - require:
       - Install eos-sspl packages
 
 Stage - Configure SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
     - require:
       - Stage - Post Install SSPL
       - Add common config - system information to Consul
@@ -23,7 +23,7 @@ Stage - Configure SSPL:
 
 Stage - Initialize SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
     - require:
       - Copy setup.yaml to /opt/seagate/health_view/conf
       - Run Resource Health View

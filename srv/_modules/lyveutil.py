@@ -4,7 +4,7 @@
 
 from salt import client
 
-from eos.utils.security.cipher import Cipher, CipherInvalidToken
+from cortx.utils.security.cipher import Cipher, CipherInvalidToken
 
 def decrypt(secret, component):
     """ Decrypt secret.
