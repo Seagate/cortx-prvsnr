@@ -13,6 +13,7 @@
 .build
 build
 .boxes
+.provisioner
 .eggs
 *.egg-info
 tmp

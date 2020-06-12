@@ -12,7 +12,9 @@ from .errors import (
     SWUpdateFatalError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
-    ClusterMaintenanceDisableError
+    ClusterMaintenanceDisableError,
+    HAPostUpdateError,
+    ClusterNotHealthyError
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
@@ -43,7 +45,9 @@ from .salt import (
 )
 from .hare import (
     cluster_maintenance_enable,
-    cluster_maintenance_disable
+    cluster_maintenance_disable,
+    apply_ha_post_update,
+    ensure_cluster_is_healthy
 )
 from .salt_master import (
     config_salt_master,
@@ -436,6 +440,48 @@ class SetEOSUpdateRepo(Set):
         super()._run(params, targets)
 
 
+# TODO IMPROVE EOS-8940 move to separate module
+def _ensure_update_repos_configuration(targets=ALL_MINIONS):
+    logger.info("Ensure update repos are configured")
+    StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo'], targets
+    )
+
+
+def _pre_yum_rollback(
+    rollback_ctx, exc_type, exc_value, exc_traceback
+):
+    if isinstance(
+        exc_value, (HAPostUpdateError, ClusterNotHealthyError)
+    ):
+        try:
+            logger.info(
+                "Enable cluster maintenance mode before rollback"
+            )
+            cluster_maintenance_enable()
+        except Exception as exc:
+            raise ClusterMaintenanceEnableError(exc) from exc
+
+
+def _update_component(component, targets=ALL_MINIONS):
+    state_name = "components.{}.update".format(component)
+    try:
+        logger.info(
+            "Updating {} on {}".format(component, targets)
+        )
+        StatesApplier.apply([state_name], targets)
+    except Exception:
+        logger.exception(
+            "Failed to update {} on {}".format(component, targets)
+        )
+        raise
+
+
+def _apply_provisioner_config(targets=ALL_MINIONS):
+    logger.info(f"Applying Provisioner config logic on {targets}")
+    StatesApplier.apply(["components.provisioner.config"], targets)
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class EOSUpdate(CommandParserFillerMixin):
@@ -443,20 +489,6 @@ class EOSUpdate(CommandParserFillerMixin):
 
     def run(self, targets):
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
-
-        def _update_component(component):
-            state_name = "components.{}.update".format(component)
-            try:
-                logger.info(
-                    "Updating {} on {}".format(component, targets)
-                )
-                StatesApplier.apply([state_name], targets)
-            except Exception:
-                logger.exception(
-                    "Failed to update {} on {}"
-                    .format(component, targets)
-                )
-                raise
 
         # TODO:
         #   - create a state instead
@@ -468,38 +500,53 @@ class EOSUpdate(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         try:
-            # ensure update repos are configured
-            StatesApplier.apply(
-                ['components.misc_pkgs.eosupdate.repo'], targets
-            )
+            ensure_cluster_is_healthy()
+
+            _ensure_update_repos_configuration(targets)
 
             with YumRollbackManager(
-                targets, multiple_targets_ok=True
+                targets,
+                multiple_targets_ok=True,
+                pre_rollback_cb=_pre_yum_rollback
             ) as rollback_ctx:
+                # enable "smart maintenance" mode
                 try:
                     cluster_maintenance_enable()
                 except Exception as exc:
                     raise ClusterMaintenanceEnableError(exc) from exc
 
+                # update SW stack packages and configuration
                 try:
-                    # provisioner update
-                    _update_component('provisioner')
+                    _update_component('provisioner', targets)
+
                     config_salt_master()
+
                     config_salt_minions()
 
-                    # update other components
                     for component in (
                         'eoscore', 's3server', 'hare', 'sspl', 'csm'
                     ):
-                        _update_component(component)
+                        _update_component(component, targets)
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc
 
                 # SW stack now in "updated" state
+                # disable "smart maintenance" mode
                 try:
                     cluster_maintenance_disable()
                 except Exception as exc:
                     raise ClusterMaintenanceDisableError(exc) from exc
+
+                # call Hare to update cluster configuration
+                try:
+                    apply_ha_post_update(targets)
+                except Exception as exc:
+                    raise HAPostUpdateError(exc) from exc
+
+                try:
+                    ensure_cluster_is_healthy()
+                except Exception as exc:
+                    raise ClusterNotHealthyError(exc) from exc
 
         except Exception as update_exc:
             # TODO TEST
@@ -514,30 +561,38 @@ class EOSUpdate(CommandParserFillerMixin):
                 # unrecoverable state: SW stack is in intermediate state,
                 # no sense to start the cluster ??? verify TODO IMPROVE
                 logger.error(
-                    'Yum Rollback failed: {}'
+                    'Rollback failed: {}'
                     .format(rollback_ctx.rollback_error)
                 )
                 final_error_t = SWUpdateFatalError
-            else:
-                # yum changes reverted now
+            elif rollback_ctx is not None:
+                # yum packages are in initial state here
+
                 if isinstance(update_exc, ClusterMaintenanceEnableError):
                     # failed to activate maintenance, cluster will likely
                     # fail to start - fail gracefully:  disable
                     # maintenance in the background
                     cluster_maintenance_disable(background=True)
                 elif isinstance(
+                    # cluster is stopped here
                     update_exc,
-                    (SWStackUpdateError, ClusterMaintenanceDisableError)
+                    (
+                        SWStackUpdateError,
+                        ClusterMaintenanceDisableError,
+                        HAPostUpdateError,
+                        ClusterNotHealthyError
+                    )
                 ):
                     # rollback provisioner related configuration
                     try:
-                        # ensure previous configuration for salt
                         ensure_salt_master_is_running()
+
                         config_salt_master()
+
                         config_salt_minions()
-                        StatesApplier.apply(
-                            ["components.provisioner.config"], targets
-                        )
+
+                        _apply_provisioner_config(targets)
+
                     except Exception as exc:
                         # unrecoverable state: SW stack is in intermediate
                         # state, no sense to start the cluster
@@ -550,19 +605,26 @@ class EOSUpdate(CommandParserFillerMixin):
                         # SW stack now in "initial" state
                         try:
                             cluster_maintenance_disable()
+
+                            apply_ha_post_update(targets)
+
+                            ensure_cluster_is_healthy()
                         except Exception as exc:
                             # unrecoverable state: SW stack is in initial
                             # state but cluster failed to start
                             logger.exception(
-                                'Failed to start cluster after rollback'
+                                'Failed to recover cluster after rollback'
                             )
                             rollback_error = exc
                             final_error_t = SWUpdateFatalError
+
                         # update failed but node is in initial state
                         # and looks functional
                 else:
                     # TODO TEST unit for that case
-                    pass  # it might be update repo set issue
+                    logger.warning(
+                        'Unexpected case: update exc {!r}'.format(update_exc)
+                    )
 
             # TODO IMPROVE
             raise final_error_t(

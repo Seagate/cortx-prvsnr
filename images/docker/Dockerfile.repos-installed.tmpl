@@ -1,7 +1,7 @@
 FROM {parent}
 
 # TODO populate .dockerignore
-COPY cli/src/functions.sh /tmp/eos-prvsnr/cli/src/
+COPY cli/src/common_utils/functions.sh /tmp/eos-prvsnr/cli/src/
 COPY files /tmp/eos-prvsnr/files/
 RUN bash -xec ". /tmp/eos-prvsnr/cli/src/functions.sh; install_repos" \
     && rm -rf /tmp/eos-prvsnr \
