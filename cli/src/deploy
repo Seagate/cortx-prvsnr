@@ -7,7 +7,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy.log}"
 export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
@@ -55,7 +55,7 @@ prereq_states=(
 iopath_states=(
     # states to be applied in desired sequence
         "misc_pkgs.lustre"
-        "eoscore"
+        "cortx-moto"
         "s3server"
     )
 
@@ -79,16 +79,16 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs EOS stack and configures eos services either on remote host or locally.
+Installs CORTX stack and configures cortx services either on remote host or locally.
 
-Target host is considered to be an EOS SaltStack master.
+Target host is considered to be an cortx SaltStack master.
 
 General options:
 $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
-       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --iopath-states             deploy only iopath states (cortx-moto, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
        --system-states             deploy only system states
@@ -193,7 +193,7 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/eos-prvsnr/cli/pillar_encrypt
+    python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt
     update_salt
 }
 
@@ -258,10 +258,10 @@ if [[ "$run_ctrlpath_states" == true ]]; then
 fi
 
 l_info "Backing up pillar files to user space."
-mkdir -p /opt/seagate/eos-prvsnr/pillar/user/groups/all
-cp -r /opt/seagate/eos-prvsnr/pillar/components/*.sls /opt/seagate/eos-prvsnr/pillar/user/groups/all/
-chown -R :prvsnrusers /opt/seagate/eos-prvsnr/pillar/user
-chmod -R 664 /opt/seagate/eos-prvsnr/pillar/user/groups/all/*.sls
+mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
+cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
+chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
+chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
 
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"

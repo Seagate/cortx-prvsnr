@@ -582,7 +582,7 @@ vol_size_get()
     echo "vol_size_get()"\
         "_volsize:`convert_from_bytes $_volsize GB`($_volsize)" >> $logfile
     [ $_volsize -lt $_bytes_2g ] && {
-        echo -e "Error: Volume of size less than 2GB is not supported in EOS" 
+        echo -e "Error: Volume of size less than 2GB is not supported in CORTX" 
         echo -e "Error: Insufficient space($_avail_size)"\
             "available in pool to create"\
                 "$_nvols volumes of size of at least 2GB."

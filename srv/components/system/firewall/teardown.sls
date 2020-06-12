@@ -80,4 +80,4 @@ Remove public-data-zone:
 
 Delete firewall checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.firewall
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall

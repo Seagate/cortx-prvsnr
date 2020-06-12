@@ -6,4 +6,4 @@ Remove EOS-HA resources:
 {% endif %}
 Delete ees_ha checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.ees_ha
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ees_ha

@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.firewall'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.firewall'.format(grains['id'])) %}
 include:
   - .prepare
   - .install
@@ -12,7 +12,7 @@ include:
 
 Generate sspl checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.firewall
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
     - makedirs: True
     - create: True
 {%- else -%}

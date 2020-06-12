@@ -7,9 +7,9 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 BUILD_NUMBER=0
 GIT_VER=
-EOS_PRVSNR_VERSION=1.0.0
+CORTX_PRVSNR_VERSION=1.0.0
 
-#usage() { echo "Usage: $0 [-G <git short revision>] [-P <EOS Provisioner version>]" 1>&2; exit 1; }
+#usage() { echo "Usage: $0 [-G <git short revision>] [-P <CORTX Provisioner version>]" 1>&2; exit 1; }
 
 # Install rpm-build package
 rpm --quiet -qi git || yum install -q -y git && echo "git already installed."
@@ -26,13 +26,13 @@ while getopts ":g:e:b:" o; do
             GIT_VER=${OPTARG}
             ;;
         e)
-            EOS_PRVSNR_VERSION=${OPTARG}
+            CORTX_PRVSNR_VERSION=${OPTARG}
             ;;
         b)
             BUILD_NUMBER=${OPTARG}
             ;;
         *)
-            echo "Usage: buildrpm.sh -g <git_commit_hash> -e <ees_prvsnr_version> -b <build_number>"
+            echo "Usage: buildrpm.sh -g <git_commit_hash> -e <cortx_prvsnr_version> -b <build_number>"
             exit 0
             ;;
     esac
@@ -43,15 +43,15 @@ if [ -z "${GIT_VER}" ]; then
     GIT_VER=`git rev-parse --short HEAD`
 fi
 
-echo "Using [EOS_PRVSNR_VERSION=${EOS_PRVSNR_VERSION}] ..."
+echo "Using [CORTX_PRVSNR_VERSION=${CORTX_PRVSNR_VERSION}] ..."
 echo "Using [GIT_VER=${GIT_VER}] ..."
 
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 
-    rm -rf eos-prvsnr-cli*
+    rm -rf cortx-prvsnr-cli*
 
-    DEST_DIR=eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    DEST_DIR=cortx-prvsnr-cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
     # Setup the source tar for rpm build
     mkdir -p ${DEST_DIR}/{cli,files/etc}
     cp -pr ${BASEDIR}/src ${DEST_DIR}/cli
@@ -59,11 +59,11 @@ pushd ~/rpmbuild/SOURCES/
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d ${DEST_DIR}/files/etc
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
-    rm -rf eos-prvsnr-cli-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    rm -rf cortx-prvsnr-cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
 
-    yum-builddep -y ${BASEDIR}/eos-prvsnr-cli.spec
+    yum-builddep -y ${BASEDIR}/cortx-prvsnr-cli.spec
 
-    rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr-cli.spec
+    rpmbuild -bb --define "_cortx_prvsnr_version ${CORTX_PRVSNR_VERSION}" --define "_cortx_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/cortx-prvsnr-cli.spec
 
 popd
 
