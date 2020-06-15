@@ -511,6 +511,9 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 
 # TODO test
+# TODO IMPROVE EOS-9484 think about better alternative to get separated
+#      stderr and stdout streams that makes sense sometimes even if a command
+#      don't fail (e.g. use 'run_all' instead)
 def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
     return function_run(
         'cmd.run',
@@ -755,8 +758,9 @@ class YumRollbackManager:
     _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
     def _resolve_last_txn_ids(self):
+        # TODO IMPROVE EOS-9484  stderrr might include valuable info
         return cmd_run(
-            "yum history | grep ID -A 2 | tail -n1 | awk '{print $1}'",
+            "yum history 2>/dev/null | grep ID -A 2 | tail -n1 | awk '{print $1}'",
             targets=self.targets
         )
 
