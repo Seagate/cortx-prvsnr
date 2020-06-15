@@ -1,18 +1,6 @@
-# Do pre-checks
-# -- if it is running as root (DONE)
-# -- check raids (DONE)
-# -- check that /boot is mounted on md0 (DONE)
-# -- check LVM config (+-)
-# -- whether the procedure has already been done (+-)
-# Identify the correct volume (+-)
-# Identify the disks (DONE)
-# Do not forget to compare partitions sizes?? Create partitions??
-# Unmount /boot/efi2 (DONE)
-# Mount /boot/efi2 (DONE)
-# Sync /boot/efi and /boot/efi2 (DONE)
-# Setup perioric synchronization of /boot/efi and /boot/efi2
-# Move md0 and md1
-# Create swap partition on the second hard drive
+# TODO:
+# -- Set up periodic /boot/efi and /boot/efi2 synchronization
+# -- Check whether /var/mero is mounted on the chosen partition on the enclosure disk
 
 import subprocess
 import sys
@@ -83,23 +71,6 @@ def disk_to_canonical_name(disk):
   if disk.startswith('/dev/dm'):
     return '/dev/mapper/' + sh(f"dmsetup info {disk} " + " | grep 'Name:' | awk '{print $2}'").stdout.strip()
   return disk
-
-
-def query_disk_uuid(disk):
-  #if disk.startswith('/dev/dm') or disk.startswith('/dev/mapper'):
-  #  return sh(f"dmsetup info {disk} " + " | grep 'UUID:' | awk '{print $2}'").stdout.strip()
-  #else:
-   output = sh(f"blkid -p {disk}").stdout
-   match = re.search(r'PARTUUID="([^\s]+)"', output)
-   if match:
-     return 'PARTUUID=' + match.group(1)
-   match = re.search(r'PART_ENTRY_UUID="([^\s]+)"', output)
-   if match:
-     return 'PART_ENTRY_UUID=' + match.group(1)
-   match = re.search(r'\sUUID="([^\s]+)"', output)
-   if match:
-     return 'UUID=' + match.group(1)
-   return None
 
 
 class RaidArray:
@@ -294,9 +265,16 @@ class PartitionList:
       right_tmp.remove(match)
     return response
 
-  @staticmethod
-  def query_partitions(disk):
-    raw_result = sh_lines(f"parted --machine -s {disk} unit B print | tail -n +3")
+
+class PartitionManager:
+  ALLOWED_LABEL_TYPES = ['gpt', 'msdos']
+  ALLOWED_PART_TYPES = ['primary', 'extended', 'logical']
+  def __init__(self, disk):
+    self.disk = disk
+    # TODO: validate that the disk exists
+
+  def query_partitions(self):
+    raw_result = sh_lines(f"parted --machine -s {self.disk} unit B print | tail -n +3")
     result = []
     for line in raw_result.stdout:
       columns = re.split(r':', re.sub('[\;]?$', '', line))
@@ -309,6 +287,19 @@ class PartitionList:
       })
     return PartitionList(result)
 
+  def mklabel(self, label_type):
+    if label_type not in self.ALLOWED_LABEL_TYPES:
+      raise Exception("Invalid label_type for mklabel")
+    result = sh(f"parted -s {self.disk} mklabel {label_type}")
+    return not result.stderr
+
+  def mkpart(self, part_type, fs_type, start, end):
+    if part_type not in self.ALLOWED_PART_TYPES:
+      raise Exception("Invalid part_type")
+    # TODO: validate the rest of args
+    result = sh(f"parted -s {self.disk} mkpart {part_type} {fs_type} {start} {end}")
+    return not result.stderr
+
 
 ### Script routines
 
@@ -316,9 +307,8 @@ def resolve_partitions(primary_disk, enclosure_disk):
   """
   Ideally this function must also take care of re-partitioning the enclosure disk
   """
-
-  primary_disk_partitions = PartitionList.query_partitions(primary_disk)
-  enclosure_partitions = PartitionList.query_partitions(enclosure_disk)
+  primary_disk_partitions = PartitionManager(primary_disk).query_partitions()
+  enclosure_partitions = PartitionManager(enclosure_disk).query_partitions()
 
   efi_partition = get_partition(efi_disk)
   boot_partition = get_partition(md0.filter_devices(primary_disk)[0])
@@ -387,10 +377,19 @@ def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
   info(f"Rebuilding is complete")
 
 
-def setup_swap(secondary_disk):
-  # re-partition the secondary disk
-  # set up swap (persistently)
-  pass
+def setup_swap(disk):
+  info(f"Re-partitioning {disk}")
+  partition_mgr = PartitionManager(disk)
+  partition_mgr.mklabel('gpt')
+  partition_mgr.mkpart('primary', 'linux-swap', '0%', '100%')
+  # TODO: check that the partition is indeed created and log it
+  
+  partition = f"{disk}1"
+  info(f"Setting up swap on {partition}")
+  sh(f"mkswap {partition}")
+  sh(f"swapon -p 32767 {partition}")
+  # TODO: update fstab
+  # TODO: check that swap has indeed been created
 
 
 ### Script 
@@ -456,6 +455,6 @@ move_raid_partition(md1, primary_disk + partitions["lvm"][0],
   enclosure_disk + partitions["lvm"][1])
 
 info(f"Settting up swap on {secondary_disk}")
-# TODO: remove swap from the primary drive as well?
+# TODO: remove swap from the primary drive?
 setup_swap(secondary_disk)
 
