@@ -21,7 +21,7 @@ Usage: Usage: $0 [options] component
 
 Configures cortx services either on remote host or locally.
 
-'component' is one of {cluster,cortx-moto,haproxy,release,s3client,s3server,sspl}.
+'component' is one of {cluster,cortx-motr,haproxy,release,s3client,s3server,sspl}.
 
 Target host is considered to be an CORTX SaltStack master.
 
@@ -65,7 +65,7 @@ function positional_args_parser {
 
     if [[ $# -eq 1 ]]; then
         case "$1" in
-            cluster|commons|controller|corosync-pacemaker|elasticsearch|cortx-moto|haproxy|keepalived|openldap|rabbitmq.sls|release|rsyslog.sls|s3clients|s3server|sspl|storage_enclosure.sls|system|uds)
+            cluster|commons|controller|corosync-pacemaker|elasticsearch|cortx-motr|haproxy|keepalived|openldap|rabbitmq.sls|release|rsyslog.sls|s3clients|s3server|sspl|storage_enclosure.sls|system|uds)
                 component=$1
                 ;;
             *)
