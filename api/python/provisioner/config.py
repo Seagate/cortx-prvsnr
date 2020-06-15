@@ -60,7 +60,7 @@ PRVSNR_EOS_COMPONENTS = [
     'controller',
     'corosync-pacemaker',
     'elasticsearch',
-    'cortx-moto',
+    'cortx-motr',
     'haproxy',
     'keepalived',
     'openldap',
