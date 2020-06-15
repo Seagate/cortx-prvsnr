@@ -48,7 +48,7 @@ lustre:
     id: "lustre"
     url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
 
-cortx_moto:
+cortx_motr:
   repo:
     id: "cortx-moto"
     url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
