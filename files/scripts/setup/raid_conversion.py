@@ -383,14 +383,15 @@ def setup_swap(disk):
   partition_mgr.mklabel('gpt')
   partition_mgr.mkpart('primary', 'linux-swap', '0%', '100%')
   # TODO: check that the partition is indeed created and log it
-  
+
   partition = f"{disk}1"
   info(f"Setting up swap on {partition}")
   sh(f"mkswap {partition}")
   sh(f"swapon -p 32767 {partition}")
-  # TODO: update fstab
-  # TODO: check that swap has indeed been created
 
+  # TODO: check that swap has indeed been created
+  fstab_mgr = FstabManager()
+  fstab_mgr.mount(partition, 'none', 'swap', fs_mntops='defaults,pri=32767')
 
 ### Script 
 
