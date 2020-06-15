@@ -44,7 +44,7 @@ controlpath_states=(
 iopath_states=(
 # states to be applied in desired sequence
     "s3server"
-    "cortx-moto"
+    "cortx-motr"
     "misc_pkgs.lustre"
 )
 
