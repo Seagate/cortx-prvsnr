@@ -128,10 +128,11 @@ system:
     time_server: time.seagate.com
     timezone: UTC
 sspl:
-    rmq:
-        user: sspluser
-        secret: sspl4ever
-    healthmappath: /tmp/resource_health_view.json
+  rmq:
+    user: sspluser
+    secret: "B4kf1T6Qso"
+  health_map_path: /tmp
+  health_map_file: heath_view_schema.json
 uds:
   version:
     uds-pyi: latest

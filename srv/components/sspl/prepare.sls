@@ -16,3 +16,5 @@ Add sspl yum repo:
     - baseurl: {{ defaults.sspl.repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.sspl.repo.gpgkey }}
+    - require:
+      - Add sspl_prereqs yum repo

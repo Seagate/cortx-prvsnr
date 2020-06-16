@@ -1,3 +1,2 @@
-sosreport:
-    generate_report:
-        - /opt/seagate/eos-prvsnr/cli/sos-generate
+support_bundle:
+    - /opt/seagate/eos-prvsnr/cli/sos-generate

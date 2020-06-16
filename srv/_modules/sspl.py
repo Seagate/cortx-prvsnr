@@ -138,15 +138,21 @@ def _inject_storage_enclosure(config_dict={}):
   return config_dict
 
 
-def health_map_schema(healthmap_path = "/opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json"):
-  file_path = "/tmp/resource_health_view.json"
+def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
+  
   local = salt.client.LocalClient()
-  data = local.cmd('*', 'file.read', [file_path])
+  health_map_path = __pillar__['sspl']['health_map_path']
+  health_map_file = __pillar__['sspl']['health_map_file']
+  
+  
+  data = local.cmd('*', 'file.read', [source_json])
   node1_data = json.loads(data["srvnode-1"])
   node2_data = json.loads(data["srvnode-2"])
+
   node1_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"].update(node2_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"])
-  local.cmd('*', 'file.mkdir',[str(Path(healthmap_path).parent)])
-  local.cmd('*', 'file.write', [healthmap_path, json.dumps(node1_data, indent=4)])
+  local.cmd('*', 'file.mkdir',[health_map_path])
+  local.cmd('*', 'file.write', [ os.path.join(health_map_path, health_map_file), json.dumps(node1_data, indent=4)])
+
   # TODO use salt formulas, CSM suggested to have 777 permission just for hotfix
-  local.cmd('*', 'cmd.run', ['chmod 777 {}'.format(healthmap_path)])
+  local.cmd('*', 'cmd.run', ['chmod 777 {}'.format(os.path.join(health_map_path, health_map_file))])
   return True

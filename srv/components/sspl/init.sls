@@ -11,6 +11,7 @@ Generate sspl checkpoint flag:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
     - makedirs: True
     - create: True
+    - order: last
 
 {%- else -%}
 
