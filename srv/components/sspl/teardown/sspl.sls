@@ -27,6 +27,10 @@ Remove /opt/seagate/sspl configurations:
       - /opt/seagate/sspl
       - /etc/sspl
 
+Remove health_view conf directory:
+  file.absent:
+    - name: /opt/seagate/health_view
+
 Delete sspl checkpoint flag:
   file.absent:
     - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
