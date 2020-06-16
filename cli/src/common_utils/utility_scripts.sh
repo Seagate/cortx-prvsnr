@@ -5,14 +5,25 @@ set -eu
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
 truncate -s 0 ${LOG_FILE}
 
+
+function _lerror {
+    local msg=${1}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
+function _linfo {
+    local msg=${1}
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+}
+
 function get_pillar_data {
     local l_key=${1:-}
 
     if [[ $# -gt 1 ]]; then
-        echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
+        _lerror "$0: Only one positional argument is expected, provided: $@"
         exit 2
     elif [[ $# -eq 0 ]]; then
-        echo "[ERROR] $0: This function expects an argument." | tee -a ${LOG_FILE}
+        _lerror "$0: This function expects an argument."
         exit 1
     fi
 
@@ -21,15 +32,18 @@ function get_pillar_data {
 }
 
 function ensure_healthy_cluster {
+    local _nowait=${1:-}
+
     _linfo "*****************************************************************"
     _linfo "Performing HA cluster health-check."
     _linfo "*****************************************************************"
-    hctl node status --full > /tmp/hctl_cluster_health.json
 
     _linfo "Checking nodes online."
 
     attempt=0
     while /usr/bin/true; do
+        hctl node status --full > /tmp/hctl_cluster_health.json
+
         if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
             # Cluster is Online, we are part happy but would continue further with checks
             _linfo " Cluster is Online, we are part happy.  "
@@ -57,8 +71,14 @@ function ensure_healthy_cluster {
                 else
                     _linfo " Cluster is Online, we are part happy as it seems few services are disabled. "
 
-                    echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
-                    read answer
+                    if [[ "$_nowait" == true ]]; then
+                        answer='y'
+                    elif [[ "$_nowait" == false ]]; then
+                        answer='n'
+                    else
+                        echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
+                        read answer
+                    fi
 
                     if [ "$answer" != "${answer#[Yy]}" ] ;then
                         _linfo "User has decided to proceed with the current HA status."

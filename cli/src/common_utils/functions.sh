@@ -1620,13 +1620,8 @@ function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
-    local _release_sls_path="pillar/components/release.sls"
+    local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
-    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _release_sls="$(realpath $cli_scripts_dir/../../$_release_sls_path)"
-    else
-        _release_sls="$(realpath $cli_scripts_dir/../../../$_release_sls_path)"
-    fi
     _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
 }
@@ -1647,13 +1642,8 @@ function update_cluster_pillar_hostname {
 
     local _node="$1"
     local _host="$2"
-    local _cluster_sls_path="pillar/components/cluster.sls"
+    local _cluster_sls="${repo_root_dir}/pillar/components/cluster.sls"
 
-    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _cluster_sls="$(realpath $cli_scripts_dir/../../$_cluster_sls_path)"
-    else
-        _cluster_sls="$(realpath $cli_scripts_dir/../../../$_cluster_sls_path)"
-    fi
     _line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
     sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
 }
@@ -1743,7 +1733,7 @@ function setup_ssh {
     # Check if the ssh works without password from node-2 to node-1
     ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec \
         "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
-        l_error "$srvnode_1_hostspec is not reachable from $srvnode_2_hostspec"
+        l_error "$srvnode_1_hostname is not reachable from $srvnode_2_hostspec"
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
         #Backup original ssh config file

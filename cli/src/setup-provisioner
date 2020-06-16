@@ -204,11 +204,11 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
 fi
 
 # SETUP SRVNODE-1
-grep -q "Red Hat" /etc/*-release && {
+if grep -q "Red Hat" /etc/*-release; then
     install_salt_repo "$hostspec" "$ssh_config" "$sudo"
-} || {
+else
     install_repos "$hostspec" "$ssh_config" "$sudo"
-}
+fi
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
@@ -238,11 +238,11 @@ configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
-    grep -q "Red Hat" /etc/*-release && {
+    if grep -q "Red Hat" /etc/*-release; then
         install_salt_repo "$srvnode_2_hostspec" "$ssh_config" "$sudo"
-    } || {
+    else
         install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
-    }
+    fi
 
     configure_firewall "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 

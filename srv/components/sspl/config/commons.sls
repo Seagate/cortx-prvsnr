@@ -10,7 +10,7 @@ Add common config - system information to Consul:
         /opt/seagate/eos/hare/bin/consul kv put system_information/{{ grains['id'] }}/node_id {{ grains['node_id'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_host {{ pillar['rsyslog']['host'] }}
         /opt/seagate/eos/hare/bin/consul kv put system_information/syslog_port {{ pillar['rsyslog']['port'] }}
-        /opt/seagate/eos/hare/bin/consul kv put system_information/healthmappath {{ pillar['sspl']['healthmappath'] }}
+        /opt/seagate/eos/hare/bin/consul kv put system_information/healthmappath {{ pillar['sspl']['health_map_path'] + '/' + pillar['sspl']['health_map_file'] }}
 
 Add common config - rabbitmq cluster to Consul:
   cmd.run:

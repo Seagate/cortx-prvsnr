@@ -1,6 +1,8 @@
 include:
-  - .sspl
+  - components.sspl
 
+{% set consul_service = 'hare-consul-agent-c1' if "primary" == grains['roles'] else 'hare-consul-agent-c2' %}
+{% if salt['service.status'](consul_service, false) %}
 Delete common config - system information to Consul:
   cmd.run:
     - name: |
@@ -48,3 +50,11 @@ Delete common config - storage enclosure to Consul:
         /opt/seagate/eos/hare/bin/consul kv delete storage_enclosure/controller/password
     - require:
       - Delete sspl checkpoint flag
+
+{% else %}
+
+Delete common config:
+  test.show_notification:
+    - text: "Consul service not running. Nothing to do."
+
+{% endif %}

@@ -57,6 +57,8 @@ def check_salt_minions_restarted(pids: Dict):
 
 
 def config_salt_minions(targets=ALL_MINIONS):
+    logger.info("Updating salt-minion configuration")
+
     res = function_run(
         'service.show', fun_args=('salt-minion',),
         targets=targets, timeout=10

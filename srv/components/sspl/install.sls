@@ -1,8 +1,13 @@
+include:
+  - .prepare
+
 Install eos-sspl packages:
   pkg.installed:
     - name: eos-sspl
     - version: latest
     - refresh: True
+    - require:
+      - Add sspl yum repo
 
 Install flask:
   pip.installed:
@@ -12,5 +17,6 @@ Install flask:
 Install eos-sspl-test:
   pkg.installed:
     - name: eos-sspl-test
-    - requires:
+    - require:
       - Install flask
+      - Install eos-sspl packages

@@ -10,7 +10,7 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos-vm.log}"
 export LOG_FILE
 
-. $BASEDIR/functions.sh
+. $BASEDIR/common_utils/functions.sh
 
 function trap_handler {
   echo "For more details see $LOG_FILE"

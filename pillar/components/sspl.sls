@@ -1,5 +1,6 @@
 sspl:
-  healthmappath: /opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json
+  health_map_path: /opt/seagate/eos-prvsnr/generated_configs/health_map/
+  health_map_file: heath_view_schema.json
   rmq:
     user: rmq
     secret: "B4kf1T6Qso"
