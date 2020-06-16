@@ -1,6 +1,7 @@
 # TODO:
 # -- Set up periodic /boot/efi and /boot/efi2 synchronization
 # -- Check whether /var/mero is mounted on the chosen partition on the enclosure disk
+# -- Add raid flag to the enclosure partitions if it is not present.
 
 import subprocess
 import sys
