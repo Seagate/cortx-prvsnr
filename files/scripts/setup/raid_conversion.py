@@ -1,7 +1,7 @@
 # TODO:
 # -- Set up periodic /boot/efi and /boot/efi2 synchronization
 # -- Check whether /var/mero is mounted on the chosen partition on the enclosure disk
-# -- Add raid flag to the enclosure partitions if it is not present.
+# -- Finalize the procedure of the target enclosure disk selection
 
 import subprocess
 import sys
@@ -41,20 +41,60 @@ def debug(comment):
 def check_root() -> bool:
   return sh_lines("id -u").stdout[0] == "0"
 
-def strip_disk(disk_name) -> str:
-  if disk_name.startswith("/dev/sd") or disk_name.startswith("/dev/mapper/mpath"):
-    return re.sub('\d*$', '', disk_name)
-  return disk_name
 
-def get_partition(disk_name) -> str:
-  if disk_name.startswith("/dev/sd"):
-    return re.search(r'([0-9]+)$', disk_name).group(1)
-  return None
+class DeviceName:
+  """ Represents a full disk name or a single partition. """
+  PARTITION_PREFIXES = ["/dev/sd", "/dev/mapper/mpath"]
+
+  def __init__(self, disk_name, partition=None):
+    self.disk_name = self._normalize_name(disk_name)
+    if partition and not self._query_partition(self.disk_name):
+      self.disk_name = self.disk_name + str(partition)
+
+  def __str__(self):
+    return self.disk_name
+
+  def __eq__(self, obj):
+    if isinstance(obj, str):
+      obj = DeviceName(obj)
+    return self.disk_name == obj.disk_name
+
+  @property
+  def partition(self):
+    """ Retrieves the partition number (if present) """
+    return self._query_partition(self.disk_name)
+
+  @property
+  def disk(self):
+    """ Returns the disk name without the partition number """
+    if self.partition:
+      return re.sub('\d*$', '', self.disk_name)
+    else:
+      return self.disk_name
+
+  def _normalize_name(self, disk):
+    """ If `disk` is a short device mapper link, retrieves the full name """
+    disk_name = disk
+    if isinstance(disk, DeviceName):
+      disk_name = disk.disk_name
+    elif disk_name.startswith('/dev/dm-'):
+      result = sh(f"dmsetup info {disk_name} | grep 'Name:' "+"| awk '{print $2}'")
+      if not result.stderr:
+        disk_name = '/dev/mapper/' + result.stdout.strip()
+    return disk_name
+
+  def _query_partition(self, disk_name):
+    if any(disk_name.startswith(x) for x in self.PARTITION_PREFIXES):
+      match_result = re.search(r'([0-9]+)$', disk_name)
+      if match_result:
+        return match_result.group(1)
+    return None
+
 
 ### Queries
 
 def query_multipath_devices():
-  return ["/dev/mapper/" + x for x in sh_lines("multipath -ll -v 1").stdout]
+  return [DeviceName("/dev/mapper/" + x) for x in sh_lines("multipath -ll -v 1").stdout]
 
 
 def query_pvs_devices():
@@ -64,21 +104,17 @@ def query_pvs_devices():
 
   result = []
   for line in raw_result.stdout:
-    result.append(re.split(r'\s{2,}', line)[2])
+    result.append(DeviceName(re.split(r'\s{2,}', line)[2]))
   return result
 
 
-def disk_to_canonical_name(disk):
-  if disk.startswith('/dev/dm'):
-    return '/dev/mapper/' + sh(f"dmsetup info {disk} " + " | grep 'Name:' | awk '{print $2}'").stdout.strip()
-  return disk
-
-
 class RaidArray:
+  """ Represents a RAID array. Provides methods for RAID array management. """
   name: str
 
   def __init__(self, name):
     self.name = name
+    # TODO: check whether the array exists
 
   @property
   def devices(self):
@@ -89,7 +125,7 @@ class RaidArray:
       devices.append({
         "raid_device": columns[4],
         "state": columns[5],
-        "device": columns[6]
+        "device": DeviceName(columns[6])
       })
     return devices
 
@@ -98,7 +134,6 @@ class RaidArray:
     result_state = sh(f"mdadm -Q --detail {self.name} | grep 'State :'")
     if result_state.stderr:
       return None
-
     return re.search(r':\s+([^\n]+)', result_state.stdout).group(1).strip()
 
   @property
@@ -122,8 +157,8 @@ class RaidArray:
     ensure(self.total_devices == required_device_no, f"{self.name} must have exactly {required_device_no} raid devices")
 
   def filter_devices(self, device_name):
-    target_stripped = strip_disk(disk_to_canonical_name(device_name))
-    return [x["device"] for x in self.devices if strip_disk(disk_to_canonical_name(x["device"])) == target_stripped]
+    device = DeviceName(device_name)
+    return [x["device"] for x in self.devices if x["device"].disk == device.disk]
 
   def fail_device(self, device_name):
     ensure(device_name in self.filter_devices(device_name), f"{device_name} must be included in {self.name}")
@@ -144,6 +179,7 @@ class RaidArray:
 
 
 class FstabManager:
+  """ Provides operations with the /etc/fstab file """
   @property
   def fstab_list(self):
     lines = []
@@ -206,6 +242,7 @@ class FstabManager:
 
 
 class MountManager:
+  """ Provides device mount management """
   @property
   def mounts_list(self):
     raw_result = sh_lines("cat /proc/mounts")
@@ -215,7 +252,7 @@ class MountManager:
     result = []
     for line in raw_result.stdout:
       columns = re.split(r'\s+', line)
-      result.append({ "device": columns[0], "mount_point": columns[1] })
+      result.append({ "device": DeviceName(columns[0]), "mount_point": columns[1] })
     return result
 
   def is_mounted(self, mount_point):
@@ -304,16 +341,16 @@ class PartitionManager:
 
 ### Script routines
 
-def resolve_partitions(primary_disk, enclosure_disk):
+def resolve_partitions(primary_disk, enclosure_disk, efi_partition):
   """
-  Ideally this function must also take care of re-partitioning the enclosure disk
+  Matches partitions of the primary disk to the partitions of the enclosure disk
+  The partitions must have equal size
   """
   primary_disk_partitions = PartitionManager(primary_disk).query_partitions()
   enclosure_partitions = PartitionManager(enclosure_disk).query_partitions()
 
-  efi_partition = get_partition(efi_disk)
-  boot_partition = get_partition(md0.filter_devices(primary_disk)[0])
-  lvm_partition = get_partition(md1.filter_devices(primary_disk)[0])
+  boot_partition = md0.filter_devices(primary_disk)[0].partition
+  lvm_partition = md1.filter_devices(primary_disk)[0].partition
 
   info(f"/boot/efi partition on {primary_disk}: {efi_partition}")
   info(f"/boot partition on {primary_disk}: {boot_partition}")
@@ -342,17 +379,18 @@ def resolve_partitions(primary_disk, enclosure_disk):
   }
 
 
-def move_boot_efi(primary_id, enclosure_id):
+def move_boot_efi(enclosure_location):
+  """ Moves /boot/efi2 to the `enclosure_location` """
   fstab_mgr = FstabManager()
   mount_mgr = MountManager()
 
   mount_mgr.unmount('/boot/efi2')
   fstab_mgr.unmount('/boot/efi2')
   
-  sh(f"mkdosfs -F 16 {enclosure_id}")
+  sh(f"mkdosfs -F 16 {enclosure_location}")
   
-  info(f"Mounting /boot/efi2 at {enclosure_id}")
-  fstab_mgr.mount(enclosure_id, '/boot/efi2', 'vfat', fs_mntops='umask=0077')
+  info(f"Mounting /boot/efi2 at {enclosure_location}")
+  fstab_mgr.mount(enclosure_location, '/boot/efi2', 'vfat', fs_mntops='umask=0077')
   mount_mgr.reload_mounts()
   
   sh("rsync -acHAX /boot/efi/* /boot/efi2/")
@@ -360,16 +398,20 @@ def move_boot_efi(primary_id, enclosure_id):
   # TODO: set up a regular task for /boot/efi and /boot/efi2 synchronization
 
 
-def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
+def move_raid_partition(raid_array, secondary_location, enclosure_location):
+  """ 
+     Removes `secondary_location` from `raid_array`
+     Replaces it with `enclosure_location`
+  """
   info(f"Removing old disks from {raid_array.name}")
-  for secondary_id in raid_array.filter_devices(secondary_disk):
+  for secondary_id in raid_array.filter_devices(secondary_location):
     info(f".. removing {secondary_id}")
     raid_array.fail_device(secondary_id)
     raid_array.remove_device(secondary_id)
 
-  info(f"Adding {enclosure_id} to {raid_array.name}")
-  raid_array.zero_superblock(enclosure_id)
-  raid_array.add_device(enclosure_id)
+  info(f"Adding {enclosure_location} to {raid_array.name}")
+  raid_array.zero_superblock(enclosure_location)
+  raid_array.add_device(enclosure_location)
   info(f"Waiting for rebuild to complete..")
   
   time.sleep(5)
@@ -379,13 +421,16 @@ def move_raid_partition(raid_array, primary_id, secondary_disk, enclosure_id):
 
 
 def setup_swap(disk):
+  """
+     Turns `disk` into a swap
+  """
   info(f"Re-partitioning {disk}")
   partition_mgr = PartitionManager(disk)
   partition_mgr.mklabel('gpt')
   partition_mgr.mkpart('primary', 'linux-swap', '0%', '100%')
   # TODO: check that the partition is indeed created and log it
 
-  partition = f"{disk}1"
+  partition = DeviceName(disk, 1)
   info(f"Setting up swap on {partition}")
   sh(f"mkswap {partition}")
   sh(f"swapon -p 32767 {partition}")
@@ -422,8 +467,8 @@ info(f"/boot/efi2 is mounted on {efi2_disk}")
 ensure(efi_disk, "/boot/efi must be mounted")
 ensure(efi2_disk, "/boot/efi2 must be mounted")
 
-primary_disk = strip_disk(efi_disk)
-secondary_disk = strip_disk(efi2_disk)
+primary_disk = efi_disk.disk
+secondary_disk = efi2_disk.disk
 
 info(f"Primary HDD: {primary_disk}")
 info(f"Secondary HDD: {secondary_disk}")
@@ -437,24 +482,20 @@ ensure(md1.filter_devices(secondary_disk), "Disk with /boot/efi2 must be include
 enclosure_disk = query_multipath_devices()[0]
 info(f"Target enclosure disk: {enclosure_disk}")
 
-partitions = resolve_partitions(primary_disk, enclosure_disk)
+partitions = resolve_partitions(primary_disk, enclosure_disk, efi_disk.partition)
 
 fstab_mgr = FstabManager()
 fstab_mgr.backup_fstab()
 
 
 info("Moving /boot/efi2 partition")
-move_boot_efi(primary_disk + partitions["efi"][0], enclosure_disk + partitions["efi"][1])
+move_boot_efi(DeviceName(enclosure_disk, partitions["efi"][1]))
 
 info("Moving /boot partition")
-move_raid_partition(md0, primary_disk + partitions["boot"][0],
-  secondary_disk,
-  enclosure_disk + partitions["boot"][1])
+move_raid_partition(md0, secondary_disk, DeviceName(enclosure_disk, partitions["boot"][1]))
 
 info("Moving LVM partition")
-move_raid_partition(md1, primary_disk + partitions["lvm"][0],
-  secondary_disk,
-  enclosure_disk + partitions["lvm"][1])
+move_raid_partition(md1, secondary_disk, DeviceName(enclosure_disk, partitions["lvm"][1]))
 
 info(f"Settting up swap on {secondary_disk}")
 # TODO: remove swap from the primary drive?
