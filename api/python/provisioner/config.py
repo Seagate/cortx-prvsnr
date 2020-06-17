@@ -72,7 +72,8 @@ PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
 PRVSNR_CONFIG_FILE = 'provisioner.conf'
 
 # logging
-LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
+# FIXME logfiles path set to /tmp reason EOS-9529
+LOG_ROOT_DIR = Path('/tmp')
 if not LOG_ROOT_DIR.exists():
     LOG_ROOT_DIR = Path('.').resolve()
 
