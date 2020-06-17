@@ -14,7 +14,7 @@ truncate -s 0 ${LOG_FILE}
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
-. ${BASEDIR}/../../functions.sh
+. ${BASEDIR}/../../common_utils/functions.sh
 
 
 PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
