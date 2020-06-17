@@ -14,9 +14,9 @@ set_ntp:
   input_type: NTP
   states:
     post:
-    - components.system.ntp.config
-    - components.system.ntp.stop
-    - components.system.ntp.start
+    - components.system.chrony.config
+    - components.system.chrony.stop
+    - components.system.chrony.start
 set_network:
   type: Set
   input_type: Network
