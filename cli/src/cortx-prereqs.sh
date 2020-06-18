@@ -197,10 +197,10 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
     grep -q "Red Hat" /etc/*-release && {
         echo -n "INFO: disabling the Red Hat Subscription Manager....................." 2>&1 | tee -a ${LOG_FILE}
 
-        subscription-manager auto-attach --disable >> ${LOG_FILE} || true
-        subscription-manager remove --all >> ${LOG_FILE} || true
-        subscription-manager unregister >> ${LOG_FILE} || true
-        subscription-manager clean >> ${LOG_FILE} || true
+        subscription-manager auto-attach --disable || true
+        subscription-manager remove --all || true
+        subscription-manager unregister || true
+        subscription-manager clean || true
         subscription-manager config --rhsm.manage_repos=0
         echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
