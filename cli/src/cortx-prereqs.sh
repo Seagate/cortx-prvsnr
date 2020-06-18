@@ -17,6 +17,9 @@ url_local_repo_commons_rhel="http://ssc-nfs-server1.colo.seagate.com/releases/eo
 # Repo url for in house built HA packages for RHEL systems
 #url_local_repo_rhel_ha="http://ci-storage.mero.colo.seagate.com/releases/eos/rhel_local_ha/"
 
+# Repo url for Saltstack
+url_saltstack_repo="https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/"
+
 function trap_handler {
     rm -rf $tmpdir || true
     echo "***** FAILED!! *****"
@@ -98,6 +101,25 @@ EOF
 
 }
 
+create_salt_repo()
+{
+    _repo_name="$1"
+    _url="$2"
+    _repo="/etc/yum.repos.d/${_repo_name}.repo"
+    echo -ne "\tCreating ${_repo}............" 2>&1 | tee -a ${LOG_FILE}
+
+cat <<EOF > ${_repo}
+[$_repo_name]
+name=$_repo_name
+gpgcheck=0
+enabled=1
+baseurl=$_url
+gpgkey=${_url}/SALTSTACK-GPG-KEY.pub
+EOF
+    echo "Done." 2>&1 | tee -a ${LOG_FILE}
+
+}
+
 create_commons_repos()
 {
     cortx_commons_url="${1:-$url_local_repo_commons}"
@@ -151,39 +173,38 @@ parse_args "$@"
 
 echo "***** Running $0 *****" 2>&1 | tee -a ${LOG_FILE}
 
-echo -n "INFO: Checking hostnames........................................" 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Checking hostnames............................................." 2>&1 | tee -a ${LOG_FILE}
 
 srvnode_hostname=`hostname -f`
 if [[ $srvnode_hostname != *"."* ]]; then
     echo -e "\nERROR: 'hostname -f' did not return the FQDN, please set FQDN and retry." 2>&1 | tee -a ${LOG_FILE}
     exit 1
 else
-    echo "Ok." 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." 2>&1 | tee -a ${LOG_FILE}
 fi
 
-echo -n "INFO: Checking if kernel version is correct....................." 2>&1 | tee -a ${LOG_FILE}
+echo -n "INFO: Checking if kernel version is correct.........................." 2>&1 | tee -a ${LOG_FILE}
 
 kernel_version=`uname -r`
 if [[ "$kernel_version" != '3.10.0-1062.el7.x86_64' ]]; then
     echo "ERROR: Kernel version is wrong. Required: 3.10.0-1062.el7.x86_64, installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
     exit 1
 else
-    echo "Ok." 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." 2>&1 | tee -a ${LOG_FILE}
 fi
 
 if [[ "$disable_sub_mgr_opt" == true ]]; then
     grep -q "Red Hat" /etc/*-release && {
-        echo -n "INFO: disabling the Red Hat Subscription Manager................" 2>&1 | tee -a ${LOG_FILE}
+        echo -n "INFO: disabling the Red Hat Subscription Manager....................." 2>&1 | tee -a ${LOG_FILE}
 
-        subscription-manager auto-attach --disable || true
-        subscription-manager remove --all || true
-        subscription-manager unregister || true
-        subscription-manager clean || true
+        subscription-manager auto-attach --disable >> ${LOG_FILE} || true
+        subscription-manager remove --all >> ${LOG_FILE} || true
+        subscription-manager unregister >> ${LOG_FILE} || true
+        subscription-manager clean >> ${LOG_FILE} || true
         subscription-manager config --rhsm.manage_repos=0
         echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
         create_commons_repos "$url_local_repo_commons_rhel"
-
     } || {
         echo "ERROR: This is not RedHat system, ignoring --disable-sub-mgr option"
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
@@ -294,6 +315,9 @@ else
         create_commons_repos "$url_repo_commons"
     }
 fi
+
+#create saltstack repo
+create_salt_repo "saltstack_2019_2_0" $url_saltstack_repo
 
 echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
