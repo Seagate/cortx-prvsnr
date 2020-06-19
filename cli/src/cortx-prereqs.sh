@@ -101,26 +101,6 @@ EOF
 
 }
 
-create_salt_repo()
-{
-    _repo_name="$1"
-    _url="$2"
-    _repo="/etc/yum.repos.d/${_repo_name}.repo"
-    echo -ne "\tCreating ${_repo}............" 2>&1 | tee -a ${LOG_FILE}
-
-cat <<EOF > ${_repo}
-[$_repo_name]
-name=$_repo_name
-gpgcheck=0
-enabled=1
-baseurl=$_url
-gpgkey=${_url}/SALTSTACK-GPG-KEY.pub
-priority=1
-EOF
-    echo "Done." 2>&1 | tee -a ${LOG_FILE}
-
-}
-
 create_commons_repos()
 {
     cortx_commons_url="${1:-$url_local_repo_commons}"
@@ -316,9 +296,6 @@ else
         create_commons_repos "$url_repo_commons"
     }
 fi
-
-#create saltstack repo
-create_salt_repo "saltstack_2019_2_0" $url_saltstack_repo
 
 echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
 yum autoremove -y >> ${LOG_FILE}

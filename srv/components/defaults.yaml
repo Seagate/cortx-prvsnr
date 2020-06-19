@@ -24,9 +24,9 @@ base_repos:
     id: "epel"
     # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
     url: http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
-  saltstack_repo:
-    id: "saltstack"
-    url: https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/
+  # saltstack_repo:
+  #   id: "saltstack"
+  #   url: https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/
 
 commons:
   repo:
