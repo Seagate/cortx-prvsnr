@@ -78,7 +78,6 @@ Clean yum local:
     - require:
       - Configure yum
       - Add commons yum repo
-      - Add Saltsatck repo
       - Add EPEL repo
 
 Clean yum cache:
