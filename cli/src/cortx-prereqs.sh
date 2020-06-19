@@ -115,6 +115,7 @@ gpgcheck=0
 enabled=1
 baseurl=$_url
 gpgkey=${_url}/SALTSTACK-GPG-KEY.pub
+priority=1
 EOF
     echo "Done." 2>&1 | tee -a ${LOG_FILE}
 
@@ -320,6 +321,7 @@ fi
 create_salt_repo "saltstack_2019_2_0" $url_saltstack_repo
 
 echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
+yum autoremove -y >> ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 hostnamectl status | grep Chassis | grep -q server && {
