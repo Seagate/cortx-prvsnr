@@ -258,7 +258,7 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-        yum install -y $tgt_build/$(curl -s $tgt_build/|grep cortx-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+        yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
         systemctl stop firewalld || true
         return 0
     fi
@@ -269,7 +269,7 @@ $remote_cmd <<EOF
       echo "Please clean-up previous installtion from both the nodes and retry"
       exit 1
     }
-    yum install -y $tgt_build/$(curl -s $tgt_build/|grep cortx-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+    yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
     systemctl stop firewalld || true
 
 EOF
