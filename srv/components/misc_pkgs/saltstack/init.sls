@@ -1,0 +1,4 @@
+include:
+  - .prepare
+  - .master
+  - .minion
