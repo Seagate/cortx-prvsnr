@@ -777,9 +777,20 @@ function install_salt_repo {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
     local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
+    local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     l_info "Installing Salt repository '$_hostspec'"
+
+read -d '' saltstack_repo << EOF
+[saltstack]
+name=SaltStack repo for RHEL/CentOS $releasever
+baseurl=${_salt_repo_url}
+enabled=1
+gpgcheck=1
+gpgkey=${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
+priority=1
+EOF
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -800,10 +811,11 @@ function install_salt_repo {
 
     # TODO a temporary fix since later version (2019.2.1) is buggy
     # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+    rpm --import https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
 
     if [[ -z "$_hostspec" ]]; then
-        cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
+        #cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
+        echo ${saltstack_repo} > $_repo_base_dir/saltstack.repo
     fi
 EOF
 
@@ -814,7 +826,8 @@ EOF
     $_cmd bash -c "$_script" 2>&1 | tee -a ${LOG_FILE}
 
     if [[ -n "$_hostspec" ]]; then
-        scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
+        # scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
+        scp -r -F "$_ssh_config" "$_repo_base_dir/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
     fi
 }
 
