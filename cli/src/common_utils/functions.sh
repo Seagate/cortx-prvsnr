@@ -1354,7 +1354,7 @@ function configure_salt {
         # re-config salt master
         if [[ ! -f /etc/salt/master.org ]]; then
             mv -f /etc/salt/master /etc/salt/master.org
-            cp srv/components/provisioner/salt_master/files/master /etc/salt/master
+            cp srv/components/misc_pkgs/saltstack/salt_master/files/master /etc/salt/master
         fi
 
         if [[ "$_master" == true ]]; then
@@ -1365,7 +1365,7 @@ function configure_salt {
         # re-config salt minion
         if [[ ! -f /etc/salt/minion.org ]]; then
             mv -f /etc/salt/minion /etc/salt/minion.org
-            cp srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
+            cp srv/components/misc_pkgs/saltstack/salt_minion/files/minion /etc/salt/minion
         fi
 
         if [[ -n "$_master_host" ]]; then
@@ -1373,9 +1373,9 @@ function configure_salt {
         fi
 
         if [[ "$_master" == true ]]; then
-            cp -f srv/components/provisioner/salt_minion/files/grains.primary /etc/salt/grains
+            cp -f srv/components/misc_pkgs/saltstack/salt_minion/files/grains.primary /etc/salt/grains
         else
-            cp -f srv/components/provisioner/salt_minion/files/grains.secondary /etc/salt/grains
+            cp -f srv/components/misc_pkgs/saltstack/salt_minion/files/grains.secondary /etc/salt/grains
         fi
         echo "$_minion_id" >/etc/salt/minion_id
 
