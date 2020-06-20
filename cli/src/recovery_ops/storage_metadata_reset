@@ -5,6 +5,7 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/storage_metadata_reset
 mkdir -p $(dirname "${LOG_FILE}")
 # truncate -s 0 ${LOG_FILE}
 
+BASEDIR=$(dirname "${BASH_SOURCE}")
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
 
 
@@ -15,7 +16,6 @@ function trap_handler {
 }
 trap trap_handler ERR
 
-BASEDIR=$(dirname "${BASH_SOURCE}")
 
 function user_confirmation {
     _linfo "*****************************************************************"
