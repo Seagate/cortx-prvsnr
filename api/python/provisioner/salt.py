@@ -391,7 +391,7 @@ def runner_function_run(
     fun_kwargs: Union[Dict, None] = None,
     **kwargs
 ):
-    logger.info(
+    logger.debug(
         "Running runner function '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
@@ -407,7 +407,7 @@ def runner_function_run(
         logger.exception("Salt runner command failed")
         raise
 
-    logger.info(
+    logger.debug(
         "Runner function '{}' resulted in {}".format(
             fun, res
         )
@@ -477,7 +477,7 @@ def function_run(
     #     https://github.com/saltstack/salt/issues/46905
     # return _salt_caller_cmd(fun, *args, **kwargs)
 
-    logger.info(
+    logger.debug(
         "Running function '{}' on '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
@@ -493,7 +493,7 @@ def function_run(
         logger.exception("Salt client command failed")
         raise
 
-    logger.info(
+    logger.debug(
         "Function '{}' on '{}' resulted in {}".format(
             fun, targets, res
         )
