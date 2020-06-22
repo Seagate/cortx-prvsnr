@@ -6,8 +6,7 @@ mkdir -p $(dirname "${LOG_FILE}")
 # truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
-. ${BASEDIR}/../../common_utils/utility_scripts.sh
-
+. ${BASEDIR}/../common_utils/utility_scripts.sh
 
 function trap_handler {
     echo "***** ERROR! *****"
