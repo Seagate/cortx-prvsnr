@@ -61,51 +61,51 @@ usage()
     echo "\
 Usage:
 auto-deploy { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
-                  -C <cluster-ip> -V <management VIP>
-                  -t <target build url for CORTX>
-                  [Optional Arguments] }
+                -C <cluster-ip> -V <management VIP>
+                -t <target build url for CORTX>
+                [Optional Arguments] }
 
 Optional Arguments:
-   -n    <NETWORK IF>     Public n/w interface name (default enp175s0f0)
-   -N    <NETWORK IF>     Private n/w interface name (default enp175s0f1).
-                          Network interface for direct connect.
-   -i    <IP ADDRESS>     IP address for public n/w interface name on node-1.
-                          This IP will be assigned to the n/w interface
-                          provided with -n option.
-                          Omit this option if ip is already set by DHCP
-   -I    <IP ADDRESS>     IP address for public n/w interface name on node-2,
-                          This IP will be assigned to the n/w interface name
-                          provided with -N option.
-                          Omit this option if ip is already set by DHCP.
-   -A    <IP ADDRESS>     IP address of controller A (default 10.0.0.2)
-   -B    <IP ADDRESS>     IP address of controller B (default 10.0.0.3)
-   -U    <USER NAME>      User for controller (default 'manage')
-   -P    <PASSWORD>       Password for controller (default 'passwd')
+-n    <NETWORK IF>     Public n/w interface name (default enp175s0f0)
+-N    <NETWORK IF>     Private n/w interface name (default enp175s0f1).
+                        Network interface for direct connect.
+-i    <IP ADDRESS>     IP address for public n/w interface name on node-1.
+                        This IP will be assigned to the n/w interface
+                        provided with -n option.
+                        Omit this option if ip is already set by DHCP
+-I    <IP ADDRESS>     IP address for public n/w interface name on node-2,
+                        This IP will be assigned to the n/w interface name
+                        provided with -N option.
+                        Omit this option if ip is already set by DHCP.
+-A    <IP ADDRESS>     IP address of controller A (default 10.0.0.2)
+-B    <IP ADDRESS>     IP address of controller B (default 10.0.0.3)
+-U    <USER NAME>      User for controller (default 'manage')
+-P    <PASSWORD>       Password for controller (default 'passwd')
 
-   --b1  <BMC USER>       BMC User for Node-1. Default ADMIN
-   --m1  <BMC PASSWORD>   BMC Password for Node-1. Default adminBMC!
-   --b2  <BMC USER>       BMC User for Node-2. Default ADMIN
-   --m2  <BMC PASSWORD>   BMC Password for Node-2. Default adminBMC!
+--b1  <BMC USER>       BMC User for Node-1. Default ADMIN
+--m1  <BMC PASSWORD>   BMC Password for Node-1. Default adminBMC!
+--b2  <BMC USER>       BMC User for Node-2. Default ADMIN
+--m2  <BMC PASSWORD>   BMC Password for Node-2. Default adminBMC!
 "
 }
 
 help()
 {
-  echo "\
+echo "\
 ----------- Caveats -------------
 1. The command must be run from primary node in the cluster.
 2. Ensure the setup is clean and no cortx rpms are installed.
 3. Ensure the ~/.ssh directory is empty.
 4. If optional arguments are skipped the default values in cluster.sls and
-   storage_enclosure.sls are used.
+storage_enclosure.sls are used.
 5. Ensure the BMC user and password are same for both nodes in the cluster.
 
 -------- Sample command ---------
 $ auto-deploy -s sm27-r22.pun.seagate.com -p 'seagate'
-  -C 172.19.222.27 -V 10.230.215.45 -n enp216s0f0 -N enp216s0f1
-  -i 172.19.22.27 -I 172.19.22.28 -A 10.230.10.2 -B 10.230.10.3 -U manage -P 'S34gate123!'
-  -b manage -m 'admin!'
-  -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/1781/
+-C 172.19.222.27 -V 10.230.215.45 -n enp216s0f0 -N enp216s0f1
+-i 172.19.22.27 -I 172.19.22.28 -A 10.230.10.2 -B 10.230.10.3 -U manage -P 'S34gate123!'
+-b manage -m 'admin!'
+-t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/1781/
 "
 }
 
@@ -221,10 +221,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$srvnode_2_host_opt" == false ||
-      "$srvnode_2_passwd_opt" == false ||
-      "$cluster_ip_opt" == false || 
-      "$mgmt_vip_opt" == false ||
-      "$tgt_build_opt" == false ]]; then
+    "$srvnode_2_passwd_opt" == false ||
+    "$cluster_ip_opt" == false || 
+    "$mgmt_vip_opt" == false ||
+    "$tgt_build_opt" == false ]]; then
 
         echo "Insufficient input provided"
         usage
@@ -257,18 +257,25 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-        yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
+        yum-config-manager --add-repo $tgt_build
+        yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
+        rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_*
+
         systemctl stop firewalld || true
         return 0
     fi
 $remote_cmd <<EOF
     set -eu
     rpm -qa | grep -q cortx && {
-      echo "ERROR: cortx packages are already installed"
-      echo "Please clean-up previous installtion from both the nodes and retry"
-      exit 1
+    echo "ERROR: cortx packages are already installed"
+    echo "Please clean-up previous installtion from both the nodes and retry"
+    exit 1
     }
-    yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
+
+    yum-config-manager --add-repo $tgt_build
+    yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
+    rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_
+    
     systemctl stop firewalld || true
 
 EOF
