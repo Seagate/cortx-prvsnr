@@ -32,14 +32,14 @@ class _NTP(object):
         prvsnr_client = salt.client.LocalClient()
 
         #Apply configuration modification salt state
-        ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.ntp.config'])
+        ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.chrony.config'])
         for val in ret_val.values():
             for task in val.values():
                 if task['result']==False:
                         raise Exception("ERROR: NTP configuration update failed, " + task['comment'])
 
         #Apply service restart salt state
-        ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.ntp.update'])
+        ret_val = prvsnr_client.cmd('*', 'state.apply', ['components.system.chrony.update'])
         for val in ret_val.values():
             for task in val.values():
                 if task['result']==False:

@@ -62,7 +62,7 @@ prereq_states=(
 
 system_states=(
     # states to be applied in desired sequence
-    "system.ntp"
+    "system.chrony"
     "system.logrotate"
     "system.firewall"
     "misc_pkgs.rsyslog"
