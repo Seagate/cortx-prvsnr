@@ -1,4 +1,4 @@
 include:
   - .prepare
-  - .master
-  - .minion
+  - .salt_master
+  - .salt_minion
