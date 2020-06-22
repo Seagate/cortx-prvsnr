@@ -1,15 +1,21 @@
 srvnode-1:
-    host: 172.19.10.101
-    user: root
-    timeout: 60
-    minion_opts:
-        id: srvnode-1
-        roles: server-node
+  host: 172.19.10.101
+  user: root
+  priv: ~/.ssh/id_rsa_prvsnr
+  timeout: 60
+  minion_opts:
+    id: srvnode-1
+    grains:
+      roles: 
+        - primary
 
 srvnode-2:
-    host: 172.19.10.101
-    user: root
-    timeout: 60
-    minion_opts:
-        id: srvnode-2
-        roles: server-node
+  host: 172.19.10.101
+  user: root
+  priv: ~/.ssh/id_rsa_prvsnr
+  timeout: 60
+  minion_opts:
+    id: srvnode-2
+    grains:
+      roles: 
+        - secondary
