@@ -725,10 +725,6 @@ function install_repos {
 
     rm -rf "$_repo_base_dir"
 
-    # TODO a temporary fix since later version (2019.2.1) is buggy
-    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-
     if [[ -z "$_hostspec" ]]; then
         cp -R "$_project_repos" "$_repo_base_dir"
     fi
@@ -811,7 +807,7 @@ EOF
 
     # TODO a temporary fix since later version (2019.2.1) is buggy
     # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+    rpm --import ${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
 
     if [[ -z "$_hostspec" ]]; then
         #cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
