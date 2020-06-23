@@ -257,9 +257,10 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-        yum-config-manager --add-repo $tgt_build
+
+        yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
         yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
-        rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_*
+        rm -rf /etc/yum.repos.d/ci-storage*
 
         systemctl stop firewalld || true
         return 0
@@ -272,9 +273,9 @@ $remote_cmd <<EOF
     exit 1
     }
 
-    yum-config-manager --add-repo $tgt_build
+    yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
     yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
-    rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_
+    rm -rf /etc/yum.repos.d/ci-storage*
     
     systemctl stop firewalld || true
 
