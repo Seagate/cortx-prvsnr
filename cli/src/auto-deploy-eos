@@ -259,7 +259,7 @@ install_prvsnr_cli()
         }
         yum-config-manager --add-repo $tgt_build
         yum install -y eos-prvsnr-cli-1.0.0 --nogpgcheck
-        rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_
+        rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_*
 
         systemctl stop firewalld || true
         return 0
@@ -273,7 +273,7 @@ $remote_cmd <<EOF
     }
     yum-config-manager --add-repo $tgt_build
     yum install -y eos-prvsnr-cli-1.0.0 --nogpgcheck
-    rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_
+    rm -rf /etc/yum.repos.d/ci-storage.mero.colo.seagate.com_releases_*
     systemctl stop firewalld || true
 
 EOF
