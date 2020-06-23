@@ -1,0 +1,4 @@
+roles:
+  - {{ grains['roles'][0] }}
+cluster_id: {{ grains['cluster_id'] }}
+node_id: {{ salt['grains.get']('node_id', salt['cmd.run']("uuidgen")) }}
