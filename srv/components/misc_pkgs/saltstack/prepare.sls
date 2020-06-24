@@ -1,9 +1,10 @@
-{% import_yaml 'components/defaults.yaml' as defaults %}
+{% from "components/map.jinja" import reporef with context %}
+
 Add Saltsatck repo:
   pkgrepo.managed:
-    - name: {{ defaults.base_repos.saltstack_repo.id }}
+    - name: {{ reporef.base_repos.saltstack_repo.id }}
     - humanname: saltstack
-    - baseurl: {{ defaults.base_repos.saltstack_repo.url }}
+    - baseurl: {{ reporef.base_repos.saltstack_repo.url }}
     - gpgcheck: 1
-    - gpgkey: {{ defaults.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
+    - gpgkey: {{ reporef.base_repos.saltstack_repo.url }}/SALTSTACK-GPG-KEY.pub
     - priority: 1

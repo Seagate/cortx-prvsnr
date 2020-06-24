@@ -8,3 +8,4 @@ salt-ssh:
   ssh_max_procs: 30
   ssh_wipe: True
   state_output: mixed
+  extra_filerefs: salt://components/map.jinja
