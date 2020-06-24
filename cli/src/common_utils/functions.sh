@@ -773,20 +773,22 @@ function install_salt_repo {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
     local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
-    local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/}"
+    local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     l_info "Installing Salt repository '$_hostspec'"
+    local _saltstack_repo="/tmp/saltstack.repo"
 
-read -d '' saltstack_repo << EOF
+#name=SaltStack repo for RHEL/CentOS \$releasever
+    cat <<EOL > ${_saltstack_repo}
 [saltstack]
-name=SaltStack repo for RHEL/CentOS $releasever
+name=SaltStack repo for RHEL/CentOS
 baseurl=${_salt_repo_url}
 enabled=1
 gpgcheck=1
 gpgkey=${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
 priority=1
-EOF
+EOL
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -809,9 +811,12 @@ EOF
     # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
     rpm --import ${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
 
+    echo "_hostspec=$_hostspec"
     if [[ -z "$_hostspec" ]]; then
         #cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
-        echo ${saltstack_repo} > $_repo_base_dir/saltstack.repo
+        #echo \${saltstack_repo} > $_repo_base_dir/saltstack.repo
+        echo "Creating saltstack repo"
+        cp "$_saltstack_repo" "$_repo_base_dir/"
     fi
 EOF
 
