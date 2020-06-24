@@ -2,7 +2,7 @@ include:
   - .stop
 
 remove_salt_minion:
-  pkg.purge:
+  pkg.purged:
     - name: salt-minion
     - require:
       - salt_minion_service_stopped

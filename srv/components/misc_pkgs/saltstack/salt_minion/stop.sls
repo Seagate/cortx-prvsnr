@@ -1,4 +1,4 @@
 salt_minion_service_stopped:
-  service.deaf:
+  service.dead:
     - name: salt-minion
     - enable: False

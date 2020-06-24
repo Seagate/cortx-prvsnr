@@ -1,15 +1,16 @@
 include:
-  - .config
+  - .install
 
-salt_minion_service_enabled:
+Enable salt minion:
   service.enabled:
     - name: salt-minion
     - require:
-      - file: salt_minion_config_updated
+      - Install Salt Minion
 
-salt_minion_service_restarted:
+# REF: https://docs.saltstack.com/en/latest/faq.html#what-is-the-best-way-to-restart-a-salt-minion-daemon-using-salt-after-upgrade
+Restart salt minion:
   cmd.run:
     - name: 'salt-call service.restart salt-minion'
     - bg: True
-    - onchanges:
-      - file: salt_minion_config_updated
+    - require:
+      - Enable salt minion

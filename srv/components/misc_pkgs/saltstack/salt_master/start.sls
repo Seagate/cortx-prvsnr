@@ -1,11 +1,11 @@
 include:
-  - .config
+  - .install
 
 salt_master_service_enabled:
   service.enabled:
     - name: salt-master
     - require:
-      - file: salt_master_config_updated
+      - install_salt_master
 
 # Note. master restart is in foreground,
 # so minion will reported to restarted master
@@ -16,5 +16,5 @@ salt_master_service_restarted:
     #    since state might be called by salt-run as well
     - name: 'salt-run salt.cmd test.true && salt-call --local service.restart salt-master'
     - bg: True
-    - onchanges:
-      - file: salt_master_config_updated
+    - require:
+      - salt_master_service_enabled

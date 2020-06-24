@@ -13,7 +13,9 @@
 
 # Set the location of the salt master server. If the master server cannot be
 # resolved, then the minion will fail to start.
-master: {{ salt['config.get']('master', 'srvnode-1') }}
+master:
+  - {{ pillar['cluster']['srvnode-1']['network']['data_nw']['pvt_ip_addr'] }}
+  - {{ pillar['cluster']['srvnode-2']['network']['data_nw']['pvt_ip_addr'] }}
 
 # Set http proxy information for the minion when doing requests
 #proxy_host:
@@ -40,7 +42,7 @@ master_shuffle: False
 # using failover.
 # Setting master_type to 'disable' let's you have a running minion (with engines and
 # beacons) without a master connection
-#master_type: str
+master_type: str
 
 # Poll interval in seconds for checking if the master is still there.  Only
 # respected if master_type above is "failover". To disable the interval entirely,

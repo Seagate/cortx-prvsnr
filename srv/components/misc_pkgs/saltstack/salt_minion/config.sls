@@ -1,10 +1,13 @@
 include:
   - .install
+  - .start
 
-salt_minion_config_updated:
+Salt minion config updated:
   file.managed:
     - name: /etc/salt/minion
     - source: salt://components/misc_pkgs/saltstack/salt_minion/files/minion
     - template: jinja
     - require:
-      - install_salt_minion
+      - Install Salt Minion
+    - onchanges_in:
+      - Restart salt minion
