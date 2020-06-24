@@ -22,8 +22,8 @@ salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 # private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
 # private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+#private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+#private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -34,7 +34,7 @@ trap trap_handler ERR
 
 function update_ssh_config {
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
-        echo -n "Updating localhost in /root/.ssh/config on primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Updating server A hostname in ssh config file of server A..................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(hostname)
         # echo ${primary_host}
@@ -42,19 +42,21 @@ function update_ssh_config {
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-1.*|Host srvnode-1 ${primary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo -n "Updating remote host in /root/.ssh/config on primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo "private_data_ip_node_2: $private_data_ip_node_2"
+        echo -n "Updating server B hostname in ssh config file of server A..................." 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-2.*|Host srvnode-2 ${secondary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
     else
-        echo -n "Updating localhost in /root/.ssh/config on secondary node....." 2>&1|tee -a ${LOG_FILE}
+        echo "private_data_ip_node_1: $private_data_ip_node_1"
+        echo -n "Updating server B hostname in ssh config file of server B..................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_1} "hostname")
         # echo ${primary_host}
@@ -62,17 +64,17 @@ function update_ssh_config {
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-1.*|Host srvnode-1 ${primary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${primary_host}|" /root/.ssh/config
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo -n "Updating remote host in /root/.ssh/config on secondary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Updating server A hostname in ssh config file of server B..................." 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(hostname)
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         sed -i "s|Host srvnode-2.*|Host srvnode-2 ${secondary_host}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
     fi
 }
 
@@ -83,27 +85,31 @@ function update_salt_minion {
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         
-        echo -n "Setting Salt master on primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Setting Salt master on server A (primary node).............................." 2>&1|tee -a ${LOG_FILE}
         sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Setting Salt master on secondary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Setting Salt master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
         
         # It's safe to restart service on both nodes
-        echo -n "Restarting salt-minion on primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Restarting salt-minion on Server A.........................................." 2>&1|tee -a ${LOG_FILE}
         systemctl restart salt-minion
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
-        echo "Restarting salt-minion on secondary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Restarting salt-minion on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-minion"
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
         sleep 5
 
-        salt-key -L 2>&1|tee -a ${LOG_FILE}
-        salt-key -A -y 2>&1|tee -a ${LOG_FILE}
+        echo -n "Listing salt keys..........................................................." 2>&1 | tee -a ${LOG_FILE}
+        salt-key -L ${salt_opts}
+        echo "Ok."
+        echo -n "Accepting salt keys........................................................." 2>&1 | tee -a ${LOG_FILE}
+        salt-key -A -y >> ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
         sleep 5
     fi
@@ -112,6 +118,8 @@ function update_salt_minion {
 function update_cluster_sls {
     local mgmt_vip=${1:-}
     local cluster_vip=${2:-}
+    local _static_ip_a=${3:-}
+    local _static_ip_b=${4:-}
 
     local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
     if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
@@ -119,54 +127,70 @@ function update_cluster_sls {
     fi
 
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
-        echo -n "Seting ${mgmt_vip} as Management VIP....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Updating Management VIP in pillar..........................................." 2>&1|tee -a ${LOG_FILE}
         local line_to_replace=$(grep -m1 -n "mgmt_vip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         sed -i "${line_to_replace},/mgmt_vip:*/ s|mgmt_vip:.*|mgmt_vip: ${mgmt_vip}|" ${_cluster_sls_path}
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Setting ${cluster_vip} as Data Network VIP....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Updating Cluster IP in pillar..............................................." 2>&1|tee -a ${LOG_FILE}
         local line_to_replace=$(grep -m1 -n "cluster_ip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         sed -i "${line_to_replace},/cluster_ip:*/ s|cluster_ip:.*|cluster_ip: ${cluster_vip}|" ${_cluster_sls_path}
-        echo "Done" |tee -a ${LOG_FILE}
- 
-        echo -n "Updating hostname of primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo "Ok." |tee -a ${LOG_FILE}
+
+         #Update public data interface ips
+        if [[ ! -z ${_static_ip_a} && ! -z ${_static_ip_b} ]]; then
+            echo "Updating static IP of public data network in pillar for both servers" |tee -a ${LOG_FILE}
+            echo "Updating static data ip ($_static_ip_a) for server A" >> $LOG_FILE
+            line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
+            sed -ie "${line_node1_ip}s/.*/                ipaddr: ${_static_ip_a}/" $_cluster_sls_path
+            echo "Updating static data ip ($_static_ip_b) for server B" >> $LOG_FILE
+            line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
+            sed -ie "${line_node2_ip}s/.*/                ipaddr: ${_static_ip_b}/" $_cluster_sls_path
+            echo "Done" | tee -a ${LOG_FILE}
+        fi
+
+        echo -n "Updating hostname of Server A..............................................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         # Hostname
         local primary_host=$(hostname)
-        # echo ${primary_host}
+        echo "DEBUG:primary_host: ${primary_host}" >> ${LOG_FILE}
         local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        # echo ${line_to_replace}
+        echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
-        echo "Done" 2>&1|tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
         # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
         # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
-            update_bmc_ip "srvnode-1"
+            echo -n "Fetching and updating BMC IP for Server A..................................." 2>&1|tee -a ${LOG_FILE}
+            update_bmc_ip "srvnode-1" >> ${LOG_FILE}
+            echo "Ok." | tee -a ${LOG_FILE}
         }
 
         # Replace node-2 entry
         # Hostname
-        echo -n "Updating hostname of secondary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Updating hostname of Server B..............................................." 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
-        # echo ${secondary_host}
+        echo "DEBUG: secondary_host: ${secondary_host}" >> ${LOG_FILE}
         local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        # echo ${line_to_replace}
+        echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
-        echo "Done" 2>&1|tee -a ${LOG_FILE}
+        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
         # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
         # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
-            update_bmc_ip "srvnode-2" "srvnode-2"
+            echo -n "Fetching and updating BMC IP for Server B..................................." 2>&1|tee -a ${LOG_FILE}
+            update_bmc_ip "srvnode-2" "srvnode-2" >> ${LOG_FILE}
+            echo "Ok." | tee -a ${LOG_FILE}
         }
 
-        echo -n "Refreshing salt pillar from primary node....." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Refreshing Salt pillar from Server A........................................" 2>&1|tee -a ${LOG_FILE}
         sleep 5
         salt "*" saltutil.refresh_pillar ${salt_opts}
-        echo "Done" 2>&1|tee -a ${LOG_FILE}
+        echo "Ok." 2>&1|tee -a ${LOG_FILE}
     fi
 }
 
@@ -178,6 +202,7 @@ function recover_rabbitmq_cluster {
     echo "Done"
 }
 
+
 function lock_unboxing_user {
     echo "\
 **********************************************************
@@ -187,23 +212,28 @@ Please validate the following:
   3. Check HA cluster is up [run: pcs status].
      All resources should show as started. Check for fails.]
 **********************************************************" 2>&1 | tee -a ${LOG_FILE}
-    echo -n "Does Unboxing look good (y/n)? "
-    read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ;then
-        passwd --lock cortxub >> ${LOG_FILE}
-        echo "\
-******************************************************************
+
+    while true; do
+        read -p "Does Unboxing look good (y/n)? " _ans
+        case $_ans in
+            [Yy] )
+                passwd --lock cortxub >> ${LOG_FILE}
+                echo "\
+*************************SUCCESS!!********************************
 The system is ready for use.
 User cortxub has been locked and can no longer be used for login.
 ******************************************************************" 2>&1 | tee -a ${LOG_FILE}
-    else
-        echo "\
+                break;;
+            [Nn] )
+              echo "\
 **************************FAILED!!********************************
 User feels unboxing is incomplete.
 Exiting unboxing process...
 ******************************************************************" 2>&1 | tee -a ${LOG_FILE}
-        exit 10
-    fi
+              exit 10;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
 }
 
 function remove_boxing_flag {
@@ -219,3 +249,4 @@ ERROR: Boxing command was not run
 The detailed logs are kept at: ${LOG_FILE}" | tee -a ${LOG_FILE}
     fi
 }
+
