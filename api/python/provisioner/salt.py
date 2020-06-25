@@ -1,8 +1,12 @@
 import attr
+from abc import ABC, abstractmethod
 import salt.config
 from salt.client import LocalClient, Caller
 from salt.runner import RunnerClient
-from typing import List, Union, Dict, Tuple, Iterable, Any, Callable, Optional
+from typing import (
+    List, Union, Dict, Tuple, Iterable, Any, Callable, Type, Optional
+)
+from salt.client.ssh.client import SSHClient
 from pathlib import Path
 import logging
 
@@ -16,8 +20,10 @@ from .errors import (
     SaltCmdRunError, SaltCmdResultError,
     PrvsnrCmdNotFinishedError, PrvsnrCmdNotFoundError
 )
+from .ssh import copy_id
 from .values import is_special
 from ._api_cli import process_cli_result
+from .utils import load_yaml
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +36,8 @@ _salt_local_client = None
 _salt_runner_client = None
 _salt_caller = None
 _salt_caller_local = None
+_salt_ssh_client = None
+
 _local_minion_id = None
 
 
@@ -136,9 +144,9 @@ class SaltRunnerResult:
         return cls(**_data)
 
 
-# TODO TEST
+# TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
-class SaltClientArgs(SaltArgsMixin):
+class SaltClientArgsBase(SaltArgsMixin):
     _prvsnr_type_ = True
 
     targets: str = attr.ib(converter=str)
@@ -149,12 +157,156 @@ class SaltClientArgs(SaltArgsMixin):
     fun_kwargs: Dict = attr.ib(
         converter=lambda v: {} if v is None else v, default=None
     )
-    nowait: bool = False
     kw: Dict = attr.Factory(dict)
 
     @property
     def args(self):
         return (self.targets, self.fun)
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltClientArgs(SaltClientArgsBase):
+    nowait: bool = False
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHArgs(SaltClientArgsBase):
+    pass
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHResultBase(ABC):
+    _prvsnr_type_ = True
+    raw: Any
+    # some not tracked fields
+    other: Dict
+
+    _result: Any = attr.ib(init=False, default=None)
+    _fail: Any = attr.ib(init=False, default=None)
+
+    @property
+    def result(self):
+        return self._result
+
+    @property
+    def fail(self):
+        return self._fail
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHRawResult(SaltSSHResultBase):
+    other: Dict = attr.ib(init=False, default=attr.Factory(dict))
+
+    def __attrs_post_init__(self):
+        self._result = self.raw
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHSimpleResult(SaltSSHResultBase):
+    retcode: int
+    stderr: str
+    stdout: str
+
+    def __attrs_post_init__(self):
+        self._result = self.stdout
+        if self.retcode:
+            self._fail = f'STDERR: {self.stderr}, STDOUT: {self.stdout}'
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHJobResult(SaltSSHResultBase):
+    retcode: int
+    jid: str
+    fun: str
+    fun_args: List
+    jresult: Any
+
+    def __attrs_post_init__(self):
+        self._result = self.jresult
+
+        # TODO IMPROVE better error presentation
+        if self.retcode or (
+            type(self._result) is dict and
+            self._result.get('retcode')
+        ):
+            self._fail = self._result
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHStateJobResult(SaltSSHJobResult):
+
+    def __attrs_post_init__(self):
+        self._result, _fail = self._get_state_results(self.jresult)
+        if _fail:
+            self._fail = _fail
+
+    # TODO IMPROVE EOS-8473
+    def _get_state_results(self, ret: Dict):
+        results = {}
+        fails = {}
+        for task, tresult in ret.items():
+            _dict = results if tresult['result'] else fails
+            _dict[task] = {
+                'comment': tresult.get('comment'),
+                'changes': tresult.get('changes')
+            }
+        return results, fails
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHResultParser:
+
+    @classmethod
+    def _sanitize_key(cls, key):
+        return (
+            'jresult' if key == 'return' else
+            key.lower().replace('-', '_').lstrip('_')
+        )
+
+    @classmethod
+    def _verify(cls, res_t: Type[SaltSSHResultBase], data: Dict) -> bool:
+        required = [
+            k for k, v in attr.fields_dict(res_t).items()
+            if (
+                v.default is attr.NOTHING and
+                k not in attr.fields_dict(SaltSSHResultBase)
+            )
+        ]
+        return not (set(required) - set(data))
+
+    @classmethod
+    def from_salt_res(cls, data: Any, cmd_args: SaltClientArgsBase):
+        if type(data) is dict:
+            _data = {cls._sanitize_key(k): v for k, v in data.items()}
+            _types = [
+                SaltSSHSimpleResult,
+                (
+                    SaltSSHStateJobResult if cmd_args.fun.startswith('state.')
+                    else SaltSSHJobResult
+                )
+            ]
+            for res_t in _types:
+                if cls._verify(res_t, _data):
+                    # TODO IMPROVE EOS-8473 makes sense
+                    #      to place non-sanitized fields into other
+                    other = {
+                        k: _data.pop(k) for k in list(_data)
+                        if (
+                            k not in attr.fields_dict(res_t) or
+                            k in attr.fields_dict(SaltSSHResultBase)
+                        )
+                    }
+                    return res_t(data, other=other, **_data)
+
+        return SaltSSHRawResult(data)
 
 
 # TODO TYPE
@@ -164,7 +316,7 @@ class SaltClientResult:
     _prvsnr_type_ = True
 
     raw: Any
-    cmd_args: SaltClientArgs
+    cmd_args: SaltClientArgsBase
     results: Any = attr.ib(init=False, default=attr.Factory(dict))
     fails: Any = attr.ib(init=False, default=attr.Factory(dict))
 
@@ -172,8 +324,10 @@ class SaltClientResult:
         # TODO is it a valid case actually ?
         if type(self.raw) is not dict:
             self.results = self.raw
-            return
+        else:
+            self._parse_raw_dict()
 
+    def _parse_raw_dict(self):
         # TODO HARDEN check format of result
         for target, job_result in self.raw.items():
             ret = None
@@ -213,6 +367,19 @@ class SaltClientResult:
                     'changes': tresult.get('changes')
                 }
         return fails
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHClientResult(SaltClientResult):
+    def _parse_raw_dict(self):
+        for target, job_result in self.raw.items():
+            ssh_res = SaltSSHResultParser.from_salt_res(
+                job_result, self.cmd_args
+            )
+            self.results[target] = ssh_res.result
+            if ssh_res.fail is not None:
+                self.fails[target] = ssh_res.fail
 
 
 def username():
@@ -260,6 +427,220 @@ def salt_caller_local():
         __opts__['file_client'] = 'local'
         _salt_caller_local = Caller(mopts=__opts__)
     return _salt_caller_local
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltClientBase(ABC):
+    c_path: str = '/etc/salt/master'
+
+    @property
+    @abstractmethod
+    def _cmd_args_t(self) -> Type[SaltClientArgsBase]:
+        ...
+
+    @property
+    def _salt_client_res_t(self) -> Type[SaltClientResult]:
+        return SaltClientResult
+
+    @abstractmethod
+    def _run(self, cmd_args: SaltClientArgsBase):
+        ...
+
+    def parse_res(self, salt_res, cmd_args) -> SaltClientResult:
+        if not salt_res:
+            raise SaltNoReturnError(
+                cmd_args, 'Empty salt result: {}'.format(salt_res)
+            )
+        return self._salt_client_res_t(salt_res, cmd_args)
+
+    def run(
+        self,
+        fun: str,
+        targets: str = ALL_MINIONS,
+        fun_args: Union[Tuple, None] = None,
+        fun_kwargs: Union[Dict, None] = None,
+        **kwargs
+    ):
+        if targets == LOCAL_MINION:
+            targets = local_minion_id()
+
+        # XXX Caller for local minion commands works not smoothly,
+        #     issues with ioloop, possibly related one
+        #     https://github.com/saltstack/salt/issues/46905
+        # return _salt_caller_cmd(fun, *args, **kwargs)
+
+        # TODO log username / password ??? / eauth
+        cmd_args = self._cmd_args_t(
+            targets, fun, fun_args, fun_kwargs, kw=kwargs
+        )
+
+        logger.debug(
+            "Running function '{}' on '{}', fun_args: {},"
+            " fun_kwargs: {}, kwargs: {}"
+            .format(
+                fun, targets, fun_args, fun_kwargs, kwargs
+            )
+        )
+
+        try:
+            salt_res = self._run(cmd_args)
+        except Exception as exc:
+            # TODO too generic
+            raise SaltCmdRunError(cmd_args, exc) from exc
+        else:
+            logger.debug(
+                "Function '{}' on '{}' resulted in {}".format(
+                    fun, targets, salt_res
+                )
+            )
+
+        res = self.parse_res(salt_res, cmd_args)
+
+        if res.fails:
+            raise SaltCmdResultError(cmd_args, res.fails)
+        else:
+            return res.results
+
+    def state_apply(self, state: str, targets=ALL_MINIONS, **kwargs):
+        return self.run(
+            'state.apply', fun_args=[state], targets=targets, **kwargs
+        )
+
+    def cmd_run(self, cmd: str, targets=ALL_MINIONS, **kwargs):
+        return self.run(
+            'cmd.run', fun_args=[cmd], targets=targets, **kwargs
+        )
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltClient(SaltClientBase):
+    # FIXME
+    _client: SSHClient = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self._client = LocalClient(c_path=str(self.c_path))
+
+    @property
+    def _cmd_args_t(self) -> Type[SaltClientArgsBase]:
+        return SaltClientArgs
+
+    def _run(self, cmd_args: SaltClientArgs):
+        _cmd_f = (
+            self._client.cmd_async if cmd_args.nowait else self._client.cmd
+        )
+        return _cmd_f(*cmd_args.args, **cmd_args.kwargs)
+
+    def run(self, *args, roster_file=None, **kwargs):
+        if roster_file is None:
+            roster_file = self.roster_file
+        if roster_file:
+            kwargs['roster_file'] = roster_file
+        return super().run(*args, **kwargs)
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHClient(SaltClientBase):
+    roster_file: str = None
+    ssh_options: Optional[Dict] = None
+
+    _client: SSHClient = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self._client = SSHClient(c_path=str(self.c_path))
+
+    @property
+    def _cmd_args_t(self) -> Type[SaltClientArgsBase]:
+        return SaltSSHArgs
+
+    @property
+    def _salt_client_res_t(self) -> Type[SaltClientResult]:
+        return SaltSSHClientResult
+
+    def _run(self, cmd_args: SaltSSHArgs):
+        return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
+
+    # TODO TEST EOS-8473
+    def ensure_access(self, targets: List, roster_file=None, ssh_options=None):
+        for target in targets:
+            try:
+                self.run(
+                    'uname',
+                    targets=target,
+                    roster_file=roster_file,
+                    ssh_options=ssh_options,
+                    raw_shell=True
+                )
+            except SaltCmdResultError as exc:
+                reason = exc.reason.get(target)
+                roster_file = exc.cmd_args.kw.get('roster_file')
+                if roster_file and ('Permission denied' in reason):
+                    roster = load_yaml(roster_file)
+                    copy_id(
+                        host=roster.get(target, {}).get('host'),
+                        user=roster.get(target, {}).get('user'),
+                        port=roster.get(target, {}).get('port'),
+                        priv_key_path=roster.get(target, {}).get('priv'),
+                        ssh_options=exc.cmd_args.kw.get('ssh_options'),
+                        force=True
+                    )
+                else:
+                    raise
+
+    # TODO TEST EOS-8473
+    def ensure_python3(
+        self,
+        targets: List,
+        roster_file=None,
+        ssh_options=None
+    ):
+        for target in targets:
+            try:
+                self.run(
+                    'python3 --version',
+                    targets=target,
+                    roster_file=roster_file,
+                    ssh_options=ssh_options,
+                    raw_shell=True
+                )
+            except SaltCmdResultError as exc:
+                reason = exc.reason.get(target)
+                # TODO IMPROVE EOS-8473 better search string / regex
+                roster_file = exc.cmd_args.kw.get('roster_file')
+                if roster_file and ("not found" in reason):
+                    self.run(
+                        'yum install -y python3',
+                        targets=target,
+                        roster_file=exc.cmd_args.kw.get('roster_file'),
+                        ssh_options=exc.cmd_args.kw.get('ssh_options'),
+                        raw_shell=True
+                    )
+                else:
+                    raise
+
+    # TODO TEST EOS-8473
+    def ensure_ready(self, targets: List, roster_file=None, ssh_options=None):
+        self.ensure_access(
+            targets, roster_file=roster_file, ssh_options=ssh_options
+        )
+
+        self.ensure_python3(
+            targets, roster_file=roster_file, ssh_options=ssh_options
+        )
+
+    # TODO TYPE EOS-8473
+    def run(self, *args, roster_file=None, ssh_options=None, **kwargs):
+        if roster_file is None:
+            roster_file = self.roster_file
+        if roster_file:
+            kwargs['roster_file'] = str(roster_file)
+        if ssh_options is None:
+            ssh_options = self.ssh_options
+        if ssh_options:
+            kwargs['ssh_options'] = ssh_options
+        return super().run(*args, **kwargs)
 
 
 def local_minion_id():
@@ -313,7 +694,7 @@ def _salt_runner_cmd(
 
     # TODO log username / password ??? / eauth
     cmd_args = SaltRunnerArgs(
-        fun, fun_args, fun_kwargs, nowait, kwargs
+        fun, fun_args, fun_kwargs, nowait, kw=kwargs
     )
 
     _set_auth(cmd_args.kw)
@@ -391,7 +772,7 @@ def runner_function_run(
     fun_kwargs: Union[Dict, None] = None,
     **kwargs
 ):
-    logger.info(
+    logger.debug(
         "Running runner function '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
@@ -407,7 +788,7 @@ def runner_function_run(
         logger.exception("Salt runner command failed")
         raise
 
-    logger.info(
+    logger.debug(
         "Runner function '{}' resulted in {}".format(
             fun, res
         )
@@ -427,7 +808,7 @@ def _salt_client_cmd(
 ):
     # TODO log username / password ??? / eauth
     cmd_args = SaltClientArgs(
-        targets, fun, fun_args, fun_kwargs, nowait, kwargs
+        targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait
     )
 
     _set_auth(cmd_args.kw)
@@ -477,7 +858,7 @@ def function_run(
     #     https://github.com/saltstack/salt/issues/46905
     # return _salt_caller_cmd(fun, *args, **kwargs)
 
-    logger.info(
+    logger.debug(
         "Running function '{}' on '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
@@ -493,7 +874,7 @@ def function_run(
         logger.exception("Salt client command failed")
         raise
 
-    logger.info(
+    logger.debug(
         "Function '{}' on '{}' resulted in {}".format(
             fun, targets, res
         )
@@ -576,7 +957,7 @@ def provisioner_cmd(
     except SaltCmdResultError as exc:
         if nowait:
             raise ProvisionerError(
-                'SaltClientResult is unexpected here: {!r}'.format(exc)
+                'SaltCmdResultError is unexpected here: {!r}'.format(exc)
             ) from exc
         else:
             return process_provisioner_cmd_res(exc.reason)
@@ -621,9 +1002,16 @@ def state_fun_execute(
 
 
 # TODO TEST
-def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
+def copy_to_file_roots(
+    source: Union[str, Path],
+    dest: Union[str, Path],
+    file_root: Optional[Path] = None
+):
+    if file_root is None:
+        file_root = PRVSNR_USER_FILEROOTS_DIR
+
     source = Path(str(source))
-    dest = PRVSNR_USER_FILEROOTS_DIR / dest
+    dest = file_root / dest
 
     if not source.exists():
         raise ValueError('{} not found'.format(source))
@@ -659,6 +1047,7 @@ def copy_to_file_roots(source: Union[str, Path], dest: Union[str, Path]):
             )
         )
 
+    # TODO DOC
     # ensure it would be visible for Salt master / minions
     runner_function_run(
         'fileserver.clear_file_list_cache',
@@ -760,7 +1149,10 @@ class YumRollbackManager:
     def _resolve_last_txn_ids(self):
         # TODO IMPROVE EOS-9484  stderrr might include valuable info
         return cmd_run(
-            "yum history 2>/dev/null | grep ID -A 2 | tail -n1 | awk '{print $1}'",
+            (
+                "yum history 2>/dev/null | grep ID -A 2 | "
+                "tail -n1 | awk '{print $1}'"
+            ),
             targets=self.targets
         )
 
@@ -848,6 +1240,101 @@ class YumRollbackManager:
         'retcode': 0
     }
 }
+"""
+
+
+# salt-ssh possible formats (TODO ??? salt docs for that)
+
+
+"""
+{
+    'srvnode2': {
+        'fun': 'test.ping',
+        'fun_args': [],
+        'id': 'srvnode2',
+        'jid': '20200603135348953717',
+        'retcode': 0,
+        'return': True
+    }
+}
+"""
+
+"""
+{
+    'srvnode2': {
+        'retcode': 0,
+        'stderr': "Warning: Permanently added '[127.0.0.1]:2222' (ECDSA) "
+                'to the list of known hosts.\r\n',
+        'stdout': 'Loaded plugins: fastestmirror\n'
+                'Loading mirror speeds from cached hostfile\n'
+                ' * base: mirror.axelname.ru\n'
+                ' * epel: mirror.datacenter.by\n'
+                ' * extras: dedic.sh\n'
+                ' * updates: mirrors.powernet.com.ru\n'
+                'Package python3-3.6.8-13.el7.x86_64 already installed '
+                'and latest version\n'
+                'Nothing to do\n'
+    }
+}
+"""
+
+
+"""
+
+{
+    'srvnode2': {
+        'fun': 'state.pkg',
+        'fun_args': [...],
+        'id': 'srvnode2',
+        'jid': '20200603135634495984',
+        'out': 'highstate',
+        'retcode': 0,
+        'return': {
+            '<state-name-as-a-key>': {
+                '__run_num__': 1,
+                '__sls__': 'cortx_repos.install',
+                '__state_ran__': False,
+                'changes': {},
+                'comment': '<some-comment>',
+                'duration': 0.002,
+                'result': True,
+                'start_time': '13:56:34.598244'
+            },
+            ...
+        }
+    }
+}
+"""
+
+"""
+{
+    'srvnode2': {
+        '_error': 'Failed to return clean data',
+        'retcode': 255,
+        'stderr': "some stderr"
+        'stdout': 'some stdout'
+    }
+}
+"""
+
+"""
+{
+    'srvnode2': {
+        'fun': 'cmd.script',
+        'fun_args': ['salt://firewall/files/firewall.sh'],
+        'id': 'srvnode2',
+        'jid': '20200603135016017125',
+        'retcode': 0,
+        'return': {
+            'cache_error': True,
+            'pid': 0,
+             'retcode': 1,
+             'stderr': '',
+             'stdout': ''
+        }
+    }
+}
+
 """
 
 #   - ??? salt docs for that)

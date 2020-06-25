@@ -3,9 +3,13 @@ import logging
 import time
 from typing import Tuple, Union
 from pathlib import Path
+from typing import Optional, List
+import subprocess
+
+from . import config
 
 from .errors import (
-    BadPillarDataError, ProvisionerError
+    BadPillarDataError, ProvisionerError, SubprocessCmdError
 )
 
 logger = logging.getLogger(__name__)
@@ -98,3 +102,71 @@ def ensure(
                 raise exc
             else:
                 raise ProvisionerError('no more tries')
+
+
+# TODO TEST EOS-8473
+def run_subprocess_cmd(cmd, **kwargs):
+    _kwargs = dict(
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    _kwargs.update(kwargs)
+    _kwargs['check'] = True
+
+    if type(cmd) is str:
+        cmd = cmd.split()
+
+    try:
+        # TODO IMPROVE EOS-8473 logging level
+        logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
+        res = subprocess.run(cmd, **_kwargs)
+    except subprocess.CalledProcessError as exc:
+        logger.exception(f"Failed to run cmd '{cmd}'")
+        raise SubprocessCmdError(cmd, _kwargs, repr(exc)) from exc
+    else:
+        logger.debug(f"Subprocess command resulted in: {res}")
+        return res
+
+
+# TODO TEST EOS-8473
+def repo_tgz(
+    dest: Path,
+    project_path: Optional[Path] = None,
+    version: str = None,
+    include_dirs: Optional[List] = None
+):
+    if project_path is None:
+        project_path = config.PROJECT_PATH
+
+    if not project_path:
+        raise ValueError('project path is not specified')
+
+    if include_dirs is None:
+        include_dirs = ['.']
+
+    include_dirs = [str(d) for d in include_dirs]
+
+    # treat the version as git commit/branch/tag ...
+    if version:
+        cmd = (
+            ['git', 'archive', '--format=tar.gz', version, '-o', str(dest)] +
+            include_dirs
+        )
+    # do raw archive with uncommitted/untracked changes otherwise
+    else:
+        exclude = []
+        for d in config.REPO_BUILD_DIRS + ['*.swp']:
+            exclude.extend(['--exclude', str(d)])
+
+        cmd = (
+            ['tar', '-czf',  str(dest)] +
+            exclude +
+            ['-C', str(project_path)] +
+            include_dirs
+        )
+
+    run_subprocess_cmd(cmd)
+
+    return dest

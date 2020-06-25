@@ -64,3 +64,7 @@ configure_eos:
   type: ConfigureEOS
 create_user:
   type: CreateUser
+setup_eos_singlenode:
+  type: SetupSinglenode
+setup_eos_cluster:
+  type: SetupCluster

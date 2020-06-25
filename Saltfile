@@ -1,5 +1,5 @@
 salt-ssh:
-  config_dir: /opt/seagate/eos-prvsnr/files/etc/salt
+  config_dir: /etc/salt
   ignore_host_keys: True
   no_host_keys: True
   refresh_cache: True

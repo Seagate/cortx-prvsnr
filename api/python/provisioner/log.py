@@ -42,7 +42,7 @@ class CommandFilter(logging.Filter):
 class NoTraceExceptionFormatter(logging.Formatter):
     def formatException(self, exc_info):
         # TODO IMPROVE check docs for exc_info
-        return repr(exc_info[1])
+        return repr(getattr(exc_info[1], 'reason', exc_info[1]))
 
 
 def build_log_args_cls(log_config=None):

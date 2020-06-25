@@ -19,6 +19,7 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}
 mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
+PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 function trap_handler {
@@ -168,6 +169,28 @@ NOTE: The above system details are required for unboxing and is stored at: $_out
     done
 }
 
+
+function reset_pub_data_ips {
+    #Reset IPs for public data network
+    #Update public data interface ips
+    local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
+    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
+        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
+    fi
+
+    echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
+    echo "Removing static data ip from $_cluster_sls_path for server A" >> $LOG_FILE
+    line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
+    sed -ie "${line_node1_ip}s/.*/                ipaddr:/" $_cluster_sls_path
+    echo "Removing static data ip from $_cluster_sls_path for server B" >> $LOG_FILE
+    line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
+    sed -ie "${line_node2_ip}s/.*/                ipaddr:/" $_cluster_sls_path
+    echo "Done" | tee -a ${LOG_FILE}
+
+    echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}
+    salt '*' state.apply components.system.network.data.direct ${salt_opts}
+    echo "Done." | tee -a ${LOG_FILE}
+}
 
 function boxing_flag {
     #Flag file is created only on primary node,

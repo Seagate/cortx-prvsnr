@@ -1,0 +1,2 @@
+include:
+  - .minion_config

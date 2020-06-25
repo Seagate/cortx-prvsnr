@@ -73,7 +73,9 @@ function trigger_s3_cleanup {
     _linfo "*****************************************************************"
 }
 
-ensure_healthy_cluster
+#EOS-9693: no need to check if cluster is healthy during reset.
+#ensure_healthy_cluster
+
 user_confirmation
 trigger_hare_reset
 ensure_healthy_cluster

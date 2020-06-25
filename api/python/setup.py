@@ -46,14 +46,14 @@ setup(
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
     # TODO LICENSE, other
-    package_data={
-        'provisioner': [
-            'api_spec.yaml',
-            'params_spec.yaml',
-            'provisioner.conf'
-        ]
-    },
-    # include_package_data=True,  # TODO
+    # package_data={
+    #    'provisioner': [
+    #        'api_spec.yaml',
+    #        'params_spec.yaml',
+    #        'provisioner.conf'
+    #    ]
+    # },
+    include_package_data=True,
     # zip_safe=False,  TODO,
     entry_points={
         'console_scripts': [
