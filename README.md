@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f2ba64dc5ca7475d8833f0a3231bb940)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade)
+
 # Introduction
 The purpose of this repository is to provide a provisioning framework for EOS project.
 The objective shall be to
