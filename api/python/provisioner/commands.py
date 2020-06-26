@@ -215,7 +215,8 @@ class RunArgsSetup:
                 'help': "the path to local provisioner repo"
             }
         },
-        default=config.PROJECT_PATH
+        default=config.PROJECT_PATH,
+        converter=(lambda v: Path(str(v)))
     )
     target_build: str = attr.ib(
         metadata={
@@ -343,18 +344,18 @@ class Node:
 
     @ping_addrs.setter
     def ping_addrs(self, addrs: Iterable):
-        priorities = set(
-            [
-                self.grains.fqdn
-            ] + self.grains.fqdns + [
-                self.host,
-                self.grains.host
-            ] + self.grains.ipv4
-        )
+        # TODO IMPROVE EOS-8473 more effective way to order
+        #      w.g. use dict (it remembers the order) and set intersection
+        priorities = [
+            self.grains.fqdn
+        ] + self.grains.fqdns + [
+            self.host,
+            self.grains.host
+        ] + self.grains.ipv4
 
         self._ping_addrs[:] = []
         for addr in priorities:
-            if addr in self.addrs:
+            if addr in addrs and (addr not in self._ping_addrs):
                 self._ping_addrs.append(addr)
 
         for addr in addrs:
@@ -1407,7 +1408,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                     f"from other nodes by any of {candidates}"
                 )
 
-            node.ping_addrs[:] = list(pings)
+            node.ping_addrs = list(pings)
 
     def _prepare_salt_masters(self, run_args):
         res = {}
@@ -1551,6 +1552,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
+        #   FIXME not valid for non 'local' source
         minion_cfg_sample_path = (
             run_args.local_repo /
             'srv/components/provisioner/salt_minion/files/minion'
@@ -1580,6 +1582,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
             #   TODO IMPROVE use salt caller and file-managed instead
             #   (locally) prepare minion grains
+            #   FIXME not valid for non 'local' source
             minion_grains_sample_path = (
                 run_args.local_repo / (
                     "srv/components/provisioner/salt_minion/files/grains.{}"
@@ -1661,7 +1664,8 @@ class SetupProvisioner(CommandParserFillerMixin):
         salt_logger.setLevel(logging.WARNING)
 
         # generate setup name
-        if not run_args.name:
+        setup_name = run_args.name
+        if not setup_name:
             setup_name = '__'.join(
                 [str(node) for node in run_args.nodes]
             )
@@ -1706,6 +1710,9 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
+            # TODO IMPROVE EOS-8473 validator
+            if not run_args.local_repo:
+                raise ValueError(f"local repo is undefined")
             # TODO IMPROVE EOS-8473 hard coded
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
