@@ -9,9 +9,9 @@ sspl:
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
     message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor"
+    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor"
     actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
-    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor"
+    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
@@ -30,6 +30,9 @@ sspl:
     threaded: "true"
     probe: sysfs
     polling_frequency: "30"
+  MEMFAULTSENSOR:
+    threaded: "true"
+    probe: procfs
   LOGGINGPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "iem-queue"
