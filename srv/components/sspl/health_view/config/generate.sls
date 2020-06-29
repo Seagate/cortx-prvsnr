@@ -11,7 +11,7 @@ Run Resource Health View:
   cmd.run:
     - name: /opt/seagate/eos/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
     - require:
-      - Install eos-sspl packages
+      - Install cortx-sspl packages
       - Add common config - system information to Consul
       - Add common config - rabbitmq cluster to Consul
       - Add common config - BMC to Consul
