@@ -223,22 +223,23 @@ echo -n "Configuring Cortx RAS services on server B.............................
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
-echo "Refreshing the cluster resources..." | tee -a ${LOG_FILE}
-echo -n "Refreshing ClusterIP........................................................" | tee -a ${LOG_FILE}
+echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
+echo -n "ClusterIP..........................." | tee -a ${LOG_FILE}
 pcs resource refresh ClusterIP:0
 pcs resource refresh ClusterIP:1
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "Refreshing Stonith.........................................................." | tee -a ${LOG_FILE}
+echo -n "Stonith............................." | tee -a ${LOG_FILE}
 pcs resource refresh stonith-c1
 pcs resource refresh stonith-c2
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "Refreshing CSM & Kibana....................................................." | tee -a ${LOG_FILE}
+echo -n "CSM & Kibana........................" | tee -a ${LOG_FILE}
 pcs resource refresh csm-kibana
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "Refreshing UDS.............................................................." | tee -a ${LOG_FILE}
+
+echo -n "UDS................................." | tee -a ${LOG_FILE}
 pcs resource refresh uds
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
@@ -250,7 +251,12 @@ lock_unboxing_user
 remove_boxing_flag
 
 echo "\
-***** SUCCESS! *****
+************************* SUCCESS!!! **************************************
+IMPORTANT:
+   - User cortxub has been locked and can no longer be used for login.
+   - Please validate the above things before you start using the system &
+     Contact Seagate Support if anything seems wrong.
+
 The detailed logs can be seen at: $LOG_FILE
-Done." | tee -a ${LOG_FILE}
+***************************************************************************" | tee -a ${LOG_FILE}
 

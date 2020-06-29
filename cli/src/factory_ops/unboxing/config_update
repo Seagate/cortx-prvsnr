@@ -209,12 +209,7 @@ function lock_unboxing_user {
 
     echo "\
 
-*************************SUCCESS!!********************************
-
-User cortxub has been locked and can no longer be used for login.
-
-*** Next Steps ***
-
+**************************** Next Steps ***********************************
   1. Check if all IP addresses are assigned as expected
 
       $ sudo ip a
@@ -227,18 +222,13 @@ User cortxub has been locked and can no longer be used for login.
 
       NOTE: run this from Server A (Primary server)
 
-  3. Check if Cortx cluster is up and all services are Started
+  3. Check if Cortx cluster is up and all services are Started, run:
 
       $ sudo pcs status
 
       NOTE: All the resources/services should be listed as started.
 
-
-Please validate the above things before you start using the system.
-
-Please contact Seagate Support if anything seems wrong.
-
-*************************SUCCESS!!********************************" 2>&1 | tee -a ${LOG_FILE}
+" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function remove_boxing_flag {
