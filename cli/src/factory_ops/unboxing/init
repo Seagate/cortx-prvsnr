@@ -224,23 +224,25 @@ salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
-echo -n "ClusterIP..........................." | tee -a ${LOG_FILE}
-pcs resource refresh ClusterIP:0
-pcs resource refresh ClusterIP:1
+echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
+pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
+pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "Stonith............................." | tee -a ${LOG_FILE}
-pcs resource refresh stonith-c1
-pcs resource refresh stonith-c2
+echo -n "Stonith................................" | tee -a ${LOG_FILE}
+
+pcs resource refresh stonith-c1 >> ${LOG_FILE}
+pcs resource refresh stonith-c2 >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "CSM & Kibana........................" | tee -a ${LOG_FILE}
-pcs resource refresh csm-kibana
+echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
+
+pcs resource refresh csm-kibana >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
-echo -n "UDS................................." | tee -a ${LOG_FILE}
-pcs resource refresh uds
+echo -n "UDS...................................." | tee -a ${LOG_FILE}
+pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
@@ -250,12 +252,30 @@ lock_unboxing_user
 # Unboxing SUCCESS
 remove_boxing_flag
 
+echo -ne "\nWaiting for Cortx cluster services to become ready.."
+try=1; tries=60
+until false
+do
+    if [[ "$try" -gt "$tries" ]]; then
+        break
+    fi
+    echo -n "."
+    try=$(( $try + 4 ))
+    sleep 4
+done
+echo -e "Ok.\n"
+
+
 echo "\
 ************************* SUCCESS!!! **************************************
+
+Lyve Drive Rack Cortx cluster is successfully initialized!!  
+
 IMPORTANT:
-   - User cortxub has been locked and can no longer be used for login.
-   - Please validate the above things before you start using the system &
-     Contact Seagate Support if anything seems wrong.
+   - Before you start using the system please ensure that the Cortx cluster
+     is up and running by executing the commands in the steps mentioned above.
+   - If everything is good, please proceed to start onboarding process else
+     please contact the Seagate Support if anything seems wrong.
 
 The detailed logs can be seen at: $LOG_FILE
 ***************************************************************************" | tee -a ${LOG_FILE}

@@ -205,11 +205,14 @@ function recover_rabbitmq_cluster {
 
 function lock_unboxing_user {
 
-    passwd --lock cortxub >> ${LOG_FILE}
+    # TODO: Locking the password of cortxub is commented for Beta.
+    #       Find alternative if unboxing fails and user gets locked out.
+    #passwd --lock cortxub >> ${LOG_FILE}
 
     echo "\
 
-**************************** Next Steps ***********************************
+******************* Please Run next steps manually ************************
+
   1. Check if all IP addresses are assigned as expected
 
       $ sudo ip a
@@ -227,7 +230,6 @@ function lock_unboxing_user {
       $ sudo pcs status
 
       NOTE: All the resources/services should be listed as started.
-
 " 2>&1 | tee -a ${LOG_FILE}
 }
 
