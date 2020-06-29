@@ -2,6 +2,7 @@ import pytest
 import attr
 import builtins
 import typing
+import functools
 
 from provisioner.errors import (
     PillarSetError,
@@ -9,13 +10,15 @@ from provisioner.errors import (
     SWUpdateFatalError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
-    ClusterMaintenanceDisableError
+    ClusterMaintenanceDisableError,
+    HAPostUpdateError,
+    ClusterNotHealthyError
 )
 from provisioner import config
 from provisioner import (
     pillar, commands, inputs, ALL_MINIONS
 )
-from provisioner.salt import State
+from provisioner.salt import State, YumRollbackManager
 from provisioner.values import MISSED
 
 from .helper import mock_fun_echo, mock_fun_result
@@ -433,22 +436,95 @@ def test_commands_Set_run(monkeypatch, some_param_gr, patch_logging):
     ]
 
 
+@pytest.mark.patch_logging([(commands, ('info',))])
+def test_commnads_ensure_update_repos_configuration(patch_logging, mocker):
+    target = 'some-target'
+    mocker.patch.object(commands, 'StatesApplier', autospec=True)
+
+    commands._ensure_update_repos_configuration(target)
+
+    mocker.call.StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo'], target
+    )
+
+
+@pytest.mark.patch_logging([(commands, ('info',))])
+def test_commnads_pre_yum_rollback(patch_logging, mocker):
+    mock = mocker.patch.object(
+        commands, 'cluster_maintenance_enable', autospec=True
+    )
+
+    exc = TypeError('some error')
+    commands._pre_yum_rollback('some-ctx', type(exc), exc, 'some traceback')
+    mock.assert_not_called()
+
+    for exc in (
+        HAPostUpdateError('some error'),
+        ClusterNotHealthyError('some error')
+    ):
+        mock.reset_mock()
+        mock.side_effect = None
+        commands._pre_yum_rollback(
+            'some-ctx', type(exc), exc, 'some traceback'
+        )
+        mock.assert_called_once_with()
+
+        mock.reset_mock()
+        mock.side_effect = ValueError('some another error')
+
+        with pytest.raises(ClusterMaintenanceEnableError):
+            commands._pre_yum_rollback(
+                'some-ctx', type(exc), exc, 'some traceback'
+            )
+        mock.assert_called_once_with()
+
+
+@pytest.mark.patch_logging([(commands, ('info',))])
+def test_commnads_update_component(patch_logging, mocker):
+    target = 'some-target'
+    component = 'some_component'
+    mocker.patch.object(commands, 'StatesApplier', autospec=True)
+
+    commands._update_component(component, target)
+
+    mocker.call.StatesApplier.apply(
+        [f"components.{component}.update"], target
+    )
+
+
+@pytest.mark.patch_logging([(commands, ('info',))])
+def test_commnads_apply_provisioner_config(patch_logging, mocker):
+    target = 'some-target'
+    mocker.patch.object(commands, 'StatesApplier', autospec=True)
+
+    commands._apply_provisioner_config(target)
+
+    mocker.call.StatesApplier.apply(
+        ["components.provisioner.config"], target
+    )
+
+
 @pytest.fixture
 def mock_eosupdate(mocker):
     calls = {}
     mocks = {}
-    mock_manager = mocker.MagicMock()
+    mock_manager = mocker.MagicMock()  # TODO DOC
 
     for fun in (
         'YumRollbackManager',
-        'StatesApplier',
         'cluster_maintenance_enable',
         'cluster_maintenance_disable',
+        'apply_ha_post_update',
+        'ensure_cluster_is_healthy',
         'config_salt_master',
         'config_salt_minions',
-        'ensure_salt_master_is_running'
+        'ensure_salt_master_is_running',
+        '_ensure_update_repos_configuration',
+        '_update_component',
+        '_apply_provisioner_config'
     ):
         mock = mocker.patch.object(commands, fun, autospec=True)
+        # TODO DOC
         # TODO IMPROVE ??? is it documented somewhere - patch returns
         #       <class 'function'> but not a Mock child for functions
         #       or methods if autospec is True
@@ -464,8 +540,40 @@ def mock_eosupdate(mocker):
         'YumRollbackManager'
     ].return_value.__enter__.return_value
 
+    # TODO DOC attaching propery mock to a mock
     type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
         return_value=None
+    )
+
+    def _init(self, *args, **kwargs):
+        for k, v in attr.asdict(YumRollbackManager(*args, **kwargs)).items():
+            setattr(self, k, v)
+        return mocker.DEFAULT
+
+    def _enter(*args, **kwargs):
+        YumRollbackManager.__enter__(*args, **kwargs)
+        return mocker.DEFAULT
+
+    def _exit(*args, **kwargs):
+        YumRollbackManager.__exit__(*args, **kwargs)
+        return mocker.DEFAULT
+
+    mocks['YumRollbackManager'].side_effect = (
+        functools.partial(
+            _init, mocks['YumRollbackManager'].return_value
+        )
+    )
+
+    mocks['YumRollbackManager'].return_value.__enter__.side_effect = (
+        functools.partial(
+            _enter, mocks['YumRollbackManager'].return_value
+        )
+    )
+
+    mocks['YumRollbackManager'].return_value.__exit__.side_effect = (
+        functools.partial(
+            _exit, mocks['YumRollbackManager'].return_value
+        )
     )
 
     return (mock_manager, mocks, calls)
@@ -477,27 +585,70 @@ def test_commands_EOSUpdate_run_happy_path(
 ):
     mock_manager, mocks, calls = mock_eosupdate
 
+    target = 'some-target'
+
     # happy path
-    commands.EOSUpdate().run('some-target')
+    commands.EOSUpdate().run(target)
     expected_calls = [
-        calls['StatesApplier'].apply(
-            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
         ),
-        calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
         calls['cluster_maintenance_enable'](),
-        calls['StatesApplier'].apply(
-            ["components.provisioner.update"], 'some-target'
-        ),
+        calls['_update_component']("provisioner", target),
         calls['config_salt_master'](),
         calls['config_salt_minions'](),
     ] + [
-        calls['StatesApplier'].apply(
-            ["components.{}.update".format(component)], 'some-target'
-        ) for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        calls['_update_component'](component, target)
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
+        calls['apply_ha_post_update'](target),
+        calls['ensure_cluster_is_healthy'](),
         calls['YumRollbackManager']().__exit__(None, None, None)
+    ]
+    assert mock_manager.mock_calls == expected_calls
+
+
+@pytest.mark.patch_logging([(commands, ('error',))])
+def test_commands_EOSUpdate_run_pre_stages_failed(
+    patch_logging, mocker, mock_eosupdate
+):
+    mock_manager, mocks, calls = mock_eosupdate
+    update_lower_exc = TypeError('some-error')
+    target = 'some-target'
+
+    mocks['ensure_cluster_is_healthy'].side_effect = update_lower_exc
+    expected_exc_t = SWUpdateError
+    with pytest.raises(expected_exc_t) as excinfo:
+        commands.EOSUpdate().run(target)
+    exc = excinfo.value
+    assert type(exc) is expected_exc_t
+    assert exc.reason is update_lower_exc
+    assert exc.rollback_error is None
+    expected_calls = [
+        calls['ensure_cluster_is_healthy'](),
+    ]
+    assert mock_manager.mock_calls == expected_calls
+
+    mock_manager.reset_mock()
+    mocks['ensure_cluster_is_healthy'].side_effect = None
+    mocks['_ensure_update_repos_configuration'].side_effect = update_lower_exc
+    expected_exc_t = SWUpdateError
+    with pytest.raises(expected_exc_t) as excinfo:
+        commands.EOSUpdate().run(target)
+    exc = excinfo.value
+    assert type(exc) is expected_exc_t
+    assert exc.reason is update_lower_exc
+    assert exc.rollback_error is None
+    expected_calls = [
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
     ]
     assert mock_manager.mock_calls == expected_calls
 
@@ -507,22 +658,27 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
+    target = 'some-target'
 
     update_lower_exc = TypeError('some-error')
     mocks['cluster_maintenance_enable'].side_effect = update_lower_exc
     with pytest.raises(SWUpdateError) as excinfo:
-        commands.EOSUpdate().run('some-target')
+        commands.EOSUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is SWUpdateError
     assert type(exc.reason) is ClusterMaintenanceEnableError
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is None
     expected_calls = [
-        calls['StatesApplier'].apply(
-            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
         ),
-        calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
         calls['cluster_maintenance_enable'](),
         calls['YumRollbackManager']().__exit__(
             ClusterMaintenanceEnableError,
@@ -530,6 +686,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
         ),
+        calls['YumRollbackManager']()._yum_rollback(),
         calls['cluster_maintenance_disable'](background=True),
     ]
     assert mock_manager.mock_calls == expected_calls
@@ -546,14 +703,15 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
 ):
     mock_manager, mocks, calls = mock_eosupdate
     update_lower_exc = TypeError('some-error')
+    target = 'some-target'
 
     # TODO IMPROVE parametrize to emulate errors on different stages:
     #      - during provisioner update
     #      - during salt master confrig (first time and on rollback)
     #      - during salt minions confrig (first time and on rollback)
     #      - ensure_salt_master_is_running on rollback
-    def apply_side_effect(states, *args, **kwargs):
-        if states == ['components.eoscore.update']:
+    def apply_side_effect(component, *args, **kwargs):
+        if component == 'eoscore':
             raise update_lower_exc
         else:
             return mocker.DEFAULT
@@ -562,36 +720,37 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
         return_value=rollback_error
     )
 
-    mocks['StatesApplier'].apply.side_effect = apply_side_effect
+    mocks['_update_component'].side_effect = apply_side_effect
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run('some-target')
+        commands.EOSUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is SWStackUpdateError
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is rollback_error
     expected_calls = [
-        calls['StatesApplier'].apply(
-            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
         ),
-        calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
         calls['cluster_maintenance_enable'](),
-        calls['StatesApplier'].apply(
-            ["components.provisioner.update"], 'some-target'
-        ),
+        calls['_update_component']("provisioner", target),
         calls['config_salt_master'](),
         calls['config_salt_minions'](),
-        calls['StatesApplier'].apply(
-            ["components.eoscore.update"], 'some-target'
-        ),
+        calls['_update_component']("eoscore", target),
         calls['YumRollbackManager']().__exit__(
             SWStackUpdateError,
             # XXX semes not valuable to check exact exc and trace as well
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
         ),
+        calls['YumRollbackManager']()._yum_rollback(),
     ]
 
     if rollback_error is None:
@@ -599,10 +758,10 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
             calls['ensure_salt_master_is_running'](),
             calls['config_salt_master'](),
             calls['config_salt_minions'](),
-            calls['StatesApplier'].apply(
-                ["components.provisioner.config"], 'some-target'
-            ),
-            calls['cluster_maintenance_disable']()
+            calls['_apply_provisioner_config'](target),
+            calls['cluster_maintenance_disable'](),
+            calls['apply_ha_post_update'](target),
+            calls['ensure_cluster_is_healthy']()
         ])
     assert mock_manager.mock_calls == expected_calls
 
@@ -618,6 +777,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
 ):
     mock_manager, mocks, calls = mock_eosupdate
     update_lower_exc = TypeError('some-error')
+    target = 'some-target'
 
     type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
         return_value=rollback_error
@@ -628,28 +788,29 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run('some-target')
+        commands.EOSUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterMaintenanceDisableError
     assert exc.reason.reason is update_lower_exc
     assert exc.rollback_error is rollback_error
     expected_calls = [
-        calls['StatesApplier'].apply(
-            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
         ),
-        calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
         calls['cluster_maintenance_enable'](),
-        calls['StatesApplier'].apply(
-            ["components.provisioner.update"], 'some-target'
-        ),
+        calls['_update_component']("provisioner", target),
         calls['config_salt_master'](),
         calls['config_salt_minions'](),
     ] + [
-        calls['StatesApplier'].apply(
-            ["components.{}.update".format(component)], 'some-target'
-        ) for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        calls['_update_component'](component, target)
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['YumRollbackManager']().__exit__(
@@ -658,6 +819,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
         ),
+        calls['YumRollbackManager']()._yum_rollback(),
     ]
 
     if rollback_error is None:
@@ -665,11 +827,217 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
             calls['ensure_salt_master_is_running'](),
             calls['config_salt_master'](),
             calls['config_salt_minions'](),
-            calls['StatesApplier'].apply(
-                ["components.provisioner.config"], 'some-target'
-            ),
-            calls['cluster_maintenance_disable']()
+            calls['_apply_provisioner_config'](target),
+            calls['cluster_maintenance_disable'](),
+            calls['apply_ha_post_update'](target),
+            calls['ensure_cluster_is_healthy']()
         ])
+
+    assert mock_manager.mock_calls == expected_calls
+
+
+# TODO IMPROVE DRY EOS-8940 (very close to upper tests)
+@pytest.mark.patch_logging([(commands, ('error',))])
+@pytest.mark.parametrize(
+    "rollback_error",
+    [None, ValueError('some-rollback-error')],
+    ids=['rollback_ok', 'rollback_failed']
+)
+def test_commands_EOSUpdate_run_ha_post_update_failed(
+    patch_logging, mocker, mock_eosupdate, rollback_error
+):
+    mock_manager, mocks, calls = mock_eosupdate
+    update_lower_exc = TypeError('some-error')
+    target = 'some-target'
+
+    type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
+        return_value=rollback_error
+    )
+
+    mocks['apply_ha_post_update'].side_effect = [
+        update_lower_exc, mocker.DEFAULT
+    ]
+    expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
+    with pytest.raises(expected_exc_t) as excinfo:
+        commands.EOSUpdate().run(target)
+    exc = excinfo.value
+    assert type(exc) is expected_exc_t
+    assert type(exc.reason) is HAPostUpdateError
+    assert exc.reason.reason is update_lower_exc
+    assert exc.rollback_error is rollback_error
+    expected_calls = [
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
+        ),
+        calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
+        calls['cluster_maintenance_enable'](),
+        calls['_update_component']("provisioner", target),
+        calls['config_salt_master'](),
+        calls['config_salt_minions'](),
+    ] + [
+        calls['_update_component'](component, target)
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+    ] + [
+        calls['cluster_maintenance_disable'](),
+        calls['apply_ha_post_update'](target),
+        calls['YumRollbackManager']().__exit__(
+            HAPostUpdateError,
+            # XXX semes not valuable to check exact exc and trace as well
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
+        ),
+        calls['cluster_maintenance_enable'](),
+        calls['YumRollbackManager']()._yum_rollback(),
+    ]
+
+    if rollback_error is None:
+        expected_calls.extend([
+            calls['ensure_salt_master_is_running'](),
+            calls['config_salt_master'](),
+            calls['config_salt_minions'](),
+            calls['_apply_provisioner_config'](target),
+            calls['cluster_maintenance_disable'](),
+            calls['apply_ha_post_update'](target),
+            calls['ensure_cluster_is_healthy']()
+        ])
+
+    assert mock_manager.mock_calls == expected_calls
+
+
+@pytest.mark.patch_logging([(commands, ('error',))])
+@pytest.mark.parametrize(
+    "rollback_error",
+    [None, ValueError('some-rollback-error')],
+    ids=['rollback_ok', 'rollback_failed']
+)
+def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
+    patch_logging, mocker, mock_eosupdate, rollback_error
+):
+    mock_manager, mocks, calls = mock_eosupdate
+    update_lower_exc = TypeError('some-error')
+    target = 'some-target'
+
+    type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
+        return_value=rollback_error
+    )
+
+    mocks['ensure_cluster_is_healthy'].side_effect = [
+        mocker.DEFAULT, update_lower_exc, mocker.DEFAULT
+    ]
+    expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
+    with pytest.raises(expected_exc_t) as excinfo:
+        commands.EOSUpdate().run(target)
+    exc = excinfo.value
+    assert type(exc) is expected_exc_t
+    assert type(exc.reason) is ClusterNotHealthyError
+    assert exc.reason.reason is update_lower_exc
+    assert exc.rollback_error is rollback_error
+    expected_calls = [
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
+        ),
+        calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
+        calls['cluster_maintenance_enable'](),
+        calls['_update_component']("provisioner", target),
+        calls['config_salt_master'](),
+        calls['config_salt_minions'](),
+    ] + [
+        calls['_update_component'](component, target)
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+    ] + [
+        calls['cluster_maintenance_disable'](),
+        calls['apply_ha_post_update'](target),
+        calls['ensure_cluster_is_healthy'](),
+        calls['YumRollbackManager']().__exit__(
+            ClusterNotHealthyError,
+            # XXX semes not valuable to check exact exc and trace as well
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
+        ),
+        calls['cluster_maintenance_enable'](),
+        calls['YumRollbackManager']()._yum_rollback(),
+    ]
+
+    if rollback_error is None:
+        expected_calls.extend([
+            calls['ensure_salt_master_is_running'](),
+            calls['config_salt_master'](),
+            calls['config_salt_minions'](),
+            calls['_apply_provisioner_config'](target),
+            calls['cluster_maintenance_disable'](),
+            calls['apply_ha_post_update'](target),
+            calls['ensure_cluster_is_healthy']()
+        ])
+
+    assert mock_manager.mock_calls == expected_calls
+
+
+@pytest.mark.patch_logging([(commands, ('error',))])
+def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
+    patch_logging, mocker, mock_eosupdate
+):
+    mock_manager, mocks, calls = mock_eosupdate
+    update_lower_exc = TypeError('some-error')
+    target = 'some-target'
+    rollback_error = ValueError('some-rollback-error')
+
+    type(mocks['rollback_ctx']).rollback_error = mocker.PropertyMock(
+        return_value=rollback_error
+    )
+
+    mocks['ensure_cluster_is_healthy'].side_effect = [
+        mocker.DEFAULT, update_lower_exc, mocker.DEFAULT
+    ]
+    mocks['cluster_maintenance_enable'].side_effect = [
+        mocker.DEFAULT, rollback_error, mocker.DEFAULT
+    ]
+    expected_exc_t = SWUpdateFatalError
+    with pytest.raises(expected_exc_t) as excinfo:
+        commands.EOSUpdate().run(target)
+    exc = excinfo.value
+    assert type(exc) is expected_exc_t
+    assert type(exc.reason) is ClusterNotHealthyError
+    assert exc.reason.reason is update_lower_exc
+    assert exc.rollback_error is rollback_error
+    expected_calls = [
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
+        ),
+        calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
+        calls['cluster_maintenance_enable'](),
+        calls['_update_component']("provisioner", target),
+        calls['config_salt_master'](),
+        calls['config_salt_minions'](),
+    ] + [
+        calls['_update_component'](component, target)
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+    ] + [
+        calls['cluster_maintenance_disable'](),
+        calls['apply_ha_post_update'](target),
+        calls['ensure_cluster_is_healthy'](),
+        calls['YumRollbackManager']().__exit__(
+            ClusterNotHealthyError,
+            # XXX semes not valuable to check exact exc and trace as well
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
+            mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
+        ),
+        calls['cluster_maintenance_enable'](),
+    ]
 
     assert mock_manager.mock_calls == expected_calls
 
@@ -678,7 +1046,10 @@ post_rollback_stages = [
     'ensure_salt_master_is_running',
     'config_salt_master',
     'config_salt_minions',
-    'cluster_maintenance_disable'
+    '_apply_provisioner_config',
+    'cluster_maintenance_disable',
+    'apply_ha_post_update',
+    'ensure_cluster_is_healthy'
 ]
 
 
@@ -695,20 +1066,31 @@ def test_commands_EOSUpdate_run_post_rollback_fail(
     _idx = post_rollback_stage_idx
     update_lower_exc = TypeError('some-error')
     post_rollback_exc = ValueError('some-post-rollback-error')
+    target = 'some-target'
 
     # Note. just emulate sw update on early stage
     #       since it's not an object of testing here
-    def apply_side_effect(states, *args, **kwargs):
-        if states == ['components.provisioner.update']:
+    def apply_side_effect(component, *args, **kwargs):
+        if component == 'provisioner':
             raise update_lower_exc
         else:
             return mocker.DEFAULT
 
-    mocks['StatesApplier'].apply.side_effect = apply_side_effect
-    mocks[post_rollback_stages[_idx]].side_effect = post_rollback_exc
+    _curr_yum_rollback_side_effect = (
+        mocks['YumRollbackManager'].return_value.__enter__.side_effect
+    )
+
+    def yum_rollback_side_effect(*args, **kwargs):
+        mocks[post_rollback_stages[_idx]].side_effect = post_rollback_exc
+        return _curr_yum_rollback_side_effect(*args, **kwargs)
+
+    mocks['_update_component'].side_effect = apply_side_effect
+    mocks['YumRollbackManager'].return_value.__enter__.side_effect = (
+        yum_rollback_side_effect
+    )
 
     with pytest.raises(SWUpdateFatalError) as excinfo:
-        commands.EOSUpdate().run('some-target')
+        commands.EOSUpdate().run(target)
 
     exc = excinfo.value
     assert type(exc) is SWUpdateFatalError
@@ -717,34 +1099,35 @@ def test_commands_EOSUpdate_run_post_rollback_fail(
     assert exc.rollback_error is post_rollback_exc
 
     expected_calls = [
-        calls['StatesApplier'].apply(
-            ["components.misc_pkgs.eosupdate.repo"], 'some-target'
+        calls['ensure_cluster_is_healthy'](),
+        calls['_ensure_update_repos_configuration'](target),
+        calls['YumRollbackManager'](
+            target,
+            multiple_targets_ok=True,
+            pre_rollback_cb=commands._pre_yum_rollback
         ),
-        calls['YumRollbackManager']('some-target', multiple_targets_ok=True),
         calls['YumRollbackManager']().__enter__(),
+        calls['YumRollbackManager']()._resolve_last_txn_ids(),
         calls['cluster_maintenance_enable'](),
-        calls['StatesApplier'].apply(
-            ["components.provisioner.update"], 'some-target'
-        ),
+        calls['_update_component']("provisioner", target),
         calls['YumRollbackManager']().__exit__(
             SWStackUpdateError,
             # XXX semes not valuable to check exact exc and trace as well
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][1],
             mocks['YumRollbackManager'].return_value.__exit__.call_args[0][2]
-        )
+        ),
+        calls['YumRollbackManager']()._yum_rollback()
     ]
 
     expected_calls.extend([
-        calls[stage]() for stage in post_rollback_stages[:(_idx + 1)]
-    ])
-
-    # TODO IMPROVE
-    if post_rollback_stages[_idx] == 'cluster_maintenance_disable':
-        expected_calls.insert(
-            -1, calls['StatesApplier'].apply(
-                ["components.provisioner.config"], 'some-target'
-            )
+        (
+            calls[stage](target) if stage in (
+                '_apply_provisioner_config',
+                'apply_ha_post_update'
+            ) else calls[stage]()
         )
+        for stage in post_rollback_stages[:(_idx + 1)]
+    ])
 
     assert mock_manager.mock_calls == expected_calls
 

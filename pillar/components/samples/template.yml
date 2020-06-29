@@ -128,7 +128,8 @@ sspl:
   rmq:
     user: sspluser
     secret: "B4kf1T6Qso"
-  healthmappath: /tmp/resource_health_view.json
+  health_map_path: /tmp
+  health_map_file: heath_view_schema.json
 uds:
   version:
     uds-pyi: latest

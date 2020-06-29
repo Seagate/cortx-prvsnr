@@ -45,8 +45,15 @@ setup(
     keywords='EOS Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
-    package_data={'provisioner': ['api_spec.yaml', 'params_spec.yaml']},  # TODO LICENSE, other
-    # include_package_data=True,  # TODO
+    # TODO LICENSE, other
+    # package_data={
+    #    'provisioner': [
+    #        'api_spec.yaml',
+    #        'params_spec.yaml',
+    #        'provisioner.conf'
+    #    ]
+    # },
+    include_package_data=True,
     # zip_safe=False,  TODO,
     entry_points={
         'console_scripts': [

@@ -31,17 +31,21 @@ def _api_call(fun, *args, **kwargs):
         if _input is not None:
             kwargs['password'] = '-'
 
-        kwargs['loglevel'] = 'DEBUG'
-        kwargs['logstream'] = 'stderr'
-        kwargs['output'] = 'json'
+        kwargs['console'] = True
+        kwargs['console-level'] = 'DEBUG'
+        kwargs['console-stream'] = 'stderr'
 
         cmd = ['provisioner']
         cmd.extend(api_args_to_cli(fun, *args, **kwargs))
         logger.debug("Command: {}".format(cmd))
 
+        env = os.environ.copy()
+        env.update({'PRVSNR_OUTPUT': 'json'})
+
         try:
             res = subprocess.run(
                 cmd,
+                env=env,
                 input=_input,
                 check=True,
                 universal_newlines=True,

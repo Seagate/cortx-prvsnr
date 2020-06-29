@@ -19,12 +19,13 @@ srvnode_2_opt=false
 
 salt_master_hostname=
 prvsnr_repo_src=rpm
+dev_repo=false
 
 prvsnr_version=
 
 cluster_id=$(uuidgen)
 
-. $BASEDIR/functions.sh
+. $BASEDIR/common_utils/functions.sh
 
 l_info "***** Running $0 *****"
 
@@ -89,6 +90,9 @@ function options_parser {
         -S|--singlenode)
             singlenode=true
             ;;
+        --dev)
+            dev_repo=true
+            ;;
         *)
             l_error "Unknown option: $1"
             exit 5
@@ -109,7 +113,7 @@ function positional_args_parser {
 }
 
 
-parse_args 'S' 'srvnode-2:,repo-src:,salt-master:,singlenode' options_parser positional_args_parser "$@"
+parse_args 'S' 'srvnode-2:,repo-src:,salt-master:,singlenode,dev' options_parser positional_args_parser "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -204,17 +208,17 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
 fi
 
 # SETUP SRVNODE-1
-grep -q "Red Hat" /etc/*-release && {
+if grep -q "Red Hat" /etc/*-release; then
     install_salt_repo "$hostspec" "$ssh_config" "$sudo"
-} || {
+else
     install_repos "$hostspec" "$ssh_config" "$sudo"
-}
+fi
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
-install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
+install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR" "$dev_repo"
 
 configure_salt srvnode-1 "$hostspec" "$ssh_config" "$sudo" true 127.0.0.1 "$INSTALLDIR"
 
@@ -238,17 +242,17 @@ configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
-    grep -q "Red Hat" /etc/*-release && {
+    if grep -q "Red Hat" /etc/*-release; then
         install_salt_repo "$srvnode_2_hostspec" "$ssh_config" "$sudo"
-    } || {
+    else
         install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo"
-    }
+    fi
 
     configure_firewall "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
     install_salt "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
+    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR" "$dev_repo"
 
     configure_salt srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
     # Always use master hostspec to execute this step

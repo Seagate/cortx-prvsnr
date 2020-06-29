@@ -1,7 +1,8 @@
 import sys
+import os
 import subprocess
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import provisioner
 from provisioner import errors
@@ -72,10 +73,18 @@ def process_cli_result(
             )
 
 
-def _run_cmd(cmd, **kwargs):
+def _run_cmd(cmd, env: Optional[Dict] = None, **kwargs):
+    # Note. we update a copy of current process env since
+    #       subprocess.run will replace the env of the current
+    #       process
+    if env is not None:
+        env_copy = os.environ.copy()
+        env_copy.update(env)
+        env = env_copy
+
     try:
         logger.debug("Executing command {}".format(cmd))
-        res = subprocess.run(cmd, **kwargs)
+        res = subprocess.run(cmd, env=env, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:
         return process_cli_result(exc.stdout, exc.stderr)
@@ -101,16 +110,18 @@ def _api_call(fun, *args, **kwargs):
         kwargs['password'] = '-'
         kwargs['eauth'] = _eauth
 
-    kwargs['logstream'] = 'rsyslog'
-    # TODO IMPROVE make configurable, think about default value
-    kwargs['loglevel'] = 'DEBUG'
-    kwargs['output'] = 'json'
+    kwargs['noconsole'] = True
+    kwargs['rsyslog'] = True
+    kwargs['rsyslog-level'] = 'DEBUG'
+    # TODO IMPROVE EOS-7495 make a config variable for formatter
+    kwargs['rsyslog-formatter'] = 'full'
 
     cli_args = api_args_to_cli(fun, *args, **kwargs)
     cmd = ['provisioner'] + cli_args
 
     return _run_cmd(
         cmd,
+        env={'PRVSNR_OUTPUT': 'json'},
         input=_input,
         check=True,
         universal_newlines=True,
@@ -153,6 +164,7 @@ for fun in [
     'reboot_server',
     'reboot_controller',
     'shutdown_controller',
-    'configure_eos'
+    'configure_eos',
+    'create_user'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

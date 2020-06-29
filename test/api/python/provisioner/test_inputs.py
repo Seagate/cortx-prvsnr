@@ -86,14 +86,65 @@ def test_inputs_AttrParserArgs_kwargs_keys_by_default():
     ) == set(('action', 'metavar', 'default', 'help', 'type'))
 
 
-def test_inputs_AttrParserArgs_kwargs_keys_for_boolean():
+def test_attr_parser_args_kwargs_keys_with_choices():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(choices='somechoices')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'choices'))
+
+
+def test_attr_parser_args_kwargs_keys_with_dest():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(dest='somedest')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'dest'))
+
+
+def test_attr_parser_args_kwargs_keys_with_const():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(type=str, default='123', metadata={
+            METADATA_ARGPARSER: dict(const='someconst')
+        })
+    })
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help', 'type', 'const'))
+
+
+def test_attr_parser_args_kwargs_keys_for_boolean():
     SC = attr.make_class("SC", {"x": attr.ib(type=bool, default=False)})
     assert set(
         AttrParserArgs(attr.fields(SC).x).kwargs.keys()
     ) == set(('action', 'help'))
 
 
-def test_inputs_AttrParserArgs_name_for_optional():
+def test_attr_parser_args_kwargs_keys_for_store_false():
+    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
+        METADATA_ARGPARSER: dict(action='store_false')
+    })})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'help'))
+
+
+def test_attr_parser_args_kwargs_keys_for_store_const():
+    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
+        METADATA_ARGPARSER: dict(action='store_const')
+    })})
+    assert set(
+        AttrParserArgs(attr.fields(SC).x).kwargs.keys()
+    ) == set(('action', 'metavar', 'default', 'help'))
+
+
+def test_attr_parser_args_name_for_optional():
     SC = attr.make_class("SC", {"x": attr.ib(default=None)})
     assert AttrParserArgs(attr.fields(SC).x).name == '--x'
 
@@ -118,7 +169,14 @@ def test_inputs_AttrParserArgs_action_for_boolean():
     assert AttrParserArgs(attr.fields(SC).x).action == 'store_true'
 
 
-def test_inputs_AttrParserArgs_default_set():
+def test_attr_parser_args_action_specified():
+    SC = attr.make_class("SC", {"x": attr.ib(default=None, metadata={
+        METADATA_ARGPARSER: dict(action='someaction')
+    })})
+    assert AttrParserArgs(attr.fields(SC).x).action == 'someaction'
+
+
+def test_attr_parser_args_default_set():
     SC = attr.make_class("SC", {"x": attr.ib(default=123)})
     assert AttrParserArgs(attr.fields(SC).x).name == '--x'
     assert AttrParserArgs(attr.fields(SC).x).default == 123
@@ -201,7 +259,35 @@ def test_inputs_AttrParserArgs_help_from_metadata_for_optional():
     assert AttrParserArgs(attr.fields(SC).x).help == 'some help'
 
 
-def test_inputs_AttrParserArgs_value_from_str():
+def test_attr_parser_args_dest_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'dest': 'somedest'
+                },
+            }
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).dest == 'somedest'
+
+
+def test_attr_parser_args_const_from_metadata_for_optional():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=str,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'const': 'someconst'
+                },
+            }
+        )
+    })
+    assert AttrParserArgs(attr.fields(SC).x).const == 'someconst'
+
+
+def test_attr_parser_args_value_from_str():
     assert AttrParserArgs.value_from_str('PRVSNR_NONE') is None
     assert AttrParserArgs.value_from_str(
         '["1", "2", "3"]', v_type=List

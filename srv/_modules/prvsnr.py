@@ -44,17 +44,20 @@ def _api_wrapper(fun):
     def f(*args, **kwargs):
         _kwargs = {k: v for k, v in kwargs.items() if not k.startswith('__')}
 
-        _kwargs['output'] = 'json'
-        _kwargs['logstream'] = 'rsyslog'
-        # TODO IMPROVE make configurable, think about default value
-        _kwargs['loglevel'] = 'DEBUG'
+        _kwargs['noconsole'] = True
+        _kwargs['rsyslog'] = True
+        _kwargs['rsyslog-level'] = 'DEBUG'
+        _kwargs['rsyslog-formatter'] = 'full'
 
         # don't make sense here
         for k in ('nowait', 'username', 'password', 'eauth'):
             _kwargs.pop(k, None)
 
-        # turn of salt job mode as well to prevent infinite api loop
-        env = {'PRVSNR_SALT_JOB': 'no'}
+        # turn off salt job mode as well to prevent infinite api loop
+        env = {
+            'PRVSNR_SALT_JOB': 'no',
+            'PRVSNR_OUTPUT': 'json'
+        }
 
         cmd = ['provisioner']
         cmd.extend(api_args_to_cli(fun, *args, **_kwargs))

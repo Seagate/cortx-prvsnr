@@ -13,8 +13,8 @@ BuildRequires: python36-devel
 Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
-Requires: salt-master = 2019.2.0
-Requires: salt-minion = 2019.2.0
+#Requires: salt-master = 2019.2.0
+#Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
 #Requires: salt-syndic
 
@@ -79,6 +79,10 @@ mkdir -p /opt/seagate/eos-prvsnr/pillar/user
 chown -R :prvsnrusers /opt/seagate/eos-prvsnr/pillar/user
 chmod -R g+rws /opt/seagate/eos-prvsnr/pillar/user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/pillar/user
+#       Provisioning log directory
+mkdir -p /var/log/seagate/provisioner
+chmod g+rwx /var/log/seagate/provisioner
+setfacl -Rm g:prvsnrusers:rwx /var/log/seagate/provisioner
 
 #   install api globally using pip
 pip3 install -U /opt/seagate/eos-prvsnr/api/python

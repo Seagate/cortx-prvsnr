@@ -4,7 +4,7 @@ import time
 from .salt import runner_function_run
 from .salt_minion import (
     list_minions,
-    check_salt_minions_are_ready
+    ensure_salt_minions_are_ready
 )
 from .utils import ensure
 from .errors import (
@@ -74,6 +74,8 @@ def check_salt_master_is_responded():
 
 # TODO TEST
 def config_salt_master():
+    logger.info("Updating salt-master configuration")
+
     # get salt master PID
     res = runner_function_run(
         'salt.cmd', fun_args=('service.show', 'salt-master')
@@ -111,13 +113,11 @@ def config_salt_master():
         # (keeping in mind that minion may try to reconnect only once
         # in a few minutes)
         # TODO IMPROVE make more dynamic based on actual minions configuration
-        ensure(
-            functools.partial(check_salt_minions_are_ready, up_minions),
-            tries=20, wait=30
-        )
+        ensure_salt_minions_are_ready(up_minions)
 
 
 def ensure_salt_master_is_running():
+    logger.info("Ensuring salt-master is running")
     runner_function_run(
         'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
     )

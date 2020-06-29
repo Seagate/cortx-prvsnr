@@ -34,6 +34,12 @@ def check_salt_minions_are_ready(targets: List):
     return not (set(targets) - set(ready))
 
 
+def ensure_salt_minions_are_ready(targets: List):
+    ensure(
+        functools.partial(check_salt_minions_are_ready, targets),
+        tries=20, wait=30
+    )
+
 # FIXME
 # 1) slat-minion might start even with malformed config
 #   - ??? but sometimes fail
@@ -57,6 +63,8 @@ def check_salt_minions_restarted(pids: Dict):
 
 
 def config_salt_minions(targets=ALL_MINIONS):
+    logger.info("Updating salt-minion configuration")
+
     res = function_run(
         'service.show', fun_args=('salt-minion',),
         targets=targets, timeout=10

@@ -7,12 +7,34 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerCliError(ProvisionerError):
+    pass
+
+
 class BadPillarDataError(ProvisionerError):
     pass
 
 
 class UnknownParamError(ProvisionerError):
     pass
+
+
+# TODO TEST EOS-8473
+class SubprocessCmdError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(
+        self, cmd, cmd_args: Any, reason: str = 'unknown'
+    ):
+        self.cmd = cmd
+        self.cmd_args = cmd_args
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            "subprocess command failed, reason {}, args {}"
+            .format(self.reason, self.cmd_args)
+        )
 
 
 class SaltError(ProvisionerError):
@@ -149,6 +171,33 @@ class SWStackUpdateError(ProvisionerError):
     def __str__(self):
         return (
             'failed to update SW stack, reason: {!r}'
+            .format(self.reason)
+        )
+
+
+# TODO TEST EOS-8940
+class HAPostUpdateError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to apply Hare post_update logic, reason: {!r}'
+            .format(self.reason)
+        )
+
+
+class ClusterNotHealthyError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to apply Hare post_update logic, reason: {!r}'
             .format(self.reason)
         )
 

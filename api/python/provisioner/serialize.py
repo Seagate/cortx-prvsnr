@@ -23,7 +23,10 @@ class PrvsnrType:
 
     @staticmethod
     def to_args_default(obj) -> Any:
-        if isinstance(obj, Exception) and not hasattr(obj, PRVSNR_TYPE_ATTR):
+        if (
+            isinstance(obj, BaseException) and
+            not hasattr(obj, PRVSNR_TYPE_ATTR)
+        ):
             return ((obj.args), None)
         else:
             return (None, obj.__dict__)
@@ -42,7 +45,7 @@ class PrvsnrType:
 #      https://docs.python.org/3.6/library/pickle.html#what-can-be-pickled-and-unpickled
 class PrvsnrJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if hasattr(obj, PRVSNR_TYPE_ATTR) or isinstance(obj, Exception):
+        if hasattr(obj, PRVSNR_TYPE_ATTR) or isinstance(obj, BaseException):
             try:
                 cls = type(obj)
                 res = {PRVSNR_TYPE_KEY: [cls.__module__, cls.__name__]}
@@ -52,7 +55,7 @@ class PrvsnrJSONEncoder(json.JSONEncoder):
                         obj, TO_ARGS_METHOD,
                         functools.partial(PrvsnrType.to_args_default, obj)
                     )()
-                else:  # Exception
+                else:  # BaseException
                     args, kwargs = PrvsnrType.to_args_default(obj)
 
                 if args:

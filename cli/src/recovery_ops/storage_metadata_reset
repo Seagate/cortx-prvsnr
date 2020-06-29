@@ -5,6 +5,9 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/storage_metadata_reset
 mkdir -p $(dirname "${LOG_FILE}")
 # truncate -s 0 ${LOG_FILE}
 
+BASEDIR=$(dirname "${BASH_SOURCE}")
+. ${BASEDIR}/../common_utils/utility_scripts.sh
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -12,17 +15,6 @@ function trap_handler {
 }
 trap trap_handler ERR
 
-BASEDIR=$(dirname "${BASH_SOURCE}")
-
-function _lerror {
-    local msg=${1}
-    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
-}
-
-function _linfo {
-    local msg=${1}
-    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
-}
 
 function user_confirmation {
     _linfo "*****************************************************************"
@@ -64,83 +56,6 @@ function trigger_hare_reset {
     _linfo "*****************************************************************"
 }
 
-function ensure_cluster_health {
-    _linfo "*****************************************************************"
-    _linfo "Performing HA cluster health-check."
-    _linfo "*****************************************************************"
-    hctl node status --full > /tmp/hctl_cluster_health.json
-
-    _linfo "Checking nodes online."
-
-    attempt=0
-    while /usr/bin/true; do
-        if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
-            # Cluster is Online, we are part happy but would continue further with checks
-            _linfo " Cluster is Online, we are part happy.  "
-            _linfo " But, would continue further with few more checks. "
-
-            configured=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f1)
-            disabled=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f4 | cut -d '(' -f2)
-            running_node1=$(jq .nodes[0].resources_running /tmp/hctl_cluster_health.json)
-            running_node2=$(jq .nodes[1].resources_running /tmp/hctl_cluster_health.json)
-            # running=$(jq .resources.statistics.started /tmp/hctl_cluster_health.json)
-            running=$(( running_node1 + running_node2 ))
-            stopped=$(jq .resources.statistics.stopped /tmp/hctl_cluster_health.json)
-
-            configured=${configured:-0}
-            disabled=${disabled:-0}
-            running=${running:-0}
-            stopped=${stopped:-0}
-
-            if [[ "${running}" == "$(( configured - disabled ))" ]]; then
-                if [[ "0" == "${stopped}" ]]; then
-                    _linfo " Cluster is Online and all services have started. "
-                    
-                    # Break the loop
-                    break
-                else
-                    _linfo " Cluster is Online, we are part happy as it seems few services are disabled. "
-
-                    echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
-                    read answer
-
-                    if [ "$answer" != "${answer#[Yy]}" ] ;then
-                        _linfo "User has decided to proceed with the current HA status."
-                        # Break the loop and proceed
-                        break
-                    else
-                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."{LOG_FILE}
-                        sleep 10
-                    fi
-                fi
-            else
-                _linfo "Something's not right. All resources are not started..."
-
-                if [[ ${attempt} -ge 10 ]]; then
-                    _lerror "Giving up after ${attempt} attempts."
-                    exit 20
-                fi
-            fi
-
-        else
-            _lerror "One or more nodes in cluster is/are Offline. Attempt: ${attempt}"
-            
-            # Try 10 attempts and give-up
-            if [[ ${attempt} -ge 10 ]]; then
-                _lerror "One or more nodes in cluster is/are Offline."
-                _lerror "Giving up after 10 attempts."
-                exit 10
-            fi
-        fi
-
-        # Increment attempt count
-        attempt=$(( attempt+1 ))
-        sleep 10
-    done
-
-    _linfo "*****************************************************************"
-} 
-
 function trigger_s3_cleanup {
 
     _linfo "*****************************************************************"
@@ -158,10 +73,12 @@ function trigger_s3_cleanup {
     _linfo "*****************************************************************"
 }
 
-ensure_cluster_health
+#EOS-9693: no need to check if cluster is healthy during reset.
+#ensure_healthy_cluster
+
 user_confirmation
 trigger_hare_reset
-ensure_cluster_health
+ensure_healthy_cluster
 trigger_s3_cleanup
 
 _linfo "*****************************************************************"

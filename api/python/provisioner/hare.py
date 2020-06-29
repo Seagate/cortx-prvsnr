@@ -1,7 +1,7 @@
 import logging
 
-from .config import LOCAL_MINION
-from .salt import cmd_run
+from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
+from .salt import cmd_run, StatesApplier
 from .utils import ensure
 
 logger = logging.getLogger(__name__)
@@ -45,11 +45,19 @@ def cluster_maintenance(
 
 
 def cluster_maintenance_enable(**kwargs):
+    logger.info("Enabling cluster maintenance mode")
     return cluster_maintenance(True, **kwargs)
 
 
 def cluster_maintenance_disable(**kwargs):
+    logger.info("Disabling cluster maintenance mode")
     return cluster_maintenance(False, **kwargs)
+
+
+# TODO TEST EOS-8940
+def apply_ha_post_update(targets=ALL_MINIONS):
+    logger.info(f"Applying Hare post_update logic on {targets}")
+    return StatesApplier.apply(["components.ha.ees_ha.post_update"], targets)
 
 
 # TODO IMPROVE may lead to errors for stpopped cluster like:
@@ -59,9 +67,26 @@ def check_cluster_is_offline():
     return ('OFFLINE:' in ret)
 
 
+# TODO TEST EOS-8940
 def check_cluster_is_online():
-    ret = cluster_status()
-    return ('Online:' in ret)
+    for path in (
+        'cli/common_utils/utility_scripts.sh',
+        'cli/src/common_utils/utility_scripts.sh'
+    ):
+        if (PRVSNR_ROOT_DIR / path).exists():
+            utility_scripts = PRVSNR_ROOT_DIR / path
+            break
+    else:
+        raise RuntimeError('Utility scripts are not found')
+
+    res = cmd_run(
+        (
+            f"bash -c "
+            f"'. {utility_scripts}; ensure_healthy_cluster false'"
+        ),
+        targets=LOCAL_MINION
+    )
+    return next(iter(res.values()))
 
 
 def ensure_cluster_is_stopped(tries=30, wait=1):
@@ -72,4 +97,11 @@ def ensure_cluster_is_stopped(tries=30, wait=1):
 
 def ensure_cluster_is_started(tries=30, wait=10):
     cluster_start()
+    ensure(check_cluster_is_online, tries=tries, wait=wait)
+
+
+# TODO IMPROVE EOS-8940 currently we rely on utility_scripts.sh as it
+#      has its own looping logic, so only one try here
+def ensure_cluster_is_healthy(tries=1, wait=10):
+    logger.info(f"Ensuring cluster is online and healthy")
     ensure(check_cluster_is_online, tries=tries, wait=wait)

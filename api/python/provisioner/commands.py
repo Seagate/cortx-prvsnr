@@ -1,19 +1,24 @@
 import sys
 import attr
-from typing import List, Dict, Type, Union
+from typing import List, Dict, Type, Union, Optional, Iterable
 from copy import deepcopy
 import logging
 from datetime import datetime
+import uuid
 from pathlib import Path
 
 from .errors import (
+    ProvisionerError,
     BadPillarDataError,
     PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
-    ClusterMaintenanceDisableError
+    ClusterMaintenanceDisableError,
+    HAPostUpdateError,
+    ClusterNotHealthyError,
+    SaltCmdResultError
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
@@ -22,9 +27,7 @@ from .config import (
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE
-)
-from .utils import (
-    load_yaml, dump_yaml_str
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
 )
 from .pillar import (
     KeyPath,
@@ -32,19 +35,29 @@ from .pillar import (
     PillarUpdater,
     PillarResolver
 )
+# TODO IMPROVE EOS-8473
+from . import config, profile
+from .utils import (
+    load_yaml, dump_yaml,
+    load_yaml_str, dump_yaml_str,
+    repo_tgz, run_subprocess_cmd
+)
 from .api_spec import api_spec
+from .ssh import keygen
 from .salt import (
     StatesApplier,
     StateFunExecuter,
     State,
     YumRollbackManager,
-    SaltJobsRunner,
-    function_run,
-    copy_to_file_roots
+    SaltJobsRunner, function_run,
+    copy_to_file_roots,
+    SaltSSHClient
 )
 from .hare import (
     cluster_maintenance_enable,
-    cluster_maintenance_disable
+    cluster_maintenance_disable,
+    apply_ha_post_update,
+    ensure_cluster_is_healthy
 )
 from .salt_master import (
     config_salt_master,
@@ -89,6 +102,7 @@ class RunArgsBase:
 class RunArgsUpdate:
     targets: str = RunArgs.targets
     dry_run: bool = RunArgs.dry_run
+
 
 # TODO DRY
 @attr.s(auto_attribs=True)
@@ -167,6 +181,275 @@ class RunArgsConfigureEOS:
     )
 
 
+# TODO TEST EOS-8473
+class RunArgsSetup:
+    name: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "A name to assign to the setup, "
+                    "auto-generated if not specified"
+                ),
+            }
+        },
+        default=None
+    )
+    prvsnr_verion: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Provisioner version to setup",
+            }
+        },
+        default=None
+    )
+    source: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the source for provisioner repo installation",
+                'choices': ['local', 'gitlab', 'gitrepo', 'rpm']
+            }
+        },
+        default='rpm'
+    )
+    local_repo: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the path to local provisioner repo"
+            }
+        },
+        default=config.PROJECT_PATH,
+        converter=(lambda v: Path(str(v)))
+    )
+    target_build: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "Cortex integration release version relative to "
+                    f"{config.CORTX_REPOS_BASE_URL}"
+                ),
+            }
+        },
+        default='integration/centos-7.7.1908/last_successful',
+        converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
+    )
+    ha: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "turn on high availbility setup",
+            }
+        },
+        default=False
+    )
+    salt_master: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "domain name or IP of the salt master"
+            }
+        },
+        default=None
+    )
+    update: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "update initial configuration",
+            }
+        },
+        default=False
+    )
+
+
+# TODO TEST EOS-8473
+# TODO IMPROVE EOS-8473 converters and validators
+@attr.s(auto_attribs=True)
+class NodeGrains:
+    fqdn: str = None
+    host: str = None
+    ipv4: List = attr.Factory(list)
+    fqdns: List = attr.Factory(list)
+    not_used: Dict = attr.Factory(dict)
+
+    @classmethod
+    def from_grains(cls, **kwargs):
+        # Note. assumtion that 'not_used' doesn't appear in grains
+        not_used = {
+            k: kwargs.pop(k) for k in list(kwargs)
+            if k not in attr.fields_dict(cls)
+        }
+        return cls(**kwargs, not_used=not_used)
+
+    @property
+    def addrs(self):
+        res = []
+        for _attr in ('host', 'fqdn', 'fqdns', 'ipv4'):
+            v = getattr(self, _attr)
+            if v:
+                if type(v) is list:
+                    res.extend(v)
+                else:  # str is expected
+                    res.append(v)
+        return list(set(res))
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class Node:
+    minion_id: str
+    host: str
+    user: str = 'root'
+    port: int = 22
+
+    grains: Optional[NodeGrains] = None
+    # ordered by priority
+    _ping_addrs: List = attr.Factory(list)
+
+    @classmethod
+    def from_spec(cls, spec: str) -> 'Node':
+        kwargs = {}
+
+        parts = spec.split(':')
+        kwargs['minion_id'] = parts[0]
+        hostspec = parts[1]
+
+        try:
+            kwargs['port'] = parts[2]
+        except IndexError:
+            pass
+
+        parts = hostspec.split('@')
+        try:
+            kwargs['user'] = parts[0]
+            kwargs['host'] = parts[1]
+        except IndexError:
+            del kwargs['user']
+            kwargs['host'] = parts[0]
+
+        return cls(**kwargs)
+
+    def __str__(self):
+        return (
+            '{}:{}@{}:{}'
+            .format(
+                self.minion_id,
+                self.user,
+                self.host,
+                self.port
+            )
+        )
+
+    @property
+    def addrs(self):
+        return list(set([self.host] + self.grains.addrs))
+
+    @property
+    def ping_addrs(self):
+        return self._ping_addrs
+
+    @ping_addrs.setter
+    def ping_addrs(self, addrs: Iterable):
+        # TODO IMPROVE EOS-8473 more effective way to order
+        #      w.g. use dict (it remembers the order) and set intersection
+        priorities = [
+            self.grains.fqdn
+        ] + self.grains.fqdns + [
+            self.host,
+            self.grains.host
+        ] + self.grains.ipv4
+
+        self._ping_addrs[:] = []
+        for addr in priorities:
+            if addr in addrs and (addr not in self._ping_addrs):
+                self._ping_addrs.append(addr)
+
+        for addr in addrs:
+            if addr not in self._ping_addrs:
+                self._ping_addrs.append(addr)
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class RunArgsSetupProvisionerBase:
+    name: str = RunArgsSetup.name
+    source: str = RunArgsSetup.source
+    prvsnr_verion: str = RunArgsSetup.prvsnr_verion
+    local_repo: str = RunArgsSetup.local_repo
+    target_build: str = RunArgsSetup.target_build
+    salt_master: str = RunArgsSetup.salt_master
+    update: bool = RunArgsSetup.update
+
+
+@attr.s(auto_attribs=True)
+class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
+    ha: bool = RunArgsSetup.ha
+    nodes: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "cluster node specification, "
+                    "format: [id:][user@]hostname[:port]"
+                ),
+                'nargs': '*'
+            }
+        },
+        default=None,
+        converter=(
+            lambda specs: [
+                (s if isinstance(s, Node) else Node.from_spec(s))
+                for s in specs
+            ]
+        )
+    )
+
+    @property
+    def primary(self):
+        return self.nodes[0]
+
+    @property
+    def secondaries(self):
+        return self.nodes[1:]
+
+
+@attr.s(auto_attribs=True)
+class RunArgsSetupSinglenode(RunArgsSetupProvisionerBase):
+    srvnode1: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "srvnode-1 host specification",
+                'metavar': '[user@]hostname[:port]'
+            }
+        },
+        default=config.LOCALHOST_IP,
+        converter=(lambda s: Node.from_spec(f"srvnode-1:{s}"))
+    )
+    salt_master: str = attr.ib(init=False,  default=None)
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class RunArgsSetupCluster(RunArgsSetupSinglenode):
+    ha: bool = RunArgsSetup.ha
+    srvnode2: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "srvnode-2 host specification",
+                'metavar': '[user@]hostname[:port]'
+            }
+        },
+        default='srvnode-2',
+        converter=(lambda s: Node.from_spec(f"srvnode-2:{s}"))
+    )
+
+    """
+    @srvnode2.validator
+    def _check_srvnode2(self, attribute, value):
+        parts = value.split('@')
+        if len(parts) > 2 or len(parts) == 0 or [p for p in parts if not p]:
+            raise ValueError(
+                f"{attribute.name} should be a valid hostspec [user@]host, "
+                f"provided '{value}'"
+            )
+    """
+
+
 @attr.s(auto_attribs=True)
 class RunArgsController:
     target_ctrl: str = attr.ib(
@@ -179,6 +462,25 @@ class RunArgsController:
             }
         }
     )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsUser:
+    uname: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "name of the user"
+            }
+        }
+    )
+    passwd: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "password for the user"
+            }
+        }
+    )
+    targets: str = RunArgs.targets
 
 
 class CommandParserFillerMixin:
@@ -417,6 +719,48 @@ class SetEOSUpdateRepo(Set):
         super()._run(params, targets)
 
 
+# TODO IMPROVE EOS-8940 move to separate module
+def _ensure_update_repos_configuration(targets=ALL_MINIONS):
+    logger.info("Ensure update repos are configured")
+    StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo'], targets
+    )
+
+
+def _pre_yum_rollback(
+    rollback_ctx, exc_type, exc_value, exc_traceback
+):
+    if isinstance(
+        exc_value, (HAPostUpdateError, ClusterNotHealthyError)
+    ):
+        try:
+            logger.info(
+                "Enable cluster maintenance mode before rollback"
+            )
+            cluster_maintenance_enable()
+        except Exception as exc:
+            raise ClusterMaintenanceEnableError(exc) from exc
+
+
+def _update_component(component, targets=ALL_MINIONS):
+    state_name = "components.{}.update".format(component)
+    try:
+        logger.info(
+            "Updating {} on {}".format(component, targets)
+        )
+        StatesApplier.apply([state_name], targets)
+    except Exception:
+        logger.exception(
+            "Failed to update {} on {}".format(component, targets)
+        )
+        raise
+
+
+def _apply_provisioner_config(targets=ALL_MINIONS):
+    logger.info(f"Applying Provisioner config logic on {targets}")
+    StatesApplier.apply(["components.provisioner.config"], targets)
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class EOSUpdate(CommandParserFillerMixin):
@@ -424,20 +768,6 @@ class EOSUpdate(CommandParserFillerMixin):
 
     def run(self, targets):
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
-
-        def _update_component(component):
-            state_name = "components.{}.update".format(component)
-            try:
-                logger.info(
-                    "Updating {} on {}".format(component, targets)
-                )
-                StatesApplier.apply([state_name], targets)
-            except Exception:
-                logger.exception(
-                    "Failed to update {} on {}"
-                    .format(component, targets)
-                )
-                raise
 
         # TODO:
         #   - create a state instead
@@ -449,38 +779,53 @@ class EOSUpdate(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         try:
-            # ensure update repos are configured
-            StatesApplier.apply(
-                ['components.misc_pkgs.eosupdate.repo'], targets
-            )
+            ensure_cluster_is_healthy()
+
+            _ensure_update_repos_configuration(targets)
 
             with YumRollbackManager(
-                targets, multiple_targets_ok=True
+                targets,
+                multiple_targets_ok=True,
+                pre_rollback_cb=_pre_yum_rollback
             ) as rollback_ctx:
+                # enable "smart maintenance" mode
                 try:
                     cluster_maintenance_enable()
                 except Exception as exc:
                     raise ClusterMaintenanceEnableError(exc) from exc
 
+                # update SW stack packages and configuration
                 try:
-                    # provisioner update
-                    _update_component('provisioner')
+                    _update_component('provisioner', targets)
+
                     config_salt_master()
+
                     config_salt_minions()
 
-                    # update other components
                     for component in (
                         'eoscore', 's3server', 'hare', 'sspl', 'csm'
                     ):
-                        _update_component(component)
+                        _update_component(component, targets)
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc
 
                 # SW stack now in "updated" state
+                # disable "smart maintenance" mode
                 try:
                     cluster_maintenance_disable()
                 except Exception as exc:
                     raise ClusterMaintenanceDisableError(exc) from exc
+
+                # call Hare to update cluster configuration
+                try:
+                    apply_ha_post_update(targets)
+                except Exception as exc:
+                    raise HAPostUpdateError(exc) from exc
+
+                try:
+                    ensure_cluster_is_healthy()
+                except Exception as exc:
+                    raise ClusterNotHealthyError(exc) from exc
 
         except Exception as update_exc:
             # TODO TEST
@@ -495,30 +840,38 @@ class EOSUpdate(CommandParserFillerMixin):
                 # unrecoverable state: SW stack is in intermediate state,
                 # no sense to start the cluster ??? verify TODO IMPROVE
                 logger.error(
-                    'Yum Rollback failed: {}'
+                    'Rollback failed: {}'
                     .format(rollback_ctx.rollback_error)
                 )
                 final_error_t = SWUpdateFatalError
-            else:
-                # yum changes reverted now
+            elif rollback_ctx is not None:
+                # yum packages are in initial state here
+
                 if isinstance(update_exc, ClusterMaintenanceEnableError):
                     # failed to activate maintenance, cluster will likely
                     # fail to start - fail gracefully:  disable
                     # maintenance in the background
                     cluster_maintenance_disable(background=True)
                 elif isinstance(
+                    # cluster is stopped here
                     update_exc,
-                    (SWStackUpdateError, ClusterMaintenanceDisableError)
+                    (
+                        SWStackUpdateError,
+                        ClusterMaintenanceDisableError,
+                        HAPostUpdateError,
+                        ClusterNotHealthyError
+                    )
                 ):
                     # rollback provisioner related configuration
                     try:
-                        # ensure previous configuration for salt
                         ensure_salt_master_is_running()
+
                         config_salt_master()
+
                         config_salt_minions()
-                        StatesApplier.apply(
-                            ["components.provisioner.config"], targets
-                        )
+
+                        _apply_provisioner_config(targets)
+
                     except Exception as exc:
                         # unrecoverable state: SW stack is in intermediate
                         # state, no sense to start the cluster
@@ -531,19 +884,26 @@ class EOSUpdate(CommandParserFillerMixin):
                         # SW stack now in "initial" state
                         try:
                             cluster_maintenance_disable()
+
+                            apply_ha_post_update(targets)
+
+                            ensure_cluster_is_healthy()
                         except Exception as exc:
                             # unrecoverable state: SW stack is in initial
                             # state but cluster failed to start
                             logger.exception(
-                                'Failed to start cluster after rollback'
+                                'Failed to recover cluster after rollback'
                             )
                             rollback_error = exc
                             final_error_t = SWUpdateFatalError
+
                         # update failed but node is in initial state
                         # and looks functional
                 else:
                     # TODO TEST unit for that case
-                    pass  # it might be update repo set issue
+                    logger.warning(
+                        'Unexpected case: update exc {!r}'.format(update_exc)
+                    )
 
             # TODO IMPROVE
             raise final_error_t(
@@ -637,6 +997,7 @@ class GetNodeId(CommandParserFillerMixin):
             fun_args=['node_id'],
             targets=targets
         )
+
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
@@ -846,6 +1207,709 @@ class ConfigureEOS(CommandParserFillerMixin):
 
         if show:
             print(dump_yaml_str(res))
+
+
+@attr.s(auto_attribs=True)
+class CreateUser(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsUser
+
+    def run(self, uname, passwd, targets: str = ALL_MINIONS):
+
+        if not SEAGATE_USER_HOME_DIR.exists():
+            raise ValueError('/opt/seagate/users directory missing')
+
+        home_dir = SEAGATE_USER_HOME_DIR / uname
+        ssh_dir = home_dir / '.ssh'
+
+        user_fileroots_dir = Path(
+            PRVSNR_FILEROOTS_DIR /
+            SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+        )
+
+        keyfile = user_fileroots_dir / f'id_rsa_{uname}'
+        keyfile_pub = keyfile.with_name(f'{keyfile.name}.pub')
+
+        nodes = PillarKey('cluster/node_list')
+
+        nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
+        nodelist_pillar = next(iter(nodelist_pillar.values()))
+
+        if (not nodelist_pillar[nodes] or
+                nodelist_pillar[nodes] is values.MISSED):
+            raise BadPillarDataError(
+                'value for {} is not specified'.format(nodes.pi_key)
+            )
+
+        def _prepare_user_fileroots_dir():
+            StateFunExecuter.execute(
+                'file.directory',
+                fun_kwargs=dict(
+                    name=str(user_fileroots_dir),
+                    makedirs=True
+                )
+            )
+
+        def _generate_ssh_keys():
+            StateFunExecuter.execute(
+                'cmd.run',
+                fun_kwargs=dict(
+                    name=(
+                        f"ssh-keygen -f {keyfile} "
+                        "-q -C '' -N '' "
+                        "-t rsa -b 4096 <<< y"
+                    )
+                )
+            )
+            StateFunExecuter.execute(
+                'ssh_auth.present',
+                fun_kwargs=dict(
+                    # name param is mandetory and expects ssh key
+                    # but ssh key is passed as source file hence name=None
+                    name=None,
+                    user=uname,
+                    source=str(keyfile_pub),
+                    config=str(user_fileroots_dir / 'authorized_keys')
+                )
+            )
+
+        def _generate_ssh_config():
+            for node in nodelist_pillar[nodes]:
+                hostname = PillarKey(
+                    'cluster/'+node+'/hostname'
+                )
+
+                hostname_pillar = PillarResolver(LOCAL_MINION).get([hostname])
+                hostname_pillar = next(iter(hostname_pillar.values()))
+
+                if (not hostname_pillar[hostname] or
+                        hostname_pillar[hostname] is values.MISSED):
+                    raise BadPillarDataError(
+                        'value for {} is not specified'.format(hostname.pi_key)
+                    )
+
+                ssh_config = f'''Host {node} {hostname_pillar[hostname]}
+    Hostname {hostname_pillar[hostname]}
+    User {uname}
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile {ssh_dir}/{keyfile.name}
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes'''
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=str(user_fileroots_dir / 'config'),
+                        text=ssh_config
+                    )
+                )
+
+        def _copy_minion_nodes():
+            StateFunExecuter.execute(
+                'file.recurse',
+                fun_kwargs=dict(
+                    name=str(ssh_dir),
+                    source=str(
+                        'salt://' +
+                        SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+                    ),
+                    user=uname,
+                    group=uname,
+                    file_mode='600',
+                    dir_mode='700'
+                ),
+                targets=targets
+            )
+
+        def _passwordless_ssh():
+            _prepare_user_fileroots_dir()
+            _generate_ssh_keys()
+            _generate_ssh_config()
+            _copy_minion_nodes()
+
+        StateFunExecuter.execute(
+            'user.present',
+            fun_kwargs=dict(
+                name=uname,
+                password=passwd,
+                hash_password=True,
+                home=str(home_dir),
+                groups=['wheel']
+            ),
+            targets=targets
+        )
+        logger.info(
+            'Setting up passowrdless ssh for {uname} user on both the nodes'
+            .format(
+                uname=uname
+            )
+        )
+        _passwordless_ssh()
+
+
+@attr.s(auto_attribs=True)
+class SetupCtx:
+    run_args: RunArgsSetupProvisionerGeneric
+    profile_paths: Dict
+    ssh_client: SaltSSHClient
+
+
+# TODO TEST EOS-8473
+# TODO DOC highlights
+#   - multiple setups support
+#   - idempotence: might be run multiple times,
+#       re-tries much faster (2-3 times)
+#   - multi-master initial support:
+#       - list of masters is auto-generated
+#         (each to each reachability is checked)
+#   - parallel setup of multiple nodes
+#   - paswordless ssh setup to nodes is supported
+@attr.s(auto_attribs=True)
+class SetupProvisioner(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsSetupProvisionerGeneric
+
+    def _resolve_grains(self, nodes: List[Node], ssh_client):
+        salt_ret = ssh_client.run('grains.items')
+        for node in nodes:
+            # assume that list of nodes matches the result
+            # TODO IMPROVE EOS-8473 better parser for grains return
+            node.grains = NodeGrains.from_grains(
+                **salt_ret[node.minion_id]['return']
+            )
+
+    def _prepare_roster(self, nodes: List[Node], profile_paths):
+        roster = {
+            node.minion_id: {
+                'host': node.host,
+                'user': node.user,
+                'port': node.port,
+                'priv': str(profile_paths['setup_key_file'])
+            } for node in nodes
+        }
+        dump_yaml(profile_paths['salt_roster_file'], roster)
+
+    def _create_ssh_client(self, c_path, roster_file):
+        # TODO IMPROVE EOS-8473 optional support for known hosts
+        ssh_options = [
+            'UserKnownHostsFile=/dev/null',
+            'StrictHostKeyChecking=no'
+        ]
+        return SaltSSHClient(
+            c_path=c_path,
+            roster_file=roster_file,
+            ssh_options=ssh_options
+        )
+
+    def _resolve_connections(self, nodes: List[Node], ssh_client):
+        addrs = {}
+
+        for node in nodes:
+            addrs[node.minion_id] = set(
+                [
+                    v for v in node.addrs
+                    if v not in (config.LOCALHOST_IP, config.LOCALHOST_DOMAIN)
+                ]
+            )
+
+        for node in nodes:
+            pings = set()
+            candidates = set(addrs[node.minion_id])
+            for _node in nodes:
+                if _node is not node:
+                    candidates -= addrs[_node.minion_id]
+
+            targets = ','.join(
+                [_node.minion_id for _node in nodes if _node is not node]
+            )
+
+            for addr in candidates:
+                try:
+                    ssh_client.cmd_run(
+                        f"ping -c 1 -W 1 {addr}", targets=targets
+                    )
+                except SaltCmdResultError as exc:
+                    logger.debug(
+                        f"Possible address '{addr}' "
+                        f"of {node.minion_id} is not reachable "
+                        f"from some nodes: {exc}"
+                    )
+                else:
+                    pings.add(addr)
+
+            if pings:
+                logger.info(
+                    f"{node.minion_id} is reachable "
+                    f"from other nodes by: {pings}"
+                )
+            else:
+                raise ProvisionerError(
+                    f"{node.minion_id} is not reachable"
+                    f"from other nodes by any of {candidates}"
+                )
+
+            node.ping_addrs = list(pings)
+
+    def _prepare_salt_masters(self, run_args):
+        res = {}
+
+        # TODO IMPROVE EOS-8473 hardcoded
+        if len(run_args.nodes) == 1:
+            res[run_args.nodes[0].minion_id] = [
+                run_args.salt_master if run_args.salt_master
+                else config.LOCALHOST_IP
+            ]
+            return res
+
+        if not run_args.salt_master:
+            master_nodes = (
+                run_args.nodes if run_args.ha else [run_args.primary]
+            )
+            masters = {
+                node.minion_id: node.ping_addrs[0]
+                for node in master_nodes
+            }
+            for node in run_args.nodes:
+                res[node.minion_id] = []
+                for _node in run_args.nodes:
+                    # not any node may be a master
+                    if _node.minion_id in masters:
+                        res[node.minion_id].append(
+                            config.LOCALHOST_IP if _node is node
+                            else masters[_node.minion_id]
+                        )
+        else:
+            res = {
+                node.minion_id: [run_args.salt_master]
+                for node in run_args.nodes
+            }
+
+        return res
+
+    def _prepare_local_repo(self, run_args, repo_dir: Path):
+        # ensure parent dirs exists in profile file root
+        run_subprocess_cmd(['rm', '-rf', str(repo_dir)])
+        repo_dir.mkdir(parents=True, exist_ok=True)
+
+        # (locally) prepare tgz
+        repo_tgz_path = repo_dir.parent / 'repo.tgz'
+        repo_tgz(
+            repo_tgz_path,
+            project_path=run_args.local_repo,
+            version=run_args.prvsnr_verion,
+            include_dirs=['pillar', 'srv', 'files', 'api']
+        )
+
+        # extract archive locally
+        run_subprocess_cmd(
+            ['tar', '-zxf', str(repo_tgz_path), '-C', str(repo_dir)]
+        )
+
+        # TODO IMPROVE use salt caller and file-managed instead
+        # set proper cluster.sls from template
+        cluster_sls_sample_path = (
+            repo_dir / 'pillar/components/samples/ees.cluster.sls'
+        )
+        cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
+        run_subprocess_cmd(
+            [
+                'cp', '-f',
+                str(cluster_sls_sample_path),
+                str(cluster_sls_path)
+            ]
+        )
+
+    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
+        minions_dir = (
+            profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
+        )
+        all_minions_dir = minions_dir / 'all'
+        master_pki_dir = (
+            profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki"
+        )
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+
+        #   ensure parent dirs exists in profile file root
+        for path in (all_minions_dir, master_pki_dir, pillar_all_dir):
+            path.mkdir(parents=True, exist_ok=True)
+
+        priv_key_path = all_minions_dir / 'id_rsa_prvsnr'
+        pub_key_path = all_minions_dir / 'id_rsa_prvsnr.pub'
+        run_subprocess_cmd(
+            [
+                'cp', '-f',
+                str(profile_paths['setup_key_file']),
+                str(priv_key_path)
+            ]
+        )
+        run_subprocess_cmd(
+            [
+                'cp', '-f',
+                str(profile_paths['setup_key_pub_file']),
+                str(pub_key_path)
+            ]
+        )
+
+        conns_pillar_path = pillar_all_dir / 'connections.sls'
+        if not conns_pillar_path.exists():
+            self._resolve_connections(run_args.nodes, ssh_client)
+            conns = {
+                node.minion_id: node.ping_addrs for node in run_args.nodes
+            }
+            dump_yaml(conns_pillar_path,  dict(connections=conns))
+        else:
+            conns = load_yaml(conns_pillar_path)['connections']
+            for node in run_args.nodes:
+                node.ping_addrs = conns[node.minion_id]
+
+        # IMRPOVE EOS-8473 it's not a salt minion config thing
+        specs_pillar_path = pillar_all_dir / 'node_specs.sls'
+        if not specs_pillar_path.exists():
+            specs = {
+                node.minion_id: {
+                    'user': 'root',
+                    'host': node.ping_addrs[0],
+                    'port': node.port
+                }
+                for node in run_args.nodes
+            }
+            dump_yaml(specs_pillar_path,  dict(node_specs=specs))
+
+        # resolve salt masters
+        # TODO IMPROVE EOS-8473 option to re-build masters
+        masters_pillar_path = pillar_all_dir / 'masters.sls'
+        if not masters_pillar_path.exists():
+            masters = self._prepare_salt_masters(run_args)
+            logger.info(
+                f"salt masters would be set as follows: {masters}"
+            )
+            dump_yaml(masters_pillar_path,  dict(masters=masters))
+
+        cluster_id_path = all_minions_dir / 'cluster_id'
+        if not cluster_id_path.exists():
+            cluster_uuid = uuid.uuid4()
+            dump_yaml(cluster_id_path, dict(cluster_id=str(cluster_uuid)))
+
+        #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
+        #   (locally) prepare minion config
+        #   FIXME not valid for non 'local' source
+        minion_cfg_sample_path = (
+            run_args.local_repo /
+            'srv/components/provisioner/salt_minion/files/minion'
+        )
+        minion_cfg_path = all_minions_dir / 'minion'
+        run_subprocess_cmd(
+            [
+                'cp', '-f',
+                str(minion_cfg_sample_path),
+                str(minion_cfg_path)
+            ]
+        )
+        run_subprocess_cmd(
+            [
+                'sed', '-i',
+                "s/^master: .*/master: {{ pillar['masters'][grains['id']] }}/g",  # noqa: E501
+                str(minion_cfg_path)
+            ]
+        )
+
+        for node in run_args.nodes:
+            node_dir = minions_dir / f"{node.minion_id}"
+            node_pki_dir = node_dir / 'pki'
+
+            #   ensure parent dirs exists in profile file root
+            node_pki_dir.mkdir(parents=True, exist_ok=True)
+
+            #   TODO IMPROVE use salt caller and file-managed instead
+            #   (locally) prepare minion grains
+            #   FIXME not valid for non 'local' source
+            minion_grains_sample_path = (
+                run_args.local_repo / (
+                    "srv/components/provisioner/salt_minion/files/grains.{}"
+                    .format(
+                        'primary' if node is run_args.primary else 'secondary'
+                    )
+                )
+            )
+            minion_grains_path = node_dir / 'grains'
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(minion_grains_sample_path),
+                    str(minion_grains_path)
+                ]
+            )
+
+            #   TODO IMPROVE use salt caller and file-managed instead
+            #   (locally) prepare minion node_id
+            minion_nodeid_path = node_dir / 'node_id'
+            if not minion_nodeid_path.exists():
+                node_uuid = uuid.uuid4()
+                dump_yaml(minion_nodeid_path, dict(node_id=str(node_uuid)))
+
+            # TODO IMPROVE EOS-8473 consider to move to mine data
+            # (locally) prepare hostname info
+            minion_hostname_status_path = node_dir / 'hostname_status'
+            if not minion_hostname_status_path.exists():
+                res = ssh_client.cmd_run(
+                    "hostnamectl status  | sed 's/^ *//g'",
+                    fun_kwargs=dict(python_shell=True),
+                    targets=node.minion_id
+                )
+                # Note. output here is similar to yaml format
+                # ensure that it is yaml parseable
+                status = load_yaml_str(res[node.minion_id])
+                dump_yaml(
+                    minion_hostname_status_path,
+                    dict(hostname_status=status)
+                )
+
+            #   preseed minion keys
+            node_key_pem_tmp = node_pki_dir / f'{node.minion_id}.pem'
+            node_key_pub_tmp = node_pki_dir / f'{node.minion_id}.pub'
+            node_key_pem = node_pki_dir / 'minion.pem'
+            node_key_pub = node_pki_dir / 'minion.pub'
+
+            if not (node_key_pem.exists() and node_key_pub.exists()):
+                run_subprocess_cmd(
+                    [
+                        'salt-key',
+                        '--gen-keys', node.minion_id,
+                        '--gen-keys-dir', str(node_pki_dir)
+                    ]
+                )
+                node_key_pem_tmp.rename(node_key_pem)
+                node_key_pub_tmp.rename(node_key_pub)
+
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(node_key_pub),
+                    str(master_pki_dir / node.minion_id)
+                ]
+            )
+
+    def run(self, **kwargs):
+        # TODO update install repos logic (salt repo changes)
+        # TODO firewall make more salt oriented
+        # TODO sources: gitlab | gitrepo | rpm
+        # TODO get latest tags for gitlab source
+
+        # validation
+        # TODO IMPROVE EOS-8473 make generic logic
+        run_args = RunArgsSetupProvisionerGeneric(**kwargs)
+
+        # TODO IMPROVE EOS-8473 better configuration way
+        salt_logger = logging.getLogger('salt.fileclient')
+        salt_logger.setLevel(logging.WARNING)
+
+        # generate setup name
+        setup_name = run_args.name
+        if not setup_name:
+            setup_name = '__'.join(
+                [str(node) for node in run_args.nodes]
+            )
+
+        # PREPARE FILE & PILLAR ROOTS
+
+        logger.info(f"Starting to build setup '{setup_name}'")
+
+        paths = config.profile_paths(setup_name=setup_name)
+        profile.setup(paths, clean=run_args.update)
+
+        logger.info(f"Profile location '{paths['base_dir']}'")
+
+        priv_key_path = paths['setup_key_file']
+        if not priv_key_path.exists():
+            logger.info('Generating setup keys')
+            keygen(priv_key_path)
+        else:
+            logger.info('Generating setup keys [skipped]')
+
+        logger.info("Generating a roster file")
+        self._prepare_roster(run_args.nodes, paths)
+
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
+
+        if run_args.source == 'local':
+            logger.info("Preparing local repo for a setup")
+            # TODO IMPROVE EOS-8473 validator
+            if not run_args.local_repo:
+                raise ValueError(f"local repo is undefined")
+            # TODO IMPROVE EOS-8473 hard coded
+            self._prepare_local_repo(
+                run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
+            )
+
+        # Note. salt may fail to an issue with not yet cahed sources:
+        # "Recurse failed: none of the specified sources were found"
+        # a workaround mentioned in https://github.com/saltstack/salt/issues/32128#issuecomment-207044948  # noqa: E501
+        run_subprocess_cmd(
+            [
+                'rm', '-rf',
+                str(paths['salt_cache_dir'] / 'file_lists/roots/*')
+            ]
+        )
+
+        # APPLY CONFIGURATION
+
+        logger.info("Setting up paswordless ssh")
+        ssh_client.state_apply('ssh')
+
+        logger.info("Checking paswordless ssh")
+        ssh_client.state_apply('ssh.check')
+
+        logger.info("Installing Cortx yum repositories")
+        ssh_client.state_apply('cortx_repos')
+
+        logger.info("Configuring the firewall")
+        ssh_client.state_apply('firewall')
+
+        logger.info("Installing SaltStack")
+        ssh_client.state_apply('saltstack')
+
+        if run_args.source == 'local':
+            logger.info("Installing provisioner from a local source")
+            ssh_client.state_apply('provisioner.local')
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
+
+        #   CONFIGURE SALT
+        logger.info("Configuring salt minions")
+        res = ssh_client.state_apply('provisioner.configure_salt_minion')
+
+        updated_keys = []
+        # TODO IMPROVE EOS-8473
+        minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
+        for node_id, _res in res.items():
+            if _res[minion_pki_state_id]['changes']:
+                updated_keys.append(node_id)
+
+        # TODO DOC how to pass inline pillar
+        logger.info("Configuring salt master")
+        ssh_client.state_apply(
+            'provisioner.configure_salt_master',
+            targets=run_args.primary.minion_id,
+            fun_kwargs={
+                'pillar': {
+                    'updated_keys': updated_keys
+                }
+            }
+        )
+
+        # FIXME EOS-8473 not necessary for rpm setup
+        logger.info("Installing provisioner API")
+        ssh_client.state_apply('provisioner.api_install')
+
+        logger.info("Starting salt minions")
+        ssh_client.state_apply('provisioner.start_salt_minion')
+
+        # TODO IMPROVE EOS-8473
+        logger.info("Ensuring salt minions are ready")
+        nodes_ids = [node.minion_id for node in run_args.nodes]
+        ssh_client.cmd_run(
+            f"python3 -c \"from provisioner import salt_minion; salt_minion.ensure_salt_minions_are_ready({nodes_ids})\"",  # noqa: E501
+            targets=run_args.primary.minion_id
+        )
+
+        # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
+        #      CONFIGURED AND MIGHT BE USED INSTED OF SALT-SSH BASED CONTROL
+
+        logger.info("Configuring provisioner logging")
+        for state in [
+            'components.system.prepare',
+            'components.provisioner.config'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=run_args.primary.minion_id
+            )
+
+        logger.info("Updating BMC IPs")
+        ssh_client.cmd_run(f"salt-call state.apply components.misc_pkgs.ipmi")
+
+        logger.info("Updating target build pillar")
+        ssh_client.cmd_run(
+            (
+                'provisioner pillar_set --fpath release.sls '
+                f'eos_release/target_build \'"{run_args.target_build}"\''
+            ), targets=run_args.primary.minion_id
+        )
+
+        return setup_ctx
+
+
+@attr.s(auto_attribs=True)
+class SetupSinglenode(SetupProvisioner):
+    _run_args_type = RunArgsSetupSinglenode
+
+    def run(self, **kwargs):
+        run_args = RunArgsSetupSinglenode(**kwargs)
+        kwargs.pop('srvnode1')
+
+        setup_ctx = super().run(
+            ha=False, nodes=[run_args.srvnode1], **kwargs
+        )
+
+        logger.info("Updating hostname in cluster pillar")
+
+        node = setup_ctx.run_args.nodes[0]
+        setup_ctx.ssh_client.cmd_run(
+            (
+                'provisioner pillar_set '
+                f'cluster/{node.minion_id}/hostname '
+                f'\'"{node.grains.fqdn}"\''
+            ), targets=setup_ctx.run_args.primary.minion_id
+        )
+
+        logger.info("Done")
+
+
+@attr.s(auto_attribs=True)
+class SetupCluster(SetupProvisioner):
+    _run_args_type = RunArgsSetupCluster
+
+    def run(self, **kwargs):
+        run_args = RunArgsSetupCluster(**kwargs)
+        kwargs.pop('srvnode1')
+        kwargs.pop('srvnode2')
+
+        setup_ctx = super().run(
+            nodes=[run_args.srvnode1, run_args.srvnode2], **kwargs
+        )
+
+        logger.info("Updating hostnames in cluster pillar")
+        for node in setup_ctx.run_args.nodes:
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'provisioner pillar_set '
+                    f'cluster/{node.minion_id}/hostname '
+                    f'\'"{node.grains.fqdn}"\''
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
+
+        logger.info("Done")
 
 
 commands = {}

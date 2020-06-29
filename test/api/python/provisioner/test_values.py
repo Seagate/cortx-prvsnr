@@ -3,8 +3,16 @@ from provisioner import values
 
 
 def test_singletone():
+    class Abcde(values._Singletone):
+        pass
+
+    abcde = Abcde()
+    assert Abcde() is abcde
+
+
+def test_prvsnr_value():
     try:
-        class Abcde(values._Singletone):
+        class Abcde(values._PrvsnrValue):
             pass
 
         abcde = Abcde()

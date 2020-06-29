@@ -1,5 +1,6 @@
 sspl:
-  healthmappath: /opt/seagate/eos-prvsnr/generated_configs/healthmap/ees-schema.json
+  health_map_path: /opt/seagate/eos-prvsnr/generated_configs/healthmap/
+  health_map_file: ees-schema.json
   rmq:
     user: rmq
     secret: "B4kf1T6Qso"
@@ -13,7 +14,7 @@ sspl:
     degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
-    product: "EES"
+    product: "ECS"
     cli_type: "CS-A"
     setup: "eos"
     data_path: "/var/eos/sspl/data/"

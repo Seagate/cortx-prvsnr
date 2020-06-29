@@ -9,12 +9,12 @@ if [[ ! -e "$log_file" ]]; then
 fi
 
 # rpm package places scripts in parent folder
-if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-    repo_root_dir="$(realpath $cli_scripts_dir/../)"
+pparent_dir=$(cd $cli_scripts_dir/../ && pwd)
+if [[ "$(basename ${pparent_dir})" == 'src' ]]; then
+    repo_root_dir="$(realpath $cli_scripts_dir/../../../)"
 else
     repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
-
 
 # TODO API for error exit that might:
 #       - echos to stderr
@@ -725,10 +725,6 @@ function install_repos {
 
     rm -rf "$_repo_base_dir"
 
-    # TODO a temporary fix since later version (2019.2.1) is buggy
-    # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-
     if [[ -z "$_hostspec" ]]; then
         cp -R "$_project_repos" "$_repo_base_dir"
     fi
@@ -777,9 +773,22 @@ function install_salt_repo {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
     local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
+    local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     l_info "Installing Salt repository '$_hostspec'"
+    local _saltstack_repo="/tmp/saltstack.repo"
+
+#name=SaltStack repo for RHEL/CentOS \$releasever
+    cat <<EOL > ${_saltstack_repo}
+[saltstack]
+name=SaltStack repo for RHEL/CentOS
+baseurl=${_salt_repo_url}
+enabled=1
+gpgcheck=1
+gpgkey=${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
+priority=1
+EOL
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -792,18 +801,22 @@ function install_salt_repo {
     yum clean expire-cache
     rm -rf /var/cache/yum
 
-    if [[ -f "$_salt_repo_file" && ! -f "$_salt_repo_bak_file" ]]; then
-        cp "$_salt_repo_file" "$_salt_repo_bak_file"
-    else
-        echo -e "\\nWARNING: skip backup creation since backup already exists"
-    fi
+    # if [[ -f "$_salt_repo_file" && ! -f "$_salt_repo_bak_file" ]]; then
+    #     cp "$_salt_repo_file" "$_salt_repo_bak_file"
+    # else
+    #     echo -e "\\nWARNING: skip backup creation since backup already exists"
+    # fi
 
     # TODO a temporary fix since later version (2019.2.1) is buggy
     # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-    rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
+    #rpm --import ${_salt_repo_url}/SALTSTACK-GPG-KEY.pub
 
+    echo "_hostspec=$_hostspec"
     if [[ -z "$_hostspec" ]]; then
-        cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
+        #cp -R "$_project_repos/saltstack.repo" "$_repo_base_dir/"
+        #echo \${saltstack_repo} > $_repo_base_dir/saltstack.repo
+        echo "Creating saltstack repo"
+        cp "$_saltstack_repo" "$_repo_base_dir/"
     fi
 EOF
 
@@ -814,7 +827,8 @@ EOF
     $_cmd bash -c "$_script" 2>&1 | tee -a ${LOG_FILE}
 
     if [[ -n "$_hostspec" ]]; then
-        scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir/"
+        # scp -r -F "$_ssh_config" "$_project_repos/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
+        scp -r -F "$_ssh_config" "$_repo_base_dir/saltstack.repo" "${_hostspec}":"$_repo_base_dir"
     fi
 }
 
@@ -1071,6 +1085,7 @@ function install_provisioner {
     local _sudo="${5:-false}"
     local _singlenode="${6:-false}"
     local _installdir="${7:-/opt/seagate/eos-prvsnr}"
+    local _dev_repo="${8:-false}"
     local _os_release="centos-7.7.1908"
 
     local _prvsnr_repo=
@@ -1123,7 +1138,21 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
+            if [[ "$_dev_repo" == true ]]; then
+                # Set the path to dev repo DEV_BUILD_URL or default
+                _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
+                
+                yum install -y createrepo wget
+                mkdir -p /opt/seagate/eos/updates/provisioner/dev
+                pushd /opt/seagate/eos/updates/provisioner/dev
+                    wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
+                    createrepo .
+                popd
+                _prvsnr_version="file:///opt/seagate/eos/updates/provisioner/dev"
+
+            else
+                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
+            fi
         fi
     fi
 
@@ -1620,13 +1649,8 @@ function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
-    local _release_sls_path="pillar/components/release.sls"
+    local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
-    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _release_sls="$(realpath $cli_scripts_dir/../$_release_sls_path)"
-    else
-        _release_sls="$(realpath $cli_scripts_dir/../../$_release_sls_path)"
-    fi
     _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
 }
@@ -1647,13 +1671,8 @@ function update_cluster_pillar_hostname {
 
     local _node="$1"
     local _host="$2"
-    local _cluster_sls_path="pillar/components/cluster.sls"
+    local _cluster_sls="${repo_root_dir}/pillar/components/cluster.sls"
 
-    if [[ "$(basename $cli_scripts_dir)" == 'cli' ]]; then
-        _cluster_sls="$(realpath $cli_scripts_dir/../$_cluster_sls_path)"
-    else
-        _cluster_sls="$(realpath $cli_scripts_dir/../../$_cluster_sls_path)"
-    fi
     _line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
     sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
 }
@@ -1743,7 +1762,7 @@ function setup_ssh {
     # Check if the ssh works without password from node-2 to node-1
     ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec \
         "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
-        l_error "$srvnode_1_hostspec is not reachable from $srvnode_2_hostspec"
+        l_error "$srvnode_1_hostname is not reachable from $srvnode_2_hostspec"
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
         #Backup original ssh config file

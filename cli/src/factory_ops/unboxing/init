@@ -12,6 +12,12 @@ function trap_handler {
 trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
+static_data_ip_a=
+static_data_ip_b=
+cluster_vip=
+management_vip=
+
+export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
@@ -21,10 +27,21 @@ function usage {
     
     Usage:
         $0 -M <management_vip> -C <data_network_vip>
+           [
+            --Ia <static IP of data n/w for server A>
+            --Ib <static IP of data n/w for server B>
+           ]
 
     Command Args:
-        -M      <management_vip>    Static vip on management network
-        -C      <data_network_vip>  Static vip on data network
+        -M    <IP ADDRESS>   Static vip on management network
+        -C    <IP ADDRESS>   Static vip on data network
+      --Ia    <IP ADDRESS>   Static ip address of public data network for server A.
+                             Optional, if skipped it is assumed that the IP address will
+                             be assigned through DHCP.
+      --Ib    <IP ADDRESS>   Static ip address of public data network for server B.
+                             Optional, if skipped it is assumed that the IP address will
+                             be assigned through DHCP.
+
     "
 }
 
@@ -32,12 +49,31 @@ function help {
   echo "\
     ----------- Caveats -------------
     1. The command must be run from primary node in the cluster.
-    2. User must provide:
+    2. Mandetory arguments:
         a. Management VIP:      Static vip on management network
         b. Data Network VIP:    Static vip on data network
 
-    -------- Sample command ---------
-    /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 172.19.100.100 -C 10.20.100.201
+    -------- Sample commands ---------
+    
+    1. Unbox Cortx setup with following Manangement and Data VIPs:
+       1. Management VIP   : 10.20.100.201
+       2. Data network VIP : 172.19.100.100
+
+       $ sudo /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100
+
+       Note: It is assumed that public data network IPs on both servers were assigned by DHCP.
+
+    2. Unbox Cortx setup with following Management & Data VIPs:
+       1. Management VIP   : 10.20.100.201
+       2. Data network VIP : 172.19.100.100 
+       3. Static IPs for public data network: 
+          server A: 172.19.100.110
+          server B: 172.19.100.120
+
+       $ sudo /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100 --Ia 172.19.100.110 --Ib 172.19.100.120
+
+         Note: In this case it is assumed that there were no IPs assigned to the public data interfaces
+               on both servers.
     "
 }
 
@@ -47,8 +83,7 @@ function die {
     exit 1
 }
 
-# Argument validation
-[[ $# -eq 4 ]] || die "Incorrect or no arguments provided."
+# Parse the input arguments
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -66,14 +101,60 @@ while [[ $# -gt 0 ]]; do
             management_vip="$2"
             shift 2
             ;;
-    
+        --Ia)
+            [ -z "$2" ] && die "Error: Static IP for public data network on server A is not provided";
+            static_data_ip_a="$2"
+            shift 2
+            ;;
+        --Ib)
+            [ -z "$2" ] && die "Error: Static IP for public data network on server B is not provided";
+            static_data_ip_b="$2"
+            shift 2
+            ;;
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
 done
 
-salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+# Validate the input parameters
+if [[ -z "$cluster_vip" || -z "$management_vip" ]]; then
+    # error out
+    echo "ERROR: Invalid input provided - Management VIP or Data network VIP is missing. Exiting" | tee -a ${LOG_FILE}
+    usage
+    echo -e "\tRun '$0 -h' for detailed help"
+    exit 1
+fi
+
+if [ ! -z "$static_data_ip_a" -a -z "$static_data_ip_b" ]; then
+    echo -e "\n\
+ERROR: Static IP for server B is not provided.
+       Please provide the static IPs for both servers or skip them both if they are already assigned by DHCP" | tee -a ${LOG_FILE}
+    usage
+    echo -e "\tRun '$0 -h' for detailed help" | tee -a ${LOG_FILE}
+    exit 1
+elif [ -z "$static_data_ip_a" -a ! -z "$static_data_ip_b" ]; then
+    echo -e "\n\
+ERROR: Static IP for server A is not provided.
+       Please provide the static IPs for both servers or skip them both if they are already assigned by DHCP" | tee -a ${LOG_FILE}
+    usage
+    echo -e "\tRun '$0 -h' for detailed help" | tee -a ${LOG_FILE}
+    exit 1
+elif [ -z "$static_data_ip_a" -a -z "$static_data_ip_b" ]; then
+    echo -e "\n\
+INFO: Static IPs for public data networks are not provided.
+      Assuming they are already assigned by DHCP" | tee -a ${LOG_FILE}
+elif [ ! -z "$static_data_ip_a" -a ! -z "$static_data_ip_b" ]; then
+    echo -e "\n\
+INFO: Static IPs for public data networks received:
+      server A                 : $static_data_ip_a
+      server B                 : $static_data_ip_b" | tee -a ${LOG_FILE}
+fi
+
 # Proceed only if boxing flag set
 check_boxing_flag
+
+echo -e "\n\
+      Management VIP           : $cluster_vip
+      Static VIP               : $management_vip" | tee -a ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
@@ -87,49 +168,43 @@ check_mgmt_ip
 # Update /root/.ssh/config file with hosts
 update_ssh_config
 update_salt_minion
-update_cluster_sls "${management_vip}" "${cluster_vip}"
+update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
-#recover_rabbitmq_cluster   # Re-provision rabbitmq cluster. Not required.
-
-#echo -n "Configuring s3 on both nodes.........." | tee -a ${LOG_FILE}
-#salt "*" state.apply components.s3server.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-#echo "Done." | tee -a ${LOG_FILE}
-
-#echo -n "Configuring CSM on secondary node....." | tee -a ${LOG_FILE}
-#salt "srvnode-2" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-#echo "Done." | tee -a ${LOG_FILE}
-
-#echo -n "Configuring CSM on primary node......" | tee -a ${LOG_FILE}
-#salt "srvnode-1" state.apply components.csm.config ${salt_opts} 2>&1 | tee -a ${LOG_FILE}; sleep 5
-#echo "Done." | tee -a ${LOG_FILE}
-
-# Shutdown HA
 if command -v pcs ; then
-    echo "INFO: Starting cluster" 2>&1 | tee -a ${LOG_FILE}
+    echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
     echo "Done." | tee -a ${LOG_FILE}
 
-    echo "INFO: Reverting from maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+    echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
+    sleep 5
     hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
     echo "Done." | tee -a ${LOG_FILE}
 
+    if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
+        # Assign Static IPs on both the nodes
+        echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
+        salt "*" state.apply components.system.network.data.direct ${salt_opts}
+        sleep 5     # Mindfulness break
+        echo "Ok." | tee -a ${LOG_FILE}
+    fi
+
     # Update ClusterIP
-    echo "INFO: Setting up Data Network VIP" | tee -a ${LOG_FILE}
+    echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
-    echo "*** Mindfulness break...Breathe in...And...Breathe out ***" | tee -a ${LOG_FILE}
+    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
 
     # Update Management_vip
 
-    echo "INFO: Setting up Management VIP" | tee -a ${LOG_FILE}
+    echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
-    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
 
     # Re-run Stonith
-    echo "INFO: Setting up Stonith" | tee -a ${LOG_FILE}
+    echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
-    echo "*** Mindfulness break...Breathe in...And...Breathe out ***"
+    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break...Breathe in...Breathe out
 
     echo "Thank you for your patience... Apreciate it!"
@@ -139,24 +214,22 @@ else
 fi
 
 # Update SSPL init
-echo -n "INFO: Configuring SSPL on primary node........................" | tee -a ${LOG_FILE}
+echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
 
-echo -n "INFO: Configuring SSPL on secondary node......................" | tee -a ${LOG_FILE}
+echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
-echo "Done." | tee -a ${LOG_FILE}
-
-#echo -n "INFO: Configuring SSPL Health Schema on secondary node........." | tee -a ${LOG_FILE}
-#salt "srvnode-2" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
-#echo "Done." | tee -a ${LOG_FILE}
-
-#echo -n "INFO: Configuring SSPL Health Schema on primary node..........." | tee -a ${LOG_FILE}
-#salt "srvnode-1" state.apply components.sspl.config.sspl ${salt_opts}; sleep 5
-#echo "Done." | tee -a ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
 
 # Unboxing SUCCESS
 remove_boxing_flag
+
+echo "\
+***** SUCCESS! *****
+The detailed logs can be seen at: $LOG_FILE
+Done." | tee -a ${LOG_FILE}
+

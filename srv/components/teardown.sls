@@ -20,7 +20,7 @@ include:
   - components.misc_pkgs.build_ssl_cert_rpms.teardown
   - components.system.storage.teardown
   # - components.system.mlnx_driver.teardown
-  - components.system.ntp.teardown
+  - components.system.chrony.teardown
   - components.system.logrotate.teardown
   - components.system.firewall.teardown
   - components.system.teardown
