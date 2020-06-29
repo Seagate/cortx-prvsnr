@@ -66,6 +66,13 @@ sspl:
   IPMI:
     user: "admin"
     pass: "admin"
+  BMC_INTERFACE:
+    system: "kcs"
+    lan: "rmcp"
+    default: "system"
+    bmc_lan_ip:
+    bmc_lan_user: "ADMIN"
+    bmc_lan_passwd: "ADMIN"
   SMTPSETTING:
     smptserver: "mailhost.seagate.com"
     recipient: "example@seagate.com"
