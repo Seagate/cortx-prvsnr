@@ -1,11 +1,10 @@
-{% if pillar['cluster']['type'] == "ees" %}
+{%- if pillar['cluster']['type'] != "single" -%}
 Copy ldap replication config:
   file.managed:
     - name: /opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif
     - source: salt://components/misc_pkgs/openldap/files/replicate.ldif
     - keep_source: False
     - template: jinja
-{% endif %}
 
 Configure openldap syncprov_mod:
   cmd.run:
@@ -29,3 +28,4 @@ Restart Slapd:
   service.running:
     - name: slapd
     - full_restart: True
+{%- endif %}
