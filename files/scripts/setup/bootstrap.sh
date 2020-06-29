@@ -1,9 +1,9 @@
 #!/usr/bin/sh
-unalias cp
+unalias cp || true
 set -e
 
-if [[ -d '/opt/seagate/ees-prvsnr' ]]; then
-  BASEDIR=/opt/seagate/ees-prvsnr
+if [[ -d '/opt/seagate/cortx-prvsnr' ]]; then
+  BASEDIR=/opt/seagate/cortx-prvsnr
 else
   BASEDIR=/opt/seagate/cortx/provisioner
 fi
@@ -17,8 +17,8 @@ fi
 sudo cp ${BASEDIR}/files/etc/yum.repos.d/*.repo /etc/yum.repos.d/
 
 # Uncomment only if necessary
-sudo yum clean all
-sudo rm -rf /var/cache/yum
+# sudo yum clean all
+# sudo rm -rf /var/cache/yum
 # yum update
 # yum makecache fast
 
@@ -54,13 +54,13 @@ sudo systemctl restart salt-minion
 sudo cp -R ${BASEDIR}/files/etc/hosts /etc/hosts
 
 # TODO: To be converted to a salt formula
-if [[ -n "$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
-  sudo systemctl stop NetworkManager
-  sudo systemctl disable NetworkManager
-  sudo yum remove -y NetworkManager
-fi
+# if [[ -n "$(rpm -qi NetworkManager | grep "^Version" 2>/dev/null)" ]]; then
+#   sudo systemctl stop NetworkManager
+#   sudo systemctl disable NetworkManager
+#   sudo yum remove -y NetworkManager
+# fi
 
-sudo cp -R ${BASEDIR}/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
+# sudo cp -R ${BASEDIR}/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.conf
 
 # For HW setup
 # sudo rm -f /etc/sysconfig/network-scripts/ifcfg-enp0s3
@@ -70,18 +70,18 @@ sudo cp -R ${BASEDIR}/files/etc/modprobe.d/bonding.conf /etc/modprobe.d/bonding.
 # sudo sed -i 's/IPADDR=//g' /etc/sysconfig/network-scripts/ifcfg-data0
 # sudo systemctl restart network.service
 
-sudo mkdir -p ~/.ssh
-sudo chmod -R 755 ~/.ssh
-sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr ~/.ssh/id_rsa
-sudo chmod -R 400 ~/.ssh/id_rsa
-sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr.pub ~/.ssh/id_rsa.pub
-sudo chmod -R 644 ~/.ssh/id_rsa.pub
-sudo cp ${BASEDIR}/files/.ssh/authorized_keys ~/.ssh/authorized_keys
-sudo chmod -R 644 ~/.ssh/authorized_keys
-sudo cp ${BASEDIR}/files/.ssh/known_hosts ~/.ssh/known_hosts
-sudo chmod -R 644 ~/.ssh/known_hosts
-sudo cp ${BASEDIR}/files/.ssh/ssh_config ~/.ssh/ssh_config
-sudo chmod -R 644 ~/.ssh/ssh_config
+sudo mkdir -p /root/.ssh
+sudo chmod -R 755 /root/.ssh
+sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr /root/.ssh/id_rsa
+sudo chmod -R 400 /root/.ssh/id_rsa
+sudo cp ${BASEDIR}/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/id_rsa.pub
+sudo chmod -R 644 /root/.ssh/id_rsa.pub
+sudo cp ${BASEDIR}/files/.ssh/authorized_keys /root/.ssh/authorized_keys
+sudo chmod -R 644 /root/.ssh/authorized_keys
+sudo cp ${BASEDIR}/files/.ssh/known_hosts /root/.ssh/known_hosts
+sudo chmod -R 644 /root/.ssh/known_hosts
+sudo cp ${BASEDIR}/files/.ssh/config /root/.ssh/config
+sudo chmod -R 644 /root/.ssh/config
 
 sudo mkdir -p /etc/salt/pki/master/ssh
 sudo chmod -R 755 /etc/salt/pki/master/ssh
