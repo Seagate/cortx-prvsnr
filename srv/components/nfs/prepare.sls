@@ -17,12 +17,6 @@ Add nfs yum repo:
     - gpgcheck: 1
     - gpgkey: {{ defaults.nfs.repo.gpgkey }}
 
-Copy kvsns.ini file:
-  file.managed:
-    - name: /etc/kvsns.d/kvsns.ini
-    - source: salt://components/nfs/files/etc/kvsns.d/kvsns.ini
-    - makedirs: True
-
 Copy ganesha.conf file:
   file.managed:
     - name: /etc/ganesha/ganesha.conf

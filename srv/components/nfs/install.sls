@@ -8,6 +8,8 @@ Install prereq packages for NFS:
       - krb5-libs
       - nfs-utils
       - rpcbind libblkid
+#TODO: confirm the library name
+      - libevhttp #TBD
 
 {% for path in [
   "/usr/lib64/libcap.so",
@@ -24,12 +26,19 @@ Install prereq packages for NFS:
 
 Install NFS Ganesha:
   pkg.installed:
+#TODO: Make sure it's installed from GitHub
     - name: nfs-ganesha
 
 Install NFS packages:
   pkg.installed:
     - pkgs:
-      - libkvsns
-      # - libkvsns-devel
-      - libkvsns-utils
-      - libfsalkvsfs
+      cortx-dsal
+      cortx-dsal-devel
+      cortx-fs
+      cortx-fs-devel
+      cortx-fs-ganesha
+      cortx-fs-ganesha-test
+      cortx-nsal
+      cortx-nsal-devel
+      cortx-utils
+      cortx-utils-devel
