@@ -19,4 +19,4 @@ Install cortx-sspl-test:
     - name: cortx-sspl-test
     - requires:
       - Install flask
-      - Install eos-sspl packages
+      - Install cortx-sspl packages
