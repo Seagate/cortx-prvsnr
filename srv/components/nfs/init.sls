@@ -1,8 +1,8 @@
 include:
-  - components.sspl.prepare
-  - components.sspl.install
-  - components.sspl.config
-  - components.sspl.housekeeping
+  - components.nfs.prepare
+  - components.nfs.install
+  #- components.nfs.config
+  - components.nfs.housekeeping
   #- components.sspl.sanity_check
 
 Generate nfs checkpoint flag:
