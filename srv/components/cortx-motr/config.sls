@@ -1,9 +1,9 @@
 {% if "physical" in grains['virtual'] %}
 # Override CortxMotr config from pillar data:
 #   module.run:
-#     - cortxmotr.conf_update:
-#       - name: /etc/sysconfig/mero
-#       - ref_pillar: cortx-motr
+#     - motr.conf_update:
+#       - name: /etc/sysconfig/motr
+#       - ref_pillar: motr
 #       - backup: True
 {% endif %}
 
