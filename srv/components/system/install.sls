@@ -3,6 +3,7 @@ Install_base_packages:
     - pkgs:
       - sudo
       - ipmitool
+      - bind-utils
       - python3
     - reload_modules: True
 
