@@ -3,6 +3,7 @@
 # Introduction
 The purpose of this repository is to provide a provisioning framework for EOS project.
 The objective shall be to
+
 *  Provision an environment (Dev, QA, Lab, Production) with minimal user intervention
 *  To maintain modularity/granularity of stages in Provisioning, so as to help enhancements, maintainability and training with minimal collateral impacts
 *  To act as single source of truth, reducing confusion of resource references (which is why the reliance would be on Readme.md and GitLab Wiki docs)
