@@ -5,7 +5,7 @@ import yaml
 
 # How to test:
 # $ salt-call saltutil.clear_cache
-# $ salt-call saltutil.sync_modules && salt-call eos.conf_update "/opt/seagate/s3/conf/s3config.yaml" s3server
+# $ salt-call saltutil.sync_modules && salt-call cortx.conf_update "/opt/seagate/s3/conf/s3config.yaml" s3server
 
 
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:

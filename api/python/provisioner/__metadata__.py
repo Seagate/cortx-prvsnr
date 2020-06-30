@@ -1,10 +1,10 @@
-__title__ = 'eos-prvsnr'
-__version__ = '0.24.0'
+__title__ = 'cortx-prvsnr'
+__version__ = '0.25.0'
 __author__ = "Seagate"
 __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'
 __maintainer_email__ = __author_email__
-__url__ = 'http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr'
+__url__ = 'https://github.com/Seagate/cortx-prvsnr'
 __description__ = 'Provisioner API for CORTX components'
 __long_description__ = __description__
 __download_url__ = (
