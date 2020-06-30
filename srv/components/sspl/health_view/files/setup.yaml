@@ -1,2 +1,2 @@
 support_bundle:
-    - /opt/seagate/eos-prvsnr/cli/health_view/health-view-bundler
+    - /opt/seagate/cortx/provisioner/cli/health_view/health-view-bundler

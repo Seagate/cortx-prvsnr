@@ -55,7 +55,7 @@ prereq_states=(
 iopath_states=(
     # states to be applied in desired sequence
         "misc_pkgs.lustre"
-        "cortx-motr"
+        "motr"
         "s3server"
     )
 
@@ -88,7 +88,7 @@ $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
-       --iopath-states             deploy only iopath states (cortx-motr, s3server & Hare)
+       --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
        --system-states             deploy only system states

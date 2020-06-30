@@ -59,7 +59,7 @@ function help {
        1. Management VIP   : 10.20.100.201
        2. Data network VIP : 172.19.100.100
 
-       $ sudo /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100
+       $ sudo /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100
 
        Note: It is assumed that public data network IPs on both servers were assigned by DHCP.
 
@@ -70,7 +70,7 @@ function help {
           server A: 172.19.100.110
           server B: 172.19.100.120
 
-       $ sudo /opt/seagate/eos-prvsnr/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100 --Ia 172.19.100.110 --Ib 172.19.100.120
+       $ sudo /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100 --Ia 172.19.100.110 --Ib 172.19.100.120
 
          Note: In this case it is assumed that there were no IPs assigned to the public data interfaces
                on both servers.

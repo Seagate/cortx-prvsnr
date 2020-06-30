@@ -1143,12 +1143,12 @@ function install_provisioner {
                 _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
                 
                 yum install -y createrepo wget
-                mkdir -p /opt/seagate/eos/updates/provisioner/dev
-                pushd /opt/seagate/eos/updates/provisioner/dev
+                mkdir -p /opt/seagate/cortx/updates/provisioner/dev
+                pushd /opt/seagate/cortx/updates/provisioner/dev
                     wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
                     createrepo .
                 popd
-                _prvsnr_version="file:///opt/seagate/eos/updates/provisioner/dev"
+                _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
 
             else
                 _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"

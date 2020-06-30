@@ -8,6 +8,6 @@ user_salt_roots_created:
 
 api_installed:
   pip.installed:
-    - name: /opt/seagate/eos-prvsnr/api/python
+    - name: /opt/seagate/cortx/provisioner/api/python
     - bin_env: /usr/bin/pip3
     - upgrade: True

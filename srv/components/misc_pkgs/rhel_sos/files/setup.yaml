@@ -1,2 +1,2 @@
 support_bundle:
-    - /opt/seagate/eos-prvsnr/cli/sos-generate
+    - /opt/seagate/cortx/provisioner/cli/sos-generate

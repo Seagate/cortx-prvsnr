@@ -9,7 +9,7 @@ include:
 {% endif %}
 Run Resource Health View:
   cmd.run:
-    - name: /opt/seagate/eos/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
+    - name: /opt/seagate/cortx/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
     - require:
       - Install cortx-sspl packages
       - Add common config - system information to Consul
