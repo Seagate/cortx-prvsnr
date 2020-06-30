@@ -4,7 +4,7 @@ sspl:
   rmq:
     user: rmq
     secret: "B4kf1T6Qso"
-  role: eos
+  role: cortx
   Version: 1.0.0
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
@@ -16,14 +16,14 @@ sspl:
     operating_system: "centos7"
     product: "ECS"
     cli_type: "CS-A"
-    setup: "eos"
-    data_path: "/var/eos/sspl/data/"
+    setup: "cortx"
+    data_path: "/var/cortx/sspl/data/"
     cluster_id: "001"
     site_id: "001"
     rack_id: "001"
     node_id: "001"
     log_level: "INFO"
-    sspl_log_file_path: "/var/log/eos/sspl/sspl.log"
+    sspl_log_file_path: "/var/log/cortx/sspl/sspl.log"
     syslog_host: "localhost"
     syslog_port: "514"
   SASPORTSENSOR:
@@ -105,8 +105,8 @@ sspl:
     threaded: "true"
   IEMSENSOR:
     threaded: "true"
-    log_file_path: "/var/log/eos/iem/iem_messages"
-    timestamp_file_path: "/var/eos/sspl/data/iem/last_processed_msg_time"
+    log_file_path: "/var/log/cortx/iem/iem_messages"
+    timestamp_file_path: "/var/cortx/sspl/data/iem/last_processed_msg_time"
   SYSTEMDWATCHDOG:
     threaded: "true"
     smart_test_interval: "999999999"
