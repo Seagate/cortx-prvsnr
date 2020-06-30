@@ -3,7 +3,7 @@
 #   module.run:
 #     - cortxmotr.conf_update:
 #       - name: /etc/sysconfig/mero
-#       - ref_pillar: cortxmotr
+#       - ref_pillar: cortx-motr
 #       - backup: True
 {% endif %}
 

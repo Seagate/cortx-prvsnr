@@ -6,7 +6,7 @@ from shutil import copyfile
 
 # How to test:
 # $ salt-call saltutil.clear_cache
-# $ salt-call saltutil.sync_modules && salt-call cortxmotr.conf_update "/etc/sysconfig/mero" cortxmotr
+# $ salt-call saltutil.sync_modules && salt-call cortxmotr.conf_update "/etc/sysconfig/mero" cortx-motr
 
 
 # def _read_pillar(ref_component_pillar: str) -> dict:
@@ -15,7 +15,7 @@ def _read_pillar(ref_component_pillar):
 
 
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
-def conf_update(name='/etc/sysconfig/mero', ref_pillar='cortxmotr', type=None, backup=True):
+def conf_update(name='/etc/sysconfig/mero', ref_pillar='cortx-motr', type=None, backup=True):
   """Update component config file.
 
   Args :
@@ -26,7 +26,7 @@ def conf_update(name='/etc/sysconfig/mero', ref_pillar='cortxmotr', type=None, b
   """
 
   name =  name if name else '/etc/sysconfig/mero'
-  ref_pillar = ref_pillar if ref_pillar else 'cortxmotr'
+  ref_pillar = ref_pillar if ref_pillar else 'cortx-motr'
 
   if not os.path.exists(name):
     print("ERROR: CortxMotr config file {0} doesn't exist.".format(name))

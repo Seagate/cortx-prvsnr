@@ -1,5 +1,5 @@
 # TODO IMPROVE EOS-8473 move to pillar to make configurable
-{% set install_dir = '/opt/seagate/eos-prvsnr' %}
+{% set install_dir = '/opt/seagate/cortx/provisioner' %}
 {% set salt_master_running = salt['service.status']('salt-master') %}
 
 salt_master_configured:
