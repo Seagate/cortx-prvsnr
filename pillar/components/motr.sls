@@ -1,4 +1,4 @@
-eoscore:
+motr:
     # Minimum rpc receive queue length
     MERO_M0D_MIN_RPC_RECVQ_LEN: 512
     # ioservice buffer pool configuration

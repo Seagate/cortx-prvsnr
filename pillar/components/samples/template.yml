@@ -91,7 +91,7 @@ s3client:
   secret_key: null
 release:
   update:
-    mount_base_dir: /opt/seagate/eos/updates777
+    mount_base_dir: /opt/seagate/cortx/updates777
     repos: {}
 corosync-pacemaker:
   user: hacluster
