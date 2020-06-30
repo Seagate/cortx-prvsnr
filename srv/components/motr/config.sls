@@ -1,5 +1,5 @@
 {% if "physical" in grains['virtual'] %}
-# Override CortxMotr config from pillar data:
+# Override Motr config from pillar data:
 #   module.run:
 #     - motr.conf_update:
 #       - name: /etc/sysconfig/motr
@@ -15,6 +15,6 @@ Stage - Config Motr:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'core:config')
 
-Stage - Init CortxMotr:
+Stage - Init Motr:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'core:init')

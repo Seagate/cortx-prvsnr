@@ -48,9 +48,9 @@ lustre:
     id: "lustre"
     url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
 
-cortx_motr:
+motr:
   repo:
-    id: "cortx-motr"
+    id: "motr"
     url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
     gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
 

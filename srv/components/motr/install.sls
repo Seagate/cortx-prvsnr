@@ -1,4 +1,4 @@
-Install CortxMotr:
+Install Motr:
   pkg.installed:
     - pkgs:
       - cortx-motr: latest

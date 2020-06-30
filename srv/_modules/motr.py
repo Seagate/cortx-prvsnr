@@ -29,7 +29,7 @@ def conf_update(name='/etc/sysconfig/motr', ref_pillar='motr', type=None, backup
   ref_pillar = ref_pillar if ref_pillar else 'motr'
 
   if not os.path.exists(name):
-    print("ERROR: CortxMotr config file {0} doesn't exist.".format(name))
+    print("ERROR: Motr config file {0} doesn't exist.".format(name))
     return False
 
   pillar_data = _read_pillar(ref_pillar)
