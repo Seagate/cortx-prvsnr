@@ -14,7 +14,8 @@ from .config import (
     LOG_NULL_HANDLER as null_handler,
     LOG_CONSOLE_HANDLER as console_handler,
     LOG_FILE_HANDLER as logfile_handler,
-    LOG_CMD_FILTER as cmd_filter
+    LOG_CMD_FILTER as cmd_filter,
+    LOG_HUMAN_FORMATTER
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,12 @@ class CommandFilter(logging.Filter):
 
 # TODO TEST EOS-7495
 class NoTraceExceptionFormatter(logging.Formatter):
+    def format(self, record):
+        # ensure cache won't be used for exception formatting
+        # and formatException would be called later
+        record.exc_text = ''
+        return super().format(record)
+
     def formatException(self, exc_info):
         # TODO IMPROVE check docs for exc_info
         return repr(getattr(exc_info[1], 'reason', exc_info[1]))
@@ -222,14 +229,18 @@ def build_log_args_cls(log_config=None):
             res = self.original_config()
 
             root_handlers = []
+            human_handlers = []
             for hname, hattrs in res['handlers'].items():
                 if getattr(self, hname, False):
-                    root_handlers.append(hname)
+                    if hattrs.get('formatter') == LOG_HUMAN_FORMATTER:
+                        human_handlers.append(hname)
+                    else:
+                        root_handlers.append(hname)
                     handler = self.handlers[hname]
                     for fname, fvalue in attr.asdict(handler).items():
                         hattrs[fname] = fvalue
             # adjust active handlers
-            res['root']['handlers'][:] = root_handlers
+            res['root']['handlers'][:] = root_handlers + human_handlers
 
             if hasattr(self, 'cmd'):
                 res['filters'][cmd_filter]['cmd'] = self.cmd

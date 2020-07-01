@@ -96,6 +96,9 @@ LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
 LOG_FILE_HANDLER = 'logfile'
 LOG_CMD_FILTER = 'cmd_filter'
+
+LOG_HUMAN_FORMATTER = 'human'
+LOG_FULL_FORMATTER = 'full'
 #   logfile habdler for the following commands
 #   will be enabled forcibly
 LOG_FORCED_LOGFILE_CMDS = [
