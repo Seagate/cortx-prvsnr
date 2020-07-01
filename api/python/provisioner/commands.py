@@ -1534,10 +1534,13 @@ class SetupProvisioner(CommandParserFillerMixin):
         master_pki_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki"
         )
+        master_minions_pki_dir = (
+            profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki/minions"
+        )
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
 
         #   ensure parent dirs exists in profile file root
-        for path in (all_minions_dir, master_pki_dir, pillar_all_dir):
+        for path in (all_minions_dir, master_minions_pki_dir, pillar_all_dir):
             path.mkdir(parents=True, exist_ok=True)
 
         priv_key_path = all_minions_dir / 'id_rsa_prvsnr'
@@ -1620,6 +1623,21 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
+        #   preseed master keys
+        # TODO IMPROVE review, check the alternatives as more secure ways
+        #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster_pki.html  # noqa: E501
+        #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster.html  # noqa: E501
+        master_key_pem = master_pki_dir / 'master.pem'
+        master_key_pub = master_pki_dir / 'master.pub'
+        if not (master_key_pem.exists() and master_key_pub.exists()):
+            run_subprocess_cmd(
+                [
+                    'salt-key',
+                    '--gen-keys', master_key_pem.stem,
+                    '--gen-keys-dir', str(master_pki_dir)
+                ]
+            )
+
         for node in run_args.nodes:
             node_dir = minions_dir / f"{node.minion_id}"
             node_pki_dir = node_dir / 'pki'
@@ -1692,7 +1710,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 [
                     'cp', '-f',
                     str(node_key_pub),
-                    str(master_pki_dir / node.minion_id)
+                    str(master_minions_pki_dir / node.minion_id)
                 ]
             )
 
@@ -1752,7 +1770,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._resolve_grains(run_args.nodes, ssh_client)
 
         #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt minions configuration")
+        logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
         if run_args.source == 'local':
@@ -1810,12 +1828,19 @@ class SetupProvisioner(CommandParserFillerMixin):
         for node_id, _res in res.items():
             if _res[minion_pki_state_id]['changes']:
                 updated_keys.append(node_id)
+        logger.debug(f'Updated salt minion keys: {updated_keys}')
 
         # TODO DOC how to pass inline pillar
-        logger.info("Configuring salt master")
-        ssh_client.state_apply(
+        # TODO IMPROVE EOS-9581 not all masters support
+        # TODO IMPROVE EOS-9581 log masters as well
+        master_targets = (
+            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
+        )
+
+        logger.info(f"Configuring salt masters")
+        res = ssh_client.state_apply(
             'provisioner.configure_salt_master',
-            targets=run_args.primary.minion_id,
+            targets=master_targets,
             fun_kwargs={
                 'pillar': {
                     'updated_keys': updated_keys
@@ -1835,7 +1860,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         nodes_ids = [node.minion_id for node in run_args.nodes]
         ssh_client.cmd_run(
             f"python3 -c \"from provisioner import salt_minion; salt_minion.ensure_salt_minions_are_ready({nodes_ids})\"",  # noqa: E501
-            targets=run_args.primary.minion_id
+            targets=master_targets
         )
 
         # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
@@ -1848,7 +1873,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
-                targets=run_args.primary.minion_id
+                targets=master_targets
             )
 
         logger.info("Updating BMC IPs")
@@ -1859,7 +1884,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             (
                 'provisioner pillar_set --fpath release.sls '
                 f'eos_release/target_build \'"{run_args.target_build}"\''
-            ), targets=run_args.primary.minion_id
+            ), targets=master_targets
         )
 
         return setup_ctx
