@@ -2,7 +2,6 @@ import docker
 import time
 import json
 import attr
-from typing import Iterable
 from pathlib import Path
 from collections import defaultdict
 
@@ -315,7 +314,6 @@ def pytest_configure(config):
     )
 
 
-
 prvsnr_pytest_options = {
     # TODO might be useful to test in multiple at once
     "base-env": dict(
@@ -352,6 +350,33 @@ prvsnr_pytest_options = {
 def pytest_addoption(parser):
     for name, params in prvsnr_pytest_options.items():
         parser.addoption("--" + name, **params)
+
+
+# TODO DOC how to modify tests collections
+# TODO DOC how to apply markers dynamically so it woudl impact comllection
+def pytest_collection_modifyitems(session, config, items):
+    for item in items:
+        if "unit" in item.fixturenames:
+            item.add_marker(pytest.mark.unit)
+        elif "integration1" in item.fixturenames:
+            item.add_marker(pytest.mark.integration1)
+        else:
+            item.add_marker(pytest.mark.integration2)
+
+
+@pytest.fixture(scope='session')
+def unit():
+    pass
+
+
+@pytest.fixture(scope='session')
+def integration1():
+    pass
+
+
+@pytest.fixture(scope='session')
+def integration2():
+    pass
 
 
 @pytest.fixture(scope="session")
