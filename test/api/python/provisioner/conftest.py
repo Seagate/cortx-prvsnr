@@ -6,6 +6,11 @@ from provisioner import (
 )
 
 
+@pytest.fixture(scope='session', autouse=True)
+def unit():
+    pass
+
+
 @pytest.fixture
 def pillar_dir(monkeypatch, tmpdir_function):
     pillar_dir = tmpdir_function / 'pillar'
