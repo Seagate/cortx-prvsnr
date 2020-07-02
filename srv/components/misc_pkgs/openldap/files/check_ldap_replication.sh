@@ -16,11 +16,13 @@ function usage {
 function trap_handler {
     exit_code=$?
 
-    if [[ 100 == ${exit_code} ]]; then
+    if [[ 0 != ${exit_code} ]]; then
       echo "***** ERROR! *****"
-      echo Cleaning up temporary account for replication
-      ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
-      echo "******************"
+      if [[ 10 != ${exit_code} ]]; then
+        echo Cleaning up temporary account for replication
+        ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
+        echo "******************"
+      fi
     fi
 }
 trap trap_handler ERR EXIT
@@ -43,7 +45,7 @@ shift $((OPTIND-1))
 if [ ! -s "$host_list" ]
 then
   echo "file $host_list is empty"
-  exit 1
+  exit 10
 fi
 
 echo "Check Ldap replication for below nodes"
@@ -69,9 +71,9 @@ while read node; do
   then
     cluster_replication=false
     echo "Replication is not setup properly on node $node"
+    exit 100
   else
     echo "Replication is setup properly on node $node"
-    exit 100
   fi
 done <$host_list
 
@@ -83,5 +85,4 @@ else
 fi
 
 #delete account created
-
-ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
+#ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
