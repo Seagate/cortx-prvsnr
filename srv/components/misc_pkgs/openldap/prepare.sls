@@ -37,10 +37,6 @@ Create tmp dir:
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ppolicyoverlay.ldif'},
     { "src": 'salt://components/misc_pkgs/openldap/files/slapdlog.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/slapdlog.ldif' },
-    { "src": 'salt://components/misc_pkgs/openldap/files/syncprov_mod.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif' },
-    { "src": 'salt://components/misc_pkgs/openldap/files/syncprov.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/test_data.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/test_data.ldif' },
     ]
