@@ -307,135 +307,90 @@ update_pillar()
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
 
-    local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
-    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
-        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
-    fi
-    cp $_cluster_sls_path ${_cluster_sls_path}.org
 
     #Update cluster_ip
     echo "Updating cluster_ip" 2>&1|tee -a $LOG_FILE
-
-    field="cluster_ip" 
-    line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
-    sed -ie "${line}s/.*/  cluster_ip: ${cluster_ip}/" $_cluster_sls_path
+    provisioner pillar_set cluster/cluster_ip \"${cluster_ip}\"
 
     #Update mgmt_vip
     echo "Updating mgmt_vip" 2>&1|tee -a $LOG_FILE
-
-    field="mgmt_vip"
-    line=`grep -n "${field}:" $_cluster_sls_path | cut -f1 -d:`
-    sed -ie "${line}s/.*/  mgmt_vip: ${mgmt_vip}/" $_cluster_sls_path
+    provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
 
     #Update interface names
-    if [[ "$pub_din_opt" == true ]]; then
+    if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        sed -i -e "s/enp175s0f0/${pub_din}/g" $_cluster_sls_path
-    fi
-
-    if [[ "$pvt_din_opt" == true ]]; then
-        echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        sed -i -e "s/enp175s0f1/${pvt_din}/g" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
-        sed -ie "${line_node1_ip}s/.*/        ipaddr: ${pub_dip1}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/ipaddr \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_node2_ip}s/.*/        ipaddr: ${pub_dip2}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/ipaddr \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
         #Node1
         echo "Updating BMC user ($bmc1_user) for node-1" 2>&1|tee -a $LOG_FILE
-        line_n1_bmc_user=`grep -A2 -n "bmc:"  $_cluster_sls_path | grep "user:" | cut -d- -f1 | head -1`
-        sed -ie "${line_n1_bmc_user}s/.*/      user: ${bmc1_user}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-1/bmc/user \"${bmc1_user}\"
     fi
     
     if [[ "$bmc2_user_opt" == true ]]; then
         #Node2
         echo "Updating BMC user ($bmc2_user) for node-2" 2>&1|tee -a $LOG_FILE
-        line_n2_bmc_user=`grep -A2 -n "bmc:"  $_cluster_sls_path | grep "user:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_n2_bmc_user}s/.*/      user: ${bmc2_user}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-2/bmc/user \"${bmc2_user}\"
     fi
 
     if [[ "$bmc1_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc1_passwd) for node-1" 2>&1|tee -a $LOG_FILE
-        #Node1
-        line_n1_bmc_passwd=`grep -A3 -n "bmc:"  $_cluster_sls_path | grep "secret:" | cut -d- -f1 | head -1`
-        sed -ie "${line_n1_bmc_passwd}s/.*/      secret: ${bmc1_passwd}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-1/bmc/secret \"${bmc1_passwd}\"
     fi
     
     if [[ "$bmc2_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc2_passwd) for node-2" 2>&1|tee -a $LOG_FILE
-        #Node2
-        line_n2_bmc_passwd=`grep -A3 -n "bmc:"  $_cluster_sls_path | grep "secret:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_n2_bmc_passwd}s/.*/      secret: ${bmc2_passwd}/" $_cluster_sls_path
+        provisioner pillar_set cluster/srvnode-2/bmc/secret \"${bmc2_passwd}\"
     fi
 
     #Update storage_enclosure pillar
     echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
-    _storage_sls_path="/opt/seagate/cortx/provisioner/pillar/components/storage_enclosure.sls"
-    cp $_storage_sls_path ${_storage_sls_path}.orig
-
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        field="primary_mc"
-        line=`grep -A1 -n "${field}:" $_storage_sls_path | tail -1 | cut -f1 -d-`
-        sed -ie "${line}s/.*/      ip: ${ctrl_a_ip}/" $_storage_sls_path
+        provisioner pillar_set storage_enclosure/controller/primary_mc/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        field="secondary_mc"
-        line=`grep -A1 -n "${field}:" $_storage_sls_path | tail -1 | cut -f1 -d-`
-        sed -ie "${line}s/.*/      ip: ${ctrl_b_ip}/" $_storage_sls_path
+        provisioner pillar_set storage_enclosure/controller/secondary_mc/ip \"${ctrl_b_ip}\"
     fi
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
         echo "Updating controller user" 2>&1|tee -a $LOG_FILE
-        field="user"
-        line=`grep -n "${field}" $_storage_sls_path | cut -f1 -d:`
-        sed -ie "${line}s/.*/    user: '${ctrl_user}'/" $_storage_sls_path
+        provisioner pillar_set storage_enclosure/controller/user \"${ctrl_user}\"
     fi
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
         echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
-        field="secret: 'passwd'"
-        line=`grep -n "${field}" $_storage_sls_path | cut -f1 -d:`
-        sed -ie "${line}s/.*/    secret: '${ctrl_passwd}'/" $_storage_sls_path
+        provisioner pillar_set storage_enclosure/controller/secret \"${ctrl_passwd}\"
     fi
 
     # Update s3client.sls
-    echo "Updating s3clients.sls" 2>&1|tee -a $LOG_FILE
-
-    _s3client_sls_path="/opt/seagate/cortx/provisioner/pillar/components/s3clients.sls"
-    cp $_s3client_sls_path ${_s3client_sls_path}.orig
-
-    #Update cluster_ip in s3clients
     echo "Updating ip in s3clients" 2>&1|tee -a $LOG_FILE
-    field="ip" 
-    line=`grep -n "${field}:" $_s3client_sls_path | cut -f1 -d:`
-    sed -ie "${line}s/.*/    ip: ${cluster_ip}/" $_s3client_sls_path
+    provisioner pillar_set s3clients/ip \"${cluster_ip}\"
 
     echo -e "\n\t ***** DEBUG: Updated pillars *****" 2>&1|tee -a $LOG_FILE
     echo -e "\n\t cluster.sls" 2>&1|tee -a $LOG_FILE
     cat $_cluster_sls_path 2>&1|tee -a $LOG_FILE
-    echo -e "\n\t s3client.sls" 2>&1|tee -a $LOG_FILE
-    cat $_storage_sls_path 2>&1|tee -a $LOG_FILE
-    echo -e "\n\t s3client.sls" 2>&1|tee -a $LOG_FILE
-    cat $_s3client_sls_path 2>&1|tee -a $LOG_FILE
+
 }
 
 install_config_prvsnr
