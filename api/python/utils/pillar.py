@@ -58,7 +58,7 @@ class _Pillar(object):
                 indent=4
             )
         prvsnr_client = salt.client.LocalClient()
-        #Refresh pillar data after updation
+        #Refresh pillar data after updatie
         ret_val = prvsnr_client.cmd('*', 'saltutil.refresh_pillar')
         for val in ret_val.values():
             if not val:

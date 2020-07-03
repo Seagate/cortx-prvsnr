@@ -908,21 +908,20 @@ def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
 
 # TODO TEST
 def process_provisioner_cmd_res(res):
-    if not isinstance(res, dict):
+    if not isinstance(res, dict) or len(res) != 1:
         raise ProvisionerError(
-            'Expected a dictionary, provided: {}, {}'
-            .format(type(res), res)
+            f'Expected a dictionary of len = 1, provided: {type(res)}, {res}'
         )
 
-    _local_minion_id = local_minion_id()
-    if _local_minion_id not in res:
-        raise ProvisionerError(
-            'local minion id {} is not in the results: {}'
-            .format(_local_minion_id, res)
+    # FIXME EOS-9581 it might be other minion id in case of HA
+    if local_minion_id() not in res:
+        logger.warning(
+            f"local minion id {local_minion_id()} is not listed "
+            f"in results: {list(res)}, might be initiated by other node"
         )
 
     # provisioner cli output
-    prvsnr_res = res[_local_minion_id]
+    prvsnr_res = next(iter(res.values()))
     return process_cli_result(prvsnr_res)
 
 

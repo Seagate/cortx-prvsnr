@@ -1535,7 +1535,8 @@ class SetupProvisioner(CommandParserFillerMixin):
             profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki"
         )
         master_minions_pki_dir = (
-            profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki/minions"
+            profile_paths['salt_fileroot_dir'] /
+            "provisioner/files/master/pki/minions"
         )
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
 
@@ -1733,7 +1734,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         if not setup_name:
             setup_name = '__'.join(
                 [str(node) for node in run_args.nodes]
-            )
+            ).replace(':', '_')
 
         # PREPARE FILE & PILLAR ROOTS
 
@@ -1772,6 +1773,82 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 hard coded
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
+
+        # TODO IMPROVE EOS-9581 not all masters support
+        master_targets = (
+            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
+        )
+
+        if run_args.ha:
+            volumes = {
+                'volume_salt_cache_jobs': {
+                    'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
+                    'mount_dir': '/var/cache/salt/master/jobs'
+                }
+            }
+
+            logger.info("Configuring glusterfs servers")
+            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
+            #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
+            glusterfs_server_pillar = {
+                'glusterfs_dirs': [
+                    vdata['export_dir'] for vdata in volumes.values()
+                ]
+            }
+            ssh_client.state_apply(
+                'glusterfs.server',
+                targets=master_targets,
+                fun_kwargs={
+                    'pillar': glusterfs_server_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs cluster")
+            glusterfs_cluster_pillar = {
+                'glusterfs_peers': [
+                    node.ping_addrs[0] for node in run_args.nodes
+                ],
+                'glusterfs_volumes': {
+                    vname: {
+                        node.ping_addrs[0]: vdata['export_dir']
+                        for node in run_args.nodes
+                    } for vname, vdata in volumes.items()
+                }
+            }
+            logger.debug(
+                f"glusterfs cluster pillar: {glusterfs_cluster_pillar}"
+            )
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.cluster',
+                targets=run_args.primary.minion_id,
+                fun_kwargs={
+                    'pillar': glusterfs_cluster_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs clients")
+            glusterfs_client_pillar = {
+                'glusterfs_mounts': [
+                    (
+                        # Note. as explaind in glusterfs docs the server here
+                        # 'is only used to fetch the gluster configuration'
+                        run_args.primary.ping_addrs[0],
+                        vname,
+                        vdata['mount_dir']
+                    ) for vname, vdata in volumes.items()
+                ]
+            }
+            logger.debug(
+                f"glusterfs client pillar: {glusterfs_client_pillar}"
+            )
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.client',
+                fun_kwargs={
+                    'pillar': glusterfs_client_pillar
+                }
+            )
 
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
@@ -1831,14 +1908,10 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.debug(f'Updated salt minion keys: {updated_keys}')
 
         # TODO DOC how to pass inline pillar
-        # TODO IMPROVE EOS-9581 not all masters support
-        # TODO IMPROVE EOS-9581 log masters as well
-        master_targets = (
-            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
-        )
 
+        # TODO IMPROVE EOS-9581 log masters as well
         logger.info(f"Configuring salt masters")
-        res = ssh_client.state_apply(
+        ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
             fun_kwargs={
