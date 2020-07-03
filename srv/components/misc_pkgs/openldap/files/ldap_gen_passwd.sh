@@ -1,4 +1,3 @@
-{%- set db = pillar['openldap']['backend_db'] -%}
 #!/bin/bash
 
 {%- set openldap_admin_secret = salt['lyveutil.decrypt'](salt['pillar.get']('openldap:admin:secret', "seagate"), 'openldap') %}
