@@ -389,7 +389,7 @@ update_pillar()
 
     echo -e "\n\t ***** DEBUG: Updated pillars *****" 2>&1|tee -a $LOG_FILE
     echo -e "\n\t cluster.sls" 2>&1|tee -a $LOG_FILE
-    cat $_cluster_sls_path 2>&1|tee -a $LOG_FILE
+    salt "srvnode-1" pillar.get cluster 2>&1|tee -a $LOG_FILE
 
 }
 

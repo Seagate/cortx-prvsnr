@@ -53,7 +53,7 @@ def storage_device_config():
             print ("[ ERROR ] multipath devices don't exist.")
             return False
 
-        metadata_device = "/dev/disk/by-id/dm-name-{0}".format(device_list[0])
+        metadata_device = ["/dev/disk/by-id/dm-name-{0}".format(device_list[0])]
         data_field = "cluster/{0}/storage/data_devices".format(node)
         metadata_field = "cluster/{0}/storage/metadata_device".format(node)
         data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in device_list[1:]]
