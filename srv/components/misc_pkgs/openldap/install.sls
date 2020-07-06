@@ -24,11 +24,11 @@ Generate Slapdpasswds:
 {%- if pillar['cluster'][node_id]['is_primary'] %}
 # SCP iam-admin.ldif:
 #   cmd.run:
-#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif /opt/seagate/cortx/provisioner/generated_configs/ldap/
 
 # SCP cfg_ldap.ldif:
 #   cmd.run:
-#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/cortx/provisioner/generated_configs/ldap/
 {%- endif %}
 {% endfor %}
 {%- endif %}

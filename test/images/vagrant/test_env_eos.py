@@ -58,7 +58,7 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
         .format(request.config.getoption('prvsnr_release'))
     )
 
-    mhosteosnode1.check_output('bash /opt/seagate/eos-prvsnr/cli/src/deploy-eos -vv -S')
+    mhosteosnode1.check_output('bash /opt/seagate/cortx/provisioner/cli/src/deploy-eos -vv -S')
 
 
 @pytest.mark.skip
@@ -84,7 +84,7 @@ def test_singlenode_eos_deployed_env(mhosteosnode1, request):
 @pytest.mark.env_level('singlenode-eos-ready')
 @pytest.mark.hosts(['eosnode1'])
 def test_singlenode_eos_ready_env(mhosteosnode1, request):
-    mhosteosnode1.check_output('bash -ex /opt/seagate/eos-prvsnr/sanity_tests/s3-sanity.sh')
+    mhosteosnode1.check_output('bash -ex /opt/seagate/cortx/provisioner/sanity_tests/s3-sanity.sh')
 
 
 @pytest.mark.skip
