@@ -1649,11 +1649,10 @@ function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
-    #local _release_sls="${repo_root_dir}/pillar/components/release.sls"
+    local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
-    #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
-    #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
-    provisioner pillar_set eos_release/target_build \"${_release_ver}\"
+    _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
+    sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
@@ -1674,9 +1673,8 @@ function update_cluster_pillar_hostname {
     local _host="$2"
     local _cluster_sls="${repo_root_dir}/pillar/components/cluster.sls"
 
-    #_line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
-    #sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
-    provisioner pillar_set cluster/${_node}/hostname \"${_host}\"
+    _line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
+    sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
 }
 
 #  disable_default_sshconfig
@@ -2023,7 +2021,9 @@ function update_bmc_ip {
 
     if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
         l_info "BMC_IP: ${_ip}"
-        provisioner pillar_set cluster/${_node}/bmc/ip \"${_ip}\"
+        _line=$(grep -m1 -A10 -n "${_node}:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d- -f1|tr -d [:space:])
+        l_debug "Line number: ${_line}"
+        sed -i "${_line},/ip:*/ s|ip:.*|ip: ${_ip}|" $_cluster_sls_path
     else
         l_info "BMC_IP is not configured"
     fi
