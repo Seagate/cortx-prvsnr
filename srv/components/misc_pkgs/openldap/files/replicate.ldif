@@ -1,4 +1,3 @@
-{%- set db = pillar['openldap']['backend_db'] -%}
 # Sample replation configuration data file for N-way multi-master setup
 # This file should be replicated on all Master nodes, replacing following fields
 # in accordance to your setup.
@@ -33,7 +32,7 @@ olcServerID: {{ loop.index }}
 {%- endif -%}
 {% endfor %}
 
-dn: olcDatabase={2}{{db}},cn=config
+dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
 changetype: modify
 add: olcSyncRepl
 {% for node in node_list -%}

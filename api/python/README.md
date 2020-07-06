@@ -52,7 +52,7 @@ SSH based installation is also possible, e.g.
 
 The API is now bundled as part of provisioner rpm package `eos-prvsnr`.
 
-During the installation the api package is placed in `/opt/seagate/eos-prvsnr/api/python` directory.
+During the installation the api package is placed in `/opt/seagate/cortx/provisioner/api/python` directory.
 
 Also it is installed to global python3 environment and available for usual python imports.
 

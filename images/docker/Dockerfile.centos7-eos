@@ -42,18 +42,18 @@ RUN yum install -y salt-minion \
 
 # config salt and set up salt scripts
 COPY files/etc/salt/minion_masterless /etc/salt/minion
-COPY pillar /opt/seagate/eos-prvsnr/pillar/
-COPY srv /opt/seagate/eos-prvsnr/srv/
+COPY pillar /opt/seagate/cortx/provisioner/pillar/
+COPY srv /opt/seagate/cortx/provisioner/srv/
 
 # TODO should be a part of salt (rsyslog, sudo)
 RUN yum install -y net-tools rsyslog sudo \
     && rm -rf /var/cache/yum
 
-RUN sed -i 's/data0/eth0/g' /opt/seagate/eos-prvsnr/pillar/components/cluster.sls \
-    && sed -i 's/mgmt0/eth0/g' /opt/seagate/eos-prvsnr/pillar/components/cluster.sls \
-    && sed -i 's/sdb/vdb/g' /opt/seagate/eos-prvsnr/pillar/components/cluster.sls \
-    && sed -i 's/sdc/vdc/g' /opt/seagate/eos-prvsnr/pillar/components/cluster.sls \
-    && cat /opt/seagate/eos-prvsnr/pillar/components/cluster.sls
+RUN sed -i 's/data0/eth0/g' /opt/seagate/cortx/provisioner/pillar/components/cluster.sls \
+    && sed -i 's/mgmt0/eth0/g' /opt/seagate/cortx/provisioner/pillar/components/cluster.sls \
+    && sed -i 's/sdb/vdb/g' /opt/seagate/cortx/provisioner/pillar/components/cluster.sls \
+    && sed -i 's/sdc/vdc/g' /opt/seagate/cortx/provisioner/pillar/components/cluster.sls \
+    && cat /opt/seagate/cortx/provisioner/pillar/components/cluster.sls
 
 # ??? is it really necessary
 COPY modprobe.sh /usr/local/bin/modprobe
