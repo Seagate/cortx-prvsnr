@@ -15,20 +15,21 @@ Backup slapd config file:
     - force: True
     - preserve: True
 
-{% if "primary" in grains['roles'][0] -%}
+
+{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) -%}
 Generate Slapdpasswds:
    cmd.run:
      - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
 {% else -%}
 {% for node_id in pillar['cluster']['node_list'] %}
 {%- if pillar['cluster'][node_id]['is_primary'] %}
-# SCP iam-admin.ldif:
-#   cmd.run:
-#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+SCP iam-admin.ldif:
+  cmd.run:
+    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif /opt/seagate/cortx/provisioner/generated_configs/ldap/
 
-# SCP cfg_ldap.ldif:
-#   cmd.run:
-#     - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
+SCP cfg_ldap.ldif:
+  cmd.run:
+    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/cortx/provisioner/generated_configs/ldap/
 {%- endif %}
 {% endfor %}
 {%- endif %}
@@ -57,6 +58,7 @@ Copy mdb ldiff file, if not present:
     - watch_in:
       - service: slapd
 {% endif %}
+
 
 slapd:
   service.running:

@@ -75,11 +75,6 @@ controlpath_states=(
         "ha.cortx-ha"
     )
 
-sync_states=(
-    # states to be applied in desired sequence
-        "sync.software.openldap"
-    )
-
 function usage {
   echo "\
 Usage: $0 [options]
@@ -92,12 +87,11 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
-       --system-states             deploy only system states
        --prereq-states             deploy only prereq states (components.misc_pkgs)
-       --sync_states               deploy only the software synchronization
-       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
+       --system-states             deploy only system states
 "
 }
 
@@ -115,11 +109,6 @@ function options_parser {
             ;;
         --prereq-states)
             run_prereq_states=true
-            run_sync_states=true
-            run_all=false
-            ;;
-        --sync_states)
-            run_sync_states=true
             run_all=false
             ;;
         --iopath-states)
@@ -166,7 +155,7 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "sync.software.openldap"
+            elif [[ "$state" == "misc_pkgs.openldap"
                 || "$state" == "misc_pkgs.rabbitmq"
                 || "$state" == "system.storage.multipath"
                 ]]; then
@@ -246,11 +235,6 @@ fi
 if [[ "$run_prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
     run_states  "${prereq_states[@]}"
-fi
-
-if [[ "$run_sync_states" == true ]]; then
-    l_info "Deploying the sync states"
-    run_states  "${sync_states[@]}"
 fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
