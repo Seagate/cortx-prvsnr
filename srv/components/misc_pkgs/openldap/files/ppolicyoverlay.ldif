@@ -1,4 +1,5 @@
-dn: olcOverlay=ppolicy,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+{%- set db = pillar['openldap']['backend_db'] -%}
+dn: olcOverlay=ppolicy,olcDatabase={2}{{db}},cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy
