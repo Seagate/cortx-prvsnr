@@ -1,9 +1,9 @@
 {%- if pillar['cluster']['type'] != "single" -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/files/create_replication_account.ldif',
-      "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/create_replication_account.ldif' },
+      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/check_ldap_replication.sh',
-      "dest": '/opt/seagate/eos-prvsnr/generated_configs/ldap/check_ldap_replication.sh' },
+      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh' },
   ]
 %}
 {{ filename.dest }}_copy:
@@ -20,7 +20,7 @@
 
 Hostlist file:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/ldap/hostlist.txt
+    - name: /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt
     - contents: |
         {%- set node_list = (pillar['cluster']['node_list']) %}
         {{ grains['id'] -}}
@@ -34,14 +34,14 @@ Hostlist file:
 
 Replication sanity check:
   cmd.run:
-    - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/eos-prvsnr/generated_configs/ldap/hostlist.txt -p {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }}
-    - onlyif: test -f /opt/seagate/eos-prvsnr/generated_configs/ldap/check_ldap_replication.sh
+    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }}
+    - onlyif: test -f /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh
 
 # Cleanup
 {% for filename in [
-    '/opt/seagate/eos-prvsnr/generated_configs/ldap/create_replication_account.ldif',
-    '/opt/seagate/eos-prvsnr/generated_configs/ldap/check_ldap_replication.sh',
-    '/opt/seagate/eos-prvsnr/generated_configs/ldap/hostlist.txt'
+    '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif',
+    '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh',
+    '/opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt'
   ]
 %}
 {{ filename }}_del:
