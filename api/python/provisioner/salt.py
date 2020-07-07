@@ -1053,6 +1053,7 @@ def copy_to_file_roots(
         'fileserver.clear_file_list_cache',
         fun_kwargs=dict(backend='roots')
     )
+    return dest
 
 
 # TODO tests

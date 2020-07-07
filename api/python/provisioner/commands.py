@@ -3,6 +3,7 @@ import attr
 from typing import List, Dict, Type, Union, Optional, Iterable
 from copy import deepcopy
 import logging
+from datetime import datetime
 import uuid
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH,
+    SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
 )
 from .pillar import (
@@ -1007,6 +1009,9 @@ class SetSSLCerts(CommandParserFillerMixin):
     def run(self, source, restart=False, dry_run=False):
 
         source = Path(source).resolve()
+        dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
+        time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        state_name = "components.misc_pkgs.ssl_certs"
 
         if not source.is_file():
             raise ValueError('{} is not a file'.format(source))
@@ -1015,25 +1020,62 @@ class SetSSLCerts(CommandParserFillerMixin):
             return
 
         try:
-            cluster_maintenance_enable()
-        except Exception as exc:
-            raise ClusterMaintenanceEnableError(exc) from exc
+            #move cluster to maintenance mode
+            try:
+                cluster_maintenance_enable()
+                logger.info('Cluster maintenance mode enabled')
+            except Exception as exc:
+                raise ClusterMaintenanceEnableError(exc) from exc
+       
+            copy_to_file_roots(source, dest) 
+            
+            try:
+                #backup old ssl certs to provisioner user files
+                backup_file_name = copy_to_file_roots(SSL_CERTS_FILE,
+                    dest.parent / '{}_{}'.format(time_stamp, dest.name))
+                StatesApplier.apply([state_name])
+                logger.info('SSL Certs Updated')
+            except Exception as exc:
+                logger.exception(
+                    "Failed to apply certs")
+                raise SSLCertsUpdateError(exc) from exc
+            
+            #disable cluster maintenance mode
+            try:
+                cluster_maintenance_disable()
+                logger.info('Cluster recovered from maintenance mode')
+            except Exception as exc:
+                raise ClusterMaintenanceDisableError(exc) from exc
+            
+        except Exception as ssl_exc:
+            logger.exception('SSL Certs Updation Failed')
+            rollback_exc = None
+            if isinstance(ssl_exc, ClusterMaintenanceEnableError):
+                cluster_maintenance_disable(background=True)
 
-        # TODO create backup and add timestamp to backups
-        copy_to_file_roots(source, PRVSNR_USER_FILES_SSL_CERTS_FILE)
+            elif isinstance(ssl_exc,
+                (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
+                
+                try:
+                    logger.info('Restoring old SSL cert ')
+                    # restores old cert
+                    copy_to_file_roots(backup_file_name, dest)
+                    StatesApplier.apply([state_name])
+                except Exception as exc:
+                    logger.exception(
+                        "Failed to apply backedup certs")
+                    rollback_exc = exc
+                else:
+                    try:
+                        cluster_maintenance_disable()
+                    except Exception as exc:
+                        logger.exception(
+                            "Failed to recover Cluster after rollback")
+                        rollback_exc = exc
+            else: 
+                logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-        try:
-            StatesApplier.apply(["components.misc_pkgs.ssl_certs"])
-        except Exception:
-            logger.exception(
-                "Failed to apply certs"
-            )
-            raise
-
-        try:
-            cluster_maintenance_disable()
-        except Exception as exc:
-            raise ClusterMaintenanceDisableError(exc) from exc
+            raise SSLCertsUpdateError(ssl_exc, rollback_exc = rollback_exc)
 
 
 # TODO TEST
