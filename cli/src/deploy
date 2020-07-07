@@ -274,10 +274,10 @@ if [[ "$run_ctrlpath_states" == true ]]; then
 fi
 
 l_info "Backing up pillar files to user space."
-mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
-cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
-chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
-chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
+# mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
+# cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
+# chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
+# chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
 
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
