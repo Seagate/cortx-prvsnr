@@ -28,7 +28,7 @@ from .config import (
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
-    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
     KeyPath,
@@ -1504,7 +1504,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             repo_tgz_path,
             project_path=run_args.local_repo,
             version=run_args.prvsnr_verion,
-            include_dirs=['pillar', 'srv', 'files', 'api']
+            include_dirs=['pillar', 'srv', 'files', 'api', 'cli']
         )
 
         # extract archive locally
@@ -1784,6 +1784,14 @@ class SetupProvisioner(CommandParserFillerMixin):
                 'volume_salt_cache_jobs': {
                     'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
                     'mount_dir': '/var/cache/salt/master/jobs'
+                },
+                'volume_user_salt_pillar': {
+                    'export_dir': '/srv/glusterfs/volume_user_salt_pillar',
+                    'mount_dir': str(config.PRVSNR_USER_PILLAR_DIR)
+                },
+                'volume_user_salt_fileroot': {
+                    'export_dir': '/srv/glusterfs/volume_user_salt_fileroot',
+                    'mount_dir': str(config.PRVSNR_USER_FILEROOT_DIR)
                 }
             }
 
@@ -1953,11 +1961,14 @@ class SetupProvisioner(CommandParserFillerMixin):
         ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
 
         logger.info("Updating target build pillar")
+        # Note. in both cases (ha and non-ha) we need user pillar update
+        # only on primary node, in case of ha it would be shared for other
+        # masters
         ssh_client.cmd_run(
             (
                 'provisioner pillar_set --fpath release.sls '
                 f'eos_release/target_build \'"{run_args.target_build}"\''
-            ), targets=master_targets
+            ), targets=run_args.primary.minion_id
         )
 
         return setup_ctx

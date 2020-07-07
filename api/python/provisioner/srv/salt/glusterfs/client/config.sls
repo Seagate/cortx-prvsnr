@@ -8,7 +8,7 @@ glusterfs_volume_{{ volume }}_mounted:
     - device: {{ server }}:{{ volume }}
     - mkmnt: True
     - fstype: glusterfs
-    - opts: _netdev,defaults
+    - opts: _netdev,defaults,acl
     - persist: True
     - dump: 0
     - pass_num: 0
