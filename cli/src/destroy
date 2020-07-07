@@ -251,11 +251,15 @@ if [[ "$remove_prvsnr" == true ]]; then
     l_info "Removing remaining cortx packages from node-2"
     ssh srvnode-2 'for pkg in `rpm -qa | grep cortx`; do\
         echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
+        for build_mount in `findmnt -l --output=target | grep "/opt/seagate/eos/updates"`; do\
+            echo "INFO: Unmounting $build_mount"; umount $build_mount; done;\
         rm -rf /opt/seagate*; rm -rf /root/.ssh/*'
 
     l_info "Removing remaining cortx packages from node-1"
     for pkg in `rpm -qa | grep cortx`; do\
         echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done
+    for build_mount in `findmnt -l --output=target | grep "/opt/seagate/eos/updates"`; do\
+        echo "INFO: Unmounting $build_mount"; umount $build_mount; done
 
     l_info "Removing /opt/seagate directory from node-1"
     rm -rf /opt/seagate; rm -rf /root/.ssh/*
