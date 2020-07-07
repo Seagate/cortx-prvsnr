@@ -1,5 +1,7 @@
 import pytest
 import yaml
+import string
+import random
 
 import test.helper as h
 import provisioner
@@ -43,50 +45,38 @@ def check_ssh_configuration(mhost, mlocalhost):
     assert not diff_installed
 
 
-def check_provisioner_api_installation(mhost, api_version=None):
-    if api_version is None:
-        api_version = provisioner.__version__
-
-    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
-    assert provisioner.__title__ in pip_packages
-    assert pip_packages[provisioner.__title__][
-        'version'
-    ] == api_version
-
-    #   check that prvsnrusers groups is created
-    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
-
-    #   check that user pillar dir is created
+def check_provisioner_group_dir(path, mhost):
+    #   check that user dir is created
     #   and has proper access rights (ACL)
-    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).exists
-    assert mhost.host.file(str(h.PRVSNR_USER_PILLAR_DIR)).is_directory
-    assert mhost.host.file(
-        str(h.PRVSNR_USER_PILLAR_DIR)
-    ).group == PRVSNRUSERS_GROUP
+    assert mhost.host.file(str(path)).exists
+    assert mhost.host.file(str(path)).is_directory
+    assert mhost.host.file(str(path)).group == PRVSNRUSERS_GROUP
 
     mhost.check_output(
-        "mkdir -p {}".format(h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb')
+        "mkdir -p {}".format(path / 'aaa' / 'bbb')
     )
     mhost.check_output(
-        "touch {}".format(h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc.sls')
+        "touch {}".format(path / 'aaa' / 'bbb' / 'ccc.sls')
     )
     expected_dir_perms = "drwxrwsr-x+ root prvsnrusers"
     dir_perms = mhost.check_output(
         "find {} -type d -exec ls -lad {{}} \\;  | "
         "awk '{{print $1 FS $3 FS $4}}' | sort -u"
-        .format(h.PRVSNR_USER_PILLAR_DIR)
+        .format(path)
     )
     assert dir_perms == expected_dir_perms
     expected_file_perms = "-rw-rw-r--+ root prvsnrusers"
     file_perms = mhost.check_output(
         "find {} -type f -exec ls -la {{}} \\;  | "
         "awk '{{print $1 FS $3 FS $4}}' | sort -u"
-        .format(h.PRVSNR_USER_PILLAR_DIR)
+        .format(path)
     )
     assert file_perms == expected_file_perms
 
     # check that user not from the provisioner group can't write there
-    testuser = 'testuser'
+    testuser = (
+        ''.join(random.choice(string.ascii_lowercase) for i in range(10))
+    )
     mhost.check_output(
         "adduser {0} && echo {1} | passwd --stdin {0}"
         .format(testuser, 'somepass')
@@ -94,7 +84,7 @@ def check_provisioner_api_installation(mhost, api_version=None):
     res = mhost.run(
         "su -l {} -c 'touch {}'".format(
             testuser,
-            h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc2.sls'
+            path / 'aaa' / 'bbb' / 'ccc2.sls'
         )
     )
     assert res.rc != 0
@@ -108,9 +98,30 @@ def check_provisioner_api_installation(mhost, api_version=None):
     mhost.check_output(
         "su -l {} -c 'touch {}'".format(
             testuser,
-            h.PRVSNR_USER_PILLAR_DIR / 'aaa' / 'bbb' / 'ccc2.sls'
+            path / 'aaa' / 'bbb' / 'ccc2.sls'
         )
     )
+
+
+def check_post_section(mhost, api_version=None):
+    if api_version is None:
+        api_version = provisioner.__version__
+
+    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
+    assert provisioner.__title__ in pip_packages
+    assert pip_packages[provisioner.__title__][
+        'version'
+    ] == api_version
+
+    #   check that prvsnrusers groups is created
+    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
+
+    for path in (
+        h.PRVSNR_USER_PILLAR_DIR,
+        h.PRVSNR_USER_FILEROOT_DIR,
+        h.PRVSNR_LOG_ROOT_DIR
+    ):
+        check_provisioner_group_dir(path, mhost)
 
 
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
@@ -165,7 +176,7 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     # check post install sections
     # TODO check salt config files replacement
     #   check that api is installed into python env and have proper version
-    check_provisioner_api_installation(mhost)
+    check_post_section(mhost)
 
 
 @pytest.mark.isolated
@@ -247,7 +258,7 @@ def test_rpm_prvsnr_provioner_is_available_after_update(
     new_rpm_remote = mhost.copy_to_host(new_rpm)
 
     mhost.check_output('yum install -y {}'.format(new_rpm_remote))
-    check_provisioner_api_installation(mhost, api_version=new_version)
+    check_post_section(mhost, api_version=new_version)
 
 
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):

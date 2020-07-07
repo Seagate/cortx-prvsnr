@@ -23,7 +23,7 @@ from .errors import (
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
-    PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
+    PRVSNR_FILEROOT_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH,
@@ -925,7 +925,7 @@ class FWUpdate(CommandParserFillerMixin):
             raise ValueError('{} is not a file'.format(source))
 
         script = (
-            PRVSNR_FILEROOTS_DIR /
+            PRVSNR_FILEROOT_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
 
@@ -1109,7 +1109,7 @@ class RebootController(CommandParserFillerMixin):
     def run(self, target_ctrl: str = CONTROLLER_BOTH):
 
         script = (
-            PRVSNR_FILEROOTS_DIR /
+            PRVSNR_FILEROOT_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
 
@@ -1157,7 +1157,7 @@ class ShutdownController(CommandParserFillerMixin):
 
     def run(self, target_ctrl: str = CONTROLLER_BOTH):
         script = (
-            PRVSNR_FILEROOTS_DIR /
+            PRVSNR_FILEROOT_DIR /
             'components/controller/files/scripts/controller-cli.sh'
         )
 
@@ -1228,8 +1228,8 @@ class CreateUser(CommandParserFillerMixin):
         ssh_dir = home_dir / '.ssh'
 
         user_fileroots_dir = Path(
-            PRVSNR_FILEROOTS_DIR /
-            SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+            PRVSNR_FILEROOT_DIR /
+            SEAGATE_USER_FILEROOT_DIR_TMPL.format(uname=uname)
         )
 
         keyfile = user_fileroots_dir / f'id_rsa_{uname}'
@@ -1318,7 +1318,7 @@ class CreateUser(CommandParserFillerMixin):
                     name=str(ssh_dir),
                     source=str(
                         'salt://' +
-                        SEAGATE_USER_FILEROOTS_DIR_TMPL.format(uname=uname)
+                        SEAGATE_USER_FILEROOT_DIR_TMPL.format(uname=uname)
                     ),
                     user=uname,
                     group=uname,

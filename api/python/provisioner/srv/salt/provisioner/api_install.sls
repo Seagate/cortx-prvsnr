@@ -4,7 +4,7 @@ prvsnrusers:
 # TODO IMPROVE EOS-8473 consider states instead
 user_salt_roots_created:
   cmd.script:
-    - source: salt://provisioner/files/api.sh
+    - source: salt://provisioner/files/post_setup.sh
 
 api_installed:
   pip.installed:

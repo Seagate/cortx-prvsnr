@@ -12,7 +12,7 @@ import logging
 
 from .config import (
    ALL_MINIONS, LOCAL_MINION,
-   PRVSNR_USER_FILEROOTS_DIR
+   PRVSNR_USER_FILEROOT_DIR
 )
 from .errors import (
     ProvisionerError,
@@ -1008,7 +1008,7 @@ def copy_to_file_roots(
     file_root: Optional[Path] = None
 ):
     if file_root is None:
-        file_root = PRVSNR_USER_FILEROOTS_DIR
+        file_root = PRVSNR_USER_FILEROOT_DIR
 
     source = Path(str(source))
     dest = file_root / dest

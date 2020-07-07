@@ -36,7 +36,7 @@ def fw_source(tmpdir_module):
 @pytest.fixture(scope='module')
 def controller_cli_script():
     return (
-        config.PRVSNR_FILEROOTS_DIR /
+        config.PRVSNR_FILEROOT_DIR /
         'components/controller/files/scripts/controller-cli.sh'
     )
 

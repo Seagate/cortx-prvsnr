@@ -22,10 +22,16 @@ else:
 #  - remove PRVSNR_ prefix
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
+PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
+PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
+PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
+PRVSNR_USER_SALT_DIR = PRVSNR_DATA_ROOT_DIR / 'srv'
 # reflects master file_roots configuration
-PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
-PRVSNR_USER_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv_user'
+PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
+# reflects pillar/top.sls
+PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
+
 #    relative paths
 PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR = Path('misc_pkgs/eosupdate/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
@@ -33,9 +39,6 @@ PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
-# reflects pillar/top.sls
-PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
-PRVSNR_USER_PILLAR_DIR = PRVSNR_PILLAR_DIR / 'user'
 PRVSNR_USER_PI_ALL_HOSTS_DIR = PRVSNR_USER_PILLAR_DIR / 'groups/all'
 PRVSNR_DEF_PI_HOST_DIR_TMPL = str(
     PRVSNR_PILLAR_DIR / 'minions/{minion_id}'
@@ -45,7 +48,7 @@ PRVSNR_USER_PI_HOST_DIR_TMPL = str(
 )
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
-SEAGATE_USER_FILEROOTS_DIR_TMPL = str(
+SEAGATE_USER_FILEROOT_DIR_TMPL = str(
     'components/provisioner/files/users/{uname}'
 )
 
@@ -89,9 +92,12 @@ PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
 PRVSNR_CONFIG_FILE = 'provisioner.conf'
 
 # logging
-LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
-if not LOG_ROOT_DIR.exists():
-    LOG_ROOT_DIR = Path('.').resolve()
+PRVSNR_LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
+LOG_ROOT_DIR = (
+    PRVSNR_LOG_ROOT_DIR
+    if PRVSNR_LOG_ROOT_DIR.exists()
+    else Path('.').resolve()
+)
 
 LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
