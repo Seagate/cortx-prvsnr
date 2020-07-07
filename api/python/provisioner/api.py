@@ -271,6 +271,17 @@ def get_node_id(targets=ALL_MINIONS, nowait=False):
         'get_node_id', targets=targets, nowait=nowait
     )
 
+def get_release_version(targets=ALL_MINIONS, nowait=False):
+    r"""Retruns Release Version
+
+    :param targets: (optional) A host to find Rlease Version.
+        Default: ``ALL_MINIONS``
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    retrun _api_call(
+        'get_release_version', targets=targets, nowait=nowait
+    )
 
 def reboot_server(targets=ALL_MINIONS, nowait=False):
     r"""Reboots the servers

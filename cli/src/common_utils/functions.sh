@@ -1151,10 +1151,14 @@ function install_provisioner {
                 _prvsnr_version="file:///opt/seagate/eos/updates/provisioner/dev"
 
             else
-                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
+                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/rhel-7.7.1908/last_successful"
             fi
         fi
     fi
+
+if curl --output /dev/null --silent --head --fail "$_prvsnr_version/MANIFEST.MF"; then
+    wget $_prvsnr_version/MANIFEST.MF -O /etc/yum.repos.d/MANIFEST_FACTORY.MF
+fi
 
 ! read -r -d '' _prvsnr_repo << EOF
 [provisioner]

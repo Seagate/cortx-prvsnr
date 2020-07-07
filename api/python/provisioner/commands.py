@@ -996,6 +996,18 @@ class GetNodeId(CommandParserFillerMixin):
             targets=targets
         )
 
+# TODO TEST
+@attr.s(auto_attribs=True)
+class GetRleaseVersion(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    def run(self, targets):
+        return function_run(
+            'grains.get',
+            fun_args=[''],
+            targets=targets
+        )
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
