@@ -13,8 +13,6 @@ BuildRequires: python36-devel
 Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
-Requires: gcc
-Requires: rsync
 Requires: salt-master = 2019.2.0
 Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
@@ -83,7 +81,7 @@ chmod -R g+rws /opt/seagate/cortx/provisioner/pillar/user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/cortx/provisioner/pillar/user
 
 #   install api globally using pip
-pip3 install -U /opt/seagate/cortx/provisioner/api/python -t /usr/lib64/python3.6/site-packages
+pip3 install -U /opt/seagate/cortx/provisioner/api/python
 
 chown -R :prvsnrusers /opt/seagate/cortx/provisioner/cli
 chmod -R 750 /opt/seagate/cortx/provisioner/cli

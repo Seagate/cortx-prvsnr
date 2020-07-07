@@ -6,6 +6,7 @@ import errno
 import os
 import subprocess
 import sys
+sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
 import yaml
 import time
 import provisioner
