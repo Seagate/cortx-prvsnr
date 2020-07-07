@@ -208,6 +208,12 @@ Vagrant.configure("2") do |config|
         name: "Vagrant_override",
         #run: "once",
         inline: <<-SHELL
+          if [[ -d '/opt/seagate/cortx-prvsnr' ]]; then
+            BASEDIR=/opt/seagate/cortx-prvsnr
+          else
+            BASEDIR=/opt/seagate/eos-prvsnr
+          fi
+
           #Disable iptables-services
           systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
           systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
@@ -223,7 +229,7 @@ Vagrant.configure("2") do |config|
           firewall-cmd --reload
 
           # Setup data0 network
-          sudo cp /opt/seagate/eos-prvsnr/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
+          sudo cp $BASEDIR/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
           echo IPADDR=#{node["data0"]}
           sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
 

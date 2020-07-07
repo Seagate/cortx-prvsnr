@@ -16,8 +16,8 @@ verbosity=2
 install_provisioner "$prvsnr_src" "$prvsnr_release" '' '' '' true
 
 # FIXME workaround
-mkdir -p /opt/seagate/eos-prvsnr/cli
-cp -R * /opt/seagate/eos-prvsnr/cli
+mkdir -p /opt/seagate/cortx/provisioner/cli
+cp -R * /opt/seagate/cortx/provisioner/cli
 
 configure_salt srvnode-1 '' '' '' true localhost
 

@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.cortx-ha'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.cortx-ha'.format(grains['id'])) %}
 include:
   - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
@@ -7,7 +7,7 @@ include:
 
 Generate ees_ha checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.cortx-ha
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-ha
     - makedirs: True
     - create: True
 {%- else -%}

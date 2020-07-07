@@ -1,29 +1,29 @@
 sspl:
-  health_map_path: /opt/seagate/eos-prvsnr/generated_configs/healthmap/
+  health_map_path: /opt/seagate/cortx/provisioner/generated_configs/healthmap/
   health_map_file: ees-schema.json
   rmq:
     user: rmq
     secret: "B4kf1T6Qso"
-  role: eos
+  role: cortx
   Version: 1.0.0
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
     message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor"
+    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor, CPUFaultSensor"
     actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
-    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor"
+    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor, CPUFaultSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
     cli_type: "CS-A"
-    setup: "eos"
-    data_path: "/var/eos/sspl/data/"
+    setup: "cortx"
+    data_path: "/var/cortx/sspl/data/"
     cluster_id: "001"
     site_id: "001"
     rack_id: "001"
     node_id: "001"
     log_level: "INFO"
-    sspl_log_file_path: "/var/log/eos/sspl/sspl.log"
+    sspl_log_file_path: "/var/log/cortx/sspl/sspl.log"
     syslog_host: "localhost"
     syslog_port: "514"
   SASPORTSENSOR:
@@ -33,6 +33,9 @@ sspl:
   MEMFAULTSENSOR:
     threaded: "true"
     probe: procfs
+  CPUFAULTSENSOR:
+    threaded: "true"
+    probe: sysfs
   LOGGINGPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "iem-queue"
@@ -108,8 +111,8 @@ sspl:
     threaded: "true"
   IEMSENSOR:
     threaded: "true"
-    log_file_path: "/var/log/eos/iem/iem_messages"
-    timestamp_file_path: "/var/eos/sspl/data/iem/last_processed_msg_time"
+    log_file_path: "/var/log/cortx/iem/iem_messages"
+    timestamp_file_path: "/var/cortx/sspl/data/iem/last_processed_msg_time"
   SYSTEMDWATCHDOG:
     threaded: "true"
     smart_test_interval: "999999999"

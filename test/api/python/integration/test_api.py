@@ -187,9 +187,8 @@ def test_set_network(
     run_test(mhosteosnode1)
 
 
-# TODO DOC example how to parametrize cluster/singlenode:
-# - dynamic markers
-# - dynamic fixtures
+# TODO DOC example how to parametrize cluster/singlenode
+# TODO DOC dynamic markers, dynamic fixtures
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.parametrize(

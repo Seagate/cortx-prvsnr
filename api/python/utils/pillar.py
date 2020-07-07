@@ -11,16 +11,17 @@ class _Pillar(object):
         '/',
         'opt',
         'seagate',
-        'eos-prvsnr',
+        'cortx',
+        'provisioner',
         "pillar"
     )
 
     def __init__(self, pillar: str=None):
         if not os.path.exists(self.__pillar_path):
-            if os.path.exists(os.path.join('/','opt', 'seagate', 'eos-prvsnr', "pillar")):
-                self.__pillar_path = os.path.join('/','opt', 'seagate', 'eos-prvsnr', "pillar")
+            if os.path.exists(os.path.join('/','opt', 'seagate', 'cortx', 'provisioner', "pillar")):
+                self.__pillar_path = os.path.join('/','opt', 'seagate', 'cortx', 'provisioner', "pillar")
             else:
-                raise Exception("ERROR: eos-prvsnr installation is missing in: /opt/seagate/eos-prvsnr")
+                raise Exception("ERROR: provisioner installation is missing in: /opt/seagate/cortx/")
         #Path to pillar file
         self.__pillar_path = os.path.join(self.__pillar_path, 'components', 'system.sls')
 

@@ -21,7 +21,7 @@ else:
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
-PRVSNR_ROOT_DIR = Path('/opt/seagate/eos-prvsnr')
+PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 
 # reflects master file_roots configuration
 PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
@@ -61,7 +61,7 @@ PRVSNR_EOS_COMPONENTS = [
     'controller',
     'corosync-pacemaker',
     'elasticsearch',
-    'eoscore',
+    'motr',
     'haproxy',
     'keepalived',
     'openldap',
@@ -97,6 +97,9 @@ LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
 LOG_FILE_HANDLER = 'logfile'
 LOG_CMD_FILTER = 'cmd_filter'
+
+LOG_HUMAN_FORMATTER = 'human'
+LOG_FULL_FORMATTER = 'full'
 #   logfile habdler for the following commands
 #   will be enabled forcibly
 LOG_FORCED_LOGFILE_CMDS = [

@@ -19,12 +19,34 @@ It is based on [pytest](http://doc.pytest.org/en/latest/contents.html) and [test
 
 ## Run tests
 
-- `pytest -l -v test`
+- `pytest -l -v`
+
+
+### Run unit tests only
+
+There is a subset of tests that verifies some scoped logic in a way
+of [unit testing](https://en.wikipedia.org/wiki/Unit_testing).
+
+These tests are:
+- safe to run on a local host since they don't require any virtual environment
+- fast, usually will end in a minute or less
+
+To filter that tests `unit` marker is available:
+
+- `pytest -m unit --collect-only` will show all unit tests available
+- `pytest -m unit` will run the tests
+
+To mark a test as a unit you may:
+
+- use the `unit` marker
+- use the `unit` fixture (a good way to mark a bunch of tests)
+
 
 ### Useful Options
 
 - `pytest ... test/<path-to-some-test-module>` to run tests only for some test module
 - `-k pattern` to filter test by name, parameters etc.
+- `-m expr` to filter tests by marker
 - `-n auto` to run multiple tests processes in parallel using available CPU cores (check [pytest-xdist](https://docs.pytest.org/en/3.0.1/xdist.html))
 - `--log-cli-level <LOG-LEVEL>` to pass logs to stdout/stderr
 

@@ -12,8 +12,8 @@ Install requisites:
 #     - sources:
 #       - stx-s3-client-certs: /opt/seagate/stx-s3-client-certs-1.0-1_s3dev.x86_64.rpm
 
-Install eos-s3iamcli:
+Install cortx-s3iamcli:
   pkg.installed:
     - pkgs:
-      - eos-s3iamcli: latest
-#       # - eos-s3iamcli-devel
+      - cortx-s3iamcli: latest
+#       # - cortx-s3iamcli-devel

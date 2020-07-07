@@ -1,4 +1,4 @@
-{% if not salt['file.file_exists']('/opt/seagate/eos-prvsnr/generated_configs/{0}.csm'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.csm'.format(grains['id'])) %}
 include:
   - components.csm.prepare
   - components.csm.install
@@ -8,7 +8,7 @@ include:
 
 Generate csm checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.csm
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.csm
     - makedirs: True
     - create: True
 {%- else -%}

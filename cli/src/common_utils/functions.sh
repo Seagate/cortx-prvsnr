@@ -932,7 +932,7 @@ function install_sg3_utils {
     rescan-scsi-bus.sh
 
 EOF
-    # TODO install salt-ssh salt-syndic as well as eos-prvsnr rpm supposes
+    # TODO install salt-ssh salt-syndic as well as cortx-prvsnr rpm supposes
 
     if [[ -n "$_hostspec" ]]; then
         _script="'$_script'"
@@ -1027,7 +1027,7 @@ function install_salt {
     # install salt master/minion
     yum install -y salt-minion salt-master
 EOF
-    # TODO install salt-ssh salt-syndic as well as eos-prvsnr rpm supposes
+    # TODO install salt-ssh salt-syndic as well as cortx-prvsnr rpm supposes
 
     if [[ -n "$_hostspec" ]]; then
         _script="'$_script'"
@@ -1051,12 +1051,12 @@ EOF
 #           `gitlab` - installs from GitLab using the specified
 #               version `prvsnr-version`. If the version is not set
 #               uses the latest tagged one.
-#           `gitrepo` - establishes local git repo at `/opt/seagate/eos-prvsnr`
+#           `gitrepo` - establishes local git repo at `/opt/seagate/cortx-prvsnr`
 #               pointing to remote repo on GitLab. This should help use switch between
 #               branches for validation of branched changes.
 #           `local` - copies local working copy of the repository, assumes
 #               that script is a part of it.
-#       prvsnr-version: The version of the EOS provisioner to install. Makes sense only
+#       prvsnr-version: The version of the CORTX provisioner to install. Makes sense only
 #           for `gitlab` source for now. Default: not set.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
@@ -1067,7 +1067,7 @@ EOF
 #       singlenode: a flag for a singlenode setup mode. Expected values: `true` or `false`.
 #           Default: `false`
 #       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
+#           Default: /opt/seagate/cortx/provisioner
 #
 function install_provisioner {
     set -eu
@@ -1084,7 +1084,7 @@ function install_provisioner {
     local _ssh_config="${4:-}"
     local _sudo="${5:-false}"
     local _singlenode="${6:-false}"
-    local _installdir="${7:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${7:-/opt/seagate/cortx/provisioner}"
     local _dev_repo="${8:-false}"
     local _os_release="centos-7.7.1908"
 
@@ -1143,12 +1143,12 @@ function install_provisioner {
                 _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
                 
                 yum install -y createrepo wget
-                mkdir -p /opt/seagate/eos/updates/provisioner/dev
-                pushd /opt/seagate/eos/updates/provisioner/dev
+                mkdir -p /opt/seagate/cortx/updates/provisioner/dev
+                pushd /opt/seagate/cortx/updates/provisioner/dev
                     wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
                     createrepo .
                 popd
-                _prvsnr_version="file:///opt/seagate/eos/updates/provisioner/dev"
+                _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
 
             else
                 _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
@@ -1217,7 +1217,7 @@ fi
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
-        yum install -y eos-prvsnr
+        yum install -y cortx-prvsnr
     else
         # local
         tar -zxf "$_repo_archive_path" -C "$_installdir"
@@ -1238,7 +1238,7 @@ EOF
 #
 #   configure_network [<hostspec> [<ssh-config> [<sudo> [<installation-dir>]]]]
 #
-#   Configures network on the EOS stack node either on local or remote host.
+#   Configures network on the CORTX stack node either on local or remote host.
 #
 #   Prerequisites:
 #       - The provisioner repo is installed.
@@ -1251,7 +1251,7 @@ EOF
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
 #       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
+#           Default: /opt/seagate/cortx/provisioner
 #
 function configure_network {
     set -eu
@@ -1265,7 +1265,7 @@ function configure_network {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
-    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${5:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -1315,12 +1315,12 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       is-master: A flag to switch between primary / secondary EOS stack nodes.
+#       is-master: A flag to switch between primary / secondary CORTX stack nodes.
 #           Default: `true`.
 #       master-host: A resolvable (from within the minion's host) domain name or IP of the salt master.
 #           Default: not set.
 #       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
+#           Default: /opt/seagate/cortx/provisioner
 #
 function configure_salt {
     set -eu
@@ -1337,7 +1337,7 @@ function configure_salt {
     local _sudo="${4:-false}"
     local _master="${5:-true}"
     local _master_host="${6:-srvnode-1}"
-    local _installdir="${7:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${7:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -1401,7 +1401,7 @@ EOF
 #   Prerequisites:
 #       - SaltStack is installed.
 #       - The provisioner repo is installed.
-#       - EOS stack salt master/minions are configured.
+#       - CORTX stack salt master/minions are configured.
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
@@ -1489,7 +1489,7 @@ EOF
 }
 
 
-#   eos_pillar_show_skeleton <component> [<hostspec> [<ssh-config> [<sudo>]]]
+#   cortx_pillar_show_skeleton <component> [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Calls provisioner api cli either locally or remotely to dump a skeleton
 #   of the configuration yaml for the specified `component`.
@@ -1508,7 +1508,7 @@ EOF
 #       timeout: a time to wait until a minion becomes connected to master.
 #           Default: `false`.
 #
-function eos_pillar_show_skeleton {
+function cortx_pillar_show_skeleton {
     set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
@@ -1523,11 +1523,11 @@ function eos_pillar_show_skeleton {
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd provisioner configure_eos ${_component} --show
+    $_cmd provisioner configure_cortx ${_component} --show
 }
 
 
-#   eos_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
+#   cortx_pillar_update <component> <file-path> [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Calls provisioner api cli either locally or remotely to update
 #   the configuration yaml for the specified `component` using `file-path`
@@ -1546,7 +1546,7 @@ function eos_pillar_show_skeleton {
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
 #
-function eos_pillar_update {
+function cortx_pillar_update {
     set -eu
 
     if [[ "$verbosity" -ge 2 ]]; then
@@ -1579,7 +1579,7 @@ function eos_pillar_update {
     fi
 
     # TODO is it ok that we stick to python3.6 here ?
-    $_cmd provisioner configure_eos ${_component} --source $_file_path
+    $_cmd provisioner configure_cortx ${_component} --source $_file_path
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then
@@ -1593,7 +1593,7 @@ function eos_pillar_update {
 }
 
 
-#   eos_pillar_load_default <component> [<hostspec> [<ssh-config> [<sudo>]]]
+#   cortx_pillar_load_default <component> [<hostspec> [<ssh-config> [<sudo>]]]
 #
 #   Calls provisioner api cli either locally or remotely to reset
 #   to a default state the configuration yaml for the specified `component`.
@@ -1612,7 +1612,7 @@ function eos_pillar_update {
 #       timeout: a time to wait until a minion becomes connected to master.
 #           Default: `false`.
 #
-function eos_pillar_load_default {
+function cortx_pillar_load_default {
     set -eu
 
     local _component="$1"
@@ -1622,7 +1622,7 @@ function eos_pillar_load_default {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo")"
 
-    $_cmd provisioner configure_eos ${_component} --reset
+    $_cmd provisioner configure_cortx ${_component} --reset
 
     local _target_minions='*'
     if [[ -n "$_hostspec" ]]; then
@@ -1644,7 +1644,7 @@ function eos_pillar_load_default {
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       target_release: tartget release version for all the EOS components
+#       target_release: tartget release version for all the CORTX components
 function update_release_pillar {
     set -eu
 
@@ -1679,7 +1679,7 @@ function update_cluster_pillar_hostname {
 
 #  disable_default_sshconfig
 #
-#  Take backup of default ssh config file shipped with eos-prvsnr-cli rpm
+#  Take backup of default ssh config file shipped with cortx-prvsnr-cli rpm
 function disable_default_sshconfig {
 
     if [[ -f "$default_ssh_conf" ]]; then
@@ -1689,7 +1689,7 @@ function disable_default_sshconfig {
 
 #  enable_default_sshconfig
 #
-#  Restor the default ssh config file shipped with eos-prvsnr-cli rpm
+#  Restor the default ssh config file shipped with cortx-prvsnr-cli rpm
 function enable_default_sshconfig {
 
     if [[ -f "${default_ssh_conf}.bak" ]]; then
@@ -1788,7 +1788,7 @@ function setup_ssh {
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
 #       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
+#           Default: /opt/seagate/cortx/provisioner
 #
 function set_node_id {
     set -eu
@@ -1802,7 +1802,7 @@ function set_node_id {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
-    local _installdir="${4:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${4:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -1816,13 +1816,13 @@ function set_node_id {
     fi
 
     pushd "$_installdir"
-        if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/node_id" ]]; then
-            mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
-            echo "node_id: \$(uuidgen)" > /opt/seagate/eos-prvsnr/generated_configs/node_id
+        if [[ ! -e "/opt/seagate/cortx/provisioner/generated_configs/node_id" ]]; then
+            mkdir -p /opt/seagate/cortx/provisioner/generated_configs/
+            echo "node_id: \$(uuidgen)" > /opt/seagate/cortx/provisioner/generated_configs/node_id
         fi
 
         if [[ -z "\$(grep "node_id" /etc/salt/grains 2>/dev/null)" ]]; then
-            cat /opt/seagate/eos-prvsnr/generated_configs/node_id >> /etc/salt/grains
+            cat /opt/seagate/cortx/provisioner/generated_configs/node_id >> /etc/salt/grains
         fi
 
         systemctl enable salt-minion
@@ -1855,7 +1855,7 @@ EOF
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
 #       installation-dir: destination installation directory.
-#           Default: /opt/seagate/eos-prvsnr
+#           Default: /opt/seagate/cortx/provisioner
 #
 function set_cluster_id {
     set -eu
@@ -1870,7 +1870,7 @@ function set_cluster_id {
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
-    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${5:-/opt/seagate/cortx/provisioner}"
 
     if [[ -z "$_cluster_uuid" ]]; then
         l_error "Set cluster ID cannot be set as blank on $_hostspec"
@@ -1889,13 +1889,13 @@ function set_cluster_id {
     fi
 
     pushd "$_installdir"
-        if [[ ! -e "/opt/seagate/eos-prvsnr/generated_configs/cluster_id" ]]; then
-            mkdir -p /opt/seagate/eos-prvsnr/generated_configs/
+        if [[ ! -e "/opt/seagate/cortx/provisioner/generated_configs/cluster_id" ]]; then
+            mkdir -p /opt/seagate/cortx/provisioner/generated_configs/
         fi
-        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/eos-prvsnr/generated_configs/cluster_id
+        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/cortx/provisioner/generated_configs/cluster_id
 
         if [[ -z "\$(grep "cluster_id" /etc/salt/grains 2>/dev/null)" ]]; then
-            cat /opt/seagate/eos-prvsnr/generated_configs/cluster_id >> /etc/salt/grains
+            cat /opt/seagate/cortx/provisioner/generated_configs/cluster_id >> /etc/salt/grains
         else
             sed -i "s/cluster_id:.*/cluster_id: ${_cluster_uuid}/g" /etc/salt/grains
         fi
@@ -1941,7 +1941,7 @@ function configure_provisioner_api_logs {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
-    local _installdir="${4:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${4:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -1992,7 +1992,7 @@ function update_bmc_ip {
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
-    local _installdir="${5:-/opt/seagate/eos-prvsnr}"
+    local _installdir="${5:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
