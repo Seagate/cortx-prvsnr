@@ -13,6 +13,7 @@ BuildRequires: python36-devel
 Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
+Requires: rsync
 Requires: salt-master = 2019.2.0
 Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
