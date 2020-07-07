@@ -22,6 +22,7 @@ function trap_handler {
 run_all=true
 run_system_states=false
 run_prereq_states=false
+run_sync_states=false
 run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
@@ -115,7 +116,6 @@ function options_parser {
             ;;
         --prereq-states)
             run_prereq_states=true
-            run_sync_states=true
             run_all=false
             ;;
         --sync-states)
@@ -166,8 +166,7 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "sync.software.openldap"
-                || "$state" == "misc_pkgs.rabbitmq"
+            elif [[ "$state" == "misc_pkgs.rabbitmq"
                 || "$state" == "system.storage.multipath"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
