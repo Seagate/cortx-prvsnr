@@ -1151,7 +1151,7 @@ function install_provisioner {
                 _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
 
             else
-                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
+                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/rhel-7.7.1908/last_successful/"
             fi
         fi
     fi
