@@ -2,16 +2,23 @@
 # $ salt-call saltutil.clear_cache
 # $ salt-call saltutil.sync_modules && salt-call cluster.nw_roaming_ip
 
+# Standard packages
 import errno
 import os
 import subprocess
 import sys
-sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
-import yaml
 import time
-import provisioner
+import yaml
 
 from shutil import copyfile
+
+# Update PYTHONPATH to include Provisioner API installed at:
+# /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
+sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
+
+# Cortx packages
+import provisioner
+
 
 def storage_device_config():
 
