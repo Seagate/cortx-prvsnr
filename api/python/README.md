@@ -50,7 +50,7 @@ SSH based installation is also possible, e.g.
 
 ### From yum repository
 
-The API is now bundled as part of provisioner rpm package `eos-prvsnr`.
+The API is now bundled as part of provisioner rpm package `cortx-prvsnr`.
 
 During the installation the api package is placed in `/opt/seagate/cortx/provisioner/api/python` directory.
 

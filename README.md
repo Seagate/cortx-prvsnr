@@ -8,7 +8,7 @@ The objective shall be to
 *  To act as single source of truth, reducing confusion of resource references (which is why the reliance would be on Readme.md and GitLab Wiki docs)
 
 # Repo Structure
-An overview of folder structure in eos-prvsnr repo
+An overview of folder structure in cortx-prvsnr repo
 ## files
 Generic files used by Vagrantfile for Vagrant provisioning.
 

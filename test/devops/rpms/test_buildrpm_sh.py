@@ -183,7 +183,7 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_removal(mhost, mlocalhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
-    mhost.check_output('yum remove -y eos-prvsnr')
+    mhost.check_output('yum remove -y cortx-prvsnr')
     # TODO check salt config files restoration
     #   check that api is removed from python env
     pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
