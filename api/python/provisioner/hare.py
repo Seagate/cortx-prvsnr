@@ -103,5 +103,5 @@ def ensure_cluster_is_started(tries=30, wait=10):
 # TODO IMPROVE EOS-8940 currently we rely on utility_scripts.sh as it
 #      has its own looping logic, so only one try here
 def ensure_cluster_is_healthy(tries=1, wait=10):
-    logger.info(f"Ensuring cluster is online and healthy")
+    logger.info("Ensuring cluster is online and healthy")
     ensure(check_cluster_is_online, tries=tries, wait=wait)

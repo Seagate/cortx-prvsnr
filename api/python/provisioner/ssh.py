@@ -15,7 +15,7 @@ def keygen(
 ):
     run_subprocess_cmd(
         (
-            f"ssh-keygen -t rsa -b 4096 -o -a 100".split() +
+            "ssh-keygen -t rsa -b 4096 -o -a 100".split() +
             ['-C', comment, '-N', passphrase, '-f', str(priv_key_path)]
         ),
         input='y'

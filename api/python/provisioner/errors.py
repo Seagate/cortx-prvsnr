@@ -243,6 +243,7 @@ class SSLCertsUpdateError(ProvisionerError):
         return (
             'SSL Cert update failed: {!r}'.format(self)
         )
+
     def __repr__(self):
         return (
             "{}(reason={!r}, rollback_error={!r})"

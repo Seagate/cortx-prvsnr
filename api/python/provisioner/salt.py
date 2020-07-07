@@ -58,6 +58,7 @@ class StateFun:
     def __str__(self):
         return self.name
 
+
 # TODO check default values
 @attr.s(auto_attribs=True)
 class SaltJob:

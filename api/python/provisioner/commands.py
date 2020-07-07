@@ -18,7 +18,8 @@ from .errors import (
     ClusterMaintenanceDisableError,
     HAPostUpdateError,
     ClusterNotHealthyError,
-    SaltCmdResultError
+    SaltCmdResultError,
+    SSLCertsUpdateError
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
@@ -1020,42 +1021,46 @@ class SetSSLCerts(CommandParserFillerMixin):
             return
 
         try:
-            #move cluster to maintenance mode
+            # move cluster to maintenance mode
             try:
                 cluster_maintenance_enable()
                 logger.info('Cluster maintenance mode enabled')
             except Exception as exc:
                 raise ClusterMaintenanceEnableError(exc) from exc
-       
-            copy_to_file_roots(source, dest) 
-            
+
+            copy_to_file_roots(source, dest)
+
             try:
-                #backup old ssl certs to provisioner user files
-                backup_file_name = copy_to_file_roots(SSL_CERTS_FILE,
-                    dest.parent / '{}_{}'.format(time_stamp, dest.name))
+                # backup old ssl certs to provisioner user files
+                backup_file_name = copy_to_file_roots(
+                    SSL_CERTS_FILE,
+                    dest.parent /
+                    '{}_{}'.format(
+                        time_stamp,
+                        dest.name))
                 StatesApplier.apply([state_name])
                 logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
                     "Failed to apply certs")
                 raise SSLCertsUpdateError(exc) from exc
-            
-            #disable cluster maintenance mode
+
+            # disable cluster maintenance mode
             try:
                 cluster_maintenance_disable()
                 logger.info('Cluster recovered from maintenance mode')
             except Exception as exc:
                 raise ClusterMaintenanceDisableError(exc) from exc
-            
+
         except Exception as ssl_exc:
             logger.exception('SSL Certs Updation Failed')
             rollback_exc = None
             if isinstance(ssl_exc, ClusterMaintenanceEnableError):
                 cluster_maintenance_disable(background=True)
 
-            elif isinstance(ssl_exc,
-                (SSLCertsUpdateError, ClusterMaintenanceDisableError)):
-                
+            elif isinstance(ssl_exc, (
+                    SSLCertsUpdateError, ClusterMaintenanceDisableError)):
+
                 try:
                     logger.info('Restoring old SSL cert ')
                     # restores old cert
@@ -1072,10 +1077,10 @@ class SetSSLCerts(CommandParserFillerMixin):
                         logger.exception(
                             "Failed to recover Cluster after rollback")
                         rollback_exc = exc
-            else: 
+            else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise SSLCertsUpdateError(ssl_exc, rollback_exc = rollback_exc)
+            raise SSLCertsUpdateError(ssl_exc, rollback_exc=rollback_exc)
 
 
 # TODO TEST
@@ -1754,7 +1759,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             logger.info("Preparing local repo for a setup")
             # TODO IMPROVE EOS-8473 validator
             if not run_args.local_repo:
-                raise ValueError(f"local repo is undefined")
+                raise ValueError("local repo is undefined")
             # TODO IMPROVE EOS-8473 hard coded
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
@@ -1847,7 +1852,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             )
 
         logger.info("Updating BMC IPs")
-        ssh_client.cmd_run(f"salt-call state.apply components.misc_pkgs.ipmi")
+        ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
 
         logger.info("Updating target build pillar")
         ssh_client.cmd_run(
