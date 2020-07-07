@@ -18,8 +18,8 @@ Remove existing file:
 Configure OpenLDAP - Schema:
   cmd.run:
     - name: ldapadd -x -D "cn=admin,cn=config" -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/cn\=\{1\}s3user.ldif -H ldapi:///
-    - unless:
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn={1}s3user,cn=schema,cn=config"
+    # - unless:
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn={1}s3user,cn=schema,cn=config"
     - require:
       - Remove existing file
     - watch_in:
@@ -28,12 +28,12 @@ Configure OpenLDAP - Schema:
 Configure OpenLDAP - Base data:
   cmd.run:
     - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap-init.ldif -H ldapi:///
-    - unless:
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=seagate,dc=com"
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=s3,dc=seagate,dc=com"
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accounts,dc=s3,dc=seagate,dc=com"
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accesskeys,dc=s3,dc=seagate,dc=com"
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=idp,dc=s3,dc=seagate,dc=com"
+    # - unless:
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accounts,dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accesskeys,dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=idp,dc=s3,dc=seagate,dc=com"
     - require:
       - Configure OpenLDAP - Schema
     - watch_in:
@@ -42,8 +42,8 @@ Configure OpenLDAP - Base data:
 Configure OpenLDAP - Add IAM admin:
   cmd.run:
     - name: ldapadd -x -D 'cn=admin,dc=seagate,dc=com' -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif -H ldapi:///
-    - unless:
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=sgiamadmin,dc=seagate,dc=com"
+    # - unless:
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=sgiamadmin,dc=seagate,dc=com"
     - require:
       - Configure OpenLDAP - Base data
     - watch_in:
@@ -60,9 +60,9 @@ Configure OpenLDAP - Setup permissions for IAM admin:
 Configure OpenLDAP - Enable IAM constraints:
   cmd.run:
     - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/iam-constraints.ldif
-    - unless:
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=module{0},cn=config"
-      - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcOverlay=unique,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config"
+    # - unless:
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=module{0},cn=config"
+    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcOverlay=unique,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config"
     - require:
       - Configure OpenLDAP - Setup permissions for IAM admin
     - watch_in:

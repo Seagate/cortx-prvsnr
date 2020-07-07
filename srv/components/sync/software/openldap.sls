@@ -1,2 +1,2 @@
 include:
-  - components.misc_pkgs.openldap.config.replication
+  - components.misc_pkgs.openldap.replication

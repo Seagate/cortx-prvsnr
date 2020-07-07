@@ -1,3 +1,6 @@
+include:
+  - components.misc_pkgs.openldap.replication.teardown
+
 {% import_yaml 'components/defaults.yaml' as defaults %}
 {% set rpm_build_dir = defaults.tmp_dir + "/rpmbuild/RPMS/x86_64" %}
 

@@ -118,7 +118,7 @@ function options_parser {
             run_sync_states=true
             run_all=false
             ;;
-        --sync_states)
+        --sync-states)
             run_sync_states=true
             run_all=false
             ;;
@@ -208,7 +208,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S' 'singlenode,prereq-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -231,6 +231,7 @@ if [[ "$run_all" == true ]]; then
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
+    run_states  "${sync_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${controlpath_states[@]}"

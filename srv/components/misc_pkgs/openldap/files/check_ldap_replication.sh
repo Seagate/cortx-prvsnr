@@ -61,8 +61,7 @@ node1=$(head -n 1 $host_list)
 ldapadd -w $ldappasswd -x -D "cn=sgiamadmin,dc=seagate,dc=com" -f ${BASEDIR}/create_replication_account.ldif -H ldap://$node1 || exit 0
 
 #adding some delay for successful replication
-
-sleep 2s
+sleep 5s
 
 # check replication on node 2
 while read node; do
@@ -85,4 +84,4 @@ else
 fi
 
 #delete account created
-#ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
+ldapdelete -x -w $ldappasswd -r "o=sanity-test-repl-account,ou=accounts,dc=s3,dc=seagate,dc=com" -D "cn=sgiamadmin,dc=seagate,dc=com" -H ldap://$node1 || exit 1
