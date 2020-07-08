@@ -27,7 +27,7 @@ network:
   secondary_data_ip: cluster/srvnode-2/network/data_nw/ipaddr
   secondary_data_netmask: cluster/srvnode-2/network/data_nw/netmask
   secondary_data_gateway: cluster/srvnode-2/network/data_nw/gateway
-eosupdate:
+swupdate:
   _path: release.sls
   repos: eos_release/update/repos
   repo:

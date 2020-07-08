@@ -22,10 +22,10 @@ from .errors import (
     SSLCertsUpdateError
 )
 from .config import (
-    ALL_MINIONS, PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR,
+    ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
-    PRVSNR_EOS_COMPONENTS,
+    PRVSNR_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
@@ -149,12 +149,12 @@ class RunArgsSSLCerts:
 
 
 @attr.s(auto_attribs=True)
-class RunArgsConfigureEOS:
+class RunArgsConfigure:
     component: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "EOS component to configure",
-                'choices': PRVSNR_EOS_COMPONENTS
+                'help': "Component to configure",
+                'choices': PRVSNR_COMPONENTS
             }
         }
     )
@@ -700,16 +700,16 @@ class Set(CommandParserFillerMixin):
 #   - call repo reset logic for master:
 #       - remove local dir/file from salt user file root (if needed)
 @attr.s(auto_attribs=True)
-class SetEOSUpdateRepo(Set):
+class SetSWUpdateRepo(Set):
     # TODO at least either pre or post should be defined
-    input_type: Type[inputs.EOSUpdateRepo] = inputs.EOSUpdateRepo
+    input_type: Type[inputs.SWUpdateRepo] = inputs.SWUpdateRepo
 
     # TODO rollback
-    def _run(self, params: inputs.EOSUpdateRepo, targets: str):
+    def _run(self, params: inputs.SWUpdateRepo, targets: str):
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
         if params.is_local():
-            dest = PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / params.release
+            dest = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / params.release
 
             if not params.is_dir():  # iso file
                 dest = dest.with_name(dest.name + '.iso')
@@ -724,7 +724,7 @@ class SetEOSUpdateRepo(Set):
 def _ensure_update_repos_configuration(targets=ALL_MINIONS):
     logger.info("Ensure update repos are configured")
     StatesApplier.apply(
-        ['components.misc_pkgs.eosupdate.repo'], targets
+        ['components.misc_pkgs.swupdate.repo'], targets
     )
 
 
@@ -764,7 +764,7 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
-class EOSUpdate(CommandParserFillerMixin):
+class sw_update(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, targets):
@@ -1194,9 +1194,9 @@ class ShutdownController(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class ConfigureEOS(CommandParserFillerMixin):
+class Configure(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsConfigureEOS
+    _run_args_type = RunArgsConfigure
 
     def run(
         self, component, source=None, show=False, reset=False

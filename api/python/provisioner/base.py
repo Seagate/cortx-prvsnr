@@ -18,7 +18,7 @@ class _Config(_Singletone):
         self._path = None
 
         # TODO IMPROVE installation path should be likely in
-        #      /etc/... or /opt/seagate/eos/...
+        #      /etc/... or /opt/seagate/cortx/...
         for path in [
             config.PRVSNR_ROOT_DIR / config.PRVSNR_CONFIG_FILE,
             Path(__file__).parent / config.PRVSNR_CONFIG_FILE

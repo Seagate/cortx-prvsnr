@@ -9,11 +9,11 @@
 copy_repo_iso_{{ release }}:
   file.managed:
     - name: {{ iso_path }}
-    - source: salt://misc_pkgs/eosupdate/repo/files/{{ release }}.iso
+    - source: salt://misc_pkgs/swupdate/repo/files/{{ release }}.iso
     - makedirs: True
     - require_in:
-      - eos_update_repo_iso_mounted_{{ release }}
-      - eos_update_repo_added_{{ release }}
+      - sw_update_repo_iso_mounted_{{ release }}
+      - sw_update_repo_added_{{ release }}
 
 
 {{ repo_mounted(release, iso_path, source) }}
@@ -24,18 +24,18 @@ copy_repo_iso_{{ release }}:
 copy_repo_dir_{{ release }}:
   file.recurse:
     - name: {{ source }}
-    - source: salt://misc_pkgs/eosupdate/repo/files/{{ release }}
+    - source: salt://misc_pkgs/swupdate/repo/files/{{ release }}
     - require_in:
-      - eos_update_repo_added_{{ release }}
+      - sw_update_repo_added_{{ release }}
 
 
     {% endif %}
 
 
-eos_update_repo_added_{{ release }}:
+sw_update_repo_added_{{ release }}:
   pkgrepo.managed:
-    - name: eos_update_{{ release }}
-    - humanname: EOS Update repo {{ release }}
+    - name: sw_update_{{ release }}
+    - humanname: Cortx Update repo {{ release }}
     {% if source_type == 'url' %}
     - baseurl: {{ source }}
     {% else %}
@@ -44,14 +44,14 @@ eos_update_repo_added_{{ release }}:
     - gpgcheck: 0
     {% if source_type == 'iso' %}
     - require:
-      - eos_update_repo_iso_mounted_{{ release }}
+      - sw_update_repo_iso_mounted_{{ release }}
     {% endif %}
 
 
-eos_update_repo_metadata_cleaned_{{ release }}:
+sw_update_repo_metadata_cleaned_{{ release }}:
   cmd.run:
-    - name: yum --disablerepo="*" --enablerepo="eos_update_{{ release }}" clean metadata
+    - name: yum --disablerepo="*" --enablerepo="sw_update_{{ release }}" clean metadata
     - require:
-      - eos_update_repo_added_{{ release }}
+      - sw_update_repo_added_{{ release }}
 
 {% endmacro %}

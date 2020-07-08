@@ -38,7 +38,7 @@ unexpected_repo_source:
 
 {% if not pillar['eos_release']['update']['repos'] %}
 
-eos_update_no_repos:
+sw_update_no_repos:
   test.nop: []
 
 {% endif %}
