@@ -254,8 +254,11 @@ install_prvsnr_cli()
     if [[ "$target_node" = "srvnode-1" ]]; then
         rpm -qa | grep -q cortx && {
             echo "ERROR: cortx packages are already installed"
-            echo "Please clean-up previous installtion from both the nodes and retry"
-            exit 1
+            echo "Cleaning up the packages"
+            yum erase -y cortx*
+            yum clean all
+            # echo "Please clean-up previous installtion from both the nodes and retry"
+            # exit 1
         }
 
         yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
@@ -268,9 +271,12 @@ install_prvsnr_cli()
 $remote_cmd <<EOF
     set -eu
     rpm -qa | grep -q cortx && {
-    echo "ERROR: cortx packages are already installed"
-    echo "Please clean-up previous installtion from both the nodes and retry"
-    exit 1
+        echo "ERROR: cortx packages are already installed"
+        echo "Cleaning up the packages"
+        yum erase -y cortx*
+        yum clean all
+        # echo "Please clean-up previous installtion from both the nodes and retry"
+        # exit 1
     }
 
     yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
