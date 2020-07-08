@@ -17,14 +17,14 @@ cluster:
     network:
       mgmt_nw:                        # Management network interfaces
         iface:
-          - eno1
+          - eth0
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
+          - eth2                # Public Data
+          - eth1                # Private Data (direct connect)
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
