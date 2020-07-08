@@ -1086,8 +1086,9 @@ function install_provisioner {
     local _singlenode="${6:-false}"
     local _installdir="${7:-/opt/seagate/cortx/provisioner}"
     local _dev_repo="${8:-false}"
-    local _os_release="centos-7.7.1908"
-
+    local _os_release="rhel-7.7.1908"
+    #local _os_release="centos-7.7.1908"
+    
     local _prvsnr_repo=
     local _repo_archive_path=
     local _tmp_dir=$(mktemp -d)
@@ -1151,7 +1152,7 @@ function install_provisioner {
                 _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
 
             else
-                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/integration/$_os_release/last_successful"
+                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
             fi
         fi
     fi
