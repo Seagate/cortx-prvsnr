@@ -1,23 +1,15 @@
-{% if pillar["cluster"][grains["id"]]["is_primary"] -%}
-Start rabbitmq app:
+include:
+  - components.misc_pkgs.rabbitmq.start
+
+Start rabbitmq app and join cluster if available:
   cmd.run:
     - name: |
+        rabbitmqctl start_app
         rabbitmqctl stop_app
+        {% for node in (salt['saltutil.runner']("manage.up") | difference(grains['id'])) %}
+        rabbitmqctl join_cluster rabbit@{{ node }} || true
+        {% endfor %}
         rabbitmqctl start_app
         rabbitmqctl set_cluster_name rabbitmq-cluster
     - require:
-      - Copy Erlang cookie
-      - Install RabbitMQ
       - Start RabbitMQ service
-{%- else %}
-Join rabbitmq minion to master:
-  cmd.run:
-    - name: |
-        rabbitmqctl stop_app
-        rabbitmqctl join_cluster rabbit@srvnode-1
-        rabbitmqctl start_app
-    - require:
-      - Copy Erlang cookie
-      - Install RabbitMQ
-      - Start RabbitMQ service
-{%- endif %}
