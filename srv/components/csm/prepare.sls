@@ -17,6 +17,7 @@ Add CSM repo:
     - gpgcheck: 1
     - gpgkey: {{ defaults.csm.repo.gpgkey }}
 
+{% if 'single' not in pillar['cluster']['type'] %}
 Render CSM ha input params template:
   file.managed:
     - name: /var/lib/hare/build-ees-ha-csm-args.yaml
@@ -24,3 +25,4 @@ Render CSM ha input params template:
     - template: jinja
     - mode: 444
     - makedirs: True
+{% endif %}
