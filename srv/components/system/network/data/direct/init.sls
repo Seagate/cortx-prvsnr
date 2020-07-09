@@ -20,11 +20,11 @@ Public direct network:
     - userctl: no
     - onboot: yes
     - userctl: no
-    - mtu: 9000
     - defroute: no
 {% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}
+    - mtu: 9000
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
@@ -46,13 +46,13 @@ Private direct network:
     - onboot: yes
     - defroute: no
     - nm_controlled: no
-    - mtu: 9000
     - peerdns: no
     - userctl: no
     - prefix: 24
 {% if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}
+    - mtu: 9000
 {%- else %}
     - proto: dhcp
 {%- endif %}

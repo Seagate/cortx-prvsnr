@@ -274,10 +274,11 @@ if [[ "$singlenode" != true ]]; then
 fi
 
 #update hostname in cluster.sls
-if [[ -n "$srvnode_1_hostname" && -n "$srvnode_2_hostname" ]]; then
+if [[ -n "$srvnode_1_hostname" ]]; then
     l_info "Updating hostnames in cluster pillar"
+    if [[ -n "$srvnode_2_hostname" ]]; then
+        update_cluster_pillar_hostname "srvnode-2" "$srvnode_2_hostname"
     update_cluster_pillar_hostname "srvnode-1" "$srvnode_1_hostname"
-    update_cluster_pillar_hostname "srvnode-2" "$srvnode_2_hostname"
 fi
 
 #update target_build in release.sls

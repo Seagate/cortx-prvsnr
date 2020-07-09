@@ -3,7 +3,7 @@ base:
     - roles.primary
   '*':
     - ignore_missing: True
-    # - node_info.node_data
+    - node_info.node_data
     - components.cluster                    # default all minions vars (here and below) TODO create task: move to groups.all.components...
     - components.commons
     - components.corosync-pacemaker
