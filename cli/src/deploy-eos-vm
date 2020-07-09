@@ -19,6 +19,7 @@ function trap_handler {
 run_all=true
 run_system_states=false
 run_prereq_states=false
+run_sync_states=false
 run_io_states=false
 run_ctrlpath_states=false
 
@@ -54,13 +55,18 @@ iopath_states=(
         "hare"
     )
 
-
 controlpath_states=(
     # states to be applied in desired sequence
         "sspl"
         "csm"
         "uds"
     )
+
+sync_states=(
+    # states to be applied in desired sequence
+        "sync.software.openldap"
+    )
+
 
 function usage {
   echo "\
@@ -75,6 +81,7 @@ $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
+       --sync_states               deploy only the software synchronization
        --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
        --ctrlpath-states           deploy only control path states (sspl & csm)
        --system-states             deploy only system states
@@ -95,6 +102,10 @@ function options_parser {
             ;;
         --prereq-states)
             run_prereq_states=true
+            run_all=false
+            ;;
+        --sync-states)
+            run_sync_states=true
             run_all=false
             ;;
         --iopath-states)
@@ -131,9 +142,7 @@ function run_states {
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap"
-                || "$state" == "misc_pkgs.rabbitmq"
-                ]]; then
+            elif [[ "$state" == "misc_pkgs.rabbitmq" ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
@@ -196,6 +205,7 @@ if [[ "$run_all" == true ]]; then
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
+    run_states "${sync_states[@]}"
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
 fi
@@ -209,6 +219,11 @@ fi
 if [[ "$run_prereq_states" == true ]]; then
     l_info "Deploying the prereq states"
     run_states "${prereq_states[@]}"
+fi
+
+if [[ "$run_sync_states" == true ]]; then
+    l_info "Deploying the sync states"
+    run_states  "${sync_states[@]}"
 fi
 
 if [[ "$run_io_states" == true ]]; then
