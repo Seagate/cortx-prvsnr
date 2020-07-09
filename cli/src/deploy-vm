@@ -7,7 +7,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-eos-vm.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-vm.log}"
 export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
@@ -50,7 +50,7 @@ prereq_states=(
 iopath_states=(
     # states to be applied in desired sequence
         "misc_pkgs.lustre"
-        "eoscore"
+        "motr"
         "s3server"
         "hare"
     )
@@ -82,7 +82,7 @@ Options:
        -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
        --sync_states               deploy only the software synchronization
-       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ctrlpath-states           deploy only control path states (sspl & csm)
        --system-states             deploy only system states
 "
@@ -175,7 +175,7 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/eos-prvsnr/cli/src/pillar_encrypt
+    python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt
     update_salt
 }
 
@@ -196,7 +196,7 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
 update_salt
 hostnamectl status | grep Chassis | grep -q server && {
-    echo "This script is specifically for VM deployment.For HW please run deploy-eos" 
+    echo "This script is specifically for VM deployment.For HW please run deploy" 
     exit 1
 }
 
