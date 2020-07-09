@@ -1924,7 +1924,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
             logger.info("Copying factory data")
             ssh_client.state_apply(
-                'provisioner.factory_data',
+                'provisioner.factory_profile',
                 targets=run_args.primary.minion_id,
             )
 
