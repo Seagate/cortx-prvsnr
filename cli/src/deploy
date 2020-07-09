@@ -79,6 +79,7 @@ controlpath_states=(
 sync_states=(
     # states to be applied in desired sequence
         "sync.software.openldap"
+        "sync.software.rabbitmq"
     )
 
 function usage {
@@ -166,7 +167,7 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.rabbitmq"
+            elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "system.storage.multipath"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
