@@ -7,7 +7,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-eos-vm.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/destroy-vm.log}"
 export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
@@ -35,7 +35,7 @@ iopath_states=(
 # states to be applied in desired sequence
     "hare"
     "s3server"
-    "eoscore"
+    "motr"
     "misc_pkgs.lustre"
 )
 
@@ -73,11 +73,11 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode     switch to single node mode setup
-       --iopath-states       remove only teardown of iopath components
-       --ctrlpath-states     remove only teardown of control path components
-       --remove-prvsnr       remove only teardown of control path components
-       --prereq-states       remove only teardown of control path components
-       --system-states       remove only teardown of control path components
+       --iopath-states       remove only iopath (hare,s3server,motr,lustre) components
+       --ctrlpath-states     remove only ctrlpath (uds,csm,sspl) components
+       --remove-prvsnr       removes provisioner and system cleanup
+       --prereq-states       remove only teardown of prereq components
+       --system-states       remove only teardown of system components
 "
 }
 
@@ -214,12 +214,17 @@ fi
 
 if [[ "$remove_prvsnr" == true ]]; then
     l_info "Cleaning up Provisioner"
-    l_info "Removing eos-prvsnr package from both nodes"
-    salt '*' pkg.remove eos-prvsnr $salt_opts || true
+
+    l_info "Removing prvsnr api logs configuration from node-1"
+    rm -rf /etc/rsyslog.d/prvsnrfwd.conf || true
+    rm -rf /etc/rsyslog.d/2-prvsnrfwd.conf || true
+
+    l_info "Removing cortx-prvsnr package from both nodes"
+    salt '*' pkg.remove cortx-prvsnr $salt_opts || true
     salt '*' file.absent $salt_opts || true
     if [[ "$singlenode" != true ]]; then
         l_info "Removing prvsnr-cli and salt packages from node-2"
-        ssh srvnode-2 "yum remove -y eos-prvsnr-cli; yum remove -y salt*; 
+        ssh srvnode-2 "yum remove -y cortx-prvsnr-cli; yum remove -y salt*; 
             rm -rf /etc/salt; rm -rf /opt/seagate" 2>&1|tee ${LOG_FILE}
     fi
     l_info "Removing salt packages from node-1"
@@ -228,14 +233,14 @@ if [[ "$remove_prvsnr" == true ]]; then
 
     sleep 2
     if [[ "$singlenode" != true ]]; then
-        l_info "Removing remaining eos packages from node-2"
-        ssh srvnode-2 'for pkg in `rpm -qa | grep eos`; do\
+        l_info "Removing remaining cortx packages from node-2"
+        ssh srvnode-2 'for pkg in `rpm -qa | grep cortx`; do\
             echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
             rm -rf /opt/seagate*; rm -rf /root/.ssh/*'
     fi
 
-    l_info "Removing remaining eos packages from node-1"
-    for pkg in `rpm -qa | grep eos`; do\
+    l_info "Removing remaining cortx packages from node-1"
+    for pkg in `rpm -qa | grep cortx`; do\
         echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done
 
     l_info "Removing /opt/seagate directory from node-1"

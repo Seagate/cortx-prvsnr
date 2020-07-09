@@ -3,7 +3,7 @@ include:
   - components.sspl.config.commons
 
 {% set enclosure = '' %}
-{% if "primary" in grains["roles"] %}
+{% if "primary" in grains["roles"] and 'physical' in grains['virtual'] %}
 # run health schema on master for both node and enclosure; on minion only for node health.
 {% set enclosure = '-e' %}
 {% endif %}
