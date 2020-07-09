@@ -198,7 +198,7 @@ Refresh partition:
     - partition.probe: []
 
 # Refresh
-{% if 'ees' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if not 'single' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
 Update partition tables of both nodes:
   cmd.run:
     - name: sleep 10; timeout -k 10 30 partprobe || true; ssh srvnode-2 "timeout -k 10 30 partprobe || true"
