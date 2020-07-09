@@ -29,7 +29,7 @@ network:
   secondary_data_gateway: cluster/srvnode-2/network/data_nw/gateway
 swupdate:
   _path: release.sls
-  repos: eos_release/update/repos
+  repos: release/update/repos
   repo:
     _type: ParamDictItem
-    parent: eos_release/update/repos
+    parent: release/update/repos

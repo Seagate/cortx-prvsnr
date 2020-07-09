@@ -1654,7 +1654,7 @@ function update_release_pillar {
 
     #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
-    provisioner pillar_set eos_release/target_build \"${_release_ver}\"
+    provisioner pillar_set release/target_build \"${_release_ver}\"
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
