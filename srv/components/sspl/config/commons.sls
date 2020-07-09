@@ -22,9 +22,9 @@ Add common config - BMC to Consul:
   cmd.run:
     - name: |
 {% for node in pillar['cluster']['node_list'] %}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/{{ node }}/ip {{ pillar['cluster'][node]['bmc']['ip'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/{{ node }}/user {{ pillar['cluster'][node]['bmc']['user'] }}
-        /opt/seagate/eos/hare/bin/consul kv put bmc/{{ node }}/secret {{ pillar['cluster'][node]['bmc']['secret'] }}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/ip {{ pillar['cluster'][node]['bmc']['ip'] }}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/user {{ pillar['cluster'][node]['bmc']['user'] }}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/secret {{ pillar['cluster'][node]['bmc']['secret'] }}
 {% endfor %}
 
 Add common config - storage enclosure to Consul:
