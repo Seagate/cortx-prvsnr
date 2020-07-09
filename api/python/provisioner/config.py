@@ -26,7 +26,10 @@ PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
-PRVSNR_USER_SALT_DIR = PRVSNR_DATA_ROOT_DIR / 'srv'
+PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
+
+PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory'
+PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # reflects master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # reflects pillar/top.sls
@@ -136,10 +139,13 @@ def profile_paths(
     location: Union[str, Path] = None,
     setup_name: Optional[str] = 'default'
 ) -> Dict:
-    if location is None:
-        location = Path.cwd()
 
-    base_dir = location / PROFILE_DIR_NAME / setup_name
+    if location is None:
+        location = Path.cwd() / PROFILE_DIR_NAME
+    else:
+        location = location.resolve()
+
+    base_dir = location / setup_name
     ssh_dir = base_dir / '.ssh'
     salt_dir = base_dir / 'srv'
     salt_fileroot_dir = salt_dir / 'salt'
@@ -147,6 +153,9 @@ def profile_paths(
     salt_cache_dir = salt_dir / 'cachedir'
     salt_pki_dir = salt_dir / 'pki_dir'
     salt_config_dir = salt_dir / 'config'
+
+    salt_factory_fileroot_dir = base_dir / 'srv_factory'
+    salt_factory_profile_dir = salt_factory_fileroot_dir / 'profile'
 
     setup_key_file = ssh_dir / 'setup.id_rsa'
     setup_key_pub_file = ssh_dir / 'setup.id_rsa.pub'
@@ -166,6 +175,9 @@ def profile_paths(
         'salt_cache_dir': salt_cache_dir,
         'salt_pki_dir': salt_pki_dir,
         'salt_config_dir': salt_config_dir,
+
+        'salt_factory_fileroot_dir': salt_factory_fileroot_dir,
+        'salt_factory_profile_dir': salt_factory_profile_dir,
 
         'setup_key_file': setup_key_file,
         'setup_key_pub_file': setup_key_pub_file,
