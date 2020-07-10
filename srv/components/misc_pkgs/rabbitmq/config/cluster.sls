@@ -6,7 +6,8 @@ Start rabbitmq app and join cluster if available:
     - name: |
         rabbitmqctl start_app
         rabbitmqctl stop_app
-        {% for node in (salt['saltutil.runner']("manage.up") | difference(grains['id'])) %}
+        {#% for node in (salt['saltutil.runner']("manage.up") | difference(grains['id'])) %#}
+        {% for node in (pillar['cluster']['node_list'] | difference(grains['id'])) %}
         rabbitmqctl join_cluster rabbit@{{ node }} || true
         {% endfor %}
         rabbitmqctl start_app
