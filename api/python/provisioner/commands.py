@@ -206,7 +206,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)))
+        converter=(lambda v: Path(str(v)) if v else v)
     )
     prvsnr_verion: str = attr.ib(
         metadata={
@@ -232,7 +232,7 @@ class RunArgsSetup:
             }
         },
         default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)))
+        converter=(lambda v: Path(str(v)) if v else v)
     )
     target_build: str = attr.ib(
         metadata={
@@ -250,6 +250,14 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "turn on high availbility setup",
+            }
+        },
+        default=False
+    )
+    field_setup: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "turn on field setup mode",
             }
         },
         default=False
@@ -399,6 +407,7 @@ class RunArgsSetupProvisionerBase:
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
     rediscover: bool = RunArgsSetup.rediscover
+    field_setup: bool = RunArgsSetup.field_setup
 
 
 @attr.s(auto_attribs=True)
@@ -461,6 +470,7 @@ class RunArgsSetupCluster(RunArgsSetupSinglenode):
         default='srvnode-2',
         converter=(lambda s: Node.from_spec(f"srvnode-2:{s}"))
     )
+    field_setup: bool = attr.ib(init=False, default=False)
 
     """
     @srvnode2.validator
@@ -472,6 +482,51 @@ class RunArgsSetupCluster(RunArgsSetupSinglenode):
                 f"provided '{value}'"
             )
     """
+
+
+@attr.s(auto_attribs=True)
+class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
+    node_id: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "new node minion id",
+                'metavar': 'ID'
+            }
+        },
+        default='srvnode-2'
+    )
+    node_host: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "new node host, by default the same is used",
+                'metavar': 'HOST'
+            }
+        },
+        default=None
+    )
+    node_port: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "new node port, by default the same is used",
+                'metavar': 'PORT'
+            }
+        },
+        default=None
+    )
+
+    name: str = attr.ib(init=False, default=None)
+    ha: bool = attr.ib(init=False, default=True)
+    profile: bool = attr.ib(
+        init=False, default=config.PRVSNR_USER_FACTORY_PROFILE_DIR
+    )
+    source: str = attr.ib(init=False, default='local')
+    prvsnr_verion: str = attr.ib(init=False, default=None)
+    local_repo: str = attr.ib(init=False, default=config.PRVSNR_ROOT_DIR)
+    target_build: str = attr.ib(init=False, default=None)
+    salt_master: str = attr.ib(init=False, default=None)
+    update: bool = attr.ib(init=False, default=False)
+    rediscover: bool = attr.ib(init=False, default=True)
+    field_setup: bool = attr.ib(init=False, default=True)
 
 
 @attr.s(auto_attribs=True)
@@ -1548,6 +1603,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 str(cluster_sls_path)
             ]
         )
+        repo_tgz_path.unlink()
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
         minions_dir = (
@@ -1789,6 +1845,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             keygen(priv_key_path)
         else:
             logger.info('Generating setup keys [skipped]')
+        paths['setup_key_file'].chmod(0o600)
 
         logger.info("Generating a roster file")
         self._prepare_roster(run_args.nodes, paths)
@@ -1827,7 +1884,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
 
-        if run_args.ha:
+        if run_args.ha and not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1839,6 +1896,14 @@ class SetupProvisioner(CommandParserFillerMixin):
                         str(_path.parent)
                     ]
                 )
+
+            run_subprocess_cmd([
+                'rm', '-rf',
+                str(
+                    paths['salt_factory_profile_dir'] /
+                    'srv/salt/provisioner/files/repo'
+                )
+            ])
 
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"
@@ -1922,11 +1987,12 @@ class SetupProvisioner(CommandParserFillerMixin):
                 }
             )
 
-            logger.info("Copying factory data")
-            ssh_client.state_apply(
-                'provisioner.factory_profile',
-                targets=run_args.primary.minion_id,
-            )
+            if not run_args.field_setup:
+                logger.info("Copying factory data")
+                ssh_client.state_apply(
+                    'provisioner.factory_profile',
+                    targets=run_args.primary.minion_id,
+                )
 
         logger.info("Setting up paswordless ssh")
         ssh_client.state_apply('ssh')
@@ -2070,6 +2136,52 @@ class SetupCluster(SetupProvisioner):
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
+
+        logger.info("Done")
+
+
+@attr.s(auto_attribs=True)
+class ReplaceNode(SetupProvisioner):
+    _run_args_type = RunArgsReplaceNode
+
+    def run(self, **kwargs):
+        run_args = RunArgsReplaceNode(**kwargs)
+        kwargs = attr.asdict(run_args)
+        kwargs.pop('node_id')
+        kwargs.pop('node_host')
+        kwargs.pop('node_port')
+
+        logger.info("Preparing user profile")
+        run_subprocess_cmd(['rm', '-rf',  str(run_args.profile)])
+        run_args.profile.parent.mkdir(parents=True, exist_ok=True)
+        run_subprocess_cmd(
+            [
+                'cp', '-r',
+                str(config.PRVSNR_FACTORY_PROFILE_DIR),
+                str(run_args.profile)
+            ]
+        )
+
+        paths = config.profile_paths(
+            location=run_args.profile.parent,
+            setup_name=run_args.profile.name
+        )
+
+        logger.info("Adjusting node specs info")
+        pillar_all_dir = paths['salt_pillar_dir'] / 'groups/all'
+        specs_pillar_path = pillar_all_dir / 'node_specs.sls'
+        node_specs = load_yaml(specs_pillar_path)['node_specs']
+        nodes = {k: Node(k, **v) for k, v in node_specs.items()}
+
+        if run_args.node_host:
+            nodes[run_args.node_id].host = run_args.node_host
+
+        if run_args.node_port:
+            nodes[run_args.node_id].port = run_args.node_port
+
+        super().run(
+            nodes=list(nodes.values()), **kwargs
+        )
 
         logger.info("Done")
 

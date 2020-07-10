@@ -28,7 +28,7 @@ PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
 
-PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory'
+PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # reflects master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
@@ -133,6 +133,9 @@ BUNDLED_SALT_PILLAR_DIR = BUNDLED_SALT_DIR / 'pillar'
 # TODO IMPROVE consider to make that configurable (e.g. env variable)
 
 PROFILE_DIR_NAME = '.provisioner'
+PRVSNR_USER_FACTORY_PROFILE_DIR = (
+    Path.home() / PROFILE_DIR_NAME / 'factory_profile'
+)
 
 
 def profile_paths(
