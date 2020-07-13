@@ -55,7 +55,7 @@ LOCAL_MINION = '__local__'
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 
 # TODO ??? make that dynamic (based on pillar structure)
-PRVSNR_COMPONENTS = [
+PRVSNR_CORTX_COMPONENTS = [
     'cluster',
     'commons',
     'controller',

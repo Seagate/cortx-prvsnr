@@ -25,7 +25,7 @@ from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
     PRVSNR_FILEROOTS_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
-    PRVSNR_COMPONENTS,
+    PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOTS_DIR_TMPL
@@ -149,12 +149,12 @@ class RunArgsSSLCerts:
 
 
 @attr.s(auto_attribs=True)
-class RunArgsConfigure:
+class RunArgsConfigureCortx:
     component: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "Component to configure",
-                'choices': PRVSNR_COMPONENTS
+                'choices': PRVSNR_CORTX_COMPONENTS
             }
         }
     )
@@ -1194,9 +1194,9 @@ class ShutdownController(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class Configure(CommandParserFillerMixin):
+class Configure_Cortx(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsConfigure
+    _run_args_type = RunArgsConfigureCortx
 
     def run(
         self, component, source=None, show=False, reset=False

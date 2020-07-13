@@ -60,8 +60,8 @@ reboot_controller:
   type: RebootController
 shutdown_controller:
   type: ShutdownController
-configure:
-  type: Configure
+configure_cortx:
+  type: Configure_Cortx
 create_user:
   type: CreateUser
 setup_singlenode:

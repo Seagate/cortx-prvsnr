@@ -209,7 +209,7 @@ def set_ssl_certs(
 ):
     r"""Configures ssl certs
 
-    Installs or removes a repository for sw update release.
+    Installs or removes a repository for cortx update release.
 
     :param source: (optional) A path to pem file. Might be: a local
     :param restart: switch to restart services
@@ -308,7 +308,7 @@ def shutdown_controller(target_ctrl=CONTROLLER_BOTH, nowait=False):
     )
 
 
-def configure(
+def configure_cortx(
     component, source=None, show=False, reset=False, nowait=False
 ):
     r"""Reboots the servers
@@ -320,7 +320,7 @@ def configure(
       - otherwise ``source`` should be specified and will be set as a pillar
         for the component
 
-    :param component: component to configure
+    :param component: CORTX component to configure
     :param source: (optional) A yaml file to apply. Default: None
     :param show: (optional) Dump current configuration. Default: False
     :param reset: (optional) Reset configuration to the factory state
@@ -329,7 +329,7 @@ def configure(
     """
 
     return _api_call(
-        'configure', component, source=source, show=show, reset=reset
+        'configure_cortx', component, source=source, show=show, reset=reset
     )
 
 

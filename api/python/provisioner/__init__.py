@@ -31,7 +31,7 @@ from .api import (  # noqa: F401
     reboot_server,
     reboot_controller,
     shutdown_controller,
-    configure,
+    configure_cortx,
     create_user
 )
 
@@ -62,7 +62,7 @@ __all__ = [
     'reboot_server',
     'reboot_controller',
     'shutdown_controller',
-    'configure',
+    'configure_cortx',
     'create_user',
     'UNCHANGED',
     'DEFAULT',
