@@ -365,7 +365,7 @@ def test_set_eosupdate_repo():
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
     base_repo_name = 'eos_update'
-    prvsnr_pkg_name = 'eos-prvsnr'
+    prvsnr_pkg_name = 'cortx-prvsnr'
 
     def check_mount_not_in_fstab(mount_dir):
         run_cmd(
@@ -589,7 +589,7 @@ def test_set_eosupdate_repo_for_reinstall():
     repo_dir = os.environ['TEST_REPO_DIR']
     test_file_path = os.environ['TEST_FILE_PATH']
     # base_repo_name = 'eos_update'
-    prvsnr_pkg_name = 'eos-prvsnr'
+    prvsnr_pkg_name = 'cortx-prvsnr'
 
     release = '1.2.3'
     source = repo_dir

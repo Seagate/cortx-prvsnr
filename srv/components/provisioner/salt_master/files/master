@@ -687,9 +687,10 @@ ssh_update_roster: True
 #
 file_roots:
   base:
-    - /opt/seagate/cortx/provisioner/srv_user
+    - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
+    - /opt/seagate/cortx/provisioner/srv_user   # old style
     - /opt/seagate/cortx/provisioner/srv
-    - /opt/seagate/ees-prvsnr/srv
+    - /opt/seagate/ees-prvsnr/srv               # FIXME shouldn't it be totally deprecated
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.
@@ -865,8 +866,9 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
+    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /opt/seagate/cortx/provisioner/pillar
-    - /opt/seagate/ees-prvsnr/pillar
+    - /opt/seagate/ees-prvsnr/pillar            # FIXME shouldn't it be totally deprecated
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a
