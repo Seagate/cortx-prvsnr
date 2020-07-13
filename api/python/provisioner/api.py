@@ -181,12 +181,12 @@ def set_network(dry_run=False, nowait=False, **kwargs):
 #     )
 
 
-def set_eosupdate_repo(
+def set_swupdate_repo(
     release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
 ):
     r"""Configures update repository.
 
-    Installs or removes a repository for EOS update release.
+    Installs or removes a repository for sw update release.
 
     :param release: An update repository release label
     :param targets: Host where to install repos
@@ -199,7 +199,7 @@ def set_eosupdate_repo(
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
-        'set_eosupdate_repo',
+        'set_swupdate_repo',
         release, source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
 
@@ -209,7 +209,7 @@ def set_ssl_certs(
 ):
     r"""Configures ssl certs
 
-    Installs or removes a repository for EOS update release.
+    Installs or removes a repository for cortx update release.
 
     :param source: (optional) A path to pem file. Might be: a local
     :param restart: switch to restart services
@@ -221,22 +221,22 @@ def set_ssl_certs(
     )
 
 
-def eos_update(targets=ALL_MINIONS, nowait=False):
-    r"""Runs EOS software update logic.
+def sw_update(targets=ALL_MINIONS, nowait=False):
+    r"""Runs software update logic.
 
-    Updates EOS components one by one.
+    Updates components one by one.
 
     :param targets: (optional) A host to update. Default: all minions
     :param nowait: (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
-        'eos_update', targets=targets, nowait=nowait
+        'sw_update', targets=targets, nowait=nowait
     )
 
 
 def fw_update(source, dry_run=False, nowait=False):
-    r"""Runs EOS firmware update logic.
+    r"""Runs firmware update logic.
 
     :param source: A path to a new firmware
     :param dry_run: (optional) validate only. Default: False
@@ -308,19 +308,19 @@ def shutdown_controller(target_ctrl=CONTROLLER_BOTH, nowait=False):
     )
 
 
-def configure_eos(
+def configure_cortx(
     component, source=None, show=False, reset=False, nowait=False
 ):
     r"""Reboots the servers
 
-    Updates or resolves configuration for specified EOS component
+    Updates or resolves configuration for specified component
     depending on passed arguments:
       - if ``source`` is True then returns current component's pillar
       - if ``reset`` is True than reset the component's pillar to default state
       - otherwise ``source`` should be specified and will be set as a pillar
         for the component
 
-    :param component: EOS component to configure
+    :param component: CORTX component to configure
     :param source: (optional) A yaml file to apply. Default: None
     :param show: (optional) Dump current configuration. Default: False
     :param reset: (optional) Reset configuration to the factory state
@@ -329,7 +329,7 @@ def configure_eos(
     """
 
     return _api_call(
-        'configure_eos', component, source=source, show=show, reset=reset
+        'configure_cortx', component, source=source, show=show, reset=reset
     )
 
 

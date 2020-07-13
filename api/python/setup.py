@@ -42,7 +42,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.6"  # TODO test and declare others
     ], # TODO
-    keywords='EOS Provisioner API',
+    keywords='Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
     # TODO LICENSE, other

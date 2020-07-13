@@ -1,7 +1,7 @@
 # Provisioner API
 
-This is a northbound interface for EOS components that provides API
-to configure provisioned EOS stack.
+This is a northbound interface for CORTX components that provides API
+to configure provisioned software stack.
 
 It uses saltstack client python API and should be called on the same machine where
 salt master is running.

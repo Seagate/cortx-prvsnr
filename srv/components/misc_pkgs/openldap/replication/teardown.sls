@@ -8,8 +8,6 @@
 %}
 {{ filename }}_del:
   file.absent:
-    - name: {{ filename }}
-    - require:
-      - Replication sanity check
+    - name: {{ filename }}s
 {% endfor %}
 {%- endif %}

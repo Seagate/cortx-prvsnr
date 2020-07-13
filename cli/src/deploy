@@ -97,7 +97,7 @@ Options:
        --system-states             deploy only system states
        --prereq-states             deploy only prereq states (components.misc_pkgs)
        --sync_states               deploy only the software synchronization
-       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
 "

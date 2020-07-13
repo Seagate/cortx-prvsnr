@@ -4,23 +4,23 @@
 
 {{ repo_unmounted(release, repo_dir) }}
 
-eos_update_repo_iso_absent_{{ release }}:
+sw_update_repo_iso_absent_{{ release }}:
   file.absent:
     - name: {{ repo_dir }}.iso
     - require:
-      - eos_update_repo_iso_unmounted_{{ release }}
+      - sw_update_repo_iso_unmounted_{{ release }}
 
 
-eos_update_repo_dir_absent_{{ release }}:
+sw_update_repo_dir_absent_{{ release }}:
   file.absent:
     - name: {{ repo_dir }}
     - require:
-      - eos_update_repo_absent_{{ release }}
-      - eos_update_repo_iso_unmounted_{{ release }}
+      - sw_update_repo_absent_{{ release }}
+      - sw_update_repo_iso_unmounted_{{ release }}
 
 
-eos_update_repo_absent_{{ release }}:
+sw_update_repo_absent_{{ release }}:
   pkgrepo.absent:
-    - name: eos_update_{{ release }}
+    - name: sw_update_{{ release }}
 
 {% endmacro %}
