@@ -261,8 +261,8 @@ update_pillar()
     else
         disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3 | sed "1 d");
     fi
-	meta_flag=0
-	data_disk=''
+    meta_flag=0
+    data_disk=''
     for disk in $disks
     do
         if [ $meta_flag == 0 ] ; then
@@ -283,7 +283,6 @@ update_pillar()
     # Update s3server.sls
     echo -e "\n\t***** INFO: Updating s3server.sls *****" 2>&1 | tee -a $LOG_FILE
     provisioner pillar_set s3server/no_of_inst \"2\"
-   
 }
 
 install_config_prvsnr
