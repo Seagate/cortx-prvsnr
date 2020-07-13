@@ -87,7 +87,7 @@ class PrvsnrTypeDecodeError(ProvisionerError, ValueError):
         )
 
 
-class EOSUpdateRepoSourceError(ProvisionerError, ValueError):
+class SWUpdateRepoSourceError(ProvisionerError, ValueError):
     _prvsnr_type_ = True
 
     def __init__(self, source: str, reason: str):
