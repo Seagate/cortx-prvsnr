@@ -1,0 +1,34 @@
+# push data replication
+# Command to add configuration to ldap:
+# ldapmodify -Y EXTERNAL  -H ldapi:/// -f data.ldif
+dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+changetype: modify
+add: olcSyncRepl
+{% for node in salt['pillar.get']('cluster:node_list', []) -%}
+olcSyncRepl: rid={{ "{0:03d}".format(200+loop.index) }}
+  provider=ldap://{{ node }}:389/
+  bindmethod=simple
+  binddn="cn=admin,dc=seagate,dc=com"
+  credentials={{ salt['lyveutil.decrypt'](salt['pillar.get']('openldap:admin:secret', "seagate"),'openldap') }}
+  searchbase="dc=seagate,dc=com"
+  scope=sub
+  schemachecking=on
+  type=refreshAndPersist
+  retry="30 5 300 3"
+  interval=00:00:05:00
+{% endfor -%}
+# Enable additional providers
+# olcSyncRepl: rid=005
+#   provider=ldap://<sample_provider_URI>:389/
+#   bindmethod=simple
+#   binddn="cn=admin,dc=seagate,dc=com"
+#   credentials=seagate
+#   searchbase="dc=seagate,dc=com"
+#   scope=sub
+#   schemachecking=on
+#   type=refreshAndPersist
+#   retry="30 5 300 3"
+#   interval=00:00:05:00
+-
+replace: olcMirrorMode
+olcMirrorMode: TRUE

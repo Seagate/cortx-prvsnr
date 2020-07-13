@@ -1,0 +1,11 @@
+# unique olcserver Id
+# Command to add configuration
+# ldapmodify -Y EXTERNAL  -H ldapi:/// -f olcserverid.ldif
+dn: cn=config
+changetype: modify
+replace: olcServerID
+{% for node in salt['pillar.get']('cluster:node_list', []) -%}
+{% if grains['id'] == node -%}
+olcServerID: {{ loop.index }}
+{%- endif %}
+{%- endfor %}
