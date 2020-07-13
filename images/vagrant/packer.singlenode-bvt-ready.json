@@ -39,8 +39,8 @@
       "type": "shell",
       "inline": [
         "set -ex",
-        "echo -e '[eos-prvsnr-cli]\ngpgcheck=0\nenabled=0\nbaseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/{{user `prvsnr_cli_release`}}\nname=eos-prvsnr-cli' >/etc/yum.repos.d/eos-prvsnr-cli.repo",
-        "yum --enablerepo=eos-prvsnr-cli install -y eos-prvsnr-cli",
+        "echo -e '[cortx-prvsnr-cli]\ngpgcheck=0\nenabled=0\nbaseurl=http://ci-storage.mero.colo.seagate.com/releases/eos/{{user `prvsnr_cli_release`}}\nname=cortx-prvsnr-cli' >/etc/yum.repos.d/cortx-prvsnr-cli.repo",
+        "yum --enablerepo=cortx-prvsnr-cli install -y cortx-prvsnr-cli",
         "sed -i \"s/HostName srvnode-1/HostName $(hostname)/g\" /root/.ssh/config",
         "cd /opt/seagate/cortx/provisioner/cli",
         "bash ./setup-provisioner -S -vv --repo-src rpm \"{{user `prvsnr_release`}}\"",

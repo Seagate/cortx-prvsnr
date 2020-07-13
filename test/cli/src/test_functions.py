@@ -783,7 +783,7 @@ def test_functions_install_provisioner_rpm(
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
 
-    assert mhost.host.package('eos-prvsnr').is_installed
+    assert mhost.host.package('cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]

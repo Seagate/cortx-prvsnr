@@ -22,10 +22,19 @@ else:
 #  - remove PRVSNR_ prefix
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
+PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
+PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
+PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
+PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
+
+PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
+PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # reflects master file_roots configuration
-PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
-PRVSNR_USER_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv_user'
+PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
+# reflects pillar/top.sls
+PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
+
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
@@ -33,9 +42,6 @@ PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
-# reflects pillar/top.sls
-PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
-PRVSNR_USER_PILLAR_DIR = PRVSNR_PILLAR_DIR / 'user'
 PRVSNR_USER_PI_ALL_HOSTS_DIR = PRVSNR_USER_PILLAR_DIR / 'groups/all'
 PRVSNR_DEF_PI_HOST_DIR_TMPL = str(
     PRVSNR_PILLAR_DIR / 'minions/{minion_id}'
@@ -45,7 +51,7 @@ PRVSNR_USER_PI_HOST_DIR_TMPL = str(
 )
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
-SEAGATE_USER_FILEROOTS_DIR_TMPL = str(
+SEAGATE_USER_FILEROOT_DIR_TMPL = str(
     'components/provisioner/files/users/{uname}'
 )
 
@@ -89,9 +95,12 @@ PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
 PRVSNR_CONFIG_FILE = 'provisioner.conf'
 
 # logging
-LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
-if not LOG_ROOT_DIR.exists():
-    LOG_ROOT_DIR = Path('.').resolve()
+PRVSNR_LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
+LOG_ROOT_DIR = (
+    PRVSNR_LOG_ROOT_DIR
+    if PRVSNR_LOG_ROOT_DIR.exists()
+    else Path('.').resolve()
+)
 
 LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
@@ -124,16 +133,22 @@ BUNDLED_SALT_PILLAR_DIR = BUNDLED_SALT_DIR / 'pillar'
 # TODO IMPROVE consider to make that configurable (e.g. env variable)
 
 PROFILE_DIR_NAME = '.provisioner'
+PRVSNR_USER_FACTORY_PROFILE_DIR = (
+    Path.home() / PROFILE_DIR_NAME / 'factory_profile'
+)
 
 
 def profile_paths(
     location: Union[str, Path] = None,
     setup_name: Optional[str] = 'default'
 ) -> Dict:
-    if location is None:
-        location = Path.cwd()
 
-    base_dir = location / PROFILE_DIR_NAME / setup_name
+    if location is None:
+        location = Path.cwd() / PROFILE_DIR_NAME
+    else:
+        location = location.resolve()
+
+    base_dir = location / setup_name
     ssh_dir = base_dir / '.ssh'
     salt_dir = base_dir / 'srv'
     salt_fileroot_dir = salt_dir / 'salt'
@@ -141,6 +156,9 @@ def profile_paths(
     salt_cache_dir = salt_dir / 'cachedir'
     salt_pki_dir = salt_dir / 'pki_dir'
     salt_config_dir = salt_dir / 'config'
+
+    salt_factory_fileroot_dir = base_dir / 'srv_factory'
+    salt_factory_profile_dir = salt_factory_fileroot_dir / 'profile'
 
     setup_key_file = ssh_dir / 'setup.id_rsa'
     setup_key_pub_file = ssh_dir / 'setup.id_rsa.pub'
@@ -160,6 +178,9 @@ def profile_paths(
         'salt_cache_dir': salt_cache_dir,
         'salt_pki_dir': salt_pki_dir,
         'salt_config_dir': salt_config_dir,
+
+        'salt_factory_fileroot_dir': salt_factory_fileroot_dir,
+        'salt_factory_profile_dir': salt_factory_profile_dir,
 
         'setup_key_file': setup_key_file,
         'setup_key_pub_file': setup_key_pub_file,

@@ -280,6 +280,18 @@ def test_eos_update(
     run_test(mhosteosnode1)
 
 
+@pytest.mark.skip
+@pytest.mark.isolated
+@pytest.mark.env_level('utils')
+@pytest.mark.env_provider('vbox')
+@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+def test_setup_cluster(
+    mhosteosnode1, mhosteosnode2, ssh_config
+):
+    mhosteosnode1.check_output('echo root | passwd --stdin root')
+    mhosteosnode2.check_output('echo root | passwd --stdin root')
+
+
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['eosnode1'])

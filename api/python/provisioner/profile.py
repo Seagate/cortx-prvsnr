@@ -22,7 +22,9 @@ def setup(profile_paths: Optional[dict] = None, clean=False):
         profile_paths['salt_pillar_dir'],
         profile_paths['salt_cache_dir'],
         profile_paths['salt_pki_dir'],
-        profile_paths['salt_config_dir']
+        profile_paths['salt_config_dir'],
+        profile_paths['salt_factory_fileroot_dir'],
+        profile_paths['salt_factory_profile_dir']
     ):
         path.mkdir(parents=True, exist_ok=True)
 
@@ -34,8 +36,9 @@ def setup(profile_paths: Optional[dict] = None, clean=False):
         'cachedir': str(profile_paths['salt_cache_dir']),
         'file_roots': {
             'base': [
-               str(config.BUNDLED_SALT_FILEROOT_DIR),
-               str(profile_paths['salt_fileroot_dir'])
+                str(profile_paths['salt_fileroot_dir']),
+                str(profile_paths['salt_factory_fileroot_dir']),
+                str(config.BUNDLED_SALT_FILEROOT_DIR)
             ]
         },
         'pillar_roots': {
