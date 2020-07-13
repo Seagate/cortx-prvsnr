@@ -6,7 +6,7 @@ import functools
 from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
 
-from .errors import UnknownParamError, EOSUpdateRepoSourceError
+from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
     KeyPath, PillarKeyAPI, PillarKey, PillarItemsAPI
 )
@@ -548,8 +548,8 @@ class ParamDictItemInputBase(PrvsnrType, PillarItemsAPI):
 
 
 @attr.s(auto_attribs=True)
-class EOSUpdateRepo(ParamDictItemInputBase):
-    _param_di = param_spec['eosupdate/repo']
+class SWUpdateRepo(ParamDictItemInputBase):
+    _param_di = param_spec['swupdate/repo']
     release: str = ParamDictItemInputBase._attr_ib(
         is_key=True,
         descr=("release version")
@@ -596,7 +596,7 @@ class EOSUpdateRepo(ParamDictItemInputBase):
                 "Invalid source {}: {}"
                 .format(str(value), reason)
             )
-            raise EOSUpdateRepoSourceError(str(value), reason)
+            raise SWUpdateRepoSourceError(str(value), reason)
 
     def __attrs_post_init__(self):
         if (

@@ -79,6 +79,10 @@ mkdir -p /opt/seagate/cortx/provisioner/pillar/user
 chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
 chmod -R g+rws /opt/seagate/cortx/provisioner/pillar/user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/cortx/provisioner/pillar/user
+#       Provisioning log directory
+mkdir -p /var/log/seagate/provisioner
+chmod g+rwx /var/log/seagate/provisioner
+setfacl -Rm g:prvsnrusers:rwx /var/log/seagate/provisioner
 
 #   install api globally using pip
 pip3 install -U /opt/seagate/cortx/provisioner/api/python

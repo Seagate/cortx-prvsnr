@@ -27,7 +27,7 @@ PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_USER_FILEROOTS_DIR = PRVSNR_ROOT_DIR / 'srv_user'
 #    relative paths
-PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR = Path('misc_pkgs/eosupdate/repo/files')
+PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
@@ -55,7 +55,7 @@ LOCAL_MINION = '__local__'
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 
 # TODO ??? make that dynamic (based on pillar structure)
-PRVSNR_EOS_COMPONENTS = [
+PRVSNR_CORTX_COMPONENTS = [
     'cluster',
     'commons',
     'controller',
@@ -104,8 +104,8 @@ LOG_FULL_FORMATTER = 'full'
 #   will be enabled forcibly
 LOG_FORCED_LOGFILE_CMDS = [
     'set_network',
-    'set_eosupdate_repo',
-    'eos_update',
+    'set_swupdate_repo',
+    'sw_update',
     'fw_update',
     'set_ssl_certs',
     'reboot_server',
