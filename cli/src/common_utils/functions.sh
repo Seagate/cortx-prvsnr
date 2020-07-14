@@ -1,14 +1,13 @@
 #!/bin/bash
 
-cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 log_file="${LOG_FILE:-/dev/null}"
-
 if [[ ! -e "$log_file" ]]; then
     mkdir -p $(dirname "${log_file}")
     touch "${log_file}"
 fi
 
 # rpm package places scripts in parent folder
+cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 pparent_dir=$(cd $cli_scripts_dir/../ && pwd)
 if [[ "$(basename ${pparent_dir})" == 'src' ]]; then
     repo_root_dir="$(realpath $cli_scripts_dir/../../../)"
