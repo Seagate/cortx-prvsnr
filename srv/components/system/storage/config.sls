@@ -141,6 +141,13 @@ Make metadata partition:
       - label: eos_metadata
       - require:
         - module: Create metadata partition
+
+Refresh partition:
+  cmd.run:
+    - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath* || true
+  module.run:
+    - partition.probe: []
+
 {% else %}
 # For VMs
 # Create partition for SWAP
@@ -189,13 +196,14 @@ Make metadata partition:
       - label: eos_metadata
       - require:
         - module: Create metadata partition
-{% endif %}
 
 Refresh partition:
   cmd.run:
-    - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath* || true
+    - name: blockdev --flushbufs /dev/vd* || true
   module.run:
     - partition.probe: []
+
+{% endif %}
 
 # Refresh
 {% if not 'single' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
