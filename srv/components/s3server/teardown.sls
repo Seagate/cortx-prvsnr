@@ -6,7 +6,7 @@
 {% if pillar["cluster"][grains["id"]]["is_primary"] %}
 Stage - Post Install S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/s3server/conf/setup.yaml', 's3server:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:reset')
 {% endif %}
 
 
@@ -19,9 +19,9 @@ Stop s3authserver service:
     - enable: False
     - init_delay: 2
 
-Remove eos-s3server:
+Remove cortx-s3server:
   pkg.purged:
-    - name: eos-s3server
+    - name: cortx-s3server
 
 #Remove s3server_uploads:
 #  pkg.purged:
@@ -74,11 +74,11 @@ Remove common_runtime libraries:
 #------------------------------
 # Teardown S3IAMCLI Start
 #------------------------------
-Remove eos-s3iamcli:
+Remove cortx-s3iamcli:
   pkg.removed:
     - pkgs:
-      - eos-s3iamcli
-#       # - eos-s3iamcli
+      - cortx-s3iamcli
+#       # - cortx-s3iamcli
 #       # - s3server-debuginfo
 #------------------------------
 # Teardown S3IAMCLI End
@@ -96,4 +96,4 @@ Remove s3server repo:
 
 Delete s3server checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.s3server
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3server

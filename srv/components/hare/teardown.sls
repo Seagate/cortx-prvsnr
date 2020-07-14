@@ -5,7 +5,7 @@ include:
 
 Stage - Reset Hare:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/hare/conf/setup.yaml', 'hare:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:reset')
 
 Remove cluster yaml:
   file.absent:
@@ -14,7 +14,7 @@ Remove cluster yaml:
 
 Remove Hare:
   pkg.purged:
-    - name: eos-hare
+    - name: cortx-hare
 
 Remove jq:
   pkg.purged:
@@ -26,4 +26,4 @@ Delete Hare yum repo:
 
 Remove hare checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.hare
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.hare

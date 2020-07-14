@@ -11,6 +11,6 @@ setup EES HA on non-primary node:
 
 Generate ees_ha checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.ees_ha
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ees_ha
     - makedirs: True
     - create: True

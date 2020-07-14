@@ -279,7 +279,7 @@ def get_release_version(targets=ALL_MINIONS, nowait=False):
     :param nowait: (optional) Run asynchronously. Default: False
     """
 
-    retrun _api_call(
+    return _api_call(
         'get_release_version', targets=targets, nowait=nowait
     )
 

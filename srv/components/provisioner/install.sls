@@ -1,5 +1,5 @@
 provisioner_package_installed:
   pkg.installed:
     - pkgs:
-      - eos-prvsnr: latest
+      - cortx-prvsnr: latest
     - refresh: True

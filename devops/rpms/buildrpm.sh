@@ -7,9 +7,9 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 BUILD_NUMBER=0
 GIT_VER=
-EOS_PRVSNR_VERSION=1.0.0
+CORTX_PRVSNR_VERSION=1.0.0
 
-usage() { echo "Usage: $0 [-G <git short revision>] [-S <EOS Provisioner version>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-G <git short revision>] [-S <CORTX Provisioner version>]" 1>&2; exit 1; }
 
 # Install rpm-build package
 rpm --quiet -qi git || yum install -q -y git && echo "git already installed."
@@ -26,7 +26,7 @@ while getopts ":g:e:b:" o; do
             GIT_VER=${OPTARG}
             ;;
         e)
-            EOS_PRVSNR_VERSION=${OPTARG}
+            CORTX_PRVSNR_VERSION=${OPTARG}
             ;;
         b)
             BUILD_NUMBER=${OPTARG}
@@ -42,16 +42,16 @@ if [ -z "${GIT_VER}" ]; then
     GIT_VER=`git rev-parse --short HEAD`
 fi
 
-echo "Using [EOS_PRVSNR_VERSION=${EOS_PRVSNR_VERSION}] ..."
+echo "Using [CORTX_PRVSNR_VERSION=${CORTX_PRVSNR_VERSION}] ..."
 echo "Using [GIT_VER=${GIT_VER}] ..."
 
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 
-    rm -rf eos-prvsnr*
+    rm -rf cortx-prvsnr*
 
     # Setup the source tar for rpm build
-    DEST_DIR=eos-prvsnr-${EOS_PRVSNR_VERSION}-git${GIT_VER}
+    DEST_DIR=cortx-prvsnr-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
     mkdir -p ${DEST_DIR}/{cli,files/etc,pillar,srv,api}
     cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIR}/cli
     cp -R ${BASEDIR}/../../files/conf ${DEST_DIR}/files
@@ -63,9 +63,9 @@ pushd ~/rpmbuild/SOURCES/
     tar -zcvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf ${DEST_DIR}
 
-    yum-builddep -y ${BASEDIR}/eos-prvsnr.spec
+    yum-builddep -y ${BASEDIR}/cortx-prvsnr.spec
 
-    rpmbuild -bb --define "_ees_prvsnr_version ${EOS_PRVSNR_VERSION}" --define "_ees_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/eos-prvsnr.spec
+    rpmbuild -bb --define "_cortx_prvsnr_version ${CORTX_PRVSNR_VERSION}" --define "_cortx_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/cortx-prvsnr.spec
 
 popd
 

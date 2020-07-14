@@ -8,7 +8,7 @@ Hare requisites:
 
 Install hare:
   pkg.installed:
-    - name: eos-hare
+    - name: cortx-hare
     - version: latest
     - refresh: True
     - require:

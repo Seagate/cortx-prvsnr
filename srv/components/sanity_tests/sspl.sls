@@ -12,10 +12,10 @@ Create SSPL Sanity test script:
       - contents: |
           #!/bin/bash
           echo "Runnign SSPL sanity"
-          echo "state=active" > /var/eos/sspl/data/state.txt
+          echo "state=active" > /var/cortx/sspl/data/state.txt
           PID=$(/sbin/pidof -s /usr/bin/sspl_ll_d)
             kill -s SIGHUP $PID
-          sh /opt/seagate/eos/sspl/sspl_test/run_tests.sh
+          sh /opt/seagate/cortx/sspl/sspl_test/run_tests.sh
 
 Run SSPL Sanity tests:
   cmd.run:

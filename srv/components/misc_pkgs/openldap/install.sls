@@ -15,24 +15,9 @@ Backup slapd config file:
     - force: True
     - preserve: True
 
-
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) -%}
 Generate Slapdpasswds:
    cmd.run:
-     - name: sh /opt/seagate/eos-prvsnr/generated_configs/ldap/ldap_gen_passwd.sh
-{% else -%}
-{% for node_id in pillar['cluster']['node_list'] %}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
-SCP iam-admin.ldif:
-  cmd.run:
-    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/iam-admin.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
-
-SCP cfg_ldap.ldif:
-  cmd.run:
-    - name: scp -r {{ pillar['cluster'][node_id]['hostname'] }}:/opt/seagate/eos-prvsnr/generated_configs/ldap/cfg_ldap.ldif /opt/seagate/eos-prvsnr/generated_configs/ldap/
-{%- endif %}
-{% endfor %}
-{%- endif %}
+     - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
 
 Stop slapd:
   service.dead:
@@ -51,14 +36,13 @@ Clean up old mdb ldiff file:
 Copy mdb ldiff file, if not present:
   file.copy:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
-    - source: /opt/seagate/eos-prvsnr/generated_configs/ldap/olcDatabase={2}mdb.ldif
+    - source: /opt/seagate/cortx/provisioner/generated_configs/ldap/olcDatabase={2}mdb.ldif
     - force: True
     - user: ldap
     - group: ldap
     - watch_in:
       - service: slapd
 {% endif %}
-
 
 slapd:
   service.running:

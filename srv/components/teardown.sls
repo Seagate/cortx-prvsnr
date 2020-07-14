@@ -6,7 +6,7 @@ include:
   - components.ha.ees_ha.teardown
   - components.hare.teardown
   - components.s3server.teardown
-  - components.eoscore.teardown
+  - components.motr.teardown
   # Remove pre-reqs
   - components.misc_pkgs.lustre.teardown
   - components.misc_pkgs.statsd.teardown

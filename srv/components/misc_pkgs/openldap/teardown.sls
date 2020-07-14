@@ -1,3 +1,6 @@
+include:
+  - components.misc_pkgs.openldap.replication.teardown
+
 {% import_yaml 'components/defaults.yaml' as defaults %}
 {% set rpm_build_dir = defaults.tmp_dir + "/rpmbuild/RPMS/x86_64" %}
 
@@ -25,7 +28,7 @@ Remove pkgs:
    '/etc/sysconfig/slapd',
    '/etc/sysconfig/slapd.bak',
    '/etc/openldap/slapd.d',
-   '/opt/seagate/eos-prvsnr/generated_configs/ldap'
+   '/opt/seagate/cortx/provisioner/generated_configs/ldap'
  ] %}
 {{ filename }}:
   file.absent:
@@ -55,4 +58,4 @@ Reset permissions:
 
 Delete openldap checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.openldap
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap

@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Script to run end to end deployment of EOS for 2 node setup.
+# Script to run end to end deployment of CORTX for 2 node setup.
 
 set -euE
 
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/auto-deploy-eos.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/auto-config-prvsnr.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 # /usr/bin/true > $LOG_FILE
 truncate -s 0 ${LOG_FILE}
 
-PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 
 trap_handler ()
 {
@@ -60,9 +60,9 @@ usage()
 {
     echo "\
 Usage:
-auto-deploy-eos { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+auto-config-prvsnr { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
                   -C <cluster-ip> -V <management VIP>
-                  -t <target build url for EOS>
+                  -t <target build url for CORTX>
                   [Optional Arguments] }
 
 Optional Arguments:
@@ -94,14 +94,14 @@ help()
   echo "\
 ----------- Caveats -------------
 1. The command must be run from primary node in the cluster.
-2. Ensure the setup is clean and no eos rpms are installed.
+2. Ensure the setup is clean and no cortx rpms are installed.
 3. Ensure the ~/.ssh directory is empty.
 4. If optional arguments are skipped the default values in cluster.sls and
    storage_enclosure.sls are used.
 5. Ensure the BMC user and password are same for both nodes in the cluster.
 
 -------- Sample command ---------
-$ auto-deploy-eos -s sm27-r22.pun.seagate.com -p 'seagate'
+$ auto-config-prvsnr -s sm27-r22.pun.seagate.com -p 'seagate'
   -C 172.19.222.27 -V 10.230.215.45 -n enp216s0f0 -N enp216s0f1
   -i 172.19.22.27 -I 172.19.22.28 -A 10.230.10.2 -B 10.230.10.3 -U manage -P 'S34gate123!'
   -b manage -m 'admin!'
@@ -249,27 +249,27 @@ ssh_tool_pkg=$(basename $ssh_tool)
 
 install_prvsnr_cli()
 {
-    # Install eos-prvsnr-cli rpm from ci-storage and install it on both nodes
+    # Install cortx-prvsnr-cli rpm from ci-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
     if [[ "$target_node" = "srvnode-1" ]]; then
-        rpm -qa | grep -q eos && {
-            echo "ERROR: eos packages are already installed"
+        rpm -qa | grep -q cortx && {
+            echo "ERROR: cortx packages are already installed"
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-        yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+        yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
         systemctl stop firewalld || true
         return 0
     fi
 $remote_cmd <<EOF
     set -eu
-    rpm -qa | grep -q eos && {
-      echo "ERROR: eos packages are already installed"
+    rpm -qa | grep -q cortx && {
+      echo "ERROR: cortx packages are already installed"
       echo "Please clean-up previous installtion from both the nodes and retry"
       exit 1
     }
-    yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+    yum-config-manager --add-repo $tgt_build ; yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
     systemctl stop firewalld || true
 
 EOF
@@ -278,20 +278,20 @@ EOF
 install_config_prvsnr()
 {
     set -eu
-    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
+    echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     install_prvsnr_cli "srvnode-2"
 
-    echo -e "\n\t***** INFO: Installing eos-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
+    echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     install_prvsnr_cli "srvnode-1"
 
     # Run setup provisioner
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    echo -e "\n\tRunning sh /opt/seagate/eos-prvsnr/cli/setup-provisioner"\
+    echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/setup-provisioner"\
         "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $LOG_FILE
-    sh /opt/seagate/eos-prvsnr/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
+    sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
     echo "Done" 2>&1 | tee -a $LOG_FILE
 }
 
@@ -375,7 +375,7 @@ update_pillar()
     #Update storage_enclosure pillar
     echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
-    _storage_sls_path="/opt/seagate/eos-prvsnr/pillar/components/storage_enclosure.sls"
+    _storage_sls_path="/opt/seagate/cortx/provisioner/pillar/components/storage_enclosure.sls"
     cp $_storage_sls_path ${_storage_sls_path}.orig
 
     #Update controller_ip1
@@ -413,7 +413,7 @@ update_pillar()
     # Update s3client.sls
     echo "Updating s3clients.sls" 2>&1|tee -a $LOG_FILE
 
-    _s3client_sls_path="/opt/seagate/eos-prvsnr/pillar/components/s3clients.sls"
+    _s3client_sls_path="/opt/seagate/cortx/provisioner/pillar/components/s3clients.sls"
     cp $_s3client_sls_path ${_s3client_sls_path}.orig
 
     #Update cluster_ip in s3clients
@@ -435,5 +435,5 @@ install_config_prvsnr
 update_pillar
 
 echo -e "\n***** SUCCESS!! *****" 2>&1 | tee -a $LOG_FILE
-echo " Check following logs to see the complete logs of auto-deploy-eos: $LOG_FILE" 2>&1 | tee -a $LOG_FILE
+echo " Check following logs to see the complete logs of auto-config-prvsnr: $LOG_FILE" 2>&1 | tee -a $LOG_FILE
 echo "Done"

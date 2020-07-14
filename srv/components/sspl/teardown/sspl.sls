@@ -1,13 +1,13 @@
 Stage - Reset SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/eos/sspl/conf/setup.yaml', 'sspl:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:reset')
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 Remove sspl packages:
   pkg.purged:
     - pkgs:
-      - eos-sspl
-      - eos-sspl-test
+      - cortx-sspl
+      - cortx-sspl-test
 
 Remove flask:
   pip.removed:
@@ -33,4 +33,4 @@ Remove health_view conf directory:
 
 Delete sspl checkpoint flag:
   file.absent:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.sspl

@@ -72,7 +72,7 @@ Execute initialization and configuration scripts
 # Environments
 ## Dev Setup
 For environment specific details please refer to:
-http://gitlab.mero.colo.seagate.com/eos/provisioner/eos-prvsnr/wikis/Dev-Setup
+http://gitlab.mero.colo.seagate.com/eos/provisioner/cortx/provisioner/wikis/Dev-Setup
 
 ## Factory Setup
 

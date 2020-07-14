@@ -10,6 +10,6 @@ include:
 
 Generate system checkpoint flag:
   file.managed:
-    - name: /opt/seagate/eos-prvsnr/generated_configs/{{ grains['id'] }}.system
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
     - makedirs: True
     - create: True
