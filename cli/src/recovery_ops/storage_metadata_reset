@@ -48,7 +48,9 @@ function trigger_hare_reset {
     _linfo "Starting metadata reset using Hare utility: hare-m0reset."
     _linfo "*****************************************************************"
     
-    bash /opt/seagate/cortx/hare/libexec/prov-m0-reset /var/lib/hare/cluster.yaml /var/lib/hare/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+    /opt/seagate/cortx/ha/conf/script/prov-m0-reset \
+        /var/lib/hare/cluster.yaml \
+        /opt/seagate/cortx/ha/conf/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
         _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
     )
 
