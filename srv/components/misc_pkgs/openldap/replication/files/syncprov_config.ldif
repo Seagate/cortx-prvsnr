@@ -1,7 +1,7 @@
-# syncprov data file
+# syncprov config file
 # Command to add configuration to ldap:
 # ldapadd -Y EXTERNAL -H ldapi:/// -f syncprov_config.ldif
-dn: olcOverlay=syncprov,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+dn: olcOverlay=syncprov,olcDatabase={0}config,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcSyncProvConfig
 olcOverlay: syncprov

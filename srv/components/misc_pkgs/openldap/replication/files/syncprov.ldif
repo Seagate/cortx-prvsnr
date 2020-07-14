@@ -1,6 +1,6 @@
-# push provider for data replication
+# syncprov data file
 # Command to add configuration to ldap:
-# ldapadd -Y EXTERNAL  -H ldapi:/// -f  syncprov_data.ldif
+# ldapadd -Y EXTERNAL -H ldapi:/// -f syncprov.ldif
 dn: olcOverlay=syncprov,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
 objectClass: olcOverlayConfig
 objectClass: olcSyncProvConfig
