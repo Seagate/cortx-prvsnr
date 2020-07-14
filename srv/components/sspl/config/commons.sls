@@ -21,12 +21,11 @@ Add common config - rabbitmq cluster to Consul:
 Add common config - BMC to Consul:
   cmd.run:
     - name: |
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-1/ip {{ pillar['cluster']['srvnode-1']['bmc']['ip'] }}
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-1/user {{ pillar['cluster']['srvnode-1']['bmc']['user'] }}
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-1/secret {{ pillar['cluster']['srvnode-1']['bmc']['secret'] }}
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-2/ip {{ pillar['cluster']['srvnode-2']['bmc']['ip'] }}
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-2/user {{ pillar['cluster']['srvnode-2']['bmc']['user'] }}
-        /opt/seagate/cortx/hare/bin/consul kv put bmc/srvnode-2/secret {{ pillar['cluster']['srvnode-2']['bmc']['secret'] }}
+{% for node in pillar['cluster']['node_list'] %}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/ip {{ pillar['cluster'][node]['bmc']['ip'] }}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/user {{ pillar['cluster'][node]['bmc']['user'] }}
+        /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/secret {{ pillar['cluster'][node]['bmc']['secret'] }}
+{% endfor %}
 
 Add common config - storage enclosure to Consul:
   cmd.run:

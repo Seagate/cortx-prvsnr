@@ -42,7 +42,7 @@ pipeline {
                 sh encoding: 'utf-8', label: '', returnStdout: true, script: '''
                     rm -rf /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
                     test -d /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER} || mkdir -p /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
-                    cp /root/rpmbuild/RPMS/x86_64/eos-prvsnr* /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
+                    cp /root/rpmbuild/RPMS/x86_64/cortx-prvsnr* /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
                 '''
             }
         }

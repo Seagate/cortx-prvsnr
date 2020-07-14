@@ -1,14 +1,13 @@
 #!/bin/bash
 
-cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 log_file="${LOG_FILE:-/dev/null}"
-
 if [[ ! -e "$log_file" ]]; then
     mkdir -p $(dirname "${log_file}")
     touch "${log_file}"
 fi
 
 # rpm package places scripts in parent folder
+cli_scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 pparent_dir=$(cd $cli_scripts_dir/../ && pwd)
 if [[ "$(basename ${pparent_dir})" == 'src' ]]; then
     repo_root_dir="$(realpath $cli_scripts_dir/../../../)"
@@ -1086,8 +1085,9 @@ function install_provisioner {
     local _singlenode="${6:-false}"
     local _installdir="${7:-/opt/seagate/cortx/provisioner}"
     local _dev_repo="${8:-false}"
-    local _os_release="centos-7.7.1908"
-
+    local _os_release="rhel-7.7.1908"
+    #local _os_release="centos-7.7.1908"
+    
     local _prvsnr_repo=
     local _repo_archive_path=
     local _tmp_dir=$(mktemp -d)
@@ -1149,9 +1149,8 @@ function install_provisioner {
                     createrepo .
                 popd
                 _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
-
             else
-                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/rhel-7.7.1908/last_successful"
+                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
             fi
         fi
     fi
@@ -1657,7 +1656,7 @@ function update_release_pillar {
 
     #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
-    provisioner pillar_set eos_release/target_build \"${_release_ver}\"
+    provisioner pillar_set release/target_build \"${_release_ver}\"
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>

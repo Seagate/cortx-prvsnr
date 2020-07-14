@@ -1,6 +1,6 @@
 tmp_dir: /tmp
 
-{% set repo_url = pillar['eos_release']['target_build'] %}
+{% set repo_url = pillar['release']['target_build'] %}
 
 {% if "RedHat" in grains['os'] %}
 {% set cortx_commons_url = pillar['commons']['cortx_commons']['RedHat'] %}

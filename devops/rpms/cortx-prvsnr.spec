@@ -63,28 +63,22 @@ rm -rf %{buildroot}
 
 
 %post
+install_dir=/opt/seagate/cortx/provisioner
+api_dir="${install_dir}/api/python"
+prvsnr_group=prvsnrusers
 
 # set api
-#   adding prvsnrusers group
-echo "Creating group 'prvsnrusers'..."
-groupadd -f prvsnrusers
-#   set access rights for api users
-#       user file root
-mkdir -p /opt/seagate/cortx/provisioner/srv_user
-chown -R :prvsnrusers /opt/seagate/cortx/provisioner/srv_user
-chmod -R g+rws /opt/seagate/cortx/provisioner/srv_user
-setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/cortx/provisioner/srv_user
-#       user pillar
-mkdir -p /opt/seagate/cortx/provisioner/pillar/user
-chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
-chmod -R g+rws /opt/seagate/cortx/provisioner/pillar/user
-setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/cortx/provisioner/pillar/user
+#   adding provisioner group
+echo "Creating group '$prvsnr_group'..."
+groupadd -f "$prvsnr_group"
+
+echo "Configuring access for provisioner data ..."
+bash "${api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
+
 
 #   install api globally using pip
-pip3 install -U /opt/seagate/cortx/provisioner/api/python
+pip3 install -U "${api_dir}"
 
-chown -R :prvsnrusers /opt/seagate/cortx/provisioner/cli
-chmod -R 750 /opt/seagate/cortx/provisioner/cli
 
 %preun
 # uninstall api globally using pip (only for pkg uninstall)

@@ -4,33 +4,54 @@ include:
   - components.misc_pkgs.openldap.start
 
 {% if pillar['cluster']['type'] != "single" -%}
-Configure openldap syncprov_mod:
+Configure unique olcserver Id:
+  cmd.run:
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/olcserverid.ldif
+    - watch_in:
+      - Start sldapd service
+
+Load provider module:
   cmd.run:
     - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif
-    # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=module,cn=config"
+    - require:
+      - Configure unique olcserver Id
     - watch_in:
       - Start sldapd service
-Configure openldap syncprov:
+
+Push Provider ldif for config replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif
-    # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcOverlay=syncprov,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config"
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_config.ldif
     - require:
-      - Configure openldap syncprov_mod
+      - Load provider module
     - watch_in:
       - Start sldapd service
-Configure openldap replication:
+
+Push config replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif
-    # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=config"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config"
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/config.ldif
     - require:
-      - Configure openldap syncprov
+      - Push Provider ldif for config replication
+    - watch_in:
+      - Start sldapd service
+
+{% if "primary" in grains["roles"][0] -%}
+Push provider for data replication:
+  cmd.run:
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_data.ldif
+    - require:
+      - Push config replication
+    - watch_in:
+      - Start sldapd service
+
+Push data replication ldif:
+  cmd.run:
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/data.ldif
+    - require:
+      - Push provider for data replication
     - watch_in:
       - Start sldapd service
 {%- endif %}
+{% endif -%}
 
 # Validate replication configs are set using command:
 # ldapsearch -w <ldappasswd> -x -D cn=admin,cn=config -b cn=config "olcSyncrepl=*"|grep olcSyncrepl: {0}rid=001

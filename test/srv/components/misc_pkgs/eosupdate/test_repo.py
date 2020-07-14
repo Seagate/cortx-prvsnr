@@ -104,7 +104,7 @@ def test_eosupdate_repo(
         # INSTALL
         # set source for the release
         if isinstance(source, Path):
-            _source = h.PRVSNR_USER_FILEROOTS_DIR / h.PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / release
+            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / release
             pillar_source = 'dir'
 
             if source.suffix == '.iso':

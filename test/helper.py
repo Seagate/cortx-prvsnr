@@ -23,8 +23,8 @@ from provisioner.config import *
 
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
-PRVSNR_PKG_NAME = 'eos-prvsnr'
-PRVSNR_CLI_PKG_NAME = 'eos-prvsnr-cli'
+PRVSNR_PKG_NAME = 'cortx-prvsnr'
+PRVSNR_CLI_PKG_NAME = 'cortx-prvsnr-cli'
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80
 

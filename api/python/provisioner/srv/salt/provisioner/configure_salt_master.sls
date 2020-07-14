@@ -17,11 +17,11 @@ salt_minion_{{ id }}_key_deleted:
 
 salt_master_pki_set:
   file.recurse:
-    - name: /etc/salt/pki/master/minions/
+    - name: /etc/salt/pki/master/
     - source: salt://provisioner/files/master/pki
     - clean: False
     - keep_source: True
-    - maxdepth: 0
+    - maxdepth: 1
 
 salt_master_enabled:
   service.enabled:

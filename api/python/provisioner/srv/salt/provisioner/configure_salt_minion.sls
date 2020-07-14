@@ -30,6 +30,14 @@ salt_minion_pki_set:
     - keep_source: True
     - maxdepth: 0
 
+salt_minion_master_pki_set:
+  file.managed:
+    - name: /etc/salt/pki/minion/minion_master.pub
+    - source: salt://provisioner/files/master/pki/master.pub
+    - keep_source: True
+    - backup: minion
+    - template: jinja
+
 salt_minion_enabled:
   service.enabled:
     - name: salt-minion.service
@@ -38,6 +46,7 @@ salt_minion_enabled:
       - salt_minion_grains_configured
       - salt_minion_id_set
       - salt_minion_pki_set
+      - salt_minion_master_pki_set
 
 salt_minion_stopped:
   service.dead:
@@ -47,3 +56,4 @@ salt_minion_stopped:
       - file: salt_minion_grains_configured
       - file: salt_minion_id_set
       - file: salt_minion_pki_set
+      - file: salt_minion_master_pki_set

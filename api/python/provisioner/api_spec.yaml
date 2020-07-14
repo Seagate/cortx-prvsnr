@@ -38,14 +38,14 @@ set_network:
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
-set_eosupdate_repo:
-  type: SetEOSUpdateRepo
-  input_type: EOSUpdateRepo
+set_swupdate_repo:
+  type: SetSWUpdateRepo
+  input_type: SWUpdateRepo
   states:
     post:
-    - components.misc_pkgs.eosupdate.repo
-eos_update:
-  type: EOSUpdate
+    - components.misc_pkgs.swupdate.repo
+sw_update:
+  type: sw_update
 fw_update:
   type: FWUpdate
 set_ssl_certs:
@@ -62,11 +62,13 @@ reboot_controller:
   type: RebootController
 shutdown_controller:
   type: ShutdownController
-configure_eos:
-  type: ConfigureEOS
+configure_cortx:
+  type: Configure_Cortx
 create_user:
   type: CreateUser
-setup_eos_singlenode:
+setup_singlenode:
   type: SetupSinglenode
-setup_eos_cluster:
+setup_cluster:
   type: SetupCluster
+replace_node:
+  type: ReplaceNode

@@ -87,7 +87,7 @@ def parse_args(args=None):
             prvsnr_config.env['PRVSNR_OUTPUT']
             not in config.PRVSNR_CLI_MACHINE_OUTPUT
         ),
-        description="EOS Provisioner CLI",
+        description="CORTX Provisioner CLI",
         parents=[parser_common],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )

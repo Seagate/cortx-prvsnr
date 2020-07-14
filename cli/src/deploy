@@ -2,10 +2,8 @@
 
 set -euE
 
-trap trap_handler ERR
 
-SCRIPT_PATH=$(readlink -f "$0")
-BASEDIR=$(dirname "$SCRIPT_PATH")
+BASEDIR=$(dirname "${BASH_SOURCE}")
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy.log}"
 export LOG_FILE
@@ -18,6 +16,7 @@ function trap_handler {
     echo "***** FAILED!! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
 }
+trap trap_handler ERR
 
 run_all=true
 run_system_states=false
@@ -79,6 +78,7 @@ controlpath_states=(
 sync_states=(
     # states to be applied in desired sequence
         "sync.software.openldap"
+        "sync.software.rabbitmq"
     )
 
 function usage {
@@ -96,7 +96,7 @@ Options:
        --system-states             deploy only system states
        --prereq-states             deploy only prereq states (components.misc_pkgs)
        --sync_states               deploy only the software synchronization
-       --iopath-states             deploy only iopath states (eoscore, s3server & Hare)
+       --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
 "
@@ -166,7 +166,7 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.rabbitmq"
+            elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "system.storage.multipath"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
@@ -203,7 +203,7 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt
+    python3 ${BASEDIR}/pillar_encrypt
     update_salt
 }
 
