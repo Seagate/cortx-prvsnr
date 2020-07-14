@@ -1,8 +1,8 @@
 {%- if pillar['cluster']['type'] != "single" -%}
 {% for filename in [
-    { "src": 'salt://components/misc_pkgs/openldap/files/create_replication_account.ldif',
+    { "src": 'salt://components/misc_pkgs/openldap/replication/files/create_replication_account.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif' },
-    { "src": 'salt://components/misc_pkgs/openldap/files/check_ldap_replication.sh',
+    { "src": 'salt://components/misc_pkgs/openldap/replication/files/check_ldap_replication.sh',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh' },
   ]
 %}
