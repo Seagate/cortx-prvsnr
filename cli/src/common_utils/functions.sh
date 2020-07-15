@@ -1149,12 +1149,15 @@ function install_provisioner {
                     createrepo .
                 popd
                 _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
-
             else
                 _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
             fi
         fi
     fi
+
+if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
+    wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
+fi
 
 ! read -r -d '' _prvsnr_repo << EOF
 [provisioner]

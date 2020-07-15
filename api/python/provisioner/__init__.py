@@ -32,7 +32,8 @@ from .api import (  # noqa: F401
     reboot_controller,
     shutdown_controller,
     configure_cortx,
-    create_user
+    create_user,
+    get_release_version
 )
 
 from .values import (  # noqa: F401
@@ -64,6 +65,7 @@ __all__ = [
     'shutdown_controller',
     'configure_cortx',
     'create_user',
+    'get_release_version',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',
