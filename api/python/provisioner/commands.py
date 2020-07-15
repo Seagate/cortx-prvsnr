@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import uuid
 from pathlib import Path
+import json, yaml
 
 from .errors import (
     ProvisionerError,
@@ -1085,9 +1086,8 @@ class GetReleaseVersion(CommandParserFillerMixin):
 
     def run(self, targets):
         source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        with open(source, 'r') as filehandle:
-            filecontent = filehandle.read()
-            return filecontent
+        with open(source, 'r') as filehandle
+            return json.dumps(yaml.load(filehandle))
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
