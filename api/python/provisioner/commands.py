@@ -1695,9 +1695,6 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
         
-        # TODO IMPROVE condiition to verify local_repo
-        # local_repo would be set from config.PROJECTPATH as default if not specified  
-        # as an argument and config.PROJECT could be None if repo not found.
         if not run_args.local_repo:
             raise ValueError("local repo is undefined")
 
