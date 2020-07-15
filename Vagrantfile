@@ -191,7 +191,7 @@ Vagrant.configure("2") do |config|
       end             # Virtualbox provisioner
 
       # Folder synchonization
-      node_config.vm.synced_folder ".", "/opt/seagate/eos-prvsnr",
+      node_config.vm.synced_folder ".", "/opt/seagate/cortx/provisioner",
         type: "rsync",
         rsync__args: ["--archive", "--delete", "-z", "--copy-links"],
         rsync__auto: true,
@@ -208,8 +208,8 @@ Vagrant.configure("2") do |config|
         name: "Vagrant_override",
         #run: "once",
         inline: <<-SHELL
-          if [[ -d '/opt/seagate/cortx-prvsnr' ]]; then
-            BASEDIR=/opt/seagate/cortx-prvsnr
+          if [[ -d '/opt/seagate/cortx/provisioner' ]]; then
+            BASEDIR=/opt/seagate/cortx/provisioner
           else
             BASEDIR=/opt/seagate/eos-prvsnr
           fi

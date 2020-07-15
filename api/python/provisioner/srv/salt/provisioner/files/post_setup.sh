@@ -20,8 +20,8 @@ user_srv_pillar_dir="${user_srv_dir}/pillar"
 seagate_log_dir=/var/log/seagate
 prvsnr_log_dir="${seagate_log_dir}/provisioner"
 
-user_srv_fileroot_dir_old=/opt/seagate/eos-prvsnr/srv_user   # FIXME deprecate that
-user_srv_pillar_dir_old=/opt/seagate/eos-prvsnr/pillar/user  # FIXME deprecate that
+user_srv_fileroot_dir_old=/opt/seagate/cortx/provisioner/srv_user   # FIXME deprecate that
+user_srv_pillar_dir_old=/opt/seagate/cortx/provisioner/pillar/user  # FIXME deprecate that
 
 echo "Configuring access for provisioner data ..."
 # TODO IMPROVE EOS-9581 consider to remove _old dirs someday
