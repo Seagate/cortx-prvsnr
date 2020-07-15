@@ -197,12 +197,6 @@ Make metadata partition:
       - require:
         - module: Create metadata partition
 
-Refresh partition:
-  cmd.run:
-    - name: blockdev --flushbufs /dev/vd* || true
-  module.run:
-    - partition.probe: []
-
 {% endif %}
 
 # Refresh
