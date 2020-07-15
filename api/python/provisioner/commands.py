@@ -1086,7 +1086,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
 
     def run(self, targets):
         source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        with open(source, 'r') as filehandle
+        with open(source, 'r') as filehandle:
             return json.dumps(yaml.load(filehandle))
 
 # TODO TEST
