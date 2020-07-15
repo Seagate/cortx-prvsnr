@@ -1694,6 +1694,10 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
+        
+        if not run_args.local_repo:
+            raise ValueError("local repo is undefined")
+
         minion_cfg_sample_path = (
             run_args.local_repo /
             'srv/components/provisioner/salt_minion/files/minion'
@@ -1922,6 +1926,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._clean_salt_cache(paths)
 
         # APPLY CONFIGURATION
+        
+        logger.info("Installing Cortx yum repositories")
+        ssh_client.state_apply('cortx_repos')
 
         if run_args.ha:
             volumes = {
@@ -2010,9 +2017,6 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
-
-        logger.info("Installing Cortx yum repositories")
-        ssh_client.state_apply('cortx_repos')
 
         logger.info("Configuring the firewall")
         ssh_client.state_apply('firewall')
