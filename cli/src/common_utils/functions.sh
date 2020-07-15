@@ -2005,9 +2005,9 @@ function update_bmc_ip {
 
     # Install ipmitool package
     if [[ -n "$_hostspec" ]]; then
-        ${_cmd} "yum install -y ipmitool"
+        ${_cmd} "rpm -qa ipmitools || yum install -y ipmitool"
     else
-        yum install -y ipmitool
+        rpm -qa ipmitools || yum install -y ipmitool
     fi
 
     l_info "Acquire BMC IP on NodeID: ${_hostspec}"

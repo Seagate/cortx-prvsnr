@@ -151,6 +151,7 @@ master_shuffle: False
 # Set the default outputter used by the salt-call command. The default is
 # "nested".
 #output: nested
+output: highstate
 
 # To set a list of additional directories to search for salt outputters, set the
 # outputter_dirs option.
@@ -651,6 +652,7 @@ pillar_roots:
 # full_id, mixed_id, changes_id and terse_id are also allowed;
 # when set, the state ID will be used as name in the output
 #state_output: full
+state_output: mixed
 
 # The state_output_diff setting changes whether or not the output from
 # successful states is returned. Useful when even the terse output of these
