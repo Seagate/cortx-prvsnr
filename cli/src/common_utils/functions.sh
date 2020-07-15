@@ -1155,7 +1155,7 @@ function install_provisioner {
         fi
     fi
 
-if curl --output /dev/null --silent --head --fail "$_prvsnr_version/MANIFEST.MF"; then
+if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
     wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
 fi
 
