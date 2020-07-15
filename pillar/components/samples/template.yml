@@ -4,7 +4,7 @@ cluster:
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: ees                           # single/ees/ecs
+  type: dual                           # single/dual/ecs
   node_list:
     - srvnode-1
     - srvnode-2
