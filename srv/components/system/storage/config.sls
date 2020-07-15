@@ -13,134 +13,139 @@ Label first LUN:
       - label_type: gpt
 
 {% if "physical" in grains['virtual'] %}
-# For HW
-# Preserve space for OS RAID/LVM partitions
-# /boot/efi  (note: this is partition #1)
-Create EFI partition:
+# Create single partition for LVM
+Create LVM partition:
   module.run:
-    - partition.mkpartfs:
+    - partition.mkpart:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
-      - fs_type: fat16
+      - fs_type: ext2
       - start: 0%
-      - end: 269MB
-
-# /boot  (note: this is partition #2)
-Create boot partition:
-  module.run:
-    - partition.mkpart:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: ext2
-      - start: 269MB
-      - end: 1343MB
-
-# The rest of the OS partitions (except /var/crash) (note: this is partition #3)
-Create OS partition:
-  module.run:
-    - partition.mkpart:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: ext2
-      - start: 1343MB
-      - end: 1001GB
-
-# /var/crash (not under RAID or LVM control; size ~1TB; note: this is partition #4)
-# temporarily removing /var/crash - may revisit this later
-#Create var_crash partition:
-#  module.run:
-#    - partition.mkpart:
-#      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-#      - part_type: primary
-#      - fs_type: ext2
-#      - start: 6%
-#      - end: 10%
-# done with the OS partitions
-
-# Create partition for SWAP (note: this is partition #4)
-Create swap partition:
-  module.run:
-    - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: linux-swap
-      - start: 1001GB
-      - end: 50%
-
-# Create partition for Metadata (note: this is partition #5)
-Create metadata partition:
-  module.run:
-    - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: ext4
-      - start: 51%
       - end: 100%
+# done creating partitions
 
-# Begin partitioning
-# Create /boot/efi
-Make EFI partition:
-  cmd.run:
-    - name: mkfs -t vfat {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    - require:
-      - module: Create EFI partition
-
-# Create /boot RAID (set flag)
-Make boot RAID:
+# Begin LVM config
+# Set LVM flag on partition
+# Convert metadata partion to LVM
+Set LVM flag:
   module.run:
     - partition.toggle:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - 2
-      - flag: raid
-    - require:
-      - module: Create boot partition
+      - 1
+      - flag: lvm
+      - require:
+        - module: Create LVM partition
+# done setting LVM flag
 
-# Create / RAID (set flag)
-Make ROOT RAID:
+# Creating LVM physical volume using pvcreate
+Make pv_metadata:
   module.run:
-    - partition.toggle:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - 3
-      - flag: raid
+    - lvm.pvcreate:
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - require:
-      - module: Create OS partition
+      - module: Set LVM flag
+# done creating LVM physical volumes
 
-# Create /var/crash
-#Make var_crash partition:
-#  module.run:
-#    - extfs.mkfs:
-#      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
-#      - fs_type: ext4
-#      - label: varcrash
-#      - require:
-#        - module: Create var_crash partition
+# Creating LVM Volume Group (vg); vg_name = vg_metadata
+Make vg_metadata:
+  module.run:
+    - lvm.vgcreate:
+      - vgname: vg_metadata
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+    - require:
+      - module: Make pv_metadata
+# done creating LVM VG
 
+# Creating LVM's Logical Volumes (LVs; one for metadata, swap, and raw_metadata)
+# Creating /var/motr metadata LV (size: 1TB)
+Make lv_metadata:
+  module.run:
+    - lvm.lvcreate:
+      - lvname: lv_metadata
+      - vgname: vg_metadata
+      - size: 1T
+    - require:
+      - module: Make vg_metadata
+
+# Creating swap LV (size: 50% of total VG space)
+Make lv_main_swap:
+  module.run:
+    - lvm.lvcreate:
+      - lvname: lv_main_swap
+      - vgname: vg_metadata
+      - size: 50%VG
+    - require:
+      - module: Make vg_metadata
+
+# Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 50% (less 1TB))
+Make lv_raw_metadata:
+  module.run:
+    - lvm.lvcreate:
+      - lvname: lv_raw_metadata
+      - vgname: vg_metadata
+      - size: 100%FREE
+    - require:
+      - module: Make vg_metadata
+# done creating LVM LVs
+# end LVM config
+
+# Format SWAP and metadata (but not raw_metadata!)
+# need to replace absolute path with proper structure
 # Format SWAP
-Make SWAP partition:
+Make SWAP
   cmd.run:
-    - name: sleep 10 && mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4 && sleep 5
-    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
+    - name: sleep 10 && mkswap -f /dev/vg_metadata/lv_main_swap && sleep 5
+    - onlyif: test -e /dev/vg_metadata/lv_main_swap
     - require:
-      - module: Create swap partition
+      - module: Make lv_main_swap
       - cmd: Ensure SWAP partition is unmounted
 
 # Activate SWAP device
 Enable swap:
   mount.swap:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
+    - name: /dev/vg_metadata/lv_main_swap
     - persist: True    # don't add /etc/fstab entry
     - require:
-      - cmd: Make SWAP partition
+      - cmd: Make SWAP
 
-# Format metadata partion
+# Format 1TB metadata partition
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
-      - fs_type: ext4
+      - device: /dev/vg_metadata/lv_metadata
+      - fstype: ext4
       - label: eos_metadata
       - require:
-        - module: Create metadata partition
+        - module: Make lv_metadata
+
+# ---------------------------------- OLD stuff below ----------------------
+# Format SWAP
+#Make SWAP partition:
+#  cmd.run:
+#    - name: sleep 10 && mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2 && sleep 5
+#    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+#    - require:
+#      - module: Create swap partition
+#      - cmd: Ensure SWAP partition is unmounted
+
+# Activate SWAP device
+#Enable swap:
+#  mount.swap:
+#    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+#    - persist: True    # don't add /etc/fstab entry
+#    - require:
+#      - cmd: Make SWAP partition
+
+# Format metadata partion
+#Make raw_metadata partition:
+#  module.run:
+#    - extfs.mkfs:
+#      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}3
+#      - fs_type: ext4
+#      - label: eos_raw_metadata
+#      - require:
+#        - module: Create raw_metadata partition
+# ------------------------------------ end of OLD stuff --------------------
 
 Refresh partition:
   cmd.run:
@@ -150,6 +155,9 @@ Refresh partition:
 
 {% else %}
 # For VMs
+
+# to-do: adjust VM config to use LVM
+
 # Create partition for SWAP
 Create swap partition:
   module.run:
