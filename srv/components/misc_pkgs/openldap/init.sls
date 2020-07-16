@@ -14,5 +14,5 @@ Generate openldap checkpoint flag:
 {%- else -%}
 OpenLDAP already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
+    - text: "OpenLDAP states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
 {% endif %}

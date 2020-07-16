@@ -96,7 +96,7 @@ Options:
        -S,  --singlenode           switch to single node mode setup
        --system-states             deploy only system states
        --prereq-states             deploy only prereq states (components.misc_pkgs)
-       --sync_states               deploy only the software synchronization
+       --sync-states               deploy only the software synchronization
        --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ha-states                 deploy only ha states (corosync-pacemaker, ees_ha)
        --ctrlpath-states           deploy only control path states (sspl & csm)
@@ -221,7 +221,7 @@ salt_opts_dry_run=
 if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
-salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
+salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run --timeout=600"
 
 update_salt
 
