@@ -56,6 +56,8 @@ get_node_id:
   type: GetNodeId
 get_release_version:
   type: GetReleaseVersion
+get_factory_version:
+  type: GetFactoryVersion
 reboot_server:
   type: RebootServer
 reboot_controller:
