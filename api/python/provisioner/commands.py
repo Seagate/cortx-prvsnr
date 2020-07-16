@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 from pathlib import Path
 import json, yaml
+import os
 
 from .errors import (
     ProvisionerError,
@@ -20,7 +21,8 @@ from .errors import (
     HAPostUpdateError,
     ClusterNotHealthyError,
     SaltCmdResultError,
-    SSLCertsUpdateError
+    SSLCertsUpdateError,
+    ReleaseFileNotFoundError
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
@@ -1085,9 +1087,28 @@ class GetReleaseVersion(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
 
     def run(self, targets):
+        if os.path.isfile('/etc/yum.repos.d/RELEASE.INFO'):
+            source = "/etc/yum.repos.d/RELEASE.INFO"
+        else:
+            source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
+        try:
+            with open(source, 'r') as filehandle:
+                return json.dumps(yaml.load(filehandle))
+        except Exception as exc:
+            raise ReleaseFileNotFoundError(exc) from exc
+
+@attr.s(auto_attribs=True)
+class GetFactoryVersion(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    def run(self, targets):
         source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        with open(source, 'r') as filehandle
-            return json.dumps(yaml.load(filehandle))
+        try:
+            with open(source, 'r') as filehandle:
+                return json.dumps(yaml.load(filehandle))
+        except Exception as exc:
+            raise ReleaseFileNotFoundError(exc) from exc
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
