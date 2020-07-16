@@ -152,7 +152,6 @@ Data-zone:
     - services:
       - consul
       - dhclient
-      - ftp
       - haproxy
       - nfs
       - hare
