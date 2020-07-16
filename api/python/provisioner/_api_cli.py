@@ -166,6 +166,7 @@ for fun in [
     'shutdown_controller',
     'configure_cortx',
     'create_user',
-    'get_release_version'
+    'get_release_version',
+    'get_factory_version'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
