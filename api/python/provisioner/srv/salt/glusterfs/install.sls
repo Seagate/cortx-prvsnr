@@ -10,4 +10,4 @@ glusterfs_repo_is_installed:
     - humanname: glusterfs-7
     - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
     - gpgcheck: 0
-    - enbaled: 1
+    - enabled: 1
