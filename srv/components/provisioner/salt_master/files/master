@@ -640,6 +640,7 @@ ssh_update_roster: True
 # full_id, mixed_id, changes_id and terse_id are also allowed;
 # when set, the state ID will be used as name in the output
 #state_output: full
+state_output: mixed
 
 # The state_output_diff setting changes whether or not the output from
 # successful states is returned. Useful when even the terse output of these

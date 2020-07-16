@@ -207,7 +207,7 @@ if command -v pcs ; then
     echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break...Breathe in...Breathe out
 
-    echo "Thank you for your patience... Apreciate it!"
+    echo "Thank you for your patience... Appreciate it!"
 
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
