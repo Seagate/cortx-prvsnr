@@ -283,6 +283,7 @@ Management zone:
       - dhclient
       - csm
       - elasticsearch
+      - ftp
       - high-availability
       - ntpd
       - openldap
