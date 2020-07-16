@@ -8,8 +8,8 @@
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/olcserverid.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_config.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_config.ldif' },
-    { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_data.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_data.ldif' },
+    { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov.ldif',
+      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_mod.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif' },
   ]

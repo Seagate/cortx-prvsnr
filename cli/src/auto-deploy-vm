@@ -267,16 +267,16 @@ update_pillar()
     do
         if [ $meta_flag == 0 ] ; then
             meta_flag=1;
-            meta_disk=\/dev\/$disk
+            meta_disk=\"\/dev\/$disk\"
         else
             data_disk+=\"\/dev\/$disk\",
         fi
     done
     data_disk=${data_disk: :-1}
-    provisioner pillar_set cluster/srvnode-1/storage/metadata_device \"$meta_disk\"
+    provisioner pillar_set cluster/srvnode-1/storage/metadata_device [$meta_disk]
     provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-2/storage/metadata_device \"$meta_disk\"
+        provisioner pillar_set cluster/srvnode-2/storage/metadata_device [$meta_disk]
         provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
     fi
     	

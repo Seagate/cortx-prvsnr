@@ -37,7 +37,7 @@ Push config replication:
 {% if "primary" in grains["roles"][0] -%}
 Push provider for data replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_data.ldif
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif
     - require:
       - Push config replication
     - watch_in:

@@ -1,6 +1,6 @@
-# loading provider module
-# Command to add configuration to ldap:
-# ldapadd -Y EXTERNAL  -H ldapi:/// -f syncprov_mod.ldif
+# syncprov overlay module file
+# Command to add module to ldap:
+# ldapadd -Y EXTERNAL -H ldapi:/// -f syncprov_mod.ldif
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module

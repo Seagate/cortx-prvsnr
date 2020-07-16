@@ -26,12 +26,6 @@ remove_prereqs=false
 remove_system=false
 remove_prvsnr=false
 
-ha_states=(
-    "ha.ees_ha"
-    "ha.corosync-pacemaker"
-    "hare"
-)
-
 controlpath_states=(
 # states to be applied in desired sequence
     "ha.cortx-ha"
@@ -39,6 +33,12 @@ controlpath_states=(
     "uds"
     "csm"
     "sspl"
+)
+
+ha_states=(
+    "ha.ees_ha"
+    "ha.corosync-pacemaker"
+    "hare"
 )
 
 iopath_states=(
@@ -246,11 +246,11 @@ if [[ "$remove_prvsnr" == true ]]; then
     done
 
     l_info "Removing salt packages from node-2"
-    ssh srvnode-2 "yum remove -y salt* || true; rm -rf /etc/salt"
+    ssh srvnode-2 "yum remove -y salt* || true; rm -rf /etc/salt; rm -rf /var/cache/salt; pkill -9 salt"
 
     l_info "Removing salt packages from node-1"
     yum remove -y salt* || true
-    rm -rf /etc/salt;
+    rm -rf /etc/salt; rm -rf /var/cache/salt; pkill -9 salt
 
     l_info "Removing /opt/seagate directory from node-1"
     rm -rf /opt/seagate; rm -rf /root/.ssh/*
