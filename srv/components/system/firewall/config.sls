@@ -152,6 +152,7 @@ Data-zone:
     - services:
       - consul
       - dhclient
+      - ftp
       - haproxy
       - nfs
       - hare
@@ -195,6 +196,7 @@ Public data zone:
     - services:
       - consul
       - dhclient
+      - ftp
       - hare
       - haproxy
       - high-availability
