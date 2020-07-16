@@ -9,8 +9,6 @@ import salt.client
 import sys
 import yaml
 
-from shutil import copy
-
 from eos.utils.security.cipher import Cipher, CipherInvalidToken
 
 logger = logging.getLogger(__name__)
@@ -24,7 +22,6 @@ class PillarEncrypt(object):
 
     def __init__(self):
         self.__options = {}
-        self.__root_path = os.path.join('/', 'opt', 'seagate', 'cortx', 'provisioner')
 
     def __load(self, sls_file):
         # No need to check file before open as we know, it exists.
@@ -75,12 +72,7 @@ class PillarEncrypt(object):
         return data
 
 
-    def execute(self, pillar_path):
-        pillar_dir = os.path.join(
-            self.__root_path,
-            pillar_path
-        )
-
+    def execute(self, pillar_dir):
         if not os.path.exists(pillar_dir):
             raise FileNotFoundError(
                 errno.ENOENT,
@@ -142,13 +134,17 @@ class PillarEncrypt(object):
 
 if __name__ == "__main__":
     try:
-        for pillar_path in (os.path.join('pillar', 'components'), os.path.join("pillar", "user", "groups", "all")):
+        _root_path = os.path.join('/', 'opt', 'seagate', 'cortx', 'provisioner')
+        pillar_paths = [(os.path.join(_root_path, 'pillar', 'components')),
+            os.path.join(_root_path, 'pillar', 'user', 'groups', 'all'),
+            os.path.join('/', 'var', 'lib', 'seagate', 'cortx', 'provisioner', 'shared', 'srv', 'pillar', 'groups', 'all')]
+        for pillar_path in pillar_paths:
             try:
                 # Ensure pillars in all paths are encrypted
                 PillarEncrypt().execute(pillar_path)
             except FileNotFoundError as err:
                 logger.exception("Path doesn't exist: {0}".format(err))
 
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
         sys.exit(1)
