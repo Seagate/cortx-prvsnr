@@ -195,7 +195,6 @@ Public data zone:
     - services:
       - consul
       - dhclient
-      - ftp
       - hare
       - haproxy
       - high-availability
@@ -284,6 +283,7 @@ Management zone:
       - dhclient
       - csm
       - elasticsearch
+      - ftp
       - high-availability
       - ntpd
       - openldap
