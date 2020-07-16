@@ -244,7 +244,7 @@ class RunArgsSetup:
                 ),
             }
         },
-        default='github/release/rhel-7.7.1908/last_successful/',
+        default='github/release/rhel-7.7.1908/last_successful',
         converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
     ha: bool = attr.ib(
