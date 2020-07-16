@@ -15,6 +15,9 @@ else
     repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
 
+echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
+source /etc/environment
+
 # TODO API for error exit that might:
 #       - echos to stderr
 #       - print usage (optionally)
