@@ -39,19 +39,17 @@ Set LVM flag:
 
 # Creating LVM physical volume using pvcreate
 Make pv_metadata:
-  module.run:
-    - lvm.pvcreate:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+  lvm.pv_present:
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - require:
       - module: Set LVM flag
 # done creating LVM physical volumes
 
 # Creating LVM Volume Group (vg); vg_name = vg_metadata
 Make vg_metadata:
-  module.run:
-    - lvm.vgcreate:
-      - vgname: vg_metadata
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+  lvm.vg_present:
+    - name: vg_metadata
+    - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
     - require:
       - module: Make pv_metadata
 # done creating LVM VG
@@ -59,11 +57,11 @@ Make vg_metadata:
 # Creating LVM's Logical Volumes (LVs; one for metadata, swap, and raw_metadata)
 # Creating /var/motr metadata LV (size: 1TB)
 Make lv_metadata:
-  module.run:
-    - lvm.lvcreate:
-      - lvname: lv_metadata
-      - vgname: vg_metadata
-      - size: 1T
+  lvm.lv_present:
+    - name: lv_metadata
+    - vgname: vg_metadata
+    - size: 1T
+    - force: True
     - require:
       - module: Make vg_metadata
 
@@ -73,7 +71,7 @@ Make lv_main_swap:
     - lvm.lvcreate:
       - lvname: lv_main_swap
       - vgname: vg_metadata
-      - size: 50%VG
+      - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
     - require:
       - module: Make vg_metadata
 
@@ -83,7 +81,7 @@ Make lv_raw_metadata:
     - lvm.lvcreate:
       - lvname: lv_raw_metadata
       - vgname: vg_metadata
-      - size: 100%FREE
+      - extents: 100%FREE        # Reference: https://linux.die.net/man/8/lvcreate
     - require:
       - module: Make vg_metadata
 # done creating LVM LVs
