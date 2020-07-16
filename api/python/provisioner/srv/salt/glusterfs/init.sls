@@ -1,2 +1,2 @@
-#include:
-#  - .install
+include:
+  - .install

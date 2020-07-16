@@ -1,6 +1,6 @@
 # TODO TEST
 
-#{% if "RedHat" in grains['os'] %}
+{% if "RedHat" in grains['os'] %}
 
 setup_yum_salt_repo:
   file.managed:
@@ -17,7 +17,7 @@ clean_yum_salt_repo_metadata:
   cmd.run:
     - name: yum --disablerepo="*" --enablerepo="saltstack-repo" clean metadata
 
-#{% else %}
+{% else %}
 
 setup_yum_repos:
   file.recurse:
@@ -36,7 +36,7 @@ clean_yum_cache:
   cmd.run:
     - name: yum clean expire-cache && rm -rf /var/cache/yum
 
-#{% endif %}
+{% endif %}
 
 #epel_release_installed:
 #  pkg.installed:
