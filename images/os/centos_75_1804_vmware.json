@@ -30,7 +30,7 @@
     {
       "type": "shell",
       "inline": [
-        "hostnamectl set-hostname ees-node1",
+        "hostnamectl set-hostname cortx-node1",
         "sudo yum install -y git",
         "sudo yum install -y vim"
       ]

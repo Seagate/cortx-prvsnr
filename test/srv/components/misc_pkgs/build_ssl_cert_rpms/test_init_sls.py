@@ -22,7 +22,7 @@ def test_build_ssl_cert_rpms_appliance(
         )
     )
     mhosteosnode1.check_output(
-        "sed -i 's/type: single/type: ees/g' {}".format(
+        "sed -i 's/type: single/type: dual/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
         )
     )
