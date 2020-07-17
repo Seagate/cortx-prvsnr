@@ -172,7 +172,7 @@ def test_set_network(
     mhosteosnode1, run_test, eos_hosts, project_path
 ):
     mhosteosnode1.copy_to_host(
-        project_path / "pillar/components/samples/ees.cluster.sls",
+        project_path / "pillar/components/samples/dual.cluster.sls",
         host_path=Path(
             "{}/pillar/components/cluster.sls"
             .format(PRVSNR_ROOT_DIR)
