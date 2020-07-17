@@ -13,6 +13,16 @@ Label first LUN:
       - label_type: gpt
 
 {% if "physical" in grains['virtual'] %}
+# Create /var/motr partition - it's NOT part of LVM!
+Create metadata partition:
+  module.run:
+    - partition.mkpartfs:
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - part_type: primary
+      - fs_type: ext4
+      - start: 0%
+      - end: 1000GB
+
 # Create single partition for LVM
 Create LVM partition:
   module.run:
@@ -20,7 +30,7 @@ Create LVM partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext2
-      - start: 0%
+      - start: 1001GB
       - end: 100%
 # done creating partitions
 
@@ -31,7 +41,7 @@ Set LVM flag:
   module.run:
     - partition.toggle:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - 1
+      - 2
       - flag: lvm
       - require:
         - module: Create LVM partition
@@ -40,7 +50,7 @@ Set LVM flag:
 # Creating LVM physical volume using pvcreate
 Make pv_metadata:
   lvm.pv_present:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
       - module: Set LVM flag
 # done creating LVM physical volumes
@@ -49,22 +59,12 @@ Make pv_metadata:
 Make vg_metadata:
   lvm.vg_present:
     - name: vg_metadata
-    - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+    - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
       - module: Make pv_metadata
 # done creating LVM VG
 
-# Creating LVM's Logical Volumes (LVs; one for metadata, swap, and raw_metadata)
-# Creating /var/motr metadata LV (size: 1TB)
-Make lv_metadata:
-  lvm.lv_present:
-    - name: lv_metadata
-    - vgname: vg_metadata
-    - size: 1T
-    - force: True
-    - require:
-      - module: Make vg_metadata
-
+# Creating LVM's Logical Volumes (LVs; one for swap and one for raw_metadata)
 # Creating swap LV (size: 50% of total VG space)
 Make lv_main_swap:
   module.run:
@@ -106,15 +106,15 @@ Enable swap:
     - require:
       - cmd: Make SWAP
 
-# Format 1TB metadata partition
+# Format metadata partion
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: /dev/vg_metadata/lv_metadata
-      - fstype: ext4
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+      - fs_type: ext4
       - label: eos_metadata
       - require:
-        - module: Make lv_metadata
+        - module: Create metadata partition
 
 # ---------------------------------- OLD stuff below ----------------------
 # Format SWAP
@@ -133,16 +133,6 @@ Make metadata partition:
 #    - persist: True    # don't add /etc/fstab entry
 #    - require:
 #      - cmd: Make SWAP partition
-
-# Format metadata partion
-#Make raw_metadata partition:
-#  module.run:
-#    - extfs.mkfs:
-#      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}3
-#      - fs_type: ext4
-#      - label: eos_raw_metadata
-#      - require:
-#        - module: Create raw_metadata partition
 # ------------------------------------ end of OLD stuff --------------------
 
 Refresh partition:
