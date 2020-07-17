@@ -196,7 +196,8 @@ install_prvsnr_cli()
 }
 
 install_config_prvsnr()
-{   if [[ "$singlenode" == false ]]; then
+{   
+    if [[ "$singlenode" == false ]]; then
 	set -eu
 	echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
 	sleep 1
@@ -231,12 +232,12 @@ update_pillar()
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
     provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\ \"
+    provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
     provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
     provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     if [[ "$singlenode" == false ]]; then
         provisioner pillar_set cluster/srvnode-1/hostname \"$srvnode_2_host\"
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\ \"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
         provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi
@@ -282,7 +283,7 @@ update_pillar()
     	
     # Update s3server.sls
     echo -e "\n\t***** INFO: Updating s3server.sls *****" 2>&1 | tee -a $LOG_FILE
-    provisioner pillar_set s3server/no_of_inst \"2\"
+    provisioner pillar_set s3server/no_of_inst '2'
 }
 
 install_config_prvsnr
