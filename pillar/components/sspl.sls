@@ -26,6 +26,8 @@ sspl:
     sspl_log_file_path: "/var/log/cortx/sspl/sspl.log"
     syslog_host: "localhost"
     syslog_port: "514"
+  NODEDATA:
+    probe:sysfs
   SASPORTSENSOR:
     threaded: "true"
     probe: sysfs
