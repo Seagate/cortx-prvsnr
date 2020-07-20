@@ -15,8 +15,11 @@ else
     repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
 
-echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
-source /etc/environment
+cat > /etc/profile.d/set_path_env << EOM
+#!/bin/bash
+echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
+EOM
+source /etc/profile.d/set_path_env
 
 # TODO API for error exit that might:
 #       - echos to stderr
@@ -1177,21 +1180,8 @@ EOF
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-if [[ "$_repo_src" == "gitrepo" ]]; then
-    if ! grep gitlab ~/.ssh/config 1>/dev/null ; then
-! read -r -d '' GITLAB <<- EOM
-
-Host gitlab.mero.colo.seagate.com
-    User root
-    UserKnownHostsFile /dev/null
-    StrictHostKeyChecking no
-    IdentityFile /root/.ssh/id_rsa_prvsnr
-    IdentitiesOnly yes
-
-EOM
-        echo $GITLAB >> ~/.ssh/config
-    fi
-fi
+    local _api_dir="${_installdir}/api/python"
+    local _prvsnr_group=prvsnrusers
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -1216,10 +1206,21 @@ fi
                 git remote remove origin
             fi
 
-            git remote add origin ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git
+            git remote add origin https://github.com/Seagate/cortx-prvsnr.git
             git fetch origin
             git checkout -B ${_prvsnr_version} origin/${_prvsnr_version} -f
             # git clean -fdx        # Commented because there could be intentional changes in workspace.
+            
+            # set api
+            #   adding provisioner group
+            echo "Creating group '$_prvsnr_group'..."
+            groupadd -f "$_prvsnr_group"
+
+            echo "Configuring access for provisioner data ..."
+            bash "${_api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
+
+            #   install api globally using pip
+            pip3 install -U "${_api_dir}"
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
@@ -1229,6 +1230,7 @@ fi
         tar -zxf "$_repo_archive_path" -C "$_installdir"
         rm -vf "$_repo_archive_path"
     fi
+
     cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
 EOF
 
