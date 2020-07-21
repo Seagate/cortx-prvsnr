@@ -23,6 +23,32 @@ import provisioner
 def storage_device_config():
 
     for node in __pillar__["cluster"]["node_list"]:
+        _target_node = __grains__['id']
+        _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(_target_node)
+        _cc_flag = False
+
+        if os.path.isfile(_ffile_path):
+            # Setup is cross connected.
+            print('INFO: setup is cross connected')
+            _cc_flag = True
+            _ctrl_a_ip = __pillar__["storage_enclosure"]["controller"]["primary_mc"]["ip"]
+            _ctrl_user = __pillar__["storage_enclosure"]["controller"]["user"]
+            _ctrl_passwd = __pillar__["storage_enclosure"]["controller"]["secret"]
+            _ctrl_cli = "/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
+        else:
+            print('INFO: setup is not cross connected')
+
+        if _cc_flag == True:
+            # Shutdown controller B
+            # run controller_cli.sh host -h 'ip_addr' -u admin -p '!passwd' --shutdown-ctrl b
+            print('INFO: Shutting down controller B')
+            _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --shutdown-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
+            _ret = subprocess.Popen([_ctrl_cmd],
+                                     shell=True,
+                                     stdout=subprocess.PIPE
+                                     ).stdout.read().decode("utf-8").splitlines()
+            time.sleep(30)
+
         if __pillar__["cluster"][node]["is_primary"]:
             cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
         else:
@@ -60,6 +86,15 @@ def storage_device_config():
         if device_list == []:
             print ("[ ERROR ] multipath devices don't exist.")
             return False
+
+        if _cc_flag == True:
+            print('INFO: Shutting down controller B')
+            _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --restart-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
+            _ret = subprocess.Popen([_ctrl_cmd],
+                                     shell=True,
+                                     stdout=subprocess.PIPE
+                                     ).stdout.read().decode("utf-8").splitlines()
+            time.sleep(30)
 
         metadata_device = ["/dev/disk/by-id/dm-name-{0}".format(device_list[0])]
         data_field = "cluster/{0}/storage/data_devices".format(node)
