@@ -8,8 +8,15 @@ if [[ "$verbosity" -ge 2 ]]; then
     set -x
 fi
 
-echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
-source /etc/environment
+# echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
+# source /etc/environment
+
+# Does same as above, but recommended way of setting Global Envisonment Variables
+cat > /etc/profile.d/set_path_env << EOM
+#!/bin/bash
+echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
+EOM
+source /etc/profile.d/set_path_env
 
 prvsnr_group=prvsnrusers
 install_dir=/opt/seagate/cortx/provisioner

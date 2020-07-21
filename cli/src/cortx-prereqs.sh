@@ -18,7 +18,7 @@ url_local_repo_commons_rhel="http://ssc-nfs-server1.colo.seagate.com/releases/eo
 #url_local_repo_rhel_ha="http://ci-storage.mero.colo.seagate.com/releases/eos/rhel_local_ha/"
 
 # Repo url for Saltstack
-url_saltstack_repo="https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/"
+# url_saltstack_repo="https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3000"
 
 function trap_handler {
     rm -rf $tmpdir || true
