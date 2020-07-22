@@ -1046,29 +1046,27 @@ ctrl_shutdown()
     fi
     _cmd="shutdown $shutdown_ctrl_name"
     echo "ctrl_shutdown(): running command '$_cmd'" >> $logfile
-    echo "Shutting down the storage enclosre: '$restart_ctrl_name'"
-    #TODO: Enable it when lab access is resotred.
-    #      This is disabled as it needs physical presence in lab to restart the controller
-    #cmd_run "$_cmd" > $xml_doc || {
-    #    try=1
-    #    _timeout=300
-    #    echo "waiting for controller to shutdown" 2>&1 | tee -a $logfile
-    #    until ! ping -c 1 $host 2>&1 > /dev/null
-    #    do
-    #        if [[ "$try" -gt "$_timeout" ]]; then
-    #            echo -ne " timeout!"
-    #            echo -e "\nController did not shut down after $_timeout seconds"
-    #            echo "Please check the status manually"
-    #            exit 1
-    #        fi
-    #        echo -ne "."
-    #        try=$(( $try + 1 ))
-    #        sleep 4
-    #    done
-    #    echo -ne " done!"
-    #    echo -e "\nController is shutdown successfully" 2>&1 | tee -a $logfile
-    #    exit 0
-    #}
+    echo "Shutting down the storage controller: '$shutdown_ctrl_name'"
+    cmd_run "$_cmd" > $xml_doc || {
+       try=1
+       _timeout=300
+       echo "waiting for controller to shutdown" 2>&1 | tee -a $logfile
+       until ! ping -c 1 $host 2>&1 > /dev/null
+       do
+           if [[ "$try" -gt "$_timeout" ]]; then
+               echo -ne " timeout!"
+               echo -e "\nController did not shut down after $_timeout seconds"
+               echo "Please check the status manually"
+               exit 1
+           fi
+           echo -ne "."
+           try=$(( $try + 1 ))
+           sleep 4
+       done
+       echo -ne " done!"
+       echo -e "\nController is shutdown successfully" 2>&1 | tee -a $logfile
+       exit 0
+    }
 }
 
 ctrl_restart()
