@@ -12,7 +12,6 @@ Label first LUN:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - label_type: gpt
 
-{% if "physical" in grains['virtual'] %}
 # Create /var/motr partition - it's NOT part of LVM!
 Create metadata partition:
   module.run:
@@ -21,7 +20,11 @@ Create metadata partition:
       - part_type: primary
       - fs_type: ext4
       - start: 0%
+{% if "physical" in grains['virtual'] %}
       - end: 1000GB
+{% else %}
+      - end: 10GB
+{% endif %}
 
 # Create single partition for LVM
 Create LVM partition:
@@ -30,7 +33,11 @@ Create LVM partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - part_type: primary
       - fs_type: ext2
+{% if "physical" in grains['virtual'] %}
       - start: 1001GB
+{% else %}
+      - start: 11GB
+{% endif %}
       - end: 100%
 # done creating partitions
 
@@ -41,7 +48,7 @@ Set LVM flag:
   module.run:
     - partition.toggle:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - 2
+      - partition: 2
       - flag: lvm
       - require:
         - module: Create LVM partition
@@ -90,7 +97,7 @@ Make lv_raw_metadata:
 # Format SWAP and metadata (but not raw_metadata!)
 # need to replace absolute path with proper structure
 # Format SWAP
-Make SWAP
+Make SWAP:
   cmd.run:
     - name: sleep 10 && mkswap -f /dev/vg_metadata/lv_main_swap && sleep 5
     - onlyif: test -e /dev/vg_metadata/lv_main_swap
@@ -102,7 +109,7 @@ Make SWAP
 Enable swap:
   mount.swap:
     - name: /dev/vg_metadata/lv_main_swap
-    - persist: True    # don't add /etc/fstab entry
+    - persist: True
     - require:
       - cmd: Make SWAP
 
@@ -140,60 +147,6 @@ Refresh partition:
     - name: blockdev --flushbufs /dev/disk/by-id/dm-name-mpath* || true
   module.run:
     - partition.probe: []
-
-{% else %}
-# For VMs
-
-# to-do: adjust VM config to use LVM
-
-# Create partition for SWAP
-Create swap partition:
-  module.run:
-    - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: linux-swap
-      - start: 0%
-      - end: 50%
-
-# Create partition for Metadata
-Create metadata partition:
-  module.run:
-    - partition.mkpart:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - part_type: primary
-      - fs_type: ext4
-      - start: 50%
-      - end: 100%
-
-# Format SWAP
-Make SWAP partition:
-  cmd.run:
-    - name: mkswap {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 && sleep 5
-    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    - require:
-      - module: Create swap partition
-      - cmd: Ensure SWAP partition is unmounted
-
-# Activate SWAP device
-Enable swap:
-  mount.swap:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    - persist: True    # don't add /etc/fstab entry
-    - require:
-      - cmd: Make SWAP partition
-
-# Format metadata partion
-Make metadata partition:
-  module.run:
-    - extfs.mkfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-      - fs_type: ext4
-      - label: eos_metadata
-      - require:
-        - module: Create metadata partition
-
-{% endif %}
 
 # Refresh
 {% if not 'single' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
