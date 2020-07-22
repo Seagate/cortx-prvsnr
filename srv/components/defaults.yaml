@@ -25,7 +25,7 @@ base_repos:
     url: {{ salt["environ.get"]('EPEL', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/") }}
   saltstack_repo:
     id: "saltstack"
-    url: {{ salt["environ.get"]('SALTSTACK', "https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/") }}
+    url: {{ salt["environ.get"]('SALTSTACK', "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3001") }}
 
 commons:
   repo:

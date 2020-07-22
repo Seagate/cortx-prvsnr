@@ -10,7 +10,7 @@ export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
 
-l_info "***** Running $0 *****"
+l_info "***** Running $0 *****" 
 
 function trap_handler {
     echo "***** FAILED!! *****"
@@ -52,6 +52,12 @@ prereq_states=(
         "misc_pkgs.statsd"
     )
 
+sync_states=(
+    # states to be applied in desired sequence
+        "sync.software.openldap"
+        "sync.software.rabbitmq"
+    )
+
 iopath_states=(
     # states to be applied in desired sequence
         "misc_pkgs.lustre"
@@ -63,7 +69,6 @@ ha_states=(
     # states to be applied in desired sequence
         "ha.corosync-pacemaker"
         "hare"
-        "ha.cortx-ha.install"
         "ha.ees_ha"
     )
 
@@ -74,12 +79,6 @@ controlpath_states=(
         "uds"
         "post_setup"
         "ha.cortx-ha"
-    )
-
-sync_states=(
-    # states to be applied in desired sequence
-        "sync.software.openldap"
-        "sync.software.rabbitmq"
     )
 
 function usage {
@@ -155,8 +154,8 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker"
-                || "$state" == "system.storage"
+            if [[ "$state" == "ha.corosync-pacemaker" 
+                || "$state" == "system.storage" 
                 || "$state" == "sspl"
                 || "$state" == "csm"
                 ]]; then
@@ -178,6 +177,11 @@ function run_states {
                 $cmd salt srvnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
+                # if [[ ("hare" == "$state") && (-e /opt/seagate/cortx/hare/bin/consul) ]]; then
+                #     l_info "Backup Consul"
+                #     /opt/seagate/cortx/hare/bin/consul version
+                # fi
+                
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
