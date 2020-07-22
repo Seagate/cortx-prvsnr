@@ -28,11 +28,11 @@ This directory consists of custom modules.
 The `stx_disks.py` is available as a sample module for reference.
 
 ### components
-This directory is a container for all EOS software components.
+This directory is a container for all CORTX software components.
 Components implemented and tested:
 * [x] SSPL
-* [x] Mero
-* [x] Halon
+* [x] Motr
+* [x] Hare
 * [x] S3 Server
 * [ ] CSM/Dashboard/Management
 * [ ] Peripheral support software
@@ -85,14 +85,14 @@ http://gitlab.mero.colo.seagate.com/eos/provisioner/cortx/provisioner/wikis/Dev-
 ### Introduction
 https://docs.saltstack.com/en/latest/topics/index.html
 
-### Provisioning EOS Components
+### Provisioning CORTX Components
 #### Platform
 
 #### SSPL
 
-#### Mero
+#### Motr
 
-#### Halon
+#### Hare
 
 #### S3Server
 
