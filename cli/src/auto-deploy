@@ -254,10 +254,13 @@ ssh_tool_pkg=$(basename $ssh_tool)
 
 create_cross_connect_flag_file()
 {
-    echo "Creating the flag file on node-1" >> $LOG_FILE
-    touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.cc
-    echo "Creating the flag file on node-2" >> $LOG_FILE
-    $remote_cmd touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.cc
+    if [[ $cross_connect_opt == true ]]; then
+        mkdir -p /opt/seagate/cortx/provisioner/generated_configs
+        echo "Creating the flag file on node-1" >> $LOG_FILE
+        touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.cc
+        echo "Creating the flag file on node-2" >> $LOG_FILE
+        $remote_cmd touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.cc
+    fi
 }
 
 install_prvsnr_cli()
