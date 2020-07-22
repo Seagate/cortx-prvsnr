@@ -490,11 +490,17 @@ class SaltClientBase(ABC):
             # TODO too generic
             raise SaltCmdRunError(cmd_args, exc) from exc
         else:
-            logger.debug(
-                "Function '{}' on '{}' resulted in {}".format(
-                    fun, targets, salt_res
+            try:
+                logger.debug(
+                    "Function '{}' on '{}' resulted in {}".format(
+                        fun, targets, salt_res
+                        )
                 )
-            )
+            except Exception as exc:
+                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):
+                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))
+                else:
+                    raise exc
 
         res = self.parse_res(salt_res, cmd_args)
 
