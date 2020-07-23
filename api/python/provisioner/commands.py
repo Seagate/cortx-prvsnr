@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 from pathlib import Path
 import json, yaml
+import os
 
 from .errors import (
     ProvisionerError,
@@ -20,7 +21,8 @@ from .errors import (
     HAPostUpdateError,
     ClusterNotHealthyError,
     SaltCmdResultError,
-    SSLCertsUpdateError
+    SSLCertsUpdateError,
+    ReleaseFileNotFoundError
 )
 from .config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
@@ -244,7 +246,7 @@ class RunArgsSetup:
                 ),
             }
         },
-        default='integration/centos-7.7.1908/last_successful',
+        default='github/release/rhel-7.7.1908/last_successful',
         converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
     ha: bool = attr.ib(
@@ -1085,9 +1087,28 @@ class GetReleaseVersion(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
 
     def run(self, targets):
+        if os.path.isfile('/etc/yum.repos.d/RELEASE.INFO'):
+            source = "/etc/yum.repos.d/RELEASE.INFO"
+        else:
+            source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
+        try:
+            with open(source, 'r') as filehandle:
+                return json.dumps(yaml.load(filehandle))
+        except Exception as exc:
+            raise ReleaseFileNotFoundError(exc) from exc
+
+@attr.s(auto_attribs=True)
+class GetFactoryVersion(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    def run(self, targets):
         source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        with open(source, 'r') as filehandle:
-            return json.dumps(yaml.load(filehandle))
+        try:
+            with open(source, 'r') as filehandle:
+                return json.dumps(yaml.load(filehandle))
+        except Exception as exc:
+            raise ReleaseFileNotFoundError(exc) from exc
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
@@ -1604,7 +1625,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO IMPROVE use salt caller and file-managed instead
         # set proper cluster.sls from template
         cluster_sls_sample_path = (
-            repo_dir / 'pillar/components/samples/ees.cluster.sls'
+            repo_dir / 'pillar/components/samples/dual.cluster.sls'
         )
         cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
         run_subprocess_cmd(
@@ -1694,6 +1715,13 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
+        
+        # TODO IMPROVE condiition to verify local_repo
+        # local_repo would be set from config.PROJECTPATH as default if not specified  
+        # as an argument and config.PROJECT could be None if repo not found.
+        if not run_args.local_repo:
+            raise ValueError("local repo is undefined")
+
         minion_cfg_sample_path = (
             run_args.local_repo /
             'srv/components/provisioner/salt_minion/files/minion'
@@ -1922,6 +1950,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._clean_salt_cache(paths)
 
         # APPLY CONFIGURATION
+        
+        logger.info("Installing Cortx yum repositories")
+        ssh_client.state_apply('cortx_repos')
 
         if run_args.ha:
             volumes = {
@@ -2010,9 +2041,6 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
-
-        logger.info("Installing Cortx yum repositories")
-        ssh_client.state_apply('cortx_repos')
 
         logger.info("Configuring the firewall")
         ssh_client.state_apply('firewall')

@@ -10,4 +10,9 @@
   file.absent:
     - name: {{ filename }}s
 {% endfor %}
+
+Delete openldap replication checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap_replication
+
 {%- endif %}

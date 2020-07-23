@@ -15,6 +15,9 @@ else
     repo_root_dir="$(realpath $cli_scripts_dir/../../)"
 fi
 
+echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
+source /etc/environment
+
 # TODO API for error exit that might:
 #       - echos to stderr
 #       - print usage (optionally)
@@ -1096,7 +1099,7 @@ function install_provisioner {
     if [[ "$_singlenode" == true ]]; then
         _cluster_sls_src="$_installdir/pillar/components/samples/singlenode.cluster.sls"
     else
-        _cluster_sls_src="$_installdir/pillar/components/samples/ees.cluster.sls"
+        _cluster_sls_src="$_installdir/pillar/components/samples/dual.cluster.sls"
     fi
 
     l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as a source (version is $_prvsnr_version), singlenode is $_singlenode"
@@ -2008,9 +2011,9 @@ function update_bmc_ip {
 
     # Install ipmitool package
     if [[ -n "$_hostspec" ]]; then
-        ${_cmd} "yum install -y ipmitool"
+        ${_cmd} "rpm -qi ipmitool > /dev/null || yum install -y ipmitool"
     else
-        yum install -y ipmitool
+        rpm -qi ipmitool > /dev/null || yum install -y ipmitool
     fi
 
     l_info "Acquire BMC IP on NodeID: ${_hostspec}"

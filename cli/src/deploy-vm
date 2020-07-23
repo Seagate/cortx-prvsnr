@@ -64,6 +64,7 @@ controlpath_states=(
 sync_states=(
     # states to be applied in desired sequence
         "sync.software.openldap"
+        "sync.software.rabbitmq"
     )
 
 
@@ -80,7 +81,7 @@ $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
        --prereq-states             deploy only prereq states (components.misc_pkgs)
-       --sync_states               deploy only the software synchronization
+       --sync-states               deploy only the software synchronization
        --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ctrlpath-states           deploy only control path states (sspl & csm)
        --system-states             deploy only system states
@@ -141,7 +142,7 @@ function run_states {
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.rabbitmq" ]]; then
+            elif [[ "$state" == "sync.software.rabbitmq" ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
@@ -178,7 +179,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S' 'singlenode,prereq-states,iopath-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode,prereq-states,sync-states,iopath-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -191,7 +192,7 @@ salt_opts_dry_run=
 if [[ "$dry_run" == true ]]; then
     salt_opts_dry_run="test=True"
 fi
-salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
+salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run --timeout=600"
 
 update_salt
 hostnamectl status | grep Chassis | grep -q server && {

@@ -8,6 +8,9 @@ if [[ "$verbosity" -ge 2 ]]; then
     set -x
 fi
 
+echo "echo "$PATH" | grep -q "/usr/local/bin" || PATH=$PATH:/usr/local/bin" > /etc/environment
+source /etc/environment
+
 prvsnr_group=prvsnrusers
 install_dir=/opt/seagate/cortx/provisioner
 
