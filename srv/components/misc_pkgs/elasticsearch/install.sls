@@ -4,14 +4,14 @@ Install JDK:
 
 Install elasticsearch:
   pkg.installed:
-    - name: elasticsearch
-    # - version: {{ pillar['commons']['version']['elasticsearch'] }}
+    - name: elasticsearch-oss
+    - version: {{ pillar['commons']['version']['elasticsearch-oss'] }}
 
-{% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('elasticsearch'))) %}
-Downgrade elasticsearch to 6.8.8:
-  cmd.run:
-    - name: yum downgrade -y elasticsearch
-{% endif %}
+{#% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('elasticsearch'))) %#}
+# Downgrade elasticsearch to 6.8.8:
+#   cmd.run:
+#     - name: yum downgrade -y elasticsearch
+{#% endif %#}
 
 Install rsyslog extras:
   pkg.installed:
