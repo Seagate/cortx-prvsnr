@@ -50,8 +50,8 @@ Set LVM flag:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - partition: 2
       - flag: lvm
-      - require:
-        - module: Create LVM partition
+    - require:
+      - Create LVM partition
 # done setting LVM flag
 
 # Creating LVM physical volume using pvcreate
@@ -59,7 +59,7 @@ Make pv_metadata:
   lvm.pv_present:
     - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
-      - module: Set LVM flag
+      - Set LVM flag
 # done creating LVM physical volumes
 
 # Creating LVM Volume Group (vg); vg_name = vg_metadata
@@ -68,7 +68,7 @@ Make vg_metadata:
     - name: vg_metadata
     - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
-      - module: Make pv_metadata
+      - Make pv_metadata
 # done creating LVM VG
 
 # Creating LVM's Logical Volumes (LVs; one for swap and one for raw_metadata)
@@ -80,7 +80,7 @@ Make lv_main_swap:
       - vgname: vg_metadata
       - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
     - require:
-      - module: Make vg_metadata
+      - Make vg_metadata
 
 # Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 50% (less 1TB))
 Make lv_raw_metadata:
@@ -90,7 +90,7 @@ Make lv_raw_metadata:
       - vgname: vg_metadata
       - extents: 100%FREE        # Reference: https://linux.die.net/man/8/lvcreate
     - require:
-      - module: Make vg_metadata
+      - Make vg_metadata
 # done creating LVM LVs
 # end LVM config
 
@@ -102,7 +102,7 @@ Make SWAP:
     - name: sleep 10 && mkswap -f /dev/vg_metadata/lv_main_swap && sleep 5
     - onlyif: test -e /dev/vg_metadata/lv_main_swap
     - require:
-      - module: Make lv_main_swap
+      - Make lv_main_swap
       - cmd: Ensure SWAP partition is unmounted
 
 # Activate SWAP device
@@ -121,7 +121,7 @@ Make metadata partition:
       - fs_type: ext4
       - label: eos_metadata
       - require:
-        - module: Create metadata partition
+        - Create metadata partition
 
 # ---------------------------------- OLD stuff below ----------------------
 # Format SWAP
@@ -130,7 +130,7 @@ Make metadata partition:
 #    - name: sleep 10 && mkswap -f {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2 && sleep 5
 #    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
 #    - require:
-#      - module: Create swap partition
+#      - Create swap partition
 #      - cmd: Ensure SWAP partition is unmounted
 
 # Activate SWAP device
@@ -149,7 +149,7 @@ Refresh partition:
     - partition.probe: []
 
 # Refresh
-{% if not 'single' in pillar['cluster']['type'] and pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if (1 < pillar['cluster']['node_list'] | length) and (pillar['cluster'][grains['id']]['is_primary']) -%}
 Update partition tables of both nodes:
   cmd.run:
     - name: sleep 10; timeout -k 10 30 partprobe || true; ssh srvnode-2 "timeout -k 10 30 partprobe || true"
