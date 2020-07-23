@@ -14,24 +14,9 @@ provisioner:
   reset:
     script: null
     args: null
-  ha:
-    script: null
-    args: null
-  ha_cleanup:
-    script: null
-    args: null
   backup:
     files:
-      - /var/lib/hare/build-ees-ha*-args.yaml
-      - /var/lib/hare/cluster.yaml
-      - /var/lib/hare/confd.*
-      - /var/lib/hare/consul-*
-      - /var/lib/hare/node-name
-      - /var/lib/hare/hax-env-*
-      - /etc/corosync/corosync.conf
-  post_update:
-    script: null
-    args: null
+      - /var/lib/seagate/cortx/provisioner/shared
 
 support_bundle:
   - /opt/seagate/cortx/provisioner/cli/provisioner-bundler
