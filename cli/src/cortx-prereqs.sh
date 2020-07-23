@@ -226,7 +226,7 @@ else
             echo "INFO: subscription-manager is enabled." 2>&1 | tee -a ${LOG_FILE}
             repos_list=(
                 "rhel-7-server-optional-rpms"
-                "rhel-7-server-satellite-tools-6.6-rpms"
+                "rhel-7-server-satellite-tools-6.7-rpms"
                 "rhel-7-server-rpms"
                 "rhel-7-server-extras-rpms"
                 "rhel-7-server-supplementary-rpms"
