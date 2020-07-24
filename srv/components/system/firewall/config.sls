@@ -293,6 +293,7 @@ Management zone:
       - ssh
       - uds
       - www
+      - glusterfs
     - interfaces:
       - {{ mgmt_if }}
     - port_fwd:
