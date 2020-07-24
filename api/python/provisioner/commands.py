@@ -241,13 +241,18 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
-                    "Cortex integration release version relative to "
-                    f"{config.CORTX_REPOS_BASE_URL}"
+                    "Cortex integration release version repo URL/path"
+                    "E.g. "
                 ),
+                # 'help': (
+                #     "Cortex integration release version relative to "
+                #     f"{config.CORTX_REPOS_BASE_URL}"
+                # ),
             }
         },
-        default='github/release/rhel-7.7.1908/last_successful',
-        converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
+        default='http://ci-storage.mero.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'
+        # default='github/release/rhel-7.7.1908/last_successful',
+        # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
     ha: bool = attr.ib(
         metadata={
