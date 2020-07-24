@@ -2047,8 +2047,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
 
-        logger.info("Configuring the firewall")
-        ssh_client.state_apply('firewall')
+        # FIXME: Commented because execution hung at firewall configuration
+        #logger.info("Configuring the firewall")
+        #ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
