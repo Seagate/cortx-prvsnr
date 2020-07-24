@@ -69,6 +69,7 @@ ha_states=(
     # states to be applied in desired sequence
         "ha.corosync-pacemaker"
         "hare"
+        "ha.cortx-ha.install"
         "ha.ees_ha"
     )
 
