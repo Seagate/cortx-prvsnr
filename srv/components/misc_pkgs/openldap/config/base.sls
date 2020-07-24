@@ -5,7 +5,7 @@ Configure OpenLDAP - Base config:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Remove existing file:
   cmd.run:
@@ -13,7 +13,7 @@ Remove existing file:
     - require:
       - Configure OpenLDAP - Base config
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Schema:
   cmd.run:
@@ -23,7 +23,7 @@ Configure OpenLDAP - Schema:
     - require:
       - Remove existing file
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Base data:
   cmd.run:
@@ -37,7 +37,7 @@ Configure OpenLDAP - Base data:
     - require:
       - Configure OpenLDAP - Schema
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Add IAM admin:
   cmd.run:
@@ -47,7 +47,7 @@ Configure OpenLDAP - Add IAM admin:
     - require:
       - Configure OpenLDAP - Base data
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Setup permissions for IAM admin:
   cmd.run:
@@ -55,7 +55,7 @@ Configure OpenLDAP - Setup permissions for IAM admin:
     - require:
       - Configure OpenLDAP - Add IAM admin
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Enable IAM constraints:
   cmd.run:
@@ -66,7 +66,7 @@ Configure OpenLDAP - Enable IAM constraints:
     - require:
       - Configure OpenLDAP - Setup permissions for IAM admin
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Load ppolicy schema:
   cmd.run:
@@ -74,7 +74,7 @@ Configure OpenLDAP - Load ppolicy schema:
     - require:
       - Configure OpenLDAP - Enable IAM constraints
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Load ppolicy module:
   cmd.run:
@@ -82,7 +82,7 @@ Configure OpenLDAP - Load ppolicy module:
     - require:
       - Configure OpenLDAP - Load ppolicy schema
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Load ppolicy overlay:
   cmd.run:
@@ -90,7 +90,7 @@ Configure OpenLDAP - Load ppolicy overlay:
     - require:
       - Configure OpenLDAP - Load ppolicy module
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - password policy:
   cmd.run:
@@ -98,10 +98,10 @@ Configure OpenLDAP - password policy:
     - require:
       - Configure OpenLDAP - Load ppolicy overlay
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
 
 Configure OpenLDAP - Enable openldap log:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin']['secret'] }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/slapdlog.ldif
     - watch_in:
-      - Start sldapd service
+      - Restart slapd service
