@@ -26,12 +26,6 @@ remove_prereqs=false
 remove_system=false
 remove_prvsnr=false
 
-ha_states=(
-    "ha.ees_ha"
-    "ha.corosync-pacemaker"
-    "hare"
-)
-
 controlpath_states=(
 # states to be applied in desired sequence
     "ha.cortx-ha"
@@ -39,6 +33,12 @@ controlpath_states=(
     "uds"
     "csm"
     "sspl"
+)
+
+ha_states=(
+    "ha.ees_ha"
+    "ha.corosync-pacemaker"
+    "hare"
 )
 
 iopath_states=(

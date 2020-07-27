@@ -10,7 +10,7 @@ export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
 
-l_info "***** Running $0 *****" 
+l_info "***** Running $0 *****"
 
 function trap_handler {
     echo "***** FAILED!! *****"
@@ -155,8 +155,8 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" 
-                || "$state" == "system.storage" 
+            if [[ "$state" == "ha.corosync-pacemaker"
+                || "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"
                 ]]; then
