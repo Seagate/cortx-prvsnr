@@ -33,6 +33,7 @@ from .api import (  # noqa: F401
     shutdown_controller,
     configure_cortx,
     create_user,
+    replace_node,
     get_release_version,
     get_factory_version
 )
@@ -66,6 +67,7 @@ __all__ = [
     'shutdown_controller',
     'configure_cortx',
     'create_user',
+    'replace_node',
     'get_release_version',
     'get_factory_version',
     'UNCHANGED',

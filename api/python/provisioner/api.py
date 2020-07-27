@@ -355,6 +355,18 @@ def configure_cortx(
         'configure_cortx', component, source=source, show=show, reset=reset
     )
 
+def replace_node(node_id, node_host=None, node_port=None, nowait=True):
+    r"""Replace node. It will trigger replace node command and return job id
+    
+    :param node_id: node id of replacing node
+    :param node_host: hostname of new node. Default: None
+    :param node_port: ssh port of new node. Default: None
+    :param nowait: (optional) Run asynchronously. Default: True
+    """
+    return _api_call(
+        'replace_node',
+        node_id=node_id, node_host=node_host, node_port=node_port, nowait=nowait
+    )
 
 def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
     r"""Creates an user.
