@@ -11,9 +11,8 @@
 #  - delete pv_metadata
 #  - delete LVM partition
 Unmount SWAP:
-  module.run:
-    - mount.swapoff:
-      - name: /dev/vg_metadata/lv_main_swap
+  cmd.run:
+    - name: swapoff /dev/vg_metadata/lv_main_swap
 
 Remove swap from fstab:
   module.run:

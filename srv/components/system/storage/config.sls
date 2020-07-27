@@ -74,21 +74,19 @@ Make vg_metadata:
 # Creating LVM's Logical Volumes (LVs; one for swap and one for raw_metadata)
 # Creating swap LV (size: 50% of total VG space)
 Make lv_main_swap:
-  module.run:
-    - lvm.lvcreate:
-      - lvname: lv_main_swap
-      - vgname: vg_metadata
-      - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
+  lvm.lv_present:
+    - name: lv_main_swap
+    - vgname: vg_metadata
+    - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
     - require:
       - Make vg_metadata
 
 # Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 50% (less 1TB))
 Make lv_raw_metadata:
-  module.run:
-    - lvm.lvcreate:
-      - lvname: lv_raw_metadata
-      - vgname: vg_metadata
-      - extents: 100%FREE        # Reference: https://linux.die.net/man/8/lvcreate
+  lvm.lv_present:
+    - name: lv_raw_metadata
+    - vgname: vg_metadata
+    - extents: 100%FREE        # Reference: https://linux.die.net/man/8/lvcreate
     - require:
       - Make vg_metadata
 # done creating LVM LVs

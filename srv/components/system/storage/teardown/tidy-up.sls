@@ -10,7 +10,7 @@ Create tidy-up script:
       - mode: 755
       - contents: |
           #!/bin/bash
-          echo "Runnign swapoff -a on current node(srvnode-1)"
+          echo "Running swapoff -a on current node(srvnode-1)"
           timeout -k 10 30 swapoff -a ||true
           echo "Runnign swapoff -a on srvnode-2 node"
           ssh srvnode-2 "timeout -k 10 30 swapoff -a || true"
