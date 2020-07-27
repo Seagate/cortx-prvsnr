@@ -166,6 +166,7 @@ for fun in [
     'shutdown_controller',
     'configure_cortx',
     'create_user',
+    'replace_node',
     'get_release_version',
     'get_factory_version'
 ]:
