@@ -59,6 +59,8 @@ def get_admin_user(args):
             if user and user_id :
                 print(f"*** creating admin user {user_id} on {args.n} ***")
                 create_user(user_id, "")
+                if not args.syncpass:
+                    return
                 nodes = _get_node_list()
                 nodes.remove(args.n)
                 if len(nodes) > 0:
@@ -92,6 +94,8 @@ if __name__=='__main__':
             help="Key to User collection in csm default : eos/base/user_collection/obj/ ")
     argParser.add_argument("-n", type=str,
             help="node_id of replacing node i.e. srvnode-1/srvnode-2")
+    argParser.add_argument("--syncpass", action='store_true',
+            help="Sync csm admin user password")
     argParser.set_defaults(func=get_admin_user)
     args = argParser.parse_args()
     args.func(args)
