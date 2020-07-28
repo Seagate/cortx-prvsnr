@@ -1244,6 +1244,8 @@ EOF
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
         yum install -y cortx-prvsnr
+        # TODO EOS-11551 enable later
+        # yum install -y python36-cortx-prvsnr
     else
         # local
         tar -zxf "$_repo_archive_path" -C "$_installdir"

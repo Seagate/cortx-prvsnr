@@ -33,7 +33,7 @@ from .helper import run_script as _run_script
 logger = logging.getLogger(__name__)
 
 
-EOS_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
+CORTX_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
 
 # TODO
 #   - a way (marker) to split tests into groups:
@@ -752,7 +752,7 @@ def test_functions_install_provisioner(
     run_script, mhost, mlocalhost,
     ssh_config, remote, repo_src
 ):
-    prvsnr_version = EOS_RELEASE_TEST_TAG
+    prvsnr_version = CORTX_RELEASE_TEST_TAG
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false' # TODO
@@ -780,7 +780,7 @@ def test_functions_install_provisioner(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("version", [
     None,
-    EOS_RELEASE_TEST_TAG,
+    CORTX_RELEASE_TEST_TAG,
     'components/dev/centos-7.7.1908/provisioner/last_successful',
     'components/dev/centos-7.7.1908/provisioner/20'
 ], ids=[
@@ -803,6 +803,8 @@ def test_functions_install_provisioner_rpm(
     assert res.rc == 0
 
     assert mhost.host.package('cortx-prvsnr').is_installed
+    # TODO EOS-11551 enable later
+    # assert mhost.host.package('python36-cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
@@ -821,7 +823,7 @@ def test_functions_install_provisioner_rpm(
     None,          # raw copy
     'headcommit',  # by commit
     'HEAD',
-    EOS_RELEASE_TEST_TAG  # by tag
+    CORTX_RELEASE_TEST_TAG  # by tag
 ])
 def test_functions_install_provisioner_local(
     run_script, mhost, mlocalhost,
@@ -1200,7 +1202,7 @@ def test_functions_eos_pillar_show_skeleton(
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
+        'provisioner configure_cortx {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
@@ -1266,7 +1268,7 @@ def test_functions_eos_pillar_update_and_load_default(
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
+        'provisioner configure_cortx {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )

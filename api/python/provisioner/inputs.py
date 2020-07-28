@@ -17,7 +17,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 import logging
 from copy import deepcopy
 
@@ -25,6 +24,7 @@ import functools
 from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
 
+from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
     KeyPath, PillarKeyAPI, PillarKey, PillarItemsAPI

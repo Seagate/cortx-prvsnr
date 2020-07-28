@@ -108,7 +108,7 @@ Options:
     --iopath-states                             run only teardown of iopath components
     --ctrlpath-states                           run only teardown of control path components
     --remove-prvsnr                             run teardown to remove cortx-prvsnr, cortx-prvsnr-cli
-                                                   and related dependencies.
+                                                    python36-cortx-prvsnr and related dependencies.
     --prereq-states                             run only teardown of prerequisite components
     --system-states                             run only teardown of system components
 "

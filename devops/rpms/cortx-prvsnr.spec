@@ -44,6 +44,7 @@ mkdir -p %{buildroot}/opt/seagate/cortx/provisioner
 cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
 cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
+# TODO EOS-11551 remove later
 cp -R api %{buildroot}/opt/seagate/cortx/provisioner
 cp -R files/conf %{buildroot}/opt/seagate/cortx/provisioner
 
@@ -58,10 +59,11 @@ rm -rf %{buildroot}
 /opt/seagate/cortx/provisioner/files
 /opt/seagate/cortx/provisioner/pillar
 /opt/seagate/cortx/provisioner/srv
+# TODO EOS-11551 remove later
 /opt/seagate/cortx/provisioner/api
 /opt/seagate/cortx/provisioner/conf
 
-
+# TODO EOS-11551 remove later
 %post
 api_dir="/opt/seagate/cortx/provisioner/api/python"
 echo "Configuring access for provisioner data ..."

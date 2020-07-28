@@ -1,5 +1,11 @@
-# TODO LICENSE, other
+include LICENSE README.md
 include provisioner/api_spec.yaml
 include provisioner/params_spec.yaml
 include provisioner/provisioner.conf
+
+recursive-include provisioner LICENSE LICENSE* *LICENSE*
+include provisioner/vendor/vendors.txt
+
 graft provisioner/srv
+
+global-exclude *.py[cod] __pycache__ *.so

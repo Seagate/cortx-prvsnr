@@ -72,10 +72,13 @@ pushd ~/rpmbuild/SOURCES/
     # Setup the source tar for rpm build
     DEST_DIR=cortx-prvsnr-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
     mkdir -p ${DEST_DIR}/{cli,files/etc,pillar,srv,api}
+    # TODO EOS-11551 enable later instead
+    #mkdir -p ${DEST_DIR}/{cli,files/etc,pillar,srv}
     cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIR}/cli
     cp -R ${BASEDIR}/../../files/conf ${DEST_DIR}/files
     cp -R ${BASEDIR}/../../pillar ${DEST_DIR}
     cp -R ${BASEDIR}/../../srv ${DEST_DIR}
+    # TODO EOS-11551 remove later
     cp -R ${BASEDIR}/../../api ${DEST_DIR}
 
 

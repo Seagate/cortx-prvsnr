@@ -17,7 +17,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 from abc import ABC, abstractmethod
 import salt.config
 from salt.client import LocalClient, Caller
@@ -29,6 +28,7 @@ from salt.client.ssh.client import SSHClient
 from pathlib import Path
 import logging
 
+from .vendor import attr
 from .config import (
    ALL_MINIONS, LOCAL_MINION,
    PRVSNR_USER_FILEROOT_DIR

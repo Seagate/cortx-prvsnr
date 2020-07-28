@@ -20,13 +20,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import attr
 from typing import Dict, Union
 from copy import deepcopy
 
 import logging
 import logging.config
 
+from .vendor import attr
 from . import inputs
 from .base import prvsnr_config
 from .config import (
