@@ -18,12 +18,12 @@
 #
 
 import logging
-import attr
 from abc import ABC, abstractmethod
 from typing import Any, List, Dict, Tuple, Iterable, Union
 from copy import deepcopy
 from pathlib import Path
 
+from .vendor import attr
 from .utils import load_yaml, dump_yaml
 from .salt import pillar_get, pillar_refresh
 from .config import (

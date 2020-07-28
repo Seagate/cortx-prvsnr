@@ -18,9 +18,9 @@
 #
 
 import pytest
-import attr
 import json
 
+from provisioner.vendor import attr
 from provisioner.serialize import (
     PrvsnrType, dumps, loads, PRVSNR_TYPE_KEY
 )
