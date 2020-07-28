@@ -26,6 +26,14 @@ def storage_device_config():
     _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(_target_node)
     _cc_flag = False
 
+    _cmd_mpath1 = "multipath -ll | grep -E \"prio=50|prio=10\" | wc -l"
+    _cmd_mpath2 = "multipath -ll | grep mpath | wc -l"
+    _ret = subprocess.Popen([_cmd_mpath2],
+                                shell=True,
+                                stdout=subprocess.PIPE
+                                ).stdout.read().decode("utf-8").splitlines()
+    subprocess.Popen([_cmd_mpath2], shell=True, stdout=subprocess.PIPE)
+    subprocess.Popen([_cmd_mpath2], shell=True, stdout=subprocess.PIPE)
     if os.path.isfile(_ffile_path):
         # Setup is cross connected.
         print('INFO: setup is cross connected')
