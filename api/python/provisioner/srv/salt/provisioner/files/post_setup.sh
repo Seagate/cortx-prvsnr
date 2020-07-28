@@ -12,14 +12,21 @@ fi
 # source /etc/environment
 
 # Does same as above, but recommended way of setting Global Envisonment Variables
-cat > /etc/profile.d/set_path_env << EOM
-#!/bin/bash
+cat > /etc/profile.d/set_path_env.sh << EOM
+#!/bin/sh
 echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
 EOM
-source /etc/profile.d/set_path_env
+source /etc/profile.d/set_path_env.sh
 
+test -e ${PWD}/api/python/setup.py && \
+  install_dir=${PWD} || \
+  install_dir=/opt/seagate/cortx/provisioner
+
+# set api
+#   adding provisioner group
 prvsnr_group=prvsnrusers
-install_dir=/opt/seagate/cortx/provisioner
+echo "Creating group '$prvsnr_group'..."
+groupadd -f "$prvsnr_group"
 
 shared_dir=/var/lib/seagate/cortx/provisioner/shared
 factory_profile_dir="${shared_dir}/factory_profile"
