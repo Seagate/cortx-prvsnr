@@ -11,6 +11,7 @@
 #  -i I        Key to User collection in csm default :
 #              eos/base/user_collection/obj/
 #  -n N        node_id of replacing node i.e. srvnode-1/srvnode-2
+#  --syncpass  Sync csm admin user password
  
 import subprocess
 import json
