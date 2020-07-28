@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 import json, yaml
 import os
+import configparser
 
 from .errors import (
     ProvisionerError,
@@ -30,7 +31,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE,
+    SSL_CERTS_FILE, CONFIG_MAP, AARAY_AS_INPUT,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -187,6 +188,16 @@ class RunArgsConfigureCortx:
 
 # TODO TEST EOS-8473
 class RunArgsSetup:
+    config_path: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "config.ini file path to update salt data "
+                ),
+            }
+        },
+    default=''
+    )
     name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -406,6 +417,7 @@ class Node:
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerBase:
+    config_path: str = RunArgsSetup.config_path
     name: str = RunArgsSetup.name
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
@@ -546,6 +558,16 @@ class RunArgsController:
                 'help': "target controller"
                 # TODO IMPROVE use argparse choises to limit
                 #      valid vales only to a/b/both
+            }
+        }
+    )
+
+@attr.s(auto_attribs=True)
+class RunArgsUpdates:
+    path: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "config path to update pillar"
             }
         }
     )
@@ -1328,6 +1350,37 @@ class Configure_Cortx(CommandParserFillerMixin):
         if show:
             print(dump_yaml_str(res))
 
+@attr.s(auto_attribs=True)
+class UpdatePillar(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsUpdates
+    config_map = CONFIG_MAP
+
+    def run(self, path):
+        if not os.path.isfile(path):
+            raise ValueError('config file is missing')
+        config = configparser.ConfigParser()
+        config.read(path)
+        logger.info("Updating salt data :")
+        for section in config.sections():
+            node_id=None
+            if section == 'srvnode-1' or section == 'srvnode-2':
+                node_id=section
+            for key in config[section]:
+                if self.config_map.get(key, None):
+                     pillar_key = self.config_map[key]
+                     logger.info(pillar_key.format(node_id=node_id))
+                     # special cases where accepting array as input
+                     if key in AARAY_AS_INPUT:
+                         value = config[section][key]
+                         value = value.replace('"','\\"')
+                         run_subprocess_cmd([
+                           "provisioner", "pillar_set", pillar_key.format(node_id=node_id), f"{config[section][key]}" ])
+                     else: 
+                         run_subprocess_cmd([
+                           "provisioner", "pillar_set", pillar_key.format(node_id=node_id), f"\"{config[section][key]}\"" ])
+        logger.info("Pillar data updated Successfully.")
+ 
 
 @attr.s(auto_attribs=True)
 class CreateUser(CommandParserFillerMixin):
@@ -2165,6 +2218,9 @@ class SetupCluster(SetupProvisioner):
 
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
+        if kwargs.get("config_path",None): 
+            pilar = UpdatePillar()
+            pilar.run(kwargs["config_path"])
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
