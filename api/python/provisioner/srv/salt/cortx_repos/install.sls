@@ -15,7 +15,7 @@ setup_yum_salt_repo:
 # TODO IMPROVE look for specific salt module instead of cmd.run
 clean_yum_salt_repo_metadata:
   cmd.run:
-    - name: yum --disablerepo="*" --enablerepo="saltstack-repo" clean metadata
+    - name: yum --disablerepo="*" --enablerepo="saltstack" clean metadata
 
 {% else %}
 
