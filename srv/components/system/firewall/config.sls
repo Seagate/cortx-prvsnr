@@ -293,7 +293,9 @@ Management zone:
       - ssh
       - uds
       - www
+      {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
+      {% endif %}
     - interfaces:
       - {{ mgmt_if }}
     - port_fwd:
