@@ -63,8 +63,11 @@ rm -rf %{buildroot}
 
 
 %post
-api_dir="/opt/seagate/cortx/provisioner/api/python"
+# Create SEAGATE_USER_HOME_DIR requried for create users
+mkdir -p "/opt/seagate/users"
+chmod 644 "/opt/seagate/users"
 
+api_dir="/opt/seagate/cortx/provisioner/api/python"
 echo "Configuring access for provisioner data ..."
 bash "${api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
 
@@ -77,3 +80,8 @@ pip3 install -U "${api_dir}"
 if [ $1 -eq 0 ] ; then
     pip3 uninstall -y cortx-prvsnr
 fi
+
+# How to ensure all created users are removed before cleaning this directory?
+#if [[ -d /opt/seagate/users ]]; then
+#    rm -rf /opt/seagate/users
+#fi
