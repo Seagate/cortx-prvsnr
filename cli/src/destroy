@@ -142,9 +142,8 @@ function teardown_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            l_info "Removing $state"
+            l_info "Removing $state from node: "$tgt_node""
             $cmd salt "$tgt_node" state.apply components.$state.teardown $salt_opts
-
             sleep 2     # Mindfulness break
         done
     else
