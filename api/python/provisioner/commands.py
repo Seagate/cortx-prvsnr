@@ -563,7 +563,7 @@ class RunArgsController:
     )
 
 @attr.s(auto_attribs=True)
-class RunArgsUpdates:
+class RunArgsConfigureSetup:
     path: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -1351,36 +1351,30 @@ class Configure_Cortx(CommandParserFillerMixin):
             print(dump_yaml_str(res))
 
 @attr.s(auto_attribs=True)
-class UpdatePillar(CommandParserFillerMixin):
+class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsUpdates
-    config_map = CONFIG_MAP
+    _run_args_type = RunArgsConfigureSetup
+    input_map = { "network": inputs.Network,
+                  "release": inputs.Release,
+                  "storage_enclosure": inputs.StorageEnclosure }
 
     def run(self, path):
-        if not os.path.isfile(path):
+
+        if not Path(path).is_file():
             raise ValueError('config file is missing')
+ 
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data :")
-        for section in config.sections():
-            node_id=None
-            if section == 'srvnode-1' or section == 'srvnode-2':
-                node_id=section
-            for key in config[section]:
-                if self.config_map.get(key, None):
-                     pillar_key = self.config_map[key]
-                     logger.info(pillar_key.format(node_id=node_id))
-                     # special cases where accepting array as input
-                     if key in AARAY_AS_INPUT:
-                         value = config[section][key]
-                         value = value.replace('"','\\"')
-                         run_subprocess_cmd([
-                           "provisioner", "pillar_set", pillar_key.format(node_id=node_id), f"{config[section][key]}" ])
-                     else: 
-                         run_subprocess_cmd([
-                           "provisioner", "pillar_set", pillar_key.format(node_id=node_id), f"\"{config[section][key]}\"" ])
-        logger.info("Pillar data updated Successfully.")
+        content = {section: dict(config.items(section)) for section in config.sections()}        
+       
+        for section in content:
+            params = self.input_map[section](**content[section])
+            pillar_updater = PillarUpdater()
+            pillar_updater.update(params) 
+            pillar_updater.apply()
  
+        logger.info("Pillar data updated Successfully.")
 
 @attr.s(auto_attribs=True)
 class CreateUser(CommandParserFillerMixin):
@@ -2218,9 +2212,10 @@ class SetupCluster(SetupProvisioner):
 
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
-        if kwargs.get("config_path",None): 
-            pilar = UpdatePillar()
-            pilar.run(kwargs["config_path"])
+        config_path = kwargs.pop('config_path')
+        if config_path: 
+            config_setup = ConfigureSetup()
+            config_setup.run(config_path)
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
