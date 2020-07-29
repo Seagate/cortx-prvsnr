@@ -3,7 +3,7 @@ include:
 
 Remove kibana:
   pkg.purged:
-    - name: kibana
+    - name: kibana-oss
 
 Remove kibana config:
   file.absent:
