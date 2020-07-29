@@ -31,7 +31,6 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 rm -rf %{buildroot}
 
 mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc}
-mkdir -p %{buildroot}/opt/seagate/users
 
 cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
 cp -pr files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files
@@ -46,7 +45,6 @@ rm -rf %{buildroot}
 # %config(noreplace) /opt/seagate/cortx/provisioner/cli/%{name}.yaml
 /opt/seagate/cortx/provisioner/cli
 /opt/seagate/cortx/provisioner/files
-/opt/seagate/users
 
 
 %post
