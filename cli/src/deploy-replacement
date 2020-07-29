@@ -62,26 +62,36 @@ sync_states=(
 iopath_states=(
     # states to be applied in desired sequence
         "misc_pkgs.lustre"
+        "motr.prepare"
         "motr.install"
+        "hare.prepare"
         "hare.install"
+        "s3server.prepare"
         "s3server.install"
     )
 
 ha_states=(
     # states to be applied in desired sequence
+        "ha.corosync-pacemaker.prepare"
         "ha.corosync-pacemaker.install"
+        "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
-        "ha.ees_ha.install"
+        "ha.ees_ha.prepare"
+        "ha.ees_ha.install"             # A blank file
+        "post_setup"
+        "ha.cortx-ha"
     )
 
 controlpath_states=(
     # states to be applied in desired sequence
+        "sspl.prepare"
         "sspl.install"
+        "csm.prepare"
         "csm.install"
+        "uds.prepare"
         "uds.install"
-        "post_setup"
-        "ha.cortx-ha"
     )
+
 
 function usage {
   echo "\
@@ -94,7 +104,7 @@ Target host is considered to be an cortx SaltStack master.
 General options:
 $base_options_usage
 Options:
-    -S <tgt_node>,  --singlenode=tgt_node        switch to single node mode setup
+    -S <tgt_node>,  --singlenode=<tgt_node>      switch to single node mode setup
     --system-states                              deploy only system states
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
@@ -206,8 +216,8 @@ if [[ "$run_all" == true ]]; then
     run_states "${prereq_states[@]}"
     run_states  "${sync_states[@]}"
     run_states  "${iopath_states[@]}"
-    run_states "${ha_states[@]}"
     run_states "${controlpath_states[@]}"
+    run_states "${ha_states[@]}"
 fi
 
 if [[ "$run_system_states" == true ]]; then
