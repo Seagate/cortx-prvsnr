@@ -1,7 +1,6 @@
 Remove elasticsearch:
   pkg.purged:
-    - name: elasticsearch
-
+    - name: elasticsearch-oss
 
 Remove elasticsearch config:
   file.absent:
