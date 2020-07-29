@@ -22,6 +22,10 @@ test -e ${PWD}/api/python/setup.py && \
   install_dir=${PWD} || \
   install_dir=/opt/seagate/cortx/provisioner
 
+# Create SEAGATE_USER_HOME_DIR requried for create users
+mkdir -p "/opt/seagate/users"
+chmod 644 "/opt/seagate/users"
+
 # set api
 #   adding provisioner group
 prvsnr_group=prvsnrusers
