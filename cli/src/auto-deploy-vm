@@ -41,10 +41,10 @@ usage()
     echo "\
 Usage:
 For Dual Node:
-sh auto-deploy-vm.sh -s <secondary node hostname (srvnode-2)> -p <password for sec node>
-                  -t <target build url for EOS>
+sh auto-deploy-vm -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+                  -t <target build url for CORTX>
 For Single Node:
-sh auto-deploy-vm.sh -S -t <target build url for EOS> 
+sh auto-deploy-vm -S -t <target build url for CORTX> 
 
 Optional Arguments:
    -C	 <Hostname/IP> 	  Hostname/IP address for Public Data n/w interface.
@@ -73,9 +73,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm.sh -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 For Single Node:
-$ sh auto-deploy-vm.sh -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 
 "
 }

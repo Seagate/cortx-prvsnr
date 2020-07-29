@@ -293,7 +293,7 @@ else
     } || {
         echo -e "\nThis is not a RedHat system, copying repos manually" 2>&1 | tee -a ${LOG_FILE}
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
-        create_commons_repos "$url_repo_commons"
+        create_commons_repos "$url_local_repo_commons"
     }
 fi
 
