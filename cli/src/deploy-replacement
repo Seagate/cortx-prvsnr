@@ -93,6 +93,7 @@ ha_states=(
     # states to be applied in desired sequence
         "ha.corosync-pacemaker.prepare"
         "ha.corosync-pacemaker.install"
+        "ha.corosync-pacemaker.config.base"
         "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
         "ha.ees_ha.prepare"
