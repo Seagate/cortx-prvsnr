@@ -23,18 +23,22 @@ import provisioner
 def storage_device_config():
 
     _target_node = __grains__['id']
+    _cluster_type = __pillar__["cluster"]["type"]
+
     _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(_target_node)
     _cc_flag = False
 
     _cmd_mpath1 = "multipath -ll | grep -E \"prio=50|prio=10\" | wc -l"
     _cmd_mpath2 = "multipath -ll | grep mpath | wc -l"
-    _ret = subprocess.Popen([_cmd_mpath2],
-                                shell=True,
-                                stdout=subprocess.PIPE
-                                ).stdout.read().decode("utf-8").splitlines()
-    subprocess.Popen([_cmd_mpath2], shell=True, stdout=subprocess.PIPE)
-    subprocess.Popen([_cmd_mpath2], shell=True, stdout=subprocess.PIPE)
-    if os.path.isfile(_ffile_path):
+
+    _prio_lines = int(subprocess.getoutput(_cmd_mpath1))
+    _mpath_devs_n = int(subprocess.getoutput(_cmd_mpath2))
+
+    if _mpath_devs_n * 2 == _prio_lines and _cluster_type == "ees":
+        #The setup is cross connected to storage enclosure
+        _cc_flag = True
+
+    if _cc_flag == True:
         # Setup is cross connected.
         print('INFO: setup is cross connected')
         _cc_flag = True
@@ -42,12 +46,8 @@ def storage_device_config():
         _ctrl_user = __pillar__["storage_enclosure"]["controller"]["user"]
         _ctrl_passwd = __pillar__["storage_enclosure"]["controller"]["secret"]
         _ctrl_cli = "/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
-    else:
-        print('INFO: setup is not cross connected')
 
-    if _cc_flag == True:
         # Shutdown controller B
-        # run controller_cli.sh host -h 'ip_addr' -u admin -p '!passwd' --shutdown-ctrl b
         print('INFO: Shutting down controller B')
         _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --shutdown-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
         _ret = subprocess.Popen([_ctrl_cmd],
@@ -55,6 +55,8 @@ def storage_device_config():
                                     stdout=subprocess.PIPE
                                     ).stdout.read().decode("utf-8").splitlines()
         time.sleep(30)
+    else:
+        print('INFO: setup is not cross connected')
 
     for node in __pillar__["cluster"]["node_list"]:
         if __pillar__["cluster"][node]["is_primary"]:
@@ -102,16 +104,19 @@ def storage_device_config():
 
         provisioner.pillar_set(metadata_field, metadata_device)
         provisioner.pillar_set(data_field, data_device)
+        if _cc_flag == True:
+            _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(node)
+            _cmd = "ssh {0} \"mkdir -p /opt/seagate/cortx/provisioner/generated_configs/; touch {1}\"".format(node, _ffile_path)
+            os.system(_cmd)
 
     if _cc_flag == True:
-        print('INFO: Shutting down controller B')
+        print('INFO: Restarting the controller B')
         _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --restart-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
         _ret = subprocess.Popen([_ctrl_cmd],
                                     shell=True,
                                     stdout=subprocess.PIPE
                                     ).stdout.read().decode("utf-8").splitlines()
         time.sleep(180)
-
     return True
 
 
