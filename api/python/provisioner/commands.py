@@ -31,7 +31,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE, CONFIG_MAP, AARAY_AS_INPUT,
+    SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -1350,31 +1350,40 @@ class Configure_Cortx(CommandParserFillerMixin):
         if show:
             print(dump_yaml_str(res))
 
+
 @attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
-    input_map = { "network": inputs.Network,
-                  "release": inputs.Release,
-                  "storage_enclosure": inputs.StorageEnclosure }
+    input_map = {"network": inputs.Network,
+                 "release": inputs.Release,
+                 "storage_enclosure": inputs.StorageEnclosure}
+
+    def _parse_input(self, input):
+        for key in input:
+
+            if input[key] and "," in input[key]:
+                input[key] = [x.strip() for x in input[key].split(",")]
 
     def run(self, path):
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
- 
+
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data :")
-        content = {section: dict(config.items(section)) for section in config.sections()}        
-       
+        content = {section: dict(config.items(section)) for section in config.sections()}
+
         for section in content:
+            self._parse_input(content[section])
             params = self.input_map[section](**content[section])
             pillar_updater = PillarUpdater()
-            pillar_updater.update(params) 
+            pillar_updater.update(params)
             pillar_updater.apply()
- 
+
         logger.info("Pillar data updated Successfully.")
+
 
 @attr.s(auto_attribs=True)
 class CreateUser(CommandParserFillerMixin):

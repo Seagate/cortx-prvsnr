@@ -214,18 +214,3 @@ REPO_BUILD_DIRS = [
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
-AARAY_AS_INPUT = ["network_interfaces", "network_ips"]
-CONFIG_MAP = {
-                "target_build":"release/target_build",
-                "network_interfaces":"cluster/{node_id}/network/data_nw/iface",
-                "network_ips":"cluster/{node_id}/network/data_nw/ipaddr",
-                "bmc_ip":"cluster/{node_id}/bmc/ip",
-                "bmc_user":"cluster/{node_id}/bmc/user",
-                "bmc_secret":"cluster/{node_id}/bmc/secret", 
-                "mgmt_vip":"cluster/mgmt_vip",
-                "cluster_ip":"cluster/cluster_ip",
-                "controllera_ip":"storage_enclosure/controller/primary_mc/ip",
-                "controllerb_ip":"storage_enclosure/controller/secondary_mc/ip",
-                "controller_user":"storage_enclosure/controller/user",
-                "controller_password":"storage_enclosure/controller/secret" 
-                }
