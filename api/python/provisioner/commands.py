@@ -2224,8 +2224,14 @@ class ReplaceNode(SetupProvisioner):
         if run_args.node_port:
             nodes[run_args.node_id].port = run_args.node_port
 
-        super().run(
+        setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
+        )
+
+        logger.info("Setting up replacement_node flag")
+        setup_ctx.ssh_client.state_apply(
+            'provisioner.post_replacement',
+            targets=run_args.node_id
         )
 
         logger.info("Done")
