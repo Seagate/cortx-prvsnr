@@ -196,7 +196,7 @@ class RunArgsSetup:
                 ),
             }
         },
-    default=''
+        default=None
     )
     name: str = attr.ib(
         metadata={
