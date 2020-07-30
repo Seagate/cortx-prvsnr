@@ -141,12 +141,19 @@ def run_subprocess_cmd(cmd, **kwargs):
         # TODO IMPROVE EOS-8473 logging level
         logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
         res = subprocess.run(cmd, **_kwargs)
-    except subprocess.CalledProcessError as exc:
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         logger.exception(f"Failed to run cmd '{cmd}'")
         raise SubprocessCmdError(cmd, _kwargs, repr(exc)) from exc
     else:
         logger.debug(f"Subprocess command resulted in: {res}")
         return res
+
+
+def get_repo_archive_exclusions():
+    exclude = []
+    for d in config.REPO_BUILD_DIRS + ['*.swp']:
+        exclude.extend(['--exclude', str(d)])
+    return exclude
 
 
 # TODO TEST EOS-8473
@@ -175,9 +182,7 @@ def repo_tgz(
         )
     # do raw archive with uncommitted/untracked changes otherwise
     else:
-        exclude = []
-        for d in config.REPO_BUILD_DIRS + ['*.swp']:
-            exclude.extend(['--exclude', str(d)])
+        exclude = get_repo_archive_exclusions()
 
         cmd = (
             ['tar', '-czf',  str(dest)] +
