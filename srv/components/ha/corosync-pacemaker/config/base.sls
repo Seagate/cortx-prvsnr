@@ -30,7 +30,7 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if grains['roles'][0] -%}                                # priamry node check
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
@@ -44,20 +44,6 @@ Authorize nodes:
       - '--force'
     - require:
       - Start pcsd service
-
-Ignore the Quorum Policy:
-  pcs.prop_has_value:
-    - prop: no-quorum-policy
-    - value: ignore
-
-Enable STONITH:
-  pcs.prop_has_value:
-    - prop: stonith-enabled
-{% if pillar['cluster'][grains['id']]['bmc']['ip'] %}
-    - value: true
-{% else %}
-    - value: false
-{% endif %}
 {% else %}
 No Cluster Setup:
   test.show_notification:
