@@ -87,8 +87,6 @@ Optional Arguments:
 --m1  <BMC PASSWORD>   BMC Password for Node-1. Default adminBMC!
 --b2  <BMC USER>       BMC User for Node-2. Default ADMIN
 --m2  <BMC PASSWORD>   BMC Password for Node-2. Default adminBMC!
---cc                   The servers are cabled to the storage enclosure in
-                       a cross-connected fashion.
 "
 }
 
@@ -218,9 +216,6 @@ while [[ $# -gt 0 ]]; do
                 echo "Error: BMC user for node-2 not provided" && exit 1;
             bmc2_user="$2"
             shift 2 ;;
-        --cc)
-            cross_connect_opt=true
-            shift ;;
 
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
@@ -250,17 +245,6 @@ ssh_tool_pkg=$(basename $ssh_tool)
 [ -f "$ssh_tool" ] || {
     echo "Installing $ssh_tool_pkg"
     yum install -y $ssh_tool_pkg
-}
-
-create_cross_connect_flag_file()
-{
-    if [[ $cross_connect_opt == true ]]; then
-        mkdir -p /opt/seagate/cortx/provisioner/generated_configs
-        echo "Creating the flag file on node-1" >> $LOG_FILE
-        touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.cc
-        echo "Creating the flag file on node-2" >> $LOG_FILE
-        $remote_cmd touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.cc
-    fi
 }
 
 install_prvsnr_cli()
@@ -416,7 +400,6 @@ update_pillar()
 
 }
 
-create_cross_connect_flag_file
 install_config_prvsnr
 update_pillar
 
