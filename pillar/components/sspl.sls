@@ -9,7 +9,7 @@ sspl:
   SSPL-LL_SETTING:
     core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
     message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor, CPUFaultSensor"
+    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor, CPUFaultSensor, RAIDIntegritySensor"
     actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
     degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor, CPUFaultSensor"
   SYSTEM_INFORMATION:
@@ -71,6 +71,9 @@ sspl:
   RAIDSENSOR:
     threaded: "true"
     RAID_status_file: "/proc/mdstat"
+  RAIDINTEGRITYSENSOR:
+    threaded: "true"
+    polling_interval: "604800"
   IPMI:
     user: "admin"
     pass: "admin"
