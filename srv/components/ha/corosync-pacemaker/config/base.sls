@@ -30,7 +30,7 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-{% if grains['roles'][0] -%}                                # priamry node check
+{% if 'primary' in grains['roles'] -%}                   # priamry node check
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
