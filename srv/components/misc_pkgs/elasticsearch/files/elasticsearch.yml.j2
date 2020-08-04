@@ -91,6 +91,10 @@ cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 network.host: {{ pillar['elasticsearch']['network_host'] }}
 http.port: {{ pillar['elasticsearch']['http_port'] }}
 discovery.zen.ping.unicast.hosts: {{ pillar['cluster']['node_list'] }}
+{%- if pillar['cluster']['node_list']|length > 2 %}
+discovery.zen.minimum_master_nodes: 2
+{%- else %}
 discovery.zen.minimum_master_nodes: 1
+{%- endif %} 
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
