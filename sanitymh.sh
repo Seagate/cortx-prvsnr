@@ -18,14 +18,14 @@ CrateConfig_Sections: [MERO_CONFIG, WORKLOAD_SPEC]
 MERO_CONFIG:
    MERO_LOCAL_ADDR: $IPADDR@tcp:12345:41:302
    MERO_HA_ADDR: $IPADDR@tcp:12345:34:101
-   CLOVIS_PROF: <$Profile>  # Profile
+   LIBMOTR_PROF: <$Profile>  # Profile
    LAYOUT_ID: 1                     # Defines the UNIT_SIZE
    IS_OOSTORE: 1                    # Is oostore-mode?
    IS_READ_VERIFY: 0                # Enable read-verify?
-   CLOVIS_TM_RECV_QUEUE_MIN_LEN: 16 # Minimum length of the receive queue
-   CLOVIS_MAX_RPC_MSG_SIZE: 65536   # Maximum rpc message size
-   CLOVIS_PROCESS_FID: <$Fid>
-   CLOVIS_IDX_SERVICE_ID: 1
+   LIBMOTR_TM_RECV_QUEUE_MIN_LEN: 16 # Minimum length of the receive queue
+   LIBMOTR_MAX_RPC_MSG_SIZE: 65536   # Maximum rpc message size
+   LIBMOTR_PROCESS_FID: <$Fid>
+   LIBMOTR_IDX_SERVICE_ID: 1
 
 LOG_LEVEL: 4  # err(0), warn(1), info(2), trace(3), debug(4)
 
@@ -34,9 +34,9 @@ WORKLOAD_SPEC:               # Workload specification section
       WORKLOAD_TYPE: 1       # Index(0), IO(1)
       WORKLOAD_SEED: tstamp  # SEED to the random number generator
       OPCODE: 3              # CREATE(0), DELETE(1), READ(2), WRITE(3)
-      CLOVIS_IOSIZE: 4k      # Total Size of IO to perform per object
+      LIBMOTR_IOSIZE: 4k      # Total Size of IO to perform per object
       BLOCK_SIZE: 4k         # In N+K conf set to (N * UNIT_SIZE) for max perf
-      BLOCKS_PER_OP: 1       # Number of blocks per Clovis operation
+      BLOCKS_PER_OP: 1       # Number of blocks per LIBMOTR operation
       MAX_NR_OPS: 1          # Max concurrent operations per thread
       NR_OBJS: 1024           # Number of objects to create by each thread
       NR_THREADS: 1          # Number of threads to run in this workload
