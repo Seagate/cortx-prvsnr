@@ -6,7 +6,7 @@ Stage - Post Install S3Server:
 
 # Update password in authserver.properties:
 #   cmd.run:
-#     - name: /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh -l {{ salt['lyveutil.decrypt'](pillar['openldap']['iam_admin']['secret'],'openldap') }} -p /opt/seagate/auth/resources/authserver.properties
+#     - name: /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh -l {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['iam_admin']['secret']) }} -p /opt/seagate/auth/resources/authserver.properties
 #     - onlyif: test -f /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh
 #     - watch_in:
 #       - service: s3authserver

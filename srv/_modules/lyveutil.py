@@ -1,12 +1,12 @@
 # How to test:
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
-# salt-call lyveutil.decrypt "secret" "component"
+# salt-call lyveutil.decrypt "component" "secret"
 
 from salt import client
 
 from eos.utils.security.cipher import Cipher, CipherInvalidToken
 
-def decrypt(secret, component):
+def decrypt(component, secret):
     """ Decrypt secret.
 
     Args:
