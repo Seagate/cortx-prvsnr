@@ -32,7 +32,7 @@ while getopts ":g:e:b:" o; do
             BUILD_NUMBER=${OPTARG}
             ;;
         *)
-            echo "Usage: buildrpm.sh -g <git_commit_hash> -e <ees_prvsnr_version> -b <build_number>"
+            echo "Usage: buildrpm.sh -g <git_commit_hash> -e <LDR-R1_prvsnr_version> -b <build_number>"
             ;;
     esac
 done
