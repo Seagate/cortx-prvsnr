@@ -572,6 +572,14 @@ class RunArgsConfigureSetup:
             }
         }
     )
+    setup_type: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "type of setup i.e.single, dual"
+            }
+        }
+    )
+
 
 
 @attr.s(auto_attribs=True)
@@ -1356,9 +1364,40 @@ class Configure_Cortx(CommandParserFillerMixin):
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
+
+    SINGLE_PARAM = [
+        "target_build",
+        "controllera_ip",
+        "controllerb_ip",
+        "controller_user",
+        "controller_secret",
+        "primary_hostname",
+        "primary_network_iface",
+        "primary_bmc_ip",
+        "primary_bmc_user",
+        "primary_bmc_secret"]
+    DUAL_PARAM = [
+        "target_build",
+        "controllera_ip",
+        "controllerb_ip",
+        "controller_user",
+        "controller_secret",
+        "primary_hostname",
+        "primary_network_iface",
+        "primary_bmc_ip",
+        "primary_bmc_user",
+        "primary_bmc_secret",
+        "secondary_hostname",
+        "secondary_network_iface",
+        "secondary_bmc_ip",
+        "secondary_bmc_user",
+        "secondary_bmc_secret"]
+
     input_map = {"network": inputs.Network,
                  "release": inputs.Release,
                  "storage_enclosure": inputs.StorageEnclosure}
+    validate_map = {"single": SINGLE_PARAM,
+                    "dual": DUAL_PARAM}
 
     def _parse_input(self, input):
         for key in input:
@@ -1366,7 +1405,17 @@ class ConfigureSetup(CommandParserFillerMixin):
             if input[key] and "," in input[key]:
                 input[key] = [x.strip() for x in input[key].split(",")]
 
-    def run(self, path):
+    def _validate_params(self, content, setup_type):
+        mandatory_param = self.validate_map[setup_type]
+        for section in content:
+            for key in content[section]:
+                if key in mandatory_param:
+                    if content[section][key]:
+                        mandatory_param.remove(key)
+        if len(mandatory_param) > 0:
+           raise ValueError(f"Mandatory param missing {mandatory_param}")
+
+    def run(self, path, setup_type):
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
@@ -1374,7 +1423,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data :")
-        content = {section: dict(config.items(section)) for section in config.sections()}
+        content = {section: dict(config.items(section)) for section in config.sections()}        
+        self._validate_params(content, setup_type)
 
         for section in content:
             self._parse_input(content[section])
@@ -2225,7 +2275,7 @@ class SetupCluster(SetupProvisioner):
         config_path = kwargs.pop('config_path')
         if config_path: 
             config_setup = ConfigureSetup()
-            config_setup.run(config_path)
+            config_setup.run(config_path, "dual")
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
