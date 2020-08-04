@@ -14,7 +14,7 @@ sspl:
     degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor, CPUFaultSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
-    product: "ECS"
+    product: "LDR-R2"
     cli_type: "CS-A"
     setup: "cortx"
     data_path: "/var/cortx/sspl/data/"
