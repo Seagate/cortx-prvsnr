@@ -132,14 +132,14 @@ Test framework has helper.py and conftest.py which declare and implement the API
   - **localhost** - localhost instance from fixture
   - **host** - host instance
   - **ssh_config** - path to ssh_config from fixture
-  - **project_path** - path of local ees-prvsnr repository from fixture
-  - **host_repo_dir** - path to copy ees-prvsnr
+  - **project_path** - path of local LDR-R1-prvsnr repository from fixture
+  - **host_repo_dir** - path to copy LDR-R1-prvsnr
 - Returns: path of copied repository on the `host`
 
 ### conftest.py
 
 #### project_path:
-- Returns the full path of local ees-prvsnr repository.
+- Returns the full path of local LDR-R1-prvsnr repository.
 - Scope: `session`
 
 #### localhost:
