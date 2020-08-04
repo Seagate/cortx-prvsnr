@@ -427,16 +427,6 @@ mine_interval: 60
 #  - test
 #disable_returners: []
 
-# This is the reverse of disable_modules.  The default, like disable_modules, is the empty list,
-# but if this option is set to *anything* then *only* those modules will load.
-# Note that this is a very large hammer and it can be quite difficult to keep the minion working
-# the way you think it should since Salt uses many modules internally itself.  At a bare minimum
-# you need the following enabled or else the minion won't start.
-#whitelist_modules:
-#  - cmdmod
-#  - test
-#  - config
-
 # Modules can be loaded from arbitrary paths. This enables the easy deployment
 # of third party modules. Modules for returners and minions can be loaded.
 # Specify a list of extra directories to search for minion modules and
@@ -734,16 +724,16 @@ state_output: mixed
 log_file: /var/log/seagate/provisioner/salt_minion.log
 
 # The level of messages to send to the console.
-# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
+# One of 'trace', 'debug', info', 'warning', 'error', 'critical'.
 #
 # The following log levels are considered INSECURE and may log sensitive data:
-# ['garbage', 'trace', 'debug']
+# ['trace', 'debug']
 #
 # Default: 'warning'
 #log_level: warning
 
 # The level of messages to send to the log file.
-# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
+# One of 'trace', 'debug', info', 'warning', 'error', 'critical'.
 # If using 'log_granular_levels' this must be set to the highest desired level.
 # Default: 'warning'
 log_level_logfile: warning
