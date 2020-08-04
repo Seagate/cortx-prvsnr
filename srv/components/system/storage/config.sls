@@ -65,7 +65,7 @@ Make pv_metadata:
 # Creating LVM Volume Group (vg); vg_name = vg_metadata
 Make vg_metadata:
   lvm.vg_present:
-    - name: vg_metadata
+    - name: vg_metadata_{{ grains['id'] }}
     - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
       - Make pv_metadata
