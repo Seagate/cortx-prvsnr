@@ -36,14 +36,14 @@ function trap_handler {
 
 function usage {
   echo "\
-Usage: $0 [options] [LDR-R1-prvsnr-version]
+Usage: $0 [options] [ldr-r1-prvsnr-version]
 
 Installs the provisioner repository along with SaltStack
 on the hosts with bare OS installed, sets up passwordless
 ssh configuration and configures salt master/minion connections
 and also makes some additional preliminary configuration.
 
-'LDR-R1-prvsnr-version' as an optional positional argument might specify
+'ldr-r1-prvsnr-version' as an optional positional argument might specify
 the desired version of the provisioner to install. Makes sense for 'gitlab'
 source only as of now. Not set by default.
 
