@@ -583,7 +583,7 @@ class RunArgsConfigureSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "type of setup i.e.single, dual",
-                'choices': ["single", "dual"]
+                'choices': [SetupType.SINGLE.value, SetupType.DUAL.value]
             }
         }
     )
