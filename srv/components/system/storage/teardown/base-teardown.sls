@@ -7,36 +7,36 @@
 #  - unmount /var/motr
 #  - remove /var/motr partition
 #  - delete SWAP and raw_metadata LVs
-#  - delete vg_metadata
+#  - delete vg_metadata_{{ node }}
 #  - delete pv_metadata
 #  - delete LVM partition
 Unmount SWAP:
   cmd.run:
-    - name: swapoff /dev/vg_metadata/lv_main_swap
+    - name: swapoff /dev/vg_metadata_{{ node }}/lv_main_swap || true
 
 Remove swap from fstab:
   module.run:
     - mount.rm_fstab:
       - name: none
-      - device: /dev/vg_metadata/lv_main_swap
+      - device: /dev/vg_metadata_{{ node }}/lv_main_swap
     - require:
       - Unmount SWAP
 
 Remove LV swap:
   lvm.lv_absent:
     - name: lv_main_swap
-    - vgname: vg_metadata
+    - vgname: vg_metadata_{{ node }}
     - require:
       - Remove swap from fstab
 
 Remove LV raw_metadata:
   lvm.lv_absent: 
     - name: lv_raw_metadata
-    - vgname: vg_metadata
+    - vgname: vg_metadata_{{ node }}
 
 Remove VG:
   lvm.vg_absent:
-    - name: vg_metadata
+    - name: vg_metadata_{{ node }}
     - require: 
       - Remove LV raw_metadata
       - Remove LV swap

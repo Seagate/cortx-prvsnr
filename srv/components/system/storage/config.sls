@@ -62,10 +62,10 @@ Make pv_metadata:
       - Set LVM flag
 # done creating LVM physical volumes
 
-# Creating LVM Volume Group (vg); vg_name = vg_metadata
-Make vg_metadata:
+# Creating LVM Volume Group (vg); vg_name = vg_metadata_{{ node }}
+Make vg_metadata_{{ node }}:
   lvm.vg_present:
-    - name: vg_metadata_{{ grains['id'] }}
+    - name: vg_metadata_{{ node }}
     - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
     - require:
       - Make pv_metadata
@@ -76,19 +76,19 @@ Make vg_metadata:
 Make lv_main_swap:
   lvm.lv_present:
     - name: lv_main_swap
-    - vgname: vg_metadata
+    - vgname: vg_metadata_{{ node }}
     - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
     - require:
-      - Make vg_metadata
+      - Make vg_metadata_{{ node }}
 
 # Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 50% (less 1TB))
 Make lv_raw_metadata:
   lvm.lv_present:
     - name: lv_raw_metadata
-    - vgname: vg_metadata
+    - vgname: vg_metadata_{{ node }}
     - extents: 100%FREE        # Reference: https://linux.die.net/man/8/lvcreate
     - require:
-      - Make vg_metadata
+      - Make vg_metadata_{{ node }}
 # done creating LVM LVs
 # end LVM config
 
@@ -97,8 +97,8 @@ Make lv_raw_metadata:
 # Format SWAP
 Make SWAP:
   cmd.run:
-    - name: sleep 10 && mkswap -f /dev/vg_metadata/lv_main_swap && sleep 5
-    - onlyif: test -e /dev/vg_metadata/lv_main_swap
+    - name: sleep 10 && mkswap -f /dev/vg_metadata_{{ node }}/lv_main_swap && sleep 5
+    - onlyif: test -e /dev/vg_metadata_{{ node }}/lv_main_swap
     - require:
       - Make lv_main_swap
       - cmd: Ensure SWAP partition is unmounted
@@ -106,7 +106,7 @@ Make SWAP:
 # Activate SWAP device
 Enable swap:
   mount.swap:
-    - name: /dev/vg_metadata/lv_main_swap
+    - name: /dev/vg_metadata_{{ node }}/lv_main_swap
     - persist: True
     - require:
       - cmd: Make SWAP
