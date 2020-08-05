@@ -64,7 +64,7 @@ Unfortunately, by default, LVM does not protect against failed drives. This make
 
 It’s also difficult to perform a replacement of the server in the field, since the complete reinstall of the OS will be required as well as partial re-provisioning of the appliance. 
 
-**Note:** Currently swap partition is located on a volume on the enclosure. We have to ensure that the swap size is at least 10% of Mero’s metadata size.  
+**Note:** Currently swap partition is located on a volume on the enclosure. We have to ensure that the swap size is at least 10% of Motr’s metadata size.  
 
  
 ## Proposed changes
@@ -193,7 +193,7 @@ where the (total size of OS partitions) is roughly 1.2 TB (256 MB for `/boot/efi
 
 **[ As of 2020-04-14 this section is under review and requires feedback before it can be implemented ]** 
 
-Right now, S3server and Mero are storing their code dump files to `/var/mero`. This could lead to various issues such as the inability to unmount the partition in case code dump is in progress. 
+Right now, S3server and Motr are storing their code dump files to `/var/mero`. This could lead to various issues such as the inability to unmount the partition in case code dump is in progress. 
 
 To prevent this from happening, we may choose to do the following: 
 
@@ -205,9 +205,9 @@ To prevent this from happening, we may choose to do the following:
 	* Note: there are two downsides of this: 
 		* We are reserving more space on the enclosure for system-specific data (also that won't affect the size of the swap much in the long run); 
 		* We may not be able to access core dumps if we lose access to the enclosure. 
-2. Reconfigure S3server and Mero to save core dumps to `/var/crash/<component>` 
+2. Reconfigure S3server and Motr to save core dumps to `/var/crash/<component>` 
 3. Enforce system-wide configuration to ensure all core files will go to `/var/crash` 
-4. Reconfigure components (especially S3server and Mero) and turn off saving data from user buffers as part of a core dump. 
+4. Reconfigure components (especially S3server and Motr) and turn off saving data from user buffers as part of a core dump. 
 
 ---
 

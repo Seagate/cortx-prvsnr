@@ -3,7 +3,7 @@
 set -e
 
 ############################
-# Mero & Halon test script #
+# Motr & Halon test script #
 ############################
 
 dd if=/dev/urandom of=/tmp/128M bs=1M count=128
@@ -13,11 +13,11 @@ Profile=$(jq -r '.csrProfile' mero_status.json)
 Fid=$(jq -r '.csrHosts[0][1].crnProcesses[0][0].r_fid' mero_status.json)
 IPADDR=$(jq '.csrPrincipalRM.s_endpoints' mero_status.json | awk -F "@" '{if(NR==2) print $1}'| cut -c 4-)
 cat <<EOF > sanity_io.yaml
-CrateConfig_Sections: [MERO_CONFIG, WORKLOAD_SPEC]
+CrateConfig_Sections: [MOTR_CONFIG, WORKLOAD_SPEC]
 
-MERO_CONFIG:
-   MERO_LOCAL_ADDR: $IPADDR@tcp:12345:41:302
-   MERO_HA_ADDR: $IPADDR@tcp:12345:34:101
+MOTR_CONFIG:
+   MOTR_LOCAL_ADDR: $IPADDR@tcp:12345:41:302
+   MOTR_HA_ADDR: $IPADDR@tcp:12345:34:101
    LIBMOTR_PROF: <$Profile>  # Profile
    LAYOUT_ID: 1                     # Defines the UNIT_SIZE
    IS_OOSTORE: 1                    # Is oostore-mode?
