@@ -408,6 +408,7 @@ class NTP(ParamGroupInputBase):
         _param_group, descr="ntp server timezone"
     )
 
+
 @attr.s(auto_attribs=True)
 class Release(ParamGroupInputBase):
     _param_group = 'release'
@@ -415,13 +416,14 @@ class Release(ParamGroupInputBase):
         _param_group, descr=" Cortx deployment build"
     )
 
+
 @attr.s(auto_attribs=True)
 class StorageEnclosure(ParamGroupInputBase):
     _param_group = 'storage_enclosure'
-    controllera_ip: str = ParamGroupInputBase._attr_ib(
+    controller_a_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller A IP"
     )
-    controllerb_ip: str = ParamGroupInputBase._attr_ib(
+    controller_b_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller B IP"
     )
     controller_user: str = ParamGroupInputBase._attr_ib(
@@ -430,6 +432,7 @@ class StorageEnclosure(ParamGroupInputBase):
     controller_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller password"
     )
+
 
 @attr.s(auto_attribs=True)
 class Network(ParamGroupInputBase):
@@ -471,7 +474,7 @@ class Network(ParamGroupInputBase):
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data iface netmask"
     )
-    primary_network_iface: list = ParamGroupInputBase._attr_ib(
+    primary_network_iface: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data network iface"
     )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
@@ -482,7 +485,7 @@ class Network(ParamGroupInputBase):
     )
     primary_bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC password"
-    ) 
+    )
     secondary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node hostname"
     )
@@ -507,7 +510,7 @@ class Network(ParamGroupInputBase):
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data iface netmask"
     )
-    secondary_network_iface: list = ParamGroupInputBase._attr_ib(
+    secondary_network_iface: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data network iface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(

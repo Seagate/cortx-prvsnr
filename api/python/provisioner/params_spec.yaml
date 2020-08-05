@@ -42,8 +42,8 @@ release:
 
 storage_enclosure:
   _path: storage_enclosure.sls
-  controllera_ip: storage_enclosure/controller/primary_mc/ip
-  controllerb_ip: storage_enclosure/controller/secondary_mc/ip
+  controller_a_ip: storage_enclosure/controller/primary_mc/ip
+  controller_b_ip: storage_enclosure/controller/secondary_mc/ip
   controller_user: storage_enclosure/controller/user
   controller_secret: storage_enclosure/controller/secret
 

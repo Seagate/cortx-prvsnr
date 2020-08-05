@@ -6,9 +6,11 @@ import logging
 from datetime import datetime
 import uuid
 from pathlib import Path
-import json, yaml
+import json
+import yaml
 import os
 import configparser
+from enum import Enum
 
 from .errors import (
     ProvisionerError,
@@ -261,7 +263,7 @@ class RunArgsSetup:
                 # ),
             }
         },
-        default='http://ci-storage.mero.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'
+        default='http://ci-storage.mero.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
@@ -563,6 +565,11 @@ class RunArgsController:
     )
 
 
+class SetupType(Enum):
+    SINGLE = "single"
+    DUAL = "dual"
+
+
 @attr.s(auto_attribs=True)
 class RunArgsConfigureSetup:
     path: str = attr.ib(
@@ -575,11 +582,11 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "type of setup i.e.single, dual"
+                'help': "type of setup i.e.single, dual",
+                'choices': ["single", "dual"]
             }
         }
     )
-
 
 
 @attr.s(auto_attribs=True)
@@ -1116,6 +1123,7 @@ class GetNodeId(CommandParserFillerMixin):
             targets=targets
         )
 
+
 # TODO TEST
 @attr.s(auto_attribs=True)
 class GetReleaseVersion(CommandParserFillerMixin):
@@ -1133,6 +1141,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
         except Exception as exc:
             raise ReleaseFileNotFoundError(exc) from exc
 
+
 @attr.s(auto_attribs=True)
 class GetFactoryVersion(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -1145,6 +1154,7 @@ class GetFactoryVersion(CommandParserFillerMixin):
                 return json.dumps(yaml.load(filehandle))
         except Exception as exc:
             raise ReleaseFileNotFoundError(exc) from exc
+
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
@@ -1367,8 +1377,8 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     SINGLE_PARAM = [
         "target_build",
-        "controllera_ip",
-        "controllerb_ip",
+        "controller_a_ip",
+        "controller_b_ip",
         "controller_user",
         "controller_secret",
         "primary_hostname",
@@ -1378,8 +1388,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         "primary_bmc_secret"]
     DUAL_PARAM = [
         "target_build",
-        "controllera_ip",
-        "controllerb_ip",
+        "controller_a_ip",
+        "controller_b_ip",
         "controller_user",
         "controller_secret",
         "primary_hostname",
@@ -1401,7 +1411,6 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     def _parse_input(self, input):
         for key in input:
-
             if input[key] and "," in input[key]:
                 input[key] = [x.strip() for x in input[key].split(",")]
 
@@ -1413,7 +1422,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                     if content[section][key]:
                         mandatory_param.remove(key)
         if len(mandatory_param) > 0:
-           raise ValueError(f"Mandatory param missing {mandatory_param}")
+            raise ValueError(f"Mandatory param missing {mandatory_param}")
 
     def run(self, path, setup_type):
 
@@ -1423,7 +1432,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data :")
-        content = {section: dict(config.items(section)) for section in config.sections()}        
+        content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
+        logger.debug(f"params data {content}")
         self._validate_params(content, setup_type)
 
         for section in content:
@@ -1827,10 +1837,11 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
-        
+
         # TODO IMPROVE condiition to verify local_repo
-        # local_repo would be set from config.PROJECTPATH as default if not specified  
-        # as an argument and config.PROJECT could be None if repo not found.
+        # local_repo would be set from config.PROJECTPATH as default if not
+        # specified as an argument and config.PROJECT could be None
+        # if repo not found.
         if not run_args.local_repo:
             raise ValueError("local repo is undefined")
 
@@ -2062,7 +2073,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._clean_salt_cache(paths)
 
         # APPLY CONFIGURATION
-        
+
         logger.info("Installing Cortx yum repositories")
         ssh_client.state_apply('cortx_repos')
 
@@ -2155,8 +2166,8 @@ class SetupProvisioner(CommandParserFillerMixin):
         ssh_client.state_apply('ssh.check')
 
         # FIXME: Commented because execution hung at firewall configuration
-        #logger.info("Configuring the firewall")
-        #ssh_client.state_apply('firewall')
+        # logger.info("Configuring the firewall")
+        # ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -2184,7 +2195,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log masters as well
-        logger.info(f"Configuring salt masters")
+        logger.info("Configuring salt masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
@@ -2273,9 +2284,9 @@ class SetupCluster(SetupProvisioner):
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
         config_path = kwargs.pop('config_path')
-        if config_path: 
+        if config_path:
             config_setup = ConfigureSetup()
-            config_setup.run(config_path, "dual")
+            config_setup.run(config_path, SetupType.DUAL.value)
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 

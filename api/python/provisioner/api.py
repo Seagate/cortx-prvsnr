@@ -271,6 +271,7 @@ def get_node_id(targets=ALL_MINIONS, nowait=False):
         'get_node_id', targets=targets, nowait=nowait
     )
 
+
 def get_release_version(targets=ALL_MINIONS, nowait=False):
     r"""Retruns Release Version
 
@@ -283,6 +284,7 @@ def get_release_version(targets=ALL_MINIONS, nowait=False):
         'get_release_version', targets=targets, nowait=nowait
     )
 
+
 def get_factory_version(targets=ALL_MINIONS, nowait=False):
     r"""Retruns Release Version
 
@@ -294,6 +296,7 @@ def get_factory_version(targets=ALL_MINIONS, nowait=False):
     return _api_call(
         'get_factory_version', targets=targets, nowait=nowait
     )
+
 
 def reboot_server(targets=ALL_MINIONS, nowait=False):
     r"""Reboots the servers
