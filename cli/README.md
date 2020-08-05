@@ -2,7 +2,7 @@
 
 # The Provisioner Setup Scripts
 
-This folder includes scripts that simplify provisioning of the EOS stack providing a set of CLI utils:
+This folder includes scripts that simplify provisioning of the CORTX stack providing a set of CLI utils:
 
 - [src](src) folder consists of shell scripts that automate initial environment installation, salt configuration and salt formulas appliance
 
@@ -14,10 +14,10 @@ The scripts might be applied to either remote or local hosts and have some prere
 It means they should be called in the following predefined order:
 1. `setup-provisioner`: installs and configures SaltStack, installs provisioner repo and setup SaltStack master-minion connections
 2. `configure-eos`: adjusts pillars for provisioner components
-3. `deploy-eos`: installs EOS stack using Salt
-4. `bootstrap-eos`: initializes EOS services
-5. `start-eos`: starts/restarts EOS services
-6. `stop-eos`: stops EOS services
+3. `deploy-eos`: installs CORTX stack using Salt
+4. `bootstrap-eos`: initializes CORTX services
+5. `start-eos`: starts/restarts CORTX services
+6. `stop-eos`: stops CORTX services
 
 ### Common Options
 
@@ -28,7 +28,7 @@ Besides help options each script might be called using any of the following opti
 - `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
 - `-v`/`--verbose`: tells the script to be more verbose.
 
-[//]: #   (commented by EOS-2410)
+[//]: #   (commented by CORTX-2410)
 [//]: #   (- `-n`/`--dry-run`: do not actually perform any changes)
 [//]: #   (- `-s`/`--sudo`: tells the script to use `sudo`.)
 
@@ -67,7 +67,7 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 
 Besides [general](#common-options) set of options it expects the following ones:
 
-- `--eosnode-2=[user@]hostname`: sets host specification of the eosnode-2. If missed default one is assumed: `eosnode-2`.
+- `--eosnode-2=[user@]hostname`: sets host specification of the cortxnode-2. If missed default one is assumed: `eosnode-2`.
 - `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
@@ -86,15 +86,15 @@ For now that makes sense only for `gitlab` and if missed the latest tagged versi
 
 #### Examples
 
-Configure cluster with a master on eosnode-1
+Configure cluster with a master on cortxnode-1
 
 ```shell
-$ setup-provisioner -F ./ssh_config --salt-master=<EOSNODE-1-IP>
+$ setup-provisioner -F ./ssh_config --salt-master=<CORTXNODE-1-IP>
 ```
 
-### configure-eos
+### configure-cortx
 
-Configures eos services either on remote host or locally for a specified configuration component.
+Configures cortx services either on remote host or locally for a specified configuration component.
 
 Usually the only component that need additional configuration are `cluster` and `release`.
 
@@ -131,9 +131,9 @@ Update the pillar for the release component remotely using specified file as a s
 $ configure-eos release --file ./release.sls --remote user@host
 ```
 
-### deploy-eos
+### deploy-cortx
 
-Installs EOS stack and configures eos services either on remote host or locally by calling salt apply command for the components.
+Installs CORTX stack and configures cortx services either on remote host or locally by calling salt apply command for the components.
 
 No specific options or positional arguments are expected by the script.
 
@@ -148,29 +148,29 @@ No specific options or positional arguments are expected by the script.
 
 #### Examples
 
-Install EOS stack for a cluster with a local host as eosnode-1
+Install CORTX stack for a cluster with a local host as cortxnode-1
 
 ```shell
 $ deploy-eos
 ```
 
-Install EOS stack for a cluster with a remote host as eosnode-1
+Install CORTX stack for a cluster with a remote host as cortxnode-1
 
 ```shell
 $ deploy-eos -r eosnode-1 -F ./ssh_config
 ```
 
-Install EOS stack for a single node with a remote host as eosnode-1
+Install CORTX stack for a single node with a remote host as cortxnode-1
 
 ```shell
 $ deploy-eos -r eosnode-1 -F ./ssh_config --singlenode
 ```
 
-### bootsrap-eos
+### bootsrap-cortx
 
-Initializes EOS services either on remote host or locally.
+Initializes CORTX services either on remote host or locally.
 
-As it has similar cli API as [deploy-eos](#deploy-eos) please refer to the latter for usage examples.
+As it has similar cli API as [deploy-cortx](#deploy-cortx) please refer to the latter for usage examples.
 
 
 #### Prerequisites
@@ -181,14 +181,14 @@ As it has similar cli API as [deploy-eos](#deploy-eos) please refer to the latte
 4. salt master-minion connections are configured
 5. networks are configured
 6. cluster and release pillars are adjusted
-7. EOS Stack is installed
+7. CORTX Stack is installed
 
 
-### start-eos
+### start-cortx
 
-Starts all EOS services either on remote host or locally.
+Starts all CORTX services either on remote host or locally.
 
-Restart EOS services if `--restart` flag is explicitly specified.
+Restart CORTX services if `--restart` flag is explicitly specified.
 
 As of now the script performs the same operations for cluster and single node installations.
 But that might be changed in future.
@@ -202,34 +202,34 @@ But that might be changed in future.
 4. salt master-minion connections are configured
 5. networks are configured
 6. cluster and release pillars are adjusted
-7. EOS Stack is installed
-8. EOS Stack is bootstrapped
+7. CORTX Stack is installed
+8. CORTX Stack is bootstrapped
 
 
 #### Examples
 
-Start all services for a cluster with local host as eosnode-1
+Start all services for a cluster with local host as cortxnode-1
 
 ```shell
 $ start-eos
 ```
 
-Start all services for a cluster with remote host as eosnode-1
+Start all services for a cluster with remote host as cortxnode-1
 
 ```shell
 $ start-eos --remote eosnode-1 -F ./ssh_config
 ```
 
-Restart all services for a cluster with remote host as eosnode-1
+Restart all services for a cluster with remote host as cortxnode-1
 
 
 ```shell
 $ start-eos --remote eosnode-1 -F ./ssh_config --restart
 ```
 
-### stop-eos
+### stop-cortx
 
-Stop all EOS services either on remote host or locally.
+Stop all CORTX services either on remote host or locally.
 
 No specific options or positional arguments are expected by the script.
 
@@ -238,13 +238,13 @@ But that might be changed in future.
 
 #### Examples
 
-Stop all services for a cluster with local host as eosnode-1
+Stop all services for a cluster with local host as cortxnode-1
 
 ```shell
 $ stop-eos
 ```
 
-Stop all services for a cluster with remote host as eosnode-1
+Stop all services for a cluster with remote host as cortxnode-1
 
 ```shell
 $ stop-eos --remote eosnode-1 -F ./ssh_config

@@ -194,7 +194,7 @@ def profile_paths(
     }
 
 
-# TODO IMPROVE EOS-8473 better name
+# TODO IMPROVE CORTX-8473 better name
 REPO_BUILD_DIRS = [
     '.build',
     'build',

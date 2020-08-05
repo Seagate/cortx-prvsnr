@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 ParseRes = attr.make_class("ParseRes", ('cmd', 'args', 'kwargs'))
 
 
-# TODO TEST EOS-7495
+# TODO TEST CORTX-7495
 class ErrorHandlingArgumentParser(argparse.ArgumentParser):
 
     def __init__(self, verbose=True, *args, **kwargs):

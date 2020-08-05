@@ -39,7 +39,7 @@ from .pillar import (
     PillarUpdater,
     PillarResolver
 )
-# TODO IMPROVE EOS-8473
+# TODO IMPROVE CORTX-8473
 from . import config, profile
 from .utils import (
     load_yaml, dump_yaml,
@@ -185,7 +185,7 @@ class RunArgsConfigureCortx:
     )
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 class RunArgsSetup:
     name: str = attr.ib(
         metadata={
@@ -296,8 +296,8 @@ class RunArgsSetup:
     )
 
 
-# TODO TEST EOS-8473
-# TODO IMPROVE EOS-8473 converters and validators
+# TODO TEST CORTX-8473
+# TODO IMPROVE CORTX-8473 converters and validators
 @attr.s(auto_attribs=True)
 class NodeGrains:
     fqdn: str = None
@@ -328,7 +328,7 @@ class NodeGrains:
         return list(set(res))
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class Node:
     minion_id: str
@@ -384,7 +384,7 @@ class Node:
 
     @ping_addrs.setter
     def ping_addrs(self, addrs: Iterable):
-        # TODO IMPROVE EOS-8473 more effective way to order
+        # TODO IMPROVE CORTX-8473 more effective way to order
         #      w.g. use dict (it remembers the order) and set intersection
         priorities = [
             self.grains.fqdn
@@ -403,7 +403,7 @@ class Node:
                 self._ping_addrs.append(addr)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerBase:
     name: str = RunArgsSetup.name
@@ -464,7 +464,7 @@ class RunArgsSetupSinglenode(RunArgsSetupProvisionerBase):
     salt_master: str = attr.ib(init=False,  default=None)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupCluster(RunArgsSetupSinglenode):
     ha: bool = RunArgsSetup.ha
@@ -806,7 +806,7 @@ class SetSWUpdateRepo(Set):
         super()._run(params, targets)
 
 
-# TODO IMPROVE EOS-8940 move to separate module
+# TODO IMPROVE CORTX-8940 move to separate module
 def _ensure_update_repos_configuration(targets=ALL_MINIONS):
     logger.info("Ensure update repos are configured")
     StatesApplier.apply(
@@ -1476,7 +1476,7 @@ class SetupCtx:
     ssh_client: SaltSSHClient
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 # TODO DOC highlights
 #   - multiple setups support
 #   - idempotence: might be run multiple times,
@@ -1495,7 +1495,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         salt_ret = ssh_client.run('grains.items')
         for node in nodes:
             # assume that list of nodes matches the result
-            # TODO IMPROVE EOS-8473 better parser for grains return
+            # TODO IMPROVE CORTX-8473 better parser for grains return
             node.grains = NodeGrains.from_grains(
                 **salt_ret[node.minion_id]['return']
             )
@@ -1512,7 +1512,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         dump_yaml(profile_paths['salt_roster_file'], roster)
 
     def _create_ssh_client(self, c_path, roster_file):
-        # TODO IMPROVE EOS-8473 optional support for known hosts
+        # TODO IMPROVE CORTX-8473 optional support for known hosts
         ssh_options = [
             'UserKnownHostsFile=/dev/null',
             'StrictHostKeyChecking=no'
@@ -1575,7 +1575,7 @@ class SetupProvisioner(CommandParserFillerMixin):
     def _prepare_salt_masters(self, run_args):
         res = {}
 
-        # TODO IMPROVE EOS-8473 hardcoded
+        # TODO IMPROVE CORTX-8473 hardcoded
         if len(run_args.nodes) == 1:
             res[run_args.nodes[0].minion_id] = [
                 run_args.salt_master if run_args.salt_master
@@ -1689,7 +1689,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             for node in run_args.nodes:
                 node.ping_addrs = conns[node.minion_id]
 
-        # IMRPOVE EOS-8473 it's not a salt minion config thing
+        # IMRPOVE CORTX-8473 it's not a salt minion config thing
         specs_pillar_path = pillar_all_dir / 'node_specs.sls'
         if run_args.rediscover or not specs_pillar_path.exists():
             specs = {
@@ -1703,7 +1703,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             dump_yaml(specs_pillar_path,  dict(node_specs=specs))
 
         # resolve salt masters
-        # TODO IMPROVE EOS-8473 option to re-build masters
+        # TODO IMPROVE CORTX-8473 option to re-build masters
         masters_pillar_path = pillar_all_dir / 'masters.sls'
         if run_args.rediscover or not masters_pillar_path.exists():
             masters = self._prepare_salt_masters(run_args)
@@ -1717,7 +1717,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             cluster_uuid = uuid.uuid4()
             dump_yaml(cluster_id_path, dict(cluster_id=str(cluster_uuid)))
 
-        #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
+        #   TODO IMPROVE CORTX-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
         
@@ -1796,7 +1796,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 node_uuid = uuid.uuid4()
                 dump_yaml(minion_nodeid_path, dict(node_id=str(node_uuid)))
 
-            # TODO IMPROVE EOS-8473 consider to move to mine data
+            # TODO IMPROVE CORTX-8473 consider to move to mine data
             # (locally) prepare hostname info
             minion_hostname_status_path = node_dir / 'hostname_status'
             if run_args.rediscover or not minion_hostname_status_path.exists():
@@ -1853,10 +1853,10 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO get latest tags for gitlab source
 
         # validation
-        # TODO IMPROVE EOS-8473 make generic logic
+        # TODO IMPROVE CORTX-8473 make generic logic
         run_args = RunArgsSetupProvisionerGeneric(**kwargs)
 
-        # TODO IMPROVE EOS-8473 better configuration way
+        # TODO IMPROVE CORTX-8473 better configuration way
         salt_logger = logging.getLogger('salt.fileclient')
         salt_logger.setLevel(logging.WARNING)
 
@@ -1909,21 +1909,21 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Resolving node grains")
         self._resolve_grains(run_args.nodes, ssh_client)
 
-        #   TODO IMPROVE EOS-8473 hard coded
+        #   TODO IMPROVE CORTX-8473 hard coded
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
-        # TODO IMPROVE EOS-9581 not all masters support
+        # TODO IMPROVE CORTX-9581 not all masters support
         master_targets = (
             ALL_MINIONS if run_args.ha else run_args.primary.minion_id
         )
 
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
-            # TODO IMPROVE EOS-8473 validator
+            # TODO IMPROVE CORTX-8473 validator
             if not run_args.local_repo:
                 raise ValueError("local repo is undefined")
-            # TODO IMPROVE EOS-8473 hard coded
+            # TODO IMPROVE CORTX-8473 hard coded
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
@@ -1972,7 +1972,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             }
 
             logger.info("Configuring glusterfs servers")
-            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
+            # TODO IMPROVE ??? CORTX-9581 glusterfs docs complains regardin /srv
             #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
             glusterfs_server_pillar = {
                 'glusterfs_dirs': [
@@ -2067,7 +2067,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         res = ssh_client.state_apply('provisioner.configure_salt_minion')
 
         updated_keys = []
-        # TODO IMPROVE EOS-8473
+        # TODO IMPROVE CORTX-8473
         minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
         for node_id, _res in res.items():
             if _res[minion_pki_state_id]['changes']:
@@ -2076,7 +2076,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # TODO DOC how to pass inline pillar
 
-        # TODO IMPROVE EOS-9581 log masters as well
+        # TODO IMPROVE CORTX-9581 log masters as well
         logger.info(f"Configuring salt masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
@@ -2088,14 +2088,14 @@ class SetupProvisioner(CommandParserFillerMixin):
             }
         )
 
-        # FIXME EOS-8473 not necessary for rpm setup
+        # FIXME CORTX-8473 not necessary for rpm setup
         logger.info("Installing provisioner API")
         ssh_client.state_apply('provisioner.api_install')
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
 
-        # TODO IMPROVE EOS-8473
+        # TODO IMPROVE CORTX-8473
         logger.info("Ensuring salt minions are ready")
         nodes_ids = [node.minion_id for node in run_args.nodes]
         ssh_client.cmd_run(
@@ -2103,7 +2103,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             targets=master_targets
         )
 
-        # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
+        # TODO IMPROVE CORTX-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
         #      CONFIGURED AND MIGHT BE USED INSTED OF SALT-SSH BASED CONTROL
 
         logger.info("Configuring provisioner logging")

@@ -62,7 +62,7 @@ class AttrParserArgs:
     choices: List = attr.ib(init=False, default=None)
     help: str = attr.ib(init=False, default='')
     type: Any = attr.ib(init=False, default=None)  # TODO typing
-    # TODO TEST EOS-8473
+    # TODO TEST CORTX-8473
     nargs: str = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
@@ -100,7 +100,7 @@ class AttrParserArgs:
                 .format(self.help, ', '.join(self.choices))
             )
 
-        # TODO TEST EOS-8473
+        # TODO TEST CORTX-8473
         if parser_args.get('nargs'):
             self.nargs = parser_args.get('nargs')
 
@@ -123,7 +123,7 @@ class AttrParserArgs:
                 not_filter.extend(['metavar', 'type', 'default'])
             if self.action in ('store_const',):
                 not_filter.extend(['type'])
-            # TODO TEST EOS-8473 nargs
+            # TODO TEST CORTX-8473 nargs
             for arg in ('choices', 'dest', 'const', 'nargs'):
                 if getattr(self, arg) is None:
                     not_filter.append(arg)

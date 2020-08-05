@@ -21,7 +21,7 @@ from .config import (
 logger = logging.getLogger(__name__)
 
 
-# TODO TEST EOS-7495
+# TODO TEST CORTX-7495
 class CommandFilter(logging.Filter):
     def __init__(self, cmd: str = None):
         self._cmd = cmd
@@ -39,7 +39,7 @@ class CommandFilter(logging.Filter):
         return True
 
 
-# TODO TEST EOS-7495
+# TODO TEST CORTX-7495
 class NoTraceExceptionFormatter(logging.Formatter):
     def format(self, record):
         # ensure cache won't be used for exception formatting
@@ -257,7 +257,7 @@ def build_log_args_cls(log_config=None):
 LogArgs = build_log_args_cls()
 
 
-# TODO TEST EOS-7495
+# TODO TEST CORTX-7495
 def reset_logging():
     for handler in logging.root.handlers[:]:
         handler.flush()

@@ -1,4 +1,4 @@
-# TODO IMPROVE EOS-8473 move to pillar to make configurable
+# TODO IMPROVE CORTX-8473 move to pillar to make configurable
 {% set install_dir = '/opt/seagate/cortx/provisioner' %}
 
 repo_installed:

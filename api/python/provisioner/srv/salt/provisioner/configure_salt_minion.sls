@@ -6,7 +6,7 @@ salt_minion_configured:
     - backup: minion
     - template: jinja
 
-# FIXME EOS-8473 prepend is not a clean solution
+# FIXME CORTX-8473 prepend is not a clean solution
 salt_minion_grains_configured:
   file.prepend:
     - name: /etc/salt/grains
@@ -16,7 +16,7 @@ salt_minion_grains_configured:
       - salt://provisioner/files/minions/{{ grains.id }}/node_id
       - salt://provisioner/files/minions/{{ grains.id }}/hostname_status
 
-# TODO EOS-8473 better content management
+# TODO CORTX-8473 better content management
 salt_minion_id_set:
   file.prepend:
     - name: /etc/salt/minion_id

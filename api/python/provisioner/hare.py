@@ -54,7 +54,7 @@ def cluster_maintenance_disable(**kwargs):
     return cluster_maintenance(False, **kwargs)
 
 
-# TODO TEST EOS-8940
+# TODO TEST CORTX-8940
 def apply_ha_post_update(targets=ALL_MINIONS):
     logger.info(f"Applying Hare post_update logic on {targets}")
     return StatesApplier.apply(["components.ha.ees_ha.post_update"], targets)
@@ -67,7 +67,7 @@ def check_cluster_is_offline():
     return ('OFFLINE:' in ret)
 
 
-# TODO TEST EOS-8940
+# TODO TEST CORTX-8940
 def check_cluster_is_online():
     for path in (
         'cli/common_utils/utility_scripts.sh',
@@ -100,7 +100,7 @@ def ensure_cluster_is_started(tries=30, wait=10):
     ensure(check_cluster_is_online, tries=tries, wait=wait)
 
 
-# TODO IMPROVE EOS-8940 currently we rely on utility_scripts.sh as it
+# TODO IMPROVE CORTX-8940 currently we rely on utility_scripts.sh as it
 #      has its own looping logic, so only one try here
 def ensure_cluster_is_healthy(tries=1, wait=10):
     logger.info("Ensuring cluster is online and healthy")

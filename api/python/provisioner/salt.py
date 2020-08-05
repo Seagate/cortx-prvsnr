@@ -145,7 +145,7 @@ class SaltRunnerResult:
         return cls(**_data)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltClientArgsBase(SaltArgsMixin):
     _prvsnr_type_ = True
@@ -165,19 +165,19 @@ class SaltClientArgsBase(SaltArgsMixin):
         return (self.targets, self.fun)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltClientArgs(SaltClientArgsBase):
     nowait: bool = False
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHArgs(SaltClientArgsBase):
     pass
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHResultBase(ABC):
     _prvsnr_type_ = True
@@ -197,7 +197,7 @@ class SaltSSHResultBase(ABC):
         return self._fail
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHRawResult(SaltSSHResultBase):
     other: Dict = attr.ib(init=False, default=attr.Factory(dict))
@@ -206,7 +206,7 @@ class SaltSSHRawResult(SaltSSHResultBase):
         self._result = self.raw
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHSimpleResult(SaltSSHResultBase):
     retcode: int
@@ -219,7 +219,7 @@ class SaltSSHSimpleResult(SaltSSHResultBase):
             self._fail = f'STDERR: {self.stderr}, STDOUT: {self.stdout}'
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHJobResult(SaltSSHResultBase):
     retcode: int
@@ -239,7 +239,7 @@ class SaltSSHJobResult(SaltSSHResultBase):
             self._fail = self._result
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHStateJobResult(SaltSSHJobResult):
 
@@ -248,7 +248,7 @@ class SaltSSHStateJobResult(SaltSSHJobResult):
         if _fail:
             self._fail = _fail
 
-    # TODO IMPROVE EOS-8473
+    # TODO IMPROVE CORTX-8473
     def _get_state_results(self, ret: Dict):
         results = {}
         fails = {}
@@ -261,7 +261,7 @@ class SaltSSHStateJobResult(SaltSSHJobResult):
         return results, fails
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHResultParser:
 
@@ -296,7 +296,7 @@ class SaltSSHResultParser:
             ]
             for res_t in _types:
                 if cls._verify(res_t, _data):
-                    # TODO IMPROVE EOS-8473 makes sense
+                    # TODO IMPROVE CORTX-8473 makes sense
                     #      to place non-sanitized fields into other
                     other = {
                         k: _data.pop(k) for k in list(_data)
@@ -370,7 +370,7 @@ class SaltClientResult:
         return fails
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHClientResult(SaltClientResult):
     def _parse_raw_dict(self):
@@ -430,7 +430,7 @@ def salt_caller_local():
     return _salt_caller_local
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltClientBase(ABC):
     c_path: str = '/etc/salt/master'
@@ -520,7 +520,7 @@ class SaltClientBase(ABC):
         )
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltClient(SaltClientBase):
     # FIXME
@@ -547,7 +547,7 @@ class SaltClient(SaltClientBase):
         return super().run(*args, **kwargs)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 @attr.s(auto_attribs=True)
 class SaltSSHClient(SaltClientBase):
     roster_file: str = None
@@ -569,7 +569,7 @@ class SaltSSHClient(SaltClientBase):
     def _run(self, cmd_args: SaltSSHArgs):
         return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
 
-    # TODO TEST EOS-8473
+    # TODO TEST CORTX-8473
     def ensure_access(self, targets: List, roster_file=None, ssh_options=None):
         for target in targets:
             try:
@@ -596,7 +596,7 @@ class SaltSSHClient(SaltClientBase):
                 else:
                     raise
 
-    # TODO TEST EOS-8473
+    # TODO TEST CORTX-8473
     def ensure_python3(
         self,
         targets: List,
@@ -614,7 +614,7 @@ class SaltSSHClient(SaltClientBase):
                 )
             except SaltCmdResultError as exc:
                 reason = exc.reason.get(target)
-                # TODO IMPROVE EOS-8473 better search string / regex
+                # TODO IMPROVE CORTX-8473 better search string / regex
                 roster_file = exc.cmd_args.kw.get('roster_file')
                 if roster_file and ("not found" in reason):
                     self.run(
@@ -627,7 +627,7 @@ class SaltSSHClient(SaltClientBase):
                 else:
                     raise
 
-    # TODO TEST EOS-8473
+    # TODO TEST CORTX-8473
     def ensure_ready(self, targets: List, roster_file=None, ssh_options=None):
         self.ensure_access(
             targets, roster_file=roster_file, ssh_options=ssh_options
@@ -637,7 +637,7 @@ class SaltSSHClient(SaltClientBase):
             targets, roster_file=roster_file, ssh_options=ssh_options
         )
 
-    # TODO TYPE EOS-8473
+    # TODO TYPE CORTX-8473
     def run(self, *args, roster_file=None, ssh_options=None, **kwargs):
         if roster_file is None:
             roster_file = self.roster_file
@@ -899,7 +899,7 @@ def pillar_refresh(targets=ALL_MINIONS):
 
 
 # TODO test
-# TODO IMPROVE EOS-9484 think about better alternative to get separated
+# TODO IMPROVE CORTX-9484 think about better alternative to get separated
 #      stderr and stdout streams that makes sense sometimes even if a command
 #      don't fail (e.g. use 'run_all' instead)
 def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
@@ -919,7 +919,7 @@ def process_provisioner_cmd_res(res):
             f'Expected a dictionary of len = 1, provided: {type(res)}, {res}'
         )
 
-    # FIXME EOS-9581 it might be other minion id in case of HA
+    # FIXME CORTX-9581 it might be other minion id in case of HA
     if local_minion_id() not in res:
         logger.warning(
             f"local minion id {local_minion_id()} is not listed "
@@ -1154,7 +1154,7 @@ class YumRollbackManager:
     _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
     def _resolve_last_txn_ids(self):
-        # TODO IMPROVE EOS-9484  stderrr might include valuable info
+        # TODO IMPROVE CORTX-9484  stderrr might include valuable info
         return cmd_run(
             (
                 "yum history 2>/dev/null | grep ID -A 2 | "
@@ -1200,7 +1200,7 @@ class YumRollbackManager:
         if exc_type is None:
             return
 
-        # TODO TEST EOS-8940
+        # TODO TEST CORTX-8940
         if self.pre_rollback_cb:
             try:
                 self.pre_rollback_cb(self, exc_type, exc_value, exc_traceback)

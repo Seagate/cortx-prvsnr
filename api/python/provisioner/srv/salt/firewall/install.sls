@@ -1,4 +1,4 @@
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 
 setup_firewall:
   cmd.script:

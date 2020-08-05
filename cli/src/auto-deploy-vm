@@ -42,9 +42,9 @@ usage()
 Usage:
 For Dual Node:
 sh auto-deploy-vm.sh -s <secondary node hostname (srvnode-2)> -p <password for sec node>
-                  -t <target build url for EOS>
+                  -t <target build url for CORTX>
 For Single Node:
-sh auto-deploy-vm.sh -S -t <target build url for EOS> 
+sh auto-deploy-vm.sh -S -t <target build url for CORTX> 
 
 Optional Arguments:
    -C	 <Hostname/IP> 	  Hostname/IP address for Public Data n/w interface.

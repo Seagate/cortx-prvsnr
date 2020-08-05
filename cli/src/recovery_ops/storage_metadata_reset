@@ -75,7 +75,7 @@ function trigger_s3_cleanup {
     _linfo "*****************************************************************"
 }
 
-#EOS-9693: no need to check if cluster is healthy during reset.
+#CORTX-9693: no need to check if cluster is healthy during reset.
 #ensure_healthy_cluster
 
 user_confirmation

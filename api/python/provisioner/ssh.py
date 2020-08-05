@@ -7,7 +7,7 @@ from .utils import run_subprocess_cmd
 logger = logging.getLogger(__name__)
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 def keygen(
     priv_key_path: Union[Path, str],
     comment: str = '',
@@ -22,7 +22,7 @@ def keygen(
     )
 
 
-# TODO TEST EOS-8473
+# TODO TEST CORTX-8473
 def copy_id(
     host: str,
     user: str = None,
