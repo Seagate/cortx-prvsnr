@@ -582,8 +582,8 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "type of setup i.e.single, dual",
-                'choices': [SetupType.SINGLE.value, SetupType.DUAL.value]
+                'help': "type of setup",
+                'choices': [st.value for st in SetupType]
             }
         }
     )
@@ -1375,6 +1375,8 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
+    # TODO : https://jts.seagate.com/browse/EOS-11741
+    # Improve optional and mandatory param validation
     SINGLE_PARAM = [
         "target_build",
         "controller_a_ip",
@@ -1406,8 +1408,8 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_map = {"network": inputs.Network,
                  "release": inputs.Release,
                  "storage_enclosure": inputs.StorageEnclosure}
-    validate_map = {"single": SINGLE_PARAM,
-                    "dual": DUAL_PARAM}
+    validate_map = {SetupType.SINGLE.value: SINGLE_PARAM,
+                    SetupType.DUAL.value: DUAL_PARAM}
 
     def _parse_input(self, input):
         for key in input:
@@ -1415,7 +1417,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input[key] = [x.strip() for x in input[key].split(",")]
 
     def _validate_params(self, content, setup_type):
-        mandatory_param = self.validate_map[setup_type]
+        params = self.validate_map[setup_type]
+        mandatory_param = deepcopy(params)
         for section in content:
             for key in content[section]:
                 if key in mandatory_param:
