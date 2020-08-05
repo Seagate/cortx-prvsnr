@@ -125,7 +125,7 @@ $ auto-deploy -s sm27-r22.pun.seagate.com -p 'seagate'
 -C 172.19.222.27 -V 10.230.215.45 -n enp216s0f0 -N enp216s0f1
 -i 172.19.22.27 -I 172.19.22.28 -A 10.230.10.2 -B 10.230.10.3 -U manage -P 'S34gate123!'
 -b manage -m 'admin!'
--t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/1781/
+-t http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/2703/
 "
 }
 
