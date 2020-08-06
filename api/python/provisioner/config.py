@@ -230,7 +230,7 @@ REPO_BUILD_DIRS = [
 
 # Using any base path is risky as it builds a dependency inside code.
 # This results in loss of flexibility.
-# CORTX_REPOS_BASE_URL = 'http://ci-storage.mero.colo.seagate.com/releases/eos'
+# CORTX_REPOS_BASE_URL = 'http://cortx-storage.colo.seagate.com/releases/eos'
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
