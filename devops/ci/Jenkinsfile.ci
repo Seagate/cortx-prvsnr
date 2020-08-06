@@ -65,7 +65,7 @@ Closure staticValidation = {
     dockerImage.inside {
         preparePythonEnv()
 
-        String testPythonReport = "flake8.out"  // TODO not configurable for now
+        String testPythonReport = "flake8.out.txt"  // TODO not configurable for now
         stage('Check python') {
             // TODO check other python sources (not only 'test')
             try {
