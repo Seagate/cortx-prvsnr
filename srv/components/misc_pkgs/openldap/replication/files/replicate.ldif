@@ -17,30 +17,36 @@
 #     tls_cacert=/etc/ssl/openldap/ldap-cert.pem
 #     tls_key=/etc/ssl/openldap/private/ldap-key.pem
 #
-# This file configures 3 node cluster,You can go
-# adding as many nodes as in cluster adding olcSyncRepl
-# for each new node.
-# This ldif you need to add only on one node.on rest nodes
-# it will be copied as config replication is in place.
 # Command to add configuration to ldap:
-# ldapmodify -Y EXTERNAL  -H ldapi:/// -f data.ldif
+# ldapmodify -Y EXTERNAL  -H ldapi:/// -f replicate.ldif
+
+{% set current_node_name = grains['id'] -%}
+{% set node_list = salt['pillar.get']('cluster:node_list', []) -%}
+
+dn: cn=config
+changetype: modify
+replace: olcServerID
+{% for node in node_list %}
+{%- if current_node_name == node -%}
+olcServerID: {{ loop.index }}
+{%- endif -%}
+{% endfor %}
 
 dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
 changetype: modify
 add: olcSyncRepl
-{% for node in salt['pillar.get']('cluster:node_list', []) -%}
-olcSyncRepl: rid={{ "{0:03d}".format(200+loop.index) }}
+{% for node in node_list -%}
+olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
   provider=ldap://{{ node }}:389/
   bindmethod=simple
   binddn="cn=admin,dc=seagate,dc=com"
   credentials={{ salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:admin:secret', "seagate")) }}
-  searchbase="dc=seagate,dc=com"
+  searchbase="dc=s3,dc=seagate,dc=com"
   scope=sub
   schemachecking=on
   type=refreshAndPersist
   retry="30 5 300 3"
   interval=00:00:05:00
-{% endfor -%}
 # Enable additional providers
 # olcSyncRepl: rid=005
 #   provider=ldap://<sample_provider_URI>:389/
@@ -53,6 +59,7 @@ olcSyncRepl: rid={{ "{0:03d}".format(200+loop.index) }}
 #   type=refreshAndPersist
 #   retry="30 5 300 3"
 #   interval=00:00:05:00
+{% endfor -%}
 -
-add: olcMirrorMode
+replace: olcMirrorMode
 olcMirrorMode: TRUE

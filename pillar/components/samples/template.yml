@@ -66,7 +66,6 @@ cluster:
         - /dev/sdc
 storage_enclosure:
   id: storage_node_1            # equivalent to fqdn for server node
-  type: 5U84                    # Type of enclosure. E.g. 5U84/PODS
   controller:
     type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
     primary_mc:
@@ -103,8 +102,8 @@ elasticsearch:
   http_port: 9200
 commons:
   cortx_commons:
-    RedHat: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
-    CentOS: http://ssc-nfs-server1.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/
+    RedHat: http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
+    CentOS: http://cortx-storage.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/
   version:
     erlang: latest
     elasticsearch: 6.8.8-1

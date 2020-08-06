@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 #!/bin/bash
 
 # Script to run end to end deployment of CORTX for 2 node setup.
@@ -87,8 +106,6 @@ Optional Arguments:
 --m1  <BMC PASSWORD>   BMC Password for Node-1. Default adminBMC!
 --b2  <BMC USER>       BMC User for Node-2. Default ADMIN
 --m2  <BMC PASSWORD>   BMC Password for Node-2. Default adminBMC!
---cc                   The servers are cabled to the storage enclosure in
-                       a cross-connected fashion.
 "
 }
 
@@ -108,7 +125,7 @@ $ auto-deploy -s sm27-r22.pun.seagate.com -p 'seagate'
 -C 172.19.222.27 -V 10.230.215.45 -n enp216s0f0 -N enp216s0f1
 -i 172.19.22.27 -I 172.19.22.28 -A 10.230.10.2 -B 10.230.10.3 -U manage -P 'S34gate123!'
 -b manage -m 'admin!'
--t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/1781/
+-t http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/2703/
 "
 }
 
@@ -218,9 +235,6 @@ while [[ $# -gt 0 ]]; do
                 echo "Error: BMC user for node-2 not provided" && exit 1;
             bmc2_user="$2"
             shift 2 ;;
-        --cc)
-            cross_connect_opt=true
-            shift ;;
 
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
@@ -250,17 +264,6 @@ ssh_tool_pkg=$(basename $ssh_tool)
 [ -f "$ssh_tool" ] || {
     echo "Installing $ssh_tool_pkg"
     yum install -y $ssh_tool_pkg
-}
-
-create_cross_connect_flag_file()
-{
-    if [[ $cross_connect_opt == true ]]; then
-        mkdir -p /opt/seagate/cortx/provisioner/generated_configs
-        echo "Creating the flag file on node-1" >> $LOG_FILE
-        touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.cc
-        echo "Creating the flag file on node-2" >> $LOG_FILE
-        $remote_cmd touch /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.cc
-    fi
 }
 
 install_prvsnr_cli()
@@ -416,7 +419,6 @@ update_pillar()
 
 }
 
-create_cross_connect_flag_file
 install_config_prvsnr
 update_pillar
 

@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import importlib
 
 from .config import ALL_MINIONS, CONTROLLER_BOTH
@@ -358,6 +377,18 @@ def configure_cortx(
         'configure_cortx', component, source=source, show=show, reset=reset
     )
 
+def replace_node(node_id, node_host=None, node_port=None, nowait=True):
+    r"""Replace node. It will trigger replace node command and return job id
+    
+    :param node_id: node id of replacing node
+    :param node_host: hostname of new node. Default: None
+    :param node_port: ssh port of new node. Default: None
+    :param nowait: (optional) Run asynchronously. Default: True
+    """
+    return _api_call(
+        'replace_node',
+        node_id=node_id, node_host=node_host, node_port=node_port, nowait=nowait
+    )
 
 def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
     r"""Creates an user.

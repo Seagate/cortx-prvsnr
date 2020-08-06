@@ -1,2 +1,2 @@
 lustre:
-    repo: http://ci-storage.mero.colo.seagate.com/releases/eos/lustre/custom
+    repo: http://cortx-storage.colo.seagate.com/releases/eos/lustre/custom/

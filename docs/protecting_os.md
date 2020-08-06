@@ -41,7 +41,7 @@
 
 ## Problem statement and notes
 
-The CORTX appliance uses two stand-alone servers, each connected to shared 5U84 enclosure via two independent SAS links. The enclosure currently has 8 volumes, created on the single disk group. The volumes are accessible by both servers. Multipath priority is configured to ensure that each server has priority access to the “own” set of volumes. 
+The CORTX appliance uses two stand-alone servers, each connected to shared storage enclosure via two independent SAS links. The enclosure currently has 8 volumes, created on the single disk group. The volumes are accessible by both servers. Multipath priority is configured to ensure that each server has priority access to the “own” set of volumes. 
 
 The servers boot from the local HDDs. 
 

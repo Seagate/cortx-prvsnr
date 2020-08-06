@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 #!/bin/bash
 
 set -euE
@@ -25,6 +44,7 @@ ctrlpath_states=false
 remove_prereqs=false
 remove_system=false
 remove_prvsnr=false
+tgt_node=srvnode-2
 
 controlpath_states=(
 # states to be applied in desired sequence
@@ -82,13 +102,15 @@ Target host is considered to be an CORTX SaltStack master.
 General options:
 $base_options_usage
 Options:
-       --ha-states          run only teardown of ha components
-       --iopath-states      run only teardown of iopath components
-       --ctrlpath-states    run only teardown of control path components
-       --remove-prvsnr      run teardown to remove cortx-prvsnr, cortx-prvsnr-cli
-                            and related dependencies.
-       --prereq-states      run only teardown of prerequisite components
-       --system-states      run only teardown of system components
+    -S <tgt_node>,  --singlenode=tgt_node       switch to single node mode setup
+    
+    --ha-states                                 run only teardown of ha components
+    --iopath-states                             run only teardown of iopath components
+    --ctrlpath-states                           run only teardown of control path components
+    --remove-prvsnr                             run teardown to remove cortx-prvsnr, cortx-prvsnr-cli
+                                                   and related dependencies.
+    --prereq-states                             run only teardown of prerequisite components
+    --system-states                             run only teardown of system components
 "
 }
 
@@ -96,6 +118,11 @@ function options_parser {
     set -eu
 
     case "$1" in
+        -S|--singlenode)
+            singlenode=true
+            tgt_node="$2"
+            shift
+            ;;
         --ha-states)
             run_ha_states=true
             run_all=false
@@ -134,9 +161,8 @@ function teardown_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            l_info "Removing $state"
-            $cmd salt srvnode-1 state.apply components.$state.teardown $salt_opts
-
+            l_info "Removing $state from node: "$tgt_node""
+            $cmd salt "$tgt_node" state.apply components.$state.teardown $salt_opts
             sleep 2     # Mindfulness break
         done
     else
@@ -165,7 +191,7 @@ function teardown_states {
     fi
 }
 
-parse_args '' 'ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode:,ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
