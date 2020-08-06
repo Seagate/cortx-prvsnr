@@ -3,7 +3,6 @@
 {% for filename in [
     '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif',
     '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh',
-    '/opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif',
     '/opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt'
   ]
 %}
