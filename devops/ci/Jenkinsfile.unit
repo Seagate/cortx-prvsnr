@@ -6,7 +6,7 @@ Map config = [
     staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'centos-prvsnr-node'
+    nodeLabel: 'cortx-prvsnr-ci'
 ]
 
 
@@ -23,8 +23,21 @@ def nodeWrapper(label=null, body) {
 }
 
 
+def buildDocker(imageName, dockerfile, ctx) {
+    return docker.build("$imageName", "-f $dockerfile $ctx")
+}
+
+
+def buildUnitDocker() {
+    return buildDocker(
+        "seagate/cortx-prvsnr:unit", "devops/ci/Dockerfile.unit", "devops/ci"
+    )
+}
+
+
 Closure preparePythonEnv = {
     String testPipenvReport = "pipenv.out"
+
     stage('Prepare python environment') {
         try {
             withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
@@ -43,22 +56,32 @@ Closure staticValidation = {
 
     checkout scm
 
-    preparePythonEnv()
+    def dockerImage = null
 
-    String testPythonReport = "flake8.out"  // TODO not configurable for now
-    stage('Check python') {
-        // TODO check other python sources (not only 'test')
-        try {
-            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                sh "pipenv run bash -x devops/ci/validate_python.sh"
+    stage('Build docker image') {
+        dockerImage = buildUnitDocker()
+    }
+
+    dockerImage.inside {
+        preparePythonEnv()
+
+        String testPythonReport = "flake8.out.txt"  // TODO not configurable for now
+        stage('Check python') {
+            // TODO check other python sources (not only 'test')
+            try {
+                // withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                    sh "pipenv run bash -x devops/ci/validate_python.sh"
+                //}
+            } catch (_err) {
+                archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
+                echo "Python static validation failed: $_err"
+                // TODO that should break the pipeline actually
+                // throw _err
             }
-        } catch (_err) {
-            archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
-            echo "Python static validation failed: $_err"
-            // TODO that should break the pipeline actually
-            // throw _err
         }
     }
+
+    return
 
     String testYamlReport = "yamllint.out"  // TODO not configurable for now
     stage('Check yaml') {
@@ -85,24 +108,32 @@ Closure dynamicValidation = {
     def test_err
     String testReportFileNameXml = "pytest.xml"
     String testReportFileNamePlain = "pytest.out.txt"
-    String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
+    String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml"
     String pytestTargets = ""
-    String pytestMarkers = "not eos_bvt"
+    String pytestMarkers = "unit"
+
+    def dockerImage = null
+
+    stage('Build docker image') {
+        dockerImage = buildUnitDocker()
+    }
 
     try {
-        stage('Clean VirtualBox environment') {
-            sh "bash -x devops/ci/clean_vbox.sh vms"
-        }
+        // stage('Clean VirtualBox environment') {
+        //    sh "bash -x devops/ci/clean_vbox.sh vms"
+        // }
 
-        preparePythonEnv()
+        dockerImage.inside {
+            preparePythonEnv()
 
-        // TODO is it a best way to ensure pipenv available
-        withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-            // run tests
-            stage('Run tests') {
-                sh """
-                    pipenv run bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
-                """
+            // TODO is it a best way to ensure pipenv available
+            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                // run tests
+                stage('Run tests') {
+                    sh """
+                        pipenv run bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                    """
+                }
             }
         }
     } catch (_err) {
