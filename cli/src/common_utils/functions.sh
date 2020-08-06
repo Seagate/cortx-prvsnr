@@ -1175,7 +1175,7 @@ function install_provisioner {
                 popd
                 _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
             else
-                _prvsnr_version="http://ci-storage.mero.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
+                _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
             fi
         fi
     fi

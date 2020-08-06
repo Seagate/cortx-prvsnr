@@ -74,3 +74,5 @@ setup_cluster:
   type: SetupCluster
 replace_node:
   type: ReplaceNode
+configure_setup:
+  type: ConfigureSetup

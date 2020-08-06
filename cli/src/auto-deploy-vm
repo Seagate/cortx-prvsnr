@@ -92,9 +92,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 For Single Node:
-$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 
 "
 }
@@ -252,11 +252,13 @@ update_pillar()
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
     provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
     provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
+    provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
     provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
     provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-1/hostname \"$srvnode_2_host\"
+        provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
         provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
         provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi

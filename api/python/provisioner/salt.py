@@ -516,8 +516,8 @@ class SaltClientBase(ABC):
                         )
                 )
             except Exception as exc:
-                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):
-                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))
+                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
+                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))  # noqa: E501
                 else:
                     raise exc
 

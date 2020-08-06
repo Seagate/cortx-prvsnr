@@ -32,7 +32,7 @@ salt_nodes = [
 ]
 
 # There is no proper way of checking in Vagrantfile if VM has been already
-# provisioned or not, so we use this hack:
+# provisioned or not, so we use this workaround:
 # https://stackoverflow.com/a/38203497
 def provisioned?(vm_name, provider='hyperv')
   vg_dotfile_prefix =
