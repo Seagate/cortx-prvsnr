@@ -301,7 +301,7 @@ $remote_cmd <<EOF
 
     yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
     yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
-    rm -rf /etc/yum.repos.d/ci-storage*
+    rm -rf /etc/yum.repos.d/cortx-storage*
     
     systemctl stop firewalld || true
 
