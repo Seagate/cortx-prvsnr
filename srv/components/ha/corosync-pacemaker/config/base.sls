@@ -3,7 +3,7 @@
 Update ha user:
   user.present:
     - name: {{ pillar['corosync-pacemaker']['user'] }}
-    - password: {{ salt['lyveutil.decrypt'](pillar['corosync-pacemaker']['secret'], 'corosync-pacemaker') }}
+    - password: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
@@ -39,7 +39,7 @@ Authorize nodes:
       - {{ node_id }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
-    - pcspasswd: {{ salt['lyveutil.decrypt'](pillar['corosync-pacemaker']['secret'],'corosync-pacemaker') }}
+    - pcspasswd: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
     - extra_args:
       - '--force'
     - require:

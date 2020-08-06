@@ -1,3 +1,15 @@
+m2crypto_precompiled_installed:
+  pkg.installed:
+    - pkgs:
+      - python36-m2crypto
+
+api_installed:
+  pip.installed:
+    - name: /opt/seagate/cortx/provisioner/api/python
+    - bin_env: /usr/bin/pip3
+    - upgrade: False  # to reuse already installed dependencies
+                      # that may come from rpm repositories
+
 prvsnrusers:
   group.present
 
@@ -5,12 +17,6 @@ prvsnrusers:
 user_salt_roots_created:
   cmd.script:
     - source: salt://provisioner/files/post_setup.sh
-
-api_installed:
-  pip.installed:
-    - name: /opt/seagate/cortx/provisioner/api/python
-    - bin_env: /usr/bin/pip3
-    - upgrade: True
 
 salt_dynamic_modules_synced:
   cmd.run:

@@ -13,9 +13,10 @@
 Extract Node.js:
   archive.extracted:
     - name: /opt/nodejs
-    - source: http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/commons/node/node-{{ node_version }}-linux-x64.tar.xz
-    - source_hash: http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/commons/node/SHASUMS256.txt.asc
+    - source: http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/commons/node/node-v12.13.0-linux-x64.tar.xz
+    - source_hash: http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/commons/node/SHASUMS256.txt.asc
     - source_hash_name: node-{{ node_version }}-linux-x64.tar.xz
     - keep_source: True
     - clean: True
     - trim_output: True
+ 

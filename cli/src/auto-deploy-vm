@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 #!/bin/bash
 # Script to run end to end deployment of Cortx for Single and Dual node setup on VM.
 
@@ -41,10 +60,10 @@ usage()
     echo "\
 Usage:
 For Dual Node:
-sh auto-deploy-vm.sh -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+sh auto-deploy-vm -s <secondary node hostname (srvnode-2)> -p <password for sec node>
                   -t <target build url for CORTX>
 For Single Node:
-sh auto-deploy-vm.sh -S -t <target build url for CORTX> 
+sh auto-deploy-vm -S -t <target build url for CORTX> 
 
 Optional Arguments:
    -C	 <Hostname/IP> 	  Hostname/IP address for Public Data n/w interface.
@@ -73,9 +92,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm.sh -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 For Single Node:
-$ sh auto-deploy-vm.sh -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/2023/
+$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
 
 "
 }
@@ -233,11 +252,13 @@ update_pillar()
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
     provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
     provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
+    provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
     provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
     provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-1/hostname \"$srvnode_2_host\"
+        provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
         provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
         provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi

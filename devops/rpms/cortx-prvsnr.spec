@@ -63,15 +63,7 @@ rm -rf %{buildroot}
 
 
 %post
-install_dir=/opt/seagate/cortx/provisioner
-api_dir="${install_dir}/api/python"
-prvsnr_group=prvsnrusers
-
-# set api
-#   adding provisioner group
-echo "Creating group '$prvsnr_group'..."
-groupadd -f "$prvsnr_group"
-
+api_dir="/opt/seagate/cortx/provisioner/api/python"
 echo "Configuring access for provisioner data ..."
 bash "${api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
 

@@ -12,6 +12,9 @@
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_mod.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif' },
+    { "src": 'salt://components/misc_pkgs/openldap/replication/files/replicate.ldif',
+      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif'}
+
   ]
 %}
 {{ filename.dest }}:

@@ -29,6 +29,12 @@ dhclient:
     - ports:
       - 68/udp
 
+dhserver:
+  firewalld.service:
+    - name: dhserver
+    - ports:
+      - 67/udp
+
 elasticsearch:
   firewalld.service:
     - name: elasticsearch
@@ -152,6 +158,7 @@ Data-zone:
     - services:
       - consul
       - dhclient
+      - dhserver
       - haproxy
       - nfs
       - hare
@@ -163,6 +170,7 @@ Data-zone:
       - Add public data zone
       - consul
       - dhclient
+      - dhserver
       - haproxy
       - nfs
       - hare
@@ -195,6 +203,7 @@ Public data zone:
     - services:
       - consul
       - dhclient
+      - dhserver
       - hare
       - haproxy
       - high-availability
@@ -210,6 +219,7 @@ Public data zone:
       - Add public data zone
       - consul
       - dhclient
+      - dhserver
       - hare
       - haproxy
       - nfs

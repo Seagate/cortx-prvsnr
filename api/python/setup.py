@@ -1,7 +1,26 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import os
 import sys
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 # TODO check python version
 
@@ -41,7 +60,7 @@ setup(
     license=metadata['__license__'],
     classifiers=[
         "Programming Language :: Python :: 3.6"  # TODO test and declare others
-    ], # TODO
+    ],  # TODO
     keywords='Provisioner API',
     packages=packages,  # TODO use if needed find_packages
     package_dir={'provisioner': 'provisioner'},
@@ -62,8 +81,10 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt==3001',  # FIXME 2019.2.0 is buggy, 3000.3 lacks support of glusterfs 7.0 updated prompt
-                       # TODO update salt packages for provisioner setup rpm as well
+        'salt==3001',  # FIXME 2019.2.0 is buggy,
+                       # 3000.3 lacks support of glusterfs 7.0 updated prompt
+                       # TODO update salt packages for provisioner
+                       # setup rpm as well
         'attrs'
     ],  # TODO
     setup_requires=['pytest-runner'],

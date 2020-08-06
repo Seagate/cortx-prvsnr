@@ -34,6 +34,6 @@ Hostlist file:
 
 Replication sanity check:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p {{ salt['lyveutil.decrypt'](pillar['openldap']['admin']['secret'],'openldap') }}
+    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret'],) }}
     - onlyif: test -f /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh
 {%- endif %}
