@@ -193,9 +193,9 @@ function teardown_states {
 
 # Ensure the cluster is in maintenance mode before teardown
 function ensure_cluster_in_maintenance {
-    if command -v pcs ; then
+    if command -v hctl ; then
         echo "INFO: Putting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
-        hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
+        hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE} || true
     else
         echo "[WARN     ]: Command 'pcs' not found, cannot put cluster into maintenance mode." 2>&1 | tee -a ${LOG_FILE}
     fi
