@@ -599,7 +599,7 @@ def mock_eosupdate(mocker):
 
 
 @pytest.mark.patch_logging([(commands, ('info',))])
-def test_commands_EOSUpdate_run_happy_path(
+def test_commands_SWUpdate_run_happy_path(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -607,7 +607,7 @@ def test_commands_EOSUpdate_run_happy_path(
     target = 'some-target'
 
     # happy path
-    commands.EOSUpdate().run(target)
+    commands.SWUpdate().run(target)
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
@@ -635,7 +635,7 @@ def test_commands_EOSUpdate_run_happy_path(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_pre_stages_failed(
+def test_commands_SWUpdate_run_pre_stages_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -645,7 +645,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
     mocks['ensure_cluster_is_healthy'].side_effect = update_lower_exc
     expected_exc_t = SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert exc.reason is update_lower_exc
@@ -660,7 +660,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
     mocks['_ensure_update_repos_configuration'].side_effect = update_lower_exc
     expected_exc_t = SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert exc.reason is update_lower_exc
@@ -673,7 +673,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_maintenance_enable_failed(
+def test_commands_SWUpdate_run_maintenance_enable_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -682,7 +682,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
     update_lower_exc = TypeError('some-error')
     mocks['cluster_maintenance_enable'].side_effect = update_lower_exc
     with pytest.raises(SWUpdateError) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is SWUpdateError
     assert type(exc.reason) is ClusterMaintenanceEnableError
@@ -717,7 +717,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_sw_stack_update_failed(
+def test_commands_SWUpdate_run_sw_stack_update_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -742,7 +742,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
     mocks['_update_component'].side_effect = apply_side_effect
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is SWStackUpdateError
@@ -791,7 +791,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_maintenance_disable_failed(
+def test_commands_SWUpdate_run_maintenance_disable_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -807,7 +807,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterMaintenanceDisableError
@@ -862,7 +862,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_ha_post_update_failed(
+def test_commands_SWUpdate_run_ha_post_update_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -878,7 +878,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is HAPostUpdateError
@@ -934,7 +934,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
+def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -950,7 +950,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterNotHealthyError
@@ -1002,7 +1002,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
+def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -1022,7 +1022,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
     ]
     expected_exc_t = SWUpdateFatalError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterNotHealthyError
@@ -1078,7 +1078,7 @@ post_rollback_stages = [
     range(len(post_rollback_stages)),
     ids=post_rollback_stages
 )
-def test_commands_EOSUpdate_run_post_rollback_fail(
+def test_commands_SWUpdate_run_post_rollback_fail(
     patch_logging, mocker, mock_eosupdate, post_rollback_stage_idx
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -1109,7 +1109,7 @@ def test_commands_EOSUpdate_run_post_rollback_fail(
     )
 
     with pytest.raises(SWUpdateFatalError) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
 
     exc = excinfo.value
     assert type(exc) is SWUpdateFatalError
