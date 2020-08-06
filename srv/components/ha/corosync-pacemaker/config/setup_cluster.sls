@@ -1,7 +1,7 @@
 # This state file is ignored if run on replacement node
 # replacement node check & priamry node check
 {% if not salt["environ.get"]('REPLACEMENT_NODE')
-  and 'primary' in grains['roles'] -%}
+  and 'primary' in grains['roles'] %}
 Setup Cluster:
   pcs.cluster_setup:
     - nodes:
@@ -19,16 +19,16 @@ Ignore the Quorum Policy:
     - prop: no-quorum-policy
     - value: ignore
 
-{% set stonith-enabled = false %}
+{% set stonith_enabled = 'false' %}
 {% if pillar['cluster'][grains['id']]['bmc']['ip']
   and "physical" in grains['virtual'] %}
-{% set stonith-enabled = true %}
+{% set stonith_enabled = 'true' %}
 {% endif %}
 
 Enable STONITH:
   pcs.prop_has_value:
     - prop: stonith-enabled
-    - value: {{ stonith-enabled }}     # Set only if BMC IP is specified
+    - value: {{ stonith_enabled }}     # Set only if BMC IP is specified
 
 {% else %}            # Check for is node primary
 

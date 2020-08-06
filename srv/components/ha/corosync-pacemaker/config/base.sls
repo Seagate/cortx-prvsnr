@@ -30,7 +30,6 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-{% if 'primary' in grains['roles'] -%}                   # priamry node check
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
@@ -44,8 +43,3 @@ Authorize nodes:
       - '--force'
     - require:
       - Start pcsd service
-{% else %}
-No Cluster Setup:
-  test.show_notification:
-    - text: "Cluster setup applies only to primary node. There's no Cluster setup operation on secondary node"
-{%- endif -%}
