@@ -30,7 +30,6 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
@@ -44,34 +43,3 @@ Authorize nodes:
       - '--force'
     - require:
       - Start pcsd service
-
-Setup Cluster:
-  pcs.cluster_setup:
-    - nodes:
-      {%- for node_id in pillar['cluster']['node_list'] %}
-      - {{ node_id }}
-      {%- endfor %}
-    - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
-    - extra_args:
-      - '--start'
-      - '--enable'
-      - '--force'
-
-Ignore the Quorum Policy:
-  pcs.prop_has_value:
-    - prop: no-quorum-policy
-    - value: ignore
-
-Enable STONITH:
-  pcs.prop_has_value:
-    - prop: stonith-enabled
-{% if pillar['cluster'][grains['id']]['bmc']['ip'] %}
-    - value: true
-{% else %}
-    - value: false
-{% endif %}
-{% else %}
-No Cluster Setup:
-  test.show_notification:
-    - text: "Cluster setup applies only to primary node. There's no Cluster setup operation on secondary node"
-{%- endif -%}
