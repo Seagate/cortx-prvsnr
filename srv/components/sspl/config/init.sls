@@ -1,3 +1,3 @@
 include:
-  - .commons
-  - .sspl
+  - components.sspl.config.commons
+  - components.sspl.config.sspl
