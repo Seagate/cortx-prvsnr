@@ -14,7 +14,7 @@ prvsnrusers:
   group.present
 
 # TODO IMPROVE EOS-8473 consider states instead
-user_salt_roots_created:
+api_post_setup_applied:
   cmd.script:
     - source: salt://provisioner/files/post_setup.sh
 
