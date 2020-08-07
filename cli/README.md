@@ -67,7 +67,7 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 
 Besides [general](#common-options) set of options it expects the following ones:
 
-- `--eosnode-2=[user@]hostname`: sets host specification of the cortxnode-2. If missed default one is assumed: `eosnode-2`.
+- `--eosnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `eosnode-2`.
 - `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
@@ -86,10 +86,10 @@ For now that makes sense only for `gitlab` and if missed the latest tagged versi
 
 #### Examples
 
-Configure cluster with a master on cortxnode-1
+Configure cluster with a master on srvnode-1
 
 ```shell
-$ setup-provisioner -F ./ssh_config --salt-master=<CORTXNODE-1-IP>
+$ setup-provisioner -F ./ssh_config --salt-master=<SRVNODE-1-IP>
 ```
 
 ### configure-cortx
@@ -148,19 +148,19 @@ No specific options or positional arguments are expected by the script.
 
 #### Examples
 
-Install CORTX stack for a cluster with a local host as cortxnode-1
+Install CORTX stack for a cluster with a local host as srvnode-1
 
 ```shell
 $ deploy-eos
 ```
 
-Install CORTX stack for a cluster with a remote host as cortxnode-1
+Install CORTX stack for a cluster with a remote host as srvnode-1
 
 ```shell
 $ deploy-eos -r eosnode-1 -F ./ssh_config
 ```
 
-Install CORTX stack for a single node with a remote host as cortxnode-1
+Install CORTX stack for a single node with a remote host as srvnode-1
 
 ```shell
 $ deploy-eos -r eosnode-1 -F ./ssh_config --singlenode
@@ -208,19 +208,19 @@ But that might be changed in future.
 
 #### Examples
 
-Start all services for a cluster with local host as cortxnode-1
+Start all services for a cluster with local host as srvnode-1
 
 ```shell
 $ start-eos
 ```
 
-Start all services for a cluster with remote host as cortxnode-1
+Start all services for a cluster with remote host as srvnode-1
 
 ```shell
 $ start-eos --remote eosnode-1 -F ./ssh_config
 ```
 
-Restart all services for a cluster with remote host as cortxnode-1
+Restart all services for a cluster with remote host as srvnode-1
 
 
 ```shell
@@ -238,13 +238,13 @@ But that might be changed in future.
 
 #### Examples
 
-Stop all services for a cluster with local host as cortxnode-1
+Stop all services for a cluster with local host as srvnode-1
 
 ```shell
 $ stop-eos
 ```
 
-Stop all services for a cluster with remote host as cortxnode-1
+Stop all services for a cluster with remote host as srvnode-1
 
 ```shell
 $ stop-eos --remote eosnode-1 -F ./ssh_config

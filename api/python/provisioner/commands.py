@@ -901,7 +901,7 @@ def _update_component(component, targets=ALL_MINIONS):
 
 
 def _apply_provisioner_config(targets=ALL_MINIONS):
-    logger.info(f"Applying Provisioner config logic on {targets}")
+    logger.info("Applying Provisioner config logic on {targets}")
     StatesApplier.apply(["components.provisioner.config"], targets)
 
 
@@ -2217,7 +2217,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log masters as well
-        logger.info(f"Configuring salt masters")
+        logger.info("Configuring salt masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
