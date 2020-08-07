@@ -1169,19 +1169,19 @@ def cortx_hosts(hosts, _cortx_spec, request):
 
 
 @pytest.fixture
-def eos_primary_host_label(cortx_hosts):
+def cortx_primary_host_label(cortx_hosts):
     return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
 
 
 @pytest.fixture
-def eos_primary_mhost(eos_primary_host_label, request):
-    return request.getfixturevalue('mhost' + eos_primary_host_label)
+def cortx_primary_mhost(cortx_primary_host_label, request):
+    return request.getfixturevalue('mhost' + cortx_primary_host_label)
 
 
 @pytest.fixture
-def eos_primary_host_ip(eos_primary_mhost):
-    return eos_primary_mhost.host.interface(
-        eos_primary_mhost.iface
+def cortx_primary_host_ip(cortx_primary_mhost):
+    return cortx_primary_mhost.host.interface(
+        cortx_primary_mhost.iface
     ).addresses[0]
 
 
@@ -1207,7 +1207,7 @@ def install_provisioner(cortx_hosts, mlocalhost, project_path, ssh_config, reque
 
 
 @pytest.fixture
-def configure_salt(cortx_hosts, install_provisioner, eos_primary_host_ip, request):
+def configure_salt(cortx_hosts, install_provisioner, cortx_primary_host_ip, request):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in cortx_hosts.items():
@@ -1216,7 +1216,7 @@ def configure_salt(cortx_hosts, install_provisioner, eos_primary_host_ip, reques
             'true' if host_spec['is_primary'] else 'false'
         )
         primary_host = (
-            "localhost" if host_spec['is_primary'] else eos_primary_host_ip
+            "localhost" if host_spec['is_primary'] else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(
@@ -1227,21 +1227,21 @@ def configure_salt(cortx_hosts, install_provisioner, eos_primary_host_ip, reques
 
 
 @pytest.fixture
-def accept_salt_keys(cortx_hosts, install_provisioner, eos_primary_mhost):
+def accept_salt_keys(cortx_hosts, install_provisioner, cortx_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
     for label, host_spec in cortx_hosts.items():
-        eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
+        cortx_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
             cli_dir / 'common_utils/functions.sh', host_spec['minion_id'])
         )
 
-    eos_primary_mhost.check_output("salt '*' mine.update")
+    cortx_primary_mhost.check_output("salt '*' mine.update")
 
 
 @pytest.fixture
-def sync_salt_modules(eos_primary_mhost, install_provisioner):
-    eos_primary_mhost.check_output("salt '*' saltutil.sync_modules")
-    eos_primary_mhost.check_output("salt-run saltutil.sync_modules")
+def sync_salt_modules(cortx_primary_mhost, install_provisioner):
+    cortx_primary_mhost.check_output("salt '*' saltutil.sync_modules")
+    cortx_primary_mhost.check_output("salt-run saltutil.sync_modules")
 
 
 @pytest.fixture
