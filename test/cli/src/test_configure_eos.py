@@ -41,7 +41,7 @@ def script_name():
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec(
+@pytest.mark.cortx_spec(
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -79,7 +79,7 @@ def test_configure_eos_show(
 #  - mostly repeats 'test_functions_eos_pillar_update_and_load_default'
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec(
+@pytest.mark.cortx_spec(
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])

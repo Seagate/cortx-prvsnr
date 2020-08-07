@@ -102,7 +102,7 @@ ENV_LEVELS_HIERARCHY = {
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
-DEFAULT_EOS_SPEC = {
+DEFAULT_CORTX_SPEC = {
     'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
@@ -296,9 +296,9 @@ def pytest_configure(config):
                    "in the specific environment level"
     )
     config.addinivalue_line(
-        "markers", "eos_spec(dict): mark test as expecting "
+        "markers", "cortx_spec(dict): mark test as expecting "
                    "specific EOS stack configuration, default: {}"
-                   .format(json.dumps(DEFAULT_EOS_SPEC))
+                   .format(json.dumps(DEFAULT_CORTX_SPEC))
     )
     config.addinivalue_line(
         "markers", "hosts(list): mark test as expecting "
@@ -1144,26 +1144,26 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 
 
 @pytest.fixture
-def eos_spec(request):
-    marker = request.node.get_closest_marker('eos_spec')
-    spec = marker.args[0] if marker else DEFAULT_EOS_SPEC
+def cortx_spec(request):
+    marker = request.node.get_closest_marker('cortx_spec')
+    spec = marker.args[0] if marker else DEFAULT_CORTX_SPEC
     return spec
 
 
-# eos_spec sanity checks
+# cortx_spec sanity checks
 @pytest.fixture
-def _eos_spec(eos_spec):
-    assert len({k: v for k, v in eos_spec.items() if v['is_primary']}) == 1
-    return eos_spec
+def _cortx_spec(cortx_spec):
+    assert len({k: v for k, v in cortx_spec.items() if v['is_primary']}) == 1
+    return cortx_spec
 
 
 @pytest.fixture
-def eos_hosts(hosts, _eos_spec, request):
+def eos_hosts(hosts, _cortx_spec, request):
     _hosts = defaultdict(dict)
     for label in hosts:
-        if label in _eos_spec:
-            _hosts[label]['minion_id'] = _eos_spec[label]['minion_id']
-            _hosts[label]['is_primary'] = _eos_spec[label].get('is_primary', True)
+        if label in _cortx_spec:
+            _hosts[label]['minion_id'] = _cortx_spec[label]['minion_id']
+            _hosts[label]['is_primary'] = _cortx_spec[label].get('is_primary', True)
 
     return _hosts
 
