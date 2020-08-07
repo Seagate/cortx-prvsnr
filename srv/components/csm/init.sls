@@ -4,7 +4,7 @@ include:
   - components.csm.install
   - components.csm.config
   - components.csm.start
-  - components.csm.sanity_check
+  - components.csm.sanity_check.csm_sanity
 
 Generate csm checkpoint flag:
   file.managed:
