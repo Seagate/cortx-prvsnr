@@ -65,7 +65,7 @@ Check `custom options` section of `pytest --help` for more information.
 
 - `--env_level`: mark test to be run in the specific environment level, default: `base`
 - `--isolated`: mark test to be run in isolated environment instead of module wide shared, default: not set
-- `--eos_spec`: mark test as expecting specific EOS stack configuration, default: not set
+- `--eos_spec`: mark test as expecting specific CORTX stack configuration, default: not set
 - `--hosts`: mark test as expecting the specified list of hosts, default: ['host']
 - `--inject_repo`: mark test as expecting repo injection only for specified hosts, default: all hosts
 - `--inject_ssh_config`: mark test as expecting ssh configuration only for specified hosts, default: all hosts
@@ -80,7 +80,7 @@ Test framework has helper.py and conftest.py which declare and implement the API
 ### helper.py
 
 #### PRVSNR_REPO_INSTALL_DIR:
-- Defines the path to the EOS provisioner installation directory
+- Defines the path to the CORTX provisioner installation directory
 
 #### HostMeta:
 - HostMeta class defines the host system with the attributes like,
@@ -190,40 +190,40 @@ Test framework has helper.py and conftest.py which declare and implement the API
 - Adds the ssh_config to host instances
 - Scope: `function`
 
-#### eos_spec:
-- Returns a dictionary of the specific EOS stack configuration.
-- Returned eos_spec dictionary will be a nested dictionary with the host_eosnode1, host_eosbode2, etc. dictionaries
-- host_eosnode1 and host_eosnode2 has
-    - key: minion_id and value: salt minion id of EOS node
+#### cortx_spec:
+- Returns a dictionary of the specific CORTX stack configuration.
+- Returned cortx_spec dictionary will be a nested dictionary with the host_srvnode1, host_srvnode2, etc. dictionaries
+- host_srvnode1 and host_srvnode2 has
+    - key: minion_id and value: salt minion id of CORTX node
     - key: is_primary and value: true/false
 - Scope: `function`
 
-#### eos_hosts:
-- Returns a dictionary of EOS host nodes
-- Returned eos_hosts dictionary has
+#### cortx_hosts:
+- Returns a dictionary of CORTX host nodes
+- Returned cortx_hosts dictionary has
     - key: host and value: host instance
     - key: minion_id and value: salt minion id 
     - key: is_primary and value: true/false
 - Scope: `function`
 
-#### eos_primary_host:
-- Returns primary EOS node instance
+#### cortx_primary_host:
+- Returns primary CORTX node instance
 - Scope: `function`
 
-#### eos_primary_host_label:
-- Returns host fixture label of a primary EOS node
+#### cortx_primary_host_label:
+- Returns host fixture label of a primary CORTX node
 - Scope: `function`
 
-#### eos_primary_host_ip:
-- Returns primary EOS host ip address
+#### cortx_primary_host_ip:
+- Returns primary CORTX host ip address
 - Scope: `function`
 
 #### configure_salt:
-- configures the salt on EOS nodes.
+- configures the salt on CORTX nodes.
 - Scope: `function`
 
 #### accept_salt_keys:
-- Accepts the salt keys from minions on a primary EOS node
+- Accepts the salt keys from minions on a primary CORTX node
 - Scope: `function`
 
 

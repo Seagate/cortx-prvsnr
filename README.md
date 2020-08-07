@@ -112,7 +112,7 @@ https://docs.saltstack.com/en/latest/topics/index.html
 `git clone https://github.com/Seagate/cortx-prvsnr/`
 `cd ~/projects/cortx-prvsnr`
 
-1. Add Vargrant box created for ldr-r1:
+1. Add Vargrant box created for LDR-R1:
 `vagrant box add http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box --name centos_7.5.1804`
 
 ##### Start VagrantBox

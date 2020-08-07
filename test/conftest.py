@@ -103,11 +103,11 @@ BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_EOS_SPEC = {
-    'eosnode1': {
+    'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
         'is_primary': True,
-    }, 'eosnode2': {
+    }, 'srvnode2': {
         'hostname': 'srvnode-2',
         'minion_id': 'srvnode-2',
         'is_primary': False,
@@ -473,7 +473,7 @@ def patch_logging(request, monkeypatch):
 @pytest.fixture(scope='session')
 def hosts_spec(request):
     return {
-        'eosnode1': {
+        'srvnode1': {
             'remote': {
                 'hostname': 'srvnode-1',
                 'specific': {
@@ -487,7 +487,7 @@ def hosts_spec(request):
             },
             'minion_id': 'srvnode-1',
             'is_primary': True,
-        }, 'eosnode2': {
+        }, 'srvnode2': {
             'remote': {
                 'hostname': 'srvnode-2',
                 'specific': {
@@ -1463,5 +1463,5 @@ def build_mhost_fixture(label=None, module_name=__name__):
 # default 'host' fixture is always present
 build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
-build_mhost_fixture('eosnode1')
-build_mhost_fixture('eosnode2')
+build_mhost_fixture('srvnode1')
+build_mhost_fixture('srvnode2')

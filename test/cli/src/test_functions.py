@@ -643,31 +643,31 @@ def test_functions_check_host_reachable(
 #   - case when they have the same IP in some non-shared iface (vbox only case for now)
 #   - actually we don't need eos specific here, just two hosts
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize(
     "local",
-    ['eosnode1', 'eosnode2', None],
+    ['srvnode1', 'srvnode2', None],
     ids=['run_on_itself', 'run_on_target', 'run_on_other']
 )
 def test_functions_get_reachable_names(
-    run_script, mhosteosnode1, mhosteosnode2,
+    run_script, mhostsrvnode1, mhostsrvnode2,
     mlocalhost, ssh_config, local, project_path,
     inject_ssh_config, request
 ):
     if local is None:
         mhost = mlocalhost
-        hostspec1 = mhosteosnode1.hostname
-        hostspec2 = mhosteosnode2.hostname
+        hostspec1 = mhostsrvnode1.hostname
+        hostspec2 = mhostsrvnode2.hostname
         _ssh_config = ssh_config
     else:
         _ssh_config = inject_ssh_config[local]
-        if local == 'eosnode1':
-            mhost = mhosteosnode1
+        if local == 'srvnode1':
+            mhost = mhostsrvnode1
             hostspec1 = "''"
-            hostspec2 = mhosteosnode2.hostname
+            hostspec2 = mhostsrvnode2.hostname
         else:
-            mhost = mhosteosnode2
-            hostspec1 = mhosteosnode1.hostname
+            mhost = mhostsrvnode2
+            hostspec1 = mhostsrvnode1.hostname
             hostspec2 = "''"
 
     script = """
@@ -684,8 +684,8 @@ def test_functions_get_reachable_names(
     collected = res.stdout.split()
     assert collected
 
-    host1_addrs = h.collect_ip4_addrs(mhosteosnode1.host)
-    host2_addrs = h.collect_ip4_addrs(mhosteosnode2.host)
+    host1_addrs = h.collect_ip4_addrs(mhostsrvnode1.host)
+    host2_addrs = h.collect_ip4_addrs(mhostsrvnode2.host)
     common_addrs = set(host1_addrs) & set(host2_addrs)
 
     assert not (set(collected) & common_addrs)
@@ -974,13 +974,13 @@ def test_functions_install_salt(
 #   - integration test for master-minion connected scheme to check grains, minion-ids ...
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
 def test_functions_configure_salt(
     run_script, mlocalhost, ssh_config, remote, master, project_path, request
 ):
-    host_label = 'eosnode1' if master else 'eosnode2'
+    host_label = 'srvnode1' if master else 'srvnode2'
     mhost = request.getfixturevalue('mhost' + host_label)
     _ = request.getfixturevalue('install_provisioner')
 
@@ -1123,54 +1123,54 @@ def test_functions_accept_salt_key_singlenode(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_key_cluster(
-    run_script, mhosteosnode1, mhosteosnode2,
+    run_script, mhostsrvnode1, mhostsrvnode2,
     mlocalhost, ssh_config, remote, project_path,
     install_provisioner, eos_spec
 ):
-    eosnode1_minion_id = eos_spec['eosnode1']['minion_id']
-    eosnode2_minion_id = eos_spec['eosnode2']['minion_id']
+    srvnode1_minion_id = eos_spec['srvnode1']['minion_id']
+    srvnode2_minion_id = eos_spec['srvnode2']['minion_id']
     with_sudo = 'false' # TODO
 
-    salt_server_ip = mhosteosnode1.host.interface(
-        mhosteosnode1.iface
+    salt_server_ip = mhostsrvnode1.host.interface(
+        mhostsrvnode1.iface
     ).addresses[0]
 
     # configure srvnode-1
     script = """
         configure_salt {} '' '' {} true localhost
     """.format(
-        eosnode1_minion_id, with_sudo, salt_server_ip
+        srvnode1_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, mhost=mhosteosnode1)
+    res = run_script(script, mhost=mhostsrvnode1)
     assert res.rc == 0
 
     # configure srvnode-2
     script = """
         configure_salt {} '' '' {} false {}
     """.format(
-        eosnode2_minion_id, with_sudo, salt_server_ip
+        srvnode2_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, mhost=mhosteosnode2)
+    res = run_script(script, mhost=mhostsrvnode2)
     assert res.rc == 0
 
-    hostspec = mhosteosnode1.hostname if remote else "''"
+    hostspec = mhostsrvnode1.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
 
-    for _id in (eosnode1_minion_id, eosnode2_minion_id):
+    for _id in (srvnode1_minion_id, srvnode2_minion_id):
         script = """
             accept_salt_key {} {} {} {}
         """.format(
             _id, hostspec, ssh_config, with_sudo
         )
-        res = run_script(script, mhost=(mlocalhost if remote else mhosteosnode1))
+        res = run_script(script, mhost=(mlocalhost if remote else mhostsrvnode1))
         assert res.rc == 0
 
-    output = mhosteosnode1.check_output("salt-key --out json --list all")
+    output = mhostsrvnode1.check_output("salt-key --out json --list all")
     output = json.loads(output)
-    assert set(output['minions']) == set([eosnode1_minion_id, eosnode2_minion_id])
+    assert set(output['minions']) == set([srvnode1_minion_id, srvnode2_minion_id])
 
 # Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)

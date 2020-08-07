@@ -27,16 +27,16 @@ logger = logging.getLogger(__name__)
 #  - split into more focused scenarios
 #  - tests for states relations
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('rsyslog-installed')
 def test_provisioner_config_sls(
-    mhosteosnode1, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, eos_hosts, configure_salt, accept_salt_keys
 ):
-    minion_id = eos_hosts['eosnode1']['minion_id']
+    minion_id = eos_hosts['srvnode1']['minion_id']
     config_state = 'components.provisioner.config'
     config_file_path = '/etc/rsyslog.d/prvsnrfwd.conf'
 
-    host = mhosteosnode1.host
+    host = mhostsrvnode1.host
     config_file = host.file(config_file_path)
     rsyslog = host.service('rsyslog')
 

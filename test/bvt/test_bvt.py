@@ -42,7 +42,7 @@ def vagrantfile_tmpl():
 @pytest.fixture(scope='module')
 def hosts_spec(hosts_spec):
     res = deepcopy(hosts_spec)
-    vbox_settings = res['eosnode1']['remote']['specific']['vbox']
+    vbox_settings = res['srvnode1']['remote']['specific']['vbox']
     vbox_settings['memory'] = 8192
     vbox_settings['cpus'] = 4
     vbox_settings['mgmt_disk_size'] = 4096
@@ -183,9 +183,9 @@ def get_bvt_results(
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-bvt-ready')
-@pytest.mark.hosts(['eosnode1'])
-def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
-    eos_release = mhosteosnode1.check_output(
+@pytest.mark.hosts(['srvnode1'])
+def test_bvt(mlocalhost, mhostsrvnode1, request, tmpdir_function):
+    eos_release = mhostsrvnode1.check_output(
         "grep target_build '{}'"
         .format(h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls')
     ).split()[1]
@@ -199,25 +199,25 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     assert local_bvt_repo_path.exists()
 
     # upload tests to the remote
-    remote_bvt_repo_archive_path = mhosteosnode1.copy_to_host(local_bvt_repo_path)
+    remote_bvt_repo_archive_path = mhostsrvnode1.copy_to_host(local_bvt_repo_path)
     remote_bvt_repo_path = remote_bvt_repo_archive_path.parent / 'eos-test'
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         'mkdir -p "{0}"; tar -zxf "{1}" -C "{0}" --strip-components=1'
         .format(remote_bvt_repo_path, remote_bvt_repo_archive_path),
         force_dump=True
     )
 
-    ensure_hw_configuration(mhosteosnode1, tmpdir_function)
+    ensure_hw_configuration(mhostsrvnode1, tmpdir_function)
 
-    prepare_bvt_python_env(mhosteosnode1, remote_bvt_repo_path)
+    prepare_bvt_python_env(mhostsrvnode1, remote_bvt_repo_path)
 
-    h.bootstrap_eos(mhosteosnode1)
+    h.bootstrap_eos(mhostsrvnode1)
 
-    configure_bvt_s3_env(mhosteosnode1, remote_bvt_repo_path)
+    configure_bvt_s3_env(mhostsrvnode1, remote_bvt_repo_path)
 
     # list tests
     logger.info("Discovering tests")
-    res = mhosteosnode1.check_output(
+    res = mhostsrvnode1.check_output(
         'cd {} && python3 -m avocado list {}'
         .format(remote_bvt_repo_path, bvt_test_targets)
     )
@@ -230,8 +230,8 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
         (
             "ssh -F {} {} 'cd {} && python3 -m avocado run {}'"
             .format(
-                mhosteosnode1.ssh_config,
-                mhosteosnode1.hostname,
+                mhostsrvnode1.ssh_config,
+                mhostsrvnode1.hostname,
                 remote_bvt_repo_path,
                 bvt_test_targets
             )
@@ -242,7 +242,7 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     )
 
     get_bvt_results(
-        mhosteosnode1,
+        mhostsrvnode1,
         mlocalhost,
         local_bvt_results,
         success=(res.returncode == 0)

@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_pillar_targets(
-    mhosteosnode1, run_test, eos_hosts
+    mhostsrvnode1, run_test, eos_hosts
 ):
-    run_test(mhosteosnode1, env={
-        'TEST_MINION_ID': eos_hosts['eosnode1']['minion_id']
+    run_test(mhostsrvnode1, env={
+        'TEST_MINION_ID': eos_hosts['srvnode1']['minion_id']
     })

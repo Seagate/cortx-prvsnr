@@ -42,12 +42,12 @@ def vagrantfile_tmpl():
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-deploy-ready')
-@pytest.mark.hosts(['eosnode1'])
-def test_singlenode_deploy_ready_env(mhosteosnode1, request):
+@pytest.mark.hosts(['srvnode1'])
+def test_singlenode_deploy_ready_env(mhostsrvnode1, request):
     # light check
-    assert mhosteosnode1.host.file(str(h.PRVSNR_REPO_INSTALL_DIR)).exists
+    assert mhostsrvnode1.host.file(str(h.PRVSNR_REPO_INSTALL_DIR)).exists
 
-    res = mhosteosnode1.run(
+    res = mhostsrvnode1.run(
         'bash {} -p cluster'.format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/src/configure-eos')
     )
     assert res.rc == 0
@@ -55,13 +55,13 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
     pillar_file_dict = yaml.safe_load(res.stdout)
     assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt_nw']['iface'] == 'lo'
     assert pillar_file_dict['cluster']['srvnode-1']['network']['data_nw']['iface'] == 'lo'
-    def_gateway = mhosteosnode1.check_output('ip route | grep default | head -1').split()[2]
+    def_gateway = mhostsrvnode1.check_output('ip route | grep default | head -1').split()[2]
     assert def_gateway
     assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt_nw']['gateway'] == def_gateway
-    assert pillar_file_dict['cluster']['srvnode-1']['hostname'] == mhosteosnode1.hostname
+    assert pillar_file_dict['cluster']['srvnode-1']['hostname'] == mhostsrvnode1.hostname
 
     # FIXME path to cli scripts
-    res = mhosteosnode1.run(
+    res = mhostsrvnode1.run(
         'bash {} -p release'.format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/src/configure-eos')
     )
     assert res.rc == 0
@@ -69,7 +69,7 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
     pillar_file_dict = yaml.safe_load(res.stdout)
     assert pillar_file_dict['eos_release']['target_build'] == request.config.getoption('eos_release')
 
-    baseurl = mhosteosnode1.check_output(
+    baseurl = mhostsrvnode1.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
     assert baseurl == (
@@ -77,22 +77,22 @@ def test_singlenode_deploy_ready_env(mhosteosnode1, request):
         .format(request.config.getoption('prvsnr_release'))
     )
 
-    mhosteosnode1.check_output('bash /opt/seagate/cortx/provisioner/cli/src/deploy-eos -vv -S')
+    mhostsrvnode1.check_output('bash /opt/seagate/cortx/provisioner/cli/src/deploy-eos -vv -S')
 
 
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-eos-deployed')
-@pytest.mark.hosts(['eosnode1'])
-def test_singlenode_eos_deployed_env(mhosteosnode1, request):
+@pytest.mark.hosts(['srvnode1'])
+def test_singlenode_eos_deployed_env(mhostsrvnode1, request):
     # bootstrap the cluster
-    h.bootstrap_eos(mhosteosnode1)
+    h.bootstrap_eos(mhostsrvnode1)
 
     # perform sanity checks
-    # mhosteosnode1.check_output(
+    # mhostsrvnode1.check_output(
     #     'bash -ex {}'
-    #     .format(mhosteosnode1.repo / 'sanity_tests/s3-sanity.sh')
+    #     .format(mhostsrvnode1.repo / 'sanity_tests/s3-sanity.sh')
     # )
 
 
@@ -101,21 +101,21 @@ def test_singlenode_eos_deployed_env(mhosteosnode1, request):
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-eos-ready')
-@pytest.mark.hosts(['eosnode1'])
-def test_singlenode_eos_ready_env(mhosteosnode1, request):
-    mhosteosnode1.check_output('bash -ex /opt/seagate/cortx/provisioner/sanity_tests/s3-sanity.sh')
+@pytest.mark.hosts(['srvnode1'])
+def test_singlenode_eos_ready_env(mhostsrvnode1, request):
+    mhostsrvnode1.check_output('bash -ex /opt/seagate/cortx/provisioner/sanity_tests/s3-sanity.sh')
 
 
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-deploy-ready')
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_s3_sanity_singlenode_env(
-    mhosteosnode1, ssh_config, mlocalhost,
+    mhostsrvnode1, ssh_config, mlocalhost,
     request, tmpdir_function, run_script
 ):
-    remote = '--remote {}'.format(mhosteosnode1.hostname)
+    remote = '--remote {}'.format(mhostsrvnode1.hostname)
     ssh_config = '--ssh-config {}'.format(ssh_config)
 
     res = run_script(
@@ -129,8 +129,8 @@ def test_s3_sanity_singlenode_env(
 
     pillar_file_dict = yaml.safe_load(res.stdout)
 
-    assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt_nw']['iface'] == mhosteosnode1.iface
-    assert pillar_file_dict['cluster']['srvnode-1']['network']['data_nw']['iface'] == mhosteosnode1.iface
-    def_gateway = mhosteosnode1.check_output('ip route | grep default | head -1').split()[2]
+    assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt_nw']['iface'] == mhostsrvnode1.iface
+    assert pillar_file_dict['cluster']['srvnode-1']['network']['data_nw']['iface'] == mhostsrvnode1.iface
+    def_gateway = mhostsrvnode1.check_output('ip route | grep default | head -1').split()[2]
     assert def_gateway
     assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt_nw']['gateway'] == def_gateway

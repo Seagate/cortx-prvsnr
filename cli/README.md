@@ -38,22 +38,22 @@ Besides help options each script might be called using any of the following opti
 
 ~~For that case you can use `-F`/`--ssh-config` option along with `-r`/`--remote` to specify a remote host spec, e.g.:~~
 
-$ `setup-provisioner -F ./ssh_config ` ~~`-r eosnode-1`~~
+$ `setup-provisioner -F ./ssh_config ` ~~`-r srvnode-1`~~
 
 
 where `./ssh_config` might look like:
 
 ```
-Host eosnode-1
-    HostName <EOSNODE-1-HOSTNAME-OR-IP-1>
+Host srvnode-1
+    HostName <srvnode-1-HOSTNAME-OR-IP-1>
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
     IdentityFile <PATH-TO-SSH-KEY>
     IdentitiesOnly yes
 
-Host eosnode-2
-    HostName <EOSNODE-2-HOSTNAME-OR-IP>
+Host srvnode-2
+    HostName <srvnode-2-HOSTNAME-OR-IP>
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
@@ -67,7 +67,7 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 
 Besides [general](#common-options) set of options it expects the following ones:
 
-- `--eosnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `eosnode-2`.
+- `--srvnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `srvnode-2`.
 - `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
@@ -75,7 +75,7 @@ Besides [general](#common-options) set of options it expects the following ones:
 - `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
   value will be used (it is specified in salt minion's [config file](../srv/components/provisioner/salt_minion/files/minion)
-  and is `eosnode-1` for now).
+  and is `srvnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.
 For now that makes sense only for `gitlab` and if missed the latest tagged version would be installed.
@@ -157,13 +157,13 @@ $ deploy-eos
 Install CORTX stack for a cluster with a remote host as srvnode-1
 
 ```shell
-$ deploy-eos -r eosnode-1 -F ./ssh_config
+$ deploy-eos -r srvnode-1 -F ./ssh_config
 ```
 
 Install CORTX stack for a single node with a remote host as srvnode-1
 
 ```shell
-$ deploy-eos -r eosnode-1 -F ./ssh_config --singlenode
+$ deploy-eos -r srvnode-1 -F ./ssh_config --singlenode
 ```
 
 ### bootsrap-cortx
@@ -217,14 +217,14 @@ $ start-eos
 Start all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ start-eos --remote eosnode-1 -F ./ssh_config
+$ start-eos --remote srvnode-1 -F ./ssh_config
 ```
 
 Restart all services for a cluster with remote host as srvnode-1
 
 
 ```shell
-$ start-eos --remote eosnode-1 -F ./ssh_config --restart
+$ start-eos --remote srvnode-1 -F ./ssh_config --restart
 ```
 
 ### stop-cortx
@@ -247,7 +247,7 @@ $ stop-eos
 Stop all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ stop-eos --remote eosnode-1 -F ./ssh_config
+$ stop-eos --remote srvnode-1 -F ./ssh_config
 ```
 
 ### End-to-End Examples
@@ -279,7 +279,7 @@ Remote installation requires ssh configuration:
 Example of a ssh-config file:
 
 ```
-Host eosnode-1
+Host srvnode-1
     HostName <ip/domain-name>
     User root
     UserKnownHostsFile /dev/null
@@ -288,7 +288,7 @@ Host eosnode-1
     IdentitiesOnly yes
 ```
 
-Steps are exactly the same with the only difference: all scripts calls should include options `-r eosnode-1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `eosnode-1` is an ID of the host described in that file.
+Steps are exactly the same with the only difference: all scripts calls should include options `-r srvnode-1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `srvnode-1` is an ID of the host described in that file.
 
 #### Cluster local installation
 
@@ -303,7 +303,7 @@ Please refer to [Singlenode remote installation](#singlenode-remote-installation
 Example of a ssh-config file:
 
 ```
-Host eosnode-2
+Host srvnode-2
     HostName <ip/domain-name>
     User root
     UserKnownHostsFile /dev/null
@@ -328,12 +328,12 @@ Host eosnode-2
 
 **Note**. The differences with the [local cluster installation](#cluster-local-installation) are:
 - ssh config file should include specifications for both primary and secondary node
-- all scripts require remote connections specification (e.g. `-r eosnode-1 -F ./ssh_config`)
+- all scripts require remote connections specification (e.g. `-r srvnode-1 -F ./ssh_config`)
 
 Example of a ssh-config file:
 
 ```
-Host eosnode-1
+Host srvnode-1
     HostName <ip1/domain-name1>
     User root
     UserKnownHostsFile /dev/null
@@ -341,7 +341,7 @@ Host eosnode-1
     IdentityFile ./id_rsa.eos
     IdentitiesOnly yes
 
-Host eosnode-2
+Host srvnode-2
     HostName <ip2/domain-name2>
     User root
     UserKnownHostsFile /dev/null

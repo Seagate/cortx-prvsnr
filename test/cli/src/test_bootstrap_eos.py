@@ -59,17 +59,17 @@ def test_bootstrap_eos_commands(
     )
     assert res.rc == 0
 
-    eosnode_1_line = "SALT-ARGS: srvnode-1 state.apply components.post_setup"
-    eosnode_2_line = "SALT-ARGS: srvnode-2 state.apply components.post_setup"
+    srvnode_1_line = "SALT-ARGS: srvnode-1 state.apply components.post_setup"
+    srvnode_2_line = "SALT-ARGS: srvnode-2 state.apply components.post_setup"
 
     if singlenode:
         expected_lines = [
-            eosnode_1_line
+            srvnode_1_line
         ]
     else:
         expected_lines = [
-            eosnode_2_line,
-            eosnode_1_line
+            srvnode_2_line,
+            srvnode_1_line
         ]
 
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
