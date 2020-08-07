@@ -35,7 +35,7 @@ def env_level():
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
 def test_mine_functions_primary_host_keys(
-    mhostsrvnode1, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
     def _make_data_comparable(data):
         data = [
@@ -45,7 +45,7 @@ def test_mine_functions_primary_host_keys(
         return sorted(data, key=lambda k: k['enc'])
 
     mine_function_alias = 'primary_host_keys'
-    minion_id = eos_hosts['srvnode1']['minion_id']
+    minion_id = cortx_hosts['srvnode1']['minion_id']
 
     output = mhostsrvnode1.check_output(
         "salt '{}' --out json mine.get 'roles:primary' '{}' grain".format(

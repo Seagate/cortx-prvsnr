@@ -37,12 +37,12 @@ logger = logging.getLogger(__name__)
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
 def test_eosupdate_repo(
-    mhostsrvnode1, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
     repo_dir = '/tmp/repo'
     iso_path = '/tmp/repo.iso'
 
-    minion_id = eos_hosts['srvnode1']['minion_id']
+    minion_id = cortx_hosts['srvnode1']['minion_id']
     pillar_path = h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls'
     release_pillar_str = mhostsrvnode1.check_output(
         'cat {}'.format(pillar_path)

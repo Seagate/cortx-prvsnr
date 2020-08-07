@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('rsyslog-installed')
 def test_provisioner_config_sls(
-    mhostsrvnode1, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
-    minion_id = eos_hosts['srvnode1']['minion_id']
+    minion_id = cortx_hosts['srvnode1']['minion_id']
     config_state = 'components.provisioner.config'
     config_file_path = '/etc/rsyslog.d/prvsnrfwd.conf'
 

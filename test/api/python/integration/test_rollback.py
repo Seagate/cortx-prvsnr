@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 def test_yum_rollback_manager(
-    mhostsrvnode1, run_test, eos_hosts
+    mhostsrvnode1, run_test, cortx_hosts
 ):
     install_provisioner_api(mhostsrvnode1)
     run_test(mhostsrvnode1, env={
-        'TEST_MINION_ID': eos_hosts['srvnode1']['minion_id']
+        'TEST_MINION_ID': cortx_hosts['srvnode1']['minion_id']
     })

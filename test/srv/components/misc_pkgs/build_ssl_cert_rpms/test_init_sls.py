@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.skip(reason="EOS-4907")
 def test_build_ssl_cert_rpms_appliance(
-    mhostsrvnode1, mhostsrvnode2, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, mhostsrvnode2, cortx_hosts, configure_salt, accept_salt_keys
 ):
     # enable cluster setup
     # TODO improve later once we have more flexible state parametrization per roles
@@ -53,7 +53,7 @@ def test_build_ssl_cert_rpms_appliance(
     for label in ('srvnode1', 'srvnode2'):
         mhostsrvnode1.check_output(
             "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms".format(
-                eos_hosts[label]['minion_id']
+                cortx_hosts[label]['minion_id']
             )
         )
 

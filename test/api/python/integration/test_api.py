@@ -39,7 +39,7 @@ def api_run_mode(request):
 
 
 @pytest.fixture
-def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
+def test_pillar_sls(tmpdir_function, cortx_hosts, project_path):
 
     def _f(mhost):
         test_pillar = {
@@ -68,7 +68,7 @@ def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
 
         mhost.check_output(
             "salt '{}' saltutil.refresh_pillar"
-            .format(eos_hosts['srvnode1']['minion_id'])
+            .format(cortx_hosts['srvnode1']['minion_id'])
         )
 
     return _f
@@ -76,13 +76,13 @@ def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
 
 @pytest.fixture
 def run_test(
-    request, api_type, api_run_mode, run_test, eos_hosts, project_path
+    request, api_type, api_run_mode, run_test, cortx_hosts, project_path
 ):
     def f(mhost, *args, env=None, **kwargs):
         if env is None:
             env = {}
 
-        minion_id = eos_hosts['srvnode1']['minion_id']
+        minion_id = cortx_hosts['srvnode1']['minion_id']
 
         env['TEST_API_TYPE'] = api_type
         env['TEST_MINION_ID'] = minion_id
@@ -188,7 +188,7 @@ def test_set_ntp(
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 def test_set_network(
-    mhostsrvnode1, run_test, eos_hosts, project_path
+    mhostsrvnode1, run_test, cortx_hosts, project_path
 ):
     mhostsrvnode1.copy_to_host(
         project_path / "pillar/components/samples/dualnode.cluster.sls",
@@ -200,7 +200,7 @@ def test_set_network(
 
     mhostsrvnode1.check_output(
         "salt '{}' saltutil.refresh_pillar"
-        .format(eos_hosts['srvnode1']['minion_id'])
+        .format(cortx_hosts['srvnode1']['minion_id'])
     )
 
     run_test(mhostsrvnode1)

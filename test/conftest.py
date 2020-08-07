@@ -1158,7 +1158,7 @@ def _cortx_spec(cortx_spec):
 
 
 @pytest.fixture
-def eos_hosts(hosts, _cortx_spec, request):
+def cortx_hosts(hosts, _cortx_spec, request):
     _hosts = defaultdict(dict)
     for label in hosts:
         if label in _cortx_spec:
@@ -1169,8 +1169,8 @@ def eos_hosts(hosts, _cortx_spec, request):
 
 
 @pytest.fixture
-def eos_primary_host_label(eos_hosts):
-    return [k for k, v in eos_hosts.items() if v['is_primary']][0]
+def eos_primary_host_label(cortx_hosts):
+    return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
 
 
 @pytest.fixture
@@ -1186,10 +1186,10 @@ def eos_primary_host_ip(eos_primary_mhost):
 
 
 @pytest.fixture
-def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request):
-    assert eos_hosts, "the fixture makes sense only for eos hosts"
+def install_provisioner(cortx_hosts, mlocalhost, project_path, ssh_config, request):
+    assert cortx_hosts, "the fixture makes sense only for eos hosts"
 
-    for label in eos_hosts:
+    for label in cortx_hosts:
         mhost = request.getfixturevalue('mhost' + label)
         mlocalhost.check_output(
             "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
@@ -1201,16 +1201,16 @@ def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request
                 hostspec=mhost.hostname,
                 ssh_config=ssh_config,
                 sudo='false',
-                singlenode=('true' if len(eos_hosts) == 1 else 'false')
+                singlenode=('true' if len(cortx_hosts) == 1 else 'false')
             )
         )
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request):
+def configure_salt(cortx_hosts, install_provisioner, eos_primary_host_ip, request):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
+    for label, host_spec in cortx_hosts.items():
         minion_id = host_spec['minion_id']
         is_primary = (
             'true' if host_spec['is_primary'] else 'false'
@@ -1227,10 +1227,10 @@ def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request)
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
+def accept_salt_keys(cortx_hosts, install_provisioner, eos_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
+    for label, host_spec in cortx_hosts.items():
         eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
             cli_dir / 'common_utils/functions.sh', host_spec['minion_id'])
         )

@@ -28,10 +28,10 @@ from test.helper import PRVSNRUSERS_GROUP
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
 def test_setup_ssh_known_hosts(
-    mhostsrvnode1, eos_hosts, configure_salt, accept_salt_keys,
+    mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys,
     sync_salt_modules, project_path, tmpdir_function
 ):
-    minion_id = eos_hosts['srvnode1']['minion_id']
+    minion_id = cortx_hosts['srvnode1']['minion_id']
 
     # mock setup.yaml for csm
     csm_setup_yaml_mock_local = (
