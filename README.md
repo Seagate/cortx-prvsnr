@@ -109,8 +109,8 @@ https://docs.saltstack.com/en/latest/topics/index.html
 `mkdir ~/projects && cd ~/projects`
 
 1. Clone git repo for ldr-r1-prvsnr:
-`git clone http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/ ldr-r1-prvsnr`
-`cd ~/projects/ldr-r1-prvsnr`
+`git clone https://github.com/Seagate/cortx-prvsnr/`
+`cd ~/projects/cortx-prvsnr`
 
 1. Add Vargrant box created for ldr-r1:
 `vagrant box add http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box --name centos_7.5.1804`
@@ -121,7 +121,7 @@ The ldr-r1 setup comes with Vagrantfile configured to create a 2 node Vagrant se
 `vagrant up ees-node2`
 
 ##### Synchronize code
-To synchronize code in git repo on host (`~/projects/ldr-r1-prvsnr`) and `/opt/seagate/eesprvsnr`:
+To synchronize code in git repo on host (`~/projects/cortx-prvsnr`) and `/opt/seagate/cortx/provisioner`:
 `vagrant rsync`
 
 ##### Destroy Vagrantbox
