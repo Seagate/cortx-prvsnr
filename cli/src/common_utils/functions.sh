@@ -797,7 +797,8 @@ function install_salt_repo {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
     local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
-    local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
+    # local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
+    local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3001}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     l_info "Installing Salt repository '$_hostspec'"
