@@ -2,6 +2,8 @@
 
 def err = null
 
+branchName = env.BRANCH_NAME.replace('/','_')
+
 Map config = [
     staticValidation: true,
     dynamicValidation: true,
@@ -23,14 +25,16 @@ def nodeWrapper(label=null, body) {
 }
 
 
-def buildDocker(imageName, dockerfile, ctx) {
-    return docker.build("$imageName", "-f $dockerfile $ctx")
+def buildDocker(imageName, dockerfile, ctx, add_args='') {
+    return docker.build("$imageName", "$add_args -f $dockerfile $ctx")
 }
 
 
 def buildUnitDocker() {
     return buildDocker(
-        "seagate/cortx-prvsnr:unit", "devops/ci/Dockerfile.unit", "devops/ci"
+        "seagate/cortx-prvsnr:unit-$branchName",
+        "devops/ci/Dockerfile.unit",
+        "api",
     )
 }
 
@@ -63,15 +67,13 @@ Closure staticValidation = {
     }
 
     dockerImage.inside {
-        preparePythonEnv()
+        // preparePythonEnv()
 
         String testPythonReport = "flake8.out.txt"  // TODO not configurable for now
         stage('Check python') {
             // TODO check other python sources (not only 'test')
             try {
-                // withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                    sh "pipenv run bash -x devops/ci/validate_python.sh"
-                //}
+                sh "bash -x devops/ci/validate_python.sh"
             } catch (_err) {
                 archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
                 echo "Python static validation failed: $_err"
@@ -119,21 +121,12 @@ Closure dynamicValidation = {
     }
 
     try {
-        // stage('Clean VirtualBox environment') {
-        //    sh "bash -x devops/ci/clean_vbox.sh vms"
-        // }
-
         dockerImage.inside {
-            preparePythonEnv()
-
-            // TODO is it a best way to ensure pipenv available
-            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                // run tests
-                stage('Run tests') {
-                    sh """
-                        pipenv run bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
-                    """
-                }
+            // run tests
+            stage('Run tests') {
+                sh """
+                    bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                """
             }
         }
     } catch (_err) {

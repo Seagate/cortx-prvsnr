@@ -1,3 +1,9 @@
 FROM python:3.6-slim-buster
 
-RUN pip3 install pipenv
+ARG PROJECT_PATH=/tmp/project
+
+COPY python $PROJECT_PATH
+
+RUN pip3 install ${PROJECT_PATH}[test]
+
+RUN rm -rf $PROJECT_PATH
