@@ -65,7 +65,7 @@ Check `custom options` section of `pytest --help` for more information.
 
 - `--env_level`: mark test to be run in the specific environment level, default: `base`
 - `--isolated`: mark test to be run in isolated environment instead of module wide shared, default: not set
-- `--eos_spec`: mark test as expecting specific CORTX stack configuration, default: not set
+- `--cortx_spec`: mark test as expecting specific CORTX stack configuration, default: not set
 - `--hosts`: mark test as expecting the specified list of hosts, default: ['host']
 - `--inject_repo`: mark test as expecting repo injection only for specified hosts, default: all hosts
 - `--inject_ssh_config`: mark test as expecting ssh configuration only for specified hosts, default: all hosts

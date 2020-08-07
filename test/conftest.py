@@ -323,7 +323,7 @@ def pytest_configure(config):
                    "default: True for single node env, False otherwise"
     )
     config.addinivalue_line(
-        "markers", "eos_bvt: mark test as BVT one"
+        "markers", "cortx_bvt: mark test as BVT one"
     )
     config.addinivalue_line(
         "markers", "patch_logging: mark test as expected patched logging"
