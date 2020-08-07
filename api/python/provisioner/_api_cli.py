@@ -132,7 +132,7 @@ def _api_call(fun, *args, **kwargs):
     kwargs['noconsole'] = True
     kwargs['rsyslog'] = True
     kwargs['rsyslog-level'] = 'DEBUG'
-    # TODO IMPROVE CORTX-7495 make a config variable for formatter
+    # TODO IMPROVE EOS-7495 make a config variable for formatter
     kwargs['rsyslog-formatter'] = 'full'
 
     cli_args = api_args_to_cli(fun, *args, **kwargs)

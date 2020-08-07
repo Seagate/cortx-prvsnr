@@ -28,7 +28,7 @@ Besides help options each script might be called using any of the following opti
 - `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
 - `-v`/`--verbose`: tells the script to be more verbose.
 
-[//]: #   (commented by CORTX-2410)
+[//]: #   (commented by EOS-2410)
 [//]: #   (- `-n`/`--dry-run`: do not actually perform any changes)
 [//]: #   (- `-s`/`--sudo`: tells the script to use `sudo`.)
 

@@ -123,7 +123,7 @@ def ensure(
                 raise ProvisionerError('no more tries')
 
 
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 def run_subprocess_cmd(cmd, **kwargs):
     _kwargs = dict(
         universal_newlines=True,
@@ -138,7 +138,7 @@ def run_subprocess_cmd(cmd, **kwargs):
         cmd = cmd.split()
 
     try:
-        # TODO IMPROVE CORTX-8473 logging level
+        # TODO IMPROVE EOS-8473 logging level
         logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
         res = subprocess.run(cmd, **_kwargs)
     except subprocess.CalledProcessError as exc:
@@ -149,7 +149,7 @@ def run_subprocess_cmd(cmd, **kwargs):
         return res
 
 
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 def repo_tgz(
     dest: Path,
     project_path: Optional[Path] = None,

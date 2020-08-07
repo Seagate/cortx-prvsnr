@@ -23,7 +23,7 @@ from . import config
 from .utils import dump_yaml, run_subprocess_cmd
 
 
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 def setup(profile_paths: Optional[dict] = None, clean=False):
     if profile_paths is None:
         profile_paths = config.profile_paths()

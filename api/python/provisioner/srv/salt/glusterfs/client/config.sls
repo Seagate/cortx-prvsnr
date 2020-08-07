@@ -1,6 +1,6 @@
 {% for server, volume, mount_dir in salt['pillar.get']('glusterfs_mounts', []) %}
 
-# TODO IMPROVE CORTX-9581 there is a possible issue with fstab, SaltStack #39757
+# TODO IMPROVE EOS-9581 there is a possible issue with fstab, SaltStack #39757
 
 glusterfs_volume_{{ volume }}_mounted:
   mount.mounted:

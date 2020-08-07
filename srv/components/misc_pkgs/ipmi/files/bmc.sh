@@ -19,7 +19,7 @@
 
 #!/bin/bash
 
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 
 set -eu
 

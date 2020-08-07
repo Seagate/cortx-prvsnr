@@ -3,5 +3,5 @@ Install Mellanox card drivers:
   pkg.installed:
     - pkgs:
       - mlnx-ofed-all
-      - mlnx-fw-updater       # For CORTX-4152
+      - mlnx-fw-updater       # For EOS-4152
 {% endif %}

@@ -33,7 +33,7 @@ except ImportError:
     from pathlib import Path
     # TODO pip3 installs provisioner to /usr/local/lib/python3.6/site-packages
     #      but that directory is not listed in salt's sys.path,
-    #      CORTX-5401 might be related
+    #      EOS-5401 might be related
     try:
         prvsnr_pkg_path = subprocess.run(
             "python3 -c 'import provisioner; print(provisioner.__file__)'",

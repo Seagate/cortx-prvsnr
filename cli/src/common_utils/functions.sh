@@ -63,7 +63,7 @@ base_options_usage="\
   -F,  --ssh-config FILE          alternative path to ssh configuration file
   -v,  --verbose                  be more verbose
 "
-# disabled options (CORTX-2410)
+# disabled options (EOS-2410)
 #  -n,  --dry-run                  do not actually perform any changes
 #  -s,  --sudo                     use sudo
 
@@ -310,7 +310,7 @@ function parse_args {
     while true; do
         case "$1" in
             -n|--dry-run)
-                # disabled CORTX-2410
+                # disabled EOS-2410
                 # dry_run=true
                 shift
                 ;;
@@ -335,7 +335,7 @@ function parse_args {
                 shift 2
                 ;;
             -s|--sudo)
-                # disabled CORTX-2410
+                # disabled EOS-2410
                 # sudo=true
                 shift
                 ;;

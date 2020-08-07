@@ -5,7 +5,7 @@ glusterfs_servers_peered:
       - {{ peer }}
 {% endfor %}
 
-# TODO IMPRVOVE ??? CORTX-9581 it might be necessary
+# TODO IMPRVOVE ??? EOS-9581 it might be necessary
 #      to add some sleep / wait here since 'peer probe' might be async ???
 
 {% for volume, bricks in salt['pillar.get']('glusterfs_volumes', {}).items() %}

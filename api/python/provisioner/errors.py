@@ -38,7 +38,7 @@ class UnknownParamError(ProvisionerError):
     pass
 
 
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 class SubprocessCmdError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -194,7 +194,7 @@ class SWStackUpdateError(ProvisionerError):
         )
 
 
-# TODO TEST CORTX-8940
+# TODO TEST EOS-8940
 class HAPostUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 

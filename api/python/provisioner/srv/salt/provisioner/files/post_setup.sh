@@ -64,7 +64,7 @@ user_srv_fileroot_dir_old=/opt/seagate/cortx/provisioner/srv_user   # FIXME depr
 user_srv_pillar_dir_old=/opt/seagate/cortx/provisioner/pillar/user  # FIXME deprecate that
 
 echo "Configuring access for provisioner data ..."
-# TODO IMPROVE CORTX-9581 consider to remove _old dirs someday
+# TODO IMPROVE EOS-9581 consider to remove _old dirs someday
 for path in "$factory_profile_dir" \
             "$user_srv_fileroot_dir" \
             "$user_srv_pillar_dir" \

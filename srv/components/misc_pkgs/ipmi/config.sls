@@ -1,4 +1,4 @@
-# TODO TEST CORTX-8473
+# TODO TEST EOS-8473
 
 bmc_ip_is_set:
   cmd.script:
