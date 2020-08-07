@@ -901,7 +901,7 @@ def _update_component(component, targets=ALL_MINIONS):
 
 
 def _apply_provisioner_config(targets=ALL_MINIONS):
-    logger.info(f"Applying Provisioner config logic on {targets}")
+    logger.info("Applying Provisioner config logic on {targets}")
     StatesApplier.apply(["components.provisioner.config"], targets)
 
 
