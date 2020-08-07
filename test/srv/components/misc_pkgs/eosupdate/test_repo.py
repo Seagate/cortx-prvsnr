@@ -48,7 +48,7 @@ def test_eosupdate_repo(
         'cat {}'.format(pillar_path)
     )
     release_pillar = yaml.safe_load(release_pillar_str)
-    update_spec = release_pillar['eos_release']['update']
+    update_spec = release_pillar['cortx_release']['update']
 
     mhostsrvnode1.check_output(
         "mkdir -p {repo_dir}"

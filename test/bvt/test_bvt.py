@@ -185,12 +185,12 @@ def get_bvt_results(
 @pytest.mark.env_level('singlenode-bvt-ready')
 @pytest.mark.hosts(['srvnode1'])
 def test_bvt(mlocalhost, mhostsrvnode1, request, tmpdir_function):
-    eos_release = mhostsrvnode1.check_output(
+    cortx_release = mhostsrvnode1.check_output(
         "grep target_build '{}'"
         .format(h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls')
     ).split()[1]
-    assert eos_release == request.config.getoption("eos_release")
-    logger.info("Target release is set to '{}'".format(eos_release))
+    assert cortx_release == request.config.getoption("cortx_release")
+    logger.info("Target release is set to '{}'".format(cortx_release))
 
     local_bvt_repo_path = Path(request.config.getoption("bvt_repo_path"))
     bvt_test_targets = Path(request.config.getoption("bvt_test_targets"))

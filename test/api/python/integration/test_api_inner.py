@@ -421,7 +421,7 @@ def test_set_eosupdate_repo():
             check_unmounted(mount_dir)
 
     pillar = api_call('pillar_get')
-    pillar_params = pillar[minion_id]['eos_release']['update']
+    pillar_params = pillar[minion_id]['cortx_release']['update']
 
     curr_params = api_call('get_params', 'eosupdate/repos')
     for _id, _params in curr_params.items():

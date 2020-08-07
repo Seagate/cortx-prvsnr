@@ -67,7 +67,7 @@ def test_singlenode_deploy_ready_env(mhostsrvnode1, request):
     assert res.rc == 0
 
     pillar_file_dict = yaml.safe_load(res.stdout)
-    assert pillar_file_dict['eos_release']['target_build'] == request.config.getoption('eos_release')
+    assert pillar_file_dict['cortx_release']['target_build'] == request.config.getoption('cortx_release')
 
     baseurl = mhostsrvnode1.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'

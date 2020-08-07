@@ -81,7 +81,7 @@ ENV_LEVELS_HIERARCHY = {
     # only for vbox
     'singlenode-deploy-ready': {
         'parent': 'salt-installed',
-        'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_src', 'prvsnr_release', 'cortx_release']
     },
     'singlenode-eos-deployed': 'singlenode-deploy-ready',
     'singlenode-eos-ready': 'singlenode-eos-deployed',
@@ -94,7 +94,7 @@ ENV_LEVELS_HIERARCHY = {
     # bvt
     'singlenode-bvt-ready': {
         'parent': 'base',
-        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'cortx_release']
     }
 }
 
