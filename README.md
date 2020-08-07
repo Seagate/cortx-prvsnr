@@ -103,12 +103,12 @@ https://docs.saltstack.com/en/latest/topics/index.html
 
 ### Setup Vagrant
 
-#### Initialize ldr-r1
+#### Initialize LDR-R1
 ##### Initalize
 1.  Create project folder:
 `mkdir ~/projects && cd ~/projects`
 
-1. Clone git repo for ldr-r1-prvsnr:
+1. Clone git repo for cortx-prvsnr:
 `git clone https://github.com/Seagate/cortx-prvsnr/`
 `cd ~/projects/cortx-prvsnr`
 
