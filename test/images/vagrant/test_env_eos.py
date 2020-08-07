@@ -85,7 +85,7 @@ def test_singlenode_deploy_ready_env(mhostsrvnode1, request):
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-eos-deployed')
 @pytest.mark.hosts(['srvnode1'])
-def test_singlenode_eos_deployed_env(mhostsrvnode1, request):
+def test_singlenode_cortx_deployed_env(mhostsrvnode1, request):
     # bootstrap the cluster
     h.bootstrap_eos(mhostsrvnode1)
 
@@ -102,7 +102,7 @@ def test_singlenode_eos_deployed_env(mhostsrvnode1, request):
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-eos-ready')
 @pytest.mark.hosts(['srvnode1'])
-def test_singlenode_eos_ready_env(mhostsrvnode1, request):
+def test_singlenode_cortx_ready_env(mhostsrvnode1, request):
     mhostsrvnode1.check_output('bash -ex /opt/seagate/cortx/provisioner/sanity_tests/s3-sanity.sh')
 
 

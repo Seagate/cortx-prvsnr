@@ -45,11 +45,11 @@ def script_name():
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_configure_eos_show(
+def test_configure_cortx_show(
     mhost, mlocalhost, ssh_config, remote, install_provisioner, run_script
 ):
     # Note. not parametrized per component since the test copies
-    #       test_functions.sh:test_functions_eos_pillar_show_skeleton a lot
+    #       test_functions.sh:test_functions_cortx_pillar_show_skeleton a lot
     component = 'cluster'
 
     h.install_provisioner_api(mhost)
@@ -76,26 +76,26 @@ def test_configure_eos_show(
 
 
 # TODO
-#  - mostly repeats 'test_functions_eos_pillar_update_and_load_default'
+#  - mostly repeats 'test_functions_cortx_pillar_update_and_load_default'
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_configure_eos_update_and_load_default(
+def test_configure_cortx_update_and_load_default(
     mhost, mlocalhost, ssh_config, remote,
     install_provisioner, run_script
 ):
     # Note. not parametrized per component since the test copies
-    #       test_functions.sh:test_functions_eos_pillar_update_and_load_default
+    #       test_functions.sh:test_functions_cortx_pillar_update_and_load_default
     #       a lot
     component = 'cluster'
 
     h.install_provisioner_api(mhost)
 
     # verify that the script accepts all pillar components
-    for comp in h.PRVSNR_EOS_COMPONENTS:
+    for comp in h.PRVSNR_CORTX_COMPONENTS:
         run_script("--show-file-format {}".format(comp), mhost=mhost)
 
     # 1. prepare some valid pillar for the component

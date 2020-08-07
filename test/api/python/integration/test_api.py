@@ -293,7 +293,7 @@ def test_set_eosupdate_repo_for_reinstall(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
-def test_eos_update(
+def test_cortx_update(
     mhostsrvnode1, run_test
 ):
     run_test(mhostsrvnode1)

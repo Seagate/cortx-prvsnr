@@ -98,7 +98,7 @@ def test_eosupdate_repo(
         )
         assert res.rc == 2
 
-    base_repo_name = 'eos_update'
+    base_repo_name = 'cortx_update'
     for release, source, expected_rpm_name in [
         ('1.2.3', Path(repo_dir), h.PRVSNR_PKG_NAME),
         ('1.2.4', Path(iso_path), h.PRVSNR_PKG_NAME),

@@ -1043,7 +1043,7 @@ def test_functions_configure_salt_master_host(
     ssh_config, remote, master_host, project_path,
     install_provisioner
 ):
-    default_eos_salt_master = 'srvnode-1'
+    default_cortx_salt_master = 'srvnode-1'
 
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
@@ -1062,7 +1062,7 @@ def test_functions_configure_salt_master_host(
     output = mhost.check_output('salt-call --local --out json config.get master')
     output = json.loads(output)
     assert output['local'] == (
-        default_eos_salt_master if master_host is None else master_host
+        default_cortx_salt_master if master_host is None else master_host
     )
 
 
@@ -1190,7 +1190,7 @@ def test_functions_accept_salt_key_cluster(
         'sspl'
     ]
 )
-def test_functions_eos_pillar_show_skeleton(
+def test_functions_cortx_pillar_show_skeleton(
     run_script, mhost, mlocalhost,
     ssh_config, remote, component, project_path,
     install_provisioner
@@ -1211,7 +1211,7 @@ def test_functions_eos_pillar_show_skeleton(
     with_sudo = 'false' # TODO
 
     script = """
-        eos_pillar_show_skeleton {} {} {} {}
+        cortx_pillar_show_skeleton {} {} {} {}
     """.format(component, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1224,10 +1224,10 @@ def test_functions_eos_pillar_show_skeleton(
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
-def test_functions_eos_pillar_update_fail(
+def test_functions_cortx_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
 ):
-    res = run_script('eos_pillar_update cluster some-path', mhost=mhost)
+    res = run_script('cortx_pillar_update cluster some-path', mhost=mhost)
     assert res.rc == 1
     assert 'ERROR: not a file' in res.stdout
 
@@ -1255,7 +1255,7 @@ def test_functions_eos_pillar_update_fail(
     ]
     # Removed s3server and sspl EOS-4907
 )
-def test_functions_eos_pillar_update_and_load_default(
+def test_functions_cortx_pillar_update_and_load_default(
     run_script, mhost, mlocalhost, tmpdir_function,
     ssh_config, remote, component, project_path,
     install_provisioner, mock_hosts
@@ -1296,7 +1296,7 @@ def test_functions_eos_pillar_update_and_load_default(
     with_sudo = 'false' # TODO
 
     script = """
-        eos_pillar_update {} {} {} {} {}
+        cortx_pillar_update {} {} {} {} {}
     """.format(component, tmp_file, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1325,7 +1325,7 @@ def test_functions_eos_pillar_update_and_load_default(
 
     # 4. call the script to reset to defaults
     script = """
-        eos_pillar_load_default {} {} {} {}
+        cortx_pillar_load_default {} {} {} {}
     """.format(component, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
