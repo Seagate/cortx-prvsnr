@@ -1,0 +1,22 @@
+provisioner:
+  post_install:
+    script: null
+    args: null
+  config:
+    script: null
+    args: null
+  init:
+    script: null
+    args: null
+  test:
+    script: null
+    args: null
+  reset:
+    script: null
+    args: null
+  backup:
+    files:
+      - /var/lib/seagate/cortx/provisioner/shared
+
+support_bundle:
+  - /opt/seagate/cortx/provisioner/cli/provisioner-bundler
