@@ -38,6 +38,12 @@ trap_handler ()
 }
 trap trap_handler ERR
 
+cat > /etc/profile.d/set_path_env << EOM
+#!/bin/bash
+echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
+EOM
+. /etc/profile.d/set_path_env
+
 srvnode_2_host=
 srvnode_2_passwd=
 cluster_ip=
@@ -325,6 +331,7 @@ install_config_prvsnr()
     echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/setup-provisioner"\
         "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $LOG_FILE
     sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
+
     echo "Done" 2>&1 | tee -a $LOG_FILE
 }
 
