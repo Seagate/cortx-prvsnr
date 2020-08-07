@@ -1,3 +1,3 @@
 include:
-  - .sspl
-  - .commons
+  - components.sspl.teardown.sspl
+  - components.sspl.teardown.commons

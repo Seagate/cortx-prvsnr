@@ -38,7 +38,7 @@ cat > /etc/profile.d/set_path_env << EOM
 #!/bin/bash
 echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
 EOM
-source /etc/profile.d/set_path_env
+. /etc/profile.d/set_path_env
 
 # TODO API for error exit that might:
 #       - echos to stderr
