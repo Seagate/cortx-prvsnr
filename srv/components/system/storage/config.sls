@@ -1,4 +1,4 @@
-# Setup SWAP and /var/mero
+# Setup SWAP and /var/motr
 {% set node = grains['id'] %}
 
 # Make SWAP

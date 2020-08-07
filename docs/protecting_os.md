@@ -142,7 +142,7 @@ The initial release of CORTX software shall include the following changes:
 
 2. Allocate and preserve the space on one of the enclosure volumes for future migration of RAID-1 to mixed setup. There are two possible ways this could be done: 
 
-	* **_Option-1:_** Re-use the existing volume where swap and `/var/mero` is located. This will simplify and minimize the changes required for Provisioner. Swap space will be on the same volume; 
+	* **_Option-1:_** Re-use the existing volume where swap and `/var/motr` is located. This will simplify and minimize the changes required for Provisioner. Swap space will be on the same volume; 
 
 	* **_Option-2:_** Create new, smaller volume on the enclosure for OS partitions. The biggest problem with this approach is the size of the volume. We could predict the size of `/boot`, `/boot/efi`, `/var/log/audit`, and `/` partitions. However, it’s harder to do that with `/var` and especially with `/var/log`. Moreover, this will complicate the Provisioner’s configuration. However, this may potentially make the layout more robust, especially if we decide to create a separate enclosure’s volume group (this idea, in its turn, has additional consequences: we’ll have to allocate additional disks to act as spares for this new group). 
 
@@ -181,7 +181,7 @@ where:
 
 **Note:** `/boot/efi2` shall move to the enclosure as well. Its path will change from `/dev/sdb1` to `/dev/disk/by-path/<SAS>-lunXp1` (where `p1` is the first partition on the volume). 
 
-**Note:** Secondary swap space shall be created on the remaining portion of the same enclosure’s volume where OS partitions (and `/var/mero`) will reside. The size of the swap space will be calculated based on the following formula: 
+**Note:** Secondary swap space shall be created on the remaining portion of the same enclosure’s volume where OS partitions (and `/var/motr`) will reside. The size of the swap space will be calculated based on the following formula: 
 
 	2nd swap size = (size of the volume) - (total size of OS partitions) 
 
@@ -193,7 +193,7 @@ where the (total size of OS partitions) is roughly 1.2 TB (256 MB for `/boot/efi
 
 **[ As of 2020-04-14 this section is under review and requires feedback before it can be implemented ]** 
 
-Right now, S3server and Motr are storing their code dump files to `/var/mero`. This could lead to various issues such as the inability to unmount the partition in case code dump is in progress. 
+Right now, S3server and Motr are storing their code dump files to `/var/motr`. This could lead to various issues such as the inability to unmount the partition in case code dump is in progress. 
 
 To prevent this from happening, we may choose to do the following: 
 

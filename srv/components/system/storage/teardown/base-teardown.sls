@@ -1,4 +1,4 @@
-# Setup SWAP and /var/mero
+# Setup SWAP and /var/motr
 {% set node = grains['id'] %}
 
 # Steps:
@@ -53,11 +53,11 @@ Remove LVM partition:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - minor: 2
 
-Unmount /var/mero partition:
+Unmount /var/motr partition:
   mount.unmounted:
     - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
 
-Remove /var/mero partition:
+Remove /var/motr partition:
   module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}

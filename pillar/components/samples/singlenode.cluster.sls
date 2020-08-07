@@ -31,7 +31,7 @@ cluster:
         pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/mero and possibly SWAP
+      metadata_device:                # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
