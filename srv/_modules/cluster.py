@@ -50,6 +50,41 @@ def storage_device_config():
     _cmd_mpath1 = "multipath -ll | grep -E \"prio=50|prio=10\" | wc -l"
     _cmd_mpath2 = "multipath -ll | grep mpath | wc -l"
 
+
+    device_list = []
+    _timeout = 60
+    _count = 0
+    _sleep_time = 5
+
+    while device_list == []:
+        device_list = subprocess.Popen([_cmd_mpath2],
+                                        shell=True,
+                                        stdout=subprocess.PIPE
+                                    ).stdout.read().decode("utf-8").splitlines()
+        if device_list == []:
+            if ( _count == 0 ):
+                print("[ INFO ] Waiting for multipath device to come up..")
+
+            if ( _count >= _timeout ):
+                break
+            else:
+                time.sleep(_sleep_time)
+                _mpath_devs_n = subprocess.Popen([_cmd_mpath2],
+                                                shell=True,
+                                                stdout=subprocess.PIPE
+                ).stdout.read().decode("utf-8")
+
+                if ( int(_mpath_devs_n) > 0 ):
+                    print("[ INFO ] Found multipath devices!")
+                    break
+                else:
+                    print(".")
+                _count = _count + _sleep_time
+
+    if device_list == []:
+        print ("[ ERROR ] No multipath devices found.")
+        return False
+
     _prio_lines = int(subprocess.getoutput(_cmd_mpath1))
     _mpath_devs_n = int(subprocess.getoutput(_cmd_mpath2))
 
@@ -83,39 +118,10 @@ def storage_device_config():
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
 
-        device_list = []
-        _timeout = 60
-        _count = 0
-        _sleep_time = 5
-        while device_list == []:
-            device_list = subprocess.Popen([cmd],
-                                            shell=True,
-                                            stdout=subprocess.PIPE
-                                        ).stdout.read().decode("utf-8").splitlines()
-            if device_list == []:
-                if ( _count == 0 ):
-                    print("[ INFO ] Waiting for multipath device to come up..")
-
-                if ( _count >= _timeout ):
-                    break
-                else:
-                    time.sleep(_sleep_time)
-                    _tmp_cmd = "multipath -ll | grep prio=50 -B2|grep mpath | wc -l"
-                    _mpath_devs = subprocess.Popen([_tmp_cmd],
-                                                    shell=True,
-                                                    stdout=subprocess.PIPE
-                    ).stdout.read().decode("utf-8")
-
-                    if ( int(_mpath_devs) > 0 ):
-                        print("[ INFO ] Found multipath devices!")
-                    else:
-                        print(".")
-                    _count = _count + _sleep_time
-
-        if device_list == []:
-            print ("[ ERROR ] multipath devices don't exist.")
-            return False
-
+        device_list = subprocess.Popen([cmd],
+                                        shell=True,
+                                        stdout=subprocess.PIPE
+                                    ).stdout.read().decode("utf-8").splitlines()
         metadata_device = ["/dev/disk/by-id/dm-name-{0}".format(device_list[0])]
         data_field = "cluster/{0}/storage/data_devices".format(node)
         metadata_field = "cluster/{0}/storage/metadata_device".format(node)
