@@ -226,6 +226,11 @@ install_config_prvsnr()
     sleep 1
     install_prvsnr_cli "srvnode-1"
 
+    #export PATH=/usr/local/bin:$PATH
+    #if [[ "$singlenode" == false ]]; then
+    #    $remote_cmd export PATH=/usr/local/bin:$PATH
+    #fi
+    
     # Run setup provisioner
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
@@ -240,39 +245,35 @@ install_config_prvsnr()
         sh /opt/seagate/cortx/provisioner/cli/setup-provisioner -S --salt-master="$srvnode_1_host" $tgt_build 2>&1 | tee -a $LOG_FILE
         echo "Done" 2>&1 | tee -a $LOG_FILE
     fi	
-    export PATH=/usr/local/bin:$PATH
-    if [[ "$singlenode" == false ]]; then
-        $remote_cmd export PATH=/usr/local/bin:$PATH
-    fi
 }
 
 update_pillar()
 {
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
-    provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
-        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi
     
     # Updating Cluster IP
     if [[ "$cluster_ip_opt" == true ]]; then
         echo -e "\n\t Updating Cluster IP " 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/cluster_ip \"$cluster_ip\"
+        /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"$cluster_ip\"
     fi
 	
     # Updating Mgmt VIP
     if [[ "$mgmt_vip_opt" == true ]]; then
         echo -e "\n\t Updating Mgmt VIP " 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/cluster_ip \"$mgmt_vip\"
+        /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"$mgmt_vip\"
     fi	
 	
     # Changing Meta and Data disks based on lsblk
@@ -295,16 +296,16 @@ update_pillar()
         fi
     done
     data_disk=${data_disk: :-1}
-    provisioner pillar_set cluster/srvnode-1/storage/metadata_device [$meta_disk]
-    provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/metadata_device [$meta_disk]
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-2/storage/metadata_device [$meta_disk]
-        provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/metadata_device [$meta_disk]
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
     fi
     	
     # Update s3server.sls
     echo -e "\n\t***** INFO: Updating s3server.sls *****" 2>&1 | tee -a $LOG_FILE
-    provisioner pillar_set s3server/no_of_inst '2'
+    /usr/local/bin/provisioner pillar_set s3server/no_of_inst '2'
 }
 
 install_config_prvsnr
