@@ -319,7 +319,7 @@ update_pillar()
     fi	
 	
     # Changing Meta and Data disks based on lsblk
-    echo -e "\n\t Changing Meta and Data disks based on lsblk" 2>&1|tee -a $LOG_FILE
+    echo -e "\n\t***** INFO: Changing Meta and Data disks based on lsblk *****" 2>&1|tee -a $LOG_FILE
     os_name=`cat /etc/redhat-release`
     if grep -q "Red Hat" <<< $os_name ; then
     	disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3);
