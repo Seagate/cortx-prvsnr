@@ -27,7 +27,24 @@ export tmpdir="$logdir/_ctrl_cli_tmp"
 [ ! -d $tmpdir ] && mkdir -p $tmpdir
 
 export logfile=$logdir/controller-cli.log
-[ -f $logfile ] && rm -rf $logfile
+
+function trap_handler {
+    echo "***** FAILED!! *****"
+    echo "For more details see $logfile"
+    exit 2
+}
+
+function trap_handler_exit {
+    if [[ $? -eq 1 ]]; then
+        echo "***** FAILED!! *****"
+        echo "For more details see $logfile"
+    else
+        exit $?
+    fi
+}
+
+trap trap_handler ERR
+trap trap_handler_exit EXIT
 
 source $script_dir/provision.sh
 source $script_dir/xml.sh
@@ -227,7 +244,7 @@ parse_hopts()
 
 parse_args()
 {
-    echo "parse_args(): parsing input arguments" > $logfile
+    echo "parse_args(): parsing input arguments" >> $logfile
     host_optparse_done=false
     prov_optparse_done=false
     prvsnr_mode=""
@@ -452,18 +469,18 @@ input_params_validate()
         0)
             echo "Info: The host details [host: $host user: $user password: $pass ] provided are correct" >> $logfile
             ;;
-        5)  echo "Error: The credentials [user: $user password: $pass ] provided are not correct" | tee $logfile 
-            echo "Error: Please provide the correct credentials and try again" | tee $logfile
+        5)  echo "Error: The credentials [user: $user password: $pass ] provided are not correct" | tee -a $logfile 
+            echo "Error: Please provide the correct credentials and try again" | tee -a $logfile
             exit 1
             ;;
         255)
-            echo "Error: The hostname [host: $host ] provided is not reachable" | tee $logfile 
-            echo "Error: Please provide the correct host details and try again" | tee $logfile
+            echo "Error: The hostname [host: $host ] provided is not reachable" | tee -a $logfile 
+            echo "Error: Please provide the correct host details and try again" | tee -a $logfile
             exit 1
             ;;
         *)
-            echo "Error: ssh command failed with error $ret while connecting to host [host: $host]" | tee $logfile 
-            echo "Error: Please ensure the host is reachable over ssh and try again" | tee $logfile
+            echo "Error: ssh command failed with error $ret while connecting to host [host: $host]" | tee -a $logfile 
+            echo "Error: Please ensure the host is reachable over ssh and try again" | tee -a $logfile
             exit 1
         ;;
     esac
@@ -471,9 +488,12 @@ input_params_validate()
 
 main()
 {
+    echo -e "\n-------------- Running $0 -----------------" >> $logfile
+    timestamp=$(date)
+    echo "Runtime: $timestamp" >> $logfile
+    echo "Inpupt arguments provided: $@" >> $logfile
     parse_args "$@"
     reqd_pkgs_install "$ssh_tool" "$xml_cmd" "$bc_tool"
-    input_params_validate
 
     # Decrypt the password. Required only for commands received from api
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
@@ -486,6 +506,7 @@ main()
         remote_cmd="$ssh_cred $ssh_cmd"
     fi
 
+    input_params_validate
     [ "$prov_optparse_done" = true ] && do_provision
     [ "$show_disks" = true ] && disks_list
     [ "$load_license" = true ] && fw_license_load
