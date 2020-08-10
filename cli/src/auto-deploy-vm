@@ -104,9 +104,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -s <secondary_node> -p seagate -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] [-I 192.168.100.102] -t http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
 For Single Node:
-$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -S -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] -t  http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
 
 "
 }
@@ -232,7 +232,7 @@ install_prvsnr_cli()
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
     if [[ "$target_node" = "srvnode-1" ]]; then
-	rpm -qa | grep -q 'eos|cortx' && {
+	rpm -qa | grep -q 'cortx' && {
         echo "ERROR: cortx packages are already installed"
         echo "Please clean-up previous installtion from both the nodes and retry"
         exit 1
@@ -244,7 +244,7 @@ install_prvsnr_cli()
     else
         $remote_cmd <<-EOF
             set -eu
-            rpm -qa | grep -q 'eos|cortx' && {
+            rpm -qa | grep -q 'cortx' && {
             echo "ERROR: cortx packages are already installed"
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
