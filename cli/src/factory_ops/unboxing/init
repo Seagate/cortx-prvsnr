@@ -173,7 +173,7 @@ check_boxing_flag
 
 echo -e "\n\
       Management VIP           : $management_vip
-      Static VIP               : $cluster_vip" | tee -a ${LOG_FILE}
+      Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
