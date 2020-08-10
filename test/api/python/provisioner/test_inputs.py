@@ -19,11 +19,11 @@
 
 import pytest
 import argparse
-import attr
 from typing import Union, List
 from pathlib import Path
 import functools
 
+from provisioner.vendor import attr
 from provisioner.errors import SWUpdateRepoSourceError
 from provisioner import values
 from provisioner.values import UNCHANGED
@@ -598,7 +598,7 @@ def test_inputs_ParamDictItemInputBasefill_parser(param_spec_mocked):
 # ### SWUpdateRepo ###
 
 def test_inputs_SWUpdateRepo_attrs():
-    assert SWUpdateRepo._param_di == inputs.param_spec['eosupdate/repo']
+    assert SWUpdateRepo._param_di == inputs.param_spec['swupdate/repo']
 
     fattr = attr.fields_dict(SWUpdateRepo)['release']
     assert fattr.type is str

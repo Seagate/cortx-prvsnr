@@ -17,10 +17,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 from typing import Union, Tuple
 from pathlib import Path
 
+from .vendor import attr
 from .pillar import KeyPath, PillarKeyAPI, PillarKey
 
 

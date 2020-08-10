@@ -32,20 +32,20 @@ The one may choose an api depending it their needs:
 ### From GitLab
 
 ```
-    pip install  git+http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr#subdirectory=api/python
+    pip install  git+http://github.com/Seagate/cortx-prvsnr#subdirectory=api/python
 ```
 
 Will install `master` branch version.
 To install specific `version` (it might be any branch, tag or commit sha1):
 
 ```
-    pip install  git+http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr@version#subdirectory=api/python
+    pip install  git+http://github.com/Seagate/cortx-prvsnr@version#subdirectory=api/python
 ```
 
 SSH based installation is also possible, e.g.
 
 ```
-    pip install git+ssh://git@gitlab.mero.colo.seagate.com:6022/eos/provisioner/ees-prvsnr.git#subdirectory=api/python
+    pip install git+ssh://git@github.com/Seagate/cortx-prvsnr.git#subdirectory=api/python
 ```
 
 ### From yum repository
