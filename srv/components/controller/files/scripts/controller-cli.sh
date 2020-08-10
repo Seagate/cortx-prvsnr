@@ -443,10 +443,37 @@ parse_args()
     return 0
 }
 
+input_params_validate()
+{
+    _test_cmd="show version"
+    $remote_cmd $_test_cmd > /tmp/version.xml
+    ret=$?
+    case $ret in
+        0)
+            echo "Info: The host details [host: $host user: $user password: $pass ] provided are correct" >> $logfile
+            ;;
+        5)  echo "Error: The credentials [user: $user password: $pass ] provided are not correct" | tee $logfile 
+            echo "Error: Please provide the correct credentials and try again" | tee $logfile
+            exit 1
+            ;;
+        255)
+            echo "Error: The hostname [host: $host ] provided is not reachable" | tee $logfile 
+            echo "Error: Please provide the correct host details and try again" | tee $logfile
+            exit 1
+            ;;
+        *)
+            echo "Error: ssh command failed with error $ret while connecting to host [host: $host]" | tee $logfile 
+            echo "Error: Please ensure the host is reachable over ssh and try again" | tee $logfile
+            exit 1
+        ;;
+    esac
+}
+
 main()
 {
     parse_args "$@"
     reqd_pkgs_install "$ssh_tool" "$xml_cmd" "$bc_tool"
+    input_params_validate
 
     # Decrypt the password. Required only for commands received from api
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
