@@ -1526,3 +1526,4 @@ build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
 build_mhost_fixture('eosnode1')
 build_mhost_fixture('eosnode2')
+build_mhost_fixture('eosnode3')

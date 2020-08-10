@@ -14,11 +14,14 @@ nodes:
 {%- endif %}
     m0_servers:
       - runs_confd: true
-        io_disks: []
+        io_disks:
+          data: []
       - io_disks:
-        {%- for dev in pillar['cluster'][node]['storage']['data_devices'] %}
-        - {{ dev }}
-        {%- endfor %}
+          be_seg: /dev/vg_metadata_{{ node }}/lv_raw_metadata
+          data:
+          {%- for dev in pillar['cluster'][node]['storage']['data_devices'] %}
+            - {{ dev }}
+          {%- endfor %}
 
     m0_clients:
 {%- if "physical" in grains['virtual'] %}

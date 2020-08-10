@@ -29,11 +29,11 @@ fi
 
 # TODO EOS-11551 remove env routine later
 # Does same as above, but recommended way of setting Global Envisonment Variables
-cat > /etc/profile.d/set_path_env.sh << EOM
+cat > /etc/profile.d/set_path_env << EOM
 #!/bin/sh
 echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
 EOM
-. /etc/profile.d/set_path_env.sh
+. /etc/profile.d/set_path_env
 
 
 

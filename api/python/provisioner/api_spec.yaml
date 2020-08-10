@@ -68,6 +68,8 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
+setup_provisioner:
+  type: SetupProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:
