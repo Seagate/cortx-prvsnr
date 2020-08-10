@@ -20,7 +20,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import attr
 import os
 import fileinput
 import sys
@@ -30,6 +29,7 @@ import threading
 from datetime import datetime
 from typing import Union, Any
 
+from .vendor import attr
 from . import (
     __version__,
     config,

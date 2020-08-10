@@ -17,11 +17,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 import os
 from typing import Union, Any
 
-from provisioner import inputs
+from .vendor import attr
+from . import inputs
 from .salt import provisioner_cmd
 from .commands import commands
 from .errors import ProvisionerError

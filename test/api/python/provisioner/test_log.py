@@ -18,9 +18,9 @@
 #
 
 import pytest
-import attr
 from copy import deepcopy
 
+from provisioner.vendor import attr
 from provisioner import (
     log, config, inputs
 )

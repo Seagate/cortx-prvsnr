@@ -18,7 +18,6 @@
 #
 
 import sys
-import attr
 from typing import List, Dict, Type, Union, Optional, Iterable
 from copy import deepcopy
 import logging
@@ -31,6 +30,7 @@ import os
 import configparser
 from enum import Enum
 
+from .vendor import attr
 from .errors import (
     ProvisionerError,
     BadPillarDataError,

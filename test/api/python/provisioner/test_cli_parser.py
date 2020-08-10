@@ -18,9 +18,9 @@
 #
 
 import pytest
-import attr
 from copy import deepcopy
 
+from provisioner.vendor import attr
 from provisioner.cli_parser import parse_args, ParseRes
 from provisioner import errors, config
 from provisioner.base import prvsnr_config

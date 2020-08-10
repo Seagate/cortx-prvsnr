@@ -270,7 +270,10 @@ def test_set_eosupdate_repo_for_reinstall(
         )
 
     new_rpm = rpm_build(
-        request, mlocalhost.tmpdir, cli=False, mhost_init_cb=mhost_init_cb
+        request,
+        mlocalhost.tmpdir,
+        rpm_type='core',
+        mhost_init_cb=mhost_init_cb
     )
     new_rpm_remote = mhosteosnode1.copy_to_host(new_rpm)
 
