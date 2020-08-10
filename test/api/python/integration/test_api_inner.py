@@ -428,8 +428,8 @@ def test_set_eosupdate_repo():
         assert _params['eosupdate/repos'] == pillar_params['repos']
 
     # dry run check for invalid source
-    from provisioner.errors import EOSUpdateRepoSourceError
-    expected_exc = EOSUpdateRepoSourceError
+    from provisioner.errors import SWUpdateRepoSourceError
+    expected_exc = SWUpdateRepoSourceError
 
     source = 'some/invalid/source'
     with pytest.raises(expected_exc) as excinfo:
