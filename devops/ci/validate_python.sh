@@ -22,8 +22,8 @@
 set -eu
 
 # TODO make that configurable
-out_file=flake8.out
+out_file=flake8.out.txt
 
 targets="${1:-}"
 
-python -m flake8 --output-file="$out_file" --tee $targets
+python3 -m flake8 --output-file="$out_file" --tee $targets
