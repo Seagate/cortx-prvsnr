@@ -55,31 +55,31 @@ def storage_device_config():
     _timeout = 60
     _count = 0
     _sleep_time = 5
+    device_list = subprocess.Popen([_cmd_mpath2],
+                                shell=True,
+                                stdout=subprocess.PIPE
+                            ).stdout.read().decode("utf-8").splitlines()
 
     while device_list == []:
-        device_list = subprocess.Popen([_cmd_mpath2],
-                                        shell=True,
-                                        stdout=subprocess.PIPE
-                                    ).stdout.read().decode("utf-8").splitlines()
-        if device_list == []:
-            if ( _count == 0 ):
-                print("[ INFO ] Waiting for multipath device to come up..")
+        if ( _count == 0 ):
+            print("[ INFO ] Waiting for multipath device to come up..", end="", flush=True)
+        else:
+            print(".", end="", flush=True)
 
-            if ( _count >= _timeout ):
+        if ( _count >= _timeout ):
+            break
+        else:
+            time.sleep(_sleep_time)
+            _mpath_devs_n = subprocess.Popen([_cmd_mpath2],
+                                            shell=True,
+                                            stdout=subprocess.PIPE
+            ).stdout.read().decode("utf-8")
+
+            if ( int(_mpath_devs_n) > 0 ):
+                print("[ INFO ] Found multipath devices!")
                 break
-            else:
-                time.sleep(_sleep_time)
-                _mpath_devs_n = subprocess.Popen([_cmd_mpath2],
-                                                shell=True,
-                                                stdout=subprocess.PIPE
-                ).stdout.read().decode("utf-8")
 
-                if ( int(_mpath_devs_n) > 0 ):
-                    print("[ INFO ] Found multipath devices!")
-                    break
-                else:
-                    print(".")
-                _count = _count + _sleep_time
+            _count = _count + _sleep_time
 
     if device_list == []:
         print ("[ ERROR ] No multipath devices found.")
