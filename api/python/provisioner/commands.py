@@ -2266,7 +2266,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # masters
         ssh_client.cmd_run(
             (
-                'provisioner pillar_set --fpath release.sls '
+                '/usr/local/bin/provisioner pillar_set --fpath release.sls '
                 f'release/target_build \'"{run_args.target_build}"\''
             ), targets=run_args.primary.minion_id
         )
@@ -2291,7 +2291,7 @@ class SetupSinglenode(SetupProvisioner):
         node = setup_ctx.run_args.nodes[0]
         setup_ctx.ssh_client.cmd_run(
             (
-                'provisioner pillar_set '
+                '/usr/local/bin/provisioner pillar_set '
                 f'cluster/{node.minion_id}/hostname '
                 f'\'"{node.grains.fqdn}"\''
             ), targets=setup_ctx.run_args.primary.minion_id
@@ -2321,7 +2321,7 @@ class SetupCluster(SetupProvisioner):
         for node in setup_ctx.run_args.nodes:
             setup_ctx.ssh_client.cmd_run(
                 (
-                    'provisioner pillar_set '
+                    '/usr/local/bin/provisioner pillar_set '
                     f'cluster/{node.minion_id}/hostname '
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
