@@ -1680,14 +1680,15 @@ class SetupProvisioner(CommandParserFillerMixin):
                 if _node is not node:
                     candidates -= addrs[_node.minion_id]
 
-            targets = ','.join(
+            targets = '|'.join(
                 [_node.minion_id for _node in nodes if _node is not node]
             )
 
             for addr in candidates:
                 try:
                     ssh_client.cmd_run(
-                        f"ping -c 1 -W 1 {addr}", targets=targets
+                        f"ping -c 1 -W 1 {addr}", targets=targets,
+                        tgt_type='pcre'
                     )
                 except SaltCmdResultError as exc:
                     logger.debug(
