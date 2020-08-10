@@ -20,92 +20,72 @@
 # Setup SWAP and /var/mero
 {% set node = grains['id'] %}
 
-{% if "physical" in grains['virtual'] %}
-# /boot/efi  (note: this is partition #1)
-Remove EFI partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 1
-
-# /boot  (note: this is partition #2)
-Remove boot partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 2
-
-# The rest of the OS partitions (except /var/crash) (note: this is partition #3)
-Remove OS partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 3
-
-# /var/crash (not under RAID or LVM control; size ~1TB; note: this is partition #4)
-# Remove var_crash partition:
-#   module.run:
-#     - partition.rm:
-#       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-#       - minor: 4
-# done with the OS partitions
-
+# Steps:
+#  - unmount SWAP
+#  - remove SWAP from fstab
+#  - unmount /var/motr
+#  - remove /var/motr partition
+#  - delete SWAP and raw_metadata LVs
+#  - delete vg_metadata_{{ node }}
+#  - delete pv_metadata
+#  - delete LVM partition
 Unmount SWAP:
-  module.run:
-    - mount.swapoff:
-      - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
+  cmd.run:
+    - name: swapoff /dev/vg_metadata_{{ node }}/lv_main_swap || true
 
 Remove swap from fstab:
   module.run:
     - mount.rm_fstab:
       - name: none
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}4
+      - device: /dev/vg_metadata_{{ node }}/lv_main_swap
+    - require:
+      - Unmount SWAP
 
-Remove swap partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 4
+Remove LV swap:
+  lvm.lv_absent:
+    - name: lv_main_swap
+    - vgname: vg_metadata_{{ node }}
+    - require:
+      - Remove swap from fstab
 
-Unmount /var/mero partition:
-  mount.unmounted:
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}5
+Remove LV raw_metadata:
+  lvm.lv_absent: 
+    - name: lv_raw_metadata
+    - vgname: vg_metadata_{{ node }}
 
-Remove /var/mero partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 5
-{% else %}
-Unmount SWAP:
-  module.run:
-    - mount.swapoff:
-      - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+Remove VG:
+  lvm.vg_absent:
+    - name: vg_metadata_{{ node }}
+    - require: 
+      - Remove LV raw_metadata
+      - Remove LV swap
 
-Remove swap from fstab:
-  module.run:
-    - mount.rm_fstab:
-      - name: none
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
-    # - onlyif: grep {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1 /etc/fstab
+Remove PV:
+  lvm.pv_absent:
+    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+    - require: 
+      - Remove VG
 
-Remove swap partition:
-  module.run:
-    - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
-      - minor: 1
-
-Unmount /var/mero partition:
-  mount.unmounted:
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-
-Remove /var/mero partition:
+Remove LVM partition:
   module.run:
     - partition.rm:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
       - minor: 2
-{% endif %}
+
+Unmount /var/mero partition:
+  mount.unmounted:
+    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+
+Remove /var/mero partition:
+  module.run:
+    - partition.rm:
+      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - minor: 1
+# done with the sequence
 
 Refresh partition:
   module.run:
-    - partition.probe: []
+    - partition.probe: 
+      {% for device in pillar['cluster'][node]['storage']['metadata_device'] %}
+      - {{ device }}
+      {% endfor %}

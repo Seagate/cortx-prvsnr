@@ -17,8 +17,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
-
+# Check: Node is primary and not a VM (No STONITH for VMs)
+{% if 'primary' in grains['roles'] and "physical" in grains['virtual'] -%}
 Remove stonith id stonith-c1 if already present:
   cmd.run:
     - name: pcs stonith delete stonith-c1
@@ -48,7 +48,9 @@ Apply stonith for node-2:
     - name: pcs constraint location stonith-c2 avoids srvnode-2=INFINITY
 
 {% else %}
+
 No STONITH application:
   test.show_notification:
-    - text: "STONITH application applies only to primary node. There's no execution on secondary node"
+    - text: "STONITH configuration applies only to primary node on a physical HW. There's no execution on secondary node or VM."
+
 {% endif %}

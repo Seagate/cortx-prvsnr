@@ -18,7 +18,6 @@
 #
 
 import sys
-import attr
 from typing import List, Dict, Type, Union, Optional, Iterable
 from copy import deepcopy
 import logging
@@ -31,6 +30,7 @@ import os
 import configparser
 from enum import Enum
 
+from .vendor import attr
 from .errors import (
     ProvisionerError,
     BadPillarDataError,
@@ -907,7 +907,7 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
-class sw_update(CommandParserFillerMixin):
+class SWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, targets):
@@ -1369,7 +1369,7 @@ class ShutdownController(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class Configure_Cortx(CommandParserFillerMixin):
+class ConfigureCortx(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureCortx
 
@@ -1680,14 +1680,15 @@ class SetupProvisioner(CommandParserFillerMixin):
                 if _node is not node:
                     candidates -= addrs[_node.minion_id]
 
-            targets = ','.join(
+            targets = '|'.join(
                 [_node.minion_id for _node in nodes if _node is not node]
             )
 
             for addr in candidates:
                 try:
                     ssh_client.cmd_run(
-                        f"ping -c 1 -W 1 {addr}", targets=targets
+                        f"ping -c 1 -W 1 {addr}", targets=targets,
+                        tgt_type='pcre'
                     )
                 except SaltCmdResultError as exc:
                     logger.debug(

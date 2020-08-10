@@ -20,10 +20,10 @@
 import pytest
 import subprocess
 from typing import Any, Callable
-import attr
 import json
 import os
 
+from provisioner.vendor import attr
 from provisioner import _api_cli as api
 from provisioner.__main__ import prepare_res, _prepare_output
 from provisioner.errors import ProvisionerError, SaltError

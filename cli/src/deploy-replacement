@@ -49,8 +49,6 @@ tgt_node=srvnode-2
 system_states=(
     # states to be applied in desired sequence
         "system"
-        "system.storage.multipath"
-        "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
@@ -89,16 +87,6 @@ iopath_states=(
         "s3server.install"
     )
 
-ha_states=(
-    # states to be applied in desired sequence
-        "ha.corosync-pacemaker.prepare"
-        "ha.corosync-pacemaker.install"
-        "ha.cortx-ha.prepare"
-        "ha.cortx-ha.install"
-        "ha.ees_ha.prepare"
-        "ha.ees_ha.install"             # A blank file
-    )
-
 controlpath_states=(
     # states to be applied in desired sequence
         "sspl.prepare"
@@ -109,6 +97,18 @@ controlpath_states=(
         "uds.install"
     )
 
+ha_states=(
+    # states to be applied in desired sequence
+        "ha.corosync-pacemaker.prepare"
+        "ha.corosync-pacemaker.install"
+        "ha.corosync-pacemaker.config.base"
+        "ha.cortx-ha.prepare"
+        "ha.cortx-ha.install"
+        "ha.ees_ha.prepare"
+        "ha.ees_ha.install"             # A blank file
+    )
+
+# ToDo: Remove & Add node script here
 
 function usage {
   echo "\

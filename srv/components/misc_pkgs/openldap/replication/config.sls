@@ -38,7 +38,7 @@ Push provider for data replication:
 
 Configure openldap replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif 
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif && sleep 10 
     - watch_in:
       - Restart slapd service
     - require:

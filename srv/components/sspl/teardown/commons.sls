@@ -18,7 +18,7 @@
 #
 
 include:
-  - components.sspl
+  - components.sspl.teardown.sspl
 
 {% set consul_service = 'hare-consul-agent-c1' if "primary" == grains['roles'] else 'hare-consul-agent-c2' %}
 {% if salt['service.status'](consul_service, false) %}

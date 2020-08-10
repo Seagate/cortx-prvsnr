@@ -19,7 +19,7 @@
 
 include:
   - components.sspl.install
-  - .commons
+  - components.sspl.config.commons
   - components.sspl.health_view.prepare
   - components.sspl.health_view.config
 

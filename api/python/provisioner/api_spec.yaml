@@ -64,7 +64,7 @@ set_swupdate_repo:
     post:
     - components.misc_pkgs.swupdate.repo
 sw_update:
-  type: sw_update
+  type: SWUpdate
 fw_update:
   type: FWUpdate
 set_ssl_certs:
@@ -84,9 +84,11 @@ reboot_controller:
 shutdown_controller:
   type: ShutdownController
 configure_cortx:
-  type: Configure_Cortx
+  type: ConfigureCortx
 create_user:
   type: CreateUser
+setup_provisioner:
+  type: SetupProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:

@@ -17,8 +17,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set node_id = grains['id'] %}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
+{%- if (pillar['cluster'][grains['id']]['is_primary']) and (1 < pillar['cluster']['node_list'] | length) %}
 Create tidy-up script:
   file.managed:
       - name: /tmp/storage-tidy-up.sh
@@ -30,17 +29,17 @@ Create tidy-up script:
       - mode: 755
       - contents: |
           #!/bin/bash
-          echo "Runnign swapoff -a on current node(srvnode-1)"
+          echo "Running swapoff -a on current node(srvnode-1)"
           timeout -k 10 30 swapoff -a ||true
           echo "Runnign swapoff -a on srvnode-2 node"
           ssh srvnode-2 "timeout -k 10 30 swapoff -a || true"
           echo "Cleaning up partitions"
-          for dev in `ls /dev/mapper/mpath* | grep '[1-6]$' | rev | cut -c 2- | rev | sort -u`
+          for dev in `ls /dev/mapper/mpath* | grep '[1-2]$' | rev | cut -c 2- | rev | sort -u`
           do
-            timeout -k 10 30 parted -s $dev rm 6 || true
-            timeout -k 10 30 parted -s $dev rm 5 || true
-            timeout -k 10 30 parted -s $dev rm 4 || true
-            timeout -k 10 30 parted -s $dev rm 3 || true
+            # timeout -k 10 30 parted -s $dev rm 6 || true
+            # timeout -k 10 30 parted -s $dev rm 5 || true
+            # timeout -k 10 30 parted -s $dev rm 4 || true
+            # timeout -k 10 30 parted -s $dev rm 3 || true
             timeout -k 10 30 parted -s $dev rm 2 || true
             timeout -k 10 30 parted -s $dev rm 1 || true
           done

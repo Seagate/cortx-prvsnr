@@ -68,7 +68,7 @@ def test_deploy_eos_commands(
                 'ha.haproxy',
                 'misc_pkgs.openldap',
                 'misc_pkgs.build_ssl_cert_rpms',
-                'eoscore',
+                'motr',
                 's3server',
                 'hare',
                 'sspl',
@@ -84,7 +84,7 @@ def test_deploy_eos_commands(
             'SALT-ARGS: srvnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms'
         ] + [
             'SALT-ARGS: srvnode-[1,2] state.apply components.{}'.format(state)
-            for state in ['eoscore', 's3server', 'hare', 'sspl', 'csm']
+            for state in ['cortx', 's3server', 'hare', 'sspl', 'csm']
         ]
 
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
