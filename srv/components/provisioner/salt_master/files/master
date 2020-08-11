@@ -846,8 +846,8 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a
