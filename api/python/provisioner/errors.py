@@ -254,7 +254,7 @@ class SWUpdateFatalError(SWUpdateError):
 class SSLCertsUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, reason: str, rollback_error=None):
+    def __init__(self, reason: ProvisionerError, rollback_error=None):
         self.reason = reason
         self.rollback_error = rollback_error
 
