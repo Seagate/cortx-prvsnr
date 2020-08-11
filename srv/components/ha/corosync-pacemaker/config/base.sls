@@ -1,3 +1,6 @@
+include:
+  - components.ha.corosync-pacemaker.install
+
 # HA user has to be updated for setting new password.
 # This has to happen only after pacemaker is installed.
 Update ha user:
@@ -19,16 +22,22 @@ Enable corosync service:
   service.dead:
     - name: corosync
     - enable: True
+    - require:
+      - Install corosync
 
 Enable pacemaker service:
   service.dead:
     - name: pacemaker
     - enable: True
+    - require:
+      - Install pacemaker
 
 Start pcsd service:
   service.running:
     - name: pcsd
     - enable: True
+    - require:
+      - Install pcs
 
 {% if 'primary' in grains['roles'] %}
 Authorize nodes:
