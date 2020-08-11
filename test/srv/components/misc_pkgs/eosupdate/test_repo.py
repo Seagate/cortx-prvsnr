@@ -166,13 +166,8 @@ def test_eosupdate_repo(
         update_spec['repos'][release] = None
         update_pillar()
         # apply states
-<<<<<<< HEAD
         mhostsrvnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
-=======
-        mhosteosnode1.check_output(
             "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
->>>>>>> upstream/dev
             .format(minion_id)
         )
         # check repo is not listed anymore
@@ -196,12 +191,7 @@ def test_eosupdate_repo(
     update_spec['repos'] = {}
     update_pillar()
     # apply states, should just does nothing
-<<<<<<< HEAD
     mhostsrvnode1.check_output(
-        "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
-=======
-    mhosteosnode1.check_output(
         "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
->>>>>>> upstream/dev
         .format(minion_id)
     )

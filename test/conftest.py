@@ -308,15 +308,9 @@ def pytest_configure(config):
                    "in the specific environment level"
     )
     config.addinivalue_line(
-<<<<<<< HEAD
         "markers", "cortx_spec(dict): mark test as expecting "
                    "specific EOS stack configuration, default: {}"
-                   .format(json.dumps(DEFAULT_CORTX_SPEC))
-=======
-        "markers", "eos_spec(dict): mark test as expecting "
-                   "specific cluster configuration, default: {}"
                    .format(json.dumps(DEFAULT_CLUSTER_SPEC))
->>>>>>> upstream/dev
     )
     config.addinivalue_line(
         "markers", "hosts(list): mark test as expecting "
@@ -1211,15 +1205,9 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 
 
 @pytest.fixture
-<<<<<<< HEAD
 def cortx_spec(request):
     marker = request.node.get_closest_marker('cortx_spec')
-    spec = marker.args[0] if marker else DEFAULT_CORTX_SPEC
-=======
-def eos_spec(request):
-    marker = request.node.get_closest_marker('eos_spec')
     spec = marker.args[0] if marker else DEFAULT_CLUSTER_SPEC
->>>>>>> upstream/dev
     return spec
 
 
@@ -1536,11 +1524,6 @@ def build_mhost_fixture(label=None, module_name=__name__):
 # default 'host' fixture is always present
 build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
-<<<<<<< HEAD
 build_mhost_fixture('srvnode1')
 build_mhost_fixture('srvnode2')
-=======
-build_mhost_fixture('eosnode1')
-build_mhost_fixture('eosnode2')
-build_mhost_fixture('eosnode3')
->>>>>>> upstream/dev
+build_mhost_fixture('srvnode3')

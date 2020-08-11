@@ -26,7 +26,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 INSTALLDIR="/opt/seagate/cortx/provisioner"
-LDR_R1_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
+LDR_R1_PRVSNR_REPO_API_TAGS='https://github.com/Seagate/cortx-prvsnr/tags'
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/setup-provisioner.log}"
 export LOG_FILE
