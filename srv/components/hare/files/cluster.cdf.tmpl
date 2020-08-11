@@ -17,7 +17,7 @@ nodes:
         io_disks:
           data: []
       - io_disks:
-          be_seg: /dev/vg_metadata_{{ node }}/lv_raw_metadata
+          meta_data: /dev/vg_metadata_{{ node }}/lv_raw_metadata
           data:
           {%- for dev in pillar['cluster'][node]['storage']['data_devices'] %}
             - {{ dev }}
