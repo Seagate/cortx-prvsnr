@@ -270,7 +270,10 @@ def test_set_eosupdate_repo_for_reinstall(
         )
 
     new_rpm = rpm_build(
-        request, mlocalhost.tmpdir, cli=False, mhost_init_cb=mhost_init_cb
+        request,
+        mlocalhost.tmpdir,
+        rpm_type='core',
+        mhost_init_cb=mhost_init_cb
     )
     new_rpm_remote = mhostsrvnode1.copy_to_host(new_rpm)
 
@@ -303,12 +306,13 @@ def test_cortx_update(
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.env_provider('vbox')
-@pytest.mark.hosts(['srvnode1', 'srvnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
 def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, ssh_config
+    mhostsrvnode1, mhostsrvnode2, mhostsrvnode3, ssh_config
 ):
     mhostsrvnode1.check_output('echo root | passwd --stdin root')
     mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    mhostsrvnode3.check_output('echo root | passwd --stdin root')
 
 
 @pytest.mark.timeout(1200)

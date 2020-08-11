@@ -23,8 +23,8 @@
 import sys
 import argparse
 import logging
-import attr
 
+from .vendor import attr
 from . import config, errors, runner, log
 from .base import prvsnr_config
 from .commands import commands

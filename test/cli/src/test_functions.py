@@ -803,6 +803,8 @@ def test_functions_install_provisioner_rpm(
     assert res.rc == 0
 
     assert mhost.host.package('cortx-prvsnr').is_installed
+    # TODO EOS-11551 enable later
+    # assert mhost.host.package('python36-cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
@@ -1200,7 +1202,7 @@ def test_functions_cortx_pillar_show_skeleton(
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
+        'provisioner configure_cortx {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )
@@ -1266,7 +1268,7 @@ def test_functions_cortx_pillar_update_and_load_default(
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        'provisioner configure_eos {1} --show'.format(
+        'provisioner configure_cortx {1} --show'.format(
             h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
         )
     )

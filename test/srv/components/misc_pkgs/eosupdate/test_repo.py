@@ -123,7 +123,7 @@ def test_eosupdate_repo(
         # INSTALL
         # set source for the release
         if isinstance(source, Path):
-            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / release
+            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / release
             pillar_source = 'dir'
 
             if source.suffix == '.iso':
@@ -140,8 +140,8 @@ def test_eosupdate_repo(
         update_spec['repos'][release] = pillar_source
         update_pillar()
         # apply states
-        mhostsrvnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+        mhosteosnode1.check_output(
+            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
             .format(minion_id)
         )
         if mount_dir:
@@ -166,8 +166,13 @@ def test_eosupdate_repo(
         update_spec['repos'][release] = None
         update_pillar()
         # apply states
+<<<<<<< HEAD
         mhostsrvnode1.check_output(
             "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+=======
+        mhosteosnode1.check_output(
+            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
+>>>>>>> upstream/dev
             .format(minion_id)
         )
         # check repo is not listed anymore
@@ -191,7 +196,12 @@ def test_eosupdate_repo(
     update_spec['repos'] = {}
     update_pillar()
     # apply states, should just does nothing
+<<<<<<< HEAD
     mhostsrvnode1.check_output(
         "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+=======
+    mhosteosnode1.check_output(
+        "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
+>>>>>>> upstream/dev
         .format(minion_id)
     )

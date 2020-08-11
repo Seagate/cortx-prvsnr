@@ -1,26 +1,8 @@
-FROM ubuntu:18.04
+FROM centos:8.2.2004
 
-RUN apt-get update -y && apt-get install -y \
-    # common stuff
-        python3.6 \
-        python3-pip \
-        rpm \
-    # fmp
-        ruby \
-        ruby-dev \
-        rubygems \
-        gcc \
-        make \
-    && rm -rf /var/lib/apt/lists/*
-
-# issues with pip>=10:
-# https://github.com/pypa/pip/issues/5240
-# https://github.com/pypa/pip/issues/5221
-RUN python3 -m pip install -U pip setuptools \
-    && pip3 list
-
-# install fpm
-RUN gem install --no-ri --no-rdoc rake fpm
+COPY setup_fpm.sh /tmp/
+RUN bash /tmp/setup_fpm.sh \
+    && rm -f /tmp/setup_fpm.sh
 
 ENTRYPOINT [ "fpm" ]
 CMD [ "--help" ]

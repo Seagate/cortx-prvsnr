@@ -18,7 +18,8 @@
 #
 
 import pytest
-import attr
+
+from provisioner.vendor import attr
 
 from provisioner import (
     ALL_MINIONS, param, pillar, inputs, log
