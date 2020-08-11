@@ -30,6 +30,7 @@ Start pcsd service:
     - name: pcsd
     - enable: True
 
+{% if 'primary' in grains['roles'] %}
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
@@ -43,3 +44,4 @@ Authorize nodes:
       - '--force'
     - require:
       - Start pcsd service
+{% endif %}
