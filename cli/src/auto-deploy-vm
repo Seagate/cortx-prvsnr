@@ -44,17 +44,23 @@ srvnode_2_passwd=
 tgt_build=
 cluster_ip=
 mgmt_vip=
-pvt_ip_addr1=
-pvt_ip_addr2=
+pub_din=
+pvt_din=
+mgmt_din= 
+pub_dip=
+pub_dip2=
 singlenode=false
 
 srvnode_2_host_opt=false
 srvnode_2_passwd_opt=false
 tgt_build_opt=false
 cluster_ip_opt=false
+pub_din_opt=false
+pvt_din_opt=false
+mgmt_din_opt=false
 mgmt_vip_opt=false
-pvt_ip_addr1_opt=false
-pvt_ip_addr2_opt=false
+pub_dip1_opt=false
+pub_dip2_opt=false
 
 usage()
 {
@@ -68,19 +74,25 @@ sh auto-deploy-vm -S -t <target build url for CORTX>
 
 Optional Arguments:
    -C	 <Hostname/IP> 	  Hostname/IP address for Public Data n/w interface.
-			  This IP will be assigned to the n/w interface
+                          This IP will be assigned to the n/w interface
                           provided with -C option.
                           if you not provide this ip, cluster_ip will consider as null
    -M	 <Hostname/IP> 	  Hostname/IP address for Management n/w interface.
-			  This IP will be assigned to the n/w interface
-			  provided with -M option.
-			  if you not provide this ip, mgmt_vip will consider as null
+                          This IP will be assigned to the n/w interface
+                          provided with -M option.
+                          if you not provide this ip, mgmt_vip will consider as null
+   -m    <NETWORK IF>     Management n/w interface name (default eth0)
+   -n    <NETWORK IF>     Public data n/w interface name (default eth2)
+   -N    <NETWORK IF>     Private data n/w interface name (default eth1).
+                          Network interface for direct connect.
    -i    <IP Address>     IP address for pvt data n/w interface name on node-1.
                           This IP will be assigned to the eth1 n/w interface.
                           if you not provide this ip, pvt_ip_addr will consider as null
+                          (default null)
    -I    <IP Address>     IP address for pvt data n/w interface name on node-2,
                           This IP will be assigned to the eth1 n/w interface name.
                           if you not provide this ip, pvt_ip_addr will consider as null
+                          (default null)
 "
 }
 
@@ -93,9 +105,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm -s ssc-vm-c-810.colo.seagate.com -p seagate -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -I 192.168.253.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -s <secondary_node> -p seagate -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] [-I 192.168.100.102] -t http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
 For Single Node:
-$ sh auto-deploy-vm -S -C eos-s3-vip-vm-xxx.eos.colo.seagate.com -M eos-mgmt-vip-xxx.colo.seagate.com -i 192.168.252.125 -t http://cortx-storage.colo.seagate.com/releases/eos/github/dev/rhel-7.7.1908/provisioner_last_successful/
+$ sh auto-deploy-vm -S -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] -t  http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
 
 "
 }
@@ -125,6 +137,36 @@ while [[ $# -gt 0 ]]; do
                 echo "Error: Cluster ip is not provided" && exit 1;
             cluster_ip="$2"
             shift 2 ;;
+        -n)
+            pub_din_opt=true
+            [ -z "$2" ] &&
+                echo "Error: public data interface name not provided" && exit 1;
+            pub_din="$2"
+            shift 2 ;;
+        -N)
+            pvt_din_opt=true
+            [ -z "$2" ] &&
+                echo "Error: private data interface name not provided" && exit 1;
+            pvt_din="$2"
+            shift 2 ;;
+        -m)
+            mgmt_din_opt=true
+            [ -z "$2" ] &&
+                echo "Error: management interface name not provided" && exit 1;
+            pvt_din="$2"
+            shift 2 ;;
+        -D)
+            meta_disk_opt=true
+            [ -z "$2" ] &&
+                echo "Error: Meta disk name not provided" && exit 1;
+            meta_disk="$2"
+            shift 2 ;;
+        -d)
+            data_disk_opt=true
+            [ -z "$2" ] &&
+                echo "Error: Data disks name not provided" && exit 1;
+            data_disk="$2"
+            shift 2 ;;
 	-M)
 	    mgmt_vip_opt=true
 	    [ -z "$2" ] &&
@@ -132,16 +174,16 @@ while [[ $# -gt 0 ]]; do
 	    mgmt_vip="$2"
 	    shift 2 ;;
 	-i)
-	    pvt_ip_addr1_opt=true
+	    pub_dip1_opt=true
 	    [ -z "$2" ] &&
 		echo "Error: srvnode-1 pvt_ip_addr for data not provided" && exit 1;
-	    pvt_ip_addr1="$2"
+	    pub_dip1="$2"
 	    shift 2 ;;
 	-I)
-	    pvt_ip_addr2_opt=true
+	    pub_dip2_opt=true
 	    [ -z "$2" ] &&
 		echo "Error: srvnode-2 pvt_ip_addr for data not provided" && exit 1;
-	    pvt_ip_addr2="$2"
+	    pub_dip2="$2"
 	    shift 2 ;;
         -t)
             tgt_build_opt=true
@@ -191,7 +233,7 @@ install_prvsnr_cli()
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
     if [[ "$target_node" = "srvnode-1" ]]; then
-	rpm -qa | grep -q 'eos|cortx' && {
+	rpm -qa | grep -q 'cortx' && {
         echo "ERROR: cortx packages are already installed"
         echo "Please clean-up previous installtion from both the nodes and retry"
         exit 1
@@ -203,7 +245,7 @@ install_prvsnr_cli()
     else
         $remote_cmd <<-EOF
             set -eu
-            rpm -qa | grep -q 'eos|cortx' && {
+            rpm -qa | grep -q 'cortx' && {
             echo "ERROR: cortx packages are already installed"
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
@@ -264,21 +306,21 @@ update_pillar()
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi
-    
+
     # Updating Cluster IP
     if [[ "$cluster_ip_opt" == true ]]; then
         echo -e "\n\t Updating Cluster IP " 2>&1|tee -a $LOG_FILE
         /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"$cluster_ip\"
     fi
-	
+
     # Updating Mgmt VIP
     if [[ "$mgmt_vip_opt" == true ]]; then
         echo -e "\n\t Updating Mgmt VIP " 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"$mgmt_vip\"
+        /usr/local/bin/provisioner pillar_set cluster/mgmt_vip \"$mgmt_vip\"
     fi	
 	
     # Changing Meta and Data disks based on lsblk
-    echo -e "\n\t Changing Meta and Data disks based on lsblk" 2>&1|tee -a $LOG_FILE
+    echo -e "\n\t***** INFO: Changing Meta and Data disks based on lsblk *****" 2>&1|tee -a $LOG_FILE
     os_name=`cat /etc/redhat-release`
     if grep -q "Red Hat" <<< $os_name ; then
     	disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3);

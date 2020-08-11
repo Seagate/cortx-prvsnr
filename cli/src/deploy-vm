@@ -225,7 +225,11 @@ if [[ "$run_all" == true ]]; then
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
-    run_states "${sync_states[@]}"
+    if [[ "$singlenode" != true ]]; then
+        # TODO use salt orchestration
+        run_states "${sync_states[@]}"
+    fi
+
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
 fi
@@ -241,7 +245,8 @@ if [[ "$run_prereq_states" == true ]]; then
     run_states "${prereq_states[@]}"
 fi
 
-if [[ "$run_sync_states" == true ]]; then
+if [[ "$run_sync_states" == true 
+    || "$singlenode" != true ]]; then
     l_info "Deploying the sync states"
     run_states  "${sync_states[@]}"
 fi
