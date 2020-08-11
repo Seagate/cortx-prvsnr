@@ -243,7 +243,8 @@ def test_pillar_get_set():
     assert (PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / fpath).exists()
     api_call('pillar_set', kp, value, fpath=fpath, targets=minion_id)
     assert (
-        Path(PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=minion_id)) / fpath
+        Path(PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=minion_id)) /
+        fpath
     ).exists()
 
 
