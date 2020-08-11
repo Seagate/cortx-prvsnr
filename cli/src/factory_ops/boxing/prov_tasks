@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/sh
+
 # Functions in this file address following:
 #   1. Stop rabbitmq cluster, if running
 #   2. Ref: Stop and restart a RabbitMQ cluster, RMQ clustering 
