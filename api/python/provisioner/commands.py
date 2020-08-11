@@ -52,7 +52,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE,
+    SSL_CERTS_FILE, PRVSNR_PILLAR_CONFIG_INI,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -1773,6 +1773,15 @@ class SetupProvisioner(CommandParserFillerMixin):
             repo_dir / 'pillar/components/samples/dualnode.cluster.sls'
         )
         cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
+        config_path = repo_dir / 'pillar/components/samples/config.ini'
+        if run_args.config_path:
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(run_args.config_path),
+                    str(config_path)
+                ]
+            )
         run_subprocess_cmd(
             [
                 'cp', '-f',
@@ -2306,10 +2315,6 @@ class SetupCluster(SetupProvisioner):
 
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
-        config_path = kwargs.pop('config_path')
-        if config_path:
-            config_setup = ConfigureSetup()
-            config_setup.run(config_path, SetupType.DUAL.value)
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
@@ -2326,7 +2331,14 @@ class SetupCluster(SetupProvisioner):
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
-
+        if run_args.config_path:
+            logger.info("Updating pillar data using config.ini")
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    '/usr/local/bin/provisioner configure_setup '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
         logger.info("Done")
 
 
@@ -2372,7 +2384,14 @@ class ReplaceNode(SetupProvisioner):
         setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
         )
-
+        if run_args.config_path:
+            logger.info("Updating pillar data using config.ini")
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    f'provisioner configure_setup {PRVSNR_PILLAR_CONFIG_INI} '
+                    f'{SetupType.DUAL.value}'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
         logger.info("Setting up replacement_node flag")
         setup_ctx.ssh_client.state_apply(
             'provisioner.post_replacement',

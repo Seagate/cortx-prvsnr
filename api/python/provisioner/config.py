@@ -44,6 +44,9 @@ PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
+PRVSNR_PILLAR_CONFIG_INI = str(
+    PRVSNR_PILLAR_DIR / 'components/samples/config.ini'
+)
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
 
