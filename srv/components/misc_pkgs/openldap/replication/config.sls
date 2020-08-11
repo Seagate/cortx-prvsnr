@@ -2,8 +2,9 @@ include:
   # - components.misc_pkgs.openldap.config.base
   - components.misc_pkgs.openldap.replication.prepare
   - components.misc_pkgs.openldap.start
+  - components.misc_pkgs.openldap.sanity_check
 
-{% if pillar['cluster']['type'] != "single" -%}
+{% if pillar['cluster']['node_list']|length > 1 -%}
 
 Load provider module:
   cmd.run:
@@ -24,8 +25,9 @@ Configure openldap replication:
       - Restart slapd service
     - require:
       - Push provider for data replication
+    - onchanges:
+      - Verify ldap certificates valid and slapd is running
 
 {% endif -%}
 
-# Validate replication configs are set using command:
-# ldapsearch -w <ldappasswd> -x -D cn=admin,cn=config -b cn=config "olcSyncrepl=*"|grep olcSyncrepl: {0}rid=001
+

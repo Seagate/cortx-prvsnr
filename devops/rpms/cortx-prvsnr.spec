@@ -70,7 +70,7 @@ echo "Configuring access for provisioner data ..."
 bash "${api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
 
 #   install api globally using pip
-pip3 install -U "${api_dir}"
+pip3 install "${api_dir}"
 
 
 %preun
