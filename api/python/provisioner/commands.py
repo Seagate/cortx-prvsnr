@@ -170,6 +170,14 @@ class RunArgsSSLCerts:
             }
         }, default=False
     )
+    targets: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target(s) to install/update SSL certificate"
+            }
+        },
+        default=ALL_MINIONS
+    )
     dry_run: bool = RunArgs.dry_run
 
 
@@ -1182,7 +1190,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
-    def run(self, source, restart=False, dry_run=False):
+    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):
 
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
@@ -1213,7 +1221,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     '{}_{}'.format(
                         time_stamp,
                         dest.name))
-                StatesApplier.apply([state_name])
+                StatesApplier.apply([state_name], targets=targets)
                 logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
@@ -1240,7 +1248,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     logger.info('Restoring old SSL cert ')
                     # restores old cert
                     copy_to_file_roots(backup_file_name, dest)
-                    StatesApplier.apply([state_name])
+                    StatesApplier.apply([state_name], targets=targets)
                 except Exception as exc:
                     logger.exception(
                         "Failed to apply backedup certs")
@@ -1255,7 +1263,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise SSLCertsUpdateError(ssl_exc, rollback_exc=rollback_exc)
+            raise SSLCertsUpdateError(ssl_exc, rollback_error=rollback_exc)
 
 
 # TODO TEST
