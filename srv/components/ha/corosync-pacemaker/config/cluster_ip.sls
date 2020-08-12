@@ -18,7 +18,9 @@
 #
 
 {% if "primary" in grains['roles'] 
-  and pillar['cluster']['cluster_ip'] -%}
+  and pillar['cluster']['cluster_ip']
+  and "physical" in grains['virtual']
+-%}
 
 {% if (0 == salt['cmd.retcode']('command -v pcs')) 
   and (0 == salt['cmd.retcode']('pcs resource show ClusterIP-clone')) -%}

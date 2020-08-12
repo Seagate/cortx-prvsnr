@@ -17,10 +17,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install runtime libraries:
+Install corosync:
   pkg.installed:
-    - pkgs:
-      - corosync
-      - pacemaker
-      - pcs
-      - fence-agents-ipmilan    # For fencing
+    - name: corosync
+
+Install pacemaker:
+  pkg.installed:
+    - name: pacemaker
+      
+Install pcs:
+  pkg.installed:
+    - name: pcs
+
+Install fence-agents-ipmilan:
+  pkg.installed:
+    - name: fence-agents-ipmilan    # For fencing

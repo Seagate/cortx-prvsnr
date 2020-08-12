@@ -27,7 +27,7 @@ Remove authorized nodes:
   cmd.run:
     - names:
       {%- for node_id in pillar['cluster']['node_list'] %}
-      - pcs cluster node remove {{ pillar['cluster'][node_id]['hostname'] }} --force || true
+      - pcs cluster node remove {{ node_id }} --force || true
       {%- endfor %}
 
 Destroy Cluster:
