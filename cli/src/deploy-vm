@@ -254,6 +254,12 @@ fi
 if [[ "$run_io_states" == true ]]; then
     l_info "Recreating the metadata partitions"
     salt '*' state.apply components.system.storage
+    if [[ "$singlenode" != true ]]; then
+        # Mount partition
+        salt-call mount.mount /var/motr $(salt-call pillar.get cluster:srvnode-1:storage:metadata_device:0 --output=newline_values_only)1 True ext4
+        # Add fstab entry
+        salt-call mount.set_fstab /var/motr $(salt-call pillar.get cluster:srvnode-1:storage:metadata_device:0 --output=newline_values_only)1 True ext4
+    fi
     run_states "${iopath_states[@]}"
 fi
 

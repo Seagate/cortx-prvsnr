@@ -117,7 +117,7 @@ Make metadata partition:
     - extfs.mkfs:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
       - fs_type: ext4
-      - label: eos_metadata
+      - label: cortx_metadata
       - require:
         - Create metadata partition
 
