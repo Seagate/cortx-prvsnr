@@ -44,9 +44,6 @@ PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
-PRVSNR_PILLAR_CONFIG_INI = str(
-    PRVSNR_PILLAR_DIR / 'components/samples/config.ini'
-)
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
 
@@ -57,6 +54,9 @@ PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # reflects pillar/top.sls
 PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
 
+PRVSNR_PILLAR_CONFIG_INI = str(
+    PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
+)
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(

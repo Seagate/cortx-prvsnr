@@ -1773,15 +1773,6 @@ class SetupProvisioner(CommandParserFillerMixin):
             repo_dir / 'pillar/components/samples/dualnode.cluster.sls'
         )
         cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
-        config_path = repo_dir / 'pillar/components/samples/config.ini'
-        if run_args.config_path:
-            run_subprocess_cmd(
-                [
-                    'cp', '-f',
-                    str(run_args.config_path),
-                    str(config_path)
-                ]
-            )
         run_subprocess_cmd(
             [
                 'cp', '-f',
@@ -1790,6 +1781,20 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
         repo_tgz_path.unlink()
+
+    def _copy_config_ini(self, run_args, ssh_client, profile_paths):
+        minions_dir = (
+            profile_paths['salt_fileroot_dir'] / "provisioner/files/minions/all/"  # noqa: E501
+        )
+        config_path = minions_dir / 'config.ini'
+        if run_args.config_path:
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(run_args.config_path),
+                    str(config_path)
+                ]
+            )
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
         minions_dir = (
@@ -2062,6 +2067,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 hard coded
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
+
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, ssh_client, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
