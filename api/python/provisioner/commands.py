@@ -2384,6 +2384,7 @@ class ReplaceNode(SetupProvisioner):
         setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
         )
+
         logger.info("Setting up replacement_node flag")
         setup_ctx.ssh_client.state_apply(
             'provisioner.post_replacement',
