@@ -2384,14 +2384,6 @@ class ReplaceNode(SetupProvisioner):
         setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
         )
-        if run_args.config_path:
-            logger.info("Updating pillar data using config.ini")
-            setup_ctx.ssh_client.cmd_run(
-                (
-                    f'provisioner configure_setup {PRVSNR_PILLAR_CONFIG_INI} '
-                    f'{SetupType.DUAL.value}'
-                ), targets=setup_ctx.run_args.primary.minion_id
-            )
         logger.info("Setting up replacement_node flag")
         setup_ctx.ssh_client.state_apply(
             'provisioner.post_replacement',
