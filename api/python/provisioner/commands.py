@@ -1782,7 +1782,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         )
         repo_tgz_path.unlink()
 
-    def _copy_config_ini(self, run_args, ssh_client, profile_paths):
+    def _copy_config_ini(self, run_args, profile_paths):
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions/all/"  # noqa: E501
         )
@@ -2069,7 +2069,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._prepare_salt_config(run_args, ssh_client, paths)
 
         logger.info("Copy config.ini to nodes")
-        self._copy_config_ini(run_args, ssh_client, paths)
+        self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
