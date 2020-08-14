@@ -6,12 +6,6 @@ sspl:
     secret: "B4kf1T6Qso"
   role: cortx
   Version: 1.0.0
-  SSPL-LL_SETTING:
-    core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
-    message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor, CPUFaultSensor"
-    actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
-    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor, CPUFaultSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
@@ -60,8 +54,6 @@ sspl:
     disk_usage_threshold: "80"
     cpu_usage_threshold: "80"
     host_memory_usage_threshold: "80"
-  XINITDWATCHDOG:
-    threaded: "true"
   RARITANPDU:
     user: "admin"
     pass: "admin"
