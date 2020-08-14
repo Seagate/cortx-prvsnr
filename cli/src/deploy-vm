@@ -162,7 +162,8 @@ function run_states {
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "sync.software.rabbitmq" ]]; then
+            elif [[ "$state" == "sync.software.rabbitmq"
+                || "$state" == "sync.software.openldap" ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Installing 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
