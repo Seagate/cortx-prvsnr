@@ -270,7 +270,7 @@ else
                 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
             }
             cat ${repos_enabled} | grep ID: | grep -q EOS_EPEL && {
-                echo "INFO: EOS_EPEL repository is enabled from Satellite subscription" 2>&1 | tee -a ${LOG_FILE}
+                echo "INFO: CORTX_EPEL repository is enabled from Satellite subscription" 2>&1 | tee -a ${LOG_FILE}
             } || {
                 #echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}

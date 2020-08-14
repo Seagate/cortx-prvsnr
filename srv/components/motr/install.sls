@@ -2,5 +2,5 @@ Install Motr:
   pkg.installed:
     - pkgs:
       - cortx-motr: latest
-      # - mero-debuginfo
+      # - motr-debuginfo
     - refresh: True

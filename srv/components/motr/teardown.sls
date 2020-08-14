@@ -8,7 +8,7 @@ Remove Motr package:
   pkg.purged:
     - pkgs:
       - cortx-motr
-      # - mero-debuginfo
+      # - motr-debuginfo
 
 Delete Motr yum repo:
   pkgrepo.absent:
