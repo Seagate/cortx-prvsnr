@@ -1,5 +1,5 @@
 {% set node_version = pillar['commons']['version']['nodejs'] %}
-{% set node_url = pillar['commons']['nodejs_repo'] %}
+{% set node_url = pillar['commons']['repo']['nodejs'] %}
 # Nodejs install
 # Extract Node.js:
 #   archive.extracted:
