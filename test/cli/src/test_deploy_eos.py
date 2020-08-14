@@ -45,7 +45,7 @@ def script_name():
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("singlenode", [True, False], ids=['singlenode', 'cluster'])
-def test_deploy_eos_commands(
+def test_deploy_cortx_commands(
     mhost, mlocalhost, ssh_config, remote, singlenode, mock_hosts, run_script
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''

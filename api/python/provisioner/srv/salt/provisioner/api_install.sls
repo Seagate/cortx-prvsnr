@@ -32,7 +32,6 @@ api_installed:
 prvsnrusers:
   group.present
 
-
 # TODO IMPROVE EOS-8473 consider states instead
 api_post_setup_applied:
   cmd.script:

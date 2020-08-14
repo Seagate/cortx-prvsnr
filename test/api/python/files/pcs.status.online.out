@@ -1,4 +1,4 @@
-Cluster name: eos_cluster
+Cluster name: cortx_cluster
 Stack: corosync
 Current DC: sm27-r22.pun.seagate.com (version 1.1.20-5.el7-3c4c782f70) - partition with quorum
 Last updated: Sat Mar 21 16:51:53 2020

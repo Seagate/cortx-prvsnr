@@ -53,26 +53,26 @@ pcs_mock_tmpl = '''
 
 
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_cluster_mgmt(
-    mhosteosnode1, run_test, request, test_output_dir
+    mhostsrvnode1, run_test, request, test_output_dir
 ):
     pcs_mock = pcs_mock_tmpl.format(
-        stop_out=mhosteosnode1.copy_to_host(
+        stop_out=mhostsrvnode1.copy_to_host(
             test_output_dir / test_stop_fname
         ),
-        start_out=mhosteosnode1.copy_to_host(
+        start_out=mhostsrvnode1.copy_to_host(
             test_output_dir / test_start_fname
         ),
-        status_offline_out=mhosteosnode1.copy_to_host(
+        status_offline_out=mhostsrvnode1.copy_to_host(
             test_output_dir / test_status_offline_fname
         ),
-        status_online_out=mhosteosnode1.copy_to_host(
+        status_online_out=mhostsrvnode1.copy_to_host(
             test_output_dir / test_status_online_fname
         )
     )
     request.applymarker(pytest.mark.mock_cmds(
-        {'eosnode1': [{'pcs': pcs_mock}]})
+        {'srvnode1': [{'pcs': pcs_mock}]})
     )
     request.getfixturevalue('mock_hosts')
-    run_test(mhosteosnode1)
+    run_test(mhostsrvnode1)

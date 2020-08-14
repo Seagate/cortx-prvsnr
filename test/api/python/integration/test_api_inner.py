@@ -383,7 +383,7 @@ def test_set_eosupdate_repo():
     # test_mode = os.environ['TEST_MODE']
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
-    base_repo_name = 'eos_update'
+    base_repo_name = 'cortx_update'
     prvsnr_pkg_name = 'cortx-prvsnr'
 
     def check_mount_not_in_fstab(mount_dir):
@@ -421,7 +421,7 @@ def test_set_eosupdate_repo():
             check_unmounted(mount_dir)
 
     pillar = api_call('pillar_get')
-    pillar_params = pillar[minion_id]['eos_release']['update']
+    pillar_params = pillar[minion_id]['cortx_release']['update']
 
     curr_params = api_call('get_params', 'swupdate/repos')
     for _id, _params in curr_params.items():
@@ -607,7 +607,7 @@ def test_set_eosupdate_repo():
 def test_set_eosupdate_repo_for_reinstall():
     repo_dir = os.environ['TEST_REPO_DIR']
     test_file_path = os.environ['TEST_FILE_PATH']
-    # base_repo_name = 'eos_update'
+    # base_repo_name = 'cortx_update'
     prvsnr_pkg_name = 'cortx-prvsnr'
 
     release = '1.2.3'
@@ -632,7 +632,7 @@ def test_set_eosupdate_repo_for_reinstall():
 #   - install eos stack first from some release
 #   - set some newer release
 #   - call udpate
-def test_eos_update():
+def test_cortx_update():
     api_call(
         'set_eosupdate_repo',
         '1.2.3',
@@ -640,4 +640,4 @@ def test_eos_update():
         targets=minion_id
     )
 
-    api_call('eos_update', targets=minion_id)
+    api_call('cortx_update', targets=minion_id)

@@ -23,7 +23,7 @@ include:
   - components.ha.ees_ha.install
   - components.ha.ees_ha.config
 {% else %}
-setup EES HA on non-primary node:
+setup LDR-R1 HA on non-primary node:
   test.show_notification:
     - text: "No changes needed on non-primary node"
 {% endif %}

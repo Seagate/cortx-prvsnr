@@ -22,15 +22,15 @@ include:
   - components.ha.ees_ha.prepare
   - components.ha.ees_ha.install
 
-Post install for EES HA cluster:
+Post install for LDR-R1 HA cluster:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:post_install')
 
-Config for EES HA cluster:
+Config for LDR-R1 HA cluster:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:config')
 
-start EES HA cluster:
+start LDR-R1 HA cluster:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:init')
 {% endif %}

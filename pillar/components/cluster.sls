@@ -23,7 +23,7 @@ cluster:
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: ees                           # single/ees/ecs
+  type: dual                          # single/dual/cluster
   node_list:
     - srvnode-1
     - srvnode-2
@@ -51,7 +51,7 @@ cluster:
         pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/mero and possibly SWAP
+      metadata_device:                # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc                    # Auto-populated by components.system.storage.multipath
@@ -79,7 +79,7 @@ cluster:
         pvt_ip_addr: 192.168.0.2      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.4       # Applies to private data network
     storage:
-      metadata_device:              # Device for /var/mero and possibly SWAP
+      metadata_device:              # Device for /var/motr and possibly SWAP
         - /dev/sdb
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc
