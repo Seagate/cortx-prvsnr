@@ -2381,6 +2381,14 @@ class ReplaceNode(SetupProvisioner):
             nodes=list(nodes.values()), **kwargs
         )
 
+        logger.info("Updating replace node data in pillar")
+        setup_ctx.ssh_client.cmd_run(
+            (
+                '/usr/local/bin/provisioner pillar_set --fpath cluster.sls '
+                f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
+            ), targets=run_args.node_id
+        )
+
         logger.info("Setting up replacement_node flag")
         setup_ctx.ssh_client.state_apply(
             'provisioner.post_replacement',
