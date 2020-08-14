@@ -92,7 +92,7 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs EOS stack and configures eos services either on VM environment.
+Installs CORTX stack and configures cortx services either on VM environment.
 
 Must be run from primary node for Dual node and from VM itself for single node.
 

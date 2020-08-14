@@ -103,25 +103,25 @@ https://docs.saltstack.com/en/latest/topics/index.html
 
 ### Setup Vagrant
 
-#### Initialize EES
+#### Initialize LDR-R1
 ##### Initalize
 1.  Create project folder:
 `mkdir ~/projects && cd ~/projects`
 
-1. Clone git repo for ees-prvsnr:
-`git clone http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/`
-`cd ~/projects/ees-prvsnr`
+1. Clone git repo for cortx-prvsnr:
+`git clone https://github.com/Seagate/cortx-prvsnr/`
+`cd ~/projects/cortx-prvsnr`
 
-1. Add Vargrant box created for EES:
+1. Add Vargrant box created for LDR-R1:
 `vagrant box add http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.5.1804.box --name centos_7.5.1804`
 
 ##### Start VagrantBox
-The ees setup comes with Vagrantfile configured to create a 2 node Vagrant setup. However, due to [limitation with iterations in Vagrantfile](https://www.vagrantup.com/docs/vagrantfile/tips.html), each node needs to be initialized independently:
+The ldr-r1 setup comes with Vagrantfile configured to create a 2 node Vagrant setup. However, due to [limitation with iterations in Vagrantfile](https://www.vagrantup.com/docs/vagrantfile/tips.html), each node needs to be initialized independently:
 `vagrant up ees-node1`
 `vagrant up ees-node2`
 
 ##### Synchronize code
-To synchronize code in git repo on host (`~/projects/ees-prvsnr`) and `/opt/seagate/eesprvsnr`:
+To synchronize code in git repo on host (`~/projects/cortx-prvsnr`) and `/opt/seagate/cortx/provisioner`:
 `vagrant rsync`
 
 ##### Destroy Vagrantbox

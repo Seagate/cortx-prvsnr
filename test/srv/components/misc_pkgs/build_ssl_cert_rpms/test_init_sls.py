@@ -28,32 +28,32 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.skip(reason="EOS-4907")
 def test_build_ssl_cert_rpms_appliance(
-    mhosteosnode1, mhosteosnode2, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, mhostsrvnode2, cortx_hosts, configure_salt, accept_salt_keys
 ):
     # enable cluster setup
     # TODO improve later once we have more flexible state parametrization per roles
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "sed -i 's/# - srvnode-2/- srvnode-2/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
         )
     )
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "sed -i 's/type: single/type: dual/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
         )
     )
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "salt '*' state.apply components.system.config.setup_ssh"
     )
 
-    for label in ('eosnode1', 'eosnode2'):
-        mhosteosnode1.check_output(
+    for label in ('srvnode1', 'srvnode2'):
+        mhostsrvnode1.check_output(
             "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms".format(
-                eos_hosts[label]['minion_id']
+                cortx_hosts[label]['minion_id']
             )
         )
 

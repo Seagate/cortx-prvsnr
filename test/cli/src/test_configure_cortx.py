@@ -41,7 +41,7 @@ def script_name():
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec(
+@pytest.mark.cortx_spec(
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -49,7 +49,7 @@ def test_configure_cortx_show(
     mhost, mlocalhost, ssh_config, remote, install_provisioner, run_script
 ):
     # Note. not parametrized per component since the test copies
-    #       test_functions.sh:test_functions_eos_pillar_show_skeleton a lot
+    #       test_functions.sh:test_functions_cortx_pillar_show_skeleton a lot
     component = 'cluster'
 
     h.install_provisioner_api(mhost)
@@ -76,10 +76,10 @@ def test_configure_cortx_show(
 
 
 # TODO
-#  - mostly repeats 'test_functions_eos_pillar_update_and_load_default'
+#  - mostly repeats 'test_functions_cortx_pillar_update_and_load_default'
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec(
+@pytest.mark.cortx_spec(
     {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -88,7 +88,7 @@ def test_configure_cortx_update_and_load_default(
     install_provisioner, run_script
 ):
     # Note. not parametrized per component since the test copies
-    #       test_functions.sh:test_functions_eos_pillar_update_and_load_default
+    #       test_functions.sh:test_functions_cortx_pillar_update_and_load_default
     #       a lot
     component = 'cluster'
 

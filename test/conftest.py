@@ -84,7 +84,7 @@ ENV_LEVELS_HIERARCHY = {
     # only for vbox
     'singlenode-deploy-ready': {
         'parent': 'salt-installed',
-        'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_src', 'prvsnr_release', 'cortx_release']
     },
     'singlenode-eos-deployed': 'singlenode-deploy-ready',
     'singlenode-eos-ready': 'singlenode-eos-deployed',
@@ -98,7 +98,7 @@ ENV_LEVELS_HIERARCHY = {
     # bvt
     'singlenode-bvt-ready': {
         'parent': 'base',
-        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'cortx_release']
     }
 }
 
@@ -106,12 +106,12 @@ ENV_LEVELS_HIERARCHY = {
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
-DEFAULT_CLUSTER_SPEC = {
-    'eosnode1': {
+DEFAULT_CORTX_SPEC = {
+    'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
         'is_primary': True,
-    }, 'eosnode2': {
+    }, 'srvnode2': {
         'hostname': 'srvnode-2',
         'minion_id': 'srvnode-2',
         'is_primary': False,
@@ -308,8 +308,8 @@ def pytest_configure(config):
                    "in the specific environment level"
     )
     config.addinivalue_line(
-        "markers", "eos_spec(dict): mark test as expecting "
-                   "specific cluster configuration, default: {}"
+        "markers", "cortx_spec(dict): mark test as expecting "
+                   "specific EOS stack configuration, default: {}"
                    .format(json.dumps(DEFAULT_CLUSTER_SPEC))
     )
     config.addinivalue_line(
@@ -335,7 +335,7 @@ def pytest_configure(config):
                    "default: True for single node env, False otherwise"
     )
     config.addinivalue_line(
-        "markers", "eos_bvt: mark test as BVT one"
+        "markers", "cortx_bvt: mark test as BVT one"
     )
     config.addinivalue_line(
         "markers", "patch_logging: mark test as expected patched logging"
@@ -485,7 +485,7 @@ def patch_logging(request, monkeypatch):
 @pytest.fixture(scope='session')
 def hosts_spec(request):
     return {
-        'eosnode1': {
+        'srvnode1': {
             'remote': {
                 'hostname': 'srvnode-1',
                 'specific': {
@@ -499,7 +499,7 @@ def hosts_spec(request):
             },
             'minion_id': 'srvnode-1',
             'is_primary': True,
-        }, 'eosnode2': {
+        }, 'srvnode2': {
             'remote': {
                 'hostname': 'srvnode-2',
                 'specific': {
@@ -1205,52 +1205,52 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 
 
 @pytest.fixture
-def eos_spec(request):
-    marker = request.node.get_closest_marker('eos_spec')
+def cortx_spec(request):
+    marker = request.node.get_closest_marker('cortx_spec')
     spec = marker.args[0] if marker else DEFAULT_CLUSTER_SPEC
     return spec
 
 
-# eos_spec sanity checks
+# cortx_spec sanity checks
 @pytest.fixture
-def _eos_spec(eos_spec):
-    assert len({k: v for k, v in eos_spec.items() if v['is_primary']}) == 1
-    return eos_spec
+def _cortx_spec(cortx_spec):
+    assert len({k: v for k, v in cortx_spec.items() if v['is_primary']}) == 1
+    return cortx_spec
 
 
 @pytest.fixture
-def eos_hosts(hosts, _eos_spec, request):
+def cortx_hosts(hosts, _cortx_spec, request):
     _hosts = defaultdict(dict)
     for label in hosts:
-        if label in _eos_spec:
-            _hosts[label]['minion_id'] = _eos_spec[label]['minion_id']
-            _hosts[label]['is_primary'] = _eos_spec[label].get('is_primary', True)
+        if label in _cortx_spec:
+            _hosts[label]['minion_id'] = _cortx_spec[label]['minion_id']
+            _hosts[label]['is_primary'] = _cortx_spec[label].get('is_primary', True)
 
     return _hosts
 
 
 @pytest.fixture
-def eos_primary_host_label(eos_hosts):
-    return [k for k, v in eos_hosts.items() if v['is_primary']][0]
+def cortx_primary_host_label(cortx_hosts):
+    return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
 
 
 @pytest.fixture
-def eos_primary_mhost(eos_primary_host_label, request):
-    return request.getfixturevalue('mhost' + eos_primary_host_label)
+def cortx_primary_mhost(cortx_primary_host_label, request):
+    return request.getfixturevalue('mhost' + cortx_primary_host_label)
 
 
 @pytest.fixture
-def eos_primary_host_ip(eos_primary_mhost):
-    return eos_primary_mhost.host.interface(
-        eos_primary_mhost.iface
+def cortx_primary_host_ip(cortx_primary_mhost):
+    return cortx_primary_mhost.host.interface(
+        cortx_primary_mhost.iface
     ).addresses[0]
 
 
 @pytest.fixture
-def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request):
-    assert eos_hosts, "the fixture makes sense only for eos hosts"
+def install_provisioner(cortx_hosts, mlocalhost, project_path, ssh_config, request):
+    assert cortx_hosts, "the fixture makes sense only for eos hosts"
 
-    for label in eos_hosts:
+    for label in cortx_hosts:
         mhost = request.getfixturevalue('mhost' + label)
         mlocalhost.check_output(
             "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
@@ -1262,22 +1262,22 @@ def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request
                 hostspec=mhost.hostname,
                 ssh_config=ssh_config,
                 sudo='false',
-                singlenode=('true' if len(eos_hosts) == 1 else 'false')
+                singlenode=('true' if len(cortx_hosts) == 1 else 'false')
             )
         )
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request):
+def configure_salt(cortx_hosts, install_provisioner, cortx_primary_host_ip, request):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
+    for label, host_spec in cortx_hosts.items():
         minion_id = host_spec['minion_id']
         is_primary = (
             'true' if host_spec['is_primary'] else 'false'
         )
         primary_host = (
-            "localhost" if host_spec['is_primary'] else eos_primary_host_ip
+            "localhost" if host_spec['is_primary'] else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(
@@ -1288,21 +1288,21 @@ def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request)
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
+def accept_salt_keys(cortx_hosts, install_provisioner, cortx_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
-        eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
+    for label, host_spec in cortx_hosts.items():
+        cortx_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
             cli_dir / 'common_utils/functions.sh', host_spec['minion_id'])
         )
 
-    eos_primary_mhost.check_output("salt '*' mine.update")
+    cortx_primary_mhost.check_output("salt '*' mine.update")
 
 
 @pytest.fixture
-def sync_salt_modules(eos_primary_mhost, install_provisioner):
-    eos_primary_mhost.check_output("salt '*' saltutil.sync_modules")
-    eos_primary_mhost.check_output("salt-run saltutil.sync_modules")
+def sync_salt_modules(cortx_primary_mhost, install_provisioner):
+    cortx_primary_mhost.check_output("salt '*' saltutil.sync_modules")
+    cortx_primary_mhost.check_output("salt-run saltutil.sync_modules")
 
 
 @pytest.fixture
@@ -1524,6 +1524,6 @@ def build_mhost_fixture(label=None, module_name=__name__):
 # default 'host' fixture is always present
 build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
-build_mhost_fixture('eosnode1')
-build_mhost_fixture('eosnode2')
-build_mhost_fixture('eosnode3')
+build_mhost_fixture('srvnode1')
+build_mhost_fixture('srvnode2')
+build_mhost_fixture('srvnode3')
