@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 # How to test:
 # $ salt-call saltutil.clear_cache
 # $ salt-call saltutil.sync_modules && salt-call cluster.nw_roaming_ip
@@ -23,10 +42,57 @@ import provisioner
 def storage_device_config():
 
     _target_node = __grains__['id']
+    _cluster_type = __pillar__["cluster"]["type"]
+
     _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(_target_node)
     _cc_flag = False
 
-    if os.path.isfile(_ffile_path):
+    _cmd_mpath1 = "multipath -ll | grep -E \"prio=50|prio=10\" | wc -l"
+    _cmd_mpath2 = "multipath -ll | grep mpath | wc -l"
+
+
+    device_list = []
+    _timeout = 60
+    _count = 0
+    _sleep_time = 5
+    device_list = subprocess.Popen([_cmd_mpath2],
+                                shell=True,
+                                stdout=subprocess.PIPE
+                            ).stdout.read().decode("utf-8").splitlines()
+
+    while device_list == []:
+        if ( _count == 0 ):
+            print("[ INFO ] Waiting for multipath device to come up..", end="", flush=True)
+        else:
+            print(".", end="", flush=True)
+
+        if ( _count >= _timeout ):
+            break
+        else:
+            time.sleep(_sleep_time)
+            _mpath_devs_n = subprocess.Popen([_cmd_mpath2],
+                                            shell=True,
+                                            stdout=subprocess.PIPE
+            ).stdout.read().decode("utf-8")
+
+            if ( int(_mpath_devs_n) > 0 ):
+                print("[ INFO ] Found multipath devices!")
+                break
+
+            _count = _count + _sleep_time
+
+    if device_list == []:
+        print ("[ ERROR ] No multipath devices found.")
+        return False
+
+    _prio_lines = int(subprocess.getoutput(_cmd_mpath1))
+    _mpath_devs_n = int(subprocess.getoutput(_cmd_mpath2))
+
+    if _mpath_devs_n * 2 == _prio_lines and _cluster_type == "ees":
+        #The setup is cross connected to storage enclosure
+        _cc_flag = True
+
+    if _cc_flag == True:
         # Setup is cross connected.
         print('INFO: setup is cross connected')
         _cc_flag = True
@@ -34,12 +100,8 @@ def storage_device_config():
         _ctrl_user = __pillar__["storage_enclosure"]["controller"]["user"]
         _ctrl_passwd = __pillar__["storage_enclosure"]["controller"]["secret"]
         _ctrl_cli = "/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
-    else:
-        print('INFO: setup is not cross connected')
 
-    if _cc_flag == True:
         # Shutdown controller B
-        # run controller_cli.sh host -h 'ip_addr' -u admin -p '!passwd' --shutdown-ctrl b
         print('INFO: Shutting down controller B')
         _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --shutdown-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
         _ret = subprocess.Popen([_ctrl_cmd],
@@ -47,6 +109,8 @@ def storage_device_config():
                                     stdout=subprocess.PIPE
                                     ).stdout.read().decode("utf-8").splitlines()
         time.sleep(30)
+    else:
+        print('INFO: setup is not cross connected')
 
     for node in __pillar__["cluster"]["node_list"]:
         if __pillar__["cluster"][node]["is_primary"]:
@@ -54,39 +118,10 @@ def storage_device_config():
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
 
-        device_list = []
-        _timeout = 60
-        _count = 0
-        _sleep_time = 5
-        while device_list == []:
-            device_list = subprocess.Popen([cmd],
-                                            shell=True,
-                                            stdout=subprocess.PIPE
-                                        ).stdout.read().decode("utf-8").splitlines()
-            if device_list == []:
-                if ( _count == 0 ):
-                    print("[ INFO ] Waiting for multipath device to come up..")
-
-                if ( _count >= _timeout ):
-                    break
-                else:
-                    time.sleep(_sleep_time)
-                    _tmp_cmd = "multipath -ll | grep prio=50 -B2|grep mpath | wc -l"
-                    _mpath_devs = subprocess.Popen([_tmp_cmd],
-                                                    shell=True,
-                                                    stdout=subprocess.PIPE
-                    ).stdout.read().decode("utf-8")
-
-                    if ( int(_mpath_devs) > 0 ):
-                        print("[ INFO ] Found multipath devices!")
-                    else:
-                        print(".")
-                    _count = _count + _sleep_time
-
-        if device_list == []:
-            print ("[ ERROR ] multipath devices don't exist.")
-            return False
-
+        device_list = subprocess.Popen([cmd],
+                                        shell=True,
+                                        stdout=subprocess.PIPE
+                                    ).stdout.read().decode("utf-8").splitlines()
         metadata_device = ["/dev/disk/by-id/dm-name-{0}".format(device_list[0])]
         data_field = "cluster/{0}/storage/data_devices".format(node)
         metadata_field = "cluster/{0}/storage/metadata_device".format(node)
@@ -94,16 +129,19 @@ def storage_device_config():
 
         provisioner.pillar_set(metadata_field, metadata_device)
         provisioner.pillar_set(data_field, data_device)
+        if _cc_flag == True:
+            _ffile_path = '/opt/seagate/cortx/provisioner/generated_configs/{0}.cc'.format(node)
+            _cmd = "ssh {0} \"mkdir -p /opt/seagate/cortx/provisioner/generated_configs/; touch {1}\"".format(node, _ffile_path)
+            os.system(_cmd)
 
     if _cc_flag == True:
-        print('INFO: Shutting down controller B')
+        print('INFO: Restarting the controller B')
         _ctrl_cmd = "sh {0} host -h {1} -u {2} -p {3} --restart-ctrl b".format(_ctrl_cli, _ctrl_a_ip, _ctrl_user, _ctrl_passwd)
         _ret = subprocess.Popen([_ctrl_cmd],
                                     shell=True,
                                     stdout=subprocess.PIPE
                                     ).stdout.read().decode("utf-8").splitlines()
         time.sleep(180)
-
     return True
 
 

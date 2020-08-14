@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import pytest
 import functools
 
@@ -638,17 +657,13 @@ def test_salt_process_provisioner_cmd_res(monkeypatch, local_minion_id):
     with pytest.raises(ProvisionerError) as excinfo:
         salt.process_provisioner_cmd_res(res)
     assert str(excinfo.value) == (
-        'Expected a dictionary, provided: {}, {}'
+        'Expected a dictionary of len = 1, provided: {}, {}'
         .format(type(res), res)
     )
 
     res = {'some-key': 'some-res'}
-    with pytest.raises(ProvisionerError) as excinfo:
-        salt.process_provisioner_cmd_res(res)
-    assert str(excinfo.value) == (
-        'local minion id {} is not in the results: {}'
-        .format(local_minion_id, res)
-    )
+    ret = salt.process_provisioner_cmd_res(res)
+    assert ret == 'some-res'
 
     res = {local_minion_id: 'some-result'}
     ret = salt.process_provisioner_cmd_res(res)
@@ -746,7 +761,7 @@ def test_salt_provisioner_cmd(monkeypatch, local_minion_id):
             **kwargs
         )
     assert str(excinfo.value) == (
-        'SaltClientResult is unexpected here: {!r}'.format(function_run_res)
+        'SaltCmdResultError is unexpected here: {!r}'.format(function_run_res)
     )
 
     # results no errors

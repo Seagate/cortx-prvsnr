@@ -1,65 +1,188 @@
 #!/bin/bash
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
 
-set -eux
+
+set -eu
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 repo_root_dir="$(realpath $script_dir/../../../)"
-docker_image_name="seagate/ees-prvsnr:fpm"
+docker_image_name="seagate/cortx-prvsnr:fpm"
 
-def_output_path=.
-def_output_type=rpm
-def_input_path="$repo_root_dir/api/python"
-def_in_docker=true
-def_fpm_tool="fpm"
+in_docker=false
+input_dir="$repo_root_dir/api/python"
+output_dir=.
+output_type=rpm
+fpm_tool=fpm
+pkg_version=
+verbosity=0
+
 
 function usage {
   echo "\
-Usage: $0 [-h|--help] [<output-path> [<output-type> [<input-path> [in-docker [<fpm-tool>]]]]]
-    
-  output-path   :  output dir, default: $def_output_path
-  output-type   :  output package type. Possible values: {rpm|deb|...}
-                   (check https://github.com/jordansissel/fpm/wiki#usage), default: $def_output_type
-  input-path    :  input dir, default: $def_input_path
-  in-docker     :  build using docker, default: $def_in_docker
-  fpm-tool      :  fpm tool path or docker image name, default: $def_fpm_tool
+Usage: $0 [options]
+
+Builds provisioner API package using fpm tool
+
+Options:
+  -d,  --docker         build using docker,
+                            default: $in_docker
+       --fpm-tool       fpm tool path or docker image name,
+                            default: $fpm_tool
+  -h,  --help           print this help and exit
+  -i,  --in-dir DIR     path to provisioner API directory,
+                            default: $input_dir
+  -o,  --out-dir DIR    output dir,
+                            default: $output_dir
+  -r,  --pkg-ver        package version (release tag),
+                            default: $pkg_version
+  -t,  --out-type       output package type. Possible values: {rpm|deb|...}
+                            default: $output_type,
+                            check https://github.com/jordansissel/fpm/wiki#usage
+  -v,  --verbose        be more verbose
 "
 }
 
-output_path="${1:-$def_output_path}"
-output_type="${2:-$def_output_type}"
-input_path="${3:-$def_input_path}"
-in_docker="${4:-$def_in_docker}"
-fpm_tool="${5:-$def_fpm_tool}"
+function parse_args {
+    set -eu
 
-first_arg="${1:-}"
-if [[ "$first_arg" == '-h' || "$first_arg" == '--help' ]]; then
-    usage
-    exit 0
+    ! getopt --test > /dev/null
+    if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+        >&2 echo 'Error: getopt is not functional.'
+        exit 1
+    fi
+
+    local _opts=hdi:o:t:r:v
+    local _long_opts=help,docker,in-dir:,out-dir:,out-type:,fpm-tool:,pkg-ver:,verbose
+
+    local _getopt_res
+    ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
+    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+        exit 2
+    fi
+
+    # TODO why eval here
+    eval set -- "$_getopt_res"
+
+    while true; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -d|--docker)
+                in_docker=true
+                shift
+                ;;
+            -i|--in-dir)
+                input_dir="$2"
+                if [[ ! -d "$input_dir" ]]; then
+                    >&2 echo "'$input_dir' not a directory"
+                    exit 5
+                fi
+                shift 2
+                ;;
+            -o|--out-dir)
+                output_dir="$2"
+                if [[ ! -d "$output_dir" ]]; then
+                    >&2 echo "'$output_dir' not a directory"
+                    exit 5
+                fi
+                shift 2
+                ;;
+            -t|--out-type)
+                output_type="$2"
+                # TODO check possible values
+                shift 2
+                ;;
+            --fpm-tool)
+                fpm_tool="$2"
+                shift 2
+                ;;
+            -r|--pkg-ver)
+                pkg_version="$2"
+                shift 2
+                ;;
+            -v|--verbose)
+                ((verbosity=verbosity+1))
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            ?)
+                >&2 echo "Runtime error"
+                exit 3
+                ;;
+            *)
+                >&2 echo "Parser error"
+                exit 3
+        esac
+    done
+}
+
+
+parse_args "$@"
+
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
 fi
 
-iteration="${RPM_RELEASE:-}"
-if [[ -n "$iteration" ]]; then
-    iteration="--iteration $iteration"
+if [[ "$verbosity" -ge 1 ]]; then
+    parsed_args=""
+    parsed_args+="\toutput_dir=$output_dir\n\toutput_type=$output_type"
+    parsed_args+="\n\tin_docker=$in_docker\n\tinput_dir=$input_dir"
+    parsed_args+="\n\tfpm_tool=$fpm_tool\n\tverbosity=$verbosity"
+    parsed_args+="\n\trelease=$pkg_version"
+
+    echo -e "Parsed arguments:\n$parsed_args"
+fi
+
+
+iteration=
+if [[ -n "$pkg_version" ]]; then
+    iteration="--iteration $pkg_version"
 fi
 
 tmp_dir="$(mktemp -d)"
-cp -r "${input_path}/." "${tmp_dir}"
-input_path="$tmp_dir"
+cp -r "${input_dir}/." "${tmp_dir}"
+input_dir="$tmp_dir"
 
-pushd $input_path
-    sed -i "s~PyYAML~python36-PyYAML~" setup.py
+pushd "$output_dir"
+    rm -f python36-cortx-prvsnr*
 popd
 
 if [[ "$in_docker" == true ]]; then
+    docker_build_dir="${tmp_dir}/docker"
+
     pushd $script_dir
-        docker build -t $docker_image_name .
+        mkdir "$docker_build_dir"
+        cp "${repo_root_dir}/images/docker/setup_fpm.sh" Dockerfile "$docker_build_dir"
+        docker build -t $docker_image_name "$docker_build_dir"
     popd
 
-    input_path="$(realpath $input_path)"
-    output_path="$(realpath $output_path)"
-    fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_path:/tmp/in -v $output_path:/tmp/out $docker_image_name"
-    input_path="/tmp/in"
-    output_path="/tmp/out"
+    input_dir="$(realpath $input_dir)"
+    output_dir="$(realpath $output_dir)"
+    fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_dir:/tmp/in -v $output_dir:/tmp/out $docker_image_name"
+    input_dir="/tmp/in"
+    output_dir="/tmp/out"
 fi
 
 $fpm_tool --input-type "python" \
@@ -67,15 +190,19 @@ $fpm_tool --input-type "python" \
     --architecture "amd64" \
     --verbose \
     --python-install-lib "/usr/lib/python3.6/site-packages" \
-    --python-package-name-prefix "python3" \
+    --python-install-bin "/usr/bin" \
+    --python-package-name-prefix "python36" \
     --python-bin "python3" \
+    --python-disable-dependency salt \
+    --no-python-downcase-dependencies \
+    --depends "salt >= 3001" \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
-    --no-python-fix-dependencies \
-    --no-python-downcase-dependencies \
-    --package "${output_path}" \
+    --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \
+    --package "${output_dir}" \
     $iteration \
-    "${input_path}"
+    "${input_dir}"
+
 
 # TODO remove it anyway even if some upper fails (kind of finally routine)
 rm -rf "${tmp_dir}"
@@ -83,7 +210,5 @@ rm -rf "${tmp_dir}"
 # TODO other options if needed
 #    --depends
 #    --before-install
-#    --after-install
 #    --before-remove
 #    --name
-#    --python-bin

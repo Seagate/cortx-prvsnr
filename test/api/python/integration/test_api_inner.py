@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import os
 import logging
 import pytest
@@ -382,15 +401,15 @@ def test_set_eosupdate_repo():
         )
 
     def check_not_installed(release, expected_repo_name, mount_dir=None):
-        curr_params = api_call('get_params', 'eosupdate/repos')
+        curr_params = api_call('get_params', 'swupdate/repos')
         for _id, _params in curr_params.items():
-            assert _params['eosupdate/repos'][release] is None
+            assert _params['swupdate/repos'][release] is None
 
         curr_params = api_call(
-            'get_params', 'eosupdate/repo/{}'.format(release),
+            'get_params', 'swupdate/repo/{}'.format(release),
         )
         for _id, _params in curr_params.items():
-            assert _params['eosupdate/repo/{}'.format(release)] is None
+            assert _params['swupdate/repo/{}'.format(release)] is None
 
         # check repo is not listed anymore
         run_cmd(
@@ -404,13 +423,13 @@ def test_set_eosupdate_repo():
     pillar = api_call('pillar_get')
     pillar_params = pillar[minion_id]['eos_release']['update']
 
-    curr_params = api_call('get_params', 'eosupdate/repos')
+    curr_params = api_call('get_params', 'swupdate/repos')
     for _id, _params in curr_params.items():
-        assert _params['eosupdate/repos'] == pillar_params['repos']
+        assert _params['swupdate/repos'] == pillar_params['repos']
 
     # dry run check for invalid source
-    from provisioner.errors import EOSUpdateRepoSourceError
-    expected_exc = EOSUpdateRepoSourceError
+    from provisioner.errors import SWUpdateRepoSourceError
+    expected_exc = SWUpdateRepoSourceError
 
     source = 'some/invalid/source'
     with pytest.raises(expected_exc) as excinfo:
@@ -454,16 +473,16 @@ def test_set_eosupdate_repo():
             'set_eosupdate_repo', release, source=source
         )
 
-        curr_params = api_call('get_params', 'eosupdate/repos')
+        curr_params = api_call('get_params', 'swupdate/repos')
         for _id, _params in curr_params.items():
-            assert _params['eosupdate/repos'][release] == expected_source
+            assert _params['swupdate/repos'][release] == expected_source
 
         curr_params = api_call(
-            'get_params', 'eosupdate/repo/{}'.format(release)
+            'get_params', 'swupdate/repo/{}'.format(release)
         )
         for _id, _params in curr_params.items():
             assert _params[
-                'eosupdate/repo/{}'.format(release)
+                'swupdate/repo/{}'.format(release)
             ] == expected_source
 
         if mount_dir:

@@ -1,9 +1,28 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import pytest
-import attr
 import builtins
 import typing
 import functools
 
+from provisioner.vendor import attr
 from provisioner.errors import (
     PillarSetError,
     SWUpdateError,
@@ -444,7 +463,7 @@ def test_commnads_ensure_update_repos_configuration(patch_logging, mocker):
     commands._ensure_update_repos_configuration(target)
 
     mocker.call.StatesApplier.apply(
-        ['components.misc_pkgs.eosupdate.repo'], target
+        ['components.misc_pkgs.swupdate.repo'], target
     )
 
 
@@ -580,7 +599,7 @@ def mock_eosupdate(mocker):
 
 
 @pytest.mark.patch_logging([(commands, ('info',))])
-def test_commands_EOSUpdate_run_happy_path(
+def test_commands_SWUpdate_run_happy_path(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -588,7 +607,7 @@ def test_commands_EOSUpdate_run_happy_path(
     target = 'some-target'
 
     # happy path
-    commands.EOSUpdate().run(target)
+    commands.SWUpdate().run(target)
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
@@ -605,7 +624,7 @@ def test_commands_EOSUpdate_run_happy_path(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -616,7 +635,7 @@ def test_commands_EOSUpdate_run_happy_path(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_pre_stages_failed(
+def test_commands_SWUpdate_run_pre_stages_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -626,7 +645,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
     mocks['ensure_cluster_is_healthy'].side_effect = update_lower_exc
     expected_exc_t = SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert exc.reason is update_lower_exc
@@ -641,7 +660,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
     mocks['_ensure_update_repos_configuration'].side_effect = update_lower_exc
     expected_exc_t = SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert exc.reason is update_lower_exc
@@ -654,7 +673,7 @@ def test_commands_EOSUpdate_run_pre_stages_failed(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_maintenance_enable_failed(
+def test_commands_SWUpdate_run_maintenance_enable_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -663,7 +682,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
     update_lower_exc = TypeError('some-error')
     mocks['cluster_maintenance_enable'].side_effect = update_lower_exc
     with pytest.raises(SWUpdateError) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is SWUpdateError
     assert type(exc.reason) is ClusterMaintenanceEnableError
@@ -698,7 +717,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_sw_stack_update_failed(
+def test_commands_SWUpdate_run_sw_stack_update_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -711,7 +730,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
     #      - during salt minions confrig (first time and on rollback)
     #      - ensure_salt_master_is_running on rollback
     def apply_side_effect(component, *args, **kwargs):
-        if component == 'eoscore':
+        if component == 'motr':
             raise update_lower_exc
         else:
             return mocker.DEFAULT
@@ -723,7 +742,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
     mocks['_update_component'].side_effect = apply_side_effect
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is SWStackUpdateError
@@ -743,7 +762,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
         calls['_update_component']("provisioner", target),
         calls['config_salt_master'](),
         calls['config_salt_minions'](),
-        calls['_update_component']("eoscore", target),
+        calls['_update_component']("motr", target),
         calls['YumRollbackManager']().__exit__(
             SWStackUpdateError,
             # XXX semes not valuable to check exact exc and trace as well
@@ -772,7 +791,7 @@ def test_commands_EOSUpdate_run_sw_stack_update_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_maintenance_disable_failed(
+def test_commands_SWUpdate_run_maintenance_disable_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -788,7 +807,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterMaintenanceDisableError
@@ -810,7 +829,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['YumRollbackManager']().__exit__(
@@ -843,7 +862,7 @@ def test_commands_EOSUpdate_run_maintenance_disable_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_ha_post_update_failed(
+def test_commands_SWUpdate_run_ha_post_update_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -859,7 +878,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is HAPostUpdateError
@@ -881,7 +900,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -915,7 +934,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
     [None, ValueError('some-rollback-error')],
     ids=['rollback_ok', 'rollback_failed']
 )
-def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
+def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
     patch_logging, mocker, mock_eosupdate, rollback_error
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -931,7 +950,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
     ]
     expected_exc_t = SWUpdateFatalError if rollback_error else SWUpdateError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterNotHealthyError
@@ -953,7 +972,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -983,7 +1002,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
 
 
 @pytest.mark.patch_logging([(commands, ('error',))])
-def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
+def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
     patch_logging, mocker, mock_eosupdate
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -1003,7 +1022,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
     ]
     expected_exc_t = SWUpdateFatalError
     with pytest.raises(expected_exc_t) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
     exc = excinfo.value
     assert type(exc) is expected_exc_t
     assert type(exc.reason) is ClusterNotHealthyError
@@ -1025,7 +1044,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -1059,7 +1078,7 @@ post_rollback_stages = [
     range(len(post_rollback_stages)),
     ids=post_rollback_stages
 )
-def test_commands_EOSUpdate_run_post_rollback_fail(
+def test_commands_SWUpdate_run_post_rollback_fail(
     patch_logging, mocker, mock_eosupdate, post_rollback_stage_idx
 ):
     mock_manager, mocks, calls = mock_eosupdate
@@ -1090,7 +1109,7 @@ def test_commands_EOSUpdate_run_post_rollback_fail(
     )
 
     with pytest.raises(SWUpdateFatalError) as excinfo:
-        commands.EOSUpdate().run(target)
+        commands.SWUpdate().run(target)
 
     exc = excinfo.value
     assert type(exc) is SWUpdateFatalError
@@ -1132,7 +1151,7 @@ def test_commands_EOSUpdate_run_post_rollback_fail(
     assert mock_manager.mock_calls == expected_calls
 
 
-def test_commands_ConfigureEOS(monkeypatch):
+def test_commands_ConfigureCortx(monkeypatch):
     mock_res = []
 
     some_pillar = {
@@ -1161,7 +1180,7 @@ def test_commands_ConfigureEOS(monkeypatch):
         mock_fun_echo(mock_res, 'component_pillar')
     )
 
-    cmd = commands.ConfigureEOS()
+    cmd = commands.ConfigureCortx()
 
     component = 'component1'
 

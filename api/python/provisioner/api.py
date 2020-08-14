@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import importlib
 
 from .config import ALL_MINIONS, CONTROLLER_BOTH
@@ -205,7 +224,7 @@ def set_swupdate_repo(
 
 
 def set_ssl_certs(
-    source, restart=False, dry_run=False, nowait=True
+    source, restart=False, targets=ALL_MINIONS, dry_run=False, nowait=True
 ):
     r"""Configures ssl certs
 
@@ -213,11 +232,12 @@ def set_ssl_certs(
 
     :param source: (optional) A path to pem file. Might be: a local
     :param restart: switch to restart services
+    :param targets: (optional) A host (hosts) to install/update certificates. Default: all minions
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
         'set_ssl_certs',
-        source, restart=restart, dry_run=dry_run, nowait=nowait
+        source, restart=restart, targets=targets, dry_run=dry_run, nowait=nowait
     )
 
 
@@ -271,6 +291,7 @@ def get_node_id(targets=ALL_MINIONS, nowait=False):
         'get_node_id', targets=targets, nowait=nowait
     )
 
+
 def get_release_version(targets=ALL_MINIONS, nowait=False):
     r"""Retruns Release Version
 
@@ -283,6 +304,7 @@ def get_release_version(targets=ALL_MINIONS, nowait=False):
         'get_release_version', targets=targets, nowait=nowait
     )
 
+
 def get_factory_version(targets=ALL_MINIONS, nowait=False):
     r"""Retruns Release Version
 
@@ -294,6 +316,7 @@ def get_factory_version(targets=ALL_MINIONS, nowait=False):
     return _api_call(
         'get_factory_version', targets=targets, nowait=nowait
     )
+
 
 def reboot_server(targets=ALL_MINIONS, nowait=False):
     r"""Reboots the servers

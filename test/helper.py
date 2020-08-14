@@ -1,9 +1,27 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import sys
 import os
 import re
 import csv
 from pathlib import Path
-import attr
 import docker
 import testinfra
 from abc import ABC, abstractmethod
@@ -15,6 +33,8 @@ import pytest
 import logging
 logger = logging.getLogger(__name__)
 
+from provisioner.vendor import attr
+
 MODULE_DIR = Path(__file__).resolve().parent
 
 PROVISIONER_API_DIR = (MODULE_DIR.parent / 'api/python').resolve()
@@ -24,6 +44,7 @@ from provisioner.config import *
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
 PRVSNR_PKG_NAME = 'cortx-prvsnr'
+PRVSNR_API_PKG_NAME = 'python36-cortx-prvsnr'
 PRVSNR_CLI_PKG_NAME = 'cortx-prvsnr-cli'
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80

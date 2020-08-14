@@ -63,6 +63,9 @@ sspl:
   RAIDSENSOR:
     threaded: "true"
     RAID_status_file: "/proc/mdstat"
+  RAIDINTEGRITYSENSOR:
+    threaded: "true"
+    polling_interval: "604800"
   IPMI:
     user: "admin"
     pass: "admin"

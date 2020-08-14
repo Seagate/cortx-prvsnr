@@ -1,8 +1,5 @@
 include:
-  - .base
-{% if "physical" in grains['virtual'] %}
-  - .cluster_ip
-{% if pillar['cluster'][grains['id']]['bmc']['ip'] %}
-  - .stonith
-{% endif %}
-{% endif %}
+  - components.ha.corosync-pacemaker.config.base
+  - components.ha.corosync-pacemaker.config.setup_cluster
+  - components.ha.corosync-pacemaker.config.cluster_ip
+  - components.ha.corosync-pacemaker.config.stonith

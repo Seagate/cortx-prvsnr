@@ -1,4 +1,23 @@
 #!/bin/bash
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 script_dir=$(dirname $0)
 
 ftp_log="$logdir/fw_upgrade.log"
@@ -1047,26 +1066,61 @@ ctrl_shutdown()
     _cmd="shutdown $shutdown_ctrl_name"
     echo "ctrl_shutdown(): running command '$_cmd'" >> $logfile
     echo "Shutting down the storage controller: '$shutdown_ctrl_name'"
-    cmd_run "$_cmd" > $xml_doc || {
-       try=1
-       _timeout=300
-       echo "waiting for controller to shutdown" 2>&1 | tee -a $logfile
-       until ! ping -c 1 $host 2>&1 > /dev/null
-       do
-           if [[ "$try" -gt "$_timeout" ]]; then
-               echo -ne " timeout!"
-               echo -e "\nController did not shut down after $_timeout seconds"
-               echo "Please check the status manually"
-               exit 1
-           fi
-           echo -ne "."
-           try=$(( $try + 1 ))
-           sleep 4
-       done
-       echo -ne " done!"
-       echo -e "\nController is shutdown successfully" 2>&1 | tee -a $logfile
-       exit 0
-    }
+    if [[ $shutdown_ctrl_name = "a" || "$shutdown_ctrl_name" = "b" ]]; then
+        cmd_run "$_cmd"
+        _cmd="show controllers"
+        _xml_obj_bt="controllers"
+        _xml_obj_plist="status"
+        _tmp_file="$tmpdir/show_controllers"
+        _timeout=30
+        _try=1
+        _shutdown_status=false
+
+        until $_shutdown_status != true
+        do
+            if [[ "$_try" -gt "$_timeout" ]]; then
+                echo -ne " timeout!"  | tee -a $logfile
+                echo -e "\nController did not shut down within stipulated timeout"  | tee -a $logfile
+                echo "Please check the status manually" | tee -a $logfile
+                exit 0
+            fi
+            cmd_run "$_cmd"
+            parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+            [ -s $_tmp_file ] || {
+                echo "ctrl_shutdown(): No output from xmllint found" >> $logfile
+                rm -rf $_tmp_file
+                return 1
+            }
+            ret=$(grep -qE "OperationalDown|DownOperational" $_tmp_file)
+            if [[ $ret -eq 0 ]]; then
+                echo "Controller $shutdown_ctrl_name shutdown successfully"
+                _shutdown_status=true
+            fi
+            echo -ne "."
+            _try=$(( $_try + 1 ))
+            sleep 4
+        done
+    elif [[ $shutdown_ctrl_name = "both" ]]; then
+        # cmd_run "$_cmd" || {
+        # try=1
+        # _timeout=30
+        # echo "waiting for controller to shutdown" 2>&1 | tee -a $logfile
+        # until ! ping -c 1 $host 2>&1 > /dev/null
+        # do
+        #     if [[ "$try" -gt "$_timeout" ]]; then
+        #         echo -ne " timeout!"
+        #         echo -e "\nControllers did not shut down after $_timeout seconds"
+        #         echo "Please check the status manually"
+        #         exit 1
+        #     fi
+        #     echo -ne "."
+        #     try=$(( $try + 1 ))
+        #     sleep 4
+        # done
+        echo -ne " done!"
+        echo -e "\nController is shutdown successfully" 2>&1 | tee -a $logfile
+        exit 0
+    fi
 }
 
 ctrl_restart()
@@ -1080,7 +1134,7 @@ ctrl_restart()
     echo "Restarting controller: '$restart_ctrl_name'"
     cmd_run "$_cmd" > $xml_doc || {
         try=1
-        _timeout=300
+        _timeout=30
         echo "waiting for controller to come up" 2>&1 | tee -a $logfile
         until ping -c 1 $host 2>&1 > /dev/null
         do

@@ -1,7 +1,25 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 import docker
 import time
 import json
-import attr
 from pathlib import Path
 from collections import defaultdict
 
@@ -10,6 +28,7 @@ import testinfra
 
 import logging
 
+from provisioner.vendor import attr
 import test.helper as h
 from .helper import (
     fixture_builder,
@@ -42,6 +61,9 @@ ENV_LEVELS_HIERARCHY = {
                 'vm_box_name': 'geerlingguy/centos7',
                 'vm_box_version': '1.2.17'
             }
+        },
+        'centos8.2.2004': {
+            'docker': 'centos:8.2.2004'
         }
     },
     'repos-installed': 'base',
@@ -69,6 +91,7 @@ ENV_LEVELS_HIERARCHY = {
 
     # utility levels
     'rpmbuild': 'base',
+    'fpm': 'base',
     'utils': 'base',
     'network-manager-installed': 'base',
 
@@ -83,7 +106,7 @@ ENV_LEVELS_HIERARCHY = {
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
-DEFAULT_EOS_SPEC = {
+DEFAULT_CLUSTER_SPEC = {
     'eosnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
@@ -114,6 +137,7 @@ class HostMeta:
     _repo = attr.ib(init=False, default=None)
     _rpm_prvsnr = attr.ib(init=False, default=None)
     _rpm_prvsnr_cli = attr.ib(init=False, default=None)
+    _rpm_prvsnr_api = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
         # TODO more smarter logic to get iface that is asseccible from host
@@ -198,6 +222,13 @@ class HostMeta:
         return self._rpm_prvsnr_cli
 
     @property
+    def rpm_prvsnr_api(self):
+        if self._rpm_prvsnr_api is None:
+            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_api')
+            self._rpm_prvsnr_api = self.copy_to_host(rpm_local_path)
+        return self._rpm_prvsnr_api
+
+    @property
     def repo(self):
         if self._repo is None:
             repo_tgz = self.request.getfixturevalue('repo_tgz')
@@ -278,8 +309,8 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "eos_spec(dict): mark test as expecting "
-                   "specific EOS stack configuration, default: {}"
-                   .format(json.dumps(DEFAULT_EOS_SPEC))
+                   "specific cluster configuration, default: {}"
+                   .format(json.dumps(DEFAULT_CLUSTER_SPEC))
     )
     config.addinivalue_line(
         "markers", "hosts(list): mark test as expecting "
@@ -342,7 +373,7 @@ prvsnr_pytest_options = {
     ),
     "eos-release": dict(
         action='store', default='integration/centos-7.7.1908/last_successful',
-        help="Target EOS release to verify, defaults to 'integration/centos-7.7.1908/last_successful'"
+        help="Target release to verify, defaults to 'integration/centos-7.7.1908/last_successful'"
     )
 }
 
@@ -535,13 +566,21 @@ def repo_tgz(project_path, localhost, tmpdir_session):
     return res
 
 
-def _rpmbuild_mhost(request):
-    env_provider = request.config.getoption("env_provider")
-    base_env = request.config.getoption("base_env")
+def _rpmbuild_mhost(
+    request, env_provider=None, base_env=None, label=None
+):
+    if not env_provider:
+        env_provider = request.config.getoption("env_provider")
+
+    if not base_env:
+        base_env = request.config.getoption("base_env")
+
+    if not label:
+        label = 'rpmbuild'
 
     # TODO DOCS : example how to run machine out of fixture scope
     remote = build_remote(
-        env_provider, request, base_env, 'rpmbuild'
+        env_provider, request, base_env, label
     )
 
     try:
@@ -601,23 +640,59 @@ def rpm_prvsnr_cli_build(mhost, version=None, release_number=None):
     )
 
 
+def rpm_prvsnr_api_build(mhost, pkg_version=None):
+    build_dir = 'rpmbuild'
+    cmd = [
+        'devops/rpms/api/build_python_api.sh',
+        '--out-dir', build_dir,
+        '--out-type', 'rpm'
+    ]
+
+    if pkg_version:
+        cmd += ['--pkg-ver', pkg_version]
+
+    mhost.check_output(
+        'cd {0} && rm -rf {1} && mkdir {1} && sh -x {2}'
+        .format(mhost.repo, build_dir, ' '.join(cmd))
+    )
+    return Path(
+        mhost.check_output(
+            'ls {}/*.rpm | grep -v debug'
+            .format(mhost.repo / build_dir)
+        )
+    )
+
+
 @pytest.fixture(scope='session')
 def rpm_build():
     def _f(
         request, tmpdir_local,
-        version=None, release_number=None, cli=False, mhost_init_cb=None
+        rpm_type='core', mhost_init_cb=None,
+        **kwargs
     ):
-        mhost = _rpmbuild_mhost(request)
+        if rpm_type not in ('core', 'cli', 'api'):
+            raise ValueError(rpm_type)
+
+        if rpm_type == 'api':
+            env_provider = 'docker'
+            base_env = 'centos8.2.2004'
+            label = 'fpm'
+        else:
+            env_provider = None
+            base_env = None
+            label = None
+
+        mhost = _rpmbuild_mhost(
+            request, env_provider=env_provider, base_env=base_env, label=label
+        )
         # TODO DOCS : example how to run machine out of fixture scope
         with mhost.remote as _:
             if mhost_init_cb:
                 mhost_init_cb(mhost)
             rpm_remote_path = (
-                rpm_prvsnr_cli_build(
-                    mhost, version=version, release_number=release_number
-                ) if cli else rpm_prvsnr_build(
-                    mhost, version=version, release_number=release_number
-                )
+                rpm_prvsnr_cli_build(mhost, **kwargs) if rpm_type == 'cli'
+                else rpm_prvsnr_build(mhost, **kwargs) if rpm_type == 'core'
+                else rpm_prvsnr_api_build(mhost, **kwargs)
             )
             return _copy_to_local(
                 mhost, rpm_remote_path, tmpdir_local
@@ -627,12 +702,17 @@ def rpm_build():
 
 @pytest.fixture(scope='session')
 def rpm_prvsnr(request, tmpdir_session, rpm_build):
-    return rpm_build(request, tmpdir_session, cli=False)
+    return rpm_build(request, tmpdir_session, rpm_type='core')
 
 
 @pytest.fixture(scope='session')
 def rpm_prvsnr_cli(request, tmpdir_session, rpm_build):
-    return rpm_build(request, tmpdir_session, cli=True)
+    return rpm_build(request, tmpdir_session, rpm_type='cli')
+
+
+@pytest.fixture(scope='session')
+def rpm_prvsnr_api(request, tmpdir_session, rpm_build):
+    return rpm_build(request, tmpdir_session, rpm_type='api')
 
 
 @pytest.fixture(autouse=True)
@@ -1127,7 +1207,7 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 @pytest.fixture
 def eos_spec(request):
     marker = request.node.get_closest_marker('eos_spec')
-    spec = marker.args[0] if marker else DEFAULT_EOS_SPEC
+    spec = marker.args[0] if marker else DEFAULT_CLUSTER_SPEC
     return spec
 
 
@@ -1446,3 +1526,4 @@ build_mhost_fixture()
 # also host fixtures for EOS stack makes sense
 build_mhost_fixture('eosnode1')
 build_mhost_fixture('eosnode2')
+build_mhost_fixture('eosnode3')

@@ -1,4 +1,23 @@
 #!/bin/sh
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 
 set -e
 
@@ -52,11 +71,12 @@ pushd ~/rpmbuild/SOURCES/
 
     # Setup the source tar for rpm build
     DEST_DIR=cortx-prvsnr-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
-    mkdir -p ${DEST_DIR}/{cli,files/etc,pillar,srv,api}
+    mkdir -p ${DEST_DIR}/{cli,files/etc,files/conf,pillar,srv,api}
     cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIR}/cli
-    cp -R ${BASEDIR}/../../files/conf ${DEST_DIR}/files
+    cp -R ${BASEDIR}/../../srv/components/provisioner/files/setup.yaml ${DEST_DIR}/files/conf
     cp -R ${BASEDIR}/../../pillar ${DEST_DIR}
     cp -R ${BASEDIR}/../../srv ${DEST_DIR}
+    # TODO EOS-11551 remove later
     cp -R ${BASEDIR}/../../api ${DEST_DIR}
 
 

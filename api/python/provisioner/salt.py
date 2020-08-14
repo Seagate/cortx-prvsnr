@@ -1,4 +1,22 @@
-import attr
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 from abc import ABC, abstractmethod
 import salt.config
 from salt.client import LocalClient, Caller
@@ -10,6 +28,7 @@ from salt.client.ssh.client import SSHClient
 from pathlib import Path
 import logging
 
+from .vendor import attr
 from .config import (
    ALL_MINIONS, LOCAL_MINION,
    PRVSNR_USER_FILEROOT_DIR
@@ -497,8 +516,8 @@ class SaltClientBase(ABC):
                         )
                 )
             except Exception as exc:
-                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):
-                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))
+                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
+                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))  # noqa: E501
                 else:
                     raise exc
 

@@ -163,11 +163,6 @@ cli_summary: True
 # By default, events are not queued.
 #event_return_queue: 0
 
-# Only return events matching tags in a whitelist, supports glob matches.
-#event_return_whitelist:
-#  - salt/master/a_tag
-#  - salt/run/*/ret
-
 # Store all event returns **except** the tags in a blacklist, supports globs.
 #event_return_blacklist:
 #  - salt/master/not_this_tag
@@ -412,21 +407,6 @@ external_auth:
       - '*':
         - '.*'
       - '@runner'  # to allow access to all runner modules
-
-# Time (in seconds) for a newly generated token to live. Default: 12 hours
-#token_expire: 43200
-#
-# Allow eauth users to specify the expiry time of the tokens they generate.
-# A boolean applies to all users or a dictionary of whitelisted eauth backends
-# and usernames may be given.
-# token_expire_user_override:
-#   pam:
-#     - fred
-#     - tom
-#   ldap:
-#     - gary
-#
-#token_expire_user_override: False
 
 # Set to True to enable keeping the calculated user's auth list in the token
 # file. This is disabled by default and the auth list is calculated or requested
@@ -866,8 +846,8 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a
@@ -1172,15 +1152,15 @@ log_file: /var/log/seagate/provisioner/salt_master.log
 #key_logfile: /var/log/salt/key
 
 # The level of messages to send to the console.
-# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
+# One of 'trace', 'debug', info', 'warning', 'error', 'critical'.
 #
 # The following log levels are considered INSECURE and may log sensitive data:
-# ['garbage', 'trace', 'debug']
+# ['trace', 'debug']
 #
 #log_level: warning
 
 # The level of messages to send to the log file.
-# One of 'garbage', 'trace', 'debug', info', 'warning', 'error', 'critical'.
+# One of 'trace', 'debug', info', 'warning', 'error', 'critical'.
 # If using 'log_granular_levels' this must be set to the highest desired level.
 log_level_logfile: warning
 

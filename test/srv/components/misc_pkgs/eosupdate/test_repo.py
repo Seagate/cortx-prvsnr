@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 from pathlib import Path
 import os
 import pytest
@@ -104,7 +123,7 @@ def test_eosupdate_repo(
         # INSTALL
         # set source for the release
         if isinstance(source, Path):
-            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_EOSUPDATE_REPOS_DIR / release
+            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / release
             pillar_source = 'dir'
 
             if source.suffix == '.iso':
@@ -122,7 +141,7 @@ def test_eosupdate_repo(
         update_pillar()
         # apply states
         mhosteosnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
             .format(minion_id)
         )
         if mount_dir:
@@ -148,7 +167,7 @@ def test_eosupdate_repo(
         update_pillar()
         # apply states
         mhosteosnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
             .format(minion_id)
         )
         # check repo is not listed anymore
@@ -173,6 +192,6 @@ def test_eosupdate_repo(
     update_pillar()
     # apply states, should just does nothing
     mhosteosnode1.check_output(
-        "salt '{0}' state.apply components.misc_pkgs.eosupdate.repo"
+        "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
         .format(minion_id)
     )

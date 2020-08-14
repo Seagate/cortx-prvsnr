@@ -1,4 +1,23 @@
 #!/bin/bash
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 
 script_dir=$(dirname $0)
 export logdir="/var/log/seagate/provisioner/"
@@ -8,7 +27,24 @@ export tmpdir="$logdir/_ctrl_cli_tmp"
 [ ! -d $tmpdir ] && mkdir -p $tmpdir
 
 export logfile=$logdir/controller-cli.log
-[ -f $logfile ] && rm -rf $logfile
+
+function trap_handler {
+    echo "***** FAILED!! *****"
+    echo "For more details see $logfile"
+    exit 2
+}
+
+function trap_handler_exit {
+    if [[ $? -eq 1 ]]; then
+        echo "***** FAILED!! *****"
+        echo "For more details see $logfile"
+    else
+        exit $?
+    fi
+}
+
+trap trap_handler ERR
+trap trap_handler_exit EXIT
 
 source $script_dir/provision.sh
 source $script_dir/xml.sh
@@ -208,7 +244,7 @@ parse_hopts()
 
 parse_args()
 {
-    echo "parse_args(): parsing input arguments" > $logfile
+    echo "parse_args(): parsing input arguments" >> $logfile
     host_optparse_done=false
     prov_optparse_done=false
     prvsnr_mode=""
@@ -424,8 +460,38 @@ parse_args()
     return 0
 }
 
+input_params_validate()
+{
+    _test_cmd="show version"
+    $remote_cmd $_test_cmd > /tmp/version.xml
+    ret=$?
+    case $ret in
+        0)
+            echo "Info: The host details [host: $host user: $user password: $pass ] provided are correct" >> $logfile
+            ;;
+        5)  echo "Error: The credentials [user: $user password: $pass ] provided are not correct" | tee -a $logfile 
+            echo "Error: Please provide the correct credentials and try again" | tee -a $logfile
+            exit 1
+            ;;
+        255)
+            echo "Error: The hostname [host: $host ] provided is not reachable" | tee -a $logfile 
+            echo "Error: Please provide the correct host details and try again" | tee -a $logfile
+            exit 1
+            ;;
+        *)
+            echo "Error: ssh command failed with error $ret while connecting to host [host: $host]" | tee -a $logfile 
+            echo "Error: Please ensure the host is reachable over ssh and try again" | tee -a $logfile
+            exit 1
+        ;;
+    esac
+}
+
 main()
 {
+    echo -e "\n-------------- Running $0 -----------------" >> $logfile
+    timestamp=$(date)
+    echo "Runtime: $timestamp" >> $logfile
+    echo "Inpupt arguments provided: $@" >> $logfile
     parse_args "$@"
     reqd_pkgs_install "$ssh_tool" "$xml_cmd" "$bc_tool"
 
@@ -433,13 +499,14 @@ main()
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
         || "$shutdown_ctrl_opt" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
-        pass=`salt-call lyveutil.decrypt ${pass} storage_enclosure --output=newline_values_only`
+        pass=`salt-call lyveutil.decrypt storage_enclosure ${pass} --output=newline_values_only`
         echo "main(): decrypted password: $pass" >> $logfile
         ssh_cred="$ssh_tool -p $pass"
         ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
         remote_cmd="$ssh_cred $ssh_cmd"
     fi
 
+    input_params_validate
     [ "$prov_optparse_done" = true ] && do_provision
     [ "$show_disks" = true ] && disks_list
     [ "$load_license" = true ] && fw_license_load
