@@ -743,27 +743,27 @@ def hash_file(path, host=localhost):
 
 
 # TODO eventually helper
-def ensure_mero_is_online(mhost, num_tries=120):
-    # ensure that mero in online
+def ensure_motr_is_online(mhost, num_tries=120):
+    # ensure that motr in online
     re_status = re.compile(r' +\[ *(.+)\]')
     for i in range(num_tries):
-        mero_status = mhost.check_output("hctl mero status")
-        logger.debug('mero status, try {}: {}'.format(i + 1, mero_status))
-        for line in mero_status.split('\n'):
+        motr_status = mhost.check_output("hctl mero status")
+        logger.debug('motr status, try {}: {}'.format(i + 1, motr_status))
+        for line in motr_status.split('\n'):
             m = re_status.match(line)
             if m and m.group(1) != 'online':
                 sleep(1)
                 break
         else:
             logger.info(
-                'mero becomes online after {} checks:\n{}'
-                .format(i + 1, mero_status)
+                'motr becomes online after {} checks:\n{}'
+                .format(i + 1, motr_status)
             )
             break
     else:
         assert False, (
-            'mero is not online after {} tries, last status: {}'
-            .format(num_tries, mero_status)
+            'motr is not online after {} tries, last status: {}'
+            .format(num_tries, motr_status)
         )
 
 
@@ -773,7 +773,7 @@ def bootstrap_eos(mhost):
         'bash {} -vv -S'
         .format(PRVSNR_REPO_INSTALL_DIR / 'cli/bootstrap-eos')
     )
-    ensure_mero_is_online(mhost)
+    ensure_motr_is_online(mhost)
 
 
 def install_provisioner_api(mhost):

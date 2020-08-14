@@ -43,7 +43,7 @@ def script_name():
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("restart", [True, False], ids=['start', 'restart'])
-def test_start_eos_commands(
+def test_start_cortx_commands(
     mhost, mlocalhost, ssh_config, remote, restart, mock_hosts, run_script
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
