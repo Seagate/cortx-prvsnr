@@ -19,13 +19,12 @@
 
 import os
 import pytest
-import json
 import logging
 
 logger = logging.getLogger(__name__)
 
 # TODO better correlation with post_env_run_hook routine
-DEFAULT_SCRIPT_PATH = "/tmp/bootstrap-eos"
+DEFAULT_SCRIPT_PATH = "/tmp/bootstrap-cortx"
 
 
 @pytest.fixture(scope='module')
@@ -35,7 +34,7 @@ def env_level():
 
 @pytest.fixture(scope='module')
 def script_name():
-    return 'bootstrap-eos'
+    return 'bootstrap-cortx'
 
 
 # isolated is required since parametrization is used
@@ -43,13 +42,15 @@ def script_name():
 @pytest.mark.isolated
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("singlenode", [True, False], ids=['singlenode', 'cluster'])
+@pytest.mark.parametrize(
+    "singlenode", [True, False], ids=['singlenode', 'cluster']
+)
 def test_bootstrap_cortx_commands(
     mhost, mlocalhost, ssh_config, remote, singlenode, mock_hosts, run_script
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "{} {} {} {}".format(

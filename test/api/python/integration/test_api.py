@@ -213,7 +213,7 @@ def test_set_network(
 @pytest.mark.parametrize(
     "cluster", [True, False], ids=['cluster', 'singlenode']
 )
-def test_set_eosupdate_repo(
+def test_set_swupdate_repo(
     request, cluster, api_type, api_run_mode
 ):
     if cluster:
@@ -253,7 +253,7 @@ def test_set_eosupdate_repo(
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
-def test_set_eosupdate_repo_for_reinstall(
+def test_set_swupdate_repo_for_reinstall(
     mhostsrvnode1, mlocalhost, run_test, rpm_build, request
 ):
     repo_dir = '/tmp/repo'

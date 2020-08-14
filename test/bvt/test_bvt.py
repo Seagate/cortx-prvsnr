@@ -50,10 +50,11 @@ def hosts_spec(hosts_spec):
     return res
 
 
-
 def ensure_hw_configuration(mhost, tmpdir):
     logger.info("Ensuring HW configuration...")
-    lsblk_res = mhost.check_output("lsblk -l -d -S -p -n -b --output NAME,SIZE,TRAN | grep 'sas'")
+    lsblk_res = mhost.check_output(
+        "lsblk -l -d -S -p -n -b --output NAME,SIZE,TRAN | grep 'sas'"
+    )
     logger.debug('SAS Block devices: {}'.format(lsblk_res))
 
     lsblk_res = lsblk_res.split('\n')
@@ -71,15 +72,19 @@ def ensure_hw_configuration(mhost, tmpdir):
     # get current pillar data
     res = mhost.check_output(
         "bash {} --show-file-format cluster"
-        .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure-eos')
+        .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure')
     )
     cluster_sls = yaml.safe_load(res)
 
     cluster_dev_data = cluster_sls['cluster']['srvnode-1']['storage']
 
-    if mgmt_dev != cluster_dev_data['metadata_device'][0] or data_dev != cluster_dev_data['data_devices'][0]:
+    if (
+        mgmt_dev != cluster_dev_data['metadata_device'][0]
+        or data_dev != cluster_dev_data['data_devices'][0]
+    ):
         logger.warning(
-            "Unexpected devices mapping: system - mgmt '{}', data '{}', cluster - {}."
+            "Unexpected devices mapping: system - mgmt '{}', "
+            "data '{}', cluster - {}."
             " Reconfiguring cluster.sls ..."
             .format(mgmt_dev, data_dev, cluster_dev_data)
         )
@@ -94,7 +99,10 @@ def ensure_hw_configuration(mhost, tmpdir):
         remote_tmp_file = mhost.copy_to_host(tmp_file)
         mhost.check_output(
             "bash {} --file {} cluster"
-            .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure-eos', remote_tmp_file)
+            .format(
+                h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure',
+                remote_tmp_file
+            )
         )
 
 
@@ -114,7 +122,10 @@ def configure_bvt_s3_env(mhost, remote_bvt_repo_path):
         "s3iamcli CreateAccount -n root -e root@seagate.com"
         " --ldapuser sgiamadmin --ldappasswd ldapadmin"
     )
-    m = re.match(r'.* AccessKeyId = ([^,]+), SecretKey = ([^, ]+)', account_data)
+    m = re.match(
+        r'.* AccessKeyId = ([^,]+), SecretKey = ([^, ]+)',
+        account_data
+    )
     aws_access_key = m.group(1)
     aws_secret_key = m.group(2)
 
@@ -177,7 +188,6 @@ def get_bvt_results(
     logger.info("Stored results as '{}'".format(local_path))
 
 
-
 @pytest.mark.timeout(3600)
 @pytest.mark.cortx_bvt
 @pytest.mark.isolated
@@ -199,8 +209,10 @@ def test_bvt(mlocalhost, mhostsrvnode1, request, tmpdir_function):
     assert local_bvt_repo_path.exists()
 
     # upload tests to the remote
-    remote_bvt_repo_archive_path = mhostsrvnode1.copy_to_host(local_bvt_repo_path)
-    remote_bvt_repo_path = remote_bvt_repo_archive_path.parent / 'eos-test'
+    remote_bvt_repo_archive_path = mhostsrvnode1.copy_to_host(
+        local_bvt_repo_path
+    )
+    remote_bvt_repo_path = remote_bvt_repo_archive_path.parent / 'cortx-test'
     mhostsrvnode1.check_output(
         'mkdir -p "{0}"; tar -zxf "{1}" -C "{0}" --strip-components=1'
         .format(remote_bvt_repo_path, remote_bvt_repo_archive_path),
@@ -211,7 +223,7 @@ def test_bvt(mlocalhost, mhostsrvnode1, request, tmpdir_function):
 
     prepare_bvt_python_env(mhostsrvnode1, remote_bvt_repo_path)
 
-    h.bootstrap_eos(mhostsrvnode1)
+    h.bootstrap_cortx(mhostsrvnode1)
 
     configure_bvt_s3_env(mhostsrvnode1, remote_bvt_repo_path)
 

@@ -19,7 +19,7 @@
       "vboxmanage": [
         [ "storagectl",
           "{{.Name}}",
-          "--name", "eosnode_vdisk",
+          "--name", "srvnode_vdisk",
           "--add", "sas",
           "--controller", "LSILogicSAS",
           "--portcount", 2,

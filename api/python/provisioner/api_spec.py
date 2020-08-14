@@ -35,7 +35,7 @@ PARAM_TYPE_KEY = '_type'
 logger = logging.getLogger(__name__)
 
 
-def process_param_spec(
+def process_param_spec(  # noqa: C901 FIXME
     spec: Dict, parent: Path = None, path: Path = None, dest: dict = None
 ):
     if dest is None:

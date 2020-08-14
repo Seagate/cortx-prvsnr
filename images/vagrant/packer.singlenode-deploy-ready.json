@@ -20,7 +20,7 @@
       "add_force"           : "true",
       "template"            : "{{template_dir}}/vagrantfile.packer.template",
       "output_dir"          : "{{template_dir}}/../../.boxes/{{user `base_env`}}/singlenode-deploy-ready",
-      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.eos.boxed",
+      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.cortx.boxed",
       "package_include"     : [
           "{{template_dir}}/../../test/id_rsa.test"
       ],
