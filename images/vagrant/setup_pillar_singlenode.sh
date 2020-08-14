@@ -29,7 +29,7 @@ mgmt_if="${1:-enp0s8}"
 data_if="${2:-enp0s8}"
 mgmt_device="${3:-/dev/sdb}"
 data_device="${4:-/dev/sdc}"
-cortx_release="${5:-integration/centos-7.7.1908/last_successful}"
+release="${5:-integration/centos-7.7.1908/last_successful}"
 
 # configure cluster.sls
 pillar_file_tmp="$(realpath ./pillar.sls.tmp)"
@@ -47,7 +47,7 @@ bash ./configure -vv -f "$pillar_file_tmp" cluster
 
 bash ./configure -p release >"$pillar_file_tmp"
 cat "$pillar_file_tmp"
-sed -i "s~target_build: .*~target_build: $cortx_release~g" "$pillar_file_tmp"
+sed -i "s~target_build: .*~target_build: $release~g" "$pillar_file_tmp"
 cat "$pillar_file_tmp"
 bash ./configure -vv -f "$pillar_file_tmp" release
 
