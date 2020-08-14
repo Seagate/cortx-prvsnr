@@ -33,7 +33,8 @@ Install flask:
 
 Install cortx-sspl-test:
   pkg.installed:
-    - name: cortx-sspl-test
-    - requires:
+    - name: eos-sspl-test
+    - version: latest
+    - require:
       - Install flask
       - Install cortx-sspl packages
