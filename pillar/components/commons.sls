@@ -12,3 +12,7 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
+  repo:
+    nodejs: http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/commons/node
+    lustre: http://cortx-storage.colo.seagate.com/releases/eos/lustre/custom/
+   
