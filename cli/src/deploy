@@ -194,7 +194,6 @@ function run_states {
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.setup_cluster  $salt_opts
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
-            fi
             elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"

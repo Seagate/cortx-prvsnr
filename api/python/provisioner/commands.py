@@ -263,7 +263,7 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "the source for provisioner repo installation",
-                'choices': ['local', 'gitlab', 'gitrepo', 'rpm']
+                'choices': ['local', 'gitrepo', 'rpm']
             }
         },
         default='rpm'
@@ -1411,8 +1411,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_user",
         "controller_secret",
         "primary_hostname",
-        "primary_network_iface",
-        "primary_bmc_ip",
+        "primary_data_network_iface",
         "primary_bmc_user",
         "primary_bmc_secret"]
     DUAL_PARAM = [
@@ -1422,13 +1421,11 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_user",
         "controller_secret",
         "primary_hostname",
-        "primary_network_iface",
-        "primary_bmc_ip",
+        "primary_data_network_iface",
         "primary_bmc_user",
         "primary_bmc_secret",
         "secondary_hostname",
-        "secondary_network_iface",
-        "secondary_bmc_ip",
+        "secondary_data_network_iface",
         "secondary_bmc_user",
         "secondary_bmc_secret"]
 

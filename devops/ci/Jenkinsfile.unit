@@ -103,9 +103,6 @@ Closure staticValidation = {
 Closure dynamicValidation = {
     checkout scm
 
-    // tags are needed for some tests
-    sh "git fetch --tags"
-
     def test_err
     String testReportFileNameXml = "pytest.xml"
     String testReportFileNamePlain = "pytest.out.txt"
