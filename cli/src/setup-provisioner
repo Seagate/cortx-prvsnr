@@ -73,7 +73,7 @@ $base_options_usage
 Options:
        --srvnode-2=[user@]hostname      srvnode-2 host specification,
                                          default: $srvnode_2_hostspec
-       --repo-src={local|gitlab|gitrepo|rpm}    the source for provisioner repo installation,
+       --repo-src={local|gitrepo|rpm}    the source for provisioner repo installation,
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt master
                                          default: not specified
