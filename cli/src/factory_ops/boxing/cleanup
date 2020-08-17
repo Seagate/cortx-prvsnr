@@ -1,0 +1,96 @@
+#!/bin/sh
+set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_cleanup.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+truncate -s 0 ${LOG_FILE}
+
+PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+
+function trap_handler {
+    echo "***** ERROR! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+    echo "******************"
+}
+trap trap_handler ERR
+
+
+sub_manager_check()
+{
+    echo "Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
+    subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
+    subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
+    if echo "$subc_list" | grep -q "Subscribed"; then
+        if [[  "$subc_status" == "Current" ]]; then
+            echo "RedHat subscription manager is enabled." 2>&1 | tee -a ${LOG_FILE}
+            subscription="enabled"
+        else
+            echo "RedHat subscription manager is disabled." 2>&1 | tee -a ${LOG_FILE}
+            subscription="disabled"
+        fi
+    fi
+}
+
+sub_manager_cleanup()
+{
+
+    echo "Cleaning up the subscription manager" | tee -a ${LOG_FILE}
+
+    echo "Running the subscription-manager auto-attach" | tee -a ${LOG_FILE}
+    subscription-manager auto-attach --disable || true  | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager remove --all" | tee -a ${LOG_FILE}
+    subscription-manager remove --all || true | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager unregister" | tee -a ${LOG_FILE}
+    subscription-manager unregister || true | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager clean" | tee -a ${LOG_FILE}
+    subscription-manager clean || true | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    subscription-manager config --rhsm.manage_repos=0 | tee -a ${LOG_FILE}
+}
+
+sub_manager_check
+sub_manager_cleanup
+
+echo "Moving following repos to /root/repos_bkp" | tee -a ${LOG_FILE}
+grep -lE "seagate.com" /etc/yum.repos.d/*.repo | tee -a ${LOG_FILE}
+mkdir -p /root/repos_bkp
+
+for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`
+do
+    echo "$file" | tee -a ${LOG_FILE}
+    mv $file /root/repos_bkp
+done
+
+echo "Cleaning yum cache" | tee -a ${LOG_FILE}
+yum clean all
+
+functions_sh_path="/opt/seagate/eos-prvsnr/cli/common_utils/functions.sh"
+echo "DEBUG: copying $functions_sh_path to ${functions_sh_path}.bkp" >> ${LOG_FILE}
+cp $functions_sh_path ${functions_sh_path}.bkp
+
+echo "updating functions" | tee -a ${LOG_FILE} 
+line1=`grep -n '\${_cmd} \"yum install -y ipmitool\"' $functions_sh_path | cut -f1 -d:`
+echo "DEBUG: line1=$line1" >> ${LOG_FILE}
+sed -ie "${line1}s/.*/        touch \/tmp\/skip_ipmi_install_hf1 /" $functions_sh_path
+
+line2=`grep -n "yum install -y ipmitool" $functions_sh_path | cut -f1 -d:`
+echo "DEBUG: line2=$line2" >> ${LOG_FILE}
+sed -ie "${line2}s/.*/        touch \/tmp\/skip_ipmi_install_hf2 /" $functions_sh_path
+
+n_diff_lines=`diff $functions_sh_path ${functions_sh_path}.bkp | grep "^>" | wc -l`
+echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+
+if [[ $n_diff_lines != 2 ]]; then
+    echo "Could not update the contents in functions, restoring the original content" | tee -a ${LOG_FILE}
+    rm -f $functions_sh_path
+    cp $functions_sh_path ${functions_sh_path}.bkp
+else
+    echo "Successfully updated the contents in functions" | tee -a ${LOG_FILE}
+fi
+
+echo "Done" | tee -a ${LOG_FILE}
