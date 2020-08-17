@@ -1181,10 +1181,6 @@ function install_provisioner {
         fi
     fi
 
-if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
-    wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
-fi
-
 ! read -r -d '' _prvsnr_repo << EOF
 [provisioner]
 gpgcheck=0
@@ -1254,6 +1250,9 @@ EOF
     fi
 
     cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
+    if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
+        wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
+    fi
 EOF
 
     if [[ -n "$_hostspec" ]]; then
