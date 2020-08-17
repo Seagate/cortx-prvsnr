@@ -52,7 +52,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE,
+    SSL_CERTS_FILE, PRVSNR_PILLAR_CONFIG_INI,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -1790,6 +1790,21 @@ class SetupProvisioner(CommandParserFillerMixin):
         )
         repo_tgz_path.unlink()
 
+    def _copy_config_ini(self, run_args, profile_paths):
+        minions_dir = (
+            profile_paths['salt_fileroot_dir'] /
+            "provisioner/files/minions/all/"
+        )
+        config_path = minions_dir / 'config.ini'
+        if run_args.config_path:
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(run_args.config_path),
+                    str(config_path)
+                ]
+            )
+
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
@@ -2062,6 +2077,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, paths)
+
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
             ALL_MINIONS if run_args.ha else run_args.primary.minion_id
@@ -2314,10 +2332,6 @@ class SetupCluster(SetupProvisioner):
 
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
-        config_path = kwargs.pop('config_path')
-        if config_path:
-            config_setup = ConfigureSetup()
-            config_setup.run(config_path, SetupType.DUAL.value)
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
@@ -2334,7 +2348,14 @@ class SetupCluster(SetupProvisioner):
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
-
+        if run_args.config_path:
+            logger.info("Updating pillar data using config.ini")
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    '/usr/local/bin/provisioner configure_setup '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
         logger.info("Done")
 
 
