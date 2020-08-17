@@ -21,4 +21,8 @@
 # Shutdown Cluster:
 #   cmd.run:
 #     - name: hctl shutdown
+{% else %}
+Start hare on non-primary node:
+  test.show_notification:
+    - text: "No changes needed on non-primary node"
 {% endif %}

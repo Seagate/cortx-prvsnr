@@ -21,4 +21,8 @@
 # Start Hare:
 #   cmd.run:
 #     - name: hctl bootstrap --conf-dir /var/lib/hare
+{% else %}
+Start hare on non-primary node:
+  test.show_notification:
+    - text: "No changes needed on non-primary node"
 {% endif %}
