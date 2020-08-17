@@ -263,7 +263,7 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "the source for provisioner repo installation",
-                'choices': ['local', 'gitlab', 'gitrepo', 'rpm']
+                'choices': ['local', 'gitrepo', 'rpm']
             }
         },
         default='rpm'
