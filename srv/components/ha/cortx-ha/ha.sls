@@ -20,7 +20,7 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 include:
   - components.ha.cortx-ha.install
-  - components.ha.ees_ha.prepare
+  - components.ha.ldr1_ha.prepare
 
 Run cortx-ha HA setup:
   cmd.run:
