@@ -36,3 +36,7 @@
 #     - name: source ~/.bashrc
 #     - watch:
 #       - Set nodejs in bash_profile
+
+Dummy placeholder for nodejs.config:
+  test.show_notification:
+    - text: "A yaml file with comments results in minion non-zero exit"
