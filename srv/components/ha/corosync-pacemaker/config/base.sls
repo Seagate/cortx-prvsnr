@@ -58,7 +58,7 @@ Start pcsd service:
     - require:
       - Install pcs
 
-{% if 'primary' in grains['roles'] %}
+{#% if ('primary' in grains['roles']) or ('true' in salt["environ.get"]('REPLACEMENT_NODE', 'false')) %#}
 Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
@@ -72,4 +72,4 @@ Authorize nodes:
       - '--force'
     - require:
       - Start pcsd service
-{% endif %}
+{#% endif %#}
