@@ -705,7 +705,7 @@ def _set_auth(kwargs):
     return
 
 
-def _salt_runner_cmd(
+def _salt_runner_cmd(  # noqa: C901 FIXME
     fun: str,
     fun_args: Union[Tuple, None] = None,
     fun_kwargs: Union[Dict, None] = None,

@@ -35,7 +35,7 @@ cortx_release="${5:-integration/centos-7.7.1908/last_successful}"
 pillar_file_tmp="$(realpath ./pillar.sls.tmp)"
 default_gateway="$(ip route | grep default | head -1 | awk '{print $3}')"
 
-bash ./configure-eos -p cluster >"$pillar_file_tmp"
+bash ./configure -p cluster >"$pillar_file_tmp"
 cat "$pillar_file_tmp"
 sed -i "s~mgmt_if: .*~mgmt_if: $mgmt_if~g" "$pillar_file_tmp"
 sed -i "s~data_if: .*~data_if: $data_if~g" "$pillar_file_tmp"
@@ -43,12 +43,12 @@ sed -i "s~/dev/sdb.*~$mgmt_device~g" "$pillar_file_tmp"
 sed -i "s~/dev/sdc.*~$data_device~g" "$pillar_file_tmp"
 sed -i "s~gateway: .*~gateway: $default_gateway~g" "$pillar_file_tmp"
 cat "$pillar_file_tmp"
-bash ./configure-eos -vv -f "$pillar_file_tmp" cluster
+bash ./configure -vv -f "$pillar_file_tmp" cluster
 
-bash ./configure-eos -p release >"$pillar_file_tmp"
+bash ./configure -p release >"$pillar_file_tmp"
 cat "$pillar_file_tmp"
 sed -i "s~target_build: .*~target_build: $cortx_release~g" "$pillar_file_tmp"
 cat "$pillar_file_tmp"
-bash ./configure-eos -vv -f "$pillar_file_tmp" release
+bash ./configure -vv -f "$pillar_file_tmp" release
 
 rm -f "$pillar_file_tmp"

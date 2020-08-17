@@ -19,14 +19,13 @@
 
 import os
 import pytest
-import json
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 # TODO better correlation with post_env_run_hook routine
-DEFAULT_SCRIPT_PATH = "/tmp/stop-eos"
+DEFAULT_SCRIPT_PATH = "/tmp/stop"
 
 
 @pytest.fixture(scope='module')
@@ -36,7 +35,7 @@ def env_level():
 
 @pytest.fixture(scope='module')
 def script_name():
-    return 'stop-eos'
+    return 'stop'
 
 
 # TODO test=True case
@@ -49,7 +48,7 @@ def test_stop_cortx_commands(
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "{} {} {}".format(

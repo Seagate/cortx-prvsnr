@@ -48,7 +48,8 @@ def test_setup_ssh_known_hosts(
         }
     }))
 
-    csm_setup_yaml_mock_remote = Path('/opt/seagate/eos/csm/conf/setup.yaml')
+    # FIXME renaming
+    csm_setup_yaml_mock_remote = Path('/opt/seagate/cortx/csm/conf/setup.yaml')
 
     mhostsrvnode1.copy_to_host(
         csm_setup_yaml_mock_local,

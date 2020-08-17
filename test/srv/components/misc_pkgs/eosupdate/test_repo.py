@@ -32,11 +32,11 @@ logger = logging.getLogger(__name__)
 #  - might makes sense. to verify for cluster case as well
 #  - split into more focused scenarios
 #  - tests for states relations
-@pytest.mark.isolated
+@pytest.mark.isolated  # noqa: C901 TODO improve
 @pytest.mark.env_provider('vbox')  # mount makes docker inappropriate
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
-def test_eosupdate_repo(
+def test_swupdate_repo(
     mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
     repo_dir = '/tmp/repo'
@@ -123,7 +123,10 @@ def test_eosupdate_repo(
         # INSTALL
         # set source for the release
         if isinstance(source, Path):
-            _source = h.PRVSNR_USER_FILEROOT_DIR / h.PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / release
+            _source = (
+                h.PRVSNR_USER_FILEROOT_DIR /
+                h.PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / release
+            )
             pillar_source = 'dir'
 
             if source.suffix == '.iso':
@@ -140,7 +143,7 @@ def test_eosupdate_repo(
         update_spec['repos'][release] = pillar_source
         update_pillar()
         # apply states
-        mhosteosnode1.check_output(
+        mhostsrvnode1.check_output(
             "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
             .format(minion_id)
         )

@@ -379,7 +379,7 @@ def test_set_network():
 
 
 # TODO test for only one minion in cluster (not ALL_MINIONS)
-def test_set_eosupdate_repo():
+def test_set_swupdate_repo():  # noqa: C901 FIXME
     # test_mode = os.environ['TEST_MODE']
     repo_dir = os.environ['TEST_REPO_DIR']
     iso_path = os.environ['TEST_REPO_ISO_PATH']
@@ -434,7 +434,7 @@ def test_set_eosupdate_repo():
     source = 'some/invalid/source'
     with pytest.raises(expected_exc) as excinfo:
         api_call(
-            'set_eosupdate_repo', '1.2.3',
+            'set_swupdate_repo', '1.2.3',
             source=source, dry_run=True
         )
     exc = excinfo.value
@@ -470,7 +470,7 @@ def test_set_eosupdate_repo():
 
         # INSTALL
         api_call(
-            'set_eosupdate_repo', release, source=source
+            'set_swupdate_repo', release, source=source
         )
 
         curr_params = api_call('get_params', 'swupdate/repos')
@@ -513,7 +513,7 @@ def test_set_eosupdate_repo():
         # REMOVE
         # TODO UNDEFINED
         api_call(
-            'set_eosupdate_repo',
+            'set_swupdate_repo',
             release,
             source=undefined_value
         )
@@ -526,7 +526,7 @@ def test_set_eosupdate_repo():
 
         # dry run check
         api_call(
-            'set_eosupdate_repo',
+            'set_swupdate_repo',
             release,
             source=source,
             dry_run=True
@@ -555,7 +555,7 @@ def test_set_eosupdate_repo():
 
         # INSTALL
         api_call(
-            'set_eosupdate_repo', release, source=source
+            'set_swupdate_repo', release, source=source
         )
 
         # check repo is enabled
@@ -592,7 +592,7 @@ def test_set_eosupdate_repo():
         # REMOVE
         # TODO UNDEFINED
         api_call(
-            'set_eosupdate_repo',
+            'set_swupdate_repo',
             release,
             source=undefined_value
         )
@@ -604,7 +604,7 @@ def test_set_eosupdate_repo():
     )
 
 
-def test_set_eosupdate_repo_for_reinstall():
+def test_set_swupdate_repo_for_reinstall():
     repo_dir = os.environ['TEST_REPO_DIR']
     test_file_path = os.environ['TEST_FILE_PATH']
     # base_repo_name = 'cortx_update'
@@ -616,7 +616,7 @@ def test_set_eosupdate_repo_for_reinstall():
 
     # INSTALL
     api_call(
-        'set_eosupdate_repo', release, source=source, targets=minion_id
+        'set_swupdate_repo', release, source=source, targets=minion_id
     )
 
     run_cmd(
@@ -629,12 +629,12 @@ def test_set_eosupdate_repo_for_reinstall():
 
 # TODO for now just tests that repo is installed and yum able
 #      to start installation (which will definitely fail)
-#   - install eos stack first from some release
+#   - install CORTX stack first from some release
 #   - set some newer release
 #   - call udpate
 def test_cortx_update():
     api_call(
-        'set_eosupdate_repo',
+        'set_swupdate_repo',
         '1.2.3',
         source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',  # noqa: E501
         targets=minion_id

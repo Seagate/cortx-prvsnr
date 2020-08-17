@@ -17,13 +17,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import os
 import pytest
 import json
 
 import logging
-
-from test.helper import PRVSNR_REPO_INSTALL_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +40,9 @@ def test_setup_ssh_known_hosts(
         )
     )
 
-    output = mhostsrvnode1.check_output('salt-call --local --out json config.get master')
+    output = mhostsrvnode1.check_output(
+        'salt-call --local --out json config.get master'
+    )
     master_host = json.loads(output)['local']
 
     # TODO checks for the keys' types
