@@ -1,7 +1,7 @@
 DEVICE="enp0s9"
 TYPE="Ethernet"
 BOOTPROTO="none"
-MASTER="data0"
+PRIMARY="data0"
 SECONDARY="yes"
 NM_CONTROLLED="no"
 USRCTL="no"
