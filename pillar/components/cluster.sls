@@ -83,3 +83,5 @@ cluster:
         - /dev/sdb
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc
+  replace_node:
+    minion_id: null                 # Could be srvnode-1, srvnode-2 or something similar
