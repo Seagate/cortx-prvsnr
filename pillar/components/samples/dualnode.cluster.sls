@@ -40,7 +40,7 @@ cluster:
           - eno1
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
           - enp175s0f0                # Public Data
