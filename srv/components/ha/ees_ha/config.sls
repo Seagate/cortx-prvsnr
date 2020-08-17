@@ -24,13 +24,13 @@ include:
 
 Post install for LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ldr1.yaml', 'ldr1-ha:post_install')
 
 Config for LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ldr1.yaml', 'ldr1-ha:config')
 
 start LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ldr1.yaml', 'ldr1-ha:init')
 {% endif %}
