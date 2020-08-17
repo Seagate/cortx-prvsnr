@@ -19,8 +19,8 @@
 
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
 include:
-  - components.ha.ees_ha.prepare
-  - components.ha.ees_ha.install
+  - components.ha.cortx-ha.prepare
+  - components.ha.cortx-ha.install
 
 Post install for LDR-R1 HA cluster:
   cmd.run:
