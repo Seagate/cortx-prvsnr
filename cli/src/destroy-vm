@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
+
 
 set -euE
 
@@ -84,7 +85,7 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Removes EOS stack and configures eos services on VM environment.
+Removes CORTX stack and cleanups cortx dependencies on VM environment.
 
 Must be run from primary node for Dual node and from VM itself for single node.
 
@@ -237,6 +238,10 @@ if [[ "$remove_prvsnr" == true ]]; then
     l_info "Removing prvsnr api logs configuration from node-1"
     rm -rf /etc/rsyslog.d/prvsnrfwd.conf || true
     rm -rf /etc/rsyslog.d/2-prvsnrfwd.conf || true
+
+    # TODO EOS-11551 enable later
+    # l_info "Removing cortx-prvsnr api package from both nodes"
+    # salt '*' pkg.remove python36-cortx-prvsnr $salt_opts || true
 
     l_info "Removing cortx-prvsnr package from both nodes"
     salt '*' pkg.remove cortx-prvsnr $salt_opts || true

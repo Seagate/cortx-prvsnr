@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
+
 
 set -euE
 
@@ -95,7 +96,7 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs CORTX stack and configures cortx services either on remote host or locally.
+Removes CORTX stack and cleanups cortx dependencies either on remote host or locally.
 
 Target host is considered to be an CORTX SaltStack master.
 
@@ -108,7 +109,7 @@ Options:
     --iopath-states                             run only teardown of iopath components
     --ctrlpath-states                           run only teardown of control path components
     --remove-prvsnr                             run teardown to remove cortx-prvsnr, cortx-prvsnr-cli
-                                                   and related dependencies.
+                                                    python36-cortx-prvsnr and related dependencies.
     --prereq-states                             run only teardown of prerequisite components
     --system-states                             run only teardown of system components
 "
@@ -191,7 +192,17 @@ function teardown_states {
     fi
 }
 
-parse_args 'S' 'singlenode:,ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
+# Ensure the cluster is in maintenance mode before teardown
+function ensure_cluster_in_maintenance {
+    if command -v hctl ; then
+        echo "INFO: Putting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+        hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE} || true
+    else
+        echo "[WARN     ]: Command 'pcs' not found, cannot put cluster into maintenance mode." 2>&1 | tee -a ${LOG_FILE}
+    fi
+}
+
+parse_args 'S:' 'singlenode:,ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -207,6 +218,8 @@ fi
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run"
 
 if [[ "$run_all" == true ]]; then
+    ensure_cluster_in_maintenance
+
     teardown_states "${controlpath_states[@]}"
     teardown_states "${ha_states[@]}"
     teardown_states "${iopath_states[@]}"
@@ -215,11 +228,15 @@ if [[ "$run_all" == true ]]; then
 fi
 
 if [[ "$ctrlpath_states" == true ]]; then
+    ensure_cluster_in_maintenance
+
     l_info "Removing the control path group packages"
     teardown_states "${controlpath_states[@]}"
 fi
 
 if [[ "$run_ha_states" == true ]]; then
+    ensure_cluster_in_maintenance
+    
     l_info "Removing the HA group packages"
     teardown_states "${ha_states[@]}"
 fi

@@ -18,7 +18,6 @@
 #
 
 
-
 def run_script(
     mhost, script_path, *args, trace=False, stderr_to_stdout=True, env=None
 ):

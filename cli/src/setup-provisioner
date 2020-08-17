@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
+
 
 set -euE
 
@@ -26,7 +27,7 @@ trap trap_handler ERR
 SCRIPT_PATH=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT_PATH")
 INSTALLDIR="/opt/seagate/cortx/provisioner"
-EES_PRVSNR_REPO_API_TAGS='http://gitlab.mero.colo.seagate.com/api/v4/projects/eos%2Fprovisioner%2Fees-prvsnr/repository/tags?order_by=updated&sort=desc'
+LDR_R1_PRVSNR_REPO_API_TAGS='https://github.com/Seagate/cortx-prvsnr/tags'
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/setup-provisioner.log}"
 export LOG_FILE
@@ -55,14 +56,14 @@ function trap_handler {
 
 function usage {
   echo "\
-Usage: $0 [options] [ees-prvsnr-version]
+Usage: $0 [options] [ldr-r1-prvsnr-version]
 
 Installs the provisioner repository along with SaltStack
 on the hosts with bare OS installed, sets up passwordless
 ssh configuration and configures salt master/minion connections
 and also makes some additional preliminary configuration.
 
-'ees-prvsnr-version' as an optional positional argument might specify
+'ldr-r1-prvsnr-version' as an optional positional argument might specify
 the desired version of the provisioner to install. Makes sense for 'gitlab'
 source only as of now. Not set by default.
 
@@ -200,7 +201,7 @@ fi
 if [[ -z "$prvsnr_version" ]]; then
     if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
         # get latest version of provisioner
-        ! _tags=$(curl "$EES_PRVSNR_REPO_API_TAGS")
+        ! _tags=$(curl "$LDR_R1_PRVSNR_REPO_API_TAGS")
         prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)
     fi
 fi

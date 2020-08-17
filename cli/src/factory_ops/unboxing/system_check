@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/sh
+
 
 # Functions in this file address following:
 #   1. Check boxing flag file and proceed only if boxing.<timestamp> file is present 
@@ -53,8 +54,8 @@ trap trap_handler ERR
 # export private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
 # export private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
 
-##export private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-##export private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+export private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+export private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
 
 function check_boxing_flag {
     if [[ -f '/opt/seagate/cortx/provisioner/generated_config/boxed' ]]

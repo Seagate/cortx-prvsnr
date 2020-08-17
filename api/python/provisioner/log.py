@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,16 +19,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-import attr
 from typing import Dict, Union
 from copy import deepcopy
 
 import logging
 import logging.config
 
+from .vendor import attr
 from . import inputs
 from .base import prvsnr_config
 from .config import (
@@ -71,7 +71,7 @@ class NoTraceExceptionFormatter(logging.Formatter):
         return repr(getattr(exc_info[1], 'reason', exc_info[1]))
 
 
-def build_log_args_cls(log_config=None):
+def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
     if log_config is None:
         log_config = prvsnr_config.logging
 

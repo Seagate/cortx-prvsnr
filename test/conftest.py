@@ -20,7 +20,6 @@
 import docker
 import time
 import json
-import attr
 from pathlib import Path
 from collections import defaultdict
 
@@ -29,6 +28,7 @@ import testinfra
 
 import logging
 
+from provisioner.vendor import attr
 import test.helper as h
 from .helper import (
     fixture_builder,
@@ -61,6 +61,9 @@ ENV_LEVELS_HIERARCHY = {
                 'vm_box_name': 'geerlingguy/centos7',
                 'vm_box_version': '1.2.17'
             }
+        },
+        'centos8.2.2004': {
+            'docker': 'centos:8.2.2004'
         }
     },
     'repos-installed': 'base',
@@ -71,8 +74,8 @@ ENV_LEVELS_HIERARCHY = {
         'docker': {
             'build_type': 'commit',
             'scripts': [
-                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_singlenode.sh local ''",
-                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_api_env.sh",
+                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_singlenode.sh local ''",  # noqa: E501
+                "cd {repo_path}/cli/src && bash ../../images/vagrant/setup_prvsnr_api_env.sh",  # noqa: E501
                 "rm -rf {repo_path}"
             ]
         }
@@ -81,20 +84,21 @@ ENV_LEVELS_HIERARCHY = {
     # only for vbox
     'singlenode-deploy-ready': {
         'parent': 'salt-installed',
-        'vars': ['prvsnr_src', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_src', 'prvsnr_release', 'cortx_release']
     },
-    'singlenode-eos-deployed': 'singlenode-deploy-ready',
-    'singlenode-eos-ready': 'singlenode-eos-deployed',
+    'singlenode-cortx-deployed': 'singlenode-deploy-ready',
+    'singlenode-cortx-ready': 'singlenode-cortx-deployed',
 
     # utility levels
     'rpmbuild': 'base',
+    'fpm': 'base',
     'utils': 'base',
     'network-manager-installed': 'base',
 
     # bvt
     'singlenode-bvt-ready': {
         'parent': 'base',
-        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'eos_release']
+        'vars': ['prvsnr_cli_release', 'prvsnr_release', 'cortx_release']
     }
 }
 
@@ -102,12 +106,12 @@ ENV_LEVELS_HIERARCHY = {
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
-DEFAULT_EOS_SPEC = {
-    'eosnode1': {
+DEFAULT_CLUSTER_SPEC = {
+    'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
         'is_primary': True,
-    }, 'eosnode2': {
+    }, 'srvnode2': {
         'hostname': 'srvnode-2',
         'minion_id': 'srvnode-2',
         'is_primary': False,
@@ -133,6 +137,7 @@ class HostMeta:
     _repo = attr.ib(init=False, default=None)
     _rpm_prvsnr = attr.ib(init=False, default=None)
     _rpm_prvsnr_cli = attr.ib(init=False, default=None)
+    _rpm_prvsnr_api = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
         # TODO more smarter logic to get iface that is asseccible from host
@@ -170,7 +175,8 @@ class HostMeta:
             local_path = tmpdir_local / host_path.name
         else:
             local_path = local_path.resolve()
-            local_path.relative_to(tmpdir_local)  # ensure that it's inside tmpdir
+            # ensure that it's inside tmpdir
+            local_path.relative_to(tmpdir_local)
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -217,6 +223,13 @@ class HostMeta:
         return self._rpm_prvsnr_cli
 
     @property
+    def rpm_prvsnr_api(self):
+        if self._rpm_prvsnr_api is None:
+            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_api')
+            self._rpm_prvsnr_api = self.copy_to_host(rpm_local_path)
+        return self._rpm_prvsnr_api
+
+    @property
     def repo(self):
         if self._repo is None:
             repo_tgz = self.request.getfixturevalue('repo_tgz')
@@ -233,7 +246,9 @@ class HostMeta:
         return h.run(self.host, script, *args, force_dump=force_dump, **kwargs)
 
     def check_output(self, script, *args, force_dump=False, **kwargs):
-        return h.check_output(self.host, script, *args, force_dump=force_dump, **kwargs)
+        return h.check_output(
+            self.host, script, *args, force_dump=force_dump, **kwargs
+        )
 
 
 class LocalHostMeta(HostMeta):
@@ -296,9 +311,9 @@ def pytest_configure(config):
                    "in the specific environment level"
     )
     config.addinivalue_line(
-        "markers", "eos_spec(dict): mark test as expecting "
-                   "specific EOS stack configuration, default: {}"
-                   .format(json.dumps(DEFAULT_EOS_SPEC))
+        "markers", "cortx_spec(dict): mark test as expecting "
+                   "specific CORTX stack configuration, default: {}"
+                   .format(json.dumps(DEFAULT_CLUSTER_SPEC))
     )
     config.addinivalue_line(
         "markers", "hosts(list): mark test as expecting "
@@ -310,8 +325,9 @@ def pytest_configure(config):
                    "environment instead of module wide shared"
     )
     config.addinivalue_line(
-        "markers", "inject_ssh_config: mark test as expecting ssh configuration "
-                   "only for specified hosts, default: all hosts"
+        "markers", "inject_ssh_config: mark test as expecting ssh "
+                   "configuration only for specified hosts, "
+                   "default: all hosts"
     )
     config.addinivalue_line(
         "markers", "mock_cmds(dict[host_lable, list]): mark test as requiring "
@@ -323,7 +339,7 @@ def pytest_configure(config):
                    "default: True for single node env, False otherwise"
     )
     config.addinivalue_line(
-        "markers", "eos_bvt: mark test as BVT one"
+        "markers", "cortx_bvt: mark test as BVT one"
     )
     config.addinivalue_line(
         "markers", "patch_logging: mark test as expected patched logging"
@@ -353,15 +369,24 @@ prvsnr_pytest_options = {
     ),
     "prvsnr-cli-release": dict(
         action='store', default='integration/centos-7.7.1908/last_successful',
-        help="Provisioner cli release to use, defaults to 'integration/centos-7.7.1908/last_successful'"
+        help=(
+            "Provisioner cli release to use, "
+            "defaults to 'integration/centos-7.7.1908/last_successful'"
+        )
     ),
     "prvsnr-release": dict(
         action='store', default='integration/centos-7.7.1908/last_successful',
-        help="Provisioner release to use, defaults to 'integration/centos-7.7.1908/last_successful'"
+        help=(
+            "Provisioner release to use, "
+            "defaults to 'integration/centos-7.7.1908/last_successful'"
+        )
     ),
-    "eos-release": dict(
+    "cortx-release": dict(
         action='store', default='integration/centos-7.7.1908/last_successful',
-        help="Target EOS release to verify, defaults to 'integration/centos-7.7.1908/last_successful'"
+        help=(
+            "Target release to verify, "
+            "defaults to 'integration/centos-7.7.1908/last_successful'"
+        )
     )
 }
 
@@ -473,7 +498,7 @@ def patch_logging(request, monkeypatch):
 @pytest.fixture(scope='session')
 def hosts_spec(request):
     return {
-        'eosnode1': {
+        'srvnode1': {
             'remote': {
                 'hostname': 'srvnode-1',
                 'specific': {
@@ -487,7 +512,7 @@ def hosts_spec(request):
             },
             'minion_id': 'srvnode-1',
             'is_primary': True,
-        }, 'eosnode2': {
+        }, 'srvnode2': {
             'remote': {
                 'hostname': 'srvnode-2',
                 'specific': {
@@ -507,7 +532,9 @@ def hosts_spec(request):
 
 # TODO multi platforms case
 @pytest.fixture(scope="session")
-def vbox_seed_machine(request, base_env, project_path, vagrant_global_status_prune):
+def vbox_seed_machine(
+    request, base_env, project_path, vagrant_global_status_prune
+):
     env_spec = ENV_LEVELS_HIERARCHY['base'][base_env]['vagrant']
     # TODO separator ???
     machine_name = '_'.join([VAGRANT_VMS_PREFIX, base_env, 'seed'])
@@ -554,13 +581,21 @@ def repo_tgz(project_path, localhost, tmpdir_session):
     return res
 
 
-def _rpmbuild_mhost(request):
-    env_provider = request.config.getoption("env_provider")
-    base_env = request.config.getoption("base_env")
+def _rpmbuild_mhost(
+    request, env_provider=None, base_env=None, label=None
+):
+    if not env_provider:
+        env_provider = request.config.getoption("env_provider")
+
+    if not base_env:
+        base_env = request.config.getoption("base_env")
+
+    if not label:
+        label = 'rpmbuild'
 
     # TODO DOCS : example how to run machine out of fixture scope
     remote = build_remote(
-        env_provider, request, base_env, 'rpmbuild'
+        env_provider, request, base_env, label
     )
 
     try:
@@ -620,23 +655,59 @@ def rpm_prvsnr_cli_build(mhost, version=None, release_number=None):
     )
 
 
+def rpm_prvsnr_api_build(mhost, pkg_version=None):
+    build_dir = 'rpmbuild'
+    cmd = [
+        'devops/rpms/api/build_python_api.sh',
+        '--out-dir', build_dir,
+        '--out-type', 'rpm'
+    ]
+
+    if pkg_version:
+        cmd += ['--pkg-ver', pkg_version]
+
+    mhost.check_output(
+        'cd {0} && rm -rf {1} && mkdir {1} && sh -x {2}'
+        .format(mhost.repo, build_dir, ' '.join(cmd))
+    )
+    return Path(
+        mhost.check_output(
+            'ls {}/*.rpm | grep -v debug'
+            .format(mhost.repo / build_dir)
+        )
+    )
+
+
 @pytest.fixture(scope='session')
 def rpm_build():
     def _f(
         request, tmpdir_local,
-        version=None, release_number=None, cli=False, mhost_init_cb=None
+        rpm_type='core', mhost_init_cb=None,
+        **kwargs
     ):
-        mhost = _rpmbuild_mhost(request)
+        if rpm_type not in ('core', 'cli', 'api'):
+            raise ValueError(rpm_type)
+
+        if rpm_type == 'api':
+            env_provider = 'docker'
+            base_env = 'centos8.2.2004'
+            label = 'fpm'
+        else:
+            env_provider = None
+            base_env = None
+            label = None
+
+        mhost = _rpmbuild_mhost(
+            request, env_provider=env_provider, base_env=base_env, label=label
+        )
         # TODO DOCS : example how to run machine out of fixture scope
         with mhost.remote as _:
             if mhost_init_cb:
                 mhost_init_cb(mhost)
             rpm_remote_path = (
-                rpm_prvsnr_cli_build(
-                    mhost, version=version, release_number=release_number
-                ) if cli else rpm_prvsnr_build(
-                    mhost, version=version, release_number=release_number
-                )
+                rpm_prvsnr_cli_build(mhost, **kwargs) if rpm_type == 'cli'
+                else rpm_prvsnr_build(mhost, **kwargs) if rpm_type == 'core'
+                else rpm_prvsnr_api_build(mhost, **kwargs)
             )
             return _copy_to_local(
                 mhost, rpm_remote_path, tmpdir_local
@@ -646,12 +717,17 @@ def rpm_build():
 
 @pytest.fixture(scope='session')
 def rpm_prvsnr(request, tmpdir_session, rpm_build):
-    return rpm_build(request, tmpdir_session, cli=False)
+    return rpm_build(request, tmpdir_session, rpm_type='core')
 
 
 @pytest.fixture(scope='session')
 def rpm_prvsnr_cli(request, tmpdir_session, rpm_build):
-    return rpm_build(request, tmpdir_session, cli=True)
+    return rpm_build(request, tmpdir_session, rpm_type='cli')
+
+
+@pytest.fixture(scope='session')
+def rpm_prvsnr_api(request, tmpdir_session, rpm_build):
+    return rpm_build(request, tmpdir_session, rpm_type='api')
 
 
 @pytest.fixture(autouse=True)
@@ -670,7 +746,7 @@ def env_fixture_suffix(os_name, env_level):
     return "{}_{}".format(os_name, env_level.replace('-', '_'))
 
 
-def build_docker_image_fixture(os_name, env_level):
+def build_docker_image_fixture(os_name, env_level):  # noqa: C901 FIXME
 
     def docker_image(request, docker_client, project_path, tmpdir_session):
         env_spec = ENV_LEVELS_HIERARCHY[env_level]
@@ -716,7 +792,8 @@ def build_docker_image_fixture(os_name, env_level):
                         "parent image {} doesn't have expected tag {}"
                         .format(p_image, p_image_name)
                     )
-                    # TODO what if no tags at all, do we allow referencing by id ?
+                    # TODO what if no tags at all,
+                    #      do we allow referencing by id ?
                     p_image_name = p_image.tags[0]
                 return p_image_name, p_image
 
@@ -733,13 +810,17 @@ def build_docker_image_fixture(os_name, env_level):
             dockerfile_tmpl = dockerfile.parent / (dockerfile.name + '.tmpl')
 
             if dockerfile_tmpl.exists():
-                dockerfile_str = dockerfile_tmpl.read_text().format(parent=parent_image_name)
+                dockerfile_str = dockerfile_tmpl.read_text().format(
+                    parent=parent_image_name
+                )
             else:
                 dockerfile_str = dockerfile.read_text()
 
             dockerfile = tmpdir_session / dockerfile.name
             dockerfile.write_text(dockerfile_str)
-            image = h._docker_image_build(docker_client, dockerfile, ctx=project_path)
+            image = h._docker_image_build(
+                docker_client, dockerfile, ctx=project_path
+            )
         else:  # image as container commit
             assert parent_image is not None
             remote = build_remote(
@@ -766,13 +847,17 @@ def build_docker_image_fixture(os_name, env_level):
         # set image name
         if _image_name(image, os_name, env_level) not in image.tags:
             try:
-                image.tag(DOCKER_IMAGES_REPO, tag=_image_tag(image, os_name, env_level))
+                image.tag(DOCKER_IMAGES_REPO, tag=_image_tag(
+                    image, os_name, env_level
+                ))
             except Exception:
                 # ensure that image doesn't have any other tags
                 # TODO what if it actually was tagged but failed then,
                 #      is it possible in docker API
                 if not image.tags:
-                    docker_client.images.remove(image.id, force=False, noprune=False)
+                    docker_client.images.remove(
+                        image.id, force=False, noprune=False
+                    )
                 raise
             else:
                 image.reload()
@@ -792,7 +877,7 @@ for _os_name in BASE_OS_NAMES:
         build_docker_image_fixture(_os_name, _env_level)
 
 
-def build_vagrant_box_fixture(os_name, env_level):
+def build_vagrant_box_fixture(os_name, env_level):  # noqa: C901 FIXME
 
     # returns VagrantBox object, box is already added to vagrant
     def vagrant_box(request, base_env, project_path):
@@ -852,7 +937,9 @@ def build_vagrant_box_fixture(os_name, env_level):
 
         # TODO separator ???
         box_name = '_'.join([VAGRANT_VMS_PREFIX, base_env, env_level])
-        box_path = project_path / '.boxes' / base_env / env_level / 'package.box'
+        box_path = (
+            project_path / '.boxes' / base_env / env_level / 'package.box'
+        )
 
         # TODO for now always rebuild the base box if box file is missed
         #  until smarter logic of boxes rebuild is implemented,
@@ -957,7 +1044,8 @@ def vagrant_machine_shared(request, env_level, project_path):
     env_level = '-'.join(_parts[1:])
 
     return request.getfixturevalue(
-        "vagrant_machine_shared_{}".format(env_fixture_suffix(os_name, env_level))
+        "vagrant_machine_shared_{}"
+        .format(env_fixture_suffix(os_name, env_level))
     )
 '''
 
@@ -981,7 +1069,9 @@ def docker_container(request, docker_client, base_env, env_level, hosts_spec):
         if marker:
             env_level = marker.args[0]
 
-    label = request.fixturename[len('docker_container_{}'.format(request.scope)):]
+    label = request.fixturename[
+        len('docker_container_{}'.format(request.scope)):
+    ]
 
     try:
         hostname = hosts_spec[label]['remote']['hostname']
@@ -1013,7 +1103,9 @@ def vagrant_machine(
         if marker:
             vagrantfile_tmpl = marker.args[0]
 
-    label = request.fixturename[len('vagrant_machine_{}'.format(request.scope)):]
+    label = request.fixturename[
+        len('vagrant_machine_{}'.format(request.scope)):
+    ]
 
     try:
         hostname = hosts_spec[label]['remote']['hostname']
@@ -1033,7 +1125,9 @@ def vagrant_machine(
         )
         try:
             # TODO hardcoded
-            machine.cmd('snapshot', 'restore', machine.name, 'initial --no-provision')
+            machine.cmd(
+                'snapshot', 'restore', machine.name, 'initial --no-provision'
+            )
             yield machine
         finally:
             machine.cmd('halt', '--force')
@@ -1144,109 +1238,123 @@ def inject_ssh_config(hosts, mlocalhost, ssh_config, ssh_key, request):
 
 
 @pytest.fixture
-def eos_spec(request):
-    marker = request.node.get_closest_marker('eos_spec')
-    spec = marker.args[0] if marker else DEFAULT_EOS_SPEC
+def cortx_spec(request):
+    marker = request.node.get_closest_marker('cortx_spec')
+    spec = marker.args[0] if marker else DEFAULT_CLUSTER_SPEC
     return spec
 
 
-# eos_spec sanity checks
+# cortx_spec sanity checks
 @pytest.fixture
-def _eos_spec(eos_spec):
-    assert len({k: v for k, v in eos_spec.items() if v['is_primary']}) == 1
-    return eos_spec
+def _cortx_spec(cortx_spec):
+    assert len({k: v for k, v in cortx_spec.items() if v['is_primary']}) == 1
+    return cortx_spec
 
 
 @pytest.fixture
-def eos_hosts(hosts, _eos_spec, request):
+def cortx_hosts(hosts, _cortx_spec, request):
     _hosts = defaultdict(dict)
     for label in hosts:
-        if label in _eos_spec:
-            _hosts[label]['minion_id'] = _eos_spec[label]['minion_id']
-            _hosts[label]['is_primary'] = _eos_spec[label].get('is_primary', True)
+        if label in _cortx_spec:
+            _hosts[label]['minion_id'] = _cortx_spec[label]['minion_id']
+            _hosts[label]['is_primary'] = _cortx_spec[label].get(
+                'is_primary', True
+            )
 
     return _hosts
 
 
 @pytest.fixture
-def eos_primary_host_label(eos_hosts):
-    return [k for k, v in eos_hosts.items() if v['is_primary']][0]
+def cortx_primary_host_label(cortx_hosts):
+    return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
 
 
 @pytest.fixture
-def eos_primary_mhost(eos_primary_host_label, request):
-    return request.getfixturevalue('mhost' + eos_primary_host_label)
+def cortx_primary_mhost(cortx_primary_host_label, request):
+    return request.getfixturevalue('mhost' + cortx_primary_host_label)
 
 
 @pytest.fixture
-def eos_primary_host_ip(eos_primary_mhost):
-    return eos_primary_mhost.host.interface(
-        eos_primary_mhost.iface
+def cortx_primary_host_ip(cortx_primary_mhost):
+    return cortx_primary_mhost.host.interface(
+        cortx_primary_mhost.iface
     ).addresses[0]
 
 
 @pytest.fixture
-def install_provisioner(eos_hosts, mlocalhost, project_path, ssh_config, request):
-    assert eos_hosts, "the fixture makes sense only for eos hosts"
+def install_provisioner(
+    cortx_hosts, mlocalhost, project_path, ssh_config, request
+):
+    assert cortx_hosts, "the fixture makes sense only for Cortx hosts"
 
-    for label in eos_hosts:
+    for label in cortx_hosts:
         mhost = request.getfixturevalue('mhost' + label)
         mlocalhost.check_output(
-            "bash -c \". {script_path} && install_provisioner {repo_src} {prvsnr_version} {hostspec} "
+            "bash -c \". {script_path} "
+            "&& install_provisioner {repo_src} {prvsnr_version} {hostspec} "
             "{ssh_config} {sudo} {singlenode}\""
             .format(
-                script_path=(project_path / 'cli/src/common_utils/functions.sh'),
+                script_path=(
+                    project_path / 'cli/src/common_utils/functions.sh'
+                ),
                 repo_src='local',
                 prvsnr_version="''",
                 hostspec=mhost.hostname,
                 ssh_config=ssh_config,
                 sudo='false',
-                singlenode=('true' if len(eos_hosts) == 1 else 'false')
+                singlenode=('true' if len(cortx_hosts) == 1 else 'false')
             )
         )
 
 
 @pytest.fixture
-def configure_salt(eos_hosts, install_provisioner, eos_primary_host_ip, request):
+def configure_salt(
+    cortx_hosts, install_provisioner, cortx_primary_host_ip, request
+):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
+    for label, host_spec in cortx_hosts.items():
         minion_id = host_spec['minion_id']
         is_primary = (
             'true' if host_spec['is_primary'] else 'false'
         )
         primary_host = (
-            "localhost" if host_spec['is_primary'] else eos_primary_host_ip
+            "localhost" if host_spec['is_primary'] else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(
             ". {} && configure_salt '{}' '' '' '' {} {}".format(
-                cli_dir / 'common_utils/functions.sh', minion_id, is_primary, primary_host
+                cli_dir / 'common_utils/functions.sh',
+                minion_id,
+                is_primary,
+                primary_host
             )
         )
 
 
 @pytest.fixture
-def accept_salt_keys(eos_hosts, install_provisioner, eos_primary_mhost):
+def accept_salt_keys(cortx_hosts, install_provisioner, cortx_primary_mhost):
     cli_dir = PRVSNR_REPO_INSTALL_DIR / 'cli' / 'src'
 
-    for label, host_spec in eos_hosts.items():
-        eos_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
+    for label, host_spec in cortx_hosts.items():
+        cortx_primary_mhost.check_output(". {} && accept_salt_key '{}'".format(
             cli_dir / 'common_utils/functions.sh', host_spec['minion_id'])
         )
 
-    eos_primary_mhost.check_output("salt '*' mine.update")
+    cortx_primary_mhost.check_output("salt '*' mine.update")
 
 
 @pytest.fixture
-def sync_salt_modules(eos_primary_mhost, install_provisioner):
-    eos_primary_mhost.check_output("salt '*' saltutil.sync_modules")
-    eos_primary_mhost.check_output("salt-run saltutil.sync_modules")
+def sync_salt_modules(cortx_primary_mhost, install_provisioner):
+    cortx_primary_mhost.check_output("salt '*' saltutil.sync_modules")
+    cortx_primary_mhost.check_output("salt-run saltutil.sync_modules")
 
 
 @pytest.fixture
 def mlocalhost(localhost, request):
-    return LocalHostMeta(None, localhost, None, request, label=None, iface='lo')
+    return LocalHostMeta(
+        None, localhost, None, request, label=None, iface='lo'
+    )
 
 
 @pytest.fixture
@@ -1259,7 +1367,8 @@ def vagrant_default_ssh(request, hosts):
 
 
 def build_remote(
-    env_provider, request, os_name, env_level, label=None, base_level=None, **kwargs
+    env_provider, request, os_name, env_level,
+    label=None, base_level=None, **kwargs
 ):
     base_name = h.remote_name(
         request.node.nodeid, request.scope, os_name, env_level, label=label
@@ -1273,7 +1382,9 @@ def build_remote(
         # TODO return an object of a class
         if env_provider == 'docker':
             base_level = request.getfixturevalue(
-                "docker_image_{}".format(env_fixture_suffix(os_name, env_level))
+                "docker_image_{}".format(
+                    env_fixture_suffix(os_name, env_level)
+                )
             )
         elif env_provider == 'vbox':
             base_level = request.getfixturevalue(
@@ -1287,7 +1398,9 @@ def build_remote(
     logger.info(
         "Starting remote with base name '{}'".format(base_name)
     )
-    remote = h.run_remote(env_provider, base_level, base_name, tmpdir, **kwargs)
+    remote = h.run_remote(
+        env_provider, base_level, base_name, tmpdir, **kwargs
+    )
     logger.info(
         "Started remote '{}'".format(remote.name)
     )
@@ -1315,16 +1428,17 @@ def discover_remote(
             time.sleep(.5)
         # TODO verify that eth0 is always true for docker
     elif isinstance(remote, h.VagrantMachine):
-        # in vagrant ssh-config a machine is accessible via localhost:localport,
-        # use that as a temporary way to get its own ip and access
-        # its internal ssh port
+        # in vagrant ssh-config a machine is accessible
+        # via localhost:localport, use that as a temporary
+        # way to get its own ip and access its internal ssh port
         _ssh_config_tmp = tmpdir / "ssh_config.{}.tmp".format(remote.name)
         with _ssh_config_tmp.open('w') as f:
             f.write(remote.ssh_config())
 
-        # FIXME sometimes hostonlynetwork of the vbox machine is not up properly
-        # (route table is not created), no remedy found yet, possible workaround
-        # is to remove vbox hostonly network for a machine and re-create the machine
+        # FIXME sometimes hostonlynetwork of a vbox machine is not up properly
+        # (route table is not created), no remedy found yet,
+        # possible workaround is to remove vbox hostonly network for
+        # the machine and re-create the machine
         # https://jts.seagate.com/browse/EOS-3129
 
         # vagrant uses vagrant machine name as Host ID in ssh-config
@@ -1333,14 +1447,17 @@ def discover_remote(
         )
         _iface = 'enp0s8'
         if request.getfixturevalue('vagrant_default_ssh'):
-            _ssh_config = remote.ssh_config().replace(remote.name, remote.hostname)
+            _ssh_config = remote.ssh_config().replace(
+                remote.name, remote.hostname
+            )
 
     else:
         raise ValueError(
             "unexpected remote type: {}".format(type(remote))
         )
 
-    # TODO there might be some cheaper way (e.g. get from testinfra host object)
+    # TODO there might be some cheaper way
+    #      (e.g. get from testinfra host object)
     _hostname = _host.check_output('hostname')
 
     if ssh_config is None:
@@ -1454,7 +1571,8 @@ def build_mhost_fixture(label=None, module_name=__name__):
 
         hosts_meta[meta.fixture_name] = meta
 
-        # TODO add try-catch and remove default implementation of post_host_run_hook
+        # TODO add try-catch and remove default implementation
+        #      of post_host_run_hook
         request.getfixturevalue('post_host_run_hook')(meta)
 
         return meta
@@ -1462,6 +1580,7 @@ def build_mhost_fixture(label=None, module_name=__name__):
 
 # default 'host' fixture is always present
 build_mhost_fixture()
-# also host fixtures for EOS stack makes sense
-build_mhost_fixture('eosnode1')
-build_mhost_fixture('eosnode2')
+# also host fixtures for CORTX stack makes sense
+build_mhost_fixture('srvnode1')
+build_mhost_fixture('srvnode2')
+build_mhost_fixture('srvnode3')

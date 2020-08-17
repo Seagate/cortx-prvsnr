@@ -606,8 +606,8 @@ file_roots:
 
 pillar_roots:
   base:
-    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
 
 
 # Set a hard-limit on the size of the files that can be pushed to the master.

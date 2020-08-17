@@ -17,7 +17,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 from abc import ABC, abstractmethod
 import salt.config
 from salt.client import LocalClient, Caller
@@ -29,6 +28,7 @@ from salt.client.ssh.client import SSHClient
 from pathlib import Path
 import logging
 
+from .vendor import attr
 from .config import (
    ALL_MINIONS, LOCAL_MINION,
    PRVSNR_USER_FILEROOT_DIR
@@ -516,8 +516,8 @@ class SaltClientBase(ABC):
                         )
                 )
             except Exception as exc:
-                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):
-                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))
+                if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
+                    logger.exception("Exception Skipped: {}".format(str(exc.strerror)))  # noqa: E501
                 else:
                     raise exc
 
@@ -705,7 +705,7 @@ def _set_auth(kwargs):
     return
 
 
-def _salt_runner_cmd(
+def _salt_runner_cmd(  # noqa: C901 FIXME
     fun: str,
     fun_args: Union[Tuple, None] = None,
     fun_kwargs: Union[Dict, None] = None,

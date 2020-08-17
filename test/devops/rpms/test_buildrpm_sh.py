@@ -27,7 +27,7 @@ import provisioner
 
 from test.helper import PRVSNRUSERS_GROUP
 
-RPM_CONTENT_PATHS = ['pillar', 'srv', 'api']
+RPM_CONTENT_PATHS = ['pillar', 'srv']
 RPM_CLI_CONTENT_PATHS = [
     'cli/src',
     'files/.ssh',
@@ -147,12 +147,13 @@ def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
     pass
 
 
+@pytest.mark.skip('EOS-11650')
 @pytest.mark.isolated
 @pytest.mark.env_level('base')
-def test_rpm_prvsnr_depends_on_salt_2019_2_0(mhost):
+def test_rpm_prvsnr_depends_on_salt_3001(mhost):
     depends = mhost.check_output('rpm -qpR {}'.format(mhost.rpm_prvsnr))
-    assert 'salt-master = 2019.2.0\n' in depends
-    assert 'salt-minion = 2019.2.0\n' in depends
+    assert 'salt-master = 3001\n' in depends
+    assert 'salt-minion = 3001\n' in depends
 
 
 @pytest.mark.isolated
@@ -192,24 +193,6 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     assert not diff_expected
     assert not diff_installed
 
-    # check post install sections
-    # TODO check salt config files replacement
-    #   check that api is installed into python env and have proper version
-    check_post_section(mhost)
-
-
-@pytest.mark.isolated
-@pytest.mark.env_level('salt-installed')
-def test_rpm_prvsnr_removal(mhost, mlocalhost):
-    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
-    mhost.check_output('yum remove -y cortx-prvsnr')
-    # TODO check salt config files restoration
-    #   check that api is removed from python env
-    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
-    assert provisioner.__title__ not in pip_packages
-    #   check that prvsnrusers group still exists
-    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
-
 
 @pytest.mark.isolated
 @pytest.mark.verifies('EOS-6021')
@@ -218,9 +201,10 @@ def test_rpm_prvsnr_reinstall_retains_configuration(
     mhost, mlocalhost, tmpdir_function
 ):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_api))
 
     cluster_config_str = mhost.check_output(
-        'provisioner configure_eos cluster --show'
+        'provisioner configure_cortx cluster --show'
     ).strip()
     cluster_config_dict = yaml.safe_load(cluster_config_str)
 
@@ -236,48 +220,17 @@ def test_rpm_prvsnr_reinstall_retains_configuration(
     tmp_file_remote = mhost.copy_to_host(tmp_file)
 
     mhost.check_output(
-        'provisioner configure_eos cluster --source {}'.format(tmp_file_remote)
+        'provisioner configure_cortx cluster --source {}'
+        .format(tmp_file_remote)
     )
 
     mhost.check_output('yum reinstall -y {}'.format(mhost.rpm_prvsnr))
     cluster_config_str = mhost.check_output(
-        'provisioner configure_eos cluster --show'
+        'provisioner configure_cortx cluster --show'
     ).strip()
     cluster_config_dict_new = yaml.safe_load(cluster_config_str)
 
     assert cluster_config_dict_new == cluster_config_dict
-
-
-@pytest.mark.isolated
-@pytest.mark.verifies('EOS-7327')
-@pytest.mark.env_level('salt-installed')
-def test_rpm_prvsnr_provioner_is_available_after_update(
-    mhost, mlocalhost, tmpdir_function, rpm_build, request
-):
-    version = provisioner.__version__
-    parts = version.split('.')
-    parts[0] = str(int(parts[0]) + 1)
-    new_version = '.'.join(parts)
-
-    def mhost_init_cb(mhost):
-        mhost.check_output(
-            "sed -i 's/__version__ = .*/__version__ = \"{}\"/g' {}"
-            .format(
-                new_version,
-                mhost.repo / 'api/python/provisioner/__metadata__.py'
-            )
-        )
-
-    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
-
-    new_rpm = rpm_build(
-        request, tmpdir_function,
-        mhost_init_cb=mhost_init_cb, cli=False, release_number=2
-    )
-    new_rpm_remote = mhost.copy_to_host(new_rpm)
-
-    mhost.check_output('yum install -y {}'.format(new_rpm_remote))
-    check_post_section(mhost, api_version=new_version)
 
 
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):
@@ -355,3 +308,68 @@ def test_rpm_prvsnr_installation_over_cli(mhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr))
     mtime2 = cli_file.mtime
     assert mtime2 > mtime1
+
+
+def test_rpm_prvsnr_api_is_buildable(rpm_prvsnr_api):
+    pass
+
+
+@pytest.mark.isolated
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_api_installation(mhost, mlocalhost):
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_api))
+
+    # check post install sections
+    # TODO check salt config files replacement
+    #   check that api is installed into python env and have proper version
+    check_post_section(mhost)
+
+    version = mhost.check_output('provisioner --version')
+    assert version == provisioner.__version__
+
+
+@pytest.mark.isolated
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_api_removal(mhost, mlocalhost):
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_api))
+    mhost.check_output('yum remove -y python36-cortx-prvsnr')
+    #   check that api is removed from python env
+    pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
+    assert provisioner.__title__ not in pip_packages
+    #   check that prvsnrusers group still exists
+    assert mhost.host.group(PRVSNRUSERS_GROUP).exists
+
+
+@pytest.mark.isolated
+@pytest.mark.verifies('EOS-7327')
+@pytest.mark.env_level('salt-installed')
+def test_rpm_prvsnr_api_provioner_is_available_after_update(
+    mhost, mlocalhost, tmpdir_function, rpm_build, request
+):
+    version = provisioner.__version__
+    parts = version.split('.')
+    parts[0] = str(int(parts[0]) + 1)
+    new_version = '.'.join(parts)
+
+    mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_api))
+
+    def mhost_init_cb(mhost):
+        mhost.check_output(
+            "sed -i 's/__version__ = .*/__version__ = \"{}\"/g' {}"
+            .format(
+                new_version,
+                mhost.repo / 'api/python/provisioner/__metadata__.py'
+            )
+        )
+
+    new_rpm = rpm_build(
+        request,
+        tmpdir_function,
+        mhost_init_cb=mhost_init_cb,
+        rpm_type='api',
+        pkg_version='2'  # just to check that param works as well
+    )
+    new_rpm_remote = mhost.copy_to_host(new_rpm)
+
+    mhost.check_output('yum install -y {}'.format(new_rpm_remote))
+    check_post_section(mhost, api_version=new_version)

@@ -60,7 +60,7 @@ def patch_logging(request):
     request.getfixturevalue('patch_logging')
 
 
-@pytest.mark.parametrize("eauth", [True, False], ids=['eauth', 'root'])
+@pytest.mark.parametrize("eauth", [True, False], ids=['eauth', 'root'])  # noqa: E501, C901 FIXME
 def test_salt_runner_cmd(monkeypatch, eauth):
     salt_cmd_args = []
     salt_cmd_res = {}
@@ -657,17 +657,13 @@ def test_salt_process_provisioner_cmd_res(monkeypatch, local_minion_id):
     with pytest.raises(ProvisionerError) as excinfo:
         salt.process_provisioner_cmd_res(res)
     assert str(excinfo.value) == (
-        'Expected a dictionary, provided: {}, {}'
+        'Expected a dictionary of len = 1, provided: {}, {}'
         .format(type(res), res)
     )
 
     res = {'some-key': 'some-res'}
-    with pytest.raises(ProvisionerError) as excinfo:
-        salt.process_provisioner_cmd_res(res)
-    assert str(excinfo.value) == (
-        'local minion id {} is not in the results: {}'
-        .format(local_minion_id, res)
-    )
+    ret = salt.process_provisioner_cmd_res(res)
+    assert ret == 'some-res'
 
     res = {local_minion_id: 'some-result'}
     ret = salt.process_provisioner_cmd_res(res)
@@ -765,7 +761,7 @@ def test_salt_provisioner_cmd(monkeypatch, local_minion_id):
             **kwargs
         )
     assert str(excinfo.value) == (
-        'SaltClientResult is unexpected here: {!r}'.format(function_run_res)
+        'SaltCmdResultError is unexpected here: {!r}'.format(function_run_res)
     )
 
     # results no errors

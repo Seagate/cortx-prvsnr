@@ -17,7 +17,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 import logging
 from copy import deepcopy
 
@@ -25,6 +24,7 @@ import functools
 from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
 
+from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
     KeyPath, PillarKeyAPI, PillarKey, PillarItemsAPI
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 def copy_attr(_attr, name=None, **changes):
     attr_kw = {}
     for arg in (
-        'default', 'validator', 'repr', 'cmp', 'hash',
+        'default', 'validator', 'repr', 'hash',
         'init', 'metadata', 'type', 'converter', 'kw_only'
     ):
         attr_kw[arg] = (
@@ -84,7 +84,7 @@ class AttrParserArgs:
     # TODO TEST EOS-8473
     nargs: str = attr.ib(init=False, default=None)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):  # noqa: C901 FIXME
         self.name = self._attr.name
 
         if self.prefix:
@@ -429,6 +429,31 @@ class NTP(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
+class Release(ParamGroupInputBase):
+    _param_group = 'release'
+    target_build: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Cortx deployment build"
+    )
+
+
+@attr.s(auto_attribs=True)
+class StorageEnclosure(ParamGroupInputBase):
+    _param_group = 'storage_enclosure'
+    controller_a_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller A IP"
+    )
+    controller_b_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller B IP"
+    )
+    controller_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller user"
+    )
+    controller_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller password"
+    )
+
+
+@attr.s(auto_attribs=True)
 class Network(ParamGroupInputBase):
     _param_group = 'network'
     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
@@ -468,6 +493,18 @@ class Network(ParamGroupInputBase):
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data iface netmask"
     )
+    primary_network_iface: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data network iface"
+    )
+    primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC  IP"
+    )
+    primary_bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC User"
+    )
+    primary_bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC password"
+    )
     secondary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node hostname"
     )
@@ -491,6 +528,18 @@ class Network(ParamGroupInputBase):
     )
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data iface netmask"
+    )
+    secondary_network_iface: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data network iface"
+    )
+    secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node BMC  IP"
+    )
+    secondary_bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node BMC User"
+    )
+    secondary_bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node BMC password"
     )
 
 

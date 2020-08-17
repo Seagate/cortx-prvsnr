@@ -1,3 +1,22 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
 sspl:
   health_map_path: /opt/seagate/cortx/provisioner/generated_configs/healthmap/
   health_map_file: ees-schema.json
@@ -6,12 +25,6 @@ sspl:
     secret: "B4kf1T6Qso"
   role: cortx
   Version: 1.0.0
-  SSPL-LL_SETTING:
-    core_processors: "RabbitMQegressProcessor, RabbitMQingressProcessor, LoggingProcessor"
-    message_handlers: "DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, RealStorEnclMsgHandler, RealStorActuatorMsgHandler"
-    sensors: "ServiceWatchdog, RAIDsensor, NodeData, RealStorFanSensor, RealStorPSUSensor, RealStorControllerSensor, RealStorDiskSensor, RealStorSideplaneExpanderSensor, RealStorLogicalVolumeSensor, IEMSensor, NodeHWsensor, RealStorEnclosureSensor, SASPortSensor, MemFaultSensor, CPUFaultSensor, RAIDIntegritySensor"
-    actuators: "Service, RAIDactuator, Smartctl, NodeHWactuator, RealStorActuator"
-    degraded_state_modules: "ServiceWatchdog, RAIDsensor, NodeData, IEMSensor, NodeHWsensor, DiskMsgHandler, LoggingMsgHandler, ServiceMsgHandler, NodeDataMsgHandler, NodeControllerMsgHandler, SASPortSensor, MemFaultSensor, CPUFaultSensor"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
@@ -60,8 +73,6 @@ sspl:
     disk_usage_threshold: "80"
     cpu_usage_threshold: "80"
     host_memory_usage_threshold: "80"
-  XINITDWATCHDOG:
-    threaded: "true"
   RARITANPDU:
     user: "admin"
     pass: "admin"

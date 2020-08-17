@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
 
 {%- set openldap_admin_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:admin:secret', "seagate")) %}
 {%- set openldap_iam_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:iam_admin:secret', "ldapadmin")) %}
@@ -32,8 +32,8 @@ CFG_FILE=/opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif
 sed -i "$EXPR" $CFG_FILE
 
 # generate encrypted password for ldap admin
-SHA=$(slappasswd -s $LDAPADMINPASS)
-ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')
-EXPR='s/userPassword: *.*/userPassword: '$ESC_SHA'/g'
+#SHA=$(slappasswd -s $LDAPADMINPASS)
+#ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')
+EXPR='s/userPassword: *.*/userPassword: '$LDAPADMINPASS'/g'
 ADMIN_USERS_FILE=/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif
 sed -i "$EXPR" $ADMIN_USERS_FILE

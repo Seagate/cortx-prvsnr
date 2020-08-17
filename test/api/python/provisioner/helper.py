@@ -17,9 +17,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import attr
 from functools import partial
 from typing import Callable, Any, Tuple, Dict
+from provisioner.vendor import attr
 
 # TODO consider to use mocks (e.g. pytest-mock plugin)
 

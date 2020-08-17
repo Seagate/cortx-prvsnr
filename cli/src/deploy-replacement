@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
+
 
 set -euE
 
@@ -49,8 +50,6 @@ tgt_node=srvnode-2
 system_states=(
     # states to be applied in desired sequence
         "system"
-        "system.storage.multipath"
-        "system.storage"
         "system.network"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
@@ -89,26 +88,31 @@ iopath_states=(
         "s3server.install"
     )
 
-ha_states=(
-    # states to be applied in desired sequence
-        "ha.corosync-pacemaker.prepare"
-        "ha.corosync-pacemaker.install"
-        "ha.cortx-ha.prepare"
-        "ha.cortx-ha.install"
-        "ha.ees_ha.prepare"
-        "ha.ees_ha.install"             # A blank file
-    )
-
 controlpath_states=(
     # states to be applied in desired sequence
         "sspl.prepare"
         "sspl.install"
         "csm.prepare"
         "csm.install"
+        "csm.config"
         "uds.prepare"
         "uds.install"
     )
 
+ha_states=(
+    # states to be applied in desired sequence
+        "ha.corosync-pacemaker.prepare"
+        "ha.corosync-pacemaker.install"
+        "ha.corosync-pacemaker.config.base"
+        "ha.cortx-ha.prepare"
+        "ha.cortx-ha.install"
+        "ha.ees_ha.prepare"
+        "ha.ees_ha.install"             # A blank file
+        "ha.cortx-ha.replace_node.refresh_context"
+        "ha.cortx-ha.replace_node.add_node"
+    )
+
+# ToDo: Remove & Add node script here
 
 function usage {
   echo "\
@@ -226,13 +230,16 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run 
 update_salt
 
 if [[ "$run_all" == true ]]; then
+
+    run_states ( "ha.cortx-ha.replace_node.remove_node" )
+
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
-    run_states  "${sync_states[@]}"
-    run_states  "${iopath_states[@]}"
+    run_states "${sync_states[@]}"
+    run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
     run_states "${ha_states[@]}"
 fi

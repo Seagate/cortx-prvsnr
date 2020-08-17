@@ -19,12 +19,12 @@
 
 import pytest
 import argparse
-import attr
 from typing import Union, List
 from pathlib import Path
 import functools
 
-from provisioner.errors import EOSUpdateRepoSourceError
+from provisioner.vendor import attr
+from provisioner.errors import SWUpdateRepoSourceError
 from provisioner import values
 from provisioner.values import UNCHANGED
 from provisioner import inputs
@@ -42,7 +42,7 @@ from provisioner.inputs import (
     ParamGroupInputBase,
     NTP, Network,
     ParamDictItemInputBase,
-    EOSUpdateRepo
+    SWUpdateRepo
 )
 from provisioner.pillar import PillarKey
 from provisioner.api_spec import param_spec as _param_spec
@@ -531,7 +531,12 @@ def test_inputs_NETWORK():
         param = Path(param)
         if str(param.parent) == Network._param_group:
             fattr = attr.fields_dict(Network)[param.name]
-            if param.name in ('dns_servers', 'search_domains'):
+            if param.name in (
+                'dns_servers',
+                'search_domains',
+                'primary_network_iface',
+                'secondary_network_iface'
+            ):
                 assert fattr.type is List
             else:
                 assert fattr.type is str
@@ -595,88 +600,88 @@ def test_inputs_ParamDictItemInputBasefill_parser(param_spec_mocked):
     assert args.some_value_attr == UNCHANGED
 
 
-# ### EOSUpdateRepo ###
+# ### SWUpdateRepo ###
 
-def test_inputs_EOSUpdateRepo_attrs():
-    assert EOSUpdateRepo._param_di == inputs.param_spec['eosupdate/repo']
+def test_inputs_SWUpdateRepo_attrs():
+    assert SWUpdateRepo._param_di == inputs.param_spec['swupdate/repo']
 
-    fattr = attr.fields_dict(EOSUpdateRepo)['release']
+    fattr = attr.fields_dict(SWUpdateRepo)['release']
     assert fattr.type is str
     assert fattr.default is attr.NOTHING
 
-    fattr = attr.fields_dict(EOSUpdateRepo)['source']
+    fattr = attr.fields_dict(SWUpdateRepo)['source']
     assert fattr.type is Union[str, Path]
     assert fattr.default is UNCHANGED
 
 
 @pytest.mark.patch_logging([(inputs, ('error',))])
-def test_inputs_EOSUpdateRepo_source_init(tmpdir_function, patch_logging):
+def test_inputs_SWUpdateRepo_source_init(tmpdir_function, patch_logging):
     some_release = '1.2.3'
 
     # special values
     for source in values._values.values():
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == source
 
-    res = EOSUpdateRepo(some_release, source=None)
+    res = SWUpdateRepo(some_release, source=None)
     assert res.source == UNCHANGED
 
     # directory
     repo_dir = tmpdir_function / 'repo'
     repo_dir.mkdir()
     for source in (repo_dir, str(repo_dir)):
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == repo_dir
 
     # iso file
     repo_iso = tmpdir_function / 'repo.iso'
     repo_iso.touch()
     for source in (repo_iso, str(repo_iso)):
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == repo_iso
 
     # other existent file object
     non_iso_file = tmpdir_function / 'repo.file'
     non_iso_file.touch()
-    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
-        EOSUpdateRepo(some_release, source=str(non_iso_file))
+    with pytest.raises(SWUpdateRepoSourceError) as excinfo:
+        SWUpdateRepo(some_release, source=str(non_iso_file))
     assert excinfo.value.source == str(non_iso_file)
     assert excinfo.value.reason == 'not an iso file'
 
     # existent object but neither file nor dir
     bad_object = '/dev/null'
-    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
-        EOSUpdateRepo(some_release, source=bad_object)
+    with pytest.raises(SWUpdateRepoSourceError) as excinfo:
+        SWUpdateRepo(some_release, source=bad_object)
     assert excinfo.value.source == bad_object
     assert excinfo.value.reason == 'not a file or directory'
 
     # urls are expected to start with http:// or https://
     for source in ('http://some/http/url', 'https://some/http/url'):
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == source
 
     # any other cases are treated as invalid
     source = 'some/string'
-    with pytest.raises(EOSUpdateRepoSourceError) as excinfo:
-        res = EOSUpdateRepo(some_release, source=source)
+    with pytest.raises(SWUpdateRepoSourceError) as excinfo:
+        res = SWUpdateRepo(some_release, source=source)
     assert excinfo.value.source == source
     assert excinfo.value.reason == 'unexpected type of source'
 
     # TODO non absolute existent one
 
     # non canonical absolute path
-    res = EOSUpdateRepo(some_release, source=(repo_dir / '..' / 'repo.iso'))
+    res = SWUpdateRepo(some_release, source=(repo_dir / '..' / 'repo.iso'))
     assert res.source == repo_iso
 
 
-def test_inputs_EOSUpdateRepo_pillar_key(tmpdir_function):
+def test_inputs_SWUpdateRepo_pillar_key(tmpdir_function):
     some_release = '1.2.3'
 
-    res = EOSUpdateRepo(some_release, source='http://some/http/url')
+    res = SWUpdateRepo(some_release, source='http://some/http/url')
     assert res.pillar_key == some_release
 
 
-def test_inputs_EOSUpdateRepo_pillar_value(tmpdir_function):
+def test_inputs_SWUpdateRepo_pillar_value(tmpdir_function):
     some_release = '1.2.3'
 
     repo_dir = tmpdir_function / 'repo'
@@ -687,27 +692,27 @@ def test_inputs_EOSUpdateRepo_pillar_value(tmpdir_function):
 
     # special values
     for source in values._values.values():
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.pillar_value == source
 
-    res = EOSUpdateRepo(some_release, source=None)
+    res = SWUpdateRepo(some_release, source=None)
     assert res.pillar_value == UNCHANGED
 
     # directory
-    res = EOSUpdateRepo(some_release, source=repo_dir)
+    res = SWUpdateRepo(some_release, source=repo_dir)
     assert res.pillar_value == 'dir'
 
     # iso file
-    res = EOSUpdateRepo(some_release, source=repo_iso)
+    res = SWUpdateRepo(some_release, source=repo_iso)
     assert res.pillar_value == 'iso'
 
     # urls are expected to start with http:// or https://
     for source in ('http://some/http/url', 'https://some/http/url'):
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.pillar_value == source
 
 
-def test_inputs_EOSUpdateRepo_is_apis(tmpdir_function):
+def test_inputs_SWUpdateRepo_is_apis(tmpdir_function):
     some_release = '1.2.3'
 
     repo_dir = tmpdir_function / 'repo'
@@ -724,20 +729,20 @@ def test_inputs_EOSUpdateRepo_is_apis(tmpdir_function):
 
     # special values
     for source in values._values.values():
-        res = EOSUpdateRepo(some_release, source=source)
+        res = SWUpdateRepo(some_release, source=source)
         _check('is_special')
 
-    res = EOSUpdateRepo(some_release, source=None)
+    res = SWUpdateRepo(some_release, source=None)
     _check('is_special')
 
     # directory
-    res = EOSUpdateRepo(some_release, source=repo_dir)
+    res = SWUpdateRepo(some_release, source=repo_dir)
     _check('is_local', 'is_dir')
 
     # iso file
-    res = EOSUpdateRepo(some_release, source=repo_iso)
+    res = SWUpdateRepo(some_release, source=repo_iso)
     _check('is_local', 'is_iso')
 
     # urls
-    res = EOSUpdateRepo(some_release, source='https://some/http/url')
+    res = SWUpdateRepo(some_release, source='https://some/http/url')
     _check('is_remote')

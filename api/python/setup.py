@@ -60,9 +60,11 @@ setup(
     license=metadata['__license__'],
     classifiers=[
         "Programming Language :: Python :: 3.6"  # TODO test and declare others
-    ], # TODO
+    ],  # TODO
     keywords='Provisioner API',
-    packages=packages,  # TODO use if needed find_packages
+    packages=find_packages(
+        exclude=['test', 'test.*', 'docs', 'docs*', 'simulation']
+    ),
     package_dir={'provisioner': 'provisioner'},
     # TODO LICENSE, other
     # package_data={
@@ -81,9 +83,10 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt==3001',  # FIXME 2019.2.0 is buggy, 3000.3 lacks support of glusterfs 7.0 updated prompt
-                       # TODO update salt packages for provisioner setup rpm as well
-        'attrs'
+        'salt>=3001',  # FIXME 2019.2.0 is buggy,
+                       # 3000.3 lacks support of glusterfs 7.0 updated prompt
+                       # TODO update salt packages for provisioner
+                       # setup rpm as well
     ],  # TODO
     setup_requires=['pytest-runner'],
     extras_require={

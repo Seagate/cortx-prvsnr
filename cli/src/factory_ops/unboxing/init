@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/sh
+
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing.log}"
@@ -172,8 +173,8 @@ fi
 check_boxing_flag
 
 echo -e "\n\
-      Management VIP           : $cluster_vip
-      Static VIP               : $management_vip" | tee -a ${LOG_FILE}
+      Management VIP           : $management_vip
+      Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node

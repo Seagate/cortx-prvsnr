@@ -18,16 +18,19 @@
 #
 
 import sys
-import attr
 from typing import List, Dict, Type, Union, Optional, Iterable
 from copy import deepcopy
 import logging
 from datetime import datetime
 import uuid
 from pathlib import Path
-import json, yaml
+import json
+import yaml
 import os
+import configparser
+from enum import Enum
 
+from .vendor import attr
 from .errors import (
     ProvisionerError,
     BadPillarDataError,
@@ -49,7 +52,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE,
+    SSL_CERTS_FILE, PRVSNR_PILLAR_CONFIG_INI,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -167,6 +170,14 @@ class RunArgsSSLCerts:
             }
         }, default=False
     )
+    targets: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target(s) to install/update SSL certificate"
+            }
+        },
+        default=ALL_MINIONS
+    )
     dry_run: bool = RunArgs.dry_run
 
 
@@ -206,6 +217,16 @@ class RunArgsConfigureCortx:
 
 # TODO TEST EOS-8473
 class RunArgsSetup:
+    config_path: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "config.ini file path to update salt data "
+                ),
+            }
+        },
+        default=None
+    )
     name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -269,7 +290,7 @@ class RunArgsSetup:
                 # ),
             }
         },
-        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'
+        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
@@ -425,6 +446,7 @@ class Node:
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerBase:
+    config_path: str = RunArgsSetup.config_path
     name: str = RunArgsSetup.name
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
@@ -565,6 +587,30 @@ class RunArgsController:
                 'help': "target controller"
                 # TODO IMPROVE use argparse choises to limit
                 #      valid vales only to a/b/both
+            }
+        }
+    )
+
+
+class SetupType(Enum):
+    SINGLE = "single"
+    DUAL = "dual"
+
+
+@attr.s(auto_attribs=True)
+class RunArgsConfigureSetup:
+    path: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "config path to update pillar"
+            }
+        }
+    )
+    setup_type: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "type of setup",
+                'choices': [st.value for st in SetupType]
             }
         }
     )
@@ -869,10 +915,10 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
-class sw_update(CommandParserFillerMixin):
+class SWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets):
+    def run(self, targets):  # noqa: C901 FIXME
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
 
         # TODO:
@@ -1104,6 +1150,7 @@ class GetNodeId(CommandParserFillerMixin):
             targets=targets
         )
 
+
 # TODO TEST
 @attr.s(auto_attribs=True)
 class GetReleaseVersion(CommandParserFillerMixin):
@@ -1121,6 +1168,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
         except Exception as exc:
             raise ReleaseFileNotFoundError(exc) from exc
 
+
 @attr.s(auto_attribs=True)
 class GetFactoryVersion(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -1134,6 +1182,7 @@ class GetFactoryVersion(CommandParserFillerMixin):
         except Exception as exc:
             raise ReleaseFileNotFoundError(exc) from exc
 
+
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
@@ -1141,7 +1190,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
-    def run(self, source, restart=False, dry_run=False):
+    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):  # noqa: E501, C901 FIXME
 
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
@@ -1172,7 +1221,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     '{}_{}'.format(
                         time_stamp,
                         dest.name))
-                StatesApplier.apply([state_name])
+                StatesApplier.apply([state_name], targets=targets)
                 logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
@@ -1199,7 +1248,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     logger.info('Restoring old SSL cert ')
                     # restores old cert
                     copy_to_file_roots(backup_file_name, dest)
-                    StatesApplier.apply([state_name])
+                    StatesApplier.apply([state_name], targets=targets)
                 except Exception as exc:
                     logger.exception(
                         "Failed to apply backedup certs")
@@ -1214,7 +1263,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise SSLCertsUpdateError(ssl_exc, rollback_exc=rollback_exc)
+            raise SSLCertsUpdateError(ssl_exc, rollback_error=rollback_exc)
 
 
 # TODO TEST
@@ -1328,7 +1377,7 @@ class ShutdownController(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class Configure_Cortx(CommandParserFillerMixin):
+class ConfigureCortx(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureCortx
 
@@ -1346,6 +1395,85 @@ class Configure_Cortx(CommandParserFillerMixin):
 
         if show:
             print(dump_yaml_str(res))
+
+
+@attr.s(auto_attribs=True)
+class ConfigureSetup(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsConfigureSetup
+
+    # TODO : https://jts.seagate.com/browse/EOS-11741
+    # Improve optional and mandatory param validation
+    SINGLE_PARAM = [
+        "target_build",
+        "controller_a_ip",
+        "controller_b_ip",
+        "controller_user",
+        "controller_secret",
+        "primary_hostname",
+        "primary_network_iface",
+        "primary_bmc_ip",
+        "primary_bmc_user",
+        "primary_bmc_secret"]
+    DUAL_PARAM = [
+        "target_build",
+        "controller_a_ip",
+        "controller_b_ip",
+        "controller_user",
+        "controller_secret",
+        "primary_hostname",
+        "primary_network_iface",
+        "primary_bmc_ip",
+        "primary_bmc_user",
+        "primary_bmc_secret",
+        "secondary_hostname",
+        "secondary_network_iface",
+        "secondary_bmc_ip",
+        "secondary_bmc_user",
+        "secondary_bmc_secret"]
+
+    input_map = {"network": inputs.Network,
+                 "release": inputs.Release,
+                 "storage_enclosure": inputs.StorageEnclosure}
+    validate_map = {SetupType.SINGLE.value: SINGLE_PARAM,
+                    SetupType.DUAL.value: DUAL_PARAM}
+
+    def _parse_input(self, input):
+        for key in input:
+            if input[key] and "," in input[key]:
+                input[key] = [x.strip() for x in input[key].split(",")]
+
+    def _validate_params(self, content, setup_type):
+        params = self.validate_map[setup_type]
+        mandatory_param = deepcopy(params)
+        for section in content:
+            for key in content[section]:
+                if key in mandatory_param:
+                    if content[section][key]:
+                        mandatory_param.remove(key)
+        if len(mandatory_param) > 0:
+            raise ValueError(f"Mandatory param missing {mandatory_param}")
+
+    def run(self, path, setup_type):
+
+        if not Path(path).is_file():
+            raise ValueError('config file is missing')
+
+        config = configparser.ConfigParser()
+        config.read(path)
+        logger.info("Updating salt data :")
+        content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
+        logger.debug(f"params data {content}")
+        self._validate_params(content, setup_type)
+
+        for section in content:
+            self._parse_input(content[section])
+            params = self.input_map[section](**content[section])
+            pillar_updater = PillarUpdater()
+            pillar_updater.update(params)
+            pillar_updater.apply()
+
+        logger.info("Pillar data updated Successfully.")
 
 
 @attr.s(auto_attribs=True)
@@ -1560,14 +1688,15 @@ class SetupProvisioner(CommandParserFillerMixin):
                 if _node is not node:
                     candidates -= addrs[_node.minion_id]
 
-            targets = ','.join(
+            targets = '|'.join(
                 [_node.minion_id for _node in nodes if _node is not node]
             )
 
             for addr in candidates:
                 try:
                     ssh_client.cmd_run(
-                        f"ping -c 1 -W 1 {addr}", targets=targets
+                        f"ping -c 1 -W 1 {addr}", targets=targets,
+                        tgt_type='pcre'
                     )
                 except SaltCmdResultError as exc:
                     logger.debug(
@@ -1661,7 +1790,22 @@ class SetupProvisioner(CommandParserFillerMixin):
         )
         repo_tgz_path.unlink()
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
+    def _copy_config_ini(self, run_args, profile_paths):
+        minions_dir = (
+            profile_paths['salt_fileroot_dir'] /
+            "provisioner/files/minions/all/"
+        )
+        config_path = minions_dir / 'config.ini'
+        if run_args.config_path:
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(run_args.config_path),
+                    str(config_path)
+                ]
+            )
+
+    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -1739,10 +1883,11 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
-        
+
         # TODO IMPROVE condiition to verify local_repo
-        # local_repo would be set from config.PROJECTPATH as default if not specified  
-        # as an argument and config.PROJECT could be None if repo not found.
+        # local_repo would be set from config.PROJECTPATH as default if not
+        # specified as an argument and config.PROJECT could be None
+        # if repo not found.
         if not run_args.local_repo:
             raise ValueError("local repo is undefined")
 
@@ -1865,7 +2010,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm
@@ -1932,6 +2077,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, paths)
+
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
             ALL_MINIONS if run_args.ha else run_args.primary.minion_id
@@ -1974,7 +2122,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         self._clean_salt_cache(paths)
 
         # APPLY CONFIGURATION
-        
+
         logger.info("Installing Cortx yum repositories")
         ssh_client.state_apply('cortx_repos')
 
@@ -2067,8 +2215,8 @@ class SetupProvisioner(CommandParserFillerMixin):
         ssh_client.state_apply('ssh.check')
 
         # FIXME: Commented because execution hung at firewall configuration
-        #logger.info("Configuring the firewall")
-        #ssh_client.state_apply('firewall')
+        # logger.info("Configuring the firewall")
+        # ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -2096,7 +2244,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log masters as well
-        logger.info(f"Configuring salt masters")
+        logger.info("Configuring salt masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
@@ -2144,7 +2292,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # masters
         ssh_client.cmd_run(
             (
-                'provisioner pillar_set --fpath release.sls '
+                '/usr/local/bin/provisioner pillar_set --fpath release.sls '
                 f'release/target_build \'"{run_args.target_build}"\''
             ), targets=run_args.primary.minion_id
         )
@@ -2169,7 +2317,7 @@ class SetupSinglenode(SetupProvisioner):
         node = setup_ctx.run_args.nodes[0]
         setup_ctx.ssh_client.cmd_run(
             (
-                'provisioner pillar_set '
+                '/usr/local/bin/provisioner pillar_set '
                 f'cluster/{node.minion_id}/hostname '
                 f'\'"{node.grains.fqdn}"\''
             ), targets=setup_ctx.run_args.primary.minion_id
@@ -2195,12 +2343,19 @@ class SetupCluster(SetupProvisioner):
         for node in setup_ctx.run_args.nodes:
             setup_ctx.ssh_client.cmd_run(
                 (
-                    'provisioner pillar_set '
+                    '/usr/local/bin/provisioner pillar_set '
                     f'cluster/{node.minion_id}/hostname '
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
-
+        if run_args.config_path:
+            logger.info("Updating pillar data using config.ini")
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    '/usr/local/bin/provisioner configure_setup '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
         logger.info("Done")
 
 
@@ -2245,6 +2400,14 @@ class ReplaceNode(SetupProvisioner):
 
         setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
+        )
+
+        logger.info("Updating replace node data in pillar")
+        setup_ctx.ssh_client.cmd_run(
+            (
+                '/usr/local/bin/provisioner pillar_set --fpath cluster.sls '
+                f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
+            ), targets=run_args.node_id
         )
 
         logger.info("Setting up replacement_node flag")
