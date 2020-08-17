@@ -27,7 +27,7 @@ sspl:
   Version: 1.0.0
   SYSTEM_INFORMATION:
     operating_system: "centos7"
-    product: "ECS"
+    product: "LDR-R2"
     cli_type: "CS-A"
     setup: "cortx"
     data_path: "/var/cortx/sspl/data/"

@@ -36,7 +36,7 @@ Ensure bonding config for management bond:
   network.managed:
     - device: {{ iface }}
     - enabled: True
-    - type: slave
+    - type: secondary
     - master: mgmt0
 
 Shutdown {{ iface }}:
@@ -53,7 +53,7 @@ Setup mgmt0 bonding:
     - nm_controlled: no
     - userctl: no
     - defroute: yes
-    # - slaves: em1 em2
+    # - secondary: em1 em2
     - mtu: 1500
     - mode: active-backup
     - miimon: 100

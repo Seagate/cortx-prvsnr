@@ -29,7 +29,7 @@ Ensure bonding config for data bond:
   network.managed:
     - device: {{ iface }}
     - enabled: True
-    - type: slave
+    - type: secondary
     - master: data0
     - requires_in:
       - Setup data0 bonding

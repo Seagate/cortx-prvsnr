@@ -163,8 +163,8 @@ cli_summary: True
 # By default, events are not queued.
 #event_return_queue: 0
 
-# Store all event returns **except** the tags in a blacklist, supports globs.
-#event_return_blacklist:
+# Store all event returns **except** the tags in a blocklist, supports globs.
+#event_return_blocklist:
 #  - salt/master/not_this_tag
 #  - salt/wheel/*/ret
 
@@ -370,10 +370,10 @@ cli_summary: True
 #    - test.ping
 #    - network.*
 #
-# Blacklist any of the following users or modules
+# Blocklist any of the following users or modules
 #
-# This example would blacklist all non sudo users, including root from
-# running any commands. It would also blacklist any use of the "cmd"
+# This example would blocklist all non sudo users, including root from
+# running any commands. It would also blocklist any use of the "cmd"
 # module. This is completely disabled by default.
 #
 #
@@ -381,14 +381,14 @@ cli_summary: True
 # system and throw errors if they do not exist.
 #client_acl_verify: True
 #
-#publisher_acl_blacklist:
+#publisher_acl_blocklist:
 #  users:
 #    - root
 #    - '^(?!sudo_).*$'   #  all non sudo users
 #  modules:
 #    - cmd
 
-# Enforce publisher_acl & publisher_acl_blacklist when users have sudo
+# Enforce publisher_acl & publisher_acl_blocklist when users have sudo
 # access to the salt command.
 #
 #sudo_acl: False
