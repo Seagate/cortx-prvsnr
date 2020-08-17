@@ -178,8 +178,24 @@ function run_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker"
-                || "$state" == "system.storage"
+            if [[ "$state" == "ha.corosync-pacemaker" ]]; then
+                                # Execute first on srvnode-2 then on srvnode-1.
+                l_info "Applying 'components.$state' for srvnode-1"
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.install  $salt_opts
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
+                sleep 2     # Mindfulness break
+                l_info "Applying 'components.$state' for srvnode-2"
+                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.install  $salt_opts
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
+                sleep 2     # Mindfulness break
+
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.setup_cluster  $salt_opts
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
+            fi
+            elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"
                 ]]; then
@@ -191,6 +207,7 @@ function run_states {
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "sync.software.rabbitmq"
+                || "$state" == "sync.software.openldap"
                 || "$state" == "system.storage.multipath"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.

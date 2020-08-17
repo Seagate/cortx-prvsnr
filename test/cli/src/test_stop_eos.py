@@ -19,14 +19,13 @@
 
 import os
 import pytest
-import json
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 # TODO better correlation with post_env_run_hook routine
-DEFAULT_SCRIPT_PATH = "/tmp/stop-eos"
+DEFAULT_SCRIPT_PATH = "/tmp/stop"
 
 
 @pytest.fixture(scope='module')
@@ -36,7 +35,7 @@ def env_level():
 
 @pytest.fixture(scope='module')
 def script_name():
-    return 'stop-eos'
+    return 'stop'
 
 
 # TODO test=True case
@@ -44,12 +43,12 @@ def script_name():
 @pytest.mark.isolated
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-def test_stop_eos_commands(
+def test_stop_cortx_commands(
     mhost, mlocalhost, ssh_config, remote, mock_hosts, run_script
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "{} {} {}".format(

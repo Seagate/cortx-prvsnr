@@ -60,7 +60,7 @@ def patch_logging(request):
     request.getfixturevalue('patch_logging')
 
 
-@pytest.mark.parametrize("eauth", [True, False], ids=['eauth', 'root'])
+@pytest.mark.parametrize("eauth", [True, False], ids=['eauth', 'root'])  # noqa: E501, C901 FIXME
 def test_salt_runner_cmd(monkeypatch, eauth):
     salt_cmd_args = []
     salt_cmd_res = {}

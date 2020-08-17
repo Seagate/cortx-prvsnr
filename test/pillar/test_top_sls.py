@@ -32,17 +32,17 @@ logger = logging.getLogger(__name__)
 #  - might makes sense. to verify for cluster case as well
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')  # mount makes docker inappropriate
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
 def test_user_pillar(
-    mhosteosnode1, eos_hosts, configure_salt, accept_salt_keys
+    mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
-    minion_id = eos_hosts['eosnode1']['minion_id']
+    minion_id = cortx_hosts['srvnode1']['minion_id']
     test_pillar = {'somekey': {'key1': 'value1', 'key2': 'value2'}}
     pillar_fname = 'release.sls'
 
     def update_pillar(pillar_data, pillar_path, minion_id='*'):
-        mhosteosnode1.check_output(
+        mhostsrvnode1.check_output(
             "mkdir -p {}"
             " && echo '{}' >{}"
             " && salt '{}' saltutil.refresh_pillar"
@@ -57,7 +57,7 @@ def test_user_pillar(
         )
 
     def get_pillar():
-        res = mhosteosnode1.check_output("salt '*' --out json pillar.items")
+        res = mhostsrvnode1.check_output("salt '*' --out json pillar.items")
         return json.loads(res)
 
     def check_pillar(update=None):

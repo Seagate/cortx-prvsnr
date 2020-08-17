@@ -52,7 +52,7 @@ from .config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
-    SSL_CERTS_FILE,
+    SSL_CERTS_FILE, PRVSNR_PILLAR_CONFIG_INI,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from .pillar import (
@@ -169,6 +169,14 @@ class RunArgsSSLCerts:
                 'help': "restart flag"
             }
         }, default=False
+    )
+    targets: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target(s) to install/update SSL certificate"
+            }
+        },
+        default=ALL_MINIONS
     )
     dry_run: bool = RunArgs.dry_run
 
@@ -910,7 +918,7 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 class SWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets):
+    def run(self, targets):  # noqa: C901 FIXME
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
 
         # TODO:
@@ -1182,7 +1190,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
-    def run(self, source, restart=False, dry_run=False):
+    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):  # noqa: E501, C901 FIXME
 
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
@@ -1213,7 +1221,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     '{}_{}'.format(
                         time_stamp,
                         dest.name))
-                StatesApplier.apply([state_name])
+                StatesApplier.apply([state_name], targets=targets)
                 logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
@@ -1240,7 +1248,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     logger.info('Restoring old SSL cert ')
                     # restores old cert
                     copy_to_file_roots(backup_file_name, dest)
-                    StatesApplier.apply([state_name])
+                    StatesApplier.apply([state_name], targets=targets)
                 except Exception as exc:
                     logger.exception(
                         "Failed to apply backedup certs")
@@ -1255,7 +1263,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise SSLCertsUpdateError(ssl_exc, rollback_exc=rollback_exc)
+            raise SSLCertsUpdateError(ssl_exc, rollback_error=rollback_exc)
 
 
 # TODO TEST
@@ -1782,7 +1790,22 @@ class SetupProvisioner(CommandParserFillerMixin):
         )
         repo_tgz_path.unlink()
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
+    def _copy_config_ini(self, run_args, profile_paths):
+        minions_dir = (
+            profile_paths['salt_fileroot_dir'] /
+            "provisioner/files/minions/all/"
+        )
+        config_path = minions_dir / 'config.ini'
+        if run_args.config_path:
+            run_subprocess_cmd(
+                [
+                    'cp', '-f',
+                    str(run_args.config_path),
+                    str(config_path)
+                ]
+            )
+
+    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -1987,7 +2010,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm
@@ -2053,6 +2076,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   TODO IMPROVE EOS-8473 hard coded
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
+
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
@@ -2306,10 +2332,6 @@ class SetupCluster(SetupProvisioner):
 
     def run(self, **kwargs):
         run_args = RunArgsSetupCluster(**kwargs)
-        config_path = kwargs.pop('config_path')
-        if config_path:
-            config_setup = ConfigureSetup()
-            config_setup.run(config_path, SetupType.DUAL.value)
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
@@ -2326,7 +2348,14 @@ class SetupCluster(SetupProvisioner):
                     f'\'"{node.grains.fqdn}"\''
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
-
+        if run_args.config_path:
+            logger.info("Updating pillar data using config.ini")
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    '/usr/local/bin/provisioner configure_setup '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
         logger.info("Done")
 
 
@@ -2371,6 +2400,14 @@ class ReplaceNode(SetupProvisioner):
 
         setup_ctx = super().run(
             nodes=list(nodes.values()), **kwargs
+        )
+
+        logger.info("Updating replace node data in pillar")
+        setup_ctx.ssh_client.cmd_run(
+            (
+                '/usr/local/bin/provisioner pillar_set --fpath cluster.sls '
+                f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
+            ), targets=run_args.node_id
         )
 
         logger.info("Setting up replacement_node flag")

@@ -27,20 +27,22 @@ import testinfra
 from abc import ABC, abstractmethod
 from random import randrange
 from time import sleep
+import logging
 
 import pytest
 
-import logging
-logger = logging.getLogger(__name__)
-
 from provisioner.vendor import attr
+
+logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
 
 PROVISIONER_API_DIR = (MODULE_DIR.parent / 'api/python').resolve()
 sys.path.insert(0, str(PROVISIONER_API_DIR))
-from provisioner.config import *
+from provisioner.config import *  # noqa: E402, F403, F401 TODO improve
 
+# just to make flake8 happy
+from provisioner.config import PRVSNR_ROOT_DIR, PROJECT_PATH  # noqa: E402
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
 PRVSNR_PKG_NAME = 'cortx-prvsnr'
@@ -150,13 +152,16 @@ class Container(Remote):
             self.container = self.client.containers.run(
                 self.image,
                 name=self.name,
-                # it's safer to not exceed 64 chars on Unix systems for the hostname
+                # it's safer to not exceed 64 chars on Unix systems
+                # for the hostname
                 # (real limit might be get using `getconf HOST_NAME_MAX`)
                 hostname=self.hostname,
                 detach=True,
                 tty=True,
                 # network=network_name,
-                volumes={'/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}},
+                volumes={
+                    '/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}
+                },
                 # security_opt=['seccomp=unconfined'],
                 tmpfs={'/run': '', '/run/lock': ''},
                 ports={'22/tcp': None},
@@ -280,7 +285,10 @@ class Vagrant:
             ), **kwargs
         )
         if parse:
-            return [VagrantParsedRow(row) for row in output.split(os.linesep) if row]
+            return [
+                VagrantParsedRow(row)
+                for row in output.split(os.linesep) if row
+            ]
         else:
             return output
 
@@ -405,7 +413,9 @@ class VagrantMachine(Remote):
             status = self.status(update=False)
             if status['state'][0] == 'not_created':
                 # TODO that is stuck to VBox only
-                self._localhost.run('VBoxManage unregistervm --delete {}'.format(self.name))
+                self._localhost.run(
+                    'VBoxManage unregistervm --delete {}'.format(self.name)
+                )
 
         return self._vagrant.up(*args)
 
@@ -430,7 +440,8 @@ class VagrantMachine(Remote):
             ):
                 if ok_if_missed:
                     logger.info(
-                        'Vagrant machine with name {} is missed'.format(self.name)
+                        'Vagrant machine with name {} is missed'
+                        .format(self.name)
                     )
                     return
                 else:
@@ -440,12 +451,18 @@ class VagrantMachine(Remote):
     @staticmethod
     def destroy_by_name(machine_name, ok_if_missed=True, force=True):
         # TODO move to module level, a kind of singletone
-        global_status = run(localhost, 'vagrant global-status --prune | grep {}'.format(machine_name))
+        global_status = run(
+            localhost,
+            'vagrant global-status --prune | grep {}'.format(machine_name)
+        )
         if global_status.rc != 0:  # missed
             if ok_if_missed:
                 return
             else:
-                raise RemoteNotExist('Vagrant machine with name {} is missed'.format(machine_name))
+                raise RemoteNotExist(
+                    'Vagrant machine with name {} is missed'
+                    .format(machine_name)
+                )
 
         machine_id = global_status.stdout.split()[0]
         _args = ['--force'] if force else []
@@ -527,8 +544,12 @@ def safe_vagrant_machine_name(name):
 # TODO
 # - tests
 # - better satisfy RFC 1123 (https://tools.ietf.org/html/rfc1123#page-13)
-# - ??? actually docker used to check hostnames but is not clear how it happens now
-#   (https://github.com/moby/moby/issues/20371, https://github.com/moby/moby/pull/20566)
+# - ??? actually docker used to check hostnames but is not clear
+#   how it happens now
+#   (
+#       https://github.com/moby/moby/issues/20371,
+#       https://github.com/moby/moby/pull/20566
+#   )
 def safe_hostname(name):
     re_hostname = re.compile(r'([^a-zA-Z0-9-])')
     re_multiple_dahses = re.compile(r'-+')
@@ -563,7 +584,9 @@ def restore_system_cmd(host, cmd, bin_path='/usr/local/bin'):
         host.check_output('mv -f {} {}'.format(cmd_orig, cmd_orig[:-4]))
 
 
-def fixture_builder(scope, name_with_scope=True, suffix=None, module_name=__name__):
+def fixture_builder(
+    scope, name_with_scope=True, suffix=None, module_name=__name__
+):
 
     scopes = scope if type(scope) in (list, tuple) else [scope]
 
@@ -705,7 +728,8 @@ def collect_ip4_addrs(host):
     res = []
 
     ifaces = host.check_output(
-        "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
+        "ip link show up | grep -v -i loopback "
+        "| sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
     )
 
     for iface in ifaces.strip().split(os.linesep):
@@ -731,7 +755,8 @@ def list_dir(path, host=localhost):
 def hash_dir(path, host=localhost):
     res = host.check_output(
         'bash -c "set -o pipefail; '
-        'cd {} && find . -type f -print0 | LANG=C sort -z | xargs -0 md5sum | md5sum"'
+        'cd {} && find . -type f -print0 | LANG=C sort -z '
+        '| xargs -0 md5sum | md5sum"'
         .format(path)
     )
     return res.split()[0]
@@ -743,37 +768,37 @@ def hash_file(path, host=localhost):
 
 
 # TODO eventually helper
-def ensure_mero_is_online(mhost, num_tries=120):
-    # ensure that mero in online
+def ensure_motr_is_online(mhost, num_tries=120):
+    # ensure that motr in online
     re_status = re.compile(r' +\[ *(.+)\]')
     for i in range(num_tries):
-        mero_status = mhost.check_output("hctl mero status")
-        logger.debug('mero status, try {}: {}'.format(i + 1, mero_status))
-        for line in mero_status.split('\n'):
+        motr_status = mhost.check_output("hctl mero status")
+        logger.debug('motr status, try {}: {}'.format(i + 1, motr_status))
+        for line in motr_status.split('\n'):
             m = re_status.match(line)
             if m and m.group(1) != 'online':
                 sleep(1)
                 break
         else:
             logger.info(
-                'mero becomes online after {} checks:\n{}'
-                .format(i + 1, mero_status)
+                'motr becomes online after {} checks:\n{}'
+                .format(i + 1, motr_status)
             )
             break
     else:
         assert False, (
-            'mero is not online after {} tries, last status: {}'
-            .format(num_tries, mero_status)
+            'motr is not online after {} tries, last status: {}'
+            .format(num_tries, motr_status)
         )
 
 
-def bootstrap_eos(mhost):
+def bootstrap_cortx(mhost):
     logger.info('Bootstrapping the cluster')
     mhost.check_output(
         'bash {} -vv -S'
-        .format(PRVSNR_REPO_INSTALL_DIR / 'cli/bootstrap-eos')
+        .format(PRVSNR_REPO_INSTALL_DIR / 'cli/bootstrap')
     )
-    ensure_mero_is_online(mhost)
+    ensure_motr_is_online(mhost)
 
 
 def install_provisioner_api(mhost):

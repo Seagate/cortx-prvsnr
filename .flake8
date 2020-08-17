@@ -1,0 +1,16 @@
+[flake8]
+exclude =
+    # common places
+    .git,__pycache__,docs/source/conf.py,old,build,.build,dist,.eggs
+    api/python/provisioner/vendor
+    .vagrant
+    .vdisks
+    *packer_cache*
+    .boxes
+    .provisioner
+    tmp
+    # FIXME EOS-5929
+    srv/_modules
+    # FIXME EOS-5929
+    cli/src/csm_admin_user.py
+max-complexity = 10

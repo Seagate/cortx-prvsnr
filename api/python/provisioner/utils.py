@@ -82,7 +82,7 @@ def dump_yaml(path, data, **kwargs):
 
 # TODO IMPROVE:
 #   - exceptions in check callback
-def ensure(
+def ensure(  # noqa: C901 FIXME
     check_cb, tries=10, wait=1, name=None,
     expected_exc: Union[Tuple, Exception, None] = None
 ):

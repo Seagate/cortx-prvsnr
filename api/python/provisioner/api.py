@@ -224,7 +224,7 @@ def set_swupdate_repo(
 
 
 def set_ssl_certs(
-    source, restart=False, dry_run=False, nowait=True
+    source, restart=False, targets=ALL_MINIONS, dry_run=False, nowait=True
 ):
     r"""Configures ssl certs
 
@@ -232,11 +232,14 @@ def set_ssl_certs(
 
     :param source: (optional) A path to pem file. Might be: a local
     :param restart: switch to restart services
+    :param targets: (optional) A host (hosts) to install/update certificates.
+           Default: all minions
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
         'set_ssl_certs',
-        source, restart=restart, dry_run=dry_run, nowait=nowait
+        source, restart=restart, targets=targets,
+        dry_run=dry_run, nowait=nowait
     )
 
 
@@ -377,9 +380,10 @@ def configure_cortx(
         'configure_cortx', component, source=source, show=show, reset=reset
     )
 
+
 def replace_node(node_id, node_host=None, node_port=None, nowait=True):
     r"""Replace node. It will trigger replace node command and return job id
-    
+
     :param node_id: node id of replacing node
     :param node_host: hostname of new node. Default: None
     :param node_port: ssh port of new node. Default: None
@@ -387,8 +391,10 @@ def replace_node(node_id, node_host=None, node_port=None, nowait=True):
     """
     return _api_call(
         'replace_node',
-        node_id=node_id, node_host=node_host, node_port=node_port, nowait=nowait
+        node_id=node_id, node_host=node_host,
+        node_port=node_port, nowait=nowait
     )
+
 
 def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
     r"""Creates an user.
