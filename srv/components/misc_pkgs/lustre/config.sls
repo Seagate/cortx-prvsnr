@@ -17,7 +17,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if 'lo' in pillar['cluster'][grains['id']]['network']['data_nw'] %}
+{% if 'lo' in pillar['cluster'][grains['id']]['network']['data_nw'] %}
 Update lnet config file:
   test.fail_without_changes:
     - name: LNet doesn't support loopback network interface. Config dropped.
