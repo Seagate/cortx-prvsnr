@@ -87,7 +87,7 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
     String pytestTargets = ""
-    String pytestMarkers = "not eos_bvt"
+    String pytestMarkers = "not cortx_bvt"
 
     try {
         stage('Clean VirtualBox environment') {

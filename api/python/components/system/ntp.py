@@ -17,6 +17,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+##########################################################
+# This code has been deprecated in favor of Nothbound API
+##########################################################
+
 # flake8: noqa
 import json
 import sys

@@ -16,6 +16,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+import pytest
 
 from provisioner.config import LOCAL_MINION
 from provisioner import hare
@@ -110,16 +111,27 @@ def test_cluster_maintenance_disable(monkeypatch):
     )
 
 
-def test_check_cluster(monkeypatch, test_output_dir):
-    test_output = (test_output_dir / 'pcs.status.offline.out').read_text()
-    monkeypatch.setattr(hare, 'cluster_status', mock_fun_result(test_output))
-    assert hare.check_cluster_is_offline()
-    assert not hare.check_cluster_is_online()
+def test_check_cluster(mocker):
+    some_path = 'some/path'
+    cmd_run_m = mocker.patch.object(hare, 'cmd_run', autospec=True)
 
-    test_output = (test_output_dir / 'pcs.status.online.out').read_text()
-    monkeypatch.setattr(hare, 'cluster_status', mock_fun_result(test_output))
-    assert not hare.check_cluster_is_offline()
-    assert hare.check_cluster_is_online()
+    path_m = mocker.patch.object(hare, 'PRVSNR_ROOT_DIR', autospec=True)
+    path_m.__truediv__().__str__.return_value = some_path
+    path_m.__truediv__().exists.return_value = False
+
+    with pytest.raises(RuntimeError) as excinfo:
+        hare.check_cluster_is_online()
+
+    assert str(excinfo.value) == 'Utility scripts are not found'
+
+    path_m.__truediv__().exists.return_value = True
+    cmd_run_m.return_value = {1: 2, 3: 4}
+    assert hare.check_cluster_is_online() == 2
+
+    cmd_run_m.assert_called_once_with(
+        f"bash -c '. {some_path}; ensure_healthy_cluster false'",
+        targets=LOCAL_MINION
+    )
 
 
 def test_ensure_cluster_is_stopped(monkeypatch):

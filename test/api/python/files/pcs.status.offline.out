@@ -1,4 +1,4 @@
-Cluster name: eos_cluster
+Cluster name: cortx_cluster
 Stack: corosync
 Current DC: NONE
 Last updated: Sat Mar 21 16:50:44 2020
