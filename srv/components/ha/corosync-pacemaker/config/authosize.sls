@@ -19,9 +19,17 @@
 
 include:
   - components.ha.corosync-pacemaker.config.base
-{% if ('primary' in grains['roles']) or ('true' in salt["environ.get"]('REPLACEMENT_NODE', 'false')) %}
-  - components.ha.corosync-pacemaker.config.authorize
-{% endif %}
-  - components.ha.corosync-pacemaker.config.setup_cluster
-  - components.ha.corosync-pacemaker.config.cluster_ip
-  - components.ha.corosync-pacemaker.config.stonith
+
+Authorize nodes:
+  pcs.auth:
+    - name: pcs_auth__auth
+    - nodes:
+      {%- for node_id in pillar['cluster']['node_list'] %}
+      - {{ node_id }}
+      {%- endfor %}
+    - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
+    - pcspasswd: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
+    - extra_args:
+      - '--force'
+    - require:
+      - Start pcsd service
