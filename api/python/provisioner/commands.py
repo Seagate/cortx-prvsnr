@@ -1412,7 +1412,6 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_secret",
         "primary_hostname",
         "primary_data_network_iface",
-        "primary_bmc_ip",
         "primary_bmc_user",
         "primary_bmc_secret"]
     DUAL_PARAM = [
@@ -1423,12 +1422,10 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_secret",
         "primary_hostname",
         "primary_data_network_iface",
-        "primary_bmc_ip",
         "primary_bmc_user",
         "primary_bmc_secret",
         "secondary_hostname",
         "secondary_data_network_iface",
-        "secondary_bmc_ip",
         "secondary_bmc_user",
         "secondary_bmc_secret"]
 
