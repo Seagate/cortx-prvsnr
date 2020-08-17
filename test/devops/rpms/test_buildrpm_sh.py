@@ -220,7 +220,8 @@ def test_rpm_prvsnr_reinstall_retains_configuration(
     tmp_file_remote = mhost.copy_to_host(tmp_file)
 
     mhost.check_output(
-        'provisioner configure_cortx cluster --source {}'.format(tmp_file_remote)
+        'provisioner configure_cortx cluster --source {}'
+        .format(tmp_file_remote)
     )
 
     mhost.check_output('yum reinstall -y {}'.format(mhost.rpm_prvsnr))
@@ -325,7 +326,6 @@ def test_rpm_prvsnr_api_installation(mhost, mlocalhost):
 
     version = mhost.check_output('provisioner --version')
     assert version == provisioner.__version__
-
 
 
 @pytest.mark.isolated

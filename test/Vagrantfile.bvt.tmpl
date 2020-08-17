@@ -30,7 +30,7 @@ Vagrant.configure('2') do |config|
       vb.customize [
         'storageattach',
         :id,
-        '--storagectl', "eosnode_vdisk",
+        '--storagectl', "srvnode_vdisk",
         '--port', disk_number - 1,
         '--device', 0,
         '--type', 'hdd',

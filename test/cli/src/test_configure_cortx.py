@@ -26,7 +26,7 @@ import test.helper as h
 logger = logging.getLogger(__name__)
 
 # TODO better correlation with post_env_run_hook routine
-DEFAULT_SCRIPT_PATH = "/tmp/configure-eos"
+DEFAULT_SCRIPT_PATH = "/tmp/configure"
 
 
 @pytest.fixture(scope='module')
@@ -36,7 +36,7 @@ def env_level():
 
 @pytest.fixture(scope='module')
 def script_name():
-    return 'configure-eos'
+    return 'configure'
 
 
 @pytest.mark.isolated

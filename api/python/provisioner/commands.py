@@ -918,7 +918,7 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 class SWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets):
+    def run(self, targets):  # noqa: C901 FIXME
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
 
         # TODO:
@@ -1190,7 +1190,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
-    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):
+    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):  # noqa: E501, C901 FIXME
 
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
@@ -1790,7 +1790,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         )
         repo_tgz_path.unlink()
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
+    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -1995,7 +1995,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm

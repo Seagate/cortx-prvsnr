@@ -19,7 +19,6 @@
 
 import os
 import pytest
-import json
 import logging
 
 
@@ -33,7 +32,7 @@ def env_level():
 
 @pytest.fixture(scope='module')
 def script_name():
-    return 'start-eos'
+    return 'start'
 
 
 # TODO test=True case
@@ -48,7 +47,7 @@ def test_start_cortx_commands(
 ):
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
     ssh_config = '--ssh-config {}'.format(ssh_config) if remote else ''
-    with_sudo = '' # TODO
+    with_sudo = ''  # TODO
 
     res = run_script(
         "{} {} {} {}".format(

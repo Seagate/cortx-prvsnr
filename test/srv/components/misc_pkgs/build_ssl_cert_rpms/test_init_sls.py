@@ -34,7 +34,8 @@ def test_build_ssl_cert_rpms_appliance(
     mhostsrvnode1, mhostsrvnode2, cortx_hosts, configure_salt, accept_salt_keys
 ):
     # enable cluster setup
-    # TODO improve later once we have more flexible state parametrization per roles
+    # TODO improve later once we have more flexible
+    #      state parametrization per roles
     mhostsrvnode1.check_output(
         "sed -i 's/# - srvnode-2/- srvnode-2/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
@@ -52,9 +53,8 @@ def test_build_ssl_cert_rpms_appliance(
 
     for label in ('srvnode1', 'srvnode2'):
         mhostsrvnode1.check_output(
-            "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms".format(
-                cortx_hosts[label]['minion_id']
-            )
+            "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms"
+            .format(cortx_hosts[label]['minion_id'])
         )
 
     # TODO check expected changes on nodes
