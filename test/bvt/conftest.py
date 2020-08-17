@@ -18,13 +18,13 @@
 #
 
 import pytest
-import argparse
+
 
 def pytest_addoption(parser):
     parser.addoption(
         "--bvt-repo-path", action='store',
-        default='./eos-test.tgz',
-        help="path to eos-test repo tar gzipped file"
+        default='./cortx-test.tgz',
+        help="path to cortx-test repo tar gzipped file"
     )
     parser.addoption(
         "--bvt-test-targets", action='store',
