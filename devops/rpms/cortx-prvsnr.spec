@@ -13,6 +13,7 @@ BuildRequires: python36-devel
 Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
+Requires: rsync
 #Requires: salt-master = 2019.2.0
 #Requires: salt-minion = 2019.2.0
 #Requires: salt-ssh
@@ -46,7 +47,7 @@ cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
 # TODO EOS-11551 remove later
 cp -R api %{buildroot}/opt/seagate/cortx/provisioner
-cp -R files/conf %{buildroot}/opt/seagate/cortx/provisioner/conf
+cp -R files/conf %{buildroot}/opt/seagate/cortx/provisioner/
 
 
 %clean
