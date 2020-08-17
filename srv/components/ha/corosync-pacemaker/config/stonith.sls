@@ -21,7 +21,7 @@
 {%  if 'primary' in grains['roles']
     and "physical" in grains['virtual']
     and pillar['cluster'][grains['id']]['bmc']['ip']
--%}
+%}
 Remove stonith id stonith-c1 if already present:
   cmd.run:
     - name: pcs stonith delete stonith-c1
