@@ -12,7 +12,7 @@ vm_spec =  {
   "cpus" => 1,
   # https://wiki.centos.org/About/Product recommends 1Gb
   "memory" => 1024,
-  "vb_sas_ctl_name" => "eosnode_sas_ctl" # TODO document: it will be consumed by upper env levels
+  "vb_sas_ctl_name" => "srvnode_sas_ctl" # TODO document: it will be consumed by upper env levels
 }
 
 Vagrant.configure("2") do |config|

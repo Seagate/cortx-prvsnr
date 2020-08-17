@@ -42,7 +42,7 @@ def vagrantfile_tmpl():
 @pytest.fixture(scope='module')
 def hosts_spec(hosts_spec):
     res = deepcopy(hosts_spec)
-    vbox_settings = res['eosnode1']['remote']['specific']['vbox']
+    vbox_settings = res['srvnode1']['remote']['specific']['vbox']
     vbox_settings['memory'] = 8192
     vbox_settings['cpus'] = 4
     vbox_settings['mgmt_disk_size'] = 4096
@@ -50,10 +50,11 @@ def hosts_spec(hosts_spec):
     return res
 
 
-
 def ensure_hw_configuration(mhost, tmpdir):
     logger.info("Ensuring HW configuration...")
-    lsblk_res = mhost.check_output("lsblk -l -d -S -p -n -b --output NAME,SIZE,TRAN | grep 'sas'")
+    lsblk_res = mhost.check_output(
+        "lsblk -l -d -S -p -n -b --output NAME,SIZE,TRAN | grep 'sas'"
+    )
     logger.debug('SAS Block devices: {}'.format(lsblk_res))
 
     lsblk_res = lsblk_res.split('\n')
@@ -71,15 +72,19 @@ def ensure_hw_configuration(mhost, tmpdir):
     # get current pillar data
     res = mhost.check_output(
         "bash {} --show-file-format cluster"
-        .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure-eos')
+        .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure')
     )
     cluster_sls = yaml.safe_load(res)
 
     cluster_dev_data = cluster_sls['cluster']['srvnode-1']['storage']
 
-    if mgmt_dev != cluster_dev_data['metadata_device'][0] or data_dev != cluster_dev_data['data_devices'][0]:
+    if (
+        mgmt_dev != cluster_dev_data['metadata_device'][0]
+        or data_dev != cluster_dev_data['data_devices'][0]
+    ):
         logger.warning(
-            "Unexpected devices mapping: system - mgmt '{}', data '{}', cluster - {}."
+            "Unexpected devices mapping: system - mgmt '{}', "
+            "data '{}', cluster - {}."
             " Reconfiguring cluster.sls ..."
             .format(mgmt_dev, data_dev, cluster_dev_data)
         )
@@ -94,7 +99,10 @@ def ensure_hw_configuration(mhost, tmpdir):
         remote_tmp_file = mhost.copy_to_host(tmp_file)
         mhost.check_output(
             "bash {} --file {} cluster"
-            .format(h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure-eos', remote_tmp_file)
+            .format(
+                h.PRVSNR_REPO_INSTALL_DIR / 'cli/configure',
+                remote_tmp_file
+            )
         )
 
 
@@ -114,7 +122,10 @@ def configure_bvt_s3_env(mhost, remote_bvt_repo_path):
         "s3iamcli CreateAccount -n root -e root@seagate.com"
         " --ldapuser sgiamadmin --ldappasswd ldapadmin"
     )
-    m = re.match(r'.* AccessKeyId = ([^,]+), SecretKey = ([^, ]+)', account_data)
+    m = re.match(
+        r'.* AccessKeyId = ([^,]+), SecretKey = ([^, ]+)',
+        account_data
+    )
     aws_access_key = m.group(1)
     aws_secret_key = m.group(2)
 
@@ -177,20 +188,19 @@ def get_bvt_results(
     logger.info("Stored results as '{}'".format(local_path))
 
 
-
 @pytest.mark.timeout(3600)
-@pytest.mark.eos_bvt
+@pytest.mark.cortx_bvt
 @pytest.mark.isolated
 @pytest.mark.env_provider('vbox')
 @pytest.mark.env_level('singlenode-bvt-ready')
-@pytest.mark.hosts(['eosnode1'])
-def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
-    eos_release = mhosteosnode1.check_output(
+@pytest.mark.hosts(['srvnode1'])
+def test_bvt(mlocalhost, mhostsrvnode1, request, tmpdir_function):
+    cortx_release = mhostsrvnode1.check_output(
         "grep target_build '{}'"
         .format(h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/release.sls')
     ).split()[1]
-    assert eos_release == request.config.getoption("eos_release")
-    logger.info("Target release is set to '{}'".format(eos_release))
+    assert cortx_release == request.config.getoption("cortx_release")
+    logger.info("Target release is set to '{}'".format(cortx_release))
 
     local_bvt_repo_path = Path(request.config.getoption("bvt_repo_path"))
     bvt_test_targets = Path(request.config.getoption("bvt_test_targets"))
@@ -199,25 +209,27 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     assert local_bvt_repo_path.exists()
 
     # upload tests to the remote
-    remote_bvt_repo_archive_path = mhosteosnode1.copy_to_host(local_bvt_repo_path)
-    remote_bvt_repo_path = remote_bvt_repo_archive_path.parent / 'eos-test'
-    mhosteosnode1.check_output(
+    remote_bvt_repo_archive_path = mhostsrvnode1.copy_to_host(
+        local_bvt_repo_path
+    )
+    remote_bvt_repo_path = remote_bvt_repo_archive_path.parent / 'cortx-test'
+    mhostsrvnode1.check_output(
         'mkdir -p "{0}"; tar -zxf "{1}" -C "{0}" --strip-components=1'
         .format(remote_bvt_repo_path, remote_bvt_repo_archive_path),
         force_dump=True
     )
 
-    ensure_hw_configuration(mhosteosnode1, tmpdir_function)
+    ensure_hw_configuration(mhostsrvnode1, tmpdir_function)
 
-    prepare_bvt_python_env(mhosteosnode1, remote_bvt_repo_path)
+    prepare_bvt_python_env(mhostsrvnode1, remote_bvt_repo_path)
 
-    h.bootstrap_eos(mhosteosnode1)
+    h.bootstrap_cortx(mhostsrvnode1)
 
-    configure_bvt_s3_env(mhosteosnode1, remote_bvt_repo_path)
+    configure_bvt_s3_env(mhostsrvnode1, remote_bvt_repo_path)
 
     # list tests
     logger.info("Discovering tests")
-    res = mhosteosnode1.check_output(
+    res = mhostsrvnode1.check_output(
         'cd {} && python3 -m avocado list {}'
         .format(remote_bvt_repo_path, bvt_test_targets)
     )
@@ -230,8 +242,8 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
         (
             "ssh -F {} {} 'cd {} && python3 -m avocado run {}'"
             .format(
-                mhosteosnode1.ssh_config,
-                mhosteosnode1.hostname,
+                mhostsrvnode1.ssh_config,
+                mhostsrvnode1.hostname,
                 remote_bvt_repo_path,
                 bvt_test_targets
             )
@@ -242,7 +254,7 @@ def test_bvt(mlocalhost, mhosteosnode1, request, tmpdir_function):
     )
 
     get_bvt_results(
-        mhosteosnode1,
+        mhostsrvnode1,
         mlocalhost,
         local_bvt_results,
         success=(res.returncode == 0)
