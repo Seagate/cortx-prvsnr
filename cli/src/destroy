@@ -96,7 +96,7 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Installs CORTX stack and configures cortx services either on remote host or locally.
+Removes CORTX stack and cleanups cortx dependencies either on remote host or locally.
 
 Target host is considered to be an CORTX SaltStack master.
 
