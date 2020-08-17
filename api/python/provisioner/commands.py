@@ -1784,7 +1784,8 @@ class SetupProvisioner(CommandParserFillerMixin):
 
     def _copy_config_ini(self, run_args, profile_paths):
         minions_dir = (
-            profile_paths['salt_fileroot_dir'] / "provisioner/files/minions/all/"  # noqa: E501
+            profile_paths['salt_fileroot_dir'] /
+            "provisioner/files/minions/all/"
         )
         config_path = minions_dir / 'config.ini'
         if run_args.config_path:
