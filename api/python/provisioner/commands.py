@@ -1411,7 +1411,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_user",
         "controller_secret",
         "primary_hostname",
-        "primary_network_iface",
+        "primary_data_network_iface",
         "primary_bmc_ip",
         "primary_bmc_user",
         "primary_bmc_secret"]
@@ -1422,12 +1422,12 @@ class ConfigureSetup(CommandParserFillerMixin):
         "controller_user",
         "controller_secret",
         "primary_hostname",
-        "primary_network_iface",
+        "primary_data_network_iface",
         "primary_bmc_ip",
         "primary_bmc_user",
         "primary_bmc_secret",
         "secondary_hostname",
-        "secondary_network_iface",
+        "secondary_data_network_iface",
         "secondary_bmc_ip",
         "secondary_bmc_user",
         "secondary_bmc_secret"]
