@@ -493,7 +493,7 @@ class Network(ParamGroupInputBase):
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data iface netmask"
     )
-    primary_network_iface: List = ParamGroupInputBase._attr_ib(
+    primary_data_network_iface: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data network iface"
     )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
@@ -529,7 +529,7 @@ class Network(ParamGroupInputBase):
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data iface netmask"
     )
-    secondary_network_iface: List = ParamGroupInputBase._attr_ib(
+    secondary_data_network_iface: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data network iface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
