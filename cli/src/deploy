@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/bin/bash
+
 
 set -euE
 
@@ -190,6 +191,7 @@ function run_states {
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "sync.software.rabbitmq"
+                || "$state" == "sync.software.openldap"
                 || "$state" == "system.storage.multipath"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.

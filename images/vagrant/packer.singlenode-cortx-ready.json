@@ -1,8 +1,8 @@
 {
   "variables": {
     "base_env": "centos7.7.1908",
-    "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/singlenode-deploy-ready/package.box",
-    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_singlenode-deploy-ready",
+    "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/singlenode-cortx-deployed/package.box",
+    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_singlenode-cortx-deployed",
     "skip_add": "false"
   },
   "builders": [
@@ -13,9 +13,9 @@
       "skip_add"            : "{{user `skip_add`}}",
       "box_name"            : "{{user `parent_box_name`}}",
       "add_force"           : "true",
-      "template"            : "{{template_dir}}/vagrantfile.eos.packer.template",
-      "output_dir"          : "{{template_dir}}/../../.boxes/{{user `base_env`}}/singlenode-eos-deployed",
-      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.eos.boxed",
+      "template"            : "{{template_dir}}/vagrantfile.cortx.packer.template",
+      "output_dir"          : "{{template_dir}}/../../.boxes/{{user `base_env`}}/singlenode-cortx-ready",
+      "output_vagrantfile"  : "{{template_dir}}/vagrantfile.cortx.boxed",
       "package_include"     : [
           "{{template_dir}}/../../test/id_rsa.test"
       ],
@@ -27,9 +27,11 @@
       "type": "shell",
       "inline": [
         "cd /tmp/ees-prvsnr/cli/src",
-        "chmod u+x deploy-eos",
+        "chmod u+x bootstrap start",
         "set -o pipefail",
-        "./deploy-eos -vv -S 2>&1 | tee /tmp/deploy-eos.logs"
+        "hostname srvnode-1",
+        "./bootstrap -vv -S 2>&1 | tee /tmp/bootstrap.logs",
+        "./start -vv -S 2>&1 | tee /tmp/start.logs"
       ]
     }
   ]

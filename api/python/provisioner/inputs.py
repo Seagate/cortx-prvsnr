@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 def copy_attr(_attr, name=None, **changes):
     attr_kw = {}
     for arg in (
-        'default', 'validator', 'repr', 'cmp', 'hash',
+        'default', 'validator', 'repr', 'hash',
         'init', 'metadata', 'type', 'converter', 'kw_only'
     ):
         attr_kw[arg] = (
@@ -84,7 +84,7 @@ class AttrParserArgs:
     # TODO TEST EOS-8473
     nargs: str = attr.ib(init=False, default=None)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):  # noqa: C901 FIXME
         self.name = self._attr.name
 
         if self.prefix:

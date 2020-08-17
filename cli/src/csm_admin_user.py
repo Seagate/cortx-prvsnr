@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,7 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#!/usr/bin/python3
+
 
 # test this using command : python3 csm_admin_user.py -n <srvnode-2>
 

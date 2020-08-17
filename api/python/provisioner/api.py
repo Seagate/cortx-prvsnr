@@ -224,7 +224,7 @@ def set_swupdate_repo(
 
 
 def set_ssl_certs(
-    source, restart=False, dry_run=False, nowait=True
+    source, restart=False, targets=ALL_MINIONS, dry_run=False, nowait=True
 ):
     r"""Configures ssl certs
 
@@ -232,11 +232,14 @@ def set_ssl_certs(
 
     :param source: (optional) A path to pem file. Might be: a local
     :param restart: switch to restart services
+    :param targets: (optional) A host (hosts) to install/update certificates.
+           Default: all minions
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
         'set_ssl_certs',
-        source, restart=restart, dry_run=dry_run, nowait=nowait
+        source, restart=restart, targets=targets,
+        dry_run=dry_run, nowait=nowait
     )
 
 
@@ -388,7 +391,8 @@ def replace_node(node_id, node_host=None, node_port=None, nowait=True):
     """
     return _api_call(
         'replace_node',
-        node_id=node_id, node_host=node_host, node_port=node_port, nowait=nowait   # noqa: E501
+        node_id=node_id, node_host=node_host,
+        node_port=node_port, nowait=nowait
     )
 
 

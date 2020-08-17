@@ -8,7 +8,7 @@ Map config = [
     staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'cortx-prvsnr-ci'
+    nodeLabel: 'cortx-prvsnr-ci || docker-image-build'
 ]
 
 
@@ -77,8 +77,7 @@ Closure staticValidation = {
             } catch (_err) {
                 archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
                 echo "Python static validation failed: $_err"
-                // TODO that should break the pipeline actually
-                // throw _err
+                throw _err
             }
         }
     }
@@ -147,7 +146,7 @@ Closure dynamicValidation = {
 // PIPELINE
 
 try {
-    timeout(300) {
+    timeout(60) {
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
@@ -163,7 +162,7 @@ try {
         stage('Build / Test') {
             if (config.dynamicValidation) {
                 nodeWrapper(config.nodeLabel) {
-                    timeout(180) {
+                    timeout(10) {
                         dynamicValidation()
                     }
                 }

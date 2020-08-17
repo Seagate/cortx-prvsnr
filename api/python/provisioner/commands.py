@@ -170,6 +170,14 @@ class RunArgsSSLCerts:
             }
         }, default=False
     )
+    targets: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target(s) to install/update SSL certificate"
+            }
+        },
+        default=ALL_MINIONS
+    )
     dry_run: bool = RunArgs.dry_run
 
 
@@ -910,7 +918,7 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
 class SWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets):
+    def run(self, targets):  # noqa: C901 FIXME
         # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
 
         # TODO:
@@ -1182,7 +1190,7 @@ class SetSSLCerts(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSSLCerts
 
-    def run(self, source, restart=False, dry_run=False):
+    def run(self, source, restart=False, targets=ALL_MINIONS, dry_run=False):  # noqa: E501, C901 FIXME
 
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
@@ -1213,7 +1221,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     '{}_{}'.format(
                         time_stamp,
                         dest.name))
-                StatesApplier.apply([state_name])
+                StatesApplier.apply([state_name], targets=targets)
                 logger.info('SSL Certs Updated')
             except Exception as exc:
                 logger.exception(
@@ -1240,7 +1248,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     logger.info('Restoring old SSL cert ')
                     # restores old cert
                     copy_to_file_roots(backup_file_name, dest)
-                    StatesApplier.apply([state_name])
+                    StatesApplier.apply([state_name], targets=targets)
                 except Exception as exc:
                     logger.exception(
                         "Failed to apply backedup certs")
@@ -1255,7 +1263,7 @@ class SetSSLCerts(CommandParserFillerMixin):
             else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
 
-            raise SSLCertsUpdateError(ssl_exc, rollback_exc=rollback_exc)
+            raise SSLCertsUpdateError(ssl_exc, rollback_error=rollback_exc)
 
 
 # TODO TEST
@@ -1797,7 +1805,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 ]
             )
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):
+    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -2002,7 +2010,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm

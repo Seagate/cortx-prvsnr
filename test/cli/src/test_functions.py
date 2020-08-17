@@ -22,10 +22,8 @@ import pytest
 import json
 import yaml
 import functools
-from pathlib import Path
 
 import logging
-import testinfra
 
 import test.helper as h
 from .helper import run_script as _run_script
@@ -37,7 +35,8 @@ CORTX_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
 
 # TODO
 #   - a way (marker) to split tests into groups:
-#       - ones that are isolated (and can be run concurrently, e.g. using pytest-xdist)
+#       - ones that are isolated (and can be run concurrently,
+#         e.g. using pytest-xdist)
 #       - and others that require serial execution
 #     (pytest doesn't support that for now:
 #       - https://github.com/pytest-dev/pytest-xdist/issues/18\
@@ -185,8 +184,12 @@ def test_functions_log_levels(run_script):
                 )
                 # TODO IMPROVE
                 _level = ('warning' if level == 'warn' else level)
-                assert stream.count("{}".format(_level.upper())) == (1 if level in ('warn', 'error') and verbosity == 2 else 2)
-                assert stream.count("{}".format(message)) == (10 if level in ('warn', 'error') and verbosity == 2 else 2)
+                assert stream.count("{}".format(_level.upper())) == (
+                    1 if level in ('warn', 'error') and verbosity == 2 else 2
+                )
+                assert stream.count("{}".format(message)) == (
+                    10 if level in ('warn', 'error') and verbosity == 2 else 2
+                )
 
 
 def test_functions_log_helpers(run_script):
@@ -300,7 +303,9 @@ def test_functions_parse_args_parses_remote(parse_args):
 
 def test_functions_parse_args_parses_ssh_config(parse_args, host_ssh_config):
     for arg in ('-F', '--ssh-config'):
-        res = parse_args(arg, str(host_ssh_config), before_script="verbosity=1")
+        res = parse_args(
+            arg, str(host_ssh_config), before_script="verbosity=1"
+        )
         assert res.rc == 0
         assert "ssh-config=<{}>".format(host_ssh_config) in res.stdout
 
@@ -336,7 +341,7 @@ def test_functions_base_options_usage(run_script):
         # '-n,  --dry-run',
         '-h,  --help',
         # '-r,  --remote [user@]hostname',
-        #'-S,  --singlenode',
+        # '-S,  --singlenode',
         '-F,  --ssh-config FILE',
         # disabled by EOS-2410
         #  '-s,  --sudo',
@@ -345,7 +350,9 @@ def test_functions_base_options_usage(run_script):
         assert opt in res.stdout
 
 
-def test_functions_parse_args_rejects_add_opt_without_required_argument(parse_args):
+def test_functions_parse_args_rejects_add_opt_without_required_argument(
+    parse_args
+):
     for arg in ('-a', '--add-opt'):
         res = parse_args(
             arg,
@@ -450,7 +457,7 @@ def test_functions_parse_args_add_option_with_argument(parse_args):
         assert "dd=<true>" in res.stdout
 
 
-def test_functions_parse_args_calls_fails_when_positional_args_cb_is_missed_for_args(parse_args):
+def test_functions_parse_args_calls_fails_when_positional_args_cb_is_missed_for_args(parse_args):  # noqa: E501
     res = parse_args('arg1')
     assert res.rc == 2
     assert 'positional arguments are not expected' in res.stdout
@@ -518,7 +525,10 @@ def test_functions_build_command(build_command, host_ssh_config):
 
     res = build_command("user@host {} true".format(host_ssh_config))
     assert res.rc == 0
-    assert "cmd=<ssh -t -F {} user@host sudo>".format(host_ssh_config) in res.stdout
+    assert (
+        "cmd=<ssh -t -F {} user@host sudo>".format(host_ssh_config)
+        in res.stdout
+    )
 
 
 def test_functions_hostname_from_spec(run_script):
@@ -544,7 +554,9 @@ def test_functions_check_host_in_ssh_config(run_script, mhost):
             echo {0} not found
         fi
     """
-    mhost.check_output("echo -e 'Host host1\n\tHost host2' >{}".format(host_ssh_config))
+    mhost.check_output(
+        "echo -e 'Host host1\n\tHost host2' >{}".format(host_ssh_config)
+    )
 
     res = run_script(script.format('host1', host_ssh_config))
     assert res.rc == 0
@@ -593,7 +605,7 @@ def test_functions_collect_addrs(
     collected = res.stdout.strip().split()
 
     ifaces = mhost.check_output(
-        "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
+        "ip link show up | grep -v -i loopback | sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"  # noqa: E501
     )
 
     # Note. will include ip6 as well
@@ -640,34 +652,35 @@ def test_functions_check_host_reachable(
 # TODO
 #   - multiplte names case (need multiple ifaces reachable between nodes)
 #   - case when some iface is not shared between them
-#   - case when they have the same IP in some non-shared iface (vbox only case for now)
-#   - actually we don't need eos specific here, just two hosts
+#   - case when they have the same IP in some non-shared iface
+#     (vbox only case for now)
+#   - actually we don't need cortx specific here, just two hosts
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize(
     "local",
-    ['eosnode1', 'eosnode2', None],
+    ['srvnode1', 'srvnode2', None],
     ids=['run_on_itself', 'run_on_target', 'run_on_other']
 )
 def test_functions_get_reachable_names(
-    run_script, mhosteosnode1, mhosteosnode2,
+    run_script, mhostsrvnode1, mhostsrvnode2,
     mlocalhost, ssh_config, local, project_path,
     inject_ssh_config, request
 ):
     if local is None:
         mhost = mlocalhost
-        hostspec1 = mhosteosnode1.hostname
-        hostspec2 = mhosteosnode2.hostname
+        hostspec1 = mhostsrvnode1.hostname
+        hostspec2 = mhostsrvnode2.hostname
         _ssh_config = ssh_config
     else:
         _ssh_config = inject_ssh_config[local]
-        if local == 'eosnode1':
-            mhost = mhosteosnode1
+        if local == 'srvnode1':
+            mhost = mhostsrvnode1
             hostspec1 = "''"
-            hostspec2 = mhosteosnode2.hostname
+            hostspec2 = mhostsrvnode2.hostname
         else:
-            mhost = mhosteosnode2
-            hostspec1 = mhosteosnode1.hostname
+            mhost = mhostsrvnode2
+            hostspec1 = mhostsrvnode1.hostname
             hostspec2 = "''"
 
     script = """
@@ -684,8 +697,8 @@ def test_functions_get_reachable_names(
     collected = res.stdout.split()
     assert collected
 
-    host1_addrs = h.collect_ip4_addrs(mhosteosnode1.host)
-    host2_addrs = h.collect_ip4_addrs(mhosteosnode2.host)
+    host1_addrs = h.collect_ip4_addrs(mhostsrvnode1.host)
+    host2_addrs = h.collect_ip4_addrs(mhostsrvnode2.host)
     common_addrs = set(host1_addrs) & set(host2_addrs)
 
     assert not (set(collected) & common_addrs)
@@ -703,7 +716,7 @@ def test_functions_install_repos(
 
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_repos {} {} {}
@@ -712,11 +725,17 @@ def test_functions_install_repos(
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
 
-    assert h.hash_dir(yum_repos_path + '.bak', mhost.host) == vanilla_repos_hash
+    assert (
+        h.hash_dir(yum_repos_path + '.bak', mhost.host) ==
+        vanilla_repos_hash
+    )
 
     local_repos_path = project_path / 'files/etc/yum.repos.d'
     try:
-        assert h.hash_dir(yum_repos_path, mhost.host) == h.hash_dir(local_repos_path)
+        assert (
+            h.hash_dir(yum_repos_path, mhost.host) ==
+            h.hash_dir(local_repos_path)
+        )
     except AssertionError:
         remote_list = h.list_dir(yum_repos_path, mhost.host)
         local_list = h.list_dir(local_repos_path)
@@ -725,7 +744,11 @@ def test_functions_install_repos(
 
     # install for the second time and check that
     # it warns regarding backup creation skip
-    res = run_script(script, mhost=(mlocalhost if remote else mhost), stderr_to_stdout=False)
+    res = run_script(
+        script,
+        mhost=(mlocalhost if remote else mhost),
+        stderr_to_stdout=False
+    )
     assert res.rc == 0
     assert 'WARNING: skip backup creation' in res.stderr
 
@@ -755,7 +778,7 @@ def test_functions_install_provisioner(
     prvsnr_version = CORTX_RELEASE_TEST_TAG
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_provisioner {} {} {} {} {}
@@ -771,7 +794,9 @@ def test_functions_install_provisioner(
 
         # check repo files are in place
         for path in ('files', 'pillar', 'srv'):
-            assert mhost.host.file(str(h.PRVSNR_REPO_INSTALL_DIR / path)).exists
+            assert mhost.host.file(
+                str(h.PRVSNR_REPO_INSTALL_DIR / path)
+            ).exists
 
 
 # TODO centos 7.6, 7.7
@@ -793,7 +818,7 @@ def test_functions_install_provisioner_rpm(
     prvsnr_version = "''" if version is None else version
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_provisioner rpm {} {} {} {}
@@ -809,8 +834,11 @@ def test_functions_install_provisioner_rpm(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
     assert baseurl == (
-        'http://ci-storage.mero.colo.seagate.com/releases/eos/{}'
-        .format('integration/centos-7.7.1908/last_successful' if version is None else version)
+        'http://ci-storage.mero.colo.seagate.com/releases/cortx/{}'
+        .format(
+            'integration/centos-7.7.1908/last_successful'
+            if version is None else version
+        )
     )
 
 
@@ -832,7 +860,7 @@ def test_functions_install_provisioner_local(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     prvsnr_version = version
     if prvsnr_version is None:
@@ -879,7 +907,9 @@ def test_functions_install_provisioner_local(
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("singlenode", [True, False], ids=['singlenode', 'cluster'])
+@pytest.mark.parametrize(
+    "singlenode", [True, False], ids=['singlenode', 'cluster']
+)
 def test_functions_install_provisioner_proper_cluster_pillar(
     run_script, mhost, mlocalhost,
     ssh_config, remote, project_path, singlenode,
@@ -887,7 +917,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_singlenode = 'true' if singlenode else 'false'
 
     prvsnr_version = 'HEAD'
@@ -908,10 +938,12 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 
 
 @pytest.mark.isolated
-@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.env_level('network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("nm_installed", [True, False], ids=['nm_installed', 'nm_not_installed'])
+@pytest.mark.parametrize(
+    "nm_installed", [True, False], ids=['nm_installed', 'nm_not_installed']
+)
 def test_functions_configure_network(
     run_script, mhost, mlocalhost,
     ssh_config, remote, nm_installed, project_path,
@@ -922,7 +954,7 @@ def test_functions_configure_network(
 
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         configure_network {} {} {}
@@ -958,7 +990,7 @@ def test_functions_install_salt(
 ):
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
         install_salt {} {} {}
@@ -972,24 +1004,26 @@ def test_functions_install_salt(
 
 
 # TODO
-#   - use different env for remote clients installation instead of the localhost
-#   - integration test for master-minion connected scheme to check grains, minion-ids ...
+#   - use different env for remote clients installation
+#     instead of the localhost
+#   - integration test for master-minion connected scheme
+#     to check grains, minion-ids ...
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
 def test_functions_configure_salt(
     run_script, mlocalhost, ssh_config, remote, master, project_path, request
 ):
-    host_label = 'eosnode1' if master else 'eosnode2'
+    host_label = 'srvnode1' if master else 'srvnode2'
     mhost = request.getfixturevalue('mhost' + host_label)
     _ = request.getfixturevalue('install_provisioner')
 
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_master = 'true' if master else 'false'
 
     script = """
@@ -998,7 +1032,6 @@ def test_functions_configure_salt(
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
-
 
     mhost.check_output(
         'diff -q {} /etc/salt/master'.format(
@@ -1028,7 +1061,9 @@ def test_functions_configure_salt(
         assert mhost.host.service('salt-master').is_enabled
         assert mhost.host.service('salt-master').is_running
 
-    output = mhost.host.check_output('salt-call --local --out json grains.items')
+    output = mhost.host.check_output(
+        'salt-call --local --out json grains.items'
+    )
     grains = json.loads(output)['local']
     assert 'roles' in grains
     assert grains['roles'] == ['primary'] if master else ['secondary']
@@ -1037,20 +1072,24 @@ def test_functions_configure_salt(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("master_host", [None, 'some-master-host'], ids=['default_master', 'custom_master'])
+@pytest.mark.parametrize(
+    "master_host",
+    [None, 'some-master-host'],
+    ids=['default_master', 'custom_master']
+)
 def test_functions_configure_salt_master_host(
     run_script, mhost, mlocalhost,
     ssh_config, remote, master_host, project_path,
     install_provisioner
 ):
-    default_eos_salt_master = 'srvnode-1'
+    default_cortx_salt_master = 'srvnode-1'
 
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     _master_host = "''" if master_host is None else master_host
 
@@ -1061,16 +1100,20 @@ def test_functions_configure_salt_master_host(
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
     assert res.rc == 0
 
-    output = mhost.check_output('salt-call --local --out json config.get master')
+    output = mhost.check_output(
+        'salt-call --local --out json config.get master'
+    )
     output = json.loads(output)
     assert output['local'] == (
-        default_eos_salt_master if master_host is None else master_host
+        default_cortx_salt_master if master_host is None else master_host
     )
 
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'some-minion-id', 'is_primary': True}})
+@pytest.mark.cortx_spec(
+    {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
+)
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_key_singlenode(
     run_script, mhost, mlocalhost,
@@ -1080,7 +1123,7 @@ def test_functions_accept_salt_key_singlenode(
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
     is_master = 'true'
 
     script = """
@@ -1125,66 +1168,71 @@ def test_functions_accept_salt_key_singlenode(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.hosts(['eosnode1', 'eosnode2'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_key_cluster(
-    run_script, mhosteosnode1, mhosteosnode2,
+    run_script, mhostsrvnode1, mhostsrvnode2,
     mlocalhost, ssh_config, remote, project_path,
-    install_provisioner, eos_spec
+    install_provisioner, cortx_spec
 ):
-    eosnode1_minion_id = eos_spec['eosnode1']['minion_id']
-    eosnode2_minion_id = eos_spec['eosnode2']['minion_id']
-    with_sudo = 'false' # TODO
+    srvnode1_minion_id = cortx_spec['srvnode1']['minion_id']
+    srvnode2_minion_id = cortx_spec['srvnode2']['minion_id']
+    with_sudo = 'false'  # TODO
 
-    salt_server_ip = mhosteosnode1.host.interface(
-        mhosteosnode1.iface
+    salt_server_ip = mhostsrvnode1.host.interface(
+        mhostsrvnode1.iface
     ).addresses[0]
 
     # configure srvnode-1
     script = """
         configure_salt {} '' '' {} true localhost
     """.format(
-        eosnode1_minion_id, with_sudo, salt_server_ip
+        srvnode1_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, mhost=mhosteosnode1)
+    res = run_script(script, mhost=mhostsrvnode1)
     assert res.rc == 0
 
     # configure srvnode-2
     script = """
         configure_salt {} '' '' {} false {}
     """.format(
-        eosnode2_minion_id, with_sudo, salt_server_ip
+        srvnode2_minion_id, with_sudo, salt_server_ip
     )
-    res = run_script(script, mhost=mhosteosnode2)
+    res = run_script(script, mhost=mhostsrvnode2)
     assert res.rc == 0
 
-    hostspec = mhosteosnode1.hostname if remote else "''"
+    hostspec = mhostsrvnode1.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
 
-    for _id in (eosnode1_minion_id, eosnode2_minion_id):
+    for _id in (srvnode1_minion_id, srvnode2_minion_id):
         script = """
             accept_salt_key {} {} {} {}
         """.format(
             _id, hostspec, ssh_config, with_sudo
         )
-        res = run_script(script, mhost=(mlocalhost if remote else mhosteosnode1))
+        res = run_script(
+            script, mhost=(mlocalhost if remote else mhostsrvnode1)
+        )
         assert res.rc == 0
 
-    output = mhosteosnode1.check_output("salt-key --out json --list all")
+    output = mhostsrvnode1.check_output("salt-key --out json --list all")
     output = json.loads(output)
-    assert set(output['minions']) == set([eosnode1_minion_id, eosnode2_minion_id])
+    assert (
+        set(output['minions']) ==
+        set([srvnode1_minion_id, srvnode2_minion_id])
+    )
 
 # Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
     [
         'cluster',
-        # 'eoscore',  # TODO EOS-5940
+        # 'motr',  # TODO EOS-5940
         # 'haproxy',
         'release',
         's3clients',
@@ -1192,7 +1240,7 @@ def test_functions_accept_salt_key_cluster(
         'sspl'
     ]
 )
-def test_functions_eos_pillar_show_skeleton(
+def test_functions_cortx_pillar_show_skeleton(
     run_script, mhost, mlocalhost,
     ssh_config, remote, component, project_path,
     install_provisioner
@@ -1210,10 +1258,10 @@ def test_functions_eos_pillar_show_skeleton(
     # 2. call the script
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
-        eos_pillar_show_skeleton {} {} {} {}
+        cortx_pillar_show_skeleton {} {} {} {}
     """.format(component, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1225,11 +1273,11 @@ def test_functions_eos_pillar_show_skeleton(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
-def test_functions_eos_pillar_update_fail(
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+def test_functions_cortx_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
 ):
-    res = run_script('eos_pillar_update cluster some-path', mhost=mhost)
+    res = run_script('cortx_pillar_update cluster some-path', mhost=mhost)
     assert res.rc == 1
     assert 'ERROR: not a file' in res.stdout
 
@@ -1237,27 +1285,27 @@ def test_functions_eos_pillar_update_fail(
 # TODO
 #   - 'salt-installed' is used since it has python3.6 installed,
 #      python and repo installed would be enough actually
-#   - do we need to test all components actually, might be a subject of other test
-#     (e.g. for utils)
+#   - do we need to test all components actually,
+#     might be a subject of other test (e.g. for utils)
 #   - update and load default are related to each other but anyway makes sense
 #     to split into separate tests
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.eos_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
     [
         'cluster',
-        # 'eoscore',  TODO EOS-5940
+        # 'motr',  TODO EOS-5940
         # 'haproxy',
         'release',
         's3clients'
     ]
     # Removed s3server and sspl EOS-4907
 )
-def test_functions_eos_pillar_update_and_load_default(
+def test_functions_cortx_pillar_update_and_load_default(
     run_script, mhost, mlocalhost, tmpdir_function,
     ssh_config, remote, component, project_path,
     install_provisioner, mock_hosts
@@ -1295,10 +1343,10 @@ def test_functions_eos_pillar_update_and_load_default(
     # 2. call the update script
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false' # TODO
+    with_sudo = 'false'  # TODO
 
     script = """
-        eos_pillar_update {} {} {} {} {}
+        cortx_pillar_update {} {} {} {} {}
     """.format(component, tmp_file, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1306,10 +1354,14 @@ def test_functions_eos_pillar_update_and_load_default(
     # 3. verify
     assert res.rc == 0
 
-    tmp_file_content = (mlocalhost if remote else mhost).check_output('cat {}'.format(tmp_file))
+    tmp_file_content = (mlocalhost if remote else mhost).check_output(
+        'cat {}'.format(tmp_file)
+    )
     current_def_pillar = h.PRVSNR_PILLAR_DIR / 'components' / component_pillar
     current_user_pillar = h.PRVSNR_USER_PI_ALL_HOSTS_DIR / component_pillar
-    pillar_file_content = mhost.check_output('cat {}'.format(current_user_pillar))
+    pillar_file_content = mhost.check_output(
+        'cat {}'.format(current_user_pillar)
+    )
 
     tmp_file_dict = yaml.safe_load(tmp_file_content)
     pillar_file_dict = yaml.safe_load(pillar_file_content)
@@ -1327,7 +1379,7 @@ def test_functions_eos_pillar_update_and_load_default(
 
     # 4. call the script to reset to defaults
     script = """
-        eos_pillar_load_default {} {} {} {}
+        cortx_pillar_load_default {} {} {} {}
     """.format(component, hostspec, ssh_config, with_sudo)
 
     res = run_script(script, mhost=(mlocalhost if remote else mhost))
@@ -1335,7 +1387,9 @@ def test_functions_eos_pillar_update_and_load_default(
     # 5. verify
     assert res.rc == 0
 
-    pillar_file_content = mhost.check_output('cat {}'.format(current_def_pillar))
+    pillar_file_content = mhost.check_output(
+        'cat {}'.format(current_def_pillar)
+    )
     pillar_file_dict = yaml.safe_load(pillar_file_content)
     del new_pillar_dict[pillar_new_key]
     assert new_pillar_dict == pillar_file_dict
