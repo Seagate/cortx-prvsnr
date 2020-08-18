@@ -9,28 +9,8 @@ def test_keygen_input_checks(mocker):
 
     run_m = mocker.patch.object(ssh, 'run_subprocess_cmd', autospec=True)
 
-    ssh.keygen(priv_key_path)
-    run_m.assert_called_with((cmd.split() + ['-C', '', '-N', '', '-f', str(priv_key_path)]), input='y')
-
-    ssh.keygen(priv_key_path, comment=comment)
-    run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', '', '-f', str(priv_key_path)]), input='y')
-
-    ssh.keygen(priv_key_path, passphrase=passphrase)
-    run_m.assert_called_with((cmd.split() + ['-C', '', '-N', passphrase, '-f', str(priv_key_path)]), input='y')
-
     ssh.keygen(priv_key_path, comment=comment, passphrase=passphrase)
     run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase, '-f', str(priv_key_path)]), input='y')
-
-
-# def test_keygen_output_check(mocker):
-#     priv_key_path = 'some-path'
-#     comment = 'some-comment'
-#     passphrase = 'some-phrase'
-#     ret_val = 'some-ret-val'
-#
-#     mocker.patch.object(utils, 'run_subprocess_cmd', autospec=True, return_value=ret_val)
-#
-#     assert ssh.keygen(priv_key_path, comment, passphrase) == ret_val
 
 
 def test_copy_id_input_checks(mocker):
@@ -58,17 +38,8 @@ def test_copy_id_input_checks(mocker):
     ssh.copy_id(host, port=port)
     run_m.assert_called_with([copy_id_cmd, '-p', str(port), str(host)])
 
-    ssh.copy_id(host, ssh_options=ssh_options)
     ssh_options_lst = []
     for opt in ssh_options:
         ssh_options_lst.extend(['-o', opt])
+    ssh.copy_id(host, ssh_options=ssh_options)
     run_m.assert_called_with([copy_id_cmd] + ssh_options_lst + [host])
-
-
-# def test_copy_id_output_check(mocker):
-#     host = 'some-host'
-#     ret_val = 'some-return-value'
-#
-#     mocker.patch.object(utils, 'run_subprocess_cmd', autospec=True, return_value=ret_val)
-#
-#     assert ssh.copy_id(host) == ret_val
