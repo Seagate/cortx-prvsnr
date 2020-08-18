@@ -18,8 +18,18 @@
 #
 
 include:
-  - components.ha.keepalived.prepare
-  - components.ha.keepalived.install
-  - components.ha.keepalived.config
-  - components.ha.keepalived.housekeeping
-  - components.ha.keepalived.sanity_check
+  - components.ha.corosync-pacemaker.config.base
+
+Authorize nodes:
+  pcs.auth:
+    - name: pcs_auth__auth
+    - nodes:
+      {%- for node_id in pillar['cluster']['node_list'] %}
+      - {{ node_id }}
+      {%- endfor %}
+    - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
+    - pcspasswd: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
+    - extra_args:
+      - '--force'
+    - require:
+      - Start pcsd service

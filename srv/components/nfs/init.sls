@@ -22,7 +22,6 @@ include:
   - components.nfs.prepare
   - components.nfs.install
   #- components.nfs.config
-  - components.nfs.housekeeping
   #- components.nfs.sanity_check
 
 Generate nfs checkpoint flag:

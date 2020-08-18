@@ -19,6 +19,9 @@
 
 include:
   - components.ha.corosync-pacemaker.config.base
+{% if ('primary' in grains['roles']) or ('true' in salt["environ.get"]('REPLACEMENT_NODE', 'false')) %}
+  - components.ha.corosync-pacemaker.config.authorize
+{% endif %}
   - components.ha.corosync-pacemaker.config.setup_cluster
   - components.ha.corosync-pacemaker.config.cluster_ip
   - components.ha.corosync-pacemaker.config.stonith
