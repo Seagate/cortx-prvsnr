@@ -18,10 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-
 set -euE
-
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -94,6 +91,7 @@ controlpath_states=(
         "sspl.install"
         "csm.prepare"
         "csm.install"
+        "csm.config"
         "uds.prepare"
         "uds.install"
     )
@@ -103,10 +101,13 @@ ha_states=(
         "ha.corosync-pacemaker.prepare"
         "ha.corosync-pacemaker.install"
         "ha.corosync-pacemaker.config.base"
+        "ha.corosync-pacemaker.config.authorize"
         "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
         "ha.ees_ha.prepare"
         "ha.ees_ha.install"             # A blank file
+        "ha.cortx-ha.replace_node.refresh_context"
+        "ha.cortx-ha.replace_node.add_node"
     )
 
 # ToDo: Remove & Add node script here
@@ -227,13 +228,16 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run 
 update_salt
 
 if [[ "$run_all" == true ]]; then
+
+    run_states ( "ha.cortx-ha.replace_node.remove_node" )
+
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
-    run_states  "${sync_states[@]}"
-    run_states  "${iopath_states[@]}"
+    run_states "${sync_states[@]}"
+    run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
     run_states "${ha_states[@]}"
 fi

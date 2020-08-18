@@ -85,7 +85,7 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Removes EOS stack and configures eos services on VM environment.
+Removes CORTX stack and cleanups cortx dependencies on VM environment.
 
 Must be run from primary node for Dual node and from VM itself for single node.
 
