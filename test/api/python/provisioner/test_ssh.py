@@ -10,7 +10,8 @@ def test_keygen_input_checks(mocker):
     run_m = mocker.patch.object(ssh, 'run_subprocess_cmd', autospec=True)
 
     ssh.keygen(priv_key_path, comment=comment, passphrase=passphrase)
-    run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase, '-f', str(priv_key_path)]), input='y')
+    run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase, '-f',
+                                             str(priv_key_path)]), input='y')
 
 
 def test_copy_id_input_checks(mocker):
@@ -33,7 +34,8 @@ def test_copy_id_input_checks(mocker):
     run_m.assert_called_with([copy_id_cmd, '-f', str(host)])
 
     ssh.copy_id(host, priv_key_path=priv_key_path)
-    run_m.assert_called_with([copy_id_cmd, '-i', str(priv_key_path), str(host)])
+    run_m.assert_called_with([copy_id_cmd, '-i', str(priv_key_path),
+                              str(host)])
 
     ssh.copy_id(host, port=port)
     run_m.assert_called_with([copy_id_cmd, '-p', str(port), str(host)])
