@@ -1,21 +1,23 @@
+{%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] -%}
+{%- set data_ip = grains['ip4_interfaces'][data_if][0] -%}
+{%- set retry_list = [] -%}
+{%- for node in (pillar['cluster']['node_list'] | difference(grains['id'])) -%}
+{%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
+{%- do retry_list.append(ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0]) %}
+{%- endfor %}
+{%- endfor %}
 {
-  "datacenter": "EES",
+  "bind_addr": "{{ data_ip }}",
+  "client_addr": "127.0.0.1 {{ data_ip }}",
   "data_dir": "/opt/consul/data",
   "log_level": "INFO",
-  "domain": "0.0.0.0",
-  "client_addr": "0.0.0.0",
   "bootstrap_expect": {{ pillar['cluster']['node_list']|length }},
   "server": true,
-  "dns_config": {
-    "allow_stale": true,
-    "max_stale": "15s"
-  },
-  "encrypt":, 
-  "retry_interval": "10s",
-  "retry_max": 100,
   "ui": true,
-  "skip_leave_on_interrupt": true,
-  "leave_on_terminate": false,
-  "rejoin_after_leave": true,
-  "retry_join": {{ pillar['cluster']['node_list'] }}
+  "leave_on_terminate": true,
+  {%- if "single" not in pillar["cluster"]["type"] %}
+  "retry_join": {{ retry_list | replace("'", '"') }},
+  {%- endif %}
+  "rejoin_after_leave": true
 }
+
