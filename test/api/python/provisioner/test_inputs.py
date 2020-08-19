@@ -531,7 +531,12 @@ def test_inputs_NETWORK():
         param = Path(param)
         if str(param.parent) == Network._param_group:
             fattr = attr.fields_dict(Network)[param.name]
-            if param.name in ('dns_servers', 'search_domains'):
+            if param.name in (
+                'dns_servers',
+                'search_domains',
+                'primary_data_network_iface',
+                'secondary_data_network_iface'
+            ):
                 assert fattr.type is List
             else:
                 assert fattr.type is str

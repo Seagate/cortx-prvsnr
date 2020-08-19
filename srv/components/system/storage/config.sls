@@ -1,4 +1,23 @@
-# Setup SWAP and /var/mero
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+# Setup SWAP and /var/motr
 {% set node = grains['id'] %}
 
 # Make SWAP
@@ -72,16 +91,16 @@ Make vg_metadata_{{ node }}:
 # done creating LVM VG
 
 # Creating LVM's Logical Volumes (LVs; one for swap and one for raw_metadata)
-# Creating swap LV (size: 50% of total VG space)
+# Creating swap LV (size: 51% of total VG space - it must be larger than raw metadata)
 Make lv_main_swap:
   lvm.lv_present:
     - name: lv_main_swap
     - vgname: vg_metadata_{{ node }}
-    - extents: 50%VG          # Reference: https://linux.die.net/man/8/lvcreate
+    - extents: 51%VG          # Reference: https://linux.die.net/man/8/lvcreate
     - require:
       - Make vg_metadata_{{ node }}
 
-# Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 50% (less 1TB))
+# Creating raw_metadata LV (per EOS-8858) (size: all remaining VG space; roughly 49% (less 1TB))
 Make lv_raw_metadata:
   lvm.lv_present:
     - name: lv_raw_metadata
@@ -117,7 +136,7 @@ Make metadata partition:
     - extfs.mkfs:
       - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
       - fs_type: ext4
-      - label: eos_metadata
+      - label: cortx_metadata
       - require:
         - Create metadata partition
 

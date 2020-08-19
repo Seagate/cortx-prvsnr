@@ -39,7 +39,7 @@ def api_run_mode(request):
 
 
 @pytest.fixture
-def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
+def test_pillar_sls(tmpdir_function, cortx_hosts, project_path):
 
     def _f(mhost):
         test_pillar = {
@@ -68,7 +68,7 @@ def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
 
         mhost.check_output(
             "salt '{}' saltutil.refresh_pillar"
-            .format(eos_hosts['eosnode1']['minion_id'])
+            .format(cortx_hosts['srvnode1']['minion_id'])
         )
 
     return _f
@@ -76,13 +76,13 @@ def test_pillar_sls(tmpdir_function, eos_hosts, project_path):
 
 @pytest.fixture
 def run_test(
-    request, api_type, api_run_mode, run_test, eos_hosts, project_path
+    request, api_type, api_run_mode, run_test, cortx_hosts, project_path
 ):
     def f(mhost, *args, env=None, **kwargs):
         if env is None:
             env = {}
 
-        minion_id = eos_hosts['eosnode1']['minion_id']
+        minion_id = cortx_hosts['srvnode1']['minion_id']
 
         env['TEST_API_TYPE'] = api_type
         env['TEST_MINION_ID'] = minion_id
@@ -113,9 +113,9 @@ def run_test(
 # TODO split to different tests per each test case
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_external_auth(
-    mhosteosnode1, run_test
+    mhostsrvnode1, run_test
 ):
     username = 'someuser'
     password = '123456'
@@ -123,12 +123,12 @@ def test_external_auth(
 
     # CASE 1. do not create user at first
     run_test(
-        mhosteosnode1, username=username, password=password,
+        mhostsrvnode1, username=username, password=password,
         expected_exc='AuthenticationError'
     )
 
     # CASE 2. create user but do not add to group for now
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "adduser {0} && echo {1} | passwd --stdin {0}"
         .format(username, password)
     )
@@ -136,34 +136,34 @@ def test_external_auth(
     # Note. changing current user actually might be not needed
     # but it's better to cover that case as well
     run_test(
-        mhosteosnode1, username=username, password=password,
+        mhostsrvnode1, username=username, password=password,
         expected_exc='AuthorizationError'
     )
     run_test(
-        mhosteosnode1, curr_user=username, username=username,
+        mhostsrvnode1, curr_user=username, username=username,
         password=password,
         expected_exc='AuthorizationError'
     )
 
     # CASE 3. add to group now
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "groupadd {0} && usermod -a -G {0} {1}"
         .format(group, username)
     )
-    run_test(mhosteosnode1, username=username, password=password)
+    run_test(mhostsrvnode1, username=username, password=password)
     run_test(
-        mhosteosnode1, curr_user=username, username=username, password=password
+        mhostsrvnode1, curr_user=username, username=username, password=password
     )
 
 
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_pillar_get_set(
-    mhosteosnode1, run_test, test_pillar_sls
+    mhostsrvnode1, run_test, test_pillar_sls
 ):
-    test_pillar_sls(mhosteosnode1)
-    run_test(mhosteosnode1)
+    test_pillar_sls(mhostsrvnode1)
+    run_test(mhostsrvnode1)
 
 
 # TODO
@@ -174,23 +174,23 @@ def test_pillar_get_set(
 # (if it's actually possible)
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_set_ntp(
-    mhosteosnode1, run_test
+    mhostsrvnode1, run_test
 ):
-    mhosteosnode1.check_output("yum install -y ntp")
-    run_test(mhosteosnode1)
+    mhostsrvnode1.check_output("yum install -y ntp")
+    run_test(mhostsrvnode1)
     # TODO
     #   - run ntp.config state and check that nothing changed
 
 
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_set_network(
-    mhosteosnode1, run_test, eos_hosts, project_path
+    mhostsrvnode1, run_test, cortx_hosts, project_path
 ):
-    mhosteosnode1.copy_to_host(
+    mhostsrvnode1.copy_to_host(
         project_path / "pillar/components/samples/dualnode.cluster.sls",
         host_path=Path(
             "{}/pillar/components/cluster.sls"
@@ -198,12 +198,12 @@ def test_set_network(
         )
     )
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "salt '{}' saltutil.refresh_pillar"
-        .format(eos_hosts['eosnode1']['minion_id'])
+        .format(cortx_hosts['srvnode1']['minion_id'])
     )
 
-    run_test(mhosteosnode1)
+    run_test(mhostsrvnode1)
 
 
 # TODO DOC example how to parametrize cluster/singlenode
@@ -213,24 +213,24 @@ def test_set_network(
 @pytest.mark.parametrize(
     "cluster", [True, False], ids=['cluster', 'singlenode']
 )
-def test_set_eosupdate_repo(
+def test_set_swupdate_repo(
     request, cluster, api_type, api_run_mode
 ):
     if cluster:
         request.applymarker(pytest.mark.env_level('salt-installed'))
-        request.applymarker(pytest.mark.hosts(['eosnode1', 'eosnode2']))
+        request.applymarker(pytest.mark.hosts(['srvnode1', 'srvnode2']))
         request.getfixturevalue('configure_salt')
         request.getfixturevalue('accept_salt_keys')
     else:
-        request.applymarker(pytest.mark.hosts(['eosnode1']))
+        request.applymarker(pytest.mark.hosts(['srvnode1']))
 
-    mhosteosnode1 = request.getfixturevalue('mhosteosnode1')
+    mhostsrvnode1 = request.getfixturevalue('mhostsrvnode1')
     run_test = request.getfixturevalue('run_test')
 
     repo_dir = '/tmp/repo'
     iso_path = '/tmp/repo.iso'
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "mkdir -p {repo_dir}"
         " && cp {rpm_path} {repo_dir}"
         " && yum install -y createrepo genisoimage"
@@ -238,11 +238,11 @@ def test_set_eosupdate_repo(
         " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
         .format(
             repo_dir=repo_dir,
-            rpm_path=mhosteosnode1.rpm_prvsnr,
+            rpm_path=mhostsrvnode1.rpm_prvsnr,
             iso_path=iso_path
         )
     )
-    run_test(mhosteosnode1, env={
+    run_test(mhostsrvnode1, env={
         'TEST_MODE': 'cluster' if cluster else 'singlenode',
         'TEST_REPO_DIR': repo_dir,
         'TEST_REPO_ISO_PATH': iso_path,
@@ -252,14 +252,14 @@ def test_set_eosupdate_repo(
 @pytest.mark.skip(reason="WIP")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
-def test_set_eosupdate_repo_for_reinstall(
-    mhosteosnode1, mlocalhost, run_test, rpm_build, request
+@pytest.mark.hosts(['srvnode1'])
+def test_set_swupdate_repo_for_reinstall(
+    mhostsrvnode1, mlocalhost, run_test, rpm_build, request
 ):
     repo_dir = '/tmp/repo'
 
-    mhosteosnode1.check_output(
-        "yum install -y {}".format(mhosteosnode1.rpm_prvsnr)
+    mhostsrvnode1.check_output(
+        "yum install -y {}".format(mhostsrvnode1.rpm_prvsnr)
     )
 
     test_file_path = 'srv/components/test.sls'
@@ -275,9 +275,9 @@ def test_set_eosupdate_repo_for_reinstall(
         rpm_type='core',
         mhost_init_cb=mhost_init_cb
     )
-    new_rpm_remote = mhosteosnode1.copy_to_host(new_rpm)
+    new_rpm_remote = mhostsrvnode1.copy_to_host(new_rpm)
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "mkdir -p {repo_dir}"
         " && cp {rpm_path} {repo_dir}"
         " && yum install -y createrepo"
@@ -287,7 +287,7 @@ def test_set_eosupdate_repo_for_reinstall(
             rpm_path=new_rpm_remote
         )
     )
-    run_test(mhosteosnode1, env={
+    run_test(mhostsrvnode1, env={
         'TEST_REPO_DIR': repo_dir,
         'TEST_FILE_PATH': test_file_path
     })
@@ -295,31 +295,31 @@ def test_set_eosupdate_repo_for_reinstall(
 
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
-def test_eos_update(
-    mhosteosnode1, run_test
+@pytest.mark.hosts(['srvnode1'])
+def test_cortx_update(
+    mhostsrvnode1, run_test
 ):
-    run_test(mhosteosnode1)
+    run_test(mhostsrvnode1)
 
 
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.env_provider('vbox')
-@pytest.mark.hosts(['eosnode1', 'eosnode2', 'eosnode3'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
 def test_setup_cluster(
-    mhosteosnode1, mhosteosnode2, mhosteosnode3, ssh_config
+    mhostsrvnode1, mhostsrvnode2, mhostsrvnode3, ssh_config
 ):
-    mhosteosnode1.check_output('echo root | passwd --stdin root')
-    mhosteosnode2.check_output('echo root | passwd --stdin root')
-    mhosteosnode3.check_output('echo root | passwd --stdin root')
+    mhostsrvnode1.check_output('echo root | passwd --stdin root')
+    mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    mhostsrvnode3.check_output('echo root | passwd --stdin root')
 
 
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
-@pytest.mark.hosts(['eosnode1'])
+@pytest.mark.hosts(['srvnode1'])
 def test_pyinstaller_approach(
-    mhosteosnode1, tmpdir_function, request
+    mhostsrvnode1, tmpdir_function, request
 ):
     # Note. python system libarary dir
     # python3 -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())'  # noqa: E501
@@ -349,23 +349,23 @@ def test_pyinstaller_approach(
                 pass
             else:
                 assert False, "provisioner._api is available"
-        """.format(api_path=(mhosteosnode1.repo / 'api/python'))
+        """.format(api_path=(mhostsrvnode1.repo / 'api/python'))
     )
     app_script = inspect.cleandoc(app_script)
 
     app_path_local = tmpdir_function / 'myapp.py'
     app_path_local.write_text(app_script)
-    app_path_remote = mhosteosnode1.copy_to_host(app_path_local)
+    app_path_remote = mhostsrvnode1.copy_to_host(app_path_local)
 
-    install_provisioner_api(mhosteosnode1)
-    mhosteosnode1.check_output("pip3 install pyinstaller")
+    install_provisioner_api(mhostsrvnode1)
+    mhostsrvnode1.check_output("pip3 install pyinstaller")
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "cd {} && pyinstaller {}"
         .format(app_path_remote.parent, app_path_remote.name)
     )
 
-    mhosteosnode1.check_output(
+    mhostsrvnode1.check_output(
         "{0}/dist/{1}/{1}"
         .format(app_path_remote.parent, app_path_remote.stem)
     )

@@ -238,7 +238,6 @@ install_prvsnr_cli()
         echo "Please clean-up previous installtion from both the nodes and retry"
         exit 1
         }
-        echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
         yum install -y $tgt_build/$(curl -s $tgt_build/|grep cortx-prvsnr-cli-1.0.0|sed 's/<\/*[^"]*"//g'|cut -d\" -f1)
         systemctl stop firewalld || true
         return 0
@@ -250,7 +249,6 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
             }
-            echo "Installing prvsnr-cli on $target_node" 2>&1|tee -a $LOG_FILE
             yum install -y $tgt_build/$(curl -s $tgt_build/|grep cortx-prvsnr-cli-1.0.0|sed 's/<\/*[^"]*"//g'|cut -d\" -f1)
             systemctl stop firewalld || true
 	EOF
