@@ -88,7 +88,7 @@ def storage_device_config():
     _prio_lines = int(subprocess.getoutput(_cmd_mpath1))
     _mpath_devs_n = int(subprocess.getoutput(_cmd_mpath2))
 
-    if _mpath_devs_n * 2 == _prio_lines and _cluster_type == "ldr1":
+    if _mpath_devs_n * 2 == _prio_lines and _cluster_type == "ldr-r1":
         #The setup is cross connected to storage enclosure
         _cc_flag = True
 

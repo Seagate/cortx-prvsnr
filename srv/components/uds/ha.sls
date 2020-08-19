@@ -20,7 +20,7 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 Setup UDS HA:
   cmd.run:
-    - name: /opt/seagate/cortx/ha/conf/script/build-ldr1-ha-uds
+    - name: /opt/seagate/cortx/ha/conf/script/build-ldr-r1-ha-uds
 {% else %}
 No post install for UDS:
   test.show_notification:
