@@ -1,5 +1,8 @@
 import sys
 import attr
+import os
+import json
+import yaml
 from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
@@ -636,6 +639,45 @@ class GetNodeId(CommandParserFillerMixin):
             fun_args=['node_id'],
             targets=targets
         )
+
+
+# TODO TEST
+@attr.s(auto_attribs=True)
+class GetReleaseVersion(CommandParserFillerMixin):
+    params_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsBase
+
+    def _get_release_info_path(self):
+        release_repo = ''
+        controller_pi_path = KeyPath('eos_release/update')
+        update_repo = Param('update', 'release.sls', controller_pi_path )
+        pillar = PillarResolver(LOCAL_MINION).get([update_repo])
+        pillar = next(iter(pillar.values()))
+        release = pillar[update_repo]
+        
+        release_repo = (release_repo + release['base_dir'])
+        repos = release['repos']
+        repo = None
+        for key, val in repos.items():
+            if val == "iso":
+                repo = key
+        if repo:
+            release_repo = release_repo + "/" + repo + '/RELEASE.INFO'
+            return release_repo
+
+
+    def run(self, targets):
+        update_path = self._get_release_info_path()
+        if os.path.isfile(update_path):
+            source = update_path
+        else:
+            source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
+        try:
+            with open(source, 'r') as filehandle:
+                return json.dumps(yaml.safe_load(filehandle))
+        except Exception as exc:
+            raise ReleaseFileNotFoundError(exc) from exc
+
 
 # TODO TEST
 # TODO consider to use RunArgsUpdate and support dry-run

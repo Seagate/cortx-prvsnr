@@ -136,6 +136,6 @@ for fun in [
     'eos_update', 'set_ssl_certs', 'fw_update',
     'get_cluster_id', 'get_node_id', 'reboot_server',
     'reboot_controller', 'shutdown_controller',
-    'configure_eos'
+    'configure_eos', 'get_release_version'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
