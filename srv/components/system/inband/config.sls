@@ -21,9 +21,9 @@ Copy the config file:
   file.managed:
     - name: /etc/scsi-network-relay.conf
     {% if grains['id'] == 'srvnode-1' %}
-      - source: salt://components/system/inband/files/scsi-network-relay_srvnode-1.conf
+    - source: salt://components/system/inband/files/scsi-network-relay_srvnode-1.conf
     {% elif grains['id'] == 'srvnode-2' %}
-      - source: salt://components/system/inband/files/scsi-network-relay_srvnode-2.conf
+    - source: salt://components/system/inband/files/scsi-network-relay_srvnode-2.conf
     {% endif %}
     - template: jinja
     - replace: True
