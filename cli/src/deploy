@@ -88,7 +88,7 @@ ha_states=(
         "ha.corosync-pacemaker"
         "hare"
         "ha.cortx-ha.install"
-        "ha.ldr1_ha"
+        "ha.ldr_r1_ha"
     )
 
 controlpath_states=(
@@ -116,7 +116,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ldr1_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, ldr_r1_ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }

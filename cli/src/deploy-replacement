@@ -104,8 +104,8 @@ ha_states=(
         "ha.corosync-pacemaker.config.authorize"
         "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
-        "ha.ldr1_ha.prepare"
-        "ha.ldr1_ha.install"             # A blank file
+        "ha.ldr_r1_ha.prepare"
+        "ha.ldr_r1_ha.install"             # A blank file
         "ha.cortx-ha.replace_node.refresh_context"
         "ha.cortx-ha.replace_node.add_node"
     )
@@ -128,7 +128,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ldr1_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, ldr_r1_ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }

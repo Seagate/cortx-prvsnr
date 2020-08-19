@@ -20,7 +20,7 @@
 Render ha input params template:
   file.managed:
     - name: /opt/seagate/cortx/ha/conf/build-ldr-r1-ha-args.yaml
-    - source: salt://components/ha/ldr-r1_ha/files/ha-params.tmpl
+    - source: salt://components/ha/ldr_r1_ha/files/ha-params.tmpl
     - template: jinja
     - mode: 444
     - makedirs: True

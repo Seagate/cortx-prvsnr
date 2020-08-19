@@ -19,17 +19,17 @@
 
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
 include:
-  - components.ha.ldr1_ha.prepare
-  - components.ha.ldr1_ha.install
-  - components.ha.ldr1_ha.config
+  - components.ha.ldr_r1_ha.prepare
+  - components.ha.ldr_r1_ha.install
+  - components.ha.ldr_r1_ha.config
 {% else %}
 setup LDR-R1 HA on non-primary node:
   test.show_notification:
     - text: "No changes needed on non-primary node"
 {% endif %}
 
-Generate ldr1_ha checkpoint flag:
+Generate ldr_r1_ha checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ldr1_ha
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ldr_r1_ha
     - makedirs: True
     - create: True

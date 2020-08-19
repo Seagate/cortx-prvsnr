@@ -23,6 +23,6 @@ Remove Cortx-HA resources:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ldr-r1.yaml', 'ldr-r1-ha:reset')
     - order: 1
 {% endif %}
-Delete ldr1_ha checkpoint flag:
+Delete ldr_r1_ha checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ldr1_ha
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ldr_r1_ha

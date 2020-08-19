@@ -22,7 +22,7 @@ include:
   - components.csm.teardown
   - components.sspl.teardown
   # Remove IO Stack
-  - components.ha.ldr1_ha.teardown
+  - components.ha.ldr_r1_ha.teardown
   - components.hare.teardown
   - components.s3server.teardown
   - components.motr.teardown
