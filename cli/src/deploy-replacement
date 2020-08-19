@@ -18,10 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-
 set -euE
-
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -104,6 +101,7 @@ ha_states=(
         "ha.corosync-pacemaker.prepare"
         "ha.corosync-pacemaker.install"
         "ha.corosync-pacemaker.config.base"
+        "ha.corosync-pacemaker.config.authorize"
         "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
         "ha.ees_ha.prepare"
