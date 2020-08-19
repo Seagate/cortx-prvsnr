@@ -649,8 +649,8 @@ class GetReleaseVersion(CommandParserFillerMixin):
 
     def _get_release_info_path(self):
         release_repo = ''
-        controller_pi_path = KeyPath('eos_release/update')
-        update_repo = Param('update', 'release.sls', controller_pi_path )
+        release_pi_path = KeyPath('eos_release/update')
+        update_repo = Param('update', 'release.sls', release_pi_path )
         pillar = PillarResolver(LOCAL_MINION).get([update_repo])
         pillar = next(iter(pillar.values()))
         release = pillar[update_repo]
