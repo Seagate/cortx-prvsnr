@@ -1,3 +1,5 @@
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
 {% set node_version = pillar['commons']['version']['nodejs'] %}
 {% set node_url = pillar['commons']['repo']['nodejs'] %}
 # Nodejs install
@@ -14,7 +16,7 @@
 Extract Node.js:
   archive.extracted:
     - name: /opt/nodejs
-    - source: {{ node_url }}/node-{{ node_version }}-linux-x64.tar.xz
+    - source: {{ defaults.commons.repo.url }}/commons/node/node-v12.13.0-linux-x64.tar.xz
     - source_hash: {{ node_url }}/SHASUMS256.txt.asc
     - source_hash_name: node-{{ node_version }}-linux-x64.tar.xz
     - keep_source: True
