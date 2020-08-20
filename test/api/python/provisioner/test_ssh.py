@@ -10,8 +10,8 @@ def test_keygen_input_checks(mocker):
     run_m = mocker.patch.object(ssh, 'run_subprocess_cmd', autospec=True)
 
     ssh.keygen(priv_key_path, comment=comment, passphrase=passphrase)
-    run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase, '-f',
-                                             str(priv_key_path)]), input='y')
+    run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase,
+                                             '-f', str(priv_key_path)]), input='y')
 
 
 def test_copy_id_input_checks(mocker):
