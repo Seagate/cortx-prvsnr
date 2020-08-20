@@ -655,14 +655,14 @@ class GetReleaseVersion(CommandParserFillerMixin):
         pillar = next(iter(pillar.values()))
         release = pillar[update_repo]
         
-        release_repo = (release_repo + release['base_dir'])
+        release_repo = Path(release['base_dir'])
         repos = release['repos']
         repo = None
         for key, val in repos.items():
             if val == "iso":
                 repo = key
         if repo:
-            release_repo = release_repo + "/" + repo + '/RELEASE.INFO'
+            release_repo = release_repo / f'{repo}/RELEASE.INFO'
             return release_repo
 
 
