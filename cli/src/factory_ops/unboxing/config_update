@@ -163,14 +163,14 @@ function update_cluster_sls {
         if [[ ! -z ${_static_ip_a} && ! -z ${_static_ip_b} ]]; then
             echo "Updating static IP of public data network in pillar for both servers" |tee -a ${LOG_FILE}
             echo "Updating static data ip ($_static_ip_a) for server A" >> $LOG_FILE
-            #line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-            #sed -ie "${line_node1_ip}s/.*/                public_ip_addr: ${_static_ip_a}/" $_cluster_sls_path
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${_static_ip_a}\"
+            #line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
+            #sed -ie "${line_node1_ip}s/.*/                ipaddr: ${_static_ip_a}/" $_cluster_sls_path
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/ipaddr \"${_static_ip_a}\"
             
             echo "Updating static data ip ($_static_ip_b) for server B" >> $LOG_FILE
-            #line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-            #sed -ie "${line_node2_ip}s/.*/                public_ip_addr: ${_static_ip_b}/" $_cluster_sls_path
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${_static_ip_b}\"
+            #line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
+            #sed -ie "${line_node2_ip}s/.*/                ipaddr: ${_static_ip_b}/" $_cluster_sls_path
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/ipaddr \"${_static_ip_b}\"
             echo "Done" | tee -a ${LOG_FILE}
         fi
 

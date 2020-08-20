@@ -19,6 +19,7 @@
 
 cluster:
   cluster_ip:                         # Cluster IP for HAProxy
+  pvt_data_nw_addr: 192.168.0.0
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
@@ -38,14 +39,14 @@ cluster:
           - eno1
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
           - enp175s0f0                # Public Data
           - enp175s0f1                # Private Data (direct connect)
-        public_ip_addr:               # DHCP is assumed if left blank
+        ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
+        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
         pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.3       # Applies to private data network
     storage:

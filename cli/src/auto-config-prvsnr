@@ -354,14 +354,14 @@ update_pillar()
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-        sed -ie "${line_node1_ip}s/.*/        public_ip_addr: ${pub_dip1}/" $_cluster_sls_path
+        line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
+        sed -ie "${line_node1_ip}s/.*/        ipaddr: ${pub_dip1}/" $_cluster_sls_path
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-        sed -ie "${line_node2_ip}s/.*/        public_ip_addr: ${pub_dip2}/" $_cluster_sls_path
+        line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
+        sed -ie "${line_node2_ip}s/.*/        ipaddr: ${pub_dip2}/" $_cluster_sls_path
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then

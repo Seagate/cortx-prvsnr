@@ -48,7 +48,6 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.network"
-        "system.network.data.public"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"

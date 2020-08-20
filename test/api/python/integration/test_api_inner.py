@@ -312,9 +312,15 @@ def test_set_network():
     pillar_nw_primary_mgmt_ip = pillar[
         'srvnode-1'
     ]['cluster']['srvnode-1']['network']['mgmt_nw']['ipaddr']
-    pillar_nw_primary_data_ip = pillar['srvnode-1']['cluster']['srvnode-1']['network']['data_nw']['public_ip_addr']
-    pillar_nw_primary_gateway_ip = pillar['srvnode-1']['cluster']['srvnode-1']['network']['gateway_ip']
-    pillar_nw_primary_hostname = pillar['srvnode-1']['cluster']['srvnode-1']['hostname']
+    pillar_nw_primary_data_ip = pillar[
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['network']['data_nw']['ipaddr']
+    pillar_nw_primary_gateway_ip = pillar[
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['network']['gateway_ip']
+    pillar_nw_primary_hostname = pillar[
+        'srvnode-1'
+    ]['cluster']['srvnode-1']['hostname']
 
     api_nw_primary_mgmt_ip = api_call(
         'get_params', 'nw_primary_mgmt_ip'

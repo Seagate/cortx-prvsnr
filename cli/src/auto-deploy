@@ -360,12 +360,12 @@ update_pillar()
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${pub_dip1}\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/ipaddr \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${pub_dip2}\"
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/ipaddr \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
