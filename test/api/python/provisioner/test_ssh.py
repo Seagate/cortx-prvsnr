@@ -11,7 +11,8 @@ def test_keygen_input_checks(mocker):
 
     ssh.keygen(priv_key_path, comment=comment, passphrase=passphrase)
     run_m.assert_called_with((cmd.split() + ['-C', comment, '-N', passphrase,
-                                             '-f', str(priv_key_path)]), input='y')
+                                             '-f', str(priv_key_path)]),
+                             input='y')
 
 
 def test_copy_id_input_checks(mocker):
