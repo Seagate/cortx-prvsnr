@@ -137,3 +137,6 @@ https://docs.saltstack.com/en/latest/topics/index.html
 - python3.6 and pip
 - pipenv: pip3 install --user pipenv
 - yamllint: pip3 install --user yamllint
+
+
+For more detailed info , visit our ***[wiki](https://github.com/Seagate/cortx-prvsnr/wiki)*** pages
