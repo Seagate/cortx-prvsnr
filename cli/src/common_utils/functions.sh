@@ -1189,15 +1189,15 @@ fi
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
         yum install -y eos-prvsnr
+        if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
+            wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
+        fi
     else
         # local
         tar -zxf "$_repo_archive_path" -C "$_installdir"
         rm -vf "$_repo_archive_path"
     fi
     cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
-    if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
-        wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
-    fi
 EOF
 
     if [[ -n "$_hostspec" ]]; then
