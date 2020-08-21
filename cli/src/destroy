@@ -57,7 +57,7 @@ controlpath_states=(
 )
 
 ha_states=(
-    "ha.ees_ha"
+    "ha.iostack-ha"
     "ha.corosync-pacemaker"
     "hare"
 )

@@ -22,15 +22,30 @@ include:
   - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
 
+Copy file setup-ees.yaml:
+  file.copy:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
+    - force: False      # Failsafe once cortx-ha fixes the path
+    - makedirs: True
+    - preserve: True
+
+Rename root node to iostack_ha:
+  file.replace:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - pattern: ees-ha
+    - repl: iostack-ha
+    - count: 1
+
 Post install for LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:post_install')
 
 Config for LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:config')
 
 start LDR-R1 HA cluster:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:init')
 {% endif %}

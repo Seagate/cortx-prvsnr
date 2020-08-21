@@ -89,7 +89,7 @@ ha_states=(
     "ha.corosync-pacemaker"
     "hare"
     "ha.cortx-ha.install"
-    "ha.ees_ha"
+    "ha.iostack-ha"
 )
 
 # states to be applied in desired sequence
@@ -117,7 +117,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ees_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }
