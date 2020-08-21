@@ -1241,6 +1241,9 @@ EOF
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
         yum install -y cortx-prvsnr
+        if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
+            wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
+        fi
         # TODO EOS-11551 enable later
         # yum install -y python36-cortx-prvsnr
     else
@@ -1250,9 +1253,6 @@ EOF
     fi
 
     cp -f "$_cluster_sls_src" "$_installdir/pillar/components/cluster.sls"
-    if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
-        wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
-    fi
 EOF
 
     if [[ -n "$_hostspec" ]]; then
