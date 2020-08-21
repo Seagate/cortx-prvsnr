@@ -280,11 +280,6 @@ if [[ "$run_sync_states" == true ]]; then
     run_states  "${sync_states[@]}"
 fi
 
-if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
-    l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage $salt_opts
-fi
-
 if [[ "$run_io_states" == true ]]; then
     l_info "Deploying the io path states"
     run_states  "${iopath_states[@]}"
