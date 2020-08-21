@@ -115,7 +115,7 @@ def test_main_set_logging_no_console_for_machine_output(
     logging = {
         'handlers': {
             console_handler: {
-                'stream': f'ext://sys.stderr'
+                'stream': 'ext://sys.stderr'
             }
         },
         'root': {

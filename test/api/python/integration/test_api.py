@@ -349,7 +349,7 @@ def test_pyinstaller_approach(
                 pass
             else:
                 assert False, "provisioner._api is available"
-        """.format(api_path=(mhostsrvnode1.repo / 'api/python'))
+        """
     )
     app_script = inspect.cleandoc(app_script)
 
