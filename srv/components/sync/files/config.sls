@@ -26,7 +26,7 @@
 # - then run - salt -L "srvnode-1,srvnode-3" state.apply components.sync.files.config {'component':['hare','csm']}
 
 
-{% set components = ['ees-ha', 'hare','csm'] %}
+{% set components = ['iostack-ha', 'csm'] %}
 {% if 'srvnode-1' in grains['id'] %}
 {% set node = 'srvnode-2' %}
 {% else %}

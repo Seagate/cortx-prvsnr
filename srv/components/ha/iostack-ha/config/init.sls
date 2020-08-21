@@ -17,35 +17,20 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
+
 include:
-  - components.ha.cortx-ha.prepare
-  - components.ha.cortx-ha.install
-
-Copy file setup-ees.yaml:
-  file.copy:
-    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
-    - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
-    - force: False      # Failsafe once cortx-ha fixes the path
-    - makedirs: True
-    - preserve: True
-
-Rename root node to iostack_ha:
-  file.replace:
-    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
-    - pattern: ees-ha
-    - repl: iostack-ha
-    - count: 1
-
-Post install for LDR-R1 HA cluster:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:post_install')
-
-Config for LDR-R1 HA cluster:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:config')
+  - components.ha.iostack-ha.config.base
+  - components.ha.iostack-ha.config.post_install
+  - components.ha.iostack-ha.config.config
 
 start LDR-R1 HA cluster:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:init')
+
+{% else %}
+setup LDR-R1 HA config on non-primary node:
+  test.show_notification:
+    - text: "No changes needed on non-primary node."
 {% endif %}

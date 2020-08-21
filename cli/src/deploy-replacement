@@ -47,6 +47,7 @@ tgt_node=srvnode-2
 # states to be applied in desired sequence
 system_states=(
     "system"
+    "system.storage.multipath"
     "system.network"
     "system.network.data.public"
     "system.network.data.direct"
@@ -107,6 +108,7 @@ ha_states=(
     "ha.corosync-pacemaker.config.base"
     "ha.corosync-pacemaker.config.authorize"
     "ha.iostack-ha.prepare"
+    "ha.iostack-ha.config.post_install"
     "ha.cortx-ha.prepare"
     "ha.cortx-ha.install"
     "ha.cortx-ha.config"
