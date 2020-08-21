@@ -999,15 +999,16 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Updating BMC IPs")
         ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
 
-        logger.info("Updating target build pillar")
-        # Note. in both cases (ha and non-ha) we need user pillar update
-        # only on primary node, in case of ha it would be shared for other
-        # masters
-        ssh_client.cmd_run(
-            (
-                '/usr/local/bin/provisioner pillar_set --fpath release.sls '
-                f'release/target_build \'"{run_args.target_build}"\''
-            ), targets=run_args.primary.minion_id
-        )
+        if run_args.target_build:
+            logger.info("Updating target build pillar")
+            # Note. in both cases (ha and non-ha) we need user pillar update
+            # only on primary node, in case of ha it would be shared for other
+            # masters
+            ssh_client.cmd_run(
+                (
+                    '/usr/local/bin/provisioner pillar_set --fpath release.sls '
+                    f'release/target_build \'"{run_args.target_build}"\''
+                ), targets=run_args.primary.minion_id
+            )
 
         return setup_ctx
