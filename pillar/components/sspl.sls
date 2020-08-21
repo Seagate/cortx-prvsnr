@@ -25,6 +25,8 @@ sspl:
     secret: "B4kf1T6Qso"
   role: cortx
   Version: 1.0.0
+  MESSAGING:
+    type: "rabbitmq"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
@@ -58,7 +60,7 @@ sspl:
     routing_key: "iem-key"
     username: "sspluser"
     password: "sspl4ever"
-    primary_rabbitmq_host: "localhost"
+    primary_messaging_host: "localhost"
   LOGGINGMSGHANDLER:
     iem_routing_enabled: "false"
     iem_log_locally: "true"
@@ -139,15 +141,15 @@ sspl:
     store_type: "consul"
     consul_host: "127.0.0.1"
     consul_port: "8500"
-  RABBITMQINGRESSPROCESSOR:
+  INGRESSPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "actuator-req-queue"
     exchange_name: "sspl-in"
     routing_key: "actuator-req-key"
     username: "sspluser"
     password: "sspl4ever"
-    primary_rabbitmq_host: "localhost"
-  RABBITMQEGRESSPROCESSOR:
+    primary_messaging_host: "localhost"
+  EGRESSPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "sensor-queue"
     exchange_name: "sspl-out"
@@ -161,4 +163,4 @@ sspl:
     message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
     message_signature_expires: "3600"
     iem_route_exchange_name: "sspl-out"
-    primary_rabbitmq_host: "localhost"
+    primary_messaging_host: "localhost"

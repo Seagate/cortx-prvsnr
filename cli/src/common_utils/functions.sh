@@ -1181,10 +1181,6 @@ function install_provisioner {
         fi
     fi
 
-if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
-    wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
-fi
-
 ! read -r -d '' _prvsnr_repo << EOF
 [provisioner]
 gpgcheck=0
@@ -1245,6 +1241,9 @@ EOF
     elif [[ "$_repo_src" == "rpm" ]]; then
         echo "$_prvsnr_repo" >/etc/yum.repos.d/prvsnr.repo
         yum install -y cortx-prvsnr
+        if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
+            wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
+        fi
         # TODO EOS-11551 enable later
         # yum install -y python36-cortx-prvsnr
     else
