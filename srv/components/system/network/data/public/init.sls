@@ -17,14 +17,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set node = grains['id'] %}
+
 include:
   - components.system.prepare
 
 # Setup network for data interfaces
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
-    - device: {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
+    - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
+    - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
     - type: eth
     - enabled: True
     - nm_controlled: no
@@ -32,16 +34,16 @@ Public direct network:
     - onboot: yes
     - userctl: no
     - defroute: no
-{% if pillar['cluster'][grains['id']]['network']['data_nw']['public_ip_addr'] %}
+{% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][grains['id']]['network']['data_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
     - mtu: 9000
 {%- else %}
     - proto: dhcp
 {%- endif %}
-{% if pillar['cluster'][grains['id']]['network']['data_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][grains['id']]['network']['data_nw']['netmask'] }}
+{% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
-{% if pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] %}
+{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
 {% endif %}
