@@ -105,9 +105,9 @@ help()
 3. Ensure the ~/.ssh directory is empty.
 -------- Sample command ---------
 For Dual Node:
-$ sh auto-deploy-vm -s <secondary_node> -p seagate -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] [-I 192.168.100.102] -t http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
+$ sh auto-deploy-vm -s <secondary_node> -p seagate -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] [-I 192.168.100.102] -t http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/last_successful/
 For Single Node:
-$ sh auto-deploy-vm -S -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] -t  http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/
+$ sh auto-deploy-vm -S -C <cluster_ip> -M <management_vip> [-i 192.168.100.101] -t  http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/last_successful/
 
 "
 }

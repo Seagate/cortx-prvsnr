@@ -770,7 +770,7 @@ def test_functions_systemd_libs_not_from_updates(mhost):
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['unknown', 'gitlab'])
+#@pytest.mark.parametrize("repo_src", ['unknown', 'github'])
 def test_functions_install_provisioner(
     run_script, mhost, mlocalhost,
     ssh_config, remote, repo_src
@@ -834,7 +834,7 @@ def test_functions_install_provisioner_rpm(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
     assert baseurl == (
-        'http://ci-storage.mero.colo.seagate.com/releases/cortx/{}'
+        'http://cortx-storage.colo.seagate.com/releases/cortx/{}'
         .format(
             'integration/centos-7.7.1908/last_successful'
             if version is None else version

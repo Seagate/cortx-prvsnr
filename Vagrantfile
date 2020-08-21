@@ -47,7 +47,7 @@ Vagrant.configure("2") do |config|
       
       node_config.vm.provider :hyperv do |hv, override|
         # Configure salt nodes
-        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_hyperv.box"
+        override.vm.box_url = "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_hyperv.box"
         override.vm.box_download_insecure = true
         override.vm.box = "centos_7.7.1908_hyperv"
         override.vm.box_check_update = false
@@ -104,7 +104,7 @@ Vagrant.configure("2") do |config|
 
       node_config.vm.provider :virtualbox do |vb, override|
         # Configure salt nodes
-        override.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_vbox.box"
+        override.vm.box_url = "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_vbox.box"
         override.vm.box_download_insecure = true
         override.vm.box = "centos_7.7.1908_vbox"
         override.vm.box_check_update = false
@@ -211,7 +211,7 @@ Vagrant.configure("2") do |config|
           if [[ -d '/opt/seagate/cortx/provisioner' ]]; then
             BASEDIR=/opt/seagate/cortx/provisioner
           else
-            BASEDIR=/opt/seagate/eos-prvsnr
+            BASEDIR=/opt/seagate/cortx-prvsnr
           fi
 
           #Disable iptables-services
@@ -257,7 +257,7 @@ Vagrant.configure("2") do |config|
           #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
           
           # IP path components
-          #sudo salt srvnode-1 state.apply components.eoscore
+          #sudo salt srvnode-1 state.apply components.motr
           #sudo salt srvnode-1 state.apply components.s3server
           #sudo salt srvnode-1 state.apply components.hare
 

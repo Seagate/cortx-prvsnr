@@ -1073,16 +1073,13 @@ EOF
 #   Args:
 #       repo-src: One of the following:
 #           `rpm` - installs from a rpm package (default),
-#           `gitlab` - installs from GitLab using the specified
-#               version `prvsnr-version`. If the version is not set
-#               uses the latest tagged one.
 #           `gitrepo` - establishes local git repo at `/opt/seagate/cortx-prvsnr`
-#               pointing to remote repo on GitLab. This should help use switch between
+#               pointing to remote repo on GitHub. This should help use switch between
 #               branches for validation of branched changes.
 #           `local` - copies local working copy of the repository, assumes
 #               that script is a part of it.
 #       prvsnr-version: The version of the CORTX provisioner to install. Makes sense only
-#           for `gitlab` source for now. Default: not set.
+#           for `GitHub` source for now. Default: not set.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1110,7 +1107,6 @@ function install_provisioner {
     local _sudo="${5:-false}"
     local _singlenode="${6:-false}"
     local _installdir="${7:-/opt/seagate/cortx/provisioner}"
-    local _dev_repo="${8:-false}"
     local _os_release="rhel-7.7.1908"
     #local _os_release="centos-7.7.1908"
     
@@ -1164,20 +1160,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            if [[ "$_dev_repo" == true ]]; then
-                # Set the path to dev repo DEV_BUILD_URL or default
-                _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
-                
-                yum install -y createrepo wget
-                mkdir -p /opt/seagate/cortx/updates/provisioner/dev
-                pushd /opt/seagate/cortx/updates/provisioner/dev
-                    wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
-                    createrepo .
-                popd
-                _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
-            else
-                _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
-            fi
+            l_error "Argument _prvsnr_version passed is empty. Please specify a valid value against argument -t in setup-provisioner."
         fi
     fi
 
@@ -1189,7 +1172,7 @@ baseurl="$_prvsnr_version"
 name=provisioner
 EOF
 
-    if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" && "$_repo_src" != "gitrepo" ]]; then
+    if [[ "$_repo_src" != "rpm" && "$_repo_src" != "local" && "$_repo_src" != "gitrepo" ]]; then
         l_error "unsupported repo src: $_repo_src"
         exit 1
     fi
@@ -1210,11 +1193,7 @@ EOF
     # issue #23
     #rm -rvf "$_installdir"
     mkdir -p "$_installdir"
-    if [[ "$_repo_src" == "gitlab" ]]; then
-        pushd "$_installdir"
-            curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
-        popd
-    elif [[ "$_repo_src" == "gitrepo" ]]; then
+    if [[ "$_repo_src" == "gitrepo" ]]; then
         pushd "$_installdir"
             yum install -y git
             git init

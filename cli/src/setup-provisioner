@@ -39,7 +39,6 @@ srvnode_2_opt=false
 
 salt_master_hostname=
 prvsnr_repo_src=rpm
-dev_repo=false
 
 prvsnr_version=
 
@@ -64,7 +63,7 @@ ssh configuration and configures salt master/minion connections
 and also makes some additional preliminary configuration.
 
 'ldr-r1-prvsnr-version' as an optional positional argument might specify
-the desired version of the provisioner to install. Makes sense for 'gitlab'
+the desired version of the provisioner to install. Makes sense for 'gitrepo'
 source only as of now. Not set by default.
 
 General options:
@@ -95,7 +94,7 @@ function options_parser {
             ;;
         --repo-src)
             case "$2" in
-                local|gitlab|gitrepo|rpm)
+                local|gitrepo|rpm)
                     prvsnr_repo_src="$2"
                     ;;
                 *)
@@ -109,9 +108,6 @@ function options_parser {
             ;;
         -S|--singlenode)
             singlenode=true
-            ;;
-        --dev)
-            dev_repo=true
             ;;
         *)
             l_error "Unknown option: $1"
@@ -198,13 +194,13 @@ fi
 #     and provide a user clear details if it's not true
 #   - tests for default ssh configuration for both singlenode and cluster modes
 
-if [[ -z "$prvsnr_version" ]]; then
-    if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
-        # get latest version of provisioner
-        ! _tags=$(curl "$LDR_R1_PRVSNR_REPO_API_TAGS")
-        prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)
-    fi
-fi
+# if [[ -z "$prvsnr_version" ]]; then
+#     if [[ "$prvsnr_repo_src" == "github" ]]; then
+#         # get latest version of provisioner
+#         ! _tags=$(curl "$LDR_R1_PRVSNR_REPO_API_TAGS")
+#         prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)
+#     fi
+# fi
 
 
 if [[ -z "$prvsnr_version" && "$prvsnr_repo_src" != "local" && "$prvsnr_repo_src" != "rpm" ]]; then
@@ -238,7 +234,7 @@ configure_firewall "$hostspec" "$ssh_config" "$sudo"
 
 install_salt "$hostspec" "$ssh_config" "$sudo"
 
-install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR" "$dev_repo"
+install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR" 
 
 configure_salt srvnode-1 "$hostspec" "$ssh_config" "$sudo" true 127.0.0.1 "$INSTALLDIR"
 
@@ -251,7 +247,7 @@ set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 # configure_multipath srvnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
 # TODO use salt formulas instead
-# disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
+# disabled, https://github.com/Seagate/cortx-prvsnr/issues/21
 # configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
@@ -268,7 +264,7 @@ if [[ "$singlenode" != true ]]; then
 
     install_salt "$srvnode_2_hostspec" "$ssh_config" "$sudo"
 
-    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR" "$dev_repo"
+    install_provisioner "$prvsnr_repo_src" "$prvsnr_version" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$singlenode" "$INSTALLDIR"
 
     configure_salt srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false "$salt_master_hostname" "$INSTALLDIR"
     # Always use master hostspec to execute this step
@@ -281,7 +277,7 @@ if [[ "$singlenode" != true ]]; then
     # configure_multipath srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false
 
     # TODO use salt formulas instead
-    # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
+    # disabled, https://github.com/Seagate/cortx-prvsnr/issues/21
     # configure_network "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 fi

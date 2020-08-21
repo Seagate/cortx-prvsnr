@@ -20,7 +20,7 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git'
+                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'https://github.com/Seagate/cortx-prvsnr.git'
             }
         }
         stage('Package: Provisioner RPMS') {
@@ -40,9 +40,9 @@ pipeline {
         stage('Upload') {
             steps {
                 sh encoding: 'utf-8', label: '', returnStdout: true, script: '''
-                    rm -rf /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
-                    test -d /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER} || mkdir -p /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
-                    cp /root/rpmbuild/RPMS/x86_64/cortx-prvsnr* /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
+                    rm -rf /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER}
+                    test -d /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER} || mkdir -p /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER}
+                    cp /root/rpmbuild/RPMS/x86_64/cortx-prvsnr* /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER}
                 '''
             }
         }
@@ -50,7 +50,7 @@ pipeline {
             steps {
                 sh encoding: 'utf-8', label: 'install_prereqs', returnStdout: true, script: '''
                     rpm --quiet -qi createrepo || yum install -q -y createrepo && echo "createrepo already installed."
-                    pushd /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER}
+                    pushd /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER}
                     createrepo .
                     popd
                 '''
@@ -62,7 +62,7 @@ pipeline {
                     test -d /mnt/bigstorage/releases/master/last_successful/provisioner && rm -rf /mnt/bigstorage/releases/master/last_successful/provisioner
                     test -d /mnt/bigstorage/releases/master/last_successful/provisioner || mkdir /mnt/bigstorage/releases/master/last_successful/provisioner
                     pushd /mnt/bigstorage/releases/master/last_successful/provisioner
-                    ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER} repo
+                    ln -s /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER} repo
                     popd
                 '''
             }
@@ -70,9 +70,9 @@ pipeline {
         stage('Link: Last Successful'){
             steps {
                 sh encoding: 'utf-8', label: 'last_successful', returnStdout: true, script: """
-                    pushd /mnt/bigstorage/releases/eos/components/dev/provisioner/
-                    test -d /mnt/bigstorage/releases/eos/components/dev/provisioner/last_successful && rm -f last_successful
-                    ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/$BUILD_NUMBER last_successful
+                    pushd /mnt/bigstorage/releases/cortx/components/dev/provisioner/
+                    test -d /mnt/bigstorage/releases/cortx/components/dev/provisioner/last_successful && rm -f last_successful
+                    ln -s /mnt/bigstorage/releases/cortx/components/dev/provisioner/$BUILD_NUMBER last_successful
                     popd
                 """
             }
@@ -86,7 +86,7 @@ pipeline {
 			body: """
 			<h><span style=color:green>SUCCESSFUL:</span> Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</h>
 			<p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>
-			<p>RPM's are located at http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/${env.BUILD_NUMBER}</p>
+			<p>RPM's are located at http://cortx-storage.colo.seagate.com/releases/cortx/components/dev/provisioner/${env.BUILD_NUMBER}</p>
 			""",
 			recipientProviders: [[$class: 'DevelopersRecipientProvider']]
 			)

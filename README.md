@@ -6,7 +6,7 @@ The purpose of this repository is to provide a provisioning framework for CORTX 
 The objective shall be to
 *  Provision an environment (Dev, QA, Lab, Production) with minimal user intervention
 *  To maintain modularity/granularity of stages in Provisioning, so as to help enhancements, maintainability and training with minimal collateral impacts
-*  To act as single source of truth, reducing confusion of resource references (which is why the reliance would be on Readme.md and GitLab Wiki docs)
+*  To act as single source of truth, reducing confusion of resource references (which is why the reliance would be on Readme.md and GitHub Wiki docs)
 
 # Repo Structure
 An overview of folder structure in cortx-prvsnr repo
@@ -119,12 +119,12 @@ https://docs.saltstack.com/en/latest/topics/index.html
 ### Jenkins server
 - cleanWS plugin: https://plugins.jenkins.io/ws-cleanup
 - junit plugin: https://plugins.jenkins.io/junit
-- Branch Source (https://plugins.jenkins.io/gitlab-branch-source) to power Multi Branch pipeline: GitLab
+- Branch Source (https://plugins.jenkins.io/github-branch-source) to power Multi Branch pipeline: GitHub
   - Jenkins server:
     - Global Configuration: TODO
     - MBr Pipeline Configuration: TODO
-  - GitLab, configure webhooks:
-    - URL: <jenkins_url>/gitlab-webhook/post
+  - GitHub, configure webhooks:
+    - URL: <jenkins_url>/github-webhook/post
     - Triggers: Push, Tag, Comments and Merge requests
 - optionally:
   - Blue Ocean plugin (https://plugins.jenkins.io/blueocean) to improve UX

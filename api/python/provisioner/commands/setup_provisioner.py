@@ -236,7 +236,7 @@ class RunArgsSetup:
                 # ),
             }
         },
-        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
+        default='http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
@@ -726,8 +726,7 @@ class SetupProvisioner(CommandParserFillerMixin):
     def run(self, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
-        # TODO sources: gitlab | gitrepo | rpm
-        # TODO get latest tags for gitlab source
+        # TODO sources: gitrepo | rpm
 
         # validation
         # TODO IMPROVE EOS-8473 make generic logic

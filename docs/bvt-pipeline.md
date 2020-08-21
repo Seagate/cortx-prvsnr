@@ -17,7 +17,7 @@ The pipeline is set up here: <http://eos-jenkins.mero.colo.seagate.com/job/eos-p
 
 ### Jenkins Agent
 
-Please refer [here](http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr#jenkins-agent).
+Please refer [here](https://github.com/Seagate/cortx-prvsnr#jenkins-agent).
 
 ## Configuration
 

@@ -68,9 +68,8 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 Besides [general](#common-options) set of options it expects the following ones:
 
 - `--srvnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `srvnode-2`.
-- `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
+- `--repo-src={local|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
-  - `gitlab` to install from GitLab by provided version (see below);
   - `rpm` to install from using rpm package (default).
 - `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
@@ -78,7 +77,6 @@ Besides [general](#common-options) set of options it expects the following ones:
   and is `srvnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.
-For now that makes sense only for `gitlab` and if missed the latest tagged version would be installed.
 
 #### Prerequisites
 
