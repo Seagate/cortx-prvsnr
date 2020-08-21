@@ -93,7 +93,7 @@ controlpath_states=(
     "csm.prepare"
     "csm.install"
     "csm.config"
-    "csm.refresh_config"
+    #"csm.refresh_config"
     "uds.prepare"
     "uds.install"
 )
@@ -189,13 +189,20 @@ function run_states {
                 || "$state" == "csm.refresh_config"
             ]]; then
 
-                local_node=$cmd salt-call grains.get id --output=newline-values-only
-                $cmd salt "$local_node" state.apply components.$state $salt_opts
+                local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
+
+                if [[ -z local_node ]]; then
+                    l_error "unable to identify local node. Check Salt services are running."
+                else
+                    l_info "Applying 'components.$state' on node: $local_node"
+                    $cmd salt "$local_node" state.apply components.$state $salt_opts
+                fi
+            else
+                l_info "Applying 'components.$state' on node: $tgt_node"
+                $cmd salt "$tgt_node" state.apply components.$state $salt_opts
+                sleep 2     # Mindfulness break
             fi
 
-            l_info "Applying 'components.$state' on node: $tgt_node"
-            $cmd salt "$tgt_node" state.apply components.$state $salt_opts
-            sleep 2     # Mindfulness break
         done
     fi
 }
@@ -241,7 +248,8 @@ update_salt
 
 if [[ "$run_all" == true ]]; then
 
-    run_states ( "ha.cortx-ha.replace_node.remove_node" )
+    recovery_ha_state=( "ha.cortx-ha.replace_node.remove_node" )
+    run_states "${recovery_ha_state[@]}"
 
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
@@ -252,9 +260,7 @@ if [[ "$run_all" == true ]]; then
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
     run_states "${ha_states[@]}"
-
-    run_states ( "ha.cortx-ha.replace_node.refresh_context" )
-    run_states ( "ha.cortx-ha.replace_node.add_node" )
+    
 fi
 
 if [[ "$run_system_states" == true ]]; then
