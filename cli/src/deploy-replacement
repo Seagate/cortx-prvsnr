@@ -44,73 +44,73 @@ run_ha_states=false
 run_ctrlpath_states=false
 tgt_node=srvnode-2
 
+# states to be applied in desired sequence
 system_states=(
-    # states to be applied in desired sequence
-        "system"
-        "system.network"
-        "system.network.data.public"
-        "system.network.data.direct"
-        "misc_pkgs.rsyslog"
-        "system.firewall"
-        "system.logrotate"
-        "system.chrony"
-    )
+    "system"
+    "system.network"
+    "system.network.data.public"
+    "system.network.data.direct"
+    "misc_pkgs.rsyslog"
+    "system.firewall"
+    "system.logrotate"
+    "system.chrony"
+)
 
+# states to be applied in desired sequence
 prereq_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.rhel_sos"
-        "misc_pkgs.ssl_certs"
-        "ha.haproxy"
-        "misc_pkgs.openldap"
-        "misc_pkgs.rabbitmq"
-        "misc_pkgs.nodejs"
-        "misc_pkgs.elasticsearch"
-        "misc_pkgs.kibana"
-        "misc_pkgs.statsd"
-    )
+    "misc_pkgs.rhel_sos"
+    "misc_pkgs.ssl_certs"
+    "ha.haproxy"
+    "misc_pkgs.openldap"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.elasticsearch"
+    "misc_pkgs.kibana"
+    "misc_pkgs.statsd"
+)
 
+# states to be applied in desired sequence
 sync_states=(
-    # states to be applied in desired sequence
-        "sync.software.openldap"
-        "sync.software.rabbitmq"
-    )
+    "sync.software.openldap"
+    "sync.software.rabbitmq"
+)
 
+# states to be applied in desired sequence
 iopath_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.lustre"
-        "motr.prepare"
-        "motr.install"
-        "hare.prepare"
-        "hare.install"
-        "s3server.prepare"
-        "s3server.install"
-    )
+    "misc_pkgs.lustre"
+    "motr.prepare"
+    "motr.install"
+    "hare.prepare"
+    "hare.install"
+    "s3server.prepare"
+    "s3server.install"
+)
 
+# states to be applied in desired sequence
 controlpath_states=(
-    # states to be applied in desired sequence
-        "sspl.prepare"
-        "sspl.install"
-        "csm.prepare"
-        "csm.install"
-        "csm.config"
-        "csm.refresh_config"
-        "uds.prepare"
-        "uds.install"
-    )
+    "sspl.prepare"
+    "sspl.install"
+    "csm.prepare"
+    "csm.install"
+    "csm.config"
+    "csm.refresh_config"
+    "uds.prepare"
+    "uds.install"
+)
 
+# states to be applied in desired sequence
 ha_states=(
-    # states to be applied in desired sequence
-        "ha.corosync-pacemaker.prepare"
-        "ha.corosync-pacemaker.install"
-        "ha.corosync-pacemaker.config.base"
-        "ha.corosync-pacemaker.config.authorize"
-        "ha.cortx-ha.prepare"
-        "ha.cortx-ha.install"
-        "ha.ees_ha.prepare"
-        "ha.ees_ha.install"             # A blank file
-        "ha.cortx-ha.replace_node.refresh_context"
-        "ha.cortx-ha.replace_node.add_node"
-    )
+    "ha.corosync-pacemaker.prepare"
+    "ha.corosync-pacemaker.install"
+    "ha.corosync-pacemaker.config.base"
+    "ha.corosync-pacemaker.config.authorize"
+    "ha.cortx-ha.prepare"
+    "ha.cortx-ha.install"
+    "ha.ees_ha.prepare"
+    "ha.ees_ha.install"
+    "ha.cortx-ha.replace_node.refresh_context"
+    "ha.cortx-ha.replace_node.add_node"
+)
 
 # ToDo: Remove & Add node script here
 
@@ -222,7 +222,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
