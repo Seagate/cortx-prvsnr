@@ -18,7 +18,11 @@ Sync Files across nodes:
       {%- for component in components %}
       {%- set yaml_file = '/opt/seagate/cortx/{0}/conf/setup.yaml'.format(component) %}
       {%- import_yaml yaml_file as yaml %}
+      {%- if yaml[component]["backup"] and yaml[component]["backup"]["files"] %}
       {%- for file_name in yaml[component]["backup"]["files"] %}
       rsync -zavhe ssh {{ node }}:{{ file_name }} {{ file_name }}
       {%- endfor %}
+      {%- else %}
+      echo "No files listed in setup.yaml to sync"
+      {%- endif %}
       {%- endfor %}

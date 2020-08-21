@@ -200,11 +200,11 @@ function reset_pub_data_ips {
 
     echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
     echo "Removing static data ip from $_cluster_sls_path for server A" >> $LOG_FILE
-    line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | head -1`
-    sed -ie "${line_node1_ip}s/.*/                ipaddr:/" $_cluster_sls_path
+    line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
+    sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
     echo "Removing static data ip from $_cluster_sls_path for server B" >> $LOG_FILE
-    line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "ipaddr:" | cut -d- -f1 | tail -1`
-    sed -ie "${line_node2_ip}s/.*/                ipaddr:/" $_cluster_sls_path
+    line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
+    sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
     echo "Done" | tee -a ${LOG_FILE}
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}

@@ -18,10 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-
 set -euE
-
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -53,6 +50,7 @@ system_states=(
         "system.storage.multipath"
         "system.storage"
         "system.network"
+        "system.network.data.public"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"
@@ -180,21 +178,33 @@ function run_states {
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
                                 # Execute first on srvnode-2 then on srvnode-1.
-                l_info "Applying 'components.$state' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                #l_info "Applying 'components.ha.corosync-pacemaker.prepare' for srvnode-1"
+                # $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                
+                l_info "Applying 'components.ha.corosync-pacemaker.install' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.install  $salt_opts
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                
+                #l_info "Applying 'components.ha.corosync-pacemaker.prepare' for srvnode-2"
+                # $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                
+                l_info "Applying 'components.ha.corosync-pacemaker.install' for srvnode-2"
                 $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.install  $salt_opts
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
                 sleep 2     # Mindfulness break
 
+                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for srvnode-1"
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for srvnode-2"
+                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.authorize' for srvnode-1"
+                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.authorize  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.setup_cluster' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.setup_cluster  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.cluster_ip' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.stonith' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
-            fi
+
             elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"

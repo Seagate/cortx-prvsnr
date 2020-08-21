@@ -534,8 +534,8 @@ def test_inputs_NETWORK():
             if param.name in (
                 'dns_servers',
                 'search_domains',
-                'primary_network_iface',
-                'secondary_network_iface'
+                'primary_data_network_iface',
+                'secondary_data_network_iface'
             ):
                 assert fattr.type is List
             else:

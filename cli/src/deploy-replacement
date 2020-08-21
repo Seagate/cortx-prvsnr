@@ -18,10 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-
 set -euE
-
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -51,6 +48,7 @@ system_states=(
     # states to be applied in desired sequence
         "system"
         "system.network"
+        "system.network.data.public"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"
@@ -104,6 +102,7 @@ ha_states=(
         "ha.corosync-pacemaker.prepare"
         "ha.corosync-pacemaker.install"
         "ha.corosync-pacemaker.config.base"
+        "ha.corosync-pacemaker.config.authorize"
         "ha.cortx-ha.prepare"
         "ha.cortx-ha.install"
         "ha.ees_ha.prepare"

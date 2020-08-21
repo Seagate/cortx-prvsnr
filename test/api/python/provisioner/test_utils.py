@@ -163,13 +163,15 @@ def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
 
 def test_repo_tgz_happy_path_with_ver(mocker, tmpdir_function):
     dest_dir = tmpdir_function / 'repo_tgz_path'
+    project_path = 'some-project-path'
     version = '1.0'
     include_dirs = ['dir1', 'dir2']
 
     run_m = mocker.patch.object(utils, 'run_subprocess_cmd', autospec=True)
 
     assert utils.repo_tgz(
-        dest_dir, version=version, include_dirs=include_dirs
+        dest_dir, project_path=project_path,
+        version=version, include_dirs=include_dirs
     ) == dest_dir
     run_m.assert_called_once_with(
         ['git', 'archive', '--format=tar.gz', version, '-o', str(dest_dir)]
