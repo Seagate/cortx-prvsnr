@@ -55,15 +55,15 @@ Setup data0 bonding:
     - miimon: 100
     - lacp_rate: fast
     - xmit_hash_policy: layer2+3
-{% if pillar['cluster'][node]['network']['data_nw']['ipaddr'] %}
+{% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['ipaddr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
+{%- else %}
+    - proto: dhcp
+{%- endif %}
 {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
 {% endif %}
-{%- else %}
-    - proto: dhcp
-{%- endif %}

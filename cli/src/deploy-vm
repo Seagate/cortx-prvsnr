@@ -47,6 +47,7 @@ system_states=(
         "system"
         "system.storage"
         "system.network"
+        "system.network.data.public"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
         "system.firewall"

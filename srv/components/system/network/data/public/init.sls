@@ -17,33 +17,31 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set node = grains['id'] %}
 include:
   - components.system.prepare
 
-{#{% if pillar['cluster'][grains['id']]['is_primary'] %}#}
-# Update roaming IPs in cluster.sls pillar:
-#   module.run:
-#     - cluster.nw_roaming_ip: []
-#     - saltutil.refresh_pillar: []
-{#{% endif %}#}
-
-Private direct network:
+# Setup network for data interfaces
+Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
-    - enabled: True
-    - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
+    - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
+    - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
     - type: eth
-    - onboot: yes
-    - defroute: no
+    - enabled: True
     - nm_controlled: no
-    - peerdns: no
     - userctl: no
-    - prefix: 24
-{% if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
+    - onboot: yes
+    - userctl: no
+    - defroute: no
+{% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
     - mtu: 9000
 {%- else %}
     - proto: dhcp
 {%- endif %}
+{% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
+{%- endif %}
+{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
+{% endif %}
