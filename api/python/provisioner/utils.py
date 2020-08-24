@@ -3,12 +3,38 @@ import logging
 import time
 from typing import Tuple, Union
 from pathlib import Path
-
+import subprocess
 from .errors import (
     BadPillarDataError, ProvisionerError
 )
 
 logger = logging.getLogger(__name__)
+
+
+def run_subprocess_cmd(cmd, **kwargs):
+    _kwargs = dict(
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    _kwargs.update(kwargs)
+    _kwargs['check'] = True
+
+    if type(cmd) is str:
+        cmd = cmd.split()
+
+    try:
+        # TODO IMPROVE EOS-8473 logging level
+        logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
+        res = subprocess.run(cmd, **_kwargs)
+    except subprocess.CalledProcessError as exc:
+        logger.exception(f"Failed to run cmd '{cmd}'")
+        raise SubprocessCmdError(cmd, _kwargs, repr(exc)) from exc
+    else:
+        logger.debug(f"Subprocess command resulted in: {res}")
+        return res
+
 
 
 # TODO test

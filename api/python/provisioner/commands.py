@@ -25,7 +25,7 @@ from .config import (
     PRVSNR_EOS_COMPONENTS,
     CONTROLLER_BOTH
 )
-from .utils import load_yaml, dump_yaml_str
+from .utils import load_yaml, dump_yaml_str, run_subprocess_cmd
 from .param import KeyPath, Param
 from .pillar import PillarUpdater, PillarResolver
 from .api_spec import api_spec
@@ -647,6 +647,29 @@ class GetReleaseVersion(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
 
+    def _get_installed_rpms(self):
+        res = run_subprocess_cmd(["rpm -qa|grep '^cortx-'"], shell=True)
+        if res.returncode == 0:
+            rpms =  res.stdout.split("\n")
+        return [f'{rpm}.rpm' for rpm in rpms if rpm]
+
+    def _get_rpms_from_release(self, source):
+        try:
+            with open(source, 'r') as filehandle:
+                return yaml.safe_load(filehandle)['COMPONENTS']
+        except Exception as exc:
+            logger.warn(f"{source} file not found") 
+
+    def _compare_rpms_info(self, repo):
+        is_flag = False
+        local_rpms = self._get_installed_rpms()
+        release_rpms = self._get_rpms_from_release(repo)
+        if local_rpms and  release_rpms:
+            local_rpms = [ rpm.replace(".","") for rpm in local_rpms]
+            release_rpms = [ rpm.replace(".","") for rpm in release_rpms ]
+            is_flag = set(local_rpms).issubset(release_rpms)
+        return is_flag
+
     def _get_release_info_path(self):
         release_repo = ''
         release_pi_path = KeyPath('eos_release/update')
@@ -655,20 +678,18 @@ class GetReleaseVersion(CommandParserFillerMixin):
         pillar = next(iter(pillar.values()))
         release = pillar[update_repo]
         
-        release_repo = Path(release['base_dir'])
+        base_dir = Path(release['base_dir'])
         repos = release['repos']
-        repo = None
-        for key, val in repos.items():
-            if val == "iso":
-                repo = key
-        if repo:
-            release_repo = release_repo / f'{repo}/RELEASE.INFO'
-            return release_repo
 
+        for key, val in repos.items():
+            release_repo = base_dir / f'{key}/RELEASE.INFO'
+            print(release_repo)
+            if val == "iso" and self._compare_rpms_info(release_repo):
+                 return release_repo
 
     def run(self, targets):
         update_path = self._get_release_info_path()
-        if os.path.isfile(update_path):
+        if update_path and os.path.isfile(update_path):
             source = update_path
         else:
             source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
