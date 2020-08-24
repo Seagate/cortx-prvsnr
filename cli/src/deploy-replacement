@@ -92,7 +92,7 @@ iopath_states=(
 controlpath_states=(
     "sspl.prepare"
     "sspl.install"
-    "sspl.config"
+    # "sspl.config"
     "csm.prepare"
     "csm.install"
     "csm.config"

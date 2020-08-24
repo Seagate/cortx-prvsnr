@@ -18,7 +18,7 @@
 #
 
 {% set lustre_repo = pillar['commons']['repo']['lustre'] %}
-{% if salt['cmd.run']('lspci -d"15b3:1017:0200"') %}
+{% if salt['cmd.run']('lspci -d"15b3:*"') %}
 Add Lustre yum repo:
   pkgrepo.managed:
     - name: lustre
