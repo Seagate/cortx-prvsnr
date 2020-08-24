@@ -1,0 +1,47 @@
+.\test\cli\src\test_configure_cortx.py:59:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:154:12: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1189:0: F523 '...'.format(...) has unused arguments at position(s): 2
+.\test\cli\src\test_functions.py:1227:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_functions.py:1253:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1319:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\pillar\test_top_sls.py:33:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\csm\test_csm_config_sls.py:27:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\misc_pkgs\eosupdate\test_repo.py:35:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\provisioner\test_provisioner.py:29:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\system\config\test_setup_ssh_sls.py:28:1: E302 expected 2 blank lines, found 1
+.\api\python\provisioner\hare.py:80:9: E128 continuation line under-indented for visual indent
+.\test\helper.py:239:1: E302 expected 2 blank lines, found 1
+.\test\helper.py:493:5: E301 expected 1 blank line, found 0
+.\test\cli\src\test_configure_cortx.py:59:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:154:12: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1189:0: F523 '...'.format(...) has unused arguments at position(s): 2
+.\test\cli\src\test_functions.py:1227:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_functions.py:1253:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1319:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\pillar\test_top_sls.py:33:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\csm\test_csm_config_sls.py:27:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\misc_pkgs\eosupdate\test_repo.py:35:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\provisioner\test_provisioner.py:29:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\system\config\test_setup_ssh_sls.py:28:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_configure_cortx.py:59:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:154:12: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1189:0: F523 '...'.format(...) has unused arguments at position(s): 2
+.\test\cli\src\test_functions.py:1227:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_functions.py:1253:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1319:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\pillar\test_top_sls.py:33:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\csm\test_csm_config_sls.py:27:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\misc_pkgs\eosupdate\test_repo.py:35:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\provisioner\test_provisioner.py:29:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\system\config\test_setup_ssh_sls.py:28:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_configure_cortx.py:59:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:154:12: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1189:0: F523 '...'.format(...) has unused arguments at position(s): 2
+.\test\cli\src\test_functions.py:1227:1: E302 expected 2 blank lines, found 1
+.\test\cli\src\test_functions.py:1253:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\cli\src\test_functions.py:1319:9: F523 '...'.format(...) has unused arguments at position(s): 0
+.\test\pillar\test_top_sls.py:33:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\csm\test_csm_config_sls.py:27:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\misc_pkgs\eosupdate\test_repo.py:35:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\provisioner\test_provisioner.py:29:1: E302 expected 2 blank lines, found 1
+.\test\srv\components\system\config\test_setup_ssh_sls.py:28:1: E302 expected 2 blank lines, found 1
