@@ -17,10 +17,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Render ha input params template:
-  file.managed:
-    - name: /opt/seagate/cortx/ha/conf/build-ees-ha-args.yaml
-    - source: salt://components/ha/ees_ha/files/ha-params.tmpl
-    - template: jinja
-    - mode: 444
-    - makedirs: True
+
+include:
+  - components.ha.iostack-ha.config.base
+  - components.ha.iostack-ha.config.post_install
+
+Config for LDR-R1 HA cluster:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:config')

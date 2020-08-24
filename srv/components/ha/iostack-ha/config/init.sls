@@ -17,20 +17,20 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.cortx-ha'.format(grains['id'])) %}
-include:
-  - components.ha.cortx-ha.prepare
-  - components.ha.cortx-ha.install
-  - components.ha.cortx-ha.config
-  - components.ha.cortx-ha.ha
 
-Generate cortx_ha checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-ha
-    - makedirs: True
-    - create: True
-{%- else -%}
-cortx-ha already applied:
+{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
+
+include:
+  - components.ha.iostack-ha.config.base
+  - components.ha.iostack-ha.config.post_install
+  - components.ha.iostack-ha.config.config
+
+start LDR-R1 HA cluster:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:init')
+
+{% else %}
+setup LDR-R1 HA config on non-primary node:
   test.show_notification:
-    - text: "cortx-ha states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.ha.cortx-ha.teardown' to reprovision these states."
-{%- endif -%}
+    - text: "No changes needed on non-primary node."
+{% endif %}
