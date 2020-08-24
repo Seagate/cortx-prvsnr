@@ -1253,9 +1253,7 @@ def test_functions_cortx_pillar_show_skeleton(
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        '{0}/provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
 
     # 2. call the script
@@ -1319,9 +1317,7 @@ def test_functions_cortx_pillar_update_and_load_default(
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        '{0}/provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
     new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
     new_pillar_dict.update({pillar_new_key: "temporary"})

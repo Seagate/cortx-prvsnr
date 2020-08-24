@@ -56,9 +56,7 @@ def test_configure_cortx_show(
 
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        '{0}/provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
 
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
@@ -66,9 +64,7 @@ def test_configure_cortx_show(
     with_sudo = ''  # TODO
 
     res = run_script(
-        "{} {} {} --show-file-format {}".format(
-            ssh_config, with_sudo, remote, component
-        ),
+        f"{ssh_config} {with_sudo} {remote} --show-file-format {component}",
         mhost=(mlocalhost if remote else mhost)
     )
     assert res.rc == 0
