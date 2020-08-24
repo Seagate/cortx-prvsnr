@@ -17,6 +17,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Dummy placeholder for corosync-pacemaker.prepare:
-  test.show_notification:
-    - text: "To avoid empty yaml file with comments resulting in minion non-zero exit."
+
+include:
+  - components.ha.iostack-ha.prepare
+  - components.ha.cortx-ha.prepare
+  - components.ha.cortx-ha.install
+
+Copy file setup-ees.yaml:
+  file.copy:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
+    - force: False      # Failsafe once cortx-ha fixes the path
+    - makedirs: True
+    - preserve: True
+
+Rename root node to iostack-ha:
+  file.replace:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - pattern: "ees-ha:"
+    - repl: "iostack-ha:"
+    - count: 1
+  

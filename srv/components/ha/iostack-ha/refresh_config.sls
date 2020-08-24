@@ -17,6 +17,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Dummy placeholder for corosync-pacemaker.prepare:
-  test.show_notification:
-    - text: "To avoid empty yaml file with comments resulting in minion non-zero exit."
+Stage - Refresh config for EES-HA:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:refresh_config')

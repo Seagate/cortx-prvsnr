@@ -17,6 +17,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Dummy placeholder for corosync-pacemaker.prepare:
-  test.show_notification:
-    - text: "To avoid empty yaml file with comments resulting in minion non-zero exit."
+{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
+start LDR-R1 HA cluster:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:test')
+{% endif %}
