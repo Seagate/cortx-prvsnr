@@ -648,7 +648,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
 
     def _get_installed_rpms(self):
-        res = run_subprocess_cmd(["rpm -qa|grep '^cortx-'"], shell=True)
+        res = run_subprocess_cmd(["rpm -qa|grep '^eos-'"], shell=True)
         if res.returncode == 0:
             rpms =  res.stdout.split("\n")
         return [f'{rpm}.rpm' for rpm in rpms if rpm]
