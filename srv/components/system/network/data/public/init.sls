@@ -17,6 +17,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set node = grains['id'] %}
+
 include:
   - components.system.prepare
 

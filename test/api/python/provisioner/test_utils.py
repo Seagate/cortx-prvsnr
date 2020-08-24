@@ -15,6 +15,7 @@ def dump_yaml_defaults():
         'width': 1,
     }
 
+
 # TODO IMPROVE split
 @pytest.mark.patch_logging([(utils, ('debug', 'info'))])
 def test_ensure(monkeypatch, patch_logging):
