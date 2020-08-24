@@ -169,6 +169,7 @@ function teardown_states {
     else
         for state in ${states[@]}; do
             if [[ "$state" == "ha.iostack-ha" ]]; then
+                
                 l_info "Installing cortx-ha on both nodes"
                 $cmd salt "*" state.apply components.ha.cortx-ha.prepare  $salt_opts || true
                 $cmd salt "*" state.apply components.ha.cortx-ha.install  $salt_opts || true
@@ -185,22 +186,29 @@ function teardown_states {
                 $cmd salt "*" state.apply components.ha.cortx-ha.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
 
-            elif [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
+            elif [[ "$state" == "ha.corosync-pacemaker"
+                || "$state" == "sspl" ]]; then
+
                 l_info "Removing $state from srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq"
-                    || "$state" == "system.storage.multipath" ]]; then
+            
+            elif [[ "$state" == "misc_pkgs.openldap"
+                || "$state" == "misc_pkgs.rabbitmq"
+                || "$state" == "system.storage.multipath" ]]; then
+                
                 l_info "Removing $state from srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
+            
             else
+            
                 l_info "Removing $state from both nodes"
                 $cmd salt '*' state.apply components.$state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
