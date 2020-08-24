@@ -47,6 +47,7 @@ tgt_node=srvnode-2
 # states to be applied in desired sequence
 system_states=(
     "system"
+    "system.storage.multipath"
     "system.network"
     "system.network.data.public"
     "system.network.data.direct"
@@ -73,6 +74,7 @@ prereq_states=(
 sync_states=(
     "sync.software.openldap"
     "sync.software.rabbitmq"
+    "sync.files"
 )
 
 # states to be applied in desired sequence
@@ -90,6 +92,7 @@ iopath_states=(
 controlpath_states=(
     "sspl.prepare"
     "sspl.install"
+    "sspl.config"
     "csm.prepare"
     "csm.install"
     "csm.config"
@@ -104,11 +107,12 @@ ha_states=(
     "ha.corosync-pacemaker.install"
     "ha.corosync-pacemaker.config.base"
     "ha.corosync-pacemaker.config.authorize"
+    "ha.iostack-ha.prepare"
+    "ha.iostack-ha.config.post_install"
     "ha.cortx-ha.prepare"
     "ha.cortx-ha.install"
-    "ha.ees_ha.prepare"
-    "ha.ees_ha.install"
-    "ha.cortx-ha.replace_node.refresh_context"
+    "ha.cortx-ha.config"
+    "ha.cortx-ha.replace_node.refresh_config"
     "ha.cortx-ha.replace_node.add_node"
 )
 
@@ -130,7 +134,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ees_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }
@@ -256,9 +260,9 @@ if [[ "$run_all" == true ]]; then
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
-    run_states "${sync_states[@]}"
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
+    run_states "${sync_states[@]}"
     run_states "${ha_states[@]}"
     
 fi

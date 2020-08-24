@@ -19,7 +19,7 @@ include:
   - components.csm.teardown
   - components.sspl.teardown
   # Remove IO Stack
-  - components.ha.ees_ha.teardown
+  - components.ha.iostack-ha.teardown
   - components.hare.teardown
   - components.s3server.teardown
   - components.motr.teardown

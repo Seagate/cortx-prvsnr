@@ -15,7 +15,11 @@
 #
 
 {% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
-start LDR-R1 HA cluster:
+Remove Cortx-HA resources:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:test')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:reset')
+    - order: 1
 {% endif %}
+Delete iostack-ha checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.iostack-ha

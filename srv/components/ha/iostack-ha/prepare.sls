@@ -14,7 +14,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-Run cortx-ha refresh_context:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:refresh_context')
-    - onlyif: test -x /opt/seagate/cortx/ha/conf/setup.yaml
+Render ha input params template:
+  file.managed:
+    - name: /opt/seagate/cortx/ha/conf/build-ees-ha-args.yaml
+    #- name: /var/lib/hare/build-ees-ha-args.yaml
+    - source: salt://components/ha/iostack-ha/files/ha-params.tmpl
+    - template: jinja
+    - mode: 444
+    - makedirs: True

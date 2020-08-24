@@ -22,20 +22,20 @@
 # - then run - salt -L "srvnode-1,srvnode-3" state.apply components.sync.files.config {'component':['hare','csm']}
 
 
-{%- set components = salt['pillar.get']('components', ['hare','csm']) %}
-{%- if 'srvnode-1' in grains['id'] %}
-{%- set node = 'srvnode-2' %}
-{%- else %}
-{%- set node = 'srvnode-1' %}
-{%- endif %}
+{% set components = ['iostack-ha', 'csm'] %}
+{% if 'srvnode-1' in grains['id'] %}
+{% set node = 'srvnode-2' %}
+{% else %}
+{% set node = 'srvnode-1' %}
+{% endif %}
 Sync Files across nodes:
   cmd.run:
     name: |
       {%- for component in components %}
       {%- set yaml_file = '/opt/seagate/cortx/{0}/conf/setup.yaml'.format(component) %}
-      {%- import_yaml yaml_file as yaml %}
-      {%- if yaml[component]["backup"] and yaml[component]["backup"]["files"] %}
-      {%- for file_name in yaml[component]["backup"]["files"] %}
+      {%- import_yaml yaml_file as yaml_str %}
+      {%- if yaml_str[component]["backup"] and yaml_str[component]["backup"]["files"] %}
+      {%- for file_name in yaml_str[component]["backup"]["files"] %}
       rsync -zavhe ssh {{ node }}:{{ file_name }} {{ file_name }}
       {%- endfor %}
       {%- else %}
