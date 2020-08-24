@@ -17,30 +17,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.30.0'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = (
-    "{0}/-/archive/${1}/${1}.tar.gz".format(__url__, __version__)  # TODO
-)
-__license__ = "private"  # TODO
+{% macro repo_absent(release, repo_dir) %}
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+    {% from './iso/unmount.sls' import repo_unmounted with context %}
+
+{{ repo_unmounted(release, repo_dir) }}
+
+cortx_base_repo_iso_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}.iso
+    - require:
+      - cortx_base_repo_iso_unmounted_{{ release }}
+
+
+cortx_base_repo_dir_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}
+    - require:
+      - cortx_base_repo_absent_{{ release }}
+      - cortx_base_repo_iso_unmounted_{{ release }}
+
+
+cortx_base_repo_absent_{{ release }}:
+  pkgrepo.absent:
+    - name: cortx_base_{{ release }}
+
+{% endmacro %}

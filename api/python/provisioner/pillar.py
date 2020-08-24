@@ -29,6 +29,7 @@ from .salt import pillar_get, pillar_refresh
 from .config import (
     ALL_MINIONS,
     PRVSNR_PILLAR_DIR,
+    PRVSNR_USER_PI_PREFIX,
     PRVSNR_USER_PI_ALL_HOSTS_DIR,
     PRVSNR_USER_PI_HOST_DIR_TMPL
 )
@@ -216,6 +217,13 @@ class PillarUpdater:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
 
+    @classmethod
+    def add_merge_prefix(cls, path: Path):
+        if path.name.startswith(PRVSNR_USER_PI_PREFIX):
+            return path
+        else:
+            return path.with_name(f"{PRVSNR_USER_PI_PREFIX}{path.name}")
+
     # TODO create task
     # TODO test
     # base things:
@@ -284,6 +292,8 @@ class PillarUpdater:
             _path = Path(
                 PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=self.targets)
             ) / path
+
+        _path = self.add_merge_prefix(_path)
 
         if _path not in self._pillars:
             self._pillars[_path] = load_yaml(_path) if _path.exists() else {}

@@ -33,6 +33,8 @@ from provisioner.pillar import (
 
 from .helper import mock_fun_echo
 
+add_pi_merge_prefix = PillarUpdater.add_merge_prefix
+
 # TODO tests for validators and converters
 
 # ### KeyPath ###
@@ -308,7 +310,6 @@ def test_pillar_updater_update_values(
 def test_pillar_updater_update_rollback_dump(
     targets, some_param_gr, some_param_di, pillar_dir, pillar_host_dir_tmpl
 ):
-
     if targets != ALL_MINIONS:
         pillar_dir = Path(pillar_host_dir_tmpl.format(minion_id=targets))
         pillar_dir.mkdir(parents=True)
@@ -320,9 +321,15 @@ def test_pillar_updater_update_rollback_dump(
     attr2_param = some_param_gr.param_spec('attr2')
     attr3_param = input_param_di.param_spec()
 
-    f1 = pillar_dir / attr1_param.fpath.name
-    f2 = pillar_dir / attr2_param.fpath.name
-    f3 = pillar_dir / attr3_param.fpath.name
+    f1 = add_pi_merge_prefix(
+        pillar_dir / attr1_param.fpath.name
+    )
+    f2 = add_pi_merge_prefix(
+        pillar_dir / attr2_param.fpath.name
+    )
+    f3 = add_pi_merge_prefix(
+        pillar_dir / attr3_param.fpath.name
+    )
 
     pillar_data = {'1': {'2': {'3': '4', '5': '6'}, 'di_parent': {}}}
     dump_yaml(f1, pillar_data)
