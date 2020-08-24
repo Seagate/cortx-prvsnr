@@ -322,7 +322,7 @@ yum autoremove -y >> ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 
-if ( hostnamectl status | grep Chassis | grep -q server >/dev/null ) && ( lspci -d"15b3:*" > /dev/null ) ; then 
+if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {
