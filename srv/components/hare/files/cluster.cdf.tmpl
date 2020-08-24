@@ -7,7 +7,7 @@ nodes:
 {% for node in pillar['cluster']['node_list'] %}
   - hostname: {{ node }}
     data_iface: {{ data_if }}
-{%- if salt['cmd.run']('lspci -d"15b3:*"') %}
+{%- if salt['cmd.run']('lspci -d"15b3:*"|grep Mellanox') %}
     data_iface_type: o2ib
 {%- else %}
     data_iface_type: tcp
