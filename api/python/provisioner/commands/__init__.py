@@ -139,6 +139,15 @@ class RunArgsRemoteCommandExecutor:
         },
         default=""  # empty string
     )
+    cmd_stdin: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': ("string which represents command's stdin. "
+                         "Can be used to pass username and passwords")
+            }
+        },
+        default=""  # empty string
+    )
     targets: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -705,20 +714,23 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsRemoteCommandExecutor
 
-    # defines a "frozen" list for allowed commands and supported by provisioner API
-    # for remote execution
+    # defines a "frozen" list for allowed commands and supported by provisioner
+    # API for remote execution
     _supported_commands = frozenset({'cortxcli'})
 
     _PRV_METHOD_MOD = "_"  # private method modificator
 
-    def _cortxcli(self, *, args: str, targets: str, dry_run: bool = False):
+    def _cortxcli(self, *, args: str, stdin: str, targets: str,
+                  dry_run: bool = False):
         """
         Private method for `cortxcli` command.
 
         :param args: `cortxcli` specific command parameters and arguments
+        :param stdin: `cortxcli` stdin parameters like username and password.
+                      NOTE: Parameters should be '\n' new line seperated
         :param targets: target nodes where `cortxcli` command will be executed
-        :param bool dry_run: for debugging purposes. Execute method without real command
-                             execution on target nodes
+        :param bool dry_run: for debugging purposes. Execute method without real
+                             command execution on target nodes
         :return:
         """
 
@@ -727,24 +739,32 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
 
         cmd_line = f'cortxcli {args}'
 
-        # Do we need to execute command and return to the user some output state?
-        StateFunExecuter.execute('cmd.run', targets=targets, fun_kwargs=dict(name=cmd_line))
+        # Do we need to execute command and return to the user some
+        # output state?
+        print(StateFunExecuter.execute('cmd.run', targets=targets,
+                                       fun_kwargs=dict(name=cmd_line,
+                                                       stdin=stdin)))
 
-    def run(self, cmd: str, cmd_args: str = "", targets: str = ALL_MINIONS, dry_run: bool = False):
+    def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
+            targets: str = ALL_MINIONS, dry_run: bool = False):
         """
         Basic run method to execute remote commands on targets nodes:
 
         :param str cmd: specific command to be executed on target nodes
         :param str cmd_args: command specific arguments
+        :param cmd_stdin: command specific stdin parameters like username and
+                          password.
         :param str targets: target nodes where command is planned to be executed
-        :param bool dry_run: for debugging purposes. Execute method without real command
-                             execution on target nodes
+        :param bool dry_run: for debugging purposes. Execute method without real
+                             command execution on target nodes
         :return:
         """
         cmd = cmd.strip()
 
         if cmd in self._supported_commands:
-            getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args, targets=targets,
+            getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
+                                                      targets=targets,
+                                                      stdin=cmd_stdin,
                                                       dry_run=dry_run)
         else:
             raise ValueError(f'Command "{cmd}" is not supported')

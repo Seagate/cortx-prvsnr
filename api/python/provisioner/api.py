@@ -270,20 +270,21 @@ def fw_update(source, dry_run=False, nowait=False):
     )
 
 
-def execute_remote_command(cmd_name: str, cmd_args: str, targets: str = ALL_MINIONS,
-                           dry_run: bool = False):
+def execute_remote_command(cmd_name: str, cmd_args: str, cmd_stdin: str,
+                           targets: str = ALL_MINIONS, dry_run: bool = False):
     """
     Execute given command on targets nodes
 
     :param cmd_name: command to be executed
     :param cmd_args: (optional) commands' arguments
+    :param cmd_stdin: (optional) commands stdin parameters like username or
+                      password
     :param targets: (optional) target nodes for command execution
     :param dry_run: (optional) validate only.
-    :return: 
+    :return:
     """
-
-    return _api_call('execute_remote_command', cmd=cmd_name, args=cmd_args, targets=targets,
-                     dry_run=dry_run)
+    return _api_call('execute_remote_command', cmd=cmd_name, args=cmd_args,
+                     cmd_stdin=cmd_stdin, targets=targets, dry_run=dry_run)
 
 
 def get_cluster_id(nowait=False):
