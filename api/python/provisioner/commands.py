@@ -2,7 +2,6 @@ import sys
 import attr
 import os
 import json
-import yaml
 from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
