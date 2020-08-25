@@ -124,7 +124,7 @@ class RunArgsUpdate:
 
 @attr.s(auto_attribs=True)
 class RunArgsRemoteCommandExecutor:
-    cmd: str = attr.ib(
+    command: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "command to be executed on target nodes. Case sensitive"
@@ -730,7 +730,7 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         # Do we need to execute command and return to the user some output state?
         StateFunExecuter.execute('cmd.run', targets=targets, fun_kwargs=dict(name=cmd_line))
 
-    def run(self, cmd: str, args: str, targets: str = ALL_MINIONS, dry_run: bool = False):
+    def run(self, cmd: str, args: str = "", targets: str = ALL_MINIONS, dry_run: bool = False):
         """
         Basic run method to execute remote commands on targets nodes:
 

@@ -275,10 +275,10 @@ def execute_remote_command(command: str, args: str, targets: str = ALL_MINIONS,
     """
     Execute given command on targets nodes
 
-    :param command: 
-    :param args: 
-    :param targets: 
-    :param dry_run: 
+    :param command: command to be executed
+    :param args: (optional) commands' arguments
+    :param targets: (optional) target nodes for command execution
+    :param dry_run: (optional) validate only.
     :return: 
     """
 
