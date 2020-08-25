@@ -143,7 +143,8 @@ LOG_FORCED_LOGFILE_CMDS = [
     'reboot_controller',
     'shutdown_controller',
     'create_user',
-    'replace_node'
+    'replace_node',
+    'execute_remote_command'
 ]
 
 # bundled salt roots dirs

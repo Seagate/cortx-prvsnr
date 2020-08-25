@@ -146,7 +146,7 @@ class RunArgsRemoteCommandExecutor:
             }
         },
         default=ALL_MINIONS
-    ),
+    )
     dry_run: bool = RunArgs.dry_run
 
 
