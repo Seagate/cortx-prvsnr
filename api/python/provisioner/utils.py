@@ -5,7 +5,7 @@ from typing import Tuple, Union
 from pathlib import Path
 import subprocess
 from .errors import (
-    BadPillarDataError, ProvisionerError
+    BadPillarDataError, ProvisionerError, SubprocessCmdError
 )
 
 logger = logging.getLogger(__name__)
