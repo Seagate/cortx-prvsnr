@@ -37,6 +37,7 @@ Add common config - rabbitmq cluster to Consul:
         /opt/seagate/cortx/hare/bin/consul kv put rabbitmq/cluster_nodes {{ pillar['rabbitmq']['cluster_nodes'] }}
         /opt/seagate/cortx/hare/bin/consul kv put rabbitmq/erlang_cookie {{ pillar['rabbitmq']['erlang_cookie'] }}
 
+{% 'physical' in grains['virtual'] %}
 Add common config - BMC to Consul:
   cmd.run:
     - name: |
@@ -45,6 +46,7 @@ Add common config - BMC to Consul:
         /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/user {{ pillar['cluster'][node]['bmc']['user'] }}
         /opt/seagate/cortx/hare/bin/consul kv put bmc/{{ node }}/secret {{ pillar['cluster'][node]['bmc']['secret'] }}
 {% endfor %}
+{% endif %}
 
 Add common config - storage enclosure to Consul:
   cmd.run:
