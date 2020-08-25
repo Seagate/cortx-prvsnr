@@ -93,6 +93,8 @@ setup_singlenode:
   type: SetupSinglenode
 setup_cluster:
   type: SetupCluster
+setup_cortx:
+  type: SetupCortx
 replace_node:
   type: ReplaceNode
 configure_setup:

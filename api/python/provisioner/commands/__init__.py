@@ -244,8 +244,14 @@ class CommandParserFillerMixin:
     _run_args_type = RunArgsBase
 
     @classmethod
+    def _run_args_types(cls):
+        ret = cls._run_args_type
+        return ret if type(ret) is list else [ret]
+
+    @classmethod
     def fill_parser(cls, parser):
-        inputs.ParserFiller.fill_parser(cls._run_args_type, parser)
+        for arg_type in cls._run_args_types():
+            inputs.ParserFiller.fill_parser(arg_type, parser)
 
     @classmethod
     def from_spec(cls):
@@ -253,9 +259,10 @@ class CommandParserFillerMixin:
 
     @classmethod
     def extract_positional_args(cls, kwargs):
-        return inputs.ParserFiller.extract_positional_args(
-            cls._run_args_type, kwargs
-        )
+        for arg_type in cls._run_args_types():
+            return inputs.ParserFiller.extract_positional_args(
+                arg_type, kwargs
+            )
 
 
 #  - Notes:
