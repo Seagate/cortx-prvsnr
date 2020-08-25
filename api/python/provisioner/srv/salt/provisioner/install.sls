@@ -24,7 +24,7 @@
 {% set mount_dir = '/opt/seagate/cortx/updates' %}
 
 {% if source == 'iso' %}
-{% iso_release = salt['cmd.run']('basename {{ repo_path }}')%}
+{% iso_release = salt.cmd.run('basename ' ~repo_path~ '') %}
 copy_iso:
   file.managed:
     - name: {{ repo_path }}

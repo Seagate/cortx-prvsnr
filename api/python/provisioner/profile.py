@@ -24,7 +24,7 @@ from .utils import dump_yaml, run_subprocess_cmd
 
 
 # TODO TEST EOS-8473
-def setup(profile_paths: Optional[dict] = None, project_path=None, clean=False):
+def setup(profile_paths: Optional[dict] = None, project_path, clean=False):
     if profile_paths is None:
         profile_paths = config.profile_paths()
 
