@@ -321,7 +321,8 @@ echo -n "INFO: Cleaning yum cache............................................." 
 yum autoremove -y >> ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
-hostnamectl status | grep Chassis | grep -q server && {
+
+if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {
@@ -334,7 +335,7 @@ hostnamectl status | grep Chassis | grep -q server && {
     yum install -y sg3_utils 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Scanning SCSI bus............................................" | tee -a ${LOG_FILE}
     /usr/bin/rescan-scsi-bus.sh -a >> ${LOG_FILE}
-}
+fi
 
 echo -n "INFO: Disabling default time syncronization mechanism..........." 2>&1 | tee -a ${LOG_FILE}
 if [ `rpm -qa chrony` ]; then
