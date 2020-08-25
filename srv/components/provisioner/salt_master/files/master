@@ -668,6 +668,7 @@ state_output: mixed
 #
 file_roots:
   base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/salt     # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user   # old style
     - /opt/seagate/cortx/provisioner/srv
@@ -846,8 +847,9 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a

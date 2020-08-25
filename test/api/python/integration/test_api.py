@@ -227,8 +227,8 @@ def test_set_swupdate_repo(
     mhostsrvnode1 = request.getfixturevalue('mhostsrvnode1')
     run_test = request.getfixturevalue('run_test')
 
-    repo_dir = '/tmp/repo'
-    iso_path = '/tmp/repo.iso'
+    repo_dir = Path('/tmp/repo')
+    iso_path = Path('/tmp/repo.iso')
 
     mhostsrvnode1.check_output(
         "mkdir -p {repo_dir}"
@@ -349,7 +349,7 @@ def test_pyinstaller_approach(
                 pass
             else:
                 assert False, "provisioner._api is available"
-        """.format(api_path=(mhostsrvnode1.repo / 'api/python'))
+        """
     )
     app_script = inspect.cleandoc(app_script)
 

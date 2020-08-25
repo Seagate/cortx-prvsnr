@@ -235,6 +235,7 @@ class VagrantParsedRow:
         self.ts, self.target, self.data_type = row[:3]
         self.data = row[3:]
 
+
 # TODO check packer is available
 @attr.s
 class Vagrant:
@@ -490,6 +491,7 @@ class VagrantBox:
         converter=lambda v: v.resolve() if v else None,
         default=None
     )
+
     @path.validator
     def _check_path(self, attribute, value):
         if value and (not value.is_file):

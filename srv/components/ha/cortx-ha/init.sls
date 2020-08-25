@@ -24,7 +24,7 @@ include:
   - components.ha.cortx-ha.config
   - components.ha.cortx-ha.ha
 
-Generate ees_ha checkpoint flag:
+Generate cortx_ha checkpoint flag:
   file.managed:
     - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-ha
     - makedirs: True

@@ -17,8 +17,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
-start LDR-R1 HA cluster:
+
+Stage - Backup files for EES-HA:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:test')
-{% endif %}
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup-ees.yaml', 'ees-ha:backup')

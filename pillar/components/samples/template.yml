@@ -19,11 +19,10 @@
 
 cluster:
   cluster_ip:                         # Cluster IP for HAProxy
-  pvt_data_nw_addr: 192.168.0.0
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: dual                           # single/dual/cluster
+  type: dual                          # single/dual/cluster
   node_list:
     - srvnode-1
     - srvnode-2
@@ -40,14 +39,14 @@ cluster:
           - eno1
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
           - enp175s0f0                # Public Data
           - enp175s0f1                # Private Data (direct connect)
-        ipaddr:                       # DHCP is assumed if left blank
+        public_ip_addr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
         pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
@@ -68,14 +67,14 @@ cluster:
           - eno1
         ipaddr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
           - enp175s0f0                # Public Data
           - enp175s0f1                # Private Data (direct connect)
-        ipaddr:                       # DHCP is assumed if left blank
+        public_ip_addr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
         pvt_ip_addr: 192.168.0.2      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.4       # Applies to private data network
     storage:
@@ -84,9 +83,9 @@ cluster:
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
 storage_enclosure:
-  id: storage_node_1            # equivalent to fqdn for server node
+  id: storage_node_1                  # equivalent to fqdn for server node
   controller:
-    type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
+    type: gallium                     # Type of controller on storage node. E.g. gallium/indium/sati
     primary_mc:
       ip: 10.0.0.2
       port: 80
@@ -121,8 +120,8 @@ elasticsearch:
   http_port: 9200
 commons:
   cortx_commons:
-    RedHat: http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/
-    CentOS: http://cortx-storage.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/
+    RedHat: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/
+    CentOS: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/centos/centos-7.7.1908/
   version:
     erlang: latest
     elasticsearch: 6.8.8-1

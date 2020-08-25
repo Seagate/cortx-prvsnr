@@ -17,19 +17,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
-include:
-  - components.ha.ees_ha.prepare
-  - components.ha.ees_ha.install
-  - components.ha.ees_ha.config
-{% else %}
-setup LDR-R1 HA on non-primary node:
-  test.show_notification:
-    - text: "No changes needed on non-primary node"
-{% endif %}
+{% macro repo_absent(release, repo_dir) %}
 
-Generate ees_ha checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.ees_ha
-    - makedirs: True
-    - create: True
+    {% from './iso/unmount.sls' import repo_unmounted with context %}
+
+{{ repo_unmounted(release, repo_dir) }}
+
+repo_iso_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}.iso
+    - require:
+      - repo_iso_unmounted_{{ release }}
+
+
+repo_dir_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}
+    - require:
+      - repo_absent_{{ release }}
+      - repo_iso_unmounted_{{ release }}
+
+
+repo_absent_{{ release }}:
+  pkgrepo.absent:
+    - name: {{ release }}
+
+{% endmacro %}

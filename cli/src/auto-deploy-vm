@@ -153,7 +153,7 @@ while [[ $# -gt 0 ]]; do
             mgmt_din_opt=true
             [ -z "$2" ] &&
                 echo "Error: management interface name not provided" && exit 1;
-            pvt_din="$2"
+            mgmt_din="$2"
             shift 2 ;;
         -D)
             meta_disk_opt=true
@@ -295,14 +295,35 @@ update_pillar()
     /usr/local/bin/provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
     /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
     /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
-    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
-    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
+    
+    if [[ "$mgmt_din_opt" == true ]]; then
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"$mgmt_din\"
+    else
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
+    fi
+
+    if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
+    else
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth2\",\"eth1\"]
+    fi
+
     if [[ "$singlenode" == false ]]; then
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
+        
+        if [[ "$mgmt_din_opt" == true ]]; then
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"$mgmt_din\"
+        else
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
+        fi
+
+        if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
+        else
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth2\",\"eth1\"]
+        fi
     fi
 
     # Updating Cluster IP

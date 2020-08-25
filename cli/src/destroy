@@ -49,15 +49,15 @@ tgt_node=srvnode-2
 
 controlpath_states=(
 # states to be applied in desired sequence
-    "ha.cortx-ha"
     "post_setup"
+    "ha.cortx-ha"
     "uds"
     "csm"
     "sspl"
 )
 
 ha_states=(
-    "ha.ees_ha"
+    "ha.iostack-ha"
     "ha.corosync-pacemaker"
     "hare"
 )
@@ -168,22 +168,47 @@ function teardown_states {
         done
     else
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.corosync-pacemaker" || "$state" == "sspl" ]]; then
+            if [[ "$state" == "ha.iostack-ha" ]]; then
+                
+                l_info "Installing cortx-ha on both nodes"
+                $cmd salt "*" state.apply components.ha.cortx-ha.prepare  $salt_opts || true
+                $cmd salt "*" state.apply components.ha.cortx-ha.install  $salt_opts || true
+                sleep 2     # Mindfulness break
+
                 l_info "Removing $state from srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-            elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq"
-                    || "$state" == "system.storage.multipath" ]]; then
+
+                l_info "Removing cortx-ha on both nodes"
+                $cmd salt "*" state.apply components.ha.cortx-ha.teardown  $salt_opts || true
+                sleep 2     # Mindfulness break
+
+            elif [[ "$state" == "ha.corosync-pacemaker"
+                || "$state" == "sspl" ]]; then
+
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                sleep 2     # Mindfulness break
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                sleep 2     # Mindfulness break
+            
+            elif [[ "$state" == "misc_pkgs.openldap"
+                || "$state" == "misc_pkgs.rabbitmq"
+                || "$state" == "system.storage.multipath" ]]; then
+                
                 l_info "Removing $state from srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
+            
             else
+            
                 l_info "Removing $state from both nodes"
                 $cmd salt '*' state.apply components.$state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
@@ -195,8 +220,10 @@ function teardown_states {
 # Ensure the cluster is in maintenance mode before teardown
 function ensure_cluster_in_maintenance {
     if command -v hctl && command -v hctl ; then
-        echo "INFO: Putting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
-        hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE} || true
+        # echo "INFO: Putting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
+        # hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE} || true
+        echo "INFO: Disabling stonith resources to avoid surprises..." 2>&1 | tee -a ${LOG_FILE}
+        pcs resource disable stonith-c1 stonith-c2
     else
         echo "[WARN     ]: Command 'pcs' not found, cannot put cluster into maintenance mode." 2>&1 | tee -a ${LOG_FILE}
     fi
