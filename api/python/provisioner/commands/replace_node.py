@@ -28,6 +28,7 @@ from ..utils import (
     load_yaml,
     run_subprocess_cmd
 )
+from ..pillar import PillarUpdater
 
 from .setup_provisioner import (
     Node,
@@ -37,6 +38,8 @@ from .setup_provisioner import (
 
 
 logger = logging.getLogger(__name__)
+
+add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
 
 
 @attr.s(auto_attribs=True)
@@ -113,7 +116,9 @@ class ReplaceNode(SetupProvisioner):
 
         logger.info("Adjusting node specs info")
         pillar_all_dir = paths['salt_pillar_dir'] / 'groups/all'
-        specs_pillar_path = pillar_all_dir / 'node_specs.sls'
+        specs_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'node_specs.sls'
+        )
         node_specs = load_yaml(specs_pillar_path)['node_specs']
         nodes = {k: Node(k, **v) for k, v in node_specs.items()}
 
