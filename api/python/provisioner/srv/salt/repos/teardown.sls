@@ -23,23 +23,23 @@
 
 {{ repo_unmounted(release, repo_dir) }}
 
-cortx_base_repo_iso_absent_{{ release }}:
+repo_iso_absent_{{ release }}:
   file.absent:
     - name: {{ repo_dir }}.iso
     - require:
-      - cortx_base_repo_iso_unmounted_{{ release }}
+      - repo_iso_unmounted_{{ release }}
 
 
-cortx_base_repo_dir_absent_{{ release }}:
+repo_dir_absent_{{ release }}:
   file.absent:
     - name: {{ repo_dir }}
     - require:
-      - cortx_base_repo_absent_{{ release }}
-      - cortx_base_repo_iso_unmounted_{{ release }}
+      - repo_absent_{{ release }}
+      - repo_iso_unmounted_{{ release }}
 
 
-cortx_base_repo_absent_{{ release }}:
+repo_absent_{{ release }}:
   pkgrepo.absent:
-    - name: cortx_base_{{ release }}
+    - name: {{ release }}
 
 {% endmacro %}

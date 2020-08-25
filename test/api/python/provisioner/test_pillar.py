@@ -33,7 +33,7 @@ from provisioner.pillar import (
 
 from .helper import mock_fun_echo
 
-add_pi_merge_prefix = PillarUpdater.add_merge_prefix
+add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
 
 # TODO tests for validators and converters
 
@@ -321,13 +321,13 @@ def test_pillar_updater_update_rollback_dump(
     attr2_param = some_param_gr.param_spec('attr2')
     attr3_param = input_param_di.param_spec()
 
-    f1 = add_pi_merge_prefix(
+    f1 = add_pillar_merge_prefix(
         pillar_dir / attr1_param.fpath.name
     )
-    f2 = add_pi_merge_prefix(
+    f2 = add_pillar_merge_prefix(
         pillar_dir / attr2_param.fpath.name
     )
-    f3 = add_pi_merge_prefix(
+    f3 = add_pillar_merge_prefix(
         pillar_dir / attr3_param.fpath.name
     )
 
@@ -411,7 +411,7 @@ def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
 
     monkeypatch.setattr(pillar, 'PRVSNR_PILLAR_DIR', default_pillar_dir)
     monkeypatch.setattr(
-        pillar, 'PRVSNR_USER_PI_ALL_HOSTS_DIR', user_pillar_dir
+        pillar, 'PRVSNR_USER_PILLAR_ALL_HOSTS_DIR', user_pillar_dir
     )
 
     monkeypatch.setattr(

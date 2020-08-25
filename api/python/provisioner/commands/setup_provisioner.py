@@ -55,7 +55,7 @@ from . import (
 
 logger = logging.getLogger(__name__)
 
-add_pi_merge_prefix = PillarUpdater.add_merge_prefix
+add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
 
 
 # TODO TEST EOS-8473
@@ -607,7 +607,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-        conns_pillar_path = add_pi_merge_prefix(
+        conns_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'connections.sls'
         )
         if run_args.rediscover or not conns_pillar_path.exists():
@@ -622,7 +622,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 node.ping_addrs = conns[node.minion_id]
 
         # IMRPOVE EOS-8473 it's not a salt minion config thing
-        specs_pillar_path = add_pi_merge_prefix(
+        specs_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'node_specs.sls'
         )
         if run_args.rediscover or not specs_pillar_path.exists():
@@ -638,7 +638,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # resolve salt masters
         # TODO IMPROVE EOS-8473 option to re-build masters
-        masters_pillar_path = add_pi_merge_prefix(
+        masters_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'masters.sls'
         )
         if run_args.rediscover or not masters_pillar_path.exists():
@@ -781,7 +781,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
 
-        pillar_path = add_pi_merge_prefix(
+        pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'release.sls'
         )
         if pillar_path.exists():
@@ -947,7 +947,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   - a repo file is created and pointed to the mount directory
         if run_args.source == 'iso':  # TODO EOS-12076 IMPROVE hard-coded
             # copy ISOs onto remotes and mount
-            ssh_client.state_apply('cortx_iso')
+            ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
 

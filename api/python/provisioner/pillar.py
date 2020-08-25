@@ -29,9 +29,9 @@ from .salt import pillar_get, pillar_refresh
 from .config import (
     ALL_MINIONS,
     PRVSNR_PILLAR_DIR,
-    PRVSNR_USER_PI_PREFIX,
-    PRVSNR_USER_PI_ALL_HOSTS_DIR,
-    PRVSNR_USER_PI_HOST_DIR_TMPL
+    PRVSNR_USER_PILLAR_PREFIX,
+    PRVSNR_USER_PILLAR_ALL_HOSTS_DIR,
+    PRVSNR_USER_PILLAR_HOST_DIR_TMPL
 )
 # from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
@@ -219,10 +219,10 @@ class PillarUpdater:
 
     @classmethod
     def add_merge_prefix(cls, path: Path):
-        if path.name.startswith(PRVSNR_USER_PI_PREFIX):
+        if path.name.startswith(PRVSNR_USER_PILLAR_PREFIX):
             return path
         else:
-            return path.with_name(f"{PRVSNR_USER_PI_PREFIX}{path.name}")
+            return path.with_name(f"{PRVSNR_USER_PILLAR_PREFIX}{path.name}")
 
     # TODO create task
     # TODO test
@@ -287,10 +287,10 @@ class PillarUpdater:
     #       2-5. minion-value: set value for a minion
     def pillar(self, path: Path):
         if self.targets == ALL_MINIONS:
-            _path = PRVSNR_USER_PI_ALL_HOSTS_DIR / path
+            _path = PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / path
         else:
             _path = Path(
-                PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=self.targets)
+                PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=self.targets)
             ) / path
 
         _path = self.add_merge_prefix(_path)
@@ -377,7 +377,7 @@ class PillarUpdater:
         pillar: Dict = None
     ):
         path = (
-            PRVSNR_USER_PI_ALL_HOSTS_DIR /
+            PRVSNR_USER_PILLAR_ALL_HOSTS_DIR /
             '{}.sls'.format(component)
         )
         if show:

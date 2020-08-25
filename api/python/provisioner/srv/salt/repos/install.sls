@@ -31,8 +31,8 @@ copy_repo_iso_{{ release }}:
     - source: {{ source }}
     - makedirs: True
     - require_in:
-      - cortx_base_repo_iso_mounted_{{ release }}
-      - cortx_base_repo_added_{{ release }}
+      - repo_iso_mounted_{{ release }}
+      - repo_added_{{ release }}
 
 {{ repo_mounted(release, iso_path, dest_repo_dir) }}
 
@@ -44,16 +44,16 @@ copy_repo_dir_{{ release }}:
     - name: {{ dest_repo_dir }}
     - source: {{ source }}
     - require_in:
-      - cortx_base_repo_added_{{ release }}
+      - repo_added_{{ release }}
 
 
     {% endif %}
 
 
-cortx_base_repo_added_{{ release }}:
+repo_added_{{ release }}:
   pkgrepo.managed:
-    - name: cortx_base_{{ release }}
-    - humanname: Cortx Base repo {{ release }}
+    - name: {{ release }}
+    - humanname: Repository {{ release }}
     {% if source_type == 'url' %}
     - baseurl: {{ source }}
     {% else %}
@@ -62,14 +62,14 @@ cortx_base_repo_added_{{ release }}:
     - gpgcheck: 0
     {% if source_type == 'iso' %}
     - require:
-      - cortx_base_repo_iso_mounted_{{ release }}
+      - repo_iso_mounted_{{ release }}
     {% endif %}
 
 
-cortx_base_repo_metadata_cleaned_{{ release }}:
+repo_metadata_cleaned_{{ release }}:
   cmd.run:
-    - name: yum --disablerepo="*" --enablerepo="cortx_base_{{ release }}" clean metadata
+    - name: yum --disablerepo="*" --enablerepo="{{ release }}" clean metadata
     - require:
-      - cortx_base_repo_added_{{ release }}
+      - repo_added_{{ release }}
 
 {% endmacro %}

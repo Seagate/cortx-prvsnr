@@ -17,11 +17,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% macro repo_unmounted(release, mount_dir) %}
+{% macro repo_mounted(release, source, mount_dir) %}
 
-cortx_base_repo_iso_unmounted_{{ release }}:
-  mount.unmounted:
+repo_iso_mounted_{{ release }}:
+  mount.mounted:
     - name: {{ mount_dir }}
-    - persist: True
+    - device: {{ source }}
+    - mkmnt: True
+    - fstype: iso9660
+    - persist: False
 
 {% endmacro %}
