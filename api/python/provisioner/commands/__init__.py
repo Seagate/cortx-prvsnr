@@ -124,7 +124,7 @@ class RunArgsUpdate:
 
 @attr.s(auto_attribs=True)
 class RunArgsRemoteCommandExecutor:
-    command: str = attr.ib(
+    remote_cmd: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "command to be executed on target nodes. Case sensitive"
