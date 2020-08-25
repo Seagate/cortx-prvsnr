@@ -136,7 +136,7 @@ def test_cli_parser_logging_nohandler(default_res_copy, log_handler_name):
     # incorrect handler
     with pytest.raises(errors.ProvisionerCliError):
         _parse_args(
-            f'--nosomehandler', add_version=True
+            '--nosomehandler', add_version=True
         )
 
 

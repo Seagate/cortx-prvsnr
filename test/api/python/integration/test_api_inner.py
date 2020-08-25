@@ -314,7 +314,7 @@ def test_set_network():
     ]['cluster']['srvnode-1']['network']['mgmt_nw']['ipaddr']
     pillar_nw_primary_data_ip = pillar[
         'srvnode-1'
-    ]['cluster']['srvnode-1']['network']['data_nw']['ipaddr']
+    ]['cluster']['srvnode-1']['network']['data_nw']['public_ip_addr']
     pillar_nw_primary_gateway_ip = pillar[
         'srvnode-1'
     ]['cluster']['srvnode-1']['network']['gateway_ip']

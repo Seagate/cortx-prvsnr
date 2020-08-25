@@ -44,71 +44,77 @@ run_ha_states=false
 run_ctrlpath_states=false
 tgt_node=srvnode-2
 
+# states to be applied in desired sequence
 system_states=(
-    # states to be applied in desired sequence
-        "system"
-        "system.network"
-        "system.network.data.direct"
-        "misc_pkgs.rsyslog"
-        "system.firewall"
-        "system.logrotate"
-        "system.chrony"
-    )
+    "system"
+    "system.storage.multipath"
+    "system.network"
+    "system.network.data.public"
+    "system.network.data.direct"
+    "misc_pkgs.rsyslog"
+    "system.firewall"
+    "system.logrotate"
+    "system.chrony"
+)
 
+# states to be applied in desired sequence
 prereq_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.rhel_sos"
-        "misc_pkgs.ssl_certs"
-        "ha.haproxy"
-        "misc_pkgs.openldap"
-        "misc_pkgs.rabbitmq"
-        "misc_pkgs.nodejs"
-        "misc_pkgs.elasticsearch"
-        "misc_pkgs.kibana"
-        "misc_pkgs.statsd"
-    )
+    "misc_pkgs.rhel_sos"
+    "misc_pkgs.ssl_certs"
+    "ha.haproxy"
+    "misc_pkgs.openldap"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.elasticsearch"
+    "misc_pkgs.kibana"
+    "misc_pkgs.statsd"
+)
 
+# states to be applied in desired sequence
 sync_states=(
-    # states to be applied in desired sequence
-        "sync.software.openldap"
-        "sync.software.rabbitmq"
-    )
+    "sync.software.openldap"
+    "sync.software.rabbitmq"
+    "sync.files"
+)
 
+# states to be applied in desired sequence
 iopath_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.lustre"
-        "motr.prepare"
-        "motr.install"
-        "hare.prepare"
-        "hare.install"
-        "s3server.prepare"
-        "s3server.install"
-    )
+    "misc_pkgs.lustre"
+    "motr.prepare"
+    "motr.install"
+    "hare.prepare"
+    "hare.install"
+    "s3server.prepare"
+    "s3server.install"
+)
 
+# states to be applied in desired sequence
 controlpath_states=(
-    # states to be applied in desired sequence
-        "sspl.prepare"
-        "sspl.install"
-        "csm.prepare"
-        "csm.install"
-        "csm.config"
-        "uds.prepare"
-        "uds.install"
-    )
+    "sspl.prepare"
+    "sspl.install"
+    "sspl.config"
+    "csm.prepare"
+    "csm.install"
+    "csm.config"
+    #"csm.refresh_config"
+    "uds.prepare"
+    "uds.install"
+)
 
+# states to be applied in desired sequence
 ha_states=(
-    # states to be applied in desired sequence
-        "ha.corosync-pacemaker.prepare"
-        "ha.corosync-pacemaker.install"
-        "ha.corosync-pacemaker.config.base"
-        "ha.corosync-pacemaker.config.authorize"
-        "ha.cortx-ha.prepare"
-        "ha.cortx-ha.install"
-        "ha.ees_ha.prepare"
-        "ha.ees_ha.install"             # A blank file
-        "ha.cortx-ha.replace_node.refresh_context"
-        "ha.cortx-ha.replace_node.add_node"
-    )
+    "ha.corosync-pacemaker.prepare"
+    "ha.corosync-pacemaker.install"
+    "ha.corosync-pacemaker.config.base"
+    "ha.corosync-pacemaker.config.authorize"
+    "ha.iostack-ha.prepare"
+    "ha.iostack-ha.config.post_install"
+    "ha.cortx-ha.prepare"
+    "ha.cortx-ha.install"
+    "ha.cortx-ha.config"
+    "ha.cortx-ha.replace_node.refresh_config"
+    "ha.cortx-ha.replace_node.add_node"
+)
 
 # ToDo: Remove & Add node script here
 
@@ -128,7 +134,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ees_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }
@@ -181,9 +187,26 @@ function run_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            l_info "Applying 'components.$state' on node: $tgt_node"
-            $cmd salt "$tgt_node" state.apply components.$state $salt_opts
-            sleep 2     # Mindfulness break
+            if [[ "$state" == "ha.cortx-ha.replace_node.remove_node"
+                || "$state" == "ha.cortx-ha.replace_node.refresh_context"
+                || "$state" == "ha.cortx-ha.replace_node.add_node"
+                || "$state" == "csm.refresh_config"
+            ]]; then
+
+                local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
+
+                if [[ -z local_node ]]; then
+                    l_error "unable to identify local node. Check Salt services are running."
+                else
+                    l_info "Applying 'components.$state' on node: $local_node"
+                    $cmd salt "$local_node" state.apply components.$state $salt_opts
+                fi
+            else
+                l_info "Applying 'components.$state' on node: $tgt_node"
+                $cmd salt "$tgt_node" state.apply components.$state $salt_opts
+                sleep 2     # Mindfulness break
+            fi
+
         done
     fi
 }
@@ -210,7 +233,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -229,17 +252,19 @@ update_salt
 
 if [[ "$run_all" == true ]]; then
 
-    run_states ( "ha.cortx-ha.replace_node.remove_node" )
+    recovery_ha_state=( "ha.cortx-ha.replace_node.remove_node" )
+    run_states "${recovery_ha_state[@]}"
 
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     encrypt_pillar
 
     run_states "${prereq_states[@]}"
-    run_states "${sync_states[@]}"
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
+    run_states "${sync_states[@]}"
     run_states "${ha_states[@]}"
+    
 fi
 
 if [[ "$run_system_states" == true ]]; then
@@ -257,11 +282,6 @@ fi
 if [[ "$run_sync_states" == true ]]; then
     l_info "Deploying the sync states"
     run_states  "${sync_states[@]}"
-fi
-
-if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
-    l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage $salt_opts
 fi
 
 if [[ "$run_io_states" == true ]]; then

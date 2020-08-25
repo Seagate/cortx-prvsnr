@@ -69,27 +69,16 @@ Create Consul config directory:
     - require:
       - user: Create Consul user
 
-Create Consul agent config file:
+Create Consul server config file:
   file.managed:
-    - name: /etc/consul.d/consul.json
-    - source: salt://components/misc_pkgs/consul/files/consul.json.j2
+    - name: /etc/consul.d/consul_server.json
+    - source: salt://components/misc_pkgs/consul/files/consul_server.json.j2
     - mode: 640
     - template: jinja
     - user: consul
     - group: consul
     - require:
       - user: Create Consul user
-
-#Create Consul server config file:
-#  file.managed:
-#    - name: /etc/consul.d/consul_server.json
-#    - source: salt://components/misc_pkgs/consul/files/consul_server.json.j2
-#    - mode: 640
-#    - template: jinja
-#    - user: consul
-#    - group: consul
-#    - require:
-#      - user: Create Consul user
 
 Create Consul Agent Service:
   file.managed:

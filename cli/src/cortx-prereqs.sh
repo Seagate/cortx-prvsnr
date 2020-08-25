@@ -202,6 +202,7 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
         subscription-manager unregister || true
         subscription-manager clean || true
         subscription-manager config --rhsm.manage_repos=0
+        puppet agent --disable "Cortx Stack Deploy Automation"
         echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
         create_commons_repos "$url_local_repo_commons_rhel"
