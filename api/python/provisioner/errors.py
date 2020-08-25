@@ -19,8 +19,6 @@
 
 from typing import Dict, Union, Any
 
-# TODO TEST for all
-
 
 class ProvisionerError(Exception):
     pass
@@ -38,7 +36,6 @@ class UnknownParamError(ProvisionerError):
     pass
 
 
-# TODO TEST EOS-8473
 class SubprocessCmdError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -60,7 +57,6 @@ class SaltError(ProvisionerError):
     pass
 
 
-# TODO TEST
 # TODO TYPING
 class SaltCmdError(SaltError):
     _prvsnr_type_ = True
@@ -153,7 +149,6 @@ class PillarSetError(ProvisionerError):
         )
 
 
-# TODO TEST
 class ClusterMaintenanceError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -168,19 +163,16 @@ class ClusterMaintenanceError(ProvisionerError):
         )
 
 
-# TODO TEST
 class ClusterMaintenanceEnableError(ClusterMaintenanceError):
     def __init__(self, reason: Union[Exception, str]):
         super().__init__(True, reason)
 
 
-# TODO TEST
 class ClusterMaintenanceDisableError(ClusterMaintenanceError):
     def __init__(self, reason: Union[Exception, str]):
         super().__init__(False, reason)
 
 
-# TODO TEST
 class SWStackUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -194,7 +186,6 @@ class SWStackUpdateError(ProvisionerError):
         )
 
 
-# TODO TEST EOS-8940
 class HAPostUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -221,7 +212,6 @@ class ClusterNotHealthyError(ProvisionerError):
         )
 
 
-# TODO TEST
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -242,7 +232,6 @@ class SWUpdateError(ProvisionerError):
         )
 
 
-# TODO TEST
 class SWUpdateFatalError(SWUpdateError):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
