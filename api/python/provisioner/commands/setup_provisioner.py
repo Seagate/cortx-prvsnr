@@ -729,7 +729,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             location=setup_location, setup_name=setup_name
         )
 
-        if run_args.source == 'local':
+        if run_args.source in ['local', 'iso']:
             project_path = Path(run_args.repo_path).parent
 
         profile.setup(paths, project_path, clean=run_args.update)
