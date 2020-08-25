@@ -19,25 +19,6 @@ class SaltError(ProvisionerError):
     pass
 
 
-# TODO TEST EOS-8473
-class SubprocessCmdError(ProvisionerError):
-    _prvsnr_type_ = True
-
-    def __init__(
-        self, cmd, cmd_args: Any, reason: str = 'unknown'
-    ):
-        self.cmd = cmd
-        self.cmd_args = cmd_args
-        self.reason = reason
-
-    def __str__(self):
-        return (
-            "subprocess command failed, reason {}, args {}"
-            .format(self.reason, self.cmd_args)
-        )
-
-
-
 # TODO TEST
 # TODO TYPING
 class SaltCmdError(SaltError):
