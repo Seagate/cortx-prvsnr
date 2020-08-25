@@ -220,8 +220,8 @@ class RunArgsSetup:
                 'help': "url/path of provisioner repo"
             }
         },
-        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'
-    ) 
+        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/' # noqa
+    )
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -449,7 +449,6 @@ class SetupProvisioner(CommandParserFillerMixin):
             }
 
         return res
-
 
     def _prepare_profile_dir(self, run_args, project_path, repo_dir: Path):
         # ensure parent dirs exists in profile file root
@@ -766,11 +765,14 @@ class SetupProvisioner(CommandParserFillerMixin):
                     "Url or Path to provisioner repository missing"
                 )
             prvsnr_source_pillar = {
-                'source' : run_args.source,
-                'repo_path' : run_args.repo_path
+                'source': run_args.source,
+                'repo_path': run_args.repo_path
             }
             for node in run_args.nodes:
-                logger.info(f"Installing provisioner from '{run_args.source}' on '{node.minion_id}'")
+                logger.info(
+                    "Installing provisioner from {} on {}"
+                    .format(run_args.source, node.minion_id)
+                )
                 ssh_client.state_apply(
                     'provisioner.install',
                     targets=node.minion_id,
@@ -801,7 +803,9 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info(f"Preparing profile directory from '{run_args.source}'")
         self._prepare_profile_dir(
-            run_args, project_path, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
+            run_args,
+            project_path,
+            paths['salt_fileroot_dir'] / 'provisioner/files/repo'
         )
 
         if run_args.ha and not run_args.field_setup:
