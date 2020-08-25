@@ -28,17 +28,14 @@
 {% else %}
 {% set node = 'srvnode-1' %}
 {% endif %}
-Sync Files across nodes:
+{% for component in components %}
+{% set yaml_file = '/opt/seagate/cortx/{0}/conf/setup.yaml'.format(component) %}
+{% import_yaml yaml_file as yaml_str %}
+{% if yaml_str[component]["backup"] and yaml_str[component]["backup"]["files"] %}
+{% for file_name in yaml_str[component]["backup"]["files"] %}
+Sync file {{ file_name }} across nodes:
   cmd.run:
-    name: |
-      {%- for component in components %}
-      {%- set yaml_file = '/opt/seagate/cortx/{0}/conf/setup.yaml'.format(component) %}
-      {%- import_yaml yaml_file as yaml_str %}
-      {%- if yaml_str[component]["backup"] and yaml_str[component]["backup"]["files"] %}
-      {%- for file_name in yaml_str[component]["backup"]["files"] %}
-      rsync -zavhe ssh {{ node }}:{{ file_name }} {{ file_name }}
-      {%- endfor %}
-      {%- else %}
-      echo "No files listed in setup.yaml to sync"
-      {%- endif %}
-      {%- endfor %}
+    - name: rsync -zavhe ssh {{ node }}:{{ file_name }} {{ file_name }}
+{% endfor %}
+{% endif %}
+{% endfor %}

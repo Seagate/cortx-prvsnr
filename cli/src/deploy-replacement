@@ -39,6 +39,7 @@ run_sync_states=false
 run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
+run_replacenode_states=false
 tgt_node=srvnode-2
 
 # states to be applied in desired sequence
@@ -89,7 +90,7 @@ iopath_states=(
 controlpath_states=(
     "sspl.prepare"
     "sspl.install"
-    "sspl.config"
+    #"sspl.config"
     "csm.prepare"
     "csm.install"
     "csm.config"
@@ -105,10 +106,14 @@ ha_states=(
     "ha.corosync-pacemaker.config.base"
     "ha.corosync-pacemaker.config.authorize"
     "ha.iostack-ha.prepare"
+    "ha.iostack-ha.config.base"
     "ha.iostack-ha.config.post_install"
     "ha.cortx-ha.prepare"
     "ha.cortx-ha.install"
     "ha.cortx-ha.config"
+)
+
+replacenode_states=(
     "ha.cortx-ha.replace_node.refresh_config"
     "ha.cortx-ha.replace_node.add_node"
 )
@@ -164,6 +169,10 @@ function options_parser {
             ;;
         --ha-states)
             run_ha_states=true
+            run_all=false
+            ;;
+        --replacenode-states)
+            run_replacenode_states=true
             run_all=false
             ;;
         --ctrlpath-states)
@@ -230,7 +239,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -259,8 +268,9 @@ if [[ "$run_all" == true ]]; then
     run_states "${prereq_states[@]}"
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
-    run_states "${sync_states[@]}"
     run_states "${ha_states[@]}"
+    run_states "${sync_states[@]}"
+    run_states "${replacenode_states[@]}"
     
 fi
 
@@ -294,6 +304,11 @@ fi
 if [[ "$run_ctrlpath_states" == true ]]; then
     l_info "Deploying the control path states"
     run_states "${controlpath_states[@]}"
+fi
+
+if [[ "$run_replacenode_states" == true ]]; then
+    l_info "Deploying the control path states"
+    run_states "${replacenode_states[@]}"
 fi
 
 l_info "Backing up pillar files to user space."

@@ -148,7 +148,7 @@ def test_functions_log_fails_for_wrong_level(run_script):
     res = run_script(script, stderr_to_stdout=False)
     assert res.rc == 5
     # TODO IMPROVE use regex
-    assert "ERROR".format(level) in res.stderr
+    assert "ERROR: {}".format(level) in res.stderr
     assert "Unknown log level: {}".format(level) in res.stderr
 
 
@@ -1182,9 +1182,11 @@ def test_functions_accept_salt_key_cluster(
 
     # configure srvnode-1
     script = """
-        configure_salt {} '' '' {} true localhost
+        configure_salt {0} {1} '' {2} true localhost
     """.format(
-        srvnode1_minion_id, with_sudo, salt_server_ip
+        srvnode1_minion_id,
+        salt_server_ip,
+        with_sudo
     )
     res = run_script(script, mhost=mhostsrvnode1)
     assert res.rc == 0
@@ -1219,6 +1221,7 @@ def test_functions_accept_salt_key_cluster(
         set([srvnode1_minion_id, srvnode2_minion_id])
     )
 
+
 # Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)
 @pytest.mark.isolated
@@ -1247,9 +1250,7 @@ def test_functions_cortx_pillar_show_skeleton(
     # 1. get pillar to compare
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
 
     # 2. call the script
@@ -1313,9 +1314,7 @@ def test_functions_cortx_pillar_update_and_load_default(
     # 1. prepare some valid pillar for the component
     # TODO python3.6 ???
     new_pillar_content = mhost.check_output(
-        'provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
     new_pillar_dict = yaml.safe_load(new_pillar_content.strip())
     new_pillar_dict.update({pillar_new_key: "temporary"})

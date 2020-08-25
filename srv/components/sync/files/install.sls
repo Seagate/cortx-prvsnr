@@ -15,5 +15,5 @@
 #
 
 Install Rsync:
-  pkg.install:
+  pkg.installed:
     - name: rsync

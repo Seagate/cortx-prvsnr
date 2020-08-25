@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 # TODO might makes sense to verify for cluster case as well
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
