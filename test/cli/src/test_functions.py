@@ -1357,7 +1357,7 @@ def test_functions_cortx_pillar_update_and_load_default(
         'cat {}'.format(tmp_file)
     )
     current_def_pillar = h.PRVSNR_PILLAR_DIR / 'components' / component_pillar
-    current_user_pillar = h.PRVSNR_USER_PI_ALL_HOSTS_DIR / component_pillar
+    current_user_pillar = h.PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / component_pillar
     pillar_file_content = mhost.check_output(
         'cat {}'.format(current_user_pillar)
     )

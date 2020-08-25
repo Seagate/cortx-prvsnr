@@ -562,6 +562,7 @@ mine_interval: 60
 
 file_roots:
   base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/salt     # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user
     - /opt/seagate/cortx/provisioner/srv
@@ -606,8 +607,9 @@ file_roots:
 
 pillar_roots:
   base:
-    - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /opt/seagate/cortx/provisioner/pillar
 
 
 # Set a hard-limit on the size of the files that can be pushed to the master.
