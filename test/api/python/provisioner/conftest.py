@@ -33,7 +33,7 @@ def pillar_dir(monkeypatch, tmpdir_function):
     pillar_dir = tmpdir_function / 'pillar'
     pillar_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(
-        pillar, 'PRVSNR_USER_PI_ALL_HOSTS_DIR', pillar_dir
+        pillar, 'PRVSNR_USER_PILLAR_ALL_HOSTS_DIR', pillar_dir
     )
     return pillar_dir
 
@@ -42,7 +42,7 @@ def pillar_dir(monkeypatch, tmpdir_function):
 def pillar_host_dir_tmpl(monkeypatch, pillar_dir):
     res = str(pillar_dir / '{minion_id}')
     monkeypatch.setattr(
-        pillar, 'PRVSNR_USER_PI_HOST_DIR_TMPL', res
+        pillar, 'PRVSNR_USER_PILLAR_HOST_DIR_TMPL', res
     )
     return res
 

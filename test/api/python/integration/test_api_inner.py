@@ -153,8 +153,8 @@ def test_external_auth():
 def test_pillar_get_set():
     from provisioner.config import (
         PRVSNR_PILLAR_DIR,
-        PRVSNR_USER_PI_HOST_DIR_TMPL,
-        PRVSNR_USER_PI_ALL_HOSTS_DIR
+        PRVSNR_USER_PILLAR_HOST_DIR_TMPL,
+        PRVSNR_USER_PILLAR_ALL_HOSTS_DIR
     )
 
     kp_simple = 'test/simple'
@@ -191,7 +191,7 @@ def test_pillar_get_set():
         assert test_pillar_sls.read_text() == test_pillar_sls_data
 
     # check pillar sls file
-    assert (PRVSNR_USER_PI_ALL_HOSTS_DIR / 'test.sls').exists()
+    assert (PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / 'test.sls').exists()
 
     pillar_partial = api_call(
         'pillar_get', kp_simple, kp_dict,  kp_list
@@ -224,23 +224,23 @@ def test_pillar_get_set():
 
     # check pillar sls files
     # assert (
-    #     PRVSNR_USER_PI_HOST_DIR_TMPL.format(
+    #     PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(
     #       minion_id=someminion_id
     #     ) / 'test.sls'
     # ).exists()
     assert (
         Path(
-            PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=minion_id)
+            PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=minion_id)
         ) / 'test.sls'
     ).exists()
 
     # fpath verification
     fpath = 'test2.sls'
     api_call('pillar_set', kp, value, fpath=fpath)
-    assert (PRVSNR_USER_PI_ALL_HOSTS_DIR / fpath).exists()
+    assert (PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / fpath).exists()
     api_call('pillar_set', kp, value, fpath=fpath, targets=minion_id)
     assert (
-        Path(PRVSNR_USER_PI_HOST_DIR_TMPL.format(minion_id=minion_id)) / fpath
+        Path(PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=minion_id)) / fpath
     ).exists()
 
 

@@ -31,7 +31,15 @@ from .errors import (
 logger = logging.getLogger(__name__)
 
 
-# TODO test
+# TODO TEST
+def validator_path_exists(instance, attribute, value):
+    if value is None:
+        if attribute.default is not None:
+            raise ValueError(f"{attribute.name} should be defined")
+    elif not value.exists():
+        raise ValueError(f"Path {value} doesn't exist")
+
+
 def load_yaml_str(data):
     try:
         return yaml.safe_load(data)
@@ -40,7 +48,6 @@ def load_yaml_str(data):
         raise BadPillarDataError(str(exc))
 
 
-# TODO test
 def dump_yaml_str(
     data,
     width=1,
@@ -59,7 +66,6 @@ def dump_yaml_str(
     )
 
 
-# TODO test
 # TODO streamed read
 def load_yaml(path):
     path = Path(str(path))
@@ -70,7 +76,6 @@ def load_yaml(path):
         raise BadPillarDataError(str(exc))
 
 
-# TODO test
 # TODO streamed write
 def dump_yaml(path, data, **kwargs):
     path = Path(str(path))
@@ -120,7 +125,6 @@ def ensure(  # noqa: C901 FIXME
                 raise ProvisionerError('no more tries')
 
 
-# TODO TEST EOS-8473
 def run_subprocess_cmd(cmd, **kwargs):
     _kwargs = dict(
         universal_newlines=True,
@@ -153,7 +157,6 @@ def get_repo_archive_exclusions():
     return exclude
 
 
-# TODO TEST EOS-8473
 def repo_tgz(
     dest: Path,
     project_path: Optional[Path] = None,
