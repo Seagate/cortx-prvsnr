@@ -748,9 +748,8 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
 
         # Do we need to execute command and return to the user some
         # output state?
-        print(StateFunExecuter.execute('cmd.run', targets=targets,
-                                       fun_kwargs=dict(name=cmd_line,
-                                                       stdin=stdin)))
+        StateFunExecuter.execute('cmd.run', targets=targets,
+                                 fun_kwargs=dict(name=cmd_line, stdin=stdin))
 
     def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
