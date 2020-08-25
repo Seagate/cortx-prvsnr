@@ -209,37 +209,19 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "the source for provisioner repo installation",
-                'choices': ['local', 'gitrepo', 'rpm']
+                'choices': ['local', 'gitrepo', 'rpm', 'iso']
             }
         },
         default='rpm'
     )
-    local_repo: str = attr.ib(
+    repo_path: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "the path to local provisioner repo"
+                'help': "url/path of provisioner repo"
             }
         },
-        default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)) if v else v)
-    )
-    target_build: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "Cortex integration release version repo URL/path"
-                    "E.g. "
-                ),
-                # 'help': (
-                #     "Cortex integration release version relative to "
-                #     f"{config.CORTX_REPOS_BASE_URL}"
-                # ),
-            }
-        },
-        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
-        # default='github/release/rhel-7.7.1908/last_successful',
-        # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
-    )
+        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'
+    ) 
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -289,9 +271,8 @@ class RunArgsSetupProvisionerBase:
     name: str = RunArgsSetup.name
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
+    repo_path: str = RunArgsSetup.repo_path
     prvsnr_verion: str = RunArgsSetup.prvsnr_verion
-    local_repo: str = RunArgsSetup.local_repo
-    target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
     rediscover: bool = RunArgsSetup.rediscover
@@ -469,7 +450,8 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         return res
 
-    def _prepare_local_repo(self, run_args, repo_dir: Path):
+
+    def _prepare_profile_dir(self, run_args, project_path, repo_dir: Path):
         # ensure parent dirs exists in profile file root
         run_subprocess_cmd(['rm', '-rf', str(repo_dir)])
         repo_dir.mkdir(parents=True, exist_ok=True)
@@ -478,7 +460,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         repo_tgz_path = repo_dir.parent / 'repo.tgz'
         repo_tgz(
             repo_tgz_path,
-            project_path=run_args.local_repo,
+            project_path=project_path,
             version=run_args.prvsnr_verion,
             include_dirs=['pillar', 'srv', 'files', 'api', 'cli']
         )
@@ -518,7 +500,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 ]
             )
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
+    def _prepare_salt_config(self, run_args, project_path, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -595,17 +577,9 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
-        #   FIXME not valid for non 'local' source
-
-        # TODO IMPROVE condiition to verify local_repo
-        # local_repo would be set from config.PROJECTPATH as default if not
-        # specified as an argument and config.PROJECT could be None
-        # if repo not found.
-        if not run_args.local_repo:
-            raise ValueError("local repo is undefined")
 
         minion_cfg_sample_path = (
-            run_args.local_repo /
+            project_path /
             'srv/components/provisioner/salt_minion/files/minion'
         )
         minion_cfg_path = all_minions_dir / 'minion'
@@ -648,9 +622,8 @@ class SetupProvisioner(CommandParserFillerMixin):
 
             #   TODO IMPROVE use salt caller and file-managed instead
             #   (locally) prepare minion grains
-            #   FIXME not valid for non 'local' source
             minion_grains_sample_path = (
-                run_args.local_repo / (
+                project_path / (
                     "srv/components/provisioner/salt_minion/files/grains.{}"
                     .format(
                         'primary' if node is run_args.primary else 'secondary'
@@ -756,7 +729,11 @@ class SetupProvisioner(CommandParserFillerMixin):
         paths = config.profile_paths(
             location=setup_location, setup_name=setup_name
         )
-        profile.setup(paths, clean=run_args.update)
+
+        if run_args.source == 'local':
+            project_path = Path(run_args.repo_path).parent
+
+        profile.setup(paths, project_path, clean=run_args.update)
 
         logger.info(f"Profile location '{paths['base_dir']}'")
 
@@ -783,12 +760,36 @@ class SetupProvisioner(CommandParserFillerMixin):
             )
             ssh_client.ensure_ready([node.minion_id])
 
+        if run_args.source in ['iso', 'rpm', 'local']:
+            if not run_args.repo_path:
+                raise ValueError(
+                    "Url or Path to provisioner repository missing"
+                )
+            prvsnr_source_pillar = {
+                'source' : run_args.source,
+                'repo_path' : run_args.repo_path
+            }
+            for node in run_args.nodes:
+                logger.info(f"Installing provisioner from '{run_args.source}' on '{node.minion_id}'")
+                ssh_client.state_apply(
+                    'provisioner.install',
+                    targets=node.minion_id,
+                    fun_kwargs={
+                        'pillar': prvsnr_source_pillar
+                    }
+                )
+            project_path = Path('/opt/seagate/cortx/provisioner')
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
+
         logger.info("Resolving node grains")
         self._resolve_grains(run_args.nodes, ssh_client)
 
         #   TODO IMPROVE EOS-8473 hard coded
         logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
+        self._prepare_salt_config(run_args, project_path, ssh_client, paths)
 
         logger.info("Copy config.ini to nodes")
         self._copy_config_ini(run_args, paths)
@@ -798,15 +799,10 @@ class SetupProvisioner(CommandParserFillerMixin):
             ALL_MINIONS if run_args.ha else run_args.primary.minion_id
         )
 
-        if run_args.source == 'local':
-            logger.info("Preparing local repo for a setup")
-            # TODO IMPROVE EOS-8473 validator
-            if not run_args.local_repo:
-                raise ValueError("local repo is undefined")
-            # TODO IMPROVE EOS-8473 hard coded
-            self._prepare_local_repo(
-                run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
-            )
+        logger.info(f"Preparing profile directory from '{run_args.source}'")
+        self._prepare_profile_dir(
+            run_args, project_path, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
+        )
 
         if run_args.ha and not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
@@ -933,14 +929,6 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
-
-        if run_args.source == 'local':
-            logger.info("Installing provisioner from a local source")
-            ssh_client.state_apply('provisioner.local')
-        else:
-            raise NotImplementedError(
-                f"{run_args.source} provisioner source is not supported yet"
-            )
 
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")

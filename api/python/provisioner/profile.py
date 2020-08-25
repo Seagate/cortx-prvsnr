@@ -24,7 +24,7 @@ from .utils import dump_yaml, run_subprocess_cmd
 
 
 # TODO TEST EOS-8473
-def setup(profile_paths: Optional[dict] = None, clean=False):
+def setup(profile_paths: Optional[dict] = None, project_path=None, clean=False):
     if profile_paths is None:
         profile_paths = config.profile_paths()
 
@@ -57,7 +57,8 @@ def setup(profile_paths: Optional[dict] = None, clean=False):
             'base': [
                 str(profile_paths['salt_fileroot_dir']),
                 str(profile_paths['salt_factory_fileroot_dir']),
-                str(config.BUNDLED_SALT_FILEROOT_DIR)
+                str(config.BUNDLED_SALT_FILEROOT_DIR),
+                str(project_path)
             ]
         },
         'pillar_roots': {
