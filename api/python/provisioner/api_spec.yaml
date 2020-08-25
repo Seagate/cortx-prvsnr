@@ -97,3 +97,5 @@ replace_node:
   type: ReplaceNode
 configure_setup:
   type: ConfigureSetup
+execute_remote_command:
+  type: RemoteCommandExecutor

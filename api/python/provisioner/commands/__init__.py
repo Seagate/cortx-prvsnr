@@ -122,6 +122,34 @@ class RunArgsUpdate:
     dry_run: bool = RunArgs.dry_run
 
 
+@attr.s(auto_attribs=True)
+class RunArgsRemoteCommandExecutor:
+    cmd: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "command to be executed on target nodes. Case sensitive"
+            }
+        }
+    )
+    args: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "string which represents command's arguments and parameters"
+            }
+        },
+        default=""  # empty string
+    )
+    targets: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "target node(s) to execute command"
+            }
+        },
+        default=ALL_MINIONS
+    ),
+    dry_run: bool = RunArgs.dry_run
+
+
 # TODO DRY
 @attr.s(auto_attribs=True)
 class RunArgsFWUpdate:
@@ -666,6 +694,59 @@ class SWUpdate(CommandParserFillerMixin):
             raise final_error_t(
                 update_exc, rollback_error=rollback_error
             ) from update_exc
+
+
+@attr.s(auto_attribs=True)
+class RemoteCommandExecutor(CommandParserFillerMixin):
+    """
+    Base class to support remote commands execution
+    """
+
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsRemoteCommandExecutor
+
+    # defines a "frozen" list for allowed commands and supported by provisioner API
+    # for remote execution
+    _supported_commands = frozenset({'cortxcli'})
+
+    _PRV_METHOD_MOD = "_"  # private method modificator
+
+    def _cortxcli(self, *, args: str, targets: str, dry_run: bool = False):
+        """
+        Private method for `cortxcli` command.
+
+        :param args: `cortxcli` specific command parameters and arguments
+        :param targets: target nodes where `cortxcli` command will be executed
+        :param bool dry_run: for debugging purposes. Execute method without real command
+                             execution on target nodes
+        :return:
+        """
+
+        if dry_run:
+            return
+
+        cmd_line = f'cortxcli {args}'
+
+        # Do we need to execute command and return to the user some output state?
+        StateFunExecuter.execute('cmd.run', targets=targets, fun_kwargs=dict(name=cmd_line))
+
+    def run(self, cmd: str, args: str, targets: str = ALL_MINIONS, dry_run: bool = False):
+        """
+        Basic run method to execute remote commands on targets nodes:
+
+        :param str cmd: specific command to be executed on target nodes
+        :param str args: command specific arguments
+        :param str targets: target nodes where command is planned to be executed
+        :param bool dry_run: for debugging purposes. Execute method without real command
+                             execution on target nodes
+        :return:
+        """
+        cmd = cmd.strip()
+
+        if cmd in self._supported_commands:
+            getattr(self, self._PRV_METHOD_MOD + cmd)(args=args, targets=targets, dry_run=dry_run)
+        else:
+            raise ValueError(f'Command "{cmd}" is not supported')
 
 
 # TODO TEST

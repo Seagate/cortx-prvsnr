@@ -270,6 +270,22 @@ def fw_update(source, dry_run=False, nowait=False):
     )
 
 
+def execute_remote_command(command: str, args: str, targets: str = ALL_MINIONS,
+                           dry_run: bool = False):
+    """
+    Execute given command on targets nodes
+
+    :param command: 
+    :param args: 
+    :param targets: 
+    :param dry_run: 
+    :return: 
+    """
+
+    return _api_call('execute_remote_command', cmd=command, args=args, targets=targets,
+                     dry_run=dry_run)
+
+
 def get_cluster_id(nowait=False):
     r"""Retruns cluster ID
 
