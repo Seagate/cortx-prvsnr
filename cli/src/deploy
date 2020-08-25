@@ -254,6 +254,18 @@ function encrypt_pillar {
     update_salt
 }
 
+
+# Teardown storage before deployment
+function destroy_storage {
+    # Old remnant partitios from previous deployments has to be cleaned-up
+
+    l_info "Removing components.system.storage from both nodes."
+    $cmd salt "$tgt_node" state.apply components.system.storage.teardown $salt_opts
+    # l_info "Removing components.system.storage.multipath from both nodes."
+    # $cmd salt "$tgt_node" state.apply components.system.storage.multipath.teardown $salt_opts
+}
+
+
 parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -272,6 +284,8 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run 
 update_salt
 
 if [[ "$run_all" == true ]]; then
+    destroy_storage
+
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     run_states "${prereq_states[@]}"
@@ -299,6 +313,7 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
+    destroy_storage
     salt '*' state.apply components.system.storage $salt_opts
 fi
 
