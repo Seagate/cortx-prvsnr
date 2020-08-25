@@ -76,8 +76,10 @@ def cluster_maintenance_disable(**kwargs):
 # TODO TEST EOS-8940
 def apply_ha_post_update(targets=ALL_MINIONS):
     logger.info(f"Applying Hare post_update logic on {targets}")
-    return StatesApplier.apply(["components.ha.ees_ha.post_update"],
-                               targets)
+    return StatesApplier.apply(
+        ["components.ha.iostack-ha.post_update"],
+        targets
+    )
 
 
 # TODO IMPROVE may lead to errors for stpopped cluster like:
