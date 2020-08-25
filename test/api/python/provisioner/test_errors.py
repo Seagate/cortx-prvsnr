@@ -8,28 +8,28 @@ from provisioner.errors import (
 )
 
 
-def test_subprocess_cmd_error_str():
+def test_SubprocessCmdError_str():
     cmd = 'some-command'
     cmd_args = 'some-args'
     reason = 'some-reason'
 
     obj = SubprocessCmdError(cmd, cmd_args, reason)
 
-    assert str(obj) == f"subprocess command failed, reason {reason}, args " \
-        f"{cmd_args}"
+    assert str(obj) == (
+        f"subprocess command failed, reason {reason}, args {cmd_args}")
 
 
-def test_salt_cmd_error_str():
+def test_SaltCmdError_str():
     cmd_args = 'some-args'
     reason = 'some-reason'
 
     obj = SaltCmdError(cmd_args, reason)
 
-    assert str(obj) == f"salt command failed, reason {reason}, args " \
-        f"{cmd_args}"
+    assert str(obj) == (
+        f"salt command failed, reason {reason}, args {cmd_args}")
 
 
-def test_prvsnr_type_decode_error_str():
+def test_PrvsnrTypeDecodeError_str():
     spec_dict = {'1': {'2': '3'}}
     reason = 'some-reason'
 
@@ -39,7 +39,7 @@ def test_prvsnr_type_decode_error_str():
                                                                    reason)
 
 
-def test_sw_update_repo_source_error_str():
+def test_SWUpdateRepoSourceError_str():
     source = 'some-src'
     reason = 'some-reason'
 
@@ -49,7 +49,7 @@ def test_sw_update_repo_source_error_str():
         source, reason)
 
 
-def test_pillar_set_error_str():
+def test_PillarSetError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
 
@@ -58,7 +58,7 @@ def test_pillar_set_error_str():
     assert str(obj) == "pillar update failed: {!r}".format(obj)
 
 
-def test_pillar_set_error_repr():
+def test_PillarSetError_repr():
     reason = 'some-reason'
     rollback_error = 'some-error'
 
@@ -68,7 +68,7 @@ def test_pillar_set_error_repr():
         obj.__class__.__name__, reason, rollback_error)
 
 
-def test_cluster_maintenance_error_str():
+def test_ClusterMaintenanceError_str():
     enable = True
     reason = 'some-reason'
 
@@ -78,7 +78,7 @@ def test_cluster_maintenance_error_str():
         'enable', reason)
 
 
-def test_cluster_maintenance_enable_error_init():
+def test_ClusterMaintenanceEnableError_init():
     reason = 'some-reason'
 
     obj = ClusterMaintenanceEnableError(reason)
@@ -86,7 +86,7 @@ def test_cluster_maintenance_enable_error_init():
     assert obj.reason == reason
 
 
-def test_cluster_maintenance_disable_error_init():
+def test_ClusterMaintenanceDisableError_init():
     reason = 'some-reason'
 
     obj = ClusterMaintenanceDisableError(reason)
@@ -94,7 +94,7 @@ def test_cluster_maintenance_disable_error_init():
     assert obj.reason == reason
 
 
-def test_sw_stack_update_error_str():
+def test_SWStackUpdateError_str():
     reason = 'some-reason'
 
     obj = SWStackUpdateError(reason)
@@ -102,7 +102,7 @@ def test_sw_stack_update_error_str():
     assert str(obj) == "failed to update SW stack, reason: {!r}".format(reason)
 
 
-def test_ha_post_update_error_str():
+def test_HAPostUpdateError_str():
     reason = 'some-reason'
 
     obj = HAPostUpdateError(reason)
@@ -111,7 +111,7 @@ def test_ha_post_update_error_str():
         .format(reason)
 
 
-def test_cluster_not_healthy_error_str():
+def test_ClusterNotHealthyError_str():
     reason = 'some-reason'
 
     obj = ClusterNotHealthyError(reason)
@@ -120,7 +120,7 @@ def test_cluster_not_healthy_error_str():
         .format(reason)
 
 
-def test_sw_update_error_str():
+def test_SWUpdateError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
 
@@ -129,7 +129,7 @@ def test_sw_update_error_str():
     assert str(obj) == "update failed: {!r}".format(obj)
 
 
-def test_sw_update_error_repr():
+def test_SWUpdateError_repr():
     reason = 'some-reason'
     rollback_error = 'some-error'
 
@@ -139,7 +139,7 @@ def test_sw_update_error_repr():
         obj.__class__.__name__, reason, rollback_error)
 
 
-def test_sw_update_fatal_error_str():
+def test_SWUpdateFatalError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
 
@@ -148,7 +148,7 @@ def test_sw_update_fatal_error_str():
     assert str(obj) == "FATAL: update failed: {!r}".format(obj)
 
 
-def test_ssl_certs_update_error_str():
+def test_SSLCertsUpdateError_str():
     prov_obj = ProvisionerError()
     rollback_error = 'some-error'
 
@@ -157,7 +157,7 @@ def test_ssl_certs_update_error_str():
     assert str(obj) == "SSL Cert update failed: {!r}".format(obj)
 
 
-def test_ssl_certs_update_error_repr():
+def test_SSLCertsUpdateError_repr():
     reason = ProvisionerError()
     rollback_error = 'some-error'
 
@@ -167,7 +167,7 @@ def test_ssl_certs_update_error_repr():
         obj.__class__.__name__, reason, rollback_error)
 
 
-def test_release_file_not_found_error_str():
+def test_ReleaseFileNotFoundError_str():
     reason = 'some-reason'
 
     obj = ReleaseFileNotFoundError(reason)
@@ -176,7 +176,7 @@ def test_release_file_not_found_error_str():
                        "found"
 
 
-def test_release_file_not_found_error_repr():
+def test_ReleaseFileNotFoundError_repr():
     reason = 'some-reason'
 
     obj = ReleaseFileNotFoundError(reason)

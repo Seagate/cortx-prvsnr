@@ -20,7 +20,6 @@
 from typing import Dict, Union, Any
 
 
-
 class ProvisionerError(Exception):
     pass
 
