@@ -8,7 +8,7 @@ Map config = [
     staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'cortx-prvsnr-ci || docker-image-build'
+    nodeLabel: 'cortx-prvsnr-ci'
 ]
 
 

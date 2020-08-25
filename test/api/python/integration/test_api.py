@@ -227,8 +227,8 @@ def test_set_swupdate_repo(
     mhostsrvnode1 = request.getfixturevalue('mhostsrvnode1')
     run_test = request.getfixturevalue('run_test')
 
-    repo_dir = '/tmp/repo'
-    iso_path = '/tmp/repo.iso'
+    repo_dir = Path('/tmp/repo')
+    iso_path = Path('/tmp/repo.iso')
 
     mhostsrvnode1.check_output(
         "mkdir -p {repo_dir}"
