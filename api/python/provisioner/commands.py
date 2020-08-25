@@ -683,7 +683,6 @@ class GetReleaseVersion(CommandParserFillerMixin):
 
         for key, val in repos.items():
             release_repo = base_dir / f'{key}/RELEASE.INFO'
-            print(release_repo)
             if val == "iso" and self._compare_rpms_info(release_repo):
                  return release_repo
 
