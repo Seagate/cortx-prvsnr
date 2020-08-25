@@ -124,14 +124,14 @@ class RunArgsUpdate:
 
 @attr.s(auto_attribs=True)
 class RunArgsRemoteCommandExecutor:
-    remote_cmd: str = attr.ib(
+    cmd_name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "command to be executed on target nodes. Case sensitive"
             }
         }
     )
-    args: str = attr.ib(
+    cmd_args: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "string which represents command's arguments and parameters"
@@ -730,12 +730,12 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         # Do we need to execute command and return to the user some output state?
         StateFunExecuter.execute('cmd.run', targets=targets, fun_kwargs=dict(name=cmd_line))
 
-    def run(self, cmd: str, args: str = "", targets: str = ALL_MINIONS, dry_run: bool = False):
+    def run(self, cmd: str, cmd_args: str = "", targets: str = ALL_MINIONS, dry_run: bool = False):
         """
         Basic run method to execute remote commands on targets nodes:
 
         :param str cmd: specific command to be executed on target nodes
-        :param str args: command specific arguments
+        :param str cmd_args: command specific arguments
         :param str targets: target nodes where command is planned to be executed
         :param bool dry_run: for debugging purposes. Execute method without real command
                              execution on target nodes
@@ -744,7 +744,8 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         cmd = cmd.strip()
 
         if cmd in self._supported_commands:
-            getattr(self, self._PRV_METHOD_MOD + cmd)(args=args, targets=targets, dry_run=dry_run)
+            getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args, targets=targets,
+                                                      dry_run=dry_run)
         else:
             raise ValueError(f'Command "{cmd}" is not supported')
 
