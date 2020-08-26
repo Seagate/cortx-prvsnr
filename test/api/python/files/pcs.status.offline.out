@@ -21,16 +21,16 @@ Full list of resources:
      lnet-c1    (ocf::seagate:lnet):    Stopped
      consul-c1  (systemd:hare-consul-agent-c1): Stopped
      hax-c1     (systemd:hare-hax-c1):  Stopped
-     mero-confd-c1      (systemd:m0d@0x7200000000000001:0x9):   Stopped
-     mero-ios-c1        (systemd:m0d@0x7200000000000001:0xc):   Stopped
+     motr-confd-c1      (systemd:m0d@0x7200000000000001:0x9):   Stopped
+     motr-ios-c1        (systemd:m0d@0x7200000000000001:0xc):   Stopped
  Resource Group: c2
      ip-c2      (ocf::heartbeat:IPaddr2):       Stopped
      lnet-c2    (ocf::seagate:lnet):    Stopped
      consul-c2  (systemd:hare-consul-agent-c2): Stopped
      hax-c2     (systemd:hare-hax-c2):  Stopped
-     mero-confd-c2      (systemd:m0d@0x7200000000000001:0x4f):  Stopped
-     mero-ios-c2        (systemd:m0d@0x7200000000000001:0x52):  Stopped
- Clone Set: mero-kernel-clone [mero-kernel]
+     motr-confd-c2      (systemd:m0d@0x7200000000000001:0x4f):  Stopped
+     motr-ios-c2        (systemd:m0d@0x7200000000000001:0x52):  Stopped
+ Clone Set: motr-kernel-clone [motr-kernel]
      Stopped: [ sm27-r22.pun.seagate.com sm28-r22.pun.seagate.com ]
  Clone Set: ldap-clone [ldap]
      Stopped: [ sm27-r22.pun.seagate.com sm28-r22.pun.seagate.com ]
