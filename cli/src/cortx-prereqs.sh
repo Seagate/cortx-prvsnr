@@ -323,6 +323,13 @@ echo -n "INFO: Cleaning yum cache............................................." 
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 
+# Install lspci command
+rpm -qa|grep "pciutils-"|grep -qv "pciutils-lib" && {
+    echo "INFO: pciutils package is already installed." 2>&1 | tee -a ${LOG_FILE}
+} || {
+    echo "INFO: Installing pciutils package" 2>&1 | tee -a ${LOG_FILE}
+    yum install -y pciutils 2>&1 | tee -a ${LOG_FILE}
+}
 if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
