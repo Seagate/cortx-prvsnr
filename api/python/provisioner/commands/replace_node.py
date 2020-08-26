@@ -78,7 +78,7 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
         init=False, default=config.PRVSNR_USER_FACTORY_PROFILE_DIR
     )
     source: str = attr.ib(init=False, default='local')
-    prvsnr_verion: str = attr.ib(init=False, default=None)
+    prvsnr_version: str = attr.ib(init=False, default=None)
     local_repo: str = attr.ib(init=False, default=config.PRVSNR_ROOT_DIR)
     target_build: str = attr.ib(init=False, default=None)
     salt_master: str = attr.ib(init=False, default=None)
