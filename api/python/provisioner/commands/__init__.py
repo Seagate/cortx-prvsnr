@@ -49,7 +49,8 @@ from ..config import (
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
-    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
+    SUPPORTED_REMOTE_COMMANDS
 )
 from ..pillar import (
     KeyPath,
@@ -148,14 +149,7 @@ class RunArgsRemoteCommandExecutor:
         },
         default=""  # empty string
     )
-    targets: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "target node(s) to execute command"
-            }
-        },
-        default=ALL_MINIONS
-    )
+    targets: RunArgs.targets
     dry_run: bool = RunArgs.dry_run
 
 
@@ -721,10 +715,6 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsRemoteCommandExecutor
 
-    # defines a "frozen" list for allowed commands and supported by provisioner
-    # API for remote execution
-    _supported_commands = frozenset({'cortxcli'})
-
     _PRV_METHOD_MOD = "_"  # private method modificator
 
     def _cortxcli(self, *, args: str, stdin: str, targets: str,
@@ -748,8 +738,9 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
 
         # Do we need to execute command and return to the user some
         # output state?
-        StateFunExecuter.execute('cmd.run', targets=targets,
-                                 fun_kwargs=dict(name=cmd_line, stdin=stdin))
+        # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
+        function_run("cmd.run", targets=targets,
+                     fun_kwargs=dict(name=cmd_line, stdin=stdin))
 
     def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
@@ -767,7 +758,7 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         """
         cmd = cmd.strip()
 
-        if cmd in self._supported_commands:
+        if cmd in SUPPORTED_REMOTE_COMMANDS:
             getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
                                                       targets=targets,
                                                       stdin=cmd_stdin,

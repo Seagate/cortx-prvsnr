@@ -55,7 +55,7 @@ from .api import (  # noqa: F401
     replace_node,
     get_release_version,
     get_factory_version,
-    execute_remote_command
+    cmd_run
 )
 
 from .values import (  # noqa: F401
@@ -90,7 +90,7 @@ __all__ = [
     'replace_node',
     'get_release_version',
     'get_factory_version',
-    'execute_remote_command',
+    'cmd_run',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',
