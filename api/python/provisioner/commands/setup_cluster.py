@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 @attr.s(auto_attribs=True)
 class RunArgsSetupCluster(RunArgsSetupSinglenode):
     ha: bool = RunArgsSetup.ha
+    glusterfs_docker: bool = RunArgsSetup.glusterfs_docker
     srvnode2: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
