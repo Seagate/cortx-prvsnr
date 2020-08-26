@@ -14,7 +14,7 @@ Update lnet config file:
   file.managed:
     - name: /etc/modprobe.d/lnet.conf
     - contents:
-{% if salt['cmd.run']('lspci -d"15b3:*"|grep Mellanox') %}
+{% if salt['cmd.run']('lspci -d"15b3:*"') %}
       - options lnet networks=o2ib({{ data_if }})  config_on_load=1  lnet_peer_discovery_disabled=1
 {% else %}
       - options lnet networks=tcp({{ data_if }})  config_on_load=1  lnet_peer_discovery_disabled=1
