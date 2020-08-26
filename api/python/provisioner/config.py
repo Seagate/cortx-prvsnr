@@ -173,7 +173,8 @@ LOG_FORCED_LOGFILE_CMDS = [
     'reboot_controller',
     'shutdown_controller',
     'create_user',
-    'replace_node'
+    'replace_node',
+    'cmd_run'
 ]
 
 # bundled salt roots dirs
@@ -267,3 +268,7 @@ REPO_BUILD_DIRS = [
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
+
+# Defines a "frozen" list for allowed commands and supported by provisioner
+# API for remote execution
+SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
