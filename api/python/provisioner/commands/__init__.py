@@ -128,14 +128,16 @@ class RunArgsRemoteCommandExecutor:
     cmd_name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "command to be executed on target nodes. Case sensitive"
+                'help': ("command to be executed on target nodes. "
+                         "Case sensitive")
             }
         }
     )
     cmd_args: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "string which represents command's arguments and parameters"
+                'help': ("string which represents command's "
+                         "arguments and parameters")
             }
         },
         default=""  # empty string
@@ -726,8 +728,8 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         :param stdin: `cortxcli` stdin parameters like username and password.
                       NOTE: Parameters should be '\n' new line seperated
         :param targets: target nodes where `cortxcli` command will be executed
-        :param bool dry_run: for debugging purposes. Execute method without real
-                             command execution on target nodes
+        :param bool dry_run: for debugging purposes. Execute method without
+                             real command execution on target nodes
         :return:
         """
 
@@ -736,11 +738,9 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
 
         cmd_line = f'cortxcli {args}'
 
-        # Do we need to execute command and return to the user some
-        # output state?
         # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
-        function_run("cmd.run", targets=targets, fun_args=[cmd_line],
-                     fun_kwargs=dict(stdin=stdin))
+        return function_run("cmd.run", targets=targets, fun_args=[cmd_line],
+                            fun_kwargs=dict(stdin=stdin))
 
     def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
@@ -751,18 +751,19 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         :param str cmd_args: command specific arguments
         :param cmd_stdin: command specific stdin parameters like username and
                           password.
-        :param str targets: target nodes where command is planned to be executed
-        :param bool dry_run: for debugging purposes. Execute method without real
-                             command execution on target nodes
+        :param str targets: target nodes where command is planned
+                            to be executed
+        :param bool dry_run: for debugging purposes. Execute method without
+                             real command execution on target nodes
         :return:
         """
         cmd = cmd.strip()
 
         if cmd in SUPPORTED_REMOTE_COMMANDS:
-            getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
-                                                      targets=targets,
-                                                      stdin=cmd_stdin,
-                                                      dry_run=dry_run)
+            return getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
+                                                             targets=targets,
+                                                             stdin=cmd_stdin,
+                                                             dry_run=dry_run)
         else:
             raise ValueError(f'Command "{cmd}" is not supported')
 
