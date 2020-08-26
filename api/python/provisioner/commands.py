@@ -646,20 +646,19 @@ class GetReleaseVersion(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
     _target = 'srvnode-1'
-
-    def _get_installed_rpms(self):
-        res = cmd_run("rpm -qa|grep '^eos-'", targets=self._target)
+    
+    @property
+    def installed_rpms(self) -> List:
+        res = cmd_run("rpm -qa|grep '^eos-'", targets=LOCAL_MINION)
         rpms =  res[self._target].split("\n")
         return [f'{rpm}.rpm' for rpm in rpms if rpm]
 
     def _get_rpms_from_release(self, source):
         return load_yaml(source)['COMPONENTS']
 
-    def _compare_rpms_info(self, local_rpms, release_rpms):
-        is_flag = False
-        if local_rpms and release_rpms:
-            is_flag = set(local_rpms).issubset(release_rpms)
-        return is_flag
+    def _compare_rpms_info(self, release_rpms):
+        return (release_rpms and 
+                set(self.installed_rpms).issubset(release_rpms))
 
     def _get_release_info_path(self):
         release_repo = ''
@@ -670,18 +669,16 @@ class GetReleaseVersion(CommandParserFillerMixin):
         release = pillar[update_repo] 
         base_dir = Path(release['base_dir'])
         repos = release['repos']
-        local_rpms = self._get_installed_rpms()
-
-        for release, source in repos.items():
+        for release, source in reversed(list(repos.items())):
             release_repo = base_dir / f'{release}/RELEASE.INFO'
-            release_rpms = self._get_rpms_from_release(release_repo)
-            if(source == "iso" and 
-                      self._compare_rpms_info(local_rpms, release_rpms)):
-                return release_repo
+            if source == "iso":
+                release_rpms = self._get_rpms_from_release(release_repo)
+                if self._compare_rpms_info(release_rpms):
+                    return release_repo
 
     def run(self, targets):
         update_path = self._get_release_info_path()
-        if update_path and Path(update_path).is_file():
+        if update_path:
             source = update_path
         else:
             source = Path("/etc/yum.repos.d/RELEASE_FACTORY.INFO")
