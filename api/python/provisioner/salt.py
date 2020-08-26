@@ -921,6 +921,7 @@ def pillar_refresh(targets=ALL_MINIONS):
 # TODO IMPROVE EOS-9484 think about better alternative to get separated
 #      stderr and stdout streams that makes sense sometimes even if a command
 #      don't fail (e.g. use 'run_all' instead)
+# TODO: add support of optional user defined `kwargs` parameters
 def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
     return function_run(
         'cmd.run',
