@@ -4,7 +4,7 @@
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] -%}
 {%- endif -%}
 interface: {{ data_if }}
-{% if salt['cmd.run']('lspci -d"15b3:*"|grep Mellanox') %}
+{% if salt['cmd.run']('lspci -d"15b3:*"') %}
 net-type: o2ib
 {% else %}
 net-type: tcp
