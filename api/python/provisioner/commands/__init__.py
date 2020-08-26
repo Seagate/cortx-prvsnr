@@ -149,7 +149,7 @@ class RunArgsRemoteCommandExecutor:
         },
         default=""  # empty string
     )
-    targets: RunArgs.targets
+    targets: str = RunArgs.targets
     dry_run: bool = RunArgs.dry_run
 
 
@@ -739,8 +739,8 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         # Do we need to execute command and return to the user some
         # output state?
         # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
-        function_run("cmd.run", targets=targets,
-                     fun_kwargs=dict(name=cmd_line, stdin=stdin))
+        function_run("cmd.run", targets=targets, fun_args=[cmd_line],
+                     fun_kwargs=dict(stdin=stdin))
 
     def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
