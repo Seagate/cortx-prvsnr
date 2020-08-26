@@ -345,7 +345,7 @@ install_config_prvsnr()
     sleep 1
     install_prvsnr_cli "srvnode-2"
 
-    echo -e "\n\t***** INFO: Install    ing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
+    echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     install_prvsnr_cli "srvnode-1"
 

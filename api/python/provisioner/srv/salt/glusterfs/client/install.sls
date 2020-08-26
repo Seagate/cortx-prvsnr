@@ -16,7 +16,7 @@
 #
 
 include:
-  - ..install
+  - ..prepare
 
 glusterfs_client_installed:
   pkg.installed:

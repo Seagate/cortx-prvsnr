@@ -32,6 +32,7 @@ tmp_dir: /tmp
   {% set cortx_deps_repo = '/'.join([base_bundle_url, '3rd_party']) %}
   {% set epel_repo = '/'.join([cortx_deps_repo, 'EPEL-7']) %}
   {% set saltstack_repo = '/'.join([cortx_deps_repo, 'commons', 'saltstack-3001']) %}
+  {% set glusterfs_repo = '/'.join([cortx_deps_repo, 'commons', 'glusterfs']) %}
 
   {% set repo_url = cortx_repo %}
   {% set cortx_commons_url = cortx_deps_repo %}

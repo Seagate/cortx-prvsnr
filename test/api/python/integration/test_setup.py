@@ -11,28 +11,28 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-# TODO detect centos instead
-{% if "RedHat" not in grains['os'] %}
+import pytest
+import logging
 
-glusterfs_repo_is_installed:
-  pkg.installed:
-    - pkgs:
-      - centos-release-gluster7
+logger = logging.getLogger(__name__)
 
-{% else  %}
 
-# FIXME need to use gluster from official  RedHat repos
-# centos-release-gluster7 not available for redhat hence adding repo manually
-glusterfs_repo_is_installed:
-  pkgrepo.managed:
-    - name: glusterfs
-    - humanname: glusterfs-7
-    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
-    - gpgcheck: 0
-    - enabled: 1
+@pytest.fixture
+def env_provider():
+    return 'docker'
 
-{% endif %}
+
+@pytest.mark.skip
+@pytest.mark.isolated
+@pytest.mark.env_level('utils')
+@pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
+def test_setup_cluster(
+    mhostsrvnode1, mhostsrvnode2, ssh_config
+):
+    mhostsrvnode1.check_output('echo root | passwd --stdin root')
+    mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    pass

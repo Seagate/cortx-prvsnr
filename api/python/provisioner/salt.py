@@ -919,15 +919,32 @@ def pillar_refresh(targets=ALL_MINIONS):
 # TODO IMPROVE EOS-9484 think about better alternative to get separated
 #      stderr and stdout streams that makes sense sometimes even if a command
 #      don't fail (e.g. use 'run_all' instead)
-# TODO: add support of optional user defined `kwargs` parameters
-def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
+def cmd_run(
+    cmd, targets=ALL_MINIONS, background=False, timeout=None, **kwargs
+):
+    # TODO IMPROVE EOS-12076 wrapper args vs direct salt's ones
+    kwargs['bg'] = background
     return function_run(
         'cmd.run',
         fun_args=[cmd],
-        fun_kwargs=dict(bg=background),
+        fun_kwargs=kwargs,
         targets=targets,
         timeout=timeout
     )
+
+
+# TODO TEST EOS-12076
+def sls_exists(state, targets=ALL_MINIONS, summary_only=True):
+    res = function_run(
+        'state.sls_exists',
+        fun_args=[state],
+        targets=targets
+    )
+
+    if summary_only:
+        return set(res.values()) == {True}
+    else:
+        return res
 
 
 # TODO TEST

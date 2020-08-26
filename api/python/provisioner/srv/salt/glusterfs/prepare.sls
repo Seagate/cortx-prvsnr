@@ -11,19 +11,32 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing,
+# For any questions about this software or licensing, 
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-release:
-    base:
-        # TODO IMPROVE EOS-12076 EOS-12334
-        #      the same base location as for update repos so they might
-        #      be mounted by prouction setup logic as well
-        # base_dir: /opt/seagate/cortx/updates
-        # TODO IMPROVE EOS-12076 EOS-12334
-        #      make the same as for for update repos so they might
-        #      be mounted by prouction setup logic as well
-        # TODO IMPROVE EOS-12076 shorten path, use some global config variable
-        base_dir: /var/lib/seagate/cortx/provisioner/local/cortx_repos
-        repos: {}
+{% if pillar['release']['type'] != 'bundle' %}
+
+# TODO detect centos instead
+    {% if "RedHat" not in grains['os'] %}
+
+glusterfs_repo_is_installed:
+  pkg.installed:
+    - pkgs:
+      - centos-release-gluster7
+
+    {% else  %}
+
+# FIXME need to use gluster from official  RedHat repos
+# centos-release-gluster7 not available for redhat hence adding repo manually
+glusterfs_repo_is_installed:
+  pkgrepo.managed:
+    - name: glusterfs
+    - humanname: glusterfs-7
+    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
+    - gpgcheck: 0
+    - enabled: 1
+
+    {% endif %}
+
+{% endif %}

@@ -25,6 +25,8 @@ Update to latest selinux-policy:
   pkg.installed:
     - name: selinux-policy
 
+# FIXME EOS-12076 the following steps are about configuration, not installation
+
 Backup slapd config file:
   file.copy:
     - name: /etc/sysconfig/slapd.bak

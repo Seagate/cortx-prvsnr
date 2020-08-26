@@ -72,7 +72,7 @@ class SetupCluster(SetupProvisioner):
         kwargs.pop('srvnode1')
         kwargs.pop('srvnode2')
 
-        setup_ctx = super().run(
+        setup_ctx = super()._run(
             nodes=[run_args.srvnode1, run_args.srvnode2], **kwargs
         )
 

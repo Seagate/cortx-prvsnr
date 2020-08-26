@@ -132,7 +132,7 @@ class ReplaceNode(SetupProvisioner):
         #   salt's local client is available since the command
         #   should be run on a healthy node
         primary_id = local_minion_id()
-        setup_ctx = super().run(
+        setup_ctx = super()._run(
             nodes=[nodes.pop(primary_id)] + list(nodes.values()),
             **kwargs
         )

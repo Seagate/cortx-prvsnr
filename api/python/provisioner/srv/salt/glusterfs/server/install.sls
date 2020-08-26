@@ -63,7 +63,7 @@ gluster_tool_is_available:
 {% else %}
 
 include:
-  - ..install
+  - ..prepare
 
 glusterfs_server_installed:
   pkg.installed:

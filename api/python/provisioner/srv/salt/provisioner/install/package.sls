@@ -15,14 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-Verify cortx repo exists:
-  file.exists:
-    - name: /etc/yum.repos.d/cortx.repo
-
 Install cortx-prvsnr packages:
   pkg.installed:
     - pkgs:
-      # - cortx-prvsnr-cli
       - cortx-prvsnr
-    - require:
-      - Verify cortx repo exists
