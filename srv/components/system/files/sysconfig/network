@@ -1,4 +1,4 @@
-SEARCH=mero.colo.seagate.com
+SEARCH=colo.seagate.com
 NETWORKING=yes
 NETWORKING_IPV6=no
 

@@ -41,7 +41,7 @@ Vagrant.configure("2") do |config|
   salt_nodes.each do |node|
     config.vm.define node['name'] do |node_config|
       # Configure salt nodes
-      node_config.vm.box_url = "http://ci-storage.mero.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908.box"
+      node_config.vm.box_url = "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908.box"
       node_config.vm.box_download_insecure = true
       node_config.vm.box = "centos_7.7.1908_vbox"
       node_config.vm.box_check_update = false
