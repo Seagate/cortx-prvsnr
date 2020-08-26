@@ -320,7 +320,7 @@ yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
 
 # Install lspci command
-rpm -qa | grep -q pciutils && {
+rpm -qa|grep "pciutils-"|grep -qv "pciutils-lib" && {
     echo "INFO: pciutils package is already installed." 2>&1 | tee -a ${LOG_FILE}
 } || {
     echo "INFO: Installing pciutils package" 2>&1 | tee -a ${LOG_FILE}

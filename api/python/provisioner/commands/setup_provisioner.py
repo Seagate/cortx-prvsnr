@@ -15,6 +15,7 @@
 #
 
 from typing import List, Dict, Type, Optional, Iterable
+import socket
 import logging
 import uuid
 from pathlib import Path
@@ -198,7 +199,7 @@ class RunArgsSetup:
         default=None,
         converter=(lambda v: Path(str(v)) if v else v)
     )
-    prvsnr_verion: str = attr.ib(
+    prvsnr_version: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "Provisioner version to setup",
@@ -276,6 +277,14 @@ class RunArgsSetup:
         },
         default=False
     )
+    glusterfs_docker: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "configure in-docker glusterfs servers",
+            }
+        },
+        default=False
+    )
     field_setup: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -317,7 +326,7 @@ class RunArgsSetupProvisionerBase:
     name: str = RunArgsSetup.name
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
-    prvsnr_verion: str = RunArgsSetup.prvsnr_verion
+    prvsnr_version: str = RunArgsSetup.prvsnr_version
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
@@ -331,6 +340,7 @@ class RunArgsSetupProvisionerBase:
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     ha: bool = RunArgsSetup.ha
+    glusterfs_docker: bool = RunArgsSetup.glusterfs_docker
     nodes: str = attr.ib(
         kw_only=True,
         metadata={
@@ -437,11 +447,21 @@ class SetupProvisioner(CommandParserFillerMixin):
     def _resolve_connections(self, nodes: List[Node], ssh_client):
         addrs = {}
 
+        # TODO EOS-11511 improve later
+        # the problem: local hostname might appear in grains
+        # (probably for VMs only)
+
+        local_hostname = socket.gethostname()
+
         for node in nodes:
             addrs[node.minion_id] = set(
                 [
                     v for v in node.addrs
-                    if v not in (config.LOCALHOST_IP, config.LOCALHOST_DOMAIN)
+                    if v not in (
+                        config.LOCALHOST_IP,
+                        config.LOCALHOST_DOMAIN,
+                        local_hostname
+                    )
                 ]
             )
 
@@ -530,7 +550,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         repo_tgz(
             repo_tgz_path,
             project_path=run_args.local_repo,
-            version=run_args.prvsnr_verion,
+            version=run_args.prvsnr_version,
             include_dirs=['pillar', 'srv', 'files', 'api', 'cli']
         )
 
@@ -795,6 +815,31 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         return pillar
 
+    def _prepare_glusterfs_pillar(self, profile_paths, in_docker=False):
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_all_dir.mkdir(parents=True, exist_ok=True)
+
+        glusterfs_pillar_path = pillar_all_dir / 'glusterfs.sls'
+        if glusterfs_pillar_path.exists():
+            data = load_yaml(glusterfs_pillar_path)['glusterfs']
+        else:
+            data = {
+                'in_docker': in_docker,
+                'volumes': {
+                    'volume_salt_cache_jobs': {
+                        'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
+                        'mount_dir': '/var/cache/salt/master/jobs'
+                    },
+                    'volume_prvsnr_data': {
+                        'export_dir': '/srv/glusterfs/volume_prvsnr_data',
+                        'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
+                    }
+                }
+            }
+            dump_yaml(glusterfs_pillar_path,  dict(glusterfs=data))
+
+        return data
+
     def _clean_salt_cache(self, paths):
         run_subprocess_cmd(
             [
@@ -948,17 +993,68 @@ class SetupProvisioner(CommandParserFillerMixin):
         else:
             ssh_client.state_apply('cortx_repos')
 
-        if run_args.ha:
-            volumes = {
-                'volume_salt_cache_jobs': {
-                    'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
-                    'mount_dir': '/var/cache/salt/master/jobs'
-                },
-                'volume_prvsnr_data': {
-                    'export_dir': '/srv/glusterfs/volume_prvsnr_data',
-                    'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
+        logger.info("Setting up paswordless ssh")
+        ssh_client.state_apply('ssh')
+
+        logger.info("Checking paswordless ssh")
+        ssh_client.state_apply('ssh.check')
+
+        # FIXME: Commented because execution hung at firewall configuration
+        # logger.info("Configuring the firewall")
+        # ssh_client.state_apply('firewall')
+
+        logger.info("Installing SaltStack")
+        ssh_client.state_apply('saltstack')
+
+        if run_args.source == 'local':
+            logger.info("Installing provisioner from a local source")
+            ssh_client.state_apply('provisioner.local')
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
+
+        #   CONFIGURE SALT
+        logger.info("Configuring salt minions")
+        res = ssh_client.state_apply('provisioner.configure_salt_minion')
+
+        updated_keys = []
+        # TODO IMPROVE EOS-8473
+        minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
+        for node_id, _res in res.items():
+            if _res[minion_pki_state_id]['changes']:
+                updated_keys.append(node_id)
+        logger.debug(f'Updated salt minion keys: {updated_keys}')
+
+        # TODO DOC how to pass inline pillar
+
+        # TODO IMPROVE EOS-9581 log masters as well
+        logger.info("Configuring salt masters")
+        ssh_client.state_apply(
+            'provisioner.configure_salt_master',
+            targets=master_targets,
+            fun_kwargs={
+                'pillar': {
+                    'updated_keys': updated_keys
                 }
             }
+        )
+
+        if run_args.ha:
+            # TODO glusterfs use usual pillar instead inline one
+            glusterfs_pillar = self._prepare_glusterfs_pillar(
+                paths, in_docker=run_args.glusterfs_docker
+            )
+            volumes = glusterfs_pillar['volumes']
+
+            if glusterfs_pillar['in_docker']:
+                # Note. there is an issue in salt-ssh
+                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
+                # so we have to apply docker using on-server salt
+                logger.info("Installing Docker")
+                ssh_client.cmd_run(
+                    "salt-call --local state.apply components.misc_pkgs.docker"
+                )
 
             logger.info("Configuring glusterfs servers")
             # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
@@ -1029,53 +1125,6 @@ class SetupProvisioner(CommandParserFillerMixin):
                     'provisioner.factory_profile',
                     targets=run_args.primary.minion_id,
                 )
-
-        logger.info("Setting up paswordless ssh")
-        ssh_client.state_apply('ssh')
-
-        logger.info("Checking paswordless ssh")
-        ssh_client.state_apply('ssh.check')
-
-        # FIXME: Commented because execution hung at firewall configuration
-        # logger.info("Configuring the firewall")
-        # ssh_client.state_apply('firewall')
-
-        logger.info("Installing SaltStack")
-        ssh_client.state_apply('saltstack')
-
-        if run_args.source == 'local':
-            logger.info("Installing provisioner from a local source")
-            ssh_client.state_apply('provisioner.local')
-        else:
-            raise NotImplementedError(
-                f"{run_args.source} provisioner source is not supported yet"
-            )
-
-        #   CONFIGURE SALT
-        logger.info("Configuring salt minions")
-        res = ssh_client.state_apply('provisioner.configure_salt_minion')
-
-        updated_keys = []
-        # TODO IMPROVE EOS-8473
-        minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
-        for node_id, _res in res.items():
-            if _res[minion_pki_state_id]['changes']:
-                updated_keys.append(node_id)
-        logger.debug(f'Updated salt minion keys: {updated_keys}')
-
-        # TODO DOC how to pass inline pillar
-
-        # TODO IMPROVE EOS-9581 log masters as well
-        logger.info("Configuring salt masters")
-        ssh_client.state_apply(
-            'provisioner.configure_salt_master',
-            targets=master_targets,
-            fun_kwargs={
-                'pillar': {
-                    'updated_keys': updated_keys
-                }
-            }
-        )
 
         # FIXME EOS-8473 not necessary for rpm setup
         logger.info("Installing provisioner API")

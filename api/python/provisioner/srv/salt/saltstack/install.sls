@@ -28,3 +28,10 @@ saltstack_installed:
     - pkgs:
       - salt-master
       - salt-minion
+
+
+# TODO consider to switch to python3-pygit2 as salt recommends
+#      once it would be availble better for target platforms
+gitfs_fileserver_deps_installed:
+  pkg.installed:
+    - name: python36-GitPython
