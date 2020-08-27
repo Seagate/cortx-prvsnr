@@ -19,10 +19,14 @@
 
 import pytest
 from copy import deepcopy
+import logging
 
 from provisioner.vendor import attr
 from provisioner import (
     log, config, inputs
+)
+from provisioner.log import (
+    CommandFilter, NoTraceExceptionFormatter
 )
 
 null_handler = config.LOG_NULL_HANDLER
@@ -456,3 +460,31 @@ def test_log_set_logging(
         mocker.call.reset_logging(),
         mocker.call.dictConfig(log_config)
     ]
+
+
+def test_CommandFilter_filter():
+    record = logging.makeLogRecord({'msg': 'some message'})
+
+    obj = CommandFilter()
+
+    assert obj.filter(record)
+
+
+def test_NoTraceExceptionFormatter_format():
+    formatter_obj = logging.Formatter()
+    exc_info = ('some-type', 'some-value', 'traceback_info')
+    record = logging.makeLogRecord(dict(
+        exc_info=exc_info
+    ))
+
+    obj = NoTraceExceptionFormatter()
+
+    assert obj.format(record) == formatter_obj.format(record)
+
+
+def test_NoTraceExceptionFormatter_formatException():
+    exc_info = ('some-type', 'some-value', 'traceback-info')
+
+    obj = NoTraceExceptionFormatter()
+
+    assert obj.formatException(exc_info) == repr(exc_info[1])
