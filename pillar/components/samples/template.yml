@@ -37,7 +37,7 @@ cluster:
       mgmt_nw:                        # Management network interfaces
         iface:
           - eno1
-        ipaddr:                       # DHCP is assumed if left blank
+        public_ip_addr:               # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
@@ -65,7 +65,7 @@ cluster:
       mgmt_nw:                        # Management network interfaces
         iface:
           - eno1
-        ipaddr:                       # DHCP is assumed if left blank
+        public_ip_addr:               # DHCP is assumed if left blank
         netmask: 255.255.0.0
         gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces

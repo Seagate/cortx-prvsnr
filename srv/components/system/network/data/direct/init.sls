@@ -18,8 +18,6 @@
 #
 
 {% set node = grains['id'] %}
-include:
-  - components.system.prepare
 
 {#{% if pillar['cluster'][grains['id']]['is_primary'] %}#}
 # Update roaming IPs in cluster.sls pillar:
