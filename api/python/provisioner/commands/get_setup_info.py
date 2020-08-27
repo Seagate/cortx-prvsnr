@@ -27,6 +27,8 @@ from .. import (
     config,
     inputs
 )
+from ..config import LOCAL_MINION
+from ..salt import function_run
 from ..vendor import attr
 
 
@@ -146,6 +148,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         :return:
         """
         res = dict()
+
+        salt_res = function_run('grains.get', fun_args=['virtual'],
+                                targets=LOCAL_MINION)
 
         return res
 
