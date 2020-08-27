@@ -55,7 +55,8 @@ from .api import (  # noqa: F401
     replace_node,
     get_release_version,
     get_factory_version,
-    cmd_run
+    cmd_run,
+    get_setup_info
 )
 
 from .values import (  # noqa: F401
@@ -91,6 +92,7 @@ __all__ = [
     'get_release_version',
     'get_factory_version',
     'cmd_run',
+    'get_setup_info',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',

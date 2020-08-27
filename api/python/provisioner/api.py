@@ -287,6 +287,15 @@ def cmd_run(cmd_name: str, cmd_args: str, cmd_stdin: str,
                      cmd_stdin=cmd_stdin, targets=targets, dry_run=dry_run)
 
 
+def get_setup_info():
+    """
+    Get setup cluster information
+
+    :return:
+    """
+    return _api_call("get_setup_info")
+
+
 def get_cluster_id(nowait=False):
     r"""Returns cluster ID
 

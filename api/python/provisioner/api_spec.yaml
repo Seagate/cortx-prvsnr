@@ -101,3 +101,5 @@ configure_setup:
   type: ConfigureSetup
 cmd_run:
   type: RemoteCommandExecutor
+get_setup_info:
+  type: GetSetupInfo

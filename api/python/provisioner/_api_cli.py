@@ -188,6 +188,7 @@ for fun in [
     'replace_node',
     'get_release_version',
     'get_factory_version',
-    'cmd_run'
+    'cmd_run',
+    'get_setup_info'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
