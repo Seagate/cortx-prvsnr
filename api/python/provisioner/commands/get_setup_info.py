@@ -28,6 +28,7 @@ from .. import (
     inputs
 )
 from ..config import LOCAL_MINION
+from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run
 from ..vendor import attr
 
@@ -39,7 +40,7 @@ class StorageType(Enum):
     """Class-enumeration for supported and existing storage types"""
 
     VIRTUAL = "virtual"
-    # standard enclosure with 5 units with 84 disks per unit
+    # standard enclosure with 5 units with 84 disks
     ENCLOSURE = "5u84"
     PODS = "PODS"
 
@@ -49,6 +50,13 @@ class ServerType(Enum):
 
     VIRTUAL = "virtual"
     PHYSICAL = "physical"
+
+
+class ControllerTypes(Enum):
+    """Class-enumeration for controller type's values"""
+    GALLIUM = "gallium"
+    INDIUM = "indium"
+    SATI = "sati"
 
 
 # TODO: maybe needed to move to config.py
@@ -181,5 +189,12 @@ class GetSetupInfo(CommandParserFillerMixin):
         :return:
         """
         res = dict()
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        controller_type = PillarKey(controller_pi_path / 'type')
+
+        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+        controller_type = next(iter(pillar.values()))
+        if controller_type == ControllerTypes.GALLIUM.value:
+            res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
 
         return res
