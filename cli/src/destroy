@@ -47,47 +47,48 @@ tgt_node=srvnode-2
 
 controlpath_states=(
 # states to be applied in desired sequence
-    "post_setup"
-    "ha.cortx-ha"
-    "uds"
-    "csm"
-    "sspl"
+    "ha.ctrlstack-ha.teardown"
+    "ha.cortx-ha.ha_cleanup"
+    "uds.teardown"
+    "csm.teardown"
+    "sspl.teardown"
 )
 
 ha_states=(
-    "ha.iostack-ha"
-    "ha.corosync-pacemaker"
-    "hare"
+    "ha.iostack-ha.teardown"
+    "ha.cortx-ha.teardown"
+    "ha.corosync-pacemaker.teardown"
+    "hare.teardown"
 )
 
 iopath_states=(
 # states to be applied in desired sequence
-    "s3server"
-    "motr"
-    "misc_pkgs.lustre"
+    "s3server.teardown"
+    "motr.teardown"
+    "misc_pkgs.lustre.teardown"
 )
 
 prereq_states=(
     # states to be applied in desired sequence
-    "misc_pkgs.statsd"
-    "misc_pkgs.kibana"
-    "misc_pkgs.elasticsearch"
-    "misc_pkgs.nodejs"
-    "misc_pkgs.rabbitmq"
-    "misc_pkgs.openldap"
-    "ha.haproxy"
-    "misc_pkgs.ssl_certs"
+    "misc_pkgs.statsd.teardown"
+    "misc_pkgs.kibana.teardown"
+    "misc_pkgs.elasticsearch.teardown"
+    "misc_pkgs.nodejs.teardown"
+    "misc_pkgs.rabbitmq.teardown"
+    "misc_pkgs.openldap.teardown"
+    "ha.haproxy.teardown"
+    "misc_pkgs.ssl_certs.teardown"
 )
 
 system_states=(
     # states to be applied in desired sequence
-    "system.chrony"
-    "system.logrotate"
-    "system.firewall"
-    "misc_pkgs.rsyslog"
-    "system.storage"
-    "system.storage.multipath"
-    "system"
+    "system.chrony.teardown"
+    "system.logrotate.teardown"
+    "system.firewall.teardown"
+    "misc_pkgs.rsyslog.teardown"
+    "system.storage.teardown"
+    "system.storage.multipath.teardown"
+    "system.teardown"
 )
 
 function usage {
@@ -161,7 +162,7 @@ function teardown_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             l_info "Removing $state from node: "$tgt_node""
-            $cmd salt "$tgt_node" state.apply components.$state.teardown $salt_opts
+            $cmd salt "$tgt_node" state.apply components.$state $salt_opts
             sleep 2     # Mindfulness break
         done
     else
@@ -174,24 +175,24 @@ function teardown_states {
                 sleep 2     # Mindfulness break
 
                 l_info "Removing $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
 
                 l_info "Removing cortx-ha on both nodes"
-                $cmd salt "*" state.apply components.ha.cortx-ha.teardown  $salt_opts || true
+                $cmd salt "*" state.apply components.ha.cortx-ha  $salt_opts || true
                 sleep 2     # Mindfulness break
 
             elif [[ "$state" == "ha.corosync-pacemaker"
                 || "$state" == "sspl" ]]; then
 
                 l_info "Removing $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             elif [[ "$state" == "misc_pkgs.openldap"
@@ -199,16 +200,16 @@ function teardown_states {
                 || "$state" == "system.storage.multipath" ]]; then
                 
                 l_info "Removing $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             else
             
                 l_info "Removing $state from both nodes"
-                $cmd salt '*' state.apply components.$state.teardown $salt_opts || true
+                $cmd salt '*' state.apply components.$state $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
         done

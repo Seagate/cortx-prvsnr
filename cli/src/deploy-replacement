@@ -108,12 +108,10 @@ ha_states=(
     "ha.corosync-pacemaker.install"
     "ha.corosync-pacemaker.config.base"
     "ha.corosync-pacemaker.config.authorize"
+    "ha.cortx-ha"
     "ha.iostack-ha.prepare"
     "ha.iostack-ha.config.base"
     "ha.iostack-ha.config.post_install"
-    "ha.cortx-ha.prepare"
-    "ha.cortx-ha.install"
-    "ha.cortx-ha.config"
 )
 
 replacenode_states=(
