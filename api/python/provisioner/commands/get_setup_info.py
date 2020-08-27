@@ -151,6 +151,15 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         salt_res = function_run('grains.get', fun_args=['virtual'],
                                 targets=LOCAL_MINION)
+        if salt_res:
+            # it should have the following format
+            # {"current node name": "physical"} or
+            # {"current node name": "kvm"}, for example
+            server_type = salt_res.popitem()[1]
+
+            res[SERVER_TYPE] = (ServerType.PHYSICAL.value
+                                if server_type == ServerType.PHYSICAL.value
+                                else ServerType.VIRTUAL.value)
 
         return res
 
