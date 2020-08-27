@@ -90,7 +90,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         :param res_dict: result dict
         :return:
         """
-        if issubclass(res_dict, (dict,)):
+        if isinstance(res_dict, (dict,)):
             raise ValueError("Input parameter should type of dict")
 
         return "\n".join(f"{key}: {value}" for key, value in res_dict.items())
