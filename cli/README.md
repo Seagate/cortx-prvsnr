@@ -13,11 +13,11 @@ Each script prints help with details regarding its usage, please use `-h`/`--hel
 The scripts might be applied to either remote or local hosts and have some prerequisites regarding the hosts state.
 It means they should be called in the following predefined order:
 1. `setup-provisioner`: installs and configures SaltStack, installs provisioner repo and setup SaltStack master-minion connections
-2. `configure-eos`: adjusts pillars for provisioner components
-3. `deploy-eos`: installs CORTX stack using Salt
-4. `bootstrap-eos`: initializes CORTX services
-5. `start-eos`: starts/restarts CORTX services
-6. `stop-eos`: stops CORTX services
+2. `configure`: adjusts pillars for provisioner components
+3. `deploy`: installs CORTX stack using Salt
+4. `bootstrap`: initializes CORTX services
+5. `start`: starts/restarts CORTX services
+6. `stop`: stops CORTX services
 
 ### Common Options
 
@@ -116,19 +116,19 @@ The only positional argument (which is expected and required) is the component n
 Show configuration file skeleton for the cluster component against locally installed provisioner
 
 ```shell
-$ configure-eos cluster --show-file-format
+$ configure cluster --show-file-format
 ```
 
 Show configuration file skeleton for the cluster component against remotely installed provisioner
 
 ```shell
-$ configure-eos cluster --show-file-format --remote user@host
+$ configure cluster --show-file-format --remote user@host
 ```
 
 Update the pillar for the release component remotely using specified file as a source
 
 ```shell
-$ configure-eos release --file ./release.sls --remote user@host
+$ configure release --file ./release.sls --remote user@host
 ```
 
 ### deploy-cortx
@@ -151,19 +151,19 @@ No specific options or positional arguments are expected by the script.
 Install CORTX stack for a cluster with a local host as srvnode-1
 
 ```shell
-$ deploy-eos
+$ deploy
 ```
 
 Install CORTX stack for a cluster with a remote host as srvnode-1
 
 ```shell
-$ deploy-eos -r srvnode-1 -F ./ssh_config
+$ deploy -r srvnode-1 -F ./ssh_config
 ```
 
 Install CORTX stack for a single node with a remote host as srvnode-1
 
 ```shell
-$ deploy-eos -r srvnode-1 -F ./ssh_config --singlenode
+$ deploy -r srvnode-1 -F ./ssh_config --singlenode
 ```
 
 ### bootsrap-cortx
@@ -211,20 +211,20 @@ But that might be changed in future.
 Start all services for a cluster with local host as srvnode-1
 
 ```shell
-$ start-eos
+$ start
 ```
 
 Start all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ start-eos --remote srvnode-1 -F ./ssh_config
+$ start --remote srvnode-1 -F ./ssh_config
 ```
 
 Restart all services for a cluster with remote host as srvnode-1
 
 
 ```shell
-$ start-eos --remote srvnode-1 -F ./ssh_config --restart
+$ start --remote srvnode-1 -F ./ssh_config --restart
 ```
 
 ### stop-cortx
@@ -241,13 +241,13 @@ But that might be changed in future.
 Stop all services for a cluster with local host as srvnode-1
 
 ```shell
-$ stop-eos
+$ stop
 ```
 
 Stop all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ stop-eos --remote srvnode-1 -F ./ssh_config
+$ stop --remote srvnode-1 -F ./ssh_config
 ```
 
 ### End-to-End Examples
@@ -257,20 +257,20 @@ $ stop-eos --remote srvnode-1 -F ./ssh_config
 **Note**: requires to be run under `root` user.
 
 1. `setup-provisioner -S`
-2. `configure-eos -p cluster >./cluster.sls`
+2. `configure -p cluster >./cluster.sls`
 3. ... edit `cluster.sls` manually ...
-4. `configure-eos -f ./cluster.sls cluster`
-5. `configure-eos -p release >./release.sls`
+4. `configure -f ./cluster.sls cluster`
+5. `configure -p release >./release.sls`
 6. ... edit `release.sls` manually ...
-7. `configure-eos -f ./release.sls release`
-8. `deploy-eos -S`
-9. `bootstrap-eos -S`
-10. `start-eos -S`
+7. `configure -f ./release.sls release`
+8. `deploy -S`
+9. `bootstrap -S`
+10. `start -S`
 
 #### Singlenode remote installation
 
 Remote installation requires ssh configuration:
-- ssh keypair should be created (e.g. `ssh-keygen -t rsa -b 4096 -o -a 100 -C "your_email@example.com" -f ./id_rsa.eos`)
+- ssh keypair should be created (e.g. `ssh-keygen -t rsa -b 4096 -o -a 100 -C "your_email@example.com" -f ./id_rsa.cortx`)
 - public key should be added for the `root`'s user (`/root/.ssh/authorized_keys`) on a remote host
 - local ssh-configuration file should be prepared
 
@@ -284,7 +284,7 @@ Host srvnode-1
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
-    IdentityFile ./id_rsa.eos
+    IdentityFile ./id_rsa.cortx
     IdentitiesOnly yes
 ```
 
@@ -308,20 +308,20 @@ Host srvnode-2
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
-    IdentityFile ./id_rsa.eos
+    IdentityFile ./id_rsa.cortx
     IdentitiesOnly yes
 ```
 
 1. `setup-provisioner -F ./ssh_config --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the secondary one)
-2. `configure-eos -p cluster >./cluster.sls`
+2. `configure -p cluster >./cluster.sls`
 3. ... edit `./cluster.sls` manually ...
-4. `configure-eos -f ./cluster.sls cluster`
-5. `configure-eos -p release >./release.sls`
+4. `configure -f ./cluster.sls cluster`
+5. `configure -p release >./release.sls`
 6. ... edit `./release.sls` manually ...
-7. `configure-eos -f ./release.sls release`
-8. `deploy-eos`
-9. `bootstrap-eos`
-10. `start-eos`
+7. `configure -f ./release.sls release`
+8. `deploy`
+9. `bootstrap`
+10. `start`
 
 
 #### Cluster remote installation
@@ -338,7 +338,7 @@ Host srvnode-1
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
-    IdentityFile ./id_rsa.eos
+    IdentityFile ./id_rsa.cortx
     IdentitiesOnly yes
 
 Host srvnode-2
@@ -346,6 +346,6 @@ Host srvnode-2
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
-    IdentityFile ./id_rsa.eos
+    IdentityFile ./id_rsa.cortx
     IdentitiesOnly yes
 ```

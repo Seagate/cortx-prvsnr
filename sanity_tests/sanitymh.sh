@@ -24,10 +24,10 @@ set -e
 
 dd if=/dev/urandom of=/tmp/128M bs=1M count=128
 
-hctl mero status --json > mero_status.json
-Profile=$(jq -r '.csrProfile' mero_status.json)
-Fid=$(jq -r '.csrHosts[0][1].crnProcesses[0][0].r_fid' mero_status.json)
-IPADDR=$(jq '.csrPrincipalRM.s_endpoints' mero_status.json | awk -F "@" '{if(NR==2) print $1}'| cut -c 4-)
+hctl motr status --json > motr_status.json
+Profile=$(jq -r '.csrProfile' motr_status.json)
+Fid=$(jq -r '.csrHosts[0][1].crnProcesses[0][0].r_fid' motr_status.json)
+IPADDR=$(jq '.csrPrincipalRM.s_endpoints' motr_status.json | awk -F "@" '{if(NR==2) print $1}'| cut -c 4-)
 cat <<EOF > sanity_io.yaml
 CrateConfig_Sections: [MOTR_CONFIG, WORKLOAD_SPEC]
 

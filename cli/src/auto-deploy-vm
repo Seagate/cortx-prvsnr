@@ -226,7 +226,7 @@ fi
 
 install_prvsnr_cli()
 {
-    # Install cortx-prvsnr-cli rpm from ci-storage and install it on both nodes
+    # Install cortx-prvsnr-cli rpm from cortx-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
     if [[ "$target_node" = "srvnode-1" ]]; then

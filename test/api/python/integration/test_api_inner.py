@@ -634,7 +634,7 @@ def test_cortx_update():
     api_call(
         'set_swupdate_repo',
         '1.2.3',
-        source='http://ci-storage.mero.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',  # noqa: E501
+        source='http://cortx-storage.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful',  # noqa: E501
         targets=minion_id
     )
 

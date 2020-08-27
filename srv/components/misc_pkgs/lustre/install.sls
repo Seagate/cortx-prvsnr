@@ -14,7 +14,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{% if salt['cmd.run']('lspci -d"15b3:*"|grep Mellanox') %}
+{% if salt['cmd.run']('lspci -d"15b3:*"') %}
 Install Lustre:
   pkg.installed:
     - fromrepo: lustre
