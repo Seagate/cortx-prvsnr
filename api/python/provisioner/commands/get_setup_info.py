@@ -25,9 +25,10 @@ from . import CommandParserFillerMixin, RunArgsEmpty
 
 from .. import (
     config,
-    inputs
+    inputs, values
 )
 from ..config import LOCAL_MINION
+from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run
 from ..vendor import attr
@@ -194,13 +195,14 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
 
-        controller_type = next(iter(pillar.values()))  # type: dict
+        pillar = next(iter(pillar.values()))  # type: dict
 
-        if controller_type:  # dictionary is not empty
-            # Get value of variable 'storage_enclosure/controller/type'
-            controller_type = controller_type.popitem()[1]
+        if (not pillar[controller_type] or
+                pillar[controller_type] is values.MISSED):
+            raise BadPillarDataError(f'value for {controller_type.keypath} '
+                                     f'is not specified')
 
-        if controller_type == ControllerTypes.GALLIUM.value:
+        if pillar[controller_type] == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
 
         # TODO: implement for other types: virtual, JBOD, PODS
