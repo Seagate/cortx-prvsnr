@@ -193,8 +193,16 @@ class GetSetupInfo(CommandParserFillerMixin):
         controller_type = PillarKey(controller_pi_path / 'type')
 
         pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
-        controller_type = next(iter(pillar.values()))
+
+        controller_type = next(iter(pillar.values()))  # type: dict
+
+        if controller_type:  # dictionary is not empty
+            # Get value of variable 'storage_enclosure/controller/type'
+            controller_type = controller_type.popitem()[1]
+
         if controller_type == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
+
+        # TODO: implement for other types: virtual, JBOD, PODS
 
         return res
