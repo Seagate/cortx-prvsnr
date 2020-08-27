@@ -127,10 +127,6 @@ class GetSetupInfo(CommandParserFillerMixin):
         if not isinstance(res_dict, (dict,)):
             raise ValueError("Input parameter should type of dict")
 
-        for k, v in res_dict.items():
-            if v is None:
-                res_dict[k] = NOT_AVAILABLE
-
         return "\n".join(OutputScheme.field_formatter(key, value)
                          for key, value in res_dict.items())
 
