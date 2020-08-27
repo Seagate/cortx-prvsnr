@@ -270,6 +270,18 @@ def fw_update(source, dry_run=False, nowait=False):
     )
 
 
+def fw_version(nowait=False):
+    r"""Gets current firmware version.
+
+    :param dry_run: (optional) validate only. Default: False
+    :param nowait: (optional) Run asynchronously. Default: False
+    """
+
+    return _api_call(
+        'fw_version', nowait=nowait
+    )
+
+
 def cmd_run(cmd_name: str, cmd_args: str, cmd_stdin: str,
             targets: str = ALL_MINIONS, dry_run: bool = False):
     """

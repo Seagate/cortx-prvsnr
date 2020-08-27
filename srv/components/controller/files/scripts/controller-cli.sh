@@ -497,7 +497,7 @@ main()
 
     # Decrypt the password. Required only for commands received from api
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
-        || "$shutdown_ctrl_opt" = true ]]; then
+        || "$shutdown_ctrl_opt" = true || "$show_fw_ver" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
         pass=`salt-call lyveutil.decrypt storage_enclosure ${pass} --output=newline_values_only`
         echo "main(): decrypted password: $pass" >> $logfile

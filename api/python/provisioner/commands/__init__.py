@@ -30,6 +30,7 @@ import importlib
 
 from ..vendor import attr
 from ..errors import (
+    ProvisionerError,
     BadPillarDataError,
     PillarSetError,
     SWUpdateError,
@@ -1079,6 +1080,59 @@ class ShutdownController(CommandParserFillerMixin):
                 )
             )
         )
+
+
+class GetFWversion(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsController
+
+    @classmethod
+    def from_spec(cls):
+        return cls()
+
+    def run(self):
+        script = (
+            PRVSNR_FILEROOT_DIR /
+            'components/controller/files/scripts/controller-cli.sh'
+        )
+
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
+        user = PillarKey(controller_pi_path / 'user')
+        passwd = PillarKey(controller_pi_path / 'secret')
+
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = next(iter(pillar.values()))
+
+        for param in (ip, user, passwd):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.keypath)
+                )
+
+        ret = list(list(StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "{script} host -h {ip} -u {user} -p {passwd} "
+                    "--show-fw-ver "
+                    .format(
+                        script=script,
+                        ip=pillar[ip],
+                        user=pillar[user],
+                        passwd=pillar[passwd],
+                    )
+                ),
+                # TODO remove it after fixing it in controllrcli
+                success_retcodes=[0, 1]
+            )
+        ).values())[0].values())[0]['changes']['stdout']
+
+        if "FAILED" in ret:
+            raise ProvisionerError(ret)
+
+        return {'Controller A': ret.splitlines()[2],
+                'Controller B': ret.splitlines()[3]}
 
 
 @attr.s(auto_attribs=True)

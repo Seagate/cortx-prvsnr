@@ -99,5 +99,7 @@ replace_node:
   type: ReplaceNode
 configure_setup:
   type: ConfigureSetup
+fw_version:
+  type: GetFWversion
 cmd_run:
   type: RemoteCommandExecutor
