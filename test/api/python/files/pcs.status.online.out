@@ -21,16 +21,16 @@ Full list of resources:
      lnet-c1    (ocf::seagate:lnet):    Started sm27-r22.pun.seagate.com
      consul-c1  (systemd:hare-consul-agent-c1): Started sm27-r22.pun.seagate.com
      hax-c1     (systemd:hare-hax-c1):  Started sm27-r22.pun.seagate.com
-     mero-confd-c1      (systemd:m0d@0x7200000000000001:0x9):   Started sm27-r22.pun.seagate.com
-     mero-ios-c1        (systemd:m0d@0x7200000000000001:0xc):   Started sm27-r22.pun.seagate.com
+     motr-confd-c1      (systemd:m0d@0x7200000000000001:0x9):   Started sm27-r22.pun.seagate.com
+     motr-ios-c1        (systemd:m0d@0x7200000000000001:0xc):   Started sm27-r22.pun.seagate.com
  Resource Group: c2
      ip-c2      (ocf::heartbeat:IPaddr2):       Started sm28-r22.pun.seagate.com
      lnet-c2    (ocf::seagate:lnet):    Started sm28-r22.pun.seagate.com
      consul-c2  (systemd:hare-consul-agent-c2): Started sm28-r22.pun.seagate.com
      hax-c2     (systemd:hare-hax-c2):  Started sm28-r22.pun.seagate.com
-     mero-confd-c2      (systemd:m0d@0x7200000000000001:0x4f):  Started sm28-r22.pun.seagate.com
-     mero-ios-c2        (systemd:m0d@0x7200000000000001:0x52):  Started sm28-r22.pun.seagate.com
- Clone Set: mero-kernel-clone [mero-kernel]
+     motr-confd-c2      (systemd:m0d@0x7200000000000001:0x4f):  Started sm28-r22.pun.seagate.com
+     motr-ios-c2        (systemd:m0d@0x7200000000000001:0x52):  Started sm28-r22.pun.seagate.com
+ Clone Set: motr-kernel-clone [motr-kernel]
      Started: [ sm27-r22.pun.seagate.com sm28-r22.pun.seagate.com ]
  Clone Set: ldap-clone [ldap]
      Started: [ sm27-r22.pun.seagate.com sm28-r22.pun.seagate.com ]

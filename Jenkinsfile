@@ -86,7 +86,7 @@ pipeline {
 			body: """
 			<h><span style=color:green>SUCCESSFUL:</span> Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</h>
 			<p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>
-			<p>RPM's are located at http://ci-storage.mero.colo.seagate.com/releases/eos/components/dev/provisioner/${env.BUILD_NUMBER}</p>
+			<p>RPM's are located at http://cortx-storage.colo.seagate.com/releases/eos/components/dev/provisioner/${env.BUILD_NUMBER}</p>
 			""",
 			recipientProviders: [[$class: 'DevelopersRecipientProvider']]
 			)

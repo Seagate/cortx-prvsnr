@@ -774,7 +774,7 @@ def ensure_motr_is_online(mhost, num_tries=120):
     # ensure that motr in online
     re_status = re.compile(r' +\[ *(.+)\]')
     for i in range(num_tries):
-        motr_status = mhost.check_output("hctl mero status")
+        motr_status = mhost.check_output("hctl motr status")
         logger.debug('motr status, try {}: {}'.format(i + 1, motr_status))
         for line in motr_status.split('\n'):
             m = re_status.match(line)
