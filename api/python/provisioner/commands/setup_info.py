@@ -75,8 +75,8 @@ class GetSetupInfo(CommandParserFillerMixin):
     #       handler runs once
     FIELD_HANDLERS = {
         NODES: "_count_minions",
-        SERVERS_PER_NODE: None,
-        STORAGE_TYPE: None,
+        SERVERS_PER_NODE: "_get_servers_per_node",
+        STORAGE_TYPE: "_get_storage_type",
         SERVER_TYPE: "_get_server_type"
     }
 
@@ -142,6 +142,26 @@ class GetSetupInfo(CommandParserFillerMixin):
     def _get_server_type(self):
         """
         Private method to determine server type
+
+        :return:
+        """
+        res = dict()
+
+        return res
+
+    def _get_servers_per_node(self):
+        """
+        Private method to obtain number of servers per node
+
+        :return:
+        """
+        res = dict()
+
+        return res
+
+    def _get_storage_type(self):
+        """
+        Private method to determine storage type
 
         :return:
         """
