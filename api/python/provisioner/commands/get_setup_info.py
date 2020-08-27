@@ -104,6 +104,10 @@ class GetSetupInfo(CommandParserFillerMixin):
         if not isinstance(res_dict, (dict,)):
             raise ValueError("Input parameter should type of dict")
 
+        for k, v in res_dict.items():
+            if v is None:
+                res_dict[k] = NOT_AVAILABLE
+
         return "\n".join(f'"{key}": "{value}"'
                          for key, value in res_dict.items())
 
@@ -180,6 +184,25 @@ class GetSetupInfo(CommandParserFillerMixin):
         :return:
         """
         res = dict()
+
+        cluster_path = KeyPath('cluster')
+        node_list_key = PillarKey(cluster_path / 'node_list')
+        type_key = PillarKey(cluster_path / 'type')
+
+        pillar = PillarResolver(LOCAL_MINION).get((node_list_key, type_key))
+
+        pillar = next(iter(pillar.values()))  # type: dict
+
+        for key in (node_list_key, type_key):
+            if (not pillar[key] or
+                    pillar[key] is values.MISSED):
+                raise BadPillarDataError(f'value for {key.keypath} '
+                                         f'is not specified')
+
+        # TODO: improve logic to determine servers_per_node field using
+        #  both: cluster/node_list and cluster/type values
+
+        res[SERVERS_PER_NODE] = len(pillar[node_list_key])
 
         return res
 
