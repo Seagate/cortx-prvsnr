@@ -18,6 +18,14 @@
 #
 
 {% set node = grains['id'] %}
+{% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr']
+    and not pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] %}
+
+Gateway not provided:
+  test.fail_with_changes:
+    - name: Static IP's for public management network requires a valid gateway. Provide a valid gateway value in cluster.sls and retry this state.
+
+{% else %}
 
 # Setup network for data interfaces
 Public direct network:
@@ -43,3 +51,4 @@ Public direct network:
 {% if pillar['cluster'][node]['network']['mgmt_nw']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] }}
 {% endif %}
+{% endif %} # Gateway check end
