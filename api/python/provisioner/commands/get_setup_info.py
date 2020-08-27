@@ -95,7 +95,8 @@ class GetSetupInfo(CommandParserFillerMixin):
         if not isinstance(res_dict, (dict,)):
             raise ValueError("Input parameter should type of dict")
 
-        return "\n".join(f"{key}: {value}" for key, value in res_dict.items())
+        return "\n".join(f'"{key}": "{value}"'
+                         for key, value in res_dict.items())
 
     # TODO: Add support of arguments to retrieve just specified fields
     def run(self):
