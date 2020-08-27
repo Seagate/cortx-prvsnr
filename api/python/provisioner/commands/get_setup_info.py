@@ -72,6 +72,29 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 NOT_AVAILABLE = "N/A"
 
 
+# TODO: in CSM we use schematics third-party library
+class OutputScheme:
+    """Class which represents scheme for output result
+    of GetSetupInfo.run method
+
+    """
+    _MAP = {
+        NODES: int,
+        SERVERS_PER_NODE: int,
+        STORAGE_TYPE: str,
+        SERVER_TYPE: str
+    }
+
+    @classmethod
+    def field_formatter(cls, key, value):
+        if value is None:
+            return f'"{key}": "{NOT_AVAILABLE}"'
+        elif cls._MAP.get(key) == int:
+            return f'"{key}": {int(value)}'
+        elif cls._MAP.get(key) == str:
+            return f'"{key}": "{str(value)}"'
+
+
 @attr.s(auto_attribs=True)
 class GetSetupInfo(CommandParserFillerMixin):
     """General class-wrapper for obtaining cluster setup information"""
@@ -108,7 +131,7 @@ class GetSetupInfo(CommandParserFillerMixin):
             if v is None:
                 res_dict[k] = NOT_AVAILABLE
 
-        return "\n".join(f'"{key}": "{value}"'
+        return "\n".join(OutputScheme.field_formatter(key, value)
                          for key, value in res_dict.items())
 
     # TODO: Add support of arguments to retrieve just specified fields
