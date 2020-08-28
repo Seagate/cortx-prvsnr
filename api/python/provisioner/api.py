@@ -289,7 +289,7 @@ def cmd_run(cmd_name: str, cmd_args: str, cmd_stdin: str,
 
 def get_setup_info():
     """
-    Get setup cluster information
+    Get cluster setup information
 
     :return:
     """

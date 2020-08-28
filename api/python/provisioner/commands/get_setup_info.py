@@ -157,6 +157,8 @@ class GetSetupInfo(CommandParserFillerMixin):
             # {"current node name": "kvm"}, for example
             server_type = salt_res.popitem()[1]
 
+            # TODO: in future we may support other values of server type
+            #  which salt provides
             res[SERVER_TYPE] = (ServerType.PHYSICAL.value
                                 if server_type == ServerType.PHYSICAL.value
                                 else ServerType.VIRTUAL.value)
@@ -230,21 +232,18 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         for field in SETUP_INFO_FIELDS:
             if aggregated_res.get(field) is not None:
-                continue  # field value is already known form previous steps
+                continue  # field value is already known from previous steps
 
-            handler_name = self.FIELD_HANDLERS.get(field, None)
-            if handler_name is None:
-                raise ValueError(f"There are no handlers for {field} field")
-
-            handler = getattr(self, handler_name, None)
-
-            if any((handler is None, not callable(handler))):
-                raise ValueError(f"Handler {handler} is not implemented "
-                                 f"for field {field}")
+            # NOTE: be sure, we don't validate the following possible
+            # conditions:
+            # * class may not have implemented expected handlers
+            # * some fields may have no assigned handlers
+            # * some fields can be not listed in FIELD_HANDLERS
+            handler = getattr(self, self.FIELD_HANDLERS.get(field))
 
             res = handler()
             # NOTE: one method can determine several fields
-            # Update only fields which are not
+            # Update only unknown fields
             for key in res.keys() & set(k for k, v in
                                         filter(lambda x: x[1] is None,
                                                aggregated_res.items())):
