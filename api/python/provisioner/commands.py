@@ -645,13 +645,15 @@ class GetNodeId(CommandParserFillerMixin):
 class GetReleaseVersion(CommandParserFillerMixin):
     params_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
-    _target = 'srvnode-1'
-    
+    _installed_rpms: List = attr.ib(init=False, default=None)
+
     @property
     def installed_rpms(self) -> List:
-        res = cmd_run("rpm -qa|grep '^eos-'", targets=LOCAL_MINION)
-        rpms =  res[self._target].split("\n")
-        return [f'{rpm}.rpm' for rpm in rpms if rpm]
+        if self._installed_rpms is None:
+            res = cmd_run("rpm -qa|grep '^eos-'", targets=LOCAL_MINION)
+            rpms =  res[next(iter(res))].split("\n")
+            self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
+        return self._installed_rpms
 
     def _get_rpms_from_release(self, source):
         return load_yaml(source)['COMPONENTS']
