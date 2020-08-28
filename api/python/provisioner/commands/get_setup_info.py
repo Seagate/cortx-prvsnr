@@ -19,7 +19,7 @@
 
 import logging
 from enum import Enum
-from typing import Type
+from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
 
@@ -27,7 +27,10 @@ from .. import (
     config,
     inputs, values
 )
-from ..config import LOCAL_MINION
+from ..config import (LOCAL_MINION, NODES, SERVERS_PER_NODE, STORAGE_TYPE,
+                      SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
+                      StorageType, SETUP_INFO_FIELDS
+                      )
 from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run
@@ -37,42 +40,6 @@ from ..vendor import attr
 logger = logging.getLogger(__name__)
 
 
-class StorageType(Enum):
-    """Class-enumeration for supported and existing storage types"""
-
-    VIRTUAL = "virtual"
-    # standard enclosure with 5 units with 84 disks
-    ENCLOSURE = "5u84"
-    PODS = "PODS"
-
-
-class ServerType(Enum):
-    """Class-enumeration which represents possible server types"""
-
-    VIRTUAL = "virtual"
-    PHYSICAL = "physical"
-
-
-class ControllerTypes(Enum):
-    """Class-enumeration for controller type's values"""
-    GALLIUM = "gallium"
-    INDIUM = "indium"
-    SATI = "sati"
-
-
-# TODO: maybe needed to move to config.py
-# Constant block for setup info fields
-NODES = "nodes"
-SERVERS_PER_NODE = "servers_per_node"
-STORAGE_TYPE = "storage_type"
-SERVER_TYPE = "server_type"
-
-SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
-
-NOT_AVAILABLE = "N/A"
-
-
-# TODO: in CSM we use schematics third-party library
 class OutputScheme:
     """Class which represents scheme for output result
     of GetSetupInfo.run method
@@ -86,13 +53,18 @@ class OutputScheme:
     }
 
     @classmethod
-    def field_formatter(cls, key, value):
-        if value is None:
-            return f'"{key}": "{NOT_AVAILABLE}"'
-        elif cls._MAP.get(key) == int:
-            return f'"{key}": {int(value)}'
-        elif cls._MAP.get(key) == str:
-            return f'"{key}": "{str(value)}"'
+    def format(cls, key: str, value: Union[str, int]) -> Union[str, int]:
+        """
+        Apply to key's values `cls._MAP` handlers
+
+        :param key: key name. Should be listed in `cls._MAP`
+        :param value: key's value to which `cls._MAP` handler will be applied
+        :return: formatted key's value according to `cls._MAP` handlers
+        """
+        formatter = cls._MAP.get(key, None)
+        if formatter is None:
+            raise ValueError(f"Format handler for field {key} is not defined")
+        return formatter(value)
 
 
 @attr.s(auto_attribs=True)
@@ -127,9 +99,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         if not isinstance(res_dict, (dict,)):
             raise ValueError("Input parameter should type of dict")
 
-        return "\n".join(OutputScheme.field_formatter(key, value)
-                         for key, value in res_dict.items())
-
+        return {k: OutputScheme.format(k, v) for k, v in res_dict.items()}
 
     def _count_minions(self):
         """
