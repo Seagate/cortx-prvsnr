@@ -24,14 +24,7 @@ glusterfs_servers_peered:
       - {{ peer }}
 {% endfor %}
 
-# TODO IMPRVOVE ??? EOS-9581 it might be necessary
-#      Added some sleep / wait here since 'peer probe' seems to be async
-
-glusterfs_peers_wait:
-  cmd.wait:
-    - name: sleep 5
-    - watch_in:
-      - glusterfs_servers_peered
+#  Added retry here since 'peer probe' seems to be async
 
 {% for volume, bricks in salt['pillar.get']('glusterfs_volumes', {}).items() %}
 
@@ -47,5 +40,9 @@ glusterfs_volume_{{ volume }}_created:
     - force: True
     - require:
       - glusterfs_servers_peered
+    - retry:
+        attempts: 10
+        until: True
+        interval: 3
 
 {% endfor %}
