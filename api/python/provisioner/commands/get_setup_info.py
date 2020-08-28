@@ -130,39 +130,6 @@ class GetSetupInfo(CommandParserFillerMixin):
         return "\n".join(OutputScheme.field_formatter(key, value)
                          for key, value in res_dict.items())
 
-    # TODO: Add support of arguments to retrieve just specified fields
-    def run(self):
-        """
-        Base method to gather and return to user information about cluster
-        installation
-
-        :return:
-        """
-        aggregated_res = dict.fromkeys(SETUP_INFO_FIELDS, None)
-
-        for field in SETUP_INFO_FIELDS:
-            if aggregated_res.get(field) is not None:
-                continue  # field value is already known form previous steps
-
-            handler_name = self.FIELD_HANDLERS.get(field, None)
-            if handler_name is None:
-                raise ValueError(f"There are no handlers for {field} field")
-
-            handler = getattr(self, handler_name, None)
-
-            if any((handler is None, not callable(handler))):
-                raise ValueError(f"Handler {handler} is not implemented "
-                                 f"for field {field}")
-
-            res = handler()
-            # NOTE: one method can determine several fields
-            # Update only fields which are not
-            for key in res.keys() & set(k for k, v in
-                                        filter(lambda x: x[1] is None,
-                                               aggregated_res.items())):
-                aggregated_res[key] = res.get(key)
-
-        return self._format_output(aggregated_res)
 
     def _count_minions(self):
         """
@@ -250,3 +217,37 @@ class GetSetupInfo(CommandParserFillerMixin):
         # TODO: implement for other types: virtual, JBOD, PODS
 
         return res
+
+    # TODO: Add support of arguments to retrieve just specified fields
+    def run(self):
+        """
+        Base method to gather and return to user information about cluster
+        installation
+
+        :return:
+        """
+        aggregated_res = dict.fromkeys(SETUP_INFO_FIELDS, None)
+
+        for field in SETUP_INFO_FIELDS:
+            if aggregated_res.get(field) is not None:
+                continue  # field value is already known form previous steps
+
+            handler_name = self.FIELD_HANDLERS.get(field, None)
+            if handler_name is None:
+                raise ValueError(f"There are no handlers for {field} field")
+
+            handler = getattr(self, handler_name, None)
+
+            if any((handler is None, not callable(handler))):
+                raise ValueError(f"Handler {handler} is not implemented "
+                                 f"for field {field}")
+
+            res = handler()
+            # NOTE: one method can determine several fields
+            # Update only fields which are not
+            for key in res.keys() & set(k for k, v in
+                                        filter(lambda x: x[1] is None,
+                                               aggregated_res.items())):
+                aggregated_res[key] = res.get(key)
+
+        return self._format_output(aggregated_res)
