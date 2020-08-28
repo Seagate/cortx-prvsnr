@@ -72,16 +72,16 @@ PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 
 # Global variables which can be set externally using environment variables
 default_hostname_nodeA="${default_hostname_nodeA:-"cortx-node-a"}"
-default_hostname_nodeB="${cortx-node-b:-"cortx-node-b"}"
-pvt_ip_a="${pvt_ip_a:-192.168.0.1}"
-pvt_ip_b="${pvt_ip_b:-192.168.0.2}"
+default_hostname_nodeB="${default_hostname_nodeB:-"cortx-node-b"}"
+pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
+pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 #TODO: The no of volumes for Beta are 32.
 nvols="${nvols:-32}" # The default value needs to be changed to 64 for cross connect
 pillar_root="${pillar_root:-/opt/seagate/eos-prvsnr/pillar/user/groups/all}"
 
 # Global variables, don't change these values.
-ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o \"StrictHostKeyChecking no\""
-scp_cmd="scp -i /root/.ssh/id_rsa_prvsnr -o \"StrictHostKeyChecking no\""
+ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking=no""
+scp_cmd="scp -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking=no""
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
 minion_ids=("srvnode-1" "srvnode-2")
 server_names=("Server A" "Server B") #Required for logging messages
@@ -99,12 +99,14 @@ function err_handler {
 **************************FAILED!!********************************
 For detailed error logs, please see: $LOG_FILE
 ******************************************************************" | tee -a ${LOG_FILE}
+    exit 1
 }
 
 function intrpt_handler {
     echo "\
 Received Ctrl-c signal, exiting Gracefully.
 For detailed logs, please see: $LOG_FILE" | tee -a ${LOG_FILE}
+    exit 1
 }
 
 trap err_handler ERR
@@ -113,7 +115,7 @@ trap intrpt_handler SIGTERM SIGINT
 sub_manager_check()
 {
     _pvt_ip="${1:-$pvt_ip_a}"
-    _server=${2:-"Server A"}
+    _server="${2:-"Server A"}"
 
     $ssh_cmd $_pvt_ip "grep -q "Red Hat" /etc/*-release" || {
         echo "$_server is not a RedHat system" | tee -a ${LOG_FILE}
@@ -146,20 +148,23 @@ sub_manager_cleanup()
     }
     echo "Cleaning up the subscription manager on $_server" | tee -a ${LOG_FILE}
 
+    echo "Running the subscription-manager list on $_server" | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager list || true"  | tee -a ${LOG_FILE}
+
     echo "Running the subscription-manager auto-attach on $_server" | tee -a ${LOG_FILE}
-    $ssh_cmd $_pvt_ip "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
 
     echo "Running subscription-manager remove --all on $_server" | tee -a ${LOG_FILE}
-    $ssh_cmd $_pvt_ip "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
 
     echo "Running subscription-manager unregister on $_server" | tee -a ${LOG_FILE}
-    $ssh_cmd $_pvt_ip "subscription-manager unregister || true" | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager unregister || true" | tee -a ${LOG_FILE}
 
     echo "Running subscription-manager clean on $_server" | tee -a ${LOG_FILE}
-    $ssh_cmd $_pvt_ip "subscription-manager clean || true" | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager clean || true" | tee -a ${LOG_FILE}
 
     echo "Running subscription-manager config --rhsm.manage_repos=0 on $_server" | tee -a ${LOG_FILE}
-    $ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    #$ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
 }
 
 seagate_refs_cleanup()
@@ -168,7 +173,7 @@ seagate_refs_cleanup()
     # 2. Disable and cleanup the subscription 
     # 3. Remove all Seagate internal repos from /etc/yum.repos.d
 
-    for i in "${!pvt_ips[*]}"; do
+    for i in "${!pvt_ips[@]}"; do
         subscription_enabled=false
         sub_manager_check "${pvt_ips[$i]}" "${server_names[$i]}"
         if [[ "$subscription_enabled" == true ]]; then
@@ -191,8 +196,9 @@ luns_availability_check()
     # 3. If the output is not equal to $nvols then error out with diagnostic steps.
 
     echo "Checking if the luns from storage enclosure are available" | tee -a ${LOG_FILE}
-    for i in "${!pvt_ips[*]}"; do
-        $ssh_cmd ${pvt_ips[$i]} "lsblk -S| grep sas" | tee -a ${LOG_FILE}
+    for i in "${!pvt_ips[@]}"; do
+        echo "Listing luns on server ${server_names[$i]}" >> ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} "lsblk -S| grep sas" >> ${LOG_FILE}
         _nluns=$($ssh_cmd ${pvt_ips[$i]} "lsblk -S" | grep sas | wc -l)
         echo "No of luns on server ${server_names[$i]} are: $_nluns" | tee -a ${LOG_FILE}
         if [[ $_nluns -eq 0 || $_nluns -ne $nvols ]]; then
@@ -216,35 +222,34 @@ ctrl_ip_addr_get_set()
     # 3.1 If the ips provided by user matches the current values in pillar, do nothing.
 
     echo "Please provide the IP addresses for storage enclosure (should be already configured)" | tee -a ${LOG_FILE}
-    _input_recd=0
-    while $_input_received -eq 0; do
+    while true; do
         read -p "Enter IP address configured for Controller A: " ctrl_ip_a
         if [[ -z $ctrl_ip_a ]]; then
-            echo "Pleaes provide valid input"; | tee -a ${LOG_FILE}
+            echo "Please provide valid input" | tee -a ${LOG_FILE}
         else
             echo "IP address received for Controller A: $ctrl_ip_a" >> ${LOG_FILE}
-            _input_recd=1
+            break
         fi
     done
 
     #TODO: remove duplicate code for controller B, add it in for loop.
-    _input_recd=0
-    while $_input_received -eq 0; do
+    while true; do
         read -p "Enter IP address configured for Controller B: " ctrl_ip_b
         if [[ -z $ctrl_ip_b ]]; then
-            echo "Please provide valid input"; | tee -a ${LOG_FILE}
+            echo "Please provide valid input" | tee -a ${LOG_FILE}
         else
             echo "IP address received for Controller B: $ctrl_ip_b" >> ${LOG_FILE}
-            _input_recd=1
+            break
         fi
     done
 
     #Update the storage_enclosure pillar with new controller IP.
-    _storage_encl_sls_path=${pillar_root}/storage_enclosure.sls
+    _storage_encl_sls_path="${pillar_root}/storage_enclosure.sls"
     echo "Updating IP addresses of storage enclosure in Salt pillar" |tee -a ${LOG_FILE}
 
     echo "Updating storage enclosure pillar with new controller A IP address" | tee -a ${LOG_FILE}
     _current_ip=$(grep -A1 primary_mc ${_storage_encl_sls_path} | tail -1 | awk '{ print $2 }')
+    echo "DEBUG:_current_ip=$_current_ip" >> ${LOG_FILE}
     cat ${_storage_encl_sls_path} | sed -e "s/$_current_ip/$ctrl_ip_a/" > /tmp/ctrla-sed.tmp
     diff_lines=$(diff ${_storage_encl_sls_path} /tmp/ctrla-sed.tmp | grep "<" | wc -l)
     #Check and ensure there is only one line change in the diff
@@ -312,12 +317,12 @@ new_hostname_set()
 
     _set_hostname_flags=("$@")
     echo "DEBUG: _set_hostname_flags=${_set_hostname_flags[@]}" >> ${LOG_FILE}
-    for i in "${!pvt_ips[*]}"; do
+    for i in "${!pvt_ips[@]}"; do
         echo "Setting the new hostname provided by user" | tee -a ${LOG_FILE}
-        if [[ $i -eq 0 && ! -z $hostname_A && "${_set_hostname_flags[$i]}" == "true" ]]; then
+        if [[ $i -eq 0 && ! -z $hostname_A && "${_set_hostname_flags[$i]}" == true ]]; then
             echo "Setting the hostname($hostname_A) for server A" | tee -a ${LOG_FILE}
             _new_hostname=$hostname_A
-        elif [[ $i -eq 1 && ! -z $hostname_B && "${_set_hostname_flags[$1]}" == "true" ]]; then
+        elif [[ $i -eq 1 && ! -z $hostname_B && "${_set_hostname_flags[$i]}" == true ]]; then
             echo "Setting the hostname($hostname_B) for server B" | tee -a ${LOG_FILE}
             _new_hostname=$hostname_B
         else
@@ -325,7 +330,7 @@ new_hostname_set()
             echo "DEBUG: no hostname provided by user for ${server_names[$i]}, skipping" >> ${LOG_FILE}
             continue
         fi
-        $ssh_cmd ${pvt_ips[$i]} "hostnamectl --set-hostname --static --transient --pretty "$_new_hostname"" 2>&1 | tee -a ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} "hostnamectl set-hostname --static --transient --pretty "$_new_hostname"" 2>&1 | tee -a ${LOG_FILE}
         echo "Restarting the hostnamed service" | tee -a ${LOG_FILE}
         systemctl restart systemd-hostnamed 2>&1 | tee -a ${LOG_FILE}
         echo "Waiting for the new hostname to get updated in system for ${server_names[$i]}" | tee -a ${LOG_FILE}
@@ -341,7 +346,7 @@ new_hostname_set()
             echo "Warning: The hostname provided ($_new_hostname) could not be set on ${server_names[$i]}" | tee -a ${LOG_FILE}
             echo "Retrying.." | tee -a ${LOG_FILE}
             $ssh_cmd ${pvt_ips[$i]} "chattr -i /etc/hostname" 2>&1 | tee -a ${LOG_FILE}
-            $ssh_cmd ${pvt_ips[$i]} "hostnamectl --set-hostname --static --transient --pretty "${_new_hostname}"" 2>&1 | tee -a ${LOG_FILE}
+            $ssh_cmd ${pvt_ips[$i]} "hostnamectl set-hostname --static --transient --pretty "${_new_hostname}"" 2>&1 | tee -a ${LOG_FILE}
             echo "Restarting the hostnamed service" | tee -a ${LOG_FILE}
             systemctl restart systemd-hostnamed 2>&1 | tee -a ${LOG_FILE}
             echo "Waiting for the new hostname to get updated in system for ${server_names[$i]}" | tee -a ${LOG_FILE}
@@ -359,7 +364,7 @@ Please do the following steps:
 1. Check whether the dns/dhclient settings in the lab are causing problems to update the hostname.
 2. If yes, please set the hostnames through DNS using mac addresses mentioned in Quick install information sheet provided by Seagate.
 3. If changing DNS is not possible or it's not working try to change the hostname manually using following commands:
-   1. hostnamectl --set-hostname --static --transient --pretty ${_new_hostname}
+   1. hostnamectl set-hostname --static --transient --pretty ${_new_hostname}
    2. nmcli general hostname $_new_hostname
    3. sysctl kernel.hostname=$_new_hostname
    NOTE: Run these commands one at a time, if command no. 1 don't work then only try command no. 2 and so on.
@@ -383,7 +388,7 @@ new_hostname_get()
     _tnode="${1:-"Server A"}"
     # Prompt user for the new hostname (suggest sample hostname as an example)
 
-    if [[ $_tnode == "Server A" ]]; then
+    if [[ "$_tnode" == "Server A" ]]; then
         read -p "Enter new hostname for server A (press enter to keep default [$default_hostname_nodeA]): " hostname_A
         hostname_A=${hostname_A:-$default_hostname_nodeA}
     else
@@ -413,14 +418,14 @@ hostname_validate_get_set()
  
     echo "Validating the current hostnames on both servers" | tee -a ${LOG_FILE}
  
-    for i in "${!pvt_ips[*]}"; do
+    for i in "${!pvt_ips[@]}"; do
         echo "Running hostname check on ${server_names[$i]}" >> ${LOG_FILE}
         _hname=$($ssh_cmd ${pvt_ips[$i]} "hostnamectl status" | grep "Static hostname" | awk '{ print $3 }')
         echo $_hname | grep -q "seagate.com" && _seagate_hname=true || _seagate_hname=false
-        if [[ $_seagate_hname == "true" ]]; then
+        if [[ "$_seagate_hname" == true ]]; then
             echo "The hostname of ${server_names[$i]} contains the seagate domain name" >> ${LOG_FILE}
             echo "The hostname needs to be changed for ${server_names[$i]}" | tee -a ${LOG_FILE}
-            ${_set_hostnames[$i]}=true
+            _set_hostnames[$i]=true
         else
             echo "The current hostname ($_hname) for ${server_names[$i]} looks good" | tee -a ${LOG_FILE}
             if [[ "${server_names[$i]}" == "Server A" ]]; then
@@ -434,24 +439,24 @@ hostname_validate_get_set()
     done
 
     while true; do
-        for i in "${!_set_hostnames[*]}"; do
+        for i in "${!_set_hostnames[@]}"; do
             # Get and print the new hostname provided by user
             # and confirm before proceeding ahead
-            if [[ ${_set_hostnames[$i]} == "true" ]]; then
+            if [[ "${_set_hostnames[$i]}" == true ]]; then
                 # Hostname needs to be set
                 echo "Requesting user to provide hostname for ${server_names[$i]}" >> ${LOG_FILE}
                 new_hostname_get "${server_names[$i]}"
             fi
         done
-        for i in "${!_set_hostnames[*]}"; do
-            if [[ ${_set_hostnames[$i]} == "true" ]]; then
-                if [[ ${server_names[$i]} == "Server A" ]]; then
+        for i in "${!_set_hostnames[@]}"; do
+            if [[ "${_set_hostnames[$i]}" == true ]]; then
+                if [[ "${server_names[$i]}" == "Server A" ]]; then
                     echo "New hostnames provided by user for Server A: $hostname_A" | tee -a ${LOG_FILE}
-                elif
+                else
                     echo "New hostnames provided by user for Server B: $hostname_B" | tee -a ${LOG_FILE}
                 fi
             else
-                if [[ ${server_names[$i]} == "Server A" ]]; then
+                if [[ "${server_names[$i]}" == "Server A" ]]; then
                     echo "Current hostname on Server A is            : $hostname_A" | tee -a ${LOG_FILE}
                 else
                     echo "Current hostname on Server B is            : $hostname_B" | tee -a ${LOG_FILE}
@@ -467,7 +472,7 @@ hostname_validate_get_set()
                 * ) echo "Please answer y or n.";;
             esac
         done
-        if [[ $_proceed == "true" ]]; then
+        if [[ "$_proceed" == true ]]; then
             # User wants to proceed with the hostnames
             echo "Proceeding to set the provided hostnames" | tee -a ${LOG_FILE}
             break
@@ -477,16 +482,27 @@ hostname_validate_get_set()
             while true; do
                 read -p "Which server do you want to update the hostname of? (A/B/both):" _ans
                 case $_ans in
-                    [Aa]* ) _set_hostnames[0]=true; _set_hostnames[1]=false; break;;
-                    [Bb]* ) _set_hostnames[1]=true; _set_hostnames[0]=false; break;;
-                    [both]*) _set_hostnames[0]=true; _set_hostnames[1]=true; break
+                    [Aa]* ) _set_hostnames=("true" "false");
+                            for i in "${!_set_hostnames[@]}"; do
+                                echo "DEBUG: case A: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
+                            done
+                            break;;
+                    [Bb]* ) _set_hostnames=("false" "true");
+                            for i in "${!_set_hostnames[@]}"; do
+                                echo "DEBUG: case A: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
+                            done
+                            break;;
+                    [both]*) _set_hostnames=("true" "true");
+                            for i in "${!_set_hostnames[@]}"; do
+                                echo "DEBUG: case both: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
+                            done
+                            break;;
                     * ) echo "Please answer A/B or both.";;
                 esac
             done
             echo "Okay, please provide the hostnames again" | tee -a ${LOG_FILE}
             continue
         fi
-    fi
     done
 
     new_hostname_set "${_set_hostnames[@]}"
@@ -768,7 +784,7 @@ ssh_config_update()
         fi
     fi
 
-    if [[ $_update_ssh_conf_A == "true" ]]; then
+    if [[ "$_update_ssh_conf_A" == true ]]; then
         # Replace Server A entry
 
         # take backup of ssh config file
@@ -786,7 +802,7 @@ ssh_config_update()
         echo "Done" | tee -a ${LOG_FILE}
     fi
 
-    if [[ $_update_ssh_conf_B == "true" ]]; then
+    if [[ "$_update_ssh_conf_B" == true ]]; then
         # Replace Server B entry
         echo "Updating server B hostname (${hostname_B}) in ssh config file of server A" | tee -a ${LOG_FILE}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
@@ -857,7 +873,7 @@ minion_config_update()
         fi
     fi
 
-    if [[ $_update_minion_A == "true" ]]; then
+    if [[ "$_update_minion_A" == true ]]; then
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         echo "Setting Salt master (${hostname_A}) on server A (${hostname_A})" | tee -a ${LOG_FILE}
         yes | cp -f /etc/salt/minion /etc/salt/minion.bkp
@@ -892,7 +908,7 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
         echo "Minion on Server A started successfully" | tee -a ${LOG_FILE}
     fi
 
-    if [[ $_update_minion_B == "true" ]]; then
+    if [[ "$_update_minion_B" == true ]]; then
         echo "Setting (${hostname_A}) in Salt minion configuration on server B (${hostname_B})" | tee -a ${LOG_FILE}
         #TODO: Should we just scp minion file from Server A to server B?
         line_to_replace=$($ssh_cmd ${pvt_ip_b} "grep -m1 -noP "master: " /etc/salt/minion" |tail -1|cut -d: -f1)
@@ -934,27 +950,33 @@ main()
 {
     time_stamp=$(date)
     echo "******** [$time_stamp] Running $0 *********" >> ${LOG_FILE}
+
+    #1. Run cleanup 
+    echo "DEBUG: Capturing output of 'ip a' on Server A for analysis (if needed)" >> ${LOG_FILE}
+    ip a >> ${LOG_FILE}
+
+    echo "DEBUG: Capturing output of 'ip a' on Server B for analysis (if needed)" >> ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "ip a" |>> ${LOG_FILE}
+
     echo "DEBUG: Private IP address Node A: $pvt_ip_a" >> ${LOG_FILE}
     echo "DEBUG: Private IP address Node B: $pvt_ip_b" >> ${LOG_FILE}
-    #1. Run cleanup 
-    echo "Capturing output of `ip a` on Server A for analysis (if needed)" | tee -a ${LOG_FILE}
-    ip a | tee -a ${LOG_FILE}
+    echo "DEBUG: default_hostname_nodeA: ${default_hostname_nodeA}" >> ${LOG_FILE}
+    echo "DEBUG: default_hostname_nodeB: ${default_hostname_nodeB}" >> ${LOG_FILE}
+    echo "DEBUG: nvols:$nvols ${default_hostname_nodeB}" >> ${LOG_FILE}
+    echo "DEBUG: pillar_roots: ${pillar_root}" >> ${LOG_FILE}
 
-    echo "Capturing output of `ip a` on Server B for analysis (if needed)" | tee -a ${LOG_FILE}
-    $ssh_cmd ${pvt_ip_b} "ip a" | tee -a ${LOG_FILE}
-
-    seagate_refs_cleanup
+    ##seagate_refs_cleanup
 
     #2. Check if the volumes are being listed on both the nodes - lsblk
-    luns_availability_check
+    ##luns_availability_check
 
     #3. Get the controller IPs from user as an input
     #TODO: Remove this when enclosure communication is switched to in-band.
-    ctrl_ip_addr_get_set
+    #ctrl_ip_addr_get_set
 
     #4. check if the hostname contains 'seagate.com', if yes, take input for new hostname
     hostname_validate_get_set
-
+    exit 0
     #5. update hostnames in local dns (/etc/hosts)
     dns_update_hostnames
 
@@ -973,6 +995,7 @@ main()
     # 4. Ctrl-C the script in between, check if the script exits gracefully
     # 5. Ctrl-C the scipt and rerun the script again, check if it overwrites anything in:
     #    /etc/hosts, /etc/salt/minion/ /root/.ssh/config files.
+    # 6. Duplicate IPs in storage enclosure causes failure.
 
 }
 
