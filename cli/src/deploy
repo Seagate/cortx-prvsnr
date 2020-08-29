@@ -40,6 +40,7 @@ run_sync_states=false
 run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
+run_backup_states=false
 tgt_node=srvnode-2
 
 # states to be applied in desired sequence
@@ -100,6 +101,17 @@ controlpath_states=(
     # "ha.cortx-ha.ha"
 )
 
+# states to be applied in desired sequence
+backup_states=(
+    "provisioner.backup"
+    "motr.backup"
+    "s3server.backup"
+    "hare.backup"
+    "ha.iostack-ha.backup"
+    "sspl.backup"
+    "csm.backup"
+)
+
 function usage {
   echo "\
 Usage: $0 [options]
@@ -118,6 +130,7 @@ Options:
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --backup-states                            deploy only control path states (sspl & csm)
 "
 }
 
@@ -153,6 +166,10 @@ function options_parser {
             ;;
         --ctrlpath-states)
             run_ctrlpath_states=true
+            run_all=false
+            ;;
+        --backup-states)
+            run_backup_states=true
             run_all=false
             ;;
         *)
@@ -254,7 +271,7 @@ function encrypt_pillar {
 }
 
 
-parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,backup-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -318,25 +335,20 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
-l_info "Backing up pillar files to user space."
+# l_info "Backing up pillar files to user space."
 # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
 # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
 # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
 # chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
 
+if [[ "$run_backup_states" == true ]]; then
+    l_info "Deploying the backup states"
+    run_states "${backup_states[@]}"
+fi
+l_info "Synchronizing files on both nodes."
+run_states "${backup[@]}"
+
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
 
-# states to be applied in desired sequence
-backup=(
-   "provisioner.backup"
-   "motr.backup"
-   "s3server.backup"
-   "hare.backup"
-   "ha.iostack-ha.backup"
-   "sspl.backup"
-   "csm.backup"
-)
-l_info "Synchronizing files on both nodes."
-run_states "${backup[@]}"
