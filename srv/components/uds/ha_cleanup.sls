@@ -18,8 +18,8 @@
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 Teardown UDS HA:
   cmd.run:
-    - name: /opt/seagate/cortx/ha/conf/script/prov-ha-uds-reset
-    - onlyif: test -x /opt/seagate/cortx/ha/conf/script/prov-ha-uds-reset
+    - name: sh /opt/seagate/cortx/ha/conf/script/prov-ha-uds-reset
+    - onlyif: test -e /opt/seagate/cortx/ha/conf/script/prov-ha-uds-reset
 {% else %}
 No post install for UDS:
   test.show_notification:

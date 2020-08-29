@@ -128,12 +128,12 @@ Change controller stop file permissions:
 
 Start driver:
   cmd.run:
-    - name: /opt/cos/start-driver.sh
+    - name: sh /opt/cos/start-driver.sh
     - cwd: /opt/cos
-    - onlyif: test -x /opt/cos/start-driver.sh
+    - onlyif: test -e /opt/cos/start-driver.sh
 
 Start controller:
   cmd.run:
-    - name: /opt/cos/start-controller.sh
+    - name: sh /opt/cos/start-controller.sh
     - cwd: /opt/cos
-    - onlyif: test -x /opt/cos/start-controller.sh
+    - onlyif: test -e /opt/cos/start-controller.sh
