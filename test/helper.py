@@ -235,6 +235,7 @@ class VagrantParsedRow:
         self.ts, self.target, self.data_type = row[:3]
         self.data = row[3:]
 
+
 # TODO check packer is available
 @attr.s
 class Vagrant:
@@ -490,6 +491,7 @@ class VagrantBox:
         converter=lambda v: v.resolve() if v else None,
         default=None
     )
+
     @path.validator
     def _check_path(self, attribute, value):
         if value and (not value.is_file):
@@ -772,7 +774,7 @@ def ensure_motr_is_online(mhost, num_tries=120):
     # ensure that motr in online
     re_status = re.compile(r' +\[ *(.+)\]')
     for i in range(num_tries):
-        motr_status = mhost.check_output("hctl mero status")
+        motr_status = mhost.check_output("hctl motr status")
         logger.debug('motr status, try {}: {}'.format(i + 1, motr_status))
         for line in motr_status.split('\n'):
             m = re_status.match(line)

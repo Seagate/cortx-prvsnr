@@ -17,19 +17,30 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Optional
+from typing import Optional, List
 
 from . import config
 from .utils import dump_yaml, run_subprocess_cmd
 
 
 # TODO TEST EOS-8473
-def setup(profile_paths: Optional[dict] = None, clean=False):
+def setup(
+        profile_paths: Optional[dict] = None,
+        clean: Optional[bool] = False,
+        add_file_roots: Optional[List] = None,
+        add_pillar_roots: Optional[List] = None,
+):
     if profile_paths is None:
         profile_paths = config.profile_paths()
 
     if clean:
         run_subprocess_cmd(['rm', '-rf', str(profile_paths['base_dir'])])
+
+    if add_file_roots is None:
+        add_file_roots = []
+
+    if add_pillar_roots is None:
+        add_pillar_roots = []
 
     profile_paths['base_dir'].mkdir(parents=True, exist_ok=True)
     profile_paths['ssh_dir'].mkdir(parents=True, exist_ok=True)
@@ -51,10 +62,10 @@ def setup(profile_paths: Optional[dict] = None, clean=False):
     # Note. for now the same for master (salt-ssh) and
     #       minion (salt-call --local) settings
     profile_config = {
-        'pki_dir': str(profile_paths['salt_pillar_dir']),
+        'pki_dir': str(profile_paths['salt_pki_dir']),
         'cachedir': str(profile_paths['salt_cache_dir']),
         'file_roots': {
-            'base': [
+            'base': [str(d.resolve()) for d in add_file_roots] + [
                 str(profile_paths['salt_fileroot_dir']),
                 str(profile_paths['salt_factory_fileroot_dir']),
                 str(config.BUNDLED_SALT_FILEROOT_DIR)
@@ -62,8 +73,10 @@ def setup(profile_paths: Optional[dict] = None, clean=False):
         },
         'pillar_roots': {
             'base': [
-                str(config.BUNDLED_SALT_PILLAR_DIR),
-                str(profile_paths['salt_pillar_dir'])
+                str(d.resolve()) for d in add_pillar_roots
+            ] + [
+                str(profile_paths['salt_pillar_dir']),
+                str(config.BUNDLED_SALT_PILLAR_DIR)
             ]
         }
     }

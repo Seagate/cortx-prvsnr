@@ -18,6 +18,7 @@
 #
 
 from typing import List, Dict, Type, Optional, Iterable
+import socket
 import logging
 import uuid
 from pathlib import Path
@@ -25,7 +26,8 @@ from pathlib import Path
 from .. import (
     inputs,
     config,
-    profile
+    profile,
+    utils
 )
 from ..vendor import attr
 from ..errors import (
@@ -35,6 +37,7 @@ from ..errors import (
 from ..config import (
     ALL_MINIONS,
 )
+from ..pillar import PillarUpdater
 # TODO IMPROVE EOS-8473
 from ..utils import (
     load_yaml,
@@ -52,6 +55,8 @@ from . import (
 
 
 logger = logging.getLogger(__name__)
+
+add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
 
 
 # TODO TEST EOS-8473
@@ -197,7 +202,7 @@ class RunArgsSetup:
         default=None,
         converter=(lambda v: Path(str(v)) if v else v)
     )
-    prvsnr_verion: str = attr.ib(
+    prvsnr_version: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "Provisioner version to setup",
@@ -209,19 +214,46 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "the source for provisioner repo installation",
-                'choices': ['local', 'gitrepo', 'rpm']
+                'choices': ['local', 'gitrepo', 'rpm', 'iso']
             }
         },
         default='rpm'
     )
+    # TODO EOS-12076 validate it is a dir
     local_repo: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "the path to local provisioner repo"
+                'help': "the path to local provisioner repo",
+                'metavar': 'PATH'
             }
         },
         default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)) if v else v)
+        converter=(lambda v: Path(str(v)) if v else v),
+        validator=utils.validator_path_exists
+    )
+    # TODO EOS-12076 validate it is a file
+    iso_cortx: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the path to a CORTX ISO",
+                'metavar': 'PATH'
+            }
+        },
+        default=None,
+        converter=(lambda v: Path(str(v)) if v else v),
+        validator=utils.validator_path_exists
+    )
+    # TODO EOS-12076 validate it is a file
+    iso_cortx_deps: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the path to a CORTX dependencies ISO",
+                'metavar': 'PATH'
+            }
+        },
+        default=None,
+        converter=(lambda v: Path(str(v)) if v else v),
+        validator=utils.validator_path_exists
     )
     target_build: str = attr.ib(
         metadata={
@@ -244,6 +276,14 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "turn on high availbility setup",
+            }
+        },
+        default=False
+    )
+    glusterfs_docker: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "configure in-docker glusterfs servers",
             }
         },
         default=False
@@ -289,8 +329,10 @@ class RunArgsSetupProvisionerBase:
     name: str = RunArgsSetup.name
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
-    prvsnr_verion: str = RunArgsSetup.prvsnr_verion
+    prvsnr_version: str = RunArgsSetup.prvsnr_version
     local_repo: str = RunArgsSetup.local_repo
+    iso_cortx: str = RunArgsSetup.iso_cortx
+    iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
     target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
@@ -301,17 +343,18 @@ class RunArgsSetupProvisionerBase:
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     ha: bool = RunArgsSetup.ha
+    glusterfs_docker: bool = RunArgsSetup.glusterfs_docker
     nodes: str = attr.ib(
+        kw_only=True,
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
                     "cluster node specification, "
-                    "format: [id:][user@]hostname[:port]"
+                    "format: id:[user@]hostname[:port]"
                 ),
-                'nargs': '*'
+                'nargs': '+'
             }
         },
-        default=None,
         converter=(
             lambda specs: [
                 (s if isinstance(s, Node) else Node.from_spec(s))
@@ -327,6 +370,27 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     @property
     def secondaries(self):
         return self.nodes[1:]
+
+    def __attrs_post_init__(self):
+        if self.source == 'local':
+            if not self.local_repo:
+                raise ValueError("local repo is undefined")
+        elif self.source == 'iso':
+            if not self.iso_cortx:
+                raise ValueError("ISO for CORTX is undefined")
+            if self.iso_cortx.suffix != '.iso':
+                raise ValueError("ISO extension is expected for CORTX repo")
+            if not self.iso_cortx_deps:
+                raise ValueError("ISO for CORTX dependencies is undefined")
+            if self.iso_cortx_deps.suffix != '.iso':
+                raise ValueError(
+                    "ISO extension is expected for CORTX deps repo"
+                )
+            if self.iso_cortx.name == self.iso_cortx_deps.name:
+                raise ValueError(
+                    f"ISO files for CORTX and CORTX dependnecies "
+                    "have the same name: {self.iso_cortx.name}"
+                )
 
 
 @attr.s(auto_attribs=True)
@@ -386,11 +450,21 @@ class SetupProvisioner(CommandParserFillerMixin):
     def _resolve_connections(self, nodes: List[Node], ssh_client):
         addrs = {}
 
+        # TODO EOS-11511 improve later
+        # the problem: local hostname might appear in grains
+        # (probably for VMs only)
+
+        local_hostname = socket.gethostname()
+
         for node in nodes:
             addrs[node.minion_id] = set(
                 [
                     v for v in node.addrs
-                    if v not in (config.LOCALHOST_IP, config.LOCALHOST_DOMAIN)
+                    if v not in (
+                        config.LOCALHOST_IP,
+                        config.LOCALHOST_DOMAIN,
+                        local_hostname
+                    )
                 ]
             )
 
@@ -479,7 +553,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         repo_tgz(
             repo_tgz_path,
             project_path=run_args.local_repo,
-            version=run_args.prvsnr_verion,
+            version=run_args.prvsnr_version,
             include_dirs=['pillar', 'srv', 'files', 'api', 'cli']
         )
 
@@ -553,7 +627,9 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-        conns_pillar_path = pillar_all_dir / 'connections.sls'
+        conns_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'connections.sls'
+        )
         if run_args.rediscover or not conns_pillar_path.exists():
             self._resolve_connections(run_args.nodes, ssh_client)
             conns = {
@@ -566,7 +642,9 @@ class SetupProvisioner(CommandParserFillerMixin):
                 node.ping_addrs = conns[node.minion_id]
 
         # IMRPOVE EOS-8473 it's not a salt minion config thing
-        specs_pillar_path = pillar_all_dir / 'node_specs.sls'
+        specs_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'node_specs.sls'
+        )
         if run_args.rediscover or not specs_pillar_path.exists():
             specs = {
                 node.minion_id: {
@@ -580,7 +658,9 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # resolve salt masters
         # TODO IMPROVE EOS-8473 option to re-build masters
-        masters_pillar_path = pillar_all_dir / 'masters.sls'
+        masters_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'masters.sls'
+        )
         if run_args.rediscover or not masters_pillar_path.exists():
             masters = self._prepare_salt_masters(run_args)
             logger.info(
@@ -715,6 +795,54 @@ class SetupProvisioner(CommandParserFillerMixin):
                 ]
             )
 
+    def _prepare_cortx_repo_pillar(
+        self, profile_paths, repos_data: Dict
+    ):
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_all_dir.mkdir(parents=True, exist_ok=True)
+
+        pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'release.sls'
+        )
+        if pillar_path.exists():
+            pillar = load_yaml(pillar_path)
+        else:
+            pillar = {
+                'release': {
+                    'base': {
+                        'repos': repos_data
+                    }
+                }
+            }
+            dump_yaml(pillar_path,  pillar)
+
+        return pillar
+
+    def _prepare_glusterfs_pillar(self, profile_paths, in_docker=False):
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_all_dir.mkdir(parents=True, exist_ok=True)
+
+        glusterfs_pillar_path = pillar_all_dir / 'glusterfs.sls'
+        if glusterfs_pillar_path.exists():
+            data = load_yaml(glusterfs_pillar_path)['glusterfs']
+        else:
+            data = {
+                'in_docker': in_docker,
+                'volumes': {
+                    'volume_salt_cache_jobs': {
+                        'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
+                        'mount_dir': '/var/cache/salt/master/jobs'
+                    },
+                    'volume_prvsnr_data': {
+                        'export_dir': '/srv/glusterfs/volume_prvsnr_data',
+                        'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
+                    }
+                }
+            }
+            dump_yaml(glusterfs_pillar_path,  dict(glusterfs=data))
+
+        return data
+
     def _clean_salt_cache(self, paths):
         run_subprocess_cmd(
             [
@@ -723,7 +851,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, **kwargs):  # noqa: C901 FIXME
+    def run(self, nodes, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm
@@ -731,7 +859,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # validation
         # TODO IMPROVE EOS-8473 make generic logic
-        run_args = RunArgsSetupProvisionerGeneric(**kwargs)
+        run_args = RunArgsSetupProvisionerGeneric(nodes=nodes, **kwargs)
 
         # TODO IMPROVE EOS-8473 better configuration way
         salt_logger = logging.getLogger('salt.fileclient')
@@ -756,7 +884,21 @@ class SetupProvisioner(CommandParserFillerMixin):
         paths = config.profile_paths(
             location=setup_location, setup_name=setup_name
         )
-        profile.setup(paths, clean=run_args.update)
+
+        add_file_roots = []
+        add_pillar_roots = []
+        if run_args.source == 'iso':
+            add_file_roots = [
+                run_args.iso_cortx.parent,
+                run_args.iso_cortx_deps.parent
+            ]
+
+        profile.setup(
+            paths,
+            clean=run_args.update,
+            add_file_roots=add_file_roots,
+            add_pillar_roots=add_pillar_roots
+        )
 
         logger.info(f"Profile location '{paths['base_dir']}'")
 
@@ -800,12 +942,17 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
-            # TODO IMPROVE EOS-8473 validator
-            if not run_args.local_repo:
-                raise ValueError("local repo is undefined")
             # TODO IMPROVE EOS-8473 hard coded
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
+            )
+        elif run_args.source == 'iso':
+            logger.info("Preparing CORTX repos pillar")
+            self._prepare_cortx_repo_pillar(
+                paths, {
+                    'cortx': f"salt://{run_args.iso_cortx.name}",
+                    'cortx_deps': f"salt://{run_args.iso_cortx_deps.name}"
+                }
             )
 
         if run_args.ha and not run_args.field_setup:
@@ -837,19 +984,80 @@ class SetupProvisioner(CommandParserFillerMixin):
         # APPLY CONFIGURATION
 
         logger.info("Installing Cortx yum repositories")
-        ssh_client.state_apply('cortx_repos')
+        # TODO IMPROVE DOC EOS-12076 Iso installation logic:
+        #   - iso files are copied to user local file roots on all remotes
+        #     (TODO consider user shared, currently glusterfs
+        #      is not enough trusted)
+        #   - iso is mounted to a location inside user local data
+        #   - a repo file is created and pointed to the mount directory
+        if run_args.source == 'iso':  # TODO EOS-12076 IMPROVE hard-coded
+            # copy ISOs onto remotes and mount
+            ssh_client.state_apply('repos')
+        else:
+            ssh_client.state_apply('cortx_repos')
 
-        if run_args.ha:
-            volumes = {
-                'volume_salt_cache_jobs': {
-                    'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
-                    'mount_dir': '/var/cache/salt/master/jobs'
-                },
-                'volume_prvsnr_data': {
-                    'export_dir': '/srv/glusterfs/volume_prvsnr_data',
-                    'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
+        logger.info("Setting up paswordless ssh")
+        ssh_client.state_apply('ssh')
+
+        logger.info("Checking paswordless ssh")
+        ssh_client.state_apply('ssh.check')
+
+        # FIXME: Commented because execution hung at firewall configuration
+        # logger.info("Configuring the firewall")
+        # ssh_client.state_apply('firewall')
+
+        logger.info("Installing SaltStack")
+        ssh_client.state_apply('saltstack')
+
+        if run_args.source == 'local':
+            logger.info("Installing provisioner from a local source")
+            ssh_client.state_apply('provisioner.local')
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
+
+        #   CONFIGURE SALT
+        logger.info("Configuring salt minions")
+        res = ssh_client.state_apply('provisioner.configure_salt_minion')
+
+        updated_keys = []
+        # TODO IMPROVE EOS-8473
+        minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
+        for node_id, _res in res.items():
+            if _res[minion_pki_state_id]['changes']:
+                updated_keys.append(node_id)
+        logger.debug(f'Updated salt minion keys: {updated_keys}')
+
+        # TODO DOC how to pass inline pillar
+
+        # TODO IMPROVE EOS-9581 log masters as well
+        logger.info("Configuring salt masters")
+        ssh_client.state_apply(
+            'provisioner.configure_salt_master',
+            targets=master_targets,
+            fun_kwargs={
+                'pillar': {
+                    'updated_keys': updated_keys
                 }
             }
+        )
+
+        if run_args.ha:
+            # TODO glusterfs use usual pillar instead inline one
+            glusterfs_pillar = self._prepare_glusterfs_pillar(
+                paths, in_docker=run_args.glusterfs_docker
+            )
+            volumes = glusterfs_pillar['volumes']
+
+            if glusterfs_pillar['in_docker']:
+                # Note. there is an issue in salt-ssh
+                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
+                # so we have to apply docker using on-server salt
+                logger.info("Installing Docker")
+                ssh_client.cmd_run(
+                    "salt-call --local state.apply components.misc_pkgs.docker"
+                )
 
             logger.info("Configuring glusterfs servers")
             # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
@@ -920,53 +1128,6 @@ class SetupProvisioner(CommandParserFillerMixin):
                     'provisioner.factory_profile',
                     targets=run_args.primary.minion_id,
                 )
-
-        logger.info("Setting up paswordless ssh")
-        ssh_client.state_apply('ssh')
-
-        logger.info("Checking paswordless ssh")
-        ssh_client.state_apply('ssh.check')
-
-        # FIXME: Commented because execution hung at firewall configuration
-        # logger.info("Configuring the firewall")
-        # ssh_client.state_apply('firewall')
-
-        logger.info("Installing SaltStack")
-        ssh_client.state_apply('saltstack')
-
-        if run_args.source == 'local':
-            logger.info("Installing provisioner from a local source")
-            ssh_client.state_apply('provisioner.local')
-        else:
-            raise NotImplementedError(
-                f"{run_args.source} provisioner source is not supported yet"
-            )
-
-        #   CONFIGURE SALT
-        logger.info("Configuring salt minions")
-        res = ssh_client.state_apply('provisioner.configure_salt_minion')
-
-        updated_keys = []
-        # TODO IMPROVE EOS-8473
-        minion_pki_state_id = 'file_|-salt_minion_pki_set_|-/etc/salt/pki/minion_|-recurse'  # noqa: E501
-        for node_id, _res in res.items():
-            if _res[minion_pki_state_id]['changes']:
-                updated_keys.append(node_id)
-        logger.debug(f'Updated salt minion keys: {updated_keys}')
-
-        # TODO DOC how to pass inline pillar
-
-        # TODO IMPROVE EOS-9581 log masters as well
-        logger.info("Configuring salt masters")
-        ssh_client.state_apply(
-            'provisioner.configure_salt_master',
-            targets=master_targets,
-            fun_kwargs={
-                'pillar': {
-                    'updated_keys': updated_keys
-                }
-            }
-        )
 
         # FIXME EOS-8473 not necessary for rpm setup
         logger.info("Installing provisioner API")

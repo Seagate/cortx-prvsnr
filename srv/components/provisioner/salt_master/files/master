@@ -668,6 +668,7 @@ state_output: mixed
 #
 file_roots:
   base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/salt     # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user   # old style
     - /opt/seagate/cortx/provisioner/srv
@@ -737,9 +738,9 @@ file_roots:
 #  - roots
 #
 # To use multiple backends list them in the order they are searched:
-#fileserver_backend:
-#  - git
-#  - roots
+fileserver_backend:
+  - roots
+  - gitfs
 #
 # Uncomment the line below if you do not want the file_server to follow
 # symlinks when walking the filesystem tree. This is set to True
@@ -808,6 +809,9 @@ file_roots:
 # environments.
 # Note: file:// repos will be treated as a remote, so refs you want used must
 # exist in that repo as *local* refs.
+gitfs_remotes:
+   - https://github.com/saltstack-formulas/docker-formula
+
 #gitfs_remotes:
 #  - git://github.com/saltstack/salt-states.git
 #  - file:///var/git/saltmaster
@@ -846,8 +850,9 @@ file_roots:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
 # Entries in this list can be formatted either as a simple string, or as a

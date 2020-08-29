@@ -157,20 +157,20 @@ function run_states {
         else
             if [[ "$state" == "sspl" ]]; then
                 # Execute first on srvnode-2 then on srvnode-1.
-                l_info "Installing 'components.$state' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+                l_info "Installing 'components.$state' for non primary nodes"
+                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Installing 'components.$state' for srvnode-1"
+                l_info "Installing 'components.$state' for primary node"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "sync.software.openldap" ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
-                l_info "Installing 'components.$state' for srvnode-1"
+                l_info "Installing 'components.$state' for primary node"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Installing 'components.$state' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+                l_info "Installing 'components.$state' for non primary nodes"
+                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
                 l_info "Installing 'components.$state' for both nodes"
@@ -180,7 +180,7 @@ function run_states {
         fi
         if [[ "$state" == "hare" ]]; then
             l_info "Bootstraping cluster"
-            hctl bootstrap --mkfs /var/lib/hare/cluster.yaml >>$LOG_FILE 2>&1
+            hctl bootstrap --mkfs /var/lib/hare/cluster.yaml 2>&1|tee ${LOG_FILE}
         fi
 
     done

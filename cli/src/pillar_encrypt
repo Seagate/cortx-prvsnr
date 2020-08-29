@@ -70,9 +70,11 @@ class PillarEncrypt(object):
                 if (("secret" in key) or ("password" in key)) and (val):
                     try:
                         (Cipher.decrypt(cipher_key, val.encode("utf-8"))).decode("utf-8")
-                        data[key] = val
                         # Already encrypted, do nothing
+                        data[key] = val
                     except CipherInvalidToken:
+                        val = val.strip('\"')
+                        val = val.strip('\'')
                         data[key] = str(Cipher.encrypt(cipher_key, bytes(val,'utf8')),'utf-8')
         return data
 
@@ -84,7 +86,7 @@ class PillarEncrypt(object):
             else:
                 if (("secret" in key) or ("password" in key)) and (val):
                     try:
-                        data[key] = (Cipher.decrypt(cipher_key, val.encode("utf-8"))).decode("utf-8")
+                        data[key] = "'{0}'".format((Cipher.decrypt(cipher_key, val.encode("utf-8"))).decode("utf-8"))
                     except CipherInvalidToken:
                         # Already decrypted, nothing to do
                         data[key] = val
