@@ -104,7 +104,7 @@ controlpath_states=(
 # states to be applied in desired sequence
 backup_states=(
     "provisioner.backup"
-    "motr.backup"
+    # "motr.backup" # TODO: Awaiting EOS-12637 fix
     "s3server.backup"
     "hare.backup"
     "ha.iostack-ha.backup"
@@ -342,11 +342,9 @@ fi
 # chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
 
 if [[ "$run_backup_states" == true ]]; then
-    l_info "Deploying the backup states"
+    l_info "Synchronizing files on both nodes."
     run_states "${backup_states[@]}"
 fi
-l_info "Synchronizing files on both nodes."
-run_states "${backup[@]}"
 
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
