@@ -75,7 +75,9 @@ prereq_states=(
 sync_states=(
     "sync.software.openldap"
     "sync.software.rabbitmq"
-    "sync.files"
+    "ha.iostack-ha.backup"
+    "ha.sspl.backup"
+    "ha.csm.backup"
 )
 
 # states to be applied in desired sequence
@@ -137,8 +139,9 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
+    --replacenode-states                         deploy only states for refresh_config on node and add_node
 "
 }
 

@@ -329,8 +329,14 @@ l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
 
 # states to be applied in desired sequence
-#backup=(
-#    "sync.files"
-#)
-#l_info "Synchronizing files on both nodes."
-#run_states "${backup[@]}"
+backup=(
+   "provisioner.backup"
+   "motr.backup"
+   "s3server.backup"
+   "hare.backup"
+   "ha.iostack-ha.backup"
+   "sspl.backup"
+   "csm.backup"
+)
+l_info "Synchronizing files on both nodes."
+run_states "${backup[@]}"
