@@ -103,9 +103,12 @@ For detailed error logs, please see: $LOG_FILE
 }
 
 function intrpt_handler {
-    echo "\
+    echo -e "\n\n\
+------------------------------------------------------------------
 Received Ctrl-c signal, exiting Gracefully.
-For detailed logs, please see: $LOG_FILE" | tee -a ${LOG_FILE}
+For detailed logs, please see: $LOG_FILE
+------------------------------------------------------------------" | tee -a ${LOG_FILE}
+
     exit 1
 }
 
@@ -223,22 +226,26 @@ ctrl_ip_addr_get_set()
 
     echo "Please provide the IP addresses for storage enclosure (should be already configured)" | tee -a ${LOG_FILE}
     while true; do
-        read -p "Enter IP address configured for Controller A: " ctrl_ip_a
+        echo -n "Enter IP address configured for Controller A: " | tee -a ${LOG_FILE}
+        read ctrl_ip_a
+        echo -e "\nDEBUG: input received for Controller A IP: $ctrl_ip_a" >> ${LOG_FILE}
         if [[ -z $ctrl_ip_a ]]; then
-            echo "Please provide valid input" | tee -a ${LOG_FILE}
+            echo "Please provide the valid input" | tee -a ${LOG_FILE}
         else
-            echo "IP address received for Controller A: $ctrl_ip_a" >> ${LOG_FILE}
+            echo "DEBUG: IP address received for Controller A: $ctrl_ip_a" >> ${LOG_FILE}
             break
         fi
     done
 
     #TODO: remove duplicate code for controller B, add it in for loop.
     while true; do
-        read -p "Enter IP address configured for Controller B: " ctrl_ip_b
+        echo -n "Enter IP address configured for Controller B: "  | tee -a ${LOG_FILE}
+        read ctrl_ip_b
+        echo -e "\nDEBUG: input received for Controller B IP: $ctrl_ip_b" >> ${LOG_FILE}
         if [[ -z $ctrl_ip_b ]]; then
             echo "Please provide valid input" | tee -a ${LOG_FILE}
         else
-            echo "IP address received for Controller B: $ctrl_ip_b" >> ${LOG_FILE}
+            echo "DEBUG: IP address received for Controller B: $ctrl_ip_b" >> ${LOG_FILE}
             break
         fi
     done
@@ -389,10 +396,14 @@ new_hostname_get()
     # Prompt user for the new hostname (suggest sample hostname as an example)
 
     if [[ "$_tnode" == "Server A" ]]; then
-        read -p "Enter new hostname for server A (press enter to keep default [$default_hostname_nodeA]): " hostname_A
+        echo -n "Enter new hostname for server A (press enter to keep default [$default_hostname_nodeA]): " | tee -a ${LOG_FILE}
+        read hostname_A
+        echo -e "\nDEBUG: input received for Server A hostname: $default_hostname_nodeA" >> ${LOG_FILE}
         hostname_A=${hostname_A:-$default_hostname_nodeA}
     else
-        read -p "Enter new hostname for server B (press enter to keep default [$default_hostname_nodeB]): " hostname_B
+        echo -n "Enter new hostname for server B (press enter to keep default [$default_hostname_nodeB]): " | tee -a ${LOG_FILE}
+        read hostname_B
+        echo -e "\nDEBUG: input received for Server B hostname: $default_hostname_nodeB" >> ${LOG_FILE}
         hostname_B=${hostname_B:-$default_hostname_nodeB}
     fi
 }
@@ -465,7 +476,9 @@ hostname_validate_get_set()
         done
         _proceed=true
         while true; do
-            read -p "Do you want to proceed with these host names? (y/n):" _ans
+            echo -n "Do you want to proceed with these host names? (y/n):" | tee -a ${LOG_FILE}
+            read _ans
+            echo -e "\nDEBUG: input received $_ans" >> ${LOG_FILE}
             case $_ans in
                 [Yy]* ) _proceed=true; break;;
                 [Nn]* ) _proceed=false; break;;
@@ -480,19 +493,21 @@ hostname_validate_get_set()
             # User don't wants to proceed with the hostnames
             # Prompt the user again
             while true; do
-                read -p "Which server do you want to update the hostname of? (A/B/both):" _ans
+                echo -n "Which server do you want to update the hostname of? (A/B/both):" | tee -a ${LOG_FILE}
+                read _ans
+                echo -e "\nDEBUG: _ans:$_ans, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
                 case $_ans in
-                    [Aa]* ) _set_hostnames=("true" "false");
+                    [Aa]) _set_hostnames=("true" "false");
                             for i in "${!_set_hostnames[@]}"; do
                                 echo "DEBUG: case A: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
                             done
                             break;;
-                    [Bb]* ) _set_hostnames=("false" "true");
+                    [Bb]) _set_hostnames=("false" "true");
                             for i in "${!_set_hostnames[@]}"; do
-                                echo "DEBUG: case A: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
+                                echo "DEBUG: case B: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
                             done
                             break;;
-                    [both]*) _set_hostnames=("true" "true");
+                    both) _set_hostnames=("true" "true");
                             for i in "${!_set_hostnames[@]}"; do
                                 echo "DEBUG: case both: i=$i, _set_hostnames[$i]=${_set_hostnames[$i]}" >> ${LOG_FILE}
                             done
@@ -508,7 +523,10 @@ hostname_validate_get_set()
     new_hostname_set "${_set_hostnames[@]}"
 }
 
-dns_update_hostnames()
+ping_status_A_to_B=false
+ping_status_B_to_A=false
+
+hosts_resolution_check()
 {
     # grab the IP address for MGMT interface from 'ip a' output
     # Check if hostnames are getting resolved to mgmt ip addresses
@@ -531,24 +549,33 @@ dns_update_hostnames()
     if ping -c1 -W2  $hostname_B > /dev/null; then
         # Ping is successfull, no need to add entry in /etc/hosts
         echo "Server B ($hostname_B) is reachable from ServerA ($hostname_A) using hostname" | tee -a ${LOG_FILE}
-        _ping_status_A_to_B=true
+        ping_status_A_to_B=true
     else
         # Ping failed, need to add entry in /etc/hosts
         echo "ERROR: Server B ($hostname_B) is not reachable from server A ($hostname_A) using hostname" |tee -a ${LOG_FILE}
-        _ping_status_A_to_B=false
+        ping_status_A_to_B=false
     fi
 
     echo "Checking if server A ($hostname_A) is reachable from Server B ($hostname_B) using hostname" | tee -a ${LOG_FILE}
     if $ssh_cmd ${pvt_ip_b} "ping -c1 -W2  $hostname_A" > /dev/null; then
         # Ping is successfull, no need to add entry in /etc/hosts
         echo "Server A ($hostname_A) is reachable from ServerB ($hostname_B) using hostname" | tee -a ${LOG_FILE}
-        _ping_status_B_to_A=true
+        ping_status_B_to_A=true
     else
         # Ping failed, need to add entry in /etc/hosts
         echo "ERROR: Server A ($hostname_A) is not reachable from server B ($hostname_B) using hostname" |tee -a ${LOG_FILE}
-        _ping_status_B_to_A=false
+        ping_status_B_to_A=false
     fi
 
+    if [[ "$_ping_status_A_to_B" == true && "$_ping_status_B_to_A" == true ]]; then
+        # No need to add dns entry
+        echo "Hostnames are reachable from each other, no need add hosts entry in /etc/hosts" | tee -a ${LOG_FILE}
+        return
+    fi
+}
+
+dns_update_hostnames()
+{
     # Steps to add entries in /etc/hosts
     # 1. Is mgmt_ip_A already added in /etc/hosts on node A?
     #     1.1 Yes: mgmt_ip_A is added in /etc/hosts
@@ -765,8 +792,8 @@ ssh_config_update()
     # 3. scp /root/.ssh/config file from Server A to Server B
     # 4. Check ssh connectivity from server A to server B using alias/minion id (srvnode-2)
     # 5. Check ssh connectivity from server B to server A using alias/minion id (srvnode-1)
-    # 6. Check if the ssh works without password from Server A to Server B using new hostname
-    # 7. Check if the ssh works without password from Server B to Server A using new hostname
+    # 6. Check if the ssh works without password from Server A to Server B using hostname
+    # 7. Check if the ssh works without password from Server B to Server A using hostname
 
     _update_ssh_conf_A=true
     if grep  "HostName" /root/.ssh/config | grep -q "$hostname_A"; then
@@ -956,7 +983,7 @@ main()
     ip a >> ${LOG_FILE}
 
     echo "DEBUG: Capturing output of 'ip a' on Server B for analysis (if needed)" >> ${LOG_FILE}
-    $ssh_cmd ${pvt_ip_b} "ip a" |>> ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "ip a" >> ${LOG_FILE}
 
     echo "DEBUG: Private IP address Node A: $pvt_ip_a" >> ${LOG_FILE}
     echo "DEBUG: Private IP address Node B: $pvt_ip_b" >> ${LOG_FILE}
@@ -974,11 +1001,29 @@ main()
     #TODO: Remove this when enclosure communication is switched to in-band.
     #ctrl_ip_addr_get_set
 
-    #4. check if the hostname contains 'seagate.com', if yes, take input for new hostname
-    hostname_validate_get_set
-    exit 0
-    #5. update hostnames in local dns (/etc/hosts)
-    dns_update_hostnames
+    hosts_resolution_check
+    if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false ]]; then
+        #4. check if the hostname contains 'seagate.com', if yes, take input for new hostname
+        hostname_validate_get_set
+    fi
+
+    if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false ]]; then
+        #5. update hostnames in local dns (/etc/hosts)
+        echo "Servers are not reachable from each other, checking if adding hosts entries in /etc/hosts helps" | tee -a ${LOG_FILE}
+        dns_update_hostnames
+        # Check the connectivity again after adding entries in /etc/hosts
+        echo "Checking the servers connectivity again after adding entries in /etc/hosts" | tee -a ${LOG_FILE}
+        hosts_resolution_check
+        if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false ]]; then
+            if [[ "$ping_status_A_to_B" == false ]]; then
+                echo "ERROR: Server B ($hostname_B) is not reachable from Server A ($hostname_A)" | tee -a ${LOG_FILE}
+            elif [[ "$ping_status_B_to_A" == false ]]; then
+                echo "ERROR: Server A ($hostname_A) is not reachable from Server B ($hostname_B)" | tee -a ${LOG_FILE}
+            fi
+            echo "Please ensure the servers are reachable from each other and rerun the command" | tee -a ${LOG_FILE}
+            exit 1
+        fi
+    fi
 
     #6. Update hostnames in ssh config files
     ssh_config_update
@@ -986,11 +1031,7 @@ main()
     #7. Update minion files on both the nodes to point master to server A hostname
     minion_config_update
 
-    #TODO: Check if .seagate.com hostnames are already added in DNS servers in customer environment.
-    
     # Test cases:
-    # 1. choose to update the hostnames
-    # 2. choose to update hostname for A, then B at then both one after another
     # 3. Add the entry in the /etc/hosts file with mgmt ip, check if the script updates the entry correctly.
     # 4. Ctrl-C the script in between, check if the script exits gracefully
     # 5. Ctrl-C the scipt and rerun the script again, check if it overwrites anything in:
