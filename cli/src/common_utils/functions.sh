@@ -1606,6 +1606,7 @@ function eos_pillar_load_default {
     fi
 }
 
+# TODO TEST EOS-12508
 #   update_release_pillar <target_release>
 #   e.g. update_release_pillar integration/centos-7.7.1908/859
 #
@@ -1616,14 +1617,21 @@ function eos_pillar_load_default {
 #
 #   Args:
 #       target_release: tartget release version for all the EOS components
+#       public_release: mark the release as public
 function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
+    local _public_release="${2:-false}"
+
     local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
     _line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
+
+    if [[ "$_public_release" == true ]]; then
+        sed "s/type: \([^ ]\+\)/type: public/g" $_release_sls
+    fi
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>

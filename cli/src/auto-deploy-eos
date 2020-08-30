@@ -56,6 +56,10 @@ bmc1_passwd_opt=false
 bmc2_user_opt=false
 bmc2_passwd_opt=false
 
+
+cortx_repo=
+public_release=false
+
 usage()
 {
     echo "\
@@ -190,6 +194,12 @@ while [[ $# -gt 0 ]]; do
             [ -z "$2" ] &&
                 echo "Error: Target build not provided" && exit 1;
             tgt_build="$2"
+            if (echo "$tgt_build" | grep colo.seagate.com); then
+                cortx_repo="$tgt_build"
+            else
+                public_release=true
+                cortx_repo="$tgt_build/cortx_iso"
+            fi
             shift 2 ;;
         --m1)
             bmc1_passwd_opt=true
@@ -246,8 +256,14 @@ ssh_tool_pkg=$(basename $ssh_tool)
     yum install -y $ssh_tool_pkg
 }
 
+# TODO TEST EOS-12508
 install_prvsnr_cli()
 {
+    local _cortx_deps_repo
+    local _system_repo
+    local _saltstack_repo
+    local _epel_repo
+
     # Install eos-prvsnr-cli rpm from ci-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
@@ -257,8 +273,30 @@ install_prvsnr_cli()
             echo "Please clean-up previous installtion from both the nodes and retry"
             exit 1
         }
-        yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+        yum install -y $cortx_repo/$(curl -s $cortx_repo/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
         systemctl stop firewalld || true
+
+        if [[ "$public_release" == true ]]; then
+            grep -q "Red Hat" /etc/*-release && {
+                _system_repo="${tgt_build}/rhel7.7"
+            } || {
+                _system_repo="${tgt_build}/centos7.7"
+            }
+
+            _cortx_deps_repo="${tgt_build}/3rd_party"
+            _saltstack_repo="${_cortx_deps_repo}/saltstack-2019.2.0"
+            _epel_repo="${_cortx_deps_repo}/EPEl-7"
+
+            # TODO FIXME EOS-12508 base, extras, updates
+            sed "s/baseurl=.*/baseurl=$_system_repo/g" /etc/yum.repos.d/base.repo
+            sed "s/baseurl=.*/baseurl=$_cortx_deps_repo/g" /etc/yum.repos.d/cortx_commons.repo
+            sed "s/baseurl=.*/baseurl=$_epel_repo/g" /etc/yum.repos.d/epel.repo
+            sed "s/baseurl=.*/baseurl=$_saltstack_repo/g" /etc/yum.repos.d/saltstack.repo
+            # FIXME EOS-12508
+            rm -f /etc/yum.repos.d/extras.repo
+            rm -f /etc/yum.repos.d/updates.repo
+        fi
+
         return 0
     fi
 $remote_cmd <<EOF
@@ -268,8 +306,29 @@ $remote_cmd <<EOF
       echo "Please clean-up previous installtion from both the nodes and retry"
       exit 1
     }
-    yum install -y $tgt_build/$(curl -s $tgt_build/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
+    yum install -y $cortx_repo/$(curl -s $cortx_repo/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)
     systemctl stop firewalld || true
+
+    if [[ "$public_release" == true ]]; then
+        grep -q "Red Hat" /etc/*-release && {
+            _system_repo="${tgt_build}/rhel7.7"
+        } || {
+            _system_repo="${tgt_build}/centos7.7"
+        }
+
+        _cortx_deps_repo="${tgt_build}/3rd_party"
+        _saltstack_repo="${_cortx_deps_repo}/saltstack-2019.2.0"
+        _epel_repo="${_cortx_deps_repo}/EPEL-7"
+
+        # TODO FIXME EOS-12508 base, extras, updates
+        sed "s/baseurl=.*/baseurl=$_system_repo/g" /etc/yum.repos.d/base.repo
+        sed "s/baseurl=.*/baseurl=$_cortx_deps_repo/g" /etc/yum.repos.d/cortx_commons.repo
+        sed "s/baseurl=.*/baseurl=$_epel_repo/g" /etc/yum.repos.d/epel.repo
+        sed "s/baseurl=.*/baseurl=$_saltstack_repo/g" /etc/yum.repos.d/saltstack.repo
+        # FIXME EOS-12508
+        rm -f /etc/yum.repos.d/extras.repo
+        rm -f /etc/yum.repos.d/updates.repo
+    fi
 
 EOF
 }
