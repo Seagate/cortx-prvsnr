@@ -327,8 +327,8 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage.teardown $salt_opts
-    salt '*' state.apply components.system.storage $salt_opts
+    salt 'srvnode-2' state.apply components.system.storage $salt_opts
+    salt 'srvnode-1' state.apply components.system.storage $salt_opts
 fi
 
 if [[ "$run_io_states" == true ]]; then
