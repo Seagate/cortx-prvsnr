@@ -17,9 +17,6 @@
 
 {% set node = grains['id'] %}
 
-include:
-  - components.system.prepare
-
 # Setup network for data interfaces
 Public direct network:
   network.managed:
@@ -28,7 +25,6 @@ Public direct network:
     - type: eth
     - enabled: True
     - nm_controlled: no
-    - userctl: no
     - onboot: yes
     - userctl: no
     - defroute: no
