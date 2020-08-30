@@ -562,6 +562,7 @@ mine_interval: 60
 
 file_roots:
   base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/salt     # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user
     - /opt/seagate/cortx/provisioner/srv
@@ -571,6 +572,12 @@ file_roots:
 # by default. Currently this only applies to the default roots
 # fileserver_backend.
 #fileserver_followsymlinks: False
+
+fileserver_backend:
+  - roots
+  - gitfs
+
+
 #
 # Uncomment the line below if you do not want symlinks to be
 # treated as the files they are pointing to. By default this is set to
@@ -585,6 +592,9 @@ file_roots:
 # has a very large number of files and performance is negatively impacted. Default
 # is False.
 #fileserver_limit_traversal: False
+
+gitfs_remotes:
+   - https://github.com/saltstack-formulas/docker-formula
 
 # The hash_type is the hash to use when discovering the hash of a file on
 # the local fileserver. The default is sha256, but md5, sha1, sha224, sha384
@@ -606,8 +616,9 @@ file_roots:
 
 pillar_roots:
   base:
-    - /opt/seagate/cortx/provisioner/pillar
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /opt/seagate/cortx/provisioner/pillar
 
 
 # Set a hard-limit on the size of the files that can be pushed to the master.

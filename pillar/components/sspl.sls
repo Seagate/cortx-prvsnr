@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 sspl:
@@ -25,8 +23,6 @@ sspl:
     secret: "B4kf1T6Qso"
   role: cortx
   Version: 1.0.0
-  MESSAGING:
-    type: "rabbitmq"
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
@@ -60,7 +56,7 @@ sspl:
     routing_key: "iem-key"
     username: "sspluser"
     password: "sspl4ever"
-    primary_messaging_host: "localhost"
+    primary_rabbitmq_host: "localhost"
   LOGGINGMSGHANDLER:
     iem_routing_enabled: "false"
     iem_log_locally: "true"
@@ -141,15 +137,15 @@ sspl:
     store_type: "consul"
     consul_host: "127.0.0.1"
     consul_port: "8500"
-  INGRESSPROCESSOR:
+  RABBITMQINGRESSPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "actuator-req-queue"
     exchange_name: "sspl-in"
     routing_key: "actuator-req-key"
     username: "sspluser"
     password: "sspl4ever"
-    primary_messaging_host: "localhost"
-  EGRESSPROCESSOR:
+    primary_rabbitmq_host: "localhost"
+  RABBITMQEGRESSPROCESSOR:
     virtual_host: "SSPL"
     queue_name: "sensor-queue"
     exchange_name: "sspl-out"
@@ -163,4 +159,4 @@ sspl:
     message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
     message_signature_expires: "3600"
     iem_route_exchange_name: "sspl-out"
-    primary_messaging_host: "localhost"
+    primary_rabbitmq_host: "localhost"

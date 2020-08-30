@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import sys
@@ -234,6 +232,7 @@ class VagrantParsedRow:
         row = next(csv.reader([self._row]))
         self.ts, self.target, self.data_type = row[:3]
         self.data = row[3:]
+
 
 # TODO check packer is available
 @attr.s
@@ -490,6 +489,7 @@ class VagrantBox:
         converter=lambda v: v.resolve() if v else None,
         default=None
     )
+
     @path.validator
     def _check_path(self, attribute, value):
         if value and (not value.is_file):
@@ -772,7 +772,7 @@ def ensure_motr_is_online(mhost, num_tries=120):
     # ensure that motr in online
     re_status = re.compile(r' +\[ *(.+)\]')
     for i in range(num_tries):
-        motr_status = mhost.check_output("hctl mero status")
+        motr_status = mhost.check_output("hctl motr status")
         logger.debug('motr status, try {}: {}'.format(i + 1, motr_status))
         for line in motr_status.split('\n'):
             m = re_status.match(line)

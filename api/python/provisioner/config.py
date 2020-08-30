@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from pathlib import Path
@@ -46,17 +44,36 @@ PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
 
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
+PRVSNR_DATA_LOCAL_DIR = Path('/var/lib/seagate/cortx/provisioner/local')
 
-PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
+# PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
+PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
+
 # reflects master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
+# PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
 PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
+# PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
 
 PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
 )
+
+# TODO EOS-12076 EOS-12334
+PRVSNR_CORTX_REPOS_BASE_DIR = (
+    PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
+)
+PRVSNR_CORTX_ISO = (
+    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx.iso'
+)
+PRVSNR_CORTX_DEPS_ISO = (
+    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx_deps.iso'
+)
+
+
+# FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
@@ -64,13 +81,24 @@ PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
-PRVSNR_USER_PI_ALL_HOSTS_DIR = PRVSNR_USER_PILLAR_DIR / 'groups/all'
-PRVSNR_DEF_PI_HOST_DIR_TMPL = str(
+# pillar structures
+PRVSNR_DEF_PILLAR_HOST_DIR_TMPL = str(
     PRVSNR_PILLAR_DIR / 'minions/{minion_id}'
 )
-PRVSNR_USER_PI_HOST_DIR_TMPL = str(
+
+PRVSNR_USER_PILLAR_PREFIX = 'uu_'
+PRVSNR_USER_PILLAR_ALL_HOSTS_DIR = PRVSNR_USER_PILLAR_DIR / 'groups/all'
+PRVSNR_USER_PILLAR_HOST_DIR_TMPL = str(
     PRVSNR_USER_PILLAR_DIR / 'minions/{minion_id}'
 )
+
+# PRVSNR_USER_LOCAL_PILLAR_ALL_HOSTS_DIR = (
+#    PRVSNR_USER_LOCAL_PILLAR_DIR / 'groups/all'
+# )
+# PRVSNR_USER_LOCAL_PILLAR_HOST_DIR_TMPL = str(
+#    PRVSNR_USER_LOCAL_PILLAR_DIR / 'minions/{minion_id}'
+# )
+
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
 SEAGATE_USER_FILEROOT_DIR_TMPL = str(
@@ -143,7 +171,8 @@ LOG_FORCED_LOGFILE_CMDS = [
     'reboot_controller',
     'shutdown_controller',
     'create_user',
-    'replace_node'
+    'replace_node',
+    'cmd_run'
 ]
 
 # bundled salt roots dirs
@@ -237,3 +266,7 @@ REPO_BUILD_DIRS = [
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
+
+# Defines a "frozen" list for allowed commands and supported by provisioner
+# API for remote execution
+SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})

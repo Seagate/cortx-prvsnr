@@ -2,20 +2,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 set -euE
@@ -44,62 +42,63 @@ run_ha_states=false
 run_ctrlpath_states=false
 tgt_node=srvnode-2
 
+# states to be applied in desired sequence
 system_states=(
-    # states to be applied in desired sequence
-        "system"
-        "system.storage.multipath"
-        "system.storage"
-        "system.network"
-        "system.network.data.public"
-        "system.network.data.direct"
-        "misc_pkgs.rsyslog"
-        "system.firewall"
-        "system.logrotate"
-        "system.chrony"
-    )
+    "system"
+    "system.storage.multipath"
+    "system.storage.teardown"
+    "system.storage"
+    "system.network"
+    "system.network.data.public"
+    "system.network.data.direct"
+    "misc_pkgs.rsyslog"
+    "system.firewall"
+    "system.logrotate"
+    "system.chrony"
+)
 
+# states to be applied in desired sequence
 prereq_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.rhel_sos"
-        "misc_pkgs.ssl_certs"
-        "ha.haproxy"
-        "misc_pkgs.openldap"
-        "misc_pkgs.rabbitmq"
-        "misc_pkgs.nodejs"
-        "misc_pkgs.elasticsearch"
-        "misc_pkgs.kibana"
-        "misc_pkgs.statsd"
-    )
+    "misc_pkgs.rhel_sos"
+    "misc_pkgs.ssl_certs"
+    "ha.haproxy"
+    "misc_pkgs.openldap"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.elasticsearch"
+    "misc_pkgs.kibana"
+    "misc_pkgs.statsd"
+)
 
+# states to be applied in desired sequence
 sync_states=(
-    # states to be applied in desired sequence
-        "sync.software.openldap"
-        "sync.software.rabbitmq"
-    )
+    "sync.software.openldap"
+    "sync.software.rabbitmq"
+)
 
+# states to be applied in desired sequence
 iopath_states=(
-    # states to be applied in desired sequence
-        "misc_pkgs.lustre"
-        "motr"
-        "s3server"
-    )
+    "misc_pkgs.lustre"
+    "motr"
+    "s3server"
+)
 
+# states to be applied in desired sequence
 ha_states=(
-    # states to be applied in desired sequence
-        "ha.corosync-pacemaker"
-        "hare"
-        "ha.cortx-ha.install"
-        "ha.ees_ha"
-    )
+    "ha.corosync-pacemaker"
+    "hare"
+    "ha.cortx-ha.install"
+    "ha.iostack-ha"
+)
 
+# states to be applied in desired sequence
 controlpath_states=(
-    # states to be applied in desired sequence
-        "sspl"
-        "csm"
-        "uds"
-        "post_setup"
-        "ha.cortx-ha"
-    )
+    "sspl"
+    "csm"
+    "uds"
+    "post_setup"
+    "ha.cortx-ha"
+)
 
 function usage {
   echo "\
@@ -117,7 +116,7 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, ees_ha)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
 "
 }
@@ -178,24 +177,14 @@ function run_states {
         for state in ${states[@]}; do
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
                                 # Execute first on srvnode-2 then on srvnode-1.
-                #l_info "Applying 'components.ha.corosync-pacemaker.prepare' for srvnode-1"
-                # $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
                 
-                l_info "Applying 'components.ha.corosync-pacemaker.install' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.install  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.install' for both nodes"
+                $cmd salt srvnode-[1,2] state.apply components.ha.corosync-pacemaker.install  $salt_opts
                 sleep 2     # Mindfulness break
                 
-                #l_info "Applying 'components.ha.corosync-pacemaker.prepare' for srvnode-2"
-                # $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.prepare  $salt_opts
+                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for both nodes"
+                $cmd salt srvnode-[1,2] state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
                 
-                l_info "Applying 'components.ha.corosync-pacemaker.install' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.install  $salt_opts
-                sleep 2     # Mindfulness break
-
-                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
-                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
                 l_info "Applying 'components.ha.corosync-pacemaker.config.authorize' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.authorize  $salt_opts
                 l_info "Applying 'components.ha.corosync-pacemaker.config.setup_cluster' for srvnode-1"
@@ -219,6 +208,7 @@ function run_states {
             elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "sync.software.openldap"
                 || "$state" == "system.storage.multipath"
+                || "$state" == "sync.files"
                 ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Applying 'components.$state' for srvnode-1"
@@ -262,6 +252,7 @@ function encrypt_pillar {
     python3 ${BASEDIR}/pillar_encrypt
     update_salt
 }
+
 
 parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
@@ -308,6 +299,7 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
+    salt '*' state.apply components.system.storage.teardown $salt_opts
     salt '*' state.apply components.system.storage $salt_opts
 fi
 
@@ -335,3 +327,10 @@ l_info "Backing up pillar files to user space."
 l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
+
+# states to be applied in desired sequence
+#backup=(
+#    "sync.files"
+#)
+#l_info "Synchronizing files on both nodes."
+#run_states "${backup[@]}"

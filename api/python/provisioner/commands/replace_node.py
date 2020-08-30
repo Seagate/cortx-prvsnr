@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import logging
@@ -28,6 +26,7 @@ from ..utils import (
     load_yaml,
     run_subprocess_cmd
 )
+from ..pillar import PillarUpdater
 
 from .setup_provisioner import (
     Node,
@@ -37,6 +36,8 @@ from .setup_provisioner import (
 
 
 logger = logging.getLogger(__name__)
+
+add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
 
 
 @attr.s(auto_attribs=True)
@@ -75,7 +76,7 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
         init=False, default=config.PRVSNR_USER_FACTORY_PROFILE_DIR
     )
     source: str = attr.ib(init=False, default='local')
-    prvsnr_verion: str = attr.ib(init=False, default=None)
+    prvsnr_version: str = attr.ib(init=False, default=None)
     local_repo: str = attr.ib(init=False, default=config.PRVSNR_ROOT_DIR)
     target_build: str = attr.ib(init=False, default=None)
     salt_master: str = attr.ib(init=False, default=None)
@@ -113,7 +114,9 @@ class ReplaceNode(SetupProvisioner):
 
         logger.info("Adjusting node specs info")
         pillar_all_dir = paths['salt_pillar_dir'] / 'groups/all'
-        specs_pillar_path = pillar_all_dir / 'node_specs.sls'
+        specs_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'node_specs.sls'
+        )
         node_specs = load_yaml(specs_pillar_path)['node_specs']
         nodes = {k: Node(k, **v) for k, v in node_specs.items()}
 

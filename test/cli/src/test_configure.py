@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import pytest
@@ -56,9 +54,7 @@ def test_configure_cortx_show(
 
     # TODO python3.6 ???
     pillar_content = mhost.check_output(
-        'provisioner configure_cortx {1} --show'.format(
-            h.PRVSNR_REPO_INSTALL_DIR / 'cli' / 'utils', component
-        )
+        f"provisioner configure_cortx {component} --show"
     )
 
     remote = '--remote {}'.format(mhost.hostname) if remote else ''
@@ -66,9 +62,7 @@ def test_configure_cortx_show(
     with_sudo = ''  # TODO
 
     res = run_script(
-        "{} {} {} --show-file-format {}".format(
-            ssh_config, with_sudo, remote, component
-        ),
+        f"{ssh_config} {with_sudo} {remote} --show-file-format {component}",
         mhost=(mlocalhost if remote else mhost)
     )
     assert res.rc == 0
@@ -144,7 +138,7 @@ def test_configure_cortx_update_and_load_default(
         'cat {}'.format(tmp_file)
     )
     current_def_pillar = h.PRVSNR_PILLAR_DIR / 'components' / component_pillar
-    current_user_pillar = h.PRVSNR_USER_PI_ALL_HOSTS_DIR / component_pillar
+    current_user_pillar = h.PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / component_pillar
     pillar_file_content = mhost.check_output(
         'cat {}'.format(current_user_pillar)
     )
