@@ -211,10 +211,10 @@ function run_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.cortx-ha.replace_node.remove_node"
-                || "$state" == "ha.cortx-ha.replace_node.refresh_context"
-                || "$state" == "ha.cortx-ha.replace_node.add_node"
-                || "$state" == "csm.refresh_config"
+            if [[ $state == "ha.cortx-ha.replace_node.remove_node"
+                || $state == "ha.cortx-ha.replace_node.refresh_context"
+                || $state == "ha.cortx-ha.replace_node.add_node"
+                || $state == "csm.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
