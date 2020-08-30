@@ -158,7 +158,7 @@ check_boxing_flag
 
 echo -e "\n\
       Management VIP           : $management_vip
-      Static VIP               : $cluster_vip" | tee -a ${LOG_FILE}
+      Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
@@ -168,6 +168,8 @@ check_salt_services
 check_hostname
 check_pvt_data_connectivity
 check_mgmt_ip
+
+# Call preunboxing script here:
 
 # Update /root/.ssh/config file with hosts
 update_ssh_config

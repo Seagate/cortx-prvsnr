@@ -79,6 +79,9 @@ pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 nvols="${nvols:-32}" # The default value needs to be changed to 64 for cross connect
 pillar_root="${pillar_root:-/opt/seagate/eos-prvsnr/pillar/user/groups/all}"
 
+#force update the hostname
+force_update_hname="${force_update_hname:-"false"}"
+
 # Global variables, don't change these values.
 ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking=no""
 scp_cmd="scp -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking=no""
@@ -93,6 +96,10 @@ ctrl_ip_b=
 # These variables will be updated in /etc/hosts, ssh config and salt config
 hostname_A=
 hostname_B=
+mgmt_ip_A=
+mgmt_ip_A=
+ssh_A_to_B=
+ssh_B_to_A=
 
 function err_handler {
     echo "\
@@ -120,21 +127,21 @@ sub_manager_check()
     _pvt_ip="${1:-$pvt_ip_a}"
     _server="${2:-"Server A"}"
 
-    $ssh_cmd $_pvt_ip "grep -q "Red Hat" /etc/*-release" || {
+    $ssh_cmd $_pvt_ip "grep -qE \"Red Hat\" /etc/*-release" || {
         echo "$_server is not a RedHat system" | tee -a ${LOG_FILE}
         subscription_enabled=false
         return
     }
 
-    echo "Checking if RHEL subscription manager is enabled on $_server" | tee -a ${LOG_FILE}
+    echo "Checking if Red Hat subscription is enabled on $_server" | tee -a ${LOG_FILE}
     subc_list=`$ssh_cmd $_pvt_ip "subscription-manager list" | grep Status: | awk '{ print $2 }'`
     subc_status=`$ssh_cmd $_pvt_ip "subscription-manager status" | grep "Overall Status:" | awk '{ print $3 }'`
     if echo "$subc_list" | grep -q "Subscribed"; then
         if [[  "$subc_status" == "Current" ]]; then
-            echo "RedHat subscription manager is enabled on $_server." | tee -a ${LOG_FILE}
+            echo "RedHat subscription is enabled on $_server." | tee -a ${LOG_FILE}
             subscription_enabled=true
         else
-            echo "RedHat subscription manager is disabled on $_server." 2>&1 | tee -a ${LOG_FILE}
+            echo "RedHat subscription is disabled on $_server." | tee -a ${LOG_FILE}
             subscription_enabled=false
         fi
     fi
@@ -145,29 +152,30 @@ sub_manager_cleanup()
     _pvt_ip="${1:-$pvt_ip_a}"
     _server=${2:-"Server A"}
 
-    $ssh_cmd $_pvt_ip "grep -q "Red Hat" /etc/*-release" || {
+    $ssh_cmd $_pvt_ip "grep -qE \"Red Hat\" /etc/*-release" || {
         echo "$_server is not a RedHat system" | tee -a ${LOG_FILE}
         return
     }
-    echo "Cleaning up the subscription manager on $_server" | tee -a ${LOG_FILE}
+    echo "Removing the Red Hat subscription from $_server" | tee -a ${LOG_FILE}
 
-    echo "Running the subscription-manager list on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager list || true"  | tee -a ${LOG_FILE}
+    echo "DEBUG: Running the subscription-manager list on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager list || true"  | tee -a ${LOG_FILE}
 
-    echo "Running the subscription-manager auto-attach on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
+    echo "DEBUG: Running the subscription-manager auto-attach on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager remove --all on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager remove --all on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager unregister on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager unregister || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager unregister on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager unregister || true" | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager clean on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager clean || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager clean on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager clean || true" | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager config --rhsm.manage_repos=0 on $_server" | tee -a ${LOG_FILE}
-    #$ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager config --rhsm.manage_repos=0 on $_server" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }
 
 seagate_refs_cleanup()
@@ -185,10 +193,12 @@ seagate_refs_cleanup()
 
         echo "Removing following repos from ${server_names[$i]}" | tee -a ${LOG_FILE}
         $ssh_cmd ${pvt_ips[$i]} "grep -lE "seagate.com" /etc/yum.repos.d/*.repo" | tee -a ${LOG_FILE}
-        $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
+        $ssh_cmd ${pvt_ips[$i]} 'mkdir -p /opt/seagate/repos_backup'
+        $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do mv "$file" /opt/seagate/repos_backup; done'
+        echo "Done." | tee -a ${LOG_FILE}
         echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
-        $ssh_cmd ${pvt_ips[$i]} "yum clean all"
-        echo "Done" | tee -a ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} "yum clean all" >> ${LOG_FILE}
+        echo "Done." | tee -a ${LOG_FILE}
     done
 }
 
@@ -198,22 +208,22 @@ luns_availability_check()
     # 2. The output should be equal to $nvols
     # 3. If the output is not equal to $nvols then error out with diagnostic steps.
 
-    echo "Checking if the luns from storage enclosure are available" | tee -a ${LOG_FILE}
+    echo "Checking if the LUNs from storage enclosure are available" | tee -a ${LOG_FILE}
     for i in "${!pvt_ips[@]}"; do
-        echo "Listing luns on server ${server_names[$i]}" >> ${LOG_FILE}
+        echo "DEBUG: Listing luns on server ${server_names[$i]}" >> ${LOG_FILE}
         $ssh_cmd ${pvt_ips[$i]} "lsblk -S| grep sas" >> ${LOG_FILE}
         _nluns=$($ssh_cmd ${pvt_ips[$i]} "lsblk -S" | grep sas | wc -l)
-        echo "No of luns on server ${server_names[$i]} are: $_nluns" | tee -a ${LOG_FILE}
+        echo "DEBUG: Number of luns on server ${server_names[$i]}: $_nluns" >> ${LOG_FILE}
         if [[ $_nluns -eq 0 || $_nluns -ne $nvols ]]; then
             echo "Error: The no of luns from storage enclosure ($_nluns) are not correct on ${server_names[$i]}." | tee -a ${LOG_FILE}
             echo "Try following steps before running the command again:\
 1. Please make sure the storage enclosure is connected to servers as shown in the user guide.
-2. If the connections to the storage enclosure are correct then try rebooting the ${server_names[$i]} once
-3. After the reboot of server(s) run 'lsblk -S | grep sas | wc -l' to check the no of volumes available
+2. If the connections to the storage enclosure are correct then try rebooting the ${server_names[$i]} once.
+3. After the reboot of server(s) run 'lsblk -S | grep sas | wc -l' to check the no of LUNs available.
 4. Once the output of 'lsblk -S | grep sas | wc -l' is $nvols on both the servers run this command '$0' again" | tee -a ${LOG_FILE}
             exit 1
         fi
-        echo "The number of luns ($_nluns) are correct on ${server_names[$i]}"  | tee -a ${LOG_FILE}
+        echo "The number of LUNs ($_nluns) are correct on ${server_names[$i]}"  | tee -a ${LOG_FILE}
     done
 }
 
@@ -252,6 +262,10 @@ ctrl_ip_addr_get_set()
 
     #Update the storage_enclosure pillar with new controller IP.
     _storage_encl_sls_path="${pillar_root}/storage_enclosure.sls"
+    if [[ ! -f "$_storage_encl_sls_path" ]]; then
+        echo "ERROR: "$_storage_encl_sls_path" no such file or directory"
+        exit 1
+    fi
     echo "Updating IP addresses of storage enclosure in Salt pillar" |tee -a ${LOG_FILE}
 
     echo "Updating storage enclosure pillar with new controller A IP address" | tee -a ${LOG_FILE}
@@ -276,7 +290,7 @@ ctrl_ip_addr_get_set()
     elif [[ $diff_lines -eq 0 ]]; then
         # old ip and new ip are matching, prbably due to rerun of 
         # the command or updating the pillar manually, do nothing.
-        echo "The IP address provided for controller A is already present in storage enclosure pillar, ignoring" | tee -a ${LOG_FILE}
+        echo "DEBUG: The IP address provided for controller A is already present in storage enclosure pillar, ignoring" >> ${LOG_FILE}
     else
         # sed didn't work as expected (was supposed to change only one line)
         echo "ERROR: Could not update the storage enclosure pillar with new controller A IP address" | tee -a ${LOG_FILE}
@@ -305,7 +319,7 @@ ctrl_ip_addr_get_set()
     elif [[ $diff_lines -eq 0 ]]; then
         # old ip and new ip match, prbably due to rerun of 
         # the command or updating the pillar manually
-        echo "The IP address provided for controller B is already present in storage enclosure pillar, ignoring" | tee -a ${LOG_FILE}
+        echo "DEBUG: The IP address provided for controller B is already present in storage enclosure pillar, ignoring" >> ${LOG_FILE}
     else
         # sed didn't work as expected (was supposed to change only one line)
         echo "ERROR: Could not update the storage enclosure pillar with new controller B IP address" | tee -a ${LOG_FILE}
@@ -327,7 +341,7 @@ new_hostname_set()
     for i in "${!pvt_ips[@]}"; do
         echo "Setting the new hostname provided by user" | tee -a ${LOG_FILE}
         if [[ $i -eq 0 && ! -z $hostname_A && "${_set_hostname_flags[$i]}" == true ]]; then
-            echo "Setting the hostname($hostname_A) for server A" | tee -a ${LOG_FILE}
+            echo "Setting the hostname ("$hostname_A") for server A" | tee -a ${LOG_FILE}
             _new_hostname=$hostname_A
         elif [[ $i -eq 1 && ! -z $hostname_B && "${_set_hostname_flags[$i]}" == true ]]; then
             echo "Setting the hostname($hostname_B) for server B" | tee -a ${LOG_FILE}
@@ -528,48 +542,67 @@ ping_status_B_to_A=false
 
 hosts_resolution_check()
 {
-    # grab the IP address for MGMT interface from 'ip a' output
-    # Check if hostnames are getting resolved to mgmt ip addresses
+    # grab & save the IP addresses for MGMT interface from 'ip a' output for both nodes
+    # Save & print the hostnames for both nodes
+    # Check if 'ping <Server B hostname>' works from Server A
+    # Check if 'ssh <pvt ip B> "ping <Server B hostname>"' works
     # Add the new ip & hostnames to /etc/hosts
 
     # Get management interface name from pillar
     local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${pillar_root}/cluster.sls|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
+    if [[ -z "$mgmt_if" ]]; then
+        echo "ERROR: Could not get the management interface" | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
+    echo "*****************************************************" | tee -a ${LOG_FILE}
     # Get management interface ip address for node1
-    local mgmt_ip_A=$((ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po "\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}" || echo "ERROR: IP address missing for ${mgmt_if} on Server A" || (tee -a ${LOG_FILE}; exit 1))|head -1)
-    echo "Management IP (Server A) : ${mgmt_ip_A}" | tee -a ${LOG_FILE}
+    mgmt_ip_A=$((ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po "\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}" || echo "ERROR: IP address missing for ${mgmt_if} on Server A" || (tee -a ${LOG_FILE}; exit 1))|head -1)
+    echo "Management IP on Server A    : ${mgmt_ip_A}" | tee -a ${LOG_FILE}
 
     # Get management ip address for node2
-    local mgmt_ip_B=$(($ssh_cmd ${pvt_ip_b} "ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po \"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\"" || (echo "ERROR: IP address missing for ${mgmt_if} on srvnode-2" | tee -a ${LOG_FILE}; echo 1))|head -1)
-    echo "Management IP (Server B) : ${mgmt_ip_B}" | tee -a ${LOG_FILE}
+    mgmt_ip_B=$(($ssh_cmd ${pvt_ip_b} "ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po \"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\"" || (echo "ERROR: IP address missing for ${mgmt_if} on srvnode-2" | tee -a ${LOG_FILE}; echo 1))|head -1)
+    echo "Management IP on Server B    : ${mgmt_ip_B}" | tee -a ${LOG_FILE}
+
+    # Get current hostnames of the servers
+    for i in "${!pvt_ips[@]}"; do
+        echo "DEBUG: Getting current hostname on ${server_names[$i]}" >> ${LOG_FILE}
+        _hname=$($ssh_cmd ${pvt_ips[$i]} "hostnamectl status" | grep "Static hostname" | awk '{ print $3 }')
+        if [[ $i -eq 0 ]]; then hostname_A=${_hname}; else hostname_B=${_hname}; fi
+        echo "Current hostname on ${server_names[$i]}: $_hname" | tee -a ${LOG_FILE}
+    done
+    echo "*****************************************************" | tee -a ${LOG_FILE}
 
     # Check if entries in /etc/hosts needs to be added.
     # The entry needs to be added only if the hostnames are NOT getting resolved from each other
-    echo "Checking if server B ($hostname_B) is reachable from server A ($hostname_A) using hostname" | tee -a ${LOG_FILE}
+
+    echo "Checking Servers connectivity from each other using the hostnames" >> ${LOG_FILE}
+    echo "DEBUG: Checking if server B ($hostname_B) is reachable from server A ($hostname_A) using hostname" >> ${LOG_FILE}
     if ping -c1 -W2  $hostname_B > /dev/null; then
         # Ping is successfull, no need to add entry in /etc/hosts
-        echo "Server B ($hostname_B) is reachable from ServerA ($hostname_A) using hostname" | tee -a ${LOG_FILE}
+        echo "Server A [$hostname_A] --> Server B [$hostname_B]: Reachable " | tee -a ${LOG_FILE}
         ping_status_A_to_B=true
     else
         # Ping failed, need to add entry in /etc/hosts
-        echo "ERROR: Server B ($hostname_B) is not reachable from server A ($hostname_A) using hostname" |tee -a ${LOG_FILE}
+        echo "WARNING: Server A [$hostname_A] --> Server B [$hostname_B]: Not Reachable " | tee -a ${LOG_FILE}
         ping_status_A_to_B=false
     fi
 
-    echo "Checking if server A ($hostname_A) is reachable from Server B ($hostname_B) using hostname" | tee -a ${LOG_FILE}
+    echo "DEBUG: Checking if server A ($hostname_A) is reachable from Server B ($hostname_B) using hostname" >> ${LOG_FILE}
     if $ssh_cmd ${pvt_ip_b} "ping -c1 -W2  $hostname_A" > /dev/null; then
         # Ping is successfull, no need to add entry in /etc/hosts
-        echo "Server A ($hostname_A) is reachable from ServerB ($hostname_B) using hostname" | tee -a ${LOG_FILE}
+        echo "Server B [$hostname_B] --> Server A [$hostname_A]: Reachable " | tee -a ${LOG_FILE}
         ping_status_B_to_A=true
     else
         # Ping failed, need to add entry in /etc/hosts
-        echo "ERROR: Server A ($hostname_A) is not reachable from server B ($hostname_B) using hostname" |tee -a ${LOG_FILE}
+        echo "WARNING: Server B [$hostname_B] --> Server A [$hostname_A]: Not Reachable " | tee -a ${LOG_FILE}
         ping_status_B_to_A=false
     fi
 
-    if [[ "$_ping_status_A_to_B" == true && "$_ping_status_B_to_A" == true ]]; then
+    if [[ "$ping_status_A_to_B" == true && "$ping_status_B_to_A" == true ]]; then
         # No need to add dns entry
-        echo "Hostnames are reachable from each other, no need add hosts entry in /etc/hosts" | tee -a ${LOG_FILE}
+        echo "DEBUG: Hostnames are reachable from each other, no need add hosts entry in /etc/hosts" >> ${LOG_FILE}
         return
     fi
 }
@@ -587,18 +620,29 @@ dns_update_hostnames()
     # 3. Repeat 1 and 2 for node B
     # TODO: Remove duplicate code.
 
+    echo "DEBUG: hostname_A: $hostname_A, hostname_B: $hostname_B" >> ${LOG_FILE}
+    echo "DEBUG: mgmt_ip_A: $mgmt_ip_A, mgmt_ip_B: $mgmt_ip_B" >> ${LOG_FILE}
     # node A
-    echo "Checking host entries in /etc/hosts on server A for management IP of server A (${mgmt_ip_A})" | tee -a ${LOG_FILE}
+    echo "Checking /etc/hosts on both the servers" | tee -a ${LOG_FILE}
+    echo "DEBUG: Checking /etc/hosts on Server A" >> ${LOG_FILE}
+    echo "DEBUG: Checking host entries in /etc/hosts on server A for management IP of server A (${mgmt_ip_A})" >> ${LOG_FILE}
+    if [[ ! -f /etc/hosts ]]; then
+        echo "ERROR: /etc/hosts file not present. Please create the file manually and rerun the command." | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
     # 1. Is mgmt_ip_A already added in /etc/hosts on node A?
     if grep -q "${mgmt_ip_A}" /etc/hosts ; then
         # 1.1 mgmt_ip_A is added in /etc/hosts
         if grep "${mgmt_ip_A}" /etc/hosts | grep "${hostname_A}"; then
             # mgmt_ip_A is added in /etc/hosts and is against hostname_A
-            echo "Server A: /etc/hosts already has host entry for management IP of server A (${mgmt_ip_A}) against hostname of Server A (${hostname_A})" | tee -a ${LOG_FILE}
+            echo "DEBUG: Server A: /etc/hosts already has host entry for [server-A-IP  Server-A-hostname] -> [${mgmt_ip_A}) ${hostname_A}]" >> ${LOG_FILE}
+            echo "Server A: host entry for Server A is up to date [${mgmt_ip_A}) ${hostname_A}]" | tee -a ${LOG_FILE}
         else
             # Entry for ${mgmt_ip_A} is there in /etc/hosts but it's not against hostname_A
             # Update the hostname against the existing entry.
-            echo "Warning: Server A /etc/hosts already has entry for management IP (${mgmt_ip_A}) of server A (${hostname_A}) but against wrong/old hostname" | tee -a  ${LOG_FILE}
+            echo "Warning: Server A: host entry for Server A is not correct, trying to correct it."  | tee -a ${LOG_FILE}
+            echo "DEBUG: Server A /etc/hosts already has entry for management IP (${mgmt_ip_A}) of server A (${hostname_A}) but against wrong/old hostname" >> ${LOG_FILE}
             # grab the current host added against mgmt_ip_A in /etc/hosts
             # replace the host with new hostname(hostname_A) against mgmt_ip_A
             _current_host=$(grep "${mgmt_ip_A}" /etc/hosts | awk '{ print $2 }')
@@ -620,7 +664,7 @@ dns_update_hostnames()
             elif [[ $diff_lines -eq 0 ]]; then
                 # currnt host and hostname_A match, prbably due to rerun of 
                 # the command or updating the pillar manually
-                echo "The hostname of Server A is already present in /etc/hosts on Server A, ignoring" | tee -a ${LOG_FILE}
+                echo "Server A: host entry for Server A is up to date [${mgmt_ip_A}) ${hostname_A}]" | tee -a ${LOG_FILE}
             else
                 # sed didn't work as expected (was supposed to change only one line)
                 echo "ERROR: Could not update /etc/hosts on Server A with hostname ($hostname_A) and management IP of Sever A (${mgmt_ip_A})" | tee -a ${LOG_FILE}
@@ -630,22 +674,24 @@ dns_update_hostnames()
         fi
     else
         # 1.2 /etc/hosts does not have the entry, add it
-        echo "Server A: Adding entry in /etc/hosts for management IP (${mgmt_ip_A}) of server A ($hostname_A)" | tee -a  ${LOG_FILE}
-        echo "$mgmt_ip_A $hostname_A" >> /etc/hosts
+        echo "Server A: Updating /etc/hosts with management IP (${mgmt_ip_A}) of server A ($hostname_A)" | tee -a  ${LOG_FILE}
+        echo -e "\n$mgmt_ip_A $hostname_A" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
 
     # 2. Is mgmt_ip_B already added in /etc/hosts on node A?
-    echo "Checking host entries in /etc/hosts on server A for management IP of Server B (${mgmt_ip_B})" | tee -a ${LOG_FILE}
+    echo "DEBUG: Checking host entries in /etc/hosts on server A for management IP of Server B (${mgmt_ip_B})" >> ${LOG_FILE}
     if grep -q "${mgmt_ip_B}" /etc/hosts ; then
         # 2.1 mgmt_ip_B is added in /etc/hosts
         if grep "${mgmt_ip_B}" /etc/hosts | grep "${hostname_B}"; then
             # mgmt_ip_B is added in /etc/hosts and is against hostname_B
-            echo "Server A: /etc/hosts already has host entry for management IP of server B (${mgmt_ip_B}) against hostname of Server B (${hostname_B})" | tee -a ${LOG_FILE}
+            echo "DEBUG: Server A: /etc/hosts already has host entry for management IP of server B (${mgmt_ip_B}) against hostname of Server B (${hostname_B})" >> ${LOG_FILE}
+            echo "Server A: host entry for Server B is up to date [${mgmt_ip_B}) ${hostname_B}]" | tee -a ${LOG_FILE}
         else
             # Entry for ${mgmt_ip_B} is there in /etc/hosts but it's not against hostname_B
             # Update the hostname against the existing entry.
-            echo "Server A: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_B}) of server B (${hostname_B}) but against wrong/old hostname" | tee -a  ${LOG_FILE}
+            echo "Warning: Server A: host entry for Server B is not correct, trying to correct it."  | tee -a ${LOG_FILE}
+            echo "DEBUG: Server A: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_B}) of server B (${hostname_B}) but against wrong/old hostname" >>  ${LOG_FILE}
             # grab the current host added against mgmt_ip_B in /etc/hosts
             # replace the current host with new hostname(hostname_B) against mgmt_ip_B
             _current_host=$(grep "${mgmt_ip_B}" /etc/hosts | awk '{ print $2 }')
@@ -667,7 +713,7 @@ dns_update_hostnames()
             elif [[ $diff_lines -eq 0 ]]; then
                 # currnt host and hostname_B match, prbably due to rerun of 
                 # the command or updating the pillar manually
-                echo "The hostname of Server B is already present in /etc/hosts of Server A, ignoring" | tee -a ${LOG_FILE}
+                echo "Server A: host entry for Server B is up to date [${mgmt_ip_B}) ${hostname_B}]" | tee -a ${LOG_FILE}
             else
                 # sed didn't work as expected (was supposed to change only one line)
                 echo "ERROR: Could not update /etc/hosts on Server A with hostname ($hostname_B) and management IP of Sever B (${mgmt_ip_B})" | tee -a ${LOG_FILE}
@@ -676,24 +722,33 @@ dns_update_hostnames()
             fi
         fi
     else
-        # 2.2 /etc/hosts does not has the entry, add it
-        echo "Server A: Adding entry in /etc/hosts for management IP (${mgmt_ip_B}) of server B ($hostname_B)" | tee -a  ${LOG_FILE}
-        echo "$mgmt_ip_B $hostname_B" >> /etc/hosts
+        # 2.2 /etc/hosts does not have the entry, add it
+        echo "Server A: Updating /etc/hosts with management IP (${mgmt_ip_B}) of server B ($hostname_B)" | tee -a  ${LOG_FILE}
+        echo -e "\n$mgmt_ip_B $hostname_B" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
 
     # Repeat for node B
-    echo "Checking host entries in /etc/hosts on server B for management IP of node A (${mgmt_ip_A})" | tee -a ${LOG_FILE}
+    echo "Checking /etc/hosts on Server B" | tee -a ${LOG_FILE}
+    echo "DEBUG: Checking host entries in /etc/hosts on server B for management IP of node A (${mgmt_ip_A})" >> ${LOG_FILE}
+    if $ssh_cmd ${pvt_ip_b} "stat /etc/hosts >/dev/null 2>&1"; then
+        echo "DEBUG: /etc/hosts file is present on Server B" >> ${LOG_FILE}
+    else
+        echo "ERROR: /etc/hosts file not present on Server B. Please create the file manually and rerun the command." | tee -a ${LOG_FILE}
+        exit 1
+    fi
     # 1. Is mgmt_ip_A already added in /etc/hosts on node B?
     if $ssh_cmd ${pvt_ip_b} "grep -q \"${mgmt_ip_A}\" /etc/hosts" ; then
         # 1.1 mgmt_ip_A is added in /etc/hosts
         if $ssh_cmd ${pvt_ip_b} "grep \"${mgmt_ip_A}\" /etc/hosts | grep \"${hostname_A}\""; then
             # mgmt_ip_A is added in /etc/hosts and is against hostname_A
-            echo "Server B: /etc/hosts already has host entry for management IP  of server A (${mgmt_ip_A}) against hostname of Server A (${hostname_A})" | tee -a ${LOG_FILE}
+            echo "DEBUG: Server B: /etc/hosts already has host entry for management IP  of server A (${mgmt_ip_A}) against hostname of Server A (${hostname_A})" >> ${LOG_FILE}
+            echo "Server B: host entry for Server A is up to date [${mgmt_ip_A}) ${hostname_A}]" | tee -a ${LOG_FILE}
         else
             # Entry for ${mgmt_ip_A} is there in /etc/hosts but it's not against hostname_A
             # Update the hostname against the existing entry.
-            echo "Server B: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_A}) of server A (${hostname_A}) but against wrong/old hostname" | tee -a  ${LOG_FILE}
+            echo "DEBUG: Server B: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_A}) of server A (${hostname_A}) but against wrong/old hostname" >>  ${LOG_FILE}
+            echo "Warning: Server B: host entry for Server A is not correct, trying to correct it."  | tee -a ${LOG_FILE}
             # grab the current host added against mgmt_ip_A in /etc/hosts of Server A
             # replace the host with new hostname(hostname_A) against mgmt_ip_A
             _current_host=$($ssh_cmd ${pvt_ip_b} "grep "${mgmt_ip_A}" /etc/hosts" | awk '{ print $2 }')
@@ -715,7 +770,7 @@ dns_update_hostnames()
             elif [[ $diff_lines -eq 0 ]]; then
                 # currnt host and hostname_A match, prbably due to rerun of 
                 # the command or updating the pillar manually
-                echo "The hostname of Server A is already present in /etc/hosts on Server B, ignoring" | tee -a ${LOG_FILE}
+                echo "Server B: host entry for Server A is up to date [${mgmt_ip_A}) ${hostname_A}]" | tee -a ${LOG_FILE}
             else
                 # sed didn't work as expected (was supposed to change only one line)
                 echo "ERROR: Could not update /etc/hosts on Server B with hostname ($hostname_A) and management IP of Sever A (${mgmt_ip_A})" | tee -a ${LOG_FILE}
@@ -726,9 +781,9 @@ dns_update_hostnames()
         fi
     else
         # 1.2 /etc/hosts does not has the entry, add it
-        echo "Server B: Adding entry in /etc/hosts for management IP (${mgmt_ip_A}) of server A ($hostname_A)" | tee -a  ${LOG_FILE}
-        echo "$mgmt_ip_A $hostname_A" > /tmp/dns_a.tmp
-        $scp_cmd /tmp/dns_a.tmp srvnode2:/tmp/dns_a.tmp
+        echo "Server B: Updating /etc/hosts with management IP (${mgmt_ip_A}) of server A ($hostname_A)" | tee -a  ${LOG_FILE}
+        echo -e "\n$mgmt_ip_A $hostname_A" > /tmp/dns_a.tmp
+        $scp_cmd /tmp/dns_a.tmp srvnode-2:/tmp/dns_a.tmp
         $ssh_cmd ${pvt_ip_b} "cat /tmp/dns_a.tmp >> /etc/hosts" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
@@ -740,11 +795,13 @@ dns_update_hostnames()
         # 2.1 mgmt_ip_B is added in /etc/hosts
         if $ssh_cmd ${pvt_ip_b} "grep \"${mgmt_ip_B}\" /etc/hosts | grep \"${hostname_B}\""; then
             # mgmt_ip_B is added in /etc/hosts and is against hostname_B
+            echo "Server B: host entry for Server B is up to date [${mgmt_ip_B}) ${hostname_B}]" | tee -a ${LOG_FILE}
             echo "Server B: /etc/hosts already has dns entry for management IP  of server B (${mgmt_ip_B}) against hostname of Server B (${hostname_B})" | tee -a ${LOG_FILE}
         else
             # Entry for ${mgmt_ip_B} is there in /etc/hosts but it's not against hostname_B
             # Update the hostname against the existing entry.
-            echo "Server B: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_B}) of server B (${hostname_B}) but against wrong/old hostname" | tee -a  ${LOG_FILE}
+            echo "DEBUG: Server B: Warning: /etc/hosts already has entry for management IP (${mgmt_ip_B}) of server B (${hostname_B}) but against wrong/old hostname" >>  ${LOG_FILE}
+            echo "Warning: Server B: host entry for Server B is not correct, trying to correct it."  | tee -a ${LOG_FILE}
 
             # grab the current host added against mgmt_ip_B in /etc/hosts of Server B
             # replace the host with new hostname(hostname_B) against mgmt_ip_B
@@ -777,12 +834,39 @@ dns_update_hostnames()
         fi
     else
         # 2.2 /etc/hosts does not has the entry, add it
-        echo "Server B: Adding entry in /etc/hosts for management IP (${mgmt_ip_B}) of server B ($hostname_B)" | tee -a  ${LOG_FILE}
-        echo "$mgmt_ip_B $hostname_B" > /tmp/dns_b.tmp
-        $scp_cmd /tmp/dns_b.tmp srvnode2:/tmp/dns_b.tmp
+        echo "Server B: Updating /etc/hosts with management IP (${mgmt_ip_B}) of server B ($hostname_B)" | tee -a  ${LOG_FILE}
+        echo -e "\n$mgmt_ip_B $hostname_B" > /tmp/dns_b.tmp
+        $scp_cmd /tmp/dns_b.tmp srvnode-2:/tmp/dns_b.tmp
         $ssh_cmd ${pvt_ip_b} "cat /tmp/dns_b.tmp >> /etc/hosts" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
+}
+
+ssh_connectivity_check()
+{
+    ssh_A_to_B=false
+    ssh_B_to_A=false
+
+    # Check if the ssh works without password from Server A to Server B using DNS hostname
+    echo "Checking passwordless ssh connectivity from Server A to Server B using new hostname" | tee -a ${LOG_FILE}
+    ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" -o "StrictHostKeyChecking=no" $hostname_B exit && {
+        echo "SUCCESS: Passwordless ssh worked from Server A ($hostname_A) to Server B ($hostname_B)"
+        ssh_A_to_B=true
+    } || {
+        echo "Could not connect Server B($hostname_B) from Server A($hostname_A) over ssh" | tee -a ${LOG_FILE}
+        ssh_A_to_B=false
+        return
+    }
+    # Check if the ssh works without password from Server B to Server A using DNS hostname
+    echo "Checking passwordless ssh connectivity from Server B to Server A using new hostname" | tee -a ${LOG_FILE}
+    ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" -o "StrictHostKeyChecking=no" $hostname_B \
+        "ssh -q -o ConnectTimeout=5 -o  "PreferredAuthentications=publickey" -o "StrictHostKeyChecking=no" $hostname_A exit; exit" && {
+        echo "SUCCESS: Passwordless ssh worked from Server B ($hostname_B) to Server A ($hostname_A)"
+        ssh_B_to_A=true
+    } || {
+        echo "Could not connect Server A ($hostname_A) from Server B($hostname_B) over ssh" | tee -a ${LOG_FILE}
+        ssh_B_to_A=false
+    }
 }
 
 ssh_config_update()
@@ -794,6 +878,16 @@ ssh_config_update()
     # 5. Check ssh connectivity from server B to server A using alias/minion id (srvnode-1)
     # 6. Check if the ssh works without password from Server A to Server B using hostname
     # 7. Check if the ssh works without password from Server B to Server A using hostname
+
+    if [[ ! -f /root/.ssh/config ]]; then
+        if [[ -f /opt/seagate/eos-prvsnr/files/.ssh/config ]]; then
+            echo "DEBUG: Copying the ssh config file from Provisioner" >> ${LOG_FILE}
+            yes | cp -f /opt/seagate/eos-prvsnr/files/.ssh/config /root/.ssh/config
+        else
+            echo "ERROR: ssh config file not present on Server A. Please create the file manually and rerun the command." | tee -a ${LOG_FILE}
+            exit 1
+        fi
+    fi
 
     _update_ssh_conf_A=true
     if grep  "HostName" /root/.ssh/config | grep -q "$hostname_A"; then
@@ -857,22 +951,6 @@ ssh_config_update()
         exit 1
     }
     echo "Done." | tee -a ${LOG_FILE}
-
-    # Check if the ssh works without password from Server A to Server B using DNS hostname
-    echo "Checking if the ssh works without password from Server A to Server B using new hostname" | tee -a ${LOG_FILE}
-    ssh -q -o "ConnectTimeout=5" $hostname_B exit || {
-        echo "ERROR: Server B($hostname_B) is not reachable from Server A($hostname_A) using hostname($hostname_B) over ssh" | tee -a ${LOG_FILE}
-        exit 1
-    }
-    echo "Done." | tee -a ${LOG_FILE}
-    # Check if the ssh works without password from Server B to Server A using DNS hostname
-    echo "Checking if the ssh works without password from Server B to Server A using new hostname" | tee -a ${LOG_FILE}
-    ssh -q -o "ConnectTimeout=5" $hostname_B \
-        "ssh -q -o ConnectTimeout=5 $hostname_A exit; exit" || {
-        echo "Server A($hostname_A) is not reachable from Server B($hostname_B)  using hostname over ssh" | tee -a ${LOG_FILE}
-        exit 1
-    }
-    echo "Done." | tee -a ${LOG_FILE}
 }
 
 minion_config_update()
@@ -884,6 +962,10 @@ minion_config_update()
     # 5. Restart salt-master service on Server A
     # 6. Check if 'salt '*' test.ping' works
 
+    if [[ ! -f /etc/salt/minion ]]; then
+        echo "ERROR: ssh config file not present on Server A. Please restore the file and rerun the command." | tee -a ${LOG_FILE}
+        exit 1
+    fi
     _update_minion_A=true
     if grep -w ^"master:" /etc/salt/minion | grep -q "$hostname_A"; then
         if grep "Host srvnode" /etc/salt/minion | grep -q "$hostname_A"; then
@@ -938,6 +1020,12 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
     if [[ "$_update_minion_B" == true ]]; then
         echo "Setting (${hostname_A}) in Salt minion configuration on server B (${hostname_B})" | tee -a ${LOG_FILE}
         #TODO: Should we just scp minion file from Server A to server B?
+        if $ssh_cmd ${pvt_ip_b} "stat /etc/salt/minion >/dev/null 2>&1"; then
+            echo "DEBUG: Salt minion file present on Server B." >> ${LOG_FILE}
+        else
+            echo "ERROR: Salt minion file not present on Server B. Please restore the file and rerun the command." | tee -a ${LOG_FILE}
+            exit 1
+        fi
         line_to_replace=$($ssh_cmd ${pvt_ip_b} "grep -m1 -noP "master: " /etc/salt/minion" |tail -1|cut -d: -f1)
         yes | cp -f /etc/salt/minion /etc/salt/minion.bkp
         $ssh_cmd ${pvt_ip_b} "sed -i \"${line_to_replace}s|^master:.*|master: ${hostname_A}|\" /etc/salt/minion"
@@ -977,8 +1065,10 @@ main()
 {
     time_stamp=$(date)
     echo "******** [$time_stamp] Running $0 *********" >> ${LOG_FILE}
+    echo "*********************************************************" | tee -a ${LOG_FILE}
+    echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
+    echo "*********************************************************" | tee -a ${LOG_FILE}
 
-    #1. Run cleanup 
     echo "DEBUG: Capturing output of 'ip a' on Server A for analysis (if needed)" >> ${LOG_FILE}
     ip a >> ${LOG_FILE}
 
@@ -992,19 +1082,24 @@ main()
     echo "DEBUG: nvols:$nvols ${default_hostname_nodeB}" >> ${LOG_FILE}
     echo "DEBUG: pillar_roots: ${pillar_root}" >> ${LOG_FILE}
 
-    ##seagate_refs_cleanup
+    #1. Run cleanup 
+    seagate_refs_cleanup
 
     #2. Check if the volumes are being listed on both the nodes - lsblk
-    ##luns_availability_check
+    luns_availability_check
 
     #3. Get the controller IPs from user as an input
     #TODO: Remove this when enclosure communication is switched to in-band.
-    #ctrl_ip_addr_get_set
+    ctrl_ip_addr_get_set
 
+    echo "Checking the servers connectivity" | tee -a ${LOG_FILE}
     hosts_resolution_check
-    if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false ]]; then
+    if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false || "$force_update_hname" == true ]]; then
         #4. check if the hostname contains 'seagate.com', if yes, take input for new hostname
+        echo "Servers are not reachable from each other, checking the hostnames" | tee -a ${LOG_FILE}
         hostname_validate_get_set
+        echo "Checking the servers connectivity again after validating hostnames" | tee -a ${LOG_FILE}
+        hosts_resolution_check
     fi
 
     if [[ "$ping_status_A_to_B" == false || "$ping_status_B_to_A" == false ]]; then
@@ -1026,7 +1121,10 @@ main()
     fi
 
     #6. Update hostnames in ssh config files
-    ssh_config_update
+    ssh_connectivity_check
+    if [[ "$ssh_A_to_B" == false || "$ssh_B_to_A" == false ]]; then
+        ssh_config_update
+    fi
 
     #7. Update minion files on both the nodes to point master to server A hostname
     minion_config_update
@@ -1038,6 +1136,9 @@ main()
     #    /etc/hosts, /etc/salt/minion/ /root/.ssh/config files.
     # 6. Duplicate IPs in storage enclosure causes failure.
 
+    #TODO: Check if running unboxing after this causes any issues in ssh config file and salt minion file
+
 }
 
 main "$@"
+
