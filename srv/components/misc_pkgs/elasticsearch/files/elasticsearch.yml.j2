@@ -88,7 +88,8 @@
 #action.destructive_requires_name: true
 
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
-network.host: {{ pillar['elasticsearch']['network_host'] }}
+network.bind_host: ['localhost', {{ grains['id'] }} ]
+network.publish_host: [{{ grains['id'] }}]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
 discovery.zen.ping.unicast.hosts: {{ pillar['cluster']['node_list'] }}
 {%- if pillar['cluster']['node_list']|length <= 2 %}

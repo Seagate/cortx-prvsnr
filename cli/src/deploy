@@ -2,20 +2,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 set -euE
@@ -48,6 +46,7 @@ tgt_node=srvnode-2
 system_states=(
     "system"
     "system.storage.multipath"
+    "system.storage.teardown"
     "system.storage"
     "system.network"
     "system.network.data.public"
@@ -255,17 +254,6 @@ function encrypt_pillar {
 }
 
 
-# Teardown storage before deployment
-function destroy_storage {
-    # Old remnant partitios from previous deployments has to be cleaned-up
-
-    l_info "Removing components.system.storage from both nodes."
-    $cmd salt "$tgt_node" state.apply components.system.storage.teardown $salt_opts
-    # l_info "Removing components.system.storage.multipath from both nodes."
-    # $cmd salt "$tgt_node" state.apply components.system.storage.multipath.teardown $salt_opts
-}
-
-
 parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -284,8 +272,6 @@ salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run 
 update_salt
 
 if [[ "$run_all" == true ]]; then
-    destroy_storage
-
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
     run_states "${prereq_states[@]}"
@@ -313,7 +299,7 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    destroy_storage
+    salt '*' state.apply components.system.storage.teardown $salt_opts
     salt '*' state.apply components.system.storage $salt_opts
 fi
 
