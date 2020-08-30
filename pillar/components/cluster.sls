@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 cluster:
@@ -37,16 +35,16 @@ cluster:
       mgmt_nw:                        # Management network interfaces
         iface:
           - eno1
-        ipaddr:                       # DHCP is assumed if left blank
+        public_ip_addr:               # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data_nw:                        # Data network interfaces
         iface:
           - enp175s0f0                # Public Data
           - enp175s0f1                # Private Data (direct connect)
         public_ip_addr:                       # DHCP is assumed if left blank
         netmask: 255.255.0.0
-        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
         pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
         roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
