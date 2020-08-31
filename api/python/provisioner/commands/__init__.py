@@ -122,7 +122,7 @@ class RunArgsUpdate:
 
 
 @attr.s(auto_attribs=True)
-class RunArgsRemoteCommandExecutor:
+class CmdRunArgs:
     cmd_name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -707,7 +707,7 @@ class SWUpdate(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class RemoteCommandExecutor(CommandParserFillerMixin):
+class CmdRun(CommandParserFillerMixin):
     """
     Base class to support remote commands execution
     """
