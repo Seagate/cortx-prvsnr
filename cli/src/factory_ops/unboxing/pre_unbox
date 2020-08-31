@@ -11,9 +11,9 @@
 #    of hostname using mac addresses.
 
 # Following steps are performed as part of the script:
-# 1. Run cleanup 
+# 1. Run cleanup
 #     1. Check if subscription manager is enabled
-#     2. Disable and cleanup the subscription 
+#     2. Disable and cleanup the subscription
 #     3. Remove all Seagate internal repos from /etc/yum.repos.d
 # 2. Check if the volumes are being listed on both the nodes - lsblk
 #     1. Run 'lsblk -S | grep sas | wc -l' command on both the servers
@@ -65,7 +65,7 @@
 # 8. Run the unboxing script
 
 set -euE
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/pre-unboxing-hf.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/pre_unbox.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 
 PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
@@ -73,14 +73,15 @@ PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 # Global variables which can be set externally using environment variables
 default_hostname_nodeA="${default_hostname_nodeA:-"cortx-node-a"}"
 default_hostname_nodeB="${default_hostname_nodeB:-"cortx-node-b"}"
-pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
-pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
+export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
+export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 #TODO: The no of volumes for Beta are 32.
 nvols="${nvols:-32}" # The default value needs to be changed to 64 for cross connect
 pillar_root="${pillar_root:-/opt/seagate/eos-prvsnr/pillar/user/groups/all}"
 
 #force update the hostname
 force_update_hname="${force_update_hname:-"false"}"
+amend_fix_for_ipmi="${amend_fix_for_ipmi:-"true"}"
 
 # Global variables, don't change these values.
 ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking=no""
@@ -101,7 +102,7 @@ mgmt_ip_A=
 ssh_A_to_B=
 ssh_B_to_A=
 
-function err_handler {
+function err_handler_pu {
     echo "\
 **************************FAILED!!********************************
 For detailed error logs, please see: $LOG_FILE
@@ -109,7 +110,7 @@ For detailed error logs, please see: $LOG_FILE
     exit 1
 }
 
-function intrpt_handler {
+function intrpt_handler_pu {
     echo -e "\n\n\
 ------------------------------------------------------------------
 Received Ctrl-c signal, exiting Gracefully.
@@ -119,8 +120,8 @@ For detailed logs, please see: $LOG_FILE
     exit 1
 }
 
-trap err_handler ERR
-trap intrpt_handler SIGTERM SIGINT
+trap err_handler_pu ERR
+trap intrpt_handler_pu SIGTERM SIGINT
 
 sub_manager_check()
 {
@@ -1061,13 +1062,43 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
 
 }
 
-main()
+ipmi_install_skip()
+{
+    _functions_sh_path="/opt/seagate/eos-prvsnr/cli/common_utils/functions.sh"
+    echo "DEBUG: copying $_functions_sh_path to ${_functions_sh_path}.bkp" >> ${LOG_FILE}
+    cp $_functions_sh_path ${_functions_sh_path}.bkp
+
+    echo "Amending functions to skip ipmi installation" | tee -a ${LOG_FILE}
+    echo "DEBUG: updating functions" >> ${LOG_FILE}
+    line1=`grep -n '\${_cmd} \"yum install -y ipmitool\"' $_functions_sh_path | cut -f1 -d:`
+    echo "DEBUG: line1=$line1" >> ${LOG_FILE}
+    sed -ie "${line1}s/.*/        touch \/tmp\/skip_ipmi_install_hf1 /" $_functions_sh_path
+
+    line2=`grep -n "yum install -y ipmitool" $_functions_sh_path | cut -f1 -d:`
+    echo "DEBUG: line2=$line2" >> ${LOG_FILE}
+    sed -ie "${line2}s/.*/        touch \/tmp\/skip_ipmi_install_hf2 /" $_functions_sh_path
+
+    n_diff_lines=`diff $_functions_sh_path ${_functions_sh_path}.bkp | grep "^>" | wc -l`
+    echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+
+    if [[ $n_diff_lines != 2 ]]; then
+        echo "Could not update the contents in functions, restoring the original content" | tee -a ${LOG_FILE}
+        rm -f $_functions_sh_path
+        cp $_functions_sh_path ${_functions_sh_path}.bkp
+    else
+        echo "Successfully ammended functions to skip ipmi installation" | tee -a ${LOG_FILE}
+    fi
+
+    echo "Done" | tee -a ${LOG_FILE}
+}
+
+pre_unbox()
 {
     time_stamp=$(date)
     echo "******** [$time_stamp] Running $0 *********" >> ${LOG_FILE}
-    echo "*********************************************************" | tee -a ${LOG_FILE}
-    echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
-    echo "*********************************************************" | tee -a ${LOG_FILE}
+    #echo "*********************************************************" | tee -a ${LOG_FILE}
+    #echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
+    #echo "*********************************************************" | tee -a ${LOG_FILE}
 
     echo "DEBUG: Capturing output of 'ip a' on Server A for analysis (if needed)" >> ${LOG_FILE}
     ip a >> ${LOG_FILE}
@@ -1129,16 +1160,11 @@ main()
     #7. Update minion files on both the nodes to point master to server A hostname
     minion_config_update
 
-    # Test cases:
-    # 3. Add the entry in the /etc/hosts file with mgmt ip, check if the script updates the entry correctly.
-    # 4. Ctrl-C the script in between, check if the script exits gracefully
-    # 5. Ctrl-C the scipt and rerun the script again, check if it overwrites anything in:
-    #    /etc/hosts, /etc/salt/minion/ /root/.ssh/config files.
-    # 6. Duplicate IPs in storage enclosure causes failure.
+    #8. Update minion files on both the nodes to point master to server A hostname
+    #TODO: Required until EOS-12652 is fixed
+    if [[ "$amend_fix_for_ipmi" == true ]]; then
+        ipmi_install_skip
+    fi
 
-    #TODO: Check if running unboxing after this causes any issues in ssh config file and salt minion file
-
+    echo "DEBUG: pre_unbox script completed successfully" >> ${LOG_FILE}
 }
-
-main "$@"
-
