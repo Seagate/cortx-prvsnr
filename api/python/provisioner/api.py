@@ -268,7 +268,7 @@ def fw_update(source, dry_run=False, nowait=False):
     )
 
 
-def cmd_run(cmd_name: str, cmd_args: str, cmd_stdin: str,
+def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
     """
     Execute given command on targets nodes
