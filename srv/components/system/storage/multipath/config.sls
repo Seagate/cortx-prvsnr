@@ -44,7 +44,7 @@ Copy multipath config:
 # Execute only on Secondary node
 Copy multipath bindings to non-primary:
   cmd.run:
-    - name: scp {{ pillar['cluster'][node_id]['hostname'] }}:/etc/multipath/bindings /etc/multipath/bindings
+    - name: scp {{ node_id }}:/etc/multipath/bindings /etc/multipath/bindings
 {%- endif %}
 {% endfor %}
 {%- endif %}

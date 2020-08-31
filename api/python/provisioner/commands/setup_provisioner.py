@@ -461,7 +461,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                     if v not in (
                         config.LOCALHOST_IP,
                         config.LOCALHOST_DOMAIN,
-                        local_hostname
+                        # local_hostname
                     )
                 ]
             )

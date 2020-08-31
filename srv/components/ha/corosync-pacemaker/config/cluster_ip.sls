@@ -18,10 +18,10 @@
 {% if "primary" in grains['roles'] 
   and pillar['cluster']['cluster_ip']
   and "physical" in grains['virtual']
--%}
+%}
 
-{% if (0 == salt['cmd.retcode']('command -v pcs')) 
-  and (0 == salt['cmd.retcode']('pcs resource show ClusterIP-clone')) -%}
+{% if (0 == salt['cmd.retcode']('command -v pcs')) %}
+{% if (0 == salt['cmd.retcode']('pcs resource show ClusterIP-clone')) %}
 
 Update ClusterIP:
   cmd.run:
@@ -52,8 +52,8 @@ Clone ClusterIP:
     # priority=1 above ensures that ClusterIP-clone is distributed across nodes.
     - requries:
       - Setup ClusterIP resouce
-
-{% endif %} # Is pcs installed & ClusterIP exists
+{% endif %} # ClusterIP exists
+{% endif %} # Is pcs installed
 
 {% else %}  # Is node primary
 

@@ -18,7 +18,7 @@
 {% if "physical" in grains['virtual'] %}
 {% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.multipath'.format(grains['id'])) %}
 include:
-  - components.system.storage.teardown.tidy-up
+  # - components.system.storage.teardown.tidy-up
   - components.system.storage.multipath.prepare
   - components.system.storage.multipath.install
   - components.system.storage.multipath.config
