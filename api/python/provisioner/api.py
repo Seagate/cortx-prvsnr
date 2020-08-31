@@ -281,7 +281,7 @@ def cmd_run(cmd_name: str, cmd_args: str, cmd_stdin: str,
     :param dry_run: (optional) validate only.
     :return:
     """
-    return _api_call('cmd_run', cmd=cmd_name, args=cmd_args,
+    return _api_call('cmd_run', cmd_name=cmd_name, cmd_args=cmd_args,
                      cmd_stdin=cmd_stdin, targets=targets, dry_run=dry_run)
 
 

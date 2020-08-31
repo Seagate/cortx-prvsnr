@@ -740,12 +740,12 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
         return function_run("cmd.run", targets=targets, fun_args=[cmd_line],
                             fun_kwargs=dict(stdin=stdin))
 
-    def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
+    def run(self, cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, dry_run: bool = False):
         """
         Basic run method to execute remote commands on targets nodes:
 
-        :param str cmd: specific command to be executed on target nodes
+        :param str cmd_name: specific command to be executed on target nodes
         :param str cmd_args: command specific arguments
         :param cmd_stdin: command specific stdin parameters like username and
                           password.
@@ -755,7 +755,7 @@ class RemoteCommandExecutor(CommandParserFillerMixin):
                              real command execution on target nodes
         :return:
         """
-        cmd = cmd.strip()
+        cmd = cmd_name.strip()
 
         if cmd in SUPPORTED_REMOTE_COMMANDS:
             return getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
