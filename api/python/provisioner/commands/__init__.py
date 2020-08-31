@@ -47,8 +47,7 @@ from ..config import (
     PRVSNR_CORTX_COMPONENTS,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
-    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
-    SUPPORTED_REMOTE_COMMANDS
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from ..pillar import (
     KeyPath,
@@ -117,38 +116,6 @@ class RunArgsBase:
 
 @attr.s(auto_attribs=True)
 class RunArgsUpdate:
-    targets: str = RunArgs.targets
-    dry_run: bool = RunArgs.dry_run
-
-
-@attr.s(auto_attribs=True)
-class RunArgsRemoteCommandExecutor:
-    cmd_name: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': ("command to be executed on target nodes. "
-                         "Case sensitive")
-            }
-        }
-    )
-    cmd_args: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': ("string which represents command's "
-                         "arguments and parameters")
-            }
-        },
-        default=""  # empty string
-    )
-    cmd_stdin: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': ("string which represents command's stdin. "
-                         "Can be used to pass username and passwords")
-            }
-        },
-        default=""  # empty string
-    )
     targets: str = RunArgs.targets
     dry_run: bool = RunArgs.dry_run
 
@@ -704,66 +671,6 @@ class SWUpdate(CommandParserFillerMixin):
             raise final_error_t(
                 update_exc, rollback_error=rollback_error
             ) from update_exc
-
-
-@attr.s(auto_attribs=True)
-class RemoteCommandExecutor(CommandParserFillerMixin):
-    """
-    Base class to support remote commands execution
-    """
-
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsRemoteCommandExecutor
-
-    _PRV_METHOD_MOD = "_"  # private method modificator
-
-    def _cortxcli(self, *, args: str, stdin: str, targets: str,
-                  dry_run: bool = False):
-        """
-        Private method for `cortxcli` command.
-
-        :param args: `cortxcli` specific command parameters and arguments
-        :param stdin: `cortxcli` stdin parameters like username and password.
-                      NOTE: Parameters should be '\n' new line seperated
-        :param targets: target nodes where `cortxcli` command will be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real command execution on target nodes
-        :return:
-        """
-
-        if dry_run:
-            return
-
-        cmd_line = f'cortxcli {args}'
-
-        # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
-        return function_run("cmd.run", targets=targets, fun_args=[cmd_line],
-                            fun_kwargs=dict(stdin=stdin))
-
-    def run(self, cmd: str, cmd_args: str = "", cmd_stdin: str = "",
-            targets: str = ALL_MINIONS, dry_run: bool = False):
-        """
-        Basic run method to execute remote commands on targets nodes:
-
-        :param str cmd: specific command to be executed on target nodes
-        :param str cmd_args: command specific arguments
-        :param cmd_stdin: command specific stdin parameters like username and
-                          password.
-        :param str targets: target nodes where command is planned
-                            to be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real command execution on target nodes
-        :return:
-        """
-        cmd = cmd.strip()
-
-        if cmd in SUPPORTED_REMOTE_COMMANDS:
-            return getattr(self, self._PRV_METHOD_MOD + cmd)(args=cmd_args,
-                                                             targets=targets,
-                                                             stdin=cmd_stdin,
-                                                             dry_run=dry_run)
-        else:
-            raise ValueError(f'Command "{cmd}" is not supported')
 
 
 # TODO TEST
