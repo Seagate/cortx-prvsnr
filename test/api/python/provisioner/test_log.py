@@ -20,6 +20,7 @@
 import pytest
 from copy import deepcopy
 import logging
+from mock import Mock
 
 from provisioner.vendor import attr
 from provisioner import (
@@ -463,23 +464,37 @@ def test_log_set_logging(
 
 
 def test_CommandFilter_filter():
-    record = logging.makeLogRecord({'msg': 'some message'})
+    record = logging.makeLogRecord({})
+    cmd = 'some-command'
 
-    obj = CommandFilter()
+    obj = CommandFilter(cmd)
 
     assert obj.filter(record)
+    assert record.prvsnrcmd == cmd
 
 
-def test_NoTraceExceptionFormatter_format():
-    formatter_obj = logging.Formatter()
-    exc_info = ('some-type', 'some-value', 'traceback_info')
-    record = logging.makeLogRecord(dict(
-        exc_info=exc_info
-    ))
+def test_NoTraceExceptionFormatter_format(mocker):
+    record = logging.makeLogRecord({})
 
     obj = NoTraceExceptionFormatter()
 
-    assert obj.format(record) == formatter_obj.format(record)
+    format_m = mocker.patch.object(logging.Formatter, 'format', autospec=True)
+    obj.format(record)
+    assert record.exc_text == ''
+    format_m.assert_called_once_with(obj, record)
+
+
+def test_NoTraceExceptionFormatter_format_formatException_called(mocker):
+    record = logging.makeLogRecord({})
+    record.exc_info = ('some-type', 'some-value', 'traceback-info')
+
+    obj = NoTraceExceptionFormatter()
+
+    fmtexc_m = mocker.patch.object(log.NoTraceExceptionFormatter,
+                                   'formatException', autospec=True)
+
+    obj.format(record)
+    fmtexc_m.assert_called_once_with(obj, record.exc_info)
 
 
 def test_NoTraceExceptionFormatter_formatException():
@@ -488,3 +503,7 @@ def test_NoTraceExceptionFormatter_formatException():
     obj = NoTraceExceptionFormatter()
 
     assert obj.formatException(exc_info) == repr(exc_info[1])
+
+    mock = Mock(reason='someError(222, "mocked the reason")')
+    exc_info = ('some-type', mock.reason, 'traceback-info')
+    assert obj.formatException(exc_info) == repr(mock.reason)
