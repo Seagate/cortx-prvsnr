@@ -23,10 +23,8 @@ from typing import Type, Union
 from . import CommandParserFillerMixin, RunArgsEmpty
 from .configure_setup import SetupType
 
-from .. import (
-    config,
-    inputs, values
-)
+from .. import inputs, values
+
 from ..config import (NODES, SERVERS_PER_NODE, STORAGE_TYPE,
                       SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
                       StorageType, SETUP_INFO_FIELDS, LOCAL_MINION
