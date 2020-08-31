@@ -29,7 +29,7 @@ from .. import (
 )
 from ..config import (NODES, SERVERS_PER_NODE, STORAGE_TYPE,
                       SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
-                      StorageType, SETUP_INFO_FIELDS
+                      StorageType, SETUP_INFO_FIELDS, LOCAL_MINION
                       )
 from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
@@ -38,6 +38,11 @@ from ..vendor import attr
 
 
 logger = logging.getLogger(__name__)
+
+# TODO: for some reason this setup type is not listed in
+#  configure_setup.SetupType but can be set in
+#  VM configuration cluster.sls file
+EES_SETUP_TYPE = "ees"
 
 
 class OutputScheme:
@@ -110,7 +115,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
 
         salt_res = function_run('grains.get', fun_args=['virtual'],
-                                targets=local_minion_id())
+                                targets=LOCAL_MINION)
         if salt_res:
             # it should have the following format
             # {"current node name": "physical"} or
@@ -140,9 +145,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         node_list_key = PillarKey(cluster_path / 'node_list')
         type_key = PillarKey(cluster_path / 'type')
 
-        pillar = PillarResolver(local_minion_id()).get((node_list_key, type_key))
+        pillar = PillarResolver(LOCAL_MINION).get((node_list_key, type_key))
 
-        pillar = next(iter(pillar.values()))  # type: dict
+        pillar = pillar.get(local_minion_id())  # type: dict
 
         for key in (node_list_key, type_key):
             if (not pillar[key] or
@@ -155,9 +160,12 @@ class GetSetupInfo(CommandParserFillerMixin):
             res[SERVERS_PER_NODE] = 1
         elif storage_type == SetupType.DUAL.value:
             res[SERVERS_PER_NODE] = 2
+        elif storage_type == EES_SETUP_TYPE:
+            # TODO: does this value can be used in real configuration?
+            res[SERVERS_PER_NODE] = 2
         else:
-            raise ValueError("Unsupported value for 'cluster/type' "
-                             "pillar value")
+            raise ValueError(f"Unsupported value '{storage_type}' for "
+                             f"'cluster/type' pillar value")
 
         # Assumption: number of nodes in 'cluster/node_list' should be
         # multiple by 'cluster/type'
@@ -165,7 +173,7 @@ class GetSetupInfo(CommandParserFillerMixin):
             raise ValueError(f"Unknown cluster configuration: "
                              f"total number of nodes(servers) = "
                              f"{pillar[node_list_key]}\n"
-                             f"cluster type = {res[SERVERS_PER_NODE]}")
+                             f"cluster type = {storage_type}")
 
         res[NODES] = len(pillar[node_list_key]) // res[SERVERS_PER_NODE]
 
@@ -181,9 +189,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         controller_type = PillarKey(controller_pi_path / 'type')
 
-        pillar = PillarResolver(local_minion_id()).get((controller_type,))
+        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
 
-        pillar = next(iter(pillar.values()))  # type: dict
+        pillar = pillar.get(local_minion_id())  # type: dict
 
         if (not pillar[controller_type] or
                 pillar[controller_type] is values.MISSED):
