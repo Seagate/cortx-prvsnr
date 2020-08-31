@@ -253,6 +253,21 @@ class RunArgsSetup:
         converter=(lambda v: Path(str(v)) if v else v),
         validator=utils.validator_path_exists
     )
+    url_cortx: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Cortx repo url"
+            }
+        }
+    )
+    url_cortx_deps: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Cortx dependencies url"
+            }
+        },
+        default=None
+    )
     target_build: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -331,6 +346,8 @@ class RunArgsSetupProvisionerBase:
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
+    url_cortx: str = RunArgsSetup.url_cortx
+    url_cortx_deps: str = RunArgsSetup.url_cortx_deps
     target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
@@ -369,7 +386,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     def secondaries(self):
         return self.nodes[1:]
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):  # noqa: C901
         if self.source == 'local':
             if not self.local_repo:
                 raise ValueError("local repo is undefined")
@@ -380,15 +397,20 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 raise ValueError("ISO extension is expected for CORTX repo")
             if not self.iso_cortx_deps:
                 raise ValueError("ISO for CORTX dependencies is undefined")
-            if self.iso_cortx_deps.suffix != '.iso':
+            if not self.iso_cortx_deps.suffix != '.iso':
                 raise ValueError(
                     "ISO extension is expected for CORTX deps repo"
                 )
             if self.iso_cortx.name == self.iso_cortx_deps.name:
                 raise ValueError(
-                    "ISO files for CORTX and CORTX dependencies "
+                    "ISO files for CORTX and CORTX dependnecies "
                     f"have the same name: {self.iso_cortx.name}"
                 )
+        elif self.source == 'rpm':
+            if not self.url_cortx:
+                raise ValueError("CORTX repo url is undefined")
+            if not self.url_cortx_deps:
+                raise ValueError("CORTX dependencies url is undefined")
 
 
 @attr.s(auto_attribs=True)
@@ -590,7 +612,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 ]
             )
 
-    def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
+    def _prepare_salt_config(self, run_args, prvsnr_dir, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
@@ -679,11 +701,11 @@ class SetupProvisioner(CommandParserFillerMixin):
         # local_repo would be set from config.PROJECTPATH as default if not
         # specified as an argument and config.PROJECT could be None
         # if repo not found.
-        if not run_args.local_repo:
-            raise ValueError("local repo is undefined")
+        # if not run_args.local_repo:
+        #     raise ValueError("local repo is undefined")
 
         minion_cfg_sample_path = (
-            run_args.local_repo /
+            prvsnr_dir /
             'srv/components/provisioner/salt_minion/files/minion'
         )
         minion_cfg_path = all_minions_dir / 'minion'
@@ -728,7 +750,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             #   (locally) prepare minion grains
             #   FIXME not valid for non 'local' source
             minion_grains_sample_path = (
-                run_args.local_repo / (
+                prvsnr_dir / (
                     "srv/components/provisioner/salt_minion/files/grains.{}"
                     .format(
                         'primary' if node is run_args.primary else 'secondary'
@@ -923,21 +945,6 @@ class SetupProvisioner(CommandParserFillerMixin):
             )
             ssh_client.ensure_ready([node.minion_id])
 
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
-
-        logger.info("Copy config.ini to nodes")
-        self._copy_config_ini(run_args, paths)
-
-        # TODO IMPROVE EOS-9581 not all masters support
-        master_targets = (
-            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
-        )
-
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
             # TODO IMPROVE EOS-8473 hard coded
@@ -952,6 +959,60 @@ class SetupProvisioner(CommandParserFillerMixin):
                     'cortx_deps': f"salt://{run_args.iso_cortx_deps.name}"
                 }
             )
+        elif run_args.source == 'rpm':
+            logger.info("Preparing CORTX repos pillar")
+            self._prepare_cortx_repo_pillar(
+                paths, {
+                    'cortx': f'{run_args.url_cortx}',
+                    'cortx_deps': f'{run_args.url_cortx_deps}'
+                }
+            )
+
+        logger.info("Installing Cortx yum repositories")
+        # TODO IMPROVE DOC EOS-12076 Iso installation logic:
+        #   - iso files are copied to user local file roots on all remotes
+        #     (TODO consider user shared, currently glusterfs
+        #      is not enough trusted)
+        #   - iso is mounted to a location inside user local data
+        #   - a repo file is created and pointed to the mount directory
+        # TODO EOS-12076 IMPROVE hard-coded
+        if (
+            run_args.source == 'iso' or
+            run_args.source == 'rpm'
+        ):
+            # copy ISOs onto remotes and mount
+            ssh_client.state_apply('repos')
+        else:
+            ssh_client.state_apply('cortx_repos')
+
+        logger.info(
+            f"Installing provisioner from a '{run_args.source}'' source"
+        )
+        if run_args.source == 'local':
+            ssh_client.state_apply('provisioner.local')
+            prvsnr_dir = run_args.local_repo
+        elif run_args.source == 'iso' or run_args.source == 'rpm':
+            ssh_client.state_apply('provisioner.install')
+            prvsnr_dir = Path('/opt/seagate/cortx/provisioner')
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt masters / minions configuration")
+        self._prepare_salt_config(run_args, prvsnr_dir, ssh_client, paths)
+
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, paths)
+
+        # TODO IMPROVE EOS-9581 not all masters support
+        master_targets = (
+            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
+        )
 
         if run_args.ha and not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
@@ -981,19 +1042,6 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # APPLY CONFIGURATION
 
-        logger.info("Installing Cortx yum repositories")
-        # TODO IMPROVE DOC EOS-12076 Iso installation logic:
-        #   - iso files are copied to user local file roots on all remotes
-        #     (TODO consider user shared, currently glusterfs
-        #      is not enough trusted)
-        #   - iso is mounted to a location inside user local data
-        #   - a repo file is created and pointed to the mount directory
-        if run_args.source == 'iso':  # TODO EOS-12076 IMPROVE hard-coded
-            # copy ISOs onto remotes and mount
-            ssh_client.state_apply('repos')
-        else:
-            ssh_client.state_apply('cortx_repos')
-
         logger.info("Setting up paswordless ssh")
         ssh_client.state_apply('ssh')
 
@@ -1006,14 +1054,6 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
-
-        if run_args.source == 'local':
-            logger.info("Installing provisioner from a local source")
-            ssh_client.state_apply('provisioner.local')
-        else:
-            raise NotImplementedError(
-                f"{run_args.source} provisioner source is not supported yet"
-            )
 
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")
