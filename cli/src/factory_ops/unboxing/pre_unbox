@@ -1066,25 +1066,33 @@ ipmi_install_skip()
 {
     _functions_sh_path="/opt/seagate/eos-prvsnr/cli/common_utils/functions.sh"
     echo "DEBUG: copying $_functions_sh_path to ${_functions_sh_path}.bkp" >> ${LOG_FILE}
-    cp $_functions_sh_path ${_functions_sh_path}.bkp
+    yes | cp -f $_functions_sh_path ${_functions_sh_path}.bkp
 
     echo "Amending functions to skip ipmi installation" | tee -a ${LOG_FILE}
     echo "DEBUG: updating functions" >> ${LOG_FILE}
     line1=`grep -n '\${_cmd} \"yum install -y ipmitool\"' $_functions_sh_path | cut -f1 -d:`
     echo "DEBUG: line1=$line1" >> ${LOG_FILE}
-    sed -ie "${line1}s/.*/        touch \/tmp\/skip_ipmi_install_hf1 /" $_functions_sh_path
+    if [[ ! -z $line1 ]]; then
+        sed -ie "${line1}s/.*/        touch \/tmp\/skip_ipmi_install_hf1 /" $_functions_sh_path
+    else
+        echo "DEBUG: content '\${_cmd} \"yum install -y ipmitool\"' not found in $_functions_sh_path, ignoring" >> ${LOG_FILE}
+    fi
 
     line2=`grep -n "yum install -y ipmitool" $_functions_sh_path | cut -f1 -d:`
     echo "DEBUG: line2=$line2" >> ${LOG_FILE}
-    sed -ie "${line2}s/.*/        touch \/tmp\/skip_ipmi_install_hf2 /" $_functions_sh_path
+    if [[ ! -z "$line2" ]]; then
+        sed -ie "${line2}s/.*/        touch \/tmp\/skip_ipmi_install_hf2 /" $_functions_sh_path
+    else
+        echo "DEBUG: content 'yum install -y ipmitool' not found in $_functions_sh_path, ignoring" >> ${LOG_FILE}
+    fi
 
     n_diff_lines=`diff $_functions_sh_path ${_functions_sh_path}.bkp | grep "^>" | wc -l`
     echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
 
     if [[ $n_diff_lines != 2 ]]; then
         echo "Could not update the contents in functions, restoring the original content" | tee -a ${LOG_FILE}
-        rm -f $_functions_sh_path
-        cp $_functions_sh_path ${_functions_sh_path}.bkp
+        #rm -f $_functions_sh_path
+        cp ${_functions_sh_path}.bkp ${_functions_sh_path}
     else
         echo "Successfully ammended functions to skip ipmi installation" | tee -a ${LOG_FILE}
     fi
