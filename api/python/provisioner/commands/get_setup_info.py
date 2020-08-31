@@ -18,22 +18,22 @@
 #
 
 import logging
-from enum import Enum
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
+from .configure_setup import SetupType
 
 from .. import (
     config,
     inputs, values
 )
-from ..config import (LOCAL_MINION, NODES, SERVERS_PER_NODE, STORAGE_TYPE,
+from ..config import (NODES, SERVERS_PER_NODE, STORAGE_TYPE,
                       SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
                       StorageType, SETUP_INFO_FIELDS
                       )
 from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
-from ..salt import function_run
+from ..salt import function_run, local_minion_id
 from ..vendor import attr
 
 
@@ -64,7 +64,7 @@ class OutputScheme:
         formatter = cls._MAP.get(key, None)
         if formatter is None:
             raise ValueError(f"Format handler for field {key} is not defined")
-        return formatter(value)
+        return NOT_AVAILABLE if value is None else formatter(value)
 
 
 @attr.s(auto_attribs=True)
@@ -80,8 +80,8 @@ class GetSetupInfo(CommandParserFillerMixin):
     # TODO: in case of numerous handlers per field need to ensure that one
     #       handler runs once
     FIELD_HANDLERS = {
-        NODES: "_count_minions",
-        SERVERS_PER_NODE: "_get_servers_per_node",
+        NODES: "_count_servers_and_nodes",
+        SERVERS_PER_NODE: "_count_servers_and_nodes",
         STORAGE_TYPE: "_get_storage_type",
         SERVER_TYPE: "_get_server_type"
     }
@@ -101,16 +101,6 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         return {k: OutputScheme.format(k, v) for k, v in res_dict.items()}
 
-    def _count_minions(self):
-        """
-        Private method to count active (registered) minions
-
-        :return:
-        """
-        res = dict()
-
-        return res
-
     def _get_server_type(self):
         """
         Private method to determine server type
@@ -120,7 +110,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
 
         salt_res = function_run('grains.get', fun_args=['virtual'],
-                                targets=LOCAL_MINION)
+                                targets=local_minion_id())
         if salt_res:
             # it should have the following format
             # {"current node name": "physical"} or
@@ -135,9 +125,12 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         return res
 
-    def _get_servers_per_node(self):
+    def _count_servers_and_nodes(self):
         """
-        Private method to obtain number of servers per node
+        Private method to obtain number of nodes (enclosures)
+        and servers per node
+
+        NOTE: this method counts both NODES and SERVERS_PER_NODE fields
 
         :return:
         """
@@ -147,7 +140,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         node_list_key = PillarKey(cluster_path / 'node_list')
         type_key = PillarKey(cluster_path / 'type')
 
-        pillar = PillarResolver(LOCAL_MINION).get((node_list_key, type_key))
+        pillar = PillarResolver(local_minion_id()).get((node_list_key, type_key))
 
         pillar = next(iter(pillar.values()))  # type: dict
 
@@ -157,10 +150,24 @@ class GetSetupInfo(CommandParserFillerMixin):
                 raise BadPillarDataError(f'value for {key.keypath} '
                                          f'is not specified')
 
-        # TODO: improve logic to determine servers_per_node field using
-        #  both: cluster/node_list and cluster/type values
+        storage_type = pillar.get(type_key)
+        if storage_type == SetupType.SINGLE.value:
+            res[SERVERS_PER_NODE] = 1
+        elif storage_type == SetupType.DUAL.value:
+            res[SERVERS_PER_NODE] = 2
+        else:
+            raise ValueError("Unsupported value for 'cluster/type' "
+                             "pillar value")
 
-        res[SERVERS_PER_NODE] = len(pillar[node_list_key])
+        # Assumption: number of nodes in 'cluster/node_list' should be
+        # multiple by 'cluster/type'
+        if (len(pillar[node_list_key]) % res[SERVERS_PER_NODE]) != 0:
+            raise ValueError(f"Unknown cluster configuration: "
+                             f"total number of nodes(servers) = "
+                             f"{pillar[node_list_key]}\n"
+                             f"cluster type = {res[SERVERS_PER_NODE]}")
+
+        res[NODES] = len(pillar[node_list_key]) // res[SERVERS_PER_NODE]
 
         return res
 
@@ -174,7 +181,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         controller_type = PillarKey(controller_pi_path / 'type')
 
-        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+        pillar = PillarResolver(local_minion_id()).get((controller_type,))
 
         pillar = next(iter(pillar.values()))  # type: dict
 
@@ -185,8 +192,10 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         if pillar[controller_type] == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
+        elif pillar[controller_type] == ControllerTypes.INDIUM.value:
+            res[STORAGE_TYPE] = StorageType.PODS.value
 
-        # TODO: implement for other types: virtual, JBOD, PODS
+        # TODO: implement for other types: virtual, JBOD
 
         return res
 
