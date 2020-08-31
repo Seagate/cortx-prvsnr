@@ -870,7 +870,7 @@ def _salt_client_cmd(
 def function_run(
     fun,
     targets=ALL_MINIONS,
-    fun_args: Union[Tuple, None] = None,
+    fun_args: Union[Tuple, List, None] = None,
     fun_kwargs: Union[Dict, None] = None,
     **kwargs
 ):
