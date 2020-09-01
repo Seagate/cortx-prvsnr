@@ -29,6 +29,17 @@ function trap_handler {
 }
 trap trap_handler ERR
 
+function intrpt_handler {
+    echo -e "\n\n\
+------------------------------------------------------------------
+Received Ctrl-c signal, exiting Gracefully.
+For detailed logs, please see: $LOG_FILE
+------------------------------------------------------------------" | tee -a ${LOG_FILE}
+
+    exit 1
+}
+trap intrpt_handler SIGTERM SIGINT
+
 BASEDIR=$(dirname "${BASH_SOURCE}")
 static_data_ip_a=
 static_data_ip_b=
@@ -39,6 +50,7 @@ export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
+. ${BASEDIR}/pre_unbox
 
 function usage {
     echo "\
@@ -174,17 +186,21 @@ echo -e "\n\
       Management VIP           : $management_vip
       Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
-# Check salt services is required as one of initial steps
-# This is requried to fetch pillar data on primary node
-check_salt_services 
-
 # Perform basic system check
 check_hostname
+
 check_pvt_data_connectivity
 check_mgmt_ip
 
+# Run pre_unbox validations
+pre_unbox
+
+# Check salt services is required as one of initial steps
+# This is requried to fetch pillar data on master node
+check_salt_services 
+
 # Update /root/.ssh/config file with hosts
-update_ssh_config
+#update_ssh_config taken care of in pre_unbox
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
