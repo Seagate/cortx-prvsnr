@@ -472,10 +472,12 @@ def test_CommandFilter_filter():
 
 def test_NoTraceExceptionFormatter_format(mocker):
     record = logging.makeLogRecord({})
+    record.exc_text = 'some-text'
 
     obj = NoTraceExceptionFormatter()
 
-    format_m = mocker.patch.object(logging.Formatter, 'format', autospec=True)
+    format_m = mocker.patch.object(log.logging.Formatter, 'format',
+                                   autospec=True)
     obj.format(record)
     assert record.exc_text == ''
     format_m.assert_called_once_with(obj, record)
@@ -484,6 +486,7 @@ def test_NoTraceExceptionFormatter_format(mocker):
 def test_NoTraceExceptionFormatter_format_formatException_called(mocker):
     record = logging.makeLogRecord({})
     record.exc_info = ('some-type', 'some-value', 'traceback-info')
+    record.exc_text = 'some-text'
 
     obj = NoTraceExceptionFormatter()
 
@@ -502,5 +505,5 @@ def test_NoTraceExceptionFormatter_formatException(mocker):
     assert obj.formatException(exc_info) == repr(exc_info[1])
 
     mock = mocker.Mock(reason='someError(222, "mocked the reason")')
-    exc_info = ('some-type', mock.reason, 'traceback-info')
+    exc_info = ('some-type', mock, 'traceback-info')
     assert obj.formatException(exc_info) == repr(mock.reason)
