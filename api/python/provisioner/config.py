@@ -295,7 +295,6 @@ class ControllerTypes(Enum):
     SATI = "sati"
 
 
-# TODO: maybe needed to move to config.py
 # Constant block for setup info fields
 NODES = "nodes"
 SERVERS_PER_NODE = "servers_per_node"

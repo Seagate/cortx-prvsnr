@@ -232,9 +232,8 @@ class GetSetupInfo(CommandParserFillerMixin):
             res = handler()
             # NOTE: one method can determine several fields
             # Update only unknown fields
-            for key in res.keys() & set(k for k, v in
-                                        filter(lambda x: x[1] is None,
-                                               aggregated_res.items())):
+            for key in (res.keys() & set(k for k, v in aggregated_res.items()
+                                         if v is None)):
                 aggregated_res[key] = res.get(key)
 
         return self._format_output(aggregated_res)
