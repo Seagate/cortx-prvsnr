@@ -15,7 +15,7 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_system_check.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
+#truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -30,12 +30,11 @@ function trap_handler {
 }
 trap trap_handler ERR
 
+#export private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+#export private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
 
-# export private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-# export private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-
-export private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-export private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+export private_data_ip_node_1="${pvt_ip_a:-"192.168.0.1"}"
+export private_data_ip_node_2="${pvt_ip_b:-"192.168.0.2"}"
 
 function check_boxing_flag {
     if [[ -f '/opt/seagate/cortx/provisioner/generated_config/boxed' ]]
