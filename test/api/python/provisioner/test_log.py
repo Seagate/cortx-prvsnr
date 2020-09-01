@@ -18,7 +18,6 @@
 import pytest
 from copy import deepcopy
 import logging
-from mock import Mock
 
 from provisioner.vendor import attr
 from provisioner import (
@@ -495,13 +494,13 @@ def test_NoTraceExceptionFormatter_format_formatException_called(mocker):
     fmtexc_m.assert_called_once_with(obj, record.exc_info)
 
 
-def test_NoTraceExceptionFormatter_formatException():
+def test_NoTraceExceptionFormatter_formatException(mocker):
     exc_info = ('some-type', 'some-value', 'traceback-info')
 
     obj = NoTraceExceptionFormatter()
 
     assert obj.formatException(exc_info) == repr(exc_info[1])
 
-    mock = Mock(reason='someError(222, "mocked the reason")')
+    mock = mocker.Mock(reason='someError(222, "mocked the reason")')
     exc_info = ('some-type', mock.reason, 'traceback-info')
     assert obj.formatException(exc_info) == repr(mock.reason)
