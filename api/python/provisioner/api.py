@@ -264,7 +264,7 @@ def get_node_id(targets=ALL_MINIONS, nowait=False):
 
 
 def get_release_version(targets=ALL_MINIONS, nowait=False):
-    r"""Retruns Release Version
+    r"""Returns Release Version
 
     :param targets: (optional) A host to find Rlease Version.
         Default: ``ALL_MINIONS``
