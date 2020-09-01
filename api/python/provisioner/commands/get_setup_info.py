@@ -37,7 +37,8 @@ from ..vendor import attr
 
 logger = logging.getLogger(__name__)
 
-# TODO: for some reason this setup type is not listed in
+# TODO: EOS-12418-improvement:
+#  for some reason this setup type is not listed in
 #  configure_setup.SetupType but can be set in
 #  VM configuration cluster.sls file
 EES_SETUP_TYPE = "ees"
@@ -120,7 +121,8 @@ class GetSetupInfo(CommandParserFillerMixin):
             # {"current node name": "kvm"}, for example
             server_type = salt_res.popitem()[1]
 
-            # TODO: in future we may support other values of server type
+            # TODO: EOS-12418-improvement:
+            #  in future we may support other values of server type
             #  which salt provides
             res[SERVER_TYPE] = (ServerType.PHYSICAL.value
                                 if server_type == ServerType.PHYSICAL.value
@@ -159,7 +161,8 @@ class GetSetupInfo(CommandParserFillerMixin):
         elif storage_type == SetupType.DUAL.value:
             res[SERVERS_PER_NODE] = 2
         elif storage_type == EES_SETUP_TYPE:
-            # TODO: does this value can be used in real configuration?
+            # TODO: EOS-12418-improvement:
+            #  does this value can be used in real configuration?
             res[SERVERS_PER_NODE] = 2
         else:
             raise ValueError(f"Unsupported value '{storage_type}' for "
@@ -201,11 +204,13 @@ class GetSetupInfo(CommandParserFillerMixin):
         elif pillar[controller_type] == ControllerTypes.INDIUM.value:
             res[STORAGE_TYPE] = StorageType.PODS.value
 
-        # TODO: implement for other types: virtual, JBOD
+        # TODO: EOS-12418-improvement:
+        #  implement for other types: virtual, JBOD
 
         return res
 
-    # TODO: Add support of arguments to retrieve just specified fields
+    # TODO: EOS-12418-improvement:
+    #  Add support of arguments to retrieve just specified fields
     def run(self):
         """
         Base method to gather and return to user information about cluster
