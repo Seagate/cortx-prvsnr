@@ -29,6 +29,9 @@ from ..pillar import PillarUpdater
 from . import (
     CommandParserFillerMixin
 )
+from ..config import (
+    ALL_MINIONS
+)
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +95,7 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     input_map = {"network": inputs.Network,
                  "release": inputs.Release,
+                 "node": inputs.Node,
                  "storage_enclosure": inputs.StorageEnclosure}
     validate_map = {SetupType.SINGLE.value: SINGLE_PARAM,
                     SetupType.DUAL.value: DUAL_PARAM}
@@ -123,11 +127,17 @@ class ConfigureSetup(CommandParserFillerMixin):
         content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
         logger.debug(f"params data {content}")
         self._validate_params(content, setup_type)
+        targets = ALL_MINIONS
 
         for section in content:
             self._parse_input(content[section])
-            params = self.input_map[section](**content[section])
-            pillar_updater = PillarUpdater()
+            if "node" in section:
+                res = section.split(":")    # section will be node:srvnode-1
+                targets = res[1]
+                params = self.input_map[res[0]](**content[section])
+            else:
+                params = self.input_map[section](**content[section])
+            pillar_updater = PillarUpdater(targets)
             pillar_updater.update(params)
             pillar_updater.apply()
 

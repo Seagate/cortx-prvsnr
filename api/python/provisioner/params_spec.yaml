@@ -53,6 +53,15 @@ network:
   secondary_bmc_user: cluster/srvnode-2/bmc/user
   secondary_bmc_secret: cluster/srvnode-2/bmc/secret
 
+node: 
+  _path: cluster.sls
+  hostname:     network/hostname
+  data_ip:      network/data_nw/ipaddr
+  data_network_iface: network/data_nw/iface
+  bmc_ip: network/bmc/ip
+  bmc_user: network/bmc/user
+  bmc_secret: network/bmc/secret
+
 release:
   _path: release.sls
   target_build: release/target_build

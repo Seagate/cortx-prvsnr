@@ -452,6 +452,29 @@ class StorageEnclosure(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
+class Node(ParamGroupInputBase):
+    _param_group = 'node'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node hostname"
+    )
+    data_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data iface IP"
+    )
+    data_network_iface: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data network iface"
+    )
+    bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC  IP"
+    )
+    bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC User"
+    )
+    bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node BMC password"
+    )
+
+
+@attr.s(auto_attribs=True)
 class Network(ParamGroupInputBase):
     _param_group = 'network'
     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
