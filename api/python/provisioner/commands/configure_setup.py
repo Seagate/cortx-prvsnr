@@ -17,7 +17,6 @@
 
 import logging
 import configparser
-from enum import Enum
 from typing import Type
 from copy import deepcopy
 from pathlib import Path
@@ -37,11 +36,6 @@ from ..config import (
 logger = logging.getLogger(__name__)
 
 
-class SetupType(Enum):
-    SINGLE = "single"
-    DUAL = "dual"
-
-
 @attr.s(auto_attribs=True)
 class RunArgsConfigureSetup:
     path: str = attr.ib(
@@ -51,11 +45,10 @@ class RunArgsConfigureSetup:
             }
         }
     )
-    setup_type: str = attr.ib(
+    number_of_nodes: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "type of setup",
-                'choices': [st.value for st in SetupType]
+                'help': "Number of nodes"
             }
         }
     )
@@ -97,16 +90,16 @@ class ConfigureSetup(CommandParserFillerMixin):
                  "release": inputs.Release,
                  "node": inputs.Node,
                  "storage_enclosure": inputs.StorageEnclosure}
-    validate_map = {SetupType.SINGLE.value: SINGLE_PARAM,
-                    SetupType.DUAL.value: DUAL_PARAM}
+    validate_map = {1: SINGLE_PARAM,
+                    2: DUAL_PARAM}
 
     def _parse_input(self, input):
         for key in input:
             if input[key] and "," in input[key]:
                 input[key] = [x.strip() for x in input[key].split(",")]
 
-    def _validate_params(self, content, setup_type):
-        params = self.validate_map[setup_type]
+    def _validate_params(self, content, number_of_nodes):
+        params = self.validate_map[number_of_nodes]
         mandatory_param = deepcopy(params)
         for section in content:
             for key in content[section]:
@@ -116,22 +109,28 @@ class ConfigureSetup(CommandParserFillerMixin):
         if len(mandatory_param) > 0:
             raise ValueError(f"Mandatory param missing {mandatory_param}")
 
-    def run(self, path, setup_type):
+    def run(self, path, number_of_nodes):
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
 
+        number_of_nodes = int(number_of_nodes)
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data :")
         content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
         logger.debug(f"params data {content}")
-        self._validate_params(content, setup_type)
+
+        if number_of_nodes < 3:
+            self._validate_params(content, number_of_nodes)
+
         targets = ALL_MINIONS
+        count = deepcopy(number_of_nodes)
 
         for section in content:
             self._parse_input(content[section])
             if "node" in section:
+                count = count - 1
                 res = section.split(":")    # section will be node:srvnode-1
                 targets = res[1]
                 params = self.input_map[res[0]](**content[section])
@@ -140,5 +139,8 @@ class ConfigureSetup(CommandParserFillerMixin):
             pillar_updater = PillarUpdater(targets)
             pillar_updater.update(params)
             pillar_updater.apply()
+
+        if number_of_nodes > 2 and count > 0:
+            raise ValueError(f"Node information for {count} node missing")
 
         logger.info("Pillar data updated Successfully.")

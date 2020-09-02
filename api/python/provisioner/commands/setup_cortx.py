@@ -32,8 +32,6 @@ from .setup_provisioner import (
     SetupProvisioner
 )
 
-from .configure_setup import SetupType
-
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,7 @@ class SetupCortx(CommandParserFillerMixin):
             setup_ctx.ssh_client.cmd_run(
                 (
                     '/usr/local/bin/provisioner configure_setup '
-                    f'{config.PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                    f'{config.PRVSNR_PILLAR_CONFIG_INI} {len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
         logger.info("Done")
