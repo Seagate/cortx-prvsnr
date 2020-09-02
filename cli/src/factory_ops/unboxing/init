@@ -175,7 +175,7 @@ echo -e "\n\
       Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
-# This is requried to fetch pillar data on primary node
+# This is requried to fetch pillar data on master node
 check_salt_services 
 
 # Perform basic system check

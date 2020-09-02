@@ -20,7 +20,7 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                 git branch: 'release', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'https://github.com/Seagate/cortx-prvsnr.git'
+                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'https://github.com/Seagate/cortx-prvsnr.git'
             }
         }
         stage('Package: Provisioner RPMS') {
@@ -59,10 +59,10 @@ pipeline {
         stage('Release') {
             steps {
                 sh encoding: 'utf-8', label: '', returnStdout: true, script: '''
-                    test -d /mnt/bigstorage/releases/cortx/github/release/rhel-7.7.1908/last_successful/provisioner && rm -rf /mnt/bigstorage/releases/cortx/github/release/rhel-7.7.1908/last_successful/provisioner
-                    test -d /mnt/bigstorage/releases/cortx/github/release/rhel-7.7.1908/last_successful/provisioner || mkdir /mnt/bigstorage/releases/cortx/github/release/rhel-7.7.1908/last_successful/provisioner
-                    pushd /mnt/bigstorage/releases/cortx/github/release/rhel-7.7.1908/last_successful/provisioner
-                    ln -s /mnt/bigstorage/releases/cortx/components/dev/provisioner/${BUILD_NUMBER} repo
+                    test -d /mnt/bigstorage/releases/master/last_successful/provisioner && rm -rf /mnt/bigstorage/releases/master/last_successful/provisioner
+                    test -d /mnt/bigstorage/releases/master/last_successful/provisioner || mkdir /mnt/bigstorage/releases/master/last_successful/provisioner
+                    pushd /mnt/bigstorage/releases/master/last_successful/provisioner
+                    ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER} repo
                     popd
                 '''
             }

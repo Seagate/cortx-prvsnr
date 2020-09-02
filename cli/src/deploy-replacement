@@ -138,7 +138,7 @@ Usage: $0 [options]
 
 Installs CORTX stack and configures cortx services either on remote host or locally.
 
-Target host is considered to be an cortx SaltStack primary.
+Target host is considered to be an cortx SaltStack master.
 
 General options:
 $base_options_usage

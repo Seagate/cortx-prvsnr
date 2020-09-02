@@ -1010,11 +1010,11 @@ def test_functions_install_salt(
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("primary", [True, False], ids=['master', 'minion'])
+@pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
 def test_functions_configure_salt(
-    run_script, mlocalhost, ssh_config, remote, primary, project_path, request
+    run_script, mlocalhost, ssh_config, remote, master, project_path, request
 ):
-    host_label = 'srvnode1' if primary else 'srvnode2'
+    host_label = 'srvnode1' if master else 'srvnode2'
     mhost = request.getfixturevalue('mhost' + host_label)
     _ = request.getfixturevalue('install_provisioner')
 
@@ -1022,7 +1022,7 @@ def test_functions_configure_salt(
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false'  # TODO
-    is_master = 'true' if primary else 'false'
+    is_master = 'true' if master else 'false'
 
     script = """
         configure_salt {} {} {} {} {}
@@ -1055,7 +1055,7 @@ def test_functions_configure_salt(
     assert mhost.host.service('salt-minion').is_enabled
     assert mhost.host.service('salt-minion').is_running
 
-    if primary:
+    if master:
         assert mhost.host.service('salt-master').is_enabled
         assert mhost.host.service('salt-master').is_running
 
@@ -1064,7 +1064,7 @@ def test_functions_configure_salt(
     )
     grains = json.loads(output)['local']
     assert 'roles' in grains
-    assert grains['roles'] == ['primary'] if primary else ['secondary']
+    assert grains['roles'] == ['primary'] if master else ['secondary']
     assert grains['id'] == minion_id
 
 
@@ -1074,7 +1074,7 @@ def test_functions_configure_salt(
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "master_host",
-    [None, 'some-primary-host'],
+    [None, 'some-master-host'],
     ids=['default_master', 'custom_master']
 )
 def test_functions_configure_salt_master_host(

@@ -1,5 +1,5 @@
-# Sample replation configuration data file for N-way multi-primary setup
-# This file should be replicated on all Primary server nodes, replacing following fields
+# Sample replation configuration data file for N-way multi-master setup
+# This file should be replicated on all Master nodes, replacing following fields
 # in accordance to your setup.
 # Change the olcServerID: <Int> , rid=<XXX > information, this should be unique
 # for each server. Update provider field, provider=ldap://<provider_IP> with

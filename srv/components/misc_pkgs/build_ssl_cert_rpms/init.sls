@@ -26,7 +26,7 @@ include:
   - components.misc_pkgs.build_ssl_cert_rpms.housekeeping
   - components.misc_pkgs.build_ssl_cert_rpms.sanity_check
 
-# Copy generated cert from Primary
+# Copy generated cert from Master
 {%- for node_id in pillar['cluster']['node_list'] -%}
 {%- if not pillar['cluster'][node_id]['is_primary'] %}
 # Requries pip install scp

@@ -41,7 +41,7 @@ Configures cortx services either on remote host or locally.
 
 'component' is one of {cluster,motr,haproxy,release,s3client,s3server,sspl}.
 
-Target host is considered to be an CORTX SaltStack primary.
+Target host is considered to be an CORTX SaltStack master.
 
 General options:
 $base_options_usage

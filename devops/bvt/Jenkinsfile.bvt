@@ -10,12 +10,12 @@ Map config = [
     nodeLabel: 'centos-prvsnr-node'
 ]
 
-String cortxRelease = params.cortxRelease ?: 'integration/centos-7.7.1908/last_successful'
-String cortxTestRepoVersion = params.cortxTestRepoVersion ?: 'release'
+String eosRelease = params.eosRelease ?: 'integration/centos-7.7.1908/last_successful'
+String eosTestRepoVersion = params.eosTestRepoVersion ?: 'master'
 
 echo """
-    Cortx release is set to '$cortxRelease'
-    cortx-test repo version is set to '$cortxTestRepoVersion'
+    EOS release is set to '$eosRelease'
+    eos-test repo version is set to '$eosTestRepoVersion'
 """
 
 def nodeWrapper(label=null, body) {
@@ -61,11 +61,11 @@ Closure dynamicValidation = {
     String bvtTestTargets = 'avocado_test/bvt_test.py'
     String bvtResultsArchive = 'bvt.results.tgz'
 
-    String prvsnrCliRelease = cortxRelease
-    String prvsnrRelease = cortxRelease
+    String prvsnrCliRelease = eosRelease
+    String prvsnrRelease = eosRelease
 
     String pytestArgs = "-l -vv -s --log-cli-level info --junit-xml=$testReportFileNameXml"
-    pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --cortx-release=$cortxRelease"
+    pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --eos-release=$eosRelease"
     pytestArgs += " --bvt-repo-path=$eosTestRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
     String pytestTargets = "test/bvt"
 
@@ -76,7 +76,7 @@ Closure dynamicValidation = {
 
         stage('Download QA tests') {
             withCredentials([string(credentialsId: 'eos-test-repo-api-token', variable: 'token')]) {
-                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$cortxTestRepoVersion/archive.tar.gz -o $eosTestRepoArchive"
+                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$eosTestRepoVersion/archive.tar.gz -o $eosTestRepoArchive"
             }
         }
 

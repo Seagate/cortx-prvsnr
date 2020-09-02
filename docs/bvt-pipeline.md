@@ -26,7 +26,7 @@ The pipeline accepts the following parameters:
 - `eosRelease`: EOS stack release to use as source for provisioner and EOS stack components.
 Default: `integration/centos-7.7.1908/last_successful`.
 - `eosTestRepoVersion`: version of the [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/)
-repository to use. Default: `release`.
+repository to use. Default: `master`.
 
 ## Artifacts
 
