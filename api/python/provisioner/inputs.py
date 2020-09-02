@@ -417,9 +417,9 @@ class ParamGroupInputBase(PillarItemsAPI):
 class Validation():
     @staticmethod
     def check_ip4(instace, attribute, value):
-        ip_regex = ("^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
-                    "25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
-                    "25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
+        ip_regex = ("^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("  # noqa: W605
+                    "25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("    # noqa: W605
+                    "25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("    # noqa: W605
                     "25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$")
         if value is not UNCHANGED and not re.search(ip_regex, value):
             raise ValueError(f"{attribute.name}: invalid ip address")
@@ -486,6 +486,351 @@ class Node(ParamGroupInputBase):
     )
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC password"
+    )
+
+
+class ReleaseParams:
+    target_build: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "Cortx deployment build"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+
+
+class StorageEnclosureParams:
+    controller_a_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "Controller A IP"
+                ),
+            }
+        },
+        validator=Validation.check_ip4,
+        default=UNCHANGED
+    )
+    controller_b_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "Controller B IP"
+                ),
+            }
+        },
+        validator=Validation.check_ip4,
+        default=UNCHANGED
+    )
+    controller_user: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "Controller User"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    controller_secret: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "Controller Password"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+
+
+class NetworkParams:
+    cluster_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "cluster ip address for public data network"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    mgmt_vip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "virtual ip address for management network"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    dns_servers: List = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "list of dns servers as json"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    search_domains: List = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "list of search domains as json"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_hostname: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node hostname"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_floating_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node floating IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_data_gateway: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node data gateway IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_mgmt_gateway: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node mgmt gateway IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_mgmt_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node management iface IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_mgmt_netmask: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node management iface netmask"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_data_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node data iface IP"
+                ),
+            }
+        },
+        default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    primary_data_netmask: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node data iface netmask"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_data_network_iface: List = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node data network iface"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    primary_bmc_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node BMC IP"
+                ),
+            }
+        },
+        default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    primary_bmc_user: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node BMC User"
+                ),
+            }
+        },
+        default=UNCHANGED,
+    )
+    primary_bmc_secret: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "primary node BMC Password"
+                ),
+            }
+        },
+        default=UNCHANGED,
+    )
+    secondary_hostname: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node hostname"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_floating_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node floating IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_data_gateway: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node data gateway IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_mgmt_gateway: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node mgmt gateway IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_mgmt_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node management iface IP"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_mgmt_netmask: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node management iface netmask"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_data_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node data iface IP"
+                ),
+            }
+        },
+        default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    secondary_data_netmask: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node data iface netmask"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_data_network_iface: List = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node data network iface"
+                ),
+            }
+        },
+        default=UNCHANGED
+    )
+    secondary_bmc_ip: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node BMC IP"
+                ),
+            }
+        },
+        default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    secondary_bmc_user: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node BMC User"
+                ),
+            }
+        },
+        default=UNCHANGED,
+    )
+    secondary_bmc_secret: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': (
+                    "secondary node BMC Password"
+                ),
+            }
+        },
+        default=UNCHANGED,
     )
 
 

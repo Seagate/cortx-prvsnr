@@ -17,14 +17,18 @@
 
 import logging
 import configparser
-from typing import Type
+from typing import Type, List
 from copy import deepcopy
 from pathlib import Path
 
+from ..inputs import (
+    NetworkParams, ReleaseParams, StorageEnclosureParams
+)
 from .. import inputs
 from ..vendor import attr
 from ..pillar import PillarUpdater
 
+from ..values import UNCHANGED
 from . import (
     CommandParserFillerMixin
 )
@@ -55,43 +59,66 @@ class RunArgsConfigureSetup:
 
 
 @attr.s(auto_attribs=True)
+class SingleNodeParams:
+    target_build: str = ReleaseParams.target_build
+    cluster_ip: str = NetworkParams.cluster_ip
+    mgmt_vip: str = NetworkParams.mgmt_vip
+    primary_hostname: str = NetworkParams.primary_hostname
+    primary_data_network_iface: List = NetworkParams.primary_data_network_iface
+    primary_data_ip: str = NetworkParams.primary_data_ip
+    primary_bmc_user: str = NetworkParams.primary_bmc_user
+    primary_bmc_secret: str = NetworkParams.primary_bmc_secret
+    controller_a_ip: str = StorageEnclosureParams.controller_a_ip
+    controller_b_ip: str = StorageEnclosureParams.controller_b_ip
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+
+    _optional_param = ['primary_data_ip']
+
+    def __attrs_post_init__(self):
+        params = vars(self)
+        optional_params = self._optional_param
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in optional_params:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class DualNodeParams(SingleNodeParams):
+    secondary_hostname: str = NetworkParams.secondary_hostname
+    secondary_data_network_iface: List = NetworkParams.secondary_data_network_iface  # noqa: E501
+    secondary_bmc_user: str = NetworkParams.secondary_bmc_user
+    secondary_bmc_secret: str = NetworkParams.secondary_bmc_secret
+    secondary_data_ip: str = NetworkParams.secondary_data_ip
+
+    _optional_param = SingleNodeParams._optional_param
+    _optional_param.append('secondary_data_ip')
+
+    def __attrs_post_init__(self):
+        params = vars(self)
+        optional_params = self._optional_param
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in optional_params:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
-
-    # TODO : https://jts.seagate.com/browse/EOS-11741
-    # Improve optional and mandatory param validation
-    SINGLE_PARAM = [
-        "target_build",
-        "controller_a_ip",
-        "controller_b_ip",
-        "controller_user",
-        "controller_secret",
-        "primary_hostname",
-        "primary_data_network_iface",
-        "primary_bmc_user",
-        "primary_bmc_secret"]
-    DUAL_PARAM = [
-        "target_build",
-        "controller_a_ip",
-        "controller_b_ip",
-        "controller_user",
-        "controller_secret",
-        "primary_hostname",
-        "primary_data_network_iface",
-        "primary_bmc_user",
-        "primary_bmc_secret",
-        "secondary_hostname",
-        "secondary_data_network_iface",
-        "secondary_bmc_user",
-        "secondary_bmc_secret"]
 
     input_map = {"network": inputs.Network,
                  "release": inputs.Release,
                  "node": inputs.Node,
                  "storage_enclosure": inputs.StorageEnclosure}
-    validate_map = {1: SINGLE_PARAM,
-                    2: DUAL_PARAM}
+    validate_map = {1: SingleNodeParams,
+                    2: DualNodeParams}
 
     def _parse_input(self, input):
         for key in input:
@@ -99,15 +126,10 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input[key] = [x.strip() for x in input[key].split(",")]
 
     def _validate_params(self, content, number_of_nodes):
-        params = self.validate_map[number_of_nodes]
-        mandatory_param = deepcopy(params)
+        params = {}
         for section in content:
-            for key in content[section]:
-                if key in mandatory_param:
-                    if content[section][key]:
-                        mandatory_param.remove(key)
-        if len(mandatory_param) > 0:
-            raise ValueError(f"Mandatory param missing {mandatory_param}")
+            params.update(content[section])
+        self.validate_map[number_of_nodes](**params)
 
     def run(self, path, number_of_nodes):
 
