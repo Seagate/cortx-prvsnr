@@ -386,8 +386,8 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 )
             if self.iso_cortx.name == self.iso_cortx_deps.name:
                 raise ValueError(
-                    f"ISO files for CORTX and CORTX dependnecies "
-                    "have the same name: {self.iso_cortx.name}"
+                    "ISO files for CORTX and CORTX dependencies "
+                    f"have the same name: {self.iso_cortx.name}"
                 )
 
 
@@ -1103,9 +1103,11 @@ class SetupProvisioner(CommandParserFillerMixin):
                     (
                         # Note. as explaind in glusterfs docs the server here
                         # 'is only used to fetch the gluster configuration'
-                        # run_args.primary.ping_addrs[0], TODO ??? remote
-                        'localhost',  # each client assumes locally
-                                      # availble healthy gluster server
+                        run_args.primary.ping_addrs[0],     # TODO ??? remote
+
+                        # each client assumes locally
+                        # availble healthy gluster server
+                        # 'localhost',
 
                         vname,
                         vdata['mount_dir']
