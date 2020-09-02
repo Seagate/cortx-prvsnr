@@ -20,6 +20,7 @@ import configparser
 from typing import Type, List
 from copy import deepcopy
 from pathlib import Path
+from enum import Enum
 
 from ..inputs import (
     NetworkParams, ReleaseParams, StorageEnclosureParams
@@ -38,6 +39,11 @@ from ..config import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class SetupType(Enum):
+    SINGLE = "single"
+    DUAL = "dual"
 
 
 @attr.s(auto_attribs=True)
