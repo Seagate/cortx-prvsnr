@@ -108,7 +108,7 @@ controlpath_states=(
     "csm.prepare"
     "csm.install"
     "csm.config"
-    #"csm.refresh_config"
+    "csm.refresh_config"
     "uds.prepare"
     "uds.install"
 )
