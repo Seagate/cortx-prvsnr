@@ -59,10 +59,10 @@ pipeline {
         stage('Release') {
             steps {
                 sh encoding: 'utf-8', label: '', returnStdout: true, script: '''
-                    test -d /mnt/bigstorage/releases/master/last_successful/provisioner && rm -rf /mnt/bigstorage/releases/master/last_successful/provisioner
-                    test -d /mnt/bigstorage/releases/master/last_successful/provisioner || mkdir /mnt/bigstorage/releases/master/last_successful/provisioner
-                    pushd /mnt/bigstorage/releases/master/last_successful/provisioner
-                    ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/${BUILD_NUMBER} repo
+                    test -d /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful && rm -rf /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful
+                    test -d /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful || mkdir /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful
+                    pushd /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful
+                    ln -s /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/${BUILD_NUMBER} repo
                     popd
                 '''
             }
@@ -70,9 +70,9 @@ pipeline {
         stage('Link: Last Successful'){
             steps {
                 sh encoding: 'utf-8', label: 'last_successful', returnStdout: true, script: """
-                    pushd /mnt/bigstorage/releases/eos/components/dev/provisioner/
-                    test -d /mnt/bigstorage/releases/eos/components/dev/provisioner/last_successful && rm -f last_successful
-                    ln -s /mnt/bigstorage/releases/eos/components/dev/provisioner/$BUILD_NUMBER last_successful
+                    pushd /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/
+                    test -d /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/last_successful && rm -f last_successful
+                    ln -s /mnt/bigstorage/releases/cortx/components/github/dev/rhel-7.7.1908/dev/provisioner/$BUILD_NUMBER last_successful
                     popd
                 """
             }
