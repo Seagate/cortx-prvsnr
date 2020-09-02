@@ -13,7 +13,7 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 #
@@ -39,7 +39,6 @@ from .config import (
 logger = logging.getLogger(__name__)
 
 
-# TODO TEST EOS-7495
 class CommandFilter(logging.Filter):
     def __init__(self, cmd: str = None):
         self._cmd = cmd
@@ -57,7 +56,6 @@ class CommandFilter(logging.Filter):
         return True
 
 
-# TODO TEST EOS-7495
 class NoTraceExceptionFormatter(logging.Formatter):
     def format(self, record):
         # ensure cache won't be used for exception formatting
@@ -275,7 +273,6 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
 LogArgs = build_log_args_cls()
 
 
-# TODO TEST EOS-7495
 def reset_logging():
     for handler in logging.root.handlers[:]:
         handler.flush()

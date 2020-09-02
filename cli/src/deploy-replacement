@@ -20,7 +20,7 @@ set -euE
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
-LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-replacement.log}"
 export LOG_FILE
 
 . $BASEDIR/common_utils/functions.sh
@@ -41,12 +41,15 @@ run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
 run_replacenode_states=false
+run_backup_states=false
 tgt_node=srvnode-2
 
 # states to be applied in desired sequence
 system_states=(
     "system"
-    "system.storage.multipath"
+    # "system.storage.multipath.prepare"
+    # "system.storage.multipath.install"
+    # "system.storage.multipath.config"
     "system.network"
     "system.network.data.public"
     "system.network.data.direct"
@@ -73,7 +76,17 @@ prereq_states=(
 sync_states=(
     "sync.software.openldap"
     "sync.software.rabbitmq"
-    "sync.files"
+)
+
+# states to be applied in desired sequence
+backup_states=(
+    # "provisioner.backup"
+    # "motr.backup" # TODO: Awaiting EOS-12637 fix
+    "s3server.backup"
+    "hare.backup"
+    "ha.iostack-ha.backup"
+    "sspl.backup"
+    "csm.backup"
 )
 
 # states to be applied in desired sequence
@@ -106,12 +119,10 @@ ha_states=(
     "ha.corosync-pacemaker.install"
     "ha.corosync-pacemaker.config.base"
     "ha.corosync-pacemaker.config.authorize"
+    "ha.cortx-ha"
     "ha.iostack-ha.prepare"
     "ha.iostack-ha.config.base"
     "ha.iostack-ha.config.post_install"
-    "ha.cortx-ha.prepare"
-    "ha.cortx-ha.install"
-    "ha.cortx-ha.config"
 )
 
 replacenode_states=(
@@ -137,8 +148,10 @@ Options:
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
-    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
+    --replacenode-states                         deploy only states for refresh_config on node and add_node
+    --backup-states                              deploy only backup states
 "
 }
 
@@ -180,6 +193,10 @@ function options_parser {
             run_ctrlpath_states=true
             run_all=false
             ;;
+        --backup-states)
+            run_backup_states=true
+            run_all=false
+            ;;
         *)
             l_error "Unknown option: $1"
             usage
@@ -194,10 +211,10 @@ function run_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            if [[ "$state" == "ha.cortx-ha.replace_node.remove_node"
-                || "$state" == "ha.cortx-ha.replace_node.refresh_context"
-                || "$state" == "ha.cortx-ha.replace_node.add_node"
-                || "$state" == "csm.refresh_config"
+            if [[ $state == "ha.cortx-ha.replace_node.remove_node"
+                || $state == "ha.cortx-ha.replace_node.refresh_context"
+                || $state == "ha.cortx-ha.replace_node.add_node"
+                || $state == "csm.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
@@ -240,7 +257,7 @@ function encrypt_pillar {
     update_salt
 }
 
-parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states,backup-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -271,6 +288,7 @@ if [[ "$run_all" == true ]]; then
     run_states "${controlpath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${sync_states[@]}"
+    run_states "${backup_states[@]}"
     run_states "${replacenode_states[@]}"
     
 fi
@@ -312,7 +330,12 @@ if [[ "$run_replacenode_states" == true ]]; then
     run_states "${replacenode_states[@]}"
 fi
 
-l_info "Backing up pillar files to user space."
+if [[ "$run_backup_states" == true ]]; then
+    l_info "Synchronizing files on both nodes."
+    run_states "${backup_states[@]}"
+fi
+
+# l_info "Backing up pillar files to user space."
 # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
 # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
 # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user

@@ -40,6 +40,7 @@ run_sync_states=false
 run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
+run_backup_states=false
 tgt_node=srvnode-2
 
 # states to be applied in desired sequence
@@ -87,7 +88,7 @@ iopath_states=(
 ha_states=(
     "ha.corosync-pacemaker"
     "hare"
-    "ha.cortx-ha.install"
+    "ha.cortx-ha"
     "ha.iostack-ha"
 )
 
@@ -96,8 +97,19 @@ controlpath_states=(
     "sspl"
     "csm"
     "uds"
-    "post_setup"
-    "ha.cortx-ha"
+    "ha.ctrlstack-ha"
+    # "ha.cortx-ha.ha"
+)
+
+# states to be applied in desired sequence
+backup_states=(
+    "provisioner.backup"
+    # "motr.backup" # TODO: Awaiting EOS-12637 fix
+    "s3server.backup"
+    "hare.backup"
+    "ha.iostack-ha.backup"
+    "sspl.backup"
+    "csm.backup"
 )
 
 function usage {
@@ -111,13 +123,14 @@ Target host is considered to be an cortx SaltStack master.
 General options:
 $base_options_usage
 Options:
-    -S <tgt_node>,  --singlenode=<tgt_node>        switch to single node mode setup
+    -S <tgt_node>,  --singlenode=<tgt_node>      switch to single node mode setup
     --system-states                              deploy only system states
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --backup-states                              deploy only backup states
 "
 }
 
@@ -153,6 +166,10 @@ function options_parser {
             ;;
         --ctrlpath-states)
             run_ctrlpath_states=true
+            run_all=false
+            ;;
+        --backup-states)
+            run_backup_states=true
             run_all=false
             ;;
         *)
@@ -193,7 +210,18 @@ function run_states {
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
                 l_info "Applying 'components.ha.corosync-pacemaker.config.stonith' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
-
+            elif [[ "$state" == "system.storage.teardown" ]] ; then
+                # Execute first on srvnode-2 then on srvnode-1.
+                if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.storage ]]; then
+                    l_info "Applying 'components.$state' for srvnode-2"
+                    $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+                    sleep 2     # Mindfulness break
+                fi
+                if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.storage ]]; then
+                    l_info "Applying 'components.$state' for srvnode-1"
+                    $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+                    sleep 2     # Mindfulness break
+                fi
             elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"
@@ -254,7 +282,7 @@ function encrypt_pillar {
 }
 
 
-parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,backup-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -299,8 +327,8 @@ fi
 
 if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage.teardown $salt_opts
-    salt '*' state.apply components.system.storage $salt_opts
+    salt 'srvnode-2' state.apply components.system.storage $salt_opts
+    salt 'srvnode-1' state.apply components.system.storage $salt_opts
 fi
 
 if [[ "$run_io_states" == true ]]; then
@@ -318,7 +346,12 @@ if [[ "$run_ctrlpath_states" == true ]]; then
     run_states "${controlpath_states[@]}"
 fi
 
-l_info "Backing up pillar files to user space."
+if [[ "$run_backup_states" == true ]]; then
+    l_info "Synchronizing files on both nodes."
+    run_states "${backup_states[@]}"
+fi
+
+# l_info "Backing up pillar files to user space."
 # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
 # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
 # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
@@ -328,9 +361,3 @@ l_info "***** SUCCESS! *****"
 l_info "The detailed logs can be seen at: $LOG_FILE"
 l_info "Done"
 
-# states to be applied in desired sequence
-#backup=(
-#    "sync.files"
-#)
-#l_info "Synchronizing files on both nodes."
-#run_states "${backup[@]}"

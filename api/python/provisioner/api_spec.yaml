@@ -98,4 +98,4 @@ replace_node:
 configure_setup:
   type: ConfigureSetup
 cmd_run:
-  type: RemoteCommandExecutor
+  type: CmdRun
