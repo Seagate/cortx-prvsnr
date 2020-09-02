@@ -1210,7 +1210,7 @@ EOF
     mkdir -p "$_installdir"
     if [[ "$_repo_src" == "gitlab" ]]; then
         pushd "$_installdir"
-            curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
+            curl "https://github.com/Seagate/cortx-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
         popd
     elif [[ "$_repo_src" == "gitrepo" ]]; then
         pushd "$_installdir"

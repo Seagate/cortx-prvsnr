@@ -5,7 +5,7 @@ Summary:    CORTX Provisioner Command line interface.
 
 Group:      Tools
 License:    Seagate
-URL:        http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr
+URL:        https://github.com/Seagate/cortx-prvsnr
 Source:     %{name}-%{version}-%{_cortx_prvsnr_git_ver}.tar.gz
 
 BuildRequires: python36-devel

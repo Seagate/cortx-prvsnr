@@ -20,7 +20,7 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr.git'
+                 git branch: 'master', credentialsId: '1f8776fd-39de-4356-ba0a-a40895719a3d', url: 'https://github.com/Seagate/cortx-prvsnr.git'
             }
         }
         stage('Package: Provisioner RPMS') {

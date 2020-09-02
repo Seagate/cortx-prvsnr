@@ -248,10 +248,6 @@ set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # configure_multipath srvnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
-# TODO use salt formulas instead
-# disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
-# configure_network "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
-
 configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP SRVNODE-2
@@ -277,10 +273,6 @@ if [[ "$singlenode" != true ]]; then
     set_cluster_id "$cluster_id" "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
     # configure_multipath srvnode-2 "$srvnode_2_hostspec" "$ssh_config" "$sudo" false
-
-    # TODO use salt formulas instead
-    # disabled, http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/issues/21
-    # configure_network "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 fi
 
