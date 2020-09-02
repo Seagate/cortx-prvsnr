@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 user_vars = {
-    "vm_name" => ENV.fetch('VAR_VM_NAME', "seagate.ees-prvsnr_centos7.7.1908_seed"),
+    "vm_name" => ENV.fetch('VAR_VM_NAME', "seagate.cortx-prvsnr_centos7.7.1908_seed"),
     "vm_box_name" => ENV.fetch('VAR_VM_BOX_NAME', "geerlingguy/centos7"),
     "vm_box_version" => ENV.fetch('VAR_VM_BOX_VERSION', "1.2.17")
 }

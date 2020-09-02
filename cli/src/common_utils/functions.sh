@@ -1162,20 +1162,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            if [[ "$_dev_repo" == true ]]; then
-                # Set the path to dev repo DEV_BUILD_URL or default
-                _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
-                
-                yum install -y createrepo wget
-                mkdir -p /opt/seagate/cortx/updates/provisioner/dev
-                pushd /opt/seagate/cortx/updates/provisioner/dev
-                    wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
-                    createrepo .
-                popd
-                _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
-            else
-                _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
-            fi
+            _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
         fi
     fi
 
