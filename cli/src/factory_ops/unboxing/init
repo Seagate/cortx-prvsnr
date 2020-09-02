@@ -281,6 +281,22 @@ pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
+echo -n "Performing HA cluster restart.........." | tee -a ${LOG_FILE}
+hctl node maintenance --all >> ${LOG_FILE}
+hctl node unmaintenance --all >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Performing STONITH resource cleanup...." | tee -a ${LOG_FILE}
+stonith_admin --cleanup --history=\* >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Performing cluster resource cleanup...." | tee -a ${LOG_FILE}
+pcs resource cleanup --all >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
 # lock unboxing user
 lock_unboxing_user
 
