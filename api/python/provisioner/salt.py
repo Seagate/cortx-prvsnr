@@ -11,7 +11,7 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
@@ -870,7 +870,7 @@ def _salt_client_cmd(
 def function_run(
     fun,
     targets=ALL_MINIONS,
-    fun_args: Union[Tuple, None] = None,
+    fun_args: Union[Tuple, List, None] = None,
     fun_kwargs: Union[Dict, None] = None,
     **kwargs
 ):

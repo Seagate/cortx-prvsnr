@@ -11,12 +11,12 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from typing import List, Dict, Type, Optional, Iterable
-import socket
+# import socket
 import logging
 import uuid
 from pathlib import Path
@@ -452,7 +452,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         # the problem: local hostname might appear in grains
         # (probably for VMs only)
 
-        local_hostname = socket.gethostname()
+        # local_hostname = socket.gethostname()
 
         for node in nodes:
             addrs[node.minion_id] = set(
@@ -461,7 +461,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                     if v not in (
                         config.LOCALHOST_IP,
                         config.LOCALHOST_DOMAIN,
-                        local_hostname
+                        # local_hostname
                     )
                 ]
             )

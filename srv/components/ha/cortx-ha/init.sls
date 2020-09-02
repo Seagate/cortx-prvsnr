@@ -20,7 +20,7 @@ include:
   - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
   - components.ha.cortx-ha.config
-  - components.ha.cortx-ha.ha
+  # - components.ha.cortx-ha.ha
 
 Generate cortx_ha checkpoint flag:
   file.managed:

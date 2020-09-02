@@ -15,32 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-glusterfs_servers_peered:
-  glusterfs.peered:
-    - names:
-{% for peer in salt['pillar.get']('glusterfs_peers', []) %}
-      - {{ peer }}
-{% endfor %}
-
-#  Added retry here since 'peer probe' seems to be async
-
-{% for volume, bricks in salt['pillar.get']('glusterfs_volumes', {}).items() %}
-
-glusterfs_volume_{{ volume }}_created:
-  glusterfs.volume_present:
-    - name: {{ volume }}
-    - bricks:
-  {% for server, path in bricks.items() %}
-      - {{ server }}:{{ path }}
-  {% endfor %}
-    - replica: {{ bricks|length }}
-    - start: True
-    - force: True
-    - require:
-      - glusterfs_servers_peered
-    - retry:
-        attempts: 10
-        until: True
-        interval: 3
-
-{% endfor %}
+Stage - Backup files for Provisioner:
+  module.run:
+    - sync.sync_files:
+      - component: provisioner
