@@ -303,4 +303,5 @@ SERVER_TYPE = "server_type"
 
 SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
+# TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
