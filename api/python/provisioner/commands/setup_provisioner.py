@@ -1103,7 +1103,10 @@ class SetupProvisioner(CommandParserFillerMixin):
                     (
                         # Note. as explaind in glusterfs docs the server here
                         # 'is only used to fetch the gluster configuration'
-                        run_args.primary.ping_addrs[0],
+                        # run_args.primary.ping_addrs[0], TODO ??? remote
+                        'localhost',  # each client assumes locally
+                                      # availble healthy gluster server
+
                         vname,
                         vdata['mount_dir']
                     ) for vname, vdata in volumes.items()
