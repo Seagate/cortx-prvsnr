@@ -269,7 +269,7 @@ Vagrant.configure("2") do |config|
 
       #unless 's3client' == node['name']
       #  node_config.vm.provision :salt do |salt|
-      #    # Master/Minion specific configs.
+      #    # Primary/Minion specific configs.
       #    salt.masterless = true
       #    salt.minion_config = './srv/components/provisioner/salt_minion/files/minion'
       #

@@ -458,7 +458,7 @@ class Set(CommandParserFillerMixin):
 #       - remove repo config for yum
 #       - unmount repo if needed
 #       - remove repo dir/iso file if needed TODO
-#   - call repo reset logic for master:
+#   - call repo reset logic for primary node:
 #       - remove local dir/file from salt user file root (if needed)
 @attr.s(auto_attribs=True)
 class SetSWUpdateRepo(Set):

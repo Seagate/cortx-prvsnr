@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 # TODO TEST:
 # case 1: (hard to make reproducible)
 #   - changes in config
-#   - master is being restarted
-#   - some runner check is failed due to connection to previous master
+#   - primary is being restarted
+#   - some runner check is failed due to connection to previous primary
 #     ('Stream is closed')
 # case 2: no restart checks happens if no changes detected
 # case 3: logic fails if minion config is malformed
@@ -78,7 +78,7 @@ def check_salt_master_is_responded():
             )
         )
     except SaltCmdResultError as exc:
-        if 'Salt request timed out. The master is not responding' in str(exc):
+        if 'Salt request timed out. The salt-master is not responding' in str(exc):
             logger.info(
                 'salt-master is not yet responding: {}'.format(exc)
             )
@@ -93,7 +93,7 @@ def check_salt_master_is_responded():
 def config_salt_master():
     logger.info("Updating salt-master configuration")
 
-    # get salt master PID
+    # get salt primary PID
     res = runner_function_run(
         'salt.cmd', fun_args=('service.show', 'salt-master')
     )
@@ -110,11 +110,11 @@ def config_salt_master():
     changes = res[state_name]['changes']
 
     # XXX might be moved to rollback part
-    # on configuration changes - expect salt master is going to be restarted
+    # on configuration changes - expect salt primary is going to be restarted
     if changes:
         # TODO IMPROVE ??? better logic
         # small delay might help to avoid noise in the logs since
-        # not responded yet master will cause some excpetions which
+        # not responded yet primary will cause some excpetions which
         # we are going to supress initially
         time.sleep(10)
 

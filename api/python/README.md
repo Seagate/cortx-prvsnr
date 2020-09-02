@@ -4,7 +4,7 @@ This is a northbound interface for CORTX components that provides API
 to configure provisioned software stack.
 
 It uses saltstack client python API and should be called on the same machine where
-salt master is running.
+salt primary is running.
 
 
 There are set of api levels:
@@ -23,7 +23,7 @@ The one may choose an api depending it their needs:
 
 ## Requirements
 
-1. Should be called on the same machine where salt master is running
+1. Should be called on the same machine where salt primary is running
 2. External auth for salt should be [respected](#authentication_initialization)
 
 
@@ -35,7 +35,7 @@ The one may choose an api depending it their needs:
     pip install  git+http://github.com/Seagate/cortx-prvsnr#subdirectory=api/python
 ```
 
-Will install `master` branch version.
+Will install `release` branch version.
 To install specific `version` (it might be any branch, tag or commit sha1):
 
 ```

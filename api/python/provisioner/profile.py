@@ -57,7 +57,7 @@ def setup(
         path.mkdir(parents=True, exist_ok=True)
 
     # config file for salt tools (salt-call, salt-ssh)
-    # Note. for now the same for master (salt-ssh) and
+    # Note. for now the same for primary (salt-ssh) and
     #       minion (salt-call --local) settings
     profile_config = {
         'pki_dir': str(profile_paths['salt_pki_dir']),
@@ -79,7 +79,7 @@ def setup(
         }
     }
     # TODO IMPROVE ??? use symlink
-    dump_yaml(profile_paths['salt_master_file'], profile_config)
+    dump_yaml(profile_paths['salt_primary_file'], profile_config)
     dump_yaml(profile_paths['salt_minion_file'], profile_config)
 
     # saltfile for salt tools

@@ -36,7 +36,7 @@ Starts all CORTX services either on remote host or locally.
 Restart CORTX services if '--restart' flag is explicitly
 specified.
 
-Target host is considered to be an CORTX SaltStack master.
+Target host is considered to be an CORTX SaltStack primary.
 
 General options:
 $base_options_usage

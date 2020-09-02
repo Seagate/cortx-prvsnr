@@ -21,7 +21,7 @@ include:
 
 {% set enclosure = '' %}
 {% if "primary" in grains["roles"] and 'physical' in grains['virtual'] %}
-# run health schema on master for both node and enclosure; on minion only for node health.
+# run health schema on primary for both node and enclosure; on minion only for node health.
 {% set enclosure = '-e' %}
 {% endif %}
 Run Resource Health View:

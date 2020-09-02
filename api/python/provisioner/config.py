@@ -50,7 +50,7 @@ PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 
-# reflects master file_roots configuration
+# reflects primary file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
@@ -214,7 +214,7 @@ def profile_paths(
 
     setup_key_file = ssh_dir / 'setup.id_rsa'
     setup_key_pub_file = ssh_dir / 'setup.id_rsa.pub'
-    salt_master_file = salt_config_dir / 'master'
+    salt_primary_file = salt_config_dir / 'master'
     salt_minion_file = salt_config_dir / 'minion'
     salt_salt_file = salt_config_dir / 'Saltfile'
     salt_roster_file = salt_config_dir / 'roster'
@@ -236,7 +236,7 @@ def profile_paths(
 
         'setup_key_file': setup_key_file,
         'setup_key_pub_file': setup_key_pub_file,
-        'salt_master_file': salt_master_file,
+        'salt_primary_file': salt_primary_file,
         'salt_minion_file': salt_minion_file,
         'salt_salt_file': salt_salt_file,
         'salt_roster_file': salt_roster_file,
