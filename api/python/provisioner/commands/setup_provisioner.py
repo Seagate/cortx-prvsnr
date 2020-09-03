@@ -397,7 +397,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 raise ValueError("ISO extension is expected for CORTX repo")
             if not self.iso_cortx_deps:
                 raise ValueError("ISO for CORTX dependencies is undefined")
-            if not self.iso_cortx_deps.suffix != '.iso':
+            if self.iso_cortx_deps.suffix != '.iso':
                 raise ValueError(
                     "ISO extension is expected for CORTX deps repo"
                 )
@@ -993,7 +993,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             prvsnr_dir = run_args.local_repo
         elif run_args.source == 'iso' or run_args.source == 'rpm':
             ssh_client.state_apply('provisioner.install')
-            prvsnr_dir = Path('/opt/seagate/cortx/provisioner')
+            prvsnr_dir = config.PRVSNR_ROOT_DIR
         else:
             raise NotImplementedError(
                 f"{run_args.source} provisioner source is not supported yet"
