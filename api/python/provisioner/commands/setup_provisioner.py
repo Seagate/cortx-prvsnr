@@ -714,7 +714,6 @@ class SetupProvisioner(CommandParserFillerMixin):
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
 
-
         #   preseed master keys
         # TODO IMPROVE review, check the alternatives as more secure ways
         #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster_pki.html  # noqa: E501
