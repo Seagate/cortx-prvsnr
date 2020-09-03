@@ -304,7 +304,7 @@ update_pillar()
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
     else
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth2\",\"eth1\"]
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi
 
     if [[ "$pvt_dip1_opt" == true ]]; then
@@ -332,7 +332,7 @@ update_pillar()
         if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
             /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
         else
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth2\",\"eth1\"]
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
         fi
 
         if [[ "$pvt_dip2_opt" == true ]]; then
