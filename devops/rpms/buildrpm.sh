@@ -74,8 +74,6 @@ pushd ~/rpmbuild/SOURCES/
     cp -R ${BASEDIR}/../../srv/components/provisioner/files/setup.yaml ${DEST_DIR}/files/conf
     cp -R ${BASEDIR}/../../pillar ${DEST_DIR}
     cp -R ${BASEDIR}/../../srv ${DEST_DIR}
-    # TODO EOS-11551 remove later
-    cp -R ${BASEDIR}/../../api ${DEST_DIR}
 
 
     tar -zcvf ${DEST_DIR}.tar.gz ${DEST_DIR}
