@@ -81,6 +81,10 @@ bmc2_user_opt=false
 bmc2_passwd_opt=false
 cross_connect_opt=false
 
+
+cortx_repo=
+public_release=false
+
 usage()
 {
     echo "\
@@ -215,6 +219,12 @@ while [[ $# -gt 0 ]]; do
             [ -z "$2" ] &&
                 echo "Error: Target build not provided" && exit 1;
             tgt_build="$2"
+            if (echo "$tgt_build" | grep colo.seagate.com); then
+                cortx_repo="$tgt_build"
+            else
+                public_release=true
+                cortx_repo="$tgt_build/cortx_iso"
+            fi
             shift 2 ;;
         --m1)
             bmc1_passwd_opt=true
@@ -271,6 +281,7 @@ ssh_tool_pkg=$(basename $ssh_tool)
     yum install -y $ssh_tool_pkg
 }
 
+# TODO TEST EOS-12508
 install_prvsnr_cli()
 {
     # Install cortx-prvsnr-cli rpm from cortx-storage and install it on both nodes
@@ -286,11 +297,12 @@ install_prvsnr_cli()
             # exit 1
         }
 
-        yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
+        yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
         yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
         rm -rf /etc/yum.repos.d/cortx-storage*
 
         systemctl stop firewalld || true
+
         return 0
     fi
 $remote_cmd <<EOF
@@ -304,7 +316,7 @@ $remote_cmd <<EOF
         # exit 1
     }
 
-    yum install -y yum-utils; yum-config-manager --add-repo $tgt_build
+    yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
     yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
     rm -rf /etc/yum.repos.d/cortx-storage*
     
