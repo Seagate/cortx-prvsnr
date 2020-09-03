@@ -138,7 +138,7 @@ function log {
 
     if [[ "$verbosity" -ge "$_verbosity" ]]; then
         _level=$(echo "$_level" | tr '[:lower:]' '[:upper:]')
-        _message="[$_level    $(date +'%b %e %R ')]: $_message"
+        _message="[$_level    $(date +'%b %e %H:%M:%S ')]: $_message"
 
         if [[ "$_error" == true ]]; then
             # Echo message to stderr
