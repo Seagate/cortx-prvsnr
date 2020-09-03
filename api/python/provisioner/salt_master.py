@@ -78,7 +78,9 @@ def check_salt_master_is_responded():
             )
         )
     except SaltCmdResultError as exc:
-        if 'Salt request timed out. The salt-master is not responding' in str(exc):
+        if ("Salt request timed out."
+                "The salt-master is not responding") in str(exc):
+
             logger.info(
                 'salt-master is not yet responding: {}'.format(exc)
             )

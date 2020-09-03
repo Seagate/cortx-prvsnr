@@ -605,7 +605,11 @@ class SetupProvisioner(CommandParserFillerMixin):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
 
         #   ensure parent dirs exists in profile file root
-        for path in (all_minions_dir, salt_master_minions_pki_dir, pillar_all_dir):
+        for path in (
+                all_minions_dir,
+                salt_master_minions_pki_dir,
+                pillar_all_dir
+                ):
             path.mkdir(parents=True, exist_ok=True)
 
         priv_key_path = all_minions_dir / 'id_rsa_prvsnr'
