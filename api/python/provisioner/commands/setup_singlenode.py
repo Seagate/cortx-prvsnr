@@ -55,7 +55,7 @@ class SetupSinglenode(SetupProvisioner):
         run_args = RunArgsSetupSinglenode(**kwargs)
         kwargs.pop('srvnode1')
 
-        setup_ctx = super()._run(
+        setup_ctx = super().run(
             ha=False, nodes=[run_args.srvnode1], **kwargs
         )
 
