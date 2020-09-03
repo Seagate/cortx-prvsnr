@@ -945,6 +945,21 @@ class SetupProvisioner(CommandParserFillerMixin):
             )
             ssh_client.ensure_ready([node.minion_id])
 
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt masters / minions configuration")
+        self._prepare_salt_config(run_args, prvsnr_dir, ssh_client, paths)
+
+        logger.info("Copy config.ini to nodes")
+        self._copy_config_ini(run_args, paths)
+
+        # TODO IMPROVE EOS-9581 not all masters support
+        master_targets = (
+            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
+        )
+
         if run_args.source == 'local':
             logger.info("Preparing local repo for a setup")
             # TODO IMPROVE EOS-8473 hard coded
@@ -968,51 +983,6 @@ class SetupProvisioner(CommandParserFillerMixin):
                 }
             )
 
-        logger.info("Installing Cortx yum repositories")
-        # TODO IMPROVE DOC EOS-12076 Iso installation logic:
-        #   - iso files are copied to user local file roots on all remotes
-        #     (TODO consider user shared, currently glusterfs
-        #      is not enough trusted)
-        #   - iso is mounted to a location inside user local data
-        #   - a repo file is created and pointed to the mount directory
-        # TODO EOS-12076 IMPROVE hard-coded
-        if (
-            run_args.source == 'iso' or
-            run_args.source == 'rpm'
-        ):
-            # copy ISOs onto remotes and mount
-            ssh_client.state_apply('repos')
-        else:
-            ssh_client.state_apply('cortx_repos')
-
-        logger.info(
-            f"Installing provisioner from a '{run_args.source}'' source"
-        )
-        if run_args.source == 'local':
-            ssh_client.state_apply('provisioner.local')
-            prvsnr_dir = run_args.local_repo
-        elif run_args.source == 'iso' or run_args.source == 'rpm':
-            ssh_client.state_apply('provisioner.install')
-            prvsnr_dir = config.PRVSNR_ROOT_DIR
-        else:
-            raise NotImplementedError(
-                f"{run_args.source} provisioner source is not supported yet"
-            )
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, prvsnr_dir, ssh_client, paths)
-
-        logger.info("Copy config.ini to nodes")
-        self._copy_config_ini(run_args, paths)
-
-        # TODO IMPROVE EOS-9581 not all masters support
-        master_targets = (
-            ALL_MINIONS if run_args.ha else run_args.primary.minion_id
-        )
 
         if run_args.ha and not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
@@ -1042,6 +1012,20 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # APPLY CONFIGURATION
 
+        logger.info("Installing Cortx yum repositories")
+        # TODO IMPROVE DOC EOS-12076 Iso installation logic:
+        #   - iso files are copied to user local file roots on all remotes
+        #     (TODO consider user shared, currently glusterfs
+        #      is not enough trusted)
+        #   - iso is mounted to a location inside user local data
+        #   - a repo file is created and pointed to the mount directory
+        # TODO EOS-12076 IMPROVE hard-coded
+        if run_args.source in ('iso', 'rpm'):
+            # copy ISOs onto remotes and mount
+            ssh_client.state_apply('repos')
+        else:
+            ssh_client.state_apply('cortx_repos')
+
         logger.info("Setting up paswordless ssh")
         ssh_client.state_apply('ssh')
 
@@ -1054,6 +1038,20 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
+
+        logger.info(
+            f"Installing provisioner from a '{run_args.source}' source"
+        )
+        if run_args.source == 'local':
+            ssh_client.state_apply('provisioner.local')
+            prvsnr_dir = run_args.local_repo
+        elif run_args.source == 'iso' or run_args.source == 'rpm':
+            ssh_client.state_apply('provisioner.install')
+            prvsnr_dir = config.PRVSNR_ROOT_DIR
+        else:
+            raise NotImplementedError(
+                f"{run_args.source} provisioner source is not supported yet"
+            )
 
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")
