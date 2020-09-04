@@ -17,7 +17,7 @@
 
 import logging
 from copy import deepcopy
-
+import re
 import functools
 from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
@@ -414,6 +414,17 @@ class ParamGroupInputBase(PillarItemsAPI):
         )
 
 
+class Validation():
+    @staticmethod
+    def check_ip4(instace, attribute, value):
+        ip_regex = (r"^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
+                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
+                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
+                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$")
+        if value is not UNCHANGED and not re.search(ip_regex, value):
+            raise ValueError(f"{attribute.name}: invalid ip address")
+
+
 @attr.s(auto_attribs=True)
 class NTP(ParamGroupInputBase):
     _param_group = 'ntp'
@@ -426,8 +437,7 @@ class NTP(ParamGroupInputBase):
     )
 
 
-@attr.s(auto_attribs=True)
-class Release(ParamGroupInputBase):
+class ReleaseParams():
     _param_group = 'release'
     target_build: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Cortx deployment build"
@@ -435,13 +445,19 @@ class Release(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
-class StorageEnclosure(ParamGroupInputBase):
+class Release(ParamGroupInputBase):
+    target_build: str = ReleaseParams.target_build
+
+
+class StorageEnclosureParams():
     _param_group = 'storage_enclosure'
-    controller_a_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller A IP"
+    primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller A IP",
+        validator=Validation.check_ip4
     )
-    controller_b_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller B IP"
+    secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller B IP",
+        validator=Validation.check_ip4
     )
     controller_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller user"
@@ -452,7 +468,38 @@ class StorageEnclosure(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
-class Network(ParamGroupInputBase):
+class StorageEnclosure(ParamGroupInputBase):
+    controller_a_ip: str = StorageEnclosureParams.primary_mc_ip
+    controller_b_ip: str = StorageEnclosureParams.secondary_mc_ip
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+
+
+class NodeNetworkParams():
+    _param_group = 'node'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node hostname"
+    )
+    data_nw_iface: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network iface"
+    )
+    bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC User"
+    )
+    bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC password"
+    )
+    data_nw_ipaddr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data iface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC  IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+
+
+class NetworkParams():
     _param_group = 'network'
     # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
     cluster_ip: str = ParamGroupInputBase._attr_ib(
@@ -486,7 +533,8 @@ class Network(ParamGroupInputBase):
         _param_group, descr="primary node management iface netmask"
     )
     primary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data iface IP"
+        _param_group, descr="primary node data iface IP",
+        validator=Validation.check_ip4
     )
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data iface netmask"
@@ -495,7 +543,8 @@ class Network(ParamGroupInputBase):
         _param_group, descr="primary node data network iface"
     )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node BMC  IP"
+        _param_group, descr="primary node BMC  IP",
+        validator=Validation.check_ip4
     )
     primary_bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC User"
@@ -516,13 +565,15 @@ class Network(ParamGroupInputBase):
         _param_group, descr="secondary node mgmt gateway IP"
     )
     secondary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node management iface IP"
+        _param_group, descr="secondary node management iface IP",
+        validator=Validation.check_ip4
     )
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node management iface netmask"
     )
     secondary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node node data iface IP"
+        _param_group, descr="secondary node node data iface IP",
+        validator=Validation.check_ip4
     )
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data iface netmask"
@@ -531,7 +582,8 @@ class Network(ParamGroupInputBase):
         _param_group, descr="secondary node data network iface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node BMC  IP"
+        _param_group, descr="secondary node BMC  IP",
+        validator=Validation.check_ip4
     )
     secondary_bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC User"
@@ -539,6 +591,32 @@ class Network(ParamGroupInputBase):
     secondary_bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC password"
     )
+
+
+@attr.s(auto_attribs=True)
+class Network(ParamGroupInputBase):
+    cluster_ip: str = NetworkParams.cluster_ip
+    mgmt_vip: str = NetworkParams.mgmt_vip
+    primary_hostname: str = NetworkParams.primary_hostname
+    primary_floating_ip: str = NetworkParams.primary_floating_ip
+    primary_mgmt_ip: str = NetworkParams.primary_mgmt_ip
+    primary_mgmt_netmask: str = NetworkParams.primary_mgmt_netmask
+    primary_mgmt_gateway: str = NetworkParams.primary_mgmt_gateway
+    primary_data_netmask: str = NetworkParams.primary_data_netmask
+    primary_data_network_iface: List = NetworkParams.primary_data_network_iface
+    primary_data_ip: str = NetworkParams.primary_data_ip
+    primary_bmc_user: str = NetworkParams.primary_bmc_user
+    primary_bmc_secret: str = NetworkParams.primary_bmc_secret
+    secondary_hostname: str = NetworkParams.secondary_hostname
+    secondary_floating_ip: str = NetworkParams.secondary_floating_ip
+    secondary_mgmt_ip: str = NetworkParams.secondary_mgmt_ip
+    secondary_mgmt_netmask: str = NetworkParams.secondary_mgmt_netmask
+    secondary_mgmt_gateway: str = NetworkParams.secondary_mgmt_gateway
+    secondary_data_netmask: str = NetworkParams.secondary_data_netmask
+    secondary_data_network_iface: List = NetworkParams.secondary_data_network_iface  # noqa: E501
+    secondary_bmc_user: str = NetworkParams.secondary_bmc_user
+    secondary_bmc_secret: str = NetworkParams.secondary_bmc_secret
+    secondary_data_ip: str = NetworkParams.secondary_data_ip
 
 
 # # TODO TEST
