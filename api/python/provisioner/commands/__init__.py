@@ -454,11 +454,11 @@ class Set(CommandParserFillerMixin):
 #
 
 # set/remove the repo:
-#   - call repo reset logic for minions:
+#   - call repo reset logic for salt-minions:
 #       - remove repo config for yum
 #       - unmount repo if needed
 #       - remove repo dir/iso file if needed TODO
-#   - call repo reset logic for master:
+#   - call repo reset logic for salt-master:
 #       - remove local dir/file from salt user file root (if needed)
 @attr.s(auto_attribs=True)
 class SetSWUpdateRepo(Set):
