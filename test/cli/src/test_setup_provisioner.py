@@ -68,7 +68,7 @@ def test_setup_provisioner_fail(mhost, run_script):
     assert res.rc == 5
     assert 'Incorrect repo source' in res.stdout
 
-    # CLUSTER - REMOTE - CUSTOM SSH - spec for master not in config
+    # CLUSTER - REMOTE - CUSTOM SSH - spec for salt-master not in config
     res = run_script(
         "--ssh-config {} --remote some-hostspec".format(
             ssh_config
@@ -147,7 +147,7 @@ def test_setup_provisioner_fail(mhost, run_script):
     #     in res.stdout
     # )
 
-    # SINGLENODE - REMOTE - CUSTOM SSH - spec for master not in config
+    # SINGLENODE - REMOTE - CUSTOM SSH - spec for salt-master not in config
     res = run_script(
         "--singlenode --ssh-config {} --remote some-hostspec".format(
             ssh_config
