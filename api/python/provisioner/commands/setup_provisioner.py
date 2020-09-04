@@ -778,6 +778,11 @@ class SetupProvisioner(CommandParserFillerMixin):
                             'master': masters[node.minion_id]
                         },
                         'grains': [
+                            # FIXME not accurate in case of HA setup
+                            {'roles': [
+                                'primary' if (node is run_args.primary)
+                                else 'secondary'
+                            ]},
                             {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
                             {'hostname_status': hostnamectl_status},

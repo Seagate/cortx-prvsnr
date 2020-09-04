@@ -15,15 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{%- for grain in salt['pillar.get']('setup:grains') -%}
-    {%- for grain_id, grain_val in grain.items() recursive %}
-        {%- if grain_val is mapping %}
-{{ grain_id }}:
-            {%- for grain_id, grain_value in grain_val.items() %}
-    {{ grain_id }}: {{ grain_value }}
-            {%- endfor -%}
-        {%- else %}
-{{ grain_id }}: {{ grain_val }}
-        {%- endif -%}
-    {%- endfor -%}
+{% for grain in salt['pillar.get']('setup:grains') %}
+
+{{ grain|yaml(False) }}
+
 {%- endfor -%}

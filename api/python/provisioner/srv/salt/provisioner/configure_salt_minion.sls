@@ -28,13 +28,12 @@ salt_minion_configured:
 
 # FIXME EOS-8473 prepend is not a clean solution
 salt_minion_grains_configured:
-  file.prepend:
+  file.managed:
     - name: /etc/salt/grains
-    - sources:
-      # FIXME EOS-11931 need to use template where
-      #       salt['pillar.get']('setup:grains') values are iterated
-      #       as for minion config above
-      - {{ install_dir }}/srv/components/provisioner/salt_minion/files/grains
+    - source: {{ install_dir }}/srv/components/provisioner/salt_minion/files/grains
+    - keep_source: True
+    - backup: minion
+    - template: jinja
 
 # TODO EOS-8473 better content management
 salt_minion_id_set:
