@@ -20,3 +20,14 @@ Configure Kibana:
     - name: /etc/kibana/kibana.yml
     - source: salt://components/misc_pkgs/kibana/files/kibana.yml.j2
     - template: jinja
+
+Configure Kibana service:
+  file.managed:
+    - name: /etc/systemd/system/kibana.service
+    - source: salt://components/misc_pkgs/kibana/files/kibana.service
+
+Reload service units:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Configure Kibana service
