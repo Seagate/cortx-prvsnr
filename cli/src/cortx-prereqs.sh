@@ -110,6 +110,7 @@ parse_args()
 
             grep -q "Red Hat" /etc/*-release && {
                 system_repo="${tgt_build}/rhel7.7"
+                # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
             } || {
                 system_repo="${tgt_build}/centos7.7"
             }
