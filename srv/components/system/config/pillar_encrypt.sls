@@ -15,14 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-Encrypt_pillar:
-  cmd.run:
-    {% if salt['file.file_exists']("/opt/seagate/cortx/provisioner/cli/pillar_encrypt") %}
-    - name: python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt       # Prod env
-    {% else %}
-    - name: python3 /opt/seagate/cortx/provisioner/cli/src/pillar_encrypt   # Dev env
-    {% endif %}
-
-Refresh pillar data:
+{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+Encrypt pillar data:
   module.run:
-    - saltutil.refresh_pillar: []
+    - pillar_encrypt.encrypt:
+      - decrypt: True
+{% else %}
+Encrypt pillar data:
+  test.show_notification:
+    - text: "Pillar encypt happens only on primary node."
+{% endif %}

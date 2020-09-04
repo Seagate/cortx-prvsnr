@@ -277,7 +277,8 @@ function update_salt {
 function encrypt_pillar {
     # Encrypt passwords in pillar data
     l_info "Encrypting salt pillar data"
-    python3 ${BASEDIR}/pillar_encrypt
+    #python3 ${BASEDIR}/pillar_encrypt
+    salt-call pillar_encrypt.encrypt 
     update_salt
 }
 
