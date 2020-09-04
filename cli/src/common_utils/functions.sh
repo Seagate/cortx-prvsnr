@@ -773,8 +773,8 @@ EOF
 
     if [[ -n "$_public_base_url" ]]; then
         _cortx_deps_repo="${public_base_url}/3rd_party"
-        _saltstack_repo="${_cortx_deps_repo}/saltstack-3001"
-        _epel_repo="${_cortx_deps_repo}/EPEl-7"
+        _saltstack_repo="${_cortx_deps_repo}/commons/saltstack-3001"
+        _epel_repo="${_cortx_deps_repo}/EPEL-7"
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -787,6 +787,7 @@ EOF
 
     grep -q "Red Hat" /etc/*-release && {
         _system_repo="${public_base_url}/rhel7.7"
+        # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
     } || {
         _system_repo="${public_base_url}/centos7.7"
     }
@@ -843,7 +844,7 @@ function install_salt_repo {
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     if [[ -n "$_public_base_url" ]]; then
-        _salt_repo_url="${public_base_url}/3rd_party/saltstack-3001"
+        _salt_repo_url="${public_base_url}/3rd_party/commons/saltstack-3001"
     fi
 
     l_info "Installing Salt repository '$_hostspec'"
