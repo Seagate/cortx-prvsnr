@@ -972,7 +972,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             )
         elif run_args.source == 'rpm':
             logger.info("Preparing CORTX repos pillar")
-            self._prepare_cortx_repo_pillar(
+            self._prepare_repos_pillar(
                 paths, {
                     'cortx': f'{run_args.url_cortx}',
                     'cortx_deps': f'{run_args.url_cortx_deps}'

@@ -34,10 +34,7 @@ salt_minion_grains_configured:
       # FIXME EOS-11931 need to use template where
       #       salt['pillar.get']('setup:grains') values are iterated
       #       as for minion config above
-      - salt://provisioner/files/minions/all/cluster_id
-      - salt://provisioner/files/minions/{{ grains.id }}/grains
-      - salt://provisioner/files/minions/{{ grains.id }}/node_id
-      - salt://provisioner/files/minions/{{ grains.id }}/hostname_status
+      - {{ install_dir }}/srv/components/provisioner/salt_minion/files/grains
 
 # TODO EOS-8473 better content management
 salt_minion_id_set:
