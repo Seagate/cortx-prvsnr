@@ -80,8 +80,8 @@ base_repos:
 {% endif %}  # type of release
 
 
-{% cortx_commons_url = salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) %}
-{% repo_url = salt["environ.get"]('REPO_URL', repo_url) %}
+{% set cortx_commons_url = salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) %}
+{% set repo_url = salt["environ.get"]('REPO_URL', repo_url) %}
 
 commons:
   repo:

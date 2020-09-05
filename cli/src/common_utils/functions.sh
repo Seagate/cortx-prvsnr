@@ -1721,7 +1721,7 @@ function update_release_pillar {
     /usr/local/bin/provisioner pillar_set release/target_build \"${_release_ver}\"
 
     if [[ "$_public_release" == true ]]; then
-        /usr/local/bin/provisioner pillar_set release/type public
+        /usr/local/bin/provisioner pillar_set release/type \"public\"
     fi
 }
 

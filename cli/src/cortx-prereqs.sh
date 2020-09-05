@@ -165,7 +165,7 @@ EOL
 
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
     if [[ "$public_release" == true ]]; then
-        _url="$system_repo"
+        _url="${system_repo}/os/"
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/"
     fi
@@ -180,7 +180,7 @@ EOL
     echo "Done" | tee -a ${LOG_FILE}
 
     if [[ "$public_release" == true ]]; then
-        ;    # FIXME EOS-12508
+        _url="${system_repo}/extras/";    # FIXME EOS-12508
     else
 
     _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
