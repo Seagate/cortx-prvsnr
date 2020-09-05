@@ -386,7 +386,6 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 )
             if self.iso_cortx.name == self.iso_cortx_deps.name:
                 raise ValueError(
-
                     "ISO files for CORTX and CORTX dependencies "
                     f"have the same name: {self.iso_cortx.name}"
                 )
