@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import logging
@@ -29,6 +27,7 @@ from ..utils import (
     run_subprocess_cmd
 )
 from ..pillar import PillarUpdater
+from ..salt import local_minion_id
 
 from .setup_provisioner import (
     Node,
@@ -128,8 +127,14 @@ class ReplaceNode(SetupProvisioner):
         if run_args.node_port:
             nodes[run_args.node_id].port = run_args.node_port
 
+        # make the current node primary (the first in the list)
+        # assumption:
+        #   salt's local client is available since the command
+        #   should be run on a healthy node
+        primary_id = local_minion_id()
         setup_ctx = super().run(
-            nodes=list(nodes.values()), **kwargs
+            nodes=[nodes.pop(primary_id)] + list(nodes.values()),
+            **kwargs
         )
 
         logger.info("Updating replace node data in pillar")

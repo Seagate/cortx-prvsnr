@@ -2,7 +2,7 @@
   "variables": {
     "base_env": "centos7.7.1908",
     "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/singlenode-cortx-deployed/package.box",
-    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_singlenode-cortx-deployed",
+    "parent_box_name": "seagate.cortx-prvsnr_centos7.7.1908_singlenode-cortx-deployed",
     "skip_add": "false"
   },
   "builders": [
@@ -26,7 +26,7 @@
     {
       "type": "shell",
       "inline": [
-        "cd /tmp/ees-prvsnr/cli/src",
+        "cd /tmp/cortx-prvsnr/cli/src",
         "chmod u+x bootstrap start",
         "set -o pipefail",
         "hostname srvnode-1",

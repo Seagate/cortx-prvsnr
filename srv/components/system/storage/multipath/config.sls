@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 include:
@@ -40,15 +38,14 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if not pillar['cluster'][grains['id']]['is_primary'] -%}
-{%- for node_id in pillar['cluster']['node_list'] -%}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
+{% if (not pillar['cluster'][grains['id']]['is_primary'])
+  or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
+-%}
+{%- set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] -%}
 # Execute only on Secondary node
 Copy multipath bindings to non-primary:
   cmd.run:
-    - name: scp {{ pillar['cluster'][node_id]['hostname'] }}:/etc/multipath/bindings /etc/multipath/bindings
-{%- endif %}
-{% endfor %}
+    - name: scp {{ node_id }}:/etc/multipath/bindings /etc/multipath/bindings
 {%- endif %}
 
 Start multipath service:

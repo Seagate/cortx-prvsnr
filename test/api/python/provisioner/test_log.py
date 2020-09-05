@@ -1,28 +1,30 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import pytest
 from copy import deepcopy
+import logging
 
 from provisioner.vendor import attr
 from provisioner import (
     log, config, inputs
+)
+from provisioner.log import (
+    CommandFilter, NoTraceExceptionFormatter
 )
 
 null_handler = config.LOG_NULL_HANDLER
@@ -456,3 +458,52 @@ def test_log_set_logging(
         mocker.call.reset_logging(),
         mocker.call.dictConfig(log_config)
     ]
+
+
+def test_CommandFilter_filter():
+    record = logging.makeLogRecord({})
+    cmd = 'some-command'
+
+    obj = CommandFilter(cmd)
+
+    assert obj.filter(record)
+    assert record.prvsnrcmd == cmd
+
+
+def test_NoTraceExceptionFormatter_format(mocker):
+    record = logging.makeLogRecord({})
+    record.exc_text = 'some-text'
+
+    obj = NoTraceExceptionFormatter()
+
+    format_m = mocker.patch.object(log.logging.Formatter, 'format',
+                                   autospec=True)
+    obj.format(record)
+    assert record.exc_text == ''
+    format_m.assert_called_once_with(obj, record)
+
+
+def test_NoTraceExceptionFormatter_format_formatException_called(mocker):
+    record = logging.makeLogRecord({})
+    record.exc_info = ('some-type', 'some-value', 'traceback-info')
+    record.exc_text = 'some-text'
+
+    obj = NoTraceExceptionFormatter()
+
+    fmtexc_m = mocker.patch.object(log.NoTraceExceptionFormatter,
+                                   'formatException', autospec=True)
+
+    obj.format(record)
+    fmtexc_m.assert_called_once_with(obj, record.exc_info)
+
+
+def test_NoTraceExceptionFormatter_formatException(mocker):
+    exc_info = ('some-type', 'some-value', 'traceback-info')
+
+    obj = NoTraceExceptionFormatter()
+
+    assert obj.formatException(exc_info) == repr(exc_info[1])
+
+    mock = mocker.Mock(reason='someError(222, "mocked the reason")')
+    exc_info = ('some-type', mock, 'traceback-info')
+    assert obj.formatException(exc_info) == repr(mock.reason)

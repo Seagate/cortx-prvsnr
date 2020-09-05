@@ -82,5 +82,5 @@ CMD ["/usr/sbin/init"]
 #
 #  salt-call state.apply components.system
 #  ...
-#  bash -c 'journalctl -f | grep -E -i "mero|lnet"' &
+#  bash -c 'journalctl -f | grep -E -i "motr|lnet"' &
 #

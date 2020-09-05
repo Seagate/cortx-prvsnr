@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 import functools
@@ -37,8 +35,8 @@ logger = logging.getLogger(__name__)
 # TODO TEST:
 # case 1: (hard to make reproducible)
 #   - changes in config
-#   - master is being restarted
-#   - some runner check is failed due to connection to previous master
+#   - salt-master is being restarted
+#   - some runner check is failed due to connection to previous salt-master
 #     ('Stream is closed')
 # case 2: no restart checks happens if no changes detected
 # case 3: logic fails if minion config is malformed
@@ -80,7 +78,9 @@ def check_salt_master_is_responded():
             )
         )
     except SaltCmdResultError as exc:
-        if 'Salt request timed out. The master is not responding' in str(exc):
+        if ("Salt request timed out."
+                "The salt-master is not responding") in str(exc):
+
             logger.info(
                 'salt-master is not yet responding: {}'.format(exc)
             )
@@ -95,7 +95,7 @@ def check_salt_master_is_responded():
 def config_salt_master():
     logger.info("Updating salt-master configuration")
 
-    # get salt master PID
+    # get salt-master PID
     res = runner_function_run(
         'salt.cmd', fun_args=('service.show', 'salt-master')
     )
@@ -112,12 +112,12 @@ def config_salt_master():
     changes = res[state_name]['changes']
 
     # XXX might be moved to rollback part
-    # on configuration changes - expect salt master is going to be restarted
+    # on configuration changes - expect salt-master is going to be restarted
     if changes:
         # TODO IMPROVE ??? better logic
         # small delay might help to avoid noise in the logs since
-        # not responded yet master will cause some excpetions which
-        # we are going to supress initially
+        # not responded yet salt-master will cause some excpetions which
+        # we are going to suppress initially
         time.sleep(10)
 
         ensure(

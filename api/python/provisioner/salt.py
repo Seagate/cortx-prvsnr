@@ -1,20 +1,18 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from abc import ABC, abstractmethod
@@ -872,7 +870,7 @@ def _salt_client_cmd(
 def function_run(
     fun,
     targets=ALL_MINIONS,
-    fun_args: Union[Tuple, None] = None,
+    fun_args: Union[Tuple, List, None] = None,
     fun_kwargs: Union[Dict, None] = None,
     **kwargs
 ):
@@ -1044,7 +1042,7 @@ def copy_to_file_roots(
 
     if source.is_dir():
         # TODO
-        #  - file.recurse expects only dirs from master file roots
+        #  - file.recurse expects only dirs from salt-master file roots
         #    (salt://), need to find another alternative to respect
         #    indempotence
         # StateFunExecuter.execute(
@@ -1074,7 +1072,7 @@ def copy_to_file_roots(
         )
 
     # TODO DOC
-    # ensure it would be visible for Salt master / minions
+    # ensure it would be visible for salt-master / salt-minions
     runner_function_run(
         'fileserver.clear_file_list_cache',
         fun_kwargs=dict(backend='roots')
@@ -1467,7 +1465,7 @@ def _salt_caller_cmd(*args, **kwargs):
     try:
         # TODO
         #  - consider to use --local arg to reduce
-        #    unnecessary connections with master
+        #    unnecessary connections with salt-master
         res = salt_caller().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic

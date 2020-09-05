@@ -3,20 +3,19 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
+#
 #
 
 
@@ -40,7 +39,6 @@ from .config import (
 logger = logging.getLogger(__name__)
 
 
-# TODO TEST EOS-7495
 class CommandFilter(logging.Filter):
     def __init__(self, cmd: str = None):
         self._cmd = cmd
@@ -58,7 +56,6 @@ class CommandFilter(logging.Filter):
         return True
 
 
-# TODO TEST EOS-7495
 class NoTraceExceptionFormatter(logging.Formatter):
     def format(self, record):
         # ensure cache won't be used for exception formatting
@@ -276,7 +273,6 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
 LogArgs = build_log_args_cls()
 
 
-# TODO TEST EOS-7495
 def reset_logging():
     for handler in logging.root.handlers[:]:
         handler.flush()

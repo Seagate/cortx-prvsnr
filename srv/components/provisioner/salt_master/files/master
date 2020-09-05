@@ -163,7 +163,7 @@ cli_summary: True
 # By default, events are not queued.
 #event_return_queue: 0
 
-# Store all event returns **except** the tags in a blacklist, supports globs.
+# Store all event returns **except** the tags in a denylist, supports globs.
 #event_return_blacklist:
 #  - salt/master/not_this_tag
 #  - salt/wheel/*/ret
@@ -370,10 +370,10 @@ cli_summary: True
 #    - test.ping
 #    - network.*
 #
-# Blacklist any of the following users or modules
+# Denylist any of the following users or modules
 #
-# This example would blacklist all non sudo users, including root from
-# running any commands. It would also blacklist any use of the "cmd"
+# This example would denylist all non sudo users, including root from
+# running any commands. It would also denylist any use of the "cmd"
 # module. This is completely disabled by default.
 #
 #
@@ -620,7 +620,7 @@ ssh_update_roster: True
 # full_id, mixed_id, changes_id and terse_id are also allowed;
 # when set, the state ID will be used as name in the output
 #state_output: full
-state_output: mixed
+state_output: changes
 
 # The state_output_diff setting changes whether or not the output from
 # successful states is returned. Useful when even the terse output of these

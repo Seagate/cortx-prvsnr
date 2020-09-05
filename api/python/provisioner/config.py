@@ -1,22 +1,20 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
-
+from enum import Enum
 from pathlib import Path
 from typing import Union, Dict, Optional
 
@@ -52,7 +50,7 @@ PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 
-# reflects master file_roots configuration
+# reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
@@ -272,3 +270,38 @@ LOCALHOST_DOMAIN = 'localhost'
 # Defines a "frozen" list for allowed commands and supported by provisioner
 # API for remote execution
 SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
+
+
+class StorageType(Enum):
+    """Class-enumeration for supported and existing storage types"""
+
+    VIRTUAL = "virtual"
+    # standard enclosure with 5 units with 84 disks
+    ENCLOSURE = "5u84"
+    PODS = "PODS"
+
+
+class ServerType(Enum):
+    """Class-enumeration which represents possible server types"""
+
+    VIRTUAL = "virtual"
+    PHYSICAL = "physical"
+
+
+class ControllerTypes(Enum):
+    """Class-enumeration for controller type's values"""
+    GALLIUM = "gallium"
+    INDIUM = "indium"
+    SATI = "sati"
+
+
+# Constant block for setup info fields
+NODES = "nodes"
+SERVERS_PER_NODE = "servers_per_node"
+STORAGE_TYPE = "storage_type"
+SERVER_TYPE = "server_type"
+
+SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
+
+# TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
+NOT_AVAILABLE = "N/A"
