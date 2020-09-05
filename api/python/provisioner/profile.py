@@ -57,8 +57,8 @@ def setup(
         path.mkdir(parents=True, exist_ok=True)
 
     # config file for salt tools (salt-call, salt-ssh)
-    # Note. for now the same for master (salt-ssh) and
-    #       minion (salt-call --local) settings
+    # Note. for now the same for salt-master (salt-ssh) and
+    #       salt-minion (salt-call --local) settings
     profile_config = {
         'pki_dir': str(profile_paths['salt_pki_dir']),
         'cachedir': str(profile_paths['salt_cache_dir']),

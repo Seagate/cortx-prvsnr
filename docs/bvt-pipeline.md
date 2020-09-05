@@ -5,7 +5,7 @@ testing suite from [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/)
 repository and logic of dynamic environment management provided by [testing suite](../test)
 from the current repository.
 
-The pipeline is set up here: <http://eos-jenkins.mero.colo.seagate.com/job/eos-prvsnr-qa-bvt>
+The pipeline is set up here: <http://eos-jenkins.colo.seagate.com/job/eos-prvsnr-qa-bvt>
 
 ## Requirements
 
@@ -17,7 +17,7 @@ The pipeline is set up here: <http://eos-jenkins.mero.colo.seagate.com/job/eos-p
 
 ### Jenkins Agent
 
-Please refer [here](http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr#jenkins-agent).
+Please refer [here](https://github.com/Seagate/cortx-prvsnr#jenkins-agent).
 
 ## Configuration
 
@@ -25,8 +25,8 @@ The pipeline accepts the following parameters:
 
 - `eosRelease`: EOS stack release to use as source for provisioner and EOS stack components.
 Default: `integration/centos-7.7.1908/last_successful`.
-- `eosTestRepoVersion`: version of the [eos-test](https://seagit.okla.seagate.com/eos/qa/eos-test/)
-repository to use. Default: `master`.
+- `eosTestRepoVersion`: version of the [eos-test](https://seagit.okla.seagate.com/eos/qa/cortx-test/)
+repository to use. Default: `release`.
 
 ## Artifacts
 

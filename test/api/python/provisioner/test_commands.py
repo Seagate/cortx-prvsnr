@@ -724,8 +724,8 @@ def test_commands_SWUpdate_run_sw_stack_update_failed(
 
     # TODO IMPROVE parametrize to emulate errors on different stages:
     #      - during provisioner update
-    #      - during salt master confrig (first time and on rollback)
-    #      - during salt minions confrig (first time and on rollback)
+    #      - during salt-master config (first time and on rollback)
+    #      - during salt-minions config (first time and on rollback)
     #      - ensure_salt_master_is_running on rollback
     def apply_side_effect(component, *args, **kwargs):
         if component == 'motr':
