@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
 
-DOCKER_IMAGES_REPO = "seagate/ees-prvsnr"
+DOCKER_IMAGES_REPO = "seagate/cortx-prvsnr"
 VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
 
 SSH_KEY_FILE_NAME = "id_rsa.test"

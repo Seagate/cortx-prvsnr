@@ -60,10 +60,7 @@ def conf_update(name='/etc/sysconfig/motr', ref_pillar='motr', type=None, backup
     file_contents = fd.read()
     for k, v in pillar_data.items():
       file_contents = re.sub(r'.?{0}=.+'.format(k), str(k) + '=' + str(v), file_contents)
-      # for line in file_contents:
-      #   if k in line:
-      #     file_contents = re.sub(r'(?<=MERO_M0D_BELOG_SIZE=).+', v, file_contents)
-  
+
   with open(name, 'w') as fd:
     fd.write(file_contents)
 
