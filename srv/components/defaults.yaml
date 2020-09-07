@@ -11,19 +11,52 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 tmp_dir: /tmp
 
-{% set repo_url = pillar['release']['target_build'] %}
+{% if pillar['release']['type'] == 'bundle' %}
 
-{% if "RedHat" in grains['os'] %}
-{% set cortx_commons_url = pillar['commons']['cortx_commons']['RedHat'] %}
+  {% set base_bundle_url = pillar['release']['target_build'] %}
+
+  {% if "RedHat" in grains['os'] %}
+    {% set system_repo = '/'.join([base_bundle_url, 'rhel7.7']) %}
+  {% else %}
+    # FIXME EOS-12508 not considered yet ?
+    {% set system_repo = '/'.join([base_bundle_url, 'centos7.7']) %}
+  {% endif %}
+
+  {% set cortx_repo = '/'.join([base_bundle_url, 'cortx_iso']) %}
+  {% set cortx_deps_repo = '/'.join([base_bundle_url, '3rd_party']) %}
+  {% set epel_repo = '/'.join([cortx_deps_repo, 'EPEL-7']) %}
+  {% set saltstack_repo = '/'.join([cortx_deps_repo, 'commons', 'saltstack-3001']) %}
+
+  {% set repo_url = cortx_repo %}
+  {% set cortx_commons_url = cortx_deps_repo %}
+
+base_repos:
+  centos_repos:  # FIXME EOS-12508 extras, updates
+    - id: "cortx_platform_base"
+      url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', system_repo) }}
+  epel_repo:
+    id: "epel"
+    url: {{ salt["environ.get"]('EPEL', epel_repo) }}
+  saltstack_repo:
+    id: "saltstack"
+    url: {{ salt["environ.get"]('SALTSTACK', saltstack_repo) }}
+
+
 {% else %}
-{% set cortx_commons_url = pillar['commons']['cortx_commons']['CentOS'] %}
-{% endif %}
+
+  {% set repo_url = pillar['release']['target_build'] %}
+
+  {% if "RedHat" in grains['os'] %}
+    {% set cortx_commons_url = pillar['commons']['cortx_commons']['RedHat'] %}
+  {% else %}
+    {% set cortx_commons_url = pillar['commons']['cortx_commons']['CentOS'] %}
+  {% endif %}
 
 base_repos:
   centos_repos:
@@ -44,53 +77,61 @@ base_repos:
     id: "saltstack"
     url: {{ salt["environ.get"]('SALTSTACK', "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3001") }}
 
+{% endif %}  # type of release
+
+
+{% set cortx_commons_url = salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) %}
+{% set repo_url = salt["environ.get"]('REPO_URL', repo_url) %}
+
 commons:
   repo:
   # Binaries from external sources
     id: "cortx_commons"
-    url: {{ salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) }}
+    url: {{ cortx_commons_url }}
 
 sspl:
   repo:
     id: "sspl"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
-    url: {{ salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) }}
+    url: {{ cortx_commons_url }}
 
 lustre:
   repo:
     id: "lustre"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
+    url:
+      tcp: {{ cortx_commons_url }}/lustre/custom/tcp/
+      o2ib: {{ cortx_commons_url }}/lustre/custom/o2ib/
 
 motr:
   repo:
     id: "motr"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 
 hare:
   repo:
     id: "hare"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 
 cortx_ha:
   repo:
     id: "cortx-ha"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
+    url: {{ repo_url }}
 
 s3server:
   repo:
     id: "s3server"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
-    url: {{ salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) }}
+    url: {{ cortx_commons_url }}
   config:
     DEPLOY_TAG: "s3dev"
     S3_VERSION: "1.0"
@@ -99,30 +140,30 @@ s3server:
 nfs:
   repo:
     id: "nfs"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
-    url: {{ salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) }}
+    url: {{ cortx_commons_url }}
 
 csm:
   repo:
     id: "csm"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url)  }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url  }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
   uploads_repo:
     id: "csm_uploads"
-    url: {{ salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) }}
+    url: {{ cortx_commons_url }}
 
 uds:
   repo:
     id: "uds"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url)  }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url  }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
 
 provisioner:
   repo:
     id: "provisioner"
-    url: {{ salt["environ.get"]('REPO_URL', repo_url) }}
-    gpgkey: {{ salt["environ.get"]('REPO_URL', repo_url) }}/RPM-GPG-KEY-Seagate
+    url: {{ repo_url }}
+    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate

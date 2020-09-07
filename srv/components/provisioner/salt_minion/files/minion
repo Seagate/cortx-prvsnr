@@ -13,8 +13,7 @@
 
 # Set the location of the salt master server. If the master server cannot be
 # resolved, then the minion will fail to start.
-master: {{ salt['config.get']('master', 'srvnode-1') }}
-
+master: {{ salt['pillar.get']('setup:config:master', salt['config.get']('master', 'srvnode-1'))|yaml }}
 # Set http proxy information for the minion when doing requests
 #proxy_host:
 #proxy_port:
