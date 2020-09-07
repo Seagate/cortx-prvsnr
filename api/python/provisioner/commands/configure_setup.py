@@ -54,6 +54,14 @@ class RunArgsConfigureSetup:
             }
         }
     )
+    number_of_nodes: int = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "No of nodes in cluster"
+            }
+        },
+        converter=int
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -163,7 +171,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         pillar_key = deepcopy(key)
         return pillar_key.replace(".", "/")
 
-    def run(self, path):
+    def run(self, path, number_of_nodes):
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
@@ -175,10 +183,12 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.debug(f"params data {content}")
 
         input_type = None
+        count = int(number_of_nodes)
         for section in content:
             input_type = section
             if 'srvnode' in section:
                 input_type = 'node'
+                count = count - 1
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])
 
@@ -187,5 +197,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                 run_subprocess_cmd([
                        "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
+
+        if count > 0:
+            raise ValueError(f"Node information for {count} node missing")
 
         logger.info("Pillar data updated Successfully.")
