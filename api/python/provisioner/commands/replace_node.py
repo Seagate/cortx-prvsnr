@@ -27,6 +27,7 @@ from ..utils import (
     run_subprocess_cmd
 )
 from ..pillar import PillarUpdater
+from ..salt import local_minion_id
 
 from .setup_provisioner import (
     Node,
@@ -126,8 +127,14 @@ class ReplaceNode(SetupProvisioner):
         if run_args.node_port:
             nodes[run_args.node_id].port = run_args.node_port
 
+        # make the current node primary (the first in the list)
+        # assumption:
+        #   salt's local client is available since the command
+        #   should be run on a healthy node
+        primary_id = local_minion_id()
         setup_ctx = super().run(
-            nodes=list(nodes.values()), **kwargs
+            nodes=[nodes.pop(primary_id)] + list(nodes.values()),
+            **kwargs
         )
 
         logger.info("Updating replace node data in pillar")

@@ -1,7 +1,7 @@
 {
   "variables": {
     "base_env": "centos7.7.1908",
-    "seed_vm_name": "seagate.ees-prvsnr_centos7.7.1908_seed"
+    "seed_vm_name": "seagate.cortx-prvsnr_centos7.7.1908_seed"
   },
   "builders": [
     {

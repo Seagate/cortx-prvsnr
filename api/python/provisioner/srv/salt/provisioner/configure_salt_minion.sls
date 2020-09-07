@@ -11,27 +11,29 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
+
+{% set install_dir = '/opt/seagate/cortx/provisioner' %}
 
 salt_minion_configured:
   file.managed:
     - name: /etc/salt/minion
-    - source: salt://provisioner/files/minions/all/minion
+    - source: {{ install_dir }}/srv/components/provisioner/salt_minion/files/minion
     - keep_source: True
     - backup: minion
     - template: jinja
 
+
 # FIXME EOS-8473 prepend is not a clean solution
 salt_minion_grains_configured:
-  file.prepend:
+  file.managed:
     - name: /etc/salt/grains
-    - sources:
-      - salt://provisioner/files/minions/all/cluster_id
-      - salt://provisioner/files/minions/{{ grains.id }}/grains
-      - salt://provisioner/files/minions/{{ grains.id }}/node_id
-      - salt://provisioner/files/minions/{{ grains.id }}/hostname_status
+    - source: {{ install_dir }}/srv/components/provisioner/salt_minion/files/grains
+    - keep_source: True
+    - backup: minion
+    - template: jinja
 
 # TODO EOS-8473 better content management
 salt_minion_id_set:

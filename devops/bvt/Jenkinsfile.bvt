@@ -10,12 +10,12 @@ Map config = [
     nodeLabel: 'centos-prvsnr-node'
 ]
 
-String eosRelease = params.eosRelease ?: 'integration/centos-7.7.1908/last_successful'
-String eosTestRepoVersion = params.eosTestRepoVersion ?: 'master'
+String cortxRelease = params.cortxRelease ?: 'integration/centos-7.7.1908/last_successful'
+String cortxTestRepoVersion = params.cortxTestRepoVersion ?: 'release'
 
 echo """
-    EOS release is set to '$eosRelease'
-    eos-test repo version is set to '$eosTestRepoVersion'
+    Cortx release is set to '$cortxRelease'
+    cortx-test repo version is set to '$cortxTestRepoVersion'
 """
 
 def nodeWrapper(label=null, body) {
@@ -56,17 +56,17 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
 
     String eosTestRepo = "https://seagit.okla.seagate.com/eos/qa/eos-test/repository/"
-    String eosTestRepoArchive = 'eos-test.tgz'
+    String cortxTestRepoArchive = 'eos-test.tgz'
 
     String bvtTestTargets = 'avocado_test/bvt_test.py'
     String bvtResultsArchive = 'bvt.results.tgz'
 
-    String prvsnrCliRelease = eosRelease
-    String prvsnrRelease = eosRelease
+    String prvsnrCliRelease = cortxRelease
+    String prvsnrRelease = cortxRelease
 
     String pytestArgs = "-l -vv -s --log-cli-level info --junit-xml=$testReportFileNameXml"
-    pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --eos-release=$eosRelease"
-    pytestArgs += " --bvt-repo-path=$eosTestRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
+    pytestArgs += " --prvsnr-cli-release=$prvsnrCliRelease --prvsnr-release=$prvsnrRelease --cortx-release=$cortxRelease"
+    pytestArgs += " --bvt-repo-path=$cortxTestRepoArchive --bvt-test-targets=$bvtTestTargets --bvt-results-path=$bvtResultsArchive"
     String pytestTargets = "test/bvt"
 
     try {
@@ -76,7 +76,7 @@ Closure dynamicValidation = {
 
         stage('Download QA tests') {
             withCredentials([string(credentialsId: 'eos-test-repo-api-token', variable: 'token')]) {
-                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$eosTestRepoVersion/archive.tar.gz -o $eosTestRepoArchive"
+                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$cortxTestRepoVersion/archive.tar.gz -o $cortxTestRepoArchive"
             }
         }
 

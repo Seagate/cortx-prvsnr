@@ -103,11 +103,11 @@ function update_salt_minion {
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         
-        echo -n "Setting Salt master on server A (primary node).............................." 2>&1|tee -a ${LOG_FILE}
+        echo -n "Setting salt-master on server A (primary node).............................." 2>&1|tee -a ${LOG_FILE}
         sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
         echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Setting Salt master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
+        echo -n "Setting salt-master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
         echo "Ok." | tee -a ${LOG_FILE}
         

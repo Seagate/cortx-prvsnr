@@ -9,7 +9,7 @@
     "cortx_release": "github/release/rhel-7.7.1908/last_successful/",
     "base_env": "centos7.7.1908",
     "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/base/package.box",
-    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_base",
+    "parent_box_name": "seagate.cortx-prvsnr_centos7.7.1908_base",
     "skip_add": "false"
   },
   "builders": [

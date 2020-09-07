@@ -15,21 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{% set lustre_repo = pillar['commons']['repo']['lustre'] %}
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+Add Lustre yum repo:
+  pkgrepo.managed:
+    - name: {{ defaults.lustre.repo.id }}
+    - enabled: True
+    - humanname: lustre
 {% if salt['cmd.run']('lspci -d"15b3:*"') %}
-Add Lustre yum repo:
-  pkgrepo.managed:
-    - name: lustre
-    - enabled: True
-    - humanname: lustre
-    - baseurl: {{ lustre_repo }}/o2ib
-    - gpgcheck: 0
+    - baseurl: {{ defaults.lustre.repo.url.o2ib }}
 {% else %}
-Add Lustre yum repo:
-  pkgrepo.managed:
-    - name: lustre
-    - enabled: True
-    - humanname: lustre
-    - baseurl: {{ lustre_repo }}/tcp
-    - gpgcheck: 0
+    - baseurl: {{ defaults.lustre.repo.url.tcp }}
 {% endif %}
+    - gpgcheck: 0
