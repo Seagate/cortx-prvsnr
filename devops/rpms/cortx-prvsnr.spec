@@ -54,6 +54,7 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/cortx/provisioner/%{name}.yaml
+/opt/seagate/cortx/provisioner/conf
 /opt/seagate/cortx/provisioner/cli
 /opt/seagate/cortx/provisioner/files
 /opt/seagate/cortx/provisioner/pillar
