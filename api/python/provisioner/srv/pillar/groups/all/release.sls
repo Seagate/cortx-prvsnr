@@ -26,5 +26,4 @@ release:
         #      be mounted by prouction setup logic as well
         # TODO IMPROVE EOS-12076 shorten path, use some global config variable
         base_dir: /var/lib/seagate/cortx/provisioner/local/cortx_repos
-        repos:
-            eee: null
+        repos: {}
