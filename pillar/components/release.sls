@@ -16,9 +16,9 @@
 #
 
 release:
-    type: internal  # value 'public' will switch to publicly hosted
+    type: internal  # value 'bundle' will switch to bundled distribution
                     # repo structure assumptions, where 'target_build'
-                    # defines the base url of the hosted artifcats:
+                    # defines the base url:
                     # <base_url>/
                     #   rhel7.7 or centos7.7   <- OS ISO is mounted here
                     #   3rd_party              <- CORTX 3rd party ISO is mounted here

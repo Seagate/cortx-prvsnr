@@ -42,8 +42,8 @@ dev_repo=false
 prvsnr_version=
 
 tgt_build=
-public_base_url=
-public_release=false
+bundle_base_url=
+bundled_release=false
 
 cluster_id=$(uuidgen)
 
@@ -79,7 +79,14 @@ Options:
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt-master
                                          default: not specified
-       -S,  --singlenode               switch to single node mode setup
+       -S,  --singlenode                switch to single node mode setup
+       --bundle                         switch to bundled release installation mode:
+                                        target build url is treated as a base url of a
+                                        a bundled distribution structure:
+                                             <base_url>/
+                                                  rhel7.7 or centos7.7
+                                                  3rd_party
+                                                  cortx_iso
 "
 }
 
@@ -112,6 +119,9 @@ function options_parser {
         -S|--singlenode)
             singlenode=true
             ;;
+        --bundle)
+            bundled_release=true
+            ;;
         --dev)
             dev_repo=true
             ;;
@@ -135,7 +145,7 @@ function positional_args_parser {
 }
 
 
-parse_args 'S' 'srvnode-2:,repo-src:,salt-master:,singlenode,dev' options_parser positional_args_parser "$@"
+parse_args 'S' 'srvnode-2:,repo-src:,salt-master:,singlenode,bundle,dev' options_parser positional_args_parser "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -209,10 +219,10 @@ if [[ -z "$prvsnr_version" ]]; then
     fi
 elif [[ "$prvsnr_repo_src" == "rpm" ]]; then
     tgt_build="$prvsnr_version"
-    if ! (echo "$prvsnr_version" | grep colo.seagate.com); then
-        public_release=true
-        public_base_url="$prvsnr_version"
-        prvsnr_version="$public_base_url/cortx_iso"
+
+    if [[ "$bundled_release" == true ]]; then
+        bundle_base_url="$prvsnr_version"
+        prvsnr_version="$bundle_base_url/cortx_iso"
     fi
 fi
 
@@ -239,9 +249,9 @@ fi
 
 # SETUP SRVNODE-1
 if grep -q "Red Hat" /etc/*-release; then
-    install_salt_repo "$hostspec" "$ssh_config" "$sudo" "$public_base_url"
+    install_salt_repo "$hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
 else
-    install_repos "$hostspec" "$ssh_config" "$sudo" "$public_base_url"
+    install_repos "$hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
 fi
 
 configure_firewall "$hostspec" "$ssh_config" "$sudo"
@@ -265,9 +275,9 @@ configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 # SETUP SRVNODE-2
 if [[ "$singlenode" != true ]]; then
     if grep -q "Red Hat" /etc/*-release; then
-        install_salt_repo "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$public_base_url"
+        install_salt_repo "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
     else
-        install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$public_base_url"
+        install_repos "$srvnode_2_hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
     fi
 
     configure_firewall "$srvnode_2_hostspec" "$ssh_config" "$sudo"
@@ -308,7 +318,7 @@ fi
 #update target_build in release.sls
 if [[ -n "$tgt_build" ]]; then
     l_info "Updating target build in release pillar"
-    update_release_pillar $tgt_build $public_release
+    update_release_pillar $tgt_build $bundled_release
 fi
 
 cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"

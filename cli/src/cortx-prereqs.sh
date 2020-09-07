@@ -29,7 +29,7 @@ tgt_build=
 cortx_deps_repo=
 saltstack_repo=
 epel_repo=
-public_release=false
+bundled_release=false
 
 # Repo url for in house built commons packages Non RHEL systems
 url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/"
@@ -85,7 +85,12 @@ usage()
                           If this option is not provided it is expected that
                           either the system is not RHEL or system is already
                           registered with subscription manager.
-    -t                    target build url to setup from publicly availble releases
+    -t                    target build url pointed to release bundle base directory,
+                          if specified the following directory structure is assumed:
+                          <base_url>/
+                               rhel7.7 or centos7.7   <- OS ISO is mounted here
+                               3rd_party              <- CORTX 3rd party ISO is mounted here
+                               cortx_iso              <- CORTX ISO (main) is mounted here
     "
     exit 0
 }
@@ -106,7 +111,7 @@ parse_args()
                 echo "Error: Target build not provided" && exit 1;
             tgt_build="$2"
 
-            public_release=true
+            bundled_release=true
 
             grep -q "Red Hat" /etc/*-release && {
                 system_repo="${tgt_build}/rhel7.7"
@@ -164,7 +169,7 @@ EOL
     echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
-    if [[ "$public_release" == true ]]; then
+    if [[ "$bundled_release" == true ]]; then
         _url="${system_repo}/os/"
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/"
@@ -179,7 +184,7 @@ baseurl=$_url
 EOL
     echo "Done" | tee -a ${LOG_FILE}
 
-    if [[ "$public_release" == true ]]; then
+    if [[ "$bundled_release" == true ]]; then
         _url="${system_repo}/extras/";    # FIXME EOS-12508
     else
 
@@ -198,7 +203,7 @@ EOL
     fi
 
     _repo="/etc/yum.repos.d/epel.repo"
-    if [[ "$public_release" == true ]]; then
+    if [[ "$bundled_release" == true ]]; then
         _url="$epel_repo"
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
@@ -323,7 +328,7 @@ else
                 #echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 #yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
-                if [[ "$public_release" == true ]]; then
+                if [[ "$bundled_release" == true ]]; then
                     create_commons_repo_rhel "epel" "$epel_repo"
                 else
                     create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"

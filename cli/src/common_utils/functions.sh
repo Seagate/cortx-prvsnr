@@ -704,7 +704,7 @@ function get_reachable_names {
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       public_base_url: mark the release as public
+#       bundle_base_url: mark the release as bundle
 #           Default: `false`.
 #
 function install_repos {
@@ -719,7 +719,7 @@ function install_repos {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
-    local _public_base_url="${4:-}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -771,8 +771,8 @@ EOF
         scp -r -F "$_ssh_config" "$_project_repos" "${_hostspec}":"$_repo_base_dir"
     fi
 
-    if [[ -n "$_public_base_url" ]]; then
-        _cortx_deps_repo="${public_base_url}/3rd_party"
+    if [[ -n "$_bundle_base_url" ]]; then
+        _cortx_deps_repo="${bundle_base_url}/3rd_party"
         _saltstack_repo="${_cortx_deps_repo}/commons/saltstack-3001"
         _epel_repo="${_cortx_deps_repo}/EPEL-7"
 
@@ -786,10 +786,10 @@ EOF
     fi
 
     grep -q "Red Hat" /etc/*-release && {
-        _system_repo="${public_base_url}/rhel7.7"
+        _system_repo="${bundle_base_url}/rhel7.7"
         # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
     } || {
-        _system_repo="${public_base_url}/centos7.7"
+        _system_repo="${bundle_base_url}/centos7.7"
     }
 
     # TODO FIXME EOS-12508 base, extras, updates
@@ -816,7 +816,7 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       public_base_url: mark the release as public
+#       bundle_base_url: mark the release as bundle
 #           Default: `false`.
 #
 function install_salt_repo {
@@ -831,7 +831,7 @@ function install_salt_repo {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
-    local _public_base_url="${4:-}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -843,8 +843,8 @@ function install_salt_repo {
     local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3001}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
-    if [[ -n "$_public_base_url" ]]; then
-        _salt_repo_url="${public_base_url}/3rd_party/commons/saltstack-3001"
+    if [[ -n "$_bundle_base_url" ]]; then
+        _salt_repo_url="${bundle_base_url}/3rd_party/commons/saltstack-3001"
     fi
 
     l_info "Installing Salt repository '$_hostspec'"
@@ -1707,12 +1707,12 @@ function cortx_pillar_load_default {
 #
 #   Args:
 #       target_release: target release version for all the CORTX components
-#       public_release: mark the release as public
+#       bundled_release: mark the release as bundle
 function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
-    local _public_release="${2:-false}"
+    local _bundled_release="${2:-false}"
 
     #local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
@@ -1720,8 +1720,8 @@ function update_release_pillar {
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
     /usr/local/bin/provisioner pillar_set release/target_build \"${_release_ver}\"
 
-    if [[ "$_public_release" == true ]]; then
-        /usr/local/bin/provisioner pillar_set release/type \"public\"
+    if [[ "$_bundled_release" == true ]]; then
+        /usr/local/bin/provisioner pillar_set release/type \"bundle\"
     fi
 }
 

@@ -17,19 +17,19 @@
 
 tmp_dir: /tmp
 
-{% if pillar['release']['type'] == 'public' %}
+{% if pillar['release']['type'] == 'bundle' %}
 
-  {% set base_public_url = pillar['release']['target_build'] %}
+  {% set base_bundle_url = pillar['release']['target_build'] %}
 
   {% if "RedHat" in grains['os'] %}
-    {% set system_repo = '/'.join([base_public_url, 'rhel7.7']) %}
+    {% set system_repo = '/'.join([base_bundle_url, 'rhel7.7']) %}
   {% else %}
     # FIXME EOS-12508 not considered yet ?
-    {% set system_repo = '/'.join([base_public_url, 'centos7.7']) %}
+    {% set system_repo = '/'.join([base_bundle_url, 'centos7.7']) %}
   {% endif %}
 
-  {% set cortx_repo = '/'.join([base_public_url, 'cortx_iso']) %}
-  {% set cortx_deps_repo = '/'.join([base_public_url, '3rd_party']) %}
+  {% set cortx_repo = '/'.join([base_bundle_url, 'cortx_iso']) %}
+  {% set cortx_deps_repo = '/'.join([base_bundle_url, '3rd_party']) %}
   {% set epel_repo = '/'.join([cortx_deps_repo, 'EPEL-7']) %}
   {% set saltstack_repo = '/'.join([cortx_deps_repo, 'commons', 'saltstack-3001']) %}
 
