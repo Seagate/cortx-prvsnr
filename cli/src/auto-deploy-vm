@@ -45,8 +45,8 @@ mgmt_vip=
 pub_din=
 pvt_din=
 mgmt_din= 
-pub_dip=
-pub_dip2=
+pvt_dip1=
+pvt_dip2=
 singlenode=false
 
 srvnode_2_host_opt=false
@@ -57,8 +57,8 @@ pub_din_opt=false
 pvt_din_opt=false
 mgmt_din_opt=false
 mgmt_vip_opt=false
-pub_dip1_opt=false
-pub_dip2_opt=false
+pvt_dip1_opt=false
+pvt_dip2_opt=false
 
 usage()
 {
@@ -172,16 +172,16 @@ while [[ $# -gt 0 ]]; do
 	    mgmt_vip="$2"
 	    shift 2 ;;
 	-i)
-	    pub_dip1_opt=true
+	    pvt_dip1_opt=true
 	    [ -z "$2" ] &&
 		echo "Error: srvnode-1 pvt_ip_addr for data not provided" && exit 1;
-	    pub_dip1="$2"
+	    pvt_dip1="$2"
 	    shift 2 ;;
 	-I)
-	    pub_dip2_opt=true
+	    pvt_dip2_opt=true
 	    [ -z "$2" ] &&
 		echo "Error: srvnode-2 pvt_ip_addr for data not provided" && exit 1;
-	    pub_dip2="$2"
+	    pvt_dip2="$2"
 	    shift 2 ;;
         -t)
             tgt_build_opt=true
@@ -291,9 +291,8 @@ update_pillar()
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
     /usr/local/bin/provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
-    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
     /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
-    
+
     if [[ "$mgmt_din_opt" == true ]]; then
         /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"$mgmt_din\"
     else
@@ -303,12 +302,23 @@ update_pillar()
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
     else
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth2\",\"eth1\"]
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"eth1\",\"eth2\"]
     fi
+
+    if [[ "$pvt_dip1_opt" == true ]]; then
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"$pvt_dip1\"
+    else
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
+    fi
+
+    disk_list=($(lsblk -ndpl --output NAME))    
+
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/metadata_device [\"${disk_list[-2]}\"]
+
+    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/data_devices [\"${disk_list[-1]}\"]
 
     if [[ "$singlenode" == false ]]; then
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
         /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
         
         if [[ "$mgmt_din_opt" == true ]]; then
@@ -320,8 +330,22 @@ update_pillar()
         if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
             /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"$pub_din\",\"$pvt_din\"]
         else
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth2\",\"eth1\"]
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"eth1\",\"eth2\"]
         fi
+
+        if [[ "$pvt_dip2_opt" == true ]]; then
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"$pvt_dip2\"
+        else
+            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
+        fi
+
+        disk_list=($($remote_cmd lsblk -ndpl --output NAME))
+
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/metadata_device [\"${disk_list[-2]}\"]
+
+        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/data_devices [\"${disk_list[-1]}\"]
+
+
     fi
 
     # Updating Cluster IP
@@ -337,35 +361,36 @@ update_pillar()
     fi	
 	
     # Changing Meta and Data disks based on lsblk
-    echo -e "\n\t***** INFO: Changing Meta and Data disks based on lsblk *****" 2>&1|tee -a $LOG_FILE
-    os_name=`cat /etc/redhat-release`
-    if grep -q "Red Hat" <<< $os_name ; then
-    	disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3);
-    else
-        disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3 | sed "1 d");
-    fi
-    meta_flag=0
-    data_disk=''
-    for disk in $disks
-    do
-        if [ $meta_flag == 0 ] ; then
-            meta_flag=1;
-            meta_disk=\"\/dev\/$disk\"
-        else
-            data_disk+=\"\/dev\/$disk\",
-        fi
-    done
-    data_disk=${data_disk: :-1}
-    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/metadata_device [$meta_disk]
-    /usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
-    if [[ "$singlenode" == false ]]; then
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/metadata_device [$meta_disk]
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
-    fi
+    #echo -e "\n\t***** INFO: Changing Meta and Data disks based on lsblk *****" 2>&1|tee -a $LOG_FILE
+    #os_name=`cat /etc/redhat-release`
+    #if grep -q "Red Hat" <<< $os_name ; then
+    # 	 disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3);
+    #else
+    #    disks=$(lsblk | grep -E ^v.*"disk" | cut -c1-3 | sed "1 d");
+    #fi
+    #meta_flag=0
+    #data_disk=''
+    #for disk in $disks
+    #do
+    #    if [ $meta_flag == 0 ] ; then
+    #        meta_flag=1;
+    #        meta_disk=\"\/dev\/$disk\"
+    #    else
+    #        data_disk+=\"\/dev\/$disk\",
+    #    fi
+    #done
+    #data_disk=${data_disk: :-1}
+    #/usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/metadata_device [$meta_disk]
+    #/usr/local/bin/provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
+    #if [[ "$singlenode" == false ]]; then
+    #    /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/metadata_device [$meta_disk]
+    #    /usr/local/bin/provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
+    #fi
     	
     # Update s3server.sls
     echo -e "\n\t***** INFO: Updating s3server.sls *****" 2>&1 | tee -a $LOG_FILE
-    /usr/local/bin/provisioner pillar_set s3server/no_of_inst '2'
+    /usr/local/bin/provisioner pillar_set s3server/no_of_inst '1'
+    salt-call pillar.get cluster
 }
 
 install_config_prvsnr

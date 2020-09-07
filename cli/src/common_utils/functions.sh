@@ -138,7 +138,7 @@ function log {
 
     if [[ "$verbosity" -ge "$_verbosity" ]]; then
         _level=$(echo "$_level" | tr '[:lower:]' '[:upper:]')
-        _message="[$_level    $(date +'%b %e %R ')]: $_message"
+        _message="[$_level    $(date +'%b %e %H:%M:%S ')]: $_message"
 
         if [[ "$_error" == true ]]; then
             # Echo message to stderr
@@ -704,6 +704,8 @@ function get_reachable_names {
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       bundle_base_url: mark the release as bundle
+#           Default: `false`.
 #
 function install_repos {
     set -eu
@@ -717,6 +719,7 @@ function install_repos {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -724,7 +727,13 @@ function install_repos {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
+    local _cortx_deps_repo
+    local _system_repo
+    local _saltstack_repo
+    local _epel_repo
+
     l_info "Installing replacing package repositories '$_hostspec'"
+
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -761,6 +770,38 @@ EOF
     if [[ -n "$_hostspec" ]]; then
         scp -r -F "$_ssh_config" "$_project_repos" "${_hostspec}":"$_repo_base_dir"
     fi
+
+    if [[ -n "$_bundle_base_url" ]]; then
+        _cortx_deps_repo="${bundle_base_url}/3rd_party"
+        _saltstack_repo="${_cortx_deps_repo}/commons/saltstack-3001"
+        _epel_repo="${_cortx_deps_repo}/EPEL-7"
+
+! read -r -d '' _script << EOF
+    set -eu
+    mkdir -p $(dirname "${log_file}")
+    /usr/bin/true > "${log_file}"
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    grep -q "Red Hat" /etc/*-release && {
+        _system_repo="${bundle_base_url}/rhel7.7"
+        # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
+    } || {
+        _system_repo="${bundle_base_url}/centos7.7"
+    }
+
+    # TODO FIXME EOS-12508 base, extras, updates
+    sed "s/baseurl=.*/baseurl=\$_system_repo/g" /etc/yum.repos.d/base.repo
+    sed "s/baseurl=.*/baseurl=$_cortx_deps_repo/g" /etc/yum.repos.d/cortx_commons.repo
+    sed "s/baseurl=.*/baseurl=$_epel_repo/g" /etc/yum.repos.d/epel.repo
+    sed "s/baseurl=.*/baseurl=$_saltstack_repo/g" /etc/yum.repos.d/saltstack.repo
+    # # FIXME EOS-12508
+    rm -f /etc/yum.repos.d/extras.repo
+    rm -f /etc/yum.repos.d/updates.repo
+EOF
+    fi
 }
 
 #   install_salt_repo [<hostspec> [<ssh-config> [<sudo>]]]
@@ -775,6 +816,8 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       bundle_base_url: mark the release as bundle
+#           Default: `false`.
 #
 function install_salt_repo {
     set -eu
@@ -788,6 +831,7 @@ function install_salt_repo {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -798,6 +842,10 @@ function install_salt_repo {
     # local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
     local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3001}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
+
+    if [[ -n "$_bundle_base_url" ]]; then
+        _salt_repo_url="${bundle_base_url}/3rd_party/commons/saltstack-3001"
+    fi
 
     l_info "Installing Salt repository '$_hostspec'"
     local _saltstack_repo="/tmp/saltstack.repo"
@@ -991,7 +1039,6 @@ function configure_multipath {
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
-    local _master="${5:-true}"
 
     local _multipath_config_file="/etc/multipath.conf"
     local _multipath_config_repo_file="$repo_root_dir/files/etc/multipath.conf"
@@ -1047,7 +1094,7 @@ function install_salt {
     systemctl stop salt-minion salt-master || true
     yum remove -y salt-minion salt-master
 
-    # install salt master/minion
+    # install salt-master/salt-minion
     yum install -y salt-minion salt-master
 EOF
     # TODO install salt-ssh salt-syndic as well as cortx-prvsnr rpm supposes
@@ -1162,20 +1209,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            if [[ "$_dev_repo" == true ]]; then
-                # Set the path to dev repo DEV_BUILD_URL or default
-                _dev_build_url="${DEV_BUILD_URL:-http://eos-jenkins.colo.seagate.com/job/Provisioner/job/ees-prvsnr-dev-branch/lastSuccessfulBuild/artifact/}"
-                
-                yum install -y createrepo wget
-                mkdir -p /opt/seagate/cortx/updates/provisioner/dev
-                pushd /opt/seagate/cortx/updates/provisioner/dev
-                    wget  --no-directories --content-disposition --restrict-file-names=nocontrol --accept rpm -e robots=off --no-parent --reject="index.html*" -r --quiet ${_dev_build_url}
-                    createrepo .
-                popd
-                _prvsnr_version="file:///opt/seagate/cortx/updates/provisioner/dev"
-            else
-                _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/eos/github/master/${_os_release}/last_successful/"
-            fi
+            _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/cortx/github/release/${_os_release}/last_successful/"
         fi
     fi
 
@@ -1210,7 +1244,7 @@ EOF
     mkdir -p "$_installdir"
     if [[ "$_repo_src" == "gitlab" ]]; then
         pushd "$_installdir"
-            curl "http://gitlab.mero.colo.seagate.com/eos/provisioner/ees-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
+            curl "https://github.com/Seagate/cortx-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
         popd
     elif [[ "$_repo_src" == "gitrepo" ]]; then
         pushd "$_installdir"
@@ -1326,9 +1360,9 @@ EOF
 }
 
 
-#   configure_salt <minion-id> [<hostspec> [<ssh-config> [<sudo> [<is-master> [<master-host> [<installation-dir>]]]]]]
+#   configure_salt <minion-id> [<hostspec> [<ssh-config> [<sudo> [<is-primary> [<master-host> [<installation-dir>]]]]]]
 #
-#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#   Configures salt-minion (ans salt-master if `is-primary` set to `true`) either on the local or remote host.
 #
 #   Prerequisites:
 #       - SaltStack is installed.
@@ -1342,7 +1376,7 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       is-master: A flag to switch between primary / secondary CORTX stack nodes.
+#       is-primary: A flag to switch between primary / secondary CORTX stack nodes.
 #           Default: `true`.
 #       master-host: A resolvable (from within the minion's host) domain name or IP of the salt master.
 #           Default: not set.
@@ -1362,13 +1396,13 @@ function configure_salt {
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
-    local _master="${5:-true}"
-    local _master_host="${6:-srvnode-1}"
+    local _primary="${5:-true}"
+    local _primary_host="${6:-srvnode-1}"
     local _installdir="${7:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Configuring salt on '$_hostspec': minion-id $_minion_id, is-master $_master, master host $_master_host"
+    l_info "Configuring salt on '$_hostspec': minion-id $_minion_id, is-primary $_primary, master host $_primary_host"
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -1378,13 +1412,13 @@ function configure_salt {
     fi
 
     pushd "$_installdir"
-        # re-config salt master
+        # re-config salt-master
         if [[ ! -f /etc/salt/master.org ]]; then
             mv -f /etc/salt/master /etc/salt/master.org
             cp srv/components/provisioner/salt_master/files/master /etc/salt/master
         fi
 
-        if [[ "$_master" == true ]]; then
+        if [[ "$_primary" == true ]]; then
             systemctl enable salt-master
             systemctl restart salt-master
         fi
@@ -1395,11 +1429,11 @@ function configure_salt {
             cp srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
         fi
 
-        if [[ -n "$_master_host" ]]; then
-            sed -i "s/^master: .*/master: $_master_host/g" /etc/salt/minion
+        if [[ -n "$_primary_host" ]]; then
+            sed -i "s/^master: .*/master: $_primary_host/g" /etc/salt/minion
         fi
 
-        if [[ "$_master" == true ]]; then
+        if [[ "$_primary" == true ]]; then
             cp -f srv/components/provisioner/salt_minion/files/grains.primary /etc/salt/grains
         else
             cp -f srv/components/provisioner/salt_minion/files/grains.secondary /etc/salt/grains
@@ -1421,14 +1455,14 @@ EOF
 
 #   accept_salt_key [<minion-ids> [<hostspec> [<ssh-config> [<sudo> [<timeout>]]]]]
 #
-#   Makes keys for the specified list of minions accepted by the salt master.
+#   Makes keys for the specified list of minions accepted by the salt-master.
 #
-#   Salt master might be either local or remote host.
+#   Salt-master might be either local or remote host.
 #
 #   Prerequisites:
 #       - SaltStack is installed.
 #       - The provisioner repo is installed.
-#       - CORTX stack salt master/minions are configured.
+#       - CORTX stack salt-master/salt-minions are configured.
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
@@ -1439,7 +1473,7 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       timeout: a time to wait until a minion becomes connected to master.
+#       timeout: a time to wait until a salt-minion becomes connected to salt-master.
 #           Default: `false`.
 #
 function accept_salt_key {
@@ -1459,7 +1493,7 @@ function accept_salt_key {
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
-    l_info "Accepting minion id $_id on salt master '$_hostspec', timeout $_timeout"
+    l_info "Accepting minion id $_id on salt-master '$_hostspec', timeout $_timeout"
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -1469,11 +1503,11 @@ function accept_salt_key {
     fi
 
     try=1
-    echo -e "\\nINFO: waiting for minion $_id to become connected to master"
+    echo -e "\\nINFO: waiting for salt-minion $_id to become connected to salt-master"
     until salt-key --list-all | grep $_id >/dev/null 2>&1
     do
         if [[ "\$try" -gt "$_timeout" ]]; then
-            echo -e "\\nERROR: minion $_id seems not connected after $_timeout seconds."
+            echo -e "\\nERROR: salt-minion $_id seems not connected after $_timeout seconds."
             salt-key --list-all >&2
             exit 1
         fi
@@ -1532,7 +1566,7 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       timeout: a time to wait until a minion becomes connected to master.
+#       timeout: a time to wait until a salt-minion becomes connected to salt-master.
 #           Default: `false`.
 #
 function cortx_pillar_show_skeleton {
@@ -1636,7 +1670,7 @@ function cortx_pillar_update {
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
-#       timeout: a time to wait until a minion becomes connected to master.
+#       timeout: a time to wait until a salt-minion becomes connected to salt-master.
 #           Default: `false`.
 #
 function cortx_pillar_load_default {
@@ -1662,6 +1696,7 @@ function cortx_pillar_load_default {
     fi
 }
 
+# TODO TEST EOS-12508
 #   update_release_pillar <target_release>
 #   e.g. update_release_pillar integration/centos-7.7.1908/859
 #
@@ -1671,16 +1706,23 @@ function cortx_pillar_load_default {
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       target_release: tartget release version for all the CORTX components
+#       target_release: target release version for all the CORTX components
+#       bundled_release: mark the release as bundle
 function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
+    local _bundled_release="${2:-false}"
+
     #local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
     #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
     /usr/local/bin/provisioner pillar_set release/target_build \"${_release_ver}\"
+
+    if [[ "$_bundled_release" == true ]]; then
+        /usr/local/bin/provisioner pillar_set release/type \"bundle\"
+    fi
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
@@ -1803,7 +1845,7 @@ function setup_ssh {
 }
 #   set_node_id <hostspec> [<ssh-config> [<sudo> ]]
 #
-#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#   Generates and assigns a node_id in salt grains.
 #
 #   Prerequisites:
 #       - SaltStack is installed.
@@ -1868,7 +1910,7 @@ EOF
 
 #   set_cluster_id <cluster_id> <hostspec> [<ssh-config> [<sudo> ]]
 #
-#   Configures salt minion (ans salt master if `is-master` set to `true`) either on the local or remote host.
+#   Generates and assigns cluster id in salt grains.
 #
 #   Prerequisites:
 #       - SaltStack is installed.

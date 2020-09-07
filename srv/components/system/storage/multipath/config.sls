@@ -38,15 +38,14 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if not pillar['cluster'][grains['id']]['is_primary'] -%}
-{%- for node_id in pillar['cluster']['node_list'] -%}
-{%- if pillar['cluster'][node_id]['is_primary'] %}
+{% if (not pillar['cluster'][grains['id']]['is_primary'])
+  or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
+-%}
+{%- set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] -%}
 # Execute only on Secondary node
 Copy multipath bindings to non-primary:
   cmd.run:
     - name: scp {{ node_id }}:/etc/multipath/bindings /etc/multipath/bindings
-{%- endif %}
-{% endfor %}
 {%- endif %}
 
 Start multipath service:

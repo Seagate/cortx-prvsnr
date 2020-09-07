@@ -15,30 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.32.0'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = (
-    "{0}/-/archive/${1}/${1}.tar.gz".format(__url__, __version__)  # TODO
-)
-__license__ = "private"  # TODO
+# TODO IMPROVE EOS-8473 move to pillar to make configurable
+{% set install_dir = '/opt/seagate/cortx/provisioner' %}
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+repo_installed:
+  file.recurse:
+    - name: {{ install_dir }}
+    - source: salt://provisioner/files/repo
+    - keep_source: True
+    - clean: True  # ???

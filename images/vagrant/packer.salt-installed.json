@@ -2,7 +2,7 @@
   "variables": {
     "base_env": "centos7.7.1908",
     "parent_source": "{{template_dir}}/../../.boxes/centos7.7.1908/repos-installed/package.box",
-    "parent_box_name": "seagate.ees-prvsnr_centos7.7.1908_repos-installed",
+    "parent_box_name": "seagate.cortx-prvsnr_centos7.7.1908_repos-installed",
     "skip_add": "false"
   },
   "builders": [
