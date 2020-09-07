@@ -297,7 +297,7 @@ class RunArgsSetup:
     salt_master: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "domain name or IP of the salt master"
+                'help': "domain name or IP of the salt-master"
             }
         },
         default=None
@@ -386,7 +386,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 )
             if self.iso_cortx.name == self.iso_cortx_deps.name:
                 raise ValueError(
-                    "ISO files for CORTX and CORTX dependnecies "
+                    "ISO files for CORTX and CORTX dependencies "
                     f"have the same name: {self.iso_cortx.name}"
                 )
 
@@ -403,8 +403,8 @@ class SetupCtx:
 #   - multiple setups support
 #   - idempotence: might be run multiple times,
 #       re-tries much faster (2-3 times)
-#   - multi-master initial support:
-#       - list of masters is auto-generated
+#   - multi-salt-master initial support:
+#       - list of salt-masters is auto-generated
 #         (each to each reachability is checked)
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
@@ -520,18 +520,18 @@ class SetupProvisioner(CommandParserFillerMixin):
             master_nodes = (
                 run_args.nodes if run_args.ha else [run_args.primary]
             )
-            masters = {
+            salt_masters = {
                 node.minion_id: node.ping_addrs[0]
                 for node in master_nodes
             }
             for node in run_args.nodes:
                 res[node.minion_id] = []
                 for _node in run_args.nodes:
-                    # not any node may be a master
-                    if _node.minion_id in masters:
+                    # note: any node may be a salt-master
+                    if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
                             config.LOCALHOST_IP if _node is node
-                            else masters[_node.minion_id]
+                            else salt_masters[_node.minion_id]
                         )
         else:
             res = {
@@ -595,17 +595,21 @@ class SetupProvisioner(CommandParserFillerMixin):
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
         all_minions_dir = minions_dir / 'all'
-        master_pki_dir = (
+        salt_master_pki_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki"
         )
-        master_minions_pki_dir = (
+        salt_master_minions_pki_dir = (
             profile_paths['salt_fileroot_dir'] /
             "provisioner/files/master/pki/minions"
         )
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
 
         #   ensure parent dirs exists in profile file root
-        for path in (all_minions_dir, master_minions_pki_dir, pillar_all_dir):
+        for path in (
+                all_minions_dir,
+                salt_master_minions_pki_dir,
+                pillar_all_dir
+                ):
             path.mkdir(parents=True, exist_ok=True)
 
         priv_key_path = all_minions_dir / 'id_rsa_prvsnr'
@@ -702,18 +706,18 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-        #   preseed master keys
+        #   preseed salt-master keys
         # TODO IMPROVE review, check the alternatives as more secure ways
         #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster_pki.html  # noqa: E501
         #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster.html  # noqa: E501
-        master_key_pem = master_pki_dir / 'master.pem'
-        master_key_pub = master_pki_dir / 'master.pub'
+        master_key_pem = salt_master_pki_dir / 'master.pem'
+        master_key_pub = salt_master_pki_dir / 'master.pub'
         if not (master_key_pem.exists() and master_key_pub.exists()):
             run_subprocess_cmd(
                 [
                     'salt-key',
                     '--gen-keys', master_key_pem.stem,
-                    '--gen-keys-dir', str(master_pki_dir)
+                    '--gen-keys-dir', str(salt_master_pki_dir)
                 ]
             )
 
@@ -789,7 +793,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 [
                     'cp', '-f',
                     str(node_key_pub),
-                    str(master_minions_pki_dir / node.minion_id)
+                    str(salt_master_minions_pki_dir / node.minion_id)
                 ]
             )
 
@@ -1029,8 +1033,8 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # TODO DOC how to pass inline pillar
 
-        # TODO IMPROVE EOS-9581 log masters as well
-        logger.info("Configuring salt masters")
+        # TODO IMPROVE EOS-9581 log salt-masters as well
+        logger.info("Configuring salt-masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
@@ -1058,7 +1062,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 )
 
             logger.info("Configuring glusterfs servers")
-            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
+            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
             #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
             glusterfs_server_pillar = {
                 'glusterfs_dirs': [
@@ -1103,7 +1107,12 @@ class SetupProvisioner(CommandParserFillerMixin):
                     (
                         # Note. as explaind in glusterfs docs the server here
                         # 'is only used to fetch the gluster configuration'
-                        run_args.primary.ping_addrs[0],
+                        run_args.primary.ping_addrs[0],     # TODO ??? remote
+
+                        # each client assumes locally
+                        # availble healthy gluster server
+                        # 'localhost',
+
                         vname,
                         vdata['mount_dir']
                     ) for vname, vdata in volumes.items()

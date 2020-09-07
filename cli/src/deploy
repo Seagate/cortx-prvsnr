@@ -47,7 +47,7 @@ tgt_node=srvnode-2
 system_states=(
     "system"
     "system.storage.multipath"
-    "system.storage.teardown"
+    #"system.storage.teardown"
     "system.storage"
     "system.network"
     "system.network.data.public"
@@ -118,7 +118,7 @@ Usage: $0 [options]
 
 Installs CORTX stack and configures cortx services either on remote host or locally.
 
-Target host is considered to be an cortx SaltStack master.
+Target host is considered to be an cortx salt-master.
 
 General options:
 $base_options_usage
@@ -307,6 +307,7 @@ if [[ "$run_all" == true ]]; then
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${controlpath_states[@]}"
+    run_states "${backup_states[@]}"
 fi
 
 if [[ "$run_system_states" == true ]]; then
@@ -325,11 +326,11 @@ if [[ "$run_sync_states" == true ]]; then
     run_states  "${sync_states[@]}"
 fi
 
-if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
-    l_info "Recreating the metadata partitions"
-    salt 'srvnode-2' state.apply components.system.storage $salt_opts
-    salt 'srvnode-1' state.apply components.system.storage $salt_opts
-fi
+# if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
+#     l_info "Recreating the metadata partitions"
+#     salt 'srvnode-2' state.apply components.system.storage $salt_opts
+#     salt 'srvnode-1' state.apply components.system.storage $salt_opts
+# fi
 
 if [[ "$run_io_states" == true ]]; then
     l_info "Deploying the io path states"
