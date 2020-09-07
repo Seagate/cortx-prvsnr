@@ -2,7 +2,7 @@
 Description=Kibana
 
 [Service]
-StartLimitIntervalSec=30 
+StartLimitInterval=30sec
 StartLimitBurst=3
 Type=simple
 User=kibana
