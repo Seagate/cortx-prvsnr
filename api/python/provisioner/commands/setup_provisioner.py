@@ -1175,8 +1175,8 @@ class SetupProvisioner(CommandParserFillerMixin):
             logger.info("Get release factory version")
             ssh_client.cmd_run(
                 (
-                   f'wget {run_args.target_build}/RELEASE.INFO '
-                   f'-O /etc/yum.repos.d/RELEASE_FACTORY.INFO'
+                   f'curl {run_args.target_build}/RELEASE.INFO '
+                   f'-o /etc/yum.repos.d/RELEASE_FACTORY.INFO'
                 )
             )
 
