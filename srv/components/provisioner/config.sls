@@ -18,6 +18,7 @@
 # TODO IMPROVE salt configs might go here as well
 include:
   - components.misc_pkgs.rsyslog
+  - components.system.config.pillar_encrypt
 
 provisioner_rsyslog_conf_updated:
   file.managed:
