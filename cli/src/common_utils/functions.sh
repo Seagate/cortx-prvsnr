@@ -704,6 +704,8 @@ function get_reachable_names {
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       bundle_base_url: mark the release as bundle
+#           Default: `false`.
 #
 function install_repos {
     set -eu
@@ -717,6 +719,7 @@ function install_repos {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -724,7 +727,13 @@ function install_repos {
     local _repo_base_dir_backup="/etc/yum.repos.d.bak"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
+    local _cortx_deps_repo
+    local _system_repo
+    local _saltstack_repo
+    local _epel_repo
+
     l_info "Installing replacing package repositories '$_hostspec'"
+
 
 ! read -r -d '' _script << EOF
     set -eu
@@ -761,6 +770,38 @@ EOF
     if [[ -n "$_hostspec" ]]; then
         scp -r -F "$_ssh_config" "$_project_repos" "${_hostspec}":"$_repo_base_dir"
     fi
+
+    if [[ -n "$_bundle_base_url" ]]; then
+        _cortx_deps_repo="${bundle_base_url}/3rd_party"
+        _saltstack_repo="${_cortx_deps_repo}/commons/saltstack-3001"
+        _epel_repo="${_cortx_deps_repo}/EPEL-7"
+
+! read -r -d '' _script << EOF
+    set -eu
+    mkdir -p $(dirname "${log_file}")
+    /usr/bin/true > "${log_file}"
+
+    if [[ "$verbosity" -ge 2 ]]; then
+        set -x
+    fi
+
+    grep -q "Red Hat" /etc/*-release && {
+        _system_repo="${bundle_base_url}/rhel7.7"
+        # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
+    } || {
+        _system_repo="${bundle_base_url}/centos7.7"
+    }
+
+    # TODO FIXME EOS-12508 base, extras, updates
+    sed "s/baseurl=.*/baseurl=\$_system_repo/g" /etc/yum.repos.d/base.repo
+    sed "s/baseurl=.*/baseurl=$_cortx_deps_repo/g" /etc/yum.repos.d/cortx_commons.repo
+    sed "s/baseurl=.*/baseurl=$_epel_repo/g" /etc/yum.repos.d/epel.repo
+    sed "s/baseurl=.*/baseurl=$_saltstack_repo/g" /etc/yum.repos.d/saltstack.repo
+    # # FIXME EOS-12508
+    rm -f /etc/yum.repos.d/extras.repo
+    rm -f /etc/yum.repos.d/updates.repo
+EOF
+    fi
 }
 
 #   install_salt_repo [<hostspec> [<ssh-config> [<sudo>]]]
@@ -775,6 +816,8 @@ EOF
 #           Default: not set.
 #       sudo: a flag to use sudo. Expected values: `true` or `false`.
 #           Default: `false`.
+#       bundle_base_url: mark the release as bundle
+#           Default: `false`.
 #
 function install_salt_repo {
     set -eu
@@ -788,6 +831,7 @@ function install_salt_repo {
     local _hostspec="${1:-}"
     local _ssh_config="${2:-}"
     local _sudo="${3:-false}"
+    local _bundle_base_url="${4:-}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
 
@@ -798,6 +842,10 @@ function install_salt_repo {
     # local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
     local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3001}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
+
+    if [[ -n "$_bundle_base_url" ]]; then
+        _salt_repo_url="${bundle_base_url}/3rd_party/commons/saltstack-3001"
+    fi
 
     l_info "Installing Salt repository '$_hostspec'"
     local _saltstack_repo="/tmp/saltstack.repo"
@@ -1647,6 +1695,7 @@ function cortx_pillar_load_default {
     fi
 }
 
+# TODO TEST EOS-12508
 #   update_release_pillar <target_release>
 #   e.g. update_release_pillar integration/centos-7.7.1908/859
 #
@@ -1656,16 +1705,23 @@ function cortx_pillar_load_default {
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       target_release: tartget release version for all the CORTX components
+#       target_release: target release version for all the CORTX components
+#       bundled_release: mark the release as bundle
 function update_release_pillar {
     set -eu
 
     local _release_ver="$1"
+    local _bundled_release="${2:-false}"
+
     #local _release_sls="${repo_root_dir}/pillar/components/release.sls"
 
     #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
     provisioner pillar_set release/target_build \"${_release_ver}\"
+
+    if [[ "$_bundled_release" == true ]]; then
+        provisioner pillar_set release/type \"bundle\"
+    fi
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>

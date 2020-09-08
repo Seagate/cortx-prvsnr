@@ -2,18 +2,20 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-# You should have received a copy of the GNU Affero General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 script_dir=$(dirname $0)
@@ -631,24 +633,29 @@ base_lun_get()
 
 volumes_create()
 {
-    _baselun_opt="baselun $1"
-    _basename_opt="basename $2"
-    _nvols=$3
-    _nvols_opt="count $_nvols"
-    _pool_opt="pool $4"
-    _size_opt="size $5"
-    _ports_opt="ports $6"
-    _cmd="create volume-set"
-    _cmd_opts="access rw $_baselun_opt $_basename_opt $_nvols_opt $_pool_opt\
-        $_size_opt $_ports_opt"
-    _volset_create_cmd="${_cmd} $_cmd_opts"
+    _blun="$1"
+    _nvols="$2"
+    _pool_name="$3"
+    _pool_opt="pool $_pool_name"
+    _size_opt="size $4"
+    _ports_opt="ports $5"
 
-    echo "volumes_create(): baselun:$1,basename:$2,nvols:$3,"\
-        "pool-name:$4,vsize:$5" >> $logfile
-    echo "Creating volume-set with $_nvols volumes of $_size_opt in"\
-         " $_pool_opt with all the volumes mapped to $_ports_opt"
+    if [[ "$_blun" == "9" ]]
+    then
+      _mylun="0"
+    fi
 
-    cmd_run "$_volset_create_cmd"
+    _mylun=$((_mylun+1))
+    _vol_name="${_pool_name}-v000${_mylun}"
+
+    _cmd="create volume"
+    _cmd_opts="access read-write $_pool_opt $_size_opt $_ports_opt"
+    _vol_create_cmd="${_cmd} $_vol_name $_cmd_opts lun $_blun"
+    echo "create volume lun: $_blun,"\
+      " pool-name: $3, vsize: $4, ports: $5" >> $logfile
+    echo "Creating volume $_vol_name of $_size_opt in"\
+      "$_pool_opt mapped to $_ports_opt"
+    cmd_run "$_vol_create_cmd"
 
     #TODO: Confirm if volume-set created successfully
 }
@@ -738,16 +745,16 @@ provision()
     _ports=`active_ports_get`
     echo "provision(): active port list:$_ports" >> $logfile
 
-    #Get base lun number, it is the next available lun number in the system.
-    _baselun=`base_lun_get`
-    echo "provision(): baselun:$_baselun" >> $logfile
+    for (( _myvol=1; _myvol<=$_nvols; _myvol++ ))
+    do
+      #Get base lun number, it is the next available lun number in the system.
+      _baselun=`base_lun_get`
+      echo "provision(): baselun: $_baselun; nvol: $_nvols; pool_name: $_pool_name" >> $logfile
 
-    #basename is the prefix of the volume name e.g. poola-vol1, poola-vol2 etc
-    _basename="$_pool_name-"
-
-    #create volumeset and map all the volumes to all the ports
-    echo "provision(): Creating volume-set" >> $logfile
-    volumes_create $_baselun $_basename $_nvols $_pool_name $vsize $_ports
+      #create volumes and map them to all the ports
+      echo "provision(): Creating volumes" >> $logfile
+      volumes_create $_baselun $_nvols $_pool_name $vsize $_ports
+    done
 }
 
 fw_ver_get()
@@ -1179,7 +1186,7 @@ do_provision()
         }
         disks_range_get
         [ -z "$range1" -o -z "$range2" ] && {
-            echo "Error: Could not derive the disk list to creat a pool"
+            echo "Error: Could not derive the disk list to create a pool"
             echo "Exiting."
             exit 1
         }

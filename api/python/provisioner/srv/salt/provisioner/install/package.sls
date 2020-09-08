@@ -11,19 +11,18 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-release:
-    base:
-        # TODO IMPROVE EOS-12076 EOS-12334
-        #      the same base location as for update repos so they might
-        #      be mounted by prouction setup logic as well
-        # base_dir: /opt/seagate/cortx/updates
-        # TODO IMPROVE EOS-12076 EOS-12334
-        #      make the same as for for update repos so they might
-        #      be mounted by prouction setup logic as well
-        # TODO IMPROVE EOS-12076 shorten path, use some global config variable
-        base_dir: /var/lib/seagate/cortx/provisioner/local/cortx_repos
-        repos: {}
+Verify cortx repo exists:
+  file.exists:
+    - name: /etc/yum.repos.d/cortx.repo
+
+Install cortx-prvsnr packages:
+  pkg.installed:
+    - pkgs:
+      # - cortx-prvsnr-cli
+      - cortx-prvsnr
+    - require:
+      - Verify cortx repo exists

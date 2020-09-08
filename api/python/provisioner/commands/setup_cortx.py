@@ -51,7 +51,9 @@ class SetupCortx(CommandParserFillerMixin):
             if k in attr.fields_dict(RunArgsSetupProvisionerGeneric)
         }
 
-        setup_ctx = SetupProvisioner().run(nodes, **setup_provisioner_args)
+        setup_ctx = SetupProvisioner().run(
+            nodes, **setup_provisioner_args
+        )
 
         # FIXME setup type is not DUAL, need generic solution
         if setup_provisioner_args.config_path and False:
