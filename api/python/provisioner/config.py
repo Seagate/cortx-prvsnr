@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
-
+from enum import Enum
 from pathlib import Path
 from typing import Union, Dict, Optional
 
@@ -50,7 +50,7 @@ PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 
-# reflects master file_roots configuration
+# reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
@@ -270,3 +270,38 @@ LOCALHOST_DOMAIN = 'localhost'
 # Defines a "frozen" list for allowed commands and supported by provisioner
 # API for remote execution
 SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
+
+
+class StorageType(Enum):
+    """Class-enumeration for supported and existing storage types"""
+
+    VIRTUAL = "virtual"
+    # standard enclosure with 5 units with 84 disks
+    ENCLOSURE = "5u84"
+    PODS = "PODS"
+
+
+class ServerType(Enum):
+    """Class-enumeration which represents possible server types"""
+
+    VIRTUAL = "virtual"
+    PHYSICAL = "physical"
+
+
+class ControllerTypes(Enum):
+    """Class-enumeration for controller type's values"""
+    GALLIUM = "gallium"
+    INDIUM = "indium"
+    SATI = "sati"
+
+
+# Constant block for setup info fields
+NODES = "nodes"
+SERVERS_PER_NODE = "servers_per_node"
+STORAGE_TYPE = "storage_type"
+SERVER_TYPE = "server_type"
+
+SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
+
+# TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
+NOT_AVAILABLE = "N/A"

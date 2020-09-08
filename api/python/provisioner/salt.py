@@ -1042,7 +1042,7 @@ def copy_to_file_roots(
 
     if source.is_dir():
         # TODO
-        #  - file.recurse expects only dirs from master file roots
+        #  - file.recurse expects only dirs from salt-master file roots
         #    (salt://), need to find another alternative to respect
         #    indempotence
         # StateFunExecuter.execute(
@@ -1072,7 +1072,7 @@ def copy_to_file_roots(
         )
 
     # TODO DOC
-    # ensure it would be visible for Salt master / minions
+    # ensure it would be visible for salt-master / salt-minions
     runner_function_run(
         'fileserver.clear_file_list_cache',
         fun_kwargs=dict(backend='roots')
@@ -1465,7 +1465,7 @@ def _salt_caller_cmd(*args, **kwargs):
     try:
         # TODO
         #  - consider to use --local arg to reduce
-        #    unnecessary connections with master
+        #    unnecessary connections with salt-master
         res = salt_caller().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic

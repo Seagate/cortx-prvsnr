@@ -63,7 +63,7 @@ Host srvnode-2
 
 ### setup-provisioner
 
-Installs the provisioner repository along with SaltStack on the hosts with bare OS installed, configures salt master/minion connections and makes some additional preliminary configuration.
+Installs the provisioner repository along with SaltStack on the hosts with bare OS installed, configures salt-master/salt-minion connections and makes some additional preliminary configuration.
 
 Besides [general](#common-options) set of options it expects the following ones:
 
@@ -72,7 +72,7 @@ Besides [general](#common-options) set of options it expects the following ones:
   - `local` to install current working copy of the repository on on the host;
   - `gitlab` to install from GitLab by provided version (see below);
   - `rpm` to install from using rpm package (default).
-- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to master.
+- `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to salt-master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
   value will be used (it is specified in salt minion's [config file](../srv/components/provisioner/salt_minion/files/minion)
   and is `srvnode-1` for now).
@@ -86,7 +86,7 @@ For now that makes sense only for `gitlab` and if missed the latest tagged versi
 
 #### Examples
 
-Configure cluster with a master on srvnode-1
+Configure cluster with a salt-master on srvnode-1
 
 ```shell
 $ setup-provisioner -F ./ssh_config --salt-master=<SRVNODE-1-IP>
