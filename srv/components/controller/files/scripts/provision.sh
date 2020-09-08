@@ -1205,7 +1205,7 @@ do_provision()
         echo "main(): manual provisioning" >> $logfile
 
         # Provision the controller with provided input
-       	provision "$pool_type" "$pool_level" "$nvols" "$disk_range" "$pool_name"
+        provision "$pool_type" "$pool_level" "$nvols" "$disk_range" "$pool_name"
 
         # Check if provisioning done successfully
         provisioning_info_get > $_prvinfo
