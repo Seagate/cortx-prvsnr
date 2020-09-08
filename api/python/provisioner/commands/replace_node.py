@@ -140,7 +140,7 @@ class ReplaceNode(SetupProvisioner):
         logger.info("Updating replace node data in pillar")
         setup_ctx.ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner pillar_set --fpath cluster.sls '
+                'provisioner pillar_set --fpath cluster.sls '
                 f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
             ), targets=run_args.node_id
         )

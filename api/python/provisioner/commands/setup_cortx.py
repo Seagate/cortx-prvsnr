@@ -65,7 +65,7 @@ class SetupCortx(CommandParserFillerMixin):
             logger.info("Updating pillar data using config.ini")
             setup_ctx.ssh_client.cmd_run(
                 (
-                    '/usr/local/bin/provisioner configure_setup '
+                    'provisioner configure_setup '
                     f'{config.PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )

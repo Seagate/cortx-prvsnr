@@ -826,8 +826,7 @@ def test_functions_install_provisioner_rpm(
     assert res.rc == 0
 
     assert mhost.host.package('cortx-prvsnr').is_installed
-    # TODO EOS-11551 enable later
-    # assert mhost.host.package('python36-cortx-prvsnr').is_installed
+    assert mhost.host.package('python3-cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
