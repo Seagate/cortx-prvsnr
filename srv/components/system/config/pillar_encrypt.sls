@@ -31,7 +31,7 @@ Install cryptography python package:
 Install eos-py-utils:           # Package for cryptography
   pkg.installed:
     - name: eos-py-utils
-    - requrie:
+    - require:
       - Install cryptography python package
 
 Encrypt_pillar:
