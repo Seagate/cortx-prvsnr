@@ -503,12 +503,13 @@ class NodeNetworkParams():
 
 class NetworkParams():
     _param_group = 'network'
-    # dns_server: str = ParamGroupInputBase._attr_ib(_param_group)
     cluster_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="cluster ip address for public data network"
+        _param_group, descr="cluster ip address for public data network",
+        validator=Validation.check_ip4
     )
     mgmt_vip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="virtual ip address for management network"
+        _param_group, descr="virtual ip address for management network",
+        validator=Validation.check_ip4
     )
     dns_servers: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of dns servers as json"
