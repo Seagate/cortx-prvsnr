@@ -17,7 +17,7 @@
 #
 
 
-set -euE
+set -eE
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/cortx-prereqs.log}"
 export LOG_FILE
