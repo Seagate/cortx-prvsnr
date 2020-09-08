@@ -15,6 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
+Ensure cryptography python package absent:
+  pip.removed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+
+Install cryptography python package:
+  pip.installed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+    - target: /usr/lib64/python3.6/site-packages/
+    - require:
+      - Ensure cryptography python package absent
+
+Install eos-py-utils:           # Package for cryptography
+  pkg.installed:
+    - name: eos-py-utils
+    - require:
+      - Install cryptography python package
+
 Encrypt_pillar:
   cmd.run:
     {% if salt['file.file_exists']("/opt/seagate/cortx/provisioner/cli/pillar_encrypt") %}
