@@ -40,7 +40,8 @@ from provisioner.inputs import (
     ParamGroupInputBase,
     NTP, Network,
     ParamDictItemInputBase,
-    SWUpdateRepo
+    SWUpdateRepo,
+    ParserFiller
 )
 from provisioner.pillar import PillarKey
 from provisioner.api_spec import param_spec as _param_spec
@@ -208,7 +209,7 @@ def test_inputs_AttrParserArgs_default_not_set():
 def test_inputs_AttrParserArgs_type_default():
     SC = attr.make_class("SC", {"x": attr.ib()})
     attr_parser_type = AttrParserArgs(attr.fields(SC).x).type
-    assert type(attr_parser_type) is functools.partial
+    assert isinstance(attr_parser_type, functools.partial)
     assert attr_parser_type.func == AttrParserArgs.value_from_str
     assert attr_parser_type.args == ()
     assert attr_parser_type.keywords == dict(v_type=attr.fields(SC).x.type)
@@ -313,7 +314,7 @@ def test_attr_parser_args_value_from_str():
         '["1", "2", "3"]', v_type='json'
     ) == ['1', '2', '3']
     assert AttrParserArgs.value_from_str(
-         '{"1": 2}', v_type='json'
+        '{"1": 2}', v_type='json'
     ) == {'1': 2}
 
 
@@ -744,3 +745,39 @@ def test_inputs_SWUpdateRepo_is_apis(tmpdir_function):
     # urls
     res = SWUpdateRepo(some_release, source='https://some/http/url')
     _check('is_remote')
+
+
+def test_inputs_copy_attr_verify_attrs():
+    some_cls = attr.make_class("some_cls", {
+        "some_attr": attr.ib(
+            default=123,
+            validator=None,
+            metadata={
+                'metadata_key': 1
+            },
+            repr=False,
+            hash=None,
+            init=True,
+            type=str,
+            converter=None,
+            kw_only=True
+        )
+    })
+
+    read_attr = attr.fields(some_cls).some_attr
+
+    copied_attr = inputs.copy_attr(read_attr)
+
+    assert copied_attr == read_attr
+
+
+def test_ParserFiller_fill_parser():
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
+        METADATA_ARGPARSER: dict(action='store_bool', help='some help'),
+    })})
+    ParserFiller.fill_parser(SC, parser)
+    args = parser.parse_args()
+    # args = parser.parse_args(
+    #     'x store_const True None'.split()
+    #     )
