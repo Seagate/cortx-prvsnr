@@ -97,6 +97,7 @@ class ReleaseParamsValidation:
 
 @attr.s(auto_attribs=True)
 class StorageEnclosureParamsValidation:
+    storage_type: str = StorageEnclosureParams.storage_type
     primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
     secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
     controller_user: str = StorageEnclosureParams.controller_user
@@ -105,6 +106,8 @@ class StorageEnclosureParamsValidation:
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
+        if params['storage_type'] == 'JBOD':
+            return
         missing_params = []
         for param, value in params.items():
             if value == UNCHANGED and param not in self._optional_param:
@@ -138,8 +141,7 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    validate_map = {"network": NetworkParamsValidation,
-                    "release": ReleaseParamsValidation,
+    validate_map = {"cluster": NetworkParamsValidation,
                     "node": NodeParamsValidation,
                     "storage_enclosure": StorageEnclosureParamsValidation}
 
@@ -183,19 +185,22 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.debug(f"params data {content}")
 
         input_type = None
+        pillar_type = None
         count = int(number_of_nodes)
         for section in content:
             input_type = section
+            pillar_type = section
             if 'srvnode' in section:
                 input_type = 'node'
+                pillar_type = f'cluster/{section}'
                 count = count - 1
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])
 
             for pillar_key in content[section]:
-                key = self._parse_pillar_key(pillar_key)
+                key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
                 run_subprocess_cmd([
-                       "provisioner", "pillar_set",
+                       "/usr/local/bin/provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
         if count > 0:

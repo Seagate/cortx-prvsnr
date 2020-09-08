@@ -17,7 +17,7 @@
 
 import logging
 from copy import deepcopy
-import re
+import ipaddress
 import functools
 from typing import List, Union, Any, Iterable, Tuple
 from pathlib import Path
@@ -417,12 +417,11 @@ class ParamGroupInputBase(PillarItemsAPI):
 class Validation():
     @staticmethod
     def check_ip4(instace, attribute, value):
-        ip_regex = (r"^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
-                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
-                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.("
-                    r"25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$")
-        if value is not UNCHANGED and not re.search(ip_regex, value):
-            raise ValueError(f"{attribute.name}: invalid ip address")
+        try:
+            if value is not UNCHANGED:
+                ipaddress.IPv4Address(value)
+        except ValueError:
+            raise ValueError(f"{attribute.name}: invalid ip4 address")
 
 
 @attr.s(auto_attribs=True)
@@ -451,6 +450,9 @@ class Release(ParamGroupInputBase):
 
 class StorageEnclosureParams():
     _param_group = 'storage_enclosure'
+    storage_type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Type of storage"
+    )
     primary_mc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller A IP",
         validator=Validation.check_ip4
