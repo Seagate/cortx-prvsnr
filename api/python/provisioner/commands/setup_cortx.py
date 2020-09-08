@@ -56,7 +56,7 @@ class SetupCortx(CommandParserFillerMixin):
         )
 
         # FIXME setup type is not DUAL, need generic solution
-        if setup_provisioner_args.config_path and False:
+        if setup_provisioner_args.get('config_path', None) and False:
             raise NotImplementedError(
                 "ini file configuration is not yet supported "
                 "for setup cortx command"
