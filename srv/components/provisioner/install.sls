@@ -19,5 +19,5 @@ provisioner_package_installed:
   pkg.installed:
     - pkgs:
       - cortx-prvsnr: latest
-      - python36-cortx-prvsnr: latest
+      - python3-cortx-prvsnr: latest
     - refresh: True

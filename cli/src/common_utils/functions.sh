@@ -1228,7 +1228,7 @@ EOF
         if curl --output /dev/null --silent --head --fail "$_prvsnr_version/RELEASE.INFO"; then
             wget $_prvsnr_version/RELEASE.INFO -O /etc/yum.repos.d/RELEASE_FACTORY.INFO
         fi
-         yum install -y python36-cortx-prvsnr
+         yum install -y python3-cortx-prvsnr
     else
         # local
         tar -zxf "$_repo_archive_path" -C "$_installdir"
