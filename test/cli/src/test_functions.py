@@ -29,7 +29,7 @@ from .helper import run_script as _run_script
 logger = logging.getLogger(__name__)
 
 
-CORTX_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
+CORTX_RELEASE_TEST_TAG = 'Cortx-1.0.0-PI.3-sprint11'
 
 # TODO
 #   - a way (marker) to split tests into groups:
