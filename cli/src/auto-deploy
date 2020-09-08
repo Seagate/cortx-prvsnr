@@ -372,50 +372,50 @@ update_pillar()
 
     #Update cluster_ip
     echo "Updating cluster_ip" 2>&1|tee -a $LOG_FILE
-    /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"${cluster_ip}\"
+    provisioner pillar_set cluster/cluster_ip \"${cluster_ip}\"
 
     #Update mgmt_vip
     echo "Updating mgmt_vip" 2>&1|tee -a $LOG_FILE
-    /usr/local/bin/provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
+    provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
 
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${pub_dip1}\"
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${pub_dip2}\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
         #Node1
         echo "Updating BMC user ($bmc1_user) for node-1" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/bmc/user \"${bmc1_user}\"
+        provisioner pillar_set cluster/srvnode-1/bmc/user \"${bmc1_user}\"
     fi
     
     if [[ "$bmc2_user_opt" == true ]]; then
         #Node2
         echo "Updating BMC user ($bmc2_user) for node-2" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/bmc/user \"${bmc2_user}\"
+        provisioner pillar_set cluster/srvnode-2/bmc/user \"${bmc2_user}\"
     fi
 
     if [[ "$bmc1_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc1_passwd) for node-1" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/bmc/secret \"${bmc1_passwd}\"
+        provisioner pillar_set cluster/srvnode-1/bmc/secret \"${bmc1_passwd}\"
     fi
     
     if [[ "$bmc2_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc2_passwd) for node-2" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/bmc/secret \"${bmc2_passwd}\"
+        provisioner pillar_set cluster/srvnode-2/bmc/secret \"${bmc2_passwd}\"
     fi
 
     #Update storage_enclosure pillar
@@ -424,30 +424,30 @@ update_pillar()
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set storage_enclosure/controller/primary_mc/ip \"${ctrl_a_ip}\"
+        provisioner pillar_set storage_enclosure/controller/primary_mc/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set storage_enclosure/controller/secondary_mc/ip \"${ctrl_b_ip}\"
+        provisioner pillar_set storage_enclosure/controller/secondary_mc/ip \"${ctrl_b_ip}\"
     fi
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
         echo "Updating controller user" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set storage_enclosure/controller/user \"${ctrl_user}\"
+        provisioner pillar_set storage_enclosure/controller/user \"${ctrl_user}\"
     fi
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
         echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
-        /usr/local/bin/provisioner pillar_set storage_enclosure/controller/secret \"${ctrl_passwd}\"
+        provisioner pillar_set storage_enclosure/controller/secret \"${ctrl_passwd}\"
     fi
 
     # Update s3client.sls
     echo "Updating ip in s3clients" 2>&1|tee -a $LOG_FILE
-    /usr/local/bin/provisioner pillar_set s3clients/ip \"${cluster_ip}\"
+    provisioner pillar_set s3clients/ip \"${cluster_ip}\"
 
     echo -e "\n\t ***** DEBUG: Updated pillars *****" 2>&1|tee -a $LOG_FILE
     echo -e "\n\t cluster.sls" 2>&1|tee -a $LOG_FILE
