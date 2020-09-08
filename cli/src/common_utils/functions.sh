@@ -1665,7 +1665,7 @@ function update_release_pillar {
 
     #_line="$(grep -n target_build $_release_sls | awk '{ print $1 }' | cut -d: -f1)"
     #sed -ie "${_line}s/.*/    target_build: $(echo ${_release_ver} | sed 's_/_\\/_g')/" $_release_sls
-    /usr/local/bin/provisioner pillar_set release/target_build \"${_release_ver}\"
+    provisioner pillar_set release/target_build \"${_release_ver}\"
 }
 
 #   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
@@ -1688,7 +1688,7 @@ function update_cluster_pillar_hostname {
 
     #_line=`grep -A1 -n "${_node}:" $_cluster_sls | tail -1 | cut -f1 -d-`
     #sed -ie "${_line}s/.*/    hostname: ${_host}/" $_cluster_sls
-    /usr/local/bin/provisioner pillar_set cluster/${_node}/hostname \"${_host}\"
+    provisioner pillar_set cluster/${_node}/hostname \"${_host}\"
 }
 
 #  disable_default_sshconfig
@@ -2035,7 +2035,7 @@ function update_bmc_ip {
 
     if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
         l_info "BMC_IP: ${_ip}"
-        /usr/local/bin/provisioner pillar_set cluster/${_node}/bmc/ip \"${_ip}\"
+        provisioner pillar_set cluster/${_node}/bmc/ip \"${_ip}\"
     else
         l_info "BMC_IP is not configured"
     fi
