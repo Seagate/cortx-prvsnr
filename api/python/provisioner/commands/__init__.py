@@ -504,7 +504,10 @@ def _pre_yum_rollback(
 
 
 def _update_component(component, targets=ALL_MINIONS):
-    state_name = "components.{}.update".format(component)
+    if component.lower() == 'ha':
+        state_name = "components.ha.cortx-ha.update"
+    else:
+        state_name = "components.{}.update".format(component)
     try:
         logger.info(
             "Updating {} on {}".format(component, targets)
@@ -564,7 +567,7 @@ class SWUpdate(CommandParserFillerMixin):
                     config_salt_minions()
 
                     for component in (
-                        'motr', 's3server', 'hare', 'sspl', 'csm'
+                        'motr', 's3server', 'hare', 'sspl', 'csm', 'ha'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
