@@ -17,6 +17,7 @@
 
 storage_enclosure:
     id: storage_node_1            # equivalent to fqdn for server node
+    type: RBOD                    # RBOD/Other
     controller:
       type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
       primary_mc:
