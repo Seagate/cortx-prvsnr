@@ -11,13 +11,18 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-provisioner_package_installed:
+Verify cortx repo exists:
+  file.exists:
+    - name: /etc/yum.repos.d/cortx.repo
+
+Install cortx-prvsnr packages:
   pkg.installed:
     - pkgs:
-      - cortx-prvsnr: latest
-      - python3-cortx-prvsnr: latest
-    - refresh: True
+      # - cortx-prvsnr-cli
+      - cortx-prvsnr
+    - require:
+      - Verify cortx repo exists

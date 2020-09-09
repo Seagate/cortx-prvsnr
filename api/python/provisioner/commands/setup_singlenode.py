@@ -64,7 +64,7 @@ class SetupSinglenode(SetupProvisioner):
         node = setup_ctx.run_args.nodes[0]
         setup_ctx.ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner pillar_set '
+                'provisioner pillar_set '
                 f'cluster/{node.minion_id}/hostname '
                 f'\'"{node.grains.fqdn}"\''
             ), targets=setup_ctx.run_args.primary.minion_id

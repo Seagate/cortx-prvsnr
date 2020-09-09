@@ -2,23 +2,25 @@
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-# You should have received a copy of the GNU Affero General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 
 script_dir=$(dirname $0)
-export logdir="/var/log/seagate/provisioner/"
+export logdir="/var/log/seagate/provisioner"
 [ ! -d $logdir ] && mkdir -p $logdir
 
 export tmpdir="$logdir/_ctrl_cli_tmp"
@@ -164,8 +166,7 @@ help()
        to 0.41 for controller with ip 192.168.1.1 and with following
        credentials(user/password) - admin/!paswd
 
-       $0 host -h '192.168.1.1' -u admin -p '!paswd' prov -t linear\
-            -l adapt -m dg01 -d '0.0-41'
+       $0 host -h '192.168.1.1' -u admin -p '!paswd' prov -t linear -l adapt -m dg01 -d '0.0-41'
 
         Note: by default 8 volumes of equal size will also be created
         under the dg01 & and mapped to all the initiators. To override
@@ -176,8 +177,7 @@ help()
        & create 5 volumes under it. With controller host details as:
        host: host.seagate.com, user: admin, passwd: !passwd
 
-       $0 host -h hostname -u admin -p '!passwd' prov -t virtual -l r6 -m\
-            a -d '0.42-0.83' -n 5
+       $0 host -h hostname -u admin -p '!passwd' prov -t virtual -l r6 -m a -d '0.42-0.83' -n 5
 
     4. Show the current provisioning on the controller host as:
        host10.seagate.com, admin, !passwd

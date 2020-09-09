@@ -11,13 +11,16 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-provisioner_package_installed:
-  pkg.installed:
-    - pkgs:
-      - cortx-prvsnr: latest
-      - python3-cortx-prvsnr: latest
-    - refresh: True
+# TODO IMPROVE EOS-8473 move to pillar to make configurable
+{% set install_dir = '/opt/seagate/cortx/provisioner' %}
+
+repo_installed:
+  file.recurse:
+    - name: {{ install_dir }}
+    - source: salt://provisioner/files/repo
+    - keep_source: True
+    - clean: True  # ???
