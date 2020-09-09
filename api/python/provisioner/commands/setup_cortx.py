@@ -32,9 +32,6 @@ from .setup_provisioner import (
     SetupProvisioner
 )
 
-from .configure_setup import SetupType
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +53,7 @@ class SetupCortx(CommandParserFillerMixin):
         )
 
         # FIXME setup type is not DUAL, need generic solution
-        if setup_provisioner_args.config_path and False:
+        if setup_provisioner_args.get('config_path') and False:
             raise NotImplementedError(
                 "ini file configuration is not yet supported "
                 "for setup cortx command"
@@ -65,8 +62,9 @@ class SetupCortx(CommandParserFillerMixin):
             logger.info("Updating pillar data using config.ini")
             setup_ctx.ssh_client.cmd_run(
                 (
-                    'provisioner configure_setup '
-                    f'{config.PRVSNR_PILLAR_CONFIG_INI} {SetupType.DUAL.value}'
+                    '/usr/local/bin/provisioner configure_setup '
+                    f'{config.PRVSNR_PILLAR_CONFIG_INI} '
+                    f'{len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
         logger.info("Done")
