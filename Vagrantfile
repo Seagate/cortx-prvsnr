@@ -257,7 +257,7 @@ Vagrant.configure("2") do |config|
           #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
           
           # IP path components
-          #sudo salt srvnode-1 state.apply components.eoscore
+          #sudo salt srvnode-1 state.apply components.cortxcore
           #sudo salt srvnode-1 state.apply components.s3server
           #sudo salt srvnode-1 state.apply components.hare
 

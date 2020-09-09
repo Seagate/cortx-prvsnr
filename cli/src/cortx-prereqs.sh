@@ -327,12 +327,12 @@ else
             find /etc/yum.repos.d/ -type f ! -name 'redhat.repo' -delete
 
             #Set repo for Mellanox drivers
-            cat ${repos_enabled} | grep ID: | grep -q EOS_Mellanox && {
+            cat ${repos_enabled} | grep ID: | grep -q CORTX_Mellanox && {
                 echo -n "INFO: Disabling Mellanox repository from Satellite subscription..." 2>&1 | tee -a ${LOG_FILE}
-                subscription-manager repos --disable=EOS_Mellanox* >> ${LOG_FILE}
+                subscription-manager repos --disable=CORTX_Mellanox* >> ${LOG_FILE}
                 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
             }
-            cat ${repos_enabled} | grep ID: | grep -q EOS_EPEL && {
+            cat ${repos_enabled} | grep ID: | grep -q CORTX_EPEL && {
                 echo "INFO: CORTX_EPEL repository is enabled from Satellite subscription" 2>&1 | tee -a ${LOG_FILE}
             } || {
                 #echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
