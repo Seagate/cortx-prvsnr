@@ -21,7 +21,7 @@ tmp_dir: /tmp
 
   {% set base_bundle_url = pillar['release']['target_build'] %}
 
-  {% if "RedHat" in grains['os'] %}
+  {% if ("RedHat" in grains['os']) and (salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
     {% set system_repo = '/'.join([base_bundle_url, 'rhel7.7']) %}
   {% else %}
     # FIXME EOS-12508 not considered yet ?

@@ -45,6 +45,7 @@ add_{{repo.id}}_repo:
     - gpgcheck: 0
     - require:
       - Cleanup yum repos directory
+    - onlyif: test -z /etc/yum.repos.d/{{ repo.id }}.repo
 {% endfor %}
 {%- endif %}
 

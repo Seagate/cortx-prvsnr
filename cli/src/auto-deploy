@@ -310,7 +310,7 @@ install_prvsnr_cli()
 
         yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
         yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
-        rm -rf /etc/yum.repos.d/*_cortx_iso*.repo
+        rm -rf /etc/yum.repos.d/$(echo ${cortx_repo#"http://"} | sed 's/\//_/g').repo
 
         systemctl stop firewalld || true
 
@@ -329,7 +329,7 @@ $remote_cmd <<EOF
 
     yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
     yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
-    rm -rf /etc/yum.repos.d/*_cortx_iso*.repo
+    rm -rf /etc/yum.repos.d/$(echo ${cortx_repo#"http://"} | sed 's/\//_/g').repo
     
     systemctl stop firewalld || true
 
@@ -338,7 +338,7 @@ EOF
 
 install_config_prvsnr()
 {
-    local _bundle
+    local _bundle=
 
     set -eu
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
