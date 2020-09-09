@@ -164,7 +164,7 @@ cp -r "${input_dir}/." "${tmp_dir}"
 input_dir="$tmp_dir"
 
 pushd "$output_dir"
-    rm -f python36-cortx-prvsnr*
+    rm -f python3*-cortx-prvsnr*
 popd
 
 if [[ "$in_docker" == true ]]; then
@@ -189,8 +189,8 @@ $fpm_tool --input-type "python" \
     --verbose \
     --python-install-lib "/usr/lib/python3.6/site-packages" \
     --python-install-bin "/usr/bin" \
-    --python-package-name-prefix "python3" \
-    --python-bin "python3" \
+    --python-package-name-prefix "python36" \
+    --python-bin "python36" \
     --python-disable-dependency salt \
     --no-python-downcase-dependencies \
     --depends "salt >= 3001" \
