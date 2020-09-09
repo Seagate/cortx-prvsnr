@@ -44,7 +44,7 @@ from provisioner.config import PRVSNR_ROOT_DIR, PROJECT_PATH  # noqa: E402
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
 PRVSNR_PKG_NAME = 'cortx-prvsnr'
-PRVSNR_API_PKG_NAME = 'python36-cortx-prvsnr'
+PRVSNR_API_PKG_NAME = 'python3-cortx-prvsnr'
 PRVSNR_CLI_PKG_NAME = 'cortx-prvsnr-cli'
 # TODO verification is required (docker containers, virtualbox machines, ...)
 MAX_REMOTE_NAME_LEN = 80

@@ -1217,7 +1217,7 @@ class SetupProvisioner(CommandParserFillerMixin):
 
             ssh_client.cmd_run(
                 (
-                    '/usr/local/bin/provisioner pillar_set --fpath release.sls'
+                    'provisioner pillar_set --fpath release.sls'
                     f' release/target_build \'"{run_args.target_build}"\''
                 ), targets=run_args.primary.minion_id
             )
