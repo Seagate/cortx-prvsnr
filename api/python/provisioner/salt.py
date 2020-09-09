@@ -927,6 +927,8 @@ def cmd_run(
     fun_kwargs: Optional[Dict] = None,
     **kwargs
 ):
+    if fun_kwargs is None:
+        fun_kwargs = {}
     # TODO IMPROVE EOS-12076 wrapper args vs direct salt's ones
     fun_kwargs['bg'] = background
     return function_run(

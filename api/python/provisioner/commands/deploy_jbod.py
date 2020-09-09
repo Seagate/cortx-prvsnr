@@ -56,7 +56,6 @@ deploy_states = dict(
         'misc_pkgs.openldap.install',
         'misc_pkgs.rabbitmq.prepare',
         'misc_pkgs.rabbitmq.install',
-        'misc_pkgs.nodejs.prepare',
         'misc_pkgs.nodejs.install',
         'misc_pkgs.elasticsearch.prepare',
         'misc_pkgs.elasticsearch.install',

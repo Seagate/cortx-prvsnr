@@ -400,6 +400,8 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         return self.nodes[1:]
 
     def __attrs_post_init__(self):  # noqa: C901
+
+        # check sources
         if self.source == 'local':
             if not self.local_repo:
                 raise ValueError("local repo is undefined")
@@ -453,6 +455,11 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
+            )
+
+        if len(self.nodes) < 2 and self.ha:
+            raise ValueError(
+                'HA is supported only for multiple nodes installation'
             )
 
 
