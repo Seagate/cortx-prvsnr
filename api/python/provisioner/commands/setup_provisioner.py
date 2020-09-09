@@ -1207,6 +1207,14 @@ class SetupProvisioner(CommandParserFillerMixin):
             # Note. in both cases (ha and non-ha) we need user pillar update
             # only on primary node, in case of ha it would be shared for other
             # masters
+            logger.info("Get release factory version")
+            ssh_client.cmd_run(
+                (
+                   f'curl {run_args.target_build}/RELEASE.INFO '
+                   f'-o /etc/yum.repos.d/RELEASE_FACTORY.INFO'
+                )
+            )
+
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
