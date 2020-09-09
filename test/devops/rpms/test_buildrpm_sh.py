@@ -330,7 +330,7 @@ def test_rpm_prvsnr_api_installation(mhost, mlocalhost):
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_api_removal(mhost, mlocalhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_api))
-    mhost.check_output('yum remove -y python36-cortx-prvsnr')
+    mhost.check_output('yum remove -y python3-cortx-prvsnr')
     #   check that api is removed from python env
     pip_packages = mhost.host.pip_package.get_packages(pip_path='pip3')
     assert provisioner.__title__ not in pip_packages
