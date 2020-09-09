@@ -148,13 +148,13 @@ function update_cluster_sls {
         echo -n "Updating Management VIP in pillar..........................................." 2>&1|tee -a ${LOG_FILE}
         #local line_to_replace=$(grep -m1 -n "mgmt_vip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         #sed -i "${line_to_replace},/mgmt_vip:*/ s|mgmt_vip:.*|mgmt_vip: ${mgmt_vip}|" ${_cluster_sls_path}
-        /usr/local/bin/provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
+        provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Updating Cluster IP in pillar..............................................." 2>&1|tee -a ${LOG_FILE}
         #local line_to_replace=$(grep -m1 -n "cluster_ip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         #sed -i "${line_to_replace},/cluster_ip:*/ s|cluster_ip:.*|cluster_ip: ${cluster_vip}|" ${_cluster_sls_path}
-        /usr/local/bin/provisioner pillar_set cluster/cluster_ip \"${cluster_vip}\"
+        provisioner pillar_set cluster/cluster_ip \"${cluster_vip}\"
         echo "Ok." |tee -a ${LOG_FILE}
 
          #Update public data interface ips
@@ -163,12 +163,12 @@ function update_cluster_sls {
             echo "Updating static data ip ($_static_ip_a) for server A" >> $LOG_FILE
             #line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
             #sed -ie "${line_node1_ip}s/.*/                public_ip_addr: ${_static_ip_a}/" $_cluster_sls_path
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${_static_ip_a}\"
+            provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${_static_ip_a}\"
             
             echo "Updating static data ip ($_static_ip_b) for server B" >> $LOG_FILE
             #line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
             #sed -ie "${line_node2_ip}s/.*/                public_ip_addr: ${_static_ip_b}/" $_cluster_sls_path
-            /usr/local/bin/provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${_static_ip_b}\"
+            provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${_static_ip_b}\"
             echo "Done" | tee -a ${LOG_FILE}
         fi
 
@@ -180,7 +180,7 @@ function update_cluster_sls {
         local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-1/hostname \"${primary_host}\"
+        provisioner pillar_set cluster/srvnode-1/hostname \"${primary_host}\"
         echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
@@ -200,7 +200,7 @@ function update_cluster_sls {
         local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
-        /usr/local/bin/provisioner pillar_set cluster/srvnode-2/hostname \"${secondary_host}\"
+        provisioner pillar_set cluster/srvnode-2/hostname \"${secondary_host}\"
         echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         # grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]

@@ -64,10 +64,18 @@ class SetupSinglenode(SetupProvisioner):
         node = setup_ctx.run_args.nodes[0]
         setup_ctx.ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner pillar_set '
+                'provisioner pillar_set '
                 f'cluster/{node.minion_id}/hostname '
                 f'\'"{node.grains.fqdn}"\''
             ), targets=setup_ctx.run_args.primary.minion_id
         )
 
+        logger.info("Updating pillar data using config.ini")
+        setup_ctx.ssh_client.cmd_run(
+            (
+                '/usr/local/bin/provisioner configure_setup '
+                f'{config.PRVSNR_PILLAR_CONFIG_INI} '
+                f'{len(setup_ctx.run_args.nodes)}'
+            ), targets=setup_ctx.run_args.primary.minion_id
+        )
         logger.info("Done")
