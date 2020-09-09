@@ -211,7 +211,7 @@ Vagrant.configure("2") do |config|
           if [[ -d '/opt/seagate/cortx/provisioner' ]]; then
             BASEDIR=/opt/seagate/cortx/provisioner
           else
-            BASEDIR=/opt/seagate/eos-prvsnr
+            BASEDIR=/opt/seagate/cortx/provisioner
           fi
 
           #Disable iptables-services
