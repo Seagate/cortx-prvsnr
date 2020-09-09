@@ -200,7 +200,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             for pillar_key in content[section]:
                 key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
                 run_subprocess_cmd([
-                       "/usr/local/bin/provisioner", "pillar_set",
+                       "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
         if count > 0:
