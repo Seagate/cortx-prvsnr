@@ -22,7 +22,6 @@ import logging
 
 from .. import (
     inputs,
-    utils,
     errors
 )
 from ..salt import (
@@ -143,21 +142,14 @@ class DeployVM(Deploy):
     def run(self, **kwargs):
         run_args = self._run_args_type(**kwargs)
 
-        self._update_salt()
-
-        res = cmd_run(
-            "hostnamectl status | sed 's/^ *//g'",
-            targets=local_minion_id(),
-            python_shell=True
-        )
-        hostnamectl_status = utils.load_yaml_str(res[local_minion_id()])
-
-        if hostnamectl_status.get('Chassis') == 'server':
+        if self._is_hw():
             # TODO EOS-12076 less generic error
             raise errors.ProvisionerError(
                 "The command is specifically for VM deployment. "
                 "For HW please run `deploy`"
             )
+
+        self._update_salt()
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)

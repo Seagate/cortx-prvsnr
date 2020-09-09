@@ -156,7 +156,7 @@ class Deploy(CommandParserFillerMixin):
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
-    def _local_minion_id(self):
+    def _primary_id(self):
         if self.setup_ctx:
             return self.setup_ctx.run_args.primary.minion_id
         else:
@@ -169,8 +169,8 @@ class Deploy(CommandParserFillerMixin):
             try:
                 self.setup_ctx.ssh_client.cmd_run(
                     (
-                        f"salt '{targets}' state.sls_exists {state}"
-                    ), targets=self.setup_ctx.run_args.primary.minion_id
+                        f"salt -C '{targets}' state.sls_exists {state}"
+                    ), targets=self._primary_id()
                 )
             # TODO IMPROVE EOS-12076 more accurate errors processing
             except errors.SaltCmdResultError:
@@ -178,27 +178,46 @@ class Deploy(CommandParserFillerMixin):
             else:
                 return True
         else:
-            return sls_exists(state, targets=targets)
+            return sls_exists(state, targets=targets, tgt_type='compound')
 
     def _function_run(self, fun, targets=config.ALL_MINIONS):
         if self.setup_ctx:
             return self.setup_ctx.ssh_client.cmd_run(
                 (
-                    f"salt '{targets}' {fun}"
-                ), targets=self.setup_ctx.run_args.primary.minion_id
+                    f"salt -C '{targets}' {fun}"
+                ), targets=self._primary_id()
             )
         else:
-            return function_run(fun, targets=targets)
+            return function_run(fun, targets=targets, tgt_type='compound')
 
     def _cmd_run(self, cmd, targets=config.ALL_MINIONS):
         if self.setup_ctx:
+            # TODO IMPROVE EOS-12076 consider to use salt-ssh client's
+            #      mcd_run directly but it woudl require accurate targeting
+            #      since salt-ssh targets differ from remote salt's ones
             return self.setup_ctx.ssh_client.cmd_run(
                 (
-                    f"salt '{targets}' cmd.run '{cmd}'"
-                ), targets=self.setup_ctx.run_args.primary.minion_id
+                    f"salt -C '{targets}' cmd.run '{cmd}'"
+                ), targets=self._primary_id()
             )
         else:
-            return cmd_run(cmd, targets=targets)
+            return cmd_run(cmd, targets=targets, tgt_type='compound')
+
+    def _is_hw(self):
+        if self.setup_ctx:
+            res = self.setup_ctx.ssh_client.run(
+                'pillar.get',
+                fun_args=['setup:grains:hostname_status:Chassis'],
+                targets=self._primary_id()
+            )
+        else:
+            res = function_run(
+                'pillar.get',
+                fun_args=['setup:grains:hostname_status:Chassis'],
+                targets=self._primary_id()
+            )
+
+        return res[self._primary_id()] == 'server'
 
     def _apply_state(
         self, state, targets=config.ALL_MINIONS, stages: Optional[List] = None
@@ -208,11 +227,13 @@ class Deploy(CommandParserFillerMixin):
             if self.setup_ctx:
                 return self.setup_ctx.ssh_client.cmd_run(
                     (
-                        f"salt '{targets}' state.apply {state}"
-                    ), targets=self.setup_ctx.run_args.primary.minion_id
+                        f"salt -C '{targets}' state.apply {state}"
+                    ), targets=self._primary_id()
                 )
             else:
-                return StatesApplier.apply([state], targets)
+                return StatesApplier.apply(
+                    [state], targets, tgt_type='compound'
+                )
         else:
             for stage in stages:
                 _state = f"{state}.{stage}"
@@ -228,7 +249,7 @@ class Deploy(CommandParserFillerMixin):
         states = deploy_states[states_group]
         stages = run_args.stages
 
-        primary = self._local_minion_id()
+        primary = self._primary_id()
         secondaries = f"not {primary}"
 
         # apply states
@@ -297,7 +318,7 @@ class Deploy(CommandParserFillerMixin):
         encrypt_tool = config.PRVSNR_ROOT_DIR / 'cli/pillar_encrypt'
         self._cmd_run(
             f"python3 {encrypt_tool}",
-            targets=self._local_minion_id()
+            targets=self._primary_id()
         )
         self._update_salt()
 
@@ -309,7 +330,7 @@ class Deploy(CommandParserFillerMixin):
             (run_args.setup_type != SetupType.SINGLE) and
             (targets == config.ALL_MINIONS)
         ):
-            targets = f"not {self._local_minion_id()}"
+            targets = f"not {self._primary_id()}"
 
         # Old remnant partitios from previous deployments has to be cleaned-up
         logger.info("Removing components.system.storage from both nodes.")

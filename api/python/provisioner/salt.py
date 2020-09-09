@@ -920,25 +920,32 @@ def pillar_refresh(targets=ALL_MINIONS):
 #      stderr and stdout streams that makes sense sometimes even if a command
 #      don't fail (e.g. use 'run_all' instead)
 def cmd_run(
-    cmd, targets=ALL_MINIONS, background=False, timeout=None, **kwargs
+    cmd,
+    targets=ALL_MINIONS,
+    background=False,
+    timeout=None,
+    fun_kwargs: Optional[Dict] = None,
+    **kwargs
 ):
     # TODO IMPROVE EOS-12076 wrapper args vs direct salt's ones
-    kwargs['bg'] = background
+    fun_kwargs['bg'] = background
     return function_run(
         'cmd.run',
         fun_args=[cmd],
-        fun_kwargs=kwargs,
+        fun_kwargs=fun_kwargs,
         targets=targets,
-        timeout=timeout
+        timeout=timeout,
+        **kwargs
     )
 
 
 # TODO TEST EOS-12076
-def sls_exists(state, targets=ALL_MINIONS, summary_only=True):
+def sls_exists(state, targets=ALL_MINIONS, summary_only=True, **kwargs):
     res = function_run(
         'state.sls_exists',
         fun_args=[state],
-        targets=targets
+        targets=targets,
+        **kwargs
     )
 
     if summary_only:
@@ -1009,13 +1016,15 @@ def provisioner_cmd(
             return process_provisioner_cmd_res(res)
 
 
-def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
+def states_apply(
+    states: List[Union[str, State]], targets=ALL_MINIONS, **kwargs
+):
     # TODO multiple states at once
     ret = {}
     for state in states:
         state = State(state)
         res = function_run(
-            'state.apply', fun_args=[state.name], targets=targets
+            'state.apply', fun_args=[state.name], targets=targets, **kwargs
         )
         ret[state.name] = res
 
@@ -1101,9 +1110,11 @@ def copy_to_file_roots(
 @attr.s(auto_attribs=True)
 class StatesApplier:
     @staticmethod
-    def apply(states: List[State], targets: str = ALL_MINIONS) -> None:
+    def apply(
+        states: List[State], targets: str = ALL_MINIONS, **kwargs
+    ) -> None:
         if states:
-            return states_apply(states=states, targets=targets)
+            return states_apply(states=states, targets=targets, **kwargs)
 
 
 # TODO tests
