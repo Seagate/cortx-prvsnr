@@ -45,8 +45,6 @@ mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{files,conf}
 cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
 cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
-# TODO EOS-11551 remove later
-cp -R api %{buildroot}/opt/seagate/cortx/provisioner
 cp -R files/conf %{buildroot}/opt/seagate/cortx/provisioner/
 
 
@@ -56,26 +54,8 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/cortx/provisioner/%{name}.yaml
+/opt/seagate/cortx/provisioner/conf
 /opt/seagate/cortx/provisioner/cli
 /opt/seagate/cortx/provisioner/files
 /opt/seagate/cortx/provisioner/pillar
 /opt/seagate/cortx/provisioner/srv
-# TODO EOS-11551 remove later
-/opt/seagate/cortx/provisioner/api
-/opt/seagate/cortx/provisioner/conf
-
-# TODO EOS-11551 remove later
-%post
-api_dir="/opt/seagate/cortx/provisioner/api/python"
-echo "Configuring access for provisioner data ..."
-bash "${api_dir}/provisioner/srv/salt/provisioner/files/post_setup.sh"
-
-#   install api globally using pip
-pip3 install "${api_dir}"
-
-
-%preun
-# uninstall api globally using pip (only for pkg uninstall)
-if [ $1 -eq 0 ] ; then
-    pip3 uninstall -y cortx-prvsnr
-fi
