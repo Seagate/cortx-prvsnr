@@ -15,9 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-include:
-  - components.ha.cortx-ha.prepare
-
 Install cortx-ha:
   pkg.installed:
     - name: cortx-ha
