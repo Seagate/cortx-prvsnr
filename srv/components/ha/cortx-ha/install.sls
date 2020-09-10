@@ -17,6 +17,6 @@
 
 Install cortx-ha:
   pkg.installed:
-    - name: cortx-ha
-    - require:
-      - Add cortx-ha yum repo
+    - pkgs:
+      - cortx-ha: latest
+    - refresh: True
