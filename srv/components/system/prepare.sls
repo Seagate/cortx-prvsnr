@@ -62,7 +62,7 @@ Reset EPEL:
 Add EPEL repo:
   pkgrepo.managed:
     - name: {{ defaults.base_repos.epel_repo.id }}
-    - humanname: epel
+    - humanname: 3rd_party_epel
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
     - require:
