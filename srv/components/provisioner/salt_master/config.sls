@@ -35,7 +35,7 @@ salt_master_service_restarted:
     # 1. test.true will prevent restart of salt-master if the config is malformed
     # 2. --local is required if salt-master is actually not running,
     #    since state might be called by salt-run as well
-    - name: 'salt-run salt.cmd test.true && salt-call --local service.restart salt-master'
+    - name: 'salt-run salt.cmd test.true > /dev/null && salt-call --local service.restart salt-master > /dev/null '
     - bg: True
     - onchanges:
       - file: salt_master_config_updated
