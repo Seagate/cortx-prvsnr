@@ -1186,8 +1186,12 @@ for cmd_name, spec in api_spec.items():
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
-        cmd_mod = importlib.import_module(
-            f'provisioner.commands.{cmd_name}'
-        )
+        try:
+            cmd_mod = importlib.import_module(
+                f'provisioner.commands.{cmd_name}'
+            )
+        except Exception:
+            logger.error(f"Failed to import provisioner.commands.{cmd_name}")
+            raise
         command = getattr(cmd_mod, cmd_cls)
     commands[cmd_name] = command.from_spec(**spec)

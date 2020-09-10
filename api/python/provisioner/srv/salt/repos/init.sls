@@ -30,7 +30,7 @@
 
     {% if source %}
 
-        {% if source.startswith(('http://', 'https://')) %}
+        {% if source.startswith(('http://', 'https://', 'file://')) %}
 
             {% set source_type = 'url' %}
 
