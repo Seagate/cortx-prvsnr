@@ -63,14 +63,16 @@ gluster_tool_is_available:
 {% else %}
 
 include:
-  - ..install
+  - ..prepare
 
 glusterfs_server_installed:
   pkg.installed:
     - pkgs:
       - glusterfs-server
+{% if pillar['release']['type'] != 'bundle' %}
     - require:
       - glusterfs_repo_is_installed
+{% endif %}
 
 glusterfs_daemon_running:
   service.running:
