@@ -15,17 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-m2crypto_precompiled_installed:
-  pkg.installed:
-    - pkgs:
-      - python36-m2crypto
-
 api_installed:
+{% if salt['pillar.get']('api_distr') == 'pip' %}
   pip.installed:
     - name: /opt/seagate/cortx/provisioner/api/python
     - bin_env: /usr/bin/pip3
     - upgrade: False  # to reuse already installed dependencies
                       # that may come from rpm repositories
+{% else %}
+  pkg.installed:
+    - pkgs:
+      - python36-cortx-prvsnr
+{% endif %}
 
 prvsnrusers:
   group.present
@@ -35,6 +36,8 @@ api_post_setup_applied:
   cmd.script:
     - source: salt://provisioner/files/post_setup.sh
 
+# XXX ??? is it actually required here:
+#     related module is part of provisioner core rpm
 salt_dynamic_modules_synced:
   cmd.run:
     # TODO IMPROVE EOS-9581: cmd.run is a workaround since
