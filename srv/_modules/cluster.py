@@ -142,6 +142,20 @@ def storage_device_config():
         time.sleep(180)
     return True
 
+def jbod_storage_config():
+    _target_node = __grains__['id']
+    _data_field = "cluster/{0}/storage/data_devices".format(_target_node)
+    _metadata_field = "cluster/{0}/storage/metadata_device".format(_target_node)
+
+    _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
+    _device_list = subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
+
+    metadata_device = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
+    data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]
+
+    provisioner.pillar_set(_metadata_field, metadata_device)
+    provisioner.pillar_set(_data_field, data_device)
+    return True
 
 def nw_roaming_ip():
 
