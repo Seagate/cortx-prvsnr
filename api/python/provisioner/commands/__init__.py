@@ -564,7 +564,12 @@ class SWUpdate(CommandParserFillerMixin):
                     config_salt_minions()
 
                     for component in (
-                        'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+                        'motr',
+                        's3server',
+                        'hare',
+                        'ha.cortx-ha',
+                        'sspl',
+                        'csm'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
