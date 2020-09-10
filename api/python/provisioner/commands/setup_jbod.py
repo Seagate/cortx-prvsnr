@@ -31,15 +31,17 @@ from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
     SetupProvisioner
 )
+from . import deploy_jbod
 
 logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class SetupCortx(CommandParserFillerMixin):
+class SetupJBOD(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = [
-        RunArgsSetupProvisionerGeneric
+        RunArgsSetupProvisionerGeneric,
+        deploy_jbod.run_args_type
     ]
 
     def run(self, nodes, **kwargs):
@@ -48,7 +50,13 @@ class SetupCortx(CommandParserFillerMixin):
             if k in attr.fields_dict(RunArgsSetupProvisionerGeneric)
         }
 
-        setup_ctx = SetupProvisioner().run(
+        deploy_jbod_args = {
+            k: kwargs.pop(k) for k in list(kwargs)
+            if k in attr.fields_dict(deploy_jbod.run_args_type)
+        }
+
+        logger.info("Setup provisioner")
+        setup_ctx = SetupProvisioner()._run(
             nodes, **setup_provisioner_args
         )
 
@@ -56,10 +64,10 @@ class SetupCortx(CommandParserFillerMixin):
         if setup_provisioner_args.get('config_path') and False:
             raise NotImplementedError(
                 "ini file configuration is not yet supported "
-                "for setup cortx command"
+                "for setup_jbod command"
             )
 
-            logger.info("Updating pillar data using config.ini")
+            logger.info("Configuring setup using config.ini")
             setup_ctx.ssh_client.cmd_run(
                 (
                     'provisioner configure_setup '
@@ -67,4 +75,14 @@ class SetupCortx(CommandParserFillerMixin):
                     f'{len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
+
+        logger.info("Deploy")
+        deploy_jbod.DeployJBOD(setup_ctx=setup_ctx).run(
+            **deploy_jbod_args
+        )
+        setup_ctx.ssh_client.cmd_run(
+            '/usr/local/bin/provisioner deploy --states prereq',
+            targets=setup_ctx.run_args.primary.minion_id
+        )
+
         logger.info("Done")

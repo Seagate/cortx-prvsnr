@@ -16,4 +16,4 @@
 #
 
 include:
-  - .install
+  - .prepare
