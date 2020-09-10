@@ -622,7 +622,9 @@ def test_commands_SWUpdate_run_happy_path(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -827,7 +829,9 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['YumRollbackManager']().__exit__(
@@ -898,7 +902,9 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -970,7 +976,9 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -1042,7 +1050,9 @@ def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),

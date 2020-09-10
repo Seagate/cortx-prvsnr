@@ -599,7 +599,7 @@ def _rpmbuild_mhost(
     try:
         return discover_remote(request, remote)
     except Exception:
-        remote.destoy()
+        remote.destroy()
         raise
 
 
@@ -832,7 +832,7 @@ def build_docker_image_fixture(os_name, env_level):  # noqa: C901 FIXME
             try:
                 mhost = discover_remote(request, remote)
             except Exception:
-                remote.destoy()
+                remote.destroy()
                 raise
 
             with mhost.remote as _:

@@ -15,8 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-Install cortx-ha:
+{% if pillar['release']['type'] != 'bundle' %}
+
+# TODO detect centos instead
+    {% if "RedHat" not in grains['os'] %}
+
+glusterfs_repo_is_installed:
   pkg.installed:
     - pkgs:
-      - cortx-ha: latest
-    - refresh: True
+      - centos-release-gluster7
+
+    {% else  %}
+
+# FIXME need to use gluster from official  RedHat repos
+# centos-release-gluster7 not available for redhat hence adding repo manually
+glusterfs_repo_is_installed:
+  pkgrepo.managed:
+    - name: glusterfs
+    - humanname: glusterfs-7
+    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
+    - gpgcheck: 0
+    - enabled: 1
+
+    {% endif %}
+
+{% endif %}
