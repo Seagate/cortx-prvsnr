@@ -75,7 +75,7 @@ class SetupJBOD(CommandParserFillerMixin):
             **deploy_jbod_args
         )
         setup_ctx.ssh_client.cmd_run(
-            '/usr/local/bin/provisioner deploy --states prereq',
+            'provisioner deploy --states prereq',
             targets=setup_ctx.run_args.primary.minion_id
         )
 

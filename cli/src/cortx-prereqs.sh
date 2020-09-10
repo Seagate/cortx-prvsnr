@@ -212,7 +212,7 @@ baseurl=$_url
 EOL
     echo "Done" | tee -a ${LOG_FILE}
 
-    _repo="/etc/yum.repos.d/epel.repo"
+    _repo="/etc/yum.repos.d/3rd_party_epel.repo"
     if [[ "$bundled_release" == true ]]; then
         _url="$epel_repo"
     else

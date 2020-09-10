@@ -1241,9 +1241,17 @@ class SetupProvisioner(CommandParserFillerMixin):
                 )
 
         # not necessary for rpm setup
-        if run_args.source == 'local':
-            logger.info("Installing provisioner API")
-            ssh_client.state_apply('provisioner.api_install')
+        logger.info("Installing provisioner API")
+        ssh_client.state_apply(
+            'provisioner.api.install',
+            fun_kwargs={
+                'pillar': {
+                    'api_distr': (
+                        'pip' if run_args.source == 'local' else 'pkg'
+                    )
+                }
+            }
+        )
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
@@ -1265,7 +1273,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Updating release distribution type")
         ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner pillar_set --fpath release.sls'
+                'provisioner pillar_set --fpath release.sls'
                 f' release/type \'"{run_args.dist_type.value}"\''
             ), targets=run_args.primary.minion_id
         )
