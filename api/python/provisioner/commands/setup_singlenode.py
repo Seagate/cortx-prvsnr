@@ -55,7 +55,7 @@ class SetupSinglenode(SetupProvisioner):
         run_args = RunArgsSetupSinglenode(**kwargs)
         kwargs.pop('srvnode1')
 
-        setup_ctx = super().run(
+        setup_ctx = super()._run(
             ha=False, nodes=[run_args.srvnode1], **kwargs
         )
 
@@ -73,7 +73,7 @@ class SetupSinglenode(SetupProvisioner):
         logger.info("Updating pillar data using config.ini")
         setup_ctx.ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner configure_setup '
+                'provisioner configure_setup '
                 f'{config.PRVSNR_PILLAR_CONFIG_INI} '
                 f'{len(setup_ctx.run_args.nodes)}'
             ), targets=setup_ctx.run_args.primary.minion_id

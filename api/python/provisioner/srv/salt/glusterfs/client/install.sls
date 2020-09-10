@@ -16,12 +16,14 @@
 #
 
 include:
-  - ..install
+  - ..prepare
 
 glusterfs_client_installed:
   pkg.installed:
     - pkgs:
       # TODO IMPROVE EOS-9581 would be different for Debian/Ubuntu
       - glusterfs-fuse
+{% if pillar['release']['type'] != 'bundle' %}
     - require:
       - glusterfs_repo_is_installed
+{% endif %}

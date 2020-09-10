@@ -19,11 +19,14 @@ import pytest
 import yaml
 import string
 import random
+from pathlib import Path
 
 import test.helper as h
 import provisioner
 
-from test.helper import PRVSNRUSERS_GROUP
+from test.helper import (
+    PRVSNRUSERS_GROUP, PROJECT_PATH
+)
 
 RPM_CONTENT_PATHS = ['pillar', 'srv']
 RPM_CLI_CONTENT_PATHS = [
@@ -371,3 +374,33 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
 
     mhost.check_output('yum install -y {}'.format(new_rpm_remote))
     check_post_section(mhost, api_version=new_version)
+
+
+@pytest.mark.skip('helper test to build ISOs')
+@pytest.mark.env_level('base')
+def test_build_isos(
+    mhost, rpm_prvsnr, rpm_prvsnr_api
+):
+    res = {}
+
+    for pkg in ('prvsnr', 'prvsnr_api'):
+        repo_dir = Path(f'/tmp/{pkg}.repo')
+        iso_path = Path(f'/tmp/{pkg}.iso')
+
+        mhost.check_output(
+            "mkdir -p {repo_dir}"
+            " && cp {rpm_path} {repo_dir}"
+            " && yum install -y createrepo genisoimage"
+            " && createrepo {repo_dir}"
+            " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
+            .format(
+                repo_dir=repo_dir,
+                rpm_path=getattr(mhost, f"rpm_{pkg}"),
+                iso_path=iso_path
+            )
+        )
+        iso = mhost.copy_from_host(iso_path)
+        res[pkg] = iso
+
+        dest = PROJECT_PATH / f"tmp/{iso.name}"
+        dest.write_bytes(iso.read_bytes())

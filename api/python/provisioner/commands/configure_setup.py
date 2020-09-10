@@ -43,16 +43,27 @@ logger = logging.getLogger(__name__)
 class SetupType(Enum):
     SINGLE = "single"
     DUAL = "dual"
+    GENERIC = "generic"
 
 
-@attr.s(auto_attribs=True)
-class RunArgsConfigureSetup:
+class RunArgsConfigureSetupAttrs:
     path: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "config path to update pillar"
             }
         }
+    )
+    setup_type: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the type of the setup",
+                'choices': [st.value for st in SetupType]
+            }
+        },
+        default=SetupType.GENERIC.value,
+        # TODO EOS-12076 better validation
+        converter=(lambda v: SetupType(v))
     )
     number_of_nodes: int = attr.ib(
         metadata={
@@ -62,6 +73,23 @@ class RunArgsConfigureSetup:
         },
         converter=int
     )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsConfigureSetup:
+    path: str = RunArgsConfigureSetupAttrs.path
+    number_of_nodes: int = RunArgsConfigureSetupAttrs.number_of_nodes
+
+    # FIXME number of nodes might be the same for different setup types
+    setup_type: str = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        if self.number_of_nodes == 1:
+            self.setup_type = SetupType.SINGLE
+        elif self.number_of_nodes == 2:
+            self.setup_type = SetupType.DUAL
+        else:
+            self.setup_type = SetupType.GENERIC
 
 
 @attr.s(auto_attribs=True)
@@ -120,11 +148,11 @@ class StorageEnclosureParamsValidation:
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
     data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_ipaddr: str = NodeNetworkParams.data_nw_ipaddr
+    public_ip_addr: str = NodeNetworkParams.public_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
-    _optional_param = ['data_nw_ipaddr']
+    _optional_param = ['public_ip_addr']
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
@@ -200,7 +228,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             for pillar_key in content[section]:
                 key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
                 run_subprocess_cmd([
-                       "/usr/local/bin/provisioner", "pillar_set",
+                       "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
         if count > 0:
