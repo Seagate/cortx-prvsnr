@@ -23,7 +23,6 @@ from datetime import datetime
 from pathlib import Path
 import json
 import yaml
-import os
 import importlib
 
 from ..vendor import attr
@@ -67,7 +66,7 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots
+    copy_to_file_roots, cmd_run
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -565,7 +564,12 @@ class SWUpdate(CommandParserFillerMixin):
                     config_salt_minions()
 
                     for component in (
-                        'motr', 's3server', 'hare', 'sspl', 'csm'
+                        'motr',
+                        's3server',
+                        'hare',
+                        'ha.cortx-ha',
+                        'sspl',
+                        'csm'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
@@ -766,17 +770,45 @@ class GetNodeId(CommandParserFillerMixin):
 class GetReleaseVersion(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
+    _installed_rpms: List = attr.ib(init=False, default=None)
+
+    @property
+    def installed_rpms(self) -> List:
+        if self._installed_rpms is None:
+            res = cmd_run("rpm -qa|grep '^cortx-'", targets=LOCAL_MINION)
+            rpms = res[next(iter(res))].split("\n")
+            self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
+        return self._installed_rpms
+
+    def _get_rpms_from_release(self, source):
+        return load_yaml(source)['COMPONENTS']
+
+    def _compare_rpms_info(self, release_rpms):
+        return (release_rpms and
+                set(self.installed_rpms).issubset(release_rpms))
+
+    def _get_release_info_path(self):
+        release_repo = ''
+        update_repo = PillarKey('release/update')
+        pillar = PillarResolver(LOCAL_MINION).get([update_repo])
+        pillar = next(iter(pillar.values()))
+        release = pillar[update_repo]
+        base_dir = Path(release['base_dir'])
+        repos = release['repos']
+        for release, source in reversed(list(repos.items())):
+            release_repo = base_dir / f'{release}/RELEASE.INFO'
+            if source == "iso":
+                release_rpms = self._get_rpms_from_release(release_repo)
+                if self._compare_rpms_info(release_rpms):
+                    return release_repo
 
     def run(self, targets):
-        if os.path.isfile('/etc/yum.repos.d/RELEASE.INFO'):
-            source = "/etc/yum.repos.d/RELEASE.INFO"
+        update_path = self._get_release_info_path()
+        if update_path:
+            source = update_path
         else:
-            source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        try:
-            with open(source, 'r') as filehandle:
-                return json.dumps(yaml.load(filehandle))
-        except Exception as exc:
-            raise ReleaseFileNotFoundError(exc) from exc
+            source = Path("/etc/yum.repos.d/RELEASE_FACTORY.INFO")
+        return load_yaml(source)
 
 
 @attr.s(auto_attribs=True)
@@ -1154,8 +1186,12 @@ for cmd_name, spec in api_spec.items():
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
-        cmd_mod = importlib.import_module(
-            f'provisioner.commands.{cmd_name}'
-        )
+        try:
+            cmd_mod = importlib.import_module(
+                f'provisioner.commands.{cmd_name}'
+            )
+        except Exception:
+            logger.error(f"Failed to import provisioner.commands.{cmd_name}")
+            raise
         command = getattr(cmd_mod, cmd_cls)
     commands[cmd_name] = command.from_spec(**spec)

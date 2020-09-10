@@ -237,9 +237,8 @@ if [[ "$remove_prvsnr" == true ]]; then
     rm -rf /etc/rsyslog.d/prvsnrfwd.conf || true
     rm -rf /etc/rsyslog.d/2-prvsnrfwd.conf || true
 
-    # TODO EOS-11551 enable later
-    # l_info "Removing cortx-prvsnr api package from both nodes"
-    # salt '*' pkg.remove python36-cortx-prvsnr $salt_opts || true
+     l_info "Removing cortx-prvsnr api package from both nodes"
+     salt '*' pkg.remove python36-cortx-prvsnr $salt_opts || true
 
     l_info "Removing cortx-prvsnr package from both nodes"
     salt '*' pkg.remove cortx-prvsnr $salt_opts || true

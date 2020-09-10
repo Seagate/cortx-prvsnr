@@ -267,6 +267,13 @@ REPO_BUILD_DIRS = [
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
 
+
+class DistrType(Enum):
+    """Distribution types"""
+    CORTX = "cortx"       # only cortx packages
+    BUNDLE = "bundle"     # coxrt packages along with all dependencies
+
+
 # Defines a "frozen" list for allowed commands and supported by provisioner
 # API for remote execution
 SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
