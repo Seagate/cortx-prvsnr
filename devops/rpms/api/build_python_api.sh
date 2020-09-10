@@ -190,7 +190,7 @@ $fpm_tool --input-type "python" \
     --python-install-lib "/usr/lib/python3.6/site-packages" \
     --python-install-bin "/usr/bin" \
     --python-package-name-prefix "python36" \
-    --python-bin "python36" \
+    --python-bin "python3" \
     --python-disable-dependency salt \
     --no-python-downcase-dependencies \
     --depends "salt >= 3001" \
