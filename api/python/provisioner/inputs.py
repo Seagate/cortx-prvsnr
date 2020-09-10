@@ -491,7 +491,7 @@ class NodeNetworkParams():
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
-    data_nw_ipaddr: str = ParamGroupInputBase._attr_ib(
+    public_ip_addr: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
