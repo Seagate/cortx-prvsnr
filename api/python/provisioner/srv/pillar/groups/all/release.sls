@@ -11,7 +11,7 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
@@ -26,5 +26,4 @@ release:
         #      be mounted by prouction setup logic as well
         # TODO IMPROVE EOS-12076 shorten path, use some global config variable
         base_dir: /var/lib/seagate/cortx/provisioner/local/cortx_repos
-        repos:
-            eee: null
+        repos: {}

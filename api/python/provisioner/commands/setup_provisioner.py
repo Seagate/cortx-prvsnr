@@ -253,6 +253,33 @@ class RunArgsSetup:
         converter=(lambda v: Path(str(v)) if v else v),
         validator=utils.validator_path_exists
     )
+    url_cortx: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Cortx repo url"
+            }
+        },
+        default=None
+    )
+    url_cortx_deps: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Cortx dependencies url"
+            }
+        },
+        default=None
+    )
+    dist_type: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the type of the distribution",
+                'choices': [dt.value for dt in config.DistrType]
+            }
+        },
+        default=config.DistrType.CORTX.value,
+        # TODO EOS-12076 better validation
+        converter=(lambda v: config.DistrType(v))
+    )
     target_build: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -266,7 +293,7 @@ class RunArgsSetup:
                 # ),
             }
         },
-        default='http://cortx-storage.colo.seagate.com/releases/eos/github/release/rhel-7.7.1908/last_successful/'  # noqa: E501
+        default=None
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
@@ -297,7 +324,7 @@ class RunArgsSetup:
     salt_master: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "domain name or IP of the salt master"
+                'help': "domain name or IP of the salt-master"
             }
         },
         default=None
@@ -331,6 +358,9 @@ class RunArgsSetupProvisionerBase:
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
+    url_cortx: str = RunArgsSetup.url_cortx
+    url_cortx_deps: str = RunArgsSetup.url_cortx_deps
+    dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
@@ -369,7 +399,9 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     def secondaries(self):
         return self.nodes[1:]
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):  # noqa: C901
+
+        # check sources
         if self.source == 'local':
             if not self.local_repo:
                 raise ValueError("local repo is undefined")
@@ -389,6 +421,46 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "ISO files for CORTX and CORTX dependencies "
                     f"have the same name: {self.iso_cortx.name}"
                 )
+            if self.dist_type != config.DistrType.BUNDLE:
+                logger.info(
+                    "The type of distribution would be set to "
+                    f"{config.DistrType.BUNDLE}"
+                )
+                self.dist_type = config.DistrType.BUNDLE
+            if (
+                self.target_build !=
+                attr.fields(type(self)).target_build.default
+            ):
+                logger.warning(
+                    "`target_build` value would be ignored "
+                    "for ISO based installation"
+                )
+            release_sls = (
+                config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
+            )
+            # iso files will be mounted into dirs inside that directory
+            self.target_build = 'file://' + load_yaml(
+                release_sls
+            )['release']['base']['base_dir']
+        elif self.source == 'rpm':
+            if self.dist_type == config.DistrType.BUNDLE:
+                if not self.target_build:
+                    raise ValueError('`target_build` should be specified')
+            else:
+                # FIXME EOS-12076 ??? is it needed actually
+                if not self.url_cortx:
+                    raise ValueError("CORTX repo url is undefined")
+                if not self.url_cortx_deps:
+                    raise ValueError("CORTX dependencies url is undefined")
+        else:
+            raise NotImplementedError(
+                f"{self.source} provisioner source is not supported yet"
+            )
+
+        if len(self.nodes) < 2 and self.ha:
+            raise ValueError(
+                'HA is supported only for multiple nodes installation'
+            )
 
 
 @attr.s(auto_attribs=True)
@@ -403,8 +475,8 @@ class SetupCtx:
 #   - multiple setups support
 #   - idempotence: might be run multiple times,
 #       re-tries much faster (2-3 times)
-#   - multi-master initial support:
-#       - list of masters is auto-generated
+#   - multi-salt-master initial support:
+#       - list of salt-masters is auto-generated
 #         (each to each reachability is checked)
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
@@ -520,18 +592,18 @@ class SetupProvisioner(CommandParserFillerMixin):
             master_nodes = (
                 run_args.nodes if run_args.ha else [run_args.primary]
             )
-            masters = {
+            salt_masters = {
                 node.minion_id: node.ping_addrs[0]
                 for node in master_nodes
             }
             for node in run_args.nodes:
                 res[node.minion_id] = []
                 for _node in run_args.nodes:
-                    # not any node may be a master
-                    if _node.minion_id in masters:
+                    # note: any node may be a salt-master
+                    if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
                             config.LOCALHOST_IP if _node is node
-                            else masters[_node.minion_id]
+                            else salt_masters[_node.minion_id]
                         )
         else:
             res = {
@@ -595,17 +667,23 @@ class SetupProvisioner(CommandParserFillerMixin):
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
         )
         all_minions_dir = minions_dir / 'all'
-        master_pki_dir = (
+        salt_master_pki_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/master/pki"
         )
-        master_minions_pki_dir = (
+        salt_master_minions_pki_dir = (
             profile_paths['salt_fileroot_dir'] /
             "provisioner/files/master/pki/minions"
         )
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_minions_dir = profile_paths['salt_pillar_dir'] / 'minions'
 
         #   ensure parent dirs exists in profile file root
-        for path in (all_minions_dir, master_minions_pki_dir, pillar_all_dir):
+        for path in (
+            all_minions_dir,
+            salt_master_minions_pki_dir,
+            pillar_all_dir,
+            pillar_minions_dir
+        ):
             path.mkdir(parents=True, exist_ok=True)
 
         priv_key_path = all_minions_dir / 'id_rsa_prvsnr'
@@ -665,91 +743,53 @@ class SetupProvisioner(CommandParserFillerMixin):
                 f"salt masters would be set as follows: {masters}"
             )
             dump_yaml(masters_pillar_path,  dict(masters=masters))
+        else:
+            masters = load_yaml(masters_pillar_path)
+
+        # TODO IMPROVE many hard coded values
 
         cluster_id_path = all_minions_dir / 'cluster_id'
         if not cluster_id_path.exists():
-            cluster_uuid = uuid.uuid4()
-            dump_yaml(cluster_id_path, dict(cluster_id=str(cluster_uuid)))
+            cluster_uuid = str(uuid.uuid4())
+            dump_yaml(cluster_id_path, dict(cluster_id=cluster_uuid))
+        else:
+            cluster_uuid = load_yaml(cluster_id_path)['cluster_id']
 
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
 
-        # TODO IMPROVE condiition to verify local_repo
-        # local_repo would be set from config.PROJECTPATH as default if not
-        # specified as an argument and config.PROJECT could be None
-        # if repo not found.
-        if not run_args.local_repo:
-            raise ValueError("local repo is undefined")
-
-        minion_cfg_sample_path = (
-            run_args.local_repo /
-            'srv/components/provisioner/salt_minion/files/minion'
-        )
-        minion_cfg_path = all_minions_dir / 'minion'
-        run_subprocess_cmd(
-            [
-                'cp', '-f',
-                str(minion_cfg_sample_path),
-                str(minion_cfg_path)
-            ]
-        )
-        run_subprocess_cmd(
-            [
-                'sed', '-i',
-                "s/^master: .*/master: {{ pillar['masters'][grains['id']] }}/g",  # noqa: E501
-                str(minion_cfg_path)
-            ]
-        )
-
-        #   preseed master keys
         # TODO IMPROVE review, check the alternatives as more secure ways
         #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster_pki.html  # noqa: E501
         #    - https://docs.saltstack.com/en/latest/topics/tutorials/multimaster.html  # noqa: E501
-        master_key_pem = master_pki_dir / 'master.pem'
-        master_key_pub = master_pki_dir / 'master.pub'
+        master_key_pem = salt_master_pki_dir / 'master.pem'
+        master_key_pub = salt_master_pki_dir / 'master.pub'
         if not (master_key_pem.exists() and master_key_pub.exists()):
             run_subprocess_cmd(
                 [
                     'salt-key',
                     '--gen-keys', master_key_pem.stem,
-                    '--gen-keys-dir', str(master_pki_dir)
+                    '--gen-keys-dir', str(salt_master_pki_dir)
                 ]
             )
 
         for node in run_args.nodes:
             node_dir = minions_dir / f"{node.minion_id}"
             node_pki_dir = node_dir / 'pki'
+            node_pillar_dir = pillar_minions_dir / f"{node.minion_id}"
 
             #   ensure parent dirs exists in profile file root
             node_pki_dir.mkdir(parents=True, exist_ok=True)
-
-            #   TODO IMPROVE use salt caller and file-managed instead
-            #   (locally) prepare minion grains
-            #   FIXME not valid for non 'local' source
-            minion_grains_sample_path = (
-                run_args.local_repo / (
-                    "srv/components/provisioner/salt_minion/files/grains.{}"
-                    .format(
-                        'primary' if node is run_args.primary else 'secondary'
-                    )
-                )
-            )
-            minion_grains_path = node_dir / 'grains'
-            run_subprocess_cmd(
-                [
-                    'cp', '-f',
-                    str(minion_grains_sample_path),
-                    str(minion_grains_path)
-                ]
-            )
+            node_pillar_dir.mkdir(parents=True, exist_ok=True)
 
             #   TODO IMPROVE use salt caller and file-managed instead
             #   (locally) prepare minion node_id
             minion_nodeid_path = node_dir / 'node_id'
             if not minion_nodeid_path.exists():
-                node_uuid = uuid.uuid4()
-                dump_yaml(minion_nodeid_path, dict(node_id=str(node_uuid)))
+                node_uuid = str(uuid.uuid4())
+                dump_yaml(minion_nodeid_path, dict(node_id=node_uuid))
+            else:
+                node_uuid = load_yaml(minion_nodeid_path)['node_id']
 
             # TODO IMPROVE EOS-8473 consider to move to mine data
             # (locally) prepare hostname info
@@ -762,11 +802,38 @@ class SetupProvisioner(CommandParserFillerMixin):
                 )
                 # Note. output here is similar to yaml format
                 # ensure that it is yaml parseable
-                status = load_yaml_str(res[node.minion_id])
+                hostnamectl_status = load_yaml_str(res[node.minion_id])
                 dump_yaml(
                     minion_hostname_status_path,
-                    dict(hostname_status=status)
+                    dict(hostname_status=hostnamectl_status)
                 )
+            else:
+                hostnamectl_status = load_yaml(
+                    minion_hostname_status_path
+                )['hostname_status']
+
+            setup_pillar_path = add_pillar_merge_prefix(
+                node_pillar_dir / 'setup.sls'
+            )
+            if run_args.rediscover or not setup_pillar_path.exists():
+                data = {
+                    'setup': {
+                        'config': {
+                            'master': masters[node.minion_id]
+                        },
+                        'grains': [
+                            # FIXME not accurate in case of HA setup
+                            {'roles': [
+                                'primary' if (node is run_args.primary)
+                                else 'secondary'
+                            ]},
+                            {'cluster_id': cluster_uuid},
+                            {'node_id': node_uuid},
+                            {'hostname_status': hostnamectl_status},
+                        ]
+                    }
+                }
+                dump_yaml(setup_pillar_path, data)
 
             #   preseed minion keys
             node_key_pem_tmp = node_pki_dir / f'{node.minion_id}.pem'
@@ -789,12 +856,12 @@ class SetupProvisioner(CommandParserFillerMixin):
                 [
                     'cp', '-f',
                     str(node_key_pub),
-                    str(master_minions_pki_dir / node.minion_id)
+                    str(salt_master_minions_pki_dir / node.minion_id)
                 ]
             )
 
-    def _prepare_cortx_repo_pillar(
-        self, profile_paths, repos_data: Dict
+    def _prepare_release_pillar(
+        self, profile_paths, repos_data: Dict, run_args
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
@@ -807,6 +874,12 @@ class SetupProvisioner(CommandParserFillerMixin):
         else:
             pillar = {
                 'release': {
+                    'type': (
+                        'bundle'
+                        if run_args.dist_type == config.DistrType.BUNDLE
+                        else 'internal'
+                    ),
+                    'target_build': run_args.target_build,
                     'base': {
                         'repos': repos_data
                     }
@@ -849,7 +922,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             ]
         )
 
-    def run(self, nodes, **kwargs):  # noqa: C901 FIXME
+    def _run(self, nodes, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: gitlab | gitrepo | rpm
@@ -930,7 +1003,7 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
-        logger.info("Copy config.ini to nodes")
+        logger.info("Copying config.ini to file root")
         self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
@@ -944,13 +1017,43 @@ class SetupProvisioner(CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        elif run_args.source == 'iso':
-            logger.info("Preparing CORTX repos pillar")
-            self._prepare_cortx_repo_pillar(
-                paths, {
-                    'cortx': f"salt://{run_args.iso_cortx.name}",
-                    'cortx_deps': f"salt://{run_args.iso_cortx_deps.name}"
+        else:  # iso or rpm
+            if run_args.source == 'iso':
+                repos = {
+                    'cortx_iso': f"salt://{run_args.iso_cortx.name}",
+                    '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
                 }
+            else:  # rpm
+                if run_args.dist_type == config.DistrType.BUNDLE:
+                    repos = {
+                        'cortx_iso': f"{run_args.target_build}/cortx_iso",
+                        '3rd_party': f"{run_args.target_build}/3rd_party"
+                    }
+                else:
+                    repos = {
+                        'cortx_iso': f'{run_args.url_cortx}',
+                        '3rd_party': f'{run_args.url_cortx_deps}'
+                    }
+
+            # FIXME rhel and centos repos
+            if run_args.dist_type == config.DistrType.BUNDLE:
+                # assume that target_build here is
+                # a base dir for bundle distribution
+                repos.update({
+                    '3rd_party_epel': (
+                        f"{run_args.target_build}/3rd_party/EPEL-7"
+                    ),
+                    '3rd_party_saltstack': (
+                        f"{run_args.target_build}/3rd_party/commons/saltstack-3001"  # noqa: E501
+                    ),
+                    '3rd_party_glusterfs': (
+                        f"{run_args.target_build}/3rd_party/commons/glusterfs"
+                    )
+                })
+
+            logger.info("Preparing CORTX repos pillar")
+            self._prepare_release_pillar(
+                paths, repos, run_args
             )
 
         if run_args.ha and not run_args.field_setup:
@@ -988,7 +1091,8 @@ class SetupProvisioner(CommandParserFillerMixin):
         #      is not enough trusted)
         #   - iso is mounted to a location inside user local data
         #   - a repo file is created and pointed to the mount directory
-        if run_args.source == 'iso':  # TODO EOS-12076 IMPROVE hard-coded
+        # TODO EOS-12076 IMPROVE hard-coded
+        if run_args.source in ('iso', 'rpm'):
             # copy ISOs onto remotes and mount
             ssh_client.state_apply('repos')
         else:
@@ -1007,9 +1111,13 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
 
-        if run_args.source == 'local':
-            logger.info("Installing provisioner from a local source")
-            ssh_client.state_apply('provisioner.local')
+        logger.info(
+            f"Installing provisioner from a '{run_args.source}' source"
+        )
+        if run_args.source in ('iso', 'rpm'):
+            ssh_client.state_apply('provisioner.install')
+        elif run_args.source == 'local':
+            ssh_client.state_apply('provisioner.install.local')
         else:
             raise NotImplementedError(
                 f"{run_args.source} provisioner source is not supported yet"
@@ -1029,8 +1137,8 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         # TODO DOC how to pass inline pillar
 
-        # TODO IMPROVE EOS-9581 log masters as well
-        logger.info("Configuring salt masters")
+        # TODO IMPROVE EOS-9581 log salt-masters as well
+        logger.info("Configuring salt-masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
             targets=master_targets,
@@ -1058,7 +1166,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 )
 
             logger.info("Configuring glusterfs servers")
-            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regardin /srv
+            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
             #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
             glusterfs_server_pillar = {
                 'glusterfs_dirs': [
@@ -1132,9 +1240,10 @@ class SetupProvisioner(CommandParserFillerMixin):
                     targets=run_args.primary.minion_id,
                 )
 
-        # FIXME EOS-8473 not necessary for rpm setup
-        logger.info("Installing provisioner API")
-        ssh_client.state_apply('provisioner.api_install')
+        # not necessary for rpm setup
+        if run_args.source == 'local':
+            logger.info("Installing provisioner API")
+            ssh_client.state_apply('provisioner.api_install')
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
@@ -1143,12 +1252,61 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Ensuring salt minions are ready")
         nodes_ids = [node.minion_id for node in run_args.nodes]
         ssh_client.cmd_run(
-            f"python3 -c \"from provisioner import salt_minion; salt_minion.ensure_salt_minions_are_ready({nodes_ids})\"",  # noqa: E501
+            (
+                f"python3 -c \"from provisioner import salt_minion; "
+                f"salt_minion.ensure_salt_minions_are_ready({nodes_ids})\""
+            ),
             targets=master_targets
         )
 
+        # Note. in both cases (ha and non-ha) we need user pillar update
+        # only on primary node, in case of ha it would be shared for other
+        # masters
+        logger.info("Updating release distribution type")
+        ssh_client.cmd_run(
+            (
+                '/usr/local/bin/provisioner pillar_set --fpath release.sls'
+                f' release/type \'"{run_args.dist_type.value}"\''
+            ), targets=run_args.primary.minion_id
+        )
+
+        if run_args.target_build:
+            logger.info("Updating target build pillar")
+            ssh_client.cmd_run(
+                (
+                    'provisioner pillar_set --fpath release.sls'
+                    f' release/target_build \'"{run_args.target_build}"\''
+                ), targets=run_args.primary.minion_id
+            )
+
+            logger.info("Get release factory version")
+            if run_args.dist_type == config.DistrType.BUNDLE:
+                url = f"{run_args.target_build}/cortx_iso"
+            else:
+                url = run_args.target_build
+
+            if url.startswith(('http://', 'https://')):
+                ssh_client.cmd_run(
+                    (
+                       f'curl {url}/RELEASE.INFO '
+                       f'-o /etc/yum.repos.d/RELEASE_FACTORY.INFO'
+                    )
+                )
+            elif url.startswith('file://'):
+                # TODO TEST EOS-12076
+                ssh_client.cmd_run(
+                    (
+                       f'cp -f {url[7:]}/RELEASE.INFO '
+                       f'/etc/yum.repos.d/RELEASE_FACTORY.INFO'
+                    )
+                )
+            else:
+                raise ValueError(
+                    f"Unexpected target build: {run_args.target_build}"
+                )
+
         # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
-        #      CONFIGURED AND MIGHT BE USED INSTED OF SALT-SSH BASED CONTROL
+        #      CONFIGURED AND MIGHT BE USED INSTEAD OF SALT-SSH BASED CONTROL
 
         logger.info("Configuring provisioner logging")
         for state in [
@@ -1163,16 +1321,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Updating BMC IPs")
         ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
 
-        if run_args.target_build:
-            logger.info("Updating target build pillar")
-            # Note. in both cases (ha and non-ha) we need user pillar update
-            # only on primary node, in case of ha it would be shared for other
-            # masters
-            ssh_client.cmd_run(
-                (
-                    '/usr/local/bin/provisioner pillar_set --fpath release.sls'
-                    f' release/target_build \'"{run_args.target_build}"\''
-                ), targets=run_args.primary.minion_id
-            )
-
         return setup_ctx
+
+    def run(self, *args, **kwargs):
+        self._run(*args, **kwargs)
+
+        logger.info("Done")

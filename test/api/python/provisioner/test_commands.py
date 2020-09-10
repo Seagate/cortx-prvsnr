@@ -622,7 +622,9 @@ def test_commands_SWUpdate_run_happy_path(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -724,8 +726,8 @@ def test_commands_SWUpdate_run_sw_stack_update_failed(
 
     # TODO IMPROVE parametrize to emulate errors on different stages:
     #      - during provisioner update
-    #      - during salt master confrig (first time and on rollback)
-    #      - during salt minions confrig (first time and on rollback)
+    #      - during salt-master config (first time and on rollback)
+    #      - during salt-minions config (first time and on rollback)
     #      - ensure_salt_master_is_running on rollback
     def apply_side_effect(component, *args, **kwargs):
         if component == 'motr':
@@ -827,7 +829,9 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['YumRollbackManager']().__exit__(
@@ -898,7 +902,9 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -970,7 +976,9 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -1042,7 +1050,9 @@ def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('motr', 's3server', 'hare', 'sspl', 'csm')
+        for component in (
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm'
+        )
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),

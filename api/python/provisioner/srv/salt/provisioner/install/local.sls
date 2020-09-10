@@ -11,28 +11,16 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-# TODO detect centos instead
-{% if "RedHat" not in grains['os'] %}
+# TODO IMPROVE EOS-8473 move to pillar to make configurable
+{% set install_dir = '/opt/seagate/cortx/provisioner' %}
 
-glusterfs_repo_is_installed:
-  pkg.installed:
-    - pkgs:
-      - centos-release-gluster7
-
-{% else  %}
-
-# FIXME need to use gluster from official  RedHat repos
-# centos-release-gluster7 not available for redhat hence adding repo manually
-glusterfs_repo_is_installed:
-  pkgrepo.managed:
-    - name: glusterfs
-    - humanname: glusterfs-7
-    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
-    - gpgcheck: 0
-    - enabled: 1
-
-{% endif %}
+repo_installed:
+  file.recurse:
+    - name: {{ install_dir }}
+    - source: salt://provisioner/files/repo
+    - keep_source: True
+    - clean: True  # ???

@@ -38,7 +38,7 @@ from provisioner.inputs import (
     PillarInputBase,
     ParamsList,
     ParamGroupInputBase,
-    NTP, Network,
+    NTP, Network, NetworkParams,
     ParamDictItemInputBase,
     SWUpdateRepo
 )
@@ -524,10 +524,10 @@ def test_inputs_NTP():
 
 
 def test_inputs_NETWORK():
-    assert Network._param_group == 'network'
+    assert NetworkParams._param_group == 'network'
     for param in _param_spec:
         param = Path(param)
-        if str(param.parent) == Network._param_group:
+        if str(param.parent) == NetworkParams._param_group:
             fattr = attr.fields_dict(Network)[param.name]
             if param.name in (
                 'dns_servers',

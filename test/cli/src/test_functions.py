@@ -29,7 +29,7 @@ from .helper import run_script as _run_script
 logger = logging.getLogger(__name__)
 
 
-CORTX_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
+CORTX_RELEASE_TEST_TAG = 'Cortx-1.0.0-PI.3-sprint11'
 
 # TODO
 #   - a way (marker) to split tests into groups:
@@ -826,8 +826,7 @@ def test_functions_install_provisioner_rpm(
     assert res.rc == 0
 
     assert mhost.host.package('cortx-prvsnr').is_installed
-    # TODO EOS-11551 enable later
-    # assert mhost.host.package('python36-cortx-prvsnr').is_installed
+    assert mhost.host.package('python36-cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
@@ -1010,11 +1009,11 @@ def test_functions_install_salt(
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("master", [True, False], ids=['master', 'minion'])
+@pytest.mark.parametrize("primary", [True, False], ids=['master', 'minion'])
 def test_functions_configure_salt(
-    run_script, mlocalhost, ssh_config, remote, master, project_path, request
+    run_script, mlocalhost, ssh_config, remote, primary, project_path, request
 ):
-    host_label = 'srvnode1' if master else 'srvnode2'
+    host_label = 'srvnode1' if primary else 'srvnode2'
     mhost = request.getfixturevalue('mhost' + host_label)
     _ = request.getfixturevalue('install_provisioner')
 
@@ -1022,7 +1021,7 @@ def test_functions_configure_salt(
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
     with_sudo = 'false'  # TODO
-    is_master = 'true' if master else 'false'
+    is_master = 'true' if primary else 'false'
 
     script = """
         configure_salt {} {} {} {} {}
@@ -1055,7 +1054,7 @@ def test_functions_configure_salt(
     assert mhost.host.service('salt-minion').is_enabled
     assert mhost.host.service('salt-minion').is_running
 
-    if master:
+    if primary:
         assert mhost.host.service('salt-master').is_enabled
         assert mhost.host.service('salt-master').is_running
 
@@ -1064,7 +1063,7 @@ def test_functions_configure_salt(
     )
     grains = json.loads(output)['local']
     assert 'roles' in grains
-    assert grains['roles'] == ['primary'] if master else ['secondary']
+    assert grains['roles'] == ['primary'] if primary else ['secondary']
     assert grains['id'] == minion_id
 
 

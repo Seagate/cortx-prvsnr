@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
 
-DOCKER_IMAGES_REPO = "seagate/ees-prvsnr"
+DOCKER_IMAGES_REPO = "seagate/cortx-prvsnr"
 VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
 
 SSH_KEY_FILE_NAME = "id_rsa.test"
@@ -599,7 +599,7 @@ def _rpmbuild_mhost(
     try:
         return discover_remote(request, remote)
     except Exception:
-        remote.destoy()
+        remote.destroy()
         raise
 
 
@@ -832,7 +832,7 @@ def build_docker_image_fixture(os_name, env_level):  # noqa: C901 FIXME
             try:
                 mhost = discover_remote(request, remote)
             except Exception:
-                remote.destoy()
+                remote.destroy()
                 raise
 
             with mhost.remote as _:

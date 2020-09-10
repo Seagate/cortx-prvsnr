@@ -132,7 +132,7 @@ class ReplaceNode(SetupProvisioner):
         #   salt's local client is available since the command
         #   should be run on a healthy node
         primary_id = local_minion_id()
-        setup_ctx = super().run(
+        setup_ctx = super()._run(
             nodes=[nodes.pop(primary_id)] + list(nodes.values()),
             **kwargs
         )
@@ -140,7 +140,7 @@ class ReplaceNode(SetupProvisioner):
         logger.info("Updating replace node data in pillar")
         setup_ctx.ssh_client.cmd_run(
             (
-                '/usr/local/bin/provisioner pillar_set --fpath cluster.sls '
+                'provisioner pillar_set --fpath cluster.sls '
                 f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
             ), targets=run_args.node_id
         )

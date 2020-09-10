@@ -12,18 +12,24 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 
-set -euE
+set -eE
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/cortx-prereqs.log}"
 export LOG_FILE
 
 tmpdir="/tmp/_cortx_prereqs_"
 mkdir -p $tmpdir
+
+tgt_build=
+cortx_deps_repo=
+saltstack_repo=
+epel_repo=
+bundled_release=false
 
 # Repo url for in house built commons packages Non RHEL systems
 url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/"
@@ -71,7 +77,7 @@ usage()
     Cortx Prerequisite script.
 
     Usage:
-         $0 [--disable-sub-mgr] [-h|--help]
+         $0 [-t <target build url>] [--disable-sub-mgr] [-h|--help]
 
     OPTION:
     --disable-sub-mgr     For RHEL. To install prerequisites by disabling
@@ -79,25 +85,66 @@ usage()
                           If this option is not provided it is expected that
                           either the system is not RHEL or system is already
                           registered with subscription manager.
+    -t                    target build url pointed to release bundle base directory,
+                          if specified the following directory structure is assumed:
+                          <base_url>/
+                               rhel7.7 or centos7.7   <- OS ISO is mounted here
+                               3rd_party              <- CORTX 3rd party ISO is mounted here
+                               cortx_iso              <- CORTX ISO (main) is mounted here
     "
     exit 0
 }
 
 parse_args()
 {
-    if [[ "$#" -gt 0 ]]; then
+    while [[ $# -gt 0 ]]; do
         case "$1" in
         --disable-sub-mgr)
             disable_sub_mgr_opt=true
+            shift
         ;;
         -h|--help)
             usage
         ;;
+        -t)
+            [ -z "$2" ] &&
+                echo "Error: Target build not provided" && exit 1;
+            tgt_build="$2"
+
+            bundled_release=true
+
+            grep -q "Red Hat" /etc/*-release && {
+                subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
+                subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
+                if echo "$subc_list" | grep -q "Subscribed" && "$subc_status" == "Current"; then
+                    system_repo="${tgt_build}/rhel7.7"
+                else
+                    system_repo="${tgt_build}/centos7.7"
+                fi
+            } || {
+                system_repo="${tgt_build}/centos7.7"
+            }
+
+            #grep -q "Red Hat" /etc/*-release && {
+            #    system_repo="${tgt_build}/rhel7.7"
+                # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
+            #} || {
+            #    system_repo="${tgt_build}/centos7.7"
+            #}
+
+            cortx_deps_repo="${tgt_build}/3rd_party"
+            epel_repo="${cortx_deps_repo}/EPEL-7"
+
+            url_saltstack_repo="${cortx_deps_repo}/commons/saltstack-3001"
+            url_local_repo_commons_rhel="$cortx_deps_repo"
+            url_local_repo_commons="$cortx_deps_repo"
+
+            shift 2 ;;
         *)
             echo -e "\nERROR: Unknown option provided: $1"
             exit 1
         esac
-    fi
+    done
 }
 
 create_commons_repo_rhel()
@@ -121,47 +168,63 @@ EOF
 create_commons_repos()
 {
     cortx_commons_url="${1:-$url_local_repo_commons}"
-    _repo="/etc/yum.repos.d/cortx_commons.repo"
+    local _repo="/etc/yum.repos.d/cortx_commons.repo"
+    local _url="$cortx_commons_url"
     echo -ne "\tCreating ${_repo}................." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_commons]
 name=cortx_commons
 gpgcheck=0
 enabled=1
-baseurl=$cortx_commons_url
+baseurl=$_url
 EOL
     echo "Done" | tee -a ${LOG_FILE}
+
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
+    if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
+        _url="${system_repo}/os/"
+    else
+        _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/"
+    fi
     echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_base]
 name=cortx_platform_base
 gpgcheck=0
 enabled=1
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
+baseurl=$_url
 EOL
     echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
-    echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}}
+    if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
+        _url="${system_repo}/extras/";    # FIXME EOS-12508
+    else
+        _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/"
+    fi
+    echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_extras]
 name=cortx_platform_extras
 gpgcheck=0
 enabled=1
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
+baseurl=$_url
 EOL
     echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/epel.repo"
+    if [[ "$bundled_release" == true ]]; then
+        _url="$epel_repo"
+    else
+        _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
+    fi
     echo -ne "\tCreating ${_repo}.........................." 2>&1 | tee -a ${LOG_FILE}
-
 cat <<EOL > ${_repo}
 [epel]
 name=epel
 gpgcheck=0
 enabled=1
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
+baseurl=$_url
 EOL
 
     echo "Done." 2>&1 | tee -a ${LOG_FILE}
@@ -211,7 +274,8 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
     }
 
 else
-    grep -q "Red Hat" /etc/*-release && { 
+    grep -q "Red Hat" /etc/*-release && {
+        # FIXME EOS-12508 do we need an iso for rhel7.7 if subscription is kept enabled
         echo "INFO: Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
         subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
         subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
@@ -274,7 +338,11 @@ else
                 #echo "INFO: Installing the Public Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 #yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
-                create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
+                if [[ "$bundled_release" == true ]]; then
+                    create_commons_repo_rhel "epel" "$epel_repo"
+                else
+                    create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
+                fi
             }
             cat ${repos_all} | grep -q rhel-ha-for-rhel-7-server-rpms && {
                 echo -n "INFO: RHEL HA repository is available from subscription, enabling it...." 2>&1 | tee -a ${LOG_FILE}
@@ -295,10 +363,10 @@ else
             # Create commons repo for installing mellanox drivers
             echo "INFO: Enabling repo for in house built commons packages for Cortx" 2>&1 | tee -a ${LOG_FILE}
             create_commons_repo_rhel "cortx_commons" "$url_local_repo_commons_rhel"
-            
+
             echo "INFO: Taking backup of /etc/yum.repos.d/*.repo to ${_bkpdir}"
             yes | cp -rf /etc/yum.repos.d/*.repo ${_bkpdir}
-            
+
             #echo "INFO: Installing yum-plugin-versionlock" 2>&1 | tee ${LOG_FILE}
             #yum install -y yum-plugin-versionlock
             #echo "INFO: Restricting the kernel updates to current kernel version" 2>&1 | tee -a ${LOG_FILE}
@@ -327,7 +395,7 @@ rpm -qa|grep "pciutils-"|grep -qv "pciutils-lib" && {
     echo "INFO: Installing pciutils package" 2>&1 | tee -a ${LOG_FILE}
     yum install -y pciutils 2>&1 | tee -a ${LOG_FILE}
 }
-if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
+if ( lspci -d"15b3:*"|grep Mellanox ) ; then
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {

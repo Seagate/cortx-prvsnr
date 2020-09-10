@@ -45,6 +45,7 @@ add_{{repo.id}}_repo:
     - gpgcheck: 0
     - require:
       - Cleanup yum repos directory
+    - onlyif: test -z /etc/yum.repos.d/{{ repo.id }}.repo
 {% endfor %}
 {%- endif %}
 
@@ -64,7 +65,7 @@ Add EPEL repo:
     - humanname: epel
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
-    - requrie:
+    - require:
       - Reset EPEL
       - Configure yum
 

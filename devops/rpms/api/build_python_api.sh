@@ -164,7 +164,7 @@ cp -r "${input_dir}/." "${tmp_dir}"
 input_dir="$tmp_dir"
 
 pushd "$output_dir"
-    rm -f python36-cortx-prvsnr*
+    rm -f python3*-cortx-prvsnr*
 popd
 
 if [[ "$in_docker" == true ]]; then

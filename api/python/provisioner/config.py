@@ -50,7 +50,7 @@ PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 # PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 
-# reflects master file_roots configuration
+# reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
 # PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
@@ -266,6 +266,13 @@ REPO_BUILD_DIRS = [
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
+
+
+class DistrType(Enum):
+    """Distribution types"""
+    CORTX = "cortx"       # only cortx packages
+    BUNDLE = "bundle"     # coxrt packages along with all dependencies
+
 
 # Defines a "frozen" list for allowed commands and supported by provisioner
 # API for remote execution

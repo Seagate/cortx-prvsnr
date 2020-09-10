@@ -919,15 +919,41 @@ def pillar_refresh(targets=ALL_MINIONS):
 # TODO IMPROVE EOS-9484 think about better alternative to get separated
 #      stderr and stdout streams that makes sense sometimes even if a command
 #      don't fail (e.g. use 'run_all' instead)
-# TODO: add support of optional user defined `kwargs` parameters
-def cmd_run(cmd, targets=ALL_MINIONS, background=False, timeout=None):
+def cmd_run(
+    cmd,
+    targets=ALL_MINIONS,
+    background=False,
+    timeout=None,
+    fun_kwargs: Optional[Dict] = None,
+    **kwargs
+):
+    if fun_kwargs is None:
+        fun_kwargs = {}
+    # TODO IMPROVE EOS-12076 wrapper args vs direct salt's ones
+    fun_kwargs['bg'] = background
     return function_run(
         'cmd.run',
         fun_args=[cmd],
-        fun_kwargs=dict(bg=background),
+        fun_kwargs=fun_kwargs,
         targets=targets,
-        timeout=timeout
+        timeout=timeout,
+        **kwargs
     )
+
+
+# TODO TEST EOS-12076
+def sls_exists(state, targets=ALL_MINIONS, summary_only=True, **kwargs):
+    res = function_run(
+        'state.sls_exists',
+        fun_args=[state],
+        targets=targets,
+        **kwargs
+    )
+
+    if summary_only:
+        return set(res.values()) == {True}
+    else:
+        return res
 
 
 # TODO TEST
@@ -992,13 +1018,15 @@ def provisioner_cmd(
             return process_provisioner_cmd_res(res)
 
 
-def states_apply(states: List[Union[str, State]], targets=ALL_MINIONS):
+def states_apply(
+    states: List[Union[str, State]], targets=ALL_MINIONS, **kwargs
+):
     # TODO multiple states at once
     ret = {}
     for state in states:
         state = State(state)
         res = function_run(
-            'state.apply', fun_args=[state.name], targets=targets
+            'state.apply', fun_args=[state.name], targets=targets, **kwargs
         )
         ret[state.name] = res
 
@@ -1042,7 +1070,7 @@ def copy_to_file_roots(
 
     if source.is_dir():
         # TODO
-        #  - file.recurse expects only dirs from master file roots
+        #  - file.recurse expects only dirs from salt-master file roots
         #    (salt://), need to find another alternative to respect
         #    indempotence
         # StateFunExecuter.execute(
@@ -1072,7 +1100,7 @@ def copy_to_file_roots(
         )
 
     # TODO DOC
-    # ensure it would be visible for Salt master / minions
+    # ensure it would be visible for salt-master / salt-minions
     runner_function_run(
         'fileserver.clear_file_list_cache',
         fun_kwargs=dict(backend='roots')
@@ -1084,9 +1112,11 @@ def copy_to_file_roots(
 @attr.s(auto_attribs=True)
 class StatesApplier:
     @staticmethod
-    def apply(states: List[State], targets: str = ALL_MINIONS) -> None:
+    def apply(
+        states: List[State], targets: str = ALL_MINIONS, **kwargs
+    ) -> None:
         if states:
-            return states_apply(states=states, targets=targets)
+            return states_apply(states=states, targets=targets, **kwargs)
 
 
 # TODO tests
@@ -1465,7 +1495,7 @@ def _salt_caller_cmd(*args, **kwargs):
     try:
         # TODO
         #  - consider to use --local arg to reduce
-        #    unnecessary connections with master
+        #    unnecessary connections with salt-master
         res = salt_caller().cmd(*args, full_return=True, **kwargs)
     except Exception as exc:
         # TODO too generic
