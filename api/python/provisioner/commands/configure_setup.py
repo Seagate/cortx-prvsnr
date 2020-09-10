@@ -120,11 +120,11 @@ class StorageEnclosureParamsValidation:
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
     data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_ipaddr: str = NodeNetworkParams.data_nw_ipaddr
+    public_ip_addr: str = NodeNetworkParams.public_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
-    _optional_param = ['data_nw_ipaddr']
+    _optional_param = ['public_ip_addr']
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
