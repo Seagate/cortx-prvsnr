@@ -58,7 +58,6 @@ srvnode_2_hostname=
 
 base_options_usage="\
   -h,  --help                     print this help and exit
-  -F,  --ssh-config FILE          alternative path to ssh configuration file
   -v,  --verbose                  be more verbose
 "
 # disabled options (EOS-2410)

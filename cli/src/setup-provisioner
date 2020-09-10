@@ -66,8 +66,7 @@ ssh configuration and configures salt-master/salt-minion connections
 and also makes some additional preliminary configuration.
 
 'ldr-r1-prvsnr-version' as an optional positional argument might specify
-the desired version of the provisioner to install. Makes sense for 'gitlab'
-source only as of now. Not set by default.
+the desired version of the provisioner to install. Not set by default.
 
 General options:
 $base_options_usage
@@ -75,7 +74,7 @@ $base_options_usage
 Options:
        --srvnode-2=[user@]hostname      srvnode-2 host specification,
                                          default: $srvnode_2_hostspec
-       --repo-src={local|gitrepo|rpm}    the source for provisioner repo installation,
+       --repo-src={local|rpm}    the source for provisioner repo installation,
                                          default: $prvsnr_repo_src
        --salt-master=HOSTNAME           domain name or IP of the salt-master
                                          default: not specified
