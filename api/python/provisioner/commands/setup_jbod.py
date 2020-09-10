@@ -60,13 +60,7 @@ class SetupJBOD(CommandParserFillerMixin):
             nodes, **setup_provisioner_args
         )
 
-        # FIXME setup type is not DUAL, need generic solution
-        if setup_provisioner_args.get('config_path') and False:
-            raise NotImplementedError(
-                "ini file configuration is not yet supported "
-                "for setup_jbod command"
-            )
-
+        if setup_provisioner_args.get('config_path'):
             logger.info("Configuring setup using config.ini")
             setup_ctx.ssh_client.cmd_run(
                 (
