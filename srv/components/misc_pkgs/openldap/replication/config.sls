@@ -49,5 +49,4 @@ Cleanup ldif files:
   file.absent:
     - name: /opt/seagate/cortx/provisioner/generated_configs/ldap
 
-{% endfor %}}
 {% endif -%}
