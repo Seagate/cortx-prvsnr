@@ -147,12 +147,22 @@ class StorageEnclosureParamsValidation:
 @attr.s(auto_attribs=True)
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
+    is_primary: str = NodeNetworkParams.is_primary
     data_nw_iface: List = NodeNetworkParams.data_nw_iface
     public_ip_addr: str = NodeNetworkParams.public_ip_addr
+    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
+    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
+    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
-    _optional_param = ['public_ip_addr']
+    _optional_param = [
+        'public_ip_addr',
+        'is_primary',
+        'data_nw_netmask',
+        'data_nw_gateway',
+        'pvt_ip_addr'
+    ]
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
@@ -177,7 +187,9 @@ class ConfigureSetup(CommandParserFillerMixin):
         params = {}
         for key in input:
             val = key.split(".")
-            if val[-1] in ['ip', 'user', 'secret', 'ipaddr', 'iface']:
+            if val[-1] in [
+                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway', 'netmask'
+            ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
                 params[val[-1]] = input[key]
