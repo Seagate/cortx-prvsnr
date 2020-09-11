@@ -16,6 +16,13 @@
 #
 
 release:
+    type: internal  # value 'bundle' will switch to bundled distribution
+                    # repo structure assumptions, where 'target_build'
+                    # defines the base url:
+                    # <base_url>/
+                    #   rhel7.7 or centos7.7   <- OS ISO is mounted here
+                    #   3rd_party              <- CORTX 3rd party ISO is mounted here
+                    #   cortx_iso              <- CORTX ISO (main) is mounted here
     base:
         # TODO IMPROVE EOS-12076 EOS-12334
         #      the same base location as for update repos so they might
