@@ -1,73 +1,177 @@
-# Code reviews and commits  
-## Git setup on development box
+- [1.0 Prerequisites](#10-Prerequisites)
+- [1.2 Set up Git on your Development Box](#12-Set-Up-Git-on-your-Development-Box)
+- [1.3 Submit your changes](#13-Submit-your-Changes)
+   * [1.3.1 Clone the cortx-prvsnr repository](#131-Clone-the-cortx-prvsnr-repository)
+   * [1.3.2 Code Commits](#132-Code-commits)
+   * [1.3.3 Create a Pull Request](#133-Create-a-Pull-Request)
+- [1.4 Run Jenkins and System Tests](#14-Run-Jenkins-and-System-Tests)
+- [FAQs](FAQs)
 
-`$ yum -y install git`
+Contributing to the CORTX-Provisioner repository is a three-step process where you'll need to:
 
-*  Setup the git config options
-  `$ git config --global user.name ‘<First_Name> <Last_Name>’`  
-  `$ git config --global user.email ‘<Your_Name>@<email_domain>.com’`  
-  To work on a feature and submit review to GitHub  
+1. [Clone the cortx-prvsnr repository](#131-Clone-the-cortx-prvsnr-repository)
+2. [Commit your Code](#132-Code-commits)
+3. [Create a Pull Request](#133-Create-a-Pull-Request)
 
-*  Clone cortx-prvsnr  
+## 1.0 Prerequisites
 
-  Each contributor needs to do 'fork' to create their own private cortx-motr and motr-galois repository.  
-  Go to homepage of cortx-motr repository on GitHub, there you will see 'fork' at top right corner.  
-  `$ git clone https://github.com/Seagate/cortx-prvsnr.git`  
+<details>
+  <summary>Before you begin</summary>
+    <p>
 
-*  Ensure you have checkout “main” branch  
-  `$ git checkout -B main origin/main`  
+Before you set up your GitHub, you'll need to
+1. Generate the SSH key on your development box using:
 
-  Now checkout your new branch for saving your code Example git checkout -B / Username = name or initials, example “John” or just “JB”  
-  `$ git checkout -B 'username-your-local-branch-name' origin/main`  
+    ```shell
 
-*  Make code changes  
-  Add files to be pushed to git to staged area  
-  `$ git add foo/somefile.py`  
-  Add all such files  
+    $ ssh-keygen -o -t rsa -b 4096 -C "your email-address"
+    ```
+2. Add the SSH key to your GitHub Account:
+   1. Copy the public key: `id_rsa.pub`. By default, your public key is located at `/root/.ssh/id_rsa.pub`
+   2. Navigate to [GitHub SSH key settings](https://github.com/settings/keys) on your GitHub account.
 
-  Make sure build passes locally using these steps & commit your changes  
-  `$ git commit --signoff -m "Provisioner-component : Appropriate Feature/Change Description"`
+      :page_with_curl:**Note:** Ensure that you've set your Seagate Email ID as the Primary Email Address associated with your GitHub Account. SSO will not work if you do not set  your Seagate Email ID as your Primary Email Address.
 
-  Check git log to see your commit, verify the author name  
-  `$ git log`
+   3. Paste the SSH key you generated in Step 1 and select *Enable SSO*.
+   4. Click **Authorize** to authorize SSO for your SSH key.
+   5. [Create a Personal Access Token or PAT](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token).
 
-  If author name is not set properly then set using following command  
-  `$ git commit --amend --author="Author Name < email@address.com >" --signoff`
+    :page_with_curl:**Note:** Ensure that you have enabled SSO for your PAT.
 
-  Make sure your git configs options are set properly.  
-  **Note here the commit hook should add a ChangeID, something like**
-  ```
-  commit 918c33f0cdf4c3c8aae505157434646cfed93a6c  
-  Author: <FirstName> <LastName> <firstname.lastname@email_domain.com>  
-  Date:   Thu Aug 22 07:58:01 2017 +0530  
+   </p>
+    </details>
 
-    <Cortx-Prvsnr>: This parameter not supported by systemd in our hardware
-  ```
+## 1.2 Set Up Git on your Development Box
 
-*  Push your changes to GitHub
-  `$ git push origin 'username-your-local-branch-name'`
+<details>
+  <summary>Before you begin</summary>
+    <p>
 
-  **Before pushing, TAKE A PAUSE. Have you rebased your branch? If not then doing right now to avoid merge conflicts on github.**  
-  `$ git pull --rebase`  
+1. Update Git to the latest version. If you're on an older version, you'll see errors in your commit hooks that look like this:
 
-*  Open pull request for review  
-  *  Open the URL given in the output of 'git push' command above.  
-  *  Select base:branch as 'main' from the dropdown.  
-  *  Click 'Create pull request' to create the pull request.  
-  *  Add reviewers to get feedback on your changes.
-  *  Running Jenkins / System tests
-  *  Jenkins job will get trigerred automatically and results about static analysis and build health will get reflect in you PR dashboard.
+     `$ git commit`
 
-*  How to rebase your local branch on latest main branch code?  
-  `$ git checkout main`  
-  `$ git fetch origin`  
-  `$ git submodule update --init --recursive`  
-  `$ git checkout -B 'username-your-local-branch-name' origin/username-your-local-branch-name`  
-  `$ git rebase origin/main`  
+    ```shell
 
-You're all set & You're awesome
-In case of any query feel free to write to our SUPPORT.
+    git: 'interpret-trailers' is not a git command.
+    See 'git --help'
+    cannot insert change-id line in .git/COMMIT_EDITMSG
+    ```
+    </p>
+    </details>
 
-Let's start without a delay to contribute to seagate's open source initiative and join this movement with us keeping a common goal of making data storage better, more efficient and more accessible.
+Once you've installed the prerequisites, follow these steps to set up Git on your Development Box:
 
-Seagate welcomes You! ☺️
+1. Install git-clang-format using: 
+
+    `$ yum install git-clang-format`
+
+2. Set up git config options using:
+
+   ```shell
+
+   $ git config --global user.name ‘Your Name’
+   $ git config --global user.email ‘Your.Name@Domain_Name’
+   $ git config --global color.ui auto
+   $ git config --global credential.helper cache
+   ```
+## 1.3. Submit your Changes
+
+Before you can work on a GitHub feature, you'll need to clone the cortx-prvsnr repository.
+
+### 1.3.1 Clone the cortx-prvsnr repository
+
+You'll need to **Fork** the cortx-prvsnr repository to clone it into your private GitHub repository. Follow these steps to clone the repository to your gitHub account:
+1. Navigate to the 'cortx-prvsnr' repository homepage on GitHub.
+2. Click **Fork**.
+3. Run the following commands in Shell:
+
+   `$ git clone git@github.com:"your-github-id"/cortx-prvsnr.git`
+
+4. Check out to the “main” branch using:
+
+   `$ git checkout main`
+
+   `$ git checkout -b "your-local-branch-name"`
+### 1.3.2 Code Commits
+
+You can make changes to the code and save them in your files.
+
+1. Use the command below to add files that need to be pushed to the git staging area:
+
+    `$ git add foo/somefile.cc`
+
+2. To commit your code changes use:
+
+   `$ git commit -s -m 'comment'` - enter your GitHub Account ID and an appropriate Feature or Change description in comment.
+
+
+3. Check out your git log to view the details of your commit and verify the author name using: `$ git log`
+
+    :page_with_curl: **Note:** If you need to change the author name for your commit, refer to the GitHub article on [Changing author info](https://docs.github.com/en/github/using-git/changing-author-info).
+
+4. To Push your changes to GitHub, use: `$ git push origin 'your-local-branch-name'`
+
+   Your output will look like the Sample Output below:
+
+   ```shell
+
+   Enumerating objects: 4, done.
+   Counting objects: 100% (4/4), done.
+   Delta compression using up to 2 threads
+   Compressing objects: 100% (2/2), done.
+   Writing objects: 100% (3/3), 332 bytes | 332.00 KiB/s, done.
+   Total 3 (delta 1), reused 0 (delta 0)
+   remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+   remote:
+   remote: Create a pull request for 'your-local-branch-name' on GitHub by visiting:
+   remote: https://github.com/<your-GitHub-Id>/cortx-prvsnr/pull/new/<your-local-branch-name>
+   remote: To github.com:<your-GitHub-Id>/cortx-prvsnr.git
+   * [new branch] <your-local-branch-name> -> <your-local-branch-name>
+   ```
+
+### 1.3.3 Create a Pull Request
+
+
+1. Once you Push changes to GitHub, the output will display a URL for creating a Pull Request, as shown in the sample code above.
+
+   :page_with_curl: **Note:** To resolve conflicts, follow the troubleshooting steps mentioned in git error messages.
+2. You'll be redirected to GitHib remote.
+3. Select **main** from the Branches/Tags drop-down list.
+4. Click **Create pull request** to create the pull request.
+5. Add reviewers to your pull request to review and provide feedback on your changes.
+
+## 1.4 Run Jenkins and System Tests
+
+Creating a pull request automatically triggers Jenkins jobs and System tests. To familiarize yourself with jenkins, please visit the [Jenkins wiki page](https://en.wikipedia.org/wiki/Jenkins_(software)).
+
+## FAQs
+
+**Q.** How do I rebase my local branch to the latest main branch?
+
+**A** Follow the steps mentioned below:
+
+```shell
+
+$ git pull origin master
+$ git submodule update --init --recursive
+$ git checkout 'your-local-branch'
+$ git pull origin 'your-remote-branch-name'
+$ git submodule update --init --recursive
+$ git rebase origin/master
+```
+
+## You're All Set & You're Awesome!
+
+We thank you for stopping by to check out the CORTX Community. We are fully dedicated to our mission to build open source technologies that help the world save unlimited data and solve challenging data problems. Join our mission to help reinvent a data-driven world. 
+
+### Contribute to CORTX Provisioner
+
+Please [contribute to the CORTX Project](https://github.com/Seagate/cortx/blob/main/doc/SuggestedContributions.md) and join our movement to make data storage better, efficient, and more accessible.
+
+### Reach Out to Us
+
+You can reach out to us with your questions, feedback, and comments through our CORTX Communication Channels:
+
+- Join our CORTX-Open Source Slack Channel to interact with your fellow community members and gets your questions answered. [![Slack Channel](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/cortxcommunity/shared_invite/zt-femhm3zm-yiCs5V9NBxh89a_709FFXQ?)
+- If you'd like to contact us directly, drop us a mail at cortx-questions@seagate.com.
