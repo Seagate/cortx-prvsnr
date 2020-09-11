@@ -168,10 +168,8 @@ Ensure that you have the correct hardware cofiguration before moving on to the p
   1. Verify and ensure that the IPMI is configured and BMC IPs are assigned on both nodes.
   2. Ensure that you've installed RHEL 7.7 OS and the kernel version is 3.10.0-1062.el7.x86_64. 
   3. Run command `lsb_release -a` to verify that the LSB Module is installed.
-  4. Make sure that direct network connection is established between two server nodes for private data network.   
-  5. Ensure that SAS connections from controllers to servers are not cross connected.
-  6. Verify that the pools and volumes are created on controller and mapped to both the servers. You can do this via controller web-interface from the *Mappings* page.  
-  7. For Provisioner to deploy successfully on RHEL servers, you'll need to either enable or disable the subscription manager with standard RHEL and RHEL HA licenses. You'll need to run the CORTX prerequisite script based on the enabled or disabled licenses on your systems. If you are on a CentOS RedHat system, you can directly run the prerequisite script. 
+  4. Make sure that direct network connection is established between two server nodes for private data network.     
+  5. For Provisioner to deploy successfully on RHEL servers, you'll need to either enable or disable the subscription manager with standard RHEL and RHEL HA licenses. You'll need to run the CORTX prerequisite script based on the enabled or disabled licenses on your systems. If you are on a CentOS RedHat system, you can directly run the prerequisite script. 
      1. You'll need to check whether licenses are enabled on both the servers. To do that, verifying if the subscription manager is enabled by using:
 
          ```shell
