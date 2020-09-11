@@ -30,6 +30,7 @@ Copy multipath config:
     - source: salt://components/system/storage/multipath/files/multipath.conf
     - force: True
     - makedirs: True
+    - template: jinja
     - require:
       - Install multipath
       - Stop multipath service
@@ -38,7 +39,7 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if 'JBOD' not in pillar["storage_enclosure"]["controller"]["type"] %}
+{% if 'JBOD' not in pillar["storage_enclosure"]["type"] %}
 {% if (not pillar['cluster'][grains['id']]['is_primary'])
   or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
