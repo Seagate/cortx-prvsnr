@@ -25,6 +25,8 @@ Sync data:
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+{% if pillar['release']['type'] != 'bundle' %}
+
 {% if (not "RedHat" in grains['os']) or (not salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
 
 # Adding repos here are redundent thing.
@@ -47,7 +49,7 @@ add_{{repo.id}}_repo:
       - Cleanup yum repos directory
     - onlyif: test -z /etc/yum.repos.d/{{ repo.id }}.repo
 {% endfor %}
-{%- endif %}
+{%- endif %}  # not (redhat && subscription)
 
 Configure yum:
   file.managed:
@@ -68,6 +70,8 @@ Add EPEL repo:
     - require:
       - Reset EPEL
       - Configure yum
+
+{% endif %}  # not a bundled release
 
 # Add Saltsatck repo:
 #   pkgrepo.managed:
