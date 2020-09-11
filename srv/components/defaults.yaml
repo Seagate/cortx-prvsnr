@@ -38,7 +38,7 @@ tmp_dir: /tmp
   {% set cortx_commons_url = cortx_deps_repo %}
 
 base_repos:
-  centos_repos: [] # FIXME EOS-12508 extras, updates
+  centos_repos: [] # FIXME redhat with subscription disabled
   #  - id: "cortx_platform_base"
   #    url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', system_repo) }}
   epel_repo:
