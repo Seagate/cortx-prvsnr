@@ -113,16 +113,15 @@ parse_args()
 
             bundled_release=true
 
+            system_repo="${tgt_build}/centos7.7"
             grep -q "Red Hat" /etc/*-release && {
                 subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
                 subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
-                if echo "$subc_list" | grep -q "Subscribed" && "$subc_status" == "Current"; then
-                    system_repo="${tgt_build}/rhel7.7"
-                else
-                    system_repo="${tgt_build}/centos7.7"
+                if echo "$subc_list" | grep -q "Subscribed"; then
+                    if [[ "$subc_status" == "Current" ]]; then
+                        system_repo="${tgt_build}/rhel7.7"
+                    fi
                 fi
-            } || {
-                system_repo="${tgt_build}/centos7.7"
             }
 
             #grep -q "Red Hat" /etc/*-release && {
