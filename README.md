@@ -14,7 +14,7 @@ The main feature of the CORTX-Provisioner is to:
 
 ## Get CORTX-Provisioner Ready! 
 
-Jump to the [CORTX-Provisioner Quickstart Guide](ProvisionerQuickstartGuide.md) to set up CORTX-Provisioner. 
+Jump to the [CORTX-Provisioner Quickstart Guide](CORTX-ProvisionerQuickstartGuide.md) to set up CORTX-Provisioner. 
 
 ## Contribute to CORTX-Provisioner
 
