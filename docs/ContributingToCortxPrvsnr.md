@@ -5,7 +5,7 @@
    * [1.3.2 Code Commits](#132-Code-commits)
    * [1.3.3 Create a Pull Request](#133-Create-a-Pull-Request)
 - [1.4 Run Jenkins and System Tests](#14-Run-Jenkins-and-System-Tests)
-- [FAQs](FAQs)
+- [FAQs](#FAQs)
 
 Contributing to the CORTX-Provisioner repository is a three-step process where you'll need to:
 
