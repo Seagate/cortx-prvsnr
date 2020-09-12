@@ -122,7 +122,10 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         for attr in (
             'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
-            assert getattr(exc.cmd_args, attr) == _locals[attr]
+            if type(exc.cmd_args) is dict:
+                assert exc.cmd_args.get(attr) == _locals[attr]
+            else:
+                assert getattr(exc.cmd_args, attr) == _locals[attr]
         assert exc.cmd_args.kw == _kwargs
 
     salt_cmd_args = []
@@ -314,7 +317,10 @@ def test_salt_client_cmd(monkeypatch):
         for attr in (
             'targets', 'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
-            assert getattr(exc.cmd_args, attr) == _locals[attr]
+            if type(exc.cmd_args) is dict:
+                assert exc.cmd_args.get(attr) == _locals[attr]
+            else:
+                assert getattr(exc.cmd_args, attr) == _locals[attr]
         assert exc.cmd_args.kw == _kwargs
 
     salt_cmd_args = []
