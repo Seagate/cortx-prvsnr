@@ -129,7 +129,6 @@ s3:
       - 514/udp
       - 8125/tcp
       - 6379/tcp
-      - 9080/tcp
       - 9443/tcp
       - 9086/tcp
 
@@ -152,7 +151,6 @@ uds:
 www:
   firewalld.service:
     - ports:
-      - 80/tcp
       - 443/tcp     # HTTPS
 
 Add public data zone:
