@@ -86,7 +86,7 @@ You'll need to **Fork** the cortx-prvsnr repository to clone it into your privat
 2. Click **Fork**.
 3. Run the following commands in Shell:
 
-   `$ git clone git@github.com:"your-github-id"/cortx-prvsnr.git`
+   `$ git clone --recursive git@github.com:"your-github-id"/cortx-prvsnr.git`
 
 4. Check out to the “main” branch using:
 
