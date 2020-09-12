@@ -98,7 +98,7 @@ controlpath_states=(
     "csm"
     "uds"
     "ha.ctrlstack-ha"
-    # "ha.cortx-ha.ha"
+    "ha.cortx-ha.ha"
 )
 
 # states to be applied in desired sequence
@@ -107,7 +107,7 @@ backup_states=(
     # "motr.backup" # TODO: Awaiting EOS-12637 fix
     "s3server.backup"
     "hare.backup"
-    # "ha.iostack-ha.backup"
+    "ha.iostack-ha.backup"
     "sspl.backup"
     "csm.backup"
 )
@@ -210,21 +210,28 @@ function run_states {
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
                 l_info "Applying 'components.ha.corosync-pacemaker.config.stonith' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
-            elif [[ "$state" == "system.storage.teardown" ]] ; then
-                # Execute first on srvnode-2 then on srvnode-1.
-                if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.storage ]]; then
-                    l_info "Applying 'components.$state' for srvnode-2"
-                    $cmd salt srvnode-2 state.apply components.$state  $salt_opts
-                    sleep 2     # Mindfulness break
-                fi
-                if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.storage ]]; then
-                    l_info "Applying 'components.$state' for srvnode-1"
-                    $cmd salt srvnode-1 state.apply components.$state  $salt_opts
-                    sleep 2     # Mindfulness break
-                fi
+            # elif [[ "$state" == "system.storage.teardown" ]] ; then
+            #     # Execute first on srvnode-2 then on srvnode-1.
+            #     if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-2.storage ]]; then
+            #         l_info "Applying 'components.$state' for srvnode-2"
+            #         $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+            #         sleep 2     # Mindfulness break
+            #     fi
+            #     if [[ -e /opt/seagate/cortx/provisioner/generated_configs/srvnode-1.storage ]]; then
+            #         l_info "Applying 'components.$state' for srvnode-1"
+            #         $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+            #         sleep 2     # Mindfulness break
+            #     fi
             elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"
+                || "$state" == "provisioner.backup"
+                # || "$state" == "motr.backup" # TODO: Awaiting EOS-12637 fix
+                || "$state" == "s3server.backup"
+                || "$state" == "hare.backup"
+                || "$state" == "ha.iostack-ha.backup"
+                || "$state" == "sspl.backup"
+                || "$state" == "csm.backup"
                 ]]; then
                 # Execute first on srvnode-2 then on srvnode-1.
                 l_info "Applying 'components.$state' for srvnode-2"
