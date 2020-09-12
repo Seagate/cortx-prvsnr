@@ -107,7 +107,7 @@ backup_states=(
     # "motr.backup" # TODO: Awaiting EOS-12637 fix
     "s3server.backup"
     "hare.backup"
-    "ha.iostack-ha.backup"
+    # "ha.iostack-ha.backup"
     "sspl.backup"
     "csm.backup"
 )

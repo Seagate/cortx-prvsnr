@@ -30,6 +30,7 @@ Copy multipath config:
     - source: salt://components/system/storage/multipath/files/multipath.conf
     - force: True
     - makedirs: True
+    - template: jinja
     - require:
       - Install multipath
       - Stop multipath service
@@ -38,7 +39,7 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if 'JBOD' not in pillar["storage_enclosure"]["controller"]["type"] %}
+{% if 'JBOD' not in pillar["storage_enclosure"]["type"] %}
 {% if (not pillar['cluster'][grains['id']]['is_primary'])
   or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
@@ -77,12 +78,21 @@ Start multipath service:
     - watch:
       - file: Copy multipath config
 
+Check multipath devices:
+  cmd.run:
+    - name: test `multipath -ll | grep mpath | wc -l` -ge 7
+    - retry:
+        attempts: 3
+        until: True
+        interval: 5
+
 Update cluster.sls pillar:
   module.run:
     - cluster.jbod_storage_config: []
     - saltutil.refresh_pillar: []
     - require:
       - Start multipath service
+      - Check multipath devices
 {% endif %}
 
 Restart service multipath:

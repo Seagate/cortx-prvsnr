@@ -247,7 +247,8 @@ if [[ -z "$salt_master_hostname" && "$singlenode" != true ]]; then
 fi
 
 # SETUP SRVNODE-1
-if grep -q "Red Hat" /etc/*-release; then
+# FIXME bundle && redhat subscription
+if grep -q "Red Hat" /etc/*-release || [[ "$bundled_release" == true ]]; then
     install_salt_repo "$hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
 else
     install_repos "$hostspec" "$ssh_config" "$sudo" "$bundle_base_url"
