@@ -17,5 +17,5 @@
 
 Stage - Backup files for SSPL:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: sspl

@@ -15,8 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-
 Stage - Backup files for IOStack-HA:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: iostack-ha
