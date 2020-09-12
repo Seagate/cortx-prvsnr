@@ -74,9 +74,5 @@ class SetupJBOD(CommandParserFillerMixin):
         deploy_jbod.DeployJBOD(setup_ctx=setup_ctx).run(
             **deploy_jbod_args
         )
-        setup_ctx.ssh_client.cmd_run(
-            'provisioner deploy --states prereq',
-            targets=setup_ctx.run_args.primary.minion_id
-        )
 
         logger.info("Done")
