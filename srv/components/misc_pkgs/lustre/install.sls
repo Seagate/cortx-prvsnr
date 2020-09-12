@@ -18,15 +18,20 @@
 {% if salt['cmd.run']('lspci -d"15b3:*"') %}
 Install Lustre:
   pkg.installed:
-    - fromrepo: lustre
+  # FIXME JBOD why it failed only for JBOD case
+  {% if salt['pillar.get']('storage_enclosure:type') != 'JBOD' %}
+    - fromrepo: lustre  # that will lead to usage a lustre repo only
+  {% endif %}
     - pkgs:
       - kmod-lustre-client: latest
       - lustre-client: latest
     - refresh: True
 {% else %}
-Install Lustre:
+Install Lustre:  # FIXME looks like exactly the same
   pkg.installed:
+  {% if salt['pillar.get']('storage_enclosure:type') != 'JBOD' %}
     - fromrepo: lustre
+  {% endif %}
     - pkgs:
       - kmod-lustre-client: latest
       - lustre-client: latest
