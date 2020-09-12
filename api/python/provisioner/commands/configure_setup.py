@@ -125,7 +125,7 @@ class ReleaseParamsValidation:
 
 @attr.s(auto_attribs=True)
 class StorageEnclosureParamsValidation:
-    storage_type: str = StorageEnclosureParams.storage_type
+    type: str = StorageEnclosureParams.type
     primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
     secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
     controller_user: str = StorageEnclosureParams.controller_user
@@ -134,7 +134,7 @@ class StorageEnclosureParamsValidation:
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
-        if params['storage_type'] == 'JBOD':
+        if params['type'] == 'JBOD':
             return
         missing_params = []
         for param, value in params.items():
@@ -149,19 +149,27 @@ class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
     is_primary: str = NodeNetworkParams.is_primary
     data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    public_ip_addr: str = NodeNetworkParams.public_ip_addr
+    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
     data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
     data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
+    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
+    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
+    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
+    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
     _optional_param = [
-        'public_ip_addr',
+        'data_nw_public_ip_addr',
         'is_primary',
         'data_nw_netmask',
         'data_nw_gateway',
-        'pvt_ip_addr'
+        'pvt_ip_addr',
+        'mgmt_nw_iface',
+        'mgmt_nw_public_ip_addr',
+        'mgmt_nw_netmask',
+        'mgmt_nw_gateway'
     ]
 
     def __attrs_post_init__(self):
@@ -188,7 +196,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         for key in input:
             val = key.split(".")
             if val[-1] in [
-                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway', 'netmask'
+                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
+                'netmask', 'public_ip_addr'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
@@ -207,7 +216,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input[key] = f'[{value}]'
             else:
                 if input[key]:
-                    input[key] = f'\"{input[key]}\"'
+                    if input[key] == 'None':
+                        input[key] = f'\"\"'
+                    else:
+                        input[key] = f'\"{input[key]}\"'
+                else:
+                    input[key] = UNCHANGED
 
     def _parse_pillar_key(self, key):
         pillar_key = deepcopy(key)
