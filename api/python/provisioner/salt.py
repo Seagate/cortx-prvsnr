@@ -126,6 +126,9 @@ class SaltArgsMixin:
         if 'password' in _dct['kw']:
             _dct['kw']['password'] = '*' * 7
 
+        if 'password' in _dct['fun_kwargs']:
+            _dct['fun_kwargs']['password'] = '*' * 7
+
         return _dct
 
 
