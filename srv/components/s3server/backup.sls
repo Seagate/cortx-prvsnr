@@ -17,5 +17,5 @@
 
 Stage - Backup files for S3Server:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: s3server
