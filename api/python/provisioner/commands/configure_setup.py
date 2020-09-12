@@ -214,6 +214,10 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
+            elif 'mgmt_nw.iface' in key:
+                # special case single value as array
+                # Need to fix this array having single value
+                input[key] = f'[\"{input[key]}\"]'
             else:
                 if input[key]:
                     if input[key] == 'None':
