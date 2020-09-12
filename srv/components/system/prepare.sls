@@ -67,9 +67,11 @@ Add EPEL repo:
     - humanname: 3rd_party_epel
     - baseurl: {{ defaults.base_repos.epel_repo.url }}
     - gpgcheck: 0
+{% if pillar['release']['type'] != 'bundle' %}
     - require:
       - Reset EPEL
       - Configure yum
+{% endif %}
 
 {% endif %}  # not a bundled release
 
@@ -91,16 +93,20 @@ Add commons yum repo:
     - humanname: commons
     - baseurl: {{ defaults.commons.repo.url }}
     - gpgcheck: 0
+{% if pillar['release']['type'] != 'bundle' %}
     - require:
       - Add EPEL repo
+{% endif %}
 
 Clean yum local:
   cmd.run:
     - name: yum clean all
     - require:
-      - Configure yum
       - Add commons yum repo
+{% if pillar['release']['type'] != 'bundle' %}
+      - Configure yum
       - Add EPEL repo
+{% endif %}
 
 Clean yum cache:
   cmd.run:
