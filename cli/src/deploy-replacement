@@ -41,7 +41,7 @@ run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
 run_replacenode_states=false
-run_backup_states=false
+run_restore_states=false
 tgt_node=srvnode-2
 
 # states to be applied in desired sequence
@@ -73,23 +73,6 @@ prereq_states=(
 )
 
 # states to be applied in desired sequence
-sync_states=(
-    "sync.software.openldap"
-    "sync.software.rabbitmq"
-)
-
-# states to be applied in desired sequence
-backup_states=(
-    # "provisioner.backup"
-    # "motr.backup" # TODO: Awaiting EOS-12637 fix
-    "s3server.backup"
-    "hare.backup"
-    "ha.iostack-ha.backup"
-    "sspl.backup"
-    "csm.backup"
-)
-
-# states to be applied in desired sequence
 iopath_states=(
     "misc_pkgs.lustre"
     "motr.prepare"
@@ -108,7 +91,6 @@ controlpath_states=(
     "csm.prepare"
     "csm.install"
     "csm.config"
-    "csm.refresh_config"
     "uds.prepare"
     "uds.install"
 )
@@ -122,7 +104,25 @@ ha_states=(
     "ha.cortx-ha"
     "ha.iostack-ha.prepare"
     "ha.iostack-ha.config.base"
-    "ha.iostack-ha.config.post_install"
+)
+
+# states to be applied in desired sequence
+sync_states=(
+    "sync.software.openldap"
+    "sync.software.rabbitmq"
+)
+
+# states to be applied in desired sequence
+restore_states=(
+    # "provisioner.restore"
+    # "motr.restore" # TODO: Awaiting EOS-12637 fix
+    "s3server.restore"
+    "hare.restore"
+    "ha.iostack-ha.restore"
+    "ha.iostack-ha.refresh_config"
+    "sspl.restore"
+    "csm.restore"
+    "csm.refresh_config"
 )
 
 replacenode_states=(
@@ -151,7 +151,7 @@ Options:
     --ctrlpath-states                            deploy only control path states (sspl & csm)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --replacenode-states                         deploy only states for refresh_config on node and add_node
-    --backup-states                              deploy only backup states
+    --restore-states                             deploy only restore states to restore backed-up files
 "
 }
 
@@ -193,8 +193,8 @@ function options_parser {
             run_ctrlpath_states=true
             run_all=false
             ;;
-        --backup-states)
-            run_backup_states=true
+        --restore-states)
+            run_restore_states=true
             run_all=false
             ;;
         *)
@@ -212,9 +212,10 @@ function run_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             if [[ $state == "ha.cortx-ha.replace_node.remove_node"
-                || $state == "ha.cortx-ha.replace_node.refresh_context"
+                || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
+                || $state == "ha.iostack-ha.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
@@ -250,14 +251,8 @@ function update_salt {
     sleep 2
 }
 
-function encrypt_pillar {
-    # Encrypt passwords in pillar data
-    l_info "Encrypting salt pillar data"
-    python3 ${BASEDIR}/pillar_encrypt
-    update_salt
-}
 
-parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states,backup-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states,restore-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -281,14 +276,13 @@ if [[ "$run_all" == true ]]; then
 
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
-    encrypt_pillar
 
     run_states "${prereq_states[@]}"
     run_states "${iopath_states[@]}"
     run_states "${controlpath_states[@]}"
     run_states "${ha_states[@]}"
     run_states "${sync_states[@]}"
-    run_states "${backup_states[@]}"
+    run_states "${restore_states[@]}"
     run_states "${replacenode_states[@]}"
     
 fi
@@ -297,7 +291,6 @@ if [[ "$run_system_states" == true ]]; then
     l_info "Deploying the system states"
     salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
     run_states "${system_states[@]}"
-    encrypt_pillar
 fi
 
 if [[ "$run_prereq_states" == true ]]; then
@@ -326,13 +319,13 @@ if [[ "$run_ctrlpath_states" == true ]]; then
 fi
 
 if [[ "$run_replacenode_states" == true ]]; then
-    l_info "Deploying the control path states"
+    l_info "Deploying the replacenode path states"
     run_states "${replacenode_states[@]}"
 fi
 
-if [[ "$run_backup_states" == true ]]; then
+if [[ "$run_restore_states" == true ]]; then
     l_info "Synchronizing files on both nodes."
-    run_states "${backup_states[@]}"
+    run_states "${restore_states[@]}"
 fi
 
 # l_info "Backing up pillar files to user space."

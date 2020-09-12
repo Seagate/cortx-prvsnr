@@ -17,5 +17,5 @@
 
 Stage - Backup files for Provisioner:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: provisioner
