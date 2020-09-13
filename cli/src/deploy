@@ -258,6 +258,14 @@ function run_states {
                 #     /opt/seagate/cortx/hare/bin/consul version
                 # fi
                 
+                # if [[ "$state" == "ha.iostack-ha" ]]; then
+                #     sed -i 's/systemd:hare-hax-c1 op stop timeout=30/systemd:hare-hax-c1 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
+
+                #     sed -i 's/systemd:hare-hax-c2 op stop timeout=30/systemd:hare-hax-c2 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
+
+                #     sleep 2     # Mindfulness break
+                # fi
+
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
@@ -313,6 +321,10 @@ if [[ "$run_all" == true ]]; then
     run_states  "${sync_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
+
+    l_info "Sleeping for 5 mins for hare-hax to stabilize..." 
+    sleep 300
+
     run_states "${controlpath_states[@]}"
     run_states "${backup_states[@]}"
 fi
@@ -350,6 +362,10 @@ if [[ "$run_ha_states" == true ]]; then
 fi
 
 if [[ "$run_ctrlpath_states" == true ]]; then
+    
+    l_info "Sleeping for 5 mins for hare-hax to stabilize..." 
+    sleep 300
+
     l_info "Deploying the control path states"
     run_states "${controlpath_states[@]}"
 fi
