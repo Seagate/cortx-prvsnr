@@ -323,14 +323,6 @@ function parse_args {
             #     singlenode=true
             #     shift
             #     ;;
-            -F|--ssh-config)
-                ssh_config="$2"
-                if [[ ! -f "$ssh_config" ]]; then
-                    l_error "'$ssh_config' not a file"
-                    exit 5
-                fi
-                shift 2
-                ;;
             -s|--sudo)
                 # disabled EOS-2410
                 # sudo=true

@@ -25,7 +25,6 @@ Besides help options each script might be called using any of the following opti
 
 - ~~`-r`/`--remote`: specifies the hostspec of the remote host. When passed the script performs its commands against remote host instead of the local one.~~
 - `-S`/`--singlenode`: turns on single mode installation. Makes sense not for all scripts.
-- `-F`/`--ssh-config`: allows to specify an alternative path to ssh configuration file which is likely makes sense in case of remote host configuration.
 - `-v`/`--verbose`: tells the script to be more verbose.
 
 [//]: #   (commented by EOS-2410)
@@ -38,7 +37,7 @@ Besides help options each script might be called using any of the following opti
 
 ~~For that case you can use `-F`/`--ssh-config` option along with `-r`/`--remote` to specify a remote host spec, e.g.:~~
 
-$ `setup-provisioner -F ./ssh_config ` ~~`-r srvnode-1`~~
+$ `setup-provisioner ` ~~`-r srvnode-1`~~
 
 
 where `./ssh_config` might look like:
@@ -68,9 +67,8 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 Besides [general](#common-options) set of options it expects the following ones:
 
 - `--srvnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `srvnode-2`.
-- `--repo-src={local|gitlab|rpm}`: configures the source of the provisioner repository to use during installation:
+- `--repo-src={local|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
-  - `gitlab` to install from GitLab by provided version (see below);
   - `rpm` to install from using rpm package (default).
 - `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to salt-master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
@@ -89,7 +87,7 @@ For now that makes sense only for `gitlab` and if missed the latest tagged versi
 Configure cluster with a salt-master on srvnode-1
 
 ```shell
-$ setup-provisioner -F ./ssh_config --salt-master=<SRVNODE-1-IP>
+$ setup-provisioner --salt-master=<SRVNODE-1-IP>
 ```
 
 ### configure-cortx
@@ -157,13 +155,13 @@ $ deploy
 Install CORTX stack for a cluster with a remote host as srvnode-1
 
 ```shell
-$ deploy -r srvnode-1 -F ./ssh_config
+$ deploy -r srvnode-1 
 ```
 
 Install CORTX stack for a single node with a remote host as srvnode-1
 
 ```shell
-$ deploy -r srvnode-1 -F ./ssh_config --singlenode
+$ deploy -r srvnode-1 --singlenode
 ```
 
 ### bootsrap-cortx
@@ -217,14 +215,14 @@ $ start
 Start all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ start --remote srvnode-1 -F ./ssh_config
+$ start --remote srvnode-1 
 ```
 
 Restart all services for a cluster with remote host as srvnode-1
 
 
 ```shell
-$ start --remote srvnode-1 -F ./ssh_config --restart
+$ start --remote srvnode-1 --restart
 ```
 
 ### stop-cortx
@@ -247,7 +245,7 @@ $ stop
 Stop all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ stop --remote srvnode-1 -F ./ssh_config
+$ stop --remote srvnode-1 
 ```
 
 ### End-to-End Examples
@@ -288,7 +286,7 @@ Host srvnode-1
     IdentitiesOnly yes
 ```
 
-Steps are exactly the same with the only difference: all scripts calls should include options `-r srvnode-1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `srvnode-1` is an ID of the host described in that file.
+Steps are exactly the same with the only difference: all scripts calls should include options `-r srvnode-1`. Where `./ssh_config` is a path to the prepared ssh configuration file and `srvnode-1` is an ID of the host described in that file.
 
 #### Cluster local installation
 
@@ -312,7 +310,7 @@ Host srvnode-2
     IdentitiesOnly yes
 ```
 
-1. `setup-provisioner -F ./ssh_config --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the secondary one)
+1. `setup-provisioner --salt-master <HOST>` (where `HOST` is IP / domain name of the primary node reachable from the secondary one)
 2. `configure -p cluster >./cluster.sls`
 3. ... edit `./cluster.sls` manually ...
 4. `configure -f ./cluster.sls cluster`
@@ -328,7 +326,7 @@ Host srvnode-2
 
 **Note**. The differences with the [local cluster installation](#cluster-local-installation) are:
 - ssh config file should include specifications for both primary and secondary node
-- all scripts require remote connections specification (e.g. `-r srvnode-1 -F ./ssh_config`)
+- all scripts require remote connections specification (e.g. `-r srvnode-1 `)
 
 Example of a ssh-config file:
 
