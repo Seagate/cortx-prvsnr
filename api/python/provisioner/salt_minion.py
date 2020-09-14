@@ -69,9 +69,12 @@ def check_salt_minions_restarted(pids: Dict):
         _targets = ','.join(targets)
         res = function_run(
             'service.show', fun_args=('salt-minion',),
-            targets=_targets, timeout=10
+            targets=_targets, timeout=10, tgt_type='list'
         )
-        _pids = {minion_id: _res['MainPID'] for minion_id, _res in res.items()}
+        _pids = {
+            minion_id: _res['MainPID'] for minion_id, _res in res.items()
+            if type(_res) is dict
+        }
         return not (
             set(pids.items()) & set(_pids.items())
         )

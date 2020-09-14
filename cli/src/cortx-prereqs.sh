@@ -12,12 +12,12 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 
-set -euE
+set -eE
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/cortx-prereqs.log}"
 export LOG_FILE
@@ -113,12 +113,23 @@ parse_args()
 
             bundled_release=true
 
+            system_repo="${tgt_build}/centos7.7"
             grep -q "Red Hat" /etc/*-release && {
-                system_repo="${tgt_build}/rhel7.7"
-                # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
-            } || {
-                system_repo="${tgt_build}/centos7.7"
+                subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
+                subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
+                if echo "$subc_list" | grep -q "Subscribed"; then
+                    if [[ "$subc_status" == "Current" ]]; then
+                        system_repo="${tgt_build}/rhel7.7"
+                    fi
+                fi
             }
+
+            #grep -q "Red Hat" /etc/*-release && {
+            #    system_repo="${tgt_build}/rhel7.7"
+                # l_info "OS RHEL: Use subscription manager with appropriate subscriptions mentioned in Seagate setup docs to enable required package repositories."
+            #} || {
+            #    system_repo="${tgt_build}/centos7.7"
+            #}
 
             cortx_deps_repo="${tgt_build}/3rd_party"
             epel_repo="${cortx_deps_repo}/EPEL-7"
@@ -169,12 +180,14 @@ EOL
     echo "Done" | tee -a ${LOG_FILE}
 
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
-    if [[ "$bundled_release" == true ]]; then
-        _url="${system_repo}/os/"
+    if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
+        _url=
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/"
     fi
-    echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
+
+    if [[ -n "$_url" ]]; then
+        echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_base]
 name=cortx_platform_base
@@ -182,15 +195,18 @@ gpgcheck=0
 enabled=1
 baseurl=$_url
 EOL
-    echo "Done" | tee -a ${LOG_FILE}
-
-    if [[ "$bundled_release" == true ]]; then
-        _url="${system_repo}/extras/";    # FIXME EOS-12508
-    else
+        echo "Done" | tee -a ${LOG_FILE}
+    fi
 
     _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
-    _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/"
-    echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}
+    if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
+        _url=
+    else
+        _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/"
+    fi
+
+    if [[ -n "$_url" ]]; then
+        echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_extras]
 name=cortx_platform_extras
@@ -198,11 +214,10 @@ gpgcheck=0
 enabled=1
 baseurl=$_url
 EOL
-    echo "Done" | tee -a ${LOG_FILE}
-
+        echo "Done" | tee -a ${LOG_FILE}
     fi
 
-    _repo="/etc/yum.repos.d/epel.repo"
+    _repo="/etc/yum.repos.d/3rd_party_epel.repo"
     if [[ "$bundled_release" == true ]]; then
         _url="$epel_repo"
     else
@@ -265,7 +280,7 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
 
 else
     grep -q "Red Hat" /etc/*-release && {
-        # FIXME EOS-12508 do we need an iso for rhel7.7 if subscription is kept enabled
+        # we do not need an iso for rhel7.7 if subscription is enabled
         echo "INFO: Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
         subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
         subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
@@ -329,7 +344,7 @@ else
                 echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 #yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
                 if [[ "$bundled_release" == true ]]; then
-                    create_commons_repo_rhel "epel" "$epel_repo"
+                    create_commons_repo_rhel "3rd_party_epel" "$epel_repo"
                 else
                     create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
                 fi
@@ -353,10 +368,10 @@ else
             # Create commons repo for installing mellanox drivers
             echo "INFO: Enabling repo for in house built commons packages for Cortx" 2>&1 | tee -a ${LOG_FILE}
             create_commons_repo_rhel "cortx_commons" "$url_local_repo_commons_rhel"
-            
+
             echo "INFO: Taking backup of /etc/yum.repos.d/*.repo to ${_bkpdir}"
             yes | cp -rf /etc/yum.repos.d/*.repo ${_bkpdir}
-            
+
             #echo "INFO: Installing yum-plugin-versionlock" 2>&1 | tee ${LOG_FILE}
             #yum install -y yum-plugin-versionlock
             #echo "INFO: Restricting the kernel updates to current kernel version" 2>&1 | tee -a ${LOG_FILE}
@@ -385,7 +400,7 @@ rpm -qa|grep "pciutils-"|grep -qv "pciutils-lib" && {
     echo "INFO: Installing pciutils package" 2>&1 | tee -a ${LOG_FILE}
     yum install -y pciutils 2>&1 | tee -a ${LOG_FILE}
 }
-if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
+if ( lspci -d"15b3:*"|grep Mellanox ) ; then
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {

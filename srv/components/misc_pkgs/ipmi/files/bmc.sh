@@ -33,7 +33,7 @@ bmc_ip=$(echo ${bmc_ip_line}|cut -f2 -d':'|tr -d ' ')
 
 if [[ -n "$bmc_ip" && "$bmc_ip" != "0.0.0.0" ]]; then
     echo "BMC_IP detected as $bmc_ip"
-    /usr/local/bin/provisioner pillar_set "cluster/${node}/bmc/ip" "\"$bmc_ip\""
+    provisioner pillar_set "cluster/${node}/bmc/ip" "\"$bmc_ip\""
 else
     >&2 echo "BMC_IP is not configured"
     exit 1

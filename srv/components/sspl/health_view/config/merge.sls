@@ -27,6 +27,10 @@ Merge healthschema:
       - Run Resource Health View
 {% else %}
 Merge healthschema:
-  test.show_notification:
-    - text: "Merge happens only on firstnode."
+  file.copy:
+    - name: {{ pillar['sspl']['health_map_path'] }}{{ pillar['sspl']['health_map_file'] }}
+    - source: /tmp/resource_health_view.json
+    - makedirs: True
+    - force: true
+    - mode: 777
 {% endif %}

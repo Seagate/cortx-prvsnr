@@ -300,19 +300,6 @@ def test_cortx_update(
     run_test(mhostsrvnode1)
 
 
-@pytest.mark.skip
-@pytest.mark.isolated
-@pytest.mark.env_level('utils')
-@pytest.mark.env_provider('vbox')
-@pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
-def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, mhostsrvnode3, ssh_config
-):
-    mhostsrvnode1.check_output('echo root | passwd --stdin root')
-    mhostsrvnode2.check_output('echo root | passwd --stdin root')
-    mhostsrvnode3.check_output('echo root | passwd --stdin root')
-
-
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])

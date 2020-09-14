@@ -18,14 +18,20 @@
 import logging
 import configparser
 from enum import Enum
-from typing import Type
+from typing import Type, List
 from copy import deepcopy
 from pathlib import Path
 
+from ..inputs import (
+    NetworkParams, ReleaseParams, StorageEnclosureParams,
+    NodeNetworkParams
+)
 from .. import inputs
 from ..vendor import attr
-from ..pillar import PillarUpdater
 
+from ..utils import run_subprocess_cmd
+
+from ..values import UNCHANGED
 from . import (
     CommandParserFillerMixin
 )
@@ -37,10 +43,10 @@ logger = logging.getLogger(__name__)
 class SetupType(Enum):
     SINGLE = "single"
     DUAL = "dual"
+    GENERIC = "generic"
 
 
-@attr.s(auto_attribs=True)
-class RunArgsConfigureSetup:
+class RunArgsConfigureSetupAttrs:
     path: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -51,11 +57,129 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "type of setup",
+                'help': "the type of the setup",
                 'choices': [st.value for st in SetupType]
             }
-        }
+        },
+        default=SetupType.GENERIC.value,
+        # TODO EOS-12076 better validation
+        converter=(lambda v: SetupType(v))
     )
+    number_of_nodes: int = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "No of nodes in cluster"
+            }
+        },
+        converter=int
+    )
+
+
+@attr.s(auto_attribs=True)
+class RunArgsConfigureSetup:
+    path: str = RunArgsConfigureSetupAttrs.path
+    number_of_nodes: int = RunArgsConfigureSetupAttrs.number_of_nodes
+
+    # FIXME number of nodes might be the same for different setup types
+    setup_type: str = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        if self.number_of_nodes == 1:
+            self.setup_type = SetupType.SINGLE
+        elif self.number_of_nodes == 2:
+            self.setup_type = SetupType.DUAL
+        else:
+            self.setup_type = SetupType.GENERIC
+
+
+@attr.s(auto_attribs=True)
+class NetworkParamsValidation:
+    cluster_ip: str = NetworkParams.cluster_ip
+    mgmt_vip: str = NetworkParams.mgmt_vip
+    _optional_param = ['cluster_ip', 'mgmt_vip']
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class ReleaseParamsValidation:
+    target_build: str = ReleaseParams.target_build
+    _optional_param = []
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class StorageEnclosureParamsValidation:
+    type: str = StorageEnclosureParams.type
+    primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
+    secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+    _optional_param = []
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        if params['type'] == 'JBOD':
+            return
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class NodeParamsValidation:
+    hostname: str = NodeNetworkParams.hostname
+    is_primary: str = NodeNetworkParams.is_primary
+    data_nw_iface: List = NodeNetworkParams.data_nw_iface
+    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
+    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
+    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
+    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
+    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
+    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
+    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
+    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+    bmc_user: str = NodeNetworkParams.bmc_user
+    bmc_secret: str = NodeNetworkParams.bmc_secret
+
+    _optional_param = [
+        'data_nw_public_ip_addr',
+        'is_primary',
+        'data_nw_netmask',
+        'data_nw_gateway',
+        'pvt_ip_addr',
+        'mgmt_nw_iface',
+        'mgmt_nw_public_ip_addr',
+        'mgmt_nw_netmask',
+        'mgmt_nw_gateway'
+    ]
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
 
 
 @attr.s(auto_attribs=True)
@@ -63,56 +187,51 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    # TODO : https://jts.seagate.com/browse/EOS-11741
-    # Improve optional and mandatory param validation
-    SINGLE_PARAM = [
-        "target_build",
-        "controller_a_ip",
-        "controller_b_ip",
-        "controller_user",
-        "controller_secret",
-        "primary_hostname",
-        "primary_data_network_iface",
-        "primary_bmc_user",
-        "primary_bmc_secret"]
-    DUAL_PARAM = [
-        "target_build",
-        "controller_a_ip",
-        "controller_b_ip",
-        "controller_user",
-        "controller_secret",
-        "primary_hostname",
-        "primary_data_network_iface",
-        "primary_bmc_user",
-        "primary_bmc_secret",
-        "secondary_hostname",
-        "secondary_data_network_iface",
-        "secondary_bmc_user",
-        "secondary_bmc_secret"]
+    validate_map = {"cluster": NetworkParamsValidation,
+                    "node": NodeParamsValidation,
+                    "storage_enclosure": StorageEnclosureParamsValidation}
 
-    input_map = {"network": inputs.Network,
-                 "release": inputs.Release,
-                 "storage_enclosure": inputs.StorageEnclosure}
-    validate_map = {SetupType.SINGLE.value: SINGLE_PARAM,
-                    SetupType.DUAL.value: DUAL_PARAM}
+    def _parse_params(self, input):
+        params = {}
+        for key in input:
+            val = key.split(".")
+            if val[-1] in [
+                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
+                'netmask', 'public_ip_addr'
+            ]:
+                params[f'{val[-2]}_{val[-1]}'] = input[key]
+            else:
+                params[val[-1]] = input[key]
+        return params
+
+    def _validate_params(self, input_type, content):
+        params = self._parse_params(content)
+        self.validate_map[input_type](**params)
 
     def _parse_input(self, input):
         for key in input:
             if input[key] and "," in input[key]:
-                input[key] = [x.strip() for x in input[key].split(",")]
+                value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
+                value = ','.join(value)
+                input[key] = f'[{value}]'
+            elif 'mgmt_nw.iface' in key:
+                # special case single value as array
+                # Need to fix this array having single value
+                input[key] = f'[\"{input[key]}\"]'
+            else:
+                if input[key]:
+                    if input[key] == 'None':
+                        input[key] = f'\"\"'
+                    else:
+                        input[key] = f'\"{input[key]}\"'
+                else:
+                    input[key] = UNCHANGED
 
-    def _validate_params(self, content, setup_type):
-        params = self.validate_map[setup_type]
-        mandatory_param = deepcopy(params)
-        for section in content:
-            for key in content[section]:
-                if key in mandatory_param:
-                    if content[section][key]:
-                        mandatory_param.remove(key)
-        if len(mandatory_param) > 0:
-            raise ValueError(f"Mandatory param missing {mandatory_param}")
+    def _parse_pillar_key(self, key):
+        pillar_key = deepcopy(key)
+        return pillar_key.replace(".", "/")
 
-    def run(self, path, setup_type):
+    def run(self, path, number_of_nodes):
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
@@ -122,13 +241,27 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.info("Updating salt data :")
         content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
         logger.debug(f"params data {content}")
-        self._validate_params(content, setup_type)
 
+        input_type = None
+        pillar_type = None
+        count = int(number_of_nodes)
         for section in content:
+            input_type = section
+            pillar_type = section
+            if 'srvnode' in section:
+                input_type = 'node'
+                pillar_type = f'cluster/{section}'
+                count = count - 1
+            self._validate_params(input_type, content[section])
             self._parse_input(content[section])
-            params = self.input_map[section](**content[section])
-            pillar_updater = PillarUpdater()
-            pillar_updater.update(params)
-            pillar_updater.apply()
+
+            for pillar_key in content[section]:
+                key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
+                run_subprocess_cmd([
+                       "provisioner", "pillar_set",
+                       key, f"{content[section][pillar_key]}"])
+
+        if count > 0:
+            raise ValueError(f"Node information for {count} node missing")
 
         logger.info("Pillar data updated Successfully.")

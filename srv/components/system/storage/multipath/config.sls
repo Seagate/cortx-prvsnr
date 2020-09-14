@@ -30,6 +30,7 @@ Copy multipath config:
     - source: salt://components/system/storage/multipath/files/multipath.conf
     - force: True
     - makedirs: True
+    - template: jinja
     - require:
       - Install multipath
       - Stop multipath service
@@ -38,15 +39,16 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
+{% if 'JBOD' not in pillar["storage_enclosure"]["type"] %}
 {% if (not pillar['cluster'][grains['id']]['is_primary'])
   or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
--%}
-{%- set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] -%}
+%}
+{% set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] %}
 # Execute only on Secondary node
 Copy multipath bindings to non-primary:
   cmd.run:
     - name: scp {{ node_id }}:/etc/multipath/bindings /etc/multipath/bindings
-{%- endif %}
+{% endif %}
 
 Start multipath service:
   service.running:
@@ -66,6 +68,31 @@ Update cluster.sls pillar:
 Update cluster.sls pillar:
   test.show_notification:
     - text: Update pillar doesn't work on Secondary node.
+{% endif %}
+
+{% else -%}
+Start multipath service:
+  service.running:
+    - name: multipathd.service
+    - enable: True
+    - watch:
+      - file: Copy multipath config
+
+Check multipath devices:
+  cmd.run:
+    - name: test `multipath -ll | grep mpath | wc -l` -ge 7
+    - retry:
+        attempts: 3
+        until: True
+        interval: 5
+
+Update cluster.sls pillar:
+  module.run:
+    - cluster.jbod_storage_config: []
+    - saltutil.refresh_pillar: []
+    - require:
+      - Start multipath service
+      - Check multipath devices
 {% endif %}
 
 Restart service multipath:

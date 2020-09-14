@@ -11,11 +11,18 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
+# For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 release:
+    type: internal  # value 'bundle' will switch to bundled distribution
+                    # repo structure assumptions, where 'target_build'
+                    # defines the base url:
+                    # <base_url>/
+                    #   rhel7.7 or centos7.7   <- OS ISO is mounted here
+                    #   3rd_party              <- CORTX 3rd party ISO is mounted here
+                    #   cortx_iso              <- CORTX ISO (main) is mounted here
     base:
         # TODO IMPROVE EOS-12076 EOS-12334
         #      the same base location as for update repos so they might

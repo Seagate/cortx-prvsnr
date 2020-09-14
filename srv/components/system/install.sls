@@ -22,6 +22,7 @@ Install_base_packages:
       - ipmitool
       - bind-utils
       - python3
+      - rsync
     - reload_modules: True
 
 Install policy packages for SELinux:
@@ -38,22 +39,3 @@ python-pip:
     - reload_modules: True
     - bin_env: /usr/bin/pip
     - upgrade: True
-
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-Install eos-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: eos-py-utils
-    - requrie:
-      - Install cryptography python package

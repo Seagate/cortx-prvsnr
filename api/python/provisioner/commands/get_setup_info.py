@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 #  for some reason this setup type is not listed in
 #  configure_setup.SetupType but can be set in
 #  VM configuration cluster.sls file
-EES_SETUP_TYPE = "ees"
+SETUP_TYPE = "ldr-r1"
 
 
 class OutputScheme:
@@ -158,7 +158,7 @@ class GetSetupInfo(CommandParserFillerMixin):
             res[SERVERS_PER_NODE] = 1
         elif storage_type == SetupType.DUAL.value:
             res[SERVERS_PER_NODE] = 2
-        elif storage_type == EES_SETUP_TYPE:
+        elif storage_type.lower() == SETUP_TYPE:
             # TODO: EOS-12418-improvement:
             #  does this value can be used in real configuration?
             res[SERVERS_PER_NODE] = 2

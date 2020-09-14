@@ -29,7 +29,7 @@ from .helper import run_script as _run_script
 logger = logging.getLogger(__name__)
 
 
-CORTX_RELEASE_TEST_TAG = 'ees1.0.0-PI.3-sprint11'
+CORTX_RELEASE_TEST_TAG = 'Cortx-1.0.0-PI.3-sprint11'
 
 # TODO
 #   - a way (marker) to split tests into groups:
@@ -826,8 +826,7 @@ def test_functions_install_provisioner_rpm(
     assert res.rc == 0
 
     assert mhost.host.package('cortx-prvsnr').is_installed
-    # TODO EOS-11551 enable later
-    # assert mhost.host.package('python36-cortx-prvsnr').is_installed
+    assert mhost.host.package('python36-cortx-prvsnr').is_installed
     baseurl = mhost.check_output(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]

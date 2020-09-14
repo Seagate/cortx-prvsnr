@@ -164,7 +164,7 @@ cp -r "${input_dir}/." "${tmp_dir}"
 input_dir="$tmp_dir"
 
 pushd "$output_dir"
-    rm -f python36-cortx-prvsnr*
+    rm -f python3*-cortx-prvsnr*
 popd
 
 if [[ "$in_docker" == true ]]; then
@@ -183,6 +183,7 @@ if [[ "$in_docker" == true ]]; then
     output_dir="/tmp/out"
 fi
 
+    # --depends "salt >= 3001" \
 $fpm_tool --input-type "python" \
     --output-type "$output_type" \
     --architecture "amd64" \
@@ -193,7 +194,6 @@ $fpm_tool --input-type "python" \
     --python-bin "python3" \
     --python-disable-dependency salt \
     --no-python-downcase-dependencies \
-    --depends "salt >= 3001" \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
     --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \

@@ -21,7 +21,7 @@ tmp_dir: /tmp
 
   {% set base_bundle_url = pillar['release']['target_build'] %}
 
-  {% if "RedHat" in grains['os'] %}
+  {% if ("RedHat" in grains['os']) and (salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
     {% set system_repo = '/'.join([base_bundle_url, 'rhel7.7']) %}
   {% else %}
     # FIXME EOS-12508 not considered yet ?
@@ -32,14 +32,15 @@ tmp_dir: /tmp
   {% set cortx_deps_repo = '/'.join([base_bundle_url, '3rd_party']) %}
   {% set epel_repo = '/'.join([cortx_deps_repo, 'EPEL-7']) %}
   {% set saltstack_repo = '/'.join([cortx_deps_repo, 'commons', 'saltstack-3001']) %}
+  {% set glusterfs_repo = '/'.join([cortx_deps_repo, 'commons', 'glusterfs']) %}
 
   {% set repo_url = cortx_repo %}
   {% set cortx_commons_url = cortx_deps_repo %}
 
 base_repos:
-  centos_repos:  # FIXME EOS-12508 extras, updates
-    - id: "cortx_platform_base"
-      url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', system_repo) }}
+  centos_repos: [] # FIXME redhat with subscription disabled
+  #  - id: "cortx_platform_base"
+  #    url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', system_repo) }}
   epel_repo:
     id: "epel"
     url: {{ salt["environ.get"]('EPEL', epel_repo) }}
