@@ -830,9 +830,11 @@ Before proceeding with Server setup ensure you have:
 
 We thank you for stopping by to check out the CORTX Community. We are fully dedicated to our mission to build open source technologies that help the world save unlimited data and solve challenging data problems. Join our mission to help reinvent a data-driven world. 
 
-### Contribute to CORTX S3 Server
+### Contribute to CORTX Provisioner
 
-Please contribute to the CORTX Open Source initiative and join our movement to make data storage better, efficient, and more accessible.
+Please contribute to the [CORTX Open Source project](https://github.com/Seagate/cortx/blob/main/doc/SuggestedContributions.md) and join our movement to make data storage better, efficient, and more accessible.
+
+Refer to our [CORTX Community Guide](https://github.com/Seagate/cortx/blob/main/doc/CORTXContributionGuide.md) to get started with your first contribution.
 
 ### Reach Out to Us
 
