@@ -771,13 +771,54 @@ def test_inputs_copy_attr_verify_attrs():
     assert copied_attr == read_attr
 
 
-def test_ParserFiller_fill_parser():
+def test_ParserFiller_fill_parser_action_is_store_bool():
     parser = argparse.ArgumentParser()
-    SC = attr.make_class("SC", {"x": attr.ib(type=int, metadata={
-        METADATA_ARGPARSER: dict(action='store_bool', help='some help'),
-    })})
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'action': 'store_bool',
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
     ParserFiller.fill_parser(SC, parser)
-    args = parser.parse_args()
-    # args = parser.parse_args(
-    #     'x store_const True None'.split()
-    #     )
+    args = parser.parse_args(['--y', '--noy'])
+    assert not args.y
+
+
+def test_ParserFiller_fill_parser_without_action():
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ParserFiller.fill_parser(SC, parser)
+    args = parser.parse_args(['--y', 'some-value'])
+    assert args.y == 'some-value'
+
+
+def test_ParserFiller_extract_positional_args():
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ret = ParserFiller.extract_positional_args(SC, attr.fields_dict(SC))
+    assert ret == ([attr.fields(SC).x], {})

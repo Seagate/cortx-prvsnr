@@ -166,7 +166,6 @@ class InputAttrParserArgs(AttrParserArgs):
         return UNCHANGED if _value is None else _value
 
 
-# TODO test
 class ParserFiller:
     @staticmethod
     def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
@@ -175,7 +174,6 @@ class ParserFiller:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
 
-                # TODO TEST
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
                         (_attr.name, _attr.default, {
