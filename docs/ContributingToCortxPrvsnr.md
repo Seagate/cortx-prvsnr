@@ -153,12 +153,12 @@ Creating a pull request automatically triggers Jenkins jobs and System tests. To
 
 ```shell
 
-$ git pull origin master
+$ git pull origin main
 $ git submodule update --init --recursive
 $ git checkout 'your-local-branch'
 $ git pull origin 'your-remote-branch-name'
 $ git submodule update --init --recursive
-$ git rebase origin/master
+$ git rebase origin/main
 ```
 
 ## You're All Set & You're Awesome!
@@ -167,7 +167,9 @@ We thank you for stopping by to check out the CORTX Community. We are fully dedi
 
 ### Contribute to CORTX Provisioner
 
-Please [contribute to the CORTX Project](https://github.com/Seagate/cortx/blob/main/doc/SuggestedContributions.md) and join our movement to make data storage better, efficient, and more accessible.
+Please [contribute to the CORTX Project](https://github.com/Seagate/cortx/blob/main/doc/SuggestedContributions.md) and join our movement to make data storage better, efficient, and more accessible. 
+
+Refer to the [CORTX Contribution Guide](https://github.com/Seagate/cortx/blob/main/doc/CORTXContributionGuide.md) to get started with your first contribution.
 
 ### Reach Out to Us
 
