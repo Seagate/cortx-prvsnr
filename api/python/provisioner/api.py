@@ -269,7 +269,8 @@ def fw_update(source, dry_run=False, nowait=False):
 
 
 def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
-            targets: str = ALL_MINIONS, dry_run: bool = False):
+            targets: str = ALL_MINIONS, nowait: bool = False,
+            dry_run: bool = False):
     """
     Execute given command on targets nodes
 
@@ -278,11 +279,27 @@ def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
     :param cmd_stdin: (optional) commands stdin parameters like username or
                       password
     :param targets: (optional) target nodes for command execution
+    :param nowait: (optional) Run asynchronously. Default: False
     :param dry_run: (optional) validate only.
     :return:
     """
-    return _api_call('cmd_run', cmd_name=cmd_name, cmd_args=cmd_args,
-                     cmd_stdin=cmd_stdin, targets=targets, dry_run=dry_run)
+    # NOTE: escape '-' character
+    #  Synopsis: It is ordinary situation when user passes arguments which
+    #  start with '-' character for remote command. If nowait=True all passed
+    #  arguments will expand as additional command line parameters instead of
+    #  parameter's value.
+    #  For example:
+    #      cmd_run('cortxcli', cmd_args="-h")
+    #  is equal to
+    #      provisioner.cmd_run cortxcli --cmd-args -h
+    #  But is should be
+    #      provisioner.cmd_run cortxcli --cmd-args='-h'
+    if nowait:
+        if '-' in cmd_args:
+            cmd_args = f"'{cmd_args}'"
+    return _api_call('cmd_run', cmd_name, cmd_args=cmd_args,
+                     cmd_stdin=cmd_stdin, targets=targets, nowait=nowait,
+                     dry_run=dry_run)
 
 
 def get_setup_info():
