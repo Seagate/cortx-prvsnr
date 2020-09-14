@@ -78,6 +78,15 @@ function backup_files {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
+function updating_ssh_settings {
+    echo -n "INFO: Updating ssh settings on both nodes....." | tee -a ${LOG_FILE}
+
+    salt "*" state.apply components.system.config.sshd_boxing
+
+    echo "Done." | tee -a ${LOG_FILE}
+}
+
+
 function create_unboxing_user {
     set -euE
     _create_date=$(date '+%Y-%m-%d')
