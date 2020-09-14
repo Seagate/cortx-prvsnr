@@ -30,7 +30,7 @@ Remove authorized nodes:
 
 Destroy Cluster:
   cmd.run:
-    - name: pcs cluster destroy --force || true
+    - name: pcs cluster destroy --all --force || true
 {% endif %}
 
 Remove user and group:

@@ -15,25 +15,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{% if salt['cmd.run']('lspci -d"15b3:*"') %}
-Install Lustre:
-  pkg.installed:
-  # FIXME JBOD why it failed only for JBOD case
-  {% if salt['pillar.get']('storage_enclosure:type') != 'JBOD' %}
-    - fromrepo: lustre  # that will lead to usage a lustre repo only
-  {% endif %}
-    - pkgs:
-      - kmod-lustre-client: latest
-      - lustre-client: latest
-    - refresh: True
+api_installed:
+{% if salt['pillar.get']('api_distr') == 'pip' %}
+  pip.installed:
+    - name: /opt/seagate/cortx/provisioner/api/python
+    - bin_env: /usr/bin/pip3
+    - upgrade: False  # to reuse already installed dependencies
+                      # that may come from rpm repositories
 {% else %}
-Install Lustre:  # FIXME looks like exactly the same
   pkg.installed:
-  {% if salt['pillar.get']('storage_enclosure:type') != 'JBOD' %}
-    - fromrepo: lustre
-  {% endif %}
     - pkgs:
-      - kmod-lustre-client: latest
-      - lustre-client: latest
-    - refresh: True
+      - python36-cortx-prvsnr
 {% endif %}
+
+prvsnrusers:
+  group.present
+
+# TODO IMPROVE EOS-8473 consider states instead
+api_post_setup_applied:
+  cmd.script:
+    - source: salt://provisioner/files/post_setup.sh
+
+# XXX ??? is it actually required here:
+#     related module is part of provisioner core rpm
+salt_dynamic_modules_synced:
+  cmd.run:
+    # TODO IMPROVE EOS-9581: cmd.run is a workaround since
+    # as a module.run it doens't work as expected
+    # https://docs.saltstack.com/en/latest/ref/modules/all/salt.modules.saltutil.html
+    - name: 'salt-call saltutil.sync_all'
+    - onchanges:
+      - api_installed

@@ -17,5 +17,5 @@
 
 Stage - Backup files for Motr:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: motr

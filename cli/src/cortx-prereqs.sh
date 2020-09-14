@@ -113,16 +113,15 @@ parse_args()
 
             bundled_release=true
 
+            system_repo="${tgt_build}/centos7.7"
             grep -q "Red Hat" /etc/*-release && {
                 subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
                 subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
-                if echo "$subc_list" | grep -q "Subscribed" && "$subc_status" == "Current"; then
-                    system_repo="${tgt_build}/rhel7.7"
-                else
-                    system_repo="${tgt_build}/centos7.7"
+                if echo "$subc_list" | grep -q "Subscribed"; then
+                    if [[ "$subc_status" == "Current" ]]; then
+                        system_repo="${tgt_build}/rhel7.7"
+                    fi
                 fi
-            } || {
-                system_repo="${tgt_build}/centos7.7"
             }
 
             #grep -q "Red Hat" /etc/*-release && {
@@ -182,11 +181,13 @@ EOL
 
     _repo="/etc/yum.repos.d/cortx_platform_base.repo"
     if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
-        _url="${system_repo}/os/"
+        _url=
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/"
     fi
-    echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
+
+    if [[ -n "$_url" ]]; then
+        echo -ne "\tCreating ${_repo}..........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_base]
 name=cortx_platform_base
@@ -194,15 +195,18 @@ gpgcheck=0
 enabled=1
 baseurl=$_url
 EOL
-    echo "Done" | tee -a ${LOG_FILE}
+        echo "Done" | tee -a ${LOG_FILE}
+    fi
 
     _repo="/etc/yum.repos.d/cortx_platform_extras.repo"
     if [[ "$bundled_release" == true && -z $LAB_ENV ]]; then
-        _url="${system_repo}/extras/";    # FIXME EOS-12508
+        _url=
     else
         _url="http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/"
     fi
-    echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}
+
+    if [[ -n "$_url" ]]; then
+        echo -ne "\tCreating ${_repo}........." 2>&1 | tee -a ${LOG_FILE}
 cat <<EOL > ${_repo}
 [cortx_platform_extras]
 name=cortx_platform_extras
@@ -210,9 +214,10 @@ gpgcheck=0
 enabled=1
 baseurl=$_url
 EOL
-    echo "Done" | tee -a ${LOG_FILE}
+        echo "Done" | tee -a ${LOG_FILE}
+    fi
 
-    _repo="/etc/yum.repos.d/epel.repo"
+    _repo="/etc/yum.repos.d/3rd_party_epel.repo"
     if [[ "$bundled_release" == true ]]; then
         _url="$epel_repo"
     else
@@ -275,7 +280,7 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
 
 else
     grep -q "Red Hat" /etc/*-release && {
-        # FIXME EOS-12508 do we need an iso for rhel7.7 if subscription is kept enabled
+        # we do not need an iso for rhel7.7 if subscription is enabled
         echo "INFO: Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
         subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
         subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
@@ -339,7 +344,7 @@ else
                 echo "INFO: Creating custom Epel repository" 2>&1 | tee -a ${LOG_FILE}
                 #yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 2>&1 | tee -a ${LOG_FILE}
                 if [[ "$bundled_release" == true ]]; then
-                    create_commons_repo_rhel "epel" "$epel_repo"
+                    create_commons_repo_rhel "3rd_party_epel" "$epel_repo"
                 else
                     create_commons_repo_rhel "satellite-epel" "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/"
                 fi

@@ -808,7 +808,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
             source = update_path
         else:
             source = Path("/etc/yum.repos.d/RELEASE_FACTORY.INFO")
-        return load_yaml(source)
+        return json.dumps(load_yaml(source))
 
 
 @attr.s(auto_attribs=True)

@@ -17,5 +17,5 @@
 
 Stage - Backup files for CSM:
   module.run:
-    - sync.sync_files:
+    - sync.backup_files:
       - component: csm

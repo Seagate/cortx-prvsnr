@@ -22,6 +22,7 @@ Install_base_packages:
       - ipmitool
       - bind-utils
       - python3
+      - rsync
     - reload_modules: True
 
 Install policy packages for SELinux:

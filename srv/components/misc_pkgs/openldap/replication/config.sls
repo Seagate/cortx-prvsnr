@@ -45,6 +45,8 @@ Configure openldap replication:
     - onchanges:
       - Verify ldap certificates valid and slapd is running
 
+Cleanup ldif files:
+  file.absent:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/ldap
+
 {% endif -%}
-
-
