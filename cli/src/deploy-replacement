@@ -280,6 +280,9 @@ update_salt
 
 flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
 if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
+    l_info "=============================="
+    l_info "Stage 1: Applying multipath..."
+    l_info "=============================="
 
     l_info "Applying multipath states on node: ${tgt_node}"
     $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare
@@ -300,6 +303,10 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         ]]; then
     # Here we verify the node specifed for multipath before reboot
     # is same as the one being used for replace_node continuation
+
+    l_info "============================================================="
+    l_info "Stage 2: Prepareing replaced node for attaching to cluster..."
+    l_info "============================================================="
 
     if [[ "$run_all" == true ]]; then
 
@@ -371,7 +378,9 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     l_info "Done"
 
 else
-    l_error "***** Oops! *****"
+    l_warn "============================================================="
+    l_warn "***** Oops! *****"
+    l_warn "============================================================="
     l_error "Check if you have specified the same node specified during first run."
     l_error "If you are confident this is the first run \
 and '-S/--single-node' parameter has correct value sepcified."
