@@ -121,16 +121,6 @@ class SaltArgsMixin:
         _self_safe = type(self)(**_dct)
         return str(attr.asdict(_self_safe))
 
-    def _as_dict(self):
-        _dct = attr.asdict(self)
-        if 'password' in _dct['kw']:
-            _dct['kw']['password'] = '*' * 7
-
-        if 'password' in _dct['fun_kwargs']:
-            _dct['fun_kwargs']['password'] = '*' * 7
-
-        return _dct
-
 
 # TODO TEST
 @attr.s(auto_attribs=True)
@@ -478,7 +468,7 @@ class SaltClientBase(ABC):
     def parse_res(self, salt_res, cmd_args) -> SaltClientResult:
         if not salt_res:
             raise SaltNoReturnError(
-                cmd_args._as_dict(), 'Empty salt result: {}'.format(salt_res)
+                cmd_args, 'Empty salt result: {}'.format(salt_res)
             )
         return self._salt_client_res_t(salt_res, cmd_args)
 
@@ -515,7 +505,7 @@ class SaltClientBase(ABC):
             salt_res = self._run(cmd_args)
         except Exception as exc:
             # TODO too generic
-            raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+            raise SaltCmdRunError(cmd_args, exc) from exc
         else:
             try:
                 logger.debug(
@@ -532,7 +522,7 @@ class SaltClientBase(ABC):
         res = self.parse_res(salt_res, cmd_args)
 
         if res.fails:
-            raise SaltCmdResultError(cmd_args._as_dict(), res.fails)
+            raise SaltCmdResultError(cmd_args, res.fails)
         else:
             return res.results
 
@@ -755,16 +745,16 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
             _cmd_f = salt_runner_client().cmd
             salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
-        raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+        raise SaltCmdRunError(cmd_args, exc) from exc
 
     if not salt_res:
         raise SaltNoReturnError(
-            cmd_args._as_dict(), 'Empty salt result: {}'.format(salt_res)
+            cmd_args, 'Empty salt result: {}'.format(salt_res)
         )
 
     if type(salt_res) is not dict:
         raise SaltCmdRunError(
-            cmd_args._as_dict(), (
+            cmd_args, (
                 'RunnerClient result type is not a dictionary: {}'
                 .format(type(salt_res))
             )
@@ -776,7 +766,7 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     if eauth:
         if 'data' not in salt_res:
             raise SaltCmdRunError(
-                cmd_args._as_dict(), (
+                cmd_args, (
                     'no data key in RunnerClient result dictionary: {}'
                     .format(salt_res)
                 )
@@ -790,12 +780,12 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     except TypeError:
         msg = 'Failed to parse salt runner result: {}'.format(salt_res)
         logger.exception(msg)
-        raise SaltCmdRunError(cmd_args._as_dict(), msg)
+        raise SaltCmdRunError(cmd_args, msg)
 
     if res.success:
         return res.result
     else:
-        raise SaltCmdResultError(cmd_args._as_dict(), res.result)
+        raise SaltCmdResultError(cmd_args, res.result)
 
 
 # TODO TEST
@@ -856,14 +846,14 @@ def _salt_client_cmd(
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
         # TODO too generic
-        raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+        raise SaltCmdRunError(cmd_args, exc) from exc
 
     if not salt_res:
         reason = (
             'Async API returned empty result: {}'.format(salt_res) if nowait
             else 'Empty salt result: {}'.format(salt_res)
         )
-        raise SaltNoReturnError(cmd_args._as_dict(), reason)
+        raise SaltNoReturnError(cmd_args, reason)
 
     if nowait:
         return salt_res
@@ -871,7 +861,7 @@ def _salt_client_cmd(
     res = SaltClientResult(salt_res, cmd_args)
 
     if res.fails:
-        raise SaltCmdResultError(cmd_args._as_dict(), res.fails)
+        raise SaltCmdResultError(cmd_args, res.fails)
     else:
         return res.results
 
