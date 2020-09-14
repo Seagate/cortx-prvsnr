@@ -16,6 +16,8 @@
 #
 
 sspl:
+  health_map_path: /opt/seagate/cortx/provisioner/generated_configs/healthmap/
+  health_map_file: ees-schema.json
   SYSTEM_INFORMATION:
     operating_system: "centos7"
     product: "ECS"
