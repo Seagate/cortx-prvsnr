@@ -28,9 +28,9 @@ Install cryptography python package:
     - require:
       - Ensure cryptography python package absent
 
-Install eos-py-utils:           # Package for cryptography
+Install cortx-py-utils:           # Package for cryptography
   pkg.installed:
-    - name: eos-py-utils
+    - name: cortx-py-utils
     - require:
       - Install cryptography python package
 
