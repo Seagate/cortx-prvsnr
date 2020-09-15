@@ -12,6 +12,8 @@ The main feature of the CORTX-Provisioner is to:
 - Let you provision your environments such as Dev, QA, Lab, and Production with minimal user intervention.
 - Allow you to maintain the modularity or granularity of during various stages of Provisioning process so as to help enhancements, maintainability, and training with minimal collateral impacts
 
+Please also read and contribute to our [Wiki](https://github.com/Seagate/cortx-prvsnr/wiki) where we maintain a lot more documentation about these repositories.
+
 ## Get CORTX-Provisioner Ready! 
 
 Jump to the [CORTX-Provisioner Quickstart Guide](Cortx-ProvisionerQuickstartGuide.md) to set up CORTX-Provisioner. 
