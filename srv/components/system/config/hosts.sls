@@ -19,6 +19,7 @@ hostsfile:
   file.managed:
     - name: /etc/hosts
     - contents: |
+        {%- if pillar['cluster']['node_list']|length > 1 %}
         127.0.0.1     localhost localhost.localdomain localhost4 localhost4.localdomain4
         ::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
         -------------------------------------------------------------------------------
@@ -31,5 +32,10 @@ hostsfile:
         {% endfor -%}
         {% endif -%}
         {% endfor %}
+        {%- else %}
+        127.0.0.1     localhost localhost.localdomain localhost4 localhost4.localdomain4 {{ grains['id'] }}
+        ::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
+        -------------------------------------------------------------------------------
+        {%- endif %}
     - user: root
     - group: root
