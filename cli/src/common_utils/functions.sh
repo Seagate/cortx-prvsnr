@@ -1120,7 +1120,7 @@ EOF
 #           `rpm` - installs from a rpm package (default),
 #           `github` - installs from Github using the specified
 #               version `prvsnr-version`. If the version is not set
-#               uses the latest tagged one. (currently broken)
+#               uses the latest tagged one.                         # FIXME EOS-13293
 #           `gitrepo` - establishes local git repo at `/opt/seagate/cortx-prvsnr`
 #               pointing to remote repo on Github. This should help use switch between
 #               branches for validation of branched changes.
