@@ -114,7 +114,7 @@ if __name__=='__main__':
     argParser.add_argument("-n", type=str,
             help="node_id of replacing node i.e. srvnode-1/srvnode-2")
     argParser.add_argument("--syncpass", action='store_true',
-            help="Sync csm admin user password")        
+            help="Sync csm admin user password")
     argParser.set_defaults(func=get_admin_user)
     args = argParser.parse_args()
     args.func(args)
