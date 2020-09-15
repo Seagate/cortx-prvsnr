@@ -144,8 +144,8 @@ function log {
             # Echo message to stderr
             # TODO IMPROVE one-line command
             >&2 echo "$_message"
-            echo "$_message" >> "$log_file"
             logger -t PRVSNR -is "$_message"
+            echo "$_message" >> "$log_file"
         else
             echo "$_message" | tee -a "$log_file"
         fi

@@ -38,7 +38,7 @@ Update ClusterIP:
 
 Setup ClusterIP resouce:
   cmd.run:
-    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} mac=$(echo "01:00:5e:`echo {{ grains['hwaddr_interfaces'][data_if] }} | cut -d ":" -f 1-3`") nic={{ data_if }} op monitor interval=30s
+    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} mac=$(echo "01:00:5e:`echo {{ grains['hwaddr_interfaces'][data_if] }} | cut -d ":" -f 1-3`") nic={{ data_if }} cidr_netmask=16 op monitor interval=30s
 
 Add stickiness metadata to ClusterIP resource:
   cmd.run:
