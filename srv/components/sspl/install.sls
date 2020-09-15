@@ -34,6 +34,7 @@ Install flask:
 Install cortx-sspl-test:
   pkg.installed:
     - name: cortx-sspl-test
-    - requires:
+    - version: latest
+    - require:
       - Install flask
       - Install cortx-sspl packages

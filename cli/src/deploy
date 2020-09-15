@@ -179,6 +179,36 @@ function options_parser {
     esac
 }
 
+function is_conul_running {
+    count=1
+    while [[ /usr/bin/true ]]; do
+        l_info "Validating availability of hare-consul-agents on nodes."
+        l_info "Attempting every 10 secs..."
+
+        consul_service=$(salt "*" service.status hare-consul-agent-c* --output=json)
+        hca1=$(echo ${consul_service}|jq .[\"srvnode-1\"][\"hare-consul-agent-c1\"]|grep -v null)
+        hca2=$(echo ${consul_service}|jq .[\"srvnode-2\"][\"hare-consul-agent-c2\"]|grep -v null)
+        
+        if [[ true == ${hca1} 
+            && true == ${hca2}
+            ]]; then
+            l_info "Both consul agents found running on respective nodes."
+            break
+        fi
+
+        sleep 10
+        count=$((count + 1))
+
+        # Attempt for 5 mins before giving up
+        if [[ ${count} > 30 ]]; then
+            l_error "Unable to get healthy hare-consul-agent service."
+            l_error "Use command 'pcs status' to further find/analyse the issue."
+            l_error "Aborting further deployment..."
+            exit 1
+        fi
+    done
+}
+
 function run_states {
     local states=${@}
 
@@ -226,13 +256,15 @@ function run_states {
                 || "$state" == "sspl"
                 || "$state" == "csm"
                 || "$state" == "provisioner.backup"
-                # || "$state" == "motr.backup" # TODO: Awaiting EOS-12637 fix
-                || "$state" == "s3server.backup"
-                || "$state" == "hare.backup"
-                || "$state" == "ha.iostack-ha.backup"
-                || "$state" == "sspl.backup"
-                || "$state" == "csm.backup"
                 ]]; then
+
+                # Consul takes time to come online after initialization (around 2-3 mins at times)
+                # We need to ensure consul service is available before proceeding
+                # Without a healthy consul service SSPL and CSM shall fail
+                if [[ "$state" == "sspl" ]]; then
+                    is_conul_running
+                fi
+
                 # Execute first on srvnode-2 then on srvnode-1.
                 l_info "Applying 'components.$state' for srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state  $salt_opts
@@ -240,11 +272,13 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
+
             elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "sync.software.openldap"
                 || "$state" == "system.storage.multipath"
                 || "$state" == "sync.files"
                 ]]; then
+                
                 # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Applying 'components.$state' for srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state  $salt_opts
@@ -252,15 +286,27 @@ function run_states {
                 l_info "Applying 'components.$state' for srvnode-2"
                 $cmd salt srvnode-2 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
+
             else
-                # if [[ ("hare" == "$state") && (-e /opt/seagate/cortx/hare/bin/consul) ]]; then
-                #     l_info "Backup Consul"
-                #     /opt/seagate/cortx/hare/bin/consul version
+
+                # if [[ "$state" == "ha.iostack-ha" ]]; then
+                #     sed -i 's/systemd:hare-hax-c1 op stop timeout=30/systemd:hare-hax-c1 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
+
+                #     sed -i 's/systemd:hare-hax-c2 op stop timeout=30/systemd:hare-hax-c2 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
+
+                #     sleep 2     # Mindfulness break
                 # fi
                 
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break
+
+                # Consul takes time to come online after initialization (around 2-3 mins at times)
+                # We need to ensure consul service is available before proceeding
+                # Without a healthy consul service SSPL and CSM shall fail
+                if [[ "$state" == "ha.iostack-ha" ]]; then
+                    is_conul_running
+                fi
             fi
         done
     fi
@@ -313,6 +359,10 @@ if [[ "$run_all" == true ]]; then
     run_states  "${sync_states[@]}"
     run_states  "${iopath_states[@]}"
     run_states "${ha_states[@]}"
+
+    # l_info "Sleeping for 5 mins for hare-hax to stabilize..." 
+    # sleep 300
+
     run_states "${controlpath_states[@]}"
     run_states "${backup_states[@]}"
 fi
@@ -350,6 +400,10 @@ if [[ "$run_ha_states" == true ]]; then
 fi
 
 if [[ "$run_ctrlpath_states" == true ]]; then
+    
+    # l_info "Sleeping for 5 mins for hare-hax to stabilize..." 
+    # sleep 300
+
     l_info "Deploying the control path states"
     run_states "${controlpath_states[@]}"
 fi
