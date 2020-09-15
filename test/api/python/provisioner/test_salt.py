@@ -122,8 +122,14 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         for attr in (
             'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
-            assert getattr(exc.cmd_args, attr) == _locals[attr]
-        assert exc.cmd_args.kw == _kwargs
+            if type(exc.cmd_args) is dict:
+                assert exc.cmd_args.get(attr) == _locals[attr]
+            else:
+                assert getattr(exc.cmd_args, attr) == _locals[attr]
+        if type(exc.cmd_args) is dict:
+            assert exc.cmd_args['kw'] == _kwargs
+        else:
+            assert exc.cmd_args.kw == _kwargs
 
     salt_cmd_args = []
     _call()
@@ -196,7 +202,11 @@ def test_salt_runner_cmd(monkeypatch, eauth):
     with pytest.raises(SaltCmdRunError) as excinfo:
         _call()
     assert excinfo.value.reason is exc
-    _check_exc_attrs(excinfo.value, locals())
+    expected_value = locals()
+    expected_value['fun_args'] = ['fun_args1', 'fun_args2']
+    if eauth:
+        expected_value['kwargs']['password'] = '*******'
+    _check_exc_attrs(excinfo.value, expected_value)
     exc = None
 
     #   falsy res
@@ -209,7 +219,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
                     .format(salt_cmd_res)
                 )
         )
-        _check_exc_attrs(excinfo.value, locals())
+        _check_exc_attrs(excinfo.value, expected_value)
 
     #   non-dict results
     salt_cmd_res = [1, 2, 3]
@@ -221,7 +231,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
             .format(type(salt_cmd_res))
         )
     )
-    _check_exc_attrs(excinfo.value, locals())
+    _check_exc_attrs(excinfo.value, expected_value)
 
     #   unexpected result format - no data field at top (eauth only)
     if eauth:
@@ -234,7 +244,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
                 .format(salt_cmd_res)
             )
         )
-        _check_exc_attrs(excinfo.value, locals())
+        _check_exc_attrs(excinfo.value, expected_value)
 
     #   unexpected result format - missed expected fields
     salt_cmd_res = {'some-key': 'some-value'}
@@ -248,7 +258,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
             .format(salt_cmd_res)
         )
     )
-    _check_exc_attrs(excinfo.value, locals())
+    _check_exc_attrs(excinfo.value, expected_value)
 
     #    raise on fail
     salt_cmd_res = salt_cmd_good_res
@@ -266,10 +276,10 @@ def test_salt_runner_cmd(monkeypatch, eauth):
         assert (
             excinfo.value.reason == salt_cmd_res['return']
         )
-    _check_exc_attrs(excinfo.value, locals())
+    _check_exc_attrs(excinfo.value, expected_value)
 
 
-def test_salt_client_cmd(monkeypatch):
+def test_salt_client_cmd(monkeypatch):  # noqa: C901 FIXME
     salt_cmd_args = []
     salt_cmd_res = {}
     exc = None
@@ -314,8 +324,14 @@ def test_salt_client_cmd(monkeypatch):
         for attr in (
             'targets', 'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
-            assert getattr(exc.cmd_args, attr) == _locals[attr]
-        assert exc.cmd_args.kw == _kwargs
+            if type(exc.cmd_args) is dict:
+                assert exc.cmd_args.get(attr) == _locals[attr]
+            else:
+                assert getattr(exc.cmd_args, attr) == _locals[attr]
+        if type(exc.cmd_args) is dict:
+            assert exc.cmd_args['kw'] == _kwargs
+        else:
+            assert exc.cmd_args.kw == _kwargs
 
     salt_cmd_args = []
     _call()
@@ -356,7 +372,9 @@ def test_salt_client_cmd(monkeypatch):
     with pytest.raises(SaltCmdRunError) as excinfo:
         _call()
     assert excinfo.value.reason is exc
-    _check_exc_attrs(excinfo.value, locals())
+    expected_value = locals()
+    expected_value['fun_args'] = ['fun_args1', 'fun_args2']
+    _check_exc_attrs(excinfo.value, expected_value)
     exc = None
 
     #   falsy res for async run
@@ -373,7 +391,8 @@ def test_salt_client_cmd(monkeypatch):
                         .format(salt_cmd_res)
                     )
             )
-            _check_exc_attrs(excinfo.value, locals())
+            expected_value['nowait'] = nowait
+            _check_exc_attrs(excinfo.value, expected_value)
 
     #   return with errors
     nowait = False
@@ -395,7 +414,9 @@ def test_salt_client_cmd(monkeypatch):
     assert excinfo.value.reason == {
         'some-node-id': salt_cmd_res['some-node-id']['ret']
     }
-    _check_exc_attrs(excinfo.value, locals())
+    expected_value['nowait'] = nowait
+    expected_value['fun'] = fun
+    _check_exc_attrs(excinfo.value, expected_value)
 
     #       state function
     fun = 'state.something'
@@ -410,7 +431,8 @@ def test_salt_client_cmd(monkeypatch):
         }
     }
     assert excinfo.value.reason == _fails
-    _check_exc_attrs(excinfo.value, locals())
+    expected_value['fun'] = fun
+    _check_exc_attrs(excinfo.value, expected_value)
 
     # test return
     #   async result
