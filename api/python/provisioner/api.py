@@ -294,9 +294,8 @@ def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
     #      provisioner.cmd_run cortxcli --cmd-args -h
     #  But is should be
     #      provisioner.cmd_run cortxcli --cmd-args='-h'
-    if nowait:
-        if '-' in cmd_args:
-            cmd_args = f"'{cmd_args}'"
+    if '-' in cmd_args:
+        cmd_args = f"'{cmd_args}'"
     return _api_call('cmd_run', cmd_name, cmd_args=cmd_args,
                      cmd_stdin=cmd_stdin, targets=targets, nowait=nowait,
                      dry_run=dry_run)
