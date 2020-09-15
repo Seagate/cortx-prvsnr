@@ -107,3 +107,5 @@ deploy_vm:
   type: DeployVM
 deploy_jbod:
   type: DeployJBOD
+auto_deploy:
+  type: AutoDeploy

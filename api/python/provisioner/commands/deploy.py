@@ -19,6 +19,7 @@
 
 from typing import Type, Dict, List, Optional
 import logging
+import time
 
 from .. import (
     config,
@@ -85,7 +86,7 @@ deploy_states = dict(
     ha=[
         "ha.corosync-pacemaker",
         "hare",
-        "ha.cortx-ha.install",
+        "ha.cortx-ha",
         "ha.iostack-ha"
     ],
     # states to be applied in desired sequence
@@ -93,8 +94,8 @@ deploy_states = dict(
         "sspl",
         "csm",
         "uds",
-        "post_setup",
-        "ha.cortx-ha"
+        "ha.ctrlstack-ha",
+        "ha.cortx-ha.ha"
     ]
 )
 
@@ -219,6 +220,36 @@ class Deploy(CommandParserFillerMixin):
 
         return res[self._primary_id()] == 'server'
 
+    def _is_consul_running(self):
+        logger.info("Validating availability of hare-consul-agent.")
+        consul_map = {"srvnode-1": "hare-consul-agent-c1",
+                      "srvnode-2": "hare-consul-agent-c2"}
+        count = 15
+        while(count):
+            result_flag = True
+            if self.setup_ctx:
+                for target in consul_map:
+                    res = self.setup_ctx.ssh_client.run(
+                                 'service.status',
+                                 fun_args=[consul_map[target]],
+                                 targets=target
+                             )
+
+                    if not res[target]:
+                        result_flag = False
+                        logger.info(f"Consul is not running on {target}")
+                        count = count - 1
+                        time.sleep(5)
+                        break
+                if result_flag:
+                    logger.info("Consul found running on respective nodes.")
+                    break
+
+        if count == 0:
+            logger.error(f"Unable to get healthy hare-consul-agent service "
+                         f"Exiting further deployment...")
+            raise
+
     def _apply_state(
         self, state, targets=config.ALL_MINIONS, stages: Optional[List] = None
     ):
@@ -296,6 +327,8 @@ class Deploy(CommandParserFillerMixin):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
+                    if state == "ha.iostack-ha":
+                        self._is_consul_running()
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
