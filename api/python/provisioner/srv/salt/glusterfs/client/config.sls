@@ -31,7 +31,3 @@ glusterfs_volume_{{ volume }}_mounted:
     - pass_num: 0
 
 {% endfor %}
-
-enable_glusterfssharedstorage:
-  service.enabled:
-    - name: glusterfssharedstorage.service

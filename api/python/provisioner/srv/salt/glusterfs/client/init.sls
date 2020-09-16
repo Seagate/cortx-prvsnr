@@ -18,3 +18,4 @@
 include:
   - .install
   - .config
+  - .start
