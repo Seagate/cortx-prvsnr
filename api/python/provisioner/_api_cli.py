@@ -116,6 +116,7 @@ def _run_cmd(cmd, env: Optional[Dict] = None, **kwargs):
 # TODO test args preparation
 def _api_call(fun, *args, **kwargs):
     # do not expect ad-hoc credentials here
+    from shlex import quote
     kwargs.pop('password', None)
     kwargs.pop('username', None)
     kwargs.pop('eauth', None)
@@ -133,8 +134,9 @@ def _api_call(fun, *args, **kwargs):
     # TODO IMPROVE EOS-7495 make a config variable for formatter
     kwargs['rsyslog-formatter'] = 'full'
 
-    cli_args = api_args_to_cli(fun, *args, **kwargs)
-    cmd = ['provisioner'] + cli_args
+    cmd = ['provisioner']
+    cmd.extend(api_args_to_cli(fun, *args, **kwargs))
+    cmd = [quote(p) for p in cmd]
 
     return _run_cmd(
         cmd,
