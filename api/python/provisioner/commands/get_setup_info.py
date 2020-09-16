@@ -200,7 +200,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         if pillar[controller_type] == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
         elif pillar[controller_type] == ControllerTypes.INDIUM.value:
-            res[STORAGE_TYPE] = StorageType.PODS.value
+            res[STORAGE_TYPE] = StorageType.RBOD.value
 
         # TODO: EOS-12418-improvement:
         #  implement for other types: virtual, JBOD
