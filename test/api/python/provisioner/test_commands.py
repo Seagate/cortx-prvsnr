@@ -377,7 +377,7 @@ def test_eosupdate_run_happy_path(patch_logging, mocker, mock_eosupdate):
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -582,7 +582,7 @@ def test_eosupdate_run_maintenance_disable_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['YumRollbackManager']().__exit__(
@@ -653,7 +653,7 @@ def test_commands_EOSUpdate_run_ha_post_update_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -725,7 +725,7 @@ def test_commands_EOSUpdate_run_ensure_cluster_is_healthy_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
@@ -797,7 +797,7 @@ def test_commands_EOSUpdate_run_maintenance_enable_at_rollback_failed(
         calls['config_salt_minions'](),
     ] + [
         calls['_update_component'](component, target)
-        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm')
+        for component in ('eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds')
     ] + [
         calls['cluster_maintenance_disable'](),
         calls['apply_ha_post_update'](target),
