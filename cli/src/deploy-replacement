@@ -139,6 +139,10 @@ replacenode_states=(
     "ha.cortx-ha.replace_node.add_node"
 )
 
+post_replacement_states=(
+    "sspl.health_view"
+)
+
 # ToDo: Remove & Add node script here
 
 function usage {
@@ -224,7 +228,7 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                || $state == "ha.iostack-ha.refresh_config"
+                # || $state == "ha.iostack-ha.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
