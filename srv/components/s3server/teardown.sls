@@ -65,9 +65,11 @@ Remove cortx-s3server:
 #  file.absent:
 #    - name: /var/seagate/s3
 
-Remove S3Server under opt:
+Remove S3 and auth directory under opt:
   file.absent:
-    - name: /opt/seagate/s3server
+    - name: |
+        /opt/seagate/cortx/s3
+        /opt/seagate/cortx/auth
 
 #-------------------------
 # Teardown S3Server End
