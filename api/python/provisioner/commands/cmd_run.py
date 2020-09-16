@@ -21,6 +21,7 @@ from .. import inputs
 from ..config import SUPPORTED_REMOTE_COMMANDS, ALL_MINIONS
 from ..salt import function_run
 from ..vendor import attr
+from shlex import quote
 
 
 @attr.s(auto_attribs=True)
@@ -83,7 +84,7 @@ class CmdRun(CommandParserFillerMixin):
         if dry_run:
             return
 
-        cmd_line = f'cortxcli {args}'
+        cmd_line = f'cortxcli {quote(args)}'
 
         # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
         return function_run("cmd.run", targets=targets, fun_args=[cmd_line],
