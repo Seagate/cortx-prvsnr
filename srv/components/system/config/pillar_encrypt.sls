@@ -34,6 +34,16 @@ Install cortx-py-utils:           # Package for cryptography
     - require:
       - Install cryptography python package
 
+# decrypt if any encrypted password to avoid
+# encryption of encrypted secret 
+Decrypt_pillar:
+  cmd.run:
+    {% if salt['file.file_exists']("/opt/seagate/cortx/provisioner/cli/pillar_encrypt") %}
+    - name: python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt -d       # Prod env
+    {% else %}
+    - name: python3 /opt/seagate/cortx/provisioner/cli/src/pillar_encrypt -d   # Dev env
+    {% endif %}
+
 Encrypt_pillar:
   cmd.run:
     {% if salt['file.file_exists']("/opt/seagate/cortx/provisioner/cli/pillar_encrypt") %}

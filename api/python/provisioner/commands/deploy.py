@@ -96,6 +96,15 @@ deploy_states = dict(
         "uds",
         "ha.ctrlstack-ha",
         "ha.cortx-ha.ha"
+    ],
+    backup_states=[
+        "provisioner.backup",
+        # "motr.backup", # TODO: Awaiting EOS-12637 fix
+        "s3server.backup",
+        "hare.backup",
+        "ha.iostack-ha.backup",
+        "sspl.backup",
+        "csm.backup"
     ]
 )
 
@@ -258,7 +267,7 @@ class Deploy(CommandParserFillerMixin):
             if self.setup_ctx:
                 return self.setup_ctx.ssh_client.cmd_run(
                     (
-                        f"salt -C '{targets}' state.apply {state}"
+                        f"salt -C '{targets}' state.apply {state} --out=json"
                     ), targets=self._primary_id()
                 )
             else:
@@ -293,7 +302,7 @@ class Deploy(CommandParserFillerMixin):
             #       for legacy dual node setup
             for state in states:
                 if state == "ha.corosync-pacemaker":
-                    for _state, targets in (
+                    for _state, target in (
                         ("install", targets),
                         ("config.base", targets),
                         ("config.authorize", primary),
@@ -303,11 +312,16 @@ class Deploy(CommandParserFillerMixin):
                     ):
                         self._apply_state(
                             f"components.ha.corosync-pacemaker.{_state}",
-                            targets,
+                            target,
                             stages
                         )
 
-                elif state in ("system.storage", "sspl", "csm"):
+                elif state in (
+                    "system.storage",
+                    "sspl",
+                    "csm",
+                    "provisioner.backup"
+                ):
                     # Execute first on secondaries then on primary.
                     self._apply_state(
                         f"components.{state}", secondaries, stages
@@ -378,7 +392,7 @@ class Deploy(CommandParserFillerMixin):
             if not nofail:
                 raise
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)
 
         # FIXME EOS-12076 in case of dual node some operations (destroy)
@@ -401,6 +415,7 @@ class Deploy(CommandParserFillerMixin):
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
+            self._run_states('backup_states', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
@@ -437,6 +452,10 @@ class Deploy(CommandParserFillerMixin):
             if 'ctrlpath' in run_args.states:
                 logger.info("Deploying the control path states")
                 self._run_states('controlpath', run_args)
+
+            if 'backup' in run_args.states:
+                logger.info("Deploying the backup states")
+                self._run_states('backup_states', run_args)
 
         logger.info("Deploy - Done")
         return run_args
