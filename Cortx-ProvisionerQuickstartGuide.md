@@ -433,7 +433,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
     	 ```shell
     
     	      $ cat /opt/seagate/cortx/provisioner/pillar/components/release.sls | grep target_build
-              target_build: http://cortx-storage.colo.seagate.com/releases/eos/github/release/prod/  
+              target_build: http://cortx-storage.colo.seagate.com/releases/cortx/github/release/prod/  
          ```  
 
   2. Ensure all prerequisites services are up and running:  
@@ -508,7 +508,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 		
    1. Install Provisioner CLI rpm (cortx-prvsnr-cli) from from the CORTX release repo:   
        
-       `$ yum install -y http://cortx-storage.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful/$(curl -s http://cortx-storage.colo.seagate.com/releases/eos/integration/centos-7.7.1908/last_successful/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)`  
+       `$ yum install -y http://cortx-storage.colo.seagate.com/releases/cortx/integration/centos-7.7.1908/last_successful/$(curl -s http://cortx-storage.colo.seagate.com/releases/cortx/integration/centos-7.7.1908/last_successful/|grep eos-prvsnr-cli-1.0.0| sed 's/<\/*[^>]*>//g'|cut -d' ' -f1)`  
        
    2. Modify contents of file on primary node as suggested below:
    
@@ -629,7 +629,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 		
 			`/opt/seagate/cortx/provisioner/pillar/components/samples/singlenode.cluster.sls`
 
-			A sample *cluster.sls* for single node EOS deployment might look like this: 
+			A sample *cluster.sls* for single node CORTX deployment might look like this: 
 			
 			```shell
      
@@ -655,7 +655,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
               		data_devices:                   # Data device/LUN from storage enclosure - /dev/sdc
           		storage_enclosure:
             		id: storage_node_1            # equivalent to fqdn for server node
-            		type: 5U84                    # Type of enclosure. E.g. 5U84/PODS
+            		type: RBOD                    # Type of enclosure. E.g. RBOD
             		controller:
               		type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
               		primary_mc:
