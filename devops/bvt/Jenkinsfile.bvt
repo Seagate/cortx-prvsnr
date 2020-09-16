@@ -55,7 +55,7 @@ Closure dynamicValidation = {
     String testReportFileNameLog = "pytest.log"
     String testReportFileNamePlain = "pytest.out.txt"
 
-    String eosTestRepo = "https://seagit.okla.seagate.com/eos/qa/eos-test/repository/"
+    String cortxTestRepo = "https://seagit.okla.seagate.com/eos/qa/eos-test/repository/"
     String cortxTestRepoArchive = 'eos-test.tgz'
 
     String bvtTestTargets = 'avocado_test/bvt_test.py'
@@ -76,7 +76,7 @@ Closure dynamicValidation = {
 
         stage('Download QA tests') {
             withCredentials([string(credentialsId: 'eos-test-repo-api-token', variable: 'token')]) {
-                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $eosTestRepo/$cortxTestRepoVersion/archive.tar.gz -o $cortxTestRepoArchive"
+                sh "curl -fsSL --request GET --header 'PRIVATE-TOKEN: $token' --insecure $cortxTestRepo/$cortxTestRepoVersion/archive.tar.gz -o $cortxTestRepoArchive"
             }
         }
 
