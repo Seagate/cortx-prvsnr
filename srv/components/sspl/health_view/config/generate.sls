@@ -16,7 +16,6 @@
 #
 
 include:
-  - components.sspl.install
   - components.sspl.config.commons
 
 {% set enclosure = '' %}
