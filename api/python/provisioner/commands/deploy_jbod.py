@@ -59,11 +59,37 @@ deploy_states = dict(
         'misc_pkgs.elasticsearch.install',
         'misc_pkgs.elasticsearch.config',
         'misc_pkgs.kibana.install',
-        'misc_pkgs.statsd.install',
+        'misc_pkgs.statsd.install'
+    ],
+    sync=[
+        # ??? "sync.software.openldap",
+        # ??? "sync.software.rabbitmq"
+    ],
+    iopath=[
         'misc_pkgs.lustre.prepare',
         'misc_pkgs.lustre.install',
         'misc_pkgs.lustre.config',
         'misc_pkgs.lustre.start'
+        "motr.prepare",
+        "motr.install",
+        "s3server.prepare",
+        "s3server.install",
+    ],
+    ha=[
+        # ??? "ha.corosync-pacemaker",
+        "hare",
+        # ??? "ha.cortx-ha.install",
+        # ??? "ha.iostack-ha"
+    ],
+    # states to be applied in desired sequence
+    controlpath=[
+        "sspl.prepare",
+        "sspl.install",
+        "csm.prepare",
+        "csm.install",
+        # ??? "uds",
+        # ??? "post_setup",
+        # ??? "ha.cortx-ha"
     ]
 )
 
