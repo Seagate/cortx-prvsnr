@@ -53,4 +53,4 @@
 
 # Configure Static IP On Storage Enclosure
 
-Follow step #2 from guide: https://github.com/Seagate/cortx-prvsnr/wiki/In-band-Setup#5u84-side
+Follow step #2 from guide: https://github.com/Seagate/cortx-prvsnr/wiki/In-band-Setup#RBOD-side
