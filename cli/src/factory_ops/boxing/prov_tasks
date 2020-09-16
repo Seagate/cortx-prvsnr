@@ -78,10 +78,12 @@ function backup_files {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
-function updating_ssh_settings {
+function update_ssh_settings {
     echo -n "INFO: Updating ssh settings on both nodes....." | tee -a ${LOG_FILE}
 
-    salt "*" state.apply components.system.config.sshd_boxing
+    salt "*" state.apply components.system.config.sshd_boxing ${salt_opts} || (
+        echo "ERROR: Failed to update ssh settings from both nodes." | tee -a ${LOG_FILE}
+    )
 
     echo "Done." | tee -a ${LOG_FILE}
 }

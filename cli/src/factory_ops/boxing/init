@@ -66,7 +66,7 @@ backup_files
 create_unboxing_user
 
 # Set remote root login only through private ips
-updating_ssh_settings
+update_ssh_settings
 
 # Create flag file
 boxing_flag $box_flag_file
