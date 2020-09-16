@@ -444,7 +444,7 @@ class EOSUpdate(CommandParserFillerMixin):
                     config_salt_minions()
 
                     for component in (
-                        'eoscore', 's3server', 'hare', 'sspl', 'csm'
+                        'eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
