@@ -100,9 +100,11 @@ def backup_files(component="provisioner"):
             for file in yaml_dict[component]["backup"]["files"]:
                 file_path = Path(file)
                 dst = file_path.parent.joinpath(current_node)
-
+                
+                # For pathlib: https://bugs.python.org/issue21039
                 msg = subprocess.Popen(
-                    [f"{cmd} {file_path.parent} {node}:{dst}"],
+                    # [f"{cmd} {file_path.parent} {node}:{dst}"],
+                    [f"{cmd} {file_path} {node}:{dst}{os.sep}"],
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
@@ -166,11 +168,13 @@ def restore_files(component="provisioner"):
             
                 for file in yaml_dict[component]["backup"]["files"]:
                     file_path = Path(file)
-                    src = file_path.parent.joinpath(replacement_node, file_path.parent.name)
-                    dst = file_path.parent.parent
+                    # src = file_path.parent.joinpath(replacement_node, file_path.parent.name)
+                    # dst = file_path.parent.parent
+                    src = file_path.parent.joinpath(replacement_node, file_path)
+                    dst = file_path.parent
 
                     msg = subprocess.Popen(
-                            [f"{cmd} {node}:{src} {dst}"],
+                            [f"{cmd} {node}:{src}{os.sep} {dst}{os.sep}"],
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
