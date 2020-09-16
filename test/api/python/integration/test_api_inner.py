@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 def _api_call(fun, *args, **kwargs):
+    from shlex import quote
     if fun not in ('auth_init', 'get_result'):
         kwargs['nowait'] = nowait
 
@@ -54,6 +55,7 @@ def _api_call(fun, *args, **kwargs):
 
         cmd = ['provisioner']
         cmd.extend(api_args_to_cli(fun, *args, **kwargs))
+        cmd = [quote(p) for p in cmd]
         logger.debug("Command: {}".format(cmd))
 
         env = os.environ.copy()
