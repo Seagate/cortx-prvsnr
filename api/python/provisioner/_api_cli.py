@@ -48,7 +48,7 @@ def api_args_to_cli(fun, *args, **kwargs):
             if v:
                 res.extend([k])
         else:
-            res.extend([k, value_to_str(v)])
+            res.extend([f"{k}={value_to_str(v)}"])
 
     res.extend([value_to_str(a) for a in args])
     logger.debug("Cli command args: {}".format(res))
