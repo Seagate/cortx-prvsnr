@@ -76,7 +76,6 @@ deploy_states = dict(
         "s3server.install",
     ],
     ha=[
-        # ??? "ha.corosync-pacemaker",
         "hare",
         # ??? "ha.cortx-ha.install",
         # ??? "ha.iostack-ha"
@@ -87,9 +86,8 @@ deploy_states = dict(
         "sspl.install",
         "csm.prepare",
         "csm.install",
-        # ??? "uds",
-        # ??? "post_setup",
-        # ??? "ha.cortx-ha"
+        # ??? "ha.ctrlstack-ha",
+        # ??? "ha.cortx-ha.ha"
     ]
 )
 
