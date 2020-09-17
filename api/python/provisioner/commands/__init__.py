@@ -1160,6 +1160,30 @@ class CreateUser(CommandParserFillerMixin):
             _generate_ssh_config()
             _copy_minion_nodes()
 
+
+        ## Creating new group with limited access for csm admin users
+        StateFunExecuter.execute(
+            'group.present',
+            fun_kwargs=dict(
+                name='csm-admin'
+            )
+        )
+
+        StateFunExecuter.execute(
+            'file.managed',
+            fun_kwargs=dict(
+                name='/etc/sudoers.d/csm-admin',
+                contents="## Allows users in group csm-admin to have access to mentioned operations \n\
+%csm-admin   ALL = NOPASSWD: /usr/bin/tail, /usr/bin/salt, /usr/bin/cp,  /usr/bin/systemctl, /usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, /usr/bin/dir, /usr/bin/cd, /usr/bin/cat, /usr/bin/ls, /usr/sbin/subscription-manager, /usr/bin/cat, /usr/bin/yum, /usr/bin/kill, /usr/bin/echo, /usr/sbin/pcs, /usr/sbin/supportbundle, /usr/sbin/boxing, /usr/sbin/unboxing",
+                create=True,
+                replace=False,
+                user='root',
+                group='root',
+                mode=440
+            )
+        )
+
+
         StateFunExecuter.execute(
             'user.present',
             fun_kwargs=dict(
@@ -1167,7 +1191,7 @@ class CreateUser(CommandParserFillerMixin):
                 password=passwd,
                 hash_password=True,
                 home=str(home_dir),
-                groups=['wheel']
+                groups=['csm-admin']
             ),
             targets=targets
         )
