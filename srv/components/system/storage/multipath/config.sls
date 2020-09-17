@@ -78,12 +78,21 @@ Start multipath service:
     - watch:
       - file: Copy multipath config
 
+Check multipath devices:
+  cmd.run:
+    - name: test `multipath -ll | grep mpath | wc -l` -ge 7
+    - retry:
+        attempts: 3
+        until: True
+        interval: 5
+
 Update cluster.sls pillar:
   module.run:
     - cluster.jbod_storage_config: []
     - saltutil.refresh_pillar: []
     - require:
       - Start multipath service
+      - Check multipath devices
 {% endif %}
 
 Restart service multipath:

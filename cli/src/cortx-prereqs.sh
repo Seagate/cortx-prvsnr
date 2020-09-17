@@ -32,13 +32,13 @@ epel_repo=
 bundled_release=false
 
 # Repo url for in house built commons packages Non RHEL systems
-url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/eos/uploads/centos/centos-7.7.1908/"
+url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/uploads/centos/centos-7.7.1908/"
 
 # Repo url for in house built commons packages for RHEL systems
-url_local_repo_commons_rhel="http://cortx-storage.colo.seagate.com/releases/eos/uploads/rhel/rhel-7.7.1908/"
+url_local_repo_commons_rhel="http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/"
 
 # Repo url for in house built HA packages for RHEL systems
-#url_local_repo_rhel_ha="http://cortx-storage.colo.seagate.com/releases/eos/rhel_local_ha/"
+#url_local_repo_rhel_ha="http://cortx-storage.colo.seagate.com/releases/cortx/rhel_local_ha/"
 
 # Repo url for Saltstack
 # url_saltstack_repo="https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3000"
@@ -113,16 +113,15 @@ parse_args()
 
             bundled_release=true
 
+            system_repo="${tgt_build}/centos7.7"
             grep -q "Red Hat" /etc/*-release && {
                 subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
                 subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
-                if echo "$subc_list" | grep -q "Subscribed" && "$subc_status" == "Current"; then
-                    system_repo="${tgt_build}/rhel7.7"
-                else
-                    system_repo="${tgt_build}/centos7.7"
+                if echo "$subc_list" | grep -q "Subscribed"; then
+                    if [[ "$subc_status" == "Current" ]]; then
+                        system_repo="${tgt_build}/rhel7.7"
+                    fi
                 fi
-            } || {
-                system_repo="${tgt_build}/centos7.7"
             }
 
             #grep -q "Red Hat" /etc/*-release && {

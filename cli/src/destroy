@@ -48,7 +48,6 @@ tgt_node=srvnode-2
 controlpath_states=(
 # states to be applied in desired sequence
     "ha.ctrlstack-ha.teardown"
-    "ha.cortx-ha.ha_cleanup"
     "uds.teardown"
     "csm.teardown"
     "sspl.teardown"
@@ -56,6 +55,7 @@ controlpath_states=(
 
 ha_states=(
     "ha.iostack-ha.teardown"
+    "ha.cortx-ha.ha_cleanup"
     "ha.cortx-ha.teardown"
     "ha.corosync-pacemaker.teardown"
     "hare.teardown"
@@ -182,7 +182,7 @@ function teardown_states {
                 sleep 2     # Mindfulness break
 
                 l_info "Removing cortx-ha on both nodes"
-                $cmd salt "*" state.apply components.ha.cortx-ha  $salt_opts || true
+                $cmd salt "*" state.apply components.ha.cortx-ha.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
 
             elif [[ "$state" == "ha.corosync-pacemaker"

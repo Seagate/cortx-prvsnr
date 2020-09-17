@@ -158,7 +158,7 @@ class GetSetupInfo(CommandParserFillerMixin):
             res[SERVERS_PER_NODE] = 1
         elif storage_type == SetupType.DUAL.value:
             res[SERVERS_PER_NODE] = 2
-        elif storage_type == SETUP_TYPE:
+        elif storage_type.lower() == SETUP_TYPE:
             # TODO: EOS-12418-improvement:
             #  does this value can be used in real configuration?
             res[SERVERS_PER_NODE] = 2
@@ -200,7 +200,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         if pillar[controller_type] == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
         elif pillar[controller_type] == ControllerTypes.INDIUM.value:
-            res[STORAGE_TYPE] = StorageType.PODS.value
+            res[STORAGE_TYPE] = StorageType.RBOD.value
 
         # TODO: EOS-12418-improvement:
         #  implement for other types: virtual, JBOD

@@ -211,7 +211,7 @@ Vagrant.configure("2") do |config|
           if [[ -d '/opt/seagate/cortx/provisioner' ]]; then
             BASEDIR=/opt/seagate/cortx/provisioner
           else
-            BASEDIR=/opt/seagate/eos-prvsnr
+            BASEDIR=/opt/seagate/cortx/provisioner
           fi
 
           #Disable iptables-services
@@ -257,7 +257,7 @@ Vagrant.configure("2") do |config|
           #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
           
           # IP path components
-          #sudo salt srvnode-1 state.apply components.eoscore
+          #sudo salt srvnode-1 state.apply components.motr
           #sudo salt srvnode-1 state.apply components.s3server
           #sudo salt srvnode-1 state.apply components.hare
 

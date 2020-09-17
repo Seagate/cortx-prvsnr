@@ -1,0 +1,398 @@
+#!/bin/bash
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing, 
+# please email opensource@seagate.com or cortx-questions@seagate.com."
+#
+
+set -euE
+
+BASEDIR=$(dirname "${BASH_SOURCE}")
+
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-replacement.log}"
+export LOG_FILE
+
+. $BASEDIR/common_utils/functions.sh
+
+l_info "***** Running $0 *****" 
+
+function trap_handler {
+    echo "***** FAILED!! *****"
+    echo "For detailed error logs, please see: $LOG_FILE"
+}
+trap trap_handler ERR
+
+run_all=true
+run_system_states=false
+run_prereq_states=false
+run_sync_states=false
+run_io_states=false
+run_ha_states=false
+run_ctrlpath_states=false
+run_replacenode_states=false
+run_restore_states=false
+tgt_node=srvnode-2
+
+salt_opts=
+salt_opts_dry_run=
+if [[ "$dry_run" == true ]]; then
+    salt_opts_dry_run="test=True"
+fi
+# Salt commands shall have a timeout of 5 min
+# A command idle for more than 5 min shall be killed
+salt_opts="--no-color --out-file=$LOG_FILE --out-file-append $salt_opts_dry_run --timeout=600"
+
+# states to be applied in desired sequence
+system_states=(
+    "system"
+    # "system.storage.multipath.prepare"
+    # "system.storage.multipath.install"
+    # "system.storage.multipath.config"
+    "system.network"
+    "system.network.data.public"
+    "system.network.data.direct"
+    "misc_pkgs.rsyslog"
+    "system.firewall"
+    "system.logrotate"
+    "system.chrony"
+)
+
+# states to be applied in desired sequence
+prereq_states=(
+    "misc_pkgs.rhel_sos"
+    "misc_pkgs.ssl_certs"
+    "ha.haproxy"
+    "misc_pkgs.openldap"
+    "misc_pkgs.rabbitmq"
+    "misc_pkgs.nodejs"
+    "misc_pkgs.elasticsearch"
+    "misc_pkgs.kibana"
+    "misc_pkgs.statsd"
+)
+
+# states to be applied in desired sequence
+iopath_states=(
+    "misc_pkgs.lustre"
+    "motr.prepare"
+    "motr.install"
+    "hare.prepare"
+    "hare.install"
+    "s3server.prepare"
+    "s3server.install"
+)
+
+# states to be applied in desired sequence
+controlpath_states=(
+    "sspl.prepare"
+    "sspl.install"
+    #"sspl.config"
+    "csm.prepare"
+    "csm.install"
+    "csm.config"
+    "uds.prepare"
+    "uds.install"
+)
+
+# states to be applied in desired sequence
+ha_states=(
+    "ha.corosync-pacemaker.prepare"
+    "ha.corosync-pacemaker.install"
+    "ha.corosync-pacemaker.config.base"
+    "ha.corosync-pacemaker.config.authorize"
+    "ha.cortx-ha"
+    "ha.iostack-ha.prepare"
+    "ha.iostack-ha.config.base"
+)
+
+# states to be applied in desired sequence
+sync_states=(
+    "sync.software.openldap"
+    "sync.software.rabbitmq"
+)
+
+# states to be applied in desired sequence
+restore_states=(
+    # "provisioner.restore"
+    # "motr.restore" # TODO: Awaiting EOS-12637 fix
+    "s3server.restore"
+    "hare.restore"
+    "ha.iostack-ha.restore"
+    "ha.iostack-ha.refresh_config"
+    "sspl.restore"
+    "csm.restore"
+    "csm.refresh_config"
+)
+
+replacenode_states=(
+    "ha.cortx-ha.replace_node.refresh_config"
+    "ha.cortx-ha.replace_node.add_node"
+)
+
+post_replacement_states=(
+    "sspl.health_view"
+)
+
+# ToDo: Remove & Add node script here
+
+function usage {
+  echo "\
+Usage: $0 [options]
+
+Installs CORTX stack and configures cortx services either on remote host or locally.
+
+Target host is considered to be an cortx salt-master.
+
+General options:
+$base_options_usage
+Options:
+    -S <tgt_node>,  --singlenode=<tgt_node>      switch to single node mode setup
+    --system-states                              deploy only system states
+    --prereq-states                              deploy only prereq states (components.misc_pkgs)
+    --sync-states                                deploy only the software synchronization
+    --iopath-states                              deploy only iopath states (motr, s3server & Hare)
+    --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
+    --replacenode-states                         deploy only states for refresh_config on node and add_node
+    --restore-states                             deploy only restore states to restore backed-up files
+"
+}
+
+
+function options_parser {
+    set -eu
+
+    case "$1" in
+        -S|--singlenode)
+            singlenode=true
+            tgt_node="$2"
+            shift
+            ;;
+        --system-states)
+            run_system_states=true
+            run_all=false
+            ;;
+        --prereq-states)
+            run_prereq_states=true
+            run_all=false
+            ;;
+        --sync-states)
+            run_sync_states=true
+            run_all=false
+            ;;
+        --iopath-states)
+            run_io_states=true
+            run_all=false
+            ;;
+        --ha-states)
+            run_ha_states=true
+            run_all=false
+            ;;
+        --replacenode-states)
+            run_replacenode_states=true
+            run_all=false
+            ;;
+        --ctrlpath-states)
+            run_ctrlpath_states=true
+            run_all=false
+            ;;
+        --restore-states)
+            run_restore_states=true
+            run_all=false
+            ;;
+        *)
+            l_error "Unknown option: $1"
+            usage
+            exit 5
+    esac
+}
+
+function run_states {
+    local states=${@}
+
+    # apply states
+    if [[ "$singlenode" == true ]]; then
+        # TODO use salt orchestration
+        for state in ${states[@]}; do
+            if [[ $state == "ha.cortx-ha.replace_node.remove_node"
+                || $state == "ha.cortx-ha.replace_node.refresh_config"
+                || $state == "ha.cortx-ha.replace_node.add_node"
+                || $state == "csm.refresh_config"
+                # || $state == "ha.iostack-ha.refresh_config"
+            ]]; then
+
+                local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
+
+                if [[ -z local_node ]]; then
+                    l_error "unable to identify local node. Check Salt services are running."
+                else
+                    l_info "Applying 'components.$state' on node: $local_node"
+                    $cmd salt "$local_node" state.apply components.$state $salt_opts
+                fi
+            else
+                l_info "Applying 'components.$state' on node: ${tgt_node}"
+                $cmd salt "${tgt_node}" state.apply components.$state $salt_opts
+                sleep 2     # Mindfulness break
+            fi
+
+        done
+    fi
+}
+
+function update_salt_n_system {
+    # Refresh salt pillar data
+    l_info "Updating Salt data"
+    l_info "Syncing states"
+    $cmd salt "*" saltutil.sync_all $salt_opts
+    sleep 2
+    l_info "Refreshing pillars"
+    sleep 2
+    $cmd salt "*" saltutil.refresh_pillar $salt_opts
+    l_info "Refreshing grains"
+    sleep 2
+    $cmd salt "*" saltutil.refresh_grains $salt_opts
+    sleep 2
+
+    # Mount SWAP from LVM
+    swapoff -a && $cmd salt "${tgt_node}" mount.swapon /dev/vg_metadata_${tgt_node}/lv_main_swap $salt_opts
+    # Add SWAP to /etc/fstab
+    $cmd salt "${tgt_node}" mount.set_fstab /dev/vg_metadata_${tgt_node}/lv_main_swap none swap ${salt_opts}
+}
+
+
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states,restore-states' options_parser '' "$@"
+
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
+cmd="$(build_command "$hostspec" "$ssh_config" "$sudo" 2>/dev/null)"
+
+# Ping if the target node is online else exit
+repl_node_hostname=$(salt-call --local pillar.get cluster:${tgt_node}:hostname --output=newline_values_only)
+ping -c1 ${repl_node_hostname} >/dev/null 2>&1 \
+    && l_info "Replacement node '${repl_node_hostname}' is online." \
+    || (l_error "Replacement node '${repl_node_hostname}' is not reachable."; exit 1)
+
+# Update salt states
+update_salt_n_system
+
+flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
+if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
+    l_info "=============================="
+    l_info "Stage 1: Applying multipath..."
+    l_info "=============================="
+
+    l_info "Applying multipath states on node: ${tgt_node}"
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config
+
+    l_info "Generating multipath flag file current node."
+    test -d ${flag_file_dir} || mkdir -p ${flag_file_dir}
+    echo ${tgt_node}>${flag_file_dir}/${tgt_node}.multipath
+
+    # On replacement node it is essential to reboot node
+    # after multipath states are applied
+    l_warn "Rebooting '${tgt_node}' to ensure multipath picks correct LUNs for mapping."
+    $cmd salt ${tgt_node} system.reboot --async
+
+elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
+        && ${tgt_node} == $(cat ${flag_file_dir}/${tgt_node}.multipath)
+        ]]; then
+    # Here we verify the node specifed for multipath before reboot
+    # is same as the one being used for replace_node continuation
+
+    l_info "============================================================="
+    l_info "Stage 2: Prepareing replaced node for attaching to cluster..."
+    l_info "============================================================="
+
+    if [[ "$run_all" == true ]]; then
+
+        recovery_ha_state=( "ha.cortx-ha.replace_node.remove_node" )
+        run_states "${recovery_ha_state[@]}"
+
+        salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
+        run_states "${system_states[@]}"
+
+        run_states "${prereq_states[@]}"
+        run_states "${iopath_states[@]}"
+        run_states "${controlpath_states[@]}"
+        run_states "${ha_states[@]}"
+        run_states "${sync_states[@]}"
+        run_states "${restore_states[@]}"
+        run_states "${replacenode_states[@]}"
+        
+    fi
+
+    if [[ "$run_system_states" == true ]]; then
+        l_info "Deploying the system states"
+        salt "*" cmd.run "rescan-scsi-bus.sh || true" $salt_opts
+        run_states "${system_states[@]}"
+    fi
+
+    if [[ "$run_prereq_states" == true ]]; then
+        l_info "Deploying the prereq states"
+        run_states  "${prereq_states[@]}"
+    fi
+
+    if [[ "$run_sync_states" == true ]]; then
+        l_info "Deploying the sync states"
+        run_states  "${sync_states[@]}"
+    fi
+
+    if [[ "$run_io_states" == true ]]; then
+        l_info "Deploying the io path states"
+        run_states  "${iopath_states[@]}"
+    fi
+
+    if [[ "$run_ha_states" == true ]]; then
+        l_info "Deploying the ha states"
+        run_states "${ha_states[@]}"
+    fi
+
+    if [[ "$run_ctrlpath_states" == true ]]; then
+        l_info "Deploying the control path states"
+        run_states "${controlpath_states[@]}"
+    fi
+
+    if [[ "$run_replacenode_states" == true ]]; then
+        l_info "Deploying the replacenode path states"
+        run_states "${replacenode_states[@]}"
+    fi
+
+    if [[ "$run_restore_states" == true ]]; then
+        l_info "Synchronizing files on both nodes."
+        run_states "${restore_states[@]}"
+    fi
+
+    # l_info "Backing up pillar files to user space."
+    # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
+    # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
+    # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
+    # chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
+
+    l_info "***** SUCCESS! *****"
+    l_info "The detailed logs can be seen at: $LOG_FILE"
+    l_info "Done"
+
+else
+    l_warn "============================================================="
+    l_warn "***** Oops! *****"
+    l_warn "============================================================="
+    l_error "Check if you have specified the same node specified during first run."
+    l_error "If you are confident this is the first run \
+and '-S/--single-node' parameter has correct value sepcified."
+    l_error "Remove file ${flag_file_dir}/${tgt_node}.multipath \
+from current node and retry."
+fi

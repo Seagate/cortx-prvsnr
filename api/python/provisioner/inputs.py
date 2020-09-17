@@ -418,10 +418,12 @@ class Validation():
     @staticmethod
     def check_ip4(instace, attribute, value):
         try:
-            if value is not UNCHANGED:
+            if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
                 ipaddress.IPv4Address(value)
         except ValueError:
-            raise ValueError(f"{attribute.name}: invalid ip4 address")
+            raise ValueError(
+                f"{attribute.name}: invalid ip4 address {value}"
+            )
 
 
 @attr.s(auto_attribs=True)
@@ -450,7 +452,7 @@ class Release(ParamGroupInputBase):
 
 class StorageEnclosureParams():
     _param_group = 'storage_enclosure'
-    storage_type: str = ParamGroupInputBase._attr_ib(
+    type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Type of storage"
     )
     primary_mc_ip: str = ParamGroupInputBase._attr_ib(
@@ -482,6 +484,10 @@ class NodeNetworkParams():
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
     )
+    is_primary: bool = ParamGroupInputBase._attr_ib(
+        _param_group, descr="mark node as a primary",
+        converter=bool
+    )
     data_nw_iface: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data network iface"
     )
@@ -491,8 +497,35 @@ class NodeNetworkParams():
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
-    public_ip_addr: str = ParamGroupInputBase._attr_ib(
+    mgmt_nw_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node mgmt gateway IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management iface IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_nw_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management iface netmask",
+        validator=Validation.check_ip4
+    )
+    mgmt_nw_iface: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network iface"
+    )
+    data_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    data_nw_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data iface netmask",
+        validator=Validation.check_ip4
+    )
+    data_nw_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    pvt_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data iface private IP",
         validator=Validation.check_ip4
     )
     bmc_ip: str = ParamGroupInputBase._attr_ib(

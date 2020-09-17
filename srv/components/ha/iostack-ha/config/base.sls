@@ -25,7 +25,7 @@ Copy file setup-ees.yaml:
   file.copy:
     - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
     - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
-    - force: False      # Failsafe once cortx-ha fixes the path
+    - force: True      # Failsafe once cortx-ha fixes the path
     - makedirs: True
     - preserve: True
 
