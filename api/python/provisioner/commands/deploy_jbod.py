@@ -59,11 +59,29 @@ deploy_states = dict(
         'misc_pkgs.elasticsearch.install',
         'misc_pkgs.elasticsearch.config',
         'misc_pkgs.kibana.install',
-        'misc_pkgs.statsd.install',
+        'misc_pkgs.statsd.install'
+    ],
+    sync=[
+    ],
+    iopath=[
         'misc_pkgs.lustre.prepare',
         'misc_pkgs.lustre.install',
         'misc_pkgs.lustre.config',
-        'misc_pkgs.lustre.start'
+        'misc_pkgs.lustre.start',
+        'motr.prepare',
+        'motr.install',
+        's3server.prepare',
+        's3server.install',
+    ],
+    ha=[
+        'hare',
+    ],
+    # states to be applied in desired sequence
+    controlpath=[
+        'sspl.prepare',
+        'sspl.install',
+        'csm.prepare',
+        'csm.install',
     ]
 )
 
@@ -107,6 +125,10 @@ class DeployJBOD(Deploy):
             self._run_states('system', run_args)
             self._encrypt_pillar()
             self._run_states('prereq', run_args)
+            self._run_states('sync', run_args)
+            self._run_states('iopath', run_args)
+            self._run_states('ha', run_args)
+            self._run_states('controlpath', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")

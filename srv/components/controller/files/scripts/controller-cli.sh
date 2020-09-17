@@ -29,17 +29,20 @@ export tmpdir="$logdir/_ctrl_cli_tmp"
 export logfile=$logdir/controller-cli.log
 
 function trap_handler {
-    echo "***** FAILED!! *****"
-    echo "For more details see $logfile"
+    echo "***** FAILED!! *****" | tee -a $logfile
+    echo "For more details see $logfile" | tee -a $logfile
+    echo "Exiting from trap_handler" >> $logfile
     exit 2
 }
 
 function trap_handler_exit {
-    if [[ $? -eq 1 ]]; then
-        echo "***** FAILED!! *****"
-        echo "For more details see $logfile"
+    ret=$?
+    if [[ $ret -ne 0 ]]; then
+        echo "***** FAILED!! *****" | tee -a $logfile
+        echo "For more details see $logfile" | tee -a $logfile
     else
-        exit $?
+        echo "Exiting with ret code: $ret" >> $logfile
+        exit $ret
     fi
 }
 
