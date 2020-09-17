@@ -36,9 +36,3 @@ Stage - Init S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:init')
 
-Append /etc/hosts:
-  file.line:
-    - name: /etc/hosts
-    - content: {{ pillar['cluster']['cluster_ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
-    - location : end
-    - mode: insert
