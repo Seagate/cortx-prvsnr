@@ -68,20 +68,20 @@ deploy_states = dict(
         'misc_pkgs.lustre.install',
         'misc_pkgs.lustre.config',
         'misc_pkgs.lustre.start',
-        "motr.prepare",
-        "motr.install",
-        "s3server.prepare",
-        "s3server.install",
+        'motr.prepare',
+        'motr.install',
+        's3server.prepare',
+        's3server.install',
     ],
     ha=[
-        "hare",
+        'hare',
     ],
     # states to be applied in desired sequence
     controlpath=[
-        "sspl.prepare",
-        "sspl.install",
-        "csm.prepare",
-        "csm.install",
+        'sspl.prepare',
+        'sspl.install',
+        'csm.prepare',
+        'csm.install',
     ]
 )
 
