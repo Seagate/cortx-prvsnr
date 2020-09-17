@@ -50,7 +50,7 @@ system_states=(
         "misc_pkgs.rsyslog"
         "system.firewall"
         "system.logrotate"
-        "system.ntp"
+        "system.chrony"
     )
 
 prereq_states=(
@@ -63,11 +63,11 @@ prereq_states=(
         "misc_pkgs.elasticsearch"
         "misc_pkgs.kibana"
         "misc_pkgs.statsd"
+        "misc_pkgs.lustre"
     )
 
 iopath_states=(
     # states to be applied in desired sequence
-        "misc_pkgs.lustre"
         "motr"
         "s3server"
         "hare"
