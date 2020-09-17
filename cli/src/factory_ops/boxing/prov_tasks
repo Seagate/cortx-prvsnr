@@ -230,7 +230,7 @@ function boxing_flag {
 
 sub_manager_check()
 {
-    _node="${1:-srvnode-1"}
+    _node="${1:-srvnode-1}"
 
     grep -q "Red Hat" /etc/*-release || {
         echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
@@ -254,7 +254,7 @@ sub_manager_check()
 
 sub_manager_cleanup()
 {
-    _node="${1:-srvnode-1"}
+    _node="${1:-srvnode-1}"
     grep -q "Red Hat" /etc/*-release || {
         echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
         return
