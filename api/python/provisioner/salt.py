@@ -609,7 +609,7 @@ class SaltSSHClient(SaltClientBase):
                 )
             except SaltCmdResultError as exc:
                 reason = exc.reason.get(target)
-                roster_file = exc.cmd_args.kw.get('roster_file')
+                roster_file = exc.cmd_args.get('kw').get('roster_file')
                 if roster_file and ('Permission denied' in reason):
                     roster = load_yaml(roster_file)
                     copy_id(
@@ -617,7 +617,7 @@ class SaltSSHClient(SaltClientBase):
                         user=roster.get(target, {}).get('user'),
                         port=roster.get(target, {}).get('port'),
                         priv_key_path=roster.get(target, {}).get('priv'),
-                        ssh_options=exc.cmd_args.kw.get('ssh_options'),
+                        ssh_options=exc.cmd_args.get('kw').get('ssh_options'),
                         force=True
                     )
                 else:
@@ -642,13 +642,13 @@ class SaltSSHClient(SaltClientBase):
             except SaltCmdResultError as exc:
                 reason = exc.reason.get(target)
                 # TODO IMPROVE EOS-8473 better search string / regex
-                roster_file = exc.cmd_args.kw.get('roster_file')
+                roster_file = exc.cmd_args.get('kw').get('roster_file')
                 if roster_file and ("not found" in reason):
                     self.run(
                         'yum install -y python3',
                         targets=target,
-                        roster_file=exc.cmd_args.kw.get('roster_file'),
-                        ssh_options=exc.cmd_args.kw.get('ssh_options'),
+                        roster_file=exc.cmd_args.get('kw').get('roster_file'),
+                        ssh_options=exc.cmd_args.get('kw').get('ssh_options'),
                         raw_shell=True
                     )
                 else:
