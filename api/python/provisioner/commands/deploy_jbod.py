@@ -67,7 +67,7 @@ deploy_states = dict(
         'misc_pkgs.lustre.prepare',
         'misc_pkgs.lustre.install',
         'misc_pkgs.lustre.config',
-        'misc_pkgs.lustre.start'
+        'misc_pkgs.lustre.start',
         "motr.prepare",
         "motr.install",
         "s3server.prepare",
