@@ -62,8 +62,6 @@ deploy_states = dict(
         'misc_pkgs.statsd.install'
     ],
     sync=[
-        # ??? "sync.software.openldap",
-        # ??? "sync.software.rabbitmq"
     ],
     iopath=[
         'misc_pkgs.lustre.prepare',
@@ -77,8 +75,6 @@ deploy_states = dict(
     ],
     ha=[
         "hare",
-        # ??? "ha.cortx-ha.install",
-        # ??? "ha.iostack-ha"
     ],
     # states to be applied in desired sequence
     controlpath=[
@@ -86,8 +82,6 @@ deploy_states = dict(
         "sspl.install",
         "csm.prepare",
         "csm.install",
-        # ??? "ha.ctrlstack-ha",
-        # ??? "ha.cortx-ha.ha"
     ]
 )
 
@@ -131,6 +125,11 @@ class DeployJBOD(Deploy):
             self._run_states('system', run_args)
             self._encrypt_pillar()
             self._run_states('prereq', run_args)
+            self._run_states('sync', run_args)
+            self._run_states('iopath', run_args)
+            self._run_states('ha', run_args)
+            self._run_states('controlpath', run_args)
+            self._run_states('', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
