@@ -3,6 +3,7 @@
 def err = null
 
 branchName = env.BRANCH_NAME.replace('/','_')
+dockerImage = "seagate/cortx-prvsnr:unit-$branchName"
 
 Map config = [
     staticValidation: true,
@@ -19,6 +20,7 @@ def nodeWrapper(label=null, body) {
             body()
         } finally {
             echo "Cleanup"
+            cleanDocker()
             cleanWs()
         }
     }
@@ -32,12 +34,15 @@ def buildDocker(imageName, dockerfile, ctx, add_args='') {
 
 def buildUnitDocker() {
     return buildDocker(
-        "seagate/cortx-prvsnr:unit-$branchName",
+        dockerImage,
         "devops/ci/Dockerfile.unit",
         "api",
     )
 }
 
+def cleanDocker(){
+    sh("docker rmi -f ${dockerImage} || true")
+}
 
 Closure preparePythonEnv = {
     String testPipenvReport = "pipenv.out"
