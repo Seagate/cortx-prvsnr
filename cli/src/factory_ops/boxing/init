@@ -60,6 +60,7 @@ fi
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
 reset_pub_data_ips
+seagate_refs_cleanup
 backup_files
 
 # Create user for unboxing
