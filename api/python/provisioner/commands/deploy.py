@@ -236,23 +236,29 @@ class Deploy(CommandParserFillerMixin):
         count = 15
         while(count):
             result_flag = True
-            if self.setup_ctx:
-                for target in consul_map:
+            for target in consul_map:
+                if self.setup_ctx:
                     res = self.setup_ctx.ssh_client.run(
                                  'service.status',
                                  fun_args=[consul_map[target]],
                                  targets=target
                              )
+                else:
+                    res = function_run(
+                                 'service.status',
+                                 fun_args=[consul_map[target]],
+                                 targets=target
+                             )
 
-                    if not res[target]:
-                        result_flag = False
-                        logger.info(f"Consul is not running on {target}")
-                        count = count - 1
-                        time.sleep(5)
-                        break
-                if result_flag:
-                    logger.info("Consul found running on respective nodes.")
+                if not res[target]:
+                    result_flag = False
+                    logger.info(f"Consul is not running on {target}")
+                    count = count - 1
+                    time.sleep(5)
                     break
+            if result_flag:
+                logger.info("Consul found running on respective nodes.")
+                break
 
         if count == 0:
             logger.error(f"Unable to get healthy hare-consul-agent service "
@@ -406,7 +412,7 @@ class Deploy(CommandParserFillerMixin):
             )
 
         if run_args.states is None:  # all states
-            self._destroy_storage(run_args)
+            # self._destroy_storage(run_args)
 
             self._rescan_scsi_bus()
             self._run_states('system', run_args)
@@ -430,16 +436,16 @@ class Deploy(CommandParserFillerMixin):
                 logger.info("Deploying the sync states")
                 self._run_states('sync', run_args)
 
-            if 'iopath' in run_args.states or 'ha' in run_args.states:
-                logger.info("Recreating the metadata partitions")
-                self._destroy_storage(run_args)
-                # FIXME EOS-12076 in non singlenode case destroy
-                #       would be applied not to all minions
-                self._apply_state(
-                    "components.system.storage",
-                    run_args.targets,
-                    run_args.stages
-                )
+            # if 'iopath' in run_args.states or 'ha' in run_args.states:
+            #    logger.info("Recreating the metadata partitions")
+            #    self._destroy_storage(run_args)
+            #    # FIXME EOS-12076 in non singlenode case destroy
+            #    #       would be applied not to all minions
+            #    self._apply_state(
+            #        "components.system.storage",
+            #        run_args.targets,
+            #        run_args.stages
+            #    )
 
             if 'iopath' in run_args.states:
                 logger.info("Deploying the io path states")
@@ -449,7 +455,7 @@ class Deploy(CommandParserFillerMixin):
                 logger.info("Deploying the ha states")
                 self._run_states('ha', run_args)
 
-            if 'ctrlpath' in run_args.states:
+            if 'controlpath' in run_args.states:
                 logger.info("Deploying the control path states")
                 self._run_states('controlpath', run_args)
 
