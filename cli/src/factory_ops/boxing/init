@@ -70,5 +70,5 @@ create_unboxing_user
 boxing_flag $box_flag_file
 
 # Power-off sequence
-shutdown_controller
+#shutdown_controller
 shutdown_node
