@@ -129,7 +129,6 @@ class DeployJBOD(Deploy):
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
-            self._run_states('', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
