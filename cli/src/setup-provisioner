@@ -271,6 +271,9 @@ set_cluster_id "$cluster_id" "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # configure_multipath srvnode-1 "$hostspec" "$ssh_config" "$sudo" true
 
+if [[ "$bundled_release" == true ]]; then
+    provisioner pillar_set release/type \"bundle\"
+fi
 configure_provisioner_api_logs "$hostspec" "$ssh_config" "$sudo" "$INSTALLDIR"
 
 # SETUP SRVNODE-2
