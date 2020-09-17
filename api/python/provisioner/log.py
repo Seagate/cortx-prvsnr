@@ -19,21 +19,26 @@
 #
 
 
+import sys
 from typing import Dict, Union
 from copy import deepcopy
 
 import logging
 import logging.config
+import logging.handlers
 
 from .vendor import attr
 from . import inputs
+from .errors import LogMsgTooLong
 from .base import prvsnr_config
 from .config import (
     LOG_NULL_HANDLER as null_handler,
     LOG_CONSOLE_HANDLER as console_handler,
     LOG_FILE_HANDLER as logfile_handler,
     LOG_CMD_FILTER as cmd_filter,
-    LOG_HUMAN_FORMATTER
+    LOG_HUMAN_FORMATTER,
+    LOG_TRUNC_MSG_TMPL,
+    LOG_TRUNC_MSG_SIZE_MAX
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +71,33 @@ class NoTraceExceptionFormatter(logging.Formatter):
     def formatException(self, exc_info):
         # TODO IMPROVE check docs for exc_info
         return repr(getattr(exc_info[1], 'reason', exc_info[1]))
+
+
+class NoErrorSysLogHandler(logging.handlers.SysLogHandler):
+    def emit(self, record):
+        try:
+            super().emit(record)
+        except LogMsgTooLong:
+            _msg = record.getMessage()
+            # we don't need any further format operations since a msg
+            # is already formatted
+            record.args = tuple()
+            _len = LOG_TRUNC_MSG_SIZE_MAX
+            while True:
+                record.msg = LOG_TRUNC_MSG_TMPL.format(_msg[:_len])
+                try:
+                    super().emit(record)
+                except LogMsgTooLong:
+                    _len = _len // 2
+                else:
+                    break
+
+    def handleError(self, record):
+        t, v, _ = sys.exc_info()
+        if issubclass(t, OSError) and 'Message too long' in str(v):
+            raise LogMsgTooLong()
+        else:
+            super().handleError(record)
 
 
 def build_log_args_cls(log_config=None):  # noqa: C901 FIXME

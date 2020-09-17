@@ -34,6 +34,10 @@ class UnknownParamError(ProvisionerError):
     pass
 
 
+class LogMsgTooLong(ProvisionerError):
+    pass
+
+
 class SubprocessCmdError(ProvisionerError):
     _prvsnr_type_ = True
 
