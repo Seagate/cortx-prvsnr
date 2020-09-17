@@ -54,11 +54,11 @@ iopath_states=(
     "hare"
     "s3server"
     "motr"
-    "misc_pkgs.lustre"
 )
 
 prereq_states=(
     # states to be applied in desired sequence
+    "misc_pkgs.lustre"
     "misc_pkgs.statsd"
     "misc_pkgs.kibana"
     "misc_pkgs.elasticsearch"

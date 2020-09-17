@@ -23,11 +23,23 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 
 function trap_handler {
-    echo "***** ERROR! *****"
-    echo "For detailed error logs, please see: $LOG_FILE"
-    echo "******************"
+    echo "\
+**************************FAILED!!********************************
+For detailed error logs, please see: $LOG_FILE
+******************************************************************" | tee -a ${LOG_FILE}
 }
 trap trap_handler ERR
+
+function intrpt_handler {
+    echo -e "\n\n\
+------------------------------------------------------------------
+Received Ctrl-c signal, exiting Gracefully.
+For detailed logs, please see: $LOG_FILE
+------------------------------------------------------------------" | tee -a ${LOG_FILE}
+
+    exit 1
+}
+trap intrpt_handler SIGTERM SIGINT
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 static_data_ip_a=
@@ -39,6 +51,7 @@ export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
+. ${BASEDIR}/pre_unbox
 
 function usage {
     echo "\
@@ -174,17 +187,21 @@ echo -e "\n\
       Management VIP           : $management_vip
       Data VIP                 : $cluster_vip" | tee -a ${LOG_FILE}
 
-# Check salt services is required as one of initial steps
-# This is requried to fetch pillar data on primary node
-check_salt_services 
-
 # Perform basic system check
 check_hostname
+
 check_pvt_data_connectivity
 check_mgmt_ip
 
+# Run pre_unbox validations
+pre_unbox
+
+# Check salt services is required as one of initial steps
+# This is requried to fetch pillar data on master node
+check_salt_services 
+
 # Update /root/.ssh/config file with hosts
-update_ssh_config
+#update_ssh_config taken care of in pre_unbox
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
@@ -240,14 +257,60 @@ echo -n "Configuring Cortx RAS services on server B.............................
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
+echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
+echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
+pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
+pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+echo -n "Stonith................................" | tee -a ${LOG_FILE}
+
+pcs resource refresh stonith-c1 >> ${LOG_FILE}
+pcs resource refresh stonith-c2 >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
+
+pcs resource refresh csm-kibana >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "UDS...................................." | tee -a ${LOG_FILE}
+pcs resource refresh uds >> ${LOG_FILE}
+sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
 # lock unboxing user
 lock_unboxing_user
 
 # Unboxing SUCCESS
 remove_boxing_flag
 
+echo -ne "\nWaiting for Cortx cluster services to become ready.."
+try=1; tries=60
+until false
+do
+    if [[ "$try" -gt "$tries" ]]; then
+        break
+    fi
+    echo -n "."
+    try=$(( $try + 4 ))
+    sleep 4
+done
+echo -e "Ok.\n"
+
+
 echo "\
-***** SUCCESS! *****
+************************* SUCCESS!!! **************************************
+
+Lyve Drive Rack Cortx cluster is successfully initialized!!  
+
+IMPORTANT:
+   - Before you start using the system please ensure that the Cortx cluster
+     is up and running by executing the commands in the steps mentioned above.
+   - If everything is good, please proceed to start onboarding process else
+     please contact the Seagate Support if anything seems wrong.
+
 The detailed logs can be seen at: $LOG_FILE
-Done." | tee -a ${LOG_FILE}
+***************************************************************************" | tee -a ${LOG_FILE}
 
