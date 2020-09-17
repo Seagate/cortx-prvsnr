@@ -139,6 +139,10 @@ replacenode_states=(
     "ha.cortx-ha.replace_node.add_node"
 )
 
+post_replacement_states=(
+    "sspl.health_view"
+)
+
 # ToDo: Remove & Add node script here
 
 function usage {
@@ -224,7 +228,7 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                || $state == "ha.iostack-ha.refresh_config"
+                # || $state == "ha.iostack-ha.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)
@@ -245,7 +249,7 @@ function run_states {
     fi
 }
 
-function update_salt {
+function update_salt_n_system {
     # Refresh salt pillar data
     l_info "Updating Salt data"
     l_info "Syncing states"
@@ -258,6 +262,11 @@ function update_salt {
     sleep 2
     $cmd salt "*" saltutil.refresh_grains $salt_opts
     sleep 2
+
+    # Mount SWAP from LVM
+    swapoff -a && $cmd salt "${tgt_node}" mount.swapon /dev/vg_metadata_${tgt_node}/lv_main_swap $salt_opts
+    # Add SWAP to /etc/fstab
+    $cmd salt "${tgt_node}" mount.set_fstab /dev/vg_metadata_${tgt_node}/lv_main_swap none swap ${salt_opts}
 }
 
 
@@ -276,7 +285,7 @@ ping -c1 ${repl_node_hostname} >/dev/null 2>&1 \
     || (l_error "Replacement node '${repl_node_hostname}' is not reachable."; exit 1)
 
 # Update salt states
-update_salt
+update_salt_n_system
 
 flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
 if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
