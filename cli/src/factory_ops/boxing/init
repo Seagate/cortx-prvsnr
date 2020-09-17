@@ -60,6 +60,7 @@ fi
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
 reset_pub_data_ips
+seagate_refs_cleanup
 backup_files
 
 # Create user for unboxing
@@ -69,5 +70,5 @@ create_unboxing_user
 boxing_flag $box_flag_file
 
 # Power-off sequence
-shutdown_controller
+#shutdown_controller
 shutdown_node

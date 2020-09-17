@@ -27,7 +27,7 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_config_update.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
+#truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
@@ -229,36 +229,33 @@ function recover_rabbitmq_cluster {
 
 
 function lock_unboxing_user {
-    echo "\
-**********************************************************
-Please validate the following:
-  1. Check if all IP addresses have been assigned [run: ip a]
-  2. Check if system has been assigned a hostname [run: hostname -f]
-  3. Check HA cluster is up [run: pcs status].
-     All resources should show as started. Check for fails.]
-**********************************************************" 2>&1 | tee -a ${LOG_FILE}
 
-    while true; do
-        read -p "Does Unboxing look good (y/n)? " _ans
-        case $_ans in
-            [Yy] )
-                passwd --lock cortxub >> ${LOG_FILE}
-                echo "\
-*************************SUCCESS!!********************************
-The system is ready for use.
-User cortxub has been locked and can no longer be used for login.
-******************************************************************" 2>&1 | tee -a ${LOG_FILE}
-                break;;
-            [Nn] )
-              echo "\
-**************************FAILED!!********************************
-User feels unboxing is incomplete.
-Exiting unboxing process...
-******************************************************************" 2>&1 | tee -a ${LOG_FILE}
-              exit 10;;
-            * ) echo "Please answer y or n.";;
-        esac
-    done
+    # TODO: Locking the password of cortxub is commented for Beta.
+    #       Find alternative if unboxing fails and user gets locked out.
+    #passwd --lock cortxub >> ${LOG_FILE}
+
+    echo "\
+
+******************* Please Run next steps manually ************************
+
+  1. Check if all IP addresses are assigned as expected
+
+      $ sudo ip a
+
+      NOTE: run this on both servers.
+
+  2. Check if system has been assigned a hostname:
+
+      $ sudo salt '*' cmd.run hostname
+
+      NOTE: run this from Server A (Primary server)
+
+  3. Check if Cortx cluster is up and all services are Started, run:
+
+      $ sudo pcs status
+
+      NOTE: All the resources/services should be listed as started.
+" 2>&1 | tee -a ${LOG_FILE}
 }
 
 function remove_boxing_flag {
