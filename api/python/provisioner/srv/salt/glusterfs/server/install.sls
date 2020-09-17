@@ -77,6 +77,7 @@ glusterfs_server_installed:
 glusterfs_daemon_running:
   service.running:
     - name: glusterd.service
+    - enable: True
     - require:
         - glusterfs_server_installed
 
