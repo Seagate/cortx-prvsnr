@@ -310,8 +310,8 @@ update_pillar()
     else
         provisioner pillar_set cluster/srvnode-1/network/data_nw/pvt_ip_addr \"\"
     fi
-
-    disk_list=($(lsblk -ndpl --output NAME))    
+    
+    disk_list=($(lsblk -ndp | grep disk | awk '{ print $1 }')) 
 
     provisioner pillar_set cluster/srvnode-1/storage/metadata_device [\"${disk_list[-2]}\"]
 
@@ -339,7 +339,7 @@ update_pillar()
             provisioner pillar_set cluster/srvnode-2/network/data_nw/pvt_ip_addr \"\"
         fi
 
-        disk_list=($($remote_cmd lsblk -ndpl --output NAME))
+        disk_list=($($remote_cmd lsblk -ndp | grep disk | awk '{ print $1 }'))
 
         provisioner pillar_set cluster/srvnode-2/storage/metadata_device [\"${disk_list[-2]}\"]
 

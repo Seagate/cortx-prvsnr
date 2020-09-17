@@ -39,6 +39,7 @@ truncate -s 0 ${LOG_FILE}
 
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+subscription_enabled=false
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -236,4 +237,75 @@ function boxing_flag {
     fi
 
     echo "Done." | tee -a ${LOG_FILE}
+}
+
+sub_manager_check()
+{
+    _node="${1:-srvnode-1}"
+
+    grep -q "Red Hat" /etc/*-release || {
+        echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
+        subscription_enabled=false
+        return
+    }
+
+    echo "Checking if RHEL subscription manager is enabled on ${_node}" 2>&1 | tee -a ${LOG_FILE}
+    subc_list=`ssh $_node "subscription-manager list" | grep Status: | awk '{ print $2 }'`
+    subc_status=`ssh $_node "subscription-manager status" | grep "Overall Status:" | awk '{ print $3 }'`
+    if echo "$subc_list" | grep -q "Subscribed"; then
+        if [[  "$subc_status" == "Current" ]]; then
+            echo "RedHat subscription manager is enabled on ${_node}." 2>&1 | tee -a ${LOG_FILE}
+            subscription_enabled=true
+        else
+            echo "RedHat subscription manager is disabled on ${_node}." 2>&1 | tee -a ${LOG_FILE}
+            subscription_enabled=false
+        fi
+    fi
+}
+
+sub_manager_cleanup()
+{
+    _node="${1:-srvnode-1}"
+    grep -q "Red Hat" /etc/*-release || {
+        echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
+        return
+    }
+    echo "Cleaning up the subscription manager on ${_node}" | tee -a ${LOG_FILE}
+
+    echo "Running the subscription-manager auto-attach on ${_node}" | tee -a ${LOG_FILE}
+    ssh $_node "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager remove --all on ${_node}" | tee -a ${LOG_FILE}
+    ssh $_node "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager unregister on ${_node}" | tee -a ${LOG_FILE}
+    ssh $_node "subscription-manager unregister || true" | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager clean on ${_node}" | tee -a ${LOG_FILE}
+    ssh $_node "subscription-manager clean || true" | tee -a ${LOG_FILE}
+
+    echo "Running subscription-manager config --rhsm.manage_repos=0 on ${_node}" | tee -a ${LOG_FILE}
+    ssh $_node "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+}
+
+seagate_refs_cleanup()
+{
+    _node_list=("srvnode-1" "srvnode-2")
+
+    for _node in "${_node_list[@]}"; do
+        subscription_enabled=false
+        sub_manager_check "${_node}"
+        if [[ "$subscription_enabled" == true ]]; then
+            sub_manager_cleanup "$_node"
+        fi
+
+        echo "Removing following repos from $_node" | tee -a ${LOG_FILE}
+        ssh "$_node" 'grep -lE "seagate.com" /etc/yum.repos.d/*.repo' | tee -a ${LOG_FILE}
+
+        ssh "$_node" 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
+        echo "Cleaning yum cache on $_node" | tee -a ${LOG_FILE}
+        ssh "$_node" 'yum clean all'
+
+        echo "Done" | tee -a ${LOG_FILE}
+    done
 }
