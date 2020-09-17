@@ -97,7 +97,7 @@ deploy_states = dict(
         "ha.ctrlstack-ha",
         "ha.cortx-ha.ha"
     ],
-    backup_states=[
+    backup=[
         "provisioner.backup",
         # "motr.backup", # TODO: Awaiting EOS-12637 fix
         "s3server.backup",
@@ -421,7 +421,7 @@ class Deploy(CommandParserFillerMixin):
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
-            self._run_states('backup_states', run_args)
+            self._run_states('backup', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
@@ -461,7 +461,7 @@ class Deploy(CommandParserFillerMixin):
 
             if 'backup' in run_args.states:
                 logger.info("Deploying the backup states")
-                self._run_states('backup_states', run_args)
+                self._run_states('backup', run_args)
 
         logger.info("Deploy - Done")
         return run_args
