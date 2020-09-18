@@ -74,7 +74,8 @@ deploy_states = dict(
         's3server.install',
     ],
     ha=[
-        'hare',
+        'hare.prepare',
+        'hare.install',
     ],
     # states to be applied in desired sequence
     controlpath=[
