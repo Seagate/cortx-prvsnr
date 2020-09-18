@@ -16,6 +16,7 @@
 #
 
 import logging
+from collections import defaultdict
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
@@ -27,7 +28,7 @@ from ..config import (NODES, SERVERS_PER_NODE, STORAGE_TYPE,
                       SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
                       StorageType, SETUP_INFO_FIELDS, LOCAL_MINION
                       )
-from ..errors import BadPillarDataError
+from ..errors import BadPillarDataError, SubprocessCmdError
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run, local_minion_id
 from ..vendor import attr
@@ -184,26 +185,82 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         :return:
         """
+        def _get_storage_type_pillar_based():
+            """
+            Previous implementation of get_storage_method
+            Can be used if command based approach failed
+            :return:
+            """
+            res = dict()
+
+            controller_pi_path = KeyPath('storage_enclosure/controller')
+            controller_type = PillarKey(controller_pi_path / 'type')
+
+            pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+
+            pillar = pillar.get(local_minion_id())  # type: dict
+
+            if (not pillar[controller_type] or
+                    pillar[controller_type] is values.MISSED):
+                raise BadPillarDataError(f'value for {controller_type.keypath} '
+                                         f'is not specified')
+
+            if pillar[controller_type] == ControllerTypes.GALLIUM.value:
+                res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
+            elif pillar[controller_type] == ControllerTypes.INDIUM.value:
+                res[STORAGE_TYPE] = StorageType.RBOD.value
+
+            return res
+
         res = dict()
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        controller_type = PillarKey(controller_pi_path / 'type')
 
-        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+        # lsscsi command - list SCSI devices (or hosts) and their attributes
+        # NOTE: lsscsi -g 0:*:*:* returns entries of the following form,
+        # for example:
+        #    [0:0:0:1]   disk   SEAGATE   3525   S100   /dev/sdb   /dev/sg2
+        # NOTE: 0:*:*:* matches all LUNs (Logical Unit Number) on 0:*:*:*.
+        # here
+        # scsi_host=0, channel=*, target_number=*, LUN tuple=*
+        # NOTE: we take from lsscsi output just 5th column with revision string
+        lsscsi_cmd = "lsscsi 0:*:*:* | awk '{print $5}'"
 
-        pillar = pillar.get(local_minion_id())  # type: dict
+        try:
+            raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
+                                   targets=LOCAL_MINION)
+        except Exception as e:
+            # TODO: improve exception generation
+            logger.debug(f"lsscsi output: '{raw_res}'")
+            raise SubprocessCmdError("lsscsi 0:*:*:* | awk '{print $5}'",
+                                     cmd_args="",
+                                     reason=str(e))
 
-        if (not pillar[controller_type] or
-                pillar[controller_type] is values.MISSED):
-            raise BadPillarDataError(f'value for {controller_type.keypath} '
-                                     f'is not specified')
+        # NOTE: raw_res it is a string. It can be an empty string if
+        # the command runs on VM. Otherwise, it should be a string with disks
+        # revisions numbers delimited by "\n" newline symbol
 
-        if pillar[controller_type] == ControllerTypes.GALLIUM.value:
+        if not raw_res:
+            # target system is VM
+            logger.debug("lsscsi command returned the empty result")
+            res[STORAGE_TYPE] = StorageType.VIRTUAL.value
+
+        logger.debug(f"lsscsi output: '{raw_res}'")
+        revisions = defaultdict(int)
+
+        # NOTE: to be more accurate count the number of different revisions
+        for rev_num in raw_res.split("\n"):
+            revisions[rev_num] += 1
+
+        popular_revision = max(revisions, key=revisions.get)  # type: str
+        if popular_revision.startswith("G"):
+            # Gallium controller type. For example, G265
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
-        elif pillar[controller_type] == ControllerTypes.INDIUM.value:
+        elif popular_revision.startswith("S"):
+            # Indium controller type. TODO: for example
             res[STORAGE_TYPE] = StorageType.RBOD.value
+        else:
+            res[STORAGE_TYPE] = StorageType.JBOD.value
 
-        # TODO: EOS-12418-improvement:
-        #  implement for other types: virtual, JBOD
+        # TODO: EOS-12418-improvement: How to detemine EBOD?
 
         return res
 
