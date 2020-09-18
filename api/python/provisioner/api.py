@@ -436,6 +436,7 @@ def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
         uname, passwd, targets=targets, nowait=nowait
     )
 
+
 def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
     """
     Grains Get items provisioner API
