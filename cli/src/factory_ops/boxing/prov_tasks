@@ -117,7 +117,7 @@ function create_unboxing_user {
     #_interface_mgmt_a=`ip -o link show | awk -F': ' '{print $2}' | grep eno1`
     _interface_mgmt_a=`salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface --output=newline_values_only`
     _mac_mgmt_a=`cat /sys/class/net/${_interface_mgmt_a}/address`
-    _interface_data_a=`ip -o link show | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _interface_data_a=`salt-call pillar.get cluster:srvnode-1:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_a=`cat /sys/class/net/${_interface_data_a}/address`
     echo "Done" | tee -a ${LOG_FILE}
 
@@ -128,7 +128,7 @@ function create_unboxing_user {
     #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
     _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface --output=newline_values_only`
     _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
-    _interface_data_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _interface_data_b=`salt-call pillar.get cluster:srvnode-2:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
     echo "Done" | tee -a ${LOG_FILE}
 
