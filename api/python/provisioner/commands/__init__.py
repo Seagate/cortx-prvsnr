@@ -43,9 +43,9 @@ from ..config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
     PRVSNR_FILEROOT_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
-    PRVSNR_CORTX_COMPONENTS, 
-    PRVSNR_ROOT_DIR, PRVSNR_CLI_DIR, 
-    CONTROLLER_BOTH, 
+    PRVSNR_CORTX_COMPONENTS,
+    PRVSNR_CLI_DIR,
+    CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
@@ -1184,17 +1184,17 @@ class CreateUser(CommandParserFillerMixin):
             'file.managed',
             fun_kwargs=dict(
                 name='/etc/sudoers.d/csm-admin',
-                contents= ('## Restricted access for csm group users \n '
-                           '%csm-admin   ALL = NOPASSWD: /usr/bin/tail, '
-                           '/usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, '
-                           '/usr/sbin/subscription-manager, /usr/bin/cat, '
-                           '/usr/bin/cd, /usr/bin/ls, '
-                           '/usr/sbin/pcs, str(SEAGATE_USER_HOME_DIR), '
-                           '/usr/bin/salt, /usr/bin/systemctl '
-                           '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp '
-                           '/opt/seagate/cortx/csm/bin/cortxcli, '
-                           'str(PRVSNR_CLI_DIR)/factory_ops/boxing/init,'
-                           'str(PRVSNR_CLI_DIR)/factory_ops/unboxing/init'),
+                contents=('## Restricted access for csm group users \n '
+                          '%csm-admin   ALL = NOPASSWD: /usr/bin/tail, '
+                          '/usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, '
+                          '/usr/sbin/subscription-manager, /usr/bin/cat, '
+                          '/usr/bin/cd, /usr/bin/ls, '
+                          '/usr/sbin/pcs, str(SEAGATE_USER_HOME_DIR), '
+                          '/usr/bin/salt, /usr/bin/systemctl '
+                          '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp '
+                          '/opt/seagate/cortx/csm/bin/cortxcli, '
+                          'str(PRVSNR_CLI_DIR)/factory_ops/boxing/init,'
+                          'str(PRVSNR_CLI_DIR)/factory_ops/unboxing/init'),
                 create=True,
                 replace=False,
                 user='root',
