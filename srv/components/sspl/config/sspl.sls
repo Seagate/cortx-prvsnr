@@ -16,6 +16,7 @@
 #
 
 include:
+  - components.sspl.install
 {% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
   - components.sspl.config.commons
@@ -26,6 +27,8 @@ include:
 Stage - Post Install SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+    - require:
+      - Install cortx-sspl packages
 
 Stage - Configure SSPL:
   cmd.run:
