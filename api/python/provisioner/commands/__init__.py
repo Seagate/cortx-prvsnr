@@ -1168,32 +1168,32 @@ class CreateUser(CommandParserFillerMixin):
             )
         )
 
-        #Updating users/ dir permissions for graceful login
+        # Updating users/ dir permissions for graceful login
         StateFunExecuter.execute(
             'file.directory',
             fun_kwargs=dict(
-            name='/opt/seagate/users/',
-            user='root',
-            group='root',
-            mode=755
+                name='/opt/seagate/users/',
+                user='root',
+                group='root',
+                mode=755
             )
         )
 
         StateFunExecuter.execute(
             'file.managed',
             fun_kwargs=dict(
-            name='/etc/sudoers.d/csm-admin',
-            contents="## Allows users in group csm-admin to have access to mentioned operations \n\
+                name='/etc/sudoers.d/csm-admin',
+                contents="## Allows users in group csm-admin to have access to mentioned operations \n\
 %csm-admin   ALL = NOPASSWD: /usr/bin/tail, /usr/bin/salt, /usr/bin/cp, /usr/bin/systemctl, \
 /usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, /usr/bin/dir, /usr/bin/cd, /usr/bin/ls, \
 /usr/sbin/subscription-manager, /usr/bin/cat, /usr/bin/yum, /usr/sbin/pcs, /opt/seagate/users/, \
 /opt/seagate/cortx/csm/bin/cortxcli, /opt/seagate/cortx/provisioner/cli/factory_ops/boxing/init, \
 /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init",
-            create=True,
-            replace=False,
-            user='root',
-            group='root',
-            mode=440
+                create=True,
+                replace=False,
+                user='root',
+                group='root',
+                mode=440
             )
         )
 
