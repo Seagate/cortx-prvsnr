@@ -54,7 +54,8 @@ from .api import (  # noqa: F401
     get_release_version,
     get_factory_version,
     cmd_run,
-    get_setup_info
+    get_setup_info,
+    grains_get
 )
 
 from .values import (  # noqa: F401
@@ -91,6 +92,7 @@ __all__ = [
     'get_factory_version',
     'cmd_run',
     'get_setup_info',
+    'grains_get',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',
