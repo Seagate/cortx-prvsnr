@@ -1172,7 +1172,7 @@ class CreateUser(CommandParserFillerMixin):
         StateFunExecuter.execute(
             'file.directory',
             fun_kwargs=dict(
-                name='/opt/seagate/users/',
+                name=str(SEAGATE_USER_HOME_DIR),
                 user='root',
                 group='root',
                 mode=755
@@ -1209,7 +1209,7 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
         logger.info(
-            'Setting up passowrdless ssh for {uname} user on both the nodes'
+            'Setting up passwordless ssh for {uname} user on both the nodes'
             .format(
                 uname=uname
             )
