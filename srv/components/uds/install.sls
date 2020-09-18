@@ -20,3 +20,4 @@ Install UDS:
     - name: uds-pyi
     - version: {{ pillar['uds']['version']['uds-pyi'] }}
     - refresh: True
+    - onlyif: yum info uds-pyi
