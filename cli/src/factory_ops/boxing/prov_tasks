@@ -115,7 +115,7 @@ function create_unboxing_user {
     _serial_a=`dmidecode -t system | grep Serial | cut -d: -f 2`
     _mac_bmc_a=`ipmitool lan print | grep "MAC Address" | awk '{ print $4 }'`
     #_interface_mgmt_a=`ip -o link show | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_a="eno1"
+    _interface_mgmt_a=`salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface --output=newline_values_only`
     _mac_mgmt_a=`cat /sys/class/net/${_interface_mgmt_a}/address`
     _interface_data_a=`ip -o link show | awk -F': ' '{print $2}' | grep enp | grep f0`
     _mac_data_a=`cat /sys/class/net/${_interface_data_a}/address`
@@ -126,7 +126,7 @@ function create_unboxing_user {
     _serial_b=`ssh srvnode-2 "dmidecode -t system" | grep Serial | cut -d: -f 2`
     _mac_bmc_b=`ssh srvnode-2 "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
     #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_b="eno1"
+    _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface --output=newline_values_only`
     _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
     _interface_data_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep enp | grep f0`
     _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
