@@ -41,6 +41,7 @@ run_io_states=false
 run_ha_states=false
 run_ctrlpath_states=false
 run_add_node_states=false
+run_remove_node_states=false
 run_restore_states=false
 tgt_node=srvnode-2
 
@@ -72,7 +73,8 @@ Options:
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
-    --replacenode-states                         deploy only states for refresh_config on node and add_node
+    --removenode-states                          deploy only states for removeind a node from cluster
+    --addnode-states                            deploy only states for refresh_config on node and add_node to cluster
     --restore-states                             deploy only restore states to restore backed-up files
 "
 }
@@ -107,8 +109,12 @@ function options_parser {
             run_ha_states=true
             run_all=false
             ;;
-        --replacenode-states)
+        --addnode-states)
             run_add_node_states=true
+            run_all=false
+            ;;
+        --removenode-states)
+            run_remove_node_states=true
             run_all=false
             ;;
         --ctrlpath-states)
@@ -354,14 +360,15 @@ function update_salt_n_system {
     sleep 2
 
     # Mount SWAP from LVM
-    swapoff -a && $cmd salt "${tgt_node}" mount.swapon /dev/vg_metadata_${tgt_node}/lv_main_swap $salt_opts
+    l_info "Remounting SWAP"
+    $cmd salt "${tgt_node}" cmd.run "swapoff -a" && $cmd salt "${tgt_node}" mount.swapon /dev/vg_metadata_${tgt_node}/lv_main_swap $salt_opts
     # Add SWAP to /etc/fstab
+    l_info "Adding SWAP entries to /etc/fstab"
     $cmd salt "${tgt_node}" mount.set_fstab /dev/vg_metadata_${tgt_node}/lv_main_swap none swap ${salt_opts}
 }
 
 
-
-parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,replacenode-states,restore-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,removenode-states,addnode-states,restore-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -420,9 +427,9 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
 
         controlpath_states
 
-        ha_states
-
         sync_states
+
+        ha_states
 
         restore_states
 
