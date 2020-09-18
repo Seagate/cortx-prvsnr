@@ -237,11 +237,13 @@ class GetSetupInfo(CommandParserFillerMixin):
         # NOTE: raw_res it is a string. It can be an empty string if
         # the command runs on VM. Otherwise, it should be a string with disks
         # revisions numbers delimited by "\n" newline symbol
+        raw_res = raw_res.get(local_minion_id())  # type: str
 
         if not raw_res:
             # target system is VM
             logger.debug("lsscsi command returned the empty result")
             res[STORAGE_TYPE] = StorageType.VIRTUAL.value
+            return res
 
         logger.debug(f"lsscsi output: '{raw_res}'")
         revisions = defaultdict(int)
