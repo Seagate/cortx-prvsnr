@@ -27,7 +27,7 @@
 #  -c C        Path to consul binary default :
 #              /opt/seagate/cortx/hare/bin/consul
 #  -i I        Key to User collection in csm default :
-#              eos/base/user_collection/obj/
+#              cortx/base/user_collection/obj/
 #  -n N        node_id of replacing node i.e. srvnode-1/srvnode-2
 #  --syncpass  Sync csm admin user password
  
@@ -109,8 +109,8 @@ if __name__=='__main__':
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-c", type=str, default="/opt/seagate/cortx/hare/bin/consul",
             help="Path to consul binary default : /opt/seagate/cortx/hare/bin/consul")
-    argParser.add_argument("-i", type=str, default="eos/base/user_collection/obj/",
-            help="Key to User collection in csm default : eos/base/user_collection/obj/ ")
+    argParser.add_argument("-i", type=str, default="cortx/base/user_collection/obj/",
+            help="Key to User collection in csm default : cortx/base/user_collection/obj/ ")
     argParser.add_argument("-n", type=str,
             help="node_id of replacing node i.e. srvnode-1/srvnode-2")
     argParser.add_argument("--syncpass", action='store_true',
