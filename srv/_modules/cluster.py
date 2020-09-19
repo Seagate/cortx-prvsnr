@@ -146,8 +146,8 @@ import provisioner
 
 def storage_device_config():
 
-    for node in for node in provisioner.pillar_get("cluster/node_list"):
-        if for node in provisioner.pillar_get(f"cluster/{node}/is_primary"):
+    for node in provisioner.pillar_get("cluster/node_list"):
+        if provisioner.pillar_get(f"cluster/{node}/is_primary"):
             cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
@@ -160,9 +160,9 @@ def storage_device_config():
             if ( _count == 0 ):
                 print(f"[ INFO ] Attempt {_count} Waiting for multipath device to come up...")
 
-            if ( _count >= _timeout ):
+            if ( _count > _timeout ):
                 msg = ("[ ERROR ] multipath devices don't exist. "
-                        f"Giving up after {_count} attempts.")
+                        f"Giving up after {_timeout} second.")
                 raise Exception(msg)
                 # break
                 # return False
@@ -193,8 +193,8 @@ def storage_device_config():
         data_field = f"cluster/{node}/storage/data_devices"
         provisioner.pillar_set(data_field, data_device)
 
-    if len(provisioner.pillar_get("cluster/srvnode-1/is_primary"))
-        != len(provisioner.pillar_get("cluster/srvnode-2/is_primary")):
+    if (len(provisioner.pillar_get("cluster/srvnode-1/storage/data_devices"))
+        != len(provisioner.pillar_get("cluster/srvnode-2/storage/data_devices"))):
         msg = ("[ ERROR ] multipath devices don't match for the 2 nodes. "
                 "Can't proceed exiting...")
         raise Exception(msg)
