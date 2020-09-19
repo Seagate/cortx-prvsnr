@@ -68,7 +68,7 @@ set -euE
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/pre_unbox.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 
-PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
+PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 
 # Global variables, which can be set externally using environment variables
 default_hostname_nodeA="${default_hostname_nodeA:-"cortx-node-a"}"
@@ -77,7 +77,7 @@ export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
 export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 #TODO: The no of volumes for Beta are 32.
 nvols="${nvols:-32}" # The default value needs to be changed to 64 for cross connect
-pillar_root="${pillar_root:-/opt/seagate/eos-prvsnr/pillar/user/groups/all}"
+pillar_root="${pillar_root:-/opt/seagate/cortx/provisioner/pillar/components}"
 
 #force update the hostname
 force_update_hname="${force_update_hname:-"false"}"
@@ -890,9 +890,9 @@ ssh_config_update()
     # 7. Check if the ssh works without password from Server B to Server A using hostname
 
     if [[ ! -f /root/.ssh/config ]]; then
-        if [[ -f /opt/seagate/eos-prvsnr/files/.ssh/config ]]; then
+        if [[ -f /opt/seagate/cortx/provisioner/files/.ssh/config ]]; then
             echo "DEBUG: Copying the ssh config file from Provisioner" >> ${LOG_FILE}
-            yes | cp -f /opt/seagate/eos-prvsnr/files/.ssh/config /root/.ssh/config
+            yes | cp -f /opt/seagate/cortx/provisioner/files/.ssh/config /root/.ssh/config
         else
             echo "ERROR: ssh config file not present on Server A. Please create the file manually and rerun the command." | tee -a ${LOG_FILE}
             exit 1
@@ -1073,7 +1073,7 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
 
 ipmi_install_skip()
 {
-    _functions_sh_path="/opt/seagate/eos-prvsnr/cli/common_utils/functions.sh"
+    _functions_sh_path="/opt/seagate/cortx/provisioner/cli/common_utils/functions.sh"
     echo "DEBUG: copying $_functions_sh_path to ${_functions_sh_path}.bkp" >> ${LOG_FILE}
     yes | cp -f $_functions_sh_path ${_functions_sh_path}.bkp
 
@@ -1178,7 +1178,6 @@ pre_unbox()
     minion_config_update
 
     #8. Update minion files on both the nodes to point master to server A hostname
-    #TODO: Required until EOS-12652 is fixed
     if [[ "$amend_fix_for_ipmi" == true ]]; then
         ipmi_install_skip
     fi

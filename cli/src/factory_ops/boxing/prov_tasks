@@ -115,7 +115,7 @@ function create_unboxing_user {
     _serial_a=`dmidecode -t system | grep Serial | cut -d: -f 2`
     _mac_bmc_a=`ipmitool lan print | grep "MAC Address" | awk '{ print $4 }'`
     #_interface_mgmt_a=`ip -o link show | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_a=`salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface --output=newline_values_only`
+    _interface_mgmt_a=`salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface:0 --output=newline_values_only`
     _mac_mgmt_a=`cat /sys/class/net/${_interface_mgmt_a}/address`
     _interface_data_a=`salt-call pillar.get cluster:srvnode-1:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_a=`cat /sys/class/net/${_interface_data_a}/address`
@@ -126,7 +126,7 @@ function create_unboxing_user {
     _serial_b=`ssh srvnode-2 "dmidecode -t system" | grep Serial | cut -d: -f 2`
     _mac_bmc_b=`ssh srvnode-2 "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
     #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface --output=newline_values_only`
+    _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface:0 --output=newline_values_only`
     _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
     _interface_data_b=`salt-call pillar.get cluster:srvnode-2:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
@@ -204,17 +204,21 @@ function reset_pub_data_ips {
     #Reset IPs for public data network
     #Update public data interface ips
     local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
-    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
-        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
+    if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
     fi
 
     echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
     echo "Removing static data ip from $_cluster_sls_path for server A" >> $LOG_FILE
     line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-    sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    if [[ -n ${line_node1_ip} ]]; then
+        sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    fi
     echo "Removing static data ip from $_cluster_sls_path for server B" >> $LOG_FILE
     line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-    sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    if [[ -n ${line_node2_ip} ]]; then
+        sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}

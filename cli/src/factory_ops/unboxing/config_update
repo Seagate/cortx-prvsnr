@@ -140,8 +140,8 @@ function update_cluster_sls {
     local _static_ip_b=${4:-}
 
     local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
-    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
-        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
+    if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
     fi
 
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
@@ -177,8 +177,8 @@ function update_cluster_sls {
         # Hostname
         local primary_host=$(hostname)
         echo "DEBUG:primary_host: ${primary_host}" >> ${LOG_FILE}
-        local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
+        #local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
+        #echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
         provisioner pillar_set cluster/srvnode-1/hostname \"${primary_host}\"
         echo "Ok." | tee -a ${LOG_FILE}
@@ -197,8 +197,8 @@ function update_cluster_sls {
         echo -n "Updating hostname of Server B..............................................." 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
         echo "DEBUG: secondary_host: ${secondary_host}" >> ${LOG_FILE}
-        local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
+        #local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
+        #echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
         provisioner pillar_set cluster/srvnode-2/hostname \"${secondary_host}\"
         echo "Ok." | tee -a ${LOG_FILE}
