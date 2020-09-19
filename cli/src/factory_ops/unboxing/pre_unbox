@@ -77,7 +77,15 @@ export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
 export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 #TODO: The no of volumes for Beta are 32.
 nvols="${nvols:-32}" # The default value needs to be changed to 64 for cross connect
-pillar_root="${pillar_root:-/opt/seagate/cortx/provisioner/pillar/components}"
+
+if [[ -d "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all" ]]; then
+    pillar_root=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all
+elif [[ -d "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all" ]]; then
+    pillar_root=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all
+else
+    echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
+    exit 1
+fi
 
 #force update the hostname
 force_update_hname="${force_update_hname:-"false"}"
@@ -262,7 +270,7 @@ ctrl_ip_addr_get_set()
     done
 
     #Update the storage_enclosure pillar with new controller IP.
-    _storage_encl_sls_path="${pillar_root}/storage_enclosure.sls"
+    _storage_encl_sls_path="${pillar_root}/uu_storage_enclosure.sls"
     if [[ ! -f "${_storage_encl_sls_path}" ]]; then
         echo "ERROR: \"${_storage_encl_sls_path}\" no such file or directory"
         exit 1
@@ -559,7 +567,12 @@ hosts_resolution_check()
     # Add the new ip & hostnames to /etc/hosts
 
     # Get management interface name from pillar
-    local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${pillar_root}/cluster.sls|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    _cluster_sls_path="${pillar_root}/uu_cluster.sls"
+    if [[ -! f ${_cluster_sls_path} ]]; then
+        echo "ERROR: \"${_cluster_sls_path}\" no such file or directory"
+        exit 1
+    fi
+    local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${_cluster_sls_path}|grep -A1 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     if [[ -z "$mgmt_if" ]]; then
         echo "ERROR: Could not get the management interface" | tee -a ${LOG_FILE}

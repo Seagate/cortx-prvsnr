@@ -203,9 +203,13 @@ NOTE: The above system details are required for unboxing and is stored at: $_out
 function reset_pub_data_ips {
     #Reset IPs for public data network
     #Update public data interface ips
-    local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
     if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
         _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+    elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        _cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+    else
+        echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
+        exit
     fi
 
     echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}

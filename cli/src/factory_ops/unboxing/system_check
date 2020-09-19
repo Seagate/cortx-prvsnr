@@ -40,9 +40,13 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
 
 export PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
-export cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
 if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
     cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+    cluster_sls_path= /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+else
+    echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
+    exit 1
 fi
 
 function trap_handler {
