@@ -15,7 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
 include:
   - components.sspl.config.commons
@@ -30,7 +31,8 @@ include:
 Run Resource Health View:
   cmd.run:
     - name: /opt/seagate/cortx/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
-{% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
     - require:
       - Add common config - system information to Consul

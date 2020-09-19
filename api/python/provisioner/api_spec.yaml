@@ -109,3 +109,5 @@ deploy_jbod:
   type: DeployJBOD
 auto_deploy:
   type: AutoDeploy
+grains_get:
+  type: GrainsGet

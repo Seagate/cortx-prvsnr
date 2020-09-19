@@ -16,7 +16,9 @@
 #
 
 include:
-{% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+  - components.sspl.install
+{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
   - components.sspl.config.commons
 {% endif %}
@@ -26,13 +28,16 @@ include:
 Stage - Post Install SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+    - require:
+      - Install cortx-sspl packages
 
 Stage - Configure SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
     - require:
       - Stage - Post Install SSPL
-{% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
       - Add common config - system information to Consul
       - Add common config - rabbitmq cluster to Consul
@@ -41,7 +46,8 @@ Stage - Configure SSPL:
 {% endif %}
     - order: 5
 
-{% if not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
