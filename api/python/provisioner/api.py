@@ -435,3 +435,16 @@ def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
         'create_user',
         uname, passwd, targets=targets, nowait=nowait
     )
+
+
+def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
+    """
+    Grains Get items provisioner API
+
+    :param keys: grains keys to fetch data from the nodes
+    :param targets: targets for grains data retrieving
+    :param nowait: Run asynchronously. Default: False
+    :param nowait: Run asynchronously. Default: False
+    :return:
+    """
+    return _api_call('grains_get', *keys, targets=targets, nowait=nowait)
