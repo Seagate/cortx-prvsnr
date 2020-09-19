@@ -328,6 +328,12 @@ class Deploy(CommandParserFillerMixin):
                     "csm",
                     "provisioner.backup"
                 ):
+                    # Consul takes time to come online after initialization
+                    # (around 2-3 mins at times). We need to ensure
+                    # consul service is available before proceeding
+                    # Without a healthy consul service SSPL and CSM shall fail
+                    if state == "sspl":
+                        self._is_consul_running()
                     # Execute first on secondaries then on primary.
                     self._apply_state(
                         f"components.{state}", secondaries, stages
