@@ -18,7 +18,7 @@
 # general settings
 Logrotate config file - Generic:
   file.managed:
-    {% if salt['cmd.run']('hostnamectl status | grep Chassis | grep -q server && echo "server"') %}
+    {% if salt['cmd.run']('provisioner get_setup_info --output json | grep server_type | grep -q physical && echo "physical"') %}
     - name: /etc/logrotate.conf
     - source: salt://components/system/logrotate/files/etc/logrotate.conf
     {%- else -%}
