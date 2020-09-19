@@ -215,14 +215,17 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
 
         # lsscsi command - list SCSI devices (or hosts) and their attributes
-        # NOTE: lsscsi -g 0:*:*:* returns entries of the following form,
-        # for example:
+        # NOTE: lsscsi returns entries of the following form, for example:
         #    [0:0:0:1]   disk   SEAGATE   3525   S100   /dev/sdb   /dev/sg2
         # NOTE: 0:*:*:* matches all LUNs (Logical Unit Number) on 0:*:*:*.
-        # here
-        # scsi_host=0, channel=*, target_number=*, LUN tuple=*
+        #  Here
+        #    scsi_host=0, channel=*, target_number=*, LUN tuple=*
         # NOTE: we take from lsscsi output just 5th column with revision string
-        lsscsi_cmd = "lsscsi 0:*:*:* | awk '{print $5}'"
+        #  lsscsi_cmd = "lsscsi 0:*:*:* | awk '{print $5}'"
+        # TODO: how detect the scsi host id with disks in raid.
+        #  The assumption that scsi_host=0 for these disks is not always
+        #  working. At now, just take all output of lsscsi command
+        lsscsi_cmd = "lsscsi | awk '{print $5}'"
 
         try:
             raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
@@ -252,7 +255,10 @@ class GetSetupInfo(CommandParserFillerMixin):
         for rev_num in raw_res.split("\n"):
             revisions[rev_num] += 1
 
+        logger.debug(f"revisions: '{revisions}'")
         popular_revision = max(revisions, key=revisions.get)  # type: str
+        logger.debug(f"Used drive revision for storage_type detection: "
+                     f"'{popular_revision}'")
         if popular_revision.startswith("G"):
             # Gallium controller type. For example, G265
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
