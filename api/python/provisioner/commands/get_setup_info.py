@@ -212,6 +212,11 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         :return:
         """
+        # TODO: EOS-12418-improvement: there is pillar `storage_enclosure/type`
+        #  But on VM systems it is set to `RBOD` values, not to 'virtual'
+        #  There are no guarantees that this pillar keeps actual on HW.
+        #  Suggestion: after detection the correct type via `lsscsi` check
+        #  pillar and update it.
         res = dict()
 
         # lsscsi command - list SCSI devices (or hosts) and their attributes
