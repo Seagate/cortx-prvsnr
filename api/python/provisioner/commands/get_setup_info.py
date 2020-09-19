@@ -225,7 +225,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         # TODO: how detect the scsi host id with disks in raid.
         #  The assumption that scsi_host=0 for these disks is not always
         #  working. At now, just take all output of lsscsi command
-        lsscsi_cmd = "lsscsi | awk '{print $5}'"
+        lsscsi_cmd = "lsscsi | awk -p '$2 ~ /disk/{print $5}'"
 
         try:
             raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
