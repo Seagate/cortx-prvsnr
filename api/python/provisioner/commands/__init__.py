@@ -1189,12 +1189,12 @@ class CreateUser(CommandParserFillerMixin):
                           '/usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, '
                           '/usr/sbin/subscription-manager, /usr/bin/cat, '
                           '/usr/bin/cd, /usr/bin/ls, '
-                          '/usr/sbin/pcs, str(SEAGATE_USER_HOME_DIR), '
+                          f'/usr/sbin/pcs, {SEAGATE_USER_HOME_DIR}, '
                           '/usr/bin/salt, /usr/bin/systemctl '
                           '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp '
                           '/opt/seagate/cortx/csm/bin/cortxcli, '
-                          'str(PRVSNR_CLI_DIR)/factory_ops/boxing/init,'
-                          'str(PRVSNR_CLI_DIR)/factory_ops/unboxing/init'),
+                          f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init,'
+                          f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
                 create=True,
                 replace=False,
                 user='root',
@@ -1210,7 +1210,7 @@ class CreateUser(CommandParserFillerMixin):
                 password=passwd,
                 hash_password=True,
                 home=str(home_dir),
-                groups=['csm-admin']
+                groups=['csm-admin', 'prvsnrusers']
             ),
             targets=targets
         )
