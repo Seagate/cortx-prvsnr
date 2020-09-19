@@ -179,39 +179,39 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         return res
 
+    def _get_storage_type_pillar_based(self):
+        """
+        Previous implementation of get_storage_method
+        Can be used if command based approach failed
+        :return:
+        """
+        res = dict()
+
+        controller_pi_path = KeyPath('storage_enclosure/controller')
+        controller_type = PillarKey(controller_pi_path / 'type')
+
+        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+
+        pillar = pillar.get(local_minion_id())  # type: dict
+
+        if (not pillar[controller_type] or
+                pillar[controller_type] is values.MISSED):
+            raise BadPillarDataError(f'value for {controller_type.keypath} '
+                                     f'is not specified')
+
+        if pillar[controller_type] == ControllerTypes.GALLIUM.value:
+            res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
+        elif pillar[controller_type] == ControllerTypes.INDIUM.value:
+            res[STORAGE_TYPE] = StorageType.RBOD.value
+
+        return res
+
     def _get_storage_type(self):
         """
         Private method to determine storage type
 
         :return:
         """
-        def _get_storage_type_pillar_based():
-            """
-            Previous implementation of get_storage_method
-            Can be used if command based approach failed
-            :return:
-            """
-            res = dict()
-
-            controller_pi_path = KeyPath('storage_enclosure/controller')
-            controller_type = PillarKey(controller_pi_path / 'type')
-
-            pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
-
-            pillar = pillar.get(local_minion_id())  # type: dict
-
-            if (not pillar[controller_type] or
-                    pillar[controller_type] is values.MISSED):
-                raise BadPillarDataError(f'value for {controller_type.keypath} '
-                                         f'is not specified')
-
-            if pillar[controller_type] == ControllerTypes.GALLIUM.value:
-                res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
-            elif pillar[controller_type] == ControllerTypes.INDIUM.value:
-                res[STORAGE_TYPE] = StorageType.RBOD.value
-
-            return res
-
         res = dict()
 
         # lsscsi command - list SCSI devices (or hosts) and their attributes
