@@ -221,7 +221,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             else:
                 if input[key]:
                     if input[key] == 'None':
-                        input[key] = f'\"\"'
+                        input[key] = '\"\"'
                     else:
                         input[key] = f'\"{input[key]}\"'
                 else:
