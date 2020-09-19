@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+{% if "replace_node" in pillar["cluster"]
   and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
 include:
@@ -31,7 +31,7 @@ include:
 Run Resource Health View:
   cmd.run:
     - name: /opt/seagate/cortx/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
-{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
+{% if "replace_node" in pillar["cluster"]
   and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
 # Should not be executed for replaced node
     - require:
