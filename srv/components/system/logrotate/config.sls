@@ -18,8 +18,12 @@
 # general settings
 Logrotate config file - Generic:
   file.managed:
+    {% if salt['cmd.run']('hostnamectl status | grep Chassis | grep -q server && echo "server"') %}
     - name: /etc/logrotate.conf
     - source: salt://components/system/logrotate/files/etc/logrotate.conf
+    {%- else -%}
+    - name: /etc/logrotate_vm.conf
+    - source: salt://components/system/logrotate/files/etc/logrotate_vm.conf
 
 # logrotate.d
 Create logrotate.d with specific component settings:
