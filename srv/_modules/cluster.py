@@ -21,11 +21,12 @@
 
 # Standard packages
 import errno
+import json
+import logging
 import os
 import subprocess
 import sys
 import time
-import yaml
 
 from shutil import copyfile
 
@@ -36,6 +37,7 @@ sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
 # Cortx packages
 import provisioner
 
+logger = logging.getLogger(__name__)
 
 # Commenting this code as it is causing controller issues due to controller shutdown
 # def storage_device_config():
@@ -147,7 +149,8 @@ import provisioner
 def storage_device_config():
 
     for node in provisioner.pillar_get("cluster/node_list"):
-        if provisioner.pillar_get(f"cluster/{node}/is_primary"):
+        cluster_dict = provisioner.pillar_get(f"cluster/{node}/is_primary", targets=node)
+        if cluster_dict[node][f"cluster/{node}/is_primary"]:
             cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
@@ -158,7 +161,7 @@ def storage_device_config():
         _sleep_time = 5
         while device_list == []:
             if ( _count == 0 ):
-                print(f"[ INFO ] Attempt {_count} Waiting for multipath device to come up...")
+                logger.info(f"[ INFO ] Attempt {_count} Waiting for multipath device to come up...")
 
             if ( _count > _timeout ):
                 msg = ("[ ERROR ] multipath devices don't exist. "
@@ -168,6 +171,8 @@ def storage_device_config():
                 # return False
             else:
                 time.sleep(_sleep_time)
+
+                logger.info(f"Command to populate multipath devices: {cmd}")
                 device_list = subprocess.Popen([cmd],
                                         shell=True,
                                         stdout=subprocess.PIPE,
@@ -175,7 +180,7 @@ def storage_device_config():
                                     ).stdout.read().decode("utf-8").splitlines()
 
                 if ( len(device_list) > 0 ):
-                    print("[ INFO ] Found multipath devices...")
+                    logger.info("[ INFO ] Found multipath devices...")
                 else:
                     print(".")
                 _count = _count + _sleep_time
