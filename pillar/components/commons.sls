@@ -22,6 +22,7 @@ commons:
     RedHat: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/
     CentOS: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/centos/centos-7.7.1908/
   version:
+    consul: 1.7.8-1
     # elasticsearch: 6.8.8-1
     elasticsearch-oss: 6.8.8-1
     erlang: latest
