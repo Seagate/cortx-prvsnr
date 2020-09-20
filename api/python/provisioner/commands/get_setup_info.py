@@ -232,15 +232,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         #  working. At now, just take all output of lsscsi command
         lsscsi_cmd = "lsscsi | awk -p '$2 ~ /disk/{print $5}'"
 
-        try:
-            raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
-                                   targets=LOCAL_MINION)
-        except Exception as e:
-            # TODO: improve exception generation
-            logger.debug(f"lsscsi output: '{raw_res}'")
-            raise SubprocessCmdError("lsscsi 0:*:*:* | awk '{print $5}'",
-                                     cmd_args="",
-                                     reason=str(e))
+        raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
+                               targets=LOCAL_MINION,
+                               fun_kwargs=dict(python_shell=True))
 
         # NOTE: raw_res it is a string. It can be an empty string if
         # the command runs on VM. Otherwise, it should be a string with disks
@@ -249,11 +243,9 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         if not raw_res:
             # target system is VM
-            logger.debug("lsscsi command returned the empty result")
             res[STORAGE_TYPE] = StorageType.VIRTUAL.value
             return res
 
-        logger.debug(f"lsscsi output: '{raw_res}'")
         revisions = defaultdict(int)
 
         # NOTE: to be more accurate count the number of different revisions
@@ -268,12 +260,12 @@ class GetSetupInfo(CommandParserFillerMixin):
             # Gallium controller type. For example, G265
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
         elif popular_revision.startswith("S"):
-            # Indium controller type. TODO: for example
+            # Indium controller type. For example, S100
             res[STORAGE_TYPE] = StorageType.RBOD.value
         else:
             res[STORAGE_TYPE] = StorageType.JBOD.value
 
-        # TODO: EOS-12418-improvement: How to detemine EBOD?
+        # TODO: EOS-12418-improvement: How to determine EBOD?
 
         return res
 
