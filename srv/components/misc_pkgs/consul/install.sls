@@ -15,8 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-include:
-  - components.misc_pkgs.consul.prepare
+# include:
+#   - components.misc_pkgs.consul.prepare
 
 # Consul installed:
 #   archive.extracted:
@@ -39,12 +39,12 @@ Consul installed:
     - name: consul
     - version: {{ pillar['commons']['version']['consul'] }}
 
-{% if 0 != salt["cmd.retcode"]("ls /opt/seagate/cortx/hare/bin/consul") %}
+{% if (0 != salt["cmd.retcode"]("ls /opt/seagate/cortx/hare/bin/consul", 0)) %}
 Create symlink:
   file.symlink:
     - name: /opt/seagate/cortx/hare/bin/consul
     - target: /usr/bin/consul
-    - force: firewalld.service:
+    - force: True
     - makedirs: True
     - user: root
     - group: root
@@ -53,9 +53,9 @@ Create symlink:
 
 Update Consul executable with required permissions:
   file.managed:
-    - name: /opt/consul/bin/consul
+    - name: /usr/bin/consul
     - user: consul
     - group: consul
     - mode: 755
-    - require:
-      - user: Create Consul user
+    # - require:
+    #   - user: Create Consul user
