@@ -925,8 +925,8 @@ class SetupProvisioner(CommandParserFillerMixin):
     def _run(self, nodes, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
-        # TODO sources: gitlab | gitrepo | rpm
-        # TODO get latest tags for gitlab source
+        # TODO sources: github | gitrepo | rpm
+        # TODO get latest tags for github source
 
         # validation
         # TODO IMPROVE EOS-8473 make generic logic
