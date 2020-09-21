@@ -41,6 +41,7 @@ else:
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
+PRVSNR_CLI_DIR = PRVSNR_ROOT_DIR / 'cli'
 
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
@@ -175,6 +176,10 @@ LOG_FORCED_LOGFILE_CMDS = [
     'cmd_run'
 ]
 
+
+LOG_TRUNC_MSG_TMPL = "<TRUNCATED> {} ..."
+LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
+
 # bundled salt roots dirs
 BUNDLED_SALT_DIR = CONFIG_MODULE_DIR / 'srv'
 BUNDLED_SALT_FILEROOT_DIR = BUNDLED_SALT_DIR / 'salt'
@@ -283,6 +288,7 @@ class StorageType(Enum):
     """Class-enumeration for supported and existing storage types"""
 
     VIRTUAL = "virtual"
+    JBOD = "JBOD"
     # standard enclosure with 5 units with 84 disks
     ENCLOSURE = "RBOD"
     RBOD = "RBOD"

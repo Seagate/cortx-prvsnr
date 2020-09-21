@@ -269,7 +269,8 @@ def fw_update(source, dry_run=False, nowait=False):
 
 
 def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
-            targets: str = ALL_MINIONS, dry_run: bool = False):
+            targets: str = ALL_MINIONS, nowait: bool = False,
+            dry_run: bool = False):
     """
     Execute given command on targets nodes
 
@@ -278,11 +279,13 @@ def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
     :param cmd_stdin: (optional) commands stdin parameters like username or
                       password
     :param targets: (optional) target nodes for command execution
+    :param nowait: (optional) Run asynchronously. Default: False
     :param dry_run: (optional) validate only.
     :return:
     """
-    return _api_call('cmd_run', cmd_name=cmd_name, cmd_args=cmd_args,
-                     cmd_stdin=cmd_stdin, targets=targets, dry_run=dry_run)
+    return _api_call('cmd_run', cmd_name, cmd_args=cmd_args,
+                     cmd_stdin=cmd_stdin, targets=targets, nowait=nowait,
+                     dry_run=dry_run)
 
 
 def get_setup_info():
@@ -432,3 +435,16 @@ def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
         'create_user',
         uname, passwd, targets=targets, nowait=nowait
     )
+
+
+def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
+    """
+    Grains Get items provisioner API
+
+    :param keys: grains keys to fetch data from the nodes
+    :param targets: targets for grains data retrieving
+    :param nowait: Run asynchronously. Default: False
+    :param nowait: Run asynchronously. Default: False
+    :return:
+    """
+    return _api_call('grains_get', *keys, targets=targets, nowait=nowait)

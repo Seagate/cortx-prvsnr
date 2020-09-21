@@ -16,8 +16,12 @@
 #
 
 include:
-  # - components.sspl.install
+  - components.sspl.install
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
+# Should not be executed for replaced node
   - components.sspl.config.commons
+{% endif %}
   - components.sspl.health_view.prepare
   - components.sspl.health_view.config
 
@@ -32,12 +36,18 @@ Stage - Configure SSPL:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
     - require:
       - Stage - Post Install SSPL
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
+# Should not be executed for replaced node
       - Add common config - system information to Consul
       - Add common config - rabbitmq cluster to Consul
       - Add common config - BMC to Consul
       - Add common config - storage enclosure to Consul
+{% endif %}
     - order: 5
 
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
@@ -46,3 +56,4 @@ Stage - Initialize SSPL:
       - Run Resource Health View
       - Stage - Configure SSPL
     - order: 10
+{% endif %}

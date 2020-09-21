@@ -57,25 +57,25 @@ def test_api_cli_api_args_to_cli(patch_logging):
         fun, 'arg1', 'arg2', '[1, 2, 3]', '{"4": {"5": 6}}'
     ]
     # optional basic
-    assert api.api_args_to_cli(fun, arg1=123) == [fun, '--arg1', '123']
+    assert api.api_args_to_cli(fun, arg1=123) == [fun, '--arg1=123']
     # optional '-' and '_'
     assert api.api_args_to_cli(fun, some_arg1=123) == [
-        fun, '--some-arg1', '123'
+        fun, '--some-arg1=123'
     ]
     # optional True bool
     assert api.api_args_to_cli(fun, arg1=True) == [fun, '--arg1']
     # optional True bool
     assert api.api_args_to_cli(fun, arg1=False) == [fun]
     # optional None
-    assert api.api_args_to_cli(fun, arg1=None) == [fun, '--arg1', str(NONE)]
+    assert api.api_args_to_cli(fun, arg1=None) == [fun, f'--arg1={str(NONE)}']
     # optional List
     assert api.api_args_to_cli(
         fun, arg1=[1, 2, '3']
-    ) == [fun, '--arg1', '[1, 2, "3"]']
+    ) == [fun, '--arg1=[1, 2, "3"]']
     # optional Dict
     assert api.api_args_to_cli(
         fun, arg1={'1': {'2': 3, '4': '5'}}
-    ) == [fun, '--arg1', '{"1": {"2": 3, "4": "5"}}']
+    ) == [fun, '--arg1={"1": {"2": 3, "4": "5"}}']
 
 
 @pytest.mark.patch_logging([(api, ('error',))])

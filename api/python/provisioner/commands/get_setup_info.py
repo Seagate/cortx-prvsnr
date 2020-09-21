@@ -23,10 +23,12 @@ from .configure_setup import SetupType
 
 from .. import inputs, values
 
-from ..config import (NODES, SERVERS_PER_NODE, STORAGE_TYPE,
-                      SERVER_TYPE, NOT_AVAILABLE, ServerType, ControllerTypes,
-                      StorageType, SETUP_INFO_FIELDS, LOCAL_MINION
-                      )
+from ..config import (
+                        NODES, SERVERS_PER_NODE, STORAGE_TYPE,
+                        SERVER_TYPE, NOT_AVAILABLE, ServerType,
+                        ControllerTypes, StorageType,
+                        SETUP_INFO_FIELDS, LOCAL_MINION
+                    )
 from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run, local_minion_id
@@ -150,29 +152,37 @@ class GetSetupInfo(CommandParserFillerMixin):
         for key in (node_list_key, type_key):
             if (not pillar[key] or
                     pillar[key] is values.MISSED):
-                raise BadPillarDataError(f'value for {key.keypath} '
-                                         f'is not specified')
+                                            f'is not specified'
+                                        )
 
-        storage_type = pillar.get(type_key)
-        if storage_type == SetupType.SINGLE.value:
+        cluster_type = pillar.get(type_key)
+        if cluster_type == SetupType.SINGLE.value:
             res[SERVERS_PER_NODE] = 1
-        elif storage_type == SetupType.DUAL.value:
+        elif cluster_type == SetupType.DUAL.value:
             res[SERVERS_PER_NODE] = 2
-        elif storage_type.lower() == SETUP_TYPE:
+        elif cluster_type.lower() == SETUP_TYPE:
             # TODO: EOS-12418-improvement:
             #  does this value can be used in real configuration?
             res[SERVERS_PER_NODE] = 2
+        elif cluster_type.lower() == SetupType._3_NODE.value:
+            res[SERVERS_PER_NODE] = 3
+        elif cluster_type.lower() == SetupType.GENERIC.value:
+            res[SERVERS_PER_NODE] = 1
         else:
-            raise ValueError(f"Unsupported value '{storage_type}' for "
-                             f"'cluster/type' pillar value")
+            raise ValueError(
+                                f"Unsupported value '{cluster_type}' for "
+                                f"'cluster/type' pillar value"
+                            )
 
         # Assumption: number of nodes in 'cluster/node_list' should be
         # multiple by 'cluster/type'
         if (len(pillar[node_list_key]) % res[SERVERS_PER_NODE]) != 0:
-            raise ValueError(f"Unknown cluster configuration: "
-                             f"total number of nodes(servers) = "
-                             f"{pillar[node_list_key]}\n"
-                             f"cluster type = {storage_type}")
+            raise ValueError(
+                                "Unknown cluster configuration: "
+                                "total number of nodes(servers) = "
+                                f"{pillar[node_list_key]}\n"
+                                f"cluster type = {cluster_type}"
+                            )
 
         res[NODES] = len(pillar[node_list_key]) // res[SERVERS_PER_NODE]
 
@@ -185,19 +195,34 @@ class GetSetupInfo(CommandParserFillerMixin):
         :return:
         """
         res = dict()
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        controller_type = PillarKey(controller_pi_path / 'type')
+        storage_enclosure_path = KeyPath('storage_enclosure')
+        storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
+        controller_type = PillarKey(
+                storage_enclosure_path / 'controller' / 'type'
+            )
 
-        pillar = PillarResolver(LOCAL_MINION).get((controller_type,))
+        pillar = PillarResolver(LOCAL_MINION).get(
+            (
+                storage_enclosure_type,
+                controller_type
+            )
+        )
 
         pillar = pillar.get(local_minion_id())  # type: dict
 
-        if (not pillar[controller_type] or
-                pillar[controller_type] is values.MISSED):
-            raise BadPillarDataError(f'value for {controller_type.keypath} '
-                                     f'is not specified')
+        for key in (storage_enclosure_type, controller_type):
+            if (
+                    not pillar[key] or
+                    pillar[key] is values.MISSED
+                    ):
+                raise BadPillarDataError(
+                    f'value for {key.keypath} '
+                    'is not specified'
+                )
 
-        if pillar[controller_type] == ControllerTypes.GALLIUM.value:
+        if pillar[storage_enclosure_type] == StorageType.JBOD.value:
+            res[STORAGE_TYPE] = StorageType.JBOD.value
+        elif pillar[controller_type] == ControllerTypes.GALLIUM.value:
             res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
         elif pillar[controller_type] == ControllerTypes.INDIUM.value:
             res[STORAGE_TYPE] = StorageType.RBOD.value
@@ -232,8 +257,12 @@ class GetSetupInfo(CommandParserFillerMixin):
             res = handler()
             # NOTE: one method can determine several fields
             # Update only unknown fields
-            for key in (res.keys() & set(k for k, v in aggregated_res.items()
-                                         if v is None)):
+            for key in (
+                res.keys() & set(
+                    k for k, v in aggregated_res.items()
+                    if v is None
+                )
+            ):
                 aggregated_res[key] = res.get(key)
 
         return self._format_output(aggregated_res)

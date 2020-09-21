@@ -28,9 +28,9 @@ Remove cryptography pip package:
     - name: cryptography
     - bin_env: /usr/bin/pip3
 
-Remove eos-py-utils pip package:
+Remove cortx-py-utils pip package:
   pkg.purged:
-    - name: eos-py-utils
+    - name: cortx-py-utils
 
 clean_yum_local:
   cmd.run:

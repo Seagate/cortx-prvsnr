@@ -15,9 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
+# Should not be executed for replaced node
 include:
-  - components.sspl.install
   - components.sspl.config.commons
+{% endif %}
 
 {% set enclosure = '' %}
 {% if "primary" in grains["roles"] and 'physical' in grains['virtual'] %}
@@ -28,9 +31,12 @@ include:
 Run Resource Health View:
   cmd.run:
     - name: /opt/seagate/cortx/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
+{% if "replace_node" in pillar["cluster"]
+  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+# Should not be executed for replaced node
     - require:
-      - Install cortx-sspl packages
       - Add common config - system information to Consul
       - Add common config - rabbitmq cluster to Consul
       - Add common config - BMC to Consul
       - Add common config - storage enclosure to Consul
+{% endif %}

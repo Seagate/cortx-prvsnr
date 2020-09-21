@@ -93,6 +93,7 @@ Add commons yum repo:
     - humanname: commons
     - baseurl: {{ defaults.commons.repo.url }}
     - gpgcheck: 0
+    - onlyif: test -z /etc/yum.repos.d/{{ defaults.commons.repo.id }}.repo
 {% if pillar['release']['type'] != 'bundle' %}
     - require:
       - Add EPEL repo
