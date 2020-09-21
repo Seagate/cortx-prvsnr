@@ -50,9 +50,10 @@ Comment default wheel conf:
     - regex: ^\%wheel.*ALL=\(ALL\).*ALL$
     - char: '#'
 
-Set NOPASSWD for wheel:
-  file.append:
-    - name: /etc/sudoers
-    - text:
-      - "\n## Allows people in group wheel to run all commands without a password"
-      - "%wheel        ALL=(ALL)       NOPASSWD: ALL"
+Configure wheel group access:
+  file.managed:
+    - name: /etc/sudoers.d/wheel_access
+    - contents: |
+        ## Allows people in group wheel to run all commands without a password
+        %wheel        ALL=(ALL)       NOPASSWD: ALL
+    - create: True
