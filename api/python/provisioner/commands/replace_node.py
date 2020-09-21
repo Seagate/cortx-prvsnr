@@ -103,13 +103,9 @@ class ReplaceNode(SetupProvisioner):
 
         # On some systems 'cp -i' alias, breaks the next step.
         # This fix addresses it
-        run_subprocess_cmd(
-            [
-                'alias',
-                '|', 'grep', '\"cp -i\"',
-                '&&', 'unalias', 'cp'
-            ]
-        )
+        ret_val = run_subprocess_cmd(['alias'])
+        if "cp -i" in ret_val.stdout:
+            run_subprocess_cmd(['unalias', 'cp'])
 
         run_subprocess_cmd(
             [
