@@ -29,7 +29,7 @@ The one may choose an api depending it their needs:
 
 ## Installation
 
-### From GitLab
+### From Github
 
 ```
     pip install  git+http://github.com/Seagate/cortx-prvsnr#subdirectory=api/python

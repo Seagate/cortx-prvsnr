@@ -64,6 +64,7 @@ prereq_states=(
         "misc_pkgs.kibana"
         "misc_pkgs.statsd"
         "misc_pkgs.lustre"
+        "misc_pkgs.consul.install"
     )
 
 iopath_states=(
