@@ -1196,7 +1196,7 @@ class CreateUser(CommandParserFillerMixin):
                           f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init,'
                           f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
                 create=True,
-                replace=False,
+                replace=True,
                 user='root',
                 group='root',
                 mode=440
