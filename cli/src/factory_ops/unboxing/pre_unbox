@@ -575,8 +575,12 @@ hosts_resolution_check()
     local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${_cluster_sls_path}|grep -A1 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     if [[ -z "$mgmt_if" ]]; then
-        echo "ERROR: Could not get the management interface" | tee -a ${LOG_FILE}
-        exit 1
+        if ip -o addr | grep -q eno1; then
+            mgmt_if="eno1"
+        else
+            echo "ERROR: Could not get the management interface" | tee -a ${LOG_FILE}
+            exit 1
+        fi
     fi
 
     echo "*****************************************************" | tee -a ${LOG_FILE}

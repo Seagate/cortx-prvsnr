@@ -88,6 +88,9 @@ function check_salt_services {
 
     # Check salt-minion on secondary node.
     local node_2_private_data_ip=$(grep -m2 -A8 -P "data_nw:" ${cluster_sls_path}|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
+    if [[ -z ${node_2_private_data_ip} ]]; then
+        node_2_private_data_ip=${private_data_ip_node_2}
+    fi
     if ! (ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${node_2_private_data_ip} "systemctl status salt-master>/dev/null"); then
         ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${node_2_private_data_ip} "systemctl start salt-minion"
     fi

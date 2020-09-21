@@ -209,7 +209,7 @@ function reset_pub_data_ips {
         _cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
     else
         echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
-        exit
+        exit 1
     fi
 
     echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
