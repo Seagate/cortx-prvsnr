@@ -287,6 +287,7 @@ class StorageType(Enum):
     """Class-enumeration for supported and existing storage types"""
 
     VIRTUAL = "virtual"
+    JBOD = "JBOD"
     # standard enclosure with 5 units with 84 disks
     ENCLOSURE = "RBOD"
     RBOD = "RBOD"
