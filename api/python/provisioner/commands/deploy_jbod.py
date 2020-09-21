@@ -52,14 +52,18 @@ deploy_states = dict(
         'misc_pkgs.ssl_certs',
         'ha.haproxy.prepare',
         'ha.haproxy.install',
+        'misc_pkgs.consul.install',
         'misc_pkgs.openldap.prepare',
         'misc_pkgs.openldap.install',
         'misc_pkgs.rabbitmq.install',
         'misc_pkgs.nodejs.install',
         'misc_pkgs.elasticsearch.install',
         'misc_pkgs.elasticsearch.config',
+        'misc_pkgs.elasticsearch.start',
         'misc_pkgs.kibana.install',
-        'misc_pkgs.statsd.install'
+        'misc_pkgs.kibana.start',
+        'misc_pkgs.statsd.install',
+        'misc_pkgs.statsd.start'
     ],
     sync=[
     ],
@@ -76,6 +80,8 @@ deploy_states = dict(
     ha=[
         'hare.prepare',
         'hare.install',
+        'ha.cortx-ha.prepare',
+        'ha.cortx-ha.install',
     ],
     # states to be applied in desired sequence
     controlpath=[

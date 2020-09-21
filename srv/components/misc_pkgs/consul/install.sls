@@ -15,30 +15,47 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-include:
-  - components.misc_pkgs.consul.prepare
+# include:
+#   - components.misc_pkgs.consul.prepare
+
+# Consul installed:
+#   archive.extracted:
+#     - name: /usr/bin
+#     - source: https://releases.hashicorp.com/consul/1.6.2/consul_1.6.2_linux_amd64.zip
+#     - source_hash: https://releases.hashicorp.com/consul/1.6.2/consul_1.6.2_SHA256SUMS
+#     - source_hash_name: consul_1.6.2_linux_amd64.zip
+#     - enforce_toplevel: False
+#     - keep_source: True
+#     - clean: False
+#     - trim_output: True
+#     - user: consul
+#     - group: consul
+#     - if_missing: /usr/bin/consul
+#     - require:
+#       - user: Create Consul user
 
 Consul installed:
-  archive.extracted:
-    - name: /opt/consul/bin
-    - source: https://releases.hashicorp.com/consul/1.6.2/consul_1.6.2_linux_amd64.zip
-    - source_hash: https://releases.hashicorp.com/consul/1.6.2/consul_1.6.2_SHA256SUMS
-    - source_hash_name: consul_1.6.2_linux_amd64.zip
-    - enforce_toplevel: False
-    - keep_source: True
-    - clean: False
-    - trim_output: True
-    - user: consul
-    - group: consul
-    - if_missing: /opt/consul/bin/consul
-    - require:
-      - user: Create Consul user
+  pkg.installed:
+    - name: consul
+    - version: {{ pillar['commons']['version']['consul'] }}
+
+{% if (0 != salt["cmd.retcode"]("ls /opt/seagate/cortx/hare/bin/consul", 0)) %}
+Create symlink:
+  file.symlink:
+    - name: /opt/seagate/cortx/hare/bin/consul
+    - target: /usr/bin/consul
+    - force: True
+    - makedirs: True
+    - user: root
+    - group: root
+    - mode: 755
+{% endif %}
 
 Update Consul executable with required permissions:
   file.managed:
-    - name: /opt/consul/bin/consul
+    - name: /usr/bin/consul
     - user: consul
     - group: consul
     - mode: 755
-    - require:
-      - user: Create Consul user
+    # - require:
+    #   - user: Create Consul user
