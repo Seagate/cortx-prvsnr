@@ -20,7 +20,7 @@ cluster:
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: dual                          # single/dual/cluster
+  type: dual                          # single/dual/generic/3_node
   node_list:
     - srvnode-1
     - srvnode-2
