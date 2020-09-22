@@ -124,6 +124,15 @@ function check_mgmt_ip {
     # Only management IP would be tested as public data IP would be later updated during onboarding.
 
     local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${cluster_sls_path}|grep -A1 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    if [[ -z "$mgmt_if" ]]; then
+        if ip -o addr | grep -q eno1; then
+            mgmt_if="eno1"
+        else
+            echo "ERROR: Could not get the management interface" | tee -a ${LOG_FILE}
+            exit 1
+        fi
+    fi
+    
     # local public_data_if=$(grep -m1 -A3 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|tail -1|cut -d'-' -f2|tr -d "[:space:]")
     # local private_data_if=$(grep -m1 -A4 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
