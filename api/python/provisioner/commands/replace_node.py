@@ -100,9 +100,16 @@ class ReplaceNode(SetupProvisioner):
         logger.info("Preparing user profile")
         run_subprocess_cmd(['rm', '-rf',  str(run_args.profile)])
         run_args.profile.parent.mkdir(parents=True, exist_ok=True)
+
+        # On some systems 'cp -i' alias, breaks the next step.
+        # This fix addresses it
+        ret_val = run_subprocess_cmd(['alias'])
+        if "cp -i" in ret_val.stdout:
+            run_subprocess_cmd(['unalias', 'cp'])
+
         run_subprocess_cmd(
             [
-                'cp', '-r',
+                'cp', '-fr',
                 str(config.PRVSNR_FACTORY_PROFILE_DIR),
                 str(run_args.profile)
             ]

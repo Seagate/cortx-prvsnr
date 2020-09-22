@@ -41,6 +41,7 @@ else:
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
+PRVSNR_CLI_DIR = PRVSNR_ROOT_DIR / 'cli'
 
 PRVSNR_DATA_ROOT_DIR = Path('/var/lib/seagate/cortx/provisioner')
 PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
@@ -287,6 +288,7 @@ class StorageType(Enum):
     """Class-enumeration for supported and existing storage types"""
 
     VIRTUAL = "virtual"
+    JBOD = "JBOD"
     # standard enclosure with 5 units with 84 disks
     ENCLOSURE = "RBOD"
     RBOD = "RBOD"

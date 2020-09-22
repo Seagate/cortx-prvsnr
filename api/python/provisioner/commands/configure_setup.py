@@ -44,6 +44,7 @@ class SetupType(Enum):
     SINGLE = "single"
     DUAL = "dual"
     GENERIC = "generic"
+    _3_NODE = "3_node"
 
 
 class RunArgsConfigureSetupAttrs:
@@ -88,6 +89,8 @@ class RunArgsConfigureSetup:
             self.setup_type = SetupType.SINGLE
         elif self.number_of_nodes == 2:
             self.setup_type = SetupType.DUAL
+        elif self.number_of_nodes == 3:
+            self.setup_type = SetupType._3_NODE
         else:
             self.setup_type = SetupType.GENERIC
 
@@ -221,7 +224,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             else:
                 if input[key]:
                     if input[key] == 'None':
-                        input[key] = f'\"\"'
+                        input[key] = '\"\"'
                     else:
                         input[key] = f'\"{input[key]}\"'
                 else:
@@ -244,7 +247,9 @@ class ConfigureSetup(CommandParserFillerMixin):
 
         input_type = None
         pillar_type = None
+        node_list = []
         count = int(number_of_nodes)
+
         for section in content:
             input_type = section
             pillar_type = section
@@ -252,6 +257,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input_type = 'node'
                 pillar_type = f'cluster/{section}'
                 count = count - 1
+                node_list.append(f"\"{section}\"")
+
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])
 
@@ -260,6 +267,28 @@ class ConfigureSetup(CommandParserFillerMixin):
                 run_subprocess_cmd([
                        "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
+
+        # Update cluster/node_list
+        run_subprocess_cmd([
+            "provisioner", "pillar_set",
+            "cluster/node_list", f"[{','.join(node_list)}]"])
+
+        if 3 == int(number_of_nodes):
+            run_subprocess_cmd([
+                "provisioner", "pillar_set",
+                "cluster/type", "\"3_node\""])
+        elif 2 == int(number_of_nodes):
+            run_subprocess_cmd([
+                "provisioner", "pillar_set",
+                "cluster/type", "\"dual\""])
+        elif 1 == int(number_of_nodes):
+            run_subprocess_cmd([
+                "provisioner", "pillar_set",
+                "cluster/type", "\"single\""])
+        else:
+            run_subprocess_cmd([
+                "provisioner", "pillar_set",
+                "cluster/type", "\"generic\""])
 
         if count > 0:
             raise ValueError(f"Node information for {count} node missing")
