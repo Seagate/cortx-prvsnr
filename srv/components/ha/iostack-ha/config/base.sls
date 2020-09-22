@@ -21,10 +21,10 @@ include:
   - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
 
-Copy file setup-ees.yaml:
+Copy file setup-ldr-r1.yaml:
   file.copy:
     - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
-    - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
+    - source: /opt/seagate/cortx/ha/conf/setup-ldr-r1.yaml
     - force: True      # Failsafe once cortx-ha fixes the path
     - makedirs: True
     - preserve: True
@@ -32,7 +32,7 @@ Copy file setup-ees.yaml:
 Rename root node to iostack-ha:
   file.replace:
     - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
-    - pattern: "ees-ha:"
+    - pattern: "ldr-r1-ha:"
     - repl: "iostack-ha:"
     - count: 1
   

@@ -37,7 +37,7 @@ Add CSM repo:
 {% if 'single' not in pillar['cluster']['type'] %}
 Render CSM ha input params template:
   file.managed:
-    - name: /opt/seagate/cortx/ha/conf/build-ees-ha-csm-args.yaml
+    - name: /opt/seagate/cortx/ha/conf/build-ha-csm-args.yaml
     - source: salt://components/csm/files/ha-params.tmpl
     - template: jinja
     - mode: 444
