@@ -291,7 +291,7 @@ update_pillar()
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
     provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"\"
+    provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"127.0.0.1\"
 
     if [[ "$mgmt_din_opt" == true ]]; then
         provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"$mgmt_din\"
@@ -319,7 +319,7 @@ update_pillar()
 
     if [[ "$singlenode" == false ]]; then
         provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"127.0.0.1\"
         
         if [[ "$mgmt_din_opt" == true ]]; then
             provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"$mgmt_din\"

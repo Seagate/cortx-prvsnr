@@ -69,6 +69,7 @@ prereq_states=(
     "misc_pkgs.elasticsearch"
     "misc_pkgs.kibana"
     "misc_pkgs.statsd"
+    "misc_pkgs.consul.install"
 )
 
 # states to be applied in desired sequence
