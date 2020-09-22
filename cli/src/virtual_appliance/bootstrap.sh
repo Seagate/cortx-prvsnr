@@ -33,9 +33,9 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 #configure haproxy
 echo "INFO: Configuring haproxy" | tee -a ${LOG_FILE}
-salt "*" state.apply components.ha.haproxy.config
+salt "*" state.apply components.ha.haproxy.config | tee -a ${LOG_FILE}
 echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a ${LOG_FILE}
-salt "*" state.apply components.s3server.config_hosts
+salt "*" state.apply components.s3server.config_hosts | tee -a ${LOG_FILE}
 
 #restart services
 echo "INFO: Restarting haproxy" | tee -a ${LOG_FILE}
@@ -56,7 +56,9 @@ hctl status | tee -a ${LOG_FILE}
 
 #configure and start sspl
 echo "INFO: Configuring sspl" | tee -a ${LOG_FILE}
-salt "*" state.apply components.sspl.config.commons
+salt "*" state.apply components.sspl.config.commons | tee -a ${LOG_FILE}
+salt "*" cmd.run "/opt/seagate/cortx/sspl/bin/sspl_setup post_install -p LDR_R1"
+salt "*" cmd.run "/opt/seagate/cortx/sspl/bin/sspl_setup config -f"
 systemctl start sspl-ll
 
 #start csm services

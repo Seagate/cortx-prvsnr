@@ -361,7 +361,7 @@ prvsnr_pytest_options = {
         help="test environment provider, defaults to docker"
     ),
     "prvsnr-src": dict(
-        action='store', choices=['rpm', 'gitlab', 'local'],
+        action='store', choices=['rpm', 'github', 'local'],
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
     ),

@@ -16,7 +16,7 @@
 #
 
 {% if 'primary' in grains['roles'] 
-  and if pillar['cluster']['mgmt_vip'] %}
+  and pillar['cluster']['mgmt_vip'] %}
 Update Management VIP:
   cmd.run:
     - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }}

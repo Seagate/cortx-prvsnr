@@ -44,6 +44,7 @@ from ..config import (
     PRVSNR_FILEROOT_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
+    PRVSNR_CLI_DIR,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
@@ -66,7 +67,7 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -776,7 +777,9 @@ class GetReleaseVersion(CommandParserFillerMixin):
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
-            res = cmd_run("rpm -qa|grep '^cortx-'", targets=LOCAL_MINION)
+            exclude_rpms = 'cortx-py|prvsnr-cli'
+            res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",  # noqa: E501
+                               targets=LOCAL_MINION)
             rpms = res[next(iter(res))].split("\n")
             self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
         return self._installed_rpms
@@ -1160,6 +1163,48 @@ class CreateUser(CommandParserFillerMixin):
             _generate_ssh_config()
             _copy_minion_nodes()
 
+        # Creating a new group with limited access for csm admin users
+        StateFunExecuter.execute(
+            'group.present',
+            fun_kwargs=dict(
+                name='csm-admin'
+            )
+        )
+
+        # Updating users/ dir permissions for graceful login
+        StateFunExecuter.execute(
+            'file.directory',
+            fun_kwargs=dict(
+                name=str(SEAGATE_USER_HOME_DIR),
+                user='root',
+                group='root',
+                mode=755
+            )
+        )
+
+        StateFunExecuter.execute(
+            'file.managed',
+            fun_kwargs=dict(
+                name='/etc/sudoers.d/csm-admin',
+                contents=('## Restricted access for csm group users \n '
+                          '%csm-admin   ALL = NOPASSWD: /usr/bin/tail, '
+                          '/usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, '
+                          '/usr/sbin/subscription-manager, /usr/bin/cat, '
+                          '/usr/bin/cd, /usr/bin/ls, '
+                          f'/usr/sbin/pcs, {SEAGATE_USER_HOME_DIR}, '
+                          '/usr/bin/salt, /usr/bin/systemctl '
+                          '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp '
+                          '/opt/seagate/cortx/csm/bin/cortxcli, '
+                          f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init,'
+                          f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
+                create=True,
+                replace=True,
+                user='root',
+                group='root',
+                mode=440
+            )
+        )
+
         StateFunExecuter.execute(
             'user.present',
             fun_kwargs=dict(
@@ -1167,12 +1212,12 @@ class CreateUser(CommandParserFillerMixin):
                 password=passwd,
                 hash_password=True,
                 home=str(home_dir),
-                groups=['wheel']
+                groups=['csm-admin', 'prvsnrusers']
             ),
             targets=targets
         )
         logger.info(
-            'Setting up passowrdless ssh for {uname} user on both the nodes'
+            'Setting up passwordless ssh for {uname} user on both the nodes'
             .format(
                 uname=uname
             )

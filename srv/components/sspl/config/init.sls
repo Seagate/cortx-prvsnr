@@ -16,8 +16,8 @@
 #
 
 include:
-{% "replace_node" in pillar["cluster"]["replace_node"]["minion_id"]
-  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
   - components.sspl.config.commons
 {% endif %}
   - components.sspl.config.sspl
