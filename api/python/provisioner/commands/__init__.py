@@ -777,8 +777,8 @@ class GetReleaseVersion(CommandParserFillerMixin):
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
-            exlude_rpms = 'cortx-py|prvsnr-cli'
-            res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exlude_rpms}'",
+            exclude_rpms = 'cortx-py|prvsnr-cli'
+            res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",
                                targets=LOCAL_MINION)
             rpms = res[next(iter(res))].split("\n")
             self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
