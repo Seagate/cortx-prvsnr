@@ -67,7 +67,7 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -777,7 +777,9 @@ class GetReleaseVersion(CommandParserFillerMixin):
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
-            res = cmd_run("rpm -qa|grep '^cortx-'", targets=LOCAL_MINION)
+            exclude_rpms = 'cortx-py|prvsnr-cli'
+            res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",  # noqa: E501
+                               targets=LOCAL_MINION)
             rpms = res[next(iter(res))].split("\n")
             self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
         return self._installed_rpms
