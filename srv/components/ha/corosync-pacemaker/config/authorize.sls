@@ -26,7 +26,7 @@ Authorize nodes:
       - {{ node_id }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}
-    - pcspasswd: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
+    - pcspasswd: {{ pillar['corosync-pacemaker']['secret'] }}
     - extra_args:
       - '--force'
     - require:

@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from typing import Type
@@ -151,7 +151,6 @@ class DeployVM(Deploy):
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
-            self._encrypt_pillar()
             self._run_states('prereq', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
@@ -163,8 +162,7 @@ class DeployVM(Deploy):
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
-                self._encrypt_pillar()
-
+                
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
                 self._run_states('prereq', run_args)

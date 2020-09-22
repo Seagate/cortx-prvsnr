@@ -17,8 +17,8 @@
 #
 
 
-{%- set openldap_admin_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:admin:secret', "seagate")) %}
-{%- set openldap_iam_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:iam_admin:secret', "ldapadmin")) %}
+{%- set openldap_admin_secret = salt['pillar.get']('openldap:admin:secret', "seagate") %}
+{%- set openldap_iam_secret = salt['pillar.get']('openldap:iam_admin:secret', "ldapadmin") %}
 
 ROOTDNPASSWORD="{{ openldap_admin_secret }}"
 LDAPADMINPASS="{{ openldap_iam_secret }}"

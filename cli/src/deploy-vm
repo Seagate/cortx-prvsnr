@@ -193,13 +193,6 @@ function update_salt {
     $cmd salt "*" saltutil.refresh_grains $salt_opts
 }
 
-function encrypt_pillar {
-    # Encrypt passwords in pillar data
-    l_info "Encrypting salt pillar data"
-    python3 ${BASEDIR}/pillar_encrypt
-    update_salt
-}
-
 parse_args 'S' 'singlenode,prereq-states,sync-states,iopath-states,ctrlpath-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
@@ -223,7 +216,6 @@ hostnamectl status | grep Chassis | grep -q server && {
 
 if [[ "$run_all" == true ]]; then
     run_states "${system_states[@]}"
-    encrypt_pillar
 
     run_states "${prereq_states[@]}"
     if [[ "$singlenode" != true ]]; then
@@ -238,7 +230,6 @@ fi
 if [[ "$run_system_states" == true ]]; then
     l_info "Deploying the system states"
     run_states "${system_states[@]}"
-    encrypt_pillar
 fi
 
 if [[ "$run_prereq_states" == true ]]; then

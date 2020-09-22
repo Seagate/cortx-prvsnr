@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from typing import Type, Dict, List, Optional
@@ -322,17 +322,6 @@ class Deploy(CommandParserFillerMixin):
 
         logger.info("Refreshing grains")
         self._function_run('saltutil.refresh_grains', targets=targets)
-
-    def _encrypt_pillar(self):
-        # FIXME ??? EOS-12076 targets
-        # Encrypt passwords in pillar data
-        logger.info("Encrypting salt pillar data")
-        encrypt_tool = config.PRVSNR_ROOT_DIR / 'cli/pillar_encrypt'
-        self._cmd_run(
-            f"python3 {encrypt_tool}",
-            targets=self._primary_id()
-        )
-        self._update_salt()
 
     def _destroy_storage(self, run_args, nofail=True):
         targets = run_args.targets

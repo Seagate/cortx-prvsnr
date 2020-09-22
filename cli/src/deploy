@@ -328,13 +328,6 @@ function update_salt {
     sleep 2
 }
 
-function encrypt_pillar {
-    # Encrypt passwords in pillar data
-    l_info "Encrypting salt pillar data"
-    python3 ${BASEDIR}/pillar_encrypt
-    update_salt
-}
-
 
 parse_args 'S' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,backup-states' options_parser '' "$@"
 

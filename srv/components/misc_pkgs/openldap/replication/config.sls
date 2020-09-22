@@ -25,13 +25,13 @@ include:
 
 Load provider module:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif && sleep 2
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin']['secret'] }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif && sleep 2
     - watch_in:
       - Restart slapd service
 
 Push provider for data replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif && sleep 2
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w {{ pillar['openldap']['admin']['secret'] }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif && sleep 2
     - watch_in:
       - Restart slapd service
 
