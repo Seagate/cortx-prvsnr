@@ -19,6 +19,12 @@ Install csm package:
   pkg.installed:
     - pkgs:
       - cortx-csm_agent: latest
-      - cortx-cli: latest
       - cortx-csm_web: latest
+    - refresh: True
+
+Install cortx-cli package:
+  pkg.installed:
+    - pkgs: 
+      - cortx-cli: latest
+    - onlyif: yum info cortx-cli
     - refresh: True
