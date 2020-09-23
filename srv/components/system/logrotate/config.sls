@@ -23,9 +23,9 @@ Logrotate config file - Generic:
     - name: /etc/logrotate.conf
     {% if server_type == "physical" %}
     - source: salt://components/system/logrotate/files/etc/logrotate.conf
-    {%- else -%}
+    {% else %}
     - source: salt://components/system/logrotate/files/etc/logrotate_vm.conf
-    {%- endif -%}
+    {% endif %}
 
 # logrotate.d
 Create logrotate.d with specific component settings:
