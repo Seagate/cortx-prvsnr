@@ -11,8 +11,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 Set ClientAliveInterval:
@@ -44,15 +44,10 @@ Restart sshd service:
     - listen:
       - file: /etc/ssh/sshd_config
 
-Comment default wheel conf:
-  file.comment:
-    - name: /etc/sudoers
-    - regex: ^\%wheel.*ALL=\(ALL\).*ALL$
-    - char: '#'
-
-Set NOPASSWD for wheel:
-  file.append:
-    - name: /etc/sudoers
-    - text:
-      - "\n## Allows people in group wheel to run all commands without a password"
-      - "%wheel        ALL=(ALL)       NOPASSWD: ALL"
+Configure wheel group access:
+  file.managed:
+    - name: /etc/sudoers.d/wheel_access
+    - contents: |
+        ## Allows people in group wheel to run all commands without a password
+        %wheel        ALL=(ALL)       NOPASSWD: ALL
+    - create: True

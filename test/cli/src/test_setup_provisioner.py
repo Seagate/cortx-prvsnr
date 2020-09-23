@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 import pytest
@@ -249,7 +249,7 @@ def check_setup_provisioner_results(mhostsrvnode1):
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.inject_ssh_config(['srvnode1'])
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'gitlab'])
+@pytest.mark.parametrize("repo_src", ['local', 'rpm', 'github'])
 def test_setup_provisioner_cluster(
     mhostsrvnode1, mhostsrvnode2, ssh_config, mlocalhost,
     remote, repo_src, inject_ssh_config, run_script

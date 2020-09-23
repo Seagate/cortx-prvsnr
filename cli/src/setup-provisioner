@@ -12,8 +12,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 
@@ -66,7 +66,7 @@ ssh configuration and configures salt-master/salt-minion connections
 and also makes some additional preliminary configuration.
 
 'ldr-r1-prvsnr-version' as an optional positional argument might specify
-the desired version of the provisioner to install. Makes sense for 'gitlab'
+the desired version of the provisioner to install. Makes sense for 'github'
 source only as of now. Not set by default.
 
 General options:
@@ -104,7 +104,7 @@ function options_parser {
             ;;
         --repo-src)
             case "$2" in
-                local|gitlab|gitrepo|rpm)
+                local|github|gitrepo|rpm)
                     prvsnr_repo_src="$2"
                     ;;
                 *)
@@ -212,7 +212,7 @@ fi
 
 # TODO TEST EOS-12508
 if [[ -z "$prvsnr_version" ]]; then
-    if [[ "$prvsnr_repo_src" == "gitlab" ]]; then
+    if [[ "$prvsnr_repo_src" == "github" ]]; then
         # get latest version of provisioner
         ! _tags=$(curl "$LDR_R1_PRVSNR_REPO_API_TAGS")
         prvsnr_version=$(echo "$_tags" | tr ',' '\n' | sed -n 's/.*"name":"\(.\+\)".*/\1/p' | head -n1)

@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 from typing import List, Dict, Type, Optional, Iterable
@@ -925,8 +925,8 @@ class SetupProvisioner(CommandParserFillerMixin):
     def _run(self, nodes, **kwargs):  # noqa: C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
-        # TODO sources: gitlab | gitrepo | rpm
-        # TODO get latest tags for gitlab source
+        # TODO sources: github | gitrepo | rpm
+        # TODO get latest tags for github source
 
         # validation
         # TODO IMPROVE EOS-8473 make generic logic

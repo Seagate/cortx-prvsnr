@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 import logging
@@ -103,13 +103,9 @@ class ReplaceNode(SetupProvisioner):
 
         # On some systems 'cp -i' alias, breaks the next step.
         # This fix addresses it
-        run_subprocess_cmd(
-            [
-                'alias',
-                '|', 'grep', '\"cp -i\"',
-                '&&', 'unalias', 'cp'
-            ]
-        )
+        ret_val = run_subprocess_cmd(['alias'])
+        if "cp -i" in ret_val.stdout:
+            run_subprocess_cmd(['unalias', 'cp'])
 
         run_subprocess_cmd(
             [

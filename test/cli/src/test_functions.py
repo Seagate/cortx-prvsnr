@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 import os
@@ -768,7 +768,7 @@ def test_functions_systemd_libs_not_from_updates(mhost):
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("repo_src", ['unknown', 'gitlab'])
+@pytest.mark.parametrize("repo_src", ['unknown', 'github'])
 def test_functions_install_provisioner(
     run_script, mhost, mlocalhost,
     ssh_config, remote, repo_src

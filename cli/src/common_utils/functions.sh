@@ -12,8 +12,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 
@@ -1118,16 +1118,16 @@ EOF
 #   Args:
 #       repo-src: One of the following:
 #           `rpm` - installs from a rpm package (default),
-#           `gitlab` - installs from GitLab using the specified
+#           `github` - installs from Github using the specified
 #               version `prvsnr-version`. If the version is not set
-#               uses the latest tagged one.
+#               uses the latest tagged one.                         # FIXME EOS-13293
 #           `gitrepo` - establishes local git repo at `/opt/seagate/cortx-prvsnr`
-#               pointing to remote repo on GitLab. This should help use switch between
+#               pointing to remote repo on Github. This should help use switch between
 #               branches for validation of branched changes.
 #           `local` - copies local working copy of the repository, assumes
 #               that script is a part of it.
 #       prvsnr-version: The version of the CORTX provisioner to install. Makes sense only
-#           for `gitlab` source for now. Default: not set.
+#           for `github` source for now. Default: not set.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1221,7 +1221,7 @@ baseurl="$_prvsnr_version"
 name=provisioner
 EOF
 
-    if [[ "$_repo_src" != "gitlab" && "$_repo_src" != "rpm" && "$_repo_src" != "local" && "$_repo_src" != "gitrepo" ]]; then
+    if [[ "$_repo_src" != "github" && "$_repo_src" != "rpm" && "$_repo_src" != "local" && "$_repo_src" != "gitrepo" ]]; then
         l_error "unsupported repo src: $_repo_src"
         exit 1
     fi
@@ -1242,7 +1242,7 @@ EOF
     # issue #23
     #rm -rvf "$_installdir"
     mkdir -p "$_installdir"
-    if [[ "$_repo_src" == "gitlab" ]]; then
+    if [[ "$_repo_src" == "github" ]]; then
         pushd "$_installdir"
             curl "https://github.com/Seagate/cortx-prvsnr/-/archive/${_prvsnr_version}/${_prvsnr_version}.tar.gz" | tar xzf - --strip-components=1
         popd

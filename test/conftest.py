@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 import docker
@@ -361,7 +361,7 @@ prvsnr_pytest_options = {
         help="test environment provider, defaults to docker"
     ),
     "prvsnr-src": dict(
-        action='store', choices=['rpm', 'gitlab', 'local'],
+        action='store', choices=['rpm', 'github', 'local'],
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
     ),
