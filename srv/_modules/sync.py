@@ -38,8 +38,8 @@ def sync_files(component="provisioner"):
     /var/lib/seagate/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
-    yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not Path(yaml_file).exists(yaml_file):
+    yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
+    if not yaml_file.exists(yaml_file):
         logger.exception("ERROR: {0} doesn't exist.".format(yaml_file))
         return False
 
@@ -93,8 +93,8 @@ def backup_files(component="provisioner"):
     on srvnode-2.
     """
 
-    yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not Path(yaml_file).exists(yaml_file):
+    yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
+    if not yaml_file.exists(yaml_file):
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
@@ -158,8 +158,8 @@ def restore_files(component="provisioner"):
     on srvnode-2.
     """
 
-    yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not Path(yaml_file).exists(yaml_file):
+    yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
+    if not yaml_file.exists(yaml_file):
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
