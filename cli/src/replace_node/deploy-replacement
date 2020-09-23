@@ -248,7 +248,6 @@ function ha_states {
         "ha.corosync-pacemaker.config.authorize"
         "ha.cortx-ha"
         "ha.iostack-ha.prepare"
-        "ha.iostack-ha.config.base"
     )
 
     l_info "=================================================="
