@@ -107,6 +107,8 @@ deploy_vm:
   type: DeployVM
 deploy_jbod:
   type: DeployJBOD
+deploy_dual:
+  type: DeployDual
 auto_deploy:
   type: AutoDeploy
 grains_get:

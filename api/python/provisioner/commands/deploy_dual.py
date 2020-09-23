@@ -1,0 +1,267 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+from typing import Type, Optional
+import logging
+
+from .. import (
+    inputs,
+    errors
+)
+from .deploy import (
+    build_deploy_run_args,
+    Deploy
+)
+from ..salt import function_run
+from ..vendor import attr
+# TODO IMPROVE EOS-8473
+from ..utils import ensure
+from .setup_provisioner import SetupCtx
+from .configure_setup import SetupType
+
+
+logger = logging.getLogger(__name__)
+
+
+deploy_states = dict(
+    system=[
+        "system",
+        "system.storage.multipath",
+        "system.storage",
+        "system.network",
+        "system.network.data.public",
+        "system.network.data.direct",
+        "misc_pkgs.rsyslog",
+        "system.firewall",
+        "system.logrotate",
+        "system.chrony"
+    ],
+    prereq=[
+        "misc_pkgs.rhel_sos",
+        "misc_pkgs.ssl_certs",
+        "ha.haproxy",
+        "misc_pkgs.openldap",
+        "misc_pkgs.rabbitmq",
+        "misc_pkgs.nodejs",
+        "misc_pkgs.elasticsearch",
+        "misc_pkgs.kibana",
+        "misc_pkgs.statsd"
+    ],
+    sync=[
+        "sync.software.openldap",
+        "sync.software.rabbitmq"
+    ],
+    iopath=[
+        "misc_pkgs.lustre",
+        "motr",
+        "s3server"
+    ],
+    ha=[
+        "ha.corosync-pacemaker",
+        "hare",
+        "ha.cortx-ha",
+        "ha.iostack-ha"
+    ],
+    # states to be applied in desired sequence
+    controlpath=[
+        "sspl",
+        "csm",
+        "uds",
+        "ha.ctrlstack-ha",
+        "ha.cortx-ha.ha"
+    ],
+    backup=[
+        "provisioner.backup",
+        # "motr.backup", # TODO: Awaiting EOS-12637 fix
+        "s3server.backup",
+        "hare.backup",
+        "ha.iostack-ha.backup",
+        "sspl.backup",
+        "csm.backup"
+    ]
+)
+
+
+run_args_type = build_deploy_run_args(deploy_states)
+
+
+@attr.s(auto_attribs=True)
+class DeployDual(Deploy):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = run_args_type
+    setup_ctx: Optional[SetupCtx] = None
+
+    def check_consul_running(self):
+        consul_map = {"srvnode-1": "hare-consul-agent-c1",
+                      "srvnode-2": "hare-consul-agent-c2"}
+        result_flag = True
+        for target in consul_map:
+            if self.setup_ctx:
+                res = self.setup_ctx.ssh_client.run(
+                             'service.status',
+                             fun_args=[consul_map[target]],
+                             targets=target
+                         )
+            else:
+                res = function_run(
+                             'service.status',
+                             fun_args=[consul_map[target]],
+                             targets=target
+                         )
+
+            if not res[target]:
+                result_flag = False
+                logger.info(f"Consul is not running on {target}")
+        if result_flag:
+            logger.info("Consul found running on respective nodes.")
+            return True
+
+    def ensure_consul_running(self, tries=15, wait=5):
+        logger.info("Validating availability of hare-consul-agent.")
+        try:
+            ensure(self.check_consul_running, tries=tries, wait=wait)
+        except errors.ProvisionerError:
+            logger.error("Unable to get healthy hare-consul-agent service "
+                         "Exiting further deployment...")
+            raise errors.ProvisionerError("Unable to get healthy "
+                                          "hare-consul-agent service.")
+
+    def _run_states(self, states_group: str, run_args: run_args_type):
+        # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
+        setup_type = run_args.setup_type
+        targets = run_args.targets
+        states = deploy_states[states_group]
+        stages = run_args.stages
+
+        primary = self._primary_id()
+        secondaries = f"not {primary}"
+
+        # apply states
+        if setup_type == SetupType.SINGLE:
+            # TODO use salt orchestration
+            for state in states:
+                self._apply_state(f"components.{state}", targets, stages)
+        else:
+            # FIXME EOS-12076 the following logic is only
+            #       for legacy dual node setup
+            for state in states:
+                if state == "ha.corosync-pacemaker":
+                    for _state, target in (
+                        ("install", targets),
+                        ("config.base", targets),
+                        ("config.authorize", primary),
+                        ("config.setup_cluster", primary),
+                        ("config.cluster_ip", primary),
+                        ("config.stonith", primary)
+                    ):
+                        self._apply_state(
+                            f"components.ha.corosync-pacemaker.{_state}",
+                            target,
+                            stages
+                        )
+
+                elif state in (
+                    "system.storage",
+                    "sspl",
+                    "csm",
+                    "provisioner.backup"
+                ):
+                    # Consul takes time to come online after initialization
+                    # (around 2-3 mins at times). We need to ensure
+                    # consul service is available before proceeding
+                    # Without a healthy consul service SSPL and CSM shall fail
+                    if state == "sspl":
+                        self.ensure_consul_running()
+                    # Execute first on secondaries then on primary.
+                    self._apply_state(
+                        f"components.{state}", secondaries, stages
+                    )
+                    self._apply_state(f"components.{state}", primary, stages)
+
+                elif state in (
+                    "sync.software.rabbitmq",
+                    "sync.software.openldap",
+                    "system.storage.multipath",
+                    "sync.files"
+                ):
+                    # Execute first on primary then on secondaries.
+                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(
+                        f"components.{state}", secondaries, stages
+                    )
+                else:
+                    self._apply_state(f"components.{state}", targets, stages)
+                    if state == "ha.iostack-ha":
+                        self.ensure_consul_running()
+
+    def run(self, **kwargs):  # noqa: C901 FIXME
+        run_args = self._run_args_type(**kwargs)
+
+        # FIXME EOS-12076 in case of dual node some operations (destroy)
+        #       should be performed on non primary nodes
+
+        self._update_salt()
+
+        if run_args.stages is not None:
+            raise NotImplementedError(
+                'no partial stages appliance is supported for now'
+            )
+
+        if run_args.states is None:  # all states
+
+            self._rescan_scsi_bus()
+            self._run_states('system', run_args)
+            self._run_states('prereq', run_args)
+            self._run_states('sync', run_args)
+            self._run_states('iopath', run_args)
+            self._run_states('ha', run_args)
+            self._run_states('controlpath', run_args)
+            self._run_states('backup', run_args)
+        else:
+            if 'system' in run_args.states:
+                logger.info("Deploying the system states")
+                self._rescan_scsi_bus()
+                self._run_states('system', run_args)
+
+            if 'prereq' in run_args.states:
+                logger.info("Deploying the prereq states")
+                self._run_states('prereq', run_args)
+
+            if 'sync' in run_args.states:
+                logger.info("Deploying the sync states")
+                self._run_states('sync', run_args)
+
+            if 'iopath' in run_args.states:
+                logger.info("Deploying the io path states")
+                self._run_states('iopath', run_args)
+
+            if 'ha' in run_args.states:
+                logger.info("Deploying the ha states")
+                self._run_states('ha', run_args)
+
+            if 'controlpath' in run_args.states:
+                logger.info("Deploying the control path states")
+                self._run_states('controlpath', run_args)
+
+            if 'backup' in run_args.states:
+                logger.info("Deploying the backup states")
+                self._run_states('backup', run_args)
+
+        logger.info("Deploy - Done")
+        return run_args

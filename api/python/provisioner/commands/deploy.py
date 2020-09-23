@@ -19,7 +19,6 @@
 
 from typing import Type, Dict, List, Optional
 import logging
-import time
 
 from .. import (
     config,
@@ -229,42 +228,6 @@ class Deploy(CommandParserFillerMixin):
 
         return res[self._primary_id()] == 'server'
 
-    def _is_consul_running(self):
-        logger.info("Validating availability of hare-consul-agent.")
-        consul_map = {"srvnode-1": "hare-consul-agent-c1",
-                      "srvnode-2": "hare-consul-agent-c2"}
-        count = 15
-        while(count):
-            result_flag = True
-            for target in consul_map:
-                if self.setup_ctx:
-                    res = self.setup_ctx.ssh_client.run(
-                                 'service.status',
-                                 fun_args=[consul_map[target]],
-                                 targets=target
-                             )
-                else:
-                    res = function_run(
-                                 'service.status',
-                                 fun_args=[consul_map[target]],
-                                 targets=target
-                             )
-
-                if not res[target]:
-                    result_flag = False
-                    logger.info(f"Consul is not running on {target}")
-                    count = count - 1
-                    time.sleep(5)
-                    break
-            if result_flag:
-                logger.info("Consul found running on respective nodes.")
-                break
-
-        if count == 0:
-            logger.error(f"Unable to get healthy hare-consul-agent service "
-                         f"Exiting further deployment...")
-            raise
-
     def _apply_state(
         self, state, targets=config.ALL_MINIONS, stages: Optional[List] = None
     ):
@@ -328,12 +291,6 @@ class Deploy(CommandParserFillerMixin):
                     "csm",
                     "provisioner.backup"
                 ):
-                    # Consul takes time to come online after initialization
-                    # (around 2-3 mins at times). We need to ensure
-                    # consul service is available before proceeding
-                    # Without a healthy consul service SSPL and CSM shall fail
-                    if state == "sspl":
-                        self._is_consul_running()
                     # Execute first on secondaries then on primary.
                     self._apply_state(
                         f"components.{state}", secondaries, stages
@@ -353,8 +310,6 @@ class Deploy(CommandParserFillerMixin):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-                    if state == "ha.iostack-ha":
-                        self._is_consul_running()
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
@@ -418,7 +373,6 @@ class Deploy(CommandParserFillerMixin):
             )
 
         if run_args.states is None:  # all states
-            # self._destroy_storage(run_args)
 
             self._rescan_scsi_bus()
             self._run_states('system', run_args)
@@ -441,17 +395,6 @@ class Deploy(CommandParserFillerMixin):
             if 'sync' in run_args.states:
                 logger.info("Deploying the sync states")
                 self._run_states('sync', run_args)
-
-            # if 'iopath' in run_args.states or 'ha' in run_args.states:
-            #    logger.info("Recreating the metadata partitions")
-            #    self._destroy_storage(run_args)
-            #    # FIXME EOS-12076 in non singlenode case destroy
-            #    #       would be applied not to all minions
-            #    self._apply_state(
-            #        "components.system.storage",
-            #        run_args.targets,
-            #        run_args.stages
-            #    )
 
             if 'iopath' in run_args.states:
                 logger.info("Deploying the io path states")

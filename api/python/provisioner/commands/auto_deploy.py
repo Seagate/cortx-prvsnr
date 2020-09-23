@@ -31,7 +31,7 @@ from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
     SetupProvisioner
 )
-from . import deploy
+from . import deploy_dual
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class AutoDeploy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = [
         RunArgsSetupProvisionerGeneric,
-        deploy.run_args_type
+        deploy_dual.run_args_type
     ]
 
     def run(self, nodes, **kwargs):
@@ -52,7 +52,7 @@ class AutoDeploy(CommandParserFillerMixin):
 
         deploy_args = {
             k: kwargs.pop(k) for k in list(kwargs)
-            if k in attr.fields_dict(deploy.run_args_type)
+            if k in attr.fields_dict(deploy_dual.run_args_type)
         }
 
         logger.info("Setup provisioner")
@@ -77,7 +77,7 @@ class AutoDeploy(CommandParserFillerMixin):
             )
 
         logger.info("Deploy")
-        deploy.Deploy(setup_ctx=setup_ctx).run(
+        deploy_dual.DeployDual(setup_ctx=setup_ctx).run(
             **deploy_args
         )
 
