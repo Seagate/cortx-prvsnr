@@ -123,7 +123,7 @@ def build_deploy_run_args(deploy_states: Dict):
             metadata={
                 inputs.METADATA_ARGPARSER: {
                     'help': (
-                        "applu only specific stages, "
+                        "apply only specific stages, "
                         "might be used multiple times to specify multiple "
                         "stages, if not specified - all are considered"
                     ),

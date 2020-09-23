@@ -284,8 +284,8 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
-                    "Cortex integration release version repo URL/path"
-                    "E.g. "
+                    "Cortex integration release version repo URL/path."
+                    "[This feature is Seagate internal only.]"
                 ),
                 # 'help': (
                 #     "Cortex integration release version relative to "
@@ -300,7 +300,7 @@ class RunArgsSetup:
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "turn on high availbility setup",
+                'help': "turn on high availability setup",
             }
         },
         default=False
@@ -308,19 +308,19 @@ class RunArgsSetup:
     glusterfs_docker: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "configure in-docker glusterfs servers",
+                'help': "configure Dockerized glusterfs servers",
             }
         },
         default=False
     )
-    field_setup: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "turn on field setup mode",
-            }
-        },
-        default=False
-    )
+    # field_setup: bool = attr.ib(
+    #     metadata={
+    #         inputs.METADATA_ARGPARSER: {
+    #             'help': "turn on field setup mode",
+    #         }
+    #     },
+    #     default=False
+    # )
     salt_master: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -332,7 +332,11 @@ class RunArgsSetup:
     update: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "update initial configuration",
+                'help': (
+                            "update initial configuration\n"
+                            "[not to be used in production environments "
+                            "as it resets grains data]"
+                        ),
             }
         },
         default=False
