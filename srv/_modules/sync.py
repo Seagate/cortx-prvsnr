@@ -24,6 +24,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def sync_files(component="provisioner"):
     """
     Synchronize the files as-is across nodes based on the list of files
@@ -31,9 +32,9 @@ def sync_files(component="provisioner"):
     component directory (/opt/seagate/<component>/conf/setup.yaml).
 
     The location of file on source node shall be the same on the
-    destination node. 
-    E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf 
-    on srvnode-1 shall be copied to 
+    destination node.
+    E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf
+    on srvnode-1 shall be copied to
     /var/lib/seagate/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
@@ -50,39 +51,46 @@ def sync_files(component="provisioner"):
     with open(yaml_file, 'r') as fd:
         yaml_dict = yaml.safe_load(fd)
 
-        if "backup" in yaml_dict[component] and "files" in yaml_dict[component]["backup"]:
-            cmd = "rsync --archive --compress --update"
+        if (
+            "backup" in yaml_dict[component]
+            and "files" in yaml_dict[component]["backup"]
+        ):
+            cmd_args = "rsync --archive --compress --update"
             for file in yaml_dict[component]["backup"]["files"]:
                 dst = Path, Path(file).parent
+                cmd = [f"{cmd_args} {file} {node}:{dst}"]
                 logger.info(
                     subprocess.run(
-                        [f"{cmd} {file} {node}:{dst}"],
+                        cmd,
                         shell=True,
-                        check = True,
-                        stdout = subprocess.PIPE,
-                        stderr = subprocess.PIPE
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    )
                 )
-            )
     return True
+
 
 def backup_files(component="provisioner"):
     """
-    Back the files as-is from best available live node 
-    based on the list of files in the section <component>:backup:files 
-    in setup.yaml within component directory 
+    Back the files as-is from best available live node
+    based on the list of files in the section <component>:backup:files
+    in setup.yaml within component directory
     (/opt/seagate/<component>/conf/setup.yaml).
 
-    The location of file on source node shall be the appended 
-    with source node name directory on the destination node. 
-    E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf 
-    on srvnode-1 shall be copied to 
-    /var/lib/seagate/provisioner/srvnode-1/provisioner/provisioner_custom_config.conf
+    The location of file on source node shall be the appended
+    with source node name directory on the destination node.
+    E.g. /var/lib/provisioner_custom_config.conf
+    on srvnode-1 shall be copied to
+    /var/lib/srvnode-1/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
 
     yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
     if not os.path.exists(yaml_file):
-        logger.exception(f"ERROR: {yaml_file} doesn't exist.")
+        msg = f"ERROR: {yaml_file} doesn't exist."
+        # raise Exception(msg)
+        logger.exception(msg)
         return False
 
     # This generic logic should always work
@@ -94,31 +102,39 @@ def backup_files(component="provisioner"):
     with open(yaml_file, 'r') as fd:
         yaml_dict = yaml.safe_load(fd)
 
-        if "backup" in yaml_dict[component] and "files" in yaml_dict[component]["backup"]:
-            cmd = f"rsync --archive --compress --exclude '{node}'"
-            
+        if (
+            "backup" in yaml_dict[component]
+            and "files" in yaml_dict[component]["backup"]
+        ):
+            cmd_args = f"rsync --archive --compress --exclude '{node}'"
+
             for file in yaml_dict[component]["backup"]["files"]:
                 file_path = Path(file)
+                if not file_path.exists():
+                    continue
+
                 dst = file_path.parent.joinpath(current_node)
-                
+                cmd = [f"{cmd_args} {file_path} {node}:{dst}{os.sep}"]
+                # cmd = [f"{cmd} {file_path.parent} {node}:{dst}"]
+
                 # For pathlib: https://bugs.python.org/issue21039
-                msg = subprocess.Popen(
-                    # [f"{cmd} {file_path.parent} {node}:{dst}"],
-                    [f"{cmd} {file_path} {node}:{dst}{os.sep}"],
+                proc_completed = subprocess.run(
+                    cmd,
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
-                ).stdout.read()
-                # msg = subprocess.run(
-                #     [f"{cmd} {file_path.parent} {node}:{dst}"],
-                #     shell=True,
-                #     check = True,
-                #     stdout = subprocess.PIPE,
-                #     stderr = subprocess.PIPE
-                # )
-                
-                logger.info(msg)
+                )
+
+                try:
+                    proc_completed.check_returncode()
+                    logger.info(proc_completed.stdout)
+                except subprocess.CalledProcessError:
+                    logger.error(f"Command: {' '.join(cmd)}")
+                    logger.error(f"Error: {proc_completed.stderr}")
+                    raise Exception(proc_completed.stderr)
+
     return True
+
 
 def restore_files(component="provisioner"):
     """
@@ -126,17 +142,19 @@ def restore_files(component="provisioner"):
     in the section <component>:sync:files in setup.yaml within
     component directory (/opt/seagate/<component>/conf/setup.yaml).
 
-    The location of file on source node shall be the appended 
-    with source node name directory on the destination node. 
-    E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf 
-    on srvnode-1 shall be copied to 
+    The location of file on source node shall be the appended
+    with source node name directory on the destination node.
+    E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf
+    on srvnode-1 shall be copied to
     /var/lib/seagate/provisioner/srvnode-1/provisioner_custom_config.conf
     on srvnode-2.
     """
 
     yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
     if not os.path.exists(yaml_file):
-        logger.exception(f"ERROR: {yaml_file} doesn't exist.")
+        msg = f"ERROR: {yaml_file} doesn't exist."
+        # raise Exception(msg)
+        logger.exception(msg)
         return False
 
     # Execute on replacement_node only
@@ -147,13 +165,13 @@ def restore_files(component="provisioner"):
         replacement_node = os.getenv("REPLACEMENT_NODE", False)
     else:
         replacement_node = None
-    
-    # Execute only if replacement_node is set 
-    # and is the current node is replacement node
-    if (    replacement_node and
-            __grains__["id"] == replacement_node
-    ):
 
+    # Execute only if replacement_node is set
+    # and is the current node is replacement node
+    if (
+        replacement_node and
+        __grains__["id"] == replacement_node
+    ):
         node_list = __pillar__["cluster"]["node_list"]
         node_list.remove(replacement_node)
         node = node_list[0]
@@ -161,33 +179,35 @@ def restore_files(component="provisioner"):
         with open(yaml_file, 'r') as fd:
             yaml_dict = yaml.safe_load(fd)
 
-            if (    "backup" in yaml_dict[component] and
-                    "files" in yaml_dict[component]["backup"]
+            if (
+                "backup" in yaml_dict[component] and
+                "files" in yaml_dict[component]["backup"]
             ):
-                cmd = "rsync --archive --compress"
-            
+                cmd_args = "rsync --archive --compress"
+
                 for file in yaml_dict[component]["backup"]["files"]:
                     file_path = Path(file)
-                    # src = file_path.parent.joinpath(replacement_node, file_path.parent.name)
-                    # dst = file_path.parent.parent
-                    src = file_path.parent.joinpath(replacement_node, file_path)
+                    src = file_path.parent.joinpath(
+                        replacement_node,
+                        file_path
+                    )
                     dst = file_path.parent
+                    cmd = [f"{cmd_args} {node}:{src}{os.sep} {dst}{os.sep}"]
 
-                    msg = subprocess.Popen(
-                            [f"{cmd} {node}:{src}{os.sep} {dst}{os.sep}"],
+                    proc_completed = subprocess.run(
+                            cmd,
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
-                    ).stdout.read()
-                    # msg = subprocess.run(
-                    #     [f"{cmd} {node}:{src} {dst}"],
-                    #     shell=True,
-                    #     check = True,
-                    #     stdout = subprocess.PIPE,
-                    #     stderr = subprocess.PIPE
-                    # )
-                    
-                    logger.info(msg)
+                    )
+
+                    try:
+                        proc_completed.check_returncode()
+                        logger.info(proc_completed.stdout)
+                    except subprocess.CalledProcessError:
+                        logger.error(f"Command: {' '.join(cmd)}")
+                        logger.error(f"Error: {proc_completed.stderr}")
+                        raise Exception(proc_completed.stderr)
     else:
         logger.warning(
             f"WARN: replacement_node is {replacement_node} "
