@@ -15,13 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set server_type = salt['cmd.run']('provisioner get_setup_info --output json | grep server_type | grep -q physical && echo "physical"') %}
+{% set setup_info = salt['cmd.run']('provisioner get_setup_info --output json') | load_json %}
 
 # general settings
 Logrotate config file - Generic:
   file.managed:
     - name: /etc/logrotate.conf
-    {% if server_type == "physical" %}
+    {% if setup_info.ret.server_type == "physical" %}
     - source: salt://components/system/logrotate/files/etc/logrotate.conf
     {% else %}
     - source: salt://components/system/logrotate/files/etc/logrotate_vm.conf
@@ -44,7 +44,7 @@ Create logrotate.d with specific component settings:
 Create logrotate_setup.d with specific component settings:
   file.recurse:
     - name: /etc/logrotate_setup.d
-    {% if server_type == "physical" %}
+    {% if setup_info.ret.server_type == "physical" %}
     - source: salt://components/system/logrotate/files/etc/logrotate_hw.d
     {% else %}
     - source: salt://components/system/logrotate/files/etc/logrotate_vm.d
