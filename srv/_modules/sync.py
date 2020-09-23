@@ -39,7 +39,7 @@ def sync_files(component="provisioner"):
     on srvnode-2.
     """
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
+    if not yaml_file.exists():
         logger.exception("ERROR: {0} doesn't exist.".format(yaml_file))
         return False
 
@@ -61,7 +61,7 @@ def sync_files(component="provisioner"):
                 cmd = [f"{cmd_args} {file} {node}:{dst}"]
                 proc_completed = subprocess.run(
                     cmd,
-                    # shell=True,
+                    shell=True,
                     check=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
@@ -94,7 +94,7 @@ def backup_files(component="provisioner"):
     """
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
+    if not yaml_file.exists():
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
@@ -127,7 +127,7 @@ def backup_files(component="provisioner"):
                 # For pathlib: https://bugs.python.org/issue21039
                 proc_completed = subprocess.run(
                     cmd,
-                    # shell=True,
+                    shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
@@ -159,7 +159,7 @@ def restore_files(component="provisioner"):
     """
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
+    if not yaml_file.exists():
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
@@ -204,7 +204,7 @@ def restore_files(component="provisioner"):
 
                     proc_completed = subprocess.run(
                             cmd,
-                            # shell=True,
+                            shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
                     )
