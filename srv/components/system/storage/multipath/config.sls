@@ -11,8 +11,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 include:
@@ -39,16 +39,17 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if 'JBOD' not in pillar["storage_enclosure"]["type"] %}
+{% if not 'JBOD' in pillar["storage_enclosure"]["type"] %}
 {% if (not pillar['cluster'][grains['id']]['is_primary'])
-  or (grains['id'] == pillar['cluster']['replace_node']['minion_id'])
+    or (pillar['cluster']['replace_node']['minion_id']
+    and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
 {% set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] %}
 # Execute only on Secondary node
-Copy multipath bindings to non-primary:
+Copy multipath bindings:
   cmd.run:
     - name: scp {{ node_id }}:/etc/multipath/bindings /etc/multipath/bindings
-{% endif %}
+{% endif %} # Check if primary node or replacement node end
 
 Start multipath service:
   service.running:
@@ -57,7 +58,10 @@ Start multipath service:
     - watch:
       - file: Copy multipath config
 
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if pillar['cluster'][grains['id']]['is_primary'] 
+    and not (pillar['cluster']['replace_node']['minion_id']
+    and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
+%}
 Update cluster.sls pillar:
   module.run:
     - cluster.storage_device_config: []
@@ -68,9 +72,10 @@ Update cluster.sls pillar:
 Update cluster.sls pillar:
   test.show_notification:
     - text: Update pillar doesn't work on Secondary node.
-{% endif %}
+{% endif %} # Check for mpath device list generation end
 
 {% else -%}
+# Changes specific to JBOD
 Start multipath service:
   service.running:
     - name: multipathd.service
@@ -93,7 +98,7 @@ Update cluster.sls pillar:
     - require:
       - Start multipath service
       - Check multipath devices
-{% endif %}
+{% endif %} # end of JBOD check
 
 Restart service multipath:
   module.run:
