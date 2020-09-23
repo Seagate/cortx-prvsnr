@@ -16,9 +16,6 @@
 #
 
 
-include:
-  - components.ha.iostack-ha.config.base
-
 Post install for LDR-R1 HA cluster:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:post_install')
