@@ -39,7 +39,7 @@ def sync_files(component="provisioner"):
     on srvnode-2.
     """
     yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not os.path.exists(yaml_file):
+    if not Path(yaml_file).exists(yaml_file):
         logger.exception("ERROR: {0} doesn't exist.".format(yaml_file))
         return False
 
@@ -59,15 +59,22 @@ def sync_files(component="provisioner"):
             for file in yaml_dict[component]["backup"]["files"]:
                 dst = Path, Path(file).parent
                 cmd = [f"{cmd_args} {file} {node}:{dst}"]
-                logger.info(
-                    subprocess.run(
-                        cmd,
-                        shell=True,
-                        check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE
-                    )
+                proc_completed = subprocess.run(
+                    cmd,
+                    # shell=True,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
                 )
+
+                try:
+                    proc_completed.check_returncode()
+                    logger.info("Command exited with retcode: 0 ")
+                    logger.info(f"stdout: {proc_completed.stdout}")
+                except subprocess.CalledProcessError:
+                    logger.error(f"Command: {' '.join(cmd)}")
+                    logger.error(f"Error: {proc_completed.stderr}")
+                    raise Exception(proc_completed.stderr)
     return True
 
 
@@ -87,7 +94,7 @@ def backup_files(component="provisioner"):
     """
 
     yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not os.path.exists(yaml_file):
+    if not Path(yaml_file).exists(yaml_file):
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
@@ -120,14 +127,15 @@ def backup_files(component="provisioner"):
                 # For pathlib: https://bugs.python.org/issue21039
                 proc_completed = subprocess.run(
                     cmd,
-                    shell=True,
+                    # shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
 
                 try:
                     proc_completed.check_returncode()
-                    logger.info(proc_completed.stdout)
+                    logger.info("Command exited with retcode: 0 ")
+                    logger.info(f"stdout: {proc_completed.stdout}")
                 except subprocess.CalledProcessError:
                     logger.error(f"Command: {' '.join(cmd)}")
                     logger.error(f"Error: {proc_completed.stderr}")
@@ -151,7 +159,7 @@ def restore_files(component="provisioner"):
     """
 
     yaml_file = f'/opt/seagate/cortx/{component}/conf/setup.yaml'
-    if not os.path.exists(yaml_file):
+    if not Path(yaml_file).exists(yaml_file):
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
         logger.exception(msg)
@@ -196,14 +204,15 @@ def restore_files(component="provisioner"):
 
                     proc_completed = subprocess.run(
                             cmd,
-                            shell=True,
+                            # shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
                     )
 
                     try:
                         proc_completed.check_returncode()
-                        logger.info(proc_completed.stdout)
+                        logger.info("Command exited with retcode: 0 ")
+                        logger.info(f"stdout: {proc_completed.stdout}")
                     except subprocess.CalledProcessError:
                         logger.error(f"Command: {' '.join(cmd)}")
                         logger.error(f"Error: {proc_completed.stderr}")
