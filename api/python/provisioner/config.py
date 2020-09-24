@@ -293,7 +293,6 @@ class StorageType(Enum):
     ENCLOSURE = "RBOD"
     RBOD = "RBOD"
     EBOD = "EBOD"
-    JBOD = "JBOD"
 
 
 class ServerType(Enum):

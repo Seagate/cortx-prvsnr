@@ -162,8 +162,11 @@ class GetSetupInfo(CommandParserFillerMixin):
             # TODO: EOS-12418-improvement:
             #  does this value can be used in real configuration?
             res[SERVERS_PER_NODE] = 2
-        elif cluster_type.lower() == SetupType._3_NODE.value:
-            res[SERVERS_PER_NODE] = 3
+        elif cluster_type.lower() == SetupType.THREE_NODE.value:
+            # NOTE: in this case we have 3 servers + 3 enclosures
+            # TODO: what is the difference between
+            #  '3_node' and 'single' values?
+            res[SERVERS_PER_NODE] = 1
         elif cluster_type.lower() == SetupType.GENERIC.value:
             res[SERVERS_PER_NODE] = 1
         else:
