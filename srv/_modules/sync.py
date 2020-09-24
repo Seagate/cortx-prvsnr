@@ -39,8 +39,8 @@ def sync_files(component="provisioner"):
     on srvnode-2.
     """
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
-        logger.exception("ERROR: {0} doesn't exist.".format(yaml_file))
+    if not yaml_file.exists():
+        logger.error("ERROR: {0} doesn't exist.".format(yaml_file))
         return False
 
     # This generic logic should always work
@@ -48,33 +48,36 @@ def sync_files(component="provisioner"):
     node_list.remove(__grains__["id"])
     node = node_list[0]
 
-    with open(yaml_file, 'r') as fd:
-        yaml_dict = yaml.safe_load(fd)
+    yaml_dict = yaml.safe_load(yaml_file.read_text())
 
-        if (
-            "backup" in yaml_dict[component]
-            and "files" in yaml_dict[component]["backup"]
-        ):
-            cmd_args = "rsync --archive --compress --update"
-            for file in yaml_dict[component]["backup"]["files"]:
-                dst = Path, Path(file).parent
-                cmd = [f"{cmd_args} {file} {node}:{dst}"]
-                proc_completed = subprocess.run(
-                    cmd,
-                    # shell=True,
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+    if (
+        "backup" in yaml_dict[component]
+        and "files" in yaml_dict[component]["backup"]
+    ):
+        cmd_args = ["rsync", "--archive", "--compress", "--update"]
+        for file in yaml_dict[component]["backup"]["files"]:
+            dst = Path(file).parent
+            cmd = cmd_args
+            cmd.extend([file, f"{node}:{dst}"])
+
+            proc_completed = subprocess.run(
+                cmd,
+                # shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+
+            try:
+                proc_completed.check_returncode()
+                msg = (
+                    "Command exited with retcode: 0 "
+                    f"stdout: {proc_completed.stdout}"
                 )
-
-                try:
-                    proc_completed.check_returncode()
-                    logger.info("Command exited with retcode: 0 ")
-                    logger.info(f"stdout: {proc_completed.stdout}")
-                except subprocess.CalledProcessError:
-                    logger.error(f"Command: {' '.join(cmd)}")
-                    logger.error(f"Error: {proc_completed.stderr}")
-                    raise Exception(proc_completed.stderr)
+                logger.debug(msg)
+            except subprocess.CalledProcessError:
+                logger.error(f"Command: {' '.join(cmd)}")
+                logger.error(f"Error: {proc_completed.stderr}")
+                raise Exception(proc_completed.stderr)
     return True
 
 
@@ -94,10 +97,10 @@ def backup_files(component="provisioner"):
     """
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
+    if not yaml_file.exists():
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
-        logger.exception(msg)
+        logger.error(msg)
         return False
 
     # This generic logic should always work
@@ -106,40 +109,42 @@ def backup_files(component="provisioner"):
     node_list.remove(current_node)
     node = node_list[0]
 
-    with open(yaml_file, 'r') as fd:
-        yaml_dict = yaml.safe_load(fd)
+    yaml_dict = yaml.safe_load(yaml_file.read_text())
 
-        if (
-            "backup" in yaml_dict[component]
-            and "files" in yaml_dict[component]["backup"]
-        ):
-            cmd_args = f"rsync --archive --compress --exclude '{node}'"
+    if (
+        "backup" in yaml_dict[component]
+        and "files" in yaml_dict[component]["backup"]
+    ):
+        cmd_args = ["rsync", "--archive", "--compress", "--exclude", f"{node}"]
 
-            for file in yaml_dict[component]["backup"]["files"]:
-                file_path = Path(file)
-                if not file_path.exists():
-                    continue
+        for file in yaml_dict[component]["backup"]["files"]:
+            file_path = Path(file)
+            if not file_path.exists():
+                continue
 
-                dst = file_path.parent.joinpath(current_node)
-                cmd = [f"{cmd_args} {file_path} {node}:{dst}{os.sep}"]
-                # cmd = [f"{cmd} {file_path.parent} {node}:{dst}"]
+            dst = file_path.parent.joinpath(current_node)
+            cmd = cmd_args
+            cmd.extend([cmd_args, file_path, f"{node}:{dst}{os.sep}"])
 
-                # For pathlib: https://bugs.python.org/issue21039
-                proc_completed = subprocess.run(
-                    cmd,
-                    # shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+            # For pathlib: https://bugs.python.org/issue21039
+            proc_completed = subprocess.run(
+                cmd,
+                # shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+
+            try:
+                proc_completed.check_returncode()
+                msg = (
+                    "Command exited with retcode: 0 "
+                    f"stdout: {proc_completed.stdout}"
                 )
-
-                try:
-                    proc_completed.check_returncode()
-                    logger.info("Command exited with retcode: 0 ")
-                    logger.info(f"stdout: {proc_completed.stdout}")
-                except subprocess.CalledProcessError:
-                    logger.error(f"Command: {' '.join(cmd)}")
-                    logger.error(f"Error: {proc_completed.stderr}")
-                    raise Exception(proc_completed.stderr)
+                logger.debug(msg)
+            except subprocess.CalledProcessError:
+                logger.error(f"Command: {' '.join(cmd)}")
+                logger.error(f"Error: {proc_completed.stderr}")
+                raise Exception(proc_completed.stderr)
 
     return True
 
@@ -159,10 +164,10 @@ def restore_files(component="provisioner"):
     """
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
-    if not yaml_file.exists(yaml_file):
+    if not yaml_file.exists():
         msg = f"ERROR: {yaml_file} doesn't exist."
         # raise Exception(msg)
-        logger.exception(msg)
+        logger.error(msg)
         return False
 
     # Execute on replacement_node only
@@ -184,39 +189,42 @@ def restore_files(component="provisioner"):
         node_list.remove(replacement_node)
         node = node_list[0]
 
-        with open(yaml_file, 'r') as fd:
-            yaml_dict = yaml.safe_load(fd)
+        yaml_dict = yaml.safe_load(yaml_file.read_text())
 
-            if (
-                "backup" in yaml_dict[component] and
-                "files" in yaml_dict[component]["backup"]
-            ):
-                cmd_args = "rsync --archive --compress"
+        if (
+            "backup" in yaml_dict[component] and
+            "files" in yaml_dict[component]["backup"]
+        ):
+            cmd_args = ["rsync", "--archive", "--compress"]
 
-                for file in yaml_dict[component]["backup"]["files"]:
-                    file_path = Path(file)
-                    src = file_path.parent.joinpath(
-                        replacement_node,
-                        file_path
+            for file in yaml_dict[component]["backup"]["files"]:
+                file_path = Path(file)
+                src = file_path.parent.joinpath(
+                    replacement_node,
+                    file_path
+                )
+                dst = file_path.parent
+                cmd = cmd_args
+                cmd.extend([cmd_args, f"{node}:{src}{os.sep}", f"{dst}{os.sep}"])
+
+                proc_completed = subprocess.run(
+                        cmd,
+                        # shell=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                )
+
+                try:
+                    proc_completed.check_returncode()
+                    msg = (
+                        "Command exited with retcode: 0 "
+                        f"stdout: {proc_completed.stdout}"
                     )
-                    dst = file_path.parent
-                    cmd = [f"{cmd_args} {node}:{src}{os.sep} {dst}{os.sep}"]
-
-                    proc_completed = subprocess.run(
-                            cmd,
-                            # shell=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE
-                    )
-
-                    try:
-                        proc_completed.check_returncode()
-                        logger.info("Command exited with retcode: 0 ")
-                        logger.info(f"stdout: {proc_completed.stdout}")
-                    except subprocess.CalledProcessError:
-                        logger.error(f"Command: {' '.join(cmd)}")
-                        logger.error(f"Error: {proc_completed.stderr}")
-                        raise Exception(proc_completed.stderr)
+                    logger.debug(msg)
+                except subprocess.CalledProcessError:
+                    logger.error(f"Command: {' '.join(cmd)}")
+                    logger.error(f"Error: {proc_completed.stderr}")
+                    raise Exception(proc_completed.stderr)
     else:
         logger.warning(
             f"WARN: replacement_node is {replacement_node} "
