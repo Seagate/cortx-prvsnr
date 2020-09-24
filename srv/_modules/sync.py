@@ -124,8 +124,7 @@ def backup_files(component="provisioner"):
 
             dst = file_path.parent.joinpath(current_node)
             cmd = cmd_args
-            cmd.extend([f"{cmd_args} {file_path} {node}:{dst}{os.sep}"])
-            
+            cmd.extend([cmd_args, file_path, f"{node}:{dst}{os.sep}"])
 
             # For pathlib: https://bugs.python.org/issue21039
             proc_completed = subprocess.run(
@@ -206,7 +205,7 @@ def restore_files(component="provisioner"):
                 )
                 dst = file_path.parent
                 cmd = cmd_args
-                cmd.extend([f"{cmd_args} {node}:{src}{os.sep} {dst}{os.sep}"])
+                cmd.extend([cmd_args, f"{node}:{src}{os.sep}", f"{dst}{os.sep}"])
 
                 proc_completed = subprocess.run(
                         cmd,
