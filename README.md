@@ -1,4 +1,4 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f2ba64dc5ca7475d8833f0a3231bb940)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1919635cce7e4677b74976a81fdffe75)](https://www.codacy.com/gh/Seagate/cortx-prvsnr/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade)
 
 # CORTX-Provisioner
 
