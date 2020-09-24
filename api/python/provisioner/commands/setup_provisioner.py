@@ -474,6 +474,29 @@ class SetupCtx:
     ssh_client: SaltSSHClient
 
 
+class SetupCmdBase:
+
+    @staticmethod
+    def setup_location(
+        run_args: RunArgsSetupProvisionerGeneric
+    ) -> Optional[Path]:
+        return (
+            run_args.profile.parent if run_args.profile else
+            config.profile_base_dir().parent
+        )
+
+    @staticmethod
+    def setup_name(run_args: RunArgsSetupProvisionerGeneric) -> str:
+        res = (
+            run_args.profile.name if run_args.profile else run_args.name
+        )
+        if not res:
+            res = '__'.join(
+                [str(node) for node in run_args.nodes]
+            ).replace(':', '_')
+        return res
+
+
 # TODO TEST EOS-8473
 # TODO DOC highlights
 #   - multiple setups support
@@ -485,7 +508,7 @@ class SetupCtx:
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
 @attr.s(auto_attribs=True)
-class SetupProvisioner(CommandParserFillerMixin):
+class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSetupProvisionerGeneric
 
@@ -942,23 +965,17 @@ class SetupProvisioner(CommandParserFillerMixin):
         salt_logger.setLevel(logging.WARNING)
 
         # generate setup name
-        setup_location = (
-            run_args.profile.parent if run_args.profile else None
-        )
-        setup_name = (
-            run_args.profile.name if run_args.profile else run_args.name
-        )
-        if not setup_name:
-            setup_name = '__'.join(
-                [str(node) for node in run_args.nodes]
-            ).replace(':', '_')
+        setup_location = self.setup_location(run_args)
+        setup_name = self.setup_name(run_args)
 
         # PREPARE FILE & PILLAR ROOTS
 
         logger.info(f"Starting to build setup '{setup_name}'")
 
         paths = config.profile_paths(
-            location=setup_location, setup_name=setup_name
+            config.profile_base_dir(
+                location=setup_location, setup_name=setup_name
+            )
         )
 
         add_file_roots = []
