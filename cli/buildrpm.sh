@@ -74,9 +74,8 @@ pushd ~/rpmbuild/SOURCES/
     cp -pr ${BASEDIR}/src ${DEST_DIR}/cli
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d ${DEST_DIR}/files/etc
     
-    ssh-keygen -f id_rsa_prvsnr -q -N ''
+    ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
     mv id_rsa_prvsnr* ${DEST_DIR}/files/.ssh
-    cat ${DEST_DIR}/files/.ssh/id_rsa_prvsnr.pub >${DEST_DIR}/files/.ssh/authorized_keys
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf cortx-prvsnr-cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
