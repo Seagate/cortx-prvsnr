@@ -313,14 +313,14 @@ class RunArgsSetup:
         },
         default=False
     )
-    # field_setup: bool = attr.ib(
-    #     metadata={
-    #         inputs.METADATA_ARGPARSER: {
-    #             'help': "turn on field setup mode",
-    #         }
-    #     },
-    #     default=False
-    # )
+    field_setup: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "turn on field setup mode",
+            }
+        },
+        default=False
+    )
     salt_master: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -333,7 +333,7 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
-                            "update initial configuration\n"
+                            "update initial configuration "
                             "[not to be used in production environments "
                             "as it resets grains data]"
                         ),
