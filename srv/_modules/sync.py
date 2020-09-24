@@ -40,7 +40,9 @@ def sync_files(component="provisioner"):
     """
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        logger.error("ERROR: {0} doesn't exist.".format(yaml_file))
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
+        # raise Exception(msg)
+        logger.error(msg)
         return False
 
     # This generic logic should always work
@@ -98,7 +100,7 @@ def backup_files(component="provisioner"):
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        msg = f"ERROR: {yaml_file} doesn't exist."
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
         # raise Exception(msg)
         logger.error(msg)
         return False
@@ -165,7 +167,7 @@ def restore_files(component="provisioner"):
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        msg = f"ERROR: {yaml_file} doesn't exist."
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
         # raise Exception(msg)
         logger.error(msg)
         return False
