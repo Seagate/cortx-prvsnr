@@ -26,6 +26,12 @@ Stage - Config CSM:
     - require:
       - Stage - Post Install CSM
 
+#Cortx-cli configuration
+Stage - Config Cortx-cli:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/cli/conf/setup.yaml', 'cli:config')
+    - onlyif: rpm -q cortx-cli
+
 Add csm user to certs group:
   group.present:
     - name: certs

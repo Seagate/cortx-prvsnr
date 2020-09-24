@@ -15,33 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Type, Dict, List, Optional
+from typing import Type, Optional
 import logging
 
 from .. import (
-    config,
     inputs,
     errors
 )
-from ..salt import (
-    function_run,
-    cmd_run,
-    StatesApplier,
-    local_minion_id,
-    sls_exists
+from .deploy import (
+    build_deploy_run_args,
+    Deploy
 )
+from ..salt import function_run
 from ..vendor import attr
 # TODO IMPROVE EOS-8473
-
-from . import (
-    RunArgsUpdate,
-    CommandParserFillerMixin
-)
+from ..utils import ensure
 from .setup_provisioner import SetupCtx
-from .configure_setup import (
-    RunArgsConfigureSetupAttrs,
-    SetupType
-)
+from .configure_setup import SetupType
 
 
 logger = logging.getLogger(__name__)
@@ -106,148 +96,49 @@ deploy_states = dict(
 )
 
 
-def build_deploy_run_args(deploy_states: Dict):
-    # TODO TEST EOS-12076
-    @attr.s(auto_attribs=True)
-    class _RunArgsDeploy(RunArgsUpdate):
-        setup_type: str = RunArgsConfigureSetupAttrs.setup_type
-        states: str = attr.ib(
-            metadata={
-                inputs.METADATA_ARGPARSER: {
-                    'help': (
-                        "deploy specific state groups, "
-                        "might be used multiple times to specify multiple "
-                        "groups, if not specified - all states are considered"
-                    ),
-                    'choices': list(deploy_states),
-                    'action': 'append',
-                    'metavar': 'state'
-                }
-            },
-            default=None,
-            # TODO IMPROVE EOS-12076 more accurate converter
-            converter=(lambda states: set(states) if states else None)
-        )
-        stages: str = attr.ib(
-            metadata={
-                inputs.METADATA_ARGPARSER: {
-                    'help': (
-                        "applu only specific stages, "
-                        "might be used multiple times to specify multiple "
-                        "stages, if not specified - all are considered"
-                    ),
-                    'choices': [
-                        'prepare',
-                        'install',
-                        'config',
-                        'start',
-                        'sanity_check'
-                    ],
-                    'action': 'append',
-                    'metavar': 'stage'
-                }
-            },
-            default=None,
-            # TODO IMPROVE EOS-12076 more accurate converter
-            converter=(lambda states: set(states) if states else None)
-        )
-    return _RunArgsDeploy
-
-
 run_args_type = build_deploy_run_args(deploy_states)
 
 
 @attr.s(auto_attribs=True)
-class Deploy(CommandParserFillerMixin):
+class DeployDual(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
-    def _primary_id(self):
-        if self.setup_ctx:
-            return self.setup_ctx.run_args.primary.minion_id
-        else:
-            return local_minion_id()
-
-    def _sls_exists(
-        self, state, targets=config.ALL_MINIONS, summary_only=True
-    ):
-        if self.setup_ctx:
-            try:
-                self.setup_ctx.ssh_client.cmd_run(
-                    (
-                        f"salt -C '{targets}' state.sls_exists {state}"
-                    ), targets=self._primary_id()
-                )
-            # TODO IMPROVE EOS-12076 more accurate errors processing
-            except errors.SaltCmdResultError:
-                return False
-            else:
-                return True
-        else:
-            return sls_exists(state, targets=targets, tgt_type='compound')
-
-    def _function_run(self, fun, targets=config.ALL_MINIONS):
-        if self.setup_ctx:
-            return self.setup_ctx.ssh_client.cmd_run(
-                (
-                    f"salt -C '{targets}' {fun}"
-                ), targets=self._primary_id()
-            )
-        else:
-            return function_run(fun, targets=targets, tgt_type='compound')
-
-    def _cmd_run(self, cmd, targets=config.ALL_MINIONS):
-        if self.setup_ctx:
-            # TODO IMPROVE EOS-12076 consider to use salt-ssh client's
-            #      mcd_run directly but it woudl require accurate targeting
-            #      since salt-ssh targets differ from remote salt's ones
-            return self.setup_ctx.ssh_client.cmd_run(
-                (
-                    f"salt -C '{targets}' cmd.run '{cmd}'"
-                ), targets=self._primary_id()
-            )
-        else:
-            return cmd_run(cmd, targets=targets, tgt_type='compound')
-
-    def _is_hw(self):
-        if self.setup_ctx:
-            res = self.setup_ctx.ssh_client.run(
-                'pillar.get',
-                fun_args=['setup:grains:hostname_status:Chassis'],
-                targets=self._primary_id()
-            )
-        else:
-            res = function_run(
-                'pillar.get',
-                fun_args=['setup:grains:hostname_status:Chassis'],
-                targets=self._primary_id()
-            )
-
-        return res[self._primary_id()] == 'server'
-
-    def _apply_state(
-        self, state, targets=config.ALL_MINIONS, stages: Optional[List] = None
-    ):
-        if stages is None:
-            logger.info(f"Applying '{state}' on {targets}")
+    def check_consul_running(self):
+        consul_map = {"srvnode-1": "hare-consul-agent-c1",
+                      "srvnode-2": "hare-consul-agent-c2"}
+        result_flag = True
+        for target in consul_map:
             if self.setup_ctx:
-                return self.setup_ctx.ssh_client.cmd_run(
-                    (
-                        f"salt -C '{targets}' state.apply {state} --out=json"
-                    ), targets=self._primary_id()
-                )
+                res = self.setup_ctx.ssh_client.run(
+                             'service.status',
+                             fun_args=[consul_map[target]],
+                             targets=target
+                         )
             else:
-                return StatesApplier.apply(
-                    [state], targets, tgt_type='compound'
-                )
-        else:
-            for stage in stages:
-                _state = f"{state}.{stage}"
-                if self._sls_exists(_state, targets=targets):
-                    return self._apply_state(_state, targets)
-                else:
-                    logger.warning(f"State {_state} is missed, ignored")
+                res = function_run(
+                             'service.status',
+                             fun_args=[consul_map[target]],
+                             targets=target
+                         )
+
+            if not res[target]:
+                result_flag = False
+                logger.info(f"Consul is not running on {target}")
+        if result_flag:
+            logger.info("Consul found running on respective nodes.")
+            return True
+
+    def ensure_consul_running(self, tries=15, wait=5):
+        logger.info("Validating availability of hare-consul-agent.")
+        try:
+            ensure(self.check_consul_running, tries=tries, wait=wait)
+        except errors.ProvisionerError:
+            logger.error("Unable to get healthy hare-consul-agent service "
+                         "Exiting further deployment...")
+            raise errors.ProvisionerError("Unable to get healthy "
+                                          "hare-consul-agent service.")
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
@@ -289,6 +180,12 @@ class Deploy(CommandParserFillerMixin):
                     "csm",
                     "provisioner.backup"
                 ):
+                    # Consul takes time to come online after initialization
+                    # (around 2-3 mins at times). We need to ensure
+                    # consul service is available before proceeding
+                    # Without a healthy consul service SSPL and CSM shall fail
+                    if state == "sspl":
+                        self.ensure_consul_running()
                     # Execute first on secondaries then on primary.
                     self._apply_state(
                         f"components.{state}", secondaries, stages
@@ -308,54 +205,8 @@ class Deploy(CommandParserFillerMixin):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-
-    def _update_salt(self, targets=config.ALL_MINIONS):
-        # TODO IMPROVE why do we need that
-        # TODO IMPROVE do wee need to wait 2 seconds after each operation
-        #      as it was in legacy bash script
-        logger.info("Updating Salt data")
-        logger.info("Syncing states")
-        self._function_run('saltutil.sync_all', targets=targets)
-
-        logger.info("Refreshing pillars")
-        self._function_run('saltutil.refresh_pillar', targets=targets)
-
-        logger.info("Refreshing grains")
-        self._function_run('saltutil.refresh_grains', targets=targets)
-
-    def _encrypt_pillar(self):
-        # FIXME ??? EOS-12076 targets
-        # Encrypt passwords in pillar data
-        logger.info("Encrypting salt pillar data")
-        encrypt_tool = config.PRVSNR_ROOT_DIR / 'cli/pillar_encrypt'
-        self._cmd_run(
-            f"python3 {encrypt_tool}",
-            targets=self._primary_id()
-        )
-        self._update_salt()
-
-    def _destroy_storage(self, run_args, nofail=True):
-        targets = run_args.targets
-
-        # FIXME VERIFY EOS-12076
-        if (
-            (run_args.setup_type != SetupType.SINGLE) and
-            (targets == config.ALL_MINIONS)
-        ):
-            targets = f"not {self._primary_id()}"
-
-        # Old remnant partitios from previous deployments has to be cleaned-up
-        logger.info("Removing components.system.storage from both nodes.")
-        self._apply_state("components.system.storage.teardown", targets)
-
-    def _rescan_scsi_bus(self, targets=config.ALL_MINIONS, nofail=True):
-        logger.info("Rescan SCSI bus")
-        try:
-            return self._cmd_run("rescan-scsi-bus.sh", targets=targets)
-        except errors.SaltCmdResultError:
-            logger.exception("rescan-scsi-bus.sh failed")
-            if not nofail:
-                raise
+                    if state == "ha.iostack-ha":
+                        self.ensure_consul_running()
 
     def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)

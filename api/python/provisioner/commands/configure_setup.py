@@ -234,7 +234,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         pillar_key = deepcopy(key)
         return pillar_key.replace(".", "/")
 
-    def run(self, path, number_of_nodes):
+    def run(self, path, number_of_nodes):  # noqa: C901
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
@@ -272,6 +272,13 @@ class ConfigureSetup(CommandParserFillerMixin):
         run_subprocess_cmd([
             "provisioner", "pillar_set",
             "cluster/node_list", f"[{','.join(node_list)}]"])
+
+        if content.get('cluster', None):
+            if content.get('cluster').get('cluster_ip', None):
+                run_subprocess_cmd([
+                       "provisioner", "pillar_set",
+                       "s3clients/ip",
+                       f"{content.get('cluster').get('cluster_ip')}"])
 
         if 3 == int(number_of_nodes):
             run_subprocess_cmd([
