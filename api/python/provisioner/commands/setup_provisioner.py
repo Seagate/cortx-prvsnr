@@ -665,6 +665,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                     str(config_path)
                 ]
             )
+        config.PRVSNR_PILLAR_CONFIG_INI = config_path
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
