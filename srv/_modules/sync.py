@@ -56,7 +56,7 @@ def sync_files(component="provisioner"):
     ):
         cmd_args = ["rsync", "--archive", "--compress", "--update"]
         for file in yaml_dict[component]["backup"]["files"]:
-            dst = Path, Path(file).parent
+            dst = Path(file).parent
             cmd = cmd_args
             cmd.extend([file, f"{node}:{dst}"])
 
