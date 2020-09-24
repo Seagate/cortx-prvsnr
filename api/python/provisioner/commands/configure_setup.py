@@ -137,7 +137,7 @@ class StorageEnclosureParamsValidation:
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
-        types = ['JBOD', 'virtual']
+        types = ['JBOD', 'virtual', 'RBOD', 'other']
         if params['type'] in types:
             return
         missing_params = []
