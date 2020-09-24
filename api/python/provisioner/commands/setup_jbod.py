@@ -29,6 +29,7 @@ from . import (
 )
 from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
+    SetupCmdBase,
     SetupProvisioner
 )
 from . import deploy_jbod
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class SetupJBOD(CommandParserFillerMixin):
+class SetupJBOD(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = [
         RunArgsSetupProvisionerGeneric,
