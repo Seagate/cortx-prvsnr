@@ -127,7 +127,7 @@ def backup_files(component="provisioner"):
                 # For pathlib: https://bugs.python.org/issue21039
                 proc_completed = subprocess.run(
                     cmd,
-                    # shell=True,
+                    shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
@@ -204,7 +204,7 @@ def restore_files(component="provisioner"):
 
                     proc_completed = subprocess.run(
                             cmd,
-                            # shell=True,
+                            shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
                     )
