@@ -32,8 +32,6 @@ glusterfs:
     - ports:
       - 24007/tcp
 
-#Andrey: Salt-ssh uses 22 port, right? \
-#        Shall we open this port here, as well?
 ssh:
   firewalld.service:
     - name: ssh
@@ -46,8 +44,7 @@ public:
     - services:
       - firewalld
 
-firewalld:
+Reload firewalld:
   service.running:
+    - name: firewalld
     - reload: True
-    - watch:
-      - firewalld: public

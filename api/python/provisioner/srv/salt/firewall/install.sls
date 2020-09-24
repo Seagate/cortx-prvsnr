@@ -17,10 +17,6 @@
 
 # TODO TEST EOS-8473
 
-#setup_firewall:
-#  cmd.script:
-#    - source: salt://firewall/files/firewall.sh
-
 Install firewalld:
   pkg.installed:
     - name: firewalld
@@ -28,8 +24,9 @@ Install firewalld:
     - refresh: True
 
 #Start the service
-firewalld:
+Start firewalld:
   service.running:
+    - name: firewalld
     - enable: True
     - reload: True
     - require:

@@ -15,21 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-#Andrey: The below 3 states for env-set can be ignored \
-#        as they are not needed for states, right?
-#Set env:
-#  cmd.run:
-#    - name: set -eu
-#Set env variable:
-#  environ.setenv:
-#    - name: verbosity
-#    - value: "${1:-0}"
-#Set env:
-#  cmd.run:
-#    {% if salt['cmd.run']('"$verbosity" -ge 2') %}
-#    - name: set -x
-#    {% endif %}
-
 #Stop and disable services first, before adding new rules
 Stop iptables:
   service.dead:
@@ -41,11 +26,11 @@ Stop ebtables:
     - name: ebtables
     - enable: False
 
-Disable services:
+Disable iptables:
   service.disabled:
     - name: iptables
 
-Disable services:
+Disable ebtables:
   service.disabled:
     - name: ebtables
 
@@ -57,13 +42,3 @@ Mask iptables:
 Mask ebtables:
   service.masked:
     - name: ebtables
-
-
-#Andrey: Can we instead, perform the above cmds
-#        to both services at the same time, like this?
-#
-#Stop services:
-#  service.dead:
-#    - name: |
-#        iptables
-#        ebtables
