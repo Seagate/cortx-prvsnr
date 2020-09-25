@@ -253,18 +253,10 @@ class RunArgsSetup:
         converter=(lambda v: Path(str(v)) if v else v),
         validator=utils.validator_path_exists
     )
-    url_cortx: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "Cortx repo url"
-            }
-        },
-        default=None
-    )
     url_cortx_deps: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "Cortx dependencies url"
+                'help': "Bundled CORTX dependencies url"
             }
         },
         default=None
@@ -354,15 +346,14 @@ class RunArgsSetup:
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerBase:
-    config_path: str = RunArgsSetup.config_path
     name: str = RunArgsSetup.name
+    config_path: str = RunArgsSetup.config_path
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
     prvsnr_version: str = RunArgsSetup.prvsnr_version
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
-    url_cortx: str = RunArgsSetup.url_cortx
     url_cortx_deps: str = RunArgsSetup.url_cortx_deps
     dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
@@ -439,6 +430,15 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "`target_build` value would be ignored "
                     "for ISO based installation"
                 )
+            if (
+                self.url_cortx_deps !=
+                attr.fields(type(self)).url_cortx_deps.default
+            ):
+                logger.warning(
+                    "`url_cortx_deps` value would be ignored "
+                    "for ISO based installation"
+                )
+
             release_sls = (
                 config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
             )
@@ -447,15 +447,8 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 release_sls
             )['release']['base']['base_dir']
         elif self.source == 'rpm':
-            if self.dist_type == config.DistrType.BUNDLE:
-                if not self.target_build:
-                    raise ValueError('`target_build` should be specified')
-            else:
-                # FIXME EOS-12076 ??? is it needed actually
-                if not self.url_cortx:
-                    raise ValueError("CORTX repo url is undefined")
-                if not self.url_cortx_deps:
-                    raise ValueError("CORTX dependencies url is undefined")
+            if not self.target_build:
+                raise ValueError('`target_build` should be specified')
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
@@ -887,6 +880,28 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ]
             )
 
+    # TODO IMPROVE DRY
+    def _prepare_setup_pillar(
+        self, profile_paths, run_args
+    ):
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_all_dir.mkdir(parents=True, exist_ok=True)
+
+        pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'setup.sls'
+        )
+        if pillar_path.exists():
+            pillar = load_yaml(pillar_path)
+        else:
+            # TODO IMPROVE here would be some duplication of release.sls
+            #      (e.g. target build)
+            pillar = {
+                'setup': attr.asdict(run_args)
+            }
+            dump_yaml(pillar_path,  pillar)
+
+        return pillar
+
     def _prepare_release_pillar(
         self, profile_paths, repos_data: Dict, run_args
     ):
@@ -907,6 +922,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         else 'internal'
                     ),
                     'target_build': run_args.target_build,
+                    'deps_bundle_url': run_args.url_cortx_deps,
                     'base': {
                         'repos': repos_data
                     }
@@ -1024,8 +1040,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Preparing salt masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
-        logger.info("Copying config.ini to file root")
-        self._copy_config_ini(run_args, paths)
+        if not run_args.field_setup:
+            logger.info("Copying config.ini to file root")
+            self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
@@ -1038,7 +1055,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        else:  # iso or rpm
+        elif not run_args.field_setup:  # iso or rpm
             if run_args.source == 'iso':
                 repos = {
                     'cortx_iso': f"salt://{run_args.iso_cortx.name}",
@@ -1052,25 +1069,37 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     }
                 else:
                     repos = {
-                        'cortx_iso': f'{run_args.url_cortx}',
+                        'cortx_iso': f'{run_args.target_build}',
                         '3rd_party': f'{run_args.url_cortx_deps}'
                     }
 
+            # assume that target_build for bundled release is
+            # a base dir for bundle distribution
+
             # FIXME rhel and centos repos
-            if run_args.dist_type == config.DistrType.BUNDLE:
-                # assume that target_build here is
-                # a base dir for bundle distribution
+            deps_bundle_url = (
+                run_args.url_cortx_deps
+                if run_args.dist_type != config.DistrType.BUNDLE
+                else f"{run_args.target_build}/3rd_party"
+            )
+
+            if deps_bundle_url:
                 repos.update({
                     '3rd_party_epel': (
-                        f"{run_args.target_build}/3rd_party/EPEL-7"
+                        f"{deps_bundle_url}/EPEL-7"
                     ),
                     '3rd_party_saltstack': (
-                        f"{run_args.target_build}/3rd_party/commons/saltstack-3001"  # noqa: E501
+                        f"{deps_bundle_url}/commons/saltstack-3001"  # noqa: E501
                     ),
                     '3rd_party_glusterfs': (
-                        f"{run_args.target_build}/3rd_party/commons/glusterfs"
+                        f"{deps_bundle_url}/commons/glusterfs"
                     )
                 })
+
+            logger.info("Preparing setup pillar")
+            self._prepare_setup_pillar(
+                paths, run_args
+            )
 
             logger.info("Preparing CORTX repos pillar")
             self._prepare_release_pillar(
@@ -1291,23 +1320,35 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # Note. in both cases (ha and non-ha) we need user pillar update
         # only on primary node, in case of ha it would be shared for other
         # masters
-        logger.info("Updating release distribution type")
-        ssh_client.cmd_run(
-            (
-                'provisioner pillar_set --fpath release.sls'
-                f' release/type \'"{run_args.dist_type.value}"\''
-            ), targets=run_args.primary.minion_id
-        )
-
-        if run_args.target_build:
-            logger.info("Updating target build pillar")
+        if not run_args.field_setup:
+            logger.info("Updating release distribution type")
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    f' release/target_build \'"{run_args.target_build}"\''
+                    f' release/type \'"{run_args.dist_type.value}"\''
                 ), targets=run_args.primary.minion_id
             )
 
+            if run_args.url_cortx_deps:
+                logger.info("Setting url for bundled dependencies")
+                ssh_client.cmd_run(
+                    (
+                        'provisioner pillar_set --fpath release.sls'
+                        ' release/deps_bundle_url '
+                        f'\'"{run_args.url_cortx_deps}"\''
+                    ), targets=run_args.primary.minion_id
+                )
+
+            if run_args.target_build:
+                logger.info("Updating target build pillar")
+                ssh_client.cmd_run(
+                    (
+                        'provisioner pillar_set --fpath release.sls'
+                        f' release/target_build \'"{run_args.target_build}"\''
+                    ), targets=run_args.primary.minion_id
+                )
+
+        if run_args.target_build:
             logger.info("Get release factory version")
             if run_args.dist_type == config.DistrType.BUNDLE:
                 url = f"{run_args.target_build}/cortx_iso"

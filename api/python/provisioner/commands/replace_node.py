@@ -72,18 +72,31 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
     )
 
     name: str = attr.ib(init=False, default=None)
-    ha: bool = attr.ib(init=False, default=True)
+    # not needed since pillar is already set
+    config_path: str = attr.ib(init=False, default=None)
     profile: bool = attr.ib(
         init=False, default=config.PRVSNR_USER_FACTORY_PROFILE_DIR
     )
-    source: str = attr.ib(init=False, default='local')
+    # not needed: would beset as for initial setup
+    source: str = attr.ib(init=False, default=None)
     prvsnr_version: str = attr.ib(init=False, default=None)
-    local_repo: str = attr.ib(init=False, default=config.PRVSNR_ROOT_DIR)
+    iso_cortx: str = attr.ib(init=False, default=None)
+    iso_cortx_deps: str = attr.ib(init=False, default=None)
+    url_cortx_deps: str = attr.ib(init=False, default=None)
+    dist_type: str = attr.ib(init=False, default=None)
     target_build: str = attr.ib(init=False, default=None)
     salt_master: str = attr.ib(init=False, default=None)
+    # in case source is local default production location
+    # would b treated as a repo
+    local_repo: str = attr.ib(init=False, default=config.PRVSNR_ROOT_DIR)
+    # retain factory profile
     update: bool = attr.ib(init=False, default=False)
+    # rediscover since new node
     rediscover: bool = attr.ib(init=False, default=True)
+    # it is a field setup actually
     field_setup: bool = attr.ib(init=False, default=True)
+    # replacement is considered only for HA mode
+    ha: bool = attr.ib(init=False, default=True)
 
 
 @attr.s(auto_attribs=True)
@@ -122,8 +135,28 @@ class ReplaceNode(SetupProvisioner):
             )
         )
 
-        logger.info("Adjusting node specs info")
         pillar_all_dir = paths['salt_pillar_dir'] / 'groups/all'
+
+        logger.info("Loading initial setup parameters")
+        setup_pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'node_specs.sls'
+        )
+        setup_args = load_yaml(setup_pillar_path)['setup']
+
+        # set some parameters as for initial setup
+        for _attr in (
+            'source',
+            'prvsnr_version',
+            # 'iso_cortx',  # FIXME iso paths would be different
+            # 'iso_cortx_deps',
+            # 'url_cortx_deps',  # already in pillar
+            # 'dist_type',  # already in pillar
+            # 'target_build',  # already in pillar
+            'salt_master'
+        ):
+            kwargs[_attr] = setup_args[_attr]
+
+        logger.info("Adjusting node specs info")
         specs_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'node_specs.sls'
         )
