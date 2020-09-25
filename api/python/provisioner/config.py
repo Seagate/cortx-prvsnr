@@ -302,9 +302,11 @@ class StorageType(Enum):
     VIRTUAL = "virtual"
     JBOD = "JBOD"
     # standard enclosure with 5 units with 84 disks
-    ENCLOSURE = "RBOD"
+    ENCLOSURE = "5u84"
+    PODS = "PODS"
     RBOD = "RBOD"
     EBOD = "EBOD"
+    OTHER = "Other"
 
 
 class ServerType(Enum):

@@ -196,36 +196,26 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
         storage_enclosure_path = KeyPath('storage_enclosure')
         storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
-        controller_type = PillarKey(
-                storage_enclosure_path / 'controller' / 'type'
-            )
 
         pillar = PillarResolver(config.LOCAL_MINION).get(
-            (
-                storage_enclosure_type,
-                controller_type
-            )
+            (storage_enclosure_type,)
         )
 
         pillar = pillar.get(local_minion_id())  # type: dict
 
-        for key in (storage_enclosure_type, controller_type):
-            if not pillar[key] or pillar[key] is values.MISSED:
+        for key in (storage_enclosure_type,):
+            if (not pillar[storage_enclosure_path] or
+                    pillar[storage_enclosure_path] is values.MISSED):
                 raise BadPillarDataError(f'value for {key.keypath} '
                                          'is not specified')
 
-        if pillar[storage_enclosure_type] == config.StorageType.JBOD.value:
-            res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
-        elif pillar[controller_type] == config.ControllerTypes.GALLIUM.value:
-            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
-        elif pillar[controller_type] == config.ControllerTypes.INDIUM.value:
-            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
+        res[config.STORAGE_TYPE] = pillar[storage_enclosure_path]
 
         return res
 
-    def _get_storage_type(self):
+    def _detect_storage_type(self):
         """
-        Private method to determine storage type
+        Private method to determine storage type based on system configuration
 
         :return:
         """
@@ -278,11 +268,71 @@ class GetSetupInfo(CommandParserFillerMixin):
             res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
         elif popular_revision.startswith("S"):
             # Indium controller type. For example, S100
-            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
-        else:
+            res[config.STORAGE_TYPE] = config.StorageType.PODS.value
+        elif popular_revision.startswith("E"):
+            # For example, E002
+            # TODO: Do we always have revision starts with "E" for JBOD?
+            #  What other variants are possible?
             res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
+        else:
+            res[config.STORAGE_TYPE] = config.StorageType.OTHER.value
 
         # TODO: EOS-12418-improvement: How to determine EBOD?
+
+        return res
+
+    def _get_storage_type(self):
+        """
+        Get storage type
+
+        Algorithm:
+        1. take storage_type/type pillar value. Filled from config.ini
+        2. If previous pillar value is not defined, use storage_type detection
+            method based on lsscsi command output
+        3. take storage_type/controller/type pillar value and convert it to
+            storage_type
+        :return:
+        """
+        # Get storage type from pillar values
+        try:
+            return self._get_storage_type_pillar_based()
+        except BadPillarDataError:
+            logger.debug("Pillar based approach for storage_type detection "
+                         "failed")
+
+        # detect storage type using info about system configuration
+        _res = self._detect_storage_type()
+
+        if _res.get(config.STORAGE_TYPE) != config.StorageType.OTHER.value:
+            return _res
+
+        logger.debug("Storage smart detection function returned storage_type "
+                     f"'{_res[config.STORAGE_TYPE]}'")
+
+        # try to detect storage_type using the original method via controller
+        # type pillar value
+        res = dict()
+        storage_enclosure_path = KeyPath('storage_enclosure')
+        controller_type = PillarKey(
+                storage_enclosure_path / 'controller' / 'type'
+            )
+
+        pillar = PillarResolver(config.LOCAL_MINION).get((controller_type,))
+
+        pillar = pillar.get(local_minion_id())  # type: dict
+
+        if (not pillar[controller_type] or
+                pillar[controller_type] is values.MISSED):
+            raise BadPillarDataError(f'value for {controller_type.keypath} '
+                                     'is not specified')
+
+        if pillar[controller_type] == config.ControllerTypes.GALLIUM.value:
+            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
+        elif pillar[controller_type] == config.ControllerTypes.INDIUM.value:
+            res[config.STORAGE_TYPE] = config.StorageType.PODS.value
+        else:
+            res[config.STORAGE_TYPE] = config.StorageType.OTHER.value
+        # TODO: what controller type for JBOD and EBOD?
 
         return res
 
