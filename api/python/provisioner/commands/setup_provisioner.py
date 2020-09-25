@@ -284,8 +284,8 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
-                    "Cortex integration release version repo URL/path"
-                    "E.g. "
+                    "Cortex integration release version repo URL/path."
+                    "[This feature is Seagate internal only.]"
                 ),
                 # 'help': (
                 #     "Cortex integration release version relative to "
@@ -300,7 +300,7 @@ class RunArgsSetup:
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "turn on high availbility setup",
+                'help': "turn on high availability setup",
             }
         },
         default=False
@@ -308,7 +308,7 @@ class RunArgsSetup:
     glusterfs_docker: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "configure in-docker glusterfs servers",
+                'help': "configure Dockerized glusterfs servers",
             }
         },
         default=False
@@ -332,7 +332,11 @@ class RunArgsSetup:
     update: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "update initial configuration",
+                'help': (
+                            "update initial configuration "
+                            "[not to be used in production environments "
+                            "as it resets grains data]"
+                        ),
             }
         },
         default=False
@@ -661,6 +665,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                     str(config_path)
                 ]
             )
+        config.PRVSNR_PILLAR_CONFIG_INI = config_path
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
