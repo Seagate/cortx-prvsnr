@@ -142,7 +142,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         node_list_key = PillarKey(cluster_path / 'node_list')
         type_key = PillarKey(cluster_path / 'type')
 
-        pillar = PillarResolver(config.LOCAL_MINION).get((node_list_key, type_key))  # noqa: E501
+        pillar = PillarResolver(config.LOCAL_MINION).get(
+            (node_list_key, type_key)
+        )
 
         pillar = pillar.get(local_minion_id())  # type: dict
 

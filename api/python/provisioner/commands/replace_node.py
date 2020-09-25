@@ -116,8 +116,10 @@ class ReplaceNode(SetupProvisioner):
         )
 
         paths = config.profile_paths(
-            location=run_args.profile.parent,
-            setup_name=run_args.profile.name
+            config.profile_base_dir(
+                location=run_args.profile.parent,
+                setup_name=run_args.profile.name
+            )
         )
 
         logger.info("Adjusting node specs info")
