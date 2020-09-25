@@ -30,3 +30,14 @@ Add USL native.crt file:
     - mode: 600
     - user: csm
     - group: csm
+
+Update uds service:
+  file.managed:
+    - name: /usr/lib/systemd/system/uds.service
+    - source: salt://components/uds/files/uds.service
+
+Reload updated service units:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Update uds service
