@@ -213,7 +213,8 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         return res
 
-    def _detect_storage_type(self):
+    @staticmethod
+    def _detect_storage_type():
         """
         Private method to determine storage type based on system configuration
 
