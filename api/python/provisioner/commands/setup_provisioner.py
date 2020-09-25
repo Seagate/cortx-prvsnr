@@ -1340,7 +1340,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         else:
             if url:
                 raise ValueError(
-                    f"Unexpected target build: {run_args.target_build}"
+                    f"Unexpected target build: {url}"
                 )
 
         # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
