@@ -33,9 +33,12 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc}
 
 cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
-cp -pr files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files
 cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
 
+if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh ]]; then
+  rm -rf %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
+fi
+cp -pr files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files
 
 %clean
 rm -rf %{buildroot}
@@ -56,9 +59,22 @@ chmod -R 750 /opt/seagate/cortx/provisioner/cli
 
 # TODO test
 mkdir -p /root/.ssh
+
+# Ensure update replaces the keys
+if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
+  rm -f /root/.ssh/id_rsa_prvsnr
+  rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+fi
+
 cp -pr /opt/seagate/cortx/provisioner/files/.ssh/* /root/.ssh/
+cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
 chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
 
 %postun
-#TDB
+# Ensure update replaces the keys
+if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
+  rm -f /root/.ssh/id_rsa_prvsnr
+  rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+fi
+rm -f /root/.ssh/config
