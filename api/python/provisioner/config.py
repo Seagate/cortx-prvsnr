@@ -292,6 +292,7 @@ class StorageType(Enum):
     # standard enclosure with 5 units with 84 disks
     ENCLOSURE = "RBOD"
     RBOD = "RBOD"
+    EBOD = "EBOD"
 
 
 class ServerType(Enum):

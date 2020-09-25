@@ -16,6 +16,7 @@
 #
 
 import logging
+from collections import defaultdict
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
@@ -23,12 +24,7 @@ from .configure_setup import SetupType
 
 from .. import inputs, values
 
-from ..config import (
-                        NODES, SERVERS_PER_NODE, STORAGE_TYPE,
-                        SERVER_TYPE, NOT_AVAILABLE, ServerType,
-                        ControllerTypes, StorageType,
-                        SETUP_INFO_FIELDS, LOCAL_MINION
-                    )
+from .. import config
 from ..errors import BadPillarDataError
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import function_run, local_minion_id
@@ -50,10 +46,10 @@ class OutputScheme:
 
     """
     _MAP = {
-        NODES: int,
-        SERVERS_PER_NODE: int,
-        STORAGE_TYPE: str,
-        SERVER_TYPE: str
+        config.NODES: int,
+        config.SERVERS_PER_NODE: int,
+        config.STORAGE_TYPE: str,
+        config.SERVER_TYPE: str
     }
 
     @classmethod
@@ -68,7 +64,7 @@ class OutputScheme:
         formatter = cls._MAP.get(key, None)
         if formatter is None:
             raise ValueError(f"Format handler for field {key} is not defined")
-        return NOT_AVAILABLE if value is None else formatter(value)
+        return config.NOT_AVAILABLE if value is None else formatter(value)
 
 
 @attr.s(auto_attribs=True)
@@ -84,10 +80,10 @@ class GetSetupInfo(CommandParserFillerMixin):
     # TODO: in case of numerous handlers per field need to ensure that one
     #       handler runs once
     FIELD_HANDLERS = {
-        NODES: "_count_servers_and_nodes",
-        SERVERS_PER_NODE: "_count_servers_and_nodes",
-        STORAGE_TYPE: "_get_storage_type",
-        SERVER_TYPE: "_get_server_type"
+        config.NODES: "_count_servers_and_nodes",
+        config.SERVERS_PER_NODE: "_count_servers_and_nodes",
+        config.STORAGE_TYPE: "_get_storage_type",
+        config.SERVER_TYPE: "_get_server_type"
     }
 
     @staticmethod
@@ -114,7 +110,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
 
         salt_res = function_run('grains.get', fun_args=['virtual'],
-                                targets=LOCAL_MINION)
+                                targets=config.LOCAL_MINION)
         if salt_res:
             # it should have the following format
             # {"current node name": "physical"} or
@@ -124,9 +120,10 @@ class GetSetupInfo(CommandParserFillerMixin):
             # TODO: EOS-12418-improvement:
             #  in future we may support other values of server type
             #  which salt provides
-            res[SERVER_TYPE] = (ServerType.PHYSICAL.value
-                                if server_type == ServerType.PHYSICAL.value
-                                else ServerType.VIRTUAL.value)
+            res[config.SERVER_TYPE] = (
+                    config.ServerType.PHYSICAL.value
+                    if server_type == config.ServerType.PHYSICAL.value
+                    else config.ServerType.VIRTUAL.value)
 
         return res
 
@@ -145,55 +142,53 @@ class GetSetupInfo(CommandParserFillerMixin):
         node_list_key = PillarKey(cluster_path / 'node_list')
         type_key = PillarKey(cluster_path / 'type')
 
-        pillar = PillarResolver(LOCAL_MINION).get((node_list_key, type_key))
+        pillar = PillarResolver(config.LOCAL_MINION).get((node_list_key, type_key))
 
         pillar = pillar.get(local_minion_id())  # type: dict
 
         for key in (node_list_key, type_key):
-            if (not pillar[key] or
-                    pillar[key] is values.MISSED):
-                raise BadPillarDataError(
-                                            f'value for {key.keypath} '
-                                            f'is not specified'
-                                        )
+            if not pillar[key] or pillar[key] is values.MISSED:
+                raise BadPillarDataError(f'value for {key.keypath} '
+                                         f'is not specified')
 
         cluster_type = pillar.get(type_key)
         if cluster_type == SetupType.SINGLE.value:
-            res[SERVERS_PER_NODE] = 1
+            res[config.SERVERS_PER_NODE] = 1
         elif cluster_type == SetupType.DUAL.value:
-            res[SERVERS_PER_NODE] = 2
+            res[config.SERVERS_PER_NODE] = 2
         elif cluster_type.lower() == SETUP_TYPE:
             # TODO: EOS-12418-improvement:
             #  does this value can be used in real configuration?
-            res[SERVERS_PER_NODE] = 2
-        elif cluster_type.lower() == SetupType._3_NODE.value:
-            res[SERVERS_PER_NODE] = 3
+            res[config.SERVERS_PER_NODE] = 2
+        elif cluster_type.lower() == SetupType.THREE_NODE.value:
+            # NOTE: in this case we have 3 servers + 3 enclosures
+            # TODO: what is the difference between
+            #  '3_node' and 'single' values?
+            res[config.SERVERS_PER_NODE] = 1
         elif cluster_type.lower() == SetupType.GENERIC.value:
-            res[SERVERS_PER_NODE] = 1
+            res[config.SERVERS_PER_NODE] = 1
         else:
-            raise ValueError(
-                                f"Unsupported value '{cluster_type}' for "
-                                f"'cluster/type' pillar value"
-                            )
+            raise ValueError(f"Unsupported value '{cluster_type}' for "
+                             f"'cluster/type' pillar value")
 
         # Assumption: number of nodes in 'cluster/node_list' should be
         # multiple by 'cluster/type'
-        if (len(pillar[node_list_key]) % res[SERVERS_PER_NODE]) != 0:
-            raise ValueError(
-                                "Unknown cluster configuration: "
-                                "total number of nodes(servers) = "
-                                f"{pillar[node_list_key]}\n"
-                                f"cluster type = {cluster_type}"
-                            )
+        if (len(pillar[node_list_key]) % res[config.SERVERS_PER_NODE]) != 0:
+            raise ValueError("Unknown cluster configuration: "
+                             "total number of nodes(servers) = "
+                             f"{pillar[node_list_key]}\n"
+                             f"cluster type = {cluster_type}")
 
-        res[NODES] = len(pillar[node_list_key]) // res[SERVERS_PER_NODE]
+        res[config.NODES] = (
+                len(pillar[node_list_key]) // res[config.SERVERS_PER_NODE])
 
         return res
 
-    def _get_storage_type(self):
+    @staticmethod
+    def _get_storage_type_pillar_based():
         """
-        Private method to determine storage type
-
+        Previous implementation of get_storage_method
+        Can be used if command based approach failed
         :return:
         """
         res = dict()
@@ -203,7 +198,7 @@ class GetSetupInfo(CommandParserFillerMixin):
                 storage_enclosure_path / 'controller' / 'type'
             )
 
-        pillar = PillarResolver(LOCAL_MINION).get(
+        pillar = PillarResolver(config.LOCAL_MINION).get(
             (
                 storage_enclosure_type,
                 controller_type
@@ -213,24 +208,79 @@ class GetSetupInfo(CommandParserFillerMixin):
         pillar = pillar.get(local_minion_id())  # type: dict
 
         for key in (storage_enclosure_type, controller_type):
-            if (
-                    not pillar[key] or
-                    pillar[key] is values.MISSED
-                    ):
-                raise BadPillarDataError(
-                    f'value for {key.keypath} '
-                    'is not specified'
-                )
+            if not pillar[key] or pillar[key] is values.MISSED:
+                raise BadPillarDataError(f'value for {key.keypath} '
+                                         'is not specified')
 
-        if pillar[storage_enclosure_type] == StorageType.JBOD.value:
-            res[STORAGE_TYPE] = StorageType.JBOD.value
-        elif pillar[controller_type] == ControllerTypes.GALLIUM.value:
-            res[STORAGE_TYPE] = StorageType.ENCLOSURE.value
-        elif pillar[controller_type] == ControllerTypes.INDIUM.value:
-            res[STORAGE_TYPE] = StorageType.RBOD.value
+        if pillar[storage_enclosure_type] == config.StorageType.JBOD.value:
+            res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
+        elif pillar[controller_type] == config.ControllerTypes.GALLIUM.value:
+            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
+        elif pillar[controller_type] == config.ControllerTypes.INDIUM.value:
+            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
 
-        # TODO: EOS-12418-improvement:
-        #  implement for other types: virtual, JBOD
+        return res
+
+    def _get_storage_type(self):
+        """
+        Private method to determine storage type
+
+        :return:
+        """
+        # TODO: EOS-12418-improvement: there is pillar `storage_enclosure/type`
+        #  But on VM systems it is set to `RBOD` values, not to 'virtual'
+        #  There are no guarantees that this pillar keeps actual on HW.
+        #  Suggestion: after detection the correct type via `lsscsi` check
+        #  pillar and update it.
+        res = dict()
+
+        # lsscsi command - list SCSI devices (or hosts) and their attributes
+        # NOTE: lsscsi returns entries of the following form, for example:
+        #    [0:0:0:1]   disk   SEAGATE   3525   S100   /dev/sdb   /dev/sg2
+        # NOTE: 0:*:*:* matches all LUNs (Logical Unit Number) on 0:*:*:*.
+        #  Here
+        #    scsi_host=0, channel=*, target_number=*, LUN tuple=*
+        # NOTE: we take from lsscsi output just 5th column with revision string
+        #  lsscsi_cmd = "lsscsi 0:*:*:* | awk '{print $5}'"
+        # TODO: how detect the scsi host id with disks in raid.
+        #  The assumption that scsi_host=0 for these disks is not always
+        #  working. At now, just take all output of lsscsi command
+        lsscsi_cmd = "lsscsi | awk -p '$2 ~ /disk/{print $5}'"
+
+        raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
+                               targets=config.LOCAL_MINION,
+                               fun_kwargs=dict(python_shell=True))
+
+        # NOTE: raw_res it is a string. It can be an empty string if
+        # the command runs on VM. Otherwise, it should be a string with disks
+        # revisions numbers delimited by "\n" newline symbol
+        raw_res = raw_res.get(local_minion_id())  # type: str
+
+        if not raw_res:
+            # target system is VM
+            res[config.STORAGE_TYPE] = config.StorageType.VIRTUAL.value
+            return res
+
+        revisions = defaultdict(int)
+
+        # NOTE: to be more accurate count the number of different revisions
+        for rev_num in raw_res.split("\n"):
+            revisions[rev_num] += 1
+
+        logger.debug(f"revisions: '{revisions}'")
+        popular_revision = max(revisions, key=revisions.get)  # type: str
+        logger.debug(f"Used drive revision for storage_type detection: "
+                     f"'{popular_revision}'")
+        if popular_revision.startswith("G"):
+            # Gallium controller type. For example, G265
+            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
+        elif popular_revision.startswith("S"):
+            # Indium controller type. For example, S100
+            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
+        else:
+            res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
+
+        # TODO: EOS-12418-improvement: How to determine EBOD?
 
         return res
 
@@ -243,9 +293,9 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         :return:
         """
-        aggregated_res = dict.fromkeys(SETUP_INFO_FIELDS, None)
+        aggregated_res = dict.fromkeys(config.SETUP_INFO_FIELDS, None)
 
-        for field in SETUP_INFO_FIELDS:
+        for field in config.SETUP_INFO_FIELDS:
             if aggregated_res.get(field) is not None:
                 continue  # field value is already known from previous steps
 
@@ -260,11 +310,8 @@ class GetSetupInfo(CommandParserFillerMixin):
             # NOTE: one method can determine several fields
             # Update only unknown fields
             for key in (
-                res.keys() & set(
-                    k for k, v in aggregated_res.items()
-                    if v is None
-                )
-            ):
+                    res.keys() & set(
+                        k for k, v in aggregated_res.items() if v is None)):
                 aggregated_res[key] = res.get(key)
 
         return self._format_output(aggregated_res)

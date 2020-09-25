@@ -44,7 +44,7 @@ class SetupType(Enum):
     SINGLE = "single"
     DUAL = "dual"
     GENERIC = "generic"
-    _3_NODE = "3_node"
+    THREE_NODE = "3_node"
 
 
 class RunArgsConfigureSetupAttrs:
