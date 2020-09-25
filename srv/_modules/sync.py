@@ -134,7 +134,7 @@ def backup_files(component="provisioner"):
                 continue
             dst = file_path.parent.joinpath(current_node)
 
-            salt_client.cmd(f'{node}', 'file.mkdir', [f"{str(dst)}"])
+            # salt_client.cmd(f'{node}', 'file.mkdir', [f"{str(dst)}"])
 
             cmd = (
                     cmd_args
