@@ -137,6 +137,7 @@ class StorageEnclosureParamsValidation:
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
+        # FIXME why we allow any params for the following types?
         types = ['JBOD', 'virtual', 'RBOD', 'other']
         if params['type'] in types:
             return
