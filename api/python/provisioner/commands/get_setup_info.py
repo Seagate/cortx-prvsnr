@@ -26,7 +26,7 @@ from .. import inputs, values
 
 from .. import config
 from ..errors import BadPillarDataError
-from ..pillar import KeyPath, PillarKey, PillarResolver
+from ..pillar import KeyPath, PillarKey, PillarResolver, PillarUpdater
 from ..salt import function_run, local_minion_id
 from ..vendor import attr
 
@@ -293,6 +293,20 @@ class GetSetupInfo(CommandParserFillerMixin):
             storage_type
         :return:
         """
+        def _update_storage_type_pillar(storage_type: str):
+            """
+            Update storage_type pillar by new value
+
+            :param storage_type: new storage_type value for pillar
+                                storage_enclosure/type
+            :return:
+            """
+            _storage_enclosure_path = KeyPath('storage_enclosure')
+            _storage_enclosure_type = PillarKey(
+                                        _storage_enclosure_path / 'type')
+            pillar_updater = PillarUpdater(config.ALL_MINIONS)
+            pillar_updater.update((_storage_enclosure_type, storage_type))
+
         # Get storage type from pillar values
         try:
             return self._get_storage_type_pillar_based()
@@ -304,6 +318,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         _res = self._detect_storage_type()
 
         if _res.get(config.STORAGE_TYPE) != config.StorageType.OTHER.value:
+            _update_storage_type_pillar(_res.get(config.STORAGE_TYPE))
             return _res
 
         logger.debug("Storage smart detection function returned storage_type "
@@ -333,6 +348,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         else:
             res[config.STORAGE_TYPE] = config.StorageType.OTHER.value
         # TODO: what controller type for JBOD and EBOD?
+
+        if res.get(config.STORAGE_TYPE) != config.StorageType.OTHER.value:
+            _update_storage_type_pillar(res.get(config.STORAGE_TYPE))
 
         return res
 
