@@ -651,7 +651,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             repo_tgz_path,
             project_path=run_args.local_repo,
             version=run_args.prvsnr_version,
-            include_dirs=['pillar', 'srv', 'files', 'api', 'cli']
+            include_dirs=['pillar', 'srv', 'api', 'cli']
         )
 
         # extract archive locally

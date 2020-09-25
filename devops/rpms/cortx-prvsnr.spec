@@ -39,9 +39,10 @@ rm -rf %{buildroot}
 %install
 # Create directories
 #mkdir -p %{buildroot}/opt/seagate/cortx/provisioner
-mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{files,conf}
+mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/conf
 
 # Copy files
+cp -R api %{buildroot}/opt/seagate/cortx/provisioner
 cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
 cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
@@ -55,7 +56,7 @@ rm -rf %{buildroot}
 %files
 # %config(noreplace) /opt/seagate/cortx/provisioner/%{name}.yaml
 /opt/seagate/cortx/provisioner/conf
+/opt/seagate/cortx/provisioner/api
 /opt/seagate/cortx/provisioner/cli
-/opt/seagate/cortx/provisioner/files
 /opt/seagate/cortx/provisioner/pillar
 /opt/seagate/cortx/provisioner/srv
