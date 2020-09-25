@@ -1299,28 +1299,29 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ), targets=run_args.primary.minion_id
         )
 
+        logger.info("Updating target build pillar")
         if run_args.url_cortx:
-            logger.info("Updating target build pillar with url_cortx")
-            ssh_client.cmd_run(
-                (
-                    'provisioner pillar_set --fpath release.sls'
-                    f' release/target_build \'"{run_args.url_cortx}"\''
-                ), targets=run_args.primary.minion_id
-            )
             url = run_args.url_cortx
+        elif run_args.target_build:
+            if run_args.dist_type == config.DistrType.BUNDLE:
+                url = f"{run_args.target_build}/cortx_iso"
+            else:
+                url = run_args.target_build
+        elif run_args.iso_cortx:
+            logger.info("Update target with mounted path")
         else:
-            if run_args.target_build:
-                logger.info("Updating target build pillar")
-                ssh_client.cmd_run(
+            raise ValueError(
+                    f"Target build is required"
+                )
+
+        if url:
+            ssh_client.cmd_run(
                     (
                         'provisioner pillar_set --fpath release.sls'
-                        f' release/target_build \'"{run_args.target_build}"\''
+                        f' release/target_build \'"{url}"\''
                     ), targets=run_args.primary.minion_id
                 )
-                if run_args.dist_type == config.DistrType.BUNDLE:
-                    url = f"{run_args.target_build}/cortx_iso"
-                else:
-                    url = run_args.target_build
+
         logger.info("Get release factory version")
         if url and url.startswith(('http://', 'https://')):
             ssh_client.cmd_run(
