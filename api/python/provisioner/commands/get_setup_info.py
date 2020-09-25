@@ -184,7 +184,8 @@ class GetSetupInfo(CommandParserFillerMixin):
 
         return res
 
-    def _get_storage_type_pillar_based(self):
+    @staticmethod
+    def _get_storage_type_pillar_based():
         """
         Previous implementation of get_storage_method
         Can be used if command based approach failed
