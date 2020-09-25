@@ -1168,7 +1168,8 @@ class CreateUser(CommandParserFillerMixin):
             'group.present',
             fun_kwargs=dict(
                 name='csm-admin'
-            )
+            ),
+            targets=targets
         )
 
         # Updating users/ dir permissions for graceful login
@@ -1179,7 +1180,8 @@ class CreateUser(CommandParserFillerMixin):
                 user='root',
                 group='root',
                 mode=755
-            )
+            ),
+            targets=targets
         )
 
         StateFunExecuter.execute(
@@ -1202,7 +1204,8 @@ class CreateUser(CommandParserFillerMixin):
                 user='root',
                 group='root',
                 mode=440
-            )
+            ),
+            targets=targets
         )
 
         StateFunExecuter.execute(
