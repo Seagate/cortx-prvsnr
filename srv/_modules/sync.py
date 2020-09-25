@@ -17,10 +17,12 @@
 
 import logging
 import os
+import salt.client
 import subprocess
 import yaml
 
 from pathlib import Path
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,9 @@ def sync_files(component="provisioner"):
     """
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        logger.error("ERROR: {0} doesn't exist.".format(yaml_file))
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
+        # raise Exception(msg)
+        logger.error(msg)
         return False
 
     # This generic logic should always work
@@ -54,7 +58,7 @@ def sync_files(component="provisioner"):
         "backup" in yaml_dict[component]
         and "files" in yaml_dict[component]["backup"]
     ):
-        cmd_args = ["rsync", "--archive", "--compress", "--update"]
+        cmd_args = ["/usr/bin/rsync", "--archive", "--compress", "--update"]
         for file in yaml_dict[component]["backup"]["files"]:
             dst = Path(file).parent
             cmd = cmd_args
@@ -75,8 +79,11 @@ def sync_files(component="provisioner"):
                 )
                 logger.debug(msg)
             except subprocess.CalledProcessError:
-                logger.error(f"Command: {' '.join(cmd)}")
-                logger.error(f"Error: {proc_completed.stderr}")
+                msg = (
+                        f"Command: {' '.join(cmd)} "
+                        f"Error: {proc_completed.stderr}"
+                    )
+                logger.error(msg)
                 raise Exception(proc_completed.stderr)
     return True
 
@@ -98,7 +105,7 @@ def backup_files(component="provisioner"):
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        msg = f"ERROR: {yaml_file} doesn't exist."
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
         # raise Exception(msg)
         logger.error(msg)
         return False
@@ -115,21 +122,30 @@ def backup_files(component="provisioner"):
         "backup" in yaml_dict[component]
         and "files" in yaml_dict[component]["backup"]
     ):
-        cmd_args = ["rsync", "--archive", "--compress", "--exclude", f"{node}"]
+        salt_client = salt.client.LocalClient()
+        cmd_args = [
+                    "/usr/bin/rsync", "--archive", "--compress",
+                    "--exclude", f"{node}"
+                ]
 
         for file in yaml_dict[component]["backup"]["files"]:
             file_path = Path(file)
             if not file_path.exists():
                 continue
-
             dst = file_path.parent.joinpath(current_node)
-            cmd = cmd_args
-            cmd.extend([cmd_args, file_path, f"{node}:{dst}{os.sep}"])
+
+            salt_client.cmd(f'{node}', 'file.mkdir', [f"{str(dst)}"])
+
+            cmd = (
+                    cmd_args
+                    + [str(file_path), f"{node}:{dst}{os.sep}"]
+            )
+            # salt_client.cmd(f'{node}', 'cmd.run', [f"{' '.join(cmd)}"])
 
             # For pathlib: https://bugs.python.org/issue21039
             proc_completed = subprocess.run(
-                cmd,
-                # shell=True,
+                [f"{' '.join(cmd)}"],
+                shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -142,8 +158,11 @@ def backup_files(component="provisioner"):
                 )
                 logger.debug(msg)
             except subprocess.CalledProcessError:
-                logger.error(f"Command: {' '.join(cmd)}")
-                logger.error(f"Error: {proc_completed.stderr}")
+                msg = (
+                    f"Command: {' '.join(cmd)} "
+                    f"Error: {proc_completed.stderr}"
+                )
+                logger.error(msg)
                 raise Exception(proc_completed.stderr)
 
     return True
@@ -165,7 +184,7 @@ def restore_files(component="provisioner"):
 
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
-        msg = f"ERROR: {yaml_file} doesn't exist."
+        msg = f"ERROR: {str(yaml_file)} doesn't exist."
         # raise Exception(msg)
         logger.error(msg)
         return False
@@ -183,11 +202,11 @@ def restore_files(component="provisioner"):
     # and is the current node is replacement node
     if (
         replacement_node and
-        __grains__["id"] == replacement_node
+        __grains__["id"] != replacement_node
     ):
-        node_list = __pillar__["cluster"]["node_list"]
-        node_list.remove(replacement_node)
-        node = node_list[0]
+        # node_list = __pillar__["cluster"]["node_list"]
+        # node_list.remove(replacement_node)
+        # node = node_list[0]
 
         yaml_dict = yaml.safe_load(yaml_file.read_text())
 
@@ -195,7 +214,7 @@ def restore_files(component="provisioner"):
             "backup" in yaml_dict[component] and
             "files" in yaml_dict[component]["backup"]
         ):
-            cmd_args = ["rsync", "--archive", "--compress"]
+            cmd_args = ["/usr/bin/rsync", "--archive", "--compress"]
 
             for file in yaml_dict[component]["backup"]["files"]:
                 file_path = Path(file)
@@ -203,13 +222,17 @@ def restore_files(component="provisioner"):
                     replacement_node,
                     file_path
                 )
-                dst = file_path.parent
-                cmd = cmd_args
-                cmd.extend([cmd_args, f"{node}:{src}{os.sep}", f"{dst}{os.sep}"])
+                if not src.exists():
+                    msg = f"Specified file ({src}) doesn't exist for restore. "
+                    "Skipping..."
+                    logger.error(msg)
+                    continue
 
+                dst = file_path.parent
+                cmd = cmd_args + [f"{src}", f"{replacement_node}:{dst}{os.sep}"]
                 proc_completed = subprocess.run(
-                        cmd,
-                        # shell=True,
+                        [f"{' '.join(cmd)}"],
+                        shell=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE
                 )
@@ -222,13 +245,16 @@ def restore_files(component="provisioner"):
                     )
                     logger.debug(msg)
                 except subprocess.CalledProcessError:
-                    logger.error(f"Command: {' '.join(cmd)}")
-                    logger.error(f"Error: {proc_completed.stderr}")
+                    msg = (
+                        f"Command: {' '.join(cmd)} "
+                        f"Error: {proc_completed.stderr}"
+                    )
+                    logger.error(msg)
                     raise Exception(proc_completed.stderr)
     else:
         logger.warning(
-            f"WARN: replacement_node is {replacement_node} "
-            f"and doesn't match the current execution node {__grains__['id']}"
+            f"Replacement_node is {replacement_node} "
+            f"and it's the same current execution node {__grains__['id']}"
         )
         return False
 
