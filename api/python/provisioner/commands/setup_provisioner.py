@@ -1307,7 +1307,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 url = f"{run_args.target_build}/cortx_iso"
             else:
                 url = run_args.target_build
-        elif run_args.iso_cortx:
+        elif run_args.iso_cortx:  # Fix Me update with proper path
             logger.info("Update target with mounted path")
         else:
             raise ValueError(
