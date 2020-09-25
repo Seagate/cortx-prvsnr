@@ -1283,37 +1283,46 @@ class SetupProvisioner(CommandParserFillerMixin):
             ), targets=run_args.primary.minion_id
         )
 
-        if run_args.target_build:
-            logger.info("Updating target build pillar")
+        if run_args.url_cortx:
+            logger.info("Updating target build pillar with url_cortx")
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    f' release/target_build \'"{run_args.target_build}"\''
+                    f' release/target_build \'"{run_args.url_cortx}"\''
                 ), targets=run_args.primary.minion_id
             )
-
-            logger.info("Get release factory version")
-            if run_args.dist_type == config.DistrType.BUNDLE:
-                url = f"{run_args.target_build}/cortx_iso"
-            else:
-                url = run_args.target_build
-
-            if url.startswith(('http://', 'https://')):
+            url = run_args.url_cortx
+        else:
+            if run_args.target_build:
+                logger.info("Updating target build pillar")
                 ssh_client.cmd_run(
                     (
-                       f'curl {url}/RELEASE.INFO '
-                       f'-o /etc/yum.repos.d/RELEASE_FACTORY.INFO'
-                    )
+                        'provisioner pillar_set --fpath release.sls'
+                        f' release/target_build \'"{run_args.target_build}"\''
+                    ), targets=run_args.primary.minion_id
                 )
-            elif url.startswith('file://'):
-                # TODO TEST EOS-12076
-                ssh_client.cmd_run(
-                    (
-                       f'cp -f {url[7:]}/RELEASE.INFO '
-                       f'/etc/yum.repos.d/RELEASE_FACTORY.INFO'
-                    )
+                if run_args.dist_type == config.DistrType.BUNDLE:
+                    url = f"{run_args.target_build}/cortx_iso"
+                else:
+                    url = run_args.target_build
+        logger.info("Get release factory version")
+        if url and url.startswith(('http://', 'https://')):
+            ssh_client.cmd_run(
+                (
+                    f'curl {url}/RELEASE.INFO '
+                    f'-o /etc/yum.repos.d/RELEASE_FACTORY.INFO'
                 )
-            else:
+            )
+        elif url and url.startswith('file://'):
+            # TODO TEST EOS-12076
+            ssh_client.cmd_run(
+                (
+                   f'cp -f {url[7:]}/RELEASE.INFO '
+                   f'/etc/yum.repos.d/RELEASE_FACTORY.INFO'
+                )
+            )
+        else:
+            if url:
                 raise ValueError(
                     f"Unexpected target build: {run_args.target_build}"
                 )
