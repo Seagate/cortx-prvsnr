@@ -117,16 +117,25 @@ def _set_logging(output_type, log_args=None, other_args=None):
             setattr(log_args, config.LOG_CONSOLE_HANDLER, False)
 
     # forcibly enable and configure rotation file logging
-    # - for most important commands
-    # - for setup commands
+    #   - for most important commands
+    #   - for setup commands
+    # forcibly disable rsyslog
+    #   - for setup commands
     cmd = getattr(log_args, 'cmd', None)
     cmd_inst = commands.get(cmd)
     if (
         cmd in config.LOG_FORCED_LOGFILE_CMDS
         or isinstance(cmd_inst, SetupCmdBase)
     ):
+        if (
+            hasattr(log_args, config.LOG_RSYSLOG_HANDLER)
+            and isinstance(cmd_inst, SetupCmdBase)
+        ):
+            # disable rsyslog logging
+            setattr(log_args, config.LOG_RSYSLOG_HANDLER, False)
+
         if hasattr(log_args, config.LOG_FILE_HANDLER):
-            # enable
+            # enable file logging
             setattr(log_args, config.LOG_FILE_HANDLER, True)
             # set file to log if default value is set
             filename_attr = f'{config.LOG_FILE_HANDLER}_filename'
@@ -140,8 +149,12 @@ def _set_logging(output_type, log_args=None, other_args=None):
                     #      agnostic to commands
                     run_args = RunArgsSetupProvisionerGeneric(
                         **{
-                            k: other_args.kwargs.get(k) for k in list(other_args.kwargs)
-                            if k in attr.fields_dict(RunArgsSetupProvisionerGeneric)
+                            k: other_args.kwargs.get(k) for k in list(
+                                other_args.kwargs
+                            )
+                            if k in attr.fields_dict(
+                                RunArgsSetupProvisionerGeneric
+                            )
                         }
                     )
                     profile_dir = (
