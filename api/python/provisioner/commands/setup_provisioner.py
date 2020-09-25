@@ -688,7 +688,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     str(config_path)
                 ]
             )
-        config.PRVSNR_PILLAR_CONFIG_INI = config_path
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
@@ -1078,7 +1077,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 paths, repos, run_args
             )
 
-        if run_args.ha and not run_args.field_setup:
+        if not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1255,12 +1254,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 }
             )
 
-            if not run_args.field_setup:
-                logger.info("Copying factory data")
-                ssh_client.state_apply(
-                    'provisioner.factory_profile',
-                    targets=run_args.primary.minion_id,
-                )
+        if not run_args.field_setup:
+            logger.info("Copying factory data")
+            ssh_client.state_apply(
+                'provisioner.factory_profile',
+                targets=run_args.primary.minion_id,
+            )
 
         # not necessary for rpm setup
         logger.info("Installing provisioner API")
