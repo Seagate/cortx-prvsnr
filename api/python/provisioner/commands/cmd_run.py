@@ -21,7 +21,6 @@ from .. import inputs
 from ..config import SUPPORTED_REMOTE_COMMANDS, ALL_MINIONS
 from ..salt import function_run
 from ..vendor import attr
-from shlex import quote
 
 
 @attr.s(auto_attribs=True)
@@ -84,13 +83,13 @@ class CmdRun(CommandParserFillerMixin):
         if dry_run:
             return
 
-        cmd_line = f'cortxcli {quote(args)}'
+        cmd_line = f'cortxcli {args}'
 
         # TODO: currently salt.cmd_run doesn't support named arguments `kwargs`
         return function_run("cmd.run", targets=targets, fun_args=[cmd_line],
                             fun_kwargs=dict(stdin=stdin))
 
-    def run(self, cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
+    def run(self, cmd_name: str, cmd_args: str = "", cmd_stdin: str = None,
             targets: str = ALL_MINIONS, dry_run: bool = False):
         """
         Basic run method to execute remote commands on targets nodes:
