@@ -324,16 +324,13 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                # || $state == "ha.iostack-ha.refresh_config"
                 # || $state == "motr.restore" # TODO: Awaiting EOS-12637 fix
                 || $state == "provisioner.restore"
                 || $state == "s3server.restore"
                 || $state == "hare.restore"
                 || $state == "ha.iostack-ha.restore"
-                || $state == "ha.iostack-ha.refresh_config"
                 || $state == "sspl.restore"
                 || $state == "csm.restore"
-                || $state == "csm.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)

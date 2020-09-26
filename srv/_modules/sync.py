@@ -17,7 +17,6 @@
 
 import logging
 import os
-import salt.client
 import subprocess
 import yaml
 
@@ -60,12 +59,23 @@ def sync_files(component="provisioner"):
     ):
         cmd_args = ["/usr/bin/rsync", "--archive", "--compress", "--update"]
         for file in yaml_dict[component]["backup"]["files"]:
-            dst = Path(file).parent
-            cmd = cmd_args
-            cmd.extend([file, f"{node}:{dst}"])
+            file_path = Path(file)
+            if not file_path.exists():
+                msg = (
+                    f"File {str(file_path)} mentioned in yaml_file, "
+                    "does not exist."
+                )
+                logger.warning(msg)
+                continue
+
+            dst = Path(file_path).parent
+            cmd = (
+                cmd_args
+                + [file_path, f"{node}:{dst}"]
+            )
 
             proc_completed = subprocess.run(
-                cmd,
+                [f"{' '.join(cmd)}"],
                 # shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -122,7 +132,6 @@ def backup_files(component="provisioner"):
         "backup" in yaml_dict[component]
         and "files" in yaml_dict[component]["backup"]
     ):
-        salt_client = salt.client.LocalClient()
         cmd_args = [
                     "/usr/bin/rsync", "--archive", "--compress",
                     "--exclude", f"{node}"
@@ -131,16 +140,19 @@ def backup_files(component="provisioner"):
         for file in yaml_dict[component]["backup"]["files"]:
             file_path = Path(file)
             if not file_path.exists():
+                msg = (
+                    f"File {str(file_path)} mentioned in yaml_file, "
+                    "does not exist."
+                )
+                logger.warning(msg)
                 continue
+
             dst = file_path.parent.joinpath(current_node)
 
-            # salt_client.cmd(f'{node}', 'file.mkdir', [f"{str(dst)}"])
-
             cmd = (
-                    cmd_args
-                    + [str(file_path), f"{node}:{dst}{os.sep}"]
+                cmd_args
+                + [str(file_path), f"{node}:{dst}{os.sep}"]
             )
-            # salt_client.cmd(f'{node}', 'cmd.run', [f"{' '.join(cmd)}"])
 
             # For pathlib: https://bugs.python.org/issue21039
             proc_completed = subprocess.run(
@@ -170,8 +182,10 @@ def backup_files(component="provisioner"):
 
 def restore_files(component="provisioner"):
     """
-    Restore the files as-is across nodes based on the list of files
-    in the section <component>:sync:files in setup.yaml within
+    Restore the files as-is across nodes.
+
+    This is based on the list of files in the section
+    <component>:sync:files in setup.yaml within
     component directory (/opt/seagate/<component>/conf/setup.yaml).
 
     The location of file on source node shall be the appended
@@ -200,62 +214,65 @@ def restore_files(component="provisioner"):
 
     # Execute only if replacement_node is set
     # and is the current node is replacement node
-    if (
+    if not (
         replacement_node and
         __grains__["id"] != replacement_node
     ):
-        # node_list = __pillar__["cluster"]["node_list"]
-        # node_list.remove(replacement_node)
-        # node = node_list[0]
-
-        yaml_dict = yaml.safe_load(yaml_file.read_text())
-
-        if (
-            "backup" in yaml_dict[component] and
-            "files" in yaml_dict[component]["backup"]
-        ):
-            cmd_args = ["/usr/bin/rsync", "--archive", "--compress"]
-
-            for file in yaml_dict[component]["backup"]["files"]:
-                file_path = Path(file)
-                src = file_path.parent.joinpath(
-                    replacement_node,
-                    file_path
-                )
-                if not src.exists():
-                    msg = f"Specified file ({src}) doesn't exist for restore. "
-                    "Skipping..."
-                    logger.error(msg)
-                    continue
-
-                dst = file_path.parent
-                cmd = cmd_args + [f"{src}", f"{replacement_node}:{dst}{os.sep}"]
-                proc_completed = subprocess.run(
-                        [f"{' '.join(cmd)}"],
-                        shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE
-                )
-
-                try:
-                    proc_completed.check_returncode()
-                    msg = (
-                        "Command exited with retcode: 0 "
-                        f"stdout: {proc_completed.stdout}"
-                    )
-                    logger.debug(msg)
-                except subprocess.CalledProcessError:
-                    msg = (
-                        f"Command: {' '.join(cmd)} "
-                        f"Error: {proc_completed.stderr}"
-                    )
-                    logger.error(msg)
-                    raise Exception(proc_completed.stderr)
-    else:
         logger.warning(
             f"Replacement_node is {replacement_node} "
             f"and it's the same current execution node {__grains__['id']}"
         )
         return False
+
+    # node_list = __pillar__["cluster"]["node_list"]
+    # node_list.remove(replacement_node)
+    # node = node_list[0]
+
+    yaml_dict = yaml.safe_load(yaml_file.read_text())
+
+    if (
+        "backup" in yaml_dict[component] and
+        "files" in yaml_dict[component]["backup"]
+    ):
+        cmd_args = ["/usr/bin/rsync", "--archive", "--compress"]
+
+        for file in yaml_dict[component]["backup"]["files"]:
+            file_path = Path(file)
+            src = file_path.parent.joinpath(
+                replacement_node,
+                file_path
+            )
+            if not src.exists():
+                msg = f"Specified file ({src}) doesn't exist for restore. "
+                "Skipping..."
+                logger.error(msg)
+                continue
+
+            dst = file_path.parent
+            cmd = (
+                cmd_args
+                + [f"{src}", f"{replacement_node}:{dst}{os.sep}"]
+            )
+            proc_completed = subprocess.run(
+                    [f"{' '.join(cmd)}"],
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+            )
+
+            try:
+                proc_completed.check_returncode()
+                msg = (
+                    "Command exited with retcode: 0 "
+                    f"stdout: {proc_completed.stdout}"
+                )
+                logger.debug(msg)
+            except subprocess.CalledProcessError:
+                msg = (
+                    f"Command: {' '.join(cmd)} "
+                    f"Error: {proc_completed.stderr}"
+                )
+                logger.error(msg)
+                raise Exception(proc_completed.stderr)
 
     return True
