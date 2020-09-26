@@ -37,15 +37,29 @@ Enable plugin rabbitmq_management:
     - name: rabbitmq_management
     - require:
       - Install RabbitMQ
-    - watch_in:
-      - Start RabbitMQ service
+
+Stop-start rabbitmq service:
+  module.run:
+    - service.stop:
+      - rabbitmq-server
+    - service.start:
+      - rabbitmq-server
+    - require:
+      - Enable plugin rabbitmq_management
 
 Copy plugin to /usr/local/bin:
   cmd.run:
     - name: cp $(find /var/lib/rabbitmq/ -name rabbitmqadmin) /usr/local/bin/rabbitmqadmin && chmod a+x /usr/local/bin/rabbitmqadmin
     - unless: test -f /usr/local/bin/rabbitmqadmin
     - require:
-      - Enable plugin rabbitmq_management
+      - Stop-start rabbitmq service
+
+Restart rabbitmq service:
+  module.run:
+    - service.restart:
+      - rabbitmq-server
+    - require:
+      - Copy plugin to /usr/local/bin
 
 # logrotate.d config: DO NOT REMOVE
 Setup logrotate policy for rabbitmq-server:
