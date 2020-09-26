@@ -29,6 +29,8 @@ Set RabbitMQ environment:
     - mode: 644
     - require:
       - Install RabbitMQ
+    - watch_in:
+      - Start RabbitMQ service
 
 Enable plugin rabbitmq_management:
   rabbitmq_plugin.enabled:
