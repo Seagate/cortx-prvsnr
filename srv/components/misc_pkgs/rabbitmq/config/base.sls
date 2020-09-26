@@ -37,8 +37,14 @@ Enable plugin rabbitmq_management:
     - name: rabbitmq_management
     - require:
       - Install RabbitMQ
-    - watch_in:
-      - Start RabbitMQ service
+
+Stop-Start RabbitMQ service:
+  module.run:
+    - service.dead:
+      - rabbitmq-server
+  module.run:
+    - service.running:
+      - rabbitmq-server
 
 Copy plugin to /usr/local/bin:
   cmd.run:
