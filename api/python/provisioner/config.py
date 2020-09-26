@@ -295,18 +295,7 @@ class DistrType(Enum):
 # API for remote execution
 SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
 
-
-class StorageType(Enum):
-    """Class-enumeration for supported and existing storage types"""
-
-    VIRTUAL = "virtual"
-    JBOD = "JBOD"
-    # standard enclosure with 5 units with 84 disks
-    ENCLOSURE = "5u84"
-    PODS = "PODS"
-    RBOD = "RBOD"
-    EBOD = "EBOD"
-    OTHER = "Other"
+OTHER_STORAGE_TYPE = "Other"
 
 
 class ServerType(Enum):
@@ -314,13 +303,6 @@ class ServerType(Enum):
 
     VIRTUAL = "virtual"
     PHYSICAL = "physical"
-
-
-class ControllerTypes(Enum):
-    """Class-enumeration for controller type's values"""
-    GALLIUM = "gallium"
-    INDIUM = "indium"
-    SATI = "sati"
 
 
 # Constant block for setup info fields
