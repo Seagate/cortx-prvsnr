@@ -30,10 +30,11 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 %install
 rm -rf %{buildroot}
 
-mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc}
+mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc,files/.ssh}
 
 cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
 cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
+cp -pr /files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
 
 if [[ -e %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/ ]]; then
   rm -rf %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh
@@ -65,8 +66,8 @@ if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
 fi
 
-cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/id_rsa_prvsnr /root/.ssh/
-cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+cp -pr /opt/seagate/cortx-prvsnr/files/.ssh/id_rsa_prvsnr /root/.ssh/
+cp -pr /opt/seagate/cortx-prvsnr/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
 cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
 
 if [[ ! -e /root/.ssh/config ]]; then
