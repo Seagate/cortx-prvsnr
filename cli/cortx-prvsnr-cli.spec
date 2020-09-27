@@ -35,8 +35,8 @@ mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc}
 cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
 cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
 
-if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh ]]; then
-  rm -rf %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
+if [[ -e %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/ ]]; then
+  rm -rf %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh
 fi
 
 %clean
@@ -65,12 +65,12 @@ if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
 fi
 
-cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
-cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/id_rsa_prvsnr /root/.ssh/
+cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
 cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
 
 if [[ ! -e /root/.ssh/config ]]; then
-  cp -pr /opt/seagate/cortx/provisioner/files/.ssh/config /root/.ssh/
+  cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/config /root/.ssh/
 fi
 
 chmod 700 /root/.ssh/
