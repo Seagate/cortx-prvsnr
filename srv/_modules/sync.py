@@ -39,6 +39,8 @@ def sync_files(component="provisioner"):
     /var/lib/seagate/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
+
+    # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
         msg = f"ERROR: {str(yaml_file)} doesn't exist."
@@ -47,33 +49,47 @@ def sync_files(component="provisioner"):
         return False
 
     # This generic logic should always work
+    # Find list of expected nodes from pillar file
+    # Find the current node id and drop it from the list
+    # Get the 0th node from the remaining list
+    # Improve: To copy to all nodes and not just next first available
     node_list = __pillar__["cluster"]["node_list"]
     node_list.remove(__grains__["id"])
     node = node_list[0]
 
+    # Read the setup.yaml into a dict object
     yaml_dict = yaml.safe_load(yaml_file.read_text())
 
+    # If setup.yaml has backup section, which has files section proceed
     if (
         "backup" in yaml_dict[component]
         and "files" in yaml_dict[component]["backup"]
     ):
+        # Rsync command standard arguments
         cmd_args = ["/usr/bin/rsync", "--archive", "--compress", "--update"]
+
         for file in yaml_dict[component]["backup"]["files"]:
             file_path = Path(file)
+            # Check if the file in backup list exists
             if not file_path.exists():
                 msg = (
                     f"File {str(file_path)} mentioned in yaml_file, "
                     "does not exist."
                 )
                 logger.warning(msg)
+                # If the file is not existent log a warning and continue
                 continue
 
+            # The destination for backup has to be a parent directory
+            # of the backup file path from list
             dst = Path(file_path).parent
             cmd = (
                 cmd_args
                 + [file_path, f"{node}:{dst}"]
             )
 
+            # Execute rsync from current node (source)
+            # to remote node (destination)
             proc_completed = subprocess.run(
                 [f"{' '.join(cmd)}"],
                 # shell=True,
@@ -82,9 +98,10 @@ def sync_files(component="provisioner"):
             )
 
             try:
+                # Check rsync command execution status
                 proc_completed.check_returncode()
                 msg = (
-                    "Command exited with retcode: 0 "
+                    "Command {' '.join(cmd)} exited with retcode: 0 "
                     f"stdout: {proc_completed.stdout}"
                 )
                 logger.debug(msg)
@@ -113,6 +130,7 @@ def backup_files(component="provisioner"):
     on srvnode-2.
     """
 
+    # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
         msg = f"ERROR: {str(yaml_file)} doesn't exist."
@@ -121,17 +139,24 @@ def backup_files(component="provisioner"):
         return False
 
     # This generic logic should always work
+    # Find list of expected nodes from pillar file
+    # Find the current node id and drop it from the list
+    # Get the 0th node from the remaining list
+    # Improve: To copy to all nodes and not just next first available
     current_node = __grains__["id"]
     node_list = __pillar__["cluster"]["node_list"]
     node_list.remove(current_node)
     node = node_list[0]
 
+    # Read the setup.yaml into a dict object
     yaml_dict = yaml.safe_load(yaml_file.read_text())
 
+    # If setup.yaml has backup section, which has files section proceed
     if (
         "backup" in yaml_dict[component]
         and "files" in yaml_dict[component]["backup"]
     ):
+        # Rsync command standard arguments
         cmd_args = [
                     "/usr/bin/rsync", "--archive", "--compress",
                     "--exclude", f"{node}"
@@ -139,22 +164,32 @@ def backup_files(component="provisioner"):
 
         for file in yaml_dict[component]["backup"]["files"]:
             file_path = Path(file)
+            # Check if the file in backup list exists
             if not file_path.exists():
                 msg = (
                     f"File {str(file_path)} mentioned in yaml_file, "
                     "does not exist."
                 )
                 logger.warning(msg)
+                # If the file is not existent log a warning and continue
                 continue
 
+            # The destination of parent dir of backup file in list
+            # obtained from setup.yaml
+            # we add the id of current node being backed-up as
+            # last directory of the destination path used for backup
             dst = file_path.parent.joinpath(current_node)
 
+            # Execute rsync from current node (source)
+            # to remote node (destination)
+            # For pathlib: https://bugs.python.org/issue21039
             cmd = (
                 cmd_args
                 + [str(file_path), f"{node}:{dst}{os.sep}"]
             )
 
-            # For pathlib: https://bugs.python.org/issue21039
+            # Execute rsync from current node (source)
+            # to remote node (destination)
             proc_completed = subprocess.run(
                 [f"{' '.join(cmd)}"],
                 shell=True,
@@ -163,9 +198,10 @@ def backup_files(component="provisioner"):
             )
 
             try:
+                # Check rsync command execution status
                 proc_completed.check_returncode()
                 msg = (
-                    "Command exited with retcode: 0 "
+                    "Command {' '.join(cmd)} exited with retcode: 0 "
                     f"stdout: {proc_completed.stdout}"
                 )
                 logger.debug(msg)
@@ -196,6 +232,7 @@ def restore_files(component="provisioner"):
     on srvnode-2.
     """
 
+    # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
     if not yaml_file.exists():
         msg = f"ERROR: {str(yaml_file)} doesn't exist."
@@ -203,7 +240,9 @@ def restore_files(component="provisioner"):
         logger.error(msg)
         return False
 
-    # Execute on replacement_node only
+    # Execute the script logic on replacement_node only
+    # Check if the parameter is available from pillar
+    # or from the Environment variable
     replacement_node = None
     if __pillar__["cluster"]["replace_node"]["minion_id"]:
         replacement_node = __pillar__["cluster"]["replace_node"]["minion_id"]
@@ -212,8 +251,10 @@ def restore_files(component="provisioner"):
     else:
         replacement_node = None
 
-    # Execute only if replacement_node is set
+    # Return false if replacement_node variable is set
     # and is the current node is replacement node
+    # We want to push files from live node to replacement node
+    # So the logic should not execute on replacement node
     if not (
         replacement_node and
         __grains__["id"] != replacement_node
@@ -224,16 +265,24 @@ def restore_files(component="provisioner"):
         )
         return False
 
+    # This generic logic should always work
+    # Find list of expected nodes from pillar file
+    # Find the current node id and drop it from the list
+    # Get the 0th node from the remaining list
+    # Improve: To copy to all nodes and not just next first available
     # node_list = __pillar__["cluster"]["node_list"]
     # node_list.remove(replacement_node)
     # node = node_list[0]
 
+    # Read the setup.yaml into a dict object
     yaml_dict = yaml.safe_load(yaml_file.read_text())
 
+    # If setup.yaml has backup section, which has files section proceed
     if (
         "backup" in yaml_dict[component] and
         "files" in yaml_dict[component]["backup"]
     ):
+        # Rsync command standard arguments
         cmd_args = ["/usr/bin/rsync", "--archive", "--compress"]
 
         for file in yaml_dict[component]["backup"]["files"]:
@@ -242,17 +291,28 @@ def restore_files(component="provisioner"):
                 replacement_node,
                 file_path
             )
+
+            # Check if the file in backup list exists for restoration
             if not src.exists():
                 msg = f"Specified file ({src}) doesn't exist for restore. "
                 "Skipping..."
                 logger.error(msg)
                 continue
 
+            # The destination of parent dir of backup file in list
+            # obtained from setup.yaml
             dst = file_path.parent
+
+            # Execute rsync from current node (source)
+            # to remote node (destination)
+            # For pathlib: https://bugs.python.org/issue21039
             cmd = (
                 cmd_args
                 + [f"{src}", f"{replacement_node}:{dst}{os.sep}"]
             )
+
+            # Execute rsync from current node (source)
+            # to remote node (destination)
             proc_completed = subprocess.run(
                     [f"{' '.join(cmd)}"],
                     shell=True,
@@ -261,9 +321,10 @@ def restore_files(component="provisioner"):
             )
 
             try:
+                # Check rsync command execution status
                 proc_completed.check_returncode()
                 msg = (
-                    "Command exited with retcode: 0 "
+                    "Command {' '.join(cmd)} exited with retcode: 0 "
                     f"stdout: {proc_completed.stdout}"
                 )
                 logger.debug(msg)
