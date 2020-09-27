@@ -29,8 +29,7 @@ from . import (
 )
 from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
-    SetupProvisioner,
-    SetupCmdBase
+    SetupProvisioner
 )
 from . import deploy_dual
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
+class AutoDeploy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = [
         RunArgsSetupProvisionerGeneric,

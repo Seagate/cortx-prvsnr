@@ -15,11 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# CONFIG COMMANDS
 get_result:
   type: GetResult
-grains_get:
-  type: GrainsGet
 pillar_get:
   type: PillarGet
   input_type: PillarKeysList
@@ -70,6 +67,14 @@ fw_update:
   type: FWUpdate
 set_ssl_certs:
   type: SetSSLCerts
+get_cluster_id:
+  type: GetClusterId
+get_node_id:
+  type: GetNodeId
+get_release_version:
+  type: GetReleaseVersion
+get_factory_version:
+  type: GetFactoryVersion
 reboot_server:
   type: RebootServer
 reboot_controller:
@@ -80,19 +85,6 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
-cmd_run:
-  type: CmdRun
-get_cluster_id:
-  type: GetClusterId
-get_node_id:
-  type: GetNodeId
-get_release_version:
-  type: GetReleaseVersion
-get_factory_version:
-  type: GetFactoryVersion
-get_setup_info:
-  type: GetSetupInfo
-# SETUP COMMANDS
 setup_provisioner:
   type: SetupProvisioner
 setup_singlenode:
@@ -101,8 +93,14 @@ setup_cluster:
   type: SetupCluster
 setup_jbod:
   type: SetupJBOD
+replace_node:
+  type: ReplaceNode
 configure_setup:
   type: ConfigureSetup
+cmd_run:
+  type: CmdRun
+get_setup_info:
+  type: GetSetupInfo
 deploy:
   type: Deploy
 deploy_vm:
@@ -113,5 +111,5 @@ deploy_dual:
   type: DeployDual
 auto_deploy:
   type: AutoDeploy
-replace_node:
-  type: ReplaceNode
+grains_get:
+  type: GrainsGet
