@@ -289,15 +289,6 @@ function run_states {
                 sleep 2     # Mindfulness break
 
             else
-
-                # if [[ "$state" == "ha.iostack-ha" ]]; then
-                #     sed -i 's/systemd:hare-hax-c1 op stop timeout=30/systemd:hare-hax-c1 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
-
-                #     sed -i 's/systemd:hare-hax-c2 op stop timeout=30/systemd:hare-hax-c2 op stop timeout=200/g' /opt/seagate/cortx/ha/conf/script/build-ha-io
-
-                #     sleep 2     # Mindfulness break
-                # fi
-                
                 l_info "Applying 'components.$state' for both nodes"
                 $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
                 sleep 2     # Mindfulness break

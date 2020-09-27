@@ -66,7 +66,7 @@ Target host is considered to be an cortx salt-master.
 General options:
 $base_options_usage
 Options:
-    -S <tgt_node>,  --singlenode=<tgt_node>      switch to single node mode setup
+    -S<tgt_node>,  --singlenode=<tgt_node>       switch to single node mode setup
     --system-states                              deploy only system states
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
     --sync-states                                deploy only the software synchronization
@@ -74,7 +74,7 @@ Options:
     --ctrlpath-states                            deploy only control path states (sspl & csm)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
     --removenode-states                          deploy only states for removeind a node from cluster
-    --addnode-states                            deploy only states for refresh_config on node and add_node to cluster
+    --addnode-states                             deploy only states for refresh_config on node and add_node to cluster
     --restore-states                             deploy only restore states to restore backed-up files
 "
 }
@@ -309,8 +309,11 @@ function add_node_states {
     l_info "Stage 2.9: Applying Node Addition States..."
     l_info "=================================================="
     run_states "${add_node_states[@]}"
-    l_info "=================================================="
 
+    l_info "Cleaning up pcs resources."
+    pcs resource cleanup
+
+    l_info "=================================================="
 }
 
 function run_states {
@@ -324,16 +327,13 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                # || $state == "ha.iostack-ha.refresh_config"
                 # || $state == "motr.restore" # TODO: Awaiting EOS-12637 fix
                 || $state == "provisioner.restore"
                 || $state == "s3server.restore"
                 || $state == "hare.restore"
                 || $state == "ha.iostack-ha.restore"
-                || $state == "ha.iostack-ha.refresh_config"
                 || $state == "sspl.restore"
                 || $state == "csm.restore"
-                || $state == "csm.refresh_config"
             ]]; then
 
                 local local_node=$($cmd salt-call grains.get id --output=newline_values_only)

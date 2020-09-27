@@ -17,14 +17,8 @@
 
 include:
   - components.ha.iostack-ha.prepare
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
   - components.ha.iostack-ha.install
   - components.ha.iostack-ha.config
-{% else %}
-setup LDR-R1 HA on non-primary node:
-  test.show_notification:
-    - text: "No changes needed on non-primary node"
-{% endif %}
 
 Generate iostack-ha checkpoint flag:
   file.managed:
