@@ -156,14 +156,12 @@ LOG_ROOT_DIR = (
 LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
 LOG_FILE_HANDLER = 'logfile'
-LOG_RSYSLOG_HANDLER = 'rsyslog'
 LOG_CMD_FILTER = 'cmd_filter'
 
 LOG_HUMAN_FORMATTER = 'human'
 LOG_FULL_FORMATTER = 'full'
 #   logfile habdler for the following commands
 #   will be enabled forcibly
-#   TODO move to some parent type instead
 LOG_FORCED_LOGFILE_CMDS = [
     'set_network',
     'set_swupdate_repo',
@@ -173,16 +171,11 @@ LOG_FORCED_LOGFILE_CMDS = [
     'reboot_server',
     'reboot_controller',
     'shutdown_controller',
-    'configure_cortx',
     'create_user',
-    'cmd_run',
-    # deploy commands might be run separately on a primary host
-    'deploy',
-    'deploy_vm',
-    'deploy_jbod',
-    'deploy_dual',
-    'replace_node'
+    'replace_node',
+    'cmd_run'
 ]
+
 
 LOG_TRUNC_MSG_TMPL = "<TRUNCATED> {} ..."
 LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
@@ -202,22 +195,17 @@ PRVSNR_USER_FACTORY_PROFILE_DIR = (
 )
 
 
-def profile_base_dir(
+def profile_paths(
     location: Union[str, Path] = None,
     setup_name: Optional[str] = 'default'
-):
+) -> Dict:
+
     if location is None:
         location = Path.cwd() / PROFILE_DIR_NAME
     else:
         location = location.resolve()
 
-    return (location / setup_name)
-
-
-def profile_paths(base_dir: Optional[Path] = None) -> Dict:
-    if base_dir is None:
-        base_dir = profile_base_dir()
-
+    base_dir = location / setup_name
     ssh_dir = base_dir / '.ssh'
     salt_dir = base_dir / 'srv'
     salt_fileroot_dir = salt_dir / 'salt'

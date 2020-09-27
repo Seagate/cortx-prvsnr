@@ -474,29 +474,6 @@ class SetupCtx:
     ssh_client: SaltSSHClient
 
 
-class SetupCmdBase:
-
-    @staticmethod
-    def setup_location(
-        run_args: RunArgsSetupProvisionerGeneric
-    ) -> Optional[Path]:
-        return (
-            run_args.profile.parent if run_args.profile else
-            config.profile_base_dir().parent
-        )
-
-    @staticmethod
-    def setup_name(run_args: RunArgsSetupProvisionerGeneric) -> str:
-        res = (
-            run_args.profile.name if run_args.profile else run_args.name
-        )
-        if not res:
-            res = '__'.join(
-                [str(node) for node in run_args.nodes]
-            ).replace(':', '_')
-        return res
-
-
 # TODO TEST EOS-8473
 # TODO DOC highlights
 #   - multiple setups support
@@ -508,7 +485,7 @@ class SetupCmdBase:
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
 @attr.s(auto_attribs=True)
-class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
+class SetupProvisioner(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSetupProvisionerGeneric
 
@@ -688,6 +665,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     str(config_path)
                 ]
             )
+        config.PRVSNR_PILLAR_CONFIG_INI = config_path
 
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
@@ -964,17 +942,23 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         salt_logger.setLevel(logging.WARNING)
 
         # generate setup name
-        setup_location = self.setup_location(run_args)
-        setup_name = self.setup_name(run_args)
+        setup_location = (
+            run_args.profile.parent if run_args.profile else None
+        )
+        setup_name = (
+            run_args.profile.name if run_args.profile else run_args.name
+        )
+        if not setup_name:
+            setup_name = '__'.join(
+                [str(node) for node in run_args.nodes]
+            ).replace(':', '_')
 
         # PREPARE FILE & PILLAR ROOTS
 
         logger.info(f"Starting to build setup '{setup_name}'")
 
         paths = config.profile_paths(
-            config.profile_base_dir(
-                location=setup_location, setup_name=setup_name
-            )
+            location=setup_location, setup_name=setup_name
         )
 
         add_file_roots = []
@@ -1077,7 +1061,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 paths, repos, run_args
             )
 
-        if not run_args.field_setup:
+        if run_args.ha and not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1254,12 +1238,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 }
             )
 
-        if not run_args.field_setup:
-            logger.info("Copying factory data")
-            ssh_client.state_apply(
-                'provisioner.factory_profile',
-                targets=run_args.primary.minion_id,
-            )
+            if not run_args.field_setup:
+                logger.info("Copying factory data")
+                ssh_client.state_apply(
+                    'provisioner.factory_profile',
+                    targets=run_args.primary.minion_id,
+                )
 
         # not necessary for rpm setup
         logger.info("Installing provisioner API")
