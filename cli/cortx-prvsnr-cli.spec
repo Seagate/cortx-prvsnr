@@ -62,8 +62,8 @@ ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
 mv id_rsa_prvsnr* %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
 mv ssh_config %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
 
-if [[ -e %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/ ]]; then
-  rm -rf %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh
+if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh/ ]]; then
+  rm -rf %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh
 fi
 
 %clean
@@ -92,12 +92,12 @@ if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
 fi
 
-cp -pr /opt/seagate/cortx-prvsnr/files/.ssh/id_rsa_prvsnr /root/.ssh/
-cp -pr /opt/seagate/cortx-prvsnr/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
+cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
 cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
 
 if [[ ! -e /root/.ssh/config ]]; then
-  cp -pr /opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/config /root/.ssh/
+  cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/
 fi
 
 chmod 700 /root/.ssh/
