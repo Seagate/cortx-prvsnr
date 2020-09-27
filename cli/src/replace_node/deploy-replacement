@@ -309,8 +309,11 @@ function add_node_states {
     l_info "Stage 2.9: Applying Node Addition States..."
     l_info "=================================================="
     run_states "${add_node_states[@]}"
-    l_info "=================================================="
 
+    l_info "Cleaning up pcs resources."
+    pcs resource cleanup
+
+    l_info "=================================================="
 }
 
 function run_states {
