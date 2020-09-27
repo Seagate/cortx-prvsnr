@@ -38,6 +38,7 @@ cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/et
 if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh ]]; then
   rm -rf %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
 fi
+cp -pr files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files
 
 %clean
 rm -rf %{buildroot}
@@ -61,28 +62,19 @@ mkdir -p /root/.ssh
 
 # Ensure update replaces the keys
 if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
-  rm -f /root/.ssh/id_rsa_prvsnr || true
+  rm -f /root/.ssh/id_rsa_prvsnr
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
 fi
 
-cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
-cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+cp -pr /opt/seagate/cortx/provisioner/files/.ssh/* /root/.ssh/
 cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
-
-if [[ ! -e /root/.ssh/config ]]; then
-  cp -pr /opt/seagate/cortx/provisioner/files/.ssh/config /root/.ssh/
-fi
-
 chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
 
 %postun
-# Remove only during uninstall
-if [[ $1 == 0  ]]; then
-  # Ensure update replaces the keys
-  echo "RPM is getting uninstalled, hence remove .ssh entries"
-  rm -f /root/.ssh/id_rsa_prvsnr || true
+# Ensure update replaces the keys
+if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
+  rm -f /root/.ssh/id_rsa_prvsnr
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
-  rm -f /root/.ssh/authorized_keys || true
-  rm -f /root/.ssh/config || true
 fi
+rm -f /root/.ssh/config
