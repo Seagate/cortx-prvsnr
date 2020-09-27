@@ -20,6 +20,28 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 %prep
 %setup -n %{name}-%{version}-%{_cortx_prvsnr_git_ver}
 
+cat <<EOL > ssh_config
+Host srvnode-1 srvnode-1.colo.seagate.com
+    HostName srvnode-1.colo.seagate.com
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+
+Host srvnode-2 srvnode-2.colo.seagate.com
+    HostName srvnode-2.colo.seagate.com
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+EOL
+
 
 %build
 # Turn off the brp-python-bytecompile automagic
@@ -28,13 +50,17 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 
 
 %install
+    
 rm -rf %{buildroot}
 
 mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc,files/.ssh}
 
 cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
 cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
-cp -pr /files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
+
+ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
+mv id_rsa_prvsnr* %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
+mv ssh_config %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
 
 if [[ -e %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh/ ]]; then
   rm -rf %{buildroot}/opt/seagate/cortx-prvsnr/srv/components/system/files/.ssh
@@ -76,6 +102,7 @@ fi
 
 chmod 700 /root/.ssh/
 chmod 600 /root/.ssh/*
+
 
 %postun
 # Remove only during uninstall
