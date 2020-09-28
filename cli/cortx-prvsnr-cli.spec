@@ -104,6 +104,7 @@ fi
 /bin/chmod 700 /root/.ssh/
 /bin/chmod 644 /root/.ssh/*
 /bin/chmod 600 /root/.ssh/id_rsa_prvsnr
+/bin/chmod 600 /root/.ssh/ssh_config
 
 %postun
 # Remove only during uninstall
