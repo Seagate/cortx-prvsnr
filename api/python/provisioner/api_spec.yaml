@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# CONFIG COMMANDS
+# read-only commands
 get_result:
   type: GetResult
 grains_get:
@@ -23,12 +23,24 @@ grains_get:
 pillar_get:
   type: PillarGet
   input_type: PillarKeysList
-pillar_set:
-  type: PillarSet
-  input_type: PillarInputBase
 get_params:
   type: Get
   input_type: ParamsList
+get_cluster_id:
+  type: GetClusterId
+get_node_id:
+  type: GetNodeId
+get_release_version:
+  type: GetReleaseVersion
+get_factory_version:
+  type: GetFactoryVersion
+get_setup_info:
+  type: GetSetupInfo
+
+# config commands
+pillar_set:
+  type: PillarSet
+  input_type: PillarInputBase
 set_ntp:
   type: Set
   input_type: NTP
@@ -82,17 +94,10 @@ create_user:
   type: CreateUser
 cmd_run:
   type: CmdRun
-get_cluster_id:
-  type: GetClusterId
-get_node_id:
-  type: GetNodeId
-get_release_version:
-  type: GetReleaseVersion
-get_factory_version:
-  type: GetFactoryVersion
-get_setup_info:
-  type: GetSetupInfo
-# SETUP COMMANDS
+configure_setup:
+  type: ConfigureSetup
+
+# setup commands
 setup_provisioner:
   type: SetupProvisioner
 setup_singlenode:
@@ -101,8 +106,12 @@ setup_cluster:
   type: SetupCluster
 setup_jbod:
   type: SetupJBOD
-configure_setup:
-  type: ConfigureSetup
+auto_deploy:
+  type: AutoDeploy
+replace_node:
+  type: ReplaceNode
+
+# deploy commands
 deploy:
   type: Deploy
 deploy_vm:
@@ -111,7 +120,3 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
-auto_deploy:
-  type: AutoDeploy
-replace_node:
-  type: ReplaceNode
