@@ -96,13 +96,14 @@ cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
 cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
 cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
 
+
 if [[ ! -e /root/.ssh/config ]]; then
   cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/
 fi
 
 chmod 700 /root/.ssh/
-chmod 600 /root/.ssh/*
-
+chmod 644 /root/.ssh/*
+chmod 600 /root/.ssh/id_rsa_prvsnr
 
 %postun
 # Remove only during uninstall
@@ -112,5 +113,5 @@ if [[ $1 == 0  ]]; then
   rm -f /root/.ssh/id_rsa_prvsnr || true
   rm -f /root/.ssh/id_rsa_prvsnr.pub || true
   rm -f /root/.ssh/authorized_keys || true
-  rm -f /root/.ssh/config || true
+  rm -f /root/.ssh/ssh_config || true
 fi
