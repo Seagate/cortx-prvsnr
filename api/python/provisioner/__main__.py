@@ -123,17 +123,18 @@ def _set_logging(output_type, log_args=None, other_args=None):
     #   - for setup commands
     cmd = getattr(log_args, 'cmd', None)
     cmd_inst = commands.get(cmd)
+
+    if (
+        hasattr(log_args, config.LOG_RSYSLOG_HANDLER)
+        and isinstance(cmd_inst, SetupCmdBase)
+    ):
+        # disable rsyslog logging
+        setattr(log_args, config.LOG_RSYSLOG_HANDLER, False)
+
     if (
         cmd in config.LOG_FORCED_LOGFILE_CMDS
-        or isinstance(cmd_inst, SetupCmdBase)
+        # or isinstance(cmd_inst, SetupCmdBase)  FIXME EOS-13228 regression
     ):
-        if (
-            hasattr(log_args, config.LOG_RSYSLOG_HANDLER)
-            and isinstance(cmd_inst, SetupCmdBase)
-        ):
-            # disable rsyslog logging
-            setattr(log_args, config.LOG_RSYSLOG_HANDLER, False)
-
         if hasattr(log_args, config.LOG_FILE_HANDLER):
             # enable file logging
             setattr(log_args, config.LOG_FILE_HANDLER, True)
@@ -143,7 +144,8 @@ def _set_logging(output_type, log_args=None, other_args=None):
                 getattr(log_args, filename_attr) ==
                 attr.fields_dict(type(log_args))[filename_attr].default
             ):
-                if isinstance(cmd_inst, SetupCmdBase):
+                # FIXME EOS-13228 regression
+                if isinstance(cmd_inst, SetupCmdBase) and False:
                     # TODO IMPROVE EOS-13228 not a clean way to check
                     #      other args here, logging was supposed to be
                     #      agnostic to commands
