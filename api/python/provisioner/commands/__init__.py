@@ -1170,7 +1170,7 @@ class CreateUser(CommandParserFillerMixin):
                 name='~/.bashrc',
                 marker_start='# DO NOT EDIT: Start',
                 marker_end='# DO NOT EDIT: End',
-                content='export PATH=/usr/local/bin:$PATH',
+                content='export PATH=$PATH:/usr/local/bin',
                 append_if_not_found=True,
                 append_newline=True,
                 backup=False
