@@ -1796,11 +1796,15 @@ function setup_ssh {
     #    l_error "Please rerun the command with root user"
     #    exit 1
     #fi
+    
 
     if [[ ! -f "$default_ssh_conf" ]]; then
         l_error "ssh config file not found: $default_ssh_conf"
         exit 1
     fi
+    
+    ssh-copy-id -i ~/.ssh/id_rsa_prvsnr.pub root@${srvnode_2_hostname}
+    ssh ${srvnode_2_hostname} ssh-copy-id -i ~/.ssh/id_rsa_prvsnr.pub root@${srvnode_1_hostname}
 
     #Backup original ssh config file
     cp "$default_ssh_conf" "${default_ssh_conf}.bak"

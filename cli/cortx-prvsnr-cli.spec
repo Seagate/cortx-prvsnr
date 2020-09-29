@@ -20,6 +20,40 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 %prep
 %setup -n %{name}-%{version}-%{_cortx_prvsnr_git_ver}
 
+
+%build
+# Turn off the brp-python-bytecompile automagic
+%global _python_bytecompile_extra 0
+%global __python %{__python3}
+
+
+%install
+    
+/bin/rm -rf %{buildroot}
+
+/bin/mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc,files/.ssh}
+
+/bin/cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
+/bin/cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
+
+if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh/ ]]; then
+  /bin/rm -rf %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh
+fi
+
+%clean
+/bin/rm -rf %{buildroot}
+
+
+%files
+# %config(noreplace) /opt/seagate/cortx/provisioner/cli/%{name}.yaml
+/opt/seagate/cortx/provisioner/cli
+/opt/seagate/cortx/provisioner/files
+
+
+%post
+# TODO test
+# TODO IMPROVE current workaround is to prevent conflicts
+#              with provisioner main rpm instllation
 /bin/cat <<EOL > ssh_config
 Host srvnode-1 srvnode-1.colo.seagate.com
     HostName srvnode-1.colo.seagate.com
@@ -42,44 +76,9 @@ Host srvnode-2 srvnode-2.colo.seagate.com
     BatchMode yes
 EOL
 
-
-%build
-# Turn off the brp-python-bytecompile automagic
-%global _python_bytecompile_extra 0
-%global __python %{__python3}
-
-
-%install
-    
-/bin/rm -rf %{buildroot}
-
-/bin/mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc,files/.ssh}
-
-/bin/cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
-/bin/cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
-
 /bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
-/bin/mv id_rsa_prvsnr* %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
-/bin/mv ssh_config %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
-
-if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh/ ]]; then
-  /bin/rm -rf %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh
-fi
-
-%clean
-/bin/rm -rf %{buildroot}
-
-
-%files
-# %config(noreplace) /opt/seagate/cortx/provisioner/cli/%{name}.yaml
-/opt/seagate/cortx/provisioner/cli
-/opt/seagate/cortx/provisioner/files
-
-
-%post
-# TODO test
-# TODO IMPROVE current workaround is to prevent conflicts
-#              with provisioner main rpm instllation
+/bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
+/bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
 /bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
 /bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
 
