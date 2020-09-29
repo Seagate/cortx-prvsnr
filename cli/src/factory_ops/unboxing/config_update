@@ -198,15 +198,48 @@ function remove_target_build {
 
     echo "Removing CORTX build url from configuration" | tee -a ${LOG_FILE}
     local _release_sls_path=${PRVSNR_ROOT}/pillar/components/release.sls
-    echo "Removing target_build from $_release_sls_path" >> $LOG_FILE
-    line_target_build=`grep -n "target_build:"  $_release_sls_path | cut -d: -f1`
-    sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path
+    yes | cp -f $_release_sls_path ${_release_sls_path}.bkp
+    local _tgt_build=$(grep -n "target_build:"  $_release_sls_path | awk '{ print $3 }')
+    if [[ ! -z $_tgt_build ]]; then
+        line_target_build=`grep -n "target_build:"  $_release_sls_path | cut -d: -f1`
+        if [[ ! -z $line_target_build ]]; then
+            echo "Removing target_build from $_release_sls_path" >> $LOG_FILE
+            sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path
+            n_diff_lines=`diff $_release_sls_path ${_release_sls_path}.bkp | grep "^>" | wc -l`
+            echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+            if [[ $n_diff_lines != 1 ]]; then
+                echo "Could not update the target_build in $_release_sls_path, restoring the original content" | tee -a ${LOG_FILE}
+                yes | cp -f ${_release_sls_path}.bkp $_release_sls_path
+            else
+                echo "Successfully updated target_build in $_release_sls_path" | tee -a ${LOG_FILE}
+            fi
+        else
+            echo "Could not find the target_build line number in $_release_sls_path, ignoring" >> $LOG_FILE
+        fi
+    fi
 
     if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/release.sls" ]]; then
         local _release_sls_path_user=${PRVSNR_ROOT}/pillar/user/groups/all/release.sls
-        echo "Removing target_build from $_release_sls_path_user" >> $LOG_FILE
-        line_target_build=`grep -n "target_build:"  $_release_sls_path_user | cut -d: -f1`
-        sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path_user
+        yes | cp -f $_release_sls_path_user ${_release_sls_path_user}.bkp
+        _tgt_build=$(grep -n "target_build:"  $_release_sls_path_user | awk '{ print $3 }')
+        if [[ ! -z $_tgt_build ]]; then
+            line_target_build=`grep -n "target_build:"  $_release_sls_path_user | cut -d: -f1`
+            if [[ ! -z $line_target_build ]]; then
+                echo "Removing target_build from $_release_sls_path_user" >> $LOG_FILE
+                sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path_user
+                # ensure the sed caused only one line change
+                n_diff_lines=`diff $_release_sls_path_user ${_release_sls_path_user}.bkp | grep "^>" | wc -l`
+                echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+                if [[ $n_diff_lines != 1 ]]; then
+                    echo "Could not update the target_build in $_release_sls_path_user, restoring the original content" | tee -a ${LOG_FILE}
+                    yes | cp -f ${_release_sls_path_user}.bkp $_release_sls_path_user
+                else
+                    echo "Successfully updated target_build in $_release_sls_path_user" | tee -a ${LOG_FILE}
+                fi
+            else
+                echo "Could not find the target_build line number in $_release_sls_path_user, ignoring" >> $LOG_FILE
+            fi
+        fi
     fi
 
     echo "Refreshing Salt pillars" >> ${LOG_FILE}
