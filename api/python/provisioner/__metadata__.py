@@ -15,8 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.36.0'
+__title__ = 'cortx-prvsnr-api'
+__version__ = '1.0.0'
 __author__ = "Seagate"
 __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'
