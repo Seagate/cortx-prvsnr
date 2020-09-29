@@ -76,27 +76,34 @@ Host srvnode-2 srvnode-2.colo.seagate.com
     BatchMode yes
 EOL
 
-/bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
-/bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
-/bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
-/bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
-/bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
+#/bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
+#/bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
+#/bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
+#/bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
+#/bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
 
 # TODO test
 /bin/mkdir -p /root/.ssh
 
-# Ensure update replaces the keys
-if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
-  /bin/rm -f /root/.ssh/id_rsa_prvsnr || true
-  /bin/rm -f /root/.ssh/id_rsa_prvsnr.pub || true
-fi
-
-/bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
-/bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
-/bin/cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
+## Ensure update replaces the keys
+#if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
+#  /bin/rm -f /root/.ssh/id_rsa_prvsnr || true
+#  /bin/rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+#fi
 
 
-if [[ ! -e /root/.ssh/ssh_config ]]; then
+if [[ ! -e /root/.ssh/ssh_config || ! -e /root/.ssh/authorized_keys 
+  || ! -e /root/.ssh/id_rsa_prvsnr.pub || ! -e /root/.ssh/id_rsa_prvsnr ]]; then
+
+  /bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
+  /bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
+  /bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
+  /bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
+  /bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
+
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+  /bin/cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
   /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/
 fi
 
