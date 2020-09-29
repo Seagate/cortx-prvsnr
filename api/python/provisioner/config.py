@@ -184,6 +184,14 @@ LOG_FORCED_LOGFILE_CMDS = [
     'replace_node'
 ]
 
+
+# List of commands for which we purposely reduce log level severity to suppress
+# logging noise and prevent log files size growing.
+LOG_SUPPRESSION_CMDS = [
+    'get_params'
+]
+
+
 LOG_TRUNC_MSG_TMPL = "<TRUNCATED> {} ..."
 LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
 
