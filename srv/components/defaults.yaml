@@ -62,9 +62,9 @@ tmp_dir: /tmp
     # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/updates/x86_64/
 
   {% set os_repos = [
-        {"id": "cortx_platform_base", "url": os_base_repo],
-        {"id": "cortx_platform_extras", "url": os_extras_repo],
-        {"id": "cortx_platform_updates", "url": os_updates_repo]
+        {"id": "cortx_platform_base", "url": os_base_repo},
+        {"id": "cortx_platform_extras", "url": os_extras_repo},
+        {"id": "cortx_platform_updates", "url": os_updates_repo}
       ]
   %}
 
