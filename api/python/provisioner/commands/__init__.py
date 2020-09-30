@@ -1186,7 +1186,6 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
-
         # Creating a new group with limited access for csm admin users
         StateFunExecuter.execute(
             'group.present',
