@@ -18,4 +18,3 @@
 include:
   - .install
   - .start
-  - .sanity_check
