@@ -45,7 +45,7 @@ mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{files,conf}
 cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
 cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
-cp -R files/conf %{buildroot}/opt/seagate/cortx/provisioner/
+cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
 
 
 %clean

@@ -469,6 +469,9 @@ class StorageEnclosureParams():
     controller_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller password"
     )
+    controller_type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller type"
+    )
 
 
 @attr.s(auto_attribs=True)

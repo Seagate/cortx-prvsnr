@@ -44,7 +44,7 @@ class SetupType(Enum):
     SINGLE = "single"
     DUAL = "dual"
     GENERIC = "generic"
-    _3_NODE = "3_node"
+    THREE_NODE = "3_node"
 
 
 class RunArgsConfigureSetupAttrs:
@@ -133,11 +133,16 @@ class StorageEnclosureParamsValidation:
     secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
-    _optional_param = []
+    controller_type: str = StorageEnclosureParams.controller_type
+    _optional_param = [
+        'controller_type'
+    ]
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
-        if params['type'] == 'JBOD':
+        # FIXME why we allow any params for the following types?
+        types = ['JBOD', 'virtual', 'RBOD', 'other']
+        if params['type'] in types:
             return
         missing_params = []
         for param, value in params.items():
@@ -198,9 +203,9 @@ class ConfigureSetup(CommandParserFillerMixin):
         params = {}
         for key in input:
             val = key.split(".")
-            if val[-1] in [
+            if len(val) > 1 and val[-1] in [
                 'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
-                'netmask', 'public_ip_addr'
+                'netmask', 'public_ip_addr', 'type'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
@@ -234,7 +239,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         pillar_key = deepcopy(key)
         return pillar_key.replace(".", "/")
 
-    def run(self, path, number_of_nodes):
+    def run(self, path, number_of_nodes):  # noqa: C901
 
         if not Path(path).is_file():
             raise ValueError('config file is missing')
@@ -272,6 +277,13 @@ class ConfigureSetup(CommandParserFillerMixin):
         run_subprocess_cmd([
             "provisioner", "pillar_set",
             "cluster/node_list", f"[{','.join(node_list)}]"])
+
+        if content.get('cluster', None):
+            if content.get('cluster').get('cluster_ip', None):
+                run_subprocess_cmd([
+                       "provisioner", "pillar_set",
+                       "s3clients/ip",
+                       f"{content.get('cluster').get('cluster_ip')}"])
 
         if 3 == int(number_of_nodes):
             run_subprocess_cmd([

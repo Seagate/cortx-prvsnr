@@ -253,22 +253,15 @@ class RunArgsSetup:
         converter=(lambda v: Path(str(v)) if v else v),
         validator=utils.validator_path_exists
     )
-    url_cortx: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "Cortx repo url"
-            }
-        },
-        default=None
-    )
-    url_cortx_deps: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "Cortx dependencies url"
-            }
-        },
-        default=None
-    )
+    # FIXME EOS-13651, EOS-13686 disabled until code complete
+    # url_cortx_deps: str = attr.ib(
+    #    metadata={
+    #        inputs.METADATA_ARGPARSER: {
+    #            'help': "Bundled CORTX dependencies url"
+    #        }
+    #    },
+    #    default=None
+    # )
     dist_type: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -284,8 +277,8 @@ class RunArgsSetup:
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': (
-                    "Cortex integration release version repo URL/path"
-                    "E.g. "
+                    "Cortex integration release version repo URL/path."
+                    "[This feature is Seagate internal only.]"
                 ),
                 # 'help': (
                 #     "Cortex integration release version relative to "
@@ -300,7 +293,7 @@ class RunArgsSetup:
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "turn on high availbility setup",
+                'help': "turn on high availability setup",
             }
         },
         default=False
@@ -308,7 +301,7 @@ class RunArgsSetup:
     glusterfs_docker: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "configure in-docker glusterfs servers",
+                'help': "configure Dockerized glusterfs servers",
             }
         },
         default=False
@@ -332,7 +325,11 @@ class RunArgsSetup:
     update: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "update initial configuration",
+                'help': (
+                            "update initial configuration "
+                            "[not to be used in production environments "
+                            "as it resets grains data]"
+                        ),
             }
         },
         default=False
@@ -350,16 +347,16 @@ class RunArgsSetup:
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class RunArgsSetupProvisionerBase:
-    config_path: str = RunArgsSetup.config_path
     name: str = RunArgsSetup.name
+    config_path: str = RunArgsSetup.config_path
     profile: str = RunArgsSetup.profile
     source: str = RunArgsSetup.source
     prvsnr_version: str = RunArgsSetup.prvsnr_version
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
-    url_cortx: str = RunArgsSetup.url_cortx
-    url_cortx_deps: str = RunArgsSetup.url_cortx_deps
+    # FIXME url_cortx_deps: str = RunArgsSetup.url_cortx_deps
+    url_cortx_deps: str = attr.ib(init=False, default=None)
     dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
@@ -400,6 +397,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         return self.nodes[1:]
 
     def __attrs_post_init__(self):  # noqa: C901
+        # TODO review params check logic per dist type
 
         # check sources
         if self.source == 'local':
@@ -427,6 +425,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     f"{config.DistrType.BUNDLE}"
                 )
                 self.dist_type = config.DistrType.BUNDLE
+
             if (
                 self.target_build !=
                 attr.fields(type(self)).target_build.default
@@ -435,6 +434,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "`target_build` value would be ignored "
                     "for ISO based installation"
                 )
+
             release_sls = (
                 config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
             )
@@ -442,16 +442,29 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
             self.target_build = 'file://' + load_yaml(
                 release_sls
             )['release']['base']['base_dir']
+
+            if (
+                self.url_cortx_deps !=
+                attr.fields(type(self)).url_cortx_deps.default
+            ):
+                logger.warning(
+                    "`url_cortx_deps` value would be ignored "
+                    "for ISO based installation"
+                )
+                self.url_cortx_deps = None
+
         elif self.source == 'rpm':
-            if self.dist_type == config.DistrType.BUNDLE:
-                if not self.target_build:
-                    raise ValueError('`target_build` should be specified')
-            else:
-                # FIXME EOS-12076 ??? is it needed actually
-                if not self.url_cortx:
-                    raise ValueError("CORTX repo url is undefined")
-                if not self.url_cortx_deps:
-                    raise ValueError("CORTX dependencies url is undefined")
+            if not self.target_build:
+                raise ValueError('`target_build` should be specified')
+            if self.dist_type == config.DistrType.BUNDLE and (
+                self.url_cortx_deps !=
+                attr.fields(type(self)).url_cortx_deps.default
+            ):
+                logger.warning(
+                    "`url_cortx_deps` value would be ignored "
+                    "for bundle distribution type"
+                )
+                self.url_cortx_deps = None
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
@@ -470,6 +483,29 @@ class SetupCtx:
     ssh_client: SaltSSHClient
 
 
+class SetupCmdBase:
+
+    @staticmethod
+    def setup_location(
+        run_args: RunArgsSetupProvisionerGeneric
+    ) -> Optional[Path]:
+        return (
+            run_args.profile.parent if run_args.profile else
+            config.profile_base_dir().parent
+        )
+
+    @staticmethod
+    def setup_name(run_args: RunArgsSetupProvisionerGeneric) -> str:
+        res = (
+            run_args.profile.name if run_args.profile else run_args.name
+        )
+        if not res:
+            res = '__'.join(
+                [str(node) for node in run_args.nodes]
+            ).replace(':', '_')
+        return res
+
+
 # TODO TEST EOS-8473
 # TODO DOC highlights
 #   - multiple setups support
@@ -481,7 +517,7 @@ class SetupCtx:
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
 @attr.s(auto_attribs=True)
-class SetupProvisioner(CommandParserFillerMixin):
+class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSetupProvisionerGeneric
 
@@ -653,6 +689,7 @@ class SetupProvisioner(CommandParserFillerMixin):
             "provisioner/files/minions/all/"
         )
         config_path = minions_dir / 'config.ini'
+        config_path.parent.mkdir(parents=True, exist_ok=True)
         if run_args.config_path:
             run_subprocess_cmd(
                 [
@@ -860,6 +897,32 @@ class SetupProvisioner(CommandParserFillerMixin):
                 ]
             )
 
+    # TODO IMPROVE DRY
+    def _prepare_setup_pillar(
+        self, profile_paths, run_args
+    ):
+        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
+        pillar_all_dir.mkdir(parents=True, exist_ok=True)
+
+        pillar_path = add_pillar_merge_prefix(
+            pillar_all_dir / 'setup.sls'
+        )
+        if pillar_path.exists():
+            pillar = load_yaml(pillar_path)
+        else:
+            # TODO IMPROVE here the setup pillar would have partial
+            #      duplication of release pillar (e.g. target build)
+            pillar = attr.asdict(run_args)
+            # TODO IMPROVE EOS-13686 more clean way
+            if pillar['dist_type']:
+                pillar['dist_type'] = pillar['dist_type'].value
+            if pillar['local_repo']:
+                pillar['local_repo'] = str(pillar['local_repo'])
+            pillar = dict(setup=pillar)
+            dump_yaml(pillar_path,  pillar)
+
+        return pillar
+
     def _prepare_release_pillar(
         self, profile_paths, repos_data: Dict, run_args
     ):
@@ -875,11 +938,13 @@ class SetupProvisioner(CommandParserFillerMixin):
             pillar = {
                 'release': {
                     'type': (
+                        # TODO better types for distribution
                         'bundle'
                         if run_args.dist_type == config.DistrType.BUNDLE
                         else 'internal'
                     ),
                     'target_build': run_args.target_build,
+                    'deps_bundle_url': run_args.url_cortx_deps,
                     'base': {
                         'repos': repos_data
                     }
@@ -937,23 +1002,17 @@ class SetupProvisioner(CommandParserFillerMixin):
         salt_logger.setLevel(logging.WARNING)
 
         # generate setup name
-        setup_location = (
-            run_args.profile.parent if run_args.profile else None
-        )
-        setup_name = (
-            run_args.profile.name if run_args.profile else run_args.name
-        )
-        if not setup_name:
-            setup_name = '__'.join(
-                [str(node) for node in run_args.nodes]
-            ).replace(':', '_')
+        setup_location = self.setup_location(run_args)
+        setup_name = self.setup_name(run_args)
 
         # PREPARE FILE & PILLAR ROOTS
 
         logger.info(f"Starting to build setup '{setup_name}'")
 
         paths = config.profile_paths(
-            location=setup_location, setup_name=setup_name
+            config.profile_base_dir(
+                location=setup_location, setup_name=setup_name
+            )
         )
 
         add_file_roots = []
@@ -973,6 +1032,12 @@ class SetupProvisioner(CommandParserFillerMixin):
 
         logger.info(f"Profile location '{paths['base_dir']}'")
 
+        if not run_args.field_setup:
+            logger.info("Preparing setup pillar")
+            self._prepare_setup_pillar(
+                paths, run_args
+            )
+
         priv_key_path = paths['setup_key_file']
         if not priv_key_path.exists():
             logger.info('Generating setup keys')
@@ -984,27 +1049,9 @@ class SetupProvisioner(CommandParserFillerMixin):
         logger.info("Generating a roster file")
         self._prepare_roster(run_args.nodes, paths)
 
-        ssh_client = self._create_ssh_client(
-            paths['salt_master_file'], paths['salt_roster_file']
-        )
-
-        setup_ctx = SetupCtx(run_args, paths, ssh_client)
-
-        for node in run_args.nodes:
-            logger.info(
-                f"Ensuring '{node.minion_id}' is ready to accept commands"
-            )
-            ssh_client.ensure_ready([node.minion_id])
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
-
-        logger.info("Copying config.ini to file root")
-        self._copy_config_ini(run_args, paths)
+        if not run_args.field_setup:
+            logger.info("Copying config.ini to file root")
+            self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
@@ -1017,37 +1064,46 @@ class SetupProvisioner(CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        else:  # iso or rpm
+        elif not run_args.field_setup:  # iso or rpm
+
+            # FIXME rhel and centos repos
+            deps_bundle_url = (
+                f"{run_args.target_build}/3rd_party"
+                if run_args.dist_type == config.DistrType.BUNDLE
+                else run_args.url_cortx_deps
+            )
+
             if run_args.source == 'iso':
                 repos = {
-                    'cortx_iso': f"salt://{run_args.iso_cortx.name}",
+                    'cortx': f"salt://{run_args.iso_cortx.name}",
                     '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
                 }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
-                        'cortx_iso': f"{run_args.target_build}/cortx_iso",
-                        '3rd_party': f"{run_args.target_build}/3rd_party"
+                        'cortx': f"{run_args.target_build}/cortx_iso",
+                        '3rd_party': deps_bundle_url
                     }
                 else:
                     repos = {
-                        'cortx_iso': f'{run_args.url_cortx}',
-                        '3rd_party': f'{run_args.url_cortx_deps}'
+                        'cortx': f'{run_args.target_build}'
                     }
+                    if deps_bundle_url:
+                        repos['3rd_party'] = deps_bundle_url
 
-            # FIXME rhel and centos repos
-            if run_args.dist_type == config.DistrType.BUNDLE:
-                # assume that target_build here is
-                # a base dir for bundle distribution
+            # assume that target_build for bundled release is
+            # a base dir for bundle distribution
+
+            if deps_bundle_url:
                 repos.update({
                     '3rd_party_epel': (
-                        f"{run_args.target_build}/3rd_party/EPEL-7"
+                        f"{deps_bundle_url}/EPEL-7"
                     ),
                     '3rd_party_saltstack': (
-                        f"{run_args.target_build}/3rd_party/commons/saltstack-3001"  # noqa: E501
+                        f"{deps_bundle_url}/commons/saltstack-3001"
                     ),
                     '3rd_party_glusterfs': (
-                        f"{run_args.target_build}/3rd_party/commons/glusterfs"
+                        f"{deps_bundle_url}/commons/glusterfs"
                     )
                 })
 
@@ -1056,7 +1112,7 @@ class SetupProvisioner(CommandParserFillerMixin):
                 paths, repos, run_args
             )
 
-        if run_args.ha and not run_args.field_setup:
+        if not run_args.field_setup:
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1076,6 +1132,25 @@ class SetupProvisioner(CommandParserFillerMixin):
                     'srv/salt/provisioner/files/repo'
                 )
             ])
+
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt masters / minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
 
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"
@@ -1138,6 +1213,14 @@ class SetupProvisioner(CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
+        # TODO IMPRVOE salt might be restarted in the background,
+        #      might require to ensure that it is ready to avoid
+        #      a race condition with further commands that relies
+        #      on it (e.g. salt calls and provisioner api on a remote).
+        #      To consider the similar logic as in salt_master.py.
+        #
+        #      Alternative: pospone that step once core and API
+        #      is installed and we may call that on remotes
         logger.info("Configuring salt-masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
@@ -1233,12 +1316,12 @@ class SetupProvisioner(CommandParserFillerMixin):
                 }
             )
 
-            if not run_args.field_setup:
-                logger.info("Copying factory data")
-                ssh_client.state_apply(
-                    'provisioner.factory_profile',
-                    targets=run_args.primary.minion_id,
-                )
+        if not run_args.field_setup:
+            logger.info("Copying factory data")
+            ssh_client.state_apply(
+                'provisioner.factory_profile',
+                targets=run_args.primary.minion_id,
+            )
 
         # not necessary for rpm setup
         logger.info("Installing provisioner API")
@@ -1270,23 +1353,36 @@ class SetupProvisioner(CommandParserFillerMixin):
         # Note. in both cases (ha and non-ha) we need user pillar update
         # only on primary node, in case of ha it would be shared for other
         # masters
-        logger.info("Updating release distribution type")
-        ssh_client.cmd_run(
-            (
-                'provisioner pillar_set --fpath release.sls'
-                f' release/type \'"{run_args.dist_type.value}"\''
-            ), targets=run_args.primary.minion_id
-        )
-
-        if run_args.target_build:
-            logger.info("Updating target build pillar")
+        if not run_args.field_setup:
+            logger.info("Updating release distribution type")
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    f' release/target_build \'"{run_args.target_build}"\''
+                    f' release/type \'"{run_args.dist_type.value}"\''
                 ), targets=run_args.primary.minion_id
             )
 
+            if run_args.url_cortx_deps:
+                logger.info("Setting url for bundled dependencies")
+                ssh_client.cmd_run(
+                    (
+                        'provisioner pillar_set --fpath release.sls'
+                        ' release/deps_bundle_url '
+                        f'\'"{run_args.url_cortx_deps}"\''
+                    ), targets=run_args.primary.minion_id
+                )
+
+            if run_args.target_build:
+                logger.info("Updating target build pillar")
+                ssh_client.cmd_run(
+                    (
+                        'provisioner pillar_set --fpath release.sls'
+                        f' release/target_build \'"{run_args.target_build}"\''
+                    ), targets=run_args.primary.minion_id
+                )
+
+        if run_args.target_build:
+            # TODO IMPROVE non idempotent now
             logger.info("Get release factory version")
             if run_args.dist_type == config.DistrType.BUNDLE:
                 url = f"{run_args.target_build}/cortx_iso"

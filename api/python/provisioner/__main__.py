@@ -39,6 +39,9 @@ from . import (
     log
 )
 from .commands import commands
+from .commands.setup_provisioner import (
+    SetupCmdBase, RunArgsSetupProvisionerGeneric
+)
 from .base import prvsnr_config
 
 from . import cli_parser
@@ -103,7 +106,7 @@ def _generate_logfile_filename(cmd):
     return (config.LOG_ROOT_DIR / f'{cmd}.{ts}.{pid}.{threadid}.log')
 
 
-def _set_logging(output_type, log_args=None):
+def _set_logging(output_type, log_args=None, other_args=None):
     if log_args is None:
         log_args = log.LogArgs()
 
@@ -114,10 +117,27 @@ def _set_logging(output_type, log_args=None):
             setattr(log_args, config.LOG_CONSOLE_HANDLER, False)
 
     # forcibly enable and configure rotation file logging
-    # for most important commands
-    if getattr(log_args, 'cmd', None) in config.LOG_FORCED_LOGFILE_CMDS:
+    #   - for most important commands
+    #   - for setup commands
+    # forcibly disable rsyslog
+    #   - for setup commands
+    cmd = getattr(log_args, 'cmd', None)
+    cmd_inst = commands.get(cmd)
+
+    if (
+        hasattr(log_args, config.LOG_RSYSLOG_HANDLER)
+        and isinstance(cmd_inst, SetupCmdBase)
+    ):
+        # disable rsyslog logging
+        setattr(log_args, config.LOG_RSYSLOG_HANDLER, False)
+        log_args.update_handlers()
+
+    if (
+        cmd in config.LOG_FORCED_LOGFILE_CMDS
+        # or isinstance(cmd_inst, SetupCmdBase)  FIXME EOS-13228 regression
+    ):
         if hasattr(log_args, config.LOG_FILE_HANDLER):
-            # enable
+            # enable file logging
             setattr(log_args, config.LOG_FILE_HANDLER, True)
             # set file to log if default value is set
             filename_attr = f'{config.LOG_FILE_HANDLER}_filename'
@@ -125,7 +145,29 @@ def _set_logging(output_type, log_args=None):
                 getattr(log_args, filename_attr) ==
                 attr.fields_dict(type(log_args))[filename_attr].default
             ):
-                filename = _generate_logfile_filename(log_args.cmd)
+                # FIXME EOS-13228 regression
+                if isinstance(cmd_inst, SetupCmdBase) and False:
+                    # TODO IMPROVE EOS-13228 not a clean way to check
+                    #      other args here, logging was supposed to be
+                    #      agnostic to commands
+                    run_args = RunArgsSetupProvisionerGeneric(
+                        **{
+                            k: other_args.kwargs.get(k) for k in list(
+                                other_args.kwargs
+                            )
+                            if k in attr.fields_dict(
+                                RunArgsSetupProvisionerGeneric
+                            )
+                        }
+                    )
+                    profile_dir = (
+                        SetupCmdBase.setup_location(run_args) /
+                        SetupCmdBase.setup_name(run_args)
+                    )
+                    profile_dir.mkdir(parents=True, exist_ok=True)
+                    filename = profile_dir / f"{cmd}.log"
+                else:
+                    filename = _generate_logfile_filename(log_args.cmd)
                 setattr(log_args, filename_attr, str(filename))
             log_args.update_handlers()
 
@@ -149,7 +191,7 @@ def _main():
         }
     )
 
-    _set_logging(output_type, log_args)
+    _set_logging(output_type, log_args, parsed_args)
 
     general_args = GeneralArgs(
         **{

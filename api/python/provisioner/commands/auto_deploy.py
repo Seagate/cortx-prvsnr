@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
 from typing import Type
@@ -29,20 +29,20 @@ from . import (
 )
 from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
-    SetupCmdBase,
-    SetupProvisioner
+    SetupProvisioner,
+    SetupCmdBase
 )
-from . import deploy_jbod
+from . import deploy_dual
 
 logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class SetupJBOD(SetupCmdBase, CommandParserFillerMixin):
+class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = [
         RunArgsSetupProvisionerGeneric,
-        deploy_jbod.run_args_type
+        deploy_dual.run_args_type
     ]
 
     def run(self, nodes, **kwargs):
@@ -51,9 +51,9 @@ class SetupJBOD(SetupCmdBase, CommandParserFillerMixin):
             if k in attr.fields_dict(RunArgsSetupProvisionerGeneric)
         }
 
-        deploy_jbod_args = {
+        deploy_args = {
             k: kwargs.pop(k) for k in list(kwargs)
-            if k in attr.fields_dict(deploy_jbod.run_args_type)
+            if k in attr.fields_dict(deploy_dual.run_args_type)
         }
 
         logger.info("Setup provisioner")
@@ -70,10 +70,16 @@ class SetupJBOD(SetupCmdBase, CommandParserFillerMixin):
                     f'{len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'salt-call state.apply '
+                    'components.system.config.pillar_encrypt'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
 
         logger.info("Deploy")
-        deploy_jbod.DeployJBOD(setup_ctx=setup_ctx).run(
-            **deploy_jbod_args
+        deploy_dual.DeployDual(setup_ctx=setup_ctx).run(
+            **deploy_args
         )
 
         logger.info("Done")

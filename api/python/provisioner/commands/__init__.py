@@ -1163,12 +1163,36 @@ class CreateUser(CommandParserFillerMixin):
             _generate_ssh_config()
             _copy_minion_nodes()
 
+        # Update PATH just as a precaution
+        StateFunExecuter.execute(
+            'file.blockreplace',
+            fun_kwargs=dict(
+                name='~/.bashrc',
+                marker_start='# DO NOT EDIT: Start',
+                marker_end='# DO NOT EDIT: End',
+                content='export PATH=$PATH:/usr/local/bin',
+                append_if_not_found=True,
+                append_newline=True,
+                backup=False
+            ),
+            targets=targets
+        )
+
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name='source ~/.bashrc'
+            ),
+            targets=targets
+        )
+
         # Creating a new group with limited access for csm admin users
         StateFunExecuter.execute(
             'group.present',
             fun_kwargs=dict(
                 name='csm-admin'
-            )
+            ),
+            targets=targets
         )
 
         # Updating users/ dir permissions for graceful login
@@ -1179,7 +1203,8 @@ class CreateUser(CommandParserFillerMixin):
                 user='root',
                 group='root',
                 mode=755
-            )
+            ),
+            targets=targets
         )
 
         StateFunExecuter.execute(
@@ -1192,9 +1217,12 @@ class CreateUser(CommandParserFillerMixin):
                           '/usr/sbin/subscription-manager, /usr/bin/cat, '
                           '/usr/bin/cd, /usr/bin/ls, '
                           f'/usr/sbin/pcs, {SEAGATE_USER_HOME_DIR}, '
-                          '/usr/bin/salt, /usr/bin/systemctl '
-                          '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp '
-                          '/opt/seagate/cortx/csm/bin/cortxcli, '
+                          '/usr/bin/salt, /usr/local/bin/salt, '
+                          '/usr/bin/salt-call, /usr/local/bin/salt-call, '
+                          '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp, '
+                          '/opt/seagate/cortx/csm/lib/cortxcli, '
+                          '/usr/bin/cortxcli, /var/log, '
+                          '/usr/bin/systemctl, '
                           f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init,'
                           f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
                 create=True,
@@ -1202,7 +1230,8 @@ class CreateUser(CommandParserFillerMixin):
                 user='root',
                 group='root',
                 mode=440
-            )
+            ),
+            targets=targets
         )
 
         StateFunExecuter.execute(
