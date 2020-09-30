@@ -253,14 +253,16 @@ class RunArgsSetup:
         converter=(lambda v: Path(str(v)) if v else v),
         validator=utils.validator_path_exists
     )
-    url_cortx_deps: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "Bundled CORTX dependencies url"
-            }
-        },
-        default=None
-    )
+    # FIXME EOS-13651, EOS-13686 disabled until code complete
+    # url_cortx_deps: str = attr.ib(
+    #    init=False,
+    #    metadata={
+    #        inputs.METADATA_ARGPARSER: {
+    #            'help': "Bundled CORTX dependencies url"
+    #        }
+    #    },
+    #    default=None
+    # )
     dist_type: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -354,7 +356,8 @@ class RunArgsSetupProvisionerBase:
     local_repo: str = RunArgsSetup.local_repo
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
-    url_cortx_deps: str = RunArgsSetup.url_cortx_deps
+    # FIXME url_cortx_deps: str = RunArgsSetup.url_cortx_deps
+    url_cortx_deps: str = attr.ib(init=False, default=None)
     dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
     salt_master: str = RunArgsSetup.salt_master
