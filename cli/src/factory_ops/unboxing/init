@@ -231,8 +231,10 @@ if command -v pcs ; then
     echo "Ok." | tee -a ${LOG_FILE}
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
+    exit 1
 fi
 
+remove_seagate_url
 remove_target_build
 
 echo "Removing the repos with Seagate url from srvnode-1" >> ${LOG_FILE}
