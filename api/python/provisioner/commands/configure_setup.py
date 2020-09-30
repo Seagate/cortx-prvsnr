@@ -134,7 +134,9 @@ class StorageEnclosureParamsValidation:
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
     controller_type: str = StorageEnclosureParams.controller_type
-    _optional_param = []
+    _optional_param = [
+        'controller_type'
+    ]
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
