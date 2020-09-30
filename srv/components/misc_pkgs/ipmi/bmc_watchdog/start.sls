@@ -23,5 +23,5 @@ Start and enable bmc-watchdog:
 Verify bmc-watchdog:
   cmd.run:
     - name: ipmitool mc watchdog get
-    - require:
+    - requires:
       - Start and enable bmc-watchdog
