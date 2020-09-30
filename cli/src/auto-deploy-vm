@@ -12,8 +12,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 
@@ -294,9 +294,9 @@ update_pillar()
     provisioner pillar_set cluster/srvnode-1/network/data_nw/roaming_ip \"127.0.0.1\"
 
     if [[ "$mgmt_din_opt" == true ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"$mgmt_din\"
+        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface [\"$mgmt_din\"]
     else
-        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface \"eth0\"
+        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/iface [\"eth0\"]
     fi
 
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
@@ -322,9 +322,9 @@ update_pillar()
         provisioner pillar_set cluster/srvnode-2/network/data_nw/roaming_ip \"127.0.0.1\"
         
         if [[ "$mgmt_din_opt" == true ]]; then
-            provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"$mgmt_din\"
+            provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface [\"$mgmt_din\"]
         else
-            provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface \"eth0\"
+            provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/iface [\"eth0\"]
         fi
 
         if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then

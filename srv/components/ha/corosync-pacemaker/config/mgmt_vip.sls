@@ -11,12 +11,12 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 {% if 'primary' in grains['roles'] 
-  and if pillar['cluster']['mgmt_vip'] %}
+  and pillar['cluster']['mgmt_vip'] %}
 Update Management VIP:
   cmd.run:
     - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }}

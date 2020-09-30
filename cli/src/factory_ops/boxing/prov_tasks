@@ -12,8 +12,8 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing, 
-# please email opensource@seagate.com or cortx-questions@seagate.com."
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
 
@@ -115,9 +115,9 @@ function create_unboxing_user {
     _serial_a=`dmidecode -t system | grep Serial | cut -d: -f 2`
     _mac_bmc_a=`ipmitool lan print | grep "MAC Address" | awk '{ print $4 }'`
     #_interface_mgmt_a=`ip -o link show | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_a="eno1"
+    _interface_mgmt_a=`salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface:0 --output=newline_values_only`
     _mac_mgmt_a=`cat /sys/class/net/${_interface_mgmt_a}/address`
-    _interface_data_a=`ip -o link show | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _interface_data_a=`salt-call pillar.get cluster:srvnode-1:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_a=`cat /sys/class/net/${_interface_data_a}/address`
     echo "Done" | tee -a ${LOG_FILE}
 
@@ -126,9 +126,9 @@ function create_unboxing_user {
     _serial_b=`ssh srvnode-2 "dmidecode -t system" | grep Serial | cut -d: -f 2`
     _mac_bmc_b=`ssh srvnode-2 "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
     #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
-    _interface_mgmt_b="eno1"
+    _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface:0 --output=newline_values_only`
     _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
-    _interface_data_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep enp | grep f0`
+    _interface_data_b=`salt-call pillar.get cluster:srvnode-2:network:data_nw:iface:0 --output=newline_values_only`
     _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
     echo "Done" | tee -a ${LOG_FILE}
 
@@ -203,18 +203,26 @@ NOTE: The above system details are required for unboxing and is stored at: $_out
 function reset_pub_data_ips {
     #Reset IPs for public data network
     #Update public data interface ips
-    local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
-    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls" ]]; then
-        _cluster_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls
+    if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+    elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        _cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+    else
+        echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
+        exit 1
     fi
 
     echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
     echo "Removing static data ip from $_cluster_sls_path for server A" >> $LOG_FILE
     line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-    sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    if [[ -n ${line_node1_ip} ]]; then
+        sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    fi
     echo "Removing static data ip from $_cluster_sls_path for server B" >> $LOG_FILE
     line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-    sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    if [[ -n ${line_node2_ip} ]]; then
+        sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}
