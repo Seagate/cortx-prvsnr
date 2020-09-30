@@ -92,8 +92,7 @@ EOL
 #fi
 
 
-if [[ ! -e /root/.ssh/ssh_config || ! -e /root/.ssh/authorized_keys 
-  || ! -e /root/.ssh/id_rsa_prvsnr.pub || ! -e /root/.ssh/id_rsa_prvsnr ]]; then
+if [[ ! -e /root/.ssh/config ]]; then
 
   /bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
   /bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
@@ -104,13 +103,13 @@ if [[ ! -e /root/.ssh/ssh_config || ! -e /root/.ssh/authorized_keys
   /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
   /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
   /bin/cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
-  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/config
 fi
 
 /bin/chmod 700 /root/.ssh/
 /bin/chmod 644 /root/.ssh/*
 /bin/chmod 600 /root/.ssh/id_rsa_prvsnr
-/bin/chmod 600 /root/.ssh/ssh_config
+/bin/chmod 600 /root/.ssh/config
 
 %postun
 # Remove only during uninstall
@@ -120,5 +119,5 @@ if [[ $1 == 0  ]]; then
   /bin/rm -f /root/.ssh/id_rsa_prvsnr || true
   /bin/rm -f /root/.ssh/id_rsa_prvsnr.pub || true
   /bin/rm -f /root/.ssh/authorized_keys || true
-  /bin/rm -f /root/.ssh/ssh_config || true 
+  /bin/rm -f /root/.ssh/config || true 
 fi
