@@ -156,6 +156,9 @@ class ReplaceNode(SetupProvisioner):
         ):
             kwargs[_attr] = setup_args[_attr]
 
+        # FIXME EOS-13803
+        kwargs.pop('url_cortx_deps', None)
+
         logger.info("Adjusting node specs info")
         specs_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'node_specs.sls'
