@@ -300,7 +300,7 @@ function remove_seagate_url {
 
     echo "Refreshing Salt pillars" >> ${LOG_FILE}
     salt '*' saltutil.refresh_pillar ${salt_opts}
-    echo "Checking if the  REdHat url is removed from commons pillar" >> ${LOG_FILE}
+    echo "Checking if the  RedHat url is removed from commons pillar" >> ${LOG_FILE}
 
     # Check if RedHat url is removed from commons url on both nodes
     _node1_url=$(salt srvnode-1 pillar.get commons:cortx_commons:RedHat --output=newline_values_only ${salt_opts})
