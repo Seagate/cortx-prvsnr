@@ -690,6 +690,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             "provisioner/files/minions/all/"
         )
         config_path = minions_dir / 'config.ini'
+        config_path.parent.mkdir(parents=True, exist_ok=True)
         if run_args.config_path:
             run_subprocess_cmd(
                 [
