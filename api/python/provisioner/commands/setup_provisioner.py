@@ -1214,6 +1214,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
+        # TODO IMPRVOE salt might be restarted in the background,
+        #      might require to ensure that it is ready to avoid
+        #      a race condition with further commands that relies
+        #      on it (e.g. salt calls and provisioner api on a remote).
+        #      To consider the similar logic as in salt_master.py.
+        #
+        #      Alternative: pospone that step once core and API
+        #      is installed and we may call that on remotes
         logger.info("Configuring salt-masters")
         ssh_client.state_apply(
             'provisioner.configure_salt_master',
