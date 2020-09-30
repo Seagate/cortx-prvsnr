@@ -1,5 +1,5 @@
-include:
-  - .prepare
+#include:
+#  - .prepare
 
 Install eos-sspl packages:
   pkg.installed:

@@ -194,6 +194,147 @@ function update_cluster_sls {
     fi
 }
 
+function remove_seagate_url {
+    echo "Removing seagate urls from salt commons pillar" | tee -a ${LOG_FILE}
+
+    if [[ -f "${PRVSNR_ROOT}/pillar/components/commons.sls" ]]; then
+        local _commons_sls_path=${PRVSNR_ROOT}/pillar/components/commons.sls
+        yes | cp -f $_commons_sls_path ${_commons_sls_path}.bkp
+        local _redhat_url=$(grep -n "RedHat:"  $_commons_sls_path | awk '{ print $3 }')
+        if [[ ! -z $_redhat_url ]]; then
+            _line_no=`grep -n "RedHat:"  $_commons_sls_path | cut -d: -f1`
+            if [[ ! -z $_line_no ]]; then
+                echo "Removing RedHat url from $_commons_sls_path" >> $LOG_FILE
+                sed -ie "${_line_no}s/.*/    RedHat:/" $_commons_sls_path
+                n_diff_lines=`diff $_commons_sls_path ${_commons_sls_path}.bkp | grep "^>" | wc -l`
+                echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+                if [[ $n_diff_lines != 1 ]]; then
+                    echo "Could not update the RedHat url in $_commons_sls_path, restoring the original content" | tee -a ${LOG_FILE}
+                    yes | cp -f ${_commons_sls_path}.bkp $_commons_sls_path
+                else
+                    echo "Successfully removed RedHat url from $_commons_sls_path" >> ${LOG_FILE}
+                fi
+            else
+                echo "Could not find the line number for RedHat url in $_commons_sls_path, ignoring" >> $LOG_FILE
+            fi
+        else
+            echo "No url found for RedHat in $_commons_sls_path, ignoring" >> ${LOG_FILE}
+        fi
+
+        # Take backup of updated copy of commons sls
+        yes | cp -f $_commons_sls_path ${_commons_sls_path}.bkp
+        local _centos_url=$(grep -n "CentOS:"  $_commons_sls_path | awk '{ print $3 }')
+        if [[ ! -z $_centos_url ]]; then
+            _line_no=`grep -n "CentOS:"  $_commons_sls_path | cut -d: -f1`
+            if [[ ! -z $_line_no ]]; then
+                echo "Removing CentOS url from $_commons_sls_path" >> $LOG_FILE
+                sed -ie "${_line_no}s/.*/    CentOS:/" $_commons_sls_path
+                n_diff_lines=`diff $_commons_sls_path ${_commons_sls_path}.bkp | grep "^>" | wc -l`
+                echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+                if [[ $n_diff_lines != 1 ]]; then
+                    echo "Could not update the CentOS url in $_commons_sls_path, restoring the original content" | tee -a ${LOG_FILE}
+                    yes | cp -f ${_commons_sls_path}.bkp $_commons_sls_path
+                else
+                    echo "Successfully removed CentOS url from $_commons_sls_path" >> ${LOG_FILE}
+                fi
+            else
+                echo "Could not find the line number for CentOS url in $_commons_sls_path, ignoring" >> $LOG_FILE
+            fi
+        else
+            echo "No url found for CentOS in $_commons_sls_path, ignoring" >> ${LOG_FILE}
+        fi
+    else
+        echo "No file $_commons_sls_path, ignoring" >> ${LOG_FILE}
+    fi
+
+    if [[ -f "${PRVSNR_ROOT}/pillar/user/groups/all/commons.sls" ]]; then
+        _commons_sls_path=${PRVSNR_ROOT}/pillar/user/groups/all/commons.sls
+        yes | cp -f $_commons_sls_path ${_commons_sls_path}.bkp
+
+        local _redhat_url=$(grep -n "RedHat:"  $_commons_sls_path | awk '{ print $3 }')
+        if [[ ! -z $_redhat_url ]]; then
+            _line_no=`grep -n "RedHat:"  $_commons_sls_path | cut -d: -f1`
+            if [[ ! -z $_line_no ]]; then
+                echo "Removing RedHat url from $_commons_sls_path" >> $LOG_FILE
+                sed -ie "${_line_no}s/.*/        RedHat:/" $_commons_sls_path
+                n_diff_lines=`diff $_commons_sls_path ${_commons_sls_path}.bkp | grep "^>" | wc -l`
+                echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+                if [[ $n_diff_lines != 1 ]]; then
+                    echo "Could not update the RedHat url in $_commons_sls_path, restoring the original content" | tee -a ${LOG_FILE}
+                    yes | cp -f ${_commons_sls_path}.bkp $_commons_sls_path
+                else
+                    echo "Successfully removed RedHat url from $_commons_sls_path" >> ${LOG_FILE}
+                fi
+            else
+                echo "Could not find the line number for RedHat url in $_commons_sls_path, ignoring" >> $LOG_FILE
+            fi
+        else
+            echo "No url found for RedHat in $_commons_sls_path, ignoring" >> ${LOG_FILE}
+        fi
+
+        # Take backup of updated copy of commons sls
+        yes | cp -f $_commons_sls_path ${_commons_sls_path}.bkp
+        local _centos_url=$(grep -n "CentOS:"  $_commons_sls_path | awk '{ print $3 }')
+        if [[ ! -z $_centos_url ]]; then
+            _line_no=`grep -n "CentOS:"  $_commons_sls_path | cut -d: -f1`
+            if [[ ! -z $_line_no ]]; then
+                echo "Removing CentOS url from $_commons_sls_path" >> $LOG_FILE
+                sed -ie "${_line_no}s/.*/        CentOS:/" $_commons_sls_path
+                n_diff_lines=`diff $_commons_sls_path ${_commons_sls_path}.bkp | grep "^>" | wc -l`
+                echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
+                if [[ $n_diff_lines != 1 ]]; then
+                    echo "Could not update the CentOS url in $_commons_sls_path, restoring the original content" | tee -a ${LOG_FILE}
+                    yes | cp -f ${_commons_sls_path}.bkp $_commons_sls_path
+                else
+                    echo "Successfully removed CentOS url from $_commons_sls_path" >> ${LOG_FILE}
+                fi
+            else
+                echo "Could not find the line number for CentOS url in $_commons_sls_path, ignoring" >> $LOG_FILE
+            fi
+        else
+            echo "No url found for CentOS in $_commons_sls_path, ignoring" >> ${LOG_FILE}
+        fi
+    else
+        echo "No file $_commons_sls_path, ignoring" >> ${LOG_FILE}
+    fi
+
+    echo "Refreshing Salt pillars" >> ${LOG_FILE}
+    salt '*' saltutil.refresh_pillar ${salt_opts}
+    echo "Checking if the  RedHat url is removed from commons pillar" >> ${LOG_FILE}
+
+    # Check if RedHat url is removed from commons url on both nodes
+    _node1_url=$(salt srvnode-1 pillar.get commons:cortx_commons:RedHat --output=newline_values_only ${salt_opts})
+    _node2_url=$(salt srvnode-2 pillar.get commons:cortx_commons:RedHat --output=newline_values_only ${salt_opts})
+    if [[ ! -z "$_node1_url" ]]; then
+        echo "ERROR: RedHat url could not be removed from commons url on srvnode-1" | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
+    if [[ ! -z "$_node2_url" ]]; then
+        echo "ERROR: RedHat url could not be removed from commons url on srvnode-2" | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
+    echo "RedHat url is removed from commons pillar" >> ${LOG_FILE}
+
+    # Check if CentOS url is removed from commons url on both nodes
+    _node1_url=$(salt srvnode-1 pillar.get commons:cortx_commons:CentOS --output=newline_values_only ${salt_opts})
+    _node2_url=$(salt srvnode-2 pillar.get commons:cortx_commons:CentOS --output=newline_values_only ${salt_opts})
+    if [[ ! -z "$_node1_url" ]]; then
+        echo "ERROR: CentOS url could not be removed from commons url on Server A" | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
+    if [[ ! -z "$_node2_url" ]]; then
+        echo "ERROR: CentOS url could not be removed from commons url on Server B" | tee -a ${LOG_FILE}
+        exit 1
+    fi
+
+    echo "CentOS url is removed from commons pillar" >> ${LOG_FILE}
+
+    echo "Done" | tee -a ${LOG_FILE}
+}
+
 function remove_target_build {
 
     echo "Removing CORTX build url from configuration" | tee -a ${LOG_FILE}
@@ -204,14 +345,14 @@ function remove_target_build {
         line_target_build=`grep -n "target_build:"  $_release_sls_path | cut -d: -f1`
         if [[ ! -z $line_target_build ]]; then
             echo "Removing target_build from $_release_sls_path" >> $LOG_FILE
-            sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path
+            sed -ie "${line_target_build}s/.*/    target_build:/" $_release_sls_path
             n_diff_lines=`diff $_release_sls_path ${_release_sls_path}.bkp | grep "^>" | wc -l`
             echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
             if [[ $n_diff_lines != 1 ]]; then
                 echo "Could not update the target_build in $_release_sls_path, restoring the original content" | tee -a ${LOG_FILE}
                 yes | cp -f ${_release_sls_path}.bkp $_release_sls_path
             else
-                echo "Successfully updated target_build in $_release_sls_path" | tee -a ${LOG_FILE}
+                echo "Successfully updated target_build in $_release_sls_path" >> ${LOG_FILE}
             fi
         else
             echo "Could not find the target_build line number in $_release_sls_path, ignoring" >> $LOG_FILE
@@ -226,7 +367,7 @@ function remove_target_build {
             line_target_build=`grep -n "target_build:"  $_release_sls_path_user | cut -d: -f1`
             if [[ ! -z $line_target_build ]]; then
                 echo "Removing target_build from $_release_sls_path_user" >> $LOG_FILE
-                sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path_user
+                sed -ie "${line_target_build}s/.*/    target_build:/" $_release_sls_path_user
                 # ensure the sed caused only one line change
                 n_diff_lines=`diff $_release_sls_path_user ${_release_sls_path_user}.bkp | grep "^>" | wc -l`
                 echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
@@ -234,7 +375,7 @@ function remove_target_build {
                     echo "Could not update the target_build in $_release_sls_path_user, restoring the original content" | tee -a ${LOG_FILE}
                     yes | cp -f ${_release_sls_path_user}.bkp $_release_sls_path_user
                 else
-                    echo "Successfully updated target_build in $_release_sls_path_user" | tee -a ${LOG_FILE}
+                    echo "Successfully updated target_build in $_release_sls_path_user" >> ${LOG_FILE}
                 fi
             else
                 echo "Could not find the target_build line number in $_release_sls_path_user, ignoring" >> $LOG_FILE
@@ -249,12 +390,12 @@ function remove_target_build {
     _node1_tgt_build=$(salt srvnode-1 pillar.get eos_release:target_build --output=newline_values_only ${salt_opts})
     _node2_tgt_build=$(salt srvnode-2 pillar.get eos_release:target_build --output=newline_values_only ${salt_opts})
     if [[ ! -z "$_node1_tgt_build" ]]; then
-        echo "ERROR: Target build url could not be reset on srvnode-1" | tee -a ${LOG_FILE}
+        echo "ERROR: Target build url could not be reset on Server A" | tee -a ${LOG_FILE}
         exit 1
     fi
 
     if [[ ! -z "$_node2_tgt_build" ]]; then
-        echo "ERROR: Target build url could not be reset on srvnode-2" | tee -a ${LOG_FILE}
+        echo "ERROR: Target build url could not be reset on Server B" | tee -a ${LOG_FILE}
         exit 1
     fi
 
