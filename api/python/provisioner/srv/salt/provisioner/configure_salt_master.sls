@@ -47,9 +47,14 @@ salt_master_enabled:
       - salt_master_configured
       - salt_master_pki_set
 
+# TODO DRY copied from srv/components/provisioner/salt_master/config.sls
 salt_master_restarted:
-  service.running:
-    - name: salt-master.service
+  cmd.run:
+    # 1. test.true will prevent restart of salt-master if the config is malformed
+    # 2. --local is required if salt-master is actually not running,
+    #    since state might be called by salt-run as well
+    - name: 'salt-run salt.cmd test.true > /dev/null && salt-call --local service.restart salt-master > /dev/null '
+    - bg: True
     - watch:
       - file: salt_master_configured
       - file: salt_master_pki_set
