@@ -204,7 +204,7 @@ function remove_target_build {
         line_target_build=`grep -n "target_build:"  $_release_sls_path | cut -d: -f1`
         if [[ ! -z $line_target_build ]]; then
             echo "Removing target_build from $_release_sls_path" >> $LOG_FILE
-            sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path
+            sed -ie "${line_target_build}s/.*/    target_build:/" $_release_sls_path
             n_diff_lines=`diff $_release_sls_path ${_release_sls_path}.bkp | grep "^>" | wc -l`
             echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
             if [[ $n_diff_lines != 1 ]]; then
@@ -226,7 +226,7 @@ function remove_target_build {
             line_target_build=`grep -n "target_build:"  $_release_sls_path_user | cut -d: -f1`
             if [[ ! -z $line_target_build ]]; then
                 echo "Removing target_build from $_release_sls_path_user" >> $LOG_FILE
-                sed -ie "${line_target_build}s/.*/    target:_build:/" $_release_sls_path_user
+                sed -ie "${line_target_build}s/.*/    target_build:/" $_release_sls_path_user
                 # ensure the sed caused only one line change
                 n_diff_lines=`diff $_release_sls_path_user ${_release_sls_path_user}.bkp | grep "^>" | wc -l`
                 echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
