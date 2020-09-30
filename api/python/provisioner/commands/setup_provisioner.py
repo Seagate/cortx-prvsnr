@@ -255,7 +255,6 @@ class RunArgsSetup:
     )
     # FIXME EOS-13651, EOS-13686 disabled until code complete
     # url_cortx_deps: str = attr.ib(
-    #    init=False,
     #    metadata={
     #        inputs.METADATA_ARGPARSER: {
     #            'help': "Bundled CORTX dependencies url"
