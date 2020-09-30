@@ -287,8 +287,8 @@ LOCALHOST_DOMAIN = 'localhost'
 
 class DistrType(Enum):
     """Distribution types"""
-    CORTX = "cortx"       # only cortx packages
-    BUNDLE = "bundle"     # coxrt packages along with all dependencies
+    CORTX = "cortx"       # only release packages
+    BUNDLE = "bundle"     # release packages along with all dependencies
 
 
 # Defines a "frozen" list for allowed commands and supported by provisioner

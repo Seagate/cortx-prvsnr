@@ -17,10 +17,28 @@
 
 tmp_dir: /tmp
 
+
+# the following logic evaluates:
+#   - release_repo: a repo of the product release
+#   - 3rd party dependencies repositories:
+#     - os repositories (optionally)
+#     - commons_repo
+#     - epel_repo
+#     - saltstack_repo
+
+{% set os_repos = [] %}
+{% set target_build = pillar['release']['target_build'] %}
+{% set deps_bundle_url = salt['pillar.get']('release:deps_bundle_url') %}
+{% set release_repo = target_build %}
+
+# for bundle release target_build is a base url of mounted repositories,
+# might be local (file://) or remote (http(s)://)
 {% if pillar['release']['type'] == 'bundle' %}
+  # FIXME os repos for redhat with subscription disabled
 
-  {% set base_bundle_url = pillar['release']['target_build'] %}
+  {% set base_bundle_url = target_build %}
 
+  # FIXME too complicated command
   {% if ("RedHat" in grains['os']) and (salt['cmd.shell']('subscription-manager list | grep -m1 -A4 -Pe "Product Name:.*Red Hat Enterprise Linux Server"|grep -Pe "Status:.*Subscribed"')) %}
     {% set system_repo = '/'.join([base_bundle_url, 'rhel7.7']) %}
   {% else %}
@@ -28,111 +46,119 @@ tmp_dir: /tmp
     {% set system_repo = '/'.join([base_bundle_url, 'centos7.7']) %}
   {% endif %}
 
-  {% set cortx_repo = '/'.join([base_bundle_url, 'cortx_iso']) %}
-  {% set cortx_deps_repo = '/'.join([base_bundle_url, '3rd_party']) %}
-  {% set epel_repo = '/'.join([cortx_deps_repo, 'EPEL-7']) %}
-  {% set saltstack_repo = '/'.join([cortx_deps_repo, 'commons', 'saltstack-3001']) %}
-  {% set glusterfs_repo = '/'.join([cortx_deps_repo, 'commons', 'glusterfs']) %}
+  {% set release_repo = '/'.join([base_bundle_url, 'cortx_iso']) %}
+  {% set deps_bundle_url = '/'.join([base_bundle_url, '3rd_party']) %}
 
-  {% set repo_url = cortx_repo %}
-  {% set cortx_commons_url = cortx_deps_repo %}
+{% elif not deps_bundle_url %}
+  # deps bundle url implies that we follow new repo structure
 
-base_repos:
-  centos_repos: [] # FIXME redhat with subscription disabled
-  #  - id: "cortx_platform_base"
-  #    url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', system_repo) }}
-  epel_repo:
-    id: "epel"
-    url: {{ salt["environ.get"]('EPEL', epel_repo) }}
-  saltstack_repo:
-    id: "saltstack"
-    url: {{ salt["environ.get"]('SALTSTACK', saltstack_repo) }}
+  # LEGACY REPOS STRUCTURE
 
+  {% set os_base_repo = salt["environ.get"]('CORTX_PLATFORM_BASE', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/") %}
+    # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/os/x86_64/
+  {% set os_extras_repo = salt["environ.get"]('CORTX_PLATFORM_EXTRAS', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/") %}
+    # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/extras/x86_64/
+  {% set os_updates_repo = salt["environ.get"]('CORTX_PLATFORM_UPDATES', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Updates/") %}
+    # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/updates/x86_64/
 
-{% else %}
-
-  {% set repo_url = pillar['release']['target_build'] %}
+  {% set os_repos = [
+        {"id": "cortx_platform_base", "url": os_base_repo],
+        {"id": "cortx_platform_extras", "url": os_extras_repo],
+        {"id": "cortx_platform_updates", "url": os_updates_repo]
+      ]
+  %}
 
   {% if "RedHat" in grains['os'] %}
-    {% set cortx_commons_url = pillar['commons']['cortx_commons']['RedHat'] %}
+    {% set commons_repo = pillar['commons']['cortx_commons']['RedHat'] %}
   {% else %}
-    {% set cortx_commons_url = pillar['commons']['cortx_commons']['CentOS'] %}
+    {% set commons_repo = pillar['commons']['cortx_commons']['CentOS'] %}
   {% endif %}
 
+  {% set epel_repo = "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/" %}
+    # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
+  {% set saltstack_repo = "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3001" %}
+
+{% else %}
+# FIXME might be unnecessary, added just because of some experience
+#       that Jinja might fail for 'if/elif' if no final 'else' is pesented
+{% endif %}
+
+# bundled 3rd parties might be:
+#   - a part of bundled release
+#   - an standalone url where they mounted
+{% if deps_bundle_url %}
+  {% set epel_repo = '/'.join([deps_bundle_url, 'EPEL-7']) %}
+  {% set saltstack_repo = '/'.join([deps_bundle_url, 'commons', 'saltstack-3001']) %}
+  # {% set glusterfs_repo = '/'.join([deps_bundle_url, 'commons', 'glusterfs']) %}
+  {% set commons_repo = deps_bundle_url %}
+{% endif %}
+
+
+# finally give env variables a chance
+{% set commons_repo = salt["environ.get"]('CORTX_COMMONS', commons_repo) %}
+{% set release_repo = salt["environ.get"]('REPO_URL', release_repo) %}
+{% set epel_repo = salt["environ.get"]('EPEL', epel_repo) %}
+{% set saltstack_repo = salt["environ.get"]('SALTSTACK', saltstack_repo) %}
+
+
 base_repos:
-  centos_repos:
-    - id: "cortx_platform_base"
-      # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/os/x86_64/
-      url: {{ salt["environ.get"]('CORTX_PLATFORM_BASE', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/") }}
-    - id: "cortx_platform_extras"
-      # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/extras/x86_64/
-      url: {{ salt["environ.get"]('CORTX_PLATFORM_EXTRAS', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/") }}
-    - id: "cortx_platform_updates"
-      # url: http://mirrors.usc.edu/pub/linux/distributions/centos/7.7.1908/updates/x86_64/
-      url: {{ salt["environ.get"]('CORTX_PLATFORM_UPDATES', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Updates/") }}
+  centos_repos: {{ os_repos }}
   epel_repo:
     id: "epel"
-    # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
-    url: {{ salt["environ.get"]('EPEL', "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/") }}
+    url: {{ epel_repo }}
   saltstack_repo:
     id: "saltstack"
-    url: {{ salt["environ.get"]('SALTSTACK', "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3001") }}
-
-{% endif %}  # type of release
-
-
-{% set cortx_commons_url = salt["environ.get"]('CORTX_COMMONS', cortx_commons_url) %}
-{% set repo_url = salt["environ.get"]('REPO_URL', repo_url) %}
+    url: {{ saltstack_repo }}
 
 commons:
   repo:
   # Binaries from external sources
     id: "cortx_commons"
-    url: {{ cortx_commons_url }}
+    url: {{ commons_repo }}
 
 sspl:
   repo:
     id: "sspl"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "sspl_uploads"
-    url: {{ cortx_commons_url }}
+    url: {{ commons_repo }}
 
 lustre:
   repo:
     id: "lustre"
     url:
-      tcp: {{ cortx_commons_url }}/lustre/custom/tcp/
-      o2ib: {{ cortx_commons_url }}/lustre/custom/o2ib/
+      tcp: {{ commons_repo }}/lustre/custom/tcp/
+      o2ib: {{ commons_repo }}/lustre/custom/o2ib/
 
 motr:
   repo:
     id: "motr"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
 
 hare:
   repo:
     id: "hare"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
 
 cortx_ha:
   repo:
     id: "cortx-ha"
-    url: {{ repo_url }}
+    url: {{ release_repo }}
 
 s3server:
   repo:
     id: "s3server"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "s3server_uploads"
-    url: {{ cortx_commons_url }}
+    url: {{ commons_repo }}
   config:
     DEPLOY_TAG: "s3dev"
     S3_VERSION: "1.0"
@@ -141,30 +167,30 @@ s3server:
 nfs:
   repo:
     id: "nfs"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
   uploads_repo:
   # Binaries from external sources
     id: "nfs_uploads"
-    url: {{ cortx_commons_url }}
+    url: {{ commons_repo }}
 
 csm:
   repo:
     id: "csm"
-    url: {{ repo_url  }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo  }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
   uploads_repo:
     id: "csm_uploads"
-    url: {{ cortx_commons_url }}
+    url: {{ commons_repo }}
 
 uds:
   repo:
     id: "uds"
-    url: {{ repo_url  }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo  }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
 
 provisioner:
   repo:
     id: "provisioner"
-    url: {{ repo_url }}
-    gpgkey: {{ repo_url }}/RPM-GPG-KEY-Seagate
+    url: {{ release_repo }}
+    gpgkey: {{ release_repo }}/RPM-GPG-KEY-Seagate
