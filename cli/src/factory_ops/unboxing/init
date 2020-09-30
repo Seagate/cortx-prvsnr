@@ -250,16 +250,21 @@ if command -v pcs ; then
     echo "Ok." | tee -a ${LOG_FILE}
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
+    exit 1
 fi
 
+remove_seagate_url
 remove_target_build
 
 echo "Removing the repos with Seagate url from srvnode-1" >> ${LOG_FILE}
 for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
+for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
+
 yum clean all >> ${LOG_FILE}
 
 echo "Removing the repos with Seagate url from srvnode-2" >> ${LOG_FILE}
 ssh srvnode-2 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
+ssh srvnode-2 'for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
 ssh srvnode-2 "yum clean all"  >> ${LOG_FILE}
 
 # Update SSPL init
