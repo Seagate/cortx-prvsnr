@@ -16,7 +16,6 @@
 #
 
 import logging
-from collections import defaultdict
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
