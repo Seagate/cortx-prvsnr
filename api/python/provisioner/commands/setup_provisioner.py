@@ -899,14 +899,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
     # TODO IMPROVE DRY
-    def _prepare_setup_pillar(
+    def _prepare_factory_setup_pillar(
         self, profile_paths, run_args
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
 
         pillar_path = add_pillar_merge_prefix(
-            pillar_all_dir / 'setup.sls'
+            pillar_all_dir / 'factory_setup.sls'
         )
         if pillar_path.exists():
             pillar = load_yaml(pillar_path)
@@ -919,7 +919,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
-            pillar = dict(setup=pillar)
+            pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
         return pillar
@@ -1035,7 +1035,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         if not run_args.field_setup:
             logger.info("Preparing setup pillar")
-            self._prepare_setup_pillar(
+            self._prepare_factory_setup_pillar(
                 paths, run_args
             )
 
