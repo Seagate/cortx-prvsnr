@@ -62,7 +62,6 @@ PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
 )
 
-# TODO EOS-12076 EOS-12334
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
 )
@@ -74,11 +73,10 @@ PRVSNR_CORTX_DEPS_ISO = (
 )
 
 
-# FIXME EOS-12334 should be inside factory installation directory
-#    relative paths
-PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
-PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
-    'components/misc_pkgs/ssl_certs/files/stx.pem'
+PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = (
+        PRVSNR_DATA_ROOT_DIR / 'components/misc_pkgs/swupdate/repo/files')
+PRVSNR_USER_FILES_SSL_CERTS_FILE = (
+    PRVSNR_DATA_ROOT_DIR / 'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 

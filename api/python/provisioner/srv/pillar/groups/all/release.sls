@@ -24,12 +24,8 @@ release:
                     #   3rd_party              <- CORTX 3rd party ISO is mounted here
                     #   cortx_iso              <- CORTX ISO (main) is mounted here
     base:
-        # TODO IMPROVE EOS-12076 EOS-12334
+        # TODO IMPROVE EOS-12076
         #      the same base location as for update repos so they might
-        #      be mounted by prouction setup logic as well
-        # base_dir: /opt/seagate/cortx/updates
-        # TODO IMPROVE EOS-12076 EOS-12334
-        #      make the same as for for update repos so they might
         #      be mounted by prouction setup logic as well
         # TODO IMPROVE EOS-12076 shorten path, use some global config variable
         base_dir: /var/lib/seagate/cortx/provisioner/local/cortx_repos
