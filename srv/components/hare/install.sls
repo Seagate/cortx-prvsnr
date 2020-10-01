@@ -1,5 +1,5 @@
-include:
-  - components.hare.prepare
+# include:
+#   - components.hare.prepare
 
 Hare requisites:
   pkg.installed:
@@ -11,5 +11,5 @@ Install hare:
     - name: eos-hare
     - version: latest
     - refresh: True
-    - require:
-      - pkg: Hare requisites
+#    - require:
+#      - pkg: Hare requisites
