@@ -93,6 +93,38 @@ class DeployVM(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = run_args_type
 
+    def set_pillar_data(self, setup_type):
+        minions_ids = ['srvnode-1']
+        disk = []
+        if setup_type != SetupType.SINGLE:
+            minions_ids.append('srvnode-2')
+        res = self._cmd_run(
+            "lsblk -ndp | grep disk | awk '{ print $1 }'",
+            targets=self._primary_id()
+        )
+        if res[self._primary_id()]:
+            disk = res[self._primary_id()].split("\n")
+        for minion_id in minions_ids:
+            if len(disk) > 1:
+                self._cmd_run(
+                    "provisioner pillar_set "
+                    f" cluster/{minion_id}/storage/metadata_device "
+                    f'[\\"{disk[-2]}\\"]',
+                    targets=self._primary_id()
+                )
+                self._cmd_run(
+                    "provisioner pillar_set "
+                    f" cluster/{minion_id}/storage/data_devices "
+                    f'[\\"{disk[-1]}\\"]',
+                    targets=self._primary_id()
+                )
+            self._cmd_run(
+                "provisioner pillar_set "
+                f"cluster/{minion_id}/network/data_nw/roaming_ip  "
+                '\\"127.0.0.1\\"',
+                targets=self._primary_id()
+            )
+
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = run_args.setup_type
@@ -107,7 +139,7 @@ class DeployVM(Deploy):
         for state in states:
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
-                self._apply_state(f"components.{state}", targets, stages)
+                self._apply_state(f"components.{state}", primary, stages)
             else:
                 # FIXME EOS-12076 the following logic is only
                 #       for legacy dual node setup
@@ -140,6 +172,7 @@ class DeployVM(Deploy):
     def run(self, **kwargs):
         run_args = self._run_args_type(**kwargs)
 
+        self.set_pillar_data(run_args.setup_type)
         if self._is_hw():
             # TODO EOS-12076 less generic error
             raise errors.ProvisionerError(
@@ -151,7 +184,7 @@ class DeployVM(Deploy):
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
-            self._encrypt_pillar()
+            # self._encrypt_pillar()
             self._run_states('prereq', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
@@ -163,7 +196,7 @@ class DeployVM(Deploy):
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
-                self._encrypt_pillar()
+                # self._encrypt_pillar()
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
