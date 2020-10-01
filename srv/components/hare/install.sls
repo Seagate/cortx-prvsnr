@@ -15,6 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# include:
+#   - components.hare.prepare
+
 Hare requisites:
   pkg.installed:
     - pkgs:
@@ -25,5 +28,5 @@ Install hare:
     - name: cortx-hare
     - version: latest
     - refresh: True
-    - require:
-      - pkg: Hare requisites
+#    - require:
+#      - pkg: Hare requisites
