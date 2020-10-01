@@ -15,17 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Relocate core dump to /var/crash:
+Create /var/log/crash directoyr:
+  file.directory:
+    - name: /var/log/crash
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: True
+
+Relocate core dump to /var/log/crash:
   sysctl.present:
     - name: kernel.core_pattern
-    - value: '|/bin/sh -c $@ -- eval exec gzip --fast > /var/crash/core-%e.%p.gz'
+    - value: '|/bin/sh -c $@ -- eval exec gzip --fast > /var/log/crash/core-%e.%p.gz'
     - config: /etc/sysctl.d/200-motr-dumps.conf
 
 Load updated sysctl settings:
   cmd.run:
     - name: sysctl -p /etc/sysctl.d/200-motr-dumps.conf
     - require:
-      - Relocate core dump to /var/crash
+      - Relocate core dump to /var/log/crash
 
 update /etc/kdump.conf:
   file.line:
@@ -36,10 +44,14 @@ update /etc/kdump.conf:
 
 cron job for coredumps rotation:
   file.managed:
-    - name: /etc/cron.daily/coredumps_rotate
+    - name: /etc/cron.hourly/coredumps_rotate
     - contents: |
         #!/bin/sh
-        ls -t /var/crash/core-* | tail -n +60 | xargs rm -f
+{% if "physical" in grains['virtual'] %}
+        ls -t /var/log/crash/core-* | tail -n +60 | xargs rm -f
+{% else %}
+        ls -t /var/log/crash/core-* | tail -n +6 | xargs rm -f
+{% endif %}
         EXITVALUE=$?
         if [ $EXITVALUE != 0 ]; then
             /usr/bin/logger -t coredumps "ALERT coredumps rotation exited abnormally with [$EXITVALUE]"

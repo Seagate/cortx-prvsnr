@@ -899,14 +899,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
     # TODO IMPROVE DRY
-    def _prepare_setup_pillar(
+    def _prepare_factory_setup_pillar(
         self, profile_paths, run_args
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
 
         pillar_path = add_pillar_merge_prefix(
-            pillar_all_dir / 'setup.sls'
+            pillar_all_dir / 'factory_setup.sls'
         )
         if pillar_path.exists():
             pillar = load_yaml(pillar_path)
@@ -919,7 +919,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
-            pillar = dict(setup=pillar)
+            pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
         return pillar
@@ -1035,7 +1035,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         if not run_args.field_setup:
             logger.info("Preparing setup pillar")
-            self._prepare_setup_pillar(
+            self._prepare_factory_setup_pillar(
                 paths, run_args
             )
 
@@ -1113,7 +1113,27 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 paths, repos, run_args
             )
 
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt masters / minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
+
         if not run_args.field_setup:
+            logger.info("Preparing factory profile")
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1133,25 +1153,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     'srv/salt/provisioner/files/repo'
                 )
             ])
-
-        ssh_client = self._create_ssh_client(
-            paths['salt_master_file'], paths['salt_roster_file']
-        )
-
-        setup_ctx = SetupCtx(run_args, paths, ssh_client)
-
-        for node in run_args.nodes:
-            logger.info(
-                f"Ensuring '{node.minion_id}' is ready to accept commands"
-            )
-            ssh_client.ensure_ready([node.minion_id])
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
 
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"

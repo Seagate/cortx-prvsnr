@@ -62,6 +62,7 @@ deploy_states = dict(
     ],
     prereq=[
         "misc_pkgs.rhel_sos",
+        "misc_pkgs.ipmi.bmc_watchdog",
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
         "misc_pkgs.openldap",
