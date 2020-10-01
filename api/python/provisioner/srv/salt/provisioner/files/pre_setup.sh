@@ -28,7 +28,7 @@ fi
 
 
 # only for upgrades
-if [ $1 -gt 1 ] ; then
+if [ "$1" -gt 1 ] ; then
     rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
     rm -rf /usr/lib/python3.6/site-packages/provisioner
 fi
