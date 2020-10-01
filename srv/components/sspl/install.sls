@@ -23,8 +23,8 @@ Install cortx-sspl packages:
     - name: cortx-sspl
     - version: latest
     - refresh: True
-    - require:
-      - Add sspl yum repo
+    # - require:
+    #   - Add sspl yum repo
 
 Install flask:
   pip.installed:
