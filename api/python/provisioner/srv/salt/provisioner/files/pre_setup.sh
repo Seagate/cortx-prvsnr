@@ -27,8 +27,6 @@ if [[ "$verbosity" -ge 2 ]]; then
 fi
 
 
-# only for upgrades
-if [ "$1" -gt 1 ] ; then
-    rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-    rm -rf /usr/lib/python3.6/site-packages/provisioner
-fi
+# FIXME remove later
+rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
+rm -rf /usr/lib/python3.6/site-packages/provisioner
