@@ -31,6 +31,7 @@ from ..vendor import attr
 from ..errors import (
     ProvisionerError,
     SaltCmdResultError,
+    SaltCmdRunError
 )
 from ..config import (
     ALL_MINIONS,
@@ -255,7 +256,6 @@ class RunArgsSetup:
     )
     # FIXME EOS-13651, EOS-13686 disabled until code complete
     # url_cortx_deps: str = attr.ib(
-    #    init=False,
     #    metadata={
     #        inputs.METADATA_ARGPARSER: {
     #            'help': "Bundled CORTX dependencies url"
@@ -1214,16 +1214,48 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
-        logger.info("Configuring salt-masters")
-        ssh_client.state_apply(
-            'provisioner.configure_salt_master',
-            targets=master_targets,
-            fun_kwargs={
-                'pillar': {
-                    'updated_keys': updated_keys
+        # TODO IMPRVOE salt might be restarted in the background,
+        #      might require to ensure that it is ready to avoid
+        #      a race condition with further commands that relies
+        #      on it (e.g. salt calls and provisioner api on a remote).
+        #      To consider the similar logic as in salt_master.py.
+        #
+        #      Alternative: pospone that step once core and API
+        #      is installed and we may call that on remotes
+        try:
+            logger.info("Configuring salt-masters")
+            ssh_client.state_apply(
+                'provisioner.configure_salt_master',
+                targets=master_targets,
+                fun_kwargs={
+                    'pillar': {
+                        'updated_keys': updated_keys
+                    }
                 }
-            }
-        )
+            )
+        except SaltCmdRunError as exc:
+            if 'Stream is closed' in str(exc):
+                logger.warning('salt-ssh lost a stream, trying to workaround')
+                # FIXME dirty code
+                targets = (
+                    [node.minion_id for node in run_args.nodes]
+                    if master_targets == ALL_MINIONS else [master_targets]
+                )
+
+                for target in targets:
+                    logger.info(f"stopping salt-master on {target}")
+                    ssh_client.run(
+                        'cmd.run', targets=target,
+                        fun_args=['systemctl stop salt-master']
+                    )
+
+                logger.info(f"starting salt-masters on all nodes")
+                ssh_client.run(
+                    'cmd.run', targets=master_targets,
+                    fun_args=['systemctl start salt-master']
+                )
+            else:
+                raise
 
         if run_args.ha:
             # TODO glusterfs use usual pillar instead inline one

@@ -133,7 +133,10 @@ class StorageEnclosureParamsValidation:
     secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
-    _optional_param = []
+    controller_type: str = StorageEnclosureParams.controller_type
+    _optional_param = [
+        'controller_type'
+    ]
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
@@ -200,9 +203,9 @@ class ConfigureSetup(CommandParserFillerMixin):
         params = {}
         for key in input:
             val = key.split(".")
-            if val[-1] in [
+            if len(val) > 1 and val[-1] in [
                 'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
-                'netmask', 'public_ip_addr'
+                'netmask', 'public_ip_addr', 'type'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:

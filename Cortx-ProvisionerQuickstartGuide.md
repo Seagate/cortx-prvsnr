@@ -656,8 +656,6 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
           		storage_enclosure:
             		id: storage_node_1            # equivalent to fqdn for server node
             		type: RBOD                    # Type of enclosure. E.g. RBOD
-            		controller:
-              		type: gallium               # Type of controller on storage node. E.g. gallium/indium/sati
               		primary_mc:
                 		ip: 127.0.0.1
                 		port: 80
