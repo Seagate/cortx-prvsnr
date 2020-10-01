@@ -15,28 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install bmc-watchdog:
-  pkg.installed:
-    - name: freeipmi-bmc-watchdog
+include:
+  - components.misc_pkgs.ipmi.bmc_watchdog.start
 
-Update watchdog timeout:
-  file.replace:
-    - name: /etc/sysconfig/bmc-watchdog
-    - pattern: '-i 900'
-    - repl: '-i 300'
-
-Reload kernel for bmc-watchdog:
-  file.managed:
-    - name: /etc/modules-load.d/ipmi_mods.conf
-    - contents: |
-        # Load at boot:
-        ipmi_devintf
-        ipmi_si
-        ipmi_msghandler
-    - create: True
-    - makedirs: True
-    - replace: True
-    - user: root
-    - group: root
-    - mode: 644
-    - dir_mode: 755
+Verify bmc-watchdog:
+  cmd.run:
+    - name: ipmitool mc watchdog get
+    - require:
+      - Start and enable bmc-watchdog
