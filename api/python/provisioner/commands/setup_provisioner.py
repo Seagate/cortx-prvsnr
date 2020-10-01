@@ -1113,7 +1113,27 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 paths, repos, run_args
             )
 
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt masters / minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
+
         if not run_args.field_setup:
+            logger.info("Preparing factory profile")
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1133,25 +1153,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     'srv/salt/provisioner/files/repo'
                 )
             ])
-
-        ssh_client = self._create_ssh_client(
-            paths['salt_master_file'], paths['salt_roster_file']
-        )
-
-        setup_ctx = SetupCtx(run_args, paths, ssh_client)
-
-        for node in run_args.nodes:
-            logger.info(
-                f"Ensuring '{node.minion_id}' is ready to accept commands"
-            )
-            ssh_client.ensure_ready([node.minion_id])
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
 
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"
