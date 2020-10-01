@@ -22,18 +22,20 @@ Install bmc-watchdog:
 Update watchdog timeout:
   file.replace:
     - name: /etc/sysconfig/bmc-watchdog
-    - pattern: '900'
-    - repl: '300'
+    - pattern: '-i 900'
+    - repl: '-i 300'
 
 Reload kernel with Modprobe:
   file.managed:
-    - name: /etc/modules
+    - name: /etc/modules-load.d/ipmi_mods.conf
     - contents: |
         ipmi_devintf
         ipmi_si
         ipmi_msghandler
     - create: True
+    - makedirs: True
     - replace: True
-    - user: 'root'
-    - group: 'root'
+    - user: root
+    - group: root
     - mode: 644
+    - dir_mode: 755

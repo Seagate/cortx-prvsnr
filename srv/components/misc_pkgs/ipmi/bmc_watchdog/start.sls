@@ -19,9 +19,3 @@ Start and enable bmc-watchdog:
   service.running:
     - name: bmc-watchdog
     - enable: True
-
-Verify bmc-watchdog:
-  cmd.run:
-    - name: ipmitool mc watchdog get
-    - requires:
-      - Start and enable bmc-watchdog
