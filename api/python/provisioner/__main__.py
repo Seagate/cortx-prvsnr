@@ -130,6 +130,7 @@ def _set_logging(output_type, log_args=None, other_args=None):
     ):
         # disable rsyslog logging
         setattr(log_args, config.LOG_RSYSLOG_HANDLER, False)
+        log_args.update_handlers()
 
     if (
         cmd in config.LOG_FORCED_LOGFILE_CMDS
