@@ -196,6 +196,8 @@ $fpm_tool --input-type "python" \
     --no-python-downcase-dependencies \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
+    --rpm-auto-add-directories \
+    --before-install "$input_dir/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
     --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \
     --package "${output_dir}" \
     $iteration \
