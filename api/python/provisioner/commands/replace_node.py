@@ -152,7 +152,8 @@ class ReplaceNode(SetupProvisioner):
             'url_cortx_deps',  # TODO IMPROVE may rely on profile data
             'dist_type',
             'target_build',
-            'salt_master'
+            'salt_master',
+            'ha'
         ):
             kwargs[_attr] = setup_args[_attr]
 

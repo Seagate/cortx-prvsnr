@@ -36,3 +36,4 @@ saltstack_installed:
 gitfs_fileserver_deps_installed:
   pkg.installed:
     - name: GitPython   # FIXME JBOD
+    - onlyif: yum info GitPython
