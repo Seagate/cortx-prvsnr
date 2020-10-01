@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Create /var/log/crash directory:
+Create /var/log/crash directoyr:
   file.directory:
     - name: /var/log/crash
     - user: root
@@ -47,7 +47,11 @@ cron job for coredumps rotation:
     - name: /etc/cron.hourly/coredumps_rotate
     - contents: |
         #!/bin/sh
+{% if "physical" in grains['virtual'] %}
         ls -t /var/log/crash/core-* | tail -n +60 | xargs rm -f
+{% else %}
+        ls -t /var/log/crash/core-* | tail -n +6 | xargs rm -f
+{% endif %}
         EXITVALUE=$?
         if [ $EXITVALUE != 0 ]; then
             /usr/bin/logger -t coredumps "ALERT coredumps rotation exited abnormally with [$EXITVALUE]"
