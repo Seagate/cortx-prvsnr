@@ -1076,18 +1076,18 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
             if run_args.source == 'iso':
                 repos = {
-                    'cortx': f"salt://{run_args.iso_cortx.name}",
+                    'cortx_iso': f"salt://{run_args.iso_cortx.name}",
                     '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
                 }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
-                        'cortx': f"{run_args.target_build}/cortx_iso",
+                        'cortx_iso': f"{run_args.target_build}/cortx_iso",
                         '3rd_party': deps_bundle_url
                     }
                 else:
                     repos = {
-                        'cortx': f'{run_args.target_build}'
+                        'cortx_iso': f'{run_args.target_build}'
                     }
                     if deps_bundle_url:
                         repos['3rd_party'] = deps_bundle_url

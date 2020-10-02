@@ -17,11 +17,16 @@
 
 import yaml
 import logging
-import time
-from typing import Tuple, Union
-from pathlib import Path
-from typing import Optional, List
 import subprocess
+import time
+
+from pathlib import Path, PosixPath
+from typing import (
+    Tuple,
+    Union,
+    Optional,
+    List
+)
 
 from . import config
 
@@ -57,7 +62,19 @@ def dump_yaml_str(
     canonical=False,
     **kwargs
 ):
-    return yaml.safe_dump(
+    def posix_path_representer(dumper_obj, posix_path_obj):
+        return dumper_obj.represent_scalar("tag:yaml.org,2002:str", str(posix_path_obj))
+    yaml.add_representer(PosixPath, posix_path_representer)
+
+    # return yaml.safe_dump(
+    #     data,
+    #     default_flow_style=default_flow_style,
+    #     canonical=canonical,
+    #     width=width,
+    #     indent=indent,
+    #     **kwargs
+    # )
+    return yaml.dump(
         data,
         default_flow_style=default_flow_style,
         canonical=canonical,
