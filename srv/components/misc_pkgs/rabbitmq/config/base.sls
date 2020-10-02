@@ -72,6 +72,37 @@ Setup logrotate policy for rabbitmq-server:
   - requrie:
     - Install RabbitMQ
 
+# logrotate_conf config:
+Setup hourly logrotate policy for rabbitmq-server:
+  file.managed:
+  - name: /etc/rabbitmq/logrotate_conf/rabbitmq-server
+  - source: salt://components/misc_pkgs/rabbitmq/files/rabbitmq-server
+  - keep_source: True
+  - file_mode: 0644
+  - user: root
+  - group: root
+  - requrie:
+    - Install RabbitMQ
+
+Setup cron job:
+  file.managed:
+    - name: /etc/cron.hourly/rabbitmq_logrotate
+    - contents: |
+        #!/bin/sh
+        /usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/rabbitmq/logrotate_conf/rabbitmq-server
+        EXITVALUE=$?
+        if [ $EXITVALUE != 0 ]; then
+            /usr/bin/logger -t logrotate "ALERT exited abnormally with [$EXITVALUE]"
+        fi
+        exit 0
+    - create: True
+    - makedirs: True
+    - replace: False
+    - user: root
+    - group: root
+    - dir_mode: 755
+    - mode: 0700
+
 Copy Erlang cookie:
   file.managed:
     - name: /var/lib/rabbitmq/.erlang.cookie
