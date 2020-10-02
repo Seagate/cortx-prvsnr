@@ -46,6 +46,10 @@ def validator_path_exists(instance, attribute, value):
         raise ValueError(f"Path {value} doesn't exist")
 
 
+def converter_path_resolved(value):
+    return value if value is None else Path(str(value)).resolve()
+
+
 def load_yaml_str(data):
     try:
         return yaml.safe_load(data)

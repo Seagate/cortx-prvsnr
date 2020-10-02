@@ -227,7 +227,7 @@ class RunArgsSetup:
             }
         },
         default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -239,7 +239,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -251,7 +251,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # FIXME EOS-13651, EOS-13686 disabled until code complete
@@ -919,13 +919,17 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
+            if pillar['iso_cortx']:
+                pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
+            if pillar['iso_cortx_deps']:
+                pillar['iso_cortx_deps'] = str(config.PRVSNR_CORTX_DEPS_ISO)
             pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
         return pillar
 
     def _prepare_release_pillar(
-        self, profile_paths, repos_data: Dict, run_args
+        self, profile_paths, repos_data: Dict, run_args, force=False
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
@@ -933,7 +937,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'release.sls'
         )
-        if pillar_path.exists():
+        if not force and pillar_path.exists():
             pillar = load_yaml(pillar_path)
         else:
             pillar = {
@@ -1065,8 +1069,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        elif not run_args.field_setup:  # iso or rpm
-
+        elif:  # iso or rpm
             # FIXME rhel and centos repos
             deps_bundle_url = (
                 f"{run_args.target_build}/3rd_party"
@@ -1109,8 +1112,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 })
 
             logger.info("Preparing CORTX repos pillar")
+            # FIXME we just shoudn't copy that file
+            #       as part of factory profile
             self._prepare_release_pillar(
-                paths, repos, run_args
+                paths, repos, run_args, force=run_args.field_setup
             )
 
         ssh_client = self._create_ssh_client(
@@ -1170,8 +1175,36 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         #   - a repo file is created and pointed to the mount directory
         # TODO EOS-12076 IMPROVE hard-coded
         if run_args.source in ('iso', 'rpm'):
-            # copy ISOs onto remotes and mount
-            ssh_client.state_apply('repos')
+            # do not copy ISO for the node where we are now already
+            if (
+                run_args.field_setup and
+                run_args.source == 'iso' and
+                run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
+                run_args.iso_cortx_deps == config.PRVSNR_CORTX_DEPS_ISO
+            ):
+                # FIXME it is valid only for replace_node logic,
+                #       not good to rely on some specific case here
+                # FIXME hardcoded pillar key
+                ssh_client.state_apply(
+                    'repos', targets=run_args.primary.minion_id,
+                    fun_kwargs={
+                        'pillar': {
+                            'skip_iso_copy': True
+                        }
+                    }
+                )
+                # NOTE for now salt-ssh supports only glob and regex targetting
+                # https://docs.saltstack.com/en/latest/topics/ssh/#targeting-with-salt-ssh
+                ssh_client.state_apply(
+                    'repos',
+                    targets='|'.join([
+                        node.id for node in run_args.secondaries
+                    ]),
+                    tgt_type='pcre'
+                )
+            else:
+                # copy ISOs onto all remotes and mount
+                ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
 

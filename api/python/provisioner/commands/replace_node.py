@@ -147,8 +147,8 @@ class ReplaceNode(SetupProvisioner):
         for _attr in (
             'source',
             'prvsnr_version',
-            # 'iso_cortx',  # FIXME iso paths would be different
-            # 'iso_cortx_deps',
+            'iso_cortx',
+            'iso_cortx_deps',
             'url_cortx_deps',  # TODO IMPROVE may rely on profile data
             'dist_type',
             'target_build',
