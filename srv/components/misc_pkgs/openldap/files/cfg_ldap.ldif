@@ -30,7 +30,7 @@ olcRootDN: cn=admin,dc=seagate,dc=com
 dn: olcDatabase={2}{{db}},cn=config
 changetype: modify
 add: olcDbMaxSize
-olcDbMaxSize: 32212254720
+olcDbMaxSize: 10737418240
 
 dn: olcDatabase={2}{{db}},cn=config
 changetype: modify
