@@ -1069,7 +1069,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        elif:  # iso or rpm
+        else:  # iso or rpm
             # FIXME rhel and centos repos
             deps_bundle_url = (
                 f"{run_args.target_build}/3rd_party"
