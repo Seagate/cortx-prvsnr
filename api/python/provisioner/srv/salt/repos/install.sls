@@ -23,6 +23,8 @@
 
         {% set iso_path = dest_repo_dir + '.iso' %}
 
+        {% if not salt['pillar.get']('skip_iso_copy', False) %}
+
 copy_repo_iso_{{ release }}:
   file.managed:
     - name: {{ iso_path }}
@@ -31,6 +33,8 @@ copy_repo_iso_{{ release }}:
     - require_in:
       - repo_iso_mounted_{{ release }}
       - repo_added_{{ release }}
+
+        {% endif %}
 
 {{ repo_mounted(release, iso_path, dest_repo_dir) }}
 

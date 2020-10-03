@@ -67,10 +67,10 @@ PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
 )
 PRVSNR_CORTX_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / 'cortx_iso.iso'
 )
 PRVSNR_CORTX_DEPS_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx_deps.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / '3rd_party.iso'
 )
 
 
