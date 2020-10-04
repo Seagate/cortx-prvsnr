@@ -1214,9 +1214,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
 
-        # FIXME: Commented because execution hung at firewall configuration
-        # logger.info("Configuring the firewall")
-        # ssh_client.state_apply('firewall')
+        # Does not hang after adding glusterfs logic.
+        logger.info("Configuring the firewall")
+        ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')

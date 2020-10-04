@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -13,28 +12,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-
-set -eu
-
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
-
-#Disable iptables-services
-systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
-#systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
-systemctl stop ebtables && systemctl disable ebtables && systemctl mask ebtables
-
-#Install and start firewalld
-yum install -y firewalld
-systemctl start firewalld
-systemctl enable firewalld
-
-# Open salt firewall ports
-firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent
-firewall-cmd --reload
+Start and enable firewalld service:
+  service.running:
+    - name: firewalld
+    - enable: True
+    - reload: True

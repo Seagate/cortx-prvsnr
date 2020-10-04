@@ -12,22 +12,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-# TODO TEST EOS-8473
+#Stop and disable services first, before adding new rules
+Stop iptables:
+  service.dead:
+    - name: iptables
+    - enable: False
 
-Install firewalld:
-  pkg.installed:
-    - name: firewalld
-    - version: latest
-    - refresh: True
+Stop ebtables:
+  service.dead:
+    - name: ebtables
+    - enable: False
 
-#Start the service
-Start firewalld:
-  service.running:
-    - name: firewalld
-    - enable: True
-    - reload: True
-    - require:
-      - Install firewalld
+Disable iptables:
+  service.disabled:
+    - name: iptables
+
+Disable ebtables:
+  service.disabled:
+    - name: ebtables
+
+#Masking to ensure the services remain stopped
+Mask iptables:
+  service.masked:
+    - name: iptables
+
+Mask ebtables:
+  service.masked:
+    - name: ebtables
