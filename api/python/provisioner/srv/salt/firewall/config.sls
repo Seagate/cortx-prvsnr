@@ -26,11 +26,11 @@ saltmaster:
       - 4505/tcp
       - 4506/tcp
 
-glusterfs:
-  firewalld.service:
-    - name: gluster
-    - ports:
-      - 24007/tcp
+# glusterfs:
+#   firewalld.service:
+#     - name: gluster
+#     - ports:
+#       - 24007/tcp
 
 ssh:
   firewalld.service:
@@ -42,7 +42,9 @@ public:
   firewalld.present:
     - name: public
     - services:
-      - firewalld
+      - glusterfs
+      - saltmaster
+      - ssh
 
 Reload firewalld:
   service.running:

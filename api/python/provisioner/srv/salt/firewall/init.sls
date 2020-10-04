@@ -19,3 +19,4 @@ include:
   - .prepare
   - .install
   - .config
+  - .start
