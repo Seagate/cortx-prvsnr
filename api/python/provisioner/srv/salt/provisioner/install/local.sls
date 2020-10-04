@@ -23,4 +23,5 @@ repo_installed:
     - name: {{ install_dir }}
     - source: salt://provisioner/files/repo
     - keep_source: True
-    - clean: True  # ???
+    - clean: False  # True would clean up generated_configs dir
+                    # We don't want the directory to be cleaned-up
