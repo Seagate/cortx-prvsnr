@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -13,28 +12,41 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
+# please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
+#Enable firewall service before configuring ports
+include:
+  - .start
 
-set -eu
+saltmaster:
+  firewalld.service:
+    - name: saltmaster
+    - ports:
+      - 4505/tcp
+      - 4506/tcp
 
-verbosity="${1:-0}"
+# glusterfs:
+#   firewalld.service:
+#     - name: gluster
+#     - ports:
+#       - 24007/tcp
 
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
+ssh:
+  firewalld.service:
+    - name: ssh
+    - ports:
+      - 22/tcp
 
-#Disable iptables-services
-systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
-#systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
-systemctl stop ebtables && systemctl disable ebtables && systemctl mask ebtables
+public:
+  firewalld.present:
+    - name: public
+    - services:
+      - glusterfs
+      - saltmaster
+      - ssh
 
-#Install and start firewalld
-yum install -y firewalld
-systemctl start firewalld
-systemctl enable firewalld
-
-# Open salt firewall ports
-firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent
-firewall-cmd --reload
+Reload firewalld:
+  service.running:
+    - name: firewalld
+    - reload: True
