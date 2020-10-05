@@ -18,7 +18,7 @@
 glusterfs_servers_peered:
   glusterfs.peered:
     - names:
-{% for peer in salt['pillar.get']('glusterfs_peers', []) %}
+{% for peer in (salt['pillar.get']('glusterfs_peers', []) | difference(grains['fqdn'])) %}
       - {{ peer }}
 {% endfor %}
 
