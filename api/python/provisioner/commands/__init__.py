@@ -1207,6 +1207,15 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
+        # Ensure rsync is installed, if not already
+        StateFunExecuter.execute(
+            'pkg.installed',
+            fun_kwargs=dict(
+                name='rsync'
+            ),
+            targets=targets
+        )
+
         StateFunExecuter.execute(
             'file.managed',
             fun_kwargs=dict(
@@ -1236,6 +1245,13 @@ class CreateUser(CommandParserFillerMixin):
                           '/usr/bin/provisioner, '
                           '/var/log, '
                           '/tmp, '
+                          '/usr/bin/lsscsi, '
+                          '/usr/sbin/mdadm, '
+                          '/usr/sbin/sfdisk, '
+                          '/usr/sbin/mkfs, '
+                          '/usr/bin/rsync, '
+                          '/bin/rsync, '
+                          '/usr/local/bin/rsync, '
                           '/usr/sbin/smartctl, '
                           '/usr/bin/ipmitool, '
                           '/opt/seagate/cortx/sspl/bin/sspl_bundle_generate, '
