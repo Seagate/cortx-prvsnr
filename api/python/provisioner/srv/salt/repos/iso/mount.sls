@@ -23,6 +23,6 @@ repo_iso_mounted_{{ release }}:
     - device: {{ source }}
     - mkmnt: True
     - fstype: iso9660
-    - persist: False
+    - persist: True
 
 {% endmacro %}
