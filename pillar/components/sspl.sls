@@ -96,12 +96,6 @@ sspl:
     threaded: "true"
     logging_interval: "3600"
   STORAGE_ENCLOSURE:
-    primary_controller_ip: "127.0.0.1"
-    primary_controller_port: "28200"
-    secondary_controller_ip: "127.0.0.1"
-    secondary_controller_port: "28200"
-    user: "xxxxx"
-    password: "gAAAAABehkmVHStx337AN2g6OTALqA5BNejmWD6Nu__25DgYzauLz6iGLLCDzqs71pP7Z5AV-oEvnOPGKomJiTzyPwOHnmylEQ=="
     mgmt_interface: "cliapi"
   REALSTORSENSORS:
     polling_frequency: "30"
