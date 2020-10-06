@@ -1198,7 +1198,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.state_apply(
                     'repos',
                     targets='|'.join([
-                        node.id for node in run_args.secondaries
+                        node.minion_id for node in run_args.secondaries
                     ]),
                     tgt_type='pcre'
                 )

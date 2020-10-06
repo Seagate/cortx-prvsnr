@@ -9,6 +9,7 @@
 /var/log/seagate/provisioner/storage_metadata_reset.log
 /var/log/seagate/provisioner/salt_master.log
 /var/log/seagate/provisioner/salt_minion.log {
+    su root prvsnrusers
     weekly
     missingok
     rotate 4
@@ -19,6 +20,7 @@
 }
 
 /var/log/salt/key {
+    su root prvsnrusers
     weekly
     missingok
     rotate 4
@@ -31,6 +33,7 @@
 # Rotate provisioner log files
 /var/log/seagate/provisioner/prvsnr*.log
 {
+    su root prvsnrusers
     weekly
     missingok
     rotate 4
