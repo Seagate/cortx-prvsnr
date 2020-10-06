@@ -208,7 +208,9 @@ LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
 
 
 class LogLevelTypes(Enum):
+
     """Types of logging output"""
+
     RSYSLOG = f"{LOG_RSYSLOG_HANDLER}_level"
     CONSOLE = f"{LOG_CONSOLE_HANDLER}_level"
     LOGFILE = f"{LOG_FILE_HANDLER}_level"
