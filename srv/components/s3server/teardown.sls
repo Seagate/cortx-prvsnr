@@ -23,7 +23,7 @@
 {% if pillar["cluster"][grains["id"]]["is_primary"] %}
 Stage - Post Install S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:reset')
 {% endif %}
 
 

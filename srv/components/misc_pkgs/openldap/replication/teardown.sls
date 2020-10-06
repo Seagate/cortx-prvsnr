@@ -26,7 +26,7 @@
 %}
 {{ filename }}_del:
   file.absent:
-    - name: {{ filename }}s
+    - name: {{ filename }}
 {% endfor %}
 
 Delete openldap replication checkpoint flag:

@@ -18,4 +18,4 @@
 Stage - Restore files for S3Server:
   module.run:
     - sync.restore_files:
-      - component: s3server
+      - component: s3

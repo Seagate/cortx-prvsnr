@@ -17,11 +17,16 @@
 
 import yaml
 import logging
-import time
-from typing import Tuple, Union
-from pathlib import Path
-from typing import Optional, List
 import subprocess
+import time
+
+from pathlib import Path, PosixPath
+from typing import (
+    Tuple,
+    Union,
+    Optional,
+    List
+)
 
 from . import config
 
@@ -41,6 +46,10 @@ def validator_path_exists(instance, attribute, value):
         raise ValueError(f"Path {value} doesn't exist")
 
 
+def converter_path_resolved(value):
+    return value if value is None else Path(str(value)).resolve()
+
+
 def load_yaml_str(data):
     try:
         return yaml.safe_load(data)
@@ -57,7 +66,21 @@ def dump_yaml_str(
     canonical=False,
     **kwargs
 ):
-    return yaml.safe_dump(
+    # TODO: Either check if this is the right way to accomplish this
+    # Or we should work to use a add_constructor
+    def posix_path_representer(dumper_obj, posix_path_obj):
+        return dumper_obj.represent_scalar("tag:yaml.org,2002:str", str(posix_path_obj))
+    yaml.add_representer(PosixPath, posix_path_representer)
+
+    # return yaml.safe_dump(
+    #     data,
+    #     default_flow_style=default_flow_style,
+    #     canonical=canonical,
+    #     width=width,
+    #     indent=indent,
+    #     **kwargs
+    # )
+    return yaml.dump(
         data,
         default_flow_style=default_flow_style,
         canonical=canonical,

@@ -139,20 +139,21 @@ class ReplaceNode(SetupProvisioner):
 
         logger.info("Loading initial setup parameters")
         setup_pillar_path = add_pillar_merge_prefix(
-            pillar_all_dir / 'setup.sls'
+            pillar_all_dir / 'factory_setup.sls'
         )
-        setup_args = load_yaml(setup_pillar_path)['setup']
+        setup_args = load_yaml(setup_pillar_path)['factory_setup']
 
         # set some parameters as for initial setup
         for _attr in (
             'source',
             'prvsnr_version',
-            # 'iso_cortx',  # FIXME iso paths would be different
-            # 'iso_cortx_deps',
+            'iso_cortx',
+            'iso_cortx_deps',
             'url_cortx_deps',  # TODO IMPROVE may rely on profile data
             'dist_type',
             'target_build',
-            'salt_master'
+            'salt_master',
+            'ha'
         ):
             kwargs[_attr] = setup_args[_attr]
 

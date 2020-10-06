@@ -178,6 +178,7 @@ function prereq_states {
     # states to be applied in desired sequence
     prereq_states=(
         "misc_pkgs.rhel_sos"
+        "misc_pkgs.ipmi.bmc_watchdog"
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
         "misc_pkgs.openldap"

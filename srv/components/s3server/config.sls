@@ -18,7 +18,7 @@
 {% if pillar["cluster"][grains["id"]]["is_primary"] %}
 Stage - Post Install S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
 {% endif %}
 
 # Update password in authserver.properties:
@@ -30,9 +30,9 @@ Stage - Post Install S3Server:
 
 Stage - Config S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:config')
 
 Stage - Init S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3server:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:init')
 
