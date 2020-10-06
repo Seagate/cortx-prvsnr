@@ -13,7 +13,15 @@
 
 # Set the location of the salt master server. If the master server cannot be
 # resolved, then the minion will fail to start.
-master: {{ salt['pillar.get']('setup:config:master', salt['config.get']('master', 'srvnode-1'))|yaml }}
+
+{% if salt['pillar.get']('setup:config:master') -%}
+master: {{ salt['pillar.get']('setup:config:master') }}
+{% elif salt['cmd.shell']('salt-call grains.get master') -%}
+master: {{ salt['cmd.shell']("salt-call grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
+{% else -%}
+master: srvnode-1
+{% endif -%}
+
 # Set http proxy information for the minion when doing requests
 #proxy_host:
 #proxy_port:
