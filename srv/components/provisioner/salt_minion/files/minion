@@ -16,7 +16,7 @@
 
 {% if salt['pillar.get']('setup:config:master') -%}
 master: {{ salt['pillar.get']('setup:config:master') }}
-{% elif salt['cmd.shell']('salt-call grains.get master') -%}
+{% elif salt['cmd.shell']("salt-call grains.get master --out=text | awk -F ':' '{ print $2 }'" -%}
 master: {{ salt['cmd.shell']("salt-call grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
 {% else -%}
 master: srvnode-1
