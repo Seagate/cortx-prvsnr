@@ -133,9 +133,7 @@ def _set_logging(output_type, log_args=None, other_args=None):
         log_args.update_handlers()
 
     if cmd in config.LOG_SUPPRESSION_CMDS:
-        setattr(log_args, "rsyslog_level", logging.WARNING)
-        setattr(log_args, "logfile_level", logging.WARNING)
-        setattr(log_args, "console_level", logging.WARNING)
+        setattr(log_args, config.LogLevelTypes.RSYSLOG.value, logging.WARNING)
 
     if (
         cmd in config.LOG_FORCED_LOGFILE_CMDS
