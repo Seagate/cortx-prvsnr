@@ -14,10 +14,15 @@
 # Set the location of the salt master server. If the master server cannot be
 # resolved, then the minion will fail to start.
 
+# TODO EOS-13921 IMPROVE need to sort out:
+#      - salt command returns only one item from list
+#           -  jinja salt['config.get'] works intermittently
+#      - salt-call returns all items for grains
+#      - salt-call --local returns all items for config but only item without --local
 {% if salt['pillar.get']('setup:config:master') %}
 master: {{ salt['pillar.get']('setup:config:master') }}
-{% elif salt['cmd.shell']("salt-call grains.get master --out=text | awk -F ':' '{ print $2 }'" %}
-master: {{ salt['cmd.shell']("salt-call grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
+{% elif salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") %}
+master: {{ salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
 {% else %}
 master: srvnode-1
 {% endif %}
