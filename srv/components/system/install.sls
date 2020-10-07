@@ -23,6 +23,8 @@ Install_base_packages:
       - bind-utils
       - python3
       - rsync
+      - ftp
+      - sshpass
     - reload_modules: True
 
 Install policy packages for SELinux:
