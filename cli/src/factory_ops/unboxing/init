@@ -226,6 +226,7 @@ if command -v pcs ; then
     # Update ClusterIP
     echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+    salt "*" state.apply components.ha.haproxy.config ${salt_opts}
     echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
 

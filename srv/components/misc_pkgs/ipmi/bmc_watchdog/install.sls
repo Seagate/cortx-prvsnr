@@ -15,28 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.39.0'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "GNU Affero General Public License"  # TODO
+Install bmc-watchdog:
+  pkg.installed:
+    - name: freeipmi-bmc-watchdog
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+Update watchdog timeout:
+  file.replace:
+    - name: /etc/sysconfig/bmc-watchdog
+    - pattern: '-i 900'
+    - repl: '-i 300'
+
+Reload kernel for bmc-watchdog:
+  file.managed:
+    - name: /etc/modules-load.d/ipmi_mods.conf
+    - contents: |
+        # Load at boot:
+        ipmi_devintf
+        ipmi_si
+        ipmi_msghandler
+    - create: True
+    - makedirs: True
+    - replace: True
+    - user: root
+    - group: root
+    - mode: 644
+    - dir_mode: 755

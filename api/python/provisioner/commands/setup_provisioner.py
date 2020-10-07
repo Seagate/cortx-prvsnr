@@ -227,7 +227,7 @@ class RunArgsSetup:
             }
         },
         default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -239,7 +239,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -251,7 +251,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # FIXME EOS-13651, EOS-13686 disabled until code complete
@@ -770,7 +770,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             }
             dump_yaml(specs_pillar_path,  dict(node_specs=specs))
 
-        # resolve salt masters
+        # resolve salt-masters
         # TODO IMPROVE EOS-8473 option to re-build masters
         masters_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'masters.sls'
@@ -778,7 +778,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.rediscover or not masters_pillar_path.exists():
             masters = self._prepare_salt_masters(run_args)
             logger.info(
-                f"salt masters would be set as follows: {masters}"
+                f"salt-masters would be set as follows: {masters}"
             )
             dump_yaml(masters_pillar_path,  dict(masters=masters))
         else:
@@ -899,14 +899,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
     # TODO IMPROVE DRY
-    def _prepare_setup_pillar(
+    def _prepare_factory_setup_pillar(
         self, profile_paths, run_args
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
 
         pillar_path = add_pillar_merge_prefix(
-            pillar_all_dir / 'setup.sls'
+            pillar_all_dir / 'factory_setup.sls'
         )
         if pillar_path.exists():
             pillar = load_yaml(pillar_path)
@@ -919,13 +919,17 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
-            pillar = dict(setup=pillar)
+            if pillar['iso_cortx']:
+                pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
+            if pillar['iso_cortx_deps']:
+                pillar['iso_cortx_deps'] = str(config.PRVSNR_CORTX_DEPS_ISO)
+            pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
         return pillar
 
     def _prepare_release_pillar(
-        self, profile_paths, repos_data: Dict, run_args
+        self, profile_paths, repos_data: Dict, run_args, force=False
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
@@ -933,7 +937,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'release.sls'
         )
-        if pillar_path.exists():
+        if not force and pillar_path.exists():
             pillar = load_yaml(pillar_path)
         else:
             pillar = {
@@ -1035,7 +1039,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         if not run_args.field_setup:
             logger.info("Preparing setup pillar")
-            self._prepare_setup_pillar(
+            self._prepare_factory_setup_pillar(
                 paths, run_args
             )
 
@@ -1065,8 +1069,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        elif not run_args.field_setup:  # iso or rpm
-
+        else:  # iso or rpm
             # FIXME rhel and centos repos
             deps_bundle_url = (
                 f"{run_args.target_build}/3rd_party"
@@ -1076,18 +1079,18 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
             if run_args.source == 'iso':
                 repos = {
-                    'cortx': f"salt://{run_args.iso_cortx.name}",
+                    'cortx_iso': f"salt://{run_args.iso_cortx.name}",
                     '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
                 }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
-                        'cortx': f"{run_args.target_build}/cortx_iso",
+                        'cortx_iso': f"{run_args.target_build}/cortx_iso",
                         '3rd_party': deps_bundle_url
                     }
                 else:
                     repos = {
-                        'cortx': f'{run_args.target_build}'
+                        'cortx_iso': f'{run_args.target_build}'
                     }
                     if deps_bundle_url:
                         repos['3rd_party'] = deps_bundle_url
@@ -1109,11 +1112,33 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 })
 
             logger.info("Preparing CORTX repos pillar")
+            # FIXME we just shoudn't copy that file
+            #       as part of factory profile
             self._prepare_release_pillar(
-                paths, repos, run_args
+                paths, repos, run_args, force=run_args.field_setup
             )
 
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt-masters / minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
+
         if not run_args.field_setup:
+            logger.info("Preparing factory profile")
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1134,25 +1159,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
             ])
 
-        ssh_client = self._create_ssh_client(
-            paths['salt_master_file'], paths['salt_roster_file']
-        )
-
-        setup_ctx = SetupCtx(run_args, paths, ssh_client)
-
-        for node in run_args.nodes:
-            logger.info(
-                f"Ensuring '{node.minion_id}' is ready to accept commands"
-            )
-            ssh_client.ensure_ready([node.minion_id])
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
-
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"
         # a workaround mentioned in https://github.com/saltstack/salt/issues/32128#issuecomment-207044948  # noqa: E501
@@ -1169,8 +1175,36 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         #   - a repo file is created and pointed to the mount directory
         # TODO EOS-12076 IMPROVE hard-coded
         if run_args.source in ('iso', 'rpm'):
-            # copy ISOs onto remotes and mount
-            ssh_client.state_apply('repos')
+            # do not copy ISO for the node where we are now already
+            if (
+                run_args.field_setup and
+                run_args.source == 'iso' and
+                run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
+                run_args.iso_cortx_deps == config.PRVSNR_CORTX_DEPS_ISO
+            ):
+                # FIXME it is valid only for replace_node logic,
+                #       not good to rely on some specific case here
+                # FIXME hardcoded pillar key
+                ssh_client.state_apply(
+                    'repos', targets=run_args.primary.minion_id,
+                    fun_kwargs={
+                        'pillar': {
+                            'skip_iso_copy': True
+                        }
+                    }
+                )
+                # NOTE for now salt-ssh supports only glob and regex targetting
+                # https://docs.saltstack.com/en/latest/topics/ssh/#targeting-with-salt-ssh
+                ssh_client.state_apply(
+                    'repos',
+                    targets='|'.join([
+                        node.minion_id for node in run_args.secondaries
+                    ]),
+                    tgt_type='pcre'
+                )
+            else:
+                # copy ISOs onto all remotes and mount
+                ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
 
@@ -1180,9 +1214,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
 
-        # FIXME: Commented because execution hung at firewall configuration
-        # logger.info("Configuring the firewall")
-        # ssh_client.state_apply('firewall')
+        # Does not hang after adding glusterfs logic.
+        logger.info("Configuring the firewall")
+        ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -1363,6 +1397,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
+
+        # TODO EOS-14019 might consider to move to right after restart
+        logger.info("Ensuring salt-masters are ready")
+        ssh_client.state_apply(
+            'saltstack.salt_master.ensure_running', targets=master_targets
+        )
 
         # TODO IMPROVE EOS-8473
         logger.info("Ensuring salt minions are ready")
