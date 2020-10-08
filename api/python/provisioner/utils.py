@@ -69,7 +69,8 @@ def dump_yaml_str(
     # TODO: Either check if this is the right way to accomplish this
     # Or we should work to use a add_constructor
     def posix_path_representer(dumper_obj, posix_path_obj):
-        return dumper_obj.represent_scalar("tag:yaml.org,2002:str", str(posix_path_obj))
+        return dumper_obj.represent_scalar("tag:yaml.org,2002:str",
+                                           str(posix_path_obj))
     yaml.add_representer(PosixPath, posix_path_representer)
 
     # return yaml.safe_dump(
