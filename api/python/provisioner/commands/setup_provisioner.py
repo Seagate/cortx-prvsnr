@@ -770,7 +770,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             }
             dump_yaml(specs_pillar_path,  dict(node_specs=specs))
 
-        # resolve salt masters
+        # resolve salt-masters
         # TODO IMPROVE EOS-8473 option to re-build masters
         masters_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'masters.sls'
@@ -778,7 +778,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.rediscover or not masters_pillar_path.exists():
             masters = self._prepare_salt_masters(run_args)
             logger.info(
-                f"salt masters would be set as follows: {masters}"
+                f"salt-masters would be set as follows: {masters}"
             )
             dump_yaml(masters_pillar_path,  dict(masters=masters))
         else:
@@ -1134,7 +1134,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         self._resolve_grains(run_args.nodes, ssh_client)
 
         #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
+        logger.info("Preparing salt-masters / minions configuration")
         self._prepare_salt_config(run_args, ssh_client, paths)
 
         if not run_args.field_setup:
@@ -1198,7 +1198,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.state_apply(
                     'repos',
                     targets='|'.join([
-                        node.id for node in run_args.secondaries
+                        node.minion_id for node in run_args.secondaries
                     ]),
                     tgt_type='pcre'
                 )
@@ -1397,6 +1397,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
+
+        # TODO EOS-14019 might consider to move to right after restart
+        logger.info("Ensuring salt-masters are ready")
+        ssh_client.state_apply(
+            'saltstack.salt_master.ensure_running', targets=master_targets
+        )
 
         # TODO IMPROVE EOS-8473
         logger.info("Ensuring salt minions are ready")

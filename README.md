@@ -1,4 +1,4 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1919635cce7e4677b74976a81fdffe75)](https://www.codacy.com/gh/Seagate/cortx-prvsnr/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1919635cce7e4677b74976a81fdffe75)](https://www.codacy.com/gh/Seagate/cortx-prvsnr/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/pujamudaliar/cortx-prvsnr/blob/add-license-slack-badge/LICENSE)
 
 # CORTX-Provisioner
 

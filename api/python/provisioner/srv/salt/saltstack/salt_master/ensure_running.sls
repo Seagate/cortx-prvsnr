@@ -15,17 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.misc_pkgs.rsyslog.stop
-  - components.misc_pkgs.rsyslog.start
-
-Restart slapd:
+salt_master_is_running:
   service.running:
-    - name: slapd
-
-Start s3authserver:
-  service.running:
-    - name: s3authserver
-    - enable: True
-    - require:
-      - Restart slapd
+    - name: salt-master

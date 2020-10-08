@@ -57,6 +57,7 @@ prereq_states=(
     # states to be applied in desired sequence
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
+        "ha.haproxy.start"
         "misc_pkgs.openldap"
         "misc_pkgs.rabbitmq"
         "misc_pkgs.nodejs"
