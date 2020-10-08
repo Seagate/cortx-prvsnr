@@ -251,16 +251,21 @@ fi
 
 echo -n "INFO: Checking if kernel version is correct.........................." 2>&1 | tee -a ${LOG_FILE}
 
+grep -q "Red Hat" /etc/*-release && { 
+    req_kernel_version='3.10.0-1062.el7.x86_64'
+} || {
+    req_kernel_version='3.10.0-1127.el7.x86_64'
+}
 kernel_version=`uname -r`
-if [[ "$kernel_version" != '3.10.0-1062.el7.x86_64' ]]; then
-    echo "ERROR: Kernel version is wrong. Required: 3.10.0-1062.el7.x86_64, installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
+if [[ $kernel_version != $req_kernel_version ]]; then
+    echo "ERROR: Kernel version is wrong. Required: $req_kernel_version installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
     exit 1
 else
-    echo "Done." 2>&1 | tee -a ${LOG_FILE}
+        echo "Done." 2>&1 | tee -a ${LOG_FILE}
 fi
 
-if [[ "$disable_sub_mgr_opt" == true ]]; then
-    grep -q "Red Hat" /etc/*-release && {
+if grep -q "Red Hat" /etc/*-release; then
+    if [[ "$disable_sub_mgr_opt" == true ]]; then
         echo -n "INFO: disabling the Red Hat Subscription Manager....................." 2>&1 | tee -a ${LOG_FILE}
 
         subscription-manager auto-attach --disable || true
@@ -272,15 +277,7 @@ if [[ "$disable_sub_mgr_opt" == true ]]; then
         echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
         create_commons_repos "$url_local_repo_commons_rhel"
-    } || {
-        echo "ERROR: This is not RedHat system, ignoring --disable-sub-mgr option"
-        echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
-        create_commons_repos "$url_local_repo_commons"
-    }
-
-else
-    grep -q "Red Hat" /etc/*-release && {
-        # we do not need an iso for rhel7.7 if subscription is enabled
+    else
         echo "INFO: Checking if RHEL subscription manager is enabled" 2>&1 | tee -a ${LOG_FILE}
         subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
         subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
@@ -381,11 +378,10 @@ else
             echo "       Please register the system with Subscription Manager and rerun the command." 2>&1 | tee -a ${LOG_FILE}
             exit 1
         fi
-    } || {
-        echo -e "\nThis is not a RedHat system, copying repos manually" 2>&1 | tee -a ${LOG_FILE}
-        echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
-        create_commons_repos "$url_local_repo_commons"
-    }
+    fi
+else
+    echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
+    create_commons_repos "$url_local_repo_commons"
 fi
 
 echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
