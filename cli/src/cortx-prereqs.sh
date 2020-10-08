@@ -257,11 +257,11 @@ grep -q "Red Hat" /etc/*-release && {
     req_kernel_version='3.10.0-1127.el7.x86_64'
 }
 kernel_version=`uname -r`
-if [[ $kernel_version != $req_kernel_version ]]; then
+if [[ "$kernel_version" != "$req_kernel_version" ]]; then
     echo "ERROR: Kernel version is wrong. Required: $req_kernel_version installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
     exit 1
 else
-        echo "Done." 2>&1 | tee -a ${LOG_FILE}
+    echo "Done." 2>&1 | tee -a ${LOG_FILE}
 fi
 
 if grep -q "Red Hat" /etc/*-release; then
