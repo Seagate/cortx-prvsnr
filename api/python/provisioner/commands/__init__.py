@@ -596,12 +596,15 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
-                if minion_conf_changes:
-                    logger.info("Restarting salt minions")
-                    salt_cmd_run(
-                        'systemctl restart salt-minion',
-                        background=True
-                    )
+                try:
+                    if minion_conf_changes:
+                        logger.info("Restarting salt minions")
+                        salt_cmd_run(
+                            'systemctl restart salt-minion',
+                            background=True
+                        )
+                except Exception as exc:
+                    raise SWStackUpdateError(exc) from exc
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
