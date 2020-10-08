@@ -596,6 +596,12 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
+                if minion_conf_changes:
+                    logger.info("Restarting salt minions")
+                    salt_cmd_run(
+                        'systemctl restart salt-minion',
+                        background=True
+                    )
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
@@ -678,14 +684,6 @@ class SWUpdate(CommandParserFillerMixin):
             raise final_error_t(
                 update_exc, rollback_error=rollback_error
             ) from update_exc
-
-        finally:
-            if minion_conf_changes:
-                logger.debug("Restarting salt minions ")
-                salt_cmd_run(
-                    'systemctl restart salt-minion',
-                    background=True
-                )
 
 
 # TODO TEST
