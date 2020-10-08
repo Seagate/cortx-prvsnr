@@ -28,6 +28,11 @@ salt_minion_service_enabled:
     - require:
       - file: salt_minion_config_updated
 
+salt_minion_config_is_good:
+  cmd.run:
+    - name: 'salt-call --local test.ping'
+    - onchanges:
+      - file: salt_minion_config_updated
 
 #salt_minion_service_restarted:
 #  cmd.run:

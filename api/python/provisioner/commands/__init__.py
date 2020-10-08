@@ -603,8 +603,8 @@ class SWUpdate(CommandParserFillerMixin):
                             'systemctl restart salt-minion',
                             background=True
                         )
-                except Exception as exc:
-                    raise SWStackUpdateError(exc) from exc
+                except Exception:
+                    logger.exception('failed to restart salt minions')
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
