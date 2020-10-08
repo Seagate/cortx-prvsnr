@@ -540,6 +540,7 @@ class SWUpdate(CommandParserFillerMixin):
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
         rollback_ctx = None
+        minion_conf_changes = None
         try:
             ensure_cluster_is_healthy()
 
@@ -562,7 +563,7 @@ class SWUpdate(CommandParserFillerMixin):
 
                     config_salt_master()
 
-                    config_salt_minions()
+                    minion_conf_changes = config_salt_minions()
 
                     for component in (
                         'motr',
@@ -677,6 +678,14 @@ class SWUpdate(CommandParserFillerMixin):
             raise final_error_t(
                 update_exc, rollback_error=rollback_error
             ) from update_exc
+
+        finally:
+            if minion_conf_changes:
+                logger.debug("Restarting salt minions ")
+                salt_cmd_run(
+                    'systemctl restart salt-minion',
+                    background=True
+                )
 
 
 # TODO TEST
