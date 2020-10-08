@@ -51,7 +51,9 @@ Hostlist file:
 
 Replication sanity check:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret'],) }} || true
+    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p $password || true
+    - env:
+      - password: {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) }}
     - onlyif: test -f /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh
     - watch_in:
       - Restart slapd service
