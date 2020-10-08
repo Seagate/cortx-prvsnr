@@ -597,6 +597,8 @@ class SWUpdate(CommandParserFillerMixin):
                     raise ClusterNotHealthyError(exc) from exc
 
                 try:
+                    # TODO: Improve salt minion restart logic
+                    # please refer to task EOS-14114.
                     if minion_conf_changes:
                         logger.info("Restarting salt minions")
                         salt_cmd_run(
