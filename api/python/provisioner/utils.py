@@ -227,21 +227,32 @@ def repo_tgz(
 # Validates the hostname string in config.ini
 # against hostname in CLI args
 def node_hostname_validator(
-    nodes: List,
-    config_path: str
+    nodes,
+    config_path
 ):
-    logger.debug(f"Validating list of nodes: {'srvnode-1 : '.join(nodes)}")
+    node_dict = {}
+    for node in nodes:
+        node_dict[node.minion_id] = node.host
+
+    logger.debug(
+        "Validating list of nodes: "
+        f"{yaml.dump(node_dict, default_flow_style=False)}"
+    )
     logger.debug(f"Config file path: {config_path}")
 
     parser_obj = configparser.ConfigParser()
     parser_obj.read(config_path)
 
     for section in parser_obj.sections():
-        if "srvnode" in section:
-            node_index = int(parser_obj[section].split("-")) - 1
-            if nodes[node_index] != parser_obj[section]["hostname"]:
+        if ("srvnode" in section
+            and
+            (
+                node_dict[parser_obj[section]]
+                != parser_obj[section]["hostname"]
+            )
+        ):
                 msg = (
                     "Hostname values from config.ini and CLI did not match. "
-                    f"{nodes[node_index]} != {parser_obj[section]['hostname']}"
+                    f"{node_dict[parser_obj[section]]} != {parser_obj[section]['hostname']}"
                 )
                 raise ValueError(msg)
