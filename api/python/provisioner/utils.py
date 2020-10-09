@@ -244,15 +244,14 @@ def node_hostname_validator(
     parser_obj.read(config_path)
 
     for section in parser_obj.sections():
-        if ("srvnode" in section
-            and
-            (
-                node_dict[section]
-                != parser_obj[section]["hostname"]
-            )
-        ):
-                msg = (
-                    "Hostname values from config.ini and CLI did not match. "
-                    f"{node_dict[parser_obj[section]]} != {parser_obj[section]['hostname']}"
+        if (
+            "srvnode" in section
+            and (
+                    node_dict[section] != parser_obj[section]["hostname"]
                 )
-                raise ValueError(msg)
+        ):
+            msg = (
+                "Hostname values from config.ini and CLI did not match. "
+                f"{node_dict[section]} != {parser_obj[section]['hostname']}"
+            )
+            raise ValueError(msg)
