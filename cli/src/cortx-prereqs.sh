@@ -384,7 +384,7 @@ else
         echo "\nINFO: Ignoring --disable-sub-mgr since it's not applicable for CentOS.." 2>&1 | tee -a ${LOG_FILE}
     fi
     if [[ -z "$tgt_build" ]]; then
-        echo -e "\nERROR: Please provide --target-build to install latest version packages" 2>&1 | tee -a ${LOG_FILE}
+        echo -e "\nERROR: Please provide build url using -t to install latest version packages" 2>&1 | tee -a ${LOG_FILE}
         exit 1
     fi
     echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
