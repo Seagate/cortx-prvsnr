@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Type
+from typing import Type, Optional
 import logging
 
 from .. import (
@@ -34,6 +34,7 @@ from ..pillar import (
 from ..vendor import attr
 # TODO IMPROVE EOS-8473
 
+from .setup_provisioner import SetupCtx
 from .configure_setup import (
     SetupType
 )
@@ -92,6 +93,7 @@ run_args_type = build_deploy_run_args(deploy_states)
 class DeployVM(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = run_args_type
+    setup_ctx: Optional[SetupCtx] = None
 
     def set_pillar_data(self, setup_type):
         minions_ids = ['srvnode-1']
@@ -132,7 +134,7 @@ class DeployVM(Deploy):
         self._cmd_run(
             "provisioner pillar_set "
             f"s3server/no_of_inst  "
-            '\\"1\\"',
+            '1',
             targets=self._primary_id()
         )
 
@@ -214,7 +216,7 @@ class DeployVM(Deploy):
                 self._run_states('prereq', run_args)
 
             if (
-                'sync' in run_args.states or
+                'sync' in run_args.states and
                 run_args.setup_type != SetupType.SINGLE
             ):
                 logger.info("Deploying the sync states")
@@ -238,25 +240,29 @@ class DeployVM(Deploy):
                     pillar = PillarResolver(local_minion_id()).get(
                         [metadata_device_keypath]
                     )
-                    metadata_device = pillar[local_minion_id()][0]
+                    metadata_device = pillar[local_minion_id()][metadata_device_keypath][0]  # noqa: E501
                     metadata_device = f"{metadata_device}1"
                     # TODO IMPROVE EOS-12076 hard coded
-                    mount_point = '/var/mero'
+                    mount_point = '/var/motr'
 
                     logger.info(
                         f"Mounting partition {metadata_device} "
-                        "into {mount_point} (with fstab record)"
+                        f"into {mount_point} (with fstab record)"
                     )
                     StateFunExecuter.execute(
                         'mount.mounted',
-                        fun_args=[mount_point, metadata_device, 'ext4'],
-                        fun_kwargs=dict(mkmnt=True, persist=True)
+                        fun_kwargs=dict(
+                                   name=mount_point,
+                                   device=metadata_device,
+                                   fstype='ext4',
+                                   mkmnt=True,
+                                   persist=True)
                     )
 
                 logger.info("Deploying the io path states")
                 self._run_states('iopath', run_args)
 
-            if 'ctrlpath' in run_args.states:
+            if 'controlpath' in run_args.states:
                 logger.info("Deploying the control path states")
                 self._run_states('controlpath', run_args)
 
