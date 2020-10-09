@@ -365,6 +365,10 @@ class SaltClientResult:
                 #   - 'ret' for sync
                 #   - 'return' for async
                 ret = job_result.get('ret', job_result.get('return'))
+            elif job_result is False:
+                # TODO IMPROVE explore salt docs/code for that,
+                #      currently it's only an observation
+                self.fails[target] = 'no connection to minion'
 
             if ret is None:
                 self.results[target] = job_result
