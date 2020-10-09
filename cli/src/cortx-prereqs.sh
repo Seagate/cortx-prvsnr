@@ -380,6 +380,13 @@ if grep -q "Red Hat" /etc/*-release; then
         fi
     fi
 else
+    if [[ "$disable_sub_mgr_opt" == true ]]; then
+        echo "\nINFO: Ignoring --disable-sub-mgr since it's not applicable for CentOS.." 2>&1 | tee -a ${LOG_FILE}
+    fi
+    if [[ -z "$tgt_build" ]]; then
+        echo -e "\nERROR: Please provide --target-build to install latest version packages" 2>&1 | tee -a ${LOG_FILE}
+        exit 1
+    fi
     echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
     create_commons_repos "$url_local_repo_commons"
 fi
@@ -402,7 +409,6 @@ if ( lspci -d"15b3:*"|grep Mellanox ) ; then
     } || {
         echo "INFO: Installing Mellanox drivers" 2>&1 | tee -a ${LOG_FILE}
         yum install -y mlnx-ofed-all mlnx-fw-updater 2>&1 | tee -a ${LOG_FILE}
-        echo "INFO: Rebooting the system now" 2>&1 | tee -a ${LOG_FILE}
         do_reboot=true
     }
     echo "INFO: Installing sg3_utils" 2>&1 | tee -a ${LOG_FILE}
