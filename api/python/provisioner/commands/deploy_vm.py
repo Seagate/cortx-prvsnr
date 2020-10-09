@@ -96,14 +96,17 @@ class DeployVM(Deploy):
     def set_pillar_data(self, setup_type):
         minions_ids = ['srvnode-1']
         disk = []
+
         if setup_type != SetupType.SINGLE:
             minions_ids.append('srvnode-2')
+
         res = self._cmd_run(
             "lsblk -ndp | grep disk | awk '{ print $1 }'",
             targets=self._primary_id()
         )
         if res[self._primary_id()]:
             disk = res[self._primary_id()].split("\n")
+
         for minion_id in minions_ids:
             if len(disk) > 1:
                 self._cmd_run(
@@ -118,12 +121,20 @@ class DeployVM(Deploy):
                     f'[\\"{disk[-1]}\\"]',
                     targets=self._primary_id()
                 )
+
             self._cmd_run(
                 "provisioner pillar_set "
                 f"cluster/{minion_id}/network/data_nw/roaming_ip  "
                 '\\"127.0.0.1\\"',
                 targets=self._primary_id()
             )
+
+        self._cmd_run(
+            "provisioner pillar_set "
+            f"s3server/no_of_inst  "
+            '\\"1\\"',
+            targets=self._primary_id()
+        )
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
@@ -132,7 +143,7 @@ class DeployVM(Deploy):
         states = deploy_states[states_group]
         stages = run_args.stages
 
-        primary = local_minion_id()
+        primary = self._primary_id()
         secondaries = f"not {primary}"
 
         # apply states
