@@ -540,6 +540,7 @@ class SWUpdate(CommandParserFillerMixin):
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
         rollback_ctx = None
+        minion_conf_changes = None
         try:
             ensure_cluster_is_healthy()
 
@@ -562,7 +563,7 @@ class SWUpdate(CommandParserFillerMixin):
 
                     config_salt_master()
 
-                    config_salt_minions()
+                    minion_conf_changes = config_salt_minions()
 
                     for component in (
                         'motr',
@@ -595,6 +596,17 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
+                try:
+                    # TODO: Improve salt minion restart logic
+                    # please refer to task EOS-14114.
+                    if minion_conf_changes:
+                        logger.info("Restarting salt minions")
+                        salt_cmd_run(
+                            'systemctl restart salt-minion',
+                            background=True
+                        )
+                except Exception:
+                    logger.exception('failed to restart salt minions')
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')

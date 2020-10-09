@@ -95,13 +95,7 @@ function create_unboxing_user {
     _create_date=$(date '+%Y-%m-%d')
     _output_file="/root/Lyve_rack_SystemID_${_create_date}.txt"
     _user="cortxub"
-    _sceret=
-
-    if [[ -f /opt/seagate/cortx/provisioner/generated_configs/cluster_id ]]; then
-        _secret=`cat /opt/seagate/cortx/provisioner/generated_configs/cluster_id | cut -d- -f 5`
-    else
-        echo "ERROR: Cortx cluster is not configured on this node" | tee -a ${LOG_FILE}
-    fi
+    _secret=$(/usr/bin/uuidgen | cut -d- -f 5)
 
     id $_user > /dev/null && {
         userdel -r -f $_user

@@ -20,5 +20,8 @@ include:
   - components.ha.haproxy.prepare
   - components.ha.haproxy.install
   - components.ha.haproxy.config
-  - components.ha.haproxy.start
-  - components.ha.haproxy.sanity_check
+  # Disable start to be explicitly started later
+  # Requires Cluster_IP to be set by corosync-pacemaker before start in HW
+  # - components.ha.haproxy.start
+  # - components.ha.haproxy.sanity_check
+  - components.ha.haproxy.stop
