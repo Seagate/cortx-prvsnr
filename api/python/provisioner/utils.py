@@ -247,7 +247,7 @@ def node_hostname_validator(
         if ("srvnode" in section
             and
             (
-                node_dict[parser_obj[section]]
+                node_dict[section]
                 != parser_obj[section]["hostname"]
             )
         ):
