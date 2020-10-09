@@ -1,0 +1,101 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+
+# Encrypts passwords in pillar in place
+import argparse
+import errno
+import logging
+import os
+import salt.client
+import secrets
+import string
+import sys
+import yaml
+
+import provisioner
+
+from cortx.utils.security.cipher import Cipher, CipherInvalidToken
+
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('/var/log/seagate/provisioner/pillar-encrypt.log', mode='w')
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter("[%(levelname)s - %(asctime)s]: %(message)s"))
+logger.addHandler(handler)
+
+class PasswordGenerator(object):
+    ```
+    A class to represent a person.
+
+    ...
+    Methods
+    -------
+    execute():
+        Replaces.
+    ````
+
+    def __init__(self):
+        self.__password = None
+
+
+    def __generate_passwd(self) -> str:
+        passwd_strength = 12
+        passwd_seed = (
+            string.ascii_letters
+            + string.digits
+            + string.punctuation
+        )
+
+        return  ''.join(
+            [
+                secrets.choice(seq=passwd_seed)
+                for index in range(passwd_strength)
+            ]
+        )
+
+
+    def __apply_generated_passwords(self, data: dict):
+        if not self.__password:
+            self.__password = self.__generate_passwd()
+
+        for key, val in data.items():
+            # Apply password value, only if it's currently blank
+            if (
+                (
+                    ("secret" in key)
+                    or ("password" in key)
+                    or ("pass" in key)
+                ) and not val
+            ):
+                # Assign password
+                provisioner.pillar_set(passwd_field, self.__password)
+                
+        return data
+
+
+    def execute(self):
+        pillar_data = provisioner.pillar_get()
+        
+
+if __name__ == "__main__":
+    try:
+        PillarEncrypt().execute(pillar_path)
+        
+    except KeyboardInterrupt:
+        print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
+        sys.exit(1)
