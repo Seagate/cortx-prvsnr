@@ -116,7 +116,7 @@ def config_salt_minions(targets=ALL_MINIONS):
     }
 
     logger.info(
-        'Minions has been configured with the changes: {}'.format(changes)
+        'Minions have been configured with the changes: {}'.format(changes)
     )
 
     # if changes:
