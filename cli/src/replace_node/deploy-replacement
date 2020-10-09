@@ -294,9 +294,9 @@ function restore_states {
     l_info "=================================================="
     l_info "Stage 2.8: Applying File Restore States..."
     l_info "=================================================="
-    $cmd salt "srvnode-2" state.apply state.apply components.sspl.health_view.config $salt_opts
-    $cmd salt "srvnode-1" state.apply state.apply components.sspl.health_view.config $salt_opts
-    
+    $cmd salt "srvnode-2" state.apply state.apply components.sspl.health_view $salt_opts
+    $cmd salt "srvnode-1" state.apply state.apply components.sspl.health_view $salt_opts
+
     run_states "${restore_states[@]}"
     l_info "=================================================="
 
