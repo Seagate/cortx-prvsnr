@@ -43,7 +43,7 @@ export PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
     cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
 elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-    cluster_sls_path= /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+    cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
 else
     echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
     exit 1

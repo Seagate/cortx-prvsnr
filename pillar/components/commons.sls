@@ -32,7 +32,3 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
-  repo:
-    # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
-    # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
-    lustre: http://cortx-storage.colo.seagate.com/releases/cortx/lustre/custom/
