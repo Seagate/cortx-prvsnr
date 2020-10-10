@@ -230,14 +230,6 @@ def node_hostname_validator(
     nodes,
     config_path
 ):
-    # config.ini was not provided, possible replace_node call
-    if not config_path:
-        logger.warning(
-            "config.ini was not provided, possible replace_node call."
-            "Skipping validation."
-        )
-        return
-
     node_dict = {}
     for node in nodes:
         node_dict[node.minion_id] = node.host

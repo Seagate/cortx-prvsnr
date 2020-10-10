@@ -1008,7 +1008,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         salt_logger.setLevel(logging.WARNING)
 
         # Config file validation against CLI args (Fail-Fast)
-        node_hostname_validator(run_args.nodes, run_args.config_path)
+        if run_args.config_path:
+            node_hostname_validator(run_args.nodes, run_args.config_path)
+        else:
+            # config.ini was not provided, possible replace_node call
+            logger.warning(
+                "config.ini was not provided, possible replace_node call."
+                "Skipping validation."
+            )
 
         # generate setup name
         setup_location = self.setup_location(run_args)
