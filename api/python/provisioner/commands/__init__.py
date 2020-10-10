@@ -488,6 +488,11 @@ def _ensure_update_repos_configuration(targets=ALL_MINIONS):
         ['components.misc_pkgs.swupdate.repo'], targets
     )
 
+    logger.info("Check yum repos are good")
+    StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo.sanity_check'], targets
+    )
+
 
 def _pre_yum_rollback(
     rollback_ctx, exc_type, exc_value, exc_traceback
