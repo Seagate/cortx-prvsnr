@@ -22,11 +22,7 @@ from .. import (
     inputs,
     errors
 )
-from ..salt import (
-    cmd_run,
-    local_minion_id,
-    StateFunExecuter
-)
+from ..salt import function_run
 from ..pillar import (
     PillarKey,
     PillarResolver
@@ -113,29 +109,37 @@ class DeployVM(Deploy):
         for minion_id in minions_ids:
             if len(disk) > 1:
                 self._cmd_run(
-                    "provisioner pillar_set "
-                    f" cluster/{minion_id}/storage/metadata_device "
-                    f'[\\"{disk[-2]}\\"]',
+                    (
+                        'provisioner pillar_set '
+                        f' cluster/{minion_id}/storage/metadata_device '
+                        f'[\\"{disk[-2]}\\"]'
+                    ),
                     targets=self._primary_id()
                 )
                 self._cmd_run(
-                    "provisioner pillar_set "
-                    f" cluster/{minion_id}/storage/data_devices "
-                    f'[\\"{disk[-1]}\\"]',
+                    (
+                        'provisioner pillar_set '
+                        f' cluster/{minion_id}/storage/data_devices '
+                        f'[\\"{disk[-1]}\\"]'
+                    ),
                     targets=self._primary_id()
                 )
 
             self._cmd_run(
-                "provisioner pillar_set "
-                f"cluster/{minion_id}/network/data_nw/roaming_ip  "
-                '\\"127.0.0.1\\"',
+                (
+                    'provisioner pillar_set '
+                    f'cluster/{minion_id}/network/data_nw/roaming_ip  '
+                    '\\"127.0.0.1\\"'
+                ),
                 targets=self._primary_id()
             )
 
         self._cmd_run(
-            "provisioner pillar_set "
-            f"s3server/no_of_inst  "
-            '1',
+            (
+                'provisioner pillar_set '
+                's3server/no_of_inst  '
+                '1'
+            ),
             targets=self._primary_id()
         )
 
@@ -178,9 +182,9 @@ class DeployVM(Deploy):
 
             if state == "hare":
                 logger.info("Bootstraping cluster")
-                cmd_run(
+                self._cmd_run(
                     "hctl bootstrap --mkfs /var/lib/hare/cluster.yaml",
-                    targets=local_minion_id()
+                    targets=self._primary_id()
                 )
 
     def run(self, **kwargs):
@@ -198,7 +202,6 @@ class DeployVM(Deploy):
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
-            # self._encrypt_pillar()
             self._run_states('prereq', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
@@ -210,7 +213,6 @@ class DeployVM(Deploy):
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
-                # self._encrypt_pillar()
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
@@ -233,15 +235,15 @@ class DeployVM(Deploy):
 
                 if run_args.setup_type != SetupType.SINGLE:
                     metadata_device_keypath = PillarKey(
-                        f"cluster/{local_minion_id()}/storage/metadata_device"
+                        f"cluster/{self._primary_id()}/storage/metadata_device"
                     )
                     logger.info(
                         f"Resolving pillar key {metadata_device_keypath}"
                     )
-                    pillar = PillarResolver(local_minion_id()).get(
+                    pillar = PillarResolver(self._primary_id()).get(
                         [metadata_device_keypath]
                     )
-                    metadata_device = pillar[local_minion_id()][metadata_device_keypath][0]  # noqa: E501
+                    metadata_device = pillar[self._primary_id()][metadata_device_keypath][0]  # noqa: E501
                     metadata_device = f"{metadata_device}1"
                     # TODO IMPROVE EOS-12076 hard coded
                     mount_point = '/var/motr'
@@ -250,14 +252,15 @@ class DeployVM(Deploy):
                         f"Mounting partition {metadata_device} "
                         f"into {mount_point} (with fstab record)"
                     )
-                    StateFunExecuter.execute(
+                    function_run(
                         'mount.mounted',
                         fun_kwargs=dict(
                                    name=mount_point,
                                    device=metadata_device,
                                    fstype='ext4',
                                    mkmnt=True,
-                                   persist=True)
+                                   persist=True),
+                        targets=self._primary_id()
                     )
 
                 logger.info("Deploying the io path states")
