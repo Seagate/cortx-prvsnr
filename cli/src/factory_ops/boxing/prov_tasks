@@ -84,6 +84,7 @@ function update_ssh_settings {
 
     salt "*" state.apply components.system.config.sshd_boxing ${salt_opts} || (
         echo "ERROR: Failed to update ssh settings from both nodes." | tee -a ${LOG_FILE}
+        exit 1
     )
 
     echo "Done." | tee -a ${LOG_FILE}
