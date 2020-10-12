@@ -204,6 +204,8 @@ check_salt_services
 #update_ssh_config taken care of in pre_unbox
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
+# After unboxing, the IP addresses in haproxy need to be updated
+salt "*" state.apply components.ha.haproxy.config ${salt_opts}
 
 if command -v pcs ; then
     echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
