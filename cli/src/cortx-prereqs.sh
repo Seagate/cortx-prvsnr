@@ -32,7 +32,7 @@ epel_repo=
 bundled_release=false
 
 # Repo url for in house built commons packages Non RHEL systems
-url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/uploads/centos/centos-7.7.1908/"
+url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/centos/centos-7.8.2003/"
 
 # Repo url for in house built commons packages for RHEL systems
 url_local_repo_commons_rhel="http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/"
@@ -382,10 +382,6 @@ if grep -q "Red Hat" /etc/*-release; then
 else
     if [[ "$disable_sub_mgr_opt" == true ]]; then
         echo "\nINFO: Ignoring --disable-sub-mgr since it's not applicable for CentOS.." 2>&1 | tee -a ${LOG_FILE}
-    fi
-    if [[ -z "$tgt_build" ]]; then
-        echo -e "\nERROR: Please provide build url using -t to install latest version packages" 2>&1 | tee -a ${LOG_FILE}
-        exit 1
     fi
     echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
     create_commons_repos "$url_local_repo_commons"
