@@ -57,11 +57,12 @@ deploy_states = dict(
         "misc_pkgs.rsyslog",
         "system.firewall",
         "system.logrotate",
-        "system.ntp"
+        "system.chrony"
     ],
     prereq=[
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
+        "ha.haproxy.start",
         "misc_pkgs.openldap",
         "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
