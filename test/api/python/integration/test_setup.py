@@ -31,8 +31,15 @@ def env_provider():
 @pytest.mark.env_level('utils')
 @pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
 def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, ssh_config
+    mhostsrvnode1, mhostsrvnode2, ssh_config, env_provider
 ):
     mhostsrvnode1.check_output('echo root | passwd --stdin root')
     mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    if env_provider == 'vbox':
+        for mhost in (mhostsrvnode1, mhostsrvnode2):
+            mhost.remote.cmd(
+                'snapshot', 'save', mhost.remote.name, 'initial --force'
+            )
+    print(ssh_config.read_text())
+    # import pdb; pdb.set_trace()
     pass
