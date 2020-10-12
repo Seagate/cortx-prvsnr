@@ -43,7 +43,8 @@ from ..utils import (
     dump_yaml,
     load_yaml_str,
     repo_tgz,
-    run_subprocess_cmd
+    run_subprocess_cmd,
+    node_hostname_validator
 )
 from ..ssh import keygen
 from ..salt import SaltSSHClient
@@ -1006,6 +1007,16 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         salt_logger = logging.getLogger('salt.fileclient')
         salt_logger.setLevel(logging.WARNING)
 
+        # Config file validation against CLI args (Fail-Fast)
+        if run_args.config_path:
+            node_hostname_validator(run_args.nodes, run_args.config_path)
+        else:
+            # config.ini was not provided, possible replace_node call
+            logger.warning(
+                "config.ini was not provided, possible replace_node call."
+                "Skipping validation."
+            )
+
         # generate setup name
         setup_location = self.setup_location(run_args)
         setup_name = self.setup_name(run_args)
@@ -1283,7 +1294,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         fun_args=['systemctl stop salt-master']
                     )
 
-                logger.info(f"starting salt-masters on all nodes")
+                logger.info(
+                    "Starting salt-masters on all nodes. "
+                    f"{master_targets}"
+                )
                 ssh_client.run(
                     'cmd.run', targets=master_targets,
                     fun_args=['systemctl start salt-master']

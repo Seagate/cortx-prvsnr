@@ -42,6 +42,11 @@ tests_require = [
     'pytest-mock==3.1.0',
 ]
 
+
+# requiring pytest-runner only when pytest is invoked
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
+
 packages = ['provisioner']
 
 setup(
@@ -86,7 +91,7 @@ setup(
                        # TODO update salt packages for provisioner
                        # setup rpm as well
     ],  # TODO
-    setup_requires=['pytest-runner'],
+    setup_requires=([] + pytest_runner),
     extras_require={
         'test': tests_require
     },

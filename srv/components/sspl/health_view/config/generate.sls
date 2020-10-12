@@ -23,7 +23,7 @@ include:
 {% endif %}
 
 {% set enclosure = '' %}
-{% if "primary" in grains["roles"] and 'physical' in grains['virtual'] %}
+{% if pillar['cluster'][grains['id']]['is_primary'] and 'physical' in grains['virtual'] %}
 # run health schema on salt-master for both node and enclosure;
 # on salt-minion only for node health.
 {% set enclosure = '-e' %}
