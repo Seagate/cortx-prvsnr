@@ -122,9 +122,17 @@ function update_salt_minion {
 
         sleep 5
 
+        echo -n "Restarting salt-master on Server A.........................................." 2>&1 | tee -a ${LOG_FILE}
+        systemctl restart salt-master
+        echo "Ok." | tee -a ${LOG_FILE}
+
+        echo -n "Restarting salt-master on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-master"
+        echo "Ok." | tee -a ${LOG_FILE}
+
         echo -n "Listing salt keys..........................................................." 2>&1 | tee -a ${LOG_FILE}
         salt-key -L ${salt_opts}
-        echo "Ok."
+        echo "Ok." | tee -a ${LOG_FILE}
         echo -n "Accepting salt keys........................................................." 2>&1 | tee -a ${LOG_FILE}
         salt-key -A -y >> ${LOG_FILE}
         echo "Ok." | tee -a ${LOG_FILE}
