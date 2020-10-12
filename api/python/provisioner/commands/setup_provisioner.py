@@ -1311,9 +1311,25 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 # - salt-minion stop might be not necessary though
                 # - stopping salt-master first to drop all new requests
                 #   for salt jobs
-                for service in ('salt-master', 'salt-minion'):
-                    logger.info(f"Stopping '{service}' service")
-                    ssh_client.state_single("service.dead", fun_args=[service])
+                try:
+                    logger.info(f"Stopping 'salt-master' service")
+                    ssh_client.state_single(
+                        "service.dead", fun_args=['salt-master']
+                    )
+                except SaltCmdRunError as exc:  # TODO DRY
+                    if 'Stream is closed' in str(exc):
+                        logger.warning(
+                            "Ensuring salt-master was stopped "
+                            "(salt-ssh lost a connection)"
+                        )
+                        ssh_client.run(
+                            'cmd.run', fun_args=['systemctl stop salt-master']
+                        )
+
+                logger.info(f"Stopping 'salt-minion' service")
+                ssh_client.state_single(
+                    "service.dead", fun_args=['salt-mininon']
+                )
 
                 secondaries = tuple([
                     node.ping_addrs[0] for node in run_args.secondaries
