@@ -296,19 +296,37 @@ seagate_refs_cleanup()
     _node_list=("srvnode-1" "srvnode-2")
 
     for _node in "${_node_list[@]}"; do
-        subscription_enabled=false
-        sub_manager_check "${_node}"
-        if [[ "$subscription_enabled" == true ]]; then
-            sub_manager_cleanup "$_node"
+        echo "Running for node: $_node" >> ${LOG_FILE}
+        if ssh $_node 'grep -q "Red Hat" /etc/*-release'; then
+            echo "RedHat system, disabling the subscription is needed" >> ${LOG_FILE}
+            subscription_enabled=false
+            sub_manager_check "${_node}"
+            if [[ "$subscription_enabled" == true ]]; then
+                sub_manager_cleanup "$_node"
+            fi
+        else
+            echo "Non RedHat system, disabling the subscription is not needed" >> ${LOG_FILE}
         fi
-
-        echo "Removing following repos from $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'grep -lE "seagate.com" /etc/yum.repos.d/*.repo' | tee -a ${LOG_FILE}
-
-        ssh "$_node" 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
-        echo "Cleaning yum cache on $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'yum clean all'
-
+        _n_repos=$(ssh $_node "ls -1 /etc/yum.repos.d/*.repo 2>/dev/null | wc -l")
+        echo "_n_repos=$_n_repos" >> ${LOG_FILE}
+        if [[ $_n_repos -ne 0 ]]; then
+            echo "Checking if there is salt or seagate references in repos" >> ${LOG_FILE}
+            if ssh $_node 'grep -lEq "seagate|salt" /etc/yum.repos.d/*.repo'; then
+                ssh "$_node" 'for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`;\
+                    do if ! grep -q "file://" $file; then\
+                            echo "Removing repo file: $file";
+                            mkdir -p /opt/seagate/cortx/provisioner/generated_config/repos_backup_boxing;
+                            yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_config/repos_backup_boxing/;
+                            rm -f "$file";
+                        fi;
+                    done'
+                echo "Cleaning yum cache on $_node" | tee -a ${LOG_FILE}
+                ssh "$_node" 'yum clean all || true' >> ${LOG_FILE}
+                echo "Done." | tee -a ${LOG_FILE}
+            fi
+        else
+            echo "No repos found with seagate references, ignoring" >> ${LOG_FILE}
+        fi
         echo "Done" | tee -a ${LOG_FILE}
     done
 }
