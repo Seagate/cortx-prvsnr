@@ -302,11 +302,13 @@ seagate_refs_cleanup()
         fi
 
         echo "Removing following repos from $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'grep -lE "seagate.com" /etc/yum.repos.d/*.repo' | tee -a ${LOG_FILE}
+        ssh "$_node" 'grep -lE "seagate.com" /etc/yum.repos.d/*.repo || true' | tee -a ${LOG_FILE}
+        ssh "$_node" 'grep -lE "salt" /etc/yum.repos.d/*.repo || true' | tee -a ${LOG_FILE}
 
         ssh "$_node" 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
+        ssh "$_node" 'for file in `grep -lE "salt" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
         echo "Cleaning yum cache on $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'yum clean all'
+        ssh "$_node" 'yum clean all || true'
 
         echo "Done" | tee -a ${LOG_FILE}
     done
