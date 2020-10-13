@@ -36,4 +36,4 @@ Install cortx-py-utils:           # Package for cryptography
 
 Encrypt pillar data:
   module.run:
-    - pillar_encrypt.encrypt:
+    - pillar_ops.encrypt: []
