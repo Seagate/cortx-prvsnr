@@ -226,10 +226,9 @@ echo -n "Updating new VIPs in haproxy configuration.............................
 salt "*" state.apply components.ha.haproxy.config ${salt_opts}
 echo "Done." | tee -a ${LOG_FILE}
 
-# TODO: Updating VIP in CSM HA needs mechanism to avoid repo creation in csm.prepare
-#echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
-#salt "*" state.apply components.csm.ha.config ${salt_opts}
-#echo "Done." | tee -a ${LOG_FILE}
+echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
+salt "*" state.apply components.csm.render_ha_template ${salt_opts}
+echo "Done." | tee -a ${LOG_FILE}
 
 if command -v pcs ; then
     echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
@@ -283,6 +282,10 @@ echo "Ok." | tee -a ${LOG_FILE}
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Configuring the CSM........................................................." | tee -a ${LOG_FILE}
+salt "*" state.apply components.csm.unboxing ${salt_opts}
+echo "Done." | tee -a ${LOG_FILE}
 
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
 echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
