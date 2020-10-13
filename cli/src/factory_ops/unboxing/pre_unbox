@@ -1173,7 +1173,7 @@ pre_unbox()
 
     #3. Get the controller IPs from user as an input
     #TODO: Remove this when enclosure communication is switched to in-band.
-    ctrl_ip_addr_get_set
+    #ctrl_ip_addr_get_set
 
     echo "Checking the servers connectivity" | tee -a ${LOG_FILE}
     hosts_resolution_check
