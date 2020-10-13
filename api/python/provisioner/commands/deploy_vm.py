@@ -187,7 +187,7 @@ class DeployVM(Deploy):
                     targets=self._primary_id()
                 )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
 
         self.set_pillar_data(run_args.setup_type)
@@ -252,16 +252,25 @@ class DeployVM(Deploy):
                         f"Mounting partition {metadata_device} "
                         f"into {mount_point} (with fstab record)"
                     )
-                    function_run(
-                        'mount.mounted',
-                        fun_kwargs=dict(
+                    fun_kwargs = dict(
                                    name=mount_point,
                                    device=metadata_device,
                                    fstype='ext4',
                                    mkmnt=True,
-                                   persist=True),
-                        targets=self._primary_id()
-                    )
+                                   persist=True)
+                    if self.setup_ctx:
+                        self.setup_ctx.ssh_client.run(
+                            'state.single',
+                            fun_args=['mount.mounted'],
+                            fun_kwargs=fun_kwargs,
+                            targets=self._primary_id()
+                        )
+                    else:
+                        function_run(
+                            'mount.mounted',
+                            fun_kwargs=fun_kwargs,
+                            targets=self._primary_id()
+                        )
 
                 logger.info("Deploying the io path states")
                 self._run_states('iopath', run_args)
