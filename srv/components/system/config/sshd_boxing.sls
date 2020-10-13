@@ -15,4 +15,4 @@ Set private ips root login:
     - name: /etc/ssh/sshd_config
     - text:
       -  Match Address {{ private_ip_list|join(',') }}
-      -  "      PermitRootLogin yes"
+      -  "    PermitRootLogin yes"
