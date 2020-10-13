@@ -57,7 +57,7 @@ else
 fi
 
 # Set remote root login only through private ips
-update_ssh_settings
+#update_ssh_settings
 
 # Provisioner tasks
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
