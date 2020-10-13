@@ -1244,6 +1244,181 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"{run_args.source} provisioner source is not supported yet"
             )
 
+        if run_args.ha:
+            # TODO glusterfs use usual pillar instead inline one
+            glusterfs_pillar = self._prepare_glusterfs_pillar(
+                paths, in_docker=run_args.glusterfs_docker
+            )
+            volumes = glusterfs_pillar['volumes']
+
+            glusterfs_server_pillar = {
+                'glusterfs_dirs': [
+                    vdata['export_dir'] for vdata in volumes.values()
+                ]
+            }
+            logger.debug(
+                f"glusterfs server pillar: {glusterfs_server_pillar}"
+            )
+
+            glusterfs_cluster_pillar = {
+                'glusterfs_peers': [
+                    node.ping_addrs[0] for node in run_args.nodes
+                ],
+                'glusterfs_volumes': {
+                    vname: {
+                        node.ping_addrs[0]: vdata['export_dir']
+                        for node in run_args.nodes
+                    } for vname, vdata in volumes.items()
+                }
+            }
+            logger.debug(
+                f"glusterfs cluster pillar: {glusterfs_cluster_pillar}"
+            )
+
+            glusterfs_client_pillar = {
+                'glusterfs_mounts': [
+                    (
+                        # Note. as explaind in glusterfs docs the server here
+                        # 'is only used to fetch the glusterfs configuration'
+                        run_args.primary.ping_addrs[0],     # TODO ??? remote
+
+                        # each client assumes locally
+                        # availble healthy glusterfs server
+                        # 'localhost',
+
+                        vname,
+                        vdata['mount_dir']
+                    ) for vname, vdata in volumes.items()
+                ]
+            }
+            logger.debug(
+                f"glusterfs client pillar: {glusterfs_client_pillar}"
+            )
+
+            # TODO IMPROVE !!!
+            #       that should be applied only for replace-node
+            #       logic and no here
+            if run_args.field_setup:
+                logger.info("Resolving glusterfs volume info")
+                volume_info = ssh_client.run(
+                    'glusterfs.info',
+                    targets=run_args.primary.minion_id
+                )[run_args.primary.minion_id]
+
+                # NOTE
+                # - we definitely need to stop salt-master since his jobs
+                #   mounts would be lost for some time
+                # - salt-minion stop might be not necessary though
+                # - stopping salt-master first to drop all new requests
+                #   for salt jobs
+                try:
+                    logger.info(f"Stopping 'salt-master' service")
+                    ssh_client.state_single(
+                        "service.dead", fun_args=['salt-master']
+                    )
+                except SaltCmdRunError as exc:  # TODO DRY
+                    if 'Stream is closed' in str(exc):
+                        logger.warning(
+                            "Ensuring salt-master was stopped "
+                            "(salt-ssh lost a connection)"
+                        )
+                        ssh_client.run(
+                            'cmd.run', fun_args=['systemctl stop salt-master']
+                        )
+
+                logger.info(f"Stopping 'salt-minion' service")
+                ssh_client.state_single(
+                    "service.dead", fun_args=['salt-mininon']
+                )
+
+                secondaries = tuple([
+                    node.ping_addrs[0] for node in run_args.secondaries
+                ])
+                logger.info(
+                    f"Removing old nodes {secondaries} glusterfs bricks"
+                )
+                for v_name, v_data in volume_info.items():
+                    # TODO EOS-14076 IMPROVE v_data also has replica info,
+                    #      need explore glusterfs more for better logic
+                    replicas_num = len(v_data['bricks'])
+                    for brick in v_data['bricks'].values():
+                        if brick['path'].startswith(secondaries):
+                            replicas_num -= 1
+                            logger.debug(
+                                f"Removing brick {brick['path']} "
+                                "from glusterfs volume {v_name}"
+                            )
+                            ssh_client.cmd_run(
+                                (
+                                    f"echo y | gluster volume remove-brick "
+                                    f"{v_name} replica {replicas_num} "
+                                    f"{brick['path']} force"
+                                ),
+                                fun_kwargs=dict(python_shell=True),
+                                targets=run_args.primary.minion_id
+                            )
+
+                for peer in secondaries:
+                    logger.info(f"Removing old node glusterfs peer {peer}")
+                    # TODO ??? is 'force' necessary here
+                    ssh_client.cmd_run(
+                        f"echo y | gluster peer detach {peer} force",
+                        fun_kwargs=dict(python_shell=True),
+                        targets=run_args.primary.minion_id
+                    )
+
+                logger.info(f"Removing old glusterfs volumes")
+                for v_name in volumes:
+                    if v_name in volume_info:
+                        logger.debug(f"Removing glusterfs volume {v_name}")
+                        ssh_client.run(
+                            'glusterfs.delete_volume',
+                            fun_args=[v_name],
+                            fun_kwargs=dict(stop=True),
+                            targets=run_args.primary.minion_id
+                        )
+
+            if glusterfs_pillar['in_docker']:
+                # Note. there is an issue in salt-ssh
+                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
+                # so we have to apply docker using on-server salt
+                logger.info("Installing Docker")
+                ssh_client.cmd_run(
+                    "salt-call --local state.apply components.misc_pkgs.docker"
+                )
+
+            logger.info("Configuring glusterfs servers")
+            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
+            #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
+            ssh_client.state_apply(
+                'glusterfs.server',
+                targets=master_targets,
+                fun_kwargs={
+                    'pillar': glusterfs_server_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs cluster")
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.cluster',
+                targets=run_args.primary.minion_id,
+                fun_kwargs={
+                    'pillar': glusterfs_cluster_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs clients")
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.client',
+                fun_kwargs={
+                    'pillar': glusterfs_client_pillar
+                }
+            )
+
+        # HA LOGIC END TODO wrap to a method / funciton
+
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")
         res = ssh_client.state_apply('provisioner.configure_salt_minion')
@@ -1304,90 +1479,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
             else:
                 raise
-
-        if run_args.ha:
-            # TODO glusterfs use usual pillar instead inline one
-            glusterfs_pillar = self._prepare_glusterfs_pillar(
-                paths, in_docker=run_args.glusterfs_docker
-            )
-            volumes = glusterfs_pillar['volumes']
-
-            if glusterfs_pillar['in_docker']:
-                # Note. there is an issue in salt-ssh
-                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
-                # so we have to apply docker using on-server salt
-                logger.info("Installing Docker")
-                ssh_client.cmd_run(
-                    "salt-call --local state.apply components.misc_pkgs.docker"
-                )
-
-            logger.info("Configuring glusterfs servers")
-            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
-            #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
-            glusterfs_server_pillar = {
-                'glusterfs_dirs': [
-                    vdata['export_dir'] for vdata in volumes.values()
-                ]
-            }
-            ssh_client.state_apply(
-                'glusterfs.server',
-                targets=master_targets,
-                fun_kwargs={
-                    'pillar': glusterfs_server_pillar
-                }
-            )
-
-            logger.info("Configuring glusterfs cluster")
-            glusterfs_cluster_pillar = {
-                'glusterfs_peers': [
-                    node.ping_addrs[0] for node in run_args.nodes
-                ],
-                'glusterfs_volumes': {
-                    vname: {
-                        node.ping_addrs[0]: vdata['export_dir']
-                        for node in run_args.nodes
-                    } for vname, vdata in volumes.items()
-                }
-            }
-            logger.debug(
-                f"glusterfs cluster pillar: {glusterfs_cluster_pillar}"
-            )
-            # should be run only on one node
-            ssh_client.state_apply(
-                'glusterfs.cluster',
-                targets=run_args.primary.minion_id,
-                fun_kwargs={
-                    'pillar': glusterfs_cluster_pillar
-                }
-            )
-
-            logger.info("Configuring glusterfs clients")
-            glusterfs_client_pillar = {
-                'glusterfs_mounts': [
-                    (
-                        # Note. as explaind in glusterfs docs the server here
-                        # 'is only used to fetch the gluster configuration'
-                        run_args.primary.ping_addrs[0],     # TODO ??? remote
-
-                        # each client assumes locally
-                        # availble healthy gluster server
-                        # 'localhost',
-
-                        vname,
-                        vdata['mount_dir']
-                    ) for vname, vdata in volumes.items()
-                ]
-            }
-            logger.debug(
-                f"glusterfs client pillar: {glusterfs_client_pillar}"
-            )
-            # should be run only on one node
-            ssh_client.state_apply(
-                'glusterfs.client',
-                fun_kwargs={
-                    'pillar': glusterfs_client_pillar
-                }
-            )
 
         if not run_args.field_setup:
             logger.info("Copying factory data")

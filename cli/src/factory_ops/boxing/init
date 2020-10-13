@@ -56,6 +56,9 @@ else
     echo "[ERROR    ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
 fi
 
+# Set remote root login only through private ips
+update_ssh_settings
+
 # Provisioner tasks
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
@@ -65,9 +68,6 @@ backup_files
 
 # Create user for unboxing
 create_unboxing_user
-
-# Set remote root login only through private ips
-update_ssh_settings
 
 # Create flag file
 boxing_flag $box_flag_file
