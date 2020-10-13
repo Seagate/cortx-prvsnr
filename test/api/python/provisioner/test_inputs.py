@@ -16,6 +16,7 @@
 #
 
 import pytest
+from unittest.mock import call
 import argparse
 from typing import Union, List
 from pathlib import Path
@@ -40,7 +41,8 @@ from provisioner.inputs import (
     ParamGroupInputBase,
     NTP, Network, NetworkParams,
     ParamDictItemInputBase,
-    SWUpdateRepo
+    SWUpdateRepo,
+    ParserFiller
 )
 from provisioner.pillar import PillarKey
 from provisioner.api_spec import param_spec as _param_spec
@@ -744,3 +746,157 @@ def test_inputs_SWUpdateRepo_is_apis(tmpdir_function):
     # urls
     res = SWUpdateRepo(some_release, source='https://some/http/url')
     _check('is_remote')
+
+
+def test_inputs_copy_attr_verify_attrs():
+    some_cls = attr.make_class("some_cls", {
+        "some_attr": attr.ib(
+            default=123,
+            validator=None,
+            metadata={
+                'metadata_key': 1
+            },
+            repr=False,
+            hash=None,
+            init=True,
+            type=str,
+            converter=None,
+            kw_only=True
+        )
+    })
+
+    read_attr = attr.fields(some_cls).some_attr
+
+    copied_attr = inputs.copy_attr(read_attr)
+
+    assert copied_attr == read_attr
+
+
+def test_ParserFiller_fill_parser_when_action_is_store_bool():
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'action': 'store_bool',
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ParserFiller.fill_parser(SC, parser)
+    args = parser.parse_args(['--y', '--noy'])
+    assert not args.y
+
+    args = parser.parse_args(['--y'])
+    assert args.y
+
+    args = parser.parse_args(['--noy'])
+    assert not args.y
+
+
+def test_ParserFiller_fill_parser_with_no_action_in_metadata():
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ParserFiller.fill_parser(SC, parser)
+    args = parser.parse_args(['--y', 'some-value'])
+    assert args.y == 'some-value'
+
+
+def test_ParserFiller_fill_parser_with_no_metadata_argparser():
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=123,
+            type=int
+        )
+    })
+    ParserFiller.fill_parser(SC, parser)
+
+    with pytest.raises(SystemExit) as excinfo:
+        parser.parse_args(['--y', 'some-value'])
+
+    assert excinfo.value.code == 2
+
+
+def test_ParserFiller_fill_parser_input_checks(mocker):
+    parser = argparse.ArgumentParser()
+    SC = attr.make_class("SC", {
+        "y": attr.ib(
+            default=True,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'action': 'store_bool',
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    add_args_m = mocker.patch.object(parser, 'add_argument', autospec=True)
+    ParserFiller.fill_parser(SC, parser)
+    expected_calls = [call('--y', action='store_const',
+                           const=True, default=True, dest='y',
+                           help='enable some help',
+                           metavar='INT'),
+                      call('--noy', action='store_const', const=False,
+                           default=False, dest='y', help='disable some help',
+                           metavar='INT')]
+    add_args_m.assert_has_calls(expected_calls)
+    assert add_args_m.call_count == len(expected_calls)
+
+
+def test_ParserFiller_extract_positional_args_happy_path():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            metadata={
+                METADATA_ARGPARSER: {
+                    'action': 'store_bool',
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ret = ParserFiller.extract_positional_args(SC, attr.fields_dict(SC))
+    assert ret == ([attr.fields(SC).x], {})
+
+
+def test_ParserFiller_extract_positional_args_no_metadata_argparser():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            type=int,
+            repr=False,
+            init=False
+        )
+    })
+    ret = ParserFiller.extract_positional_args(SC, attr.fields_dict(SC))
+    assert ret == ([], attr.fields_dict(SC))
+
+
+def test_ParserFiller_extract_positional_args_default_is_not_NOTHING():
+    SC = attr.make_class("SC", {
+        "x": attr.ib(
+            default=123,
+            metadata={
+                METADATA_ARGPARSER: {
+                    'help': 'some help'
+                }
+            },
+            type=int
+        )
+    })
+    ret = ParserFiller.extract_positional_args(SC, attr.fields_dict(SC))
+    assert ret == ([], attr.fields_dict(SC))
