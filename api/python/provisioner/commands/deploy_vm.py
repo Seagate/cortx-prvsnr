@@ -99,6 +99,7 @@ class DeployVM(Deploy):
         if setup_type != SetupType.SINGLE:
             minions_ids.append('srvnode-2')
 
+        # TODO: EOS-14248 remote setup vm deployment
         res = self._cmd_run(
             "lsblk -ndp | grep disk | awk '{ print $1 }'",
             targets=self._primary_id()
