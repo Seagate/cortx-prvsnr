@@ -22,7 +22,7 @@ from .. import (
     inputs,
     errors
 )
-from ..salt import function_run
+from ..salt import StateFunExecuter
 from ..pillar import (
     PillarKey,
     PillarResolver
@@ -266,7 +266,7 @@ class DeployVM(Deploy):
                             targets=self._primary_id()
                         )
                     else:
-                        function_run(
+                        StateFunExecuter.execute(
                             'mount.mounted',
                             fun_kwargs=fun_kwargs,
                             targets=self._primary_id()
