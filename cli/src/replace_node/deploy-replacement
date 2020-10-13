@@ -399,16 +399,20 @@ ping -c1 ${repl_node_hostname} >/dev/null 2>&1 \
 # Update salt states
 update_salt_n_system
 
+l_info "=================================================="
+l_info "Stage 1.1: Applying update repo (if exists)..."
+l_info "=================================================="
+$cmd salt "*" state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
+
 flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
 if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     l_info "=================================================="
-    l_info "Stage 1: Applying multipath..."
+    l_info "Stage 1.2: Applying multipath..."
     l_info "=================================================="
-
     l_info "Applying multipath states on node: ${tgt_node}"
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare ${salt_opts}
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install ${salt_opts}
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config ${salt_opts}
 
     l_info "Generating multipath flag file current node."
     test -d ${flag_file_dir} || mkdir -p ${flag_file_dir}
@@ -417,7 +421,7 @@ if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     # On replacement node it is essential to reboot node
     # after multipath states are applied
     l_warn "Rebooting '${tgt_node}' to ensure multipath picks correct LUNs for mapping."
-    $cmd salt ${tgt_node} system.reboot --async
+    $cmd salt ${tgt_node} system.reboot --async ${salt_opts}
 
 elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         && ${tgt_node} == $(cat ${flag_file_dir}/${tgt_node}.multipath)
