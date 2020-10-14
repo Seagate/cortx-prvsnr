@@ -20,7 +20,7 @@ sspl:
   health_map_file: ees-schema.json
   rmq:
     user: rmq
-    secret: "B4kf1T6Qso"
+    secret: 
   role: cortx
   Version: 1.0.0
   SYSTEM_INFORMATION:
@@ -55,7 +55,7 @@ sspl:
     exchange_name: "sspl-in"
     routing_key: "iem-key"
     username: "sspluser"
-    password: "sspl4ever"
+    password:
     primary_rabbitmq_host: "localhost"
   LOGGINGMSGHANDLER:
     iem_routing_enabled: "false"
@@ -101,7 +101,7 @@ sspl:
     secondary_controller_ip: "127.0.0.1"
     secondary_controller_port: "28200"
     user: "xxxxx"
-    password: "gAAAAABehkmVHStx337AN2g6OTALqA5BNejmWD6Nu__25DgYzauLz6iGLLCDzqs71pP7Z5AV-oEvnOPGKomJiTzyPwOHnmylEQ=="
+    password: 
     mgmt_interface: "cliapi"
   REALSTORSENSORS:
     polling_frequency: "30"
@@ -143,7 +143,7 @@ sspl:
     exchange_name: "sspl-in"
     routing_key: "actuator-req-key"
     username: "sspluser"
-    password: "sspl4ever"
+    password:
     primary_rabbitmq_host: "localhost"
   RABBITMQEGRESSPROCESSOR:
     virtual_host: "SSPL"
@@ -154,7 +154,7 @@ sspl:
     ack_exchange_name: "sspl-out"
     ack_routing_key: "sensor-key"
     username: "sspluser"
-    password: "sspl4ever"
+    password:
     message_signature_username: "sspl-ll"
     message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
     message_signature_expires: "3600"
