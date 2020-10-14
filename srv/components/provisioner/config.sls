@@ -32,7 +32,7 @@ provisioner_rsyslog_conf_updated:
 Update glusterfshsaredstorage.service:
   file.managed:
     - name: /usr/lib/systemd/system/glusterfssharedstorage.service;
-    - source: salt://provisioner/files/glusterfshsaredstorage.service
+    - source: salt://components/provisioner/files/glusterfshsaredstorage.service
 
 Reload updated services:
   cmd.run:
