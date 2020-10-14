@@ -550,6 +550,18 @@ class SaltClientBase(ABC):
             'cmd.run', fun_args=[cmd], targets=targets, **kwargs
         )
 
+    def state_single(
+        self,
+        state_fun: str,
+        fun_args: Union[List, Tuple, None] = None,
+        **kwargs
+    ):
+        return self.run(
+            'state.single',
+            fun_args=[state_fun] + list(fun_args or []),
+            **kwargs
+        )
+
 
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
