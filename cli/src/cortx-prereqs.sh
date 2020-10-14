@@ -31,11 +31,15 @@ saltstack_repo=
 epel_repo=
 bundled_release=false
 
-# Repo url for in house built commons packages Non RHEL systems
-url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/centos/centos-7.8.2003/"
+# Repo url for in house built commons packages CentOS systems
+if grep -q "CentOS Linux release 7.8" /etc/*-release; then
+    url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/centos/centos-7.8.2003/"
+elif grep -q "CentOS Linux release 7.7" /etc/*-release; then
+    url_local_repo_commons="http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/centos/centos-7.7.1908/"
+fi
 
 # Repo url for in house built commons packages for RHEL systems
-url_local_repo_commons_rhel="http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/"
+url_local_repo_commons_rhel="http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/rhel/rhel-7.7.1908/"
 
 # Repo url for in house built HA packages for RHEL systems
 #url_local_repo_rhel_ha="http://cortx-storage.colo.seagate.com/releases/cortx/rhel_local_ha/"
@@ -114,7 +118,7 @@ parse_args()
             bundled_release=true
 
             system_repo="${tgt_build}/centos7.7"
-            grep -q "Red Hat" /etc/*-release && {
+            grep -E -q "Red Hat.*7.7" /etc/*-release && {
                 subc_list=`subscription-manager list | grep Status: | awk '{ print $2 }'`
                 subc_status=`subscription-manager status | grep "Overall Status:" | awk '{ print $3 }'`
                 if echo "$subc_list" | grep -q "Subscribed"; then
@@ -251,11 +255,17 @@ fi
 
 echo -n "INFO: Checking if kernel version is correct.........................." 2>&1 | tee -a ${LOG_FILE}
 
-grep -q "Red Hat" /etc/*-release && { 
+if grep -E -q "Red Hat.*7.7" /etc/*-release; then
     req_kernel_version='3.10.0-1062.el7.x86_64'
-} || {
+elif grep -q "CentOS Linux release 7.7" /etc/*-release; then
+    req_kernel_version='3.10.0-1062.el7.x86_64'
+elif grep -q "CentOS Linux release 7.8" /etc/*-release; then
     req_kernel_version='3.10.0-1127.el7.x86_64'
-}
+else
+    echo "OS version not supported. Supported OS: RedHat-7.7, CentOS-7.7 and CentOS-7.8" 2>&1 | tee -a ${LOG_FILE}
+    exit 1
+fi
+
 kernel_version=`uname -r`
 if [[ "$kernel_version" != "$req_kernel_version" ]]; then
     echo "ERROR: Kernel version is wrong. Required: $req_kernel_version installed: $kernel_version" 2>&1 | tee -a ${LOG_FILE}
@@ -264,7 +274,7 @@ else
     echo "Done." 2>&1 | tee -a ${LOG_FILE}
 fi
 
-if grep -q "Red Hat" /etc/*-release; then
+if grep -E -q "Red Hat.*7.7" /etc/*-release; then
     if [[ "$disable_sub_mgr_opt" == true ]]; then
         echo -n "INFO: disabling the Red Hat Subscription Manager....................." 2>&1 | tee -a ${LOG_FILE}
 
