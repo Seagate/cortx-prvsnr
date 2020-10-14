@@ -399,15 +399,10 @@ ping -c1 ${repl_node_hostname} >/dev/null 2>&1 \
 # Update salt states
 update_salt_n_system
 
-l_info "=================================================="
-l_info "Stage 1.1: Applying update repo (if exists)..."
-l_info "=================================================="
-$cmd salt "*" state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
-
 flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
 if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     l_info "=================================================="
-    l_info "Stage 1.2: Applying multipath..."
+    l_info "Stage 1: Applying multipath..."
     l_info "=================================================="
     l_info "Applying multipath states on node: ${tgt_node}"
     $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare ${salt_opts}
@@ -432,6 +427,11 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     l_info "============================================================="
     l_info "Stage 2: Prepareing replaced node for attaching to cluster..."
     l_info "============================================================="
+
+    l_info "=================================================="
+    l_info "Stage 2.0: Applying update repo (if exists)..."
+    l_info "=================================================="
+    $cmd salt ${tgt_node} state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
 
     if [[ "$run_all" == true ]]; then
 
