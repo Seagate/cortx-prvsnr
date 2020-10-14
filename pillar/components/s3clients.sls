@@ -23,6 +23,6 @@ s3clients:
     ip:
     iam_admin:
       user: "sgiamadmin"
-      secret: "B4kf1T6Qso"
+      secret:
   s3endpoint: s3.seagate.com
   secret_key:
