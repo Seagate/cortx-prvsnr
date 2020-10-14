@@ -31,3 +31,15 @@ glusterfs_volume_{{ volume }}_mounted:
     - pass_num: 0
 
 {% endfor %}
+
+# Always start glusterfshsaredstorage before salt-minion
+Update glusterfshsaredstorage.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/glusterfssharedstorage.service;
+    - source: salt://glusterfs/client/files/glusterfshsaredstorage.service
+
+Reload updated services:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Update glusterfshsaredstorage.service

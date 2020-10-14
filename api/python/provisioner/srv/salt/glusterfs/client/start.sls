@@ -3,9 +3,9 @@
 #     - name: glusterfsd.service
 #     - enable: True
 
-#Enable glusterfssharedstorage.service:
-#  service.enabled:
-#    - name: glusterfssharedstorage.service
+Enable glusterfssharedstorage.service:
+  service.enabled:
+    - name: glusterfssharedstorage.service
 
 Enable sync-saltdata.service:
   service.enabled:
