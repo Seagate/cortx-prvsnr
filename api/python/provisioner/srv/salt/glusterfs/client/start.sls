@@ -6,4 +6,3 @@
 Enable glusterfssharedstorage.service:
   service.enabled:
     - name: glusterfssharedstorage.service
-    
