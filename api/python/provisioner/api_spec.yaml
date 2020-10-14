@@ -122,3 +122,5 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
+check:
+  type: Check

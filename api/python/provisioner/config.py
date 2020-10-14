@@ -315,3 +315,35 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+
+class Checks(Enum):
+
+    """Enumeration for available checks/validations"""
+
+    NETWORK = "network"
+    CONNECTIVITY = "connectivity",
+    BMC_ACCESSIBILITY = "bmc_accessibility"
+    COMMUNICABILITY = "communicability"
+    CLUSTER_STATUS = "cluster_status"
+    LOGS_ARE_GOOD = "logs_are_good"
+    PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+
+
+# Set of supported validations/checks
+CHECKS = {
+    Checks.NETWORK.value,
+    Checks.NETWORK.value,
+    Checks.CONNECTIVITY.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value
+}
+
+
+class CheckVerdict(Enum):
+
+    """Values which represent validation status"""
+    PASSED = "passed"
+    FAIL = "fail"

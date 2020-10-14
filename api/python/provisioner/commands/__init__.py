@@ -25,6 +25,7 @@ import json
 import yaml
 import importlib
 
+from .check import Check
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -546,6 +547,10 @@ class SWUpdate(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         minion_conf_changes = None
+
+        # TODO: discuss which check we exactly need for sw update
+        # checker = Check()
+        # res = checker.check_all(targets=LOCAL_MINION)
         try:
             ensure_cluster_is_healthy()
 
