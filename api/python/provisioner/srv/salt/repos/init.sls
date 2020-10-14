@@ -25,10 +25,16 @@
 {% for release, source in pillar['release']['base']['repos'].items() %}
 
     {% set source_type = None %}
+    {% set is_repo = True %}
     {% set repo_dir = '/'.join(
         [pillar['release']['base']['base_dir'], release]) %}
 
     {% if source %}
+
+        {% if source is mapping %}
+            {% set source = source['source'] %}
+            {% set is_repo = source['is_repo'] | to_bool %}
+        {% endif %}
 
         {% if source.startswith(('http://', 'https://', 'file://')) %}
 
@@ -65,7 +71,7 @@ unexpected_repo_source:
 
         {% endif %}  # source value inspection
 
-{{ repo_added(release, source, source_type, repo_dir) }}
+{{ repo_added(release, source, source_type, repo_dir, is_repo) }}
 
     {% else %}  # source is undefined
 
