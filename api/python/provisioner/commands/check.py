@@ -20,8 +20,10 @@ from . import RunArgs, CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
 from ..errors import SaltCmdResultError
+from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
-from ..salt import local_minion_id, function_run
+from ..salt import local_minion_id, function_run, cmd_run
+from ..salt_minion import check_salt_minions_are_ready
 from ..vendor import attr
 
 
@@ -55,7 +57,6 @@ class CheckArgs:
     )
 
     targets: str = RunArgs.targets
-    dry_run: bool = RunArgs.dry_run
 
 
 @attr.s(auto_attribs=True)
@@ -68,33 +69,16 @@ class Check(CommandParserFillerMixin):
     _run_args_type = CheckArgs
 
     _PRV_METHOD_MOD = "_"  # private method modificator
-    # -c 1 means count of sending ECHO_REQUEST packets
-    # -W 1 means timeout to wait for a response
-    _PING_CMD_TMP = "ping -c 1 -W 1 {server_addr}"  # ping command template
-    _BMC_CHECK_CMD = 'ipmitool chassis status | grep "System Power"'
-    _CLUSTER_STATUS_CHECK_CMD = "pcs status --full cluster"
-    _LOGS_ARE_GOOD_CHECK_CMD_TMP = ('test -f {log_filename} && '
-                                    'grep -i "{key_phrase}" {log_filename} '
-                                    '1>/dev/null && exit 1')
-    _PSWDLESS_SSH_CHECK_CMD_TMP = ('ssh -o BatchMode=yes '
-                                   '-o PasswordAuthentication=no '
-                                   '{user}@{hostname} exit &>/dev/null '
-                                   '&& test $? == 0 || exit 1')
 
     @staticmethod
-    def _network(*, args: str, targets: str, dry_run: bool = False) -> dict:
+    def _network(*, args: str, targets: str) -> dict:
         """
         Private method for network checks.
 
         :param args: network specific checking parameters and arguments
         :param targets: target nodes where network checks will be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real command execution on target nodes
         :return:
         """
-        if dry_run:
-            return dict()
-
         res = dict()
 
         minion_id = local_minion_id()
@@ -126,53 +110,44 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _communicability(*, args: str, targets: str = cfg.ALL_MINIONS,
-                         dry_run: bool = False) -> dict:
+    def _communicability(
+                *, args: str,
+                targets: Union[list, tuple, set] = PENDING_SERVERS) -> dict:
         """
         Check if nodes can communicate using `salt test.ping`
 
         :param args: bmc accessibility check specific parameters and arguments
         :param targets: target nodes where network checks will be executed
-        :param dry_run: Execute method without real check execution on
-                        target nodes
         :return:
         """
-        if dry_run:
-            return dict()
-
         res = dict()
 
-        minion_id = local_minion_id()
-        try:
-            _res = function_run("test.ping", targets=minion_id)
-            # TODO: parse response
-            res[local_minion_id()] = (f"{cfg.CheckVerdict.PASSED.value}: "
-                                      f"{str(_res)}")
-        except SaltCmdResultError as e:
-            res[minion_id] = f"{cfg.CheckVerdict.FAIL.value}: {str(e)}"
+        # TODO: need to resolve cfg.ALL_MINIONS alias
+        #  to the list of minions
+        # TODO: create check and return list of nodes which are down
+        if check_salt_minions_are_ready(targets=targets):
+            res[local_minion_id()] = cfg.CheckVerdict.PASSED.value
+        else:
+            res[local_minion_id()] = cfg.CheckVerdict.FAIL.value
 
         return res
 
-    def _bmc_accessibility(self, *, args: str, targets: str = cfg.ALL_MINIONS,
-                           dry_run: bool = False) -> dict:
+    def _bmc_accessibility(self, *, args: str,
+                           targets: str = cfg.ALL_MINIONS) -> dict:
         """
         Check BMC accessibility
 
         :param args: bmc accessibility check specific parameters and arguments
         :param targets: target nodes where network checks will be executed
-        :param dry_run: Execute method without real check execution on
-                        target nodes
         :return:
         """
-        if dry_run:
-            return dict()
+        _BMC_CHECK_CMD = 'ipmitool chassis status | grep "System Power"'
 
         res = dict()
         minion_id = local_minion_id()
         try:
-            _res = function_run("cmd.run", targets=minion_id,
-                                fun_args=[self._BMC_CHECK_CMD],
-                                fun_kwargs=dict(python_shell=True))
+            _res = cmd_run(_BMC_CHECK_CMD, targets=minion_id,
+                           fun_kwargs=dict(python_shell=True))
             # TODO: parse command output if necessary
             res[minion_id] = f"{cfg.CheckVerdict.PASSED}: {str(_res)}"
         except SaltCmdResultError as e:
@@ -180,52 +155,59 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    def _connectivity(self, *, args: str,
+    def _connectivity(self, *,
                       servers: Union[list, tuple, set] = PENDING_SERVERS,
-                      dry_run: bool = False) -> dict:
+                      args: str) -> dict:
         """
         Check servers connectivity. Ping servers to check for availability
 
-        :param str args: possible arguments for connectivity checks
         :param Union[list, tuple, set] servers: servers for pinging
-        :param dry_run: Execute method without real check execution on
-                        target nodes
+        :param str args: possible arguments for connectivity checks
         :return:
         """
-        if dry_run:
-            return dict()
+        # ping command template
+        # -c 1 means count of sending ECHO_REQUEST packets
+        # -W 1 means timeout to wait for a response
+        _PING_CMD_TMPL = "ping -c 1 -W 1 {server_addr}"
 
         res = dict()
         for addr in servers:
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
-            #  check cross connectivity if nodes > 2
+            #  check cross connectivity if nodes > 2 and all possible pairs
             targets = set(servers) - {addr}
             targets = (cfg.LOCAL_MINION if not targets
                        else next(iter(targets)))  # takes just one node
 
-            cmd = self._PING_CMD_TMP.format(server_addr=addr)
+            cmd = _PING_CMD_TMPL.format(server_addr=addr)
             try:
-                function_run("cmd.run", targets=targets, fun_args=[cmd])
+                cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
                 res[targets] = (f"{cfg.CheckVerdict.FAIL.value}: "
                                 f"{addr} is not reachable from {targets}")
             else:
                 res[targets] = cfg.CheckVerdict.PASSED.value
 
-    def _logs_are_good(self, *, args: str, targets: str = cfg.ALL_MINIONS,
-                       dry_run: bool = False) -> dict:
+        return res
+
+    def _logs_are_good(self, *, args: str,
+                       targets: str = cfg.ALL_MINIONS) -> dict:
         """
         Check that logs are clear and don't contain some specific key phrases
         which signal about serious issues
 
         :param args: logs_are_good check specific parameters and arguments
         :param targets: target nodes where network checks will be executed
-        :param dry_run: Execute method without real check execution on
-                        target nodes
         :return:
         """
+        _LOGS_ARE_GOOD_CHECK_CMD_TMPL = (
+                                    'test -f {log_filename} && '
+                                    'grep -i "{key_phrase}" {log_filename} '
+                                    '1>/dev/null && exit 1')
+        res = dict()
+        minion_id = local_minion_id()
+
         def check_log_file(log_file, key_phrases, _targets):
             """
             Check separate log_file against key_phrases
@@ -236,11 +218,11 @@ class Check(CommandParserFillerMixin):
             :return:
             """
             for phrase in key_phrases:
-                cmd = self._LOGS_ARE_GOOD_CHECK_CMD_TMP.format(
+                cmd = _LOGS_ARE_GOOD_CHECK_CMD_TMPL.format(
                     log_filename=log_file,
                     key_phrase=phrase)
                 try:
-                    function_run("cmd.run", targets=_targets, fun_args=[cmd])
+                    cmd_run(cmd, targets=_targets)
                     res[minion_id] = {
                         log_file: f"{cfg.CheckVerdict.PASSED}"
                     }
@@ -253,10 +235,6 @@ class Check(CommandParserFillerMixin):
         # grep "reboot" /var/log/corosync.log
         # grep "error" /var/log/corosync.log"
 
-        if dry_run:
-            return dict()
-
-        res = dict()
         # they should be a constants
         corosync_log = "/var/log/cluster/corosync.log"
         pacemaker_log = "/var/log/pacemaker.log"
@@ -269,30 +247,28 @@ class Check(CommandParserFillerMixin):
             "unable to stop resource"
         )
 
-        minion_id = local_minion_id()
-
         check_log_file(corosync_log, corosync_key_phrases, minion_id)
         check_log_file(pacemaker_log, pacemaker_key_phrases, minion_id)
 
         return res
 
     def _passwordless_ssh_access(
-                        self, *, args: str,
+                        self, *,
                         servers: Union[list, tuple, set] = PENDING_SERVERS,
-                        dry_run: bool = False) -> dict:
+                        args: str) -> dict:
         """
+        Check if passwordless SSH access is possible between nodes
 
         :param args: passwordless ssh access check specific parameters
                      and arguments
         :param servers: servers for checking passwordless SSH
-        :param dry_run: Execute method without real check execution on
-                        target nodes
-
         :return:
         """
         # NOTE: the logic is similar to `_connectivity` method
-        if dry_run:
-            return dict()
+        _PSWDLESS_SSH_CHECK_CMD_TMPL = ('ssh -o BatchMode=yes '
+                                        '-o PasswordAuthentication=no '
+                                        '{user}@{hostname} exit &>/dev/null '
+                                        '&& test $? == 0 || exit 1')
 
         res = dict()
         for addr in servers:
@@ -305,87 +281,88 @@ class Check(CommandParserFillerMixin):
             targets = (cfg.LOCAL_MINION if not targets
                        else next(iter(targets)))  # takes just one node
 
-            cmd = self._PSWDLESS_SSH_CHECK_CMD_TMP.format(user='root',
-                                                          hostname=addr)
+            cmd = _PSWDLESS_SSH_CHECK_CMD_TMPL.format(user='root',
+                                                      hostname=addr)
             try:
-                function_run("cmd.run", targets=targets, fun_args=[cmd])
+                cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
                 res[targets] = (f"{cfg.CheckVerdict.FAIL.value}: "
                                 f"'{addr}' is not reachable from {targets}")
             else:
                 res[targets] = cfg.CheckVerdict.PASSED.value
 
-    def _cluster_status(self, *, args: str, targets: str = cfg.ALL_MINIONS,
-                        dry_run: bool = False) -> dict:
+        return res
+
+    def _cluster_status(self, *, args: str,
+                        targets: str = cfg.ALL_MINIONS) -> dict:
         """
         Check cluster status
 
         :param args: cluster_status check specific parameters and arguments
         :param targets: target nodes where network checks will be executed
-        :param dry_run: Execute method without real check execution on
-                        target nodes
         :return:
         """
-        if dry_run:
-            return dict()
-
+        # NOTE: per my discussion with Andrey Kononykhin replace
+        #  `pcs status --full cluster` and its complex parsing by existing
+        #  ensure_cluster_is_healthy call
         res = dict()
 
-        minion_id = local_minion_id()
         try:
-            _res = function_run("cmd.run", targets=minion_id,
-                                fun_args=[self._CLUSTER_STATUS_CHECK_CMD])
-            # TODO: parse command if necessary
-            res[minion_id] = f"{cfg.CheckVerdict.PASSED.value}: {str(_res)}"
-        except SaltCmdResultError as e:
-            res[minion_id] = f"{cfg.CheckVerdict.FAIL.value}: {str(e)}"
+            ensure_cluster_is_healthy()
+            res[local_minion_id()] = f"{cfg.CheckVerdict.PASSED.value}"
+        except Exception:
+            res[local_minion_id()] = f"{cfg.CheckVerdict.FAIL.value}"
 
         return res
 
-    def check_all(self, check_args: str = "", targets: str = cfg.ALL_MINIONS,
-                  dry_run: bool = False) -> dict:
+    def check_all(self, check_args: str = None,
+                  targets: str = cfg.ALL_MINIONS) -> dict:
         """
         Run all checks which are available and supported
 
         :param str check_args: check specific arguments
         :param str targets: target nodes where checks are planned
                             to be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real check execution on target nodes
         :return:
         """
         res = dict()
         for check_name in cfg.CHECKS:
             _res = getattr(self,
                            self._PRV_METHOD_MOD + check_name)(args=check_args,
-                                                              targets=targets,
-                                                              dry_run=dry_run)
+                                                              targets=targets)
             res[check_name] = _res  # aggregate result to simple dict form
 
         return res
 
-    def run(self, check_name: cfg.Checks, check_args: str = "",
-            targets: str = cfg.ALL_MINIONS, dry_run: bool = False) -> dict:
+    def run(self, check_name: cfg.Checks = None, check_args: str = "",
+            targets: str = cfg.ALL_MINIONS) -> dict:
         """
-        Basic run method to execute remote commands on targets nodes:
+        Basic run method to execute checks specified by `check_name` or
+        perform all checks if `check_name` is omitted
 
         :param str check_name: specific command to be executed on target nodes
         :param str check_args: check specific arguments
         :param str targets: target nodes where checks are planned
                             to be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real check execution on target nodes
         :return:
         """
-        check_name = check_name.strip().lower()
-
         res = dict()
+
+        if check_name is None:
+            for check_name in cfg.CHECKS:
+                _res = getattr(self,
+                               self._PRV_METHOD_MOD + check_name)(
+                                                            args=check_args,
+                                                            targets=targets)
+                res[check_name] = _res  # aggregate result to simple dict form
+
+        check_name = check_name.strip().lower()
         if check_name in cfg.CHECKS:
             _res = getattr(self,
                            self._PRV_METHOD_MOD + check_name)(args=check_args,
-                                                              targets=targets,
-                                                              dry_run=dry_run)
+                                                              targets=targets)
             res[check_name] = _res  # aggregate result to simple dict form
+
         else:
             raise ValueError(f'Check "{check_name}" is not supported')
 
