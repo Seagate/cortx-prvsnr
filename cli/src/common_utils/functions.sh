@@ -1972,11 +1972,10 @@ function update_bmc_ip {
         _cluster_sls_path=${_installdir}/pillar/user/groups/all/cluster.sls
     fi
 
-    # Install ipmitool package
     if [[ -n "$_hostspec" ]]; then
-        ${_cmd} "yum install -y ipmitool"
+        ${_cmd} "rpm -qi ipmitool > /dev/null || yum install -y ipmitool"
     else
-        yum install -y ipmitool
+        rpm -qi ipmitool > /dev/null || yum install -y ipmitool
     fi
 
     l_info "Acquire BMC IP on NodeID: ${_hostspec}"
