@@ -1616,6 +1616,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
         #      CONFIGURED AND MIGHT BE USED INSTEAD OF SALT-SSH BASED CONTROL
 
+        logger.info("Sync salt modules")
+        ssh_client.cmd_run("salt-call saltutil.sync_modules")
+
         logger.info("Configuring provisioner logging")
         for state in [
             'components.system.prepare',
