@@ -76,6 +76,7 @@ prereq_states=(
     "misc_pkgs.nodejs.teardown"
     "misc_pkgs.rabbitmq.teardown"
     "misc_pkgs.openldap.teardown"
+    "misc_pkgs.consul.teardown"
     "ha.haproxy.teardown"
     "misc_pkgs.ssl_certs.teardown"
 )
