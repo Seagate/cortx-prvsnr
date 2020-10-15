@@ -28,10 +28,10 @@ Public direct network:
     - onboot: yes
     - userctl: no
     - defroute: no
+    - mtu: 9000
 {% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
-    - mtu: 9000
 {%- else %}
     - proto: dhcp
 {%- endif %}
