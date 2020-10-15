@@ -874,7 +874,10 @@ reqd_pkgs_install()
         pkg_name=$(basename $pkg)
         [ -f "$pkg" ] || {
             echo "reqd_pkgs_install(): $pkg_name not installed " >> $logfile
-            pkg_install $pkg_name
+            #pkg_install $pkg_name
+            echo "ERROR: $pkg_name is not installed" | tee -a $logfile
+            echo "Please make sure $pkg_name is installed before running the command" | tee -a $logfile
+            exit 1
         }
     done
 }
@@ -883,6 +886,10 @@ ftp_cmd_run()
 {
     _cmd="$1"
     ftp_cmd="/bin/ftp"
+    if [ -f $ftp_log ]; then
+        ts=$(date +"%Y-%m-%d_%H-%M-%S")
+        yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
+    fi
     echo "ftp_cmd_run(): cmd: $_cmd" >> $logfile
     reqd_pkgs_install $ftp_cmd
     echo "ftp_cmd_run(): starting ftp session" >> $logfile
@@ -1035,22 +1042,43 @@ fw_update()
     echo "Updating the firmware on host: $host" >> $logfile
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
+
+    echo "Firmware Version before update:" | tee -a $logfile
+    fw_ver_get | tee -a $logfile
+
     ftp_cmd_run "put $fw_bundle flash"
 
-    grep -q "Codeload completed successfully." $ftp_log && {
-        grep -q "Partner: Codeload completed successfully." $ftp_log && {
-            grep -q "RETURN_CODE: 8" $ftp_log || _error=1
-        } || _error=1
-    } || _error=1
+    echo "Firmware Version after update:" | tee -a $logfile
+    fw_ver_get | tee -a $logfile
 
-    [ $_error -eq 1 ] && {
+    if grep -q "Codeload completed successfully." $ftp_log; then
+        if grep -q "RETURN_CODE: 8" $ftp_log; then
+            _error=0
+        elif grep -q "RETURN_CODE: 9" $ftp_log; then
+            _error=0
+        elif grep -q "Not attempted (Versions match)" $ftp_log; then
+            _error=0
+        fi
+
+        if ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
+            _error=0
+        else
+            _error=1
+        fi
+    elif ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
+        _error=0
+    else
+        _error=1
+    fi
+
+    if [[ $_error -eq 1 ]]; then
         echo "Error: Firmware upgrade failed" | tee -a $logfile
         echo "Check $ftp_log for more details, exiting" 2>&1 | tee -a $logfile
         exit 1
-    } || {
+    else
         echo "ftp_cmd_run(): firmware is updated successfully" 2>&1 | tee -a $logfile
         echo "The detailed logs are kept at: '$ftp_log'" 2>&1 | tee -a $logfile
-    }
+    fi
 }
 
 fw_license_show()
