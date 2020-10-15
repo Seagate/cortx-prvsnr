@@ -22,8 +22,15 @@
 
     {% set repo_dir = '/'.join(
         [pillar['release']['update']['base_dir'], release]) %}
+    {% set repo_params = {} %}
 
     {% if source %}
+
+        {% if source is mapping %}
+            {% set source = source['source'] %}
+            {% set repo_params = source.get('params', {}) %}
+        {% endif %}
+
 
         {% if source.startswith(('http://', 'https://')) %}
 
@@ -42,7 +49,7 @@ unexpected_repo_source:
 
         {% endif %}
 
-{{ repo_added(release, source, source_type) }}
+{{ repo_added(release, source, source_type, repo_params) }}
 
     {% else %}
 
