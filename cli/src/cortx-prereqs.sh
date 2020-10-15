@@ -283,7 +283,7 @@ if grep -E -q "Red Hat.*7.7" /etc/*-release; then
         subscription-manager unregister || true
         subscription-manager clean || true
         subscription-manager config --rhsm.manage_repos=0
-        puppet agent --disable "Cortx Stack Deploy Automation"
+        puppet agent --disable "Cortx Stack Deploy Automation" || true
         echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
         echo "INFO: Creating repos for Cotrx" 2>&1 | tee -a ${LOG_FILE}
         create_commons_repos "$url_local_repo_commons_rhel"
