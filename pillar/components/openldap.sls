@@ -17,8 +17,8 @@
 
 openldap:
   admin:
-    secret:
+    secret: "B4kf1T6Qso"
   backend_db: mdb
   iam_admin:
     user: "sgiamadmin"
-    secret:
+    secret: "B4kf1T6Qso"
