@@ -16,8 +16,9 @@
 #
 
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
 include:
+  - components.ha.iostack-ha.config.base
+{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
   - components.ha.iostack-ha.config.post_install
   - components.ha.iostack-ha.config.config
 
