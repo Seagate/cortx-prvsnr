@@ -17,7 +17,6 @@
 
 
 include:
-  - components.ha.iostack-ha.config.base
   - components.ha.iostack-ha.config.post_install
 
 Config for LDR-R1 HA cluster:
