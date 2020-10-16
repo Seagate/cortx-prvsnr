@@ -1052,6 +1052,7 @@ fw_update()
     fw_ver_get | tee -a $logfile
 
     if grep -q "Codeload completed successfully." $ftp_log; then
+        # IMPORTANT: Do not change the sequence of the checks below 
         if grep -q "RETURN_CODE: 8" $ftp_log; then
             _error=0
         elif grep -q "RETURN_CODE: 9" $ftp_log; then
