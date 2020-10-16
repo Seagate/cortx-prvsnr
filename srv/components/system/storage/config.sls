@@ -84,6 +84,8 @@ Make vg_metadata_{{ node }}:
   lvm.vg_present:
     - name: vg_metadata_{{ node }}
     - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+    - kwargs:
+      - addtag: {{ node }}
     - require:
       - Make pv_metadata
 # done creating LVM VG
