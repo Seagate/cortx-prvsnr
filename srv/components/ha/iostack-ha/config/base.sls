@@ -15,7 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Run cortx-ha remove_node:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:remove_node')
-    - onlyif: test -e /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+
+include:
+  - components.ha.iostack-ha.prepare
+  - components.ha.cortx-ha.prepare
+  - components.ha.cortx-ha.install
+
+Copy file setup-ees.yaml:
+  file.copy:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - source: /opt/seagate/cortx/ha/conf/setup-ees.yaml
+    - force: True      # Failsafe once cortx-ha fixes the path
+    - makedirs: True
+    - preserve: True
+
+Rename root node to iostack-ha:
+  file.replace:
+    - name: /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - pattern: "ees-ha:"
+    - repl: "iostack-ha:"
+    - count: 1
+  
