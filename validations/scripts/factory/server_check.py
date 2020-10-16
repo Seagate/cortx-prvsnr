@@ -84,3 +84,36 @@ class ServerValidations():
                 response['response'] = [response['response'], result[1]]
                 response['message'] = [response['message'], message]
         return response
+
+    @staticmethod
+    def verify_passwordless():
+        ''' Validations for nodes'''
+        res = PillarGet.get_pillar("cluster:node_list")
+        nodes = []
+        response = {}
+        if not res['ret_code']:
+            nodes = res['response']
+        else:
+            return res
+        flag = True
+        print(nodes)
+        for node in nodes:
+            result = run_subprocess_cmd(f"ssh {node} exit")
+            if result[0]:
+                flag = False
+                if not response.get("response", None):
+                    response['ret_code'] = result[0]
+                    response['response'] = result[1]
+                    response['error_msg'] = result[2]
+                    response['message'] = f"No Passwordless ssh: {node}"
+                else:
+                    if result[0]:
+                        response['ret_code'] = result[0]
+                    response['response'] = [response['response'], result[1]]
+                    response['message'] = [response['message'], f"No Passwordless ssh: {node}"]
+        if flag:
+            response['ret_code'] = result[0]
+            response['response'] = ""
+            response['error_msg'] = ""
+            response['message'] = f"Verified Passwordless ssh"
+        return response
