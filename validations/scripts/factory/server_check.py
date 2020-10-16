@@ -31,14 +31,9 @@ logger = logging.getLogger(__name__)
 
 class ServerValidations():
 
-    def __init__(self):
-        ''' Server validations
-        '''
-        pass
-
     @staticmethod
     def verify_nodes_online():
-        ''' Validations for nodes'''
+        '''Validations for nodes'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -59,7 +54,7 @@ class ServerValidations():
 
     @staticmethod
     def verif_node_communication():
-        """ validation salt '*' test.ping"""
+        '''validation salt  test.ping'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -87,7 +82,7 @@ class ServerValidations():
 
     @staticmethod
     def verify_passwordless():
-        ''' Validations for nodes'''
+        '''Validations for nodes'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -115,5 +110,5 @@ class ServerValidations():
             response['ret_code'] = result[0]
             response['response'] = ""
             response['error_msg'] = ""
-            response['message'] = f"Verified Passwordless ssh"
+            response['message'] = "Verified Passwordless ssh"
         return response

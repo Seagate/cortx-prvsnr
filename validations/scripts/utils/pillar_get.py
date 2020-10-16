@@ -31,11 +31,11 @@ class PillarGet():
 
     @staticmethod
     def get_pillar(key):
-        """ Get pillar data for key"""
+        """Get pillar data for key"""
         cmd = f"salt-call pillar.get {key} --out=json"
         response = list(run_subprocess_cmd(cmd))
         if response[0] == 127:
-            message = f"salt-call: command not found"
+            message = "salt-call: command not found"
         elif response[0] == 0:
             res = json.loads(response[1])
             res = res['local']
@@ -46,7 +46,7 @@ class PillarGet():
                 response[1] = res
                 message = f"pillar data {res}"
         else:
-            message = f"Failed to get pillar data"
+            message = "Failed to get pillar data"
         return {"ret_code": response[0],
                 "response": response[1],
                 "error_msg": response[2],

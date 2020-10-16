@@ -29,15 +29,9 @@ logger = logging.getLogger(__name__)
 
 class NetworkChecks():
 
-    def __init__(self):
-        ''' Network validations
-        '''
-        pass
-
     @staticmethod
     def verify_mgmt_vip():
-        ''' Validations for mgmt_vip
-        '''
+        '''Validations for mgmt_vip'''
         res = PillarGet.get_pillar("cluster:mgmt_vip")
         if res['ret_code']:
             res['message'] = "MGMT VIP is not set in pillars"
@@ -47,8 +41,7 @@ class NetworkChecks():
 
     @staticmethod
     def verify_cluster_ip():
-        ''' Validations for cluster_ip
-        '''
+        '''Validations for cluster_ip'''
         res = PillarGet.get_pillar("cluster:cluster_ip")
         if res['ret_code']:
             res['message'] = "Cluster IP is not set in pillars"
@@ -58,7 +51,7 @@ class NetworkChecks():
 
     @staticmethod
     def verify_public_data_ip():
-        ''' Validations for public data ip'''
+        '''Validations for public data ip'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -83,7 +76,7 @@ class NetworkChecks():
 
     @staticmethod
     def verify_private_data_ip():
-        ''' Validations for private data ip'''
+        '''Validations for private data ip'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}

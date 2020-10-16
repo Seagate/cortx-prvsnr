@@ -23,7 +23,6 @@ sys.path.append(parent_dir_name + "/utils")
 
 from network_checks import NetworkValidations  # noqa: E402
 from pillar_get import PillarGet  # noqa: E402
-from ..utils.common import run_subprocess_cmd  # noqa: E402
 
 
 logger = logging.getLogger(__name__)
@@ -31,14 +30,9 @@ logger = logging.getLogger(__name__)
 
 class ControllerValidations():
 
-    def __init__(self):
-        ''' Server validations
-        '''
-        pass
-
     @staticmethod
     def verify_access_to_controller():
-        ''' Validations Access to controllers  '''
+        '''Validations Access to controllers'''
         controllers = ['primary_mc', 'secondary_mc']
         response = {}
         for controller in controllers:

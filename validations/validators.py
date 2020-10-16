@@ -30,7 +30,7 @@ class_mapper = {
 
 
 class Validators():
-    ''' Validator class :validation of all checks for given request '''
+    '''Validator class :validation of all checks for given request'''
 
     @staticmethod
     def factory_checks(args):

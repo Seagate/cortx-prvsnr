@@ -30,14 +30,9 @@ logger = logging.getLogger(__name__)
 
 class StorageValidations():
 
-    def __init__(self):
-        ''' Server validations
-        '''
-        pass
-
     @staticmethod
     def verify_luns_consistency():
-        ''' Validations for LUNs are consistent across nodes '''
+        '''Validations for LUNs are consistent across nodes'''
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -46,7 +41,7 @@ class StorageValidations():
         else:
             return res
         for node in nodes:
-            result = run_subprocess_cmd(f"ssh srvnode-1 lsblk -S | wc -l")
+            result = run_subprocess_cmd(f"ssh {node} lsblk -S | wc -l")
             if not response.get("response", None):
                 response['ret_code'] = result[0]
                 response['response'] = result[1]
@@ -65,4 +60,37 @@ class StorageValidations():
                 response['message'] = "Number of luns are not same on nodes"
             else:
                 response['message'] = "Number of luns are same on nodes"
+        return response
+
+    @staticmethod
+    def verify_lvm():
+        '''Validations for LVM'''
+        res = PillarGet.get_pillar("cluster:node_list")
+        nodes = []
+        response = {}
+        if not res['ret_code']:
+            nodes = res['response']
+        else:
+            return res
+        for node in nodes:
+            result = run_subprocess_cmd(f"ssh {node} vgdisplay | grep srvnode | wc -l")
+            if not response.get("response", None):
+                response['ret_code'] = result[0]
+                response['response'] = result[1]
+                response['error_msg'] = result[2]
+            else:
+                if result[0]:
+                    response['ret_code'] = result[0]
+                response['response'] = [response['response'], result[1]]
+                response['error_msg'] = result[2]
+        if len(nodes) > 1:
+            pre_res = len(nodes)
+            flag = True
+            for resp in response['response']:
+                if pre_res and pre_res != int(resp.strip()):
+                    flag = False
+            if not flag:
+                response['message'] = "Failed to verify LVM "
+            else:
+                response['message'] = "LVM  are present on nodes"
         return response
