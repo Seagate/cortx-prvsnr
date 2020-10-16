@@ -474,8 +474,9 @@ class SetSWUpdateRepo(Set):
     # TODO at least either pre or post should be defined
     input_type: Type[inputs.SWUpdateRepo] = inputs.SWUpdateRepo
 
+    @staticmethod
     def _prepare_repo_for_apply(
-        self, repo: inputs.SWUpdateRepo, enabled: bool = True
+        repo: inputs.SWUpdateRepo, enabled: bool = True
     ):
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
@@ -491,8 +492,9 @@ class SetSWUpdateRepo(Set):
             if not enabled:
                 repo.repo_params = dict(enabled=False)
 
-    def dynamic_validation(self, repo: inputs.SWUpdateRepo, targets: str):
+    def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):
         metadata = {}
+        repo = params
 
         if repo.is_special():
             logger.info(
@@ -520,7 +522,7 @@ class SetSWUpdateRepo(Set):
         #     minions
         try:
             logger.debug(
-                f"Configuring update candidate repo for validation"
+                "Configuring update candidate repo for validation"
             )
             self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
@@ -550,7 +552,9 @@ class SetSWUpdateRepo(Set):
         return repo.metadata
 
     # TODO rollback
-    def _run(self, repo: inputs.SWUpdateRepo, targets: str):
+    def _run(self, params: inputs.SWUpdateRepo, targets: str):
+        repo = params
+
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
 
