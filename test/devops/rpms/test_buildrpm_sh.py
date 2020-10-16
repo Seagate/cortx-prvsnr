@@ -23,6 +23,7 @@ from pathlib import Path
 
 import test.helper as h
 import provisioner
+from provisioner import config
 
 from test.helper import (
     PRVSNRUSERS_GROUP, PROJECT_PATH
@@ -383,14 +384,20 @@ def test_build_isos(
 ):
     res = {}
 
-    for pkg in ('prvsnr', 'prvsnr_api'):
-        repo_dir = Path(f'/tmp/{pkg}.repo')
-        iso_path = Path(f'/tmp/{pkg}.iso')
+    mhost.check_output("yum install -y createrepo genisoimage")
+    single_repo = Path(f'/tmp/single')
+    cortx_repo = single_repo / config.CORTX_ISO_DIR
+    deps_repo = single_repo / config.CORTX_3RD_PARTY_ISO_DIR
+
+    for pkg, repo_dir in (
+        ('prvsnr', cortx_repo),
+        ('prvsnr_api', deps_repo)
+    ):
+        iso_path = Path(f'/tmp/{repo_dir.name}.iso')
 
         mhost.check_output(
             "mkdir -p {repo_dir}"
             " && cp {rpm_path} {repo_dir}"
-            " && yum install -y createrepo genisoimage"
             " && createrepo {repo_dir}"
             " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
             .format(
@@ -404,3 +411,18 @@ def test_build_isos(
 
         dest = PROJECT_PATH / f"tmp/{iso.name}"
         dest.write_bytes(iso.read_bytes())
+
+    # prepare single iso
+    iso_path = Path(f'/tmp/{single_repo.name}.iso')
+    mhost.check_output(
+        "mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
+        .format(
+            repo_dir=single_repo,
+            iso_path=iso_path
+        )
+    )
+    iso = mhost.copy_from_host(iso_path)
+    res[pkg] = iso
+
+    dest = PROJECT_PATH / f"tmp/{iso.name}"
+    dest.write_bytes(iso.read_bytes())
