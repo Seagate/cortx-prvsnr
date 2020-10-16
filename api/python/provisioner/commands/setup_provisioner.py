@@ -1253,11 +1253,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         else:
             ssh_client.state_apply('cortx_repos')
 
-        logger.info("Setting up paswordless ssh")
-        ssh_client.state_apply('ssh')
-
-        logger.info("Checking paswordless ssh")
-        ssh_client.state_apply('ssh.check')
+        try:
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
+        except SaltCmdResultError:
+            logger.info("Setting up paswordless ssh")
+            ssh_client.state_apply('ssh')
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
 
         # Does not hang after adding glusterfs logic.
         logger.info("Configuring the firewall")

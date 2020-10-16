@@ -1210,7 +1210,7 @@ pre_unbox()
     fi
 
     #7. Update minion files on both the nodes to point master to server A hostname
-    minion_config_update
+    # minion_config_update
 
     #8. Update minion files on both the nodes to point master to server A hostname
     # TODO: remove the function ipmi_install_skip
