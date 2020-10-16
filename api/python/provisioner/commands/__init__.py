@@ -25,7 +25,9 @@ import json
 import yaml
 import importlib
 
-from .check import Check
+# TODO: cross import: from .check import Check
+#  from . import RunArgs - it leads to import errors
+# from .check import Check
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,

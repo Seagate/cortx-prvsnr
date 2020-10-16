@@ -322,7 +322,7 @@ class Checks(Enum):
     """Enumeration for available checks/validations"""
 
     NETWORK = "network"
-    CONNECTIVITY = "connectivity",
+    CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
     COMMUNICABILITY = "communicability"
     CLUSTER_STATUS = "cluster_status"
@@ -333,12 +333,12 @@ class Checks(Enum):
 # Set of supported validations/checks
 CHECKS = {
     Checks.NETWORK.value,
-    Checks.NETWORK.value,
     Checks.CONNECTIVITY.value,
     Checks.BMC_ACCESSIBILITY.value,
     Checks.COMMUNICABILITY.value,
     Checks.CLUSTER_STATUS.value,
-    Checks.LOGS_ARE_GOOD.value
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value
 }
 
 

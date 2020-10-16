@@ -450,7 +450,8 @@ def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
     return _api_call('grains_get', *keys, targets=targets, nowait=nowait)
 
 
-def check(check_name: str, check_args: str = "", targets: str = ALL_MINIONS):
+def check(check_name: str = None, check_args: str = "",
+          targets: str = ALL_MINIONS):
     """
     Verify specific checks for system and beyond
 
@@ -459,5 +460,5 @@ def check(check_name: str, check_args: str = "", targets: str = ALL_MINIONS):
     :param targets: targets where to execute validations (optional)
     :return:
     """
-    return _api_call('check', check_name, check_args_args=check_args,
-                     targets=targets)
+    return _api_call('check', check_name=check_name,
+                     check_args_args=check_args, targets=targets)

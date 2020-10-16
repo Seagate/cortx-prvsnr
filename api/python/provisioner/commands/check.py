@@ -41,7 +41,8 @@ class CheckArgs:
             inputs.METADATA_ARGPARSER: {
                 'help': "name of check/validation alias"
             }
-        }
+        },
+        default=None
     )
     check_args: str = attr.ib(
         metadata={
@@ -56,8 +57,6 @@ class CheckArgs:
         default=""  # empty string
     )
 
-    targets: str = RunArgs.targets
-
 
 @attr.s(auto_attribs=True)
 class Check(CommandParserFillerMixin):
@@ -71,15 +70,14 @@ class Check(CommandParserFillerMixin):
     _PRV_METHOD_MOD = "_"  # private method modificator
 
     @staticmethod
-    def _network(*, args: str, targets: str) -> dict:
+    def _network(*, args: str) -> dict:
         """
         Private method for network checks.
 
         :param args: network specific checking parameters and arguments
-        :param targets: target nodes where network checks will be executed
         :return:
         """
-        res = dict()
+        res: dict = dict()
 
         minion_id = local_minion_id()
 
@@ -120,7 +118,7 @@ class Check(CommandParserFillerMixin):
         :param targets: target nodes where network checks will be executed
         :return:
         """
-        res = dict()
+        res: dict = dict()
 
         # TODO: need to resolve cfg.ALL_MINIONS alias
         #  to the list of minions
@@ -132,19 +130,19 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    def _bmc_accessibility(self, *, args: str,
-                           targets: str = cfg.ALL_MINIONS) -> dict:
+    def _bmc_accessibility(self, *, args: str) -> dict:
         """
         Check BMC accessibility
 
         :param args: bmc accessibility check specific parameters and arguments
-        :param targets: target nodes where network checks will be executed
         :return:
         """
         _BMC_CHECK_CMD = 'ipmitool chassis status | grep "System Power"'
 
-        res = dict()
+        res: dict = dict()
+
         minion_id = local_minion_id()
+
         try:
             _res = cmd_run(_BMC_CHECK_CMD, targets=minion_id,
                            fun_kwargs=dict(python_shell=True))
@@ -170,7 +168,7 @@ class Check(CommandParserFillerMixin):
         # -W 1 means timeout to wait for a response
         _PING_CMD_TMPL = "ping -c 1 -W 1 {server_addr}"
 
-        res = dict()
+        res: dict = dict()
         for addr in servers:
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
@@ -191,22 +189,26 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    def _logs_are_good(self, *, args: str,
-                       targets: str = cfg.ALL_MINIONS) -> dict:
+    def _logs_are_good(self, *, args: str) -> dict:
         """
         Check that logs are clear and don't contain some specific key phrases
         which signal about serious issues
 
         :param args: logs_are_good check specific parameters and arguments
-        :param targets: target nodes where network checks will be executed
         :return:
         """
+        # TODO: do we need to fail if logfile doesn't exist?
         _LOGS_ARE_GOOD_CHECK_CMD_TMPL = (
-                                    'test -f {log_filename} && '
+                                    'test -f {log_filename} || '
+                                    '{{ echo "logfile does not exist" && '
+                                    'exit 1 ; }} ; '
                                     'grep -i "{key_phrase}" {log_filename} '
-                                    '1>/dev/null && exit 1')
-        res = dict()
+                                    '1>/dev/null && '
+                                    'echo "{key_phrase} exists in logfile" && '
+                                    'exit 1')
+
         minion_id = local_minion_id()
+        res: dict = {minion_id: dict()}
 
         def check_log_file(log_file, key_phrases, _targets):
             """
@@ -223,13 +225,12 @@ class Check(CommandParserFillerMixin):
                     key_phrase=phrase)
                 try:
                     cmd_run(cmd, targets=_targets)
-                    res[minion_id] = {
-                        log_file: f"{cfg.CheckVerdict.PASSED}"
-                    }
                 except SaltCmdResultError as e:
-                    res[minion_id] = {
-                        log_file: f"{cfg.CheckVerdict.FAIL}: {str(e)}"
-                    }
+                    res[minion_id][log_file] = (
+                                    f"{cfg.CheckVerdict.FAIL.value}: {str(e)}")
+                    return
+
+                res[minion_id][log_file] = cfg.CheckVerdict.PASSED.value
 
         # grep "unable to stop resource" /var/log/pacemaker.log
         # grep "reboot" /var/log/corosync.log
@@ -244,7 +245,7 @@ class Check(CommandParserFillerMixin):
             "error"
         )
         pacemaker_key_phrases = (
-            "unable to stop resource"
+            "unable to stop resource",
         )
 
         check_log_file(corosync_log, corosync_key_phrases, minion_id)
@@ -265,12 +266,15 @@ class Check(CommandParserFillerMixin):
         :return:
         """
         # NOTE: the logic is similar to `_connectivity` method
-        _PSWDLESS_SSH_CHECK_CMD_TMPL = ('ssh -o BatchMode=yes '
-                                        '-o PasswordAuthentication=no '
-                                        '{user}@{hostname} exit &>/dev/null '
-                                        '&& test $? == 0 || exit 1')
+        _PSWDLESS_SSH_CHECK_CMD_TMPL = (
+                                    'ssh -o BatchMode=yes '
+                                    '-o PasswordAuthentication=no '
+                                    '{user}@{hostname} exit 0 &>/dev/null; '
+                                    'test $? == 0 || {{ echo "fail" && '
+                                    'exit 1; }}')
 
-        res = dict()
+        res: dict = dict()
+        user = "root"
         for addr in servers:
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
@@ -281,56 +285,36 @@ class Check(CommandParserFillerMixin):
             targets = (cfg.LOCAL_MINION if not targets
                        else next(iter(targets)))  # takes just one node
 
-            cmd = _PSWDLESS_SSH_CHECK_CMD_TMPL.format(user='root',
+            cmd = _PSWDLESS_SSH_CHECK_CMD_TMPL.format(user=user,
                                                       hostname=addr)
             try:
-                cmd_run(cmd, targets=targets)
+                _res = cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
                 res[targets] = (f"{cfg.CheckVerdict.FAIL.value}: "
-                                f"'{addr}' is not reachable from {targets}")
+                                f"'{addr}' is not reachable from {targets} "
+                                f"under user {user}")
             else:
                 res[targets] = cfg.CheckVerdict.PASSED.value
 
         return res
 
-    def _cluster_status(self, *, args: str,
-                        targets: str = cfg.ALL_MINIONS) -> dict:
+    def _cluster_status(self, *, args: str) -> dict:
         """
         Check cluster status
 
         :param args: cluster_status check specific parameters and arguments
-        :param targets: target nodes where network checks will be executed
         :return:
         """
         # NOTE: per my discussion with Andrey Kononykhin replace
         #  `pcs status --full cluster` and its complex parsing by existing
         #  ensure_cluster_is_healthy call
-        res = dict()
+        res: dict = dict()
 
         try:
             ensure_cluster_is_healthy()
             res[local_minion_id()] = f"{cfg.CheckVerdict.PASSED.value}"
         except Exception:
             res[local_minion_id()] = f"{cfg.CheckVerdict.FAIL.value}"
-
-        return res
-
-    def check_all(self, check_args: str = None,
-                  targets: str = cfg.ALL_MINIONS) -> dict:
-        """
-        Run all checks which are available and supported
-
-        :param str check_args: check specific arguments
-        :param str targets: target nodes where checks are planned
-                            to be executed
-        :return:
-        """
-        res = dict()
-        for check_name in cfg.CHECKS:
-            _res = getattr(self,
-                           self._PRV_METHOD_MOD + check_name)(args=check_args,
-                                                              targets=targets)
-            res[check_name] = _res  # aggregate result to simple dict form
 
         return res
 
@@ -346,21 +330,21 @@ class Check(CommandParserFillerMixin):
                             to be executed
         :return:
         """
-        res = dict()
+        res: dict = dict()
 
         if check_name is None:
             for check_name in cfg.CHECKS:
                 _res = getattr(self,
                                self._PRV_METHOD_MOD + check_name)(
-                                                            args=check_args,
-                                                            targets=targets)
+                                                            args=check_args)
                 res[check_name] = _res  # aggregate result to simple dict form
 
         check_name = check_name.strip().lower()
+
         if check_name in cfg.CHECKS:
             _res = getattr(self,
-                           self._PRV_METHOD_MOD + check_name)(args=check_args,
-                                                              targets=targets)
+                           self._PRV_METHOD_MOD + check_name)(args=check_args)
+
             res[check_name] = _res  # aggregate result to simple dict form
 
         else:
