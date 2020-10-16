@@ -68,7 +68,7 @@ function trigger_hare_reset {
     
     /opt/seagate/cortx/ha/conf/script/prov-m0-reset \
         /var/lib/hare/cluster.yaml \
-        /opt/seagate/cortx/ha/conf/build-ees-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
+        /opt/seagate/cortx/iostack-ha/conf/build-ha-args.yaml 2>&1 | tee -a ${LOG_FILE} || (
         _lerror "Script *hare-m0reset* failed to execute. Check log file: ${LOG_FILE}"
     )
 

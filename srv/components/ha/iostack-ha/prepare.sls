@@ -17,7 +17,7 @@
 
 Render ha input params template:
   file.managed:
-    - name: /opt/seagate/cortx/ha/conf/build-ees-ha-args.yaml
+    - name: /opt/seagate/cortx/iostack-ha/conf/build-ha-args.yaml
     - source: salt://components/ha/iostack-ha/files/ha-params.tmpl
     - template: jinja
     - mode: 444
