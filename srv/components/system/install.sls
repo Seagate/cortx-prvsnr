@@ -25,6 +25,7 @@ Install_base_packages:
       - rsync
       - ftp
       - sshpass
+      - jq
     - reload_modules: True
 
 Install policy packages for SELinux:
