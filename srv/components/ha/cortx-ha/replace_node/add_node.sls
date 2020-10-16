@@ -17,5 +17,5 @@
 
 Run cortx-ha add_node:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:add_node')
-    - onlyif: test -e /opt/seagate/cortx/iostack-ha/conf/setup.yaml
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:add_node')
+    - onlyif: test -e /opt/seagate/cortx/ha/conf/setup.yaml
