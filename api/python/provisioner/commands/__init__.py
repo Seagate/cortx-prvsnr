@@ -512,7 +512,7 @@ class SetSWUpdateRepo(Set):
             REPO_CANDIDATE_NAME, repo.source
         )
 
-        # TODO IMPROVE VALIDATION
+        # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified
 
         # TODO IMPROVE
@@ -528,7 +528,7 @@ class SetSWUpdateRepo(Set):
 
             super()._run(candidate_repo, targets)
 
-            # TODO IMPROVE VALIDATION
+            # TODO IMPROVE VALIDATION EOS-6078
             # - yum --disablerepo="*" --enablerepo="sw_update_{candidate_repo.release}" list available  # noqa: E501
             # - extract metadata from release info file, validate and assign,
             #   validation:
@@ -539,7 +539,7 @@ class SetSWUpdateRepo(Set):
             logger.debug(f"Resolved metadata {metadata}")
             repo.metadata = metadata
 
-            # TODO IMPROVE
+            # TODO IMPROVE EOS-6078
             # - set 'release' to version from resolved metadata,
             #   that would make `release` param unnecessary at all
             #   repo.release = ...
