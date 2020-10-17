@@ -150,7 +150,7 @@ def ensure(  # noqa: C901 FIXME
             if exc:
                 raise exc
             else:
-                raise ProvisionerError('no more tries')
+                raise ProvisionerError(f'no more tries for {name}')
 
 
 def run_subprocess_cmd(cmd, **kwargs):

@@ -17,6 +17,8 @@
 
 import pytest
 import logging
+from collections import defaultdict
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +28,29 @@ def env_provider():
     return 'docker'
 
 
+@pytest.fixture
+def hosts_spec(hosts_spec, hosts, tmpdir_function):
+    res = deepcopy(hosts_spec)
+    for host in hosts:
+        host_glusterfs = tmpdir_function / host / 'srv/glusterfs'
+        host_glusterfs.mkdir(parents=True)
+
+        docker_settings = res[host]['remote']['specific']
+        docker_settings['docker'] = defaultdict(
+            dict, docker_settings.get('docker', {})
+        )
+        docker_settings = docker_settings['docker']
+        docker_settings['privileged'] = True
+        docker_settings['volumes'][str(host_glusterfs)] = {
+            # '/dev': {'bind': '/dev', 'mode': 'ro'},
+            'bind': '/srv/glusterfs', 'mode': 'rw'
+        }
+    return res
+
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
-@pytest.mark.hosts(['srvnode1', 'srvnode2', 'srvnode3'])
+@pytest.mark.hosts(['srvnode1', 'srvnode2'])
 def test_setup_cluster(
     mhostsrvnode1, mhostsrvnode2, ssh_config, env_provider
 ):
@@ -41,5 +62,4 @@ def test_setup_cluster(
                 'snapshot', 'save', mhost.remote.name, 'initial --force'
             )
     print(ssh_config.read_text())
-    # import pdb; pdb.set_trace()
     pass
