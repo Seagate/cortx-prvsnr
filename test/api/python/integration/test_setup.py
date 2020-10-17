@@ -20,6 +20,10 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 
+from provisioner.commands.setup_provisioner import (
+    SetupProvisioner
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +47,45 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function):
         docker_settings = docker_settings['docker']
         docker_settings['privileged'] = True
         docker_settings['volumes'][str(host_glusterfs)] = {
-            # '/dev': {'bind': '/dev', 'mode': 'ro'},
             'bind': '/srv/glusterfs', 'mode': 'rw'
         }
+        # docker_settings['volumes']['/dev'] = {
+        #     'bind': '/dev', 'mode': 'ro'
+        # }
     return res
 
 
-@pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, ssh_config, env_provider, ssh_key
+    mhostsrvnode1, mhostsrvnode2, ssh_config,
+    env_provider, ssh_key, tmpdir_function
 ):
-    mhostsrvnode1.check_output('echo root | passwd --stdin root')
-    mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    #mhostsrvnode1.check_output('echo root | passwd --stdin root')
+    #mhostsrvnode2.check_output('echo root | passwd --stdin root')
     if env_provider == 'vbox':
         for mhost in (mhostsrvnode1, mhostsrvnode2):
             mhost.remote.cmd(
                 'snapshot', 'save', mhost.remote.name, 'initial --force'
             )
     print(ssh_config.read_text())
-    pass
+
+    nodes = [
+        f'srvnode-1:{mhostsrvnode1.ssh_host}',
+        f'srvnode-2:{mhostsrvnode2.ssh_host}'
+    ]
+    kwargs = {
+        'bootstrap_key': ssh_key,
+        'ha': True,
+        'profile': tmpdir_function / 'test-setup',
+        'source': 'local',
+        'update': True
+    }
+
+    SetupProvisioner().run(nodes, **kwargs)
+    # TODO IMPROVE add more checks:
+    #   - saltstack activ-active configuration
+    #   - glusterfs configuration
+    #   - firewall configuration
+    #   - etc.

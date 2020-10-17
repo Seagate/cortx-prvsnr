@@ -377,7 +377,6 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
     check_post_section(mhost, api_version=new_version)
 
 
-@pytest.mark.skip('helper test to build ISOs')
 @pytest.mark.env_level('base')
 def test_build_isos(
     mhost, rpm_prvsnr, rpm_prvsnr_api

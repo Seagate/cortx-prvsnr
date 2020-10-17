@@ -158,6 +158,10 @@ class HostMeta:
         return self._hostname
 
     @property
+    def ssh_host(self):
+        return self.host.interface(self.iface).addresses[0]
+
+    @property
     def tmpdir(self):
         if self._tmpdir is None:
             tmpdir_function = self.request.getfixturevalue('tmpdir_function')
