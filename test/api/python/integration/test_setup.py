@@ -20,6 +20,7 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,12 +48,13 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function):
         }
     return res
 
+
 @pytest.mark.skip
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, ssh_config, env_provider
+    mhostsrvnode1, mhostsrvnode2, ssh_config, env_provider, ssh_key
 ):
     mhostsrvnode1.check_output('echo root | passwd --stdin root')
     mhostsrvnode2.check_output('echo root | passwd --stdin root')

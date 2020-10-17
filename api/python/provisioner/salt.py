@@ -563,6 +563,7 @@ class SaltClientBase(ABC):
         )
 
 
+"""
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltClient(SaltClientBase):
@@ -582,12 +583,14 @@ class SaltClient(SaltClientBase):
         )
         return _cmd_f(*cmd_args.args, **cmd_args.kwargs)
 
+    # FIXME
     def run(self, *args, roster_file=None, **kwargs):
         if roster_file is None:
             roster_file = self.roster_file
         if roster_file:
             kwargs['roster_file'] = roster_file
         return super().run(*args, **kwargs)
+"""
 
 
 # TODO TEST EOS-8473
@@ -613,29 +616,66 @@ class SaltSSHClient(SaltClientBase):
         return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
 
     # TODO TEST EOS-8473
-    def ensure_access(self, targets: List, roster_file=None, ssh_options=None):
+    def ensure_access(
+        self, targets: List, bootstrap_roster_file=None
+    ):
         for target in targets:
             try:
+                # try to reach using default (class-level) settings
                 self.run(
                     'uname',
                     targets=target,
-                    roster_file=roster_file,
-                    ssh_options=ssh_options,
                     raw_shell=True
                 )
             except SaltCmdResultError as exc:
                 reason = exc.reason.get(target)
                 roster_file = exc.cmd_args.get('kw').get('roster_file')
+
                 if roster_file and ('Permission denied' in reason):
                     roster = load_yaml(roster_file)
-                    copy_id(
-                        host=roster.get(target, {}).get('host'),
-                        user=roster.get(target, {}).get('user'),
-                        port=roster.get(target, {}).get('port'),
-                        priv_key_path=roster.get(target, {}).get('priv'),
-                        ssh_options=exc.cmd_args.get('kw').get('ssh_options'),
-                        force=True
-                    )
+
+                    if bootstrap_roster_file:
+                        # NOTE assumptions:
+                        #   - python3 is already there since it can be
+                        #     installed using the bootstrap key
+                        #     (so salt modules might be used now)
+                        #   - bootstrap key is availble in salt-ssh file roots
+
+                        self.run(
+                            'state.single',
+                            fun_args=['file.directory'],
+                            fun_kwargs=dict(name='~/.ssh', mode=700),
+                            targets=target,
+                            roster_file=bootstrap_roster_file
+                        )
+
+                        # inject production access public key
+                        # FIXME hardcoded 'root'
+                        # FIXME hardcoded path to production pub key
+                        self.run(
+                            'state.single',
+                            fun_args=['ssh_auth.present'],
+                            fun_kwargs=dict(
+                                name=None,
+                                user=roster.get(target, {}).get(
+                                    'user', 'root'
+                                ),
+                                source="salt://provisioner/files/minions/all/id_rsa_prvsnr.pub"
+                            ),
+                            targets=target,
+                            roster_file=bootstrap_roster_file
+                        )
+                    else:
+                        copy_id(
+                            host=roster.get(target, {}).get('host'),
+                            user=roster.get(target, {}).get('user'),
+                            port=roster.get(target, {}).get('port'),
+                            priv_key_path=roster.get(target, {}).get('priv'),
+                            ssh_options=exc.cmd_args.get('kw').get(
+                                'ssh_options'
+                            ),
+                            force=True
+                        )
                 else:
                     raise
 
@@ -643,8 +683,7 @@ class SaltSSHClient(SaltClientBase):
     def ensure_python3(
         self,
         targets: List,
-        roster_file=None,
-        ssh_options=None
+        roster_file=None
     ):
         for target in targets:
             try:
@@ -652,7 +691,6 @@ class SaltSSHClient(SaltClientBase):
                     'python3 --version',
                     targets=target,
                     roster_file=roster_file,
-                    ssh_options=ssh_options,
                     raw_shell=True
                 )
             except SaltCmdResultError as exc:
@@ -663,7 +701,7 @@ class SaltSSHClient(SaltClientBase):
                     self.run(
                         'yum install -y python3',
                         targets=target,
-                        roster_file=exc.cmd_args.get('kw').get('roster_file'),
+                        roster_file=roster_file,
                         ssh_options=exc.cmd_args.get('kw').get('ssh_options'),
                         raw_shell=True
                     )
@@ -671,14 +709,40 @@ class SaltSSHClient(SaltClientBase):
                     raise
 
     # TODO TEST EOS-8473
-    def ensure_ready(self, targets: List, roster_file=None, ssh_options=None):
+    def ensure_ready(
+            self, targets: List, bootstrap_roster_file: Optional[Path] = None,
+    ):
+        if bootstrap_roster_file:
+            self.ensure_python3(targets, roster_file=bootstrap_roster_file)
+
         self.ensure_access(
-            targets, roster_file=roster_file, ssh_options=ssh_options
+            targets,
+            bootstrap_roster_file=bootstrap_roster_file
         )
 
-        self.ensure_python3(
-            targets, roster_file=roster_file, ssh_options=ssh_options
-        )
+        if not bootstrap_roster_file:
+            self.ensure_python3(targets)
+
+    # FIXME issues:
+    #   1. not properly processed error, e.g.:
+    #
+    #        self.run(
+    #            'state.single',
+    #            fun_args=['ssh_auth.present'],
+    #            fun_kwargs=dict(
+    #                user=roster.get(target, {}).get(
+    #                    'user', 'root'
+    #                ),
+    #                source=f"{priv_file}.pub"
+    #            ),
+    #            targets=target,
+    #            roster_file=bootstrap_roster_file
+    #        )
+    #
+    #        will return with success but salt actually error takes place:
+    #
+    #        TypeError encountered executing state.single: single() missing 1
+    #        required positional argument: 'name'
 
     # TODO TYPE EOS-8473
     def run(self, *args, roster_file=None, ssh_options=None, **kwargs):

@@ -452,11 +452,14 @@ def localhost():
 
 @pytest.fixture(scope='session')
 def ssh_key(tmpdir_session):
-    key = tmpdir_session / SSH_KEY_FILE_NAME
-    with open(str(MODULE_DIR / SSH_KEY_FILE_NAME)) as f:
-        key.write_text(f.read())
-    key.chmod(0o600)
-    return key
+    bundled_key = MODULE_DIR / SSH_KEY_FILE_NAME
+    res = tmpdir_session / SSH_KEY_FILE_NAME
+    res.write_text(bundled_key.read_text())
+    res.chmod(0o600)
+    res.with_name(f"{res.name}.pub").write_text(
+        bundled_key.with_name(f"{bundled_key.name}.pub").read_text()
+    )
+    return res
 
 
 @pytest.fixture(scope="session")
