@@ -21,9 +21,9 @@ include:
   and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
 # Should not be executed for replaced node
   - components.sspl.config.commons
-{% endif %}
   - components.sspl.health_view.prepare
   - components.sspl.health_view.config
+{% endif %}
 
 Stage - Post Install SSPL:
   cmd.run:
@@ -48,6 +48,7 @@ Stage - Configure SSPL:
 
 {% if not ("replace_node" in pillar["cluster"]
   and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
+# Should not be executed for replaced node
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
