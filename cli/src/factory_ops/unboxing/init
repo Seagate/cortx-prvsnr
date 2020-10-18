@@ -31,9 +31,9 @@ management_vip=
 
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
+. ${BASEDIR}/pre_unbox
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
-. ${BASEDIR}/pre_unbox
 
 function usage {
     echo "\
@@ -128,6 +128,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+time_stamp=$(date)
+echo "*********************************************************" | tee -a ${LOG_FILE}
+echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
+echo "*********************************************************" | tee -a ${LOG_FILE}
+echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+
 # Validate the input parameters
 if [[ -z "$cluster_vip" || -z "$management_vip" ]]; then
     # error out
@@ -187,6 +193,28 @@ check_salt_services
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
+echo -n "Clean the Salt cache........................................................" | tee -a ${LOG_FILE}
+salt '*' saltutil.clear_cache ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the Salt modules................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_modules ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Syncing all states for Salt................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.sync_all ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the Salt pillar.................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_pillar ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the grains......................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_grains ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+
+
 if command -v pcs ; then
     echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
@@ -237,18 +265,17 @@ fi
 remove_seagate_url
 remove_target_build
 
-echo "Removing the repos with Seagate url from srvnode-1" >> ${LOG_FILE}
-for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
+echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
+for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
 for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
 
-yum clean all >> ${LOG_FILE}
+yum clean all || true  >> ${LOG_FILE}
 
-echo "Removing the repos with Seagate url from srvnode-2" >> ${LOG_FILE}
-ssh srvnode-2 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
-ssh srvnode-2 'for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
-ssh srvnode-2 "yum clean all"  >> ${LOG_FILE}
+echo "Removing the repos with Seagate URL from Server B" | tee -a ${LOG_FILE}
+$ssh_cmd 192.168.0.2 'for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
+$ssh_cmd 192.168.0.2 'for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
+$ssh_cmd 192.168.0.2 "yum clean all || true"  >> ${LOG_FILE}
 
-# Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
@@ -257,6 +284,13 @@ echo -n "Configuring Cortx RAS services on server B.............................
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
+echo -n "Configuring Cortx SSPL healthview on server B..............................." | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.sspl.health_view ${salt_opts}; sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Configuring Cortx SSPL healthview on server A..............................." | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.sspl.health_view ${salt_opts}; sleep 5
+
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
 echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
 pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
@@ -264,6 +298,12 @@ pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 echo -n "Stonith................................" | tee -a ${LOG_FILE}
+
+echo -n "csm-agent.............................." | tee -a ${LOG_FILE}
+pcs resource disable csm-agent; sleep 5 
+pcs resource enable csm-agent; sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
+
 
 pcs resource refresh stonith-c1 >> ${LOG_FILE}
 pcs resource refresh stonith-c2 >> ${LOG_FILE}

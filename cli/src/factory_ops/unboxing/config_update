@@ -20,11 +20,6 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
-# private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-# private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-#private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-#private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
-
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -45,9 +40,9 @@ function update_ssh_config {
         echo "Ok." | tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo "private_data_ip_node_2: $private_data_ip_node_2"
+        echo "Private n/w IP (Server B): $pvt_ip_b"
         echo -n "Updating server B hostname in ssh config file of server A..................." 2>&1|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -55,10 +50,10 @@ function update_ssh_config {
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
         echo "Ok." | tee -a ${LOG_FILE}
     else
-        echo "private_data_ip_node_1: $private_data_ip_node_1"
+        echo "Private n/w IP (Server A): $pvt_ip_a"
         echo -n "Updating server B hostname in ssh config file of server B..................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
-        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_1} "hostname")
+        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_a} "hostname")
         # echo ${primary_host}
         local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -90,7 +85,7 @@ function update_salt_minion {
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Setting Salt master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
         echo "Ok." | tee -a ${LOG_FILE}
         
         # It's safe to restart service on both nodes
@@ -99,7 +94,7 @@ function update_salt_minion {
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Restarting salt-minion on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "systemctl restart salt-minion"
         echo "Ok." | tee -a ${LOG_FILE}
 
         sleep 5
@@ -159,33 +154,53 @@ function update_cluster_sls {
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
         echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
-        # grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
-        # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
-        (hostnamectl status | grep Chassis | grep -q server) && {
+        if hostnamectl status | grep Chassis | grep -q server; then
             echo -n "Fetching and updating BMC IP for Server A..................................." 2>&1|tee -a ${LOG_FILE}
-            update_bmc_ip "srvnode-1" >> ${LOG_FILE}
+            _ip_line=$(ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
+            _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
+
+            if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
+                echo "BMC_IP (Server A): ${_ip}" >> ${LOG_FILE}
+                _line=$(grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d- -f1|tr -d [:space:])
+                echo "Line number: ${_line}" >> ${LOG_FILE}
+                sed -i "${_line},/ip:*/ s|ip:.*|ip: ${_ip}|" $_cluster_sls_path
+            else
+                echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
+                exit 1
+            fi
+
             echo "Ok." | tee -a ${LOG_FILE}
-        }
+            echo "BMC_IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
+        fi
 
         # Replace node-2 entry
         # Hostname
         echo -n "Updating hostname of Server B..............................................." 2>&1|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        local secondary_host=$( ${ssh_cmd} ${pvt_ip_b} "hostname")
         echo "DEBUG: secondary_host: ${secondary_host}" >> ${LOG_FILE}
         local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
         echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
         sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
         echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
-        # grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
-        # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
-        (hostnamectl status | grep Chassis | grep -q server) && {
+        if hostnamectl status | grep Chassis | grep -q server; then
             echo -n "Fetching and updating BMC IP for Server B..................................." 2>&1|tee -a ${LOG_FILE}
-            update_bmc_ip "srvnode-2" "srvnode-2" >> ${LOG_FILE}
+            _ip_line=$(${ssh_cmd} ${pvt_ip_b} ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
+            _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
+
+            if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
+                echo "BMC_IP (Server B): ${_ip}" >> ${LOG_FILE}
+                _line=$(grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d- -f1|tr -d [:space:])
+                echo "Line number: ${_line}" >> ${LOG_FILE}
+                sed -i "${_line},/ip:*/ s|ip:.*|ip: ${_ip}|" $_cluster_sls_path
+            else
+                echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
+                exit 1
+            fi
+
             echo "Ok." | tee -a ${LOG_FILE}
-        }
+            echo "BMC_IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
+        fi
 
         echo -n "Refreshing Salt pillar from Server A........................................" 2>&1|tee -a ${LOG_FILE}
         sleep 5
