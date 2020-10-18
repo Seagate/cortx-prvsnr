@@ -128,6 +128,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+time_stamp=$(date)
+echo "*********************************************************" | tee -a ${LOG_FILE}
+echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
+echo "*********************************************************" | tee -a ${LOG_FILE}
+echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+
 # Validate the input parameters
 if [[ -z "$cluster_vip" || -z "$management_vip" ]]; then
     # error out
@@ -226,27 +232,9 @@ if command -v pcs ; then
 
     echo "Thank you for your patience... Apreciate it!"
 
-    echo -n "Updating Management Network VIP in CSM HA config file......................." | tee -a ${LOG_FILE}
-    salt "*" state.apply components.csm.prepare ${salt_opts}
-    echo "Ok." | tee -a ${LOG_FILE}
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
-    exit 1
 fi
-
-remove_seagate_url
-remove_target_build
-
-echo "Removing the repos with Seagate url from srvnode-1" >> ${LOG_FILE}
-for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
-for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done  >> ${LOG_FILE}
-
-yum clean all >> ${LOG_FILE}
-
-echo "Removing the repos with Seagate url from srvnode-2" >> ${LOG_FILE}
-ssh srvnode-2 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
-ssh srvnode-2 'for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'  >> ${LOG_FILE}
-ssh srvnode-2 "yum clean all"  >> ${LOG_FILE}
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
@@ -277,22 +265,6 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "UDS...................................." | tee -a ${LOG_FILE}
 pcs resource refresh uds >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Performing HA cluster restart.........." | tee -a ${LOG_FILE}
-hctl node maintenance --all >> ${LOG_FILE}
-hctl node unmaintenance --all >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Performing STONITH resource cleanup...." | tee -a ${LOG_FILE}
-stonith_admin --cleanup --history=\* >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Performing cluster resource cleanup...." | tee -a ${LOG_FILE}
-pcs resource cleanup --all >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
