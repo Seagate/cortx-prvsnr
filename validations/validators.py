@@ -16,30 +16,39 @@
 #
 
 import config
-from scripts.factory.server_check import ServerValidations
-from scripts.factory.network_check import NetworkChecks
-from scripts.factory.storage_check import StorageValidations
-from scripts.factory.controller_check import ControllerValidations
-
-class_mapper = {
-    'server_validation': ServerValidations,
-    'netowrk_validation': NetworkChecks,
-    'storage_validation': StorageValidations,
-    'controller_validation': ControllerValidations
-}
+from scripts.factory.server_check import ServerValidations  # noqa: F401
+from scripts.factory.network_check import NetworkChecks  # noqa: F401
+from scripts.factory.storage_check import StorageValidations  # noqa: F401
+from scripts.factory.controller_check import ControllerValidations  # noqa: F401
 
 
 class Validators():
     '''Validator class :validation of all checks for given request'''
 
-    @staticmethod
+    @staticmethod  # noqa: C901
     def factory_checks(args):
         if args.postcheck:
             check_list = config.FACTORY_POST_CHECK
-        if args.precheck:
+        elif args.precheck:
             check_list = config.FACTORY_PRE_CHECK
+        elif args.swupdate:
+            check_list = config.SW_UPDATE_CHECK
+        elif args.fwupdate:
+            check_list = config.FW_UPDATE_CHECK
+        elif args.fwupdate:
+            check_list = config.FW_UPDATE_CHECK
+        elif args.unboxing:
+            check_list = config.UNBOXING_CHECK
+        elif args.c:
+            check_list = {args.c: config.ALL_CHECKS[args.c]}
+        else:
+            print("No valid argument is passed")
+
+        if len(check_list.keys()) < 1:
+            print("Check is not available for this flag")
+
         for check, cls in check_list.items():
-            res = getattr(class_mapper[cls], check)()
+            res = getattr(globals()[cls], check)()
             if res:
                 if res['ret_code']:
                     print(f"{check}: Failed : {res['message']}")
@@ -58,6 +67,18 @@ if __name__ == '__main__':
     argParser.add_argument(
               "--postcheck", action='store_true',
               help="Factory deployment Post check validation")
+    argParser.add_argument(
+              "--swupdate", action='store_true',
+              help="Software update check validation")
+    argParser.add_argument(
+              "--fwupdate", action='store_true',
+              help="Firmware update check validation")
+    argParser.add_argument(
+              "-unboxing", action='store_true',
+              help="Unboxing check validation")
+    argParser.add_argument(
+              "-c", type=str, choices=config.ALL_CHECKS.keys(),
+              help="Name of validation to check")
     argParser.set_defaults(func=Validators.factory_checks)
     args = argParser.parse_args()
     args.func(args)

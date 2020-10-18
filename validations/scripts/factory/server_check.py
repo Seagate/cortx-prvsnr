@@ -91,7 +91,6 @@ class ServerValidations():
         else:
             return res
         flag = True
-        print(nodes)
         for node in nodes:
             result = run_subprocess_cmd(f"ssh {node} exit")
             if result[0]:
