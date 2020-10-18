@@ -84,10 +84,25 @@ Make vg_metadata_{{ node }}:
   lvm.vg_present:
     - name: vg_metadata_{{ node }}
     - devices: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
-    - kwargs:
-      - addtag: {{ node }}
+    # - kwargs:
+    #   - addtag: {{ node }}
     - require:
       - Make pv_metadata
+
+# Since addtag is not supported yet in linux LVM Salt module
+# Issue: https://github.com/saltstack/salt/issues/58747
+# Proposed solution: https://github.com/saltstack/salt/pull/58748/files
+# A workaround until the above issue is fixed
+Add tag to vg_metadata_{{ node }}:
+  cmd.run:
+    - name: vgchange --addtag {{ node }} vg_metadata_{{ node }}
+
+Refresh VG data:
+  cmd.run:
+    - name: vgscan --cache
+    - require:
+      - Add tag to vg_metadata_{{ node }}
+
 # done creating LVM VG
 
 # Creating LVM's Logical Volumes (LVs; one for swap and one for raw_metadata)
