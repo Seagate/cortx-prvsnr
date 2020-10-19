@@ -49,9 +49,10 @@ management_vip=
 
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
+. ${BASEDIR}/pre_unbox
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
-. ${BASEDIR}/pre_unbox
+
 
 function usage {
     echo "\
@@ -145,6 +146,13 @@ while [[ $# -gt 0 ]]; do
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
 done
+
+time_stamp=$(date)
+ echo "*********************************************************" | tee -a ${LOG_FILE}
+ echo "          Unboxing the Cortx Lyve Drive Rack          " | tee -a ${LOG_FILE}
+ echo "*********************************************************" | tee -a ${LOG_FILE}
+ echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+
 
 # Validate the input parameters
 if [[ -z "$cluster_vip" || -z "$management_vip" ]]; then
@@ -257,6 +265,10 @@ if command -v pcs ; then
     # Update ClusterIP
     echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+    echo "Ok." | tee -a ${LOG_FILE}
+    sleep 5     # Mindfulness break
+
+    echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
     salt "*" state.apply components.ha.haproxy.config ${salt_opts}
     echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break

@@ -108,6 +108,7 @@ fi
 stop_services
 reset_pub_data_ips
 seagate_refs_cleanup
+#TODO: Remove URLs from release and commons sls
 backup_files
 configure_service_port
 
