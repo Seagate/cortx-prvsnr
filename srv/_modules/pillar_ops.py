@@ -15,65 +15,59 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from cortx.utils.security.cipher import Cipher, CipherInvalidToken
-import provisioner
 import os
 import sys
 import logging
 import string
 import secrets
-
-# Update PYTHONPATH to include Provisioner API installed at:
-# /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
-sys.path.append(os.path.join('usr', 'local', 'lib',
-                             'python3.6', 'site-packages'))
+import provisioner
 
 
-cypher_key = ""
-to_decrypt = False
-_new_passwd = ""
+def _import_cipher():
+    from cortx.utils.security import cipher
+    return cipher
 
 
 def encrypt(decrypt=False):
-    global to_decrypt, cypher_key, _new_passwd
 
+    cipher = _import_cipher()
     pillar_list = __pillar__.keys()
     cluster_id = __grains__['cluster_id']
-    _new_passwd = _generate_secret() 
-
-    to_decrypt = decrypt
+    new_passwd = _generate_secret()
 
     for pillar_name in pillar_list:
-        cypher_key = Cipher.generate_key(cluster_id, pillar_name)
-        _update(__pillar__[pillar_name], pillar_name)
+        cipher_key = cipher.Cipher.generate_key(cluster_id, pillar_name)
+        _update(__pillar__[pillar_name], pillar_name,
+                cluster_id, new_passwd, cipher, decrypt, cipher_key)
 
     return True
 
 
-def _update(data, path):
+def _update(data, path, cluster_id, new_passwd, cipher, decrypt, cipher_key):
 
     for key, val in data.items():
         if isinstance(val, dict):
-            data[key] = _update(val, path + '/' + key)
+            data[key] = _update(val, path + '/' + key, cluster_id,
+                                new_passwd, cipher, decrypt, cipher_key)
         else:
             if (("secret" in key) or ("password" in key)):
                 if not val:
-                    val = _new_passwd
+                    val = new_passwd
                 try:
-                    temp = Cipher.decrypt(
-                        cypher_key, val.encode("utf-8")).decode("utf-8")
-                    if to_decrypt:
+                    temp = cipher.Cipher.decrypt(
+                        cipher_key, val.encode("utf-8")).decode("utf-8")
+                    if decrypt:
                         provisioner.pillar_set(path + '/' + key, temp)
-                except CipherInvalidToken:
+                except cipher.CipherInvalidToken:
                     val = val.strip('\"')
                     val = val.strip("\'")
-                    if to_decrypt:
+                    if decrypt:
                         provisioner.pillar_set(path + '/' + key, val)
                     else:
                         provisioner.pillar_set(
                             path + '/' + key,
-                            str(Cipher.encrypt(cypher_key,
-                                               bytes(val, 'utf8')), 'utf-8')
+                            str(cipher.Cipher.encrypt(cipher_key,
+                                                      bytes(val, 'utf8')), 'utf-8')
                         )
     return True
 

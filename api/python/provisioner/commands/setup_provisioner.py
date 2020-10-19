@@ -1617,7 +1617,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         #      CONFIGURED AND MIGHT BE USED INSTEAD OF SALT-SSH BASED CONTROL
 
         logger.info("Sync salt modules")
-        ssh_client.cmd_run("salt-call saltutil.sync_modules")
+        res = ssh_client.cmd_run("salt-call saltutil.list_extmods")
+        logger.debug(f"Current list of extension modules: {res}")
+        res = ssh_client.cmd_run("salt-call saltutil.sync_modules")
+        logger.debug(f"Synced extension modules: {res}")
 
         logger.info("Configuring provisioner logging")
         for state in [
