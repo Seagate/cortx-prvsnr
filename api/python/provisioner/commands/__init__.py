@@ -37,7 +37,7 @@ from ..errors import (
     HAPostUpdateError,
     ClusterNotHealthyError,
     SSLCertsUpdateError,
-    ReleaseFileNotFoundError
+    ReleaseFileNotFoundError, SaltCmdRunError
 )
 from ..config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
@@ -48,7 +48,9 @@ from ..config import (
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
-    REPO_CANDIDATE_NAME
+    REPO_CANDIDATE_NAME,
+    RELEASE_INFO,
+    ReleaseInfo
 )
 from ..pillar import (
     KeyPath,
@@ -68,7 +70,7 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run, cmd_run
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -402,9 +404,7 @@ class Set(CommandParserFillerMixin):
 
     # TODO input class type
     @classmethod
-    def from_spec(
-        cls, input_type: str, states: Dict
-    ):
+    def from_spec(cls, input_type: str, states: Dict):
         return cls(
             input_type=getattr(inputs, input_type),
             pre_states=[State(state) for state in states.get('pre', [])],
@@ -537,13 +537,56 @@ class SetSWUpdateRepo(Set):
             #   - there is no the same release repo already active EOS-13715
             #   - (optionally) new version is higher then currently installed
 
+            cmd = ('yum --disablerepo="*" '
+                   f'--enablerepo="sw_update_{candidate_repo.release}')
+            try:
+                cmd_run(cmd, targets=LOCAL_MINION)
+            except SaltCmdRunError as e:
+                # SW Update repo is malformed
+                logger.debug("Can't enable SW update candidate repo: "
+                             f"'{str(e)}'")
+
+            # TODO: take it from pillar
+            iso_mount_dir = f'/opt/seagate/cortx/updates/{REPO_CANDIDATE_NAME}'
+            release_file = f'{iso_mount_dir}/cortx_iso/{RELEASE_INFO}'
+
+            metadata = load_yaml(release_file)
+            try:
+                metadata[ReleaseInfo.RELEASE.value] = (
+                                f'{metadata.get(ReleaseInfo.VERSION.value)}-'
+                                f'{metadata.get(ReleaseInfo.BUILD.value)}')
+            except KeyError as e:
+                logging.debug("Can't build release version. "
+                              f"{ReleaseInfo.VERSION.value} or "
+                              f"{ReleaseInfo.BUILD.value} are not specified")
+                raise
+
+            # there is no the same release repo already active EOS-13715
+            release = metadata[ReleaseInfo.RELEASE.value]
+            cmd = ("yum repoinfo enabled | awk -F':' "
+                   f"'/Repo\\-id/{{if ($2 ~  \"sw_update_{release}\") err=1}} "
+                   "END {{exit err}}'")
+
+            try:
+                cmd_run(cmd, targets=LOCAL_MINION)
+            except SaltCmdRunError:
+                # We have the same enabled SW Update repository
+                logger.debug(f"SW update repository sw_update_{release} have"
+                             "already enabled")
+
             logger.debug(f"Resolved metadata {metadata}")
             repo.metadata = metadata
+
+            # Optional: try to get current version of the repository
+            # TODO: use digit-character regex to retrieve repository release
+            # cmd = ('yum repoinfo enabled | '
+            #        'sed -rn "s/Repo-id\\s+:.*sw_update_(.*)$/\\1/p"')
 
             # TODO IMPROVE EOS-6078
             # - set 'release' to version from resolved metadata,
             #   that would make `release` param unnecessary at all
             #   repo.release = ...
+            repo.release = release
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
