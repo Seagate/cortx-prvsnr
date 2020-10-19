@@ -15,13 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Remove_base_packages:
-#   pkg.purged:
-#     - pkgs:
-#       - python2-pip
-#       - python36-pip
-#       - vi-enhanced
-#       - tmux
+Remove_base_packages:
+  pkg.purged:
+    - pkgs:
+      - ipmitool
+      - bind-utils
+      - python3
+      - rsync
+      - ftp
+      - sshpass
+      - jq
+      - policycoreutils 
+      - policycoreutils-python
+      - python3-pip
+#     - python2-pip
+#     - python36-pip
+#     - vi-enhanced
+#     - tmux
 
 Remove cryptography pip package:
   pip.removed:
@@ -40,10 +50,6 @@ clean_yum_local:
 Delete Commons yum repo:
   pkgrepo.absent:
     - name: {{ defaults.commons.repo.id }}
-
-Delete system checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
 
 Remove added journald configuration:
   file.replace:
@@ -65,3 +71,7 @@ Restart systemd-journald:
   module.run:
     - service.restart:
       - systemd-journald
+
+Delete system checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system

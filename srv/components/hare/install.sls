@@ -20,5 +20,3 @@ Install hare:
     - name: cortx-hare
     - version: latest
     - refresh: True
-    - require:
-      - pkg: Hare requisites
