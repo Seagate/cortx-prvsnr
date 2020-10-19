@@ -18,13 +18,13 @@
 import config
 from scripts.utils.network_pre_checks import NetworkValidations
 from scripts.utils.pillar_get import PillarGet
-from scripts.factory.deployment_pre_checks import PreFactoryValidations
-from scripts.factory.pacemaker_checks import PacemakerValidations
-from scripts.factory.cortx_checks import CortxValidations
-from scripts.factory.server_check import ServerValidations
-from scripts.factory.network_check import NetworkChecks
-from scripts.factory.storage_check import StorageValidations
-from scripts.factory.controller_check import ControllerValidations
+from scripts.utils.pre_deployment import PreFactoryValidations
+from scripts.utils.pacemaker import PacemakerValidations
+from scripts.utils.cortx import CortxValidations
+from scripts.utils.server import ServerValidations
+from scripts.utils.network import NetworkChecks
+from scripts.utils.storage import StorageValidations
+from scripts.utils.controller import ControllerValidations
 
 
 class Validators():

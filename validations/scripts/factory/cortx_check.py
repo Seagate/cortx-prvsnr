@@ -47,7 +47,7 @@ class CortxValidationsCall():
         return response
 
     @staticmethod
-    def checck_consul_service():
+    def check_elasticsearch_service():
         ''' Validations for ES service
         '''
         cmd = "ps -eaf | grep elastic"

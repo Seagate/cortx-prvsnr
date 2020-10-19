@@ -122,7 +122,6 @@ class PreFactoryValidationsCall():
         response["ret_code"]= res[0]
         response["response"]= res[1]
         response["error_msg"]= res[2]
-        print ("RESPONSE -----> ", response)
         return response
 
     @staticmethod
@@ -139,5 +138,4 @@ class PreFactoryValidationsCall():
         response["ret_code"]= "0"
         response["response"]= int(res)
         response["error_msg"]= "NULL"
-        print ("RESPONSE -----> ", response)
         return response
