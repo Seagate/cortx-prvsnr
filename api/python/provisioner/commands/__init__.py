@@ -70,7 +70,7 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run, cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -540,7 +540,7 @@ class SetSWUpdateRepo(Set):
             cmd = ('yum --disablerepo="*" '
                    f'--enablerepo="sw_update_{candidate_repo.release}')
             try:
-                cmd_run(cmd, targets=LOCAL_MINION)
+                salt_cmd_run(cmd, targets=LOCAL_MINION)
             except SaltCmdRunError as e:
                 # SW Update repo is malformed
                 logger.debug("Can't enable SW update candidate repo: "
@@ -568,7 +568,7 @@ class SetSWUpdateRepo(Set):
                    "END {{exit err}}'")
 
             try:
-                cmd_run(cmd, targets=LOCAL_MINION)
+                salt_cmd_run(cmd, targets=LOCAL_MINION)
             except SaltCmdRunError:
                 # We have the same enabled SW Update repository
                 logger.debug(f"SW update repository sw_update_{release} have"
