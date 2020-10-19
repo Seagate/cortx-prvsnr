@@ -1,0 +1,16 @@
+[Unit]
+Description=Mount glusterfs sharedstorage
+After=glusterd.service
+Before=salt-minion.service
+Requires=glusterd.service salt-minion.service remote-fs-pre.target local-fs.target
+BindsTo=glusterd.service salt-minion.service
+
+[Service]
+Type=forking
+ExecStart=/usr/libexec/glusterfs/mount-shared-storage.sh
+Restart=on-failure
+RestartSec=3
+RestartForceExitStatus=1
+
+[Install]
+WantedBy=multi-user.target

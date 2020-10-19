@@ -17,7 +17,8 @@
 
 Install firewalld:
   pkg.installed:
-    - name: firewalld
+    - pkgs:
+       - firewalld: latest
 
 # Enable Firewalld
 Unmask Firewall service:

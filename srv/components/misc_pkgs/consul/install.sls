@@ -51,11 +51,11 @@ Create symlink:
     - mode: 755
 {% endif %}
 
-Update Consul executable with required permissions:
-  file.managed:
-    - name: /usr/bin/consul
-    - user: consul
-    - group: consul
-    - mode: 755
-    # - require:
-    #   - user: Create Consul user
+# Update Consul executable with required permissions:
+#   file.managed:
+#     - name: /usr/bin/consul
+#     - user: consul
+#     - group: consul
+#     - mode: 755
+#     - require:
+#       - user: Create Consul user

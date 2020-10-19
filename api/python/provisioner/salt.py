@@ -365,6 +365,10 @@ class SaltClientResult:
                 #   - 'ret' for sync
                 #   - 'return' for async
                 ret = job_result.get('ret', job_result.get('return'))
+            elif job_result is False:
+                # TODO IMPROVE explore salt docs/code for that,
+                #      currently it's only an observation
+                self.fails[target] = 'no connection to minion'
 
             if ret is None:
                 self.results[target] = job_result
@@ -544,6 +548,18 @@ class SaltClientBase(ABC):
     def cmd_run(self, cmd: str, targets=ALL_MINIONS, **kwargs):
         return self.run(
             'cmd.run', fun_args=[cmd], targets=targets, **kwargs
+        )
+
+    def state_single(
+        self,
+        state_fun: str,
+        fun_args: Union[List, Tuple, None] = None,
+        **kwargs
+    ):
+        return self.run(
+            'state.single',
+            fun_args=[state_fun] + list(fun_args or []),
+            **kwargs
         )
 
 

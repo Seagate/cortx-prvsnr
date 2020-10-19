@@ -63,14 +63,22 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 )
 
 # TODO EOS-12076 EOS-12334
+
+CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'
+CORTX_ISO_DIR = 'cortx_iso'
+CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
+
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
 )
+PRVSNR_CORTX_SINGLE_ISO = (
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_SINGLE_ISO_DIR}.iso'
+)
 PRVSNR_CORTX_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_ISO_DIR}.iso'
 )
 PRVSNR_CORTX_DEPS_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / 'base_cortx_deps.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_3RD_PARTY_ISO_DIR}.iso'
 )
 
 
@@ -295,16 +303,7 @@ class DistrType(Enum):
 # API for remote execution
 SUPPORTED_REMOTE_COMMANDS = frozenset({'cortxcli'})
 
-
-class StorageType(Enum):
-    """Class-enumeration for supported and existing storage types"""
-
-    VIRTUAL = "virtual"
-    JBOD = "JBOD"
-    # standard enclosure with 5 units with 84 disks
-    ENCLOSURE = "RBOD"
-    RBOD = "RBOD"
-    EBOD = "EBOD"
+OTHER_STORAGE_TYPE = "Other"
 
 
 class ServerType(Enum):
@@ -312,13 +311,6 @@ class ServerType(Enum):
 
     VIRTUAL = "virtual"
     PHYSICAL = "physical"
-
-
-class ControllerTypes(Enum):
-    """Class-enumeration for controller type's values"""
-    GALLIUM = "gallium"
-    INDIUM = "indium"
-    SATI = "sati"
 
 
 # Constant block for setup info fields

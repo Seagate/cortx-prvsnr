@@ -18,4 +18,4 @@
 Stage - Sync files for S3Server:
   module.run:
     - sync.sync_files:
-      - component: s3server
+      - component: s3

@@ -15,13 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% macro repo_added(release, source, source_type, dest_repo_dir=None) %}
+{% macro repo_added(release, source, source_type, dest_repo_dir=None, is_repo=True) %}
 
     {% from './iso/mount.sls' import repo_mounted with context %}
 
     {% if source_type == 'iso' %}
 
         {% set iso_path = dest_repo_dir + '.iso' %}
+
+        {% if not salt['pillar.get']('skip_iso_copy', False) %}
 
 copy_repo_iso_{{ release }}:
   file.managed:
@@ -31,6 +33,8 @@ copy_repo_iso_{{ release }}:
     - require_in:
       - repo_iso_mounted_{{ release }}
       - repo_added_{{ release }}
+
+        {% endif %}
 
 {{ repo_mounted(release, iso_path, dest_repo_dir) }}
 
@@ -48,6 +52,8 @@ copy_repo_dir_{{ release }}:
     {% endif %}
 
 
+    {% if is_repo %}
+
 repo_added_{{ release }}:
   pkgrepo.managed:
     - name: {{ release }}
@@ -61,6 +67,7 @@ repo_added_{{ release }}:
     {% if source_type == 'iso' %}
     - require:
       - repo_iso_mounted_{{ release }}
+
     {% endif %}
 
 
@@ -69,5 +76,7 @@ repo_metadata_cleaned_{{ release }}:
     - name: yum --disablerepo="*" --enablerepo="{{ release }}" clean metadata
     - require:
       - repo_added_{{ release }}
+
+    {% endif %}
 
 {% endmacro %}

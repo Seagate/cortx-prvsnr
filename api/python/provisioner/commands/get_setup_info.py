@@ -16,7 +16,6 @@
 #
 
 import logging
-from collections import defaultdict
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
@@ -26,7 +25,7 @@ from .. import inputs, values
 
 from .. import config
 from ..errors import BadPillarDataError
-from ..pillar import KeyPath, PillarKey, PillarResolver
+from ..pillar import KeyPath, PillarKey, PillarResolver, PillarUpdater
 from ..salt import function_run, local_minion_id
 from ..vendor import attr
 
@@ -196,95 +195,56 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
         storage_enclosure_path = KeyPath('storage_enclosure')
         storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
-        controller_type = PillarKey(
-                storage_enclosure_path / 'controller' / 'type'
-            )
 
         pillar = PillarResolver(config.LOCAL_MINION).get(
-            (
-                storage_enclosure_type,
-                controller_type
-            )
+            (storage_enclosure_type,)
         )
 
         pillar = pillar.get(local_minion_id())  # type: dict
 
-        for key in (storage_enclosure_type, controller_type):
-            if not pillar[key] or pillar[key] is values.MISSED:
-                raise BadPillarDataError(f'value for {key.keypath} '
-                                         'is not specified')
+        if (not pillar[storage_enclosure_type] or
+                pillar[storage_enclosure_type] is values.MISSED):
+            raise BadPillarDataError('value for '
+                                     f'{storage_enclosure_type.keypath} '
+                                     'is not specified')
 
-        if pillar[storage_enclosure_type] == config.StorageType.JBOD.value:
-            res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
-        elif pillar[controller_type] == config.ControllerTypes.GALLIUM.value:
-            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
-        elif pillar[controller_type] == config.ControllerTypes.INDIUM.value:
-            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
+        res[config.STORAGE_TYPE] = pillar[storage_enclosure_type]
 
         return res
+
+    @staticmethod
+    def _update_storage_type_pillar(storage_type: str):
+        """
+        Update storage_type pillar by new value
+
+        :param storage_type: new storage_type value for pillar
+                            storage_enclosure/type
+        :return:
+        """
+        storage_enclosure_path = KeyPath('storage_enclosure')
+        storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
+        pillar_updater = PillarUpdater(config.ALL_MINIONS)
+        pillar_updater.update((storage_enclosure_type, storage_type))
+        pillar_updater.dump()
 
     def _get_storage_type(self):
         """
-        Private method to determine storage type
+        Get storage type
+
+        Algorithm:
+        1. take storage_type/type pillar value. Filled from config.ini
 
         :return:
         """
-        # TODO: EOS-12418-improvement: there is pillar `storage_enclosure/type`
-        #  But on VM systems it is set to `RBOD` values, not to 'virtual'
-        #  There are no guarantees that this pillar keeps actual on HW.
-        #  Suggestion: after detection the correct type via `lsscsi` check
-        #  pillar and update it.
-        res = dict()
+        # Get storage type from pillar values
+        try:
+            return self._get_storage_type_pillar_based()
+        except BadPillarDataError as e:
+            logger.info("Pillar based approach for storage_type detection "
+                        f"failed. Reason: {e}")
 
-        # lsscsi command - list SCSI devices (or hosts) and their attributes
-        # NOTE: lsscsi returns entries of the following form, for example:
-        #    [0:0:0:1]   disk   SEAGATE   3525   S100   /dev/sdb   /dev/sg2
-        # NOTE: 0:*:*:* matches all LUNs (Logical Unit Number) on 0:*:*:*.
-        #  Here
-        #    scsi_host=0, channel=*, target_number=*, LUN tuple=*
-        # NOTE: we take from lsscsi output just 5th column with revision string
-        #  lsscsi_cmd = "lsscsi 0:*:*:* | awk '{print $5}'"
-        # TODO: how detect the scsi host id with disks in raid.
-        #  The assumption that scsi_host=0 for these disks is not always
-        #  working. At now, just take all output of lsscsi command
-        lsscsi_cmd = "lsscsi | awk -p '$2 ~ /disk/{print $5}'"
-
-        raw_res = function_run('cmd.run', fun_args=[lsscsi_cmd],
-                               targets=config.LOCAL_MINION,
-                               fun_kwargs=dict(python_shell=True))
-
-        # NOTE: raw_res it is a string. It can be an empty string if
-        # the command runs on VM. Otherwise, it should be a string with disks
-        # revisions numbers delimited by "\n" newline symbol
-        raw_res = raw_res.get(local_minion_id())  # type: str
-
-        if not raw_res:
-            # target system is VM
-            res[config.STORAGE_TYPE] = config.StorageType.VIRTUAL.value
-            return res
-
-        revisions = defaultdict(int)
-
-        # NOTE: to be more accurate count the number of different revisions
-        for rev_num in raw_res.split("\n"):
-            revisions[rev_num] += 1
-
-        logger.debug(f"revisions: '{revisions}'")
-        popular_revision = max(revisions, key=revisions.get)  # type: str
-        logger.debug(f"Used drive revision for storage_type detection: "
-                     f"'{popular_revision}'")
-        if popular_revision.startswith("G"):
-            # Gallium controller type. For example, G265
-            res[config.STORAGE_TYPE] = config.StorageType.ENCLOSURE.value
-        elif popular_revision.startswith("S"):
-            # Indium controller type. For example, S100
-            res[config.STORAGE_TYPE] = config.StorageType.RBOD.value
-        else:
-            res[config.STORAGE_TYPE] = config.StorageType.JBOD.value
-
-        # TODO: EOS-12418-improvement: How to determine EBOD?
-
-        return res
+        self._update_storage_type_pillar(config.OTHER_STORAGE_TYPE)
+        return {config.STORAGE_TYPE: config.OTHER_STORAGE_TYPE}
 
     # TODO: EOS-12418-improvement:
     #  Add support of arguments to retrieve just specified fields

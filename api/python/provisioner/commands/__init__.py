@@ -488,6 +488,11 @@ def _ensure_update_repos_configuration(targets=ALL_MINIONS):
         ['components.misc_pkgs.swupdate.repo'], targets
     )
 
+    logger.info("Check yum repos are good")
+    StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo.sanity_check'], targets
+    )
+
 
 def _pre_yum_rollback(
     rollback_ctx, exc_type, exc_value, exc_traceback
@@ -540,6 +545,7 @@ class SWUpdate(CommandParserFillerMixin):
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
         rollback_ctx = None
+        minion_conf_changes = None
         try:
             ensure_cluster_is_healthy()
 
@@ -562,7 +568,7 @@ class SWUpdate(CommandParserFillerMixin):
 
                     config_salt_master()
 
-                    config_salt_minions()
+                    minion_conf_changes = config_salt_minions()
 
                     for component in (
                         'motr',
@@ -595,6 +601,17 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
+                try:
+                    # TODO: Improve salt minion restart logic
+                    # please refer to task EOS-14114.
+                    if minion_conf_changes:
+                        logger.info("Restarting salt minions")
+                        salt_cmd_run(
+                            'systemctl restart salt-minion',
+                            background=True
+                        )
+                except Exception:
+                    logger.exception('failed to restart salt minions')
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
@@ -1186,7 +1203,6 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
-
         # Creating a new group with limited access for csm admin users
         StateFunExecuter.execute(
             'group.present',
@@ -1212,19 +1228,47 @@ class CreateUser(CommandParserFillerMixin):
             'file.managed',
             fun_kwargs=dict(
                 name='/etc/sudoers.d/csm-admin',
-                contents=('## Restricted access for csm group users \n '
-                          '%csm-admin   ALL = NOPASSWD: /usr/bin/tail, '
-                          '/usr/sbin/ifup, /usr/sbin/ifdown, /usr/sbin/ip, '
-                          '/usr/sbin/subscription-manager, /usr/bin/cat, '
-                          '/usr/bin/cd, /usr/bin/ls, '
-                          f'/usr/sbin/pcs, {SEAGATE_USER_HOME_DIR}, '
-                          '/usr/bin/salt, /usr/local/bin/salt, '
-                          '/usr/bin/salt-call, /usr/local/bin/salt-call, '
-                          '/usr/bin/yum, /usr/bin/dir, /usr/bin/cp, '
-                          '/opt/seagate/cortx/csm/lib/cortxcli, '
-                          '/usr/bin/cortxcli, /var/log, '
+                contents=('## Restricted access for csm group users \n'
+                          '%csm-admin   ALL = NOPASSWD: '
+                          '/usr/bin/tail, '
+                          '/usr/sbin/ifup, '
+                          '/usr/sbin/ifdown, '
+                          '/usr/sbin/ip, '
+                          '/usr/sbin/subscription-manager, '
+                          '/usr/bin/cat, '
+                          '/usr/bin/cd, '
+                          '/usr/bin/ls, '
+                          '/usr/sbin/pcs, '
+                          '/usr/bin/salt, '
+                          '/usr/local/bin/salt, '
+                          '/usr/bin/salt-call, '
+                          '/bin/salt-call, '
+                          '/usr/local/bin/salt-call, '
+                          '/usr/bin/yum, '
+                          '/usr/bin/dir, '
+                          '/usr/bin/cp, '
                           '/usr/bin/systemctl, '
-                          f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init,'
+                          '/opt/seagate/cortx/csm/lib/cortxcli, '
+                          '/usr/bin/cortxcli, '
+                          '/usr/bin/provisioner, '
+                          '/var/log, '
+                          '/tmp, '
+                          '/usr/bin/lsscsi, '
+                          '/usr/sbin/mdadm, '
+                          '/usr/sbin/sfdisk, '
+                          '/usr/sbin/mkfs, '
+                          '/usr/bin/rsync, '
+                          '/bin/rsync, '
+                          '/usr/sbin/smartctl, '
+                          '/usr/bin/ipmitool, '
+                          '/opt/seagate/cortx/sspl/bin/sspl_bundle_generate, '
+                          '/opt/seagate/cortx/sspl/lib/sspl_bundle_generate, '
+                          '/usr/bin/rabbitmqctl, '
+                          '/usr/sbin/rabbitmqctl, '
+                          '/var/lib/rabbitmq, '
+                          '/var/log/rabbitmq, '
+                          f'{SEAGATE_USER_HOME_DIR}, '
+                          f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init, '
                           f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
                 create=True,
                 replace=True,

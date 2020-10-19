@@ -31,6 +31,7 @@ from ..vendor import attr
 from ..errors import (
     ProvisionerError,
     SaltCmdResultError,
+    SaltCmdRunError
 )
 from ..config import (
     ALL_MINIONS,
@@ -42,7 +43,8 @@ from ..utils import (
     dump_yaml,
     load_yaml_str,
     repo_tgz,
-    run_subprocess_cmd
+    run_subprocess_cmd,
+    node_hostname_validator
 )
 from ..ssh import keygen
 from ..salt import SaltSSHClient
@@ -226,7 +228,7 @@ class RunArgsSetup:
             }
         },
         default=config.PROJECT_PATH,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -238,7 +240,7 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # TODO EOS-12076 validate it is a file
@@ -250,12 +252,11 @@ class RunArgsSetup:
             }
         },
         default=None,
-        converter=(lambda v: Path(str(v)) if v else v),
+        converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
     # FIXME EOS-13651, EOS-13686 disabled until code complete
     # url_cortx_deps: str = attr.ib(
-    #    init=False,
     #    metadata={
     #        inputs.METADATA_ARGPARSER: {
     #            'help': "Bundled CORTX dependencies url"
@@ -409,17 +410,16 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 raise ValueError("ISO for CORTX is undefined")
             if self.iso_cortx.suffix != '.iso':
                 raise ValueError("ISO extension is expected for CORTX repo")
-            if not self.iso_cortx_deps:
-                raise ValueError("ISO for CORTX dependencies is undefined")
-            if self.iso_cortx_deps.suffix != '.iso':
-                raise ValueError(
-                    "ISO extension is expected for CORTX deps repo"
-                )
-            if self.iso_cortx.name == self.iso_cortx_deps.name:
-                raise ValueError(
-                    "ISO files for CORTX and CORTX dependencies "
-                    f"have the same name: {self.iso_cortx.name}"
-                )
+            if self.iso_cortx_deps:
+                if self.iso_cortx_deps.suffix != '.iso':
+                    raise ValueError(
+                        "ISO extension is expected for CORTX deps repo"
+                    )
+                if self.iso_cortx.name == self.iso_cortx_deps.name:
+                    raise ValueError(
+                        "ISO files for CORTX and CORTX dependencies "
+                        f"have the same name: {self.iso_cortx.name}"
+                    )
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
                     "The type of distribution would be set to "
@@ -440,9 +440,14 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
             )
             # iso files will be mounted into dirs inside that directory
-            self.target_build = 'file://' + load_yaml(
-                release_sls
-            )['release']['base']['base_dir']
+            base_dir = Path(
+                load_yaml(release_sls)['release']['base']['base_dir']
+            )
+
+            if not self.iso_cortx_deps:
+                base_dir /= config.CORTX_SINGLE_ISO_DIR
+
+            self.target_build = f'file://{base_dir}'
 
             if (
                 self.url_cortx_deps !=
@@ -690,6 +695,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             "provisioner/files/minions/all/"
         )
         config_path = minions_dir / 'config.ini'
+        config_path.parent.mkdir(parents=True, exist_ok=True)
         if run_args.config_path:
             run_subprocess_cmd(
                 [
@@ -769,7 +775,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             }
             dump_yaml(specs_pillar_path,  dict(node_specs=specs))
 
-        # resolve salt masters
+        # resolve salt-masters
         # TODO IMPROVE EOS-8473 option to re-build masters
         masters_pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'masters.sls'
@@ -777,7 +783,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.rediscover or not masters_pillar_path.exists():
             masters = self._prepare_salt_masters(run_args)
             logger.info(
-                f"salt masters would be set as follows: {masters}"
+                f"salt-masters would be set as follows: {masters}"
             )
             dump_yaml(masters_pillar_path,  dict(masters=masters))
         else:
@@ -898,14 +904,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
     # TODO IMPROVE DRY
-    def _prepare_setup_pillar(
+    def _prepare_factory_setup_pillar(
         self, profile_paths, run_args
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
 
         pillar_path = add_pillar_merge_prefix(
-            pillar_all_dir / 'setup.sls'
+            pillar_all_dir / 'factory_setup.sls'
         )
         if pillar_path.exists():
             pillar = load_yaml(pillar_path)
@@ -918,13 +924,21 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
-            pillar = dict(setup=pillar)
+            if pillar['iso_cortx']:
+                if pillar['iso_cortx_deps']:
+                    pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
+                    pillar['iso_cortx_deps'] = str(
+                        config.PRVSNR_CORTX_DEPS_ISO
+                    )
+                else:
+                    pillar['iso_cortx'] = str(config.PRVSNR_CORTX_SINGLE_ISO)
+            pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
         return pillar
 
     def _prepare_release_pillar(
-        self, profile_paths, repos_data: Dict, run_args
+        self, profile_paths, repos_data: Dict, run_args, force=False
     ):
         pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
         pillar_all_dir.mkdir(parents=True, exist_ok=True)
@@ -932,7 +946,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         pillar_path = add_pillar_merge_prefix(
             pillar_all_dir / 'release.sls'
         )
-        if pillar_path.exists():
+        if not force and pillar_path.exists():
             pillar = load_yaml(pillar_path)
         else:
             pillar = {
@@ -1001,6 +1015,16 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         salt_logger = logging.getLogger('salt.fileclient')
         salt_logger.setLevel(logging.WARNING)
 
+        # Config file validation against CLI args (Fail-Fast)
+        if run_args.config_path:
+            node_hostname_validator(run_args.nodes, run_args.config_path)
+        else:
+            # config.ini was not provided, possible replace_node call
+            logger.warning(
+                "config.ini was not provided, possible replace_node call."
+                "Skipping validation."
+            )
+
         # generate setup name
         setup_location = self.setup_location(run_args)
         setup_name = self.setup_name(run_args)
@@ -1020,8 +1044,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.source == 'iso':
             add_file_roots = [
                 run_args.iso_cortx.parent,
-                run_args.iso_cortx_deps.parent
             ]
+            if run_args.iso_cortx_deps:
+                add_file_roots.append(run_args.iso_cortx_deps.parent)
 
         profile.setup(
             paths,
@@ -1034,7 +1059,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         if not run_args.field_setup:
             logger.info("Preparing setup pillar")
-            self._prepare_setup_pillar(
+            self._prepare_factory_setup_pillar(
                 paths, run_args
             )
 
@@ -1064,32 +1089,52 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             self._prepare_local_repo(
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
-        elif not run_args.field_setup:  # iso or rpm
+        else:  # iso or rpm
+            logger.info("Preparing CORTX repos pillar")
 
             # FIXME rhel and centos repos
             deps_bundle_url = (
-                f"{run_args.target_build}/3rd_party"
+                f"{run_args.target_build}/{config.CORTX_3RD_PARTY_ISO_DIR}"
                 if run_args.dist_type == config.DistrType.BUNDLE
                 else run_args.url_cortx_deps
             )
 
             if run_args.source == 'iso':
-                repos = {
-                    'cortx': f"salt://{run_args.iso_cortx.name}",
-                    '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
-                }
+                if run_args.iso_cortx_deps:
+                    repos = {
+                        config.CORTX_ISO_DIR: (
+                            f"salt://{run_args.iso_cortx.name}"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: (
+                            f"salt://{run_args.iso_cortx_deps.name}"
+                        )
+                    }
+                else:
+                    logger.info("... NOTE: single ISO mode would be set")
+                    repos = {
+                        config.CORTX_SINGLE_ISO_DIR: {
+                            'source': f"salt://{run_args.iso_cortx.name}",
+                            'is_repo': False
+                        },
+                        config.CORTX_ISO_DIR: (
+                            f"{run_args.target_build}/{config.CORTX_ISO_DIR}"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
+                    }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
-                        'cortx': f"{run_args.target_build}/cortx_iso",
-                        '3rd_party': deps_bundle_url
+                        config.CORTX_ISO_DIR: (
+                            f"{run_args.target_build}/cortx_iso"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
                     }
                 else:
                     repos = {
-                        'cortx': f'{run_args.target_build}'
+                        config.CORTX_ISO_DIR: f'{run_args.target_build}'
                     }
                     if deps_bundle_url:
-                        repos['3rd_party'] = deps_bundle_url
+                        repos[config.CORTX_3RD_PARTY_ISO_DIR] = deps_bundle_url
 
             # assume that target_build for bundled release is
             # a base dir for bundle distribution
@@ -1107,12 +1152,33 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     )
                 })
 
-            logger.info("Preparing CORTX repos pillar")
+            # FIXME we just shoudn't copy that file
+            #       as part of factory profile
             self._prepare_release_pillar(
-                paths, repos, run_args
+                paths, repos, run_args, force=run_args.field_setup
             )
 
+        ssh_client = self._create_ssh_client(
+            paths['salt_master_file'], paths['salt_roster_file']
+        )
+
+        setup_ctx = SetupCtx(run_args, paths, ssh_client)
+
+        for node in run_args.nodes:
+            logger.info(
+                f"Ensuring '{node.minion_id}' is ready to accept commands"
+            )
+            ssh_client.ensure_ready([node.minion_id])
+
+        logger.info("Resolving node grains")
+        self._resolve_grains(run_args.nodes, ssh_client)
+
+        #   TODO IMPROVE EOS-8473 hard coded
+        logger.info("Preparing salt-masters / minions configuration")
+        self._prepare_salt_config(run_args, ssh_client, paths)
+
         if not run_args.field_setup:
+            logger.info("Preparing factory profile")
             for path in ('srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
@@ -1133,25 +1199,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
             ])
 
-        ssh_client = self._create_ssh_client(
-            paths['salt_master_file'], paths['salt_roster_file']
-        )
-
-        setup_ctx = SetupCtx(run_args, paths, ssh_client)
-
-        for node in run_args.nodes:
-            logger.info(
-                f"Ensuring '{node.minion_id}' is ready to accept commands"
-            )
-            ssh_client.ensure_ready([node.minion_id])
-
-        logger.info("Resolving node grains")
-        self._resolve_grains(run_args.nodes, ssh_client)
-
-        #   TODO IMPROVE EOS-8473 hard coded
-        logger.info("Preparing salt masters / minions configuration")
-        self._prepare_salt_config(run_args, ssh_client, paths)
-
         # Note. salt may fail to an issue with not yet cached sources:
         # "Recurse failed: none of the specified sources were found"
         # a workaround mentioned in https://github.com/saltstack/salt/issues/32128#issuecomment-207044948  # noqa: E501
@@ -1168,8 +1215,41 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         #   - a repo file is created and pointed to the mount directory
         # TODO EOS-12076 IMPROVE hard-coded
         if run_args.source in ('iso', 'rpm'):
-            # copy ISOs onto remotes and mount
-            ssh_client.state_apply('repos')
+            # do not copy ISO for the node where we are now already
+            if (
+                run_args.field_setup and
+                run_args.source == 'iso' and
+                (
+                    run_args.iso_cortx == config.PRVSNR_CORTX_SINGLE_ISO
+                    or (
+                        run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
+                        run_args.iso_cortx_deps == config.PRVSNR_CORTX_DEPS_ISO
+                    )
+                )
+            ):
+                # FIXME it is valid only for replace_node logic,
+                #       not good to rely on some specific case here
+                # FIXME hardcoded pillar key
+                ssh_client.state_apply(
+                    'repos', targets=run_args.primary.minion_id,
+                    fun_kwargs={
+                        'pillar': {
+                            'skip_iso_copy': True
+                        }
+                    }
+                )
+                # NOTE for now salt-ssh supports only glob and regex targetting
+                # https://docs.saltstack.com/en/latest/topics/ssh/#targeting-with-salt-ssh
+                ssh_client.state_apply(
+                    'repos',
+                    targets='|'.join([
+                        node.minion_id for node in run_args.secondaries
+                    ]),
+                    tgt_type='pcre'
+                )
+            else:
+                # copy ISOs onto all remotes and mount
+                ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
 
@@ -1179,9 +1259,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Checking paswordless ssh")
         ssh_client.state_apply('ssh.check')
 
-        # FIXME: Commented because execution hung at firewall configuration
-        # logger.info("Configuring the firewall")
-        # ssh_client.state_apply('firewall')
+        # Does not hang after adding glusterfs logic.
+        logger.info("Configuring the firewall")
+        ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -1198,6 +1278,181 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"{run_args.source} provisioner source is not supported yet"
             )
 
+        if run_args.ha:
+            # TODO glusterfs use usual pillar instead inline one
+            glusterfs_pillar = self._prepare_glusterfs_pillar(
+                paths, in_docker=run_args.glusterfs_docker
+            )
+            volumes = glusterfs_pillar['volumes']
+
+            glusterfs_server_pillar = {
+                'glusterfs_dirs': [
+                    vdata['export_dir'] for vdata in volumes.values()
+                ]
+            }
+            logger.debug(
+                f"glusterfs server pillar: {glusterfs_server_pillar}"
+            )
+
+            glusterfs_cluster_pillar = {
+                'glusterfs_peers': [
+                    node.ping_addrs[0] for node in run_args.nodes
+                ],
+                'glusterfs_volumes': {
+                    vname: {
+                        node.ping_addrs[0]: vdata['export_dir']
+                        for node in run_args.nodes
+                    } for vname, vdata in volumes.items()
+                }
+            }
+            logger.debug(
+                f"glusterfs cluster pillar: {glusterfs_cluster_pillar}"
+            )
+
+            glusterfs_client_pillar = {
+                'glusterfs_mounts': [
+                    (
+                        # Note. as explaind in glusterfs docs the server here
+                        # 'is only used to fetch the glusterfs configuration'
+                        run_args.primary.ping_addrs[0],     # TODO ??? remote
+
+                        # each client assumes locally
+                        # availble healthy glusterfs server
+                        # 'localhost',
+
+                        vname,
+                        vdata['mount_dir']
+                    ) for vname, vdata in volumes.items()
+                ]
+            }
+            logger.debug(
+                f"glusterfs client pillar: {glusterfs_client_pillar}"
+            )
+
+            # TODO IMPROVE !!!
+            #       that should be applied only for replace-node
+            #       logic and no here
+            if run_args.field_setup:
+                logger.info("Resolving glusterfs volume info")
+                volume_info = ssh_client.run(
+                    'glusterfs.info',
+                    targets=run_args.primary.minion_id
+                )[run_args.primary.minion_id]
+
+                # NOTE
+                # - we definitely need to stop salt-master since his jobs
+                #   mounts would be lost for some time
+                # - salt-minion stop might be not necessary though
+                # - stopping salt-master first to drop all new requests
+                #   for salt jobs
+                try:
+                    logger.info(f"Stopping 'salt-master' service")
+                    ssh_client.state_single(
+                        "service.dead", fun_args=['salt-master']
+                    )
+                except SaltCmdRunError as exc:  # TODO DRY
+                    if 'Stream is closed' in str(exc):
+                        logger.warning(
+                            "Ensuring salt-master was stopped "
+                            "(salt-ssh lost a connection)"
+                        )
+                        ssh_client.run(
+                            'cmd.run', fun_args=['systemctl stop salt-master']
+                        )
+
+                logger.info(f"Stopping 'salt-minion' service")
+                ssh_client.state_single(
+                    "service.dead", fun_args=['salt-mininon']
+                )
+
+                secondaries = tuple([
+                    node.ping_addrs[0] for node in run_args.secondaries
+                ])
+                logger.info(
+                    f"Removing old nodes {secondaries} glusterfs bricks"
+                )
+                for v_name, v_data in volume_info.items():
+                    # TODO EOS-14076 IMPROVE v_data also has replica info,
+                    #      need explore glusterfs more for better logic
+                    replicas_num = len(v_data['bricks'])
+                    for brick in v_data['bricks'].values():
+                        if brick['path'].startswith(secondaries):
+                            replicas_num -= 1
+                            logger.debug(
+                                f"Removing brick {brick['path']} "
+                                "from glusterfs volume {v_name}"
+                            )
+                            ssh_client.cmd_run(
+                                (
+                                    f"echo y | gluster volume remove-brick "
+                                    f"{v_name} replica {replicas_num} "
+                                    f"{brick['path']} force"
+                                ),
+                                fun_kwargs=dict(python_shell=True),
+                                targets=run_args.primary.minion_id
+                            )
+
+                for peer in secondaries:
+                    logger.info(f"Removing old node glusterfs peer {peer}")
+                    # TODO ??? is 'force' necessary here
+                    ssh_client.cmd_run(
+                        f"echo y | gluster peer detach {peer} force",
+                        fun_kwargs=dict(python_shell=True),
+                        targets=run_args.primary.minion_id
+                    )
+
+                logger.info(f"Removing old glusterfs volumes")
+                for v_name in volumes:
+                    if v_name in volume_info:
+                        logger.debug(f"Removing glusterfs volume {v_name}")
+                        ssh_client.run(
+                            'glusterfs.delete_volume',
+                            fun_args=[v_name],
+                            fun_kwargs=dict(stop=True),
+                            targets=run_args.primary.minion_id
+                        )
+
+            if glusterfs_pillar['in_docker']:
+                # Note. there is an issue in salt-ssh
+                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
+                # so we have to apply docker using on-server salt
+                logger.info("Installing Docker")
+                ssh_client.cmd_run(
+                    "salt-call --local state.apply components.misc_pkgs.docker"
+                )
+
+            logger.info("Configuring glusterfs servers")
+            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
+            #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
+            ssh_client.state_apply(
+                'glusterfs.server',
+                targets=master_targets,
+                fun_kwargs={
+                    'pillar': glusterfs_server_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs cluster")
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.cluster',
+                targets=run_args.primary.minion_id,
+                fun_kwargs={
+                    'pillar': glusterfs_cluster_pillar
+                }
+            )
+
+            logger.info("Configuring glusterfs clients")
+            # should be run only on one node
+            ssh_client.state_apply(
+                'glusterfs.client',
+                fun_kwargs={
+                    'pillar': glusterfs_client_pillar
+                }
+            )
+
+        # HA LOGIC END TODO wrap to a method / funciton
+
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")
         res = ssh_client.state_apply('provisioner.configure_salt_minion')
@@ -1213,100 +1468,51 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
-        logger.info("Configuring salt-masters")
-        ssh_client.state_apply(
-            'provisioner.configure_salt_master',
-            targets=master_targets,
-            fun_kwargs={
-                'pillar': {
-                    'updated_keys': updated_keys
-                }
-            }
-        )
-
-        if run_args.ha:
-            # TODO glusterfs use usual pillar instead inline one
-            glusterfs_pillar = self._prepare_glusterfs_pillar(
-                paths, in_docker=run_args.glusterfs_docker
-            )
-            volumes = glusterfs_pillar['volumes']
-
-            if glusterfs_pillar['in_docker']:
-                # Note. there is an issue in salt-ssh
-                # https://github.com/saltstack-formulas/docker-formula/issues/234  # noqa: E501
-                # so we have to apply docker using on-server salt
-                logger.info("Installing Docker")
-                ssh_client.cmd_run(
-                    "salt-call --local state.apply components.misc_pkgs.docker"
-                )
-
-            logger.info("Configuring glusterfs servers")
-            # TODO IMPROVE ??? EOS-9581 glusterfs docs complains regarding /srv
-            #      https://docs.gluster.org/en/latest/Administrator%20Guide/Brick%20Naming%20Conventions/  # noqa: E501
-            glusterfs_server_pillar = {
-                'glusterfs_dirs': [
-                    vdata['export_dir'] for vdata in volumes.values()
-                ]
-            }
+        # TODO IMPRVOE salt might be restarted in the background,
+        #      might require to ensure that it is ready to avoid
+        #      a race condition with further commands that relies
+        #      on it (e.g. salt calls and provisioner api on a remote).
+        #      To consider the similar logic as in salt_master.py.
+        #
+        #      Alternative: pospone that step once core and API
+        #      is installed and we may call that on remotes
+        try:
+            logger.info("Configuring salt-masters")
             ssh_client.state_apply(
-                'glusterfs.server',
+                'provisioner.configure_salt_master',
                 targets=master_targets,
                 fun_kwargs={
-                    'pillar': glusterfs_server_pillar
+                    'pillar': {
+                        'updated_keys': updated_keys
+                    }
                 }
             )
+        except SaltCmdRunError as exc:
+            if 'Stream is closed' in str(exc):
+                logger.warning('salt-ssh lost a stream, trying to workaround')
+                # FIXME dirty code
+                targets = (
+                    [node.minion_id for node in run_args.nodes]
+                    if master_targets == ALL_MINIONS else [master_targets]
+                )
 
-            logger.info("Configuring glusterfs cluster")
-            glusterfs_cluster_pillar = {
-                'glusterfs_peers': [
-                    node.ping_addrs[0] for node in run_args.nodes
-                ],
-                'glusterfs_volumes': {
-                    vname: {
-                        node.ping_addrs[0]: vdata['export_dir']
-                        for node in run_args.nodes
-                    } for vname, vdata in volumes.items()
-                }
-            }
-            logger.debug(
-                f"glusterfs cluster pillar: {glusterfs_cluster_pillar}"
-            )
-            # should be run only on one node
-            ssh_client.state_apply(
-                'glusterfs.cluster',
-                targets=run_args.primary.minion_id,
-                fun_kwargs={
-                    'pillar': glusterfs_cluster_pillar
-                }
-            )
+                for target in targets:
+                    logger.info(f"stopping salt-master on {target}")
+                    ssh_client.run(
+                        'cmd.run', targets=target,
+                        fun_args=['systemctl stop salt-master']
+                    )
 
-            logger.info("Configuring glusterfs clients")
-            glusterfs_client_pillar = {
-                'glusterfs_mounts': [
-                    (
-                        # Note. as explaind in glusterfs docs the server here
-                        # 'is only used to fetch the gluster configuration'
-                        run_args.primary.ping_addrs[0],     # TODO ??? remote
-
-                        # each client assumes locally
-                        # availble healthy gluster server
-                        # 'localhost',
-
-                        vname,
-                        vdata['mount_dir']
-                    ) for vname, vdata in volumes.items()
-                ]
-            }
-            logger.debug(
-                f"glusterfs client pillar: {glusterfs_client_pillar}"
-            )
-            # should be run only on one node
-            ssh_client.state_apply(
-                'glusterfs.client',
-                fun_kwargs={
-                    'pillar': glusterfs_client_pillar
-                }
-            )
+                logger.info(
+                    "Starting salt-masters on all nodes. "
+                    f"{master_targets}"
+                )
+                ssh_client.run(
+                    'cmd.run', targets=master_targets,
+                    fun_args=['systemctl start salt-master']
+                )
+            else:
+                raise
 
         if not run_args.field_setup:
             logger.info("Copying factory data")
@@ -1330,6 +1536,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         logger.info("Starting salt minions")
         ssh_client.state_apply('provisioner.start_salt_minion')
+
+        # TODO EOS-14019 might consider to move to right after restart
+        logger.info("Ensuring salt-masters are ready")
+        ssh_client.state_apply(
+            'saltstack.salt_master.ensure_running', targets=master_targets
+        )
 
         # TODO IMPROVE EOS-8473
         logger.info("Ensuring salt minions are ready")

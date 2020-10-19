@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 
 # TODO IMPROVE use some attr api to copy spec
-# TODO TEST
 def copy_attr(_attr, name=None, **changes):
     attr_kw = {}
     for arg in (
@@ -166,7 +165,6 @@ class InputAttrParserArgs(AttrParserArgs):
         return UNCHANGED if _value is None else _value
 
 
-# TODO test
 class ParserFiller:
     @staticmethod
     def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
@@ -175,7 +173,6 @@ class ParserFiller:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
 
-                # TODO TEST
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
                         (_attr.name, _attr.default, {
@@ -468,6 +465,9 @@ class StorageEnclosureParams():
     )
     controller_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller password"
+    )
+    controller_type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Controller type"
     )
 
 

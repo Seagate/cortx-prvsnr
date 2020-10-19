@@ -145,8 +145,6 @@ uds:
     - name: uds
     - ports:
       - 5000/tcp
-      - 3535/tcp  #3535 & 4000 ports are used to expose websocket servers
-      - 4000/tcp
       - 5125/udp  #UDS advertises remote volumes over UDP multicast over this port
 
 www:
@@ -182,6 +180,7 @@ Data-zone:
       - high-availability
       - lnet
       - s3
+      - uds
       - www
     - require:
       - Add public data zone
@@ -193,6 +192,7 @@ Data-zone:
       - hare
       - lnet
       - s3
+      - uds
       - www
 
 # No restrictions for localhost
@@ -226,6 +226,7 @@ Public data zone:
       - high-availability
       - nfs
       - ssh
+      - uds
       - www
       - s3
     - interfaces:
@@ -240,6 +241,7 @@ Public data zone:
       - hare
       - haproxy
       - nfs
+      - uds
       - www
       - s3
 

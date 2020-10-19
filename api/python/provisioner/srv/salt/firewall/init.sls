@@ -16,4 +16,8 @@
 #
 
 include:
-  - .install
+  - .prepare
+#   - .install
+#   - .config
+#   - .start
+  - .stop

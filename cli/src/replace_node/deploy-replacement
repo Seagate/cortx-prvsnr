@@ -178,6 +178,7 @@ function prereq_states {
     # states to be applied in desired sequence
     prereq_states=(
         "misc_pkgs.rhel_sos"
+        "misc_pkgs.ipmi.bmc_watchdog"
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
         "misc_pkgs.openldap"
@@ -293,6 +294,9 @@ function restore_states {
     l_info "=================================================="
     l_info "Stage 2.8: Applying File Restore States..."
     l_info "=================================================="
+    $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
+    $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
+
     run_states "${restore_states[@]}"
     l_info "=================================================="
 
@@ -315,6 +319,7 @@ function add_node_states {
 
     l_info "=================================================="
 }
+
 
 function run_states {
     local states=${@}
@@ -399,11 +404,10 @@ if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     l_info "=================================================="
     l_info "Stage 1: Applying multipath..."
     l_info "=================================================="
-
     l_info "Applying multipath states on node: ${tgt_node}"
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare ${salt_opts}
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install ${salt_opts}
+    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config ${salt_opts}
 
     l_info "Generating multipath flag file current node."
     test -d ${flag_file_dir} || mkdir -p ${flag_file_dir}
@@ -412,7 +416,7 @@ if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     # On replacement node it is essential to reboot node
     # after multipath states are applied
     l_warn "Rebooting '${tgt_node}' to ensure multipath picks correct LUNs for mapping."
-    $cmd salt ${tgt_node} system.reboot --async
+    $cmd salt ${tgt_node} system.reboot --async ${salt_opts}
 
 elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         && ${tgt_node} == $(cat ${flag_file_dir}/${tgt_node}.multipath)
@@ -423,6 +427,11 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     l_info "============================================================="
     l_info "Stage 2: Prepareing replaced node for attaching to cluster..."
     l_info "============================================================="
+
+    l_info "=================================================="
+    l_info "Stage 2.0: Applying update repo (if exists)..."
+    l_info "=================================================="
+    $cmd salt ${tgt_node} state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
 
     if [[ "$run_all" == true ]]; then
 
