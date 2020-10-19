@@ -27,8 +27,8 @@
     {% if source %}
 
         {% if source is mapping %}
-            {% set source = source['source'] %}
             {% set repo_params = source.get('params', {}) %}
+            {% set source = source['source'] %}
         {% endif %}
 
 
