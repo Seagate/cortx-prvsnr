@@ -92,8 +92,10 @@ force_update_hname="${force_update_hname:-"false"}"
 amend_fix_for_ipmi="${amend_fix_for_ipmi:-"true"}"
 
 # Global variables, don't change these values.
-ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o StrictHostKeyChecking=no"
-scp_cmd="scp -i /root/.ssh/id_rsa_prvsnr -o StrictHostKeyChecking=no"
+
+export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
+export scp_cmd="scp -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
+
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
 minion_ids=("srvnode-1" "srvnode-2")
 server_names=("Server A" "Server B") #Required for logging messages
@@ -267,7 +269,7 @@ ctrl_ip_addr_get_set()
         read ctrl_ip_a
         echo -e "\nDEBUG: Input received for Controller A IP: ${ctrl_ip_a}" >> ${LOG_FILE}
         if [[ -z $ctrl_ip_a ]]; then
-            echo "Kindly provide the valid input." | tee -a ${LOG_FILE}
+            echo "Please provide the valid input." | tee -a ${LOG_FILE}
         else
             echo "DEBUG: IP address received for Controller A: ${ctrl_ip_a}" >> ${LOG_FILE}
             break
@@ -280,7 +282,7 @@ ctrl_ip_addr_get_set()
         read ctrl_ip_b
         echo -e "\nDEBUG: input received for Controller B IP: ${ctrl_ip_b}" >> ${LOG_FILE}
         if [[ -z $ctrl_ip_b ]]; then
-            echo "Kindly provide valid input." | tee -a ${LOG_FILE}
+            echo "Please provide valid input." | tee -a ${LOG_FILE}
         else
             echo "DEBUG: IP address received for Controller B: ${ctrl_ip_b}" >> ${LOG_FILE}
             break
@@ -446,12 +448,12 @@ new_hostname_get()
     # Prompt user for the new hostname (suggest sample hostname as an example)
 
     if [[ "$_tnode" == "Server A" ]]; then
-        echo -n "Enter new hostname for server A (press enter to maintain default [${default_hostname_nodeA}]): " | tee -a ${LOG_FILE}
+        echo -n "Enter new hostname for server A (press enter to keep default [${default_hostname_nodeA}]): " | tee -a ${LOG_FILE}
         read hostname_A
         echo -e "\nDEBUG: input received for Server A hostname: ${default_hostname_nodeA}" >> ${LOG_FILE}
         hostname_A=${hostname_A:-$default_hostname_nodeA}
     else
-        echo -n "Enter new hostname for server B (press enter to maintain default [${default_hostname_nodeB}]): " | tee -a ${LOG_FILE}
+        echo -n "Enter new hostname for server B (press enter to keep default [${default_hostname_nodeB}]): " | tee -a ${LOG_FILE}
         read hostname_B
         echo -e "\nDEBUG: input received for Server B hostname: ${default_hostname_nodeB}" >> ${LOG_FILE}
         hostname_B=${hostname_B:-$default_hostname_nodeB}
@@ -828,7 +830,7 @@ dns_update_hostnames()
         # 1.2 /etc/hosts does not has the entry, add it
         echo "Server B: Updating /etc/hosts with management IP (${mgmt_ip_A}) of server A (${hostname_A})" | tee -a  ${LOG_FILE}
         echo -e "\n${mgmt_ip_A} ${hostname_A}" > /tmp/dns_a.tmp
-        $scp_cmd /tmp/dns_a.tmp srvnode-2:/tmp/dns_a.tmp
+        $scp_cmd /tmp/dns_a.tmp ${pvt_ip_b}:/tmp/dns_a.tmp
         $ssh_cmd ${pvt_ip_b} "cat /tmp/dns_a.tmp >> /etc/hosts" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
@@ -881,7 +883,7 @@ dns_update_hostnames()
         # 2.2 /etc/hosts does not has the entry, add it
         echo "Server B: Updating /etc/hosts with management IP (${mgmt_ip_B}) of server B (${hostname_B})" | tee -a  ${LOG_FILE}
         echo -e "\n${mgmt_ip_B} ${hostname_B}" > /tmp/dns_b.tmp
-        $scp_cmd /tmp/dns_b.tmp srvnode-2:/tmp/dns_b.tmp
+        $scp_cmd /tmp/dns_b.tmp ${pvt_ip_b}:/tmp/dns_b.tmp
         $ssh_cmd ${pvt_ip_b} "cat /tmp/dns_b.tmp >> /etc/hosts" >> /etc/hosts
         echo "Done" | tee -a ${LOG_FILE}
     fi
@@ -894,24 +896,49 @@ ssh_connectivity_check()
 
     # Check if the ssh works without password from Server A to Server B using DNS hostname
     echo "Checking passwordless ssh connectivity from Server A to Server B using new hostname" | tee -a ${LOG_FILE}
-    ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no $hostname_B exit && {
+    if $ssh_cmd $hostname_B exit; then
         echo "SUCCESS: Passwordless ssh worked from Server A (${hostname_A}) to Server B (${hostname_B})"
         ssh_A_to_B=true
-    } || {
-        echo "Could not connect Server B(${hostname_B}) from Server A(${hostname_A}) over ssh" | tee -a ${LOG_FILE}
+    else
+        echo "ERROR: Could not connect Server B(${hostname_B}) from Server A(${hostname_A}) over ssh" | tee -a ${LOG_FILE}
         ssh_A_to_B=false
         return
-    }
+    fi
+
+    # Check if the ssh works without password from Server A to Server B using alias (srvnode-2)
+     echo "Checking passwordless ssh connectivity from Server A to Server B using alias" | tee -a ${LOG_FILE}
+     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-2 "exit"; then
+         echo "SUCCESS: Passwordless ssh worked from Server A to Server B alias (srvnode-2)" | tee -a ${LOG_FILE}
+         ssh_A_to_B=true
+     else
+         echo "ERROR: Could not connect Server B(srvnode-2) from Server A over ssh using alias" | tee -a ${LOG_FILE}
+         ssh_A_to_B=false
+         return
+     fi
+
     # Check if the ssh works without password from Server B to Server A using DNS hostname
     echo "Checking passwordless ssh connectivity from Server B to Server A using new hostname" | tee -a ${LOG_FILE}
-    ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no ${hostname_B} \
-        "ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no ${hostname_A} exit; exit" && {
+    if $ssh_cmd ${hostname_B} \
+        "ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no ${hostname_A} exit; exit"; then
         echo "SUCCESS: Passwordless ssh worked from Server B ($hostname_B) to Server A ($hostname_A)"
         ssh_B_to_A=true
-    } || {
-        echo "Could not connect Server A ($hostname_A) from Server B($hostname_B) over ssh" | tee -a ${LOG_FILE}
+    else
+        echo "ERROR: Could not connect Server A ($hostname_A) from Server B($hostname_B) over ssh" | tee -a ${LOG_FILE}
         ssh_B_to_A=false
-    }
+    fi
+
+    # Check if the ssh works without password from Server B to Server A using alias (srvnode-1)
+     echo "Checking passwordless ssh connectivity from Server B to Server A using alias" | tee -a ${LOG_FILE}
+     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-2 \
+         "ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-1 exit; exit"; then
+         echo "SUCCESS: Passwordless ssh worked from Server B (srvnode-2) to Server A (srvnode-1) using aliases" | tee -a ${LOG_FILE}
+         ssh_B_to_A=true
+     else
+         echo "ERROR: Could not connect Server A(srvnode-1) from Server B(srvnode-2) over ssh using alias" | tee -a ${LOG_FILE}
+         ssh_B_to_A=false
+         return
+     fi
+
 }
 
 ssh_config_update()
@@ -978,7 +1005,7 @@ ssh_config_update()
     fi
 
     echo "Copying the ssh config file from Server A to Server B" | tee -a ${LOG_FILE}
-    $scp_cmd /root/.ssh/config srvnode-2:/root/.ssh/config
+    $scp_cmd /root/.ssh/config ${pvt_ip_b}:/root/.ssh/config
     echo "Done"
 
     # Check if the ssh works without password from Server A to Server B
@@ -1106,44 +1133,6 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
 
 }
 
-ipmi_install_skip()
-{
-    _functions_sh_path="/opt/seagate/cortx/provisioner/cli/common_utils/functions.sh"
-    echo "DEBUG: copying $_functions_sh_path to ${_functions_sh_path}.bkp" >> ${LOG_FILE}
-    yes | cp -f $_functions_sh_path ${_functions_sh_path}.bkp
-
-    echo "Amending functions to skip ipmi installation" | tee -a ${LOG_FILE}
-    echo "DEBUG: updating functions" >> ${LOG_FILE}
-    line1=`grep -n '\${_cmd} \"yum install -y ipmitool\"' $_functions_sh_path | cut -f1 -d:`
-    echo "DEBUG: line1=$line1" >> ${LOG_FILE}
-    if [[ ! -z $line1 ]]; then
-        sed -ie "${line1}s/.*/        touch \/tmp\/skip_ipmi_install_hf1 /" $_functions_sh_path
-    else
-        echo "DEBUG: content '\${_cmd} \"yum install -y ipmitool\"' not found in $_functions_sh_path, ignoring" >> ${LOG_FILE}
-    fi
-
-    line2=`grep -n "yum install -y ipmitool" $_functions_sh_path | cut -f1 -d:`
-    echo "DEBUG: line2=$line2" >> ${LOG_FILE}
-    if [[ ! -z "$line2" ]]; then
-        sed -ie "${line2}s/.*/        touch \/tmp\/skip_ipmi_install_hf2 /" $_functions_sh_path
-    else
-        echo "DEBUG: content 'yum install -y ipmitool' not found in $_functions_sh_path, ignoring" >> ${LOG_FILE}
-    fi
-
-    n_diff_lines=`diff $_functions_sh_path ${_functions_sh_path}.bkp | grep "^>" | wc -l`
-    echo "DEBUG: n_diff_lines: $n_diff_lines" >>  ${LOG_FILE}
-
-    if [[ $n_diff_lines != 2 ]]; then
-        echo "Could not update the contents in functions, restoring the original content" | tee -a ${LOG_FILE}
-        #rm -f $_functions_sh_path
-        cp ${_functions_sh_path}.bkp ${_functions_sh_path}
-    else
-        echo "Successfully ammended functions to skip ipmi installation" | tee -a ${LOG_FILE}
-    fi
-
-    echo "Done" | tee -a ${LOG_FILE}
-}
-
 pre_unbox()
 {
     time_stamp=$(date)
@@ -1211,12 +1200,6 @@ pre_unbox()
 
     #7. Update minion files on both the nodes to point master to server A hostname
     minion_config_update
-
-    #8. Update minion files on both the nodes to point master to server A hostname
-    # TODO: remove the function ipmi_install_skip
-    #if [[ "$amend_fix_for_ipmi" == true ]]; then
-    #    ipmi_install_skip
-    #fi
 
     echo "DEBUG: pre_unbox script completed successfully" >> ${LOG_FILE}
 }

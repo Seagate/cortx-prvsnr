@@ -33,47 +33,47 @@ Sync data:
 # These repos get added in prereq-script, setup-provisioner
 #TODO Remove redundency
  
-Cleanup yum repos directory:
-  cmd.run:
-    - name: rm -rf /etc/yum.repos.d/CentOS-*.repo
-    - if: test -f /etc/yum.repos.d/CentOS-Base.repo
+# Cleanup yum repos directory:
+#   cmd.run:
+#     - name: rm -rf /etc/yum.repos.d/CentOS-*.repo
+#     - if: test -f /etc/yum.repos.d/CentOS-Base.repo
 
-{% for repo in defaults.base_repos.centos_repos %}
-add_{{repo.id}}_repo:
-  pkgrepo.managed:
-    - name: {{ repo.id }}
-    - humanname: {{ repo.id }}
-    - baseurl: {{ repo.url }}
-    - gpgcheck: 0
-    - require:
-      - Cleanup yum repos directory
-    - onlyif: test -z /etc/yum.repos.d/{{ repo.id }}.repo
-{% endfor %}
-{%- endif %}  # not (redhat && subscription)
+# {% for repo in defaults.base_repos.centos_repos %}
+# add_{{repo.id}}_repo:
+#   pkgrepo.managed:
+#     - name: {{ repo.id }}
+#     - humanname: {{ repo.id }}
+#     - baseurl: {{ repo.url }}
+#     - gpgcheck: 0
+#     - require:
+#       - Cleanup yum repos directory
+#     - onlyif: test -z /etc/yum.repos.d/{{ repo.id }}.repo
+# {% endfor %}
+# {%- endif %}  # not (redhat && subscription)
 
 Configure yum:
   file.managed:
     - name: /etc/yum.conf
     - source: salt://components/system/files/etc/yum.conf
 
-Reset EPEL:
-  cmd.run:
-    - name: rm -rf /etc/yum.repos.d/epel.repo.*
-    - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
+# Reset EPEL:
+#   cmd.run:
+#     - name: rm -rf /etc/yum.repos.d/epel.repo.*
+#     - if: test -f /etc/yum.repos.d/epel.repo.rpmsave
 
-Add EPEL repo:
-  pkgrepo.managed:
-    - name: {{ defaults.base_repos.epel_repo.id }}
-    - humanname: 3rd_party_epel
-    - baseurl: {{ defaults.base_repos.epel_repo.url }}
-    - gpgcheck: 0
-{% if pillar['release']['type'] != 'bundle' %}
-    - require:
-      - Reset EPEL
-      - Configure yum
-{% endif %}
+# Add EPEL repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.base_repos.epel_repo.id }}
+#     - humanname: 3rd_party_epel
+#     - baseurl: {{ defaults.base_repos.epel_repo.url }}
+#     - gpgcheck: 0
+# {% if pillar['release']['type'] != 'bundle' %}
+#     - require:
+#       - Reset EPEL
+#       - Configure yum
+# {% endif %}
 
-{% endif %}  # not a bundled release
+# {% endif %}  # not a bundled release
 
 # Add Saltsatck repo:
 #   pkgrepo.managed:
@@ -86,27 +86,27 @@ Add EPEL repo:
 #     - require:
 #       - Add EPEL repo
 
-Add commons yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.commons.repo.id }}
-    - enabled: True
-    - humanname: commons
-    - baseurl: {{ defaults.commons.repo.url }}
-    - gpgcheck: 0
-    - onlyif: test -z /etc/yum.repos.d/{{ defaults.commons.repo.id }}.repo
-{% if pillar['release']['type'] != 'bundle' %}
-    - require:
-      - Add EPEL repo
-{% endif %}
+# Add commons yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.commons.repo.id }}
+#     - enabled: True
+#     - humanname: commons
+#     - baseurl: {{ defaults.commons.repo.url }}
+#     - gpgcheck: 0
+#     - onlyif: test -z /etc/yum.repos.d/{{ defaults.commons.repo.id }}.repo
+# {% if pillar['release']['type'] != 'bundle' %}
+#     - require:
+#       - Add EPEL repo
+# {% endif %}
 
 Clean yum local:
   cmd.run:
     - name: yum clean all
-    - require:
-      - Add commons yum repo
 {% if pillar['release']['type'] != 'bundle' %}
+    - require:
+#      - Add commons yum repo
       - Configure yum
-      - Add EPEL repo
+#      - Add EPEL repo
 {% endif %}
 
 Clean yum cache:
