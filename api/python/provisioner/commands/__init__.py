@@ -538,7 +538,8 @@ class SetSWUpdateRepo(Set):
             #   - (optionally) new version is higher then currently installed
 
             cmd = ('yum --disablerepo="*" '
-                   f'--enablerepo="sw_update_{candidate_repo.release}')
+                   f'--enablerepo="sw_update_{candidate_repo.release} '
+                   'list available')
             try:
                 salt_cmd_run(cmd, targets=LOCAL_MINION)
             except SaltCmdRunError as e:
