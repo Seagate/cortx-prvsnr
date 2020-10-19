@@ -33,10 +33,10 @@ Sync data:
 # These repos get added in prereq-script, setup-provisioner
 #TODO Remove redundency
  
-Cleanup yum repos directory:
-  cmd.run:
-    - name: rm -rf /etc/yum.repos.d/CentOS-*.repo
-    - if: test -f /etc/yum.repos.d/CentOS-Base.repo
+# Cleanup yum repos directory:
+#   cmd.run:
+#     - name: rm -rf /etc/yum.repos.d/CentOS-*.repo
+#     - if: test -f /etc/yum.repos.d/CentOS-Base.repo
 
 # {% for repo in defaults.base_repos.centos_repos %}
 # add_{{repo.id}}_repo:

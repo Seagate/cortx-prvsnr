@@ -42,11 +42,20 @@ PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
 export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
 export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
 server_names=("Server A" "Server B")
 export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
+<<<<<<< HEAD
+=======
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -284,8 +293,12 @@ function boxing_flag {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
+<<<<<<< HEAD
 sub_manager_check()
 {
+=======
+function sub_manager_check() {
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     _pvt_ip="${1:-$pvt_ip_a}"
     _server="${2:-"Server A"}"
 
@@ -309,8 +322,12 @@ sub_manager_check()
     fi
 }
 
+<<<<<<< HEAD
 sub_manager_cleanup()
 {
+=======
+function sub_manager_cleanup() {
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     _pvt_ip="${1:-$pvt_ip_a}"
     _server=${2:-"Server A"}
 
@@ -337,8 +354,12 @@ sub_manager_cleanup()
     $ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
 }
 
+<<<<<<< HEAD
 seagate_refs_cleanup()
 {
+=======
+function seagate_refs_cleanup() {
+>>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     # 1. Check if subscription manager is enabled
     # 2. Disable and cleanup the subscription
     # 3. Remove all Seagate internal repos from /etc/yum.repos.d
