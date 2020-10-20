@@ -224,6 +224,7 @@ function controlpath_states {
         "sspl.prepare"
         "sspl.install"
         "sspl.config"
+        "sspl.health_view"
         "csm.prepare"
         "csm.install"
         "csm.config"
@@ -293,9 +294,6 @@ function restore_states {
     l_info "=================================================="
     l_info "Stage 2.8: Applying File Restore States..."
     l_info "=================================================="
-    $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
-    $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
-
     run_states "${restore_states[@]}"
     l_info "=================================================="
 
@@ -348,6 +346,12 @@ function run_states {
                     l_info "Applying 'components.$state' on node: $local_node"
                     $cmd salt "$local_node" state.apply components.$state $salt_opts
                 fi
+            elif [[ $state == "sspl.health_view" ]]; then
+                l_info "Generating HealthMap Schema: srvnode-2"
+                $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
+                l_info "Generating HealthMap Schema: srvnode-1"
+                $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
+                l_info "HealthMap Schema ready for CSM."
             else
                 l_info "Applying 'components.$state' on node: ${tgt_node}"
                 $cmd salt "${tgt_node}" state.apply components.$state $salt_opts
