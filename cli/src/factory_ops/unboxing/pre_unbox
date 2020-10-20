@@ -1199,7 +1199,7 @@ pre_unbox()
     fi
 
     #7. Update minion files on both the nodes to point master to server A hostname
-    minion_config_update
+    # minion_config_update
 
     echo "DEBUG: pre_unbox script completed successfully" >> ${LOG_FILE}
 }
