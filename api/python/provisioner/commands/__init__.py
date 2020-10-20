@@ -549,7 +549,7 @@ class SetSWUpdateRepo(Set):
 
             # TODO: take it from pillar
             iso_mount_dir = f'/opt/seagate/cortx/updates/{REPO_CANDIDATE_NAME}'
-            release_file = f'{iso_mount_dir}/cortx_iso/{RELEASE_INFO}'
+            release_file = f'{iso_mount_dir}/{RELEASE_INFO}'
 
             try:
                 metadata = load_yaml(release_file)
@@ -560,7 +560,7 @@ class SetSWUpdateRepo(Set):
                 metadata[ReleaseInfo.RELEASE.value] = (
                                 f'{metadata.get(ReleaseInfo.VERSION.value)}-'
                                 f'{metadata.get(ReleaseInfo.BUILD.value)}')
-            except KeyError as e:
+            except KeyError:
                 logging.debug("Can't build release version. "
                               f"{ReleaseInfo.VERSION.value} or "
                               f"{ReleaseInfo.BUILD.value} are not specified")
