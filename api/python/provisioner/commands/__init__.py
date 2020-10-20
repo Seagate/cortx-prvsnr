@@ -538,7 +538,7 @@ class SetSWUpdateRepo(Set):
             #   - (optionally) new version is higher then currently installed
 
             cmd = ('yum --disablerepo="*" '
-                   f'--enablerepo="sw_update_{candidate_repo.release} '
+                   f'--enablerepo="sw_update_{candidate_repo.release}" '
                    'list available')
             try:
                 salt_cmd_run(cmd, targets=LOCAL_MINION)
@@ -564,9 +564,10 @@ class SetSWUpdateRepo(Set):
 
             # there is no the same release repo already active EOS-13715
             release = metadata[ReleaseInfo.RELEASE.value]
-            cmd = ("yum repoinfo enabled | awk -F':' "
-                   f"'/Repo\\-id/{{if ($2 ~  \"sw_update_{release}\") err=1}} "
-                   "END {{exit err}}'")
+            cmd = ("yum repoinfo disabled 2>/dev/null | awk -F':' "
+                   f"'/Repo\\-id/{{if ($2 ~ \"sw_update_{release}\")
+                   {{ print \"Repo \" $2 \" have already enabled\"; "
+                   "exit 1}} }}' ")
 
             try:
                 salt_cmd_run(cmd, targets=LOCAL_MINION)
