@@ -20,7 +20,7 @@ import sys
 # HOW TO DEBUG:
 # - set a breakpoint: import pdb; pdb.set_trace()
 # - salt-run saltutil.sync_modules
-# - salt-run cmd.cmd provisioner.<fun> ... <args>
+# - salt-run salt.cmd provisioner.<fun> ... <args>
 
 __virtualname__ = 'provisioner'
 

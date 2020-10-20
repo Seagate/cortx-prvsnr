@@ -31,7 +31,6 @@
             {% set source = source['source'] %}
         {% endif %}
 
-
         {% if source.startswith(('http://', 'https://')) %}
 
             {% set source_type = 'url' %}

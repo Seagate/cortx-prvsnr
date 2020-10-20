@@ -134,13 +134,21 @@ class Container(Remote):
     image = attr.ib()
     hostname = attr.ib(default=None)
     container = attr.ib(init=False, default=None)
-    specific = attr.ib(default={})
+    specific = attr.ib(default=dict)
+    volumes = attr.ib(
+        init=False,
+        default=attr.Factory(lambda: {
+            '/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}
+        })
+    )
 
     client = docker.from_env()
 
     def __attrs_post_init__(self):
         if self.hostname is None:
             self.hostname = safe_hostname(self.name)
+
+        self.volumes.update(self.specific.pop('volumes', {}))
 
     def run(self):
         if self.container is not None:
@@ -157,9 +165,7 @@ class Container(Remote):
                 detach=True,
                 tty=True,
                 # network=network_name,
-                volumes={
-                    '/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'}
-                },
+                volumes=self.volumes,
                 # security_opt=['seccomp=unconfined'],
                 tmpfs={'/run': '', '/run/lock': ''},
                 ports={'22/tcp': None},
