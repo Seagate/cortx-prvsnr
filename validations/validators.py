@@ -16,10 +16,11 @@
 #
 
 import config
-from scripts.factory.server_check import ServerValidations  # noqa: F401
-from scripts.factory.network_check import NetworkChecks  # noqa: F401
-from scripts.factory.storage_check import StorageValidations  # noqa: F401
-from scripts.factory.controller_check import ControllerValidations  # noqa: F401
+from scripts.utils.server_checks import ServerValidations  # noqa: F401
+from scripts.utils.network_checks import NetworkChecks  # noqa: F401
+from scripts.utils.storage_connectivity_checks import StorageValidations  # noqa: F401
+from scripts.utils.controller_check import ControllerValidations  # noqa: F401
+from scripts.utils.system_check.lvm_checks import LVMChecks  # noqa: F401
 
 
 class Validators():
@@ -74,7 +75,7 @@ if __name__ == '__main__':
               "--fwupdate", action='store_true',
               help="Firmware update check validation")
     argParser.add_argument(
-              "-unboxing", action='store_true',
+              "--unboxing", action='store_true',
               help="Unboxing check validation")
     argParser.add_argument(
               "-c", type=str, choices=config.ALL_CHECKS.keys(),

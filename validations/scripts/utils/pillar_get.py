@@ -14,15 +14,10 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-import os
-import sys
 import json
 import logging
 
-parent_dir_name = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(parent_dir_name + "/utils")
-
-from common import run_subprocess_cmd  # noqa: E402
+from .common import run_subprocess_cmd  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -35,18 +30,19 @@ class PillarGet():
         cmd = f"salt-call pillar.get {key} --out=json"
         response = list(run_subprocess_cmd(cmd))
         if response[0] == 127:
-            message = "salt-call: command not found"
+            message = "get_pillar: salt-call: command not found"
         elif response[0] == 0:
             res = json.loads(response[1])
             res = res['local']
             if not res:
-                message = f"No pillar data for key: {key}"
+                message = f"get_pillar: No pillar data for key: {key}"
+                response[2] = f"No pillar data for key: {key}"
                 response[0] = 1
             else:
                 response[1] = res
                 message = f"pillar data {res}"
         else:
-            message = "Failed to get pillar data"
+            message = "get_pillar: Failed to get pillar data"
         return {"ret_code": response[0],
                 "response": response[1],
                 "error_msg": response[2],

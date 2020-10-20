@@ -16,13 +16,9 @@
 #
 
 import logging
-import os
-import sys
-parent_dir_name = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(parent_dir_name + "/utils")
 
-from network_checks import NetworkValidations  # noqa: E402
-from pillar_get import PillarGet  # noqa: E402
+from .network_connectivity_checks import NetworkValidations
+from .pillar_get import PillarGet
 
 
 logger = logging.getLogger(__name__)
@@ -34,16 +30,10 @@ class ControllerValidations():
     def verify_access_to_controller():
         '''Validations Access to controllers'''
         controllers = ['primary_mc', 'secondary_mc']
-        response = {}
         for controller in controllers:
             result = PillarGet.get_pillar(f"storage_enclosure:controller:{controller}:ip")
-            if not result['ret_code']:
-                result = NetworkValidations.check_ping(result['response'])
-            if not response.get("response", None):
-                response = result
-            else:
-                if result['ret_code']:
-                    response['ret_code'] = result['ret_code']
-                response['response'] = [response['response'], result['response']]
-                response['message'] = [response['message'], result['message']]
-        return response
+            if result['ret_code']:
+                return result
+            result = NetworkValidations.check_ping(result['response'])
+        result['message'] = "Controllers are accessible"
+        return result

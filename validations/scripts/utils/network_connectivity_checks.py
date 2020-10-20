@@ -14,37 +14,28 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
 import logging
-import subprocess
 
-
+from .common import run_subprocess_cmd
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess_cmd(cmd, **kwargs):
-    _kwargs = dict(
-        universal_newlines=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+class NetworkValidations():
 
-    _kwargs.update(kwargs)
-    _kwargs['check'] = True
-
-    if not _kwargs.get('timeout', None):
-        _kwargs['timeout'] = 15
-    if type(cmd) is str:
-        cmd = cmd.split()
-
-    try:
-        logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
-        res = subprocess.run(cmd, **_kwargs)
-    except subprocess.TimeoutExpired as exc:
-        result = (1, str(exc), repr(exc))
-    except Exception as exc:
-        result = (1, str(exc), repr(exc))
-    else:
-        logger.debug(f"Subprocess command resulted in: {res}")
-        result = (res.returncode, res.stdout, res.stderr)
-    return result
+    @staticmethod
+    def check_ping(ip):
+        """Check if IP's are reachable"""
+        cmd = f"ping -c 1 {ip}"
+        response = run_subprocess_cmd(cmd)
+        if response[0] == 0:
+            message = f"{ip} is reachable"
+        elif response[0] == 1:
+            message = f"check_ping: {ip}: Destination Host Unreachable"
+        elif response[0] == 2:
+            message = f"check_ping: {ip}: Name or service not known"
+        else:
+            message = f"check_ping: {ip}: Not reachable"
+        return {"ret_code": response[0],
+                "response": response[1],
+                "error_msg": response[2],
+                "message": message}

@@ -8,7 +8,7 @@ FACTORY_POST_CHECK = {
     'verify_luns_consistency': 'StorageValidations',
     'verify_access_to_controller': 'ControllerValidations',
     'verify_passwordless': 'ServerValidations',
-    'verify_lvm': 'StorageValidations'
+    'verify_lvm': 'LVMChecks'
 }
 
 FACTORY_PRE_CHECK = {
