@@ -489,11 +489,12 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         add_node_states
     fi
 
-    # l_info "Backing up pillar files to user space."
-    # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
-    # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
-    # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
-    # chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
+    # Check HA cluster health
+    l_info "Check HA cluster health"
+    . ${BASEDIR}/../../common_utils/utility_scripts.sh
+    ensure_healthy_cluster
+
+    python3 /opt/seagate/cortx/provisioner/cli/csm_admin_user.py -c /usr/bin/consul -n ${tgt_node} --syncpass
 
     l_info "***** SUCCESS! *****"
     l_info "The detailed logs can be seen at: $LOG_FILE"
