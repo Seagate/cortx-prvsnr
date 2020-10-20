@@ -565,8 +565,8 @@ class SetSWUpdateRepo(Set):
             # there is no the same release repo already active EOS-13715
             release = metadata[ReleaseInfo.RELEASE.value]
             cmd = ("yum repoinfo disabled 2>/dev/null | awk -F':' "
-                   f"'/Repo\\-id/{{if ($2 ~ \"sw_update_{release}\")
-                   {{ print \"Repo \" $2 \" have already enabled\"; "
+                   f"'/Repo\\-id/{{if ($2 ~ \"sw_update_{release}\")"
+                   "{{ print \"Repo \" $2 \" have already enabled\"; "
                    "exit 1}} }}' ")
 
             try:
