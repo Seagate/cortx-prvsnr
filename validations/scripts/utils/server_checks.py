@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 class ServerValidations():
 
-    @staticmethod
     def verify_nodes_online():
         '''Validations for nodes'''
         res = PillarGet.get_pillar("cluster:node_list")
@@ -40,7 +39,6 @@ class ServerValidations():
         result['message'] = "Nodes are online"
         return result
 
-    @staticmethod
     def verif_node_communication():
         '''validation salt  test.ping'''
         res = PillarGet.get_pillar("cluster:node_list")
@@ -58,10 +56,9 @@ class ServerValidations():
         response['message'] = f"Nodes communication is working"
         return response
 
-    @staticmethod
     def verify_passwordless():
         '''Validations for nodes'''
-        res = PillarGet.get_pillar("cluster:node_list")
+        res = PillarGet.get_hostnames()
         response = {}
         if res['ret_code']:
             return res

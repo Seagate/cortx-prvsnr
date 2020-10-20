@@ -26,10 +26,9 @@ logger = logging.getLogger(__name__)
 
 class StorageValidations():
 
-    @staticmethod
     def verify_luns_consistency():
         '''Validations for LUNs are consistent across nodes'''
-        res = PillarGet.get_pillar("cluster:node_list")
+        res = PillarGet.get_hostnames()
         nodes = []
         response = {}
         if not res['ret_code']:
@@ -38,28 +37,18 @@ class StorageValidations():
             return res
         res = []
         for node in nodes:
-            result = run_subprocess_cmd(f"ssh {node} lsblk -S | wc -l")
+            result = run_subprocess_cmd(f"ssh {node} lsblk -S| grep sas | wc -l")
             response['ret_code'] = result[0]
             response['response'] = result[1]
             response['error_msg'] = result[2]
-            if result[0] or int(result[1]) == 0:
-                response['message'] = "verify_luns_consistency: Failed to get luns for {node}"
-                return response
-            else:
-                res.append(result[1])
-        if len(res) > 1:
-            pre_res = 0
-            flag = True
-            for resp in res:
-                if pre_res and pre_res != resp:
-                    flag = False
-                pre_res = res
-            response['response'] = res
-            if not flag:
+            if result[0] or int(result[1]) == 0 or (int(result[1])%16) != 0:
                 response['ret_code'] = 1
-                response['message'] = "verify_luns_consistency: Number of luns are not same on nodes"
-            else:
-                response['message'] = "Number of luns are same on nodes"
+                response['message'] = ( 
+                    "verify_luns_consistency:"
+                    f"Inconsistent luns {int(result[1])} for {node}"
+                )
+                return response
+            response['message'] = "Number of luns are same on nodes"
         return response
 
     def verify_multipath():

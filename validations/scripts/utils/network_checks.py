@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 class NetworkChecks():
 
-    @staticmethod
     def verify_mgmt_vip():
         '''Validations for mgmt_vip'''
         res = PillarGet.get_pillar("cluster:mgmt_vip")
@@ -39,7 +38,6 @@ class NetworkChecks():
                 res['message'] = "MGMT VIP is configured"
         return res
 
-    @staticmethod
     def verify_cluster_ip():
         '''Validations for cluster_ip'''
         res = PillarGet.get_pillar("cluster:cluster_ip")
@@ -53,7 +51,6 @@ class NetworkChecks():
                 res['message'] = "Cluster IP is configured"
         return res
 
-    @staticmethod
     def verify_public_data_ip():
         '''Validations for public data ip'''
         res = PillarGet.get_pillar("cluster:node_list")
@@ -73,7 +70,6 @@ class NetworkChecks():
         result['message'] = "Public data IP is configured"
         return result
 
-    @staticmethod
     def verify_private_data_ip():
         '''Validations for private data ip'''
         res = PillarGet.get_pillar("cluster:node_list")

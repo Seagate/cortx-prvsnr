@@ -47,3 +47,17 @@ class PillarGet():
                 "response": response[1],
                 "error_msg": response[2],
                 "message": message}
+
+    @staticmethod
+    def get_hostnames():
+        res = PillarGet.get_pillar("cluster:node_list")
+        if res['ret_code']:
+            return res
+        hostnames = []
+        for node in res['response']:
+            res = PillarGet.get_pillar(f"cluster:{node}:hostname")
+            if res['ret_code']:
+                return res
+            hostnames.append(res['response'])
+        res['response'] = hostnames
+        return res

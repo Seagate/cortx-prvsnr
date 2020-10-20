@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 class LVMChecks():
 
-    @staticmethod
     def verify_lvm():
         '''Validations for LVM'''
         res = PillarGet.get_pillar("cluster:node_list")

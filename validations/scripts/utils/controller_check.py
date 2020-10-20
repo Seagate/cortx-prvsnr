@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 class ControllerValidations():
 
-    @staticmethod
     def verify_access_to_controller():
         '''Validations Access to controllers'''
         controllers = ['primary_mc', 'secondary_mc']
