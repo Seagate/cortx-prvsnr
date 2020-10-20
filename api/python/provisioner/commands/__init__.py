@@ -551,7 +551,11 @@ class SetSWUpdateRepo(Set):
             iso_mount_dir = f'/opt/seagate/cortx/updates/{REPO_CANDIDATE_NAME}'
             release_file = f'{iso_mount_dir}/cortx_iso/{RELEASE_INFO}'
 
-            metadata = load_yaml(release_file)
+            try:
+                metadata = load_yaml(release_file)
+            except FileNotFoundError as e:
+                logging.debug(f"Can't load {RELEASE_INFO} file: {str(e)}")
+
             try:
                 metadata[ReleaseInfo.RELEASE.value] = (
                                 f'{metadata.get(ReleaseInfo.VERSION.value)}-'
