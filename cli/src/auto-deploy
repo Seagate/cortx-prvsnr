@@ -43,6 +43,7 @@ echo $PATH | grep -q "/usr/local/bin" || export PATH=$PATH:/usr/local/bin
 EOM
 . /etc/profile.d/set_path_env
 
+srvnode_1_host=`hostname -f`
 srvnode_2_host=
 srvnode_2_passwd=
 cluster_ip=
@@ -311,6 +312,7 @@ install_prvsnr_cli()
         yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
         yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
         rm -rf /etc/yum.repos.d/$(echo ${cortx_repo#"http://"} | sed -e 's/\/\//\//' -e 's/\//_/g').repo
+        $ssh_cred ssh-copy-id $ssh_opts -i ~/.ssh/id_rsa_prvsnr.pub $user@$srvnode_2_host
 
         systemctl stop firewalld || true
 
@@ -330,6 +332,7 @@ $remote_cmd <<EOF
     yum install -y yum-utils; yum-config-manager --add-repo $cortx_repo
     yum install -y cortx-prvsnr-cli-1.0.0 --nogpgcheck
     rm -rf /etc/yum.repos.d/$(echo ${cortx_repo#"http://"} | sed -e 's/\/\//\//' -e 's/\//_/g').repo
+    $ssh_cred ssh-copy-id $ssh_opts -i ~/.ssh/id_rsa_prvsnr.pub $user@$srvnode_1_host
     
     systemctl stop firewalld || true
 
