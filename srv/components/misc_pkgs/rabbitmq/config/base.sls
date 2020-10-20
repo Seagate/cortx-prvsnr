@@ -64,7 +64,7 @@ Restart rabbitmq service:
 # logrotate.d config: DO NOT REMOVE
 Setup logrotate policy for rabbitmq-server:
   file.managed:
-  - name: /etc/logrotate_hourly.d/rabbitmq-server
+  - name: /etc/logrotate.d/rabbitmq-server
   - source: salt://components/misc_pkgs/rabbitmq/files/rabbitmq-server
   - keep_source: True
   - user: root

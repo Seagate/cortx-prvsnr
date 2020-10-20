@@ -62,6 +62,9 @@ PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
 )
 
+
+REPO_CANDIDATE_NAME = 'candidate'
+
 # TODO EOS-12076 EOS-12334
 
 CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'

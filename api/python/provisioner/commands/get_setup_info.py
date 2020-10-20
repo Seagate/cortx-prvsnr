@@ -225,7 +225,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
         pillar_updater = PillarUpdater(config.ALL_MINIONS)
         pillar_updater.update((storage_enclosure_type, storage_type))
-        pillar_updater.dump()
+        pillar_updater.apply()
 
     def _get_storage_type(self):
         """
