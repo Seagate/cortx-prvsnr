@@ -4,6 +4,8 @@
     rotate 7
     compress
     delaycompress
+    dateext
+    dateformat -%Y-%m-%d-%s.log
     notifempty
     sharedscripts
     size 20M
