@@ -14,15 +14,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-from typing import Type, Union
+from typing import Type, Union, List
 
-from . import RunArgs, CommandParserFillerMixin
+from . import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
 from ..errors import SaltCmdResultError
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
-from ..salt import local_minion_id, function_run, cmd_run
+from ..salt import local_minion_id, cmd_run
 from ..salt_minion import check_salt_minions_are_ready
 from ..vendor import attr
 
@@ -31,6 +31,193 @@ SRVNODE1 = "srvnode-1"
 SRVNODE2 = "srvnode-2"
 
 PENDING_SERVERS = frozenset({SRVNODE1, SRVNODE2})  # to make constant immutable
+
+
+class CheckEntry:
+
+    """Result of the single validation"""
+
+    def __init__(self, check_name: str):
+        """
+        Setup check
+        Args:
+            str check_name: check/validation name or label
+        """
+        self._check_name = check_name
+        self._verdict = None
+        self._comment = None
+        self._target = None
+
+    def __str__(self):
+        """String representation of the single check"""
+        if self.is_set:
+            return (f"{self._target}: {self._check_name}: "
+                    f"{self._verdict.value}: {self._comment}")
+
+        return ""  # We can return just None value
+
+    def to_dict(self) -> dict:
+        """
+        Return dict representation of check
+        Returns:
+
+        """
+        return {self._check_name: f"{self._target}: {self._verdict.value}: "
+                                  f"{self._comment}"}
+
+    def set_fail(self, *, target: str, comment: str = ""):
+        """
+        Set fail for the check
+        Args:
+            str target: target where validation was run
+            str comment: validation result comment (reason of fail)
+
+        Returns:
+
+        """
+        self._verdict = cfg.CheckVerdict.FAIL
+        self._target = target
+        self._comment = comment
+
+    def set_passed(self, *, target, comment: str = ""):
+        """
+        Set passed for the check
+        Args:
+            str target: target where validation was run
+            str comment: validation result comment (optional)
+        Returns:
+
+        """
+        self._verdict = cfg.CheckVerdict.PASSED
+        self._target = target
+        self._comment = comment
+
+    @property
+    def is_passed(self) -> bool:
+        """
+        Returns: True if check is passed and False otherwise
+
+        """
+        return self._verdict == cfg.CheckVerdict.PASSED
+
+    @property
+    def is_failed(self) -> bool:
+        """
+
+        Returns: True if check is failed and False otherwise
+
+        """
+        return self._verdict == cfg.CheckVerdict.FAIL
+
+    @property
+    def is_set(self) -> bool:
+        """
+        Validates if self._verdict is set up to one of the CheckVerdict values
+        Returns:
+
+        """
+        return self._verdict is not None
+
+
+class CheckResult:
+
+    """Base class to represent check/validation result"""
+
+    def __init__(self):
+        self._check_entries: list = list()
+
+    def __iter__(self):
+        """
+        Iterate over all check results
+
+        Returns:
+
+        Example:
+
+            ...
+
+            check_results = CheckResult()
+            for check in check_results:
+                do_something(check)
+
+            ...
+
+        """
+        for check in self._check_entries:
+            yield check
+
+    def __str__(self):
+        """String representation of all checks"""
+        return str(self.to_dict())  # TODO: maybe it is better to use json.dump
+
+    @property
+    def is_passed(self) -> bool:
+        """
+        Verifies if all checks are passed
+
+        Returns: True if all checks are passed and False otherwise
+
+        """
+        return all(check.is_passed for check in self._check_entries)
+
+    @property
+    def is_failed(self) -> bool:
+        """
+        Verifies if at least one check is failed
+        Returns: True if at least one check is failed and False otherwise
+
+        """
+        return any(check.is_failed for check in self._check_entries)
+
+    def add_checks(self, check: Union[CheckEntry, List[CheckEntry]]) -> None:
+        """
+        Add check entry to the check entries chain
+
+        Args:
+            CheckEntry check: check entry(ies) with single check result
+
+        Returns:
+
+        """
+        def _add_check(check_entry: CheckEntry):
+            if check_entry.is_set:
+                self._check_entries.append(check_entry)
+            else:
+                raise ValueError("Check verdict is not set")
+
+        if isinstance(check, list):
+            for _check in check:
+                _add_check(_check)
+        else:
+            _add_check(check)
+
+    def get_passed(self) -> list:
+        """
+        Return all check entries which passed
+        Returns: list with all passed checks
+
+        """
+        return [check for check in self._check_entries if check.is_passed]
+
+    def get_failed(self) -> list:
+        """
+        Return all check entries which failed
+        Returns: list with all failed checks
+
+        """
+        return [check for check in self._check_entries if check.is_failed]
+
+    def to_dict(self) -> dict:
+        """
+        Return dictionary representation of check results
+        Returns:
+
+        """
+        result = dict()
+        for check in self._check_entries:
+            result.update(check.to_dict())
+
+        return result
 
 
 @attr.s(auto_attribs=True)
@@ -70,14 +257,14 @@ class Check(CommandParserFillerMixin):
     _PRV_METHOD_MOD = "_"  # private method modificator
 
     @staticmethod
-    def _network(*, args: str) -> dict:
+    def _network(*, args: str) -> List[CheckEntry]:
         """
         Private method for network checks.
 
         :param args: network specific checking parameters and arguments
         :return:
         """
-        res: dict = dict()
+        res: List[CheckEntry] = list()
 
         minion_id = local_minion_id()
 
@@ -96,21 +283,24 @@ class Check(CommandParserFillerMixin):
         pillar = pillar.get(local_minion_id())  # type: dict
 
         for key in pillar_keys:
+            _res = CheckEntry(cfg.Checks.NETWORK.value)
             if not pillar[key] or pillar[key] is values.MISSED:
-                res[str(key.keypath)] = (f'{cfg.CheckVerdict.FAIL.value}: '
-                                         'value is not specified')
+                _res.set_fail(target=str(key.keypath),
+                              comment="value is not specified")
             elif pillar[key] is None:
-                res[str(key.keypath)] = (f'{cfg.CheckVerdict.FAIL.value}: '
-                                         'value is unset')
+                _res.set_fail(target=str(key.keypath),
+                              comment="value is unset")
             else:
-                res[str(key.keypath)] = cfg.CheckVerdict.PASSED.value
+                _res.set_passed(target=str(key.keypath))
+
+            res.append(_res)
 
         return res
 
     @staticmethod
     def _communicability(
-                *, args: str,
-                targets: Union[list, tuple, set] = PENDING_SERVERS) -> dict:
+            *, args: str,
+            targets: Union[list, tuple, set] = PENDING_SERVERS) -> CheckEntry:
         """
         Check if nodes can communicate using `salt test.ping`
 
@@ -118,19 +308,20 @@ class Check(CommandParserFillerMixin):
         :param targets: target nodes where network checks will be executed
         :return:
         """
-        res: dict = dict()
+        res: CheckEntry = CheckEntry(cfg.Checks.COMMUNICABILITY.value)
 
         # TODO: need to resolve cfg.ALL_MINIONS alias
         #  to the list of minions
         # TODO: create check and return list of nodes which are down
         if check_salt_minions_are_ready(targets=targets):
-            res[local_minion_id()] = cfg.CheckVerdict.PASSED.value
+            res.set_passed(target=local_minion_id())
         else:
-            res[local_minion_id()] = cfg.CheckVerdict.FAIL.value
+            res.set_fail(target=local_minion_id())
 
         return res
 
-    def _bmc_accessibility(self, *, args: str) -> dict:
+    @staticmethod
+    def _bmc_accessibility(*, args: str) -> CheckEntry:
         """
         Check BMC accessibility
 
@@ -139,7 +330,7 @@ class Check(CommandParserFillerMixin):
         """
         _BMC_CHECK_CMD = 'ipmitool chassis status | grep "System Power"'
 
-        res: dict = dict()
+        res: CheckEntry = CheckEntry(cfg.Checks.BMC_ACCESSIBILITY.value)
 
         minion_id = local_minion_id()
 
@@ -147,15 +338,15 @@ class Check(CommandParserFillerMixin):
             _res = cmd_run(_BMC_CHECK_CMD, targets=minion_id,
                            fun_kwargs=dict(python_shell=True))
             # TODO: parse command output if necessary
-            res[minion_id] = f"{cfg.CheckVerdict.PASSED}: {str(_res)}"
+            res.set_passed(target=minion_id, comment=str(_res))
         except SaltCmdResultError as e:
-            res[minion_id] = f"{cfg.CheckVerdict.FAIL.value}: {str(e)}"
+            res.set_fail(target=minion_id, comment=str(e))
 
         return res
 
-    def _connectivity(self, *,
-                      servers: Union[list, tuple, set] = PENDING_SERVERS,
-                      args: str) -> dict:
+    @staticmethod
+    def _connectivity(*, servers: Union[list, tuple, set] = PENDING_SERVERS,
+                      args: str) -> CheckEntry:
         """
         Check servers connectivity. Ping servers to check for availability
 
@@ -168,7 +359,8 @@ class Check(CommandParserFillerMixin):
         # -W 1 means timeout to wait for a response
         _PING_CMD_TMPL = "ping -c 1 -W 1 {server_addr}"
 
-        res: dict = dict()
+        res: CheckEntry = CheckEntry(cfg.Checks.CONNECTIVITY.value)
+
         for addr in servers:
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
@@ -182,14 +374,16 @@ class Check(CommandParserFillerMixin):
             try:
                 cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                res[targets] = (f"{cfg.CheckVerdict.FAIL.value}: "
-                                f"{addr} is not reachable from {targets}")
+                res.set_fail(target=targets,
+                             comment=(f"{cfg.CheckVerdict.FAIL.value}: {addr} "
+                                      f"is not reachable from {targets}"))
             else:
-                res[targets] = cfg.CheckVerdict.PASSED.value
+                res.set_passed(target=targets)
 
         return res
 
-    def _logs_are_good(self, *, args: str) -> dict:
+    @staticmethod
+    def _logs_are_good(*, args: str) -> List[CheckEntry]:
         """
         Check that logs are clear and don't contain some specific key phrases
         which signal about serious issues
@@ -208,7 +402,7 @@ class Check(CommandParserFillerMixin):
                                     'exit 1')
 
         minion_id = local_minion_id()
-        res: dict = {minion_id: dict()}
+        res: List[CheckEntry] = list()
 
         def check_log_file(log_file, key_phrases, _targets):
             """
@@ -219,6 +413,7 @@ class Check(CommandParserFillerMixin):
             :param _targets
             :return:
             """
+            _res: CheckEntry = CheckEntry(cfg.Checks.LOGS_ARE_GOOD.value)
             for phrase in key_phrases:
                 cmd = _LOGS_ARE_GOOD_CHECK_CMD_TMPL.format(
                     log_filename=log_file,
@@ -226,11 +421,13 @@ class Check(CommandParserFillerMixin):
                 try:
                     cmd_run(cmd, targets=_targets)
                 except SaltCmdResultError as e:
-                    res[minion_id][log_file] = (
-                                    f"{cfg.CheckVerdict.FAIL.value}: {str(e)}")
-                    return
+                    _res.set_fail(target=minion_id,
+                                  comment=f"{log_file}: {str(e)}")
+                    return _res
 
-                res[minion_id][log_file] = cfg.CheckVerdict.PASSED.value
+            _res.set_passed(target=minion_id, comment=f"{log_file}")
+
+            return _res
 
         # grep "unable to stop resource" /var/log/pacemaker.log
         # grep "reboot" /var/log/corosync.log
@@ -248,15 +445,18 @@ class Check(CommandParserFillerMixin):
             "unable to stop resource",
         )
 
-        check_log_file(corosync_log, corosync_key_phrases, minion_id)
-        check_log_file(pacemaker_log, pacemaker_key_phrases, minion_id)
+        res.append(
+            check_log_file(corosync_log, corosync_key_phrases, minion_id))
+        res.append(
+            check_log_file(pacemaker_log, pacemaker_key_phrases, minion_id))
 
         return res
 
+    @staticmethod
     def _passwordless_ssh_access(
-                        self, *,
-                        servers: Union[list, tuple, set] = PENDING_SERVERS,
-                        args: str) -> dict:
+                            *,
+                            servers: Union[list, tuple, set] = PENDING_SERVERS,
+                            args: str) -> CheckEntry:
         """
         Check if passwordless SSH access is possible between nodes
 
@@ -273,7 +473,8 @@ class Check(CommandParserFillerMixin):
                                     'test $? == 0 || {{ echo "fail" && '
                                     'exit 1; }}')
 
-        res: dict = dict()
+        res: CheckEntry = CheckEntry(cfg.Checks.PASSWORDLESS_SSH_ACCESS.value)
+
         user = "root"
         for addr in servers:
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
@@ -290,15 +491,17 @@ class Check(CommandParserFillerMixin):
             try:
                 _res = cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                res[targets] = (f"{cfg.CheckVerdict.FAIL.value}: "
-                                f"'{addr}' is not reachable from {targets} "
-                                f"under user {user}")
+                res.set_fail(target=targets,
+                             comment=(f"{cfg.CheckVerdict.FAIL.value}: "
+                                      f"'{addr}' is not reachable from "
+                                      f"{targets} under user {user}"))
             else:
-                res[targets] = cfg.CheckVerdict.PASSED.value
+                res.set_passed(target=targets)
 
         return res
 
-    def _cluster_status(self, *, args: str) -> dict:
+    @staticmethod
+    def _cluster_status(*, args: str) -> CheckEntry:
         """
         Check cluster status
 
@@ -308,18 +511,18 @@ class Check(CommandParserFillerMixin):
         # NOTE: per my discussion with Andrey Kononykhin replace
         #  `pcs status --full cluster` and its complex parsing by existing
         #  ensure_cluster_is_healthy call
-        res: dict = dict()
+        res: CheckEntry = CheckEntry(cfg.Checks.CLUSTER_STATUS.value)
 
         try:
             ensure_cluster_is_healthy()
-            res[local_minion_id()] = f"{cfg.CheckVerdict.PASSED.value}"
+            res.set_passed(target=local_minion_id())
         except Exception:
-            res[local_minion_id()] = f"{cfg.CheckVerdict.FAIL.value}"
+            res.set_fail(target=local_minion_id())
 
         return res
 
     def run(self, check_name: cfg.Checks = None, check_args: str = "",
-            targets: str = cfg.ALL_MINIONS) -> dict:
+            targets: str = cfg.ALL_MINIONS) -> CheckResult:
         """
         Basic run method to execute checks specified by `check_name` or
         perform all checks if `check_name` is omitted
@@ -330,7 +533,7 @@ class Check(CommandParserFillerMixin):
                             to be executed
         :return:
         """
-        res: dict = dict()
+        res: CheckResult = CheckResult()
 
         if check_name is None:
             for check_name in cfg.CHECKS:
@@ -345,7 +548,7 @@ class Check(CommandParserFillerMixin):
             _res = getattr(self,
                            self._PRV_METHOD_MOD + check_name)(args=check_args)
 
-            res[check_name] = _res  # aggregate result to simple dict form
+            res.add_checks(_res)  # aggregate all check results
 
         else:
             raise ValueError(f'Check "{check_name}" is not supported')
