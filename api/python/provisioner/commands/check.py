@@ -150,6 +150,10 @@ class CheckResult:
         """String representation of all checks"""
         return str(self.to_dict())  # TODO: maybe it is better to use json.dump
 
+    def __repr__(self):
+        # For correct Json decoder
+        return self.to_dict()
+
     @property
     def is_passed(self) -> bool:
         """
