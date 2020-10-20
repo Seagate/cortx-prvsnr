@@ -32,10 +32,8 @@ class Validators():
             check_list = config.FACTORY_POST_CHECK
         elif args.precheck:
             check_list = config.FACTORY_PRE_CHECK
-        elif args.swupdate:
-            check_list = config.SW_UPDATE_CHECK
-        elif args.fwupdate:
-            check_list = config.FW_UPDATE_CHECK
+        elif args.replacenode:
+            check_list = config.REPLACE_NODE_CHECK
         elif args.fwupdate:
             check_list = config.FW_UPDATE_CHECK
         elif args.unboxing:
@@ -69,7 +67,7 @@ if __name__ == '__main__':
               "--postcheck", action='store_true',
               help="Factory deployment Post check validation")
     argParser.add_argument(
-              "--swupdate", action='store_true',
+              "--replacenode", action='store_true',
               help="Software update check validation")
     argParser.add_argument(
               "--fwupdate", action='store_true',

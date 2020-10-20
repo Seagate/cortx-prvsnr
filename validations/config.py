@@ -14,7 +14,9 @@ FACTORY_POST_CHECK = {
 FACTORY_PRE_CHECK = {
 }
 
-SW_UPDATE_CHECK = {
+REPLACE_NODE_CHECK = {
+    'verify_mgmt_vip': 'NetworkChecks',
+    'verify_luns_consistency': 'StorageValidations'
 }
 
 FW_UPDATE_CHECK = {
@@ -29,7 +31,7 @@ ALL_CHECKS = {
 for check in (
             FACTORY_POST_CHECK,
             FACTORY_PRE_CHECK,
-            SW_UPDATE_CHECK,
+            REPLACE_NODE_CHECK,
             FW_UPDATE_CHECK,
             UNBOXING_CHECK):
     ALL_CHECKS.update(check)
