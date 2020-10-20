@@ -280,7 +280,7 @@ function restore_states {
     # states to be applied in desired sequence
     restore_states=(
         # "provisioner.restore"
-        # "motr.restore" # TODO: Awaiting EOS-12637 fix
+        "motr.restore"
         "s3server.restore"
         "hare.restore"
         "ha.iostack-ha.restore"
