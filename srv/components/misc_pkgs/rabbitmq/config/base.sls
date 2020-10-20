@@ -69,7 +69,7 @@ Setup logrotate policy for rabbitmq-server:
   - keep_source: True
   - user: root
   - group: root
-  - requrie:
+  - require:
     - Install RabbitMQ
 
 Copy Erlang cookie:

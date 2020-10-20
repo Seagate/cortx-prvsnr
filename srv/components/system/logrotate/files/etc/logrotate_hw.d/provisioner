@@ -35,7 +35,7 @@
 /var/log/seagate/provisioner/prvsnr*.log
 {
     su root prvsnrusers
-    dailyly
+    daily
     size 10M
     missingok
     rotate 15
