@@ -329,7 +329,7 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                # || $state == "motr.restore" # TODO: Awaiting EOS-12637 fix
+                || $state == "motr.restore"
                 || $state == "provisioner.restore"
                 || $state == "s3server.restore"
                 || $state == "hare.restore"
