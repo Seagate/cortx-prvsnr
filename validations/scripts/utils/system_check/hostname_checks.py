@@ -38,7 +38,7 @@ class HostnameChecks():
             response['response'] = result[1]
             response['error_msg'] = result[2]
             if result[0]:
-                response['message'] = f"Invalid hostname for {node}"
+                response['message'] = f"Ssh to host {node} failed"
                 return response
         response['message'] = "Verified hostnames for both nodes"
         logger.debug(f"verify_hostnames: resulted in {response}")
