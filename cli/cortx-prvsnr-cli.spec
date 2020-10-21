@@ -28,20 +28,20 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 
 
 %install
-rm -rf %{buildroot}
+    
+/bin/rm -rf %{buildroot}
 
-mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc}
+/bin/mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{cli,files/etc,files/.ssh}
 
-cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
-cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
+/bin/cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
+/bin/cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
 
-if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh ]]; then
-  rm -rf %{buildroot}/opt/seagate/cortx/provisioner/files/.ssh
+if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh/ ]]; then
+  /bin/rm -rf %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh
 fi
-cp -pr files/.ssh %{buildroot}/opt/seagate/cortx/provisioner/files
 
 %clean
-rm -rf %{buildroot}
+/bin/rm -rf %{buildroot}
 
 
 %files
@@ -54,27 +54,70 @@ rm -rf %{buildroot}
 # TODO test
 # TODO IMPROVE current workaround is to prevent conflicts
 #              with provisioner main rpm instllation
-cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
-chmod -R 750 /opt/seagate/cortx/provisioner/cli
+/bin/cat <<EOL > ssh_config
+Host srvnode-1 srvnode-1.localdomain
+    HostName srvnode-1.localdomain
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+
+Host srvnode-2 srvnode-2.localdomain
+    HostName srvnode-2.localdomain
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+EOL
+
+#/bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
+#/bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
+#/bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
+#/bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
+#/bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
 
 # TODO test
-mkdir -p /root/.ssh
+/bin/mkdir -p /root/.ssh
 
-# Ensure update replaces the keys
-if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
-  rm -f /root/.ssh/id_rsa_prvsnr
-  rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+## Ensure update replaces the keys
+#if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
+#  /bin/rm -f /root/.ssh/id_rsa_prvsnr || true
+#  /bin/rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+#fi
+
+
+if [[ ! -e /root/.ssh/config ]]; then
+
+  /bin/ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
+  /bin/mv id_rsa_prvsnr* /opt/seagate/cortx/provisioner/files/.ssh
+  /bin/mv ssh_config /opt/seagate/cortx/provisioner/files/.ssh
+  /bin/cp -fpr /opt/seagate/cortx/provisioner/cli/src/* /opt/seagate/cortx/provisioner/cli
+  /bin/chmod -R 750 /opt/seagate/cortx/provisioner/cli
+
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr /root/.ssh/
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/id_rsa_prvsnr.pub /root/.ssh/
+  /bin/cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
+  /bin/cp -pr /opt/seagate/cortx/provisioner/files/.ssh/ssh_config /root/.ssh/config
 fi
 
-cp -pr /opt/seagate/cortx/provisioner/files/.ssh/* /root/.ssh/
-cat /root/.ssh/id_rsa_prvsnr.pub >>/root/.ssh/authorized_keys
-chmod 700 /root/.ssh/
-chmod 600 /root/.ssh/*
+/bin/chmod 700 /root/.ssh/
+/bin/chmod 644 /root/.ssh/*
+/bin/chmod 600 /root/.ssh/id_rsa_prvsnr
+/bin/chmod 600 /root/.ssh/config
 
 %postun
-# Ensure update replaces the keys
-if [[ -e /root/.ssh/id_rsa_prvsnr ]]; then
-  rm -f /root/.ssh/id_rsa_prvsnr
-  rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+# Remove only during uninstall
+if [[ $1 == 0  ]]; then
+  # Ensure update replaces the keys
+  /bin/echo "RPM is getting uninstalled, hence remove .ssh entries"
+  /bin/rm -f /root/.ssh/id_rsa_prvsnr || true
+  /bin/rm -f /root/.ssh/id_rsa_prvsnr.pub || true
+  /bin/rm -f /root/.ssh/authorized_keys || true
+  /bin/rm -f /root/.ssh/config || true 
 fi
-rm -f /root/.ssh/config

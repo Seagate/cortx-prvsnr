@@ -246,6 +246,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     salt_minion_file = salt_config_dir / 'minion'
     salt_salt_file = salt_config_dir / 'Saltfile'
     salt_roster_file = salt_config_dir / 'roster'
+    salt_bootstrap_roster_file = salt_config_dir / 'roster_bootstrap'
     salt_ssh_log_file = salt_config_dir / 'salt_ssh.log'
     salt_call_log_file = salt_config_dir / 'salt_call.log'
 
@@ -268,6 +269,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
         'salt_minion_file': salt_minion_file,
         'salt_salt_file': salt_salt_file,
         'salt_roster_file': salt_roster_file,
+        'salt_bootstrap_roster_file': salt_bootstrap_roster_file,
         'salt_ssh_log_file': salt_ssh_log_file,
         'salt_call_log_file': salt_call_log_file
     }

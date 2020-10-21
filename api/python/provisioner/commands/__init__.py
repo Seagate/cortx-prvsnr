@@ -600,8 +600,6 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
     StatesApplier.apply(["components.provisioner.config"], targets)
 
 
-
-
 # TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):

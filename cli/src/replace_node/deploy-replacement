@@ -224,6 +224,7 @@ function controlpath_states {
         "sspl.prepare"
         "sspl.install"
         "sspl.config"
+        "sspl.health_view"
         "csm.prepare"
         "csm.install"
         "csm.config"
@@ -280,7 +281,7 @@ function restore_states {
     # states to be applied in desired sequence
     restore_states=(
         # "provisioner.restore"
-        # "motr.restore" # TODO: Awaiting EOS-12637 fix
+        "motr.restore"
         "s3server.restore"
         "hare.restore"
         "ha.iostack-ha.restore"
@@ -293,9 +294,6 @@ function restore_states {
     l_info "=================================================="
     l_info "Stage 2.8: Applying File Restore States..."
     l_info "=================================================="
-    $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
-    $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
-
     run_states "${restore_states[@]}"
     l_info "=================================================="
 
@@ -331,7 +329,7 @@ function run_states {
                 || $state == "ha.cortx-ha.replace_node.refresh_config"
                 || $state == "ha.cortx-ha.replace_node.add_node"
                 || $state == "csm.refresh_config"
-                # || $state == "motr.restore" # TODO: Awaiting EOS-12637 fix
+                || $state == "motr.restore"
                 || $state == "provisioner.restore"
                 || $state == "s3server.restore"
                 || $state == "hare.restore"
@@ -348,6 +346,12 @@ function run_states {
                     l_info "Applying 'components.$state' on node: $local_node"
                     $cmd salt "$local_node" state.apply components.$state $salt_opts
                 fi
+            elif [[ $state == "sspl.health_view" ]]; then
+                l_info "Generating HealthMap Schema: srvnode-2"
+                $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
+                l_info "Generating HealthMap Schema: srvnode-1"
+                $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
+                l_info "HealthMap Schema ready for CSM."
             else
                 l_info "Applying 'components.$state' on node: ${tgt_node}"
                 $cmd salt "${tgt_node}" state.apply components.$state $salt_opts
@@ -489,11 +493,12 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         add_node_states
     fi
 
-    # l_info "Backing up pillar files to user space."
-    # mkdir -p /opt/seagate/cortx/provisioner/pillar/user/groups/all
-    # cp -r /opt/seagate/cortx/provisioner/pillar/components/*.sls /opt/seagate/cortx/provisioner/pillar/user/groups/all/
-    # chown -R :prvsnrusers /opt/seagate/cortx/provisioner/pillar/user
-    # chmod -R 664 /opt/seagate/cortx/provisioner/pillar/user/groups/all/*.sls
+    # Check HA cluster health
+    l_info "Check HA cluster health"
+    . ${BASEDIR}/../../common_utils/utility_scripts.sh
+    ensure_healthy_cluster
+
+    python3 /opt/seagate/cortx/provisioner/cli/csm_admin_user.py -c /usr/bin/consul -n ${tgt_node} --syncpass
 
     l_info "***** SUCCESS! *****"
     l_info "The detailed logs can be seen at: $LOG_FILE"

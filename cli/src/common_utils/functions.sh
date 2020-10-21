@@ -1796,12 +1796,13 @@ function setup_ssh {
     #    l_error "Please rerun the command with root user"
     #    exit 1
     #fi
+    
 
     if [[ ! -f "$default_ssh_conf" ]]; then
         l_error "ssh config file not found: $default_ssh_conf"
         exit 1
     fi
-
+    
     #Backup original ssh config file
     cp "$default_ssh_conf" "${default_ssh_conf}.bak"
 

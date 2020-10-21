@@ -19,11 +19,15 @@ chrony_installed:
     - name: chrony
 
 
+{% if salt['grains.get']('virtual') != 'container' %}
+
 chronyd_running:
   service.running:
     - name: chronyd.service
     - require:
         - chrony_installed
+
+{% endif %}
 
 {% if salt['pillar.get']('glusterfs:in_docker', False) %}
 
