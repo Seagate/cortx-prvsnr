@@ -321,6 +321,7 @@ class Checks(Enum):
 
     """Enumeration for available checks/validations"""
 
+    ALL = "all"
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"

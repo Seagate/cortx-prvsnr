@@ -556,7 +556,7 @@ class Check(CommandParserFillerMixin):
         """
         res: CheckResult = CheckResult()
 
-        if check_name is None:
+        if check_name is None or check_name == cfg.Checks.ALL.value:
             for check_name in cfg.CHECKS:
                 _res = getattr(self,
                                self._PRV_METHOD_MOD + check_name)(
