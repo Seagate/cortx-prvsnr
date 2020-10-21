@@ -15,10 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import yaml
+import configparser
 import logging
 import subprocess
 import time
+import yaml
 
 from pathlib import Path, PosixPath
 from typing import (
@@ -69,7 +70,10 @@ def dump_yaml_str(
     # TODO: Either check if this is the right way to accomplish this
     # Or we should work to use a add_constructor
     def posix_path_representer(dumper_obj, posix_path_obj):
-        return dumper_obj.represent_scalar("tag:yaml.org,2002:str", str(posix_path_obj))
+        return dumper_obj.represent_scalar(
+            "tag:yaml.org,2002:str",
+            str(posix_path_obj)
+        )
     yaml.add_representer(PosixPath, posix_path_representer)
 
     # return yaml.safe_dump(
@@ -146,7 +150,7 @@ def ensure(  # noqa: C901 FIXME
             if exc:
                 raise exc
             else:
-                raise ProvisionerError('no more tries')
+                raise ProvisionerError(f'no more tries for {name}')
 
 
 def run_subprocess_cmd(cmd, **kwargs):
@@ -168,7 +172,7 @@ def run_subprocess_cmd(cmd, **kwargs):
         res = subprocess.run(cmd, **_kwargs)
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         logger.exception(f"Failed to run cmd '{cmd}'")
-        raise SubprocessCmdError(cmd, _kwargs, repr(exc)) from exc
+        raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
         logger.debug(f"Subprocess command resulted in: {res}")
         return res
@@ -218,3 +222,36 @@ def repo_tgz(
     run_subprocess_cmd(cmd)
 
     return dest
+
+
+# Validates the hostname string in config.ini
+# against hostname in CLI args
+def node_hostname_validator(
+    nodes,
+    config_path
+):
+    node_dict = {}
+    for node in nodes:
+        node_dict[node.minion_id] = node.host
+
+    logger.debug(
+        "Validating list of nodes: "
+        f"{yaml.dump(node_dict, default_flow_style=False)}"
+    )
+    logger.debug(f"Config file path: {config_path}")
+
+    parser_obj = configparser.ConfigParser()
+    parser_obj.read(config_path)
+
+    for section in parser_obj.sections():
+        if (
+            "srvnode" in section
+            and (
+                    node_dict[section] != parser_obj[section]["hostname"]
+                )
+        ):
+            msg = (
+                "Hostname values from config.ini and CLI did not match. "
+                f"{node_dict[section]} != {parser_obj[section]['hostname']}"
+            )
+            raise ValueError(msg)

@@ -19,7 +19,7 @@ import logging
 from copy import deepcopy
 import ipaddress
 import functools
-from typing import List, Union, Any, Iterable, Tuple
+from typing import List, Union, Any, Iterable, Tuple, Dict
 from pathlib import Path
 
 from .vendor import attr
@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 
 # TODO IMPROVE use some attr api to copy spec
-# TODO TEST
 def copy_attr(_attr, name=None, **changes):
     attr_kw = {}
     for arg in (
@@ -166,7 +165,6 @@ class InputAttrParserArgs(AttrParserArgs):
         return UNCHANGED if _value is None else _value
 
 
-# TODO test
 class ParserFiller:
     @staticmethod
     def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
@@ -175,7 +173,6 @@ class ParserFiller:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
 
-                # TODO TEST
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
                         (_attr.name, _attr.default, {
@@ -757,6 +754,8 @@ class SWUpdateRepo(ParamDictItemInputBase):
             )
         )
     )
+    _repo_params: Dict = attr.ib(init=False, default=attr.Factory(dict))
+    _metadata: Dict = attr.ib(init=False, default=attr.Factory(dict))
 
     @source.validator
     def _check_source(self, attribute, value):
@@ -806,7 +805,30 @@ class SWUpdateRepo(ParamDictItemInputBase):
         if self.is_special() or self.is_remote():
             return self.source
         else:
-            return 'iso' if self.source.is_file() else 'dir'
+            source = 'iso' if self.source.is_file() else 'dir'
+            if self._repo_params:
+                return {
+                    'source': source,
+                    'params': self._repo_params
+                }
+            else:
+                return source
+
+    @property
+    def repo_params(self):
+        return self._repo_params
+
+    @repo_params.setter
+    def repo_params(self, params: Dict):
+        self._repo_params = params
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Dict):
+        self._metadata = metadata
 
     def is_special(self):
         return is_special(self.source)

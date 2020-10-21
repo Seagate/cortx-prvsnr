@@ -158,6 +158,10 @@ class HostMeta:
         return self._hostname
 
     @property
+    def ssh_host(self):
+        return self.host.interface(self.iface).addresses[0]
+
+    @property
     def tmpdir(self):
         if self._tmpdir is None:
             tmpdir_function = self.request.getfixturevalue('tmpdir_function')
@@ -452,11 +456,14 @@ def localhost():
 
 @pytest.fixture(scope='session')
 def ssh_key(tmpdir_session):
-    key = tmpdir_session / SSH_KEY_FILE_NAME
-    with open(str(MODULE_DIR / SSH_KEY_FILE_NAME)) as f:
-        key.write_text(f.read())
-    key.chmod(0o600)
-    return key
+    bundled_key = MODULE_DIR / SSH_KEY_FILE_NAME
+    res = tmpdir_session / SSH_KEY_FILE_NAME
+    res.write_text(bundled_key.read_text())
+    res.chmod(0o600)
+    res.with_name(f"{res.name}.pub").write_text(
+        bundled_key.with_name(f"{bundled_key.name}.pub").read_text()
+    )
+    return res
 
 
 @pytest.fixture(scope="session")

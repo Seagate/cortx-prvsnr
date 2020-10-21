@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import subprocess
 from typing import Dict, Union, Any
 
 
@@ -42,11 +43,16 @@ class SubprocessCmdError(ProvisionerError):
     _prvsnr_type_ = True
 
     def __init__(
-        self, cmd, cmd_args: Any, reason: str = 'unknown'
+        self, cmd, cmd_args: Any, reason: Union[str, Exception] = 'unknown'
     ):
         self.cmd = cmd
         self.cmd_args = cmd_args
-        self.reason = reason
+        if isinstance(reason, subprocess.CalledProcessError):
+            self.reason = repr(
+                (reason, reason.stdout, reason.stderr)
+            )
+        else:
+            self.reason = repr(reason)
 
     def __str__(self):
         return (

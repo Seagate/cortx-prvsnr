@@ -33,10 +33,6 @@ Remove Hare:
   pkg.purged:
     - name: cortx-hare
 
-Remove jq:
-  pkg.purged:
-    - name: jq
-
 Delete Hare yum repo:
   pkgrepo.absent:
     - name: {{ defaults.hare.repo.id }}

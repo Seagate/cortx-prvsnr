@@ -56,9 +56,28 @@ Create logrotate_setup.d with specific component settings:
     - clean: False
     - include_empty: True
 
+# Setup cron job:
+#   file.managed:
+#     - name: /etc/cron.daily/logrotate
+#     - contents: |
+#         #!/bin/sh
+#         /usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.conf
+#         EXITVALUE=$?
+#         if [ $EXITVALUE != 0 ]; then
+#             /usr/bin/logger -t logrotate "ALERT exited abnormally with [$EXITVALUE]"
+#         fi
+#         exit 0
+#     - create: True
+#     - makedirs: True
+#     - replace: False
+#     - user: root
+#     - group: root
+#     - dir_mode: 755
+#     - mode: 0700
+
 Setup cron job:
   file.managed:
-    - name: /etc/cron.daily/logrotate
+    - name: /etc/cron.hourly/logrotate
     - contents: |
         #!/bin/sh
         /usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.conf

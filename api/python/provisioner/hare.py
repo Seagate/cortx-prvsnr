@@ -16,12 +16,51 @@
 #
 
 import logging
+import os
+from datetime import datetime
+from pathlib import Path
 
 from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
 from .salt import cmd_run, StatesApplier
 from .utils import ensure
+from . import errors
 
 logger = logging.getLogger(__name__)
+
+
+def consul_export(fn_suffix='', no_fail=True, targets=ALL_MINIONS):
+    # TODO move to configuration routine
+    dest_dir = Path('/var/lib/hare/prvsnr_generated')
+    consul_legacy = Path('/opt/seagate/cortx/hare/bin/consul')
+
+    ts = datetime.now().strftime("%Y%m%dT%H.%M.%S")
+    pid = os.getpid()
+    out_file = (dest_dir / f'consul-kv.{ts}.{fn_suffix}.{pid}.json')
+
+    def _export_consul(consul='consul'):
+        return cmd_run(
+            f"mkdir -p {dest_dir} && {consul} kv export >{out_file}",
+            fun_kwargs=dict(python_shell=True)
+        )
+
+    try:
+        try:
+            logger.debug("Exporting consul kv store")
+            return _export_consul()
+        except errors.SaltCmdResultError as exc:
+            if 'consul: command not found' in str(exc):
+                logger.warning(
+                    f"No 'consul' found in PATH, fallback to {consul_legacy}, "
+                    f"error: {exc}"
+                )
+                return _export_consul(consul_legacy)
+            else:
+                raise
+    except Exception:
+        if no_fail:
+            logger.exception('Consul export failed')
+        else:
+            raise
 
 
 def cluster_status():

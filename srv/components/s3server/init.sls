@@ -20,7 +20,6 @@ include:
   - components.s3server.prepare
   - components.s3server.install
   - components.s3server.config
-  - components.s3server.config_hosts
   - components.s3server.start
   - components.s3server.sanity_check
 

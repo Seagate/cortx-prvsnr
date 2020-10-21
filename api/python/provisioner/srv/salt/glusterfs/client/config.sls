@@ -26,7 +26,11 @@ glusterfs_volume_{{ volume }}_mounted:
     - mkmnt: True
     - fstype: glusterfs
     - opts: _netdev,defaults,acl
+{%- if salt['grains.get']('virtual') != 'container' %}
     - persist: True
+{%- else %}
+    - persist: False
+{%- endif %}
     - dump: 0
     - pass_num: 0
 

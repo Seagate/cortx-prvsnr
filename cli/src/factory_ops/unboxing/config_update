@@ -99,16 +99,20 @@ function update_ssh_config {
 function update_salt_minion {
 
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
-        local host=$(hostname)
+        # Getting '127.0.0.1'. This can be hard-coded also
+        local localhost_ip=$(awk '{print $1; exit}' /etc/hosts)
+        local primary_host=$(hostname)
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        # echo ${secondary_host}
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
         
-        echo -n "Setting salt-master on server A (primary node).............................." 2>&1|tee -a ${LOG_FILE}
-        sed -i "${line_to_replace}s|^master:.*|master: ${host}|" /etc/salt/minion
+        echo -n "Setting salt-master on server A (primary node).............................." 2>&1|tee -a ${LOG_FILE} 
+        sed -i "${line_to_replace}s|^master:.*|master: ['${localhost_ip}', '${secondary_host}']|" /etc/salt/minion
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Setting salt-master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: ${host}|\" /etc/salt/minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: \['${primary_host}', '${localhost_ip}'\]|\" /etc/salt/minion"
         echo "Ok." | tee -a ${LOG_FILE}
         
         # It's safe to restart service on both nodes
@@ -122,9 +126,17 @@ function update_salt_minion {
 
         sleep 5
 
+        echo -n "Restarting salt-master on Server A.........................................." 2>&1 | tee -a ${LOG_FILE}
+        systemctl restart salt-master
+        echo "Ok." | tee -a ${LOG_FILE}
+
+        echo -n "Restarting salt-master on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-master"
+        echo "Ok." | tee -a ${LOG_FILE}
+
         echo -n "Listing salt keys..........................................................." 2>&1 | tee -a ${LOG_FILE}
         salt-key -L ${salt_opts}
-        echo "Ok."
+        echo "Ok." | tee -a ${LOG_FILE}
         echo -n "Accepting salt keys........................................................." 2>&1 | tee -a ${LOG_FILE}
         salt-key -A -y >> ${LOG_FILE}
         echo "Ok." | tee -a ${LOG_FILE}
