@@ -196,8 +196,6 @@ LOG_SUPPRESSION_CMDS = [
     "get_cluster_id",
     "get_node_id",
     "get_release_version",
-    "get_release_version",
-    "get_factory_version",
     "get_factory_version",
     "get_setup_info"
 ]
