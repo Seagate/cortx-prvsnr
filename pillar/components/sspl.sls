@@ -16,8 +16,8 @@
 #
 
 sspl:
-  health_map_path: /opt/seagate/cortx/provisioner/generated_configs/healthmap/
-  health_map_file: ees-schema.json
+  health_map_path: /opt/seagate/cortx_configs/healthmap/
+  health_map_file: healthmap-schema.json
   rmq:
     user: rmq
     secret: "B4kf1T6Qso"
