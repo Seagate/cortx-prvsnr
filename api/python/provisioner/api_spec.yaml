@@ -108,6 +108,8 @@ setup_jbod:
   type: SetupJBOD
 auto_deploy:
   type: AutoDeploy
+auto_deploy_vm:
+  type: AutoDeployVM
 replace_node:
   type: ReplaceNode
 

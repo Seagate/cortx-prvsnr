@@ -37,3 +37,25 @@ gitfs_fileserver_deps_installed:
   pkg.installed:
     - name: GitPython   # FIXME JBOD
     - onlyif: yum info GitPython
+
+
+{% if (
+    (salt['grains.get']('virtual') == 'container') and
+    salt['pillar.get']('factory_setup:ha') and
+    not salt['pillar.get']('factory_setup:glusterfs_docker')
+) -%}
+
+# TODO IMPROVE WORKAROUND
+#      lvm2 is required by glusterfs and it hangs
+#      for about 8 minutes on starting lvm2-monitor.service
+#      once saltstack is installed.
+#      That workaround resolves the issue by some reason.
+
+lvm2_installed:
+  pkg.installed:
+    - pkgs:
+      - lvm2
+    - require_in:
+      - saltstack_installed
+
+{% endif %}

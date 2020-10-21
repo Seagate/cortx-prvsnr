@@ -40,4 +40,6 @@ sw_update_repo_absent_{{ release }}:
   pkgrepo.absent:
     - name: sw_update_{{ release }}
 
+# TODO IMPROVE EOS-14348 remove from file root as well
+
 {% endmacro %}

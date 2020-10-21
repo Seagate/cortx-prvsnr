@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% macro repo_added(release, source, source_type) %}
+{% macro repo_added(release, source, source_type, repo_params={}) %}
 
     {% from './iso/mount.sls' import repo_mounted with context %}
 
@@ -58,6 +58,7 @@ sw_update_repo_added_{{ release }}:
     {% else %}
     - baseurl: file://{{ source }}
     {% endif %}
+    - enabled: {{ repo_params.get('enabled', True) }}
     - gpgcheck: 0
     {% if source_type == 'iso' %}
     - require:

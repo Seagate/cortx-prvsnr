@@ -62,15 +62,26 @@ PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
 )
 
+
+REPO_CANDIDATE_NAME = 'candidate'
+
 # TODO EOS-12076 EOS-12334
+
+CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'
+CORTX_ISO_DIR = 'cortx_iso'
+CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
+
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
 )
+PRVSNR_CORTX_SINGLE_ISO = (
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_SINGLE_ISO_DIR}.iso'
+)
 PRVSNR_CORTX_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / 'cortx_iso.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_ISO_DIR}.iso'
 )
 PRVSNR_CORTX_DEPS_ISO = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / '3rd_party.iso'
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_3RD_PARTY_ISO_DIR}.iso'
 )
 
 
@@ -260,6 +271,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     salt_minion_file = salt_config_dir / 'minion'
     salt_salt_file = salt_config_dir / 'Saltfile'
     salt_roster_file = salt_config_dir / 'roster'
+    salt_bootstrap_roster_file = salt_config_dir / 'roster_bootstrap'
     salt_ssh_log_file = salt_config_dir / 'salt_ssh.log'
     salt_call_log_file = salt_config_dir / 'salt_call.log'
 
@@ -282,6 +294,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
         'salt_minion_file': salt_minion_file,
         'salt_salt_file': salt_salt_file,
         'salt_roster_file': salt_roster_file,
+        'salt_bootstrap_roster_file': salt_bootstrap_roster_file,
         'salt_ssh_log_file': salt_ssh_log_file,
         'salt_call_log_file': salt_call_log_file
     }

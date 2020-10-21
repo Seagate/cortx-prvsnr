@@ -64,6 +64,7 @@ prereq_states=(
     "misc_pkgs.elasticsearch"
     "misc_pkgs.nodejs"
     "misc_pkgs.rabbitmq"
+    "misc_pkgs.consul"
     "misc_pkgs.openldap"
     "ha.haproxy"
     "misc_pkgs.ssl_certs"

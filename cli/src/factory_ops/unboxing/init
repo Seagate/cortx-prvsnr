@@ -205,6 +205,37 @@ check_salt_services
 update_salt_minion
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
+echo -n "Clean the Salt cache........................................................" | tee -a ${LOG_FILE}
+salt '*' saltutil.clear_cache ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the Salt modules................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_modules ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Syncing all states for Salt................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.sync_all ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the Salt pillar.................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_pillar ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+echo -n "Refreshing the grains......................................................." | tee -a ${LOG_FILE}
+salt '*' saltutil.refresh_grains ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 2
+
+# After unboxing, the IP addresses in haproxy need to be updated
+echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
+salt "*" state.apply components.ha.haproxy.config ${salt_opts}
+echo "Done." | tee -a ${LOG_FILE}
+
+# TODO: Updating VIP in CSM HA needs mechanism to avoid repo creation in csm.prepare
+#echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
+#salt "*" state.apply components.csm.ha.config ${salt_opts}
+#echo "Done." | tee -a ${LOG_FILE}
+
 if command -v pcs ; then
     echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
     pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}

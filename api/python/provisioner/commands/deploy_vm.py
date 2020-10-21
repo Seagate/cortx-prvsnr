@@ -15,18 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Type
+from typing import Type, Optional
 import logging
 
 from .. import (
     inputs,
     errors
 )
-from ..salt import (
-    cmd_run,
-    local_minion_id,
-    StateFunExecuter
-)
+from ..salt import StateFunExecuter
 from ..pillar import (
     PillarKey,
     PillarResolver
@@ -34,6 +30,7 @@ from ..pillar import (
 from ..vendor import attr
 # TODO IMPROVE EOS-8473
 
+from .setup_provisioner import SetupCtx
 from .configure_setup import (
     SetupType
 )
@@ -56,17 +53,19 @@ deploy_states = dict(
         "misc_pkgs.rsyslog",
         "system.firewall",
         "system.logrotate",
-        "system.ntp"
+        "system.chrony"
     ],
     prereq=[
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
+        "ha.haproxy.start",
         "misc_pkgs.openldap",
         "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
-        "misc_pkgs.statsd"
+        "misc_pkgs.statsd",
+        "misc_pkgs.consul.install"
     ],
     sync=[
         "sync.software.openldap",
@@ -92,6 +91,59 @@ run_args_type = build_deploy_run_args(deploy_states)
 class DeployVM(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = run_args_type
+    setup_ctx: Optional[SetupCtx] = None
+
+    def set_pillar_data(self, setup_type):
+        minions_ids = ['srvnode-1']
+        disk = []
+
+        if setup_type != SetupType.SINGLE:
+            minions_ids.append('srvnode-2')
+
+        # TODO: EOS-14248 remote setup vm deployment
+        res = self._cmd_run(
+            "lsblk -ndp | grep disk | awk '{ print $1 }'",
+            targets=self._primary_id()
+        )
+        if res[self._primary_id()]:
+            disk = res[self._primary_id()].split("\n")
+
+        for minion_id in minions_ids:
+            if len(disk) > 1:
+                self._cmd_run(
+                    (
+                        'provisioner pillar_set '
+                        f' cluster/{minion_id}/storage/metadata_device '
+                        f'[\\"{disk[-2]}\\"]'
+                    ),
+                    targets=self._primary_id()
+                )
+                self._cmd_run(
+                    (
+                        'provisioner pillar_set '
+                        f' cluster/{minion_id}/storage/data_devices '
+                        f'[\\"{disk[-1]}\\"]'
+                    ),
+                    targets=self._primary_id()
+                )
+
+            self._cmd_run(
+                (
+                    'provisioner pillar_set '
+                    f'cluster/{minion_id}/network/data_nw/roaming_ip  '
+                    '\\"127.0.0.1\\"'
+                ),
+                targets=self._primary_id()
+            )
+
+        self._cmd_run(
+            (
+                'provisioner pillar_set '
+                's3server/no_of_inst  '
+                '1'
+            ),
+            targets=self._primary_id()
+        )
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
@@ -100,14 +152,14 @@ class DeployVM(Deploy):
         states = deploy_states[states_group]
         stages = run_args.stages
 
-        primary = local_minion_id()
+        primary = self._primary_id()
         secondaries = f"not {primary}"
 
         # apply states
         for state in states:
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
-                self._apply_state(f"components.{state}", targets, stages)
+                self._apply_state(f"components.{state}", primary, stages)
             else:
                 # FIXME EOS-12076 the following logic is only
                 #       for legacy dual node setup
@@ -132,14 +184,15 @@ class DeployVM(Deploy):
 
             if state == "hare":
                 logger.info("Bootstraping cluster")
-                cmd_run(
+                self._cmd_run(
                     "hctl bootstrap --mkfs /var/lib/hare/cluster.yaml",
-                    targets=local_minion_id()
+                    targets=self._primary_id()
                 )
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
 
+        self.set_pillar_data(run_args.setup_type)
         if self._is_hw():
             # TODO EOS-12076 less generic error
             raise errors.ProvisionerError(
@@ -151,7 +204,6 @@ class DeployVM(Deploy):
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
-            self._encrypt_pillar()
             self._run_states('prereq', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
@@ -163,14 +215,13 @@ class DeployVM(Deploy):
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
-                self._encrypt_pillar()
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
                 self._run_states('prereq', run_args)
 
             if (
-                'sync' in run_args.states or
+                'sync' in run_args.states and
                 run_args.setup_type != SetupType.SINGLE
             ):
                 logger.info("Deploying the sync states")
@@ -186,33 +237,47 @@ class DeployVM(Deploy):
 
                 if run_args.setup_type != SetupType.SINGLE:
                     metadata_device_keypath = PillarKey(
-                        f"cluster/{local_minion_id()}/storage/metadata_device"
+                        f"cluster/{self._primary_id()}/storage/metadata_device"
                     )
                     logger.info(
                         f"Resolving pillar key {metadata_device_keypath}"
                     )
-                    pillar = PillarResolver(local_minion_id()).get(
+                    pillar = PillarResolver(self._primary_id()).get(
                         [metadata_device_keypath]
                     )
-                    metadata_device = pillar[local_minion_id()][0]
+                    metadata_device = pillar[self._primary_id()][metadata_device_keypath][0]  # noqa: E501
                     metadata_device = f"{metadata_device}1"
                     # TODO IMPROVE EOS-12076 hard coded
-                    mount_point = '/var/mero'
+                    mount_point = '/var/motr'
 
                     logger.info(
                         f"Mounting partition {metadata_device} "
-                        "into {mount_point} (with fstab record)"
+                        f"into {mount_point} (with fstab record)"
                     )
-                    StateFunExecuter.execute(
-                        'mount.mounted',
-                        fun_args=[mount_point, metadata_device, 'ext4'],
-                        fun_kwargs=dict(mkmnt=True, persist=True)
-                    )
+                    fun_kwargs = dict(
+                                   name=mount_point,
+                                   device=metadata_device,
+                                   fstype='ext4',
+                                   mkmnt=True,
+                                   persist=True)
+                    if self.setup_ctx:
+                        self.setup_ctx.ssh_client.run(
+                            'state.single',
+                            fun_args=['mount.mounted'],
+                            fun_kwargs=fun_kwargs,
+                            targets=self._primary_id()
+                        )
+                    else:
+                        StateFunExecuter.execute(
+                            'mount.mounted',
+                            fun_kwargs=fun_kwargs,
+                            targets=self._primary_id()
+                        )
 
                 logger.info("Deploying the io path states")
                 self._run_states('iopath', run_args)
 
-            if 'ctrlpath' in run_args.states:
+            if 'controlpath' in run_args.states:
                 logger.info("Deploying the control path states")
                 self._run_states('controlpath', run_args)
 

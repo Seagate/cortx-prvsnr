@@ -66,27 +66,6 @@ echo "Using [GIT_VER=${GIT_VER}] ..."
 mkdir -p ~/rpmbuild/SOURCES/
 pushd ~/rpmbuild/SOURCES/
 
-cat <<EOL > ssh_config
-Host srvnode-1 srvnode-1.colo.seagate.com
-    HostName srvnode-1.colo.seagate.com
-    User root
-    UserKnownHostsFile /dev/null
-    StrictHostKeyChecking no
-    IdentityFile /root/.ssh/id_rsa_prvsnr
-    IdentitiesOnly yes
-    LogLevel ERROR
-    BatchMode yes
-
-Host srvnode-2 srvnode-2.colo.seagate.com
-    HostName srvnode-2.colo.seagate.com
-    User root
-    UserKnownHostsFile /dev/null
-    StrictHostKeyChecking no
-    IdentityFile /root/.ssh/id_rsa_prvsnr
-    IdentitiesOnly yes
-    LogLevel ERROR
-    BatchMode yes
-EOL
 
     rm -rf cortx-prvsnr-cli*
 
@@ -95,10 +74,6 @@ EOL
     mkdir -p ${DEST_DIR}/{cli,files/etc,files/.ssh}
     cp -pr ${BASEDIR}/src ${DEST_DIR}/cli
     cp -pr ${BASEDIR}/../files/etc/yum.repos.d ${DEST_DIR}/files/etc
-    
-    ssh-keygen -o -q -t rsa -b 4096 -a 100 -N '' -f id_rsa_prvsnr
-    mv id_rsa_prvsnr* ${DEST_DIR}/files/.ssh
-    mv ssh_config ${DEST_DIR}/files/.ssh/config
 
     tar -czvf ${DEST_DIR}.tar.gz ${DEST_DIR}
     rm -rf cortx-prvsnr-cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}

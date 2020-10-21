@@ -194,20 +194,38 @@ seagate_refs_cleanup()
     # 3. Remove all Seagate internal repos from /etc/yum.repos.d
 
     for i in "${!pvt_ips[@]}"; do
-        subscription_enabled=false
-        sub_manager_check "${pvt_ips[$i]}" "${server_names[$i]}"
-        if [[ "$subscription_enabled" == true ]]; then
-            sub_manager_cleanup "${pvt_ips[$i]}" "${server_names[$i]}"
+        echo "Running for node:${pvt_ips[$i]}" >> ${LOG_FILE}
+        if $ssh_cmd ${pvt_ips[$i]} 'grep -q "Red Hat" /etc/*-release'; then
+            echo "RedHat system, disabling the subscription is needed" >> ${LOG_FILE}
+            subscription_enabled=false
+            sub_manager_check "${pvt_ips[$i]}" "${server_names[$i]}"
+            if [[ "$subscription_enabled" == true ]]; then
+                sub_manager_cleanup "${pvt_ips[$i]}" "${server_names[$i]}"
+            fi
+        else
+            echo "Non RedHat system, disabling the subscription is not needed" >> ${LOG_FILE}
         fi
 
-        echo "Removing following repos from ${server_names[$i]}" | tee -a ${LOG_FILE}
-        $ssh_cmd ${pvt_ips[$i]} "grep -lE "seagate.com" /etc/yum.repos.d/*.repo" | tee -a ${LOG_FILE}
-        $ssh_cmd ${pvt_ips[$i]} 'mkdir -p /opt/seagate/repos_backup'
-        $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do mv "${file}" /opt/seagate/repos_backup; done'
-        echo "Done." | tee -a ${LOG_FILE}
-        echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
-        $ssh_cmd ${pvt_ips[$i]} "yum clean all" >> ${LOG_FILE}
-        echo "Done." | tee -a ${LOG_FILE}
+        _n_repos=$($ssh_cmd ${pvt_ips[$i]} "ls -1 /etc/yum.repos.d/*.repo 2>/dev/null | wc -l")
+        echo "_n_repos=$_n_repos" >> ${LOG_FILE}
+        if [[ $_n_repos -ne 0 ]]; then
+            echo "Checking if there is salt or seagate references in repos" >> ${LOG_FILE}
+            if $ssh_cmd ${pvt_ips[$i]} 'grep -lEq "seagate|salt" /etc/yum.repos.d/*.repo'; then
+                $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`;\
+                    do if ! grep -q "file://" $file; then\
+                        echo "Removing repo file: $file";
+                        mkdir -p /opt/seagate/cortx/provisioner/generated_config/repos_backup_unboxing
+                        yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_config/repos_backup_unboxing/; 
+                        fi;
+                    done'
+                echo "Done." | tee -a ${LOG_FILE}
+                echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
+                $ssh_cmd ${pvt_ips[$i]} "yum clean all || true" >> ${LOG_FILE}
+                echo "Done." | tee -a ${LOG_FILE}
+            fi
+        else
+            echo "No repos found with seagate references, ignoring" >> ${LOG_FILE}
+        fi
     done
 }
 
@@ -1155,7 +1173,7 @@ pre_unbox()
 
     #3. Get the controller IPs from user as an input
     #TODO: Remove this when enclosure communication is switched to in-band.
-    ctrl_ip_addr_get_set
+    #ctrl_ip_addr_get_set
 
     echo "Checking the servers connectivity" | tee -a ${LOG_FILE}
     hosts_resolution_check

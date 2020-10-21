@@ -23,7 +23,7 @@ include:
 {% endif %}
 
 {% set enclosure = '' %}
-{% if "primary" in grains["roles"] and 'physical' in grains['virtual'] %}
+{% if pillar['cluster'][grains['id']]['is_primary'] and 'physical' in grains['virtual'] %}
 # run health schema on salt-master for both node and enclosure;
 # on salt-minion only for node health.
 {% set enclosure = '-e' %}
@@ -31,8 +31,8 @@ include:
 Run Resource Health View:
   cmd.run:
     - name: /opt/seagate/cortx/sspl/lib/resource_health_view -n {{ enclosure }} --path /tmp
-{% if "replace_node" in pillar["cluster"]
-  and not grains['id'] == pillar["cluster"]["replace_node"]["minion_id"] %}
+{% if not ("replace_node" in pillar["cluster"]
+  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
 # Should not be executed for replaced node
     - require:
       - Add common config - system information to Consul

@@ -59,7 +59,8 @@ deploy_states = dict(
         "misc_pkgs.nodejs",
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
-        "misc_pkgs.statsd"
+        "misc_pkgs.statsd",
+        "misc_pkgs.consul.install"
     ],
     sync=[
         "sync.software.openldap",
@@ -86,7 +87,7 @@ deploy_states = dict(
     ],
     backup=[
         "provisioner.backup",
-        # "motr.backup", # TODO: Awaiting EOS-12637 fix
+        "motr.backup",
         "s3server.backup",
         "hare.backup",
         "ha.iostack-ha.backup",
