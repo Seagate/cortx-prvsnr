@@ -49,7 +49,7 @@ from ..config import (
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
     REPO_CANDIDATE_NAME,
-    RELEASE_INFO,
+    RELEASE_INFO_FILE,
     ReleaseInfo
 )
 from ..pillar import (
@@ -493,6 +493,28 @@ class SetSWUpdateRepo(Set):
             if not enabled:
                 repo.repo_params = dict(enabled=False)
 
+    @staticmethod
+    def _get_mount_dir():
+        """
+        Return the base mount directory for ISO from pillar values
+
+        :return:
+        """
+        release_path = KeyPath('release_path')
+        update_dir = PillarKey(release_path / 'update/base_dir')
+
+        pillar = PillarResolver(LOCAL_MINION).get((update_dir,))
+
+        pillar = pillar.get(LOCAL_MINION)  # type: dict
+
+        if (not pillar[update_dir] or
+                pillar[update_dir] is values.MISSED):
+            raise BadPillarDataError('value for '
+                                     f'{update_dir.keypath} '
+                                     'is not specified')
+
+        return pillar[update_dir]
+
     def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):
         metadata = {}
         repo = params
@@ -548,13 +570,14 @@ class SetSWUpdateRepo(Set):
                              f"'{str(e)}'")
 
             # TODO: take it from pillar
-            iso_mount_dir = f'/opt/seagate/cortx/updates/{REPO_CANDIDATE_NAME}'
-            release_file = f'{iso_mount_dir}/{RELEASE_INFO}'
+            iso_mount_dir = self._get_mount_dir()
+            iso_mount_dir = f'{iso_mount_dir}/{REPO_CANDIDATE_NAME}'
+            release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
 
             try:
                 metadata = load_yaml(release_file)
             except FileNotFoundError as e:
-                logging.debug(f"Can't load {RELEASE_INFO} file: {str(e)}")
+                logging.debug(f"Can't load {RELEASE_INFO_FILE} file: {str(e)}")
 
             try:
                 metadata[ReleaseInfo.RELEASE.value] = (
