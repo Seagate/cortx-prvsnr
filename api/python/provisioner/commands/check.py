@@ -69,7 +69,7 @@ class CheckEntry:
         """
         if self.is_set:
             if self._comment:
-                return {self._check_name: f"{self._target}:"
+                return {self._check_name: f"{self._target}: "
                                           f"{self._verdict.value}: "
                                           f"{self._comment}"}
             return {self._check_name: f"{self._target}: {self._verdict.value}"}
@@ -249,8 +249,7 @@ class CheckArgs:
             inputs.METADATA_ARGPARSER: {
                 'help': "name of check/validation alias"
             }
-        },
-        default=None
+        }
     )
     check_args: str = attr.ib(
         metadata={
@@ -361,7 +360,7 @@ class Check(CommandParserFillerMixin):
             # TODO: parse command output if necessary
             res.set_passed(target=minion_id, comment=str(_res))
         except SaltCmdResultError as e:
-            res.set_fail(target=minion_id, comment=str(e))
+            res.set_fail(target=minion_id, comment=str(e.reason))
 
         return res
 
@@ -443,7 +442,7 @@ class Check(CommandParserFillerMixin):
                     cmd_run(cmd, targets=_targets)
                 except SaltCmdResultError as e:
                     _res.set_fail(target=minion_id,
-                                  comment=f"{log_file}: {str(e)}")
+                                  comment=f"{log_file}: {str(e.reason)}")
                     return _res
 
             _res.set_passed(target=minion_id, comment=f"{log_file}")
@@ -561,7 +560,9 @@ class Check(CommandParserFillerMixin):
                 _res = getattr(self,
                                self._PRV_METHOD_MOD + check_name)(
                                                             args=check_args)
-                res[check_name] = _res  # aggregate result to simple dict form
+                res.add_checks(_res)  # aggregate all check results
+
+            return res
 
         check_name = check_name.strip().lower()
 

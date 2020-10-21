@@ -63,8 +63,9 @@ class SWUpdate(CommandParserFillerMixin):
         checker = Check()
         check_res = checker.run(targets=LOCAL_MINION)
         if check_res.is_failed:
-            raise SWUpdateError("Some pre-flight checks are failed:"
-                                f"{check_res.get_failed()}")
+            failed = "; ".join(str(check) for check in check_res.get_failed())
+            raise SWUpdateError("Some pre-flight checks are failed: "
+                                f"{failed}")
         try:
             # TODO: improve it is no more needed as we have this
             #  check in Check()
