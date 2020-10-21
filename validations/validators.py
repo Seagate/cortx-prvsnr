@@ -29,7 +29,7 @@ from scripts.utils.controller import ControllerValidations
 
 
 class Validators():
-    '''Validator class :validation of all checks for given request'''
+    '''Validator class : Validation of all checks for given request'''
 
     @staticmethod
     def factory_checks(args):
@@ -47,7 +47,7 @@ class Validators():
             check_list = {args.c: config.ALL_CHECKS[args.c]}
         else:
             print("No valid argument is passed")
-        
+
         if len(check_list.keys()) < 1:
             print("Check is not available for this flag")
 

@@ -30,7 +30,7 @@ class BMCValidations():
         '''
         pass
 
-    def get_bmc_ip():
+    def get_bmc_ip(self):
         '''
         Get BMC IP along with status of command
         '''
@@ -47,7 +47,7 @@ class BMCValidations():
         common_response["error_msg"]= node_res[2]
         return common_response
 
-    def bmc_accessible():
+    def bmc_accessible(self):
         ''' Validations for BMC accessibility
         '''
         cmd = "ipmitool chassis status | grep 'System Power'"

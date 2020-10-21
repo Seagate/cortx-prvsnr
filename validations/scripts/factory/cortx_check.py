@@ -18,7 +18,7 @@
 import logging
 import os
 import sys
-import ..utils.cortx as cortx 
+from ..utils.cortx import CortxValidations as cortx 
 from .. .messages.user_messages import *
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ class CortxValidationsCall():
         '''
         pass
 
-    def check_consul_service():
-        ''' Validations for Consul
+    def check_consul_service(self):
+        ''' Validations for Consul service
         '''
         response = {}
         res = cortx.consul_service()
@@ -43,7 +43,7 @@ class CortxValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_elasticsearch_service():
+    def check_elasticsearch_service(self):
         ''' Validations for ES service
         '''
         response = {}
@@ -57,7 +57,7 @@ class CortxValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_ioservice_service():
+    def check_ioservice_service(self):
         ''' Validations for IO services
         '''
         response = {}

@@ -18,8 +18,8 @@
 import logging
 import os
 import sys
-import ..utils.cluster as cluster
-import ..utils.pillar_get import PillarGet
+from ..utils.cluster import ClusterValidations as cluster
+from ..utils.pillar_get import PillarGet
 from .. .messages.user_messages import *
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class ClusterValidationsCall():
         '''
         pass
 
-    def check_corosync_status():
+    def check_corosync_status(self):
         ''' Validations for Pacemaker status
         '''
         response = {}
@@ -49,7 +49,7 @@ class ClusterValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_nodes_status():
+    def check_nodes_status(self):
         ''' Validations for nodes status
         '''
         response = {}
@@ -68,7 +68,7 @@ class ClusterValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_get_resource_failcount():
+    def check_get_resource_failcount(self):
         ''' Validations for resource fail count
         '''
         response = {}
@@ -86,7 +86,7 @@ class ClusterValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_cluster_status():
+    def check_cluster_status(self):
         ''' Validations for cluster status
         '''
         response = {}
@@ -105,7 +105,7 @@ class ClusterValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_stonith_issues():
+    def check_stonith_issues(self):
         ''' Validations for STONITH issues
         '''
         response = {}

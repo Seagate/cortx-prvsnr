@@ -17,7 +17,6 @@
 
 import logging
 from .common import run_subprocess_cmd
-from .. .messages.user_messages import *
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +27,21 @@ class CortxValidations():
         '''
         pass
 
-    def consul_service():
+    def consul_service(self):
         ''' Validations for Consul
         '''
         cmd = "ps -eaf | grep consul"
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def elasticsearch_service():
+    def elasticsearch_service(self):
         ''' Validations for ES service
         '''
         cmd = "ps -eaf | grep elastic"
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def ioservice_service():
+    def ioservice_service(self):
         ''' Validations for IO services
         '''
         cmd = "hctl status | grep unknown | grep -v m0_client"

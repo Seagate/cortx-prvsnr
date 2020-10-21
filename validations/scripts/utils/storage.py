@@ -17,10 +17,7 @@
 
 import logging
 import os
-import sys
-import subprocess
 from .common import run_subprocess_cmd
-from .. .messages.user_messages import *
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +28,14 @@ class StorageValidations():
         '''
         pass
 
-    def volumes_accessible():
+    def volumes_accessible(self):
         ''' Validations for Enclosure Volumes
         '''
         cmd = "lsblk -S && ls -1 /dev/disk/by-id/scsi-*"
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def volumes_mapped():
+    def volumes_mapped(self):
         ''' Validations for Enclosure Volumes
         '''
         cmd_priority_50 = "multipath -ll | grep prio=50 | wc -l"

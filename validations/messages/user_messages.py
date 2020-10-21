@@ -15,14 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Custom User Messages for CHECK / ERROR/ LOG 
+# Custom User Messages for CHECK / ERROR/ LOG
 # are listed here. These can be standardised any time.
 
-from pathlib import Path
-from typing import Dict, Optional
-
 # Pre-Factory Deployment: Log messages
-
 MLNX_INSTALL_CHECK = "mlnx_ofed_installed CHECK: Mellanox OFED Is Installed"
 MLNX_INSTALL_ERROR = "mlnx_ofed_installed ERROR: Mellanox OFED Is Not Installed"
 MLNX_HCA_CHECK = "mlnx_hca_present CHECK: Mellanox HCA Present"
@@ -33,10 +29,10 @@ LSB_HBA_PORTS_CHECK = "lsb_hba_req_ports CHECK: LSB HBA Present And Has Required
 LSB_HBA_PORTS_ERROR = "lsb_hba_req_ports ERROR: LSB HBA Present But Does Not Have Required Number of ports"
 LSB_HBA_CHECK = "lsb_hba_present CHECK: LSB HBA Not Present"
 LSB_HBA_ERROR = "lsb_hba_present ERROR: LSB HBA Not Present"
-VOLUMES_ACCESSIBLE_CHECK = "CHECK: Enclosure Volumes Are Accessible From Both Servers"
-VOLUMES_ACCESSIBLE_ERROR = "ERROR: Enclosure Volumes Are Not Accessible"
-VOLUMES_MAPPED_TO_CNTRLRS_CHECK = "CHECK: Enclosure Volumes Are Mapped To Both Controllers"
-VOLUMES_MAPPED_TO_CNTRLRS_ERROR = "ERROR: Enclosure Volumes Not Mapped to Controllers. Run rescan_scsi_bus.sh file"
+VOLUMES_ACCESSIBLE_CHECK = "volumes_accessible CHECK: Enclosure Volumes Are Accessible From Both Servers"
+VOLUMES_ACCESSIBLE_ERROR = "volumes_accessible ERROR: Enclosure Volumes Are Not Accessible"
+VOLUMES_MAPPED_TO_CNTRLRS_CHECK = "volumes_mapped CHECK: Enclosure Volumes Are Mapped To Both Controllers"
+VOLUMES_MAPPED_TO_CNTRLRS_ERROR = "volumes_mapped ERROR: Enclosure Volumes Not Mapped to Controllers. Run rescan_scsi_bus.sh file"
 
 # BMC Accessible
 BMC_ACCESSIBLE_CHECK = "check_bmc_accessible CHECK: BMC Is Accessible On Both Servers"
@@ -48,8 +44,8 @@ BMC_IP_ERROR = "ping_bmc ERROR: Failed to get BMC IP."
 # Nodes Status
 NODES_ONLINE = "nodes_status CHECK: All Nodes Active and Online"
 NODES_OFFLINE = "nodes_status ERROR: One or more Nodes Inctive and Offline"
-PILLAR_DATA_CHECK = "CHECK: Pillar Config Data Obtained"
-PILLAR_DATA_ERROR = "ERROR: Pillar Config Data Error"
+PILLAR_DATA_CHECK = "get_pillar CHECK: Pillar Config Data Obtained"
+PILLAR_DATA_ERROR = "get_pillar ERROR: Pillar Config Data Error"
 RESOURCE_FAIL_CHECK = "get_resource_failcount CHECK: No Resource Failure Seen. All OK"
 RESOURCE_FAIL_ERROR = "get_resource_failcount ERROR: One or More Resources Seemed To Have Failed. Please Check."
 CLUSTER_HEALTH_ERROR = "cluster_status ERROR: One or More Nodes In The Cluster Not Online. Please Check."

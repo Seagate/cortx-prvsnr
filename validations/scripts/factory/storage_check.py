@@ -18,7 +18,7 @@
 import logging
 import os
 import sys
-import ..utils.storage as storage
+from ..utils.storage import StorageValidations as storage
 from .. .messages.user_messages import *
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class HardwareValidationsCall():
         '''
         pass
 
-    def check_volumes_accessible():
+    def check_volumes_accessible(self):
         ''' Validations for Enclosure Volumes
         '''
         response = {}
@@ -44,7 +44,7 @@ class HardwareValidationsCall():
         return response
 
 
-    def check_volumes_mapped():
+    def check_volumes_mapped(self):
         ''' Validations for Enclosure Volumes
         '''
         response = {}

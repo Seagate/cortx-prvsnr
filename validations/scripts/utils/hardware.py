@@ -29,39 +29,39 @@ class HardwareValidations():
         '''
         pass
 
-    def mlnx_ofed_installed():
+    def mlnx_ofed_installed(self):
         ''' Validations for Mellanox drivers
         '''
         cmd = "yum list yum list mlnx-ofed-all | grep mlnx-ofed*"
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def mlnx_hca_present():
+    def mlnx_hca_present(self):
         ''' Validations for Mellanox drivers
         '''
-        cmd_present = "lspci -nn | grep 'Mellanox Technologies'"
-        common_response = run_subprocess_cmd(cmd_present, shell=True)
+        cmd = "lspci -nn | grep 'Mellanox Technologies'"
+        common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def mlnx_hca_req_ports():
+    def mlnx_hca_req_ports(self):
         ''' Validations for Mellanox drivers
         '''
-        cmd_present = "lspci -nn | grep 'Mellanox Technologies' | wc -l"
+        cmd = "lspci -nn | grep 'Mellanox Technologies' | wc -l"
         # TO DO: Check os function result
-        common_response = os.system(cmd_ports)
+        common_response = os.system(cmd)
         return common_response
 
-    def lsb_hba_present():
+    def lsb_hba_present(self):
         ''' Validations for LUNs
         '''
-        cmd_present = "lspci -nn | grep 'SCSI'"
-        common_response = run_subprocess_cmd(cmd_present, shell=True)
+        cmd = "lspci -nn | grep 'SCSI'"
+        common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    def lsb_hba_req_ports():
+    def lsb_hba_req_ports(self):
         ''' Validations for LUNs
         '''
-        cmd_present = "ls /sys/class/scsi_host/ | wc -l"
+        cmd = "ls /sys/class/scsi_host/ | wc -l"
         # TO DO: Check os function result
-        common_response = os.system(cmd_ports)
+        common_response = os.system(cmd)
         return common_response

@@ -18,7 +18,7 @@
 import logging
 import os
 import sys
-import ..utils.bmc as bmc
+from ..utils.bmc import BMCValidations as bmc
 from .. .messages.user_messages import *
 from ..utils.network_connectivity_checks import NetworkValidations
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class BMCValidationsCall():
         '''
         pass
 
-    def ping_bmc():
+    def ping_bmc(self):
         ''' Ping BMC IP
         '''
         response = {}
@@ -48,7 +48,7 @@ class BMCValidationsCall():
         response["error_msg"]= ping_check[2]
         return response
 
-    def check_bmc_accessible():
+    def check_bmc_accessible(self):
         ''' Validations for BMC accessibility
         '''
         response = {}

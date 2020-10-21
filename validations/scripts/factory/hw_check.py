@@ -18,18 +18,18 @@
 import logging
 import os
 import sys
-import ..utils.hardware as hw
+from ..utils.hardware import HardwareValidations as hw
 from .. .messages.user_messages import *
 logger = logging.getLogger(__name__)
 
 class HardwareValidationsCall():
 
     def __init__(self):
-        ''' Validations for pre-factory HW steps
+        ''' Validations for factory HW steps
         '''
         pass
 
-    def check_mlnx_ofed_installed():
+    def check_mlnx_ofed_installed(self):
         ''' Validations for Mellanox drivers
         '''
         response = {}
@@ -43,7 +43,7 @@ class HardwareValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_mlnx_hca_present():
+    def check_mlnx_hca_present(self):
         ''' Validations for Mellanox drivers
         '''
         response = {}
@@ -57,7 +57,7 @@ class HardwareValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_mlnx_hca_req_ports():
+    def check_mlnx_hca_req_ports(self):
         ''' Validations for Mellanox drivers
         '''
         response = {}
@@ -73,7 +73,7 @@ class HardwareValidationsCall():
         return response
 
 
-    def check_lsb_hba_present():
+    def check_lsb_hba_present(self):
         ''' Validations for LUNs
         '''
         response = {}
@@ -86,7 +86,7 @@ class HardwareValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    def check_lsb_hba_req_ports():
+    def check_lsb_hba_req_ports(self):
         ''' Validations for LUNs
         '''
         response = {}

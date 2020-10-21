@@ -29,35 +29,35 @@ class ClusterValidations():
         '''
         pass
 
-    def corosync_status():
+    def corosync_status(self):
         ''' Validations for Pacemaker status
         '''
         cmd = "pcs status corosync"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
-    def nodes_status():
+    def nodes_status(self):
         ''' Validations for nodes status
         '''
         cmd = "pcs status nodes"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
-    def get_resource_failcount():
+    def get_resource_failcount(self):
         ''' Validations for resource fail count
         '''
         cmd = "pcs resource failcount show"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
-    def cluster_status():
+    def cluster_status(self):
         ''' Validations for cluster status
         '''
         cmd = "pcs cluster status"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
-    def stonith_issues():
+    def stonith_issues(self):
         ''' Validations for STONITH issues
         '''
         stop_cmd = "grep 'unable to stop resource' /var/log/pacemaker.log"
