@@ -160,8 +160,7 @@ def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
   local = salt.client.LocalClient()
   health_map_path = __pillar__['sspl']['health_map_path']
   health_map_file = __pillar__['sspl']['health_map_file']
-  
-  
+
   data = local.cmd('*', 'file.read', [source_json])
   node1_data = json.loads(data["srvnode-1"])
   node2_data = json.loads(data["srvnode-2"])

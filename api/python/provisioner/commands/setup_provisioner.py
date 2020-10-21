@@ -410,17 +410,16 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 raise ValueError("ISO for CORTX is undefined")
             if self.iso_cortx.suffix != '.iso':
                 raise ValueError("ISO extension is expected for CORTX repo")
-            if not self.iso_cortx_deps:
-                raise ValueError("ISO for CORTX dependencies is undefined")
-            if self.iso_cortx_deps.suffix != '.iso':
-                raise ValueError(
-                    "ISO extension is expected for CORTX deps repo"
-                )
-            if self.iso_cortx.name == self.iso_cortx_deps.name:
-                raise ValueError(
-                    "ISO files for CORTX and CORTX dependencies "
-                    f"have the same name: {self.iso_cortx.name}"
-                )
+            if self.iso_cortx_deps:
+                if self.iso_cortx_deps.suffix != '.iso':
+                    raise ValueError(
+                        "ISO extension is expected for CORTX deps repo"
+                    )
+                if self.iso_cortx.name == self.iso_cortx_deps.name:
+                    raise ValueError(
+                        "ISO files for CORTX and CORTX dependencies "
+                        f"have the same name: {self.iso_cortx.name}"
+                    )
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
                     "The type of distribution would be set to "
@@ -441,9 +440,14 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
             )
             # iso files will be mounted into dirs inside that directory
-            self.target_build = 'file://' + load_yaml(
-                release_sls
-            )['release']['base']['base_dir']
+            base_dir = Path(
+                load_yaml(release_sls)['release']['base']['base_dir']
+            )
+
+            if not self.iso_cortx_deps:
+                base_dir /= config.CORTX_SINGLE_ISO_DIR
+
+            self.target_build = f'file://{base_dir}'
 
             if (
                 self.url_cortx_deps !=
@@ -921,9 +925,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
             if pillar['iso_cortx']:
-                pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
-            if pillar['iso_cortx_deps']:
-                pillar['iso_cortx_deps'] = str(config.PRVSNR_CORTX_DEPS_ISO)
+                if pillar['iso_cortx_deps']:
+                    pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
+                    pillar['iso_cortx_deps'] = str(
+                        config.PRVSNR_CORTX_DEPS_ISO
+                    )
+                else:
+                    pillar['iso_cortx'] = str(config.PRVSNR_CORTX_SINGLE_ISO)
             pillar = dict(factory_setup=pillar)
             dump_yaml(pillar_path,  pillar)
 
@@ -1036,8 +1044,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.source == 'iso':
             add_file_roots = [
                 run_args.iso_cortx.parent,
-                run_args.iso_cortx_deps.parent
             ]
+            if run_args.iso_cortx_deps:
+                add_file_roots.append(run_args.iso_cortx_deps.parent)
 
         profile.setup(
             paths,
@@ -1081,30 +1090,51 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 run_args, paths['salt_fileroot_dir'] / 'provisioner/files/repo'
             )
         else:  # iso or rpm
+            logger.info("Preparing CORTX repos pillar")
+
             # FIXME rhel and centos repos
             deps_bundle_url = (
-                f"{run_args.target_build}/3rd_party"
+                f"{run_args.target_build}/{config.CORTX_3RD_PARTY_ISO_DIR}"
                 if run_args.dist_type == config.DistrType.BUNDLE
                 else run_args.url_cortx_deps
             )
 
             if run_args.source == 'iso':
-                repos = {
-                    'cortx_iso': f"salt://{run_args.iso_cortx.name}",
-                    '3rd_party': f"salt://{run_args.iso_cortx_deps.name}"
-                }
+                if run_args.iso_cortx_deps:
+                    repos = {
+                        config.CORTX_ISO_DIR: (
+                            f"salt://{run_args.iso_cortx.name}"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: (
+                            f"salt://{run_args.iso_cortx_deps.name}"
+                        )
+                    }
+                else:
+                    logger.info("... NOTE: single ISO mode would be set")
+                    repos = {
+                        config.CORTX_SINGLE_ISO_DIR: {
+                            'source': f"salt://{run_args.iso_cortx.name}",
+                            'is_repo': False
+                        },
+                        config.CORTX_ISO_DIR: (
+                            f"{run_args.target_build}/{config.CORTX_ISO_DIR}"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
+                    }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
-                        'cortx_iso': f"{run_args.target_build}/cortx_iso",
-                        '3rd_party': deps_bundle_url
+                        config.CORTX_ISO_DIR: (
+                            f"{run_args.target_build}/cortx_iso"
+                        ),
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
                     }
                 else:
                     repos = {
-                        'cortx_iso': f'{run_args.target_build}'
+                        config.CORTX_ISO_DIR: f'{run_args.target_build}'
                     }
                     if deps_bundle_url:
-                        repos['3rd_party'] = deps_bundle_url
+                        repos[config.CORTX_3RD_PARTY_ISO_DIR] = deps_bundle_url
 
             # assume that target_build for bundled release is
             # a base dir for bundle distribution
@@ -1122,7 +1152,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     )
                 })
 
-            logger.info("Preparing CORTX repos pillar")
             # FIXME we just shoudn't copy that file
             #       as part of factory profile
             self._prepare_release_pillar(
@@ -1190,8 +1219,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             if (
                 run_args.field_setup and
                 run_args.source == 'iso' and
-                run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
-                run_args.iso_cortx_deps == config.PRVSNR_CORTX_DEPS_ISO
+                (
+                    run_args.iso_cortx == config.PRVSNR_CORTX_SINGLE_ISO
+                    or (
+                        run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
+                        run_args.iso_cortx_deps == config.PRVSNR_CORTX_DEPS_ISO
+                    )
+                )
             ):
                 # FIXME it is valid only for replace_node logic,
                 #       not good to rely on some specific case here
