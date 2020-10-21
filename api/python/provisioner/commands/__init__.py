@@ -70,7 +70,8 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run,
+    local_minion_id
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -500,12 +501,12 @@ class SetSWUpdateRepo(Set):
 
         :return:
         """
-        release_path = KeyPath('release_path')
+        release_path = KeyPath('release')
         update_dir = PillarKey(release_path / 'update/base_dir')
 
         pillar = PillarResolver(LOCAL_MINION).get((update_dir,))
 
-        pillar = pillar.get(LOCAL_MINION)  # type: dict
+        pillar = pillar.get(local_minion_id())  # type: dict
 
         if (not pillar[update_dir] or
                 pillar[update_dir] is values.MISSED):
