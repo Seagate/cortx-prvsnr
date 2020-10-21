@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,9 +16,6 @@
 #
 
 import logging
-import os
-import sys
-import subprocess
 from .common import run_subprocess_cmd
 from .. .messages.user_messages import *
 
@@ -32,7 +28,6 @@ class CortxValidations():
         '''
         pass
 
-    @staticmethod
     def consul_service():
         ''' Validations for Consul
         '''
@@ -40,7 +35,6 @@ class CortxValidations():
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    @staticmethod
     def elasticsearch_service():
         ''' Validations for ES service
         '''
@@ -48,7 +42,6 @@ class CortxValidations():
         common_response = run_subprocess_cmd(cmd, shell=True)
         return common_response
 
-    @staticmethod
     def ioservice_service():
         ''' Validations for IO services
         '''

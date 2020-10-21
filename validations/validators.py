@@ -18,9 +18,10 @@
 import config
 from scripts.utils.network_pre_checks import NetworkValidations
 from scripts.utils.pillar_get import PillarGet
-from scripts.utils.pre_deployment import PreFactoryValidations
-from scripts.utils.pacemaker import PacemakerValidations
+from scripts.utils.hardware import HardwareValidations
+from scripts.utils.cluster import ClusterValidations
 from scripts.utils.cortx import CortxValidations
+from scripts.utils.bmc import BMCValidations
 from scripts.utils.server import ServerValidations
 from scripts.utils.network import NetworkChecks
 from scripts.utils.storage import StorageValidations
@@ -36,12 +37,10 @@ class Validators():
             check_list = config.FACTORY_POST_CHECK
         elif args.precheck:
             check_list = config.FACTORY_PRE_CHECK
-        elif args.swupdate:
-            check_list = config.SW_UPDATE_CHECK
         elif args.fwupdate:
             check_list = config.FW_UPDATE_CHECK
-        elif args.fwupdate:
-            check_list = config.FW_UPDATE_CHECK
+        elif args.replacenode:
+            check_list = config.REPLACE_NODE_CHECK
         elif args.unboxing:
             check_list = config.UNBOXING_CHECK
         elif args.c:

@@ -1,19 +1,21 @@
-# CLI_ARG = {'function_implemented': 'Class_implemented_in'}
+# CHECK_ARG = {'function_implemented': 'Class_implemented_in'}
 
 FACTORY_PRE_CHECK = {
-    'mlnx_ofed_installed': 'PreFactoryValidations',
-    'mlnx_hca_present': 'PreFactoryValidations',
-    'lsb_hba_present': 'PreFactoryValidations',
-    'volumes_accessible': 'PreFactoryValidations',
-    'volumes_mapped': 'PreFactoryValidations'    #TO DO: Verify and move this to post-check 
+    'mlnx_ofed_installed': 'HardwareValidations',
+    'mlnx_hca_present': 'HardwareValidations',
+    'lsb_hba_present': 'HardwareValidations',
+    'lsb_hba_req_ports': 'HardwareValidations',
+    'volumes_accessible': 'StorageValidations',
+    'volumes_mapped': 'StorageValidations'   #TO DO: Verify and move this to post-check
 }
 
 FACTORY_POST_CHECK = {
-    'verify_corosync_status': 'PacemakerValidations',
-    'verify_nodes_status': 'PacemakerValidations',
-    'get_resource_failcount': 'PacemakerValidations',
-    'verify_cluster_status': 'PacemakerValidations',
-    'check_stonith_issues': 'PacemakerValidations',
+    'corosync_status': 'ClusterValidations',
+    'nodes_status': 'ClusterValidations',
+    'get_resource_failcount': 'ClusterValidations',
+    'cluster_status': 'ClusterValidations',
+    'stonith_issues': 'ClusterValidations',
+    'bmc_accessible': 'BMCValidations',
     'consul_check': 'CortxValidations',
     'elasticsearch_check': 'CortxValidations',
     'ioservice_check': 'CortxValidations',
@@ -30,7 +32,7 @@ FACTORY_POST_CHECK = {
 }
 
 
-SW_UPDATE_CHECK = {
+REPLACE_NODE_CHECK = {
 }
 
 FW_UPDATE_CHECK = {
@@ -45,7 +47,7 @@ ALL_CHECKS = {
 for check in (
             FACTORY_POST_CHECK,
             FACTORY_PRE_CHECK,
-            SW_UPDATE_CHECK,
+            REPLACE_NODE_CHECK,
             FW_UPDATE_CHECK,
             UNBOXING_CHECK ):
     ALL_CHECKS.update(check)

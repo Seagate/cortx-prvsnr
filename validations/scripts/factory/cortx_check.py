@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -19,9 +18,8 @@
 import logging
 import os
 import sys
-import ..utils.pacemaker as pacemaker 
+import ..utils.cortx as cortx 
 from .. .messages.user_messages import *
-
 logger = logging.getLogger(__name__)
 
 class CortxValidationsCall():
@@ -31,12 +29,11 @@ class CortxValidationsCall():
         '''
         pass
 
-    @staticmethod
-    def consul_check():
+    def check_consul_service():
         ''' Validations for Consul
         '''
-        cmd = "ps -eaf | grep consul"
-        res = run_subprocess_cmd(cmd)
+        response = {}
+        res = cortx.consul_service()
         if res[0] == 0:
             response["message"]= str(CONSUL_SERVICE_CHECK)
         else:
@@ -46,12 +43,11 @@ class CortxValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    @staticmethod
     def check_elasticsearch_service():
         ''' Validations for ES service
         '''
-        cmd = "ps -eaf | grep elastic"
-        res = run_subprocess_cmd(cmd)
+        response = {}
+        res = cortx.elasticsearch_service()
         if res[0] == 0:
             response["message"]= str(ES_SERVICE_CHECK)
         else:
@@ -61,12 +57,11 @@ class CortxValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-    @staticmethod
     def check_ioservice_service():
         ''' Validations for IO services
         '''
-        cmd = "hctl status | grep unknown | grep -v m0_client"
-        res = run_subprocess_cmd(cmd)
+        response = {}
+        res = cortx.ioservice_service()
         if res[0] == 0:
             response["message"]= str(IO_SERVICE_CHECK)
         else:
