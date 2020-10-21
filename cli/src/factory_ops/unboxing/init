@@ -204,9 +204,10 @@ check_mgmt_ip
 # Run pre_unbox validations
 pre_unbox
 
+echo "Configuring the Salt services on both nodes" | tee -a ${LOG_FILE}
 echo "Running provisioner replace node api" >> ${LOG_FILE}
-provisioner replace_node --node-host 192.168.0.2 --logfile --logfile-filename ${LOG_FILE}
-echo "done with replace_node command" >> ${LOG_FILE}
+provisioner replace_node --node-host $pvt_ip_b --logfile --logfile-filename ${LOG_FILE}
+echo "Done with provisioner replace node api" >> ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
@@ -220,29 +221,34 @@ update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "$
 
 echo -n "Clean the Salt cache........................................................" | tee -a ${LOG_FILE}
 salt '*' saltutil.clear_cache ${salt_opts}
-echo "Ok." | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
 echo -n "Refreshing the Salt modules................................................." | tee -a ${LOG_FILE}
 salt '*' saltutil.refresh_modules ${salt_opts}
-echo "Ok." | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
 echo -n "Syncing all states for Salt................................................." | tee -a ${LOG_FILE}
 salt '*' saltutil.sync_all ${salt_opts}
-echo "Ok." | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
 echo -n "Refreshing the Salt pillar.................................................." | tee -a ${LOG_FILE}
 salt '*' saltutil.refresh_pillar ${salt_opts}
-echo "Ok." | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
 echo -n "Refreshing the grains......................................................." | tee -a ${LOG_FILE}
 salt '*' saltutil.refresh_grains ${salt_opts}
-echo "Ok." | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
 
 # After unboxing, the IP addresses in haproxy need to be updated
 echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
 salt "*" state.apply components.ha.haproxy.config ${salt_opts}
-echo "Done." | tee -a ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
 
 # TODO: Updating VIP in CSM HA needs mechanism to avoid repo creation in csm.prepare
 #echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
@@ -270,40 +276,67 @@ if command -v pcs ; then
     # Update ClusterIP
     echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
-    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
 
     echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
     salt "*" state.apply components.ha.haproxy.config ${salt_opts}
-    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
 
     # Update Management_vip
 
     echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
-    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
 
     # Re-run Stonith
     echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
     salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
-    echo "Ok." | tee -a ${LOG_FILE}
     sleep 5     # Mindfulness break...Breathe in...Breathe out
+    echo "Ok." | tee -a ${LOG_FILE}
 
     echo "Thank you for your patience... Appreciate it!"
 
 else
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
+    exit 1
 fi
+
+echo -n "Removing build URL from Salt configuration.................................." | tee -a ${LOG_FILE}
+provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing stale URL (CentOS) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing build URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing Lustre URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing the repos with Seagate URL from Server A..........................." | tee -a ${LOG_FILE}
+seagate_refs_cleanup
+echo "Ok." | tee -a ${LOG_FILE}
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
@@ -312,14 +345,14 @@ pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
 pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "Stonith................................" | tee -a ${LOG_FILE}
 
+echo -n "Stonith................................" | tee -a ${LOG_FILE}
 pcs resource refresh stonith-c1 >> ${LOG_FILE}
 pcs resource refresh stonith-c2 >> ${LOG_FILE}
-sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
+sleep 5
 
+echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
 pcs resource refresh csm-kibana >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
