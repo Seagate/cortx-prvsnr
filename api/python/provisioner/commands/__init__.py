@@ -74,7 +74,8 @@ from ..hare import (
     cluster_maintenance_enable,
     cluster_maintenance_disable,
     apply_ha_post_update,
-    ensure_cluster_is_healthy
+    ensure_cluster_is_healthy,
+    consul_export
 )
 from ..salt_master import (
     config_salt_master,
@@ -610,6 +611,12 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
     StatesApplier.apply(["components.provisioner.config"], targets)
 
 
+def _consul_export(stage):
+    # TODO make that configurable to turn off if not needed
+    logger.info(f'Exporting consul [{stage}]')
+    consul_export(fn_suffix=stage)
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SWUpdate(CommandParserFillerMixin):
@@ -632,6 +639,8 @@ class SWUpdate(CommandParserFillerMixin):
             ensure_cluster_is_healthy()
 
             _ensure_update_repos_configuration(targets)
+
+            _consul_export('update-pre')
 
             with YumRollbackManager(
                 targets,
@@ -672,11 +681,15 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterMaintenanceDisableError(exc) from exc
 
+                _consul_export('update-pre-ha-update')
+
                 # call Hare to update cluster configuration
                 try:
                     apply_ha_post_update(targets)
                 except Exception as exc:
                     raise HAPostUpdateError(exc) from exc
+
+                _consul_export('update-post-ha-update')
 
                 try:
                     ensure_cluster_is_healthy()
@@ -694,6 +707,9 @@ class SWUpdate(CommandParserFillerMixin):
                         )
                 except Exception:
                     logger.exception('failed to restart salt minions')
+
+                _consul_export('update-post')
+
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
@@ -752,9 +768,15 @@ class SWUpdate(CommandParserFillerMixin):
                         try:
                             cluster_maintenance_disable()
 
+                            _consul_export('rollback-pre-ha-update')
+
                             apply_ha_post_update(targets)
 
+                            _consul_export('rollback-post-ha-update')
+
                             ensure_cluster_is_healthy()
+
+                            _consul_export('rollback-post')
                         except Exception as exc:
                             # unrecoverable state: SW stack is in initial
                             # state but cluster failed to start

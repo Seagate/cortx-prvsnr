@@ -150,7 +150,7 @@ def ensure(  # noqa: C901 FIXME
             if exc:
                 raise exc
             else:
-                raise ProvisionerError('no more tries')
+                raise ProvisionerError(f'no more tries for {name}')
 
 
 def run_subprocess_cmd(cmd, **kwargs):
@@ -172,7 +172,7 @@ def run_subprocess_cmd(cmd, **kwargs):
         res = subprocess.run(cmd, **_kwargs)
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         logger.exception(f"Failed to run cmd '{cmd}'")
-        raise SubprocessCmdError(cmd, _kwargs, repr(exc)) from exc
+        raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
         logger.debug(f"Subprocess command resulted in: {res}")
         return res
