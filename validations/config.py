@@ -16,7 +16,8 @@ FACTORY_PRE_CHECK = {
 
 REPLACE_NODE_CHECK = {
     'verify_mgmt_vip': 'NetworkChecks',
-    'verify_luns_consistency': 'StorageValidations'
+    'verify_luns_consistency': 'StorageValidations',
+    'verify_hostnames': 'HostnameChecks'
 }
 
 FW_UPDATE_CHECK = {

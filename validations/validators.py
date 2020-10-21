@@ -24,6 +24,7 @@ from scripts.utils.storage_connectivity_checks import (  # noqa: F401
 )
 from scripts.utils.controller_check import ControllerValidations  # noqa: F401
 from scripts.utils.system_check.lvm_checks import LVMChecks  # noqa: F401
+from scripts.utils.system_check.hostname_checks import HostnameChecks  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,6 @@ class Validators():
                     print(f"Response: {res}\n")
                 else:
                     print(f"{check}: Success : {res['message']}\n")
-                    print(f"Response: {res}\n")
 
 
 if __name__ == '__main__':
