@@ -198,11 +198,14 @@ seagate_refs_cleanup()
     for i in "${!pvt_ips[@]}"; do
         echo "Running for node:${pvt_ips[$i]}" >> ${LOG_FILE}
         if $ssh_cmd ${pvt_ips[$i]} 'grep -q "Red Hat" /etc/*-release'; then
-            echo "RedHat system, disabling the subscription is needed" >> ${LOG_FILE}
+            echo "RedHat system, checking if Redhat subscription is enabled." >> ${LOG_FILE}
             subscription_enabled=false
             sub_manager_check "${pvt_ips[$i]}" "${server_names[$i]}"
             if [[ "$subscription_enabled" == true ]]; then
+                echo "Disabling the RedHat Subscription" >> ${LOG_FILE}
                 sub_manager_cleanup "${pvt_ips[$i]}" "${server_names[$i]}"
+            else
+                echo "RedHat Subscription is already disabled" >> ${LOG_FILE}
             fi
         else
             echo "Non RedHat system, disabling the subscription is not needed" >> ${LOG_FILE}
