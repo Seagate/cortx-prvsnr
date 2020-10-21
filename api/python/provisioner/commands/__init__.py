@@ -47,7 +47,8 @@ from ..config import (
     PRVSNR_CLI_DIR,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
-    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
+    REPO_CANDIDATE_NAME
 )
 from ..pillar import (
     KeyPath,
@@ -73,7 +74,8 @@ from ..hare import (
     cluster_maintenance_enable,
     cluster_maintenance_disable,
     apply_ha_post_update,
-    ensure_cluster_is_healthy
+    ensure_cluster_is_healthy,
+    consul_export
 )
 from ..salt_master import (
     config_salt_master,
@@ -414,12 +416,16 @@ class Set(CommandParserFillerMixin):
 
         pillar_updater.update(params)
         try:
+            logger.debug('Applying pre states')
             StatesApplier.apply(self.pre_states)
             try:
+                logger.debug('Applying pillar changes')
                 pillar_updater.apply()
+
+                logger.debug('Applying post states')
                 StatesApplier.apply(self.post_states)
             except Exception:
-                logger.exception('Failed to apply changes')
+                logger.warning('Failed to apply changes, starting rollback')
                 # TODO more solid rollback
                 pillar_updater.rollback()
                 pillar_updater.apply()
@@ -431,6 +437,9 @@ class Set(CommandParserFillerMixin):
             StatesApplier.apply(self.post_states)
             raise
 
+    def dynamic_validation(self, params, targets):
+        pass
+
     # TODO
     # - class for pillar file
     # - caching (load once)
@@ -441,11 +450,12 @@ class Set(CommandParserFillerMixin):
         else:
             params = self.input_type.from_args(*args, **kwargs)
 
-        # TODO dynamic validation
-        if dry_run:
-            return
+        res = self.dynamic_validation(params, targets)
 
-        self._run(params, targets)
+        if dry_run:
+            return res
+
+        return self._run(params, targets)
 
 
 # assumtions / limitations
@@ -465,20 +475,93 @@ class SetSWUpdateRepo(Set):
     # TODO at least either pre or post should be defined
     input_type: Type[inputs.SWUpdateRepo] = inputs.SWUpdateRepo
 
-    # TODO rollback
-    def _run(self, params: inputs.SWUpdateRepo, targets: str):
+    @staticmethod
+    def _prepare_repo_for_apply(
+        repo: inputs.SWUpdateRepo, enabled: bool = True
+    ):
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
-        if params.is_local():
-            dest = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / params.release
+        if repo.is_local():
+            dest = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / repo.release
 
-            if not params.is_dir():  # iso file
+            if not repo.is_dir():  # iso file
                 dest = dest.with_name(dest.name + '.iso')
 
-            copy_to_file_roots(params.source, dest)
+            logger.debug(f"Copying {repo.source} to file roots")
+            copy_to_file_roots(repo.source, dest)
+
+            if not enabled:
+                repo.repo_params = dict(enabled=False)
+
+    def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):
+        metadata = {}
+        repo = params
+
+        if repo.is_special():
+            logger.info(
+                "Skipping update repo validation for special value: "
+                f"{repo.source}"
+            )
+            return
+
+        logger.info(
+            f"Validating update repo: release {repo.release}, "
+            f"source {repo.source}"
+        )
+
+        candidate_repo = inputs.SWUpdateRepo(
+            REPO_CANDIDATE_NAME, repo.source
+        )
+
+        # TODO IMPROVE VALIDATION EOS-14350
+        #   - there is no other candidate that is being verified
+
+        # TODO IMPROVE
+        #   - makes sense to try that only on local minion,
+        #     currently it's not convenient since may lead to
+        #     mess in release.sls pillar between all and specific
+        #     minions
+        try:
+            logger.debug(
+                "Configuring update candidate repo for validation"
+            )
+            self._prepare_repo_for_apply(candidate_repo, enabled=False)
+
+            super()._run(candidate_repo, targets)
+
+            # TODO IMPROVE VALIDATION EOS-6078
+            # - yum --disablerepo="*" --enablerepo="sw_update_{candidate_repo.release}" list available  # noqa: E501
+            # - extract metadata from release info file, validate and assign,
+            #   validation:
+            #   - metadata is full enough (at least release information)
+            #   - there is no the same release repo already active EOS-13715
+            #   - (optionally) new version is higher then currently installed
+
+            logger.debug(f"Resolved metadata {metadata}")
+            repo.metadata = metadata
+
+            # TODO IMPROVE EOS-6078
+            # - set 'release' to version from resolved metadata,
+            #   that would make `release` param unnecessary at all
+            #   repo.release = ...
+        finally:
+            # remove the repo
+            candidate_repo.source = values.UNDEFINED
+            logger.info("Post-validation cleanup")
+            super()._run(candidate_repo, targets)
+
+        return repo.metadata
+
+    # TODO rollback
+    def _run(self, params: inputs.SWUpdateRepo, targets: str):
+        repo = params
+
+        logger.info(f"Configuring update repo: release {repo.release}")
+        self._prepare_repo_for_apply(repo, enabled=True)
 
         # call default set logic (set pillar, call related states)
-        super()._run(params, targets)
+        super()._run(repo, targets)
+        return repo.metadata
 
 
 # TODO IMPROVE EOS-8940 move to separate module
@@ -528,6 +611,12 @@ def _apply_provisioner_config(targets=ALL_MINIONS):
     StatesApplier.apply(["components.provisioner.config"], targets)
 
 
+def _consul_export(stage):
+    # TODO make that configurable to turn off if not needed
+    logger.info(f'Exporting consul [{stage}]')
+    consul_export(fn_suffix=stage)
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SWUpdate(CommandParserFillerMixin):
@@ -550,6 +639,8 @@ class SWUpdate(CommandParserFillerMixin):
             ensure_cluster_is_healthy()
 
             _ensure_update_repos_configuration(targets)
+
+            _consul_export('update-pre')
 
             with YumRollbackManager(
                 targets,
@@ -590,11 +681,15 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterMaintenanceDisableError(exc) from exc
 
+                _consul_export('update-pre-ha-update')
+
                 # call Hare to update cluster configuration
                 try:
                     apply_ha_post_update(targets)
                 except Exception as exc:
                     raise HAPostUpdateError(exc) from exc
+
+                _consul_export('update-post-ha-update')
 
                 try:
                     ensure_cluster_is_healthy()
@@ -612,6 +707,9 @@ class SWUpdate(CommandParserFillerMixin):
                         )
                 except Exception:
                     logger.exception('failed to restart salt minions')
+
+                _consul_export('update-post')
+
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Update failed')
@@ -670,9 +768,15 @@ class SWUpdate(CommandParserFillerMixin):
                         try:
                             cluster_maintenance_disable()
 
+                            _consul_export('rollback-pre-ha-update')
+
                             apply_ha_post_update(targets)
 
+                            _consul_export('rollback-post-ha-update')
+
                             ensure_cluster_is_healthy()
+
+                            _consul_export('rollback-post')
                         except Exception as exc:
                             # unrecoverable state: SW stack is in initial
                             # state but cluster failed to start

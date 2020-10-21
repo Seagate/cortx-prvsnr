@@ -75,18 +75,6 @@ Create logrotate_setup.d with specific component settings:
 #     - dir_mode: 755
 #     - mode: 0700
 
-
-Create config file directory for hourly logrotate configs:
-  file.directory:
-    - name: /etc/logrotate_hourly.d
-    - clean: False
-    - force: True
-    - user: root
-    - group: root
-    - dir_mode: 750
-    - file_mode: 640
-
-
 Setup cron job:
   file.managed:
     - name: /etc/cron.hourly/logrotate
