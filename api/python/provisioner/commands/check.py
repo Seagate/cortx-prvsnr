@@ -67,8 +67,14 @@ class CheckEntry:
         Returns:
 
         """
-        return {self._check_name: f"{self._target}: {self._verdict.value}: "
-                                  f"{self._comment}"}
+        if self.is_set:
+            if self._comment:
+                return {self._check_name: f"{self._target}:"
+                                          f"{self._verdict.value}: "
+                                          f"{self._comment}"}
+            return {self._check_name: f"{self._target}: {self._verdict.value}"}
+
+        return dict()
 
     def set_fail(self, *, target: str, comment: str = ""):
         """
