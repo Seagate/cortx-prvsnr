@@ -253,6 +253,7 @@ fi
 echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
 pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
 sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
@@ -306,13 +307,39 @@ echo "Removing build URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
 
+echo -n "Removing build URL from Salt configuration.................................." | tee -a ${LOG_FILE}
+provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing stale URL (CentOS) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing build URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing Lustre URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
+provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}
+sleep 2
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Removing the repos with Seagate URL from Server A..........................." | tee -a ${LOG_FILE}
+seagate_refs_cleanup
+echo "Ok." | tee -a ${LOG_FILE}
+
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
 # echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
