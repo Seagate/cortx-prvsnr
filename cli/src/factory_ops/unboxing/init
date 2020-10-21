@@ -204,13 +204,18 @@ check_mgmt_ip
 # Run pre_unbox validations
 pre_unbox
 
+echo "Running provisioner replace node api" >> ${LOG_FILE}
+provisioner replace_node --node-host 192.168.0.2 --logfile --logfile-filename ${LOG_FILE}
+echo "done with replace_node command" >> ${LOG_FILE}
+
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
-check_salt_services 
+# check_salt_services 
 
 # Update /root/.ssh/config file with hosts
 #update_ssh_config taken care of in pre_unbox
-update_salt_minion
+# update_salt_minion
+
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 
 echo -n "Clean the Salt cache........................................................" | tee -a ${LOG_FILE}

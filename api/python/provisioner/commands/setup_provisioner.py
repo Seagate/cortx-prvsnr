@@ -1383,11 +1383,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             logger.info("Setting up custom python repository")
             ssh_client.state_apply('repos.pip_config')
 
-        logger.info("Setting up paswordless ssh")
-        ssh_client.state_apply('ssh')
-
-        logger.info("Checking paswordless ssh")
-        ssh_client.state_apply('ssh.check')
+        try:
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
+        except SaltCmdResultError:
+            logger.info("Setting up paswordless ssh")
+            ssh_client.state_apply('ssh')
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
 
         # Does not hang after adding glusterfs logic.
         logger.info("Configuring the firewall")
