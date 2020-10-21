@@ -27,6 +27,7 @@ class NetworkValidations():
         """Check if IP's are reachable"""
         cmd = f"ping -c 1 {ip}"
         response = run_subprocess_cmd(cmd)
+
         if response[0] == 0:
             message = f"{ip} is reachable"
         elif response[0] == 1:
@@ -35,6 +36,12 @@ class NetworkValidations():
             message = f"check_ping: {ip}: Name or service not known"
         else:
             message = f"check_ping: {ip}: Not reachable"
+
+        if response[0]:
+            logger.error(f"check_ping {cmd} resulted in {message}")
+        else:
+            logger.debug(f"check_ping {cmd} resulted in {message}")
+
         return {"ret_code": response[0],
                 "response": response[1],
                 "error_msg": response[2],

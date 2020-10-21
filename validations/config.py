@@ -1,5 +1,5 @@
 FACTORY_POST_CHECK = {
-    'verify_nodes_online': 'ServerValidations',
+    'verify_nodes_connectivity': 'ServerValidations',
     'verif_node_communication': 'ServerValidations',
     'verify_mgmt_vip': 'NetworkChecks',
     'verify_cluster_ip': 'NetworkChecks',

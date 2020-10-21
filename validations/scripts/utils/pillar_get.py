@@ -29,8 +29,10 @@ class PillarGet():
         """Get pillar data for key"""
         cmd = f"salt-call pillar.get {key} --out=json"
         response = list(run_subprocess_cmd(cmd))
+
         if response[0] == 127:
             message = "get_pillar: salt-call: command not found"
+            logger.error(f"get_pillar: {cmd} resulted in {message} ")
         elif response[0] == 0:
             res = json.loads(response[1])
             res = res['local']
@@ -38,11 +40,15 @@ class PillarGet():
                 message = f"get_pillar: No pillar data for key: {key}"
                 response[2] = f"No pillar data for key: {key}"
                 response[0] = 1
+                logger.error(f"get_pillar: {cmd} resulted in {message} ")
             else:
                 response[1] = res
                 message = f"pillar data {res}"
+                logger.debug(f"get_pillar: {cmd} resulted in {message} ")
         else:
             message = "get_pillar: Failed to get pillar data"
+            logger.error(f"get_pillar: {cmd} resulted in {message} ")
+
         return {"ret_code": response[0],
                 "response": response[1],
                 "error_msg": response[2],

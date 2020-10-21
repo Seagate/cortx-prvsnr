@@ -16,7 +16,6 @@
 #
 
 import logging
-
 from .network_connectivity_checks import NetworkValidations
 from .pillar_get import PillarGet
 from .common import run_subprocess_cmd
@@ -27,8 +26,9 @@ logger = logging.getLogger(__name__)
 
 class ServerValidations():
 
-    def verify_nodes_online():
+    def verify_nodes_connectivity():
         '''Validations for nodes'''
+        logger.info("verify_nodes_connectivity check")
         res = PillarGet.get_pillar("cluster:node_list")
         if res['ret_code']:
             return res
@@ -37,16 +37,20 @@ class ServerValidations():
             if result['ret_code']:
                 return result
         result['message'] = "Nodes are online"
+        logger.debug(f"verify_nodes_online: resulted in {result}")
         return result
 
     def verif_node_communication():
         '''validation salt  test.ping'''
+        logger.info("verif_node_communication check")
         res = PillarGet.get_pillar("cluster:node_list")
         response = {}
         if res['ret_code']:
             return res
         for node in res['response']:
-            result = run_subprocess_cmd(f"salt {node} test.ping --out=json", timeout=10)
+            result = run_subprocess_cmd(
+                f"salt {node} test.ping --out=json", timeout=10
+            )
             response['ret_code'] = result[0]
             response['response'] = result[1]
             response['error_msg'] = result[2]
@@ -54,10 +58,12 @@ class ServerValidations():
                 response['message'] = f"Failed to communicate to {node}"
                 return response
         response['message'] = f"Nodes communication is working"
+        logger.debug(f"verif_node_communication: resulted in {response}")
         return response
 
     def verify_passwordless():
         '''Validations for nodes'''
+        logger.info("verify_passwordless check")
         res = PillarGet.get_hostnames()
         response = {}
         if res['ret_code']:
@@ -71,4 +77,5 @@ class ServerValidations():
                 response['message'] = f"No Passwordless ssh: {node}"
                 return response
         response['message'] = "Verified Passwordless ssh"
+        logger.debug(f"verify_passwordless: resulted in {response}")
         return response

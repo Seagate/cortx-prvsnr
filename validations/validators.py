@@ -16,11 +16,16 @@
 #
 
 import config
+import logging
 from scripts.utils.server_checks import ServerValidations  # noqa: F401
 from scripts.utils.network_checks import NetworkChecks  # noqa: F401
-from scripts.utils.storage_connectivity_checks import StorageValidations  # noqa: F401
+from scripts.utils.storage_connectivity_checks import (  # noqa: F401
+    StorageValidations
+)
 from scripts.utils.controller_check import ControllerValidations  # noqa: F401
 from scripts.utils.system_check.lvm_checks import LVMChecks  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 
 class Validators():
@@ -47,6 +52,7 @@ class Validators():
             print("Check is not available for this flag")
 
         for check, cls in check_list.items():
+            logger.info(f"Check name {check}")
             res = getattr(globals()[cls], check)()
             if res:
                 if res['ret_code']:
@@ -54,11 +60,17 @@ class Validators():
                     print(f"Response: {res}\n")
                 else:
                     print(f"{check}: Success : {res['message']}\n")
+                    print(f"Response: {res}\n")
 
 
 if __name__ == '__main__':
     import argparse
     import sys
+    import logging
+    from scripts.utils.log import setup_logging
+
+    setup_logging()
+
     argParser = argparse.ArgumentParser()
     argParser.add_argument(
               "--precheck", action='store_true',

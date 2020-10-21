@@ -28,6 +28,7 @@ class LVMChecks():
 
     def verify_lvm():
         '''Validations for LVM'''
+        logger.info("verify_lvm check")
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -37,12 +38,14 @@ class LVMChecks():
             return res
         res = []
         for node in nodes:
-            result = run_subprocess_cmd(f"ssh {node} vgdisplay | grep srvnode | wc -l")
+            result = run_subprocess_cmd(
+                f"ssh {node} vgdisplay | grep srvnode | wc -l")
             response['ret_code'] = result[0]
             response['response'] = result[1]
             response['error_msg'] = result[2]
             if result[0] or int(result[1]) == 0:
-                response['message'] = "verify_lvm: Failed to get volumes for {node}"
+                response['message'] = (
+                    "verify_lvm: Failed to get volumes for {node}")
                 return response
             else:
                 res.append(result[1])
@@ -58,4 +61,5 @@ class LVMChecks():
                 response['message'] = "Failed to verify LVM "
             else:
                 response['message'] = "Verified LVM on both nodes"
+        logger.debug("verify_lvm: resulted in {response}")
         return response

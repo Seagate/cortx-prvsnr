@@ -28,11 +28,17 @@ class ControllerValidations():
 
     def verify_access_to_controller():
         '''Validations Access to controllers'''
+        logger.info("verify_access_to_controller check")
         controllers = ['primary_mc', 'secondary_mc']
         for controller in controllers:
-            result = PillarGet.get_pillar(f"storage_enclosure:controller:{controller}:ip")
+            result = PillarGet.get_pillar(
+                f"storage_enclosure:controller:{controller}:ip"
+            )
             if result['ret_code']:
                 return result
             result = NetworkValidations.check_ping(result['response'])
+            if result['ret_code']:
+                return result
         result['message'] = "Controllers are accessible"
+        logger.debug("verify_access_to_controller: resulted in {result}")
         return result

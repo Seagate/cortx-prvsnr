@@ -28,6 +28,7 @@ class StorageValidations():
 
     def verify_luns_consistency():
         '''Validations for LUNs are consistent across nodes'''
+        logger.info("verify_luns_consistency check")
         res = PillarGet.get_hostnames()
         nodes = []
         response = {}
@@ -37,41 +38,18 @@ class StorageValidations():
             return res
         res = []
         for node in nodes:
-            result = run_subprocess_cmd(f"ssh {node} lsblk -S| grep sas | wc -l")
+            result = run_subprocess_cmd(
+                f"ssh {node} lsblk -S| grep sas | wc -l")
             response['ret_code'] = result[0]
             response['response'] = result[1]
             response['error_msg'] = result[2]
-            if result[0] or int(result[1]) == 0 or (int(result[1])%16) != 0:
+            if result[0] or int(result[1]) == 0 or (int(result[1]) % 16) != 0:
                 response['ret_code'] = 1
-                response['message'] = ( 
+                response['message'] = (
                     "verify_luns_consistency:"
                     f"Inconsistent luns {int(result[1])} for {node}"
                 )
                 return response
             response['message'] = "Number of luns are same on nodes"
+        logger.debug("verify_luns_consistency: resulted in {response}")
         return response
-
-    def verify_multipath():
-        '''Validations for multpath volumes'''
-        res = run_subprocess_cmd("multipath -ll")
-        response = {}
-        if res[0]:
-            response['ret_code'] = res[0]
-            response['response'] = res[1]
-            response['err_msg'] = res[2]
-            response['message'] = "Failed to validate multipath"
-            return response
-        else:
-            cmds = [
-                   "multipath -ll | grep -B2 prio=50 | grep mpath | sort -k2.2 | wc -l",
-                   "multipath -ll | grep -B2 prio=10 | grep mpath | sort -k2.2 | wc -l"
-                ]
-            result = {}
-            for cmd in cmds:
-                result = run_subprocess_cmd(f"multipath -ll | grep -B2 prio=50 | grep mpath | sort -k2.2 | wc -l")
-                if result['ret_code'] or int(result['response']) != 8:
-                    result['message'] = "Failed to verified multipaths on the device"
-                    return result
-            result['message'] = "Verified multipaths on the device"
-        return result
-

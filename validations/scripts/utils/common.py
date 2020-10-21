@@ -42,8 +42,10 @@ def run_subprocess_cmd(cmd, **kwargs):
         res = subprocess.run(cmd, **_kwargs)
     except subprocess.TimeoutExpired as exc:
         result = (1, str(exc), repr(exc))
+        logger.error(f"Subprocess command resulted in: {result}")
     except Exception as exc:
         result = (1, str(exc), repr(exc))
+        logger.error(f"Subprocess command resulted in: {result}")
     else:
         logger.debug(f"Subprocess command resulted in: {res}")
         result = (res.returncode, res.stdout, res.stderr)
