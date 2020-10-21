@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 from typing import Type, Union, List
+import json
 
 from . import CommandParserFillerMixin
 from .. import inputs
@@ -51,8 +52,12 @@ class CheckEntry:
     def __str__(self):
         """String representation of the single check"""
         if self.is_set:
+            if self._comment:
+                return (f"{self._target}: {self._check_name}: "
+                        f"{self._verdict.value}: {self._comment}")
+
             return (f"{self._target}: {self._check_name}: "
-                    f"{self._verdict.value}: {self._comment}")
+                    f"{self._verdict.value}")
 
         return ""  # We can return just None value
 
@@ -148,11 +153,9 @@ class CheckResult:
 
     def __str__(self):
         """String representation of all checks"""
-        return str(self.to_dict())  # TODO: maybe it is better to use json.dump
-
-    def __repr__(self):
-        # For correct Json decoder
-        return self.to_dict()
+        # return str(self.to_dict())
+        # TODO: maybe it is better to use json.dump
+        return json.dumps(self.to_dict(), indent=4)
 
     @property
     def is_passed(self) -> bool:
@@ -218,8 +221,16 @@ class CheckResult:
 
         """
         result = dict()
+
         for check in self._check_entries:
-            result.update(check.to_dict())
+            for key, value in check.to_dict().items():
+                if key in result:
+                    if isinstance(result[key], list):
+                        result[key].append(value)
+                    else:
+                        result[key] = [result[key], value]
+                else:
+                    result[key] = value
 
         return result
 
