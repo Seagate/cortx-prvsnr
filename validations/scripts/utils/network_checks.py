@@ -20,25 +20,31 @@ import yaml
 from pathlib import Path
 from ...messages.user_messages.error import (
     DEVICE_DOES_NOT_EXIST,
-    FILE_READ_ERROR
+    FILE_READ_ERROR,
+    IP_DEV_INVALID_OP
 )
 from .cluster import ClusterInfo as Cls
 from .common import run_subprocess_cmd, remote_execution
-from .network_connectivity_check import NetworkConnCheck
+from .network_connectivity_checks import NetworkConnCheck
 logger = logging.getLogger(__name__)
 
 class NetworkValidations():
 
-    @staticmethod
-    def get_ip_from_iface(iface, remote_host=None):
+    def __init__(self):
+        self.nw_conn = NetworkConnCheck()
+        pass
+
+    def get_ip_from_iface(self, iface, remote_host=None):
         """
         This function gets the IP from given interface. If remote host is
         mentioned, then it performs the operation on remote host.
         """
 
+        logger.info("Get ip from iface")
+
         response = {}
         pub_ip = None
-        cmd = f"ip addr show dev {iface}"
+        cmd = f"ip addr show dev {iface} | grep 'inet'"
         if remote_host:
             response = remote_execution(remote_host, cmd)
         else:
@@ -47,22 +53,20 @@ class NetworkValidations():
         if response['ret_code']:
             response['message'] = str(DEVICE_DOES_NOT_EXIST).format(iface)
         else:
-            resp_lines = response['response'].split('\n')
-            for line in resp_lines:
-                if 'inet' in line:
-                    pub_ip = line.strip().split()[1].split('/')[0]
-                    response['message'] = pub_ip
-                    break
+            if 'inet' in response['response']:
+                pub_ip = response['response'].strip().split()[1].split('/')[0]
+                response['message'] = pub_ip
+            else:
+                response['message'] = str(IP_DEV_INVALID_OP)
 
         if response['ret_code']:
-            logger.error(f"{cmd} : {response['message']}")
+            logger.error(f"'{cmd}' : '{response['message']}'")
         else:
-            logger.debug(f"{cmd} : {response['message']}")
+            logger.debug(f"'{cmd}' : '{response['message']}'")
         return response
 
 
-    @staticmethod
-    def verify_public_data_ip():
+    def verify_public_data_ip(self):
         """
         This function checks if public data ip is configured successfully or
         not. If remote host is mentioned, then it checks if public data ip of
@@ -79,15 +83,15 @@ class NetworkValidations():
             for ifc in iface:
                 if 's0f0' in ifc:
                     # Get public data ip from interface
-                    response = NetworkValidations.get_ip_from_iface(ifc, remote_host=node)
+                    response = self.get_ip_from_iface('eth2', remote_host=node)
                     if response['ret_code']:
                         return response
 
                     # Ping public data ip
-                    response = NetworkConnCheck.check_ping(response['message'])
+                    response = self.nw_conn.check_ping(response['message'])
                     if response['ret_code']:
                         return response
 
         response['message'] = "Public data IP is configured for both nodes"
-        logger.debug(response)
+        logger.debug(response['message'])
         return response

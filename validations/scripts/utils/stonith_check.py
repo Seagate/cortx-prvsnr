@@ -14,22 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-# Network connection check
-DEST_HOST_NOT_REACHABLE   = "ERROR: Destination Host Unreachable"
-NAME_OR_SERVICE_NOT_KNOWN = "ERROR: Name or service not known"
-NOT_REACHABLE             = "ERROR: Not reachable"
-
-# Network Check
-DEVICE_DOES_NOT_EXIST = "ERROR: Device {} does not exist."
-IP_DEV_INVALID_OP     = "ERROR: Invalid output. 'inet' is missing"
-
-# BMC Accessible
-BMC_CHASSIS_ERROR      = "ERROR: Unable to check chassis status"
-BMC_POWER_STATUS_ERROR = "ERROR: BMC power status not found"
-BMC_ACCESSIBLE_CHECK   = "CHECK: BMC Is Accessible On Both Servers"
-BMC_ACCESSIBLE_ERROR   = "ERROR: BMC Is Inaccessible On Servers. Please Check."
-BMC_IP_ERROR           = "ERROR: Failed to get BMC IP."
-
-# Others
-FILE_READ_ERROR = "Failed to read file"

@@ -27,8 +27,11 @@ logger = logging.getLogger(__name__)
 
 class NetworkConnCheck():
 
-    @staticmethod
-    def check_ping(ip, remote_host=None):
+    def __init__(self):
+        pass
+
+
+    def check_ping(self, ip, remote_host=None):
         """
         This function checks if IP is reachable. If remote host is mentioned,
         then it checks if ip is reachable from remote host.
@@ -50,8 +53,8 @@ class NetworkConnCheck():
             response['message'] = f"{str(NOT_REACHABLE)} : {ip}"
 
         if response['ret_code']:
-            logger.error(f"{cmd} : {response['message']}")
+            logger.error(f"'{cmd}' : '{response['message']}'")
         else:
-            logger.debug(f"{cmd} : {response['message']}")
+            logger.debug(f"'{cmd}' : '{response['message']}'")
 
         return response
