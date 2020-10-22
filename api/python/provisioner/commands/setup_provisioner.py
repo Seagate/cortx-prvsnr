@@ -1498,6 +1498,26 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "service.dead", fun_args=['salt-mininon']
                 )
 
+                # TODO move to teardown states
+                logger.info("Stopping 'glusterfssharedstorage' service")
+                ssh_client.state_single(
+                    "service.dead",
+                    fun_args=['glusterfssharedstorage.service']
+                )
+
+                logger.info(f"Removing glusterfs mounts")
+                for _, _, mount_dir in glusterfs_client_pillar[
+                    'glusterfs_mounts'
+                ]:
+                    logger.debug(f"Removing mount {mount_dir}")
+                    ssh_client.state_single(
+                        'mount.unmounted',
+                        fun_kwargs={
+                            'name': mount_dir,
+                            'persist': True
+                        }
+                    )
+
                 secondaries = tuple([
                     node.ping_addrs[0] for node in run_args.secondaries
                 ])
