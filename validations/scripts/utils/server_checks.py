@@ -41,7 +41,7 @@ class ServerValidations():
         return result
 
     def verif_node_communication(self):
-        """validation salt  test.ping."""
+        """Validation salt  test.ping."""
         logger.info("verif_node_communication check")
         res = PillarGet.get_pillar("cluster:node_list")
         response = {}
@@ -57,7 +57,7 @@ class ServerValidations():
             if response['ret_code']:
                 response['message'] = f"Failed to communicate to {node}"
                 return response
-        response['message'] = f"Nodes communication is working"
+        response['message'] = "Nodes communication is working"
         logger.debug(f"verif_node_communication: resulted in {response}")
         return response
 

@@ -34,7 +34,7 @@ def run_subprocess_cmd(cmd, **kwargs):
 
     if not _kwargs.get('timeout', None):
         _kwargs['timeout'] = 15
-    if type(cmd) is str:
+    if isinstance(cmd, str):
         cmd = cmd.split()
 
     try:
