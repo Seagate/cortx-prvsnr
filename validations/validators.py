@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class Validators():
-    """Validator class :validation of all checks for given request"""
+    """Validator class :validation of all checks for given request."""
 
     @staticmethod  # noqa: C901
     def factory_checks(args):

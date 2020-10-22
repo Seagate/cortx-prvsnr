@@ -26,7 +26,7 @@ class PillarGet():
 
     @staticmethod
     def get_pillar(key):
-        """Get pillar data for key"""
+        """Get pillar data for key."""
         cmd = f"salt-call pillar.get {key} --out=json"
         response = list(run_subprocess_cmd(cmd))
 
@@ -56,7 +56,7 @@ class PillarGet():
 
     @staticmethod
     def get_hostnames():
-        """Get hostnames from pillar data"""
+        """Get hostnames from pillar data."""
         res = PillarGet.get_pillar("cluster:node_list")
         if res['ret_code']:
             return res

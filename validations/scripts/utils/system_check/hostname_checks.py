@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class HostnameChecks():
 
     def verify_hostnames(self):
-        """Validations of hostnames for nodes(Ask for password)"""
+        """Validations of hostnames for nodes(Ask for password)."""
         logger.info("verify_hostnames check")
         res = PillarGet.get_hostnames()
         response = {}

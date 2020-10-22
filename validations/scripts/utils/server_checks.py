@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ServerValidations():
 
     def verify_nodes_connectivity(self):
-        """Validations for nodes"""
+        """Validations for nodes."""
         logger.info("verify_nodes_connectivity check")
         res = PillarGet.get_pillar("cluster:node_list")
         if res['ret_code']:
@@ -41,7 +41,7 @@ class ServerValidations():
         return result
 
     def verif_node_communication(self):
-        """validation salt  test.ping"""
+        """validation salt  test.ping."""
         logger.info("verif_node_communication check")
         res = PillarGet.get_pillar("cluster:node_list")
         response = {}
@@ -62,7 +62,7 @@ class ServerValidations():
         return response
 
     def verify_passwordless(self):
-        """Validations for nodes"""
+        """Validations for nodes."""
         logger.info("verify_passwordless check")
         res = PillarGet.get_hostnames()
         response = {}
