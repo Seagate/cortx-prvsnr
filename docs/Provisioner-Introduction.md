@@ -59,7 +59,7 @@ This API is exposed in 3 forms:
 
 * Library (python module).
 * CLI (main entry point is command-line utility called `provisioner`; run `provisioner --help` for list of available commands).
-* CLI-wrapper library.  It's a python module, but it's "decoupled" from main library listed above, and does not change frequently with versions which allows for special strict linkage of this python module, e.g. in a form of python frozen app (and there is no need to re-link every time there is new version of main Provisioner library).
+* CLI-wrapper library. It's a python module, but it's "decoupled" from main library listed above, and does not inherit external dependencies/imports on other modules (which main library has).  This allows for special strict linkage of this python module, e.g. in a form of python frozen app (dependencies are minimized in this case).
 
 
 ### Southbound Interface
