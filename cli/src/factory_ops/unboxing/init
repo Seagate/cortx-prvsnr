@@ -204,10 +204,10 @@ check_mgmt_ip
 # Run pre_unbox validations
 pre_unbox
 
-# echo "Configuring the Salt services on both nodes" | tee -a ${LOG_FILE}
-# echo "Running provisioner replace node api" >> ${LOG_FILE}
-# provisioner replace_node --node-host $pvt_ip_b --logfile --logfile-filename ${LOG_FILE}
-# echo "Done with provisioner replace node api" >> ${LOG_FILE}
+echo "Configuring the Salt services on both nodes" | tee -a ${LOG_FILE}
+echo "Running provisioner replace node api" >> ${LOG_FILE}
+provisioner replace_node --node-host $pvt_ip_b --logfile --logfile-filename ${LOG_FILE}
+echo "Done with provisioner replace node api" >> ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
