@@ -23,7 +23,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/deploy-replacement.log}"
 export LOG_FILE
 
-. $BASEDIR/../common_utils/functions.sh
+. ${BASEDIR}/../common_utils/functions.sh
 
 l_info "***** Running $0 *****" 
 
@@ -34,15 +34,16 @@ function trap_handler {
 trap trap_handler ERR
 
 run_all=true
+run_remove_node_states=false
 run_system_states=false
 run_prereq_states=false
-run_sync_states=false
 run_io_states=false
-run_ha_states=false
 run_ctrlpath_states=false
-run_add_node_states=false
-run_remove_node_states=false
+run_sync_states=false
 run_restore_states=false
+run_ha_states=false
+run_add_node_states=false
+run_finalization_states=false
 tgt_node=srvnode-2
 
 salt_opts=
@@ -67,15 +68,16 @@ General options:
 $base_options_usage
 Options:
     -S<tgt_node>,  --singlenode=<tgt_node>       switch to single node mode setup
+    --removenode-states                          deploy only states for removeind a node from cluster
     --system-states                              deploy only system states
     --prereq-states                              deploy only prereq states (components.misc_pkgs)
-    --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
+    --sync-states                                deploy only the software synchronization
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
-    --removenode-states                          deploy only states for removeind a node from cluster
-    --addnode-states                             deploy only states for refresh_config on node and add_node to cluster
     --restore-states                             deploy only restore states to restore backed-up files
+    --addnode-states                             deploy only states for refresh_config on node and add_node to cluster
+    --finalization-states                        deploy only finalization states
 "
 }
 
@@ -89,6 +91,10 @@ function options_parser {
             tgt_node="$2"
             shift
             ;;
+        --removenode-states)
+            run_remove_node_states=true
+            run_all=false
+            ;;
         --system-states)
             run_system_states=true
             run_all=false
@@ -97,32 +103,32 @@ function options_parser {
             run_prereq_states=true
             run_all=false
             ;;
-        --sync-states)
-            run_sync_states=true
-            run_all=false
-            ;;
         --iopath-states)
             run_io_states=true
-            run_all=false
-            ;;
-        --ha-states)
-            run_ha_states=true
-            run_all=false
-            ;;
-        --addnode-states)
-            run_add_node_states=true
-            run_all=false
-            ;;
-        --removenode-states)
-            run_remove_node_states=true
             run_all=false
             ;;
         --ctrlpath-states)
             run_ctrlpath_states=true
             run_all=false
             ;;
+        --sync-states)
+            run_sync_states=true
+            run_all=false
+            ;;
+        --ha-states)
+            run_ha_states=true
+            run_all=false
+            ;;
         --restore-states)
             run_restore_states=true
+            run_all=false
+            ;;
+        --addnode-states)
+            run_add_node_states=true
+            run_all=false
+            ;;
+        --finalization-states)
+            run_finalization_states=true
             run_all=false
             ;;
         *)
@@ -228,8 +234,7 @@ function controlpath_states {
         "csm.prepare"
         "csm.install"
         "csm.config"
-        "uds.prepare"
-        "uds.install"
+        "uds"
     )
 
     l_info "=================================================="
@@ -317,6 +322,27 @@ function add_node_states {
     l_info "=================================================="
 }
 
+function finalization_states {
+    l_info "=================================================="
+    l_info "Stage 2.10: Finalization States..."
+    l_info "=================================================="
+
+    # Check HA cluster health
+    if [[ -e ${BASEDIR}/../common_utils/utility_scripts.sh ]]; then
+        l_info "Check HA cluster health"
+        . ${BASEDIR}/../common_utils/utility_scripts.sh
+        ensure_healthy_cluster
+    else
+        l_error "Unable to find utility scripts for cluster health check."
+        l_info "Please validate cluster health using command: pcs status"
+    fi
+
+    python3 /opt/seagate/cortx/provisioner/cli/csm_admin_user.py -c /usr/bin/consul -n ${tgt_node} --syncpass
+    l_info "CSM admin user created"
+    
+    l_info "=================================================="
+}
+
 
 function run_states {
     local states=${@}
@@ -385,7 +411,7 @@ function update_salt_n_system {
 }
 
 
-parse_args 'S:' 'singlenode:,prereq-states,sync-states,iopath-states,ha-states,ctrlpath-states,system-states,removenode-states,addnode-states,restore-states' options_parser '' "$@"
+parse_args 'S:' 'singlenode:,removenode-states,system-states,prereq-states,sync-states,iopath-states,ctrlpath-states,ha-states,restore-states,addnode-states,finalization-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -455,6 +481,8 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         restore_states
 
         add_node_states
+
+        finalization_states
     fi
 
     if [[ "$run_remove_node_states" == true ]]; then
@@ -493,13 +521,10 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
         add_node_states
     fi
 
-    # Check HA cluster health
-    l_info "Check HA cluster health"
-    . ${BASEDIR}/../../common_utils/utility_scripts.sh
-    ensure_healthy_cluster
-
-    python3 /opt/seagate/cortx/provisioner/cli/csm_admin_user.py -c /usr/bin/consul -n ${tgt_node} --syncpass
-
+    if [[ "$run_finalization_states" == true ]]; then
+        finalization_states
+    fi
+    
     l_info "***** SUCCESS! *****"
     l_info "The detailed logs can be seen at: $LOG_FILE"
     l_info "Done"
