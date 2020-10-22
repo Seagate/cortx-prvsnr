@@ -244,100 +244,90 @@ salt '*' saltutil.refresh_grains ${salt_opts}
 sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
-# After unboxing, the IP addresses in haproxy need to be updated
-echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
-salt "*" state.apply components.ha.haproxy.config ${salt_opts}
-sleep 2
-echo "Ok." | tee -a ${LOG_FILE}
 
-# TODO: Updating VIP in CSM HA needs mechanism to avoid repo creation in csm.prepare
-#echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
-#salt "*" state.apply components.csm.ha.config ${salt_opts}
-#echo "Done." | tee -a ${LOG_FILE}
-
-if command -v pcs ; then
-    echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
-    pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
-    echo "Done." | tee -a ${LOG_FILE}
-
-    echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
-    sleep 5
-    hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-    echo "Done." | tee -a ${LOG_FILE}
-
-    if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
-        # Assign Static IPs on both the nodes
-        echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
-        salt "*" state.apply components.system.network.data.direct ${salt_opts}
-        sleep 5     # Mindfulness break
-        echo "Ok." | tee -a ${LOG_FILE}
-    fi
-
-    # Update ClusterIP
-    echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
-    sleep 5     # Mindfulness break
-    echo "Ok." | tee -a ${LOG_FILE}
-
-    echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
-    salt "*" state.apply components.ha.haproxy.config ${salt_opts}
-    sleep 5     # Mindfulness break
-    echo "Ok." | tee -a ${LOG_FILE}
-
-    # Update Management_vip
-
-    echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
-    sleep 5     # Mindfulness break
-    echo "Ok." | tee -a ${LOG_FILE}
-
-    # Re-run Stonith
-    echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
-    salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
-    sleep 5     # Mindfulness break...Breathe in...Breathe out
-    echo "Ok." | tee -a ${LOG_FILE}
-
-    echo "Thank you for your patience... Appreciate it!"
-
-else
+if ! command -v pcs ; then
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
     exit 1
 fi
 
-echo -n "Removing build URL from Salt configuration.................................." | tee -a ${LOG_FILE}
+echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
+pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
+sleep 2
+
+echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+sleep 5
+
+if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
+    # Assign Static IPs on both the nodes
+    echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
+    salt "*" state.apply components.system.network.data.direct ${salt_opts}
+    sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
+fi
+
+# Update ClusterIP
+echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+sleep 5     # Mindfulness break
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
+salt "*" state.apply components.ha.haproxy.config ${salt_opts}
+sleep 5     # Mindfulness break
+echo "Ok." | tee -a ${LOG_FILE}
+
+# Update Management_vip
+
+echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
+sleep 5     # Mindfulness break
+echo "Ok." | tee -a ${LOG_FILE}
+
+# Re-run Stonith
+echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
+sleep 5     # Mindfulness break...Breathe in...Breathe out
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
+salt "*" state.apply components.csm.prepare ${salt_opts}
+echo "Ok." | tee -a ${LOG_FILE}
+
+echo "Removing build URL from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
-echo "Ok." | tee -a ${LOG_FILE}
 
-echo -n "Removing stale URL (CentOS) from Salt configuration........................." | tee -a ${LOG_FILE}
+echo "Removing stale URL (CentOS) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
-echo "Ok." | tee -a ${LOG_FILE}
 
-echo -n "Removing build URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
+echo "Removing build URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Removing Lustre URL (RedHat) from Salt configuration........................." | tee -a ${LOG_FILE}
-provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}
-sleep 2
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Removing the repos with Seagate URL from Server A..........................." | tee -a ${LOG_FILE}
-seagate_refs_cleanup
-echo "Ok." | tee -a ${LOG_FILE}
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
-sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
-sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
+
+# echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
+# salt "srvnode-2" state.apply components.csm.config ${salt_opts}; sleep 5
+# echo "Ok." | tee -a ${LOG_FILE}
+
+# echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
+# salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
+# echo "Ok." | tee -a ${LOG_FILE}
+
+echo "Removing Lustre URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
+provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}; sleep 2
+
+echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
+seagate_refs_cleanup
 
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
 echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
@@ -362,6 +352,15 @@ pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
+echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
+echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}
+pcs stonith history cleanup >> ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
+echo  -n "Cleaning failed resource history......" | tee -a ${LOG_FILE}
+pcs resource cleanup >> ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
+
+
 # lock unboxing user
 lock_unboxing_user
 
@@ -377,7 +376,7 @@ do
     fi
     echo -n "."
     try=$(( $try + 4 ))
-    sleep 4
+    sleep 2
 done
 echo -e "Ok.\n"
 

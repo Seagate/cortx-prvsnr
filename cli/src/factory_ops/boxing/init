@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check if Boxing flag file is present
-box_flag_file="/opt/seagate/cortx/provisioner/generated_config/boxed"
+box_flag_file="/opt/seagate/cortx/provisioner/generated_configs/boxed"
 if [[ -f $box_flag_file ]]; then
     echo "INFO: Boxing script already run, printing system details required for unboxing" | tee -a ${LOG_FILE}
     create_unboxing_user
@@ -106,6 +106,7 @@ fi
 # Provisioner tasks
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
+reset_vips
 reset_pub_data_ips
 seagate_refs_cleanup
 #TODO: Remove URLs from release and commons sls

@@ -58,8 +58,8 @@ function update_ssh_config {
         echo "Ok." | tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo "Private n/w IP (Server B): $pvt_ip_b"
-        echo -n "Updating server B hostname in ssh config file of server A..................." 2>&1|tee -a ${LOG_FILE}
+        echo "Private n/w IP (Server B): $pvt_ip_b" | tee -a ${LOG_FILE}
+        echo -n "Updating server B hostname in ssh config file of server A..................." | tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
@@ -68,7 +68,7 @@ function update_ssh_config {
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
         echo "Ok." | tee -a ${LOG_FILE}
     else
-        echo "Private n/w IP (Server A): $pvt_ip_a"
+        echo "Private n/w IP (Server A): $pvt_ip_a" | tee -a ${LOG_FILE}
         echo -n "Updating server B hostname in ssh config file of server B..................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_a} "hostname")
@@ -147,43 +147,32 @@ function update_cluster_sls {
     local _static_ip_b=${4:-}
 
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
-        echo -n "Updating Management VIP in pillar..........................................." 2>&1|tee -a ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "mgmt_vip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #sed -i "${line_to_replace},/mgmt_vip:*/ s|mgmt_vip:.*|mgmt_vip: ${mgmt_vip}|" ${_cluster_sls_path}
+        echo "Updating Management VIP in pillar" 2>&1|tee -a ${LOG_FILE}
         provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
-        echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Updating Cluster IP in pillar..............................................." 2>&1|tee -a ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "cluster_ip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #sed -i "${line_to_replace},/cluster_ip:*/ s|cluster_ip:.*|cluster_ip: ${cluster_vip}|" ${_cluster_sls_path}
+        echo "Updating Cluster IP in pillar" 2>&1|tee -a ${LOG_FILE}
         provisioner pillar_set cluster/cluster_ip \"${cluster_vip}\"
-        echo "Ok." |tee -a ${LOG_FILE}
 
          #Update public data interface ips
         if [[ ! -z ${_static_ip_a} && ! -z ${_static_ip_b} ]]; then
             echo "Updating static IP of public data network in pillar for both servers" |tee -a ${LOG_FILE}
             echo "Updating static data ip ($_static_ip_a) for server A" >> $LOG_FILE
-            #line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-            #sed -ie "${line_node1_ip}s/.*/                public_ip_addr: ${_static_ip_a}/" $_cluster_sls_path
             provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${_static_ip_a}\"
             
             echo "Updating static data ip ($_static_ip_b) for server B" >> $LOG_FILE
-            #line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-            #sed -ie "${line_node2_ip}s/.*/                public_ip_addr: ${_static_ip_b}/" $_cluster_sls_path
             provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${_static_ip_b}\"
             echo "Done" | tee -a ${LOG_FILE}
         fi
 
-        echo -n "Updating hostname of Server A..............................................." 2>&1|tee -a ${LOG_FILE}
+        echo "Updating hostname of Server A" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         # Hostname
         local primary_host=$(hostname)
         echo "DEBUG:primary_host: ${primary_host}" >> ${LOG_FILE}
         provisioner pillar_set cluster/srvnode-1/hostname \"${primary_host}\"
-        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         (hostnamectl status | grep Chassis | grep -q server) && {
-            echo -n "Fetching and updating BMC IP for Server A..................................." 2>&1|tee -a ${LOG_FILE}
+            echo "Fetching and updating BMC IP for Server A" 2>&1|tee -a ${LOG_FILE}
             #update_bmc_ip "srvnode-1" >> ${LOG_FILE}
             _ip_line=$(ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
@@ -194,20 +183,19 @@ function update_cluster_sls {
                 echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
                 exit 1
             fi
-            echo "Ok." | tee -a ${LOG_FILE}
-            echo "BMC_IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
+            echo "Done." >> ${LOG_FILE}
+
         }
 
         # Replace node-2 entry
         # Hostname
-        echo -n "Updating hostname of Server B..............................................." 2>&1|tee -a ${LOG_FILE}
+        echo "Updating hostname of Server B" 2>&1|tee -a ${LOG_FILE}
         local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         echo "DEBUG: secondary_host: ${secondary_host}" >> ${LOG_FILE}
         provisioner pillar_set cluster/srvnode-2/hostname \"${secondary_host}\"
-        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
         (hostnamectl status | grep Chassis | grep -q server) && {
-            echo -n "Fetching and updating BMC IP for Server B..................................." 2>&1|tee -a ${LOG_FILE}
+            echo "Fetching and updating BMC IP for Server B" 2>&1|tee -a ${LOG_FILE}
             #update_bmc_ip "srvnode-2" "srvnode-2" >> ${LOG_FILE}
             _ip_line=$(${ssh_cmd} ${pvt_ip_b} ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
@@ -218,14 +206,11 @@ function update_cluster_sls {
                 echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
                 exit 1
             fi
-            echo "Ok." | tee -a ${LOG_FILE}
-            echo "BMC_IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
-        }
+            echo "Done." >> ${LOG_FILE}
 
-        echo -n "Refreshing Salt pillar from Server A........................................" 2>&1|tee -a ${LOG_FILE}
-        sleep 5
-        salt "*" saltutil.refresh_pillar ${salt_opts}
-        echo "Ok." 2>&1|tee -a ${LOG_FILE}
+        }
+        echo "BMC_IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
+        echo "BMC_IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
     fi
 }
 
@@ -270,10 +255,10 @@ function lock_unboxing_user {
 }
 
 function remove_boxing_flag {
-    if [[ -f '/opt/seagate/cortx/provisioner/generated_config/boxed' ]]
+    if [[ -f '/opt/seagate/cortx/provisioner/generated_configs/boxed' ]]
     then
         echo "DEBUG: Boxed file found. Removing boxed file." >> ${LOG_FILE}
-        rm -f /opt/seagate/cortx/provisioner/generated_config/boxed || true
+        rm -f /opt/seagate/cortx/provisioner/generated_configs/boxed || true
     else
         echo "\
 ERROR: Boxing command was not run

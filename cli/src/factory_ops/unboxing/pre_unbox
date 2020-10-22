@@ -79,9 +79,9 @@ export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 nvols="${nvols:-64}" # The default value needs to be changed to 64 for cross connect
 
 if [[ -d "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all" ]]; then
-    pillar_root=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all
+    export pillar_root="/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all"
 elif [[ -d "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all" ]]; then
-    pillar_root=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all
+    export pillar_root="/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all"
 else
     echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
     exit 1
@@ -215,12 +215,12 @@ seagate_refs_cleanup()
         echo "_n_repos=$_n_repos" >> ${LOG_FILE}
         if [[ $_n_repos -ne 0 ]]; then
             echo "Checking if there is salt or seagate references in repos" >> ${LOG_FILE}
-            if $ssh_cmd ${pvt_ips[$i]} 'grep -lEq "seagate|salt" /etc/yum.repos.d/*.repo'; then
-                $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`;\
+            if $ssh_cmd ${pvt_ips[$i]} 'grep -liEq "seagate|salt" /etc/yum.repos.d/*.repo'; then
+                $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -liE "seagate|salt" /etc/yum.repos.d/*.repo`;\
                     do if ! grep -q "file://" $file; then\
                         echo "Removing repo file: $file";
-                        mkdir -p /opt/seagate/cortx/provisioner/generated_config/repos_backup_unboxing
-                        yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_config/repos_backup_unboxing/; 
+                        mkdir -p /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing
+                        yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing/; 
                         fi;
                     done'
                 echo "Done." | tee -a ${LOG_FILE}
