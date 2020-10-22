@@ -1,28 +1,54 @@
 # Validation Framework
 
+Table of Contents:
+
+- [Validation Framework](#validation-framework)
+  - [General Guidelines](#general-guidelines)
+  - [Input/Output Checks](#inputoutput-checks)
+    - [Input Format](#input-format)
+    - [Output Format](#output-format)
+  - [Proposed directory structure](#proposed-directory-structure)
+  - [`scripts`](#scripts)
+    - [`utils`](#utils)
+    - [`factory`](#factory)
+    - [`field`](#field)
+  - [Salt Modules](#salt-modules)
+- [Checks](#checks)
+  - [Hardware check](#hardware-check)
+  - [Software Check](#software-check)
+
+
 ## General Guidelines
-*  As a high-level guideline, the entire framework would be built and managed in Python 3.x+.
-    Python helps us in 2 ways:
-    1.  Better control over stdout and stderr
-    1.  Possibility of easily converting Python module to Salt module
 
-    If you have concerns regarding Python code or lack confidence in Python, it is absolutely ok to capture the logic in a bach script and place it under **_cortx-prvsnr/validation/scripts/utils/uncategorized_**
+* As a high-level guideline, the entire framework would be built and managed in Python 3.x+.
 
-*  Another general rule of thumb would be to modularize the checks as much as possible. Avoid long script files. Each script file should contain only checks related to the theme of the file.  **_Single-Responsibility principle_**
-    **E.g.** A network check file should have only ping test and no checks related to storage connectivity like iperf, which also happens over network
+  Python helps us in 2 ways:
 
-*  Before you start implementing a new check, make sure you have scanned the utils directory for any existing modules. **_Open-Closed principle_**
-    If you find something similar, but doesn't fit your purpose, consider generalizing the existing module and extend it to scope in the new possible
+  1. Better control over `stdout` and `stderr`.
+  2. Possibility of easily converting Python module to Salt module.
 
-*  Any script not in _validation/scripts/utils_ should serve the only purpose of making calls to the util scripts (**should serve as an orchestrator**). Any specific code logic should be avoided as much as possible. (**centralization** to avoid regression bugs and enable maintainable code)  
+  If you have concerns regarding Python code or lack confidence in Python, it is absolutely ok to capture the logic in a bash script and place it under `_cortx-prvsnr/validation/scripts/utils/uncategorized_`.
+
+* Another general rule of thumb would be to modularize the checks as much as possible. Avoid long script files. Each script file should contain only checks related to the theme of the file -- **_Single-Responsibility principle_**.  E.g. a network check file should have only `ping` test and no checks related to storage connectivity like `iperf`, which also happens over network.
+
+* Before you start implementing a new check, make sure you have scanned the `utils` directory for any existing modules -- **_Open-Closed principle_**.  If you find something similar, but doesn't fit your purpose, consider generalizing the existing module and extend it to scope in the new possible.
+
+* Any script not in `validation/scripts/utils` should serve the only purpose of making calls to the `util` scripts (**should serve as an orchestrator**). Any specific code logic should be avoided as much as possible. (**Centralization** to avoid regression bugs and enable maintainable code.)
+
 
 ## Input/Output Checks
+
 ### Input Format
-Ideally the input should be a method call with zero parameters.  
-If it is necessary to have parameters, there should be only one.  
-The single parameter shall be a dictionary of all the parameters necessary by the method, with keys as the argument names and values as the potential arguments to the method (This would be in-line with Python **kwargs)  
-E.g. 
-```
+
+Ideally the input should be a method call with zero parameters.
+
+If it is necessary to have parameters, there should be only one.
+
+The single parameter shall be a dictionary of all the parameters necessary by the method, with keys as the argument names and values as the potential arguments to the method.  (This would be in-line with Python `**kwargs`).
+
+E.g.:
+
+```python
 def foo(
         args = {
             "arg_1": "value_for_arg_1",
@@ -34,8 +60,10 @@ def foo(
 
 
 ### Output Format
-Output shall always be a single JSON format string  
-```
+
+Output shall always be a single JSON format string:
+
+```json
 {
   "check": "",  
   "retcode": "",  
@@ -44,21 +72,28 @@ Output shall always be a single JSON format string
 }
 ```  
 
-**Legend**:  
-**_check_**: This is the check that has been performed by the callee. It could be the command executed or a short string describing check performed  
-**_retcode_**: Return code either from shell for an executed command or a preferable code decided by the callee module to help understand the area of failure  
-**_stdout_**: The stdout from shell command or a string that describes a success scenario  
-**_stderr_**: The stderr from shell command or a string that describes a failure scenario  
+Legend:
+
+* `check`: This is the check that has been performed by the called. It could be the command executed or a short string describing check performed.
+
+* `retcode`: Return code either from shell for an executed command or a preferable code decided by the called module to help understand the area of failure.
+
+* `stdout`: The `stdout` from shell command or a string that describes a success scenario.
+
+* `stderr`: The `stderr` from shell command or a string that describes a failure scenario.
 
 
-## Proposed directory structure:
+## Proposed directory structure
+
 At a high level the directory structure would consist of:
-*  **messages**: Directory for messages. It would consist of:
-    *  User messages: Translations for known standard cryptic messages from system (command output/logs)
-    *  log_messages: Messages that guide the user studying logs. This is essentially required if we plan to do localization in future.
-*  **scripts**: The validation scripts performing granular level checks of system processes/components. This directory structure would be discussed in detail in later parts of this document.
+
+* `messages`: Directory for messages. It would consist of:
+  * `user_messages`: Translations for known standard cryptic messages from system (command output/logs).
+  * `log_messages`: Messages that guide the user studying logs. This is essentially required if we plan to do localization in future.
+* `scripts`: The validation scripts performing granular level checks of system processes/components. This directory structure would be discussed in detail in later parts of this document.
 
 A sample tree of directory structure for validation would be:
+
 ```
 ├───validation
 │   ├───messages
@@ -108,131 +143,174 @@ A sample tree of directory structure for validation would be:
 ```
 
 
-## Scripts
+## `scripts`
+
 The scripts directory shall be logically segregated into:
-*  **utils**
-*  **factory**
-*  **field**
 
-### Utils
-Utils would be a common library of reusable modules that would be reused with specific validation scripts targeting a specific logical role.
-Example of scripts under Utils would be:
-*  **logger**
-*  **exit_trap**
-*  **network_connectivity_check**: Tools to test network connectivity
-    * **ping_test**
-    * **port_check**
-*  **internal_storage_connectivity_check**: Check storage sanity on server node
-*  **external_storage_connectivity_check**: Check storage sanity on storage enclosure
-*  **raw_io_check_over_sas**: FIO kind of utility to test IO on SAS channels
-*  **raw_io_check_over_nw**: iperf kind of utility over ib/tcp channels
-*  **system_check**: Various sanity checks for system components (SW/HW)
-    * hw_check
-    * hostname_check
-    * critical_dir_access_check
-    * repo_source_check
-    * gluster_replication_check
-    * lvm_check
-    * salt_health_check
+* `utils`
+* `factory`
+* `field`
 
-### Factory
+### `utils`
+
+This would be a common library of reusable modules that would be reused with specific validation scripts targeting a specific logical role.
+
+Example of scripts under `utils` would be:
+
+* `logger`
+* `exit_trap`
+* `network_connectivity_check`: Tools to test network connectivity
+  * `ping_test`
+  * `port_check`
+* `internal_storage_connectivity_check`: Check storage sanity on server node
+* `external_storage_connectivity_check`: Check storage sanity on storage enclosure
+* `raw_io_check_over_sas`: FIO kind of utility to test IO on SAS channels
+* `raw_io_check_over_nw`: `iperf` kind of utility over IB/TCP channels
+* `system_check`: Various sanity checks for system components (SW/HW):
+    * `hw_check`
+    * `hostname_check`
+    * `critical_dir_access_check`
+    * `repo_source_check`
+    * `gluster_replication_check`
+    * `lvm_check`
+    * `salt_health_check`
+
+### `factory`
+
 The section consists of scripts performing validation in factory environment.
-Each logical validation scenario shall represent a script, which aggregates the validation modules from utils.
+Each logical validation scenario shall represent a script, which aggregates the validation modules from `utils`.
 
-### Field
+### `field`
+
 The scripts performing validation in field on customer environment.
-Each logical validation scenario shall represent a script, which aggregates the validation modules from utils.
+Each logical validation scenario shall represent a script, which aggregates the validation modules from `utils`.
 
 ## Salt Modules
-Our salt formula under srv directory follows a strict discipline of structure. Thus each component module has `prepare.sls` and `sanity_check.sls`
 
-In place validations for each components modules can and shall be performed using:
-*  **prepare.sls**: For check prior to starting installation and configuration of a component
-*  **sanity_check.sls**: For check post installation and configuration of a component
+Our salt formula under `srv` directory follows a strict discipline of structure. Thus each component module has `prepare.sls` and `sanity_check.sls`.
+
+In-place validations for each components modules can and shall be performed using:
+
+* `prepare.sls`: For check prior to starting installation and configuration of a component.
+* `sanity_check.sls`: For check post installation and configuration of a component.
+
 
 # Checks
+
 ## Hardware check
-*  Mellanox OFED in installed:
-	  yum list yum list mlnx-ofed-all
-  	Ideally pick list of installed packages from yum list *mlnx* and cross-check against a standard reference list
-*  Mellanox HCA present and has number of ports:
-	  https://www.mellanox.com/support/firmware/identification
-    ```
-    [root@localhost ~]# lspci -nn | grep "Mellanox Technologies"
-    af:00.0 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
-    af:00.1 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
-    d8:00.0 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
-    d8:00.1 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
-    ```
-*  LSI HBA is present
-    ```
-    [root@localhost ~]# lspci -nn | grep "SCSI"
-    86:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI SAS3216 PCI-Express Fusion-MPT SAS-3 [1000:00c9] (rev 01)
-    ```
-*  LSI HBA has required number of ports
-	  https://www.thegeekdiary.com/how-to-identify-the-hba-cardsports-and-wwn-in-rheloel/
-    Enclosure volumes are accessible from both servers
-    - `lsblk -S`
-    - `ls -1 /dev/disk/by-id/scsi-*`
-*  Enclosure volumes are mapped to both controller  
-    (Should be 16 for cross-connect setup with 8 volumes per storage mapping)  
-    ```
-    $ multipath -ll | grep prio=50 | wc -l
-      16
-    $ multipath -ll | grep prio=10 | wc -l
-      16
-    ```  
-    If not found, instruct user to run `rescan_scsi_bus.sh`  
-*  LVM check  
-    ```
-    $ lvscan | grep metadata | grep ACTIVE | wc -l
-    4
-    ```  
-    2 for SWAP (one from each node) and 2 for metadata (one for each node)  
-*  Network interface check  
-    ```
-    $ ip a | grep inet | egrep -v 'inet6|127.0.0.1'
-    inet 192.168.10.10/20 brd 10.230.255.255 scope global noprefixroute dynamic eth0
-    inet 192.168.20.10/20 brd 192.168.15.255 scope global noprefixroute dynamic eth1
-    inet 192.168.30.10/20 brd 192.168.31.255 scope global noprefixroute dynamic eth2
-    ```
+
+* Mellanox OFED in installed:
+
+  ```
+  yum list yum list mlnx-ofed-all
+  ```
+
+  Ideally pick list of installed packages from
+
+  ```
+  yum list *mlnx*
+  ```
+
+  and cross-check against a standard reference list.
+
+* Mellanox HCA present and has number of ports:
+
+  https://www.mellanox.com/support/firmware/identification
+
+  ```
+  [root@localhost ~]# lspci -nn | grep "Mellanox Technologies"
+  af:00.0 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
+  af:00.1 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
+  d8:00.0 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
+  d8:00.1 Ethernet controller [0200]: Mellanox Technologies MT27800 Family [ConnectX-5] [15b3:1017]
+  ```
+
+* LSI HBA is present:
+
+  ```
+  [root@localhost ~]# lspci -nn | grep "SCSI"
+  86:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI SAS3216 PCI-Express Fusion-MPT SAS-3 [1000:00c9] (rev 01)
+  ```
+
+* LSI HBA has required number of ports:
+	* https://www.thegeekdiary.com/how-to-identify-the-hba-cardsports-and-wwn-in-rheloel/
+  * Enclosure volumes are accessible from both servers
+    * `lsblk -S`
+    * `ls -1 /dev/disk/by-id/scsi-*`
+
+* Enclosure volumes are mapped to both controller:
+
+  (Should be 16 for cross-connect setup with 8 volumes per storage mapping.)
+
+  ```
+  $ multipath -ll | grep prio=50 | wc -l
+    16
+  $ multipath -ll | grep prio=10 | wc -l
+    16
+  ```
+
+  If not found, instruct user to run `rescan_scsi_bus.sh`.
+
+* LVM check:
+
+  ```
+  $ lvscan | grep metadata | grep ACTIVE | wc -l
+  4
+  ```
+
+  2 for SWAP (one from each node) and 2 for metadata (one for each node).
+
+* Network interface check:
+
+  ```
+  $ ip a | grep inet | egrep -v 'inet6|127.0.0.1'
+  inet 192.168.10.10/20 brd 10.230.255.255 scope global noprefixroute dynamic eth0
+  inet 192.168.20.10/20 brd 192.168.15.255 scope global noprefixroute dynamic eth1
+  inet 192.168.30.10/20 brd 192.168.31.255 scope global noprefixroute dynamic eth2
+  ```
 
 ## Software Check
-*  Verify rpm  
-    ```
-    yum verify-rpm *cortx*
-    ```  
-*  Cluster resource status  
-    ```
-    $ hctl node status --full|jq .
-    {
-      "resources": {
-        "statistics": {
-          "started": 71,
-          "stopped": 0,
-          "starting": 2
-        }
+
+* Verify rpm:
+
+  ```
+  yum verify-rpm *cortx*
+  ```
+
+* Cluster resource status:
+
+  ```
+  $ hctl node status --full|jq .
+  {
+    "resources": {
+      "statistics": {
+        "started": 71,
+        "stopped": 0,
+        "starting": 2
+      }
+    },
+    "nodes": [
+      {
+        "name": "srvnode-1",
+        "online": true,
+        "standby": false,
+        "unclean": false,
+        "resources_running": 39
       },
-      "nodes": [
-        {
-          "name": "srvnode-1",
-          "online": true,
-          "standby": false,
-          "unclean": false,
-          "resources_running": 39
-        },
-        {
-          "name": "srvnode-2",
-          "online": true,
-          "standby": false,
-          "unclean": false,
-          "resources_running": 34
-        }
-      ]
-    }
-    ```  
-*  Virtual IP
-    *  Cluster VIP on public data network
+      {
+        "name": "srvnode-2",
+        "online": true,
+        "standby": false,
+        "unclean": false,
+        "resources_running": 34
+      }
+    ]
+  }
+  ```
+
+* Virtual IP:
+  * Cluster VIP on public data network
+
     ```
     $ pcs status | grep kibana-vip
      kibana-vip (ocf::heartbeat:IPaddr2):       Started srvnode-1
@@ -240,7 +318,9 @@ In place validations for each components modules can and shall be performed usin
     $ salt-call pillar.get cluster:cluster_ip --output=newline_values_only
     172.16.200.11
     ```
-    *  Management VIP on management network
+
+  * Management VIP on management network:
+
     ```
     $ pcs status | grep ClusterIP:
      ClusterIP:0        (ocf::heartbeat:IPaddr2):       Started srvnode-1
