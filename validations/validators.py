@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class Validators():
-
     """Validation of all checks for given request."""
 
     @staticmethod  # noqa: C901

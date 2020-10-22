@@ -29,6 +29,7 @@ class LVMChecks():
     def verify_lvm(self):
         """Validations for LVM."""
         logger.info("verify_lvm check")
+
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
         response = {}
@@ -36,6 +37,7 @@ class LVMChecks():
             nodes = res['response']
         else:
             return res
+
         res = []
         for node in nodes:
             result = run_subprocess_cmd(
@@ -49,6 +51,7 @@ class LVMChecks():
                 return response
             else:
                 res.append(result[1])
+
         if len(res) > 1:
             pre_res = len(nodes)
             flag = True
@@ -61,5 +64,6 @@ class LVMChecks():
                 response['message'] = "Failed to verify LVM "
             else:
                 response['message'] = "Verified LVM on both nodes"
+
         logger.debug("verify_lvm: resulted in {response}")
         return response

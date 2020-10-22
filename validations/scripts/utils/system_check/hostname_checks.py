@@ -28,10 +28,12 @@ class HostnameChecks():
     def verify_hostnames(self):
         """Validations of hostnames for nodes(Ask for password)."""
         logger.info("verify_hostnames check")
+
         res = PillarGet.get_hostnames()
         response = {}
         if res['ret_code']:
             return res
+
         for node in res['response']:
             result = run_subprocess_cmd(f"ssh {node} exit")
             response['ret_code'] = result[0]
@@ -40,6 +42,7 @@ class HostnameChecks():
             if result[0]:
                 response['message'] = f"Ssh to host {node} failed"
                 return response
+
         response['message'] = "Verified hostnames for both nodes"
         logger.debug(f"verify_hostnames: resulted in {response}")
         return response

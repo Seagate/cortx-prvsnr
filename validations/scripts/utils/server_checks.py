@@ -30,12 +30,15 @@ class ServerValidations():
         """Validations for nodes."""
         logger.info("verify_nodes_connectivity check")
         res = PillarGet.get_pillar("cluster:node_list")
+
         if res['ret_code']:
             return res
+
         for node in res['response']:
             result = NetworkValidations.check_ping(node)
             if result['ret_code']:
                 return result
+
         result['message'] = "Nodes are online"
         logger.debug(f"verify_nodes_online: resulted in {result}")
         return result
@@ -45,8 +48,10 @@ class ServerValidations():
         logger.info("verif_node_communication check")
         res = PillarGet.get_pillar("cluster:node_list")
         response = {}
+
         if res['ret_code']:
             return res
+
         for node in res['response']:
             result = run_subprocess_cmd(
                 f"salt {node} test.ping --out=json", timeout=10
@@ -57,6 +62,7 @@ class ServerValidations():
             if response['ret_code']:
                 response['message'] = f"Failed to communicate to {node}"
                 return response
+
         response['message'] = "Nodes communication is working"
         logger.debug(f"verif_node_communication: resulted in {response}")
         return response
@@ -66,8 +72,10 @@ class ServerValidations():
         logger.info("verify_passwordless check")
         res = PillarGet.get_hostnames()
         response = {}
+
         if res['ret_code']:
             return res
+
         for node in res['response']:
             result = run_subprocess_cmd(f"ssh {node} exit")
             response['ret_code'] = result[0]
@@ -76,6 +84,7 @@ class ServerValidations():
             if result[0]:
                 response['message'] = f"No Passwordless ssh: {node}"
                 return response
+
         response['message'] = "Verified Passwordless ssh"
         logger.debug(f"verify_passwordless: resulted in {response}")
         return response
