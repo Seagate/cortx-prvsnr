@@ -76,11 +76,11 @@ Each of the sub-sections (unless mentioned explicitly) will have the following p
 
 Supported **Sub-sections** for `<component>` root node are listed below:
 
-* `post_install`:  This section is called after the component rpm is installed from config `.sls`
+* `post_install`:  This section is called after the component rpm is installed from config `.sls`.
 
 * `config`: This section shall follow the post_install and is intended to allow components to update/adjust the configurations according to local environments.
 
-* `init`: This section has a purpose to initialize the component (i.e. mark it ready) for service. This shall config the config stage.
+* `init`: This section has a purpose to initialize the component (i.e. mark it ready) for service. This shall complete the configuration of the component.  This would be post the `config` stage.
 
 * `test`: This section should have scripts to validate the state of the component, i.e. to ensure component sanity post deployment. This would be post the `init` stage.
 
