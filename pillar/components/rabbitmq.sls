@@ -25,7 +25,7 @@ rabbitmq:
       exchange_name: "sspl-in"
       routing_key: "actuator-req-key"
       username: "sspluser"
-      password: "sspl4ever"
+      password:
       primary_rabbitmq_host: "localhost"
     RABBITMQEGRESSPROCESSOR:
       virtual_host: "SSPL"
@@ -36,7 +36,7 @@ rabbitmq:
       ack_exchange_name: "sspl-out"
       ack_routing_key: "actuator-resp-key"
       username: "sspluser"
-      password: "sspl4ever"
+      password:
       message_signature_username: "sspl-ll"
       message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
       message_signature_expires: "3600"
