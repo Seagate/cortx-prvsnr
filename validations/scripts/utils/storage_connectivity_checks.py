@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 class StorageValidations():
 
-    def verify_luns_consistency():
-        '''Validations for LUNs are consistent across nodes'''
+    def verify_luns_consistency(self):
+        """Validations for LUNs are consistent across nodes"""
         logger.info("verify_luns_consistency check")
         res = PillarGet.get_hostnames()
         nodes = []

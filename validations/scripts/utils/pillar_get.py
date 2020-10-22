@@ -56,6 +56,7 @@ class PillarGet():
 
     @staticmethod
     def get_hostnames():
+        """Get hostnames from pillar data"""
         res = PillarGet.get_pillar("cluster:node_list")
         if res['ret_code']:
             return res

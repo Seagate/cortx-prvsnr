@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class Validators():
-    '''Validator class :validation of all checks for given request'''
+    """Validator class :validation of all checks for given request"""
 
     @staticmethod  # noqa: C901
     def factory_checks(args):
@@ -54,19 +54,19 @@ class Validators():
 
         for check, cls in check_list.items():
             logger.info(f"Check name {check}")
-            res = getattr(globals()[cls], check)()
+            obj = globals()[cls]()
+            res = getattr(obj, check)()
             if res:
                 if res['ret_code']:
-                    print(f"{check}: Failed : {res['message']}")
+                    print(f"{check}: {res['message']}......[Failed]")
                     print(f"Response: {res}\n")
                 else:
-                    print(f"{check}: Success : {res['message']}\n")
+                    print(f"{check}: {res['message']}......[Success]\n")
 
 
 if __name__ == '__main__':
     import argparse
     import sys
-    import logging
     from scripts.utils.log import setup_logging
 
     setup_logging()

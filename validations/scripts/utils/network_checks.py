@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 class NetworkChecks():
 
-    def verify_mgmt_vip():
-        '''Validations for mgmt_vip'''
+    def verify_mgmt_vip(self):
+        """Validations for mgmt_vip"""
         logger.info("verify_mgmt_vip check")
         res = PillarGet.get_pillar("cluster:mgmt_vip")
         if res['ret_code']:
@@ -40,8 +40,8 @@ class NetworkChecks():
         logger.debug(f"verify_mgmt_vip: resulted in {res}")
         return res
 
-    def verify_cluster_ip():
-        '''Validations for cluster_ip'''
+    def verify_cluster_ip(self):
+        """Validations for cluster_ip"""
         logger.info("verify_cluster_ip check")
         res = PillarGet.get_pillar("cluster:cluster_ip")
         if res['ret_code']:
@@ -55,8 +55,8 @@ class NetworkChecks():
         logger.debug(f"verify_cluster_ip: resulted in {res}")
         return res
 
-    def verify_public_data_ip():
-        '''Validations for public data ip'''
+    def verify_public_data_ip(self):
+        """Validations for public data ip"""
         logger.info("verify_public_data_ip check")
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
@@ -78,8 +78,8 @@ class NetworkChecks():
         logger.debug(f"verify_public_data_ip: resulted in {result}")
         return result
 
-    def verify_private_data_ip():
-        '''Validations for private data ip'''
+    def verify_private_data_ip(self):
+        """Validations for private data ip"""
         logger.info("verify_private_data_ip check")
         res = PillarGet.get_pillar("cluster:node_list")
         nodes = []
