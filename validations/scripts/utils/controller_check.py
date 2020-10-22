@@ -42,3 +42,28 @@ class ControllerValidations():
         result['message'] = "Controllers are accessible"
         logger.debug("verify_access_to_controller: resulted in {result}")
         return result
+
+    def verify_inband_controller(self):
+        """Validations inband Access to controllers."""
+        logger.info("verify_inband_controller check")
+        controllers = {'primary_mc': '10.0.0.2',
+                       'secondary_mc': '10.0.0.3'}
+        for controller in controllers.keys():
+            result = PillarGet.get_pillar(
+                f"storage_enclosure:controller:{controller}:ip"
+            )
+            if result['ret_code']:
+                return result
+            if result['response'] != controllers[controller]:
+                result['ret_code'] = 1
+                result['err_msg'] = (
+                    f"{controller} shoule be {controllers[controller]}")
+                result['message'] = (
+                    f"Not a valid inband controller ip {result['response']}")
+                return result
+            result = NetworkValidations.check_ping(result['response'])
+            if result['ret_code']:
+                return result
+        result['message'] = "Inband Controllers are accessible"
+        logger.debug("verify_inband_controller: resulted in {result}")
+        return result

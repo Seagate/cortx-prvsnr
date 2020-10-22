@@ -27,6 +27,7 @@ UNBOXING_CHECK = {
 }
 
 ALL_CHECKS = {
+    'verify_inband_controller': 'ControllerValidations'
 }
 
 for check in (
