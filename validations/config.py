@@ -16,7 +16,7 @@
 #
 
 UNBOXING_PRE_CHECK = {
-    # 'bmc_validation' : [BmcCheck, 'is_bmc_accessible'],
+    'verify_bmc_accessible' : 'BMCValidations',
     'verify_public_data_ip' : 'NetworkValidations',
 }
 

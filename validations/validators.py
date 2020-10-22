@@ -27,7 +27,7 @@ from validations import config
 # from scripts.utils.system_check.lvm_checks import LVMChecks  # noqa: F401
 # from scripts.utils.system_check.hostname_checks import HostnameChecks  # noqa: F401
 
-# from .scripts.utils.system_check.bmc_checks import BmcCheck
+from .scripts.factory.bmc_checks import BMCValidations
 from .scripts.utils.network_checks import NetworkValidations
 
 logger = logging.getLogger(__name__)
