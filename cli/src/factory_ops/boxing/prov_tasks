@@ -43,19 +43,25 @@ salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 =======
 >>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
+=======
+>>>>>>> Fix bugs found during testing.
 export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
 export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
 server_names=("Server A" "Server B")
 export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
 >>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
+=======
+>>>>>>> Fix bugs found during testing.
 
 function trap_handler {
     echo "***** ERROR! *****"
