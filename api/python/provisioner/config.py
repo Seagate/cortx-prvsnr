@@ -122,6 +122,8 @@ LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 
+SECRET_MASK = '*' * 7
+
 # TODO ??? make that dynamic (based on pillar structure)
 PRVSNR_CORTX_COMPONENTS = [
     'cluster',

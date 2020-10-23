@@ -29,7 +29,8 @@ import logging
 from .vendor import attr
 from .config import (
    ALL_MINIONS, LOCAL_MINION,
-   PRVSNR_USER_FILEROOT_DIR
+   PRVSNR_USER_FILEROOT_DIR,
+   SECRET_MASK
 )
 from .errors import (
     ProvisionerError,
@@ -114,20 +115,24 @@ class SaltArgsMixin:
         return dict(arg=self.fun_args, kwarg=self.fun_kwargs, **self.kw)
 
     def __str__(self):
-        _dct = attr.asdict(self)
-        if 'password' in _dct['kw']:
-            _dct['kw']['password'] = '*' * 7
-
+        _dct = self._as_dict()
         _self_safe = type(self)(**_dct)
         return str(attr.asdict(_self_safe))
 
     def _as_dict(self):
         _dct = attr.asdict(self)
         if 'password' in _dct['kw']:
-            _dct['kw']['password'] = '*' * 7
+            _dct['kw']['password'] = SECRET_MASK
 
         if 'password' in _dct['fun_kwargs']:
-            _dct['fun_kwargs']['password'] = '*' * 7
+            _dct['fun_kwargs']['password'] = SECRET_MASK
+
+        # we do not mask the 'kw' more since
+        # it should include only salt related parameters
+        # that are safe to show
+        if self.secure:
+            _dct['fun_args'] = SECRET_MASK
+            _dct['fun_kwargs'] = SECRET_MASK
 
         return _dct
 
@@ -146,9 +151,11 @@ class SaltRunnerArgs(SaltArgsMixin):
     )
     nowait: bool = False
     kw: Dict = attr.Factory(dict)
+    secure: bool = False
 
 
 # TODO TEST
+# TODO IMPROVE EOS-14361 optionally mask fun_args
 @attr.s(auto_attribs=True)
 class SaltRunnerResult:
     _prvsnr_type_ = True
@@ -186,6 +193,7 @@ class SaltClientArgsBase(SaltArgsMixin):
         converter=lambda v: {} if v is None else v, default=None
     )
     kw: Dict = attr.Factory(dict)
+    secure: bool = False
 
     @property
     def args(self):
@@ -311,13 +319,14 @@ class SaltSSHResultParser:
         return not (set(required) - set(data))
 
     @classmethod
-    def from_salt_res(cls, data: Any, cmd_args: SaltClientArgsBase):
+    def from_salt_res(cls, data: Any, cmd_args_view: Dict):
         if type(data) is dict:
             _data = {cls._sanitize_key(k): v for k, v in data.items()}
             _types = [
                 SaltSSHSimpleResult,
                 (
-                    SaltSSHStateJobResult if cmd_args.fun.startswith('state.')
+                    SaltSSHStateJobResult
+                    if cmd_args_view['fun'].startswith('state.')
                     else SaltSSHJobResult
                 )
             ]
@@ -344,7 +353,7 @@ class SaltClientResult:
     _prvsnr_type_ = True
 
     raw: Any
-    cmd_args: SaltClientArgsBase
+    cmd_args_view: Dict
     results: Any = attr.ib(init=False, default=attr.Factory(dict))
     fails: Any = attr.ib(init=False, default=attr.Factory(dict))
 
@@ -379,7 +388,7 @@ class SaltClientResult:
             _fails = {}
             if job_result.get('retcode') != 0:
                 if (
-                    self.cmd_args.fun.startswith('state.')
+                    self.cmd_args_view['fun'].startswith('state.')
                     and (type(ret) is dict)
                 ):
                     _fails = self._get_state_fails(ret)
@@ -407,7 +416,7 @@ class SaltSSHClientResult(SaltClientResult):
     def _parse_raw_dict(self):
         for target, job_result in self.raw.items():
             ssh_res = SaltSSHResultParser.from_salt_res(
-                job_result, self.cmd_args
+                job_result, self.cmd_args_view
             )
             self.results[target] = ssh_res.result
             if ssh_res.fail is not None:
@@ -479,12 +488,14 @@ class SaltClientBase(ABC):
     def _run(self, cmd_args: SaltClientArgsBase):
         ...
 
-    def parse_res(self, salt_res, cmd_args) -> SaltClientResult:
+    def parse_res(
+        self, salt_res, cmd_args_view: Dict
+    ) -> SaltClientResult:
         if not salt_res:
             raise SaltNoReturnError(
-                cmd_args._as_dict(), 'Empty salt result: {}'.format(salt_res)
+                cmd_args_view, 'Empty salt result: {}'.format(salt_res)
             )
-        return self._salt_client_res_t(salt_res, cmd_args)
+        return self._salt_client_res_t(salt_res, cmd_args_view)
 
     def run(
         self,
@@ -492,6 +503,7 @@ class SaltClientBase(ABC):
         targets: str = ALL_MINIONS,
         fun_args: Union[Tuple, None] = None,
         fun_kwargs: Union[Dict, None] = None,
+        secure=False,
         **kwargs
     ):
         if targets == LOCAL_MINION:
@@ -504,28 +516,27 @@ class SaltClientBase(ABC):
 
         # TODO log username / password ??? / eauth
         cmd_args = self._cmd_args_t(
-            targets, fun, fun_args, fun_kwargs, kw=kwargs
+            targets, fun, fun_args, fun_kwargs, kw=kwargs,
+            secure=secure
         )
 
         logger.debug(
-            "Running function '{}' on '{}', fun_args: {},"
-            " fun_kwargs: {}, kwargs: {}"
-            .format(
-                fun, targets, fun_args, fun_kwargs, kwargs
-            )
+            f"Running function '{fun}' on '{targets}', args: {cmd_args}"
         )
+
+        # TODO IMPROVE EOS-14361 make a View class instead
+        cmd_args_view = cmd_args._as_dict()
 
         try:
             salt_res = self._run(cmd_args)
         except Exception as exc:
             # TODO too generic
-            raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+            raise SaltCmdRunError(cmd_args_view, exc) from exc
         else:
             try:
                 logger.debug(
-                    "Function '{}' on '{}' resulted in {}".format(
-                        fun, targets, salt_res
-                        )
+                    "Function '{}' on '{}' resulted in {}"
+                    .format(fun, targets, salt_res)
                 )
             except Exception as exc:
                 if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
@@ -533,10 +544,10 @@ class SaltClientBase(ABC):
                 else:
                     raise exc
 
-        res = self.parse_res(salt_res, cmd_args)
+        res = self.parse_res(salt_res, cmd_args_view)
 
         if res.fails:
-            raise SaltCmdResultError(cmd_args._as_dict(), res.fails)
+            raise SaltCmdResultError(cmd_args_view, res.fails)
         else:
             return res.results
 
@@ -651,7 +662,6 @@ class SaltSSHClient(SaltClientBase):
 
                         # inject production access public key
                         # FIXME hardcoded 'root'
-                        # FIXME hardcoded path to production pub key
                         self.run(
                             'state.single',
                             fun_args=['ssh_auth.present'],
@@ -660,7 +670,8 @@ class SaltSSHClient(SaltClientBase):
                                 user=roster.get(target, {}).get(
                                     'user', 'root'
                                 ),
-                                source="salt://provisioner/files/minions/all/id_rsa_prvsnr.pub"
+                                # FIXME hardcoded path to production pub key
+                                source="salt://provisioner/files/minions/all/id_rsa_prvsnr.pub"  # noqa: E501
                             ),
                             targets=target,
                             roster_file=bootstrap_roster_file
@@ -798,6 +809,7 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     fun_args: Union[Tuple, None] = None,
     fun_kwargs: Union[Dict, None] = None,
     nowait=False,
+    secure=False,
     **kwargs
 ):
     # TODO FEATURE not yet supported
@@ -808,7 +820,8 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
 
     # TODO log username / password ??? / eauth
     cmd_args = SaltRunnerArgs(
-        fun, fun_args, fun_kwargs, nowait, kw=kwargs
+        fun, fun_args, fun_kwargs, nowait, kw=kwargs,
+        secure=secure
     )
 
     _set_auth(cmd_args.kw)
@@ -823,6 +836,9 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
         cmd_args.kw['print_event'] = False
         cmd_args.kw['full_return'] = True
 
+    # TODO IMPROVE EOS-14361 make a View class instead
+    cmd_args_view = cmd_args._as_dict()
+
     try:
         if eauth:
             _cmd_f = (
@@ -835,16 +851,16 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
             _cmd_f = salt_runner_client().cmd
             salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
-        raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+        raise SaltCmdRunError(cmd_args_view, exc) from exc
 
     if not salt_res:
         raise SaltNoReturnError(
-            cmd_args._as_dict(), 'Empty salt result: {}'.format(salt_res)
+            cmd_args_view, 'Empty salt result: {}'.format(salt_res)
         )
 
     if type(salt_res) is not dict:
         raise SaltCmdRunError(
-            cmd_args._as_dict(), (
+            cmd_args_view, (
                 'RunnerClient result type is not a dictionary: {}'
                 .format(type(salt_res))
             )
@@ -856,7 +872,7 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     if eauth:
         if 'data' not in salt_res:
             raise SaltCmdRunError(
-                cmd_args._as_dict(), (
+                cmd_args_view, (
                     'no data key in RunnerClient result dictionary: {}'
                     .format(salt_res)
                 )
@@ -870,12 +886,12 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     except TypeError:
         msg = 'Failed to parse salt runner result: {}'.format(salt_res)
         logger.exception(msg)
-        raise SaltCmdRunError(cmd_args._as_dict(), msg)
+        raise SaltCmdRunError(cmd_args_view, msg)
 
     if res.success:
         return res.result
     else:
-        raise SaltCmdResultError(cmd_args._as_dict(), res.result)
+        raise SaltCmdResultError(cmd_args_view, res.result)
 
 
 # TODO TEST
@@ -884,13 +900,17 @@ def runner_function_run(
     fun,
     fun_args: Union[Tuple, None] = None,
     fun_kwargs: Union[Dict, None] = None,
+    secure=False,
     **kwargs
 ):
     logger.debug(
         "Running runner function '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
-            fun, fun_args, fun_kwargs, kwargs
+            fun,
+            (SECRET_MASK if secure else fun_args),
+            (SECRET_MASK if secure else fun_kwargs),
+            kwargs
         )
     )
 
@@ -918,15 +938,20 @@ def _salt_client_cmd(
     fun_args: Union[Tuple, None] = None,
     fun_kwargs: Union[Dict, None] = None,
     nowait=False,
+    secure=False,
     **kwargs
 ):
     # TODO log username / password ??? / eauth
     cmd_args = SaltClientArgs(
-        targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait
+        targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait,
+        secure=secure
     )
 
     _set_auth(cmd_args.kw)
     cmd_args.kw['full_return'] = True
+
+    # TODO IMPROVE EOS-14361 make a View class instead
+    cmd_args_view = cmd_args._as_dict()
 
     try:
         _cmd_f = (
@@ -936,22 +961,22 @@ def _salt_client_cmd(
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
         # TODO too generic
-        raise SaltCmdRunError(cmd_args._as_dict(), exc) from exc
+        raise SaltCmdRunError(cmd_args_view, exc) from exc
 
     if not salt_res:
         reason = (
             'Async API returned empty result: {}'.format(salt_res) if nowait
             else 'Empty salt result: {}'.format(salt_res)
         )
-        raise SaltNoReturnError(cmd_args._as_dict(), reason)
+        raise SaltNoReturnError(cmd_args_view, reason)
 
     if nowait:
         return salt_res
 
-    res = SaltClientResult(salt_res, cmd_args)
+    res = SaltClientResult(salt_res, cmd_args_view)
 
     if res.fails:
-        raise SaltCmdResultError(cmd_args._as_dict(), res.fails)
+        raise SaltCmdResultError(cmd_args_view, res.fails)
     else:
         return res.results
 
@@ -962,6 +987,7 @@ def function_run(
     targets=ALL_MINIONS,
     fun_args: Union[Tuple, List, None] = None,
     fun_kwargs: Union[Dict, None] = None,
+    secure=False,
     **kwargs
 ):
     if targets == LOCAL_MINION:
@@ -976,7 +1002,11 @@ def function_run(
         "Running function '{}' on '{}', fun_args: {},"
         " fun_kwargs: {}, kwargs: {}"
         .format(
-            fun, targets, fun_args, fun_kwargs, kwargs
+            fun,
+            targets,
+            (SECRET_MASK if secure else fun_args),
+            (SECRET_MASK if secure else fun_kwargs),
+            kwargs
         )
     )
 
@@ -1271,6 +1301,8 @@ class SaltJobsRunner:
             if not job.result:
                 raise PrvsnrCmdNotFinishedError(jid)
             else:
+                # FIXME EOS-14361 that might disclosure some secure data
+                #       since 'secure' arg is not set
                 cmd_args = SaltClientArgs(
                     targets=job.minions,  # TODO ??? or job.target
                     fun=job.function,
@@ -1331,6 +1363,8 @@ class YumRollbackManager:
                 "matched targets: {} for '{}'"
                 .format(list(self.last_txn_ids), self.targets)
             )
+
+        logger.debug(f'Rollback txns ids: {self._last_txn_ids}')
 
         return self
 
