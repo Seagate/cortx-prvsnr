@@ -9,7 +9,7 @@ Current version: **0.1**
 - [Introduction to Provisioner](#introduction-to-provisioner)
   - [Informational](#informational)
     - [Table of Content](#table-of-content)
-    - [Document history:](#document-history)
+    - [Document history](#document-history)
   - [Overview](#overview)
   - [Operations Performed by Provisioner](#operations-performed-by-provisioner)
   - [How Provisioner Interacts With Other Components](#how-provisioner-interacts-with-other-components)
@@ -17,7 +17,7 @@ Current version: **0.1**
     - [Southbound Interface](#southbound-interface)
 
 
-### Document history:
+### Document history
 
 | Revision | Revision date | Author           | Description |
 | -------- | :-----------: | ---------------- | ----------- |
@@ -53,19 +53,19 @@ CORTX stack goes through certain stages in it's lifecycle.  Below is the diagram
 
 Provisioner exposes an API which other components may use to run certain operations through Provisioner.
 
-Main page: [Northbound-Interface](https://github.com/Seagate/cortx-prvsnr/wiki/Northbound-Interface).
+Main page: [Northbound-Interface](Architecture/Northbound-Interface.md).
 
 This API is exposed in 3 forms:
 
 * Library (python module).
 * CLI (main entry point is command-line utility called `provisioner`; run `provisioner --help` for list of available commands).
-* CLI-wrapper library.  It's a python module, but it's "decoupled" from main library listed above, and does not change frequently with versions which allows for special strict linkage of this python module, e.g. in a form of python frozen app (and there is no need to re-link every time there is new version of main Provisioner library).
+* CLI-wrapper library. It's a python module, but it's "decoupled" from main library listed above, and does not inherit external dependencies/imports on other modules (which main library has).  This allows for special strict linkage of this python module, e.g. in a form of python frozen app (dependencies are minimized in this case).
 
 
 ### Southbound Interface
 
 This is an interface which must be supported by every CORTX component to enable it with Provisioner.
 
-Main page: [Southbound-Interface](https://github.com/Seagate/cortx-prvsnr/wiki/Southbound-Interface).
+Main page: [Southbound-Interface](Architecture/Southbound-Interface.md).
 
-In a nutshell: Provisioner defines certain stages/actions (e.g. post-install, or config update), and every component defines (in setup.yaml) which component-specific commands must be run during a given stage by Provisioner.
+In a nutshell: Provisioner defines certain stages/actions (e.g. post-install, or config update), and every component defines (in `setup.yaml`) which component-specific commands must be run during a given stage by Provisioner.
