@@ -27,7 +27,7 @@ MLNX_HCA_PORTS_CHECK = "mlnx_hca_req_ports CHECK: Mellanox HCA Present And Has R
 MLNX_HCA_PORTS_ERROR = "mlnx_hca_req_ports ERROR: Mellanox HCA Present But Does Not Have Required Number Of Ports"
 LSB_HBA_PORTS_CHECK = "lsb_hba_req_ports CHECK: LSB HBA Present And Has Required Number Of Ports"
 LSB_HBA_PORTS_ERROR = "lsb_hba_req_ports ERROR: LSB HBA Present But Does Not Have Required Number of ports"
-LSB_HBA_CHECK = "lsb_hba_present CHECK: LSB HBA Not Present"
+LSB_HBA_CHECK = "lsb_hba_present CHECK: LSB HBA Present"
 LSB_HBA_ERROR = "lsb_hba_present ERROR: LSB HBA Not Present"
 VOLUMES_ACCESSIBLE_CHECK = "volumes_accessible CHECK: Enclosure Volumes Are Accessible From Both Servers"
 VOLUMES_ACCESSIBLE_ERROR = "volumes_accessible ERROR: Enclosure Volumes Are Not Accessible"
@@ -55,6 +55,7 @@ PACEMAKER_HEALTH_CHECK = "corosync_status CHECK: Pacemaker Health Check OK"
 PACEMAKER_HEALTH_ERROR = "corosync_status ERROR: Pacemaker Health Check Not OK"
 STONITH_CHECK = "stonith_issues CHECK: No STONITH Issues Seen"
 STONITH_ERROR = "stonith_issues ERROR: STONITH Issues Seen. Please Check Logs"
+CTRL_IP_ACCESSIBLE_ERROR = "check_controller_mc_accessible ERROR: IP Not Reachable. Please Check"
 
 # Post-Factory Deployment: Cortx Check messages
 CONSUL_SERVICE_CHECK = "consul_service Consul Service Running"
@@ -69,3 +70,7 @@ MGMT_VIP_CHECK = "Management VIP is Set in Pillars"
 MGMT_VIP_ERROR = "Management VIP is Not Set in Pillars"
 CLUSTER_IP_CHECK = "Cluster IP is Set in Pillars"
 CLUSTER_IP_ERROR = "Cluster IP is Not Set in Pillars"
+
+# Remote Execution messages
+SSH_CONN_ERROR = "SSH Conection Failed to Establish"
+DECRYPT_PASSWD_FAILED = "Decryption Failed for Given Secret"

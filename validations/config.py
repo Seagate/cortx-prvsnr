@@ -1,24 +1,25 @@
 # CHECK_ARG = {'function_implemented': 'Class_implemented_in'}
 
 FACTORY_PRE_CHECK = {
-    'mlnx_ofed_installed': 'HardwareValidations',
-    'mlnx_hca_present': 'HardwareValidations',
-    'lsb_hba_present': 'HardwareValidations',
-    'lsb_hba_req_ports': 'HardwareValidations',
-    'volumes_accessible': 'StorageValidations',
-    'volumes_mapped': 'StorageValidations'   #TO DO: Verify and move this to post-check
+    'check_mlnx_ofed_installed': 'PreFlightValidationsCall',
+    'check_mlnx_hca_present': 'PreFlightValidationsCall',
+    'check_mlnx_hca_req_ports': 'PreFlightValidationsCall',
+    'check_lsb_hba_present': 'PreFlightValidationsCall',
+    'check_lsb_hba_req_ports': 'PreFlightValidationsCall',
+    'check_volumes_accessible': 'PreFlightValidationsCall',
+    'check_volumes_mapped': 'PreFlightValidationsCall'   #TO DO: Verify, if needed, move to post-check
 }
 
 FACTORY_POST_CHECK = {
-    'corosync_status': 'ClusterValidations',
-    'nodes_status': 'ClusterValidations',
-    'get_resource_failcount': 'ClusterValidations',
-    'cluster_status': 'ClusterValidations',
-    'stonith_issues': 'ClusterValidations',
-    'bmc_accessible': 'BMCValidations',
-    'consul_check': 'CortxValidations',
-    'elasticsearch_check': 'CortxValidations',
-    'ioservice_check': 'CortxValidations',
+    'check_corosync_status': 'ClusterValidationsCall',
+    'check_nodes_status': 'ClusterValidationsCall',
+    'check_get_resource_failcount': 'ClusterValidationsCall',
+    'check_cluster_status': 'ClusterValidationsCall',
+    'check_stonith_issues': 'ClusterValidationsCall',
+    'check_bmc_accessible': 'ClusterValidationsCall',
+    'check_consul_check': 'CortxValidationsCall',
+    'check_elasticsearch_check': 'CortxValidationsCall',
+    'check_ioservice_check': 'CortxValidationsCall',
     'verify_nodes_online': 'ServerValidations',
     'verif_node_communication': 'ServerValidations',
     'verify_mgmt_vip': 'NetworkChecks',
@@ -39,6 +40,9 @@ FW_UPDATE_CHECK = {
 }
 
 UNBOXING_CHECK = {
+    'check_stonith_issues': 'UnboxingValidationsCall',
+    'check_bmc_accessible': 'UnboxingValidationsCall',
+    'check_controller_mc_accessible': 'UnboxingValidationsCall'
 }
 
 ALL_CHECKS = {

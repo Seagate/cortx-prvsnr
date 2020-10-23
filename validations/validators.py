@@ -16,31 +16,28 @@
 #
 
 import config
-from scripts.utils.network_pre_checks import NetworkValidations
-from scripts.utils.pillar_get import PillarGet
-from scripts.utils.hardware import HardwareValidations
-from scripts.utils.cluster import ClusterValidations
-from scripts.utils.cortx import CortxValidations
-from scripts.utils.bmc import BMCValidations
-from scripts.utils.server import ServerValidations
-from scripts.utils.network import NetworkChecks
-from scripts.utils.storage import StorageValidations
-from scripts.utils.controller import ControllerValidations
+import logging
+from scripts.factory.pre_flight_check import PreFlightValidationsCall
+from scripts.factory.cluster_readiness_check import ClusterValidationsCall
+from scripts.factory.cortx_check import CortxValidationsCall
+from scripts.factory.unboxing_readiness_check import UnboxingValidationsCall
+
+logger = logging.getLogger(__name__)
 
 
 class Validators():
-    '''Validator class : Validation of all checks for given request'''
+    """Validation of all checks for given request."""
 
-    @staticmethod
+    @staticmethod  # noqa: C901
     def factory_checks(args):
         if args.postcheck:
             check_list = config.FACTORY_POST_CHECK
         elif args.precheck:
             check_list = config.FACTORY_PRE_CHECK
-        elif args.fwupdate:
-            check_list = config.FW_UPDATE_CHECK
         elif args.replacenode:
             check_list = config.REPLACE_NODE_CHECK
+        elif args.fwupdate:
+            check_list = config.FW_UPDATE_CHECK
         elif args.unboxing:
             check_list = config.UNBOXING_CHECK
         elif args.c:
@@ -52,18 +49,24 @@ class Validators():
             print("Check is not available for this flag")
 
         for check, cls in check_list.items():
-            res = getattr(globals()[cls], check)()
+            logger.info(f"Check name {check}")
+            obj = globals()[cls]()
+            res = getattr(obj, check)()
             if res:
                 if res['ret_code']:
-                    print(f"{check}: Failed : {res['message']}")
+                    print(f"{check}: {res['message']}......[Failed]")
                     print(f"Response: {res}\n")
                 else:
-                    print(f"{check}: Success : {res['message']}\n")
+                    print(f"{check}: {res['message']}......[Success]\n")
 
 
 if __name__ == '__main__':
     import argparse
     import sys
+    #from scripts.utils.log import setup_logging
+
+    #setup_logging()
+
     argParser = argparse.ArgumentParser()
     argParser.add_argument(
               "--precheck", action='store_true',
@@ -72,7 +75,7 @@ if __name__ == '__main__':
               "--postcheck", action='store_true',
               help="Factory deployment Post check validation")
     argParser.add_argument(
-              "--swupdate", action='store_true',
+              "--replacenode", action='store_true',
               help="Software update check validation")
     argParser.add_argument(
               "--fwupdate", action='store_true',
@@ -80,8 +83,9 @@ if __name__ == '__main__':
     argParser.add_argument(
               "--unboxing", action='store_true',
               help="Unboxing check validation")
-    argParser.add_argument("-c", type=str, choices=config.ALL_CHECKS.keys(),
-            help="Name of validation to check")
+    argParser.add_argument(
+              "-c", type=str, choices=config.ALL_CHECKS.keys(),
+              help="Name of validation to check")
     argParser.set_defaults(func=Validators.factory_checks)
     args = argParser.parse_args()
     args.func(args)

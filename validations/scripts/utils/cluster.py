@@ -16,9 +16,9 @@
 #
 
 import logging
-from .common import run_subprocess_cmd
-from .pillar_get import PillarGet
-from .. .messages.user_messages import *
+from scripts.utils.common import run_subprocess_cmd
+from scripts.utils.pillar_get import PillarGet
+from messages.user_messages import *
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +67,9 @@ class ClusterValidations():
         err_cmd = "grep 'error' /var/log/corosync.log"
         err_response = run_subprocess_cmd(err_cmd, shell=True)
         return (stop_response, reboot_response, err_response)
+
+    def controller_mc_accessible(self, ctrl_ip, host_port, uname, passwd):
+        ''' Validations for Controller Accessibility
+        ''' 
+        common_response = ssh_remote_machine(ctrl_ip, host_port, uname, passwd)
+        return common_response

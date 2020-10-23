@@ -16,10 +16,11 @@
 #
 
 import logging
-import os
-from .common import run_subprocess_cmd
-import .pillar_get import PillarGet
-from .. .messages.user_messages import *
+import os, subprocess
+from scripts.utils.common import run_subprocess_cmd
+from scripts.utils.pillar_get import PillarGet
+from messages.user_messages import *
+from scripts.utils.network_connectivity_checks import NetworkValidations
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +48,37 @@ class BMCValidations():
         common_response["error_msg"]= node_res[2]
         return common_response
 
+    def ping_bmc(self):
+        ''' Ping BMC IP
+        '''
+        response = {}
+        res_ip = self.get_bmc_ip()
+        if not res_ip[0]:
+            ping_check = NetworkValidations.check_ping(res_ip)
+            if ping_check[0] == 0:
+                response["message"]= str(BMC_ACCESSIBLE_CHECK)
+            else:
+                response["message"]= str(BMC_ACCESSIBLE_ERROR)
+        else:
+            response["message"]= str(BMC_IP_ERROR)
+        response["ret_code"]= ping_check[0]
+        response["response"]= ping_check[1]
+        response["error_msg"]= ping_check[2]
+        return response
+
     def bmc_accessible(self):
         ''' Validations for BMC accessibility
         '''
         cmd = "ipmitool chassis status | grep 'System Power'"
-        common_response = run_subprocess_cmd(cmd_present, shell=True)
-        # TO DO: Check os function result
-        #common_response = os.system(cmd)
+        common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        print (common_response)
+        #print (common_response)
+        bmc_ping_res = self.ping_bmc()
+        if ("on" in common_response) and (bmc_ping_res[0]) == 0:
+            response["message"]= str(BMC_ACCESSIBLE_CHECK)
+        else:
+           response["message"]= str(BMC_ACCESSIBLE_ERROR)
+        response["ret_code"]= res[0]
+        response["response"]= res[1]
+        response["error_msg"]= res[2]
         return common_response

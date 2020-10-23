@@ -17,8 +17,9 @@
 
 import logging
 import os
-from .common import run_subprocess_cmd
-from .. .messages.user_messages import *
+import subprocess
+from scripts.utils.common import run_subprocess_cmd
+from messages.user_messages import *
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ class HardwareValidations():
         ''' Validations for Mellanox drivers
         '''
         cmd = "yum list yum list mlnx-ofed-all | grep mlnx-ofed*"
-        common_response = run_subprocess_cmd(cmd, shell=True)
+        common_response = run_subprocess_cmd(cmd)
+        print ("UTIL: ", common_response)
         return common_response
 
     def mlnx_hca_present(self):
@@ -48,7 +50,7 @@ class HardwareValidations():
         '''
         cmd = "lspci -nn | grep 'Mellanox Technologies' | wc -l"
         # TO DO: Check os function result
-        common_response = os.system(cmd)
+        common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         return common_response
 
     def lsb_hba_present(self):
@@ -63,5 +65,5 @@ class HardwareValidations():
         '''
         cmd = "ls /sys/class/scsi_host/ | wc -l"
         # TO DO: Check os function result
-        common_response = os.system(cmd)
+        common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         return common_response

@@ -16,7 +16,7 @@
 #
 
 import logging
-from .common import run_subprocess_cmd
+from scripts.utils.common import run_subprocess_cmd
 
 logger = logging.getLogger(__name__)
 

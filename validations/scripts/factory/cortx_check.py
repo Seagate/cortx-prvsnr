@@ -18,8 +18,8 @@
 import logging
 import os
 import sys
-from ..utils.cortx import CortxValidations as cortx 
-from .. .messages.user_messages import *
+from scripts.utils.cortx import CortxValidations as cortx 
+from messages.user_messages import *
 logger = logging.getLogger(__name__)
 
 class CortxValidationsCall():
