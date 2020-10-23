@@ -65,6 +65,7 @@ stop_services
 reset_pub_data_ips
 seagate_refs_cleanup
 backup_files
+configure_service_port
 
 # Create user for unboxing
 create_unboxing_user
