@@ -18,13 +18,13 @@
 {% if pillar['cluster'][node]['network']['mgmt_nw']['iface'][1] %}
 # Check if the extra NIC is provided in cluster pillar
 # for configuration as service port
-  {% if "srvnode-1" in grains['id'] %}
-# Apply only on srvnode-1
+  {%- if "srvnode-1" in grains['id'] %}
+  # Apply only on srvnode-1
 
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] }}
-    - device: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] }}
+    - name: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][1] }}
+    - device: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][1] }}
     - type: eth
     - enabled: True
     - onboot: yes
@@ -42,7 +42,7 @@ Public direct network:
 
   {% endif %}
 {% else %}
-  Lustre already applied:
+Network interface for service port not specified:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.lustre.teardown' to reprovision these states."
+    - text: "A dedicated network interface for service port not specified in cluster pillar. Please contact Seagate support to help specify a second interface in addtion to {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] }} and re-run this state formula."
 {% endif %}
