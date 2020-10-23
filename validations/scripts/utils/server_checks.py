@@ -16,9 +16,9 @@
 #
 
 import logging
-from .network_connectivity_checks import NetworkValidations
-from .pillar_get import PillarGet
-from .common import run_subprocess_cmd
+from scripts.utils.network_connectivity_checks import NetworkValidations
+from scripts.utils.pillar_get import PillarGet
+from scripts.utils.common import run_subprocess_cmd
 
 
 logger = logging.getLogger(__name__)
@@ -39,8 +39,8 @@ class ServerValidations():
             if result['ret_code']:
                 return result
 
-        result['message'] = "Nodes are online"
-        logger.debug(f"verify_nodes_online: resulted in {result}")
+        result['message'] = "Nodes are connected"
+        logger.debug(f"verify_nodes_connectivity: resulted in {result}")
         return result
 
     def verif_node_communication(self):

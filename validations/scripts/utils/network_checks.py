@@ -17,8 +17,8 @@
 
 import logging
 
-from .pillar_get import PillarGet  # noqa: E402
-from .network_connectivity_checks import NetworkValidations
+from scripts.utils.pillar_get import PillarGet  # noqa: E402
+from scripts.utils.network_connectivity_checks import NetworkValidations
 
 logger = logging.getLogger(__name__)
 

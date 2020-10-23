@@ -17,8 +17,8 @@
 
 import logging
 
-from ..pillar_get import PillarGet
-from ..common import run_subprocess_cmd
+from scripts.utils.pillar_get import PillarGet
+from scripts.utils.common import run_subprocess_cmd
 
 
 logger = logging.getLogger(__name__)

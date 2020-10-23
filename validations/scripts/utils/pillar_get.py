@@ -17,7 +17,7 @@
 import json
 import logging
 
-from .common import run_subprocess_cmd  # noqa: E402
+from scripts.utils.common import run_subprocess_cmd  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

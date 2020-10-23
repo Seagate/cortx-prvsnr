@@ -17,8 +17,8 @@
 
 import logging
 
-from .network_connectivity_checks import NetworkValidations
-from .pillar_get import PillarGet
+from scripts.utils.network_connectivity_checks import NetworkValidations
+from scripts.utils.pillar_get import PillarGet
 
 
 logger = logging.getLogger(__name__)
