@@ -16,11 +16,8 @@
 #
 
 import logging
-import yaml
-from pathlib import Path
 from ...messages.user_messages.error import (
     DEVICE_DOES_NOT_EXIST,
-    FILE_READ_ERROR,
     IP_DEV_INVALID_OP
 )
 from .cluster import ClusterInfo as Cls
@@ -31,13 +28,14 @@ logger = logging.getLogger(__name__)
 class NetworkValidations():
 
     def __init__(self):
+        """ Initialize network validation
+        """
         self.nw_conn = NetworkConnCheck()
-        pass
+
 
     def get_ip_from_iface(self, iface, remote_host=None):
-        """
-        This function gets the IP from given interface. If remote host is
-        mentioned, then it performs the operation on remote host.
+        """ This function gets the IP from given interface. If remote host is
+            mentioned, then it performs the operation on remote host.
         """
 
         logger.info("Get ip from iface")

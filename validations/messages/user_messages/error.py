@@ -31,5 +31,3 @@ BMC_ACCESSIBLE_CHECK   = "CHECK: BMC Is Accessible On Both Servers"
 BMC_ACCESSIBLE_ERROR   = "ERROR: BMC Is Inaccessible On Servers. Please Check."
 BMC_IP_ERROR           = "ERROR: Failed to get BMC IP."
 
-# Others
-FILE_READ_ERROR = "Failed to read file"

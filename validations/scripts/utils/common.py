@@ -16,17 +16,14 @@
 #
 
 import logging
-import time
 import subprocess
-import sys
 
 
 logger = logging.getLogger(__name__)
 
 def run_subprocess_cmd(cmd, **kwargs):
-    """
-    This function runs the command on the prompt using subprocess.run()
-    It returns the result or exception in the form of dictionary
+    """ This function runs the command on the prompt using subprocess.run()
+        It returns the result or exception in the form of dictionary
     """
     _kwargs = dict(
         universal_newlines=True,
@@ -63,7 +60,8 @@ def run_subprocess_cmd(cmd, **kwargs):
 
 
 def remote_execution(remote_ip, cmd):
-    """This function executes command on remote node."""
+    """ This function executes command on remote node.
+    """
     ssh_cmd="ssh -i /root/.ssh/id_rsa_prvsnr -o StrictHostKeyChecking=no"
     cmd = f'{ssh_cmd} {remote_ip} {cmd}'
     return run_subprocess_cmd(cmd)

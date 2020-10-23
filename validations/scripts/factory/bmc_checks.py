@@ -16,14 +16,7 @@
 #
 
 import logging
-import os
-import sys
-
-from ..utils.bmc import BMC as bmc
-from ...messages.user_messages.error import (
-    BMC_ACCESSIBLE_CHECK,
-    BMC_ACCESSIBLE_ERROR
-)
+from ..utils.bmc import BMC
 from ..utils.network_connectivity_checks import NetworkConnCheck
 from ..utils.cluster import ClusterInfo
 
@@ -32,14 +25,15 @@ logger = logging.getLogger(__name__)
 class BMCValidations():
 
     def __init__(self):
-        ''' Validations for BMC steps
-        '''
-        self.bmc = bmc()
+        """ Validations for BMC steps
+        """
+        self.bmc = BMC()
         self.nw_conn = NetworkConnCheck()
 
+
     def ping_bmc(self, remote_host=None):
-        ''' Ping BMC IP
-        '''
+        """ Ping BMC IP
+        """
         logger.info("Ping BMC IP")
 
         response = self.bmc.get_bmc_ip()
@@ -50,8 +44,8 @@ class BMCValidations():
 
 
     def verify_bmc_power_status(self, remote_host=None):
-        ''' Validations for BMC power status
-        '''
+        """ Validations for BMC power status
+        """
         logger.info("verify_bmc_power_status check")
 
         response = self.bmc.get_bmc_power_status(remote_host)
@@ -63,19 +57,19 @@ class BMCValidations():
 
 
     def verify_bmc_accessible(self):
-        ''' Validations for BMC accessibility
-        '''
+        """ Validations for BMC accessibility
+        """
         logger.info("verify_bmc_accessible check")
 
         response = {}
         cls = ClusterInfo()
         nodes = cls.get_nodes()
         for node in nodes:
-            response = BMCValidations.verify_bmc_power_status(node)
+            response = self.verify_bmc_power_status(node)
             if response['ret_code']:
                 return
 
-            response = BMCValidations.ping_bmc(node)
+            response = self.ping_bmc(node)
             if response['ret_code']:
                 return
 

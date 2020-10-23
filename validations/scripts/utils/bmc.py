@@ -16,28 +16,28 @@
 #
 
 import logging
-import os
 from .common import run_subprocess_cmd, remote_execution
-# import .pillar_get import PillarGet
 from ...messages.user_messages.error import (
     BMC_CHASSIS_ERROR,
     BMC_POWER_STATUS_ERROR,
     BMC_IP_ERROR
 )
+import .pillar_get import PillarGet
 
 logger = logging.getLogger(__name__)
 
 class BMC():
 
     def __init__(self):
-        ''' Validations for BMC steps
-        '''
+        """ Get BMC Details
+        """
+        self.pillar = PillarGet()
         pass
 
 
     def get_bmc_ip(self, remote_host=None):
-        ''' Get BMC IP along with status of command
-        '''
+        """ Get BMC IP along with status of command
+        """
         logger.info("Get BMC IP")
 
         cmd = "ipmitool lan print 1"
@@ -64,8 +64,8 @@ class BMC():
 
 
     def get_bmc_power_status(self, remote_host=None):
-        ''' Validations for BMC accessibility
-        '''
+        """ Get BMC Power Status
+        """
         logger.info("Get BMC Power Status")
 
         response = {}
@@ -79,22 +79,10 @@ class BMC():
             response['message'] = str(BMC_CHASSIS_ERROR)
         else:
             if "System Power" in response['response']:
-                # pw_status_found = True
                 response['message'] = response['response'].split(':')[-1].strip()
             else:
                 response['ret_code'] = 1
                 response['message'] = str(BMC_POWER_STATUS_ERROR)
-
-            # pw_status_found = False
-            # output_lines = response['response'].split('\n')
-            # for line in output_lines:
-            #     if "System Power" in line:
-            #         pw_status_found = True
-            #         response['message'] = line
-            #         break
-            # if not pw_status_found:
-            #     response['ret_code'] = 1
-            #     response['message'] = str(BMC_POWER_STATUS_ERROR)
 
         if response['ret_code']:
             logger.error(f"'{cmd}' : '{response['message']}'")
@@ -103,11 +91,14 @@ class BMC():
 
         return response
 
-
-    def get_bmc_user_passwd(self, remote_host=None):
-
+    def get_bmc_user(self, node):
+        """ Get BMC User
+        """
         logger.info("Get BMC User and Password")
-        # Get BMC IP
-        response = BMC.get_bmc_ip(remote_host)
-        return response
+        return self.pillar.get_pillar(f"cluster:{node}:bmc:user")
 
+    def get_bmc_passwd(self, node):
+        """ Get BMC Password
+        """
+        logger.info("Get BMC Password")
+        return self.pillar.get_pillar(f"cluster:{node}:bmc:secret")

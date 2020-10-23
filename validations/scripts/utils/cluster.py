@@ -16,7 +16,6 @@
 #
 
 import logging
-from os import path
 from pathlib import Path
 import yaml
 
@@ -24,7 +23,8 @@ logger = logging.getLogger(__name__)
 
 class ClusterInfo():
     def __init__(self):
-        """Read cluster info and store it"""
+        """ Read cluster info and store it
+        """
         self.cluster_info = self.__read_cluster_sls()
 
     @staticmethod
@@ -67,14 +67,16 @@ class ClusterInfo():
 
 
     def get_nodes(self):
-        """This function returns the node list"""
+        """ This function returns the node list
+        """
         logger.info("Getting nodes from cluster.sls")
         node_list = self.cluster_info['node_list']
         logger.info(node_list)
         return node_list
 
     def get_data_nw(self, node):
-        """This function returns the data network details"""
+        """ This function returns the data network details
+        """
         logger.info(f"Read data network for '{node}'")
         data_nw = None
         if self.__is_valid_node(node):
@@ -83,7 +85,8 @@ class ClusterInfo():
         return data_nw
 
     def get_pvt_ip_addr(self, node):
-        """This function returns the private ip address for the node"""
+        """ This function returns the private ip address for the node
+        """
         logger.debug(f"Read private ip address for '{node}'")
         pvt_ip_addr = None
         if self.__is_valid_node(node):
@@ -92,7 +95,8 @@ class ClusterInfo():
         return pvt_ip_addr
 
     def get_pub_data_iface(self, node):
-        """This function returns the public data interface for the node"""
+        """ This function returns the public data interface for the node
+        """
         logger.debug(f"Read public data iface for '{node}'")
         pub_iface = None
         if self.__is_valid_node(node):

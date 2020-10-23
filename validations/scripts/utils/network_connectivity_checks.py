@@ -28,13 +28,14 @@ logger = logging.getLogger(__name__)
 class NetworkConnCheck():
 
     def __init__(self):
+        """ Initialize network connection
+        """
         pass
 
 
     def check_ping(self, ip, remote_host=None):
-        """
-        This function checks if IP is reachable. If remote host is mentioned,
-        then it checks if ip is reachable from remote host.
+        """ This function checks if IP is reachable. If remote host is mentioned,
+            then it checks if ip is reachable from remote host.
         """
 
         cmd = f"ping -c 1 {ip}"

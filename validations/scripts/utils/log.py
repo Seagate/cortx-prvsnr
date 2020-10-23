@@ -23,9 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging():
-    """
-    This function set up the logging.
-    Default file level logging is set to DEBUG
+    """ This function set up the logging.
+        Default file level logging is set to DEBUG
     """
     global logger
     log_dir = Path("/var/log/seagate/provisioner/")
