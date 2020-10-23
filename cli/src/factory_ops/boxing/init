@@ -62,9 +62,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help) usage; help; exit 0
         ;;
 
-        -serial)
+        --serial)
             [ -z "$2" ] && die "Error: SERIAL NUMBER not provided";
             serial_number="$2"
+            [ ${#serial_number} -ne 15 ] && die "Error: SERIAL NUMBER invalid";
             shift 2
             ;;
         *) echo "Invalid option $1"; usage; exit 1;;
@@ -79,10 +80,10 @@ if [[ -f $box_flag_file ]]; then
     exit 0
 fi
 
-if [[ ! -z $serial_number ]]; then
-    echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED"
+if [[ -z $serial_number ]]; then
+    echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED" | tee -a ${LOG_FILE}
 else
-    set_lrserial_number $serial_number
+    ${BASEDIR}/../../common_utils/lr-serial-number $serial_number | tee -a ${LOG_FILE}
 fi
     
 

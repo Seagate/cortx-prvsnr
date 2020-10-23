@@ -1,0 +1,22 @@
+if [[ $# -eq 0 ]]; then
+    if [[ -f /opt/seagate/lr-serial-number ]]; then
+        echo "Lyve Rack r1 Serial Number - "`cat /opt/seagate/lr-serial-number`
+    else
+        echo "Lyve Rack r1 Serial Number does not exist"
+        exit 1
+    fi
+else
+    if [[ -f /opt/seagate/lr-serial-number ]]; then
+        echo "Lyve Rack r1 Serial Number already set."
+        exit 1
+    else
+        if [[ $(/usr/local/bin/provisioner --version > /dev/null) ]]; then
+            /usr/local/bin/provisioner pillar_set cluster/lr-serial-number $1
+        fi
+        echo $1 > /opt/seagate/lr-serial-number
+        chmod 0644 /opt/seagate/lr-serial-number
+        chattr +i /opt/seagate/lr-serial-number
+        echo "INFO: Lyve Rack r1 serial number can be found at /opt/seagate/lr-serial-number"
+    fi
+fi
+

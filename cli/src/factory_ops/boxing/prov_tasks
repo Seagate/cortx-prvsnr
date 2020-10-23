@@ -108,7 +108,7 @@ function create_unboxing_user {
 
     ###### Lyve Rack Serial Number ######
     echo -n "INFO: Getting Lyve Rack serial numbers " | tee -a ${LOG_FILE}
-    [[ ! -f /opt/seagate/lr_serial_number ]] && echo "WARNING: Lyve Rack serial number has not been provided" || _lr_serial=`cat /opt/seagate/lr_serial_number`
+    [[ ! -f /opt/seagate/lr-serial-number ]] && echo "WARNING: Lyve Rack serial number has not been provided" || _lr_serial=`cat /opt/seagate/lr-serial-number`
 
     ###### Server A #####
     echo -n "INFO: Getting serial numbers and mac addresses for server A.........." | tee -a ${LOG_FILE}

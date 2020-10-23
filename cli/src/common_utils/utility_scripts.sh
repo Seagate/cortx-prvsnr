@@ -133,21 +133,3 @@ function ensure_healthy_cluster {
 
     _linfo "*****************************************************************"
 }
-function set_lrserial_number {
-    local _serial_number=${1:-}
-
-    _linfo "Setting Lyve Rack serial number"
-
-! read -r -d '' _script << EOF
-    if [[ $(/usr/local/bin/provisioner --version > /dev/null) ]]; then
-        /usr/local/bin/provisioner pillar_set cluster/lr_serial_number $_serial_number
-    fi
-    echo $_serial_number > /opt/seagate/lr_serial_number
-    chmod 0644 /opt/seagate/lr_serial_number
-    chattr +i /opt/seagate/lr_serial_number
-    echo "INFO: Lyve Rack r1 serial number can be found at /opt/seagate/lr_serial_number"
-EOF
-    sudo bash -c $_script
-    sudo ssh srvnode-2 bash -c $_script
-
-}
