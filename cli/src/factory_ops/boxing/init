@@ -82,10 +82,7 @@ fi
 if [[ ! -z $serial_number ]]; then
     echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED"
 else
-    salt "*" cmd.run "echo $serial_number > /opt/seagate/lr_serial_number"
-    salt "*" cmd.run "chmod 0644 /opt/seagate/lr_serial_number"
-    salt "*" cmd.run "chattr +i /opt/seagate/lr_serial_number"
-    echo "INFO: Lyve Rack r1 serial number can be found at /opt/seagate/lr_serial_number"
+    set_lrserial_number $serial_number
 fi
     
 
