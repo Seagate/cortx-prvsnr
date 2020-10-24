@@ -97,7 +97,7 @@ function create_unboxing_user {
     _output_file="/root/Lyve_rack_SystemID_${_create_date}.txt"
     _user="cortxub"
     _secret=$(/usr/bin/uuidgen | cut -d- -f 5)
-    _lr_serial=
+    _lr_serial=-
 
     id $_user > /dev/null && {
         userdel -r -f $_user
@@ -108,7 +108,7 @@ function create_unboxing_user {
 
     ###### Lyve Rack Serial Number ######
     echo -n "INFO: Getting Lyve Rack serial numbers " | tee -a ${LOG_FILE}
-    [[ ! -f /opt/seagate/lr-serial-number ]] && echo "WARNING: Lyve Rack serial number has not been provided" || _lr_serial=`cat /opt/seagate/lr-serial-number`
+    [[ -f /opt/seagate/lr-serial-number ]] && _lr_serial=$(cat /opt/seagate/lr-serial-number) || echo "WARNING: Lyve Rack serial number has not been provided" 
 
     ###### Server A #####
     echo -n "INFO: Getting serial numbers and mac addresses for server A.........." | tee -a ${LOG_FILE}

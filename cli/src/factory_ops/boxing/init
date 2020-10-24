@@ -36,7 +36,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . $BASEDIR/shutdown
 
 
-serial_number=
+serial_number=-
 
 function usage {
     echo "\
@@ -44,10 +44,10 @@ function usage {
     Usage:
         $0
            [
-            -serial <Lyve Rack r1 serial number>
+            --serial <Lyve Rack r1 serial number>
            ]
     Command Args:
-        -serial    <SERIAL_NUMBER>   Lyve Rack r1 serial number
+        --serial    <SERIAL_NUMBER>   Lyve Rack r1 serial number
     "
 }
 
@@ -83,7 +83,7 @@ fi
 if [[ -z $serial_number ]]; then
     echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED" | tee -a ${LOG_FILE}
 else
-    ${BASEDIR}/../../common_utils/lr-serial-number $serial_number | tee -a ${LOG_FILE}
+    salt "*" cmd.run "${BASEDIR}/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
 fi
     
 
