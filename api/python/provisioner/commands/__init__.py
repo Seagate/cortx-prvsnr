@@ -696,6 +696,8 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
+                _consul_export('update-post')
+
                 try:
                     # TODO: Improve salt minion restart logic
                     # please refer to task EOS-14114.
@@ -707,8 +709,6 @@ class SWUpdate(CommandParserFillerMixin):
                         )
                 except Exception:
                     logger.exception('failed to restart salt minions')
-
-                _consul_export('update-post')
 
         except Exception as update_exc:
             # TODO TEST
