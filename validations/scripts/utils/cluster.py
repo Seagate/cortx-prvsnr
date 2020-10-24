@@ -16,6 +16,7 @@
 #
 
 import logging
+import subprocess
 from scripts.utils.common import run_subprocess_cmd
 from scripts.utils.pillar_get import PillarGet
 from messages.user_messages import *
@@ -39,7 +40,7 @@ class ClusterValidations():
     def nodes_status(self):
         ''' Validations for nodes status
         '''
-        cmd = "pcs status nodes"
+        cmd = "pcs status nodes | grep Online"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
@@ -53,7 +54,7 @@ class ClusterValidations():
     def cluster_status(self):
         ''' Validations for cluster status
         '''
-        cmd = "pcs cluster status"
+        cmd = "pcs cluster status | grep Online"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
@@ -61,15 +62,15 @@ class ClusterValidations():
         ''' Validations for STONITH issues
         '''
         stop_cmd = "grep 'unable to stop resource' /var/log/pacemaker.log"
-        stop_response = run_subprocess_cmd(stop_cmd, shell=True)
+        stop_response = subprocess.check_output(stop_cmd, stderr=subprocess.STDOUT, shell=True)
         reboot_cmd = "grep 'reboot' /var/log/corosync.log"
-        reboot_response = run_subprocess_cmd(reboot_cmd, shell=True)
+        reboot_response = subprocess.check_output(reboot_cmd, stderr=subprocess.STDOUT, shell=True)
         err_cmd = "grep 'error' /var/log/corosync.log"
-        err_response = run_subprocess_cmd(err_cmd, shell=True)
+        err_response = subprocess.check_output(err_cmd, stderr=subprocess.STDOUT, shell=True)
         return (stop_response, reboot_response, err_response)
 
     def controller_mc_accessible(self, ctrl_ip, host_port, uname, passwd):
         ''' Validations for Controller Accessibility
         ''' 
-        common_response = ssh_remote_machine(ctrl_ip, host_port, uname, passwd)
+        common_response = ssh_remote_machine(ctrl_ip, uname, passwd, host_port)
         return common_response

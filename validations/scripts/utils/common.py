@@ -19,7 +19,7 @@ import logging
 import subprocess
 import paramiko
 import time
-from messages import SSH_CONN_ERROR
+from messages.user_messages import *
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,8 @@ def run_subprocess_cmd(cmd, **kwargs):
         result = (res.returncode, res.stdout, res.stderr)
     return result
 
-def ssh_remote_machine(hostname, port=None, username, password):
+
+def ssh_remote_machine(hostname, username, password, port=None):
     cmd = "pip3 install paramiko"
     self.run_subprocess_cmd(cmd)
     time.sleep(5)
@@ -91,7 +92,7 @@ def decrypt_secret(auth_key, secret):
     response = list(run_subprocess_cmd(cmd))
 
     if response[0] == 127:
-        message = "decrypt_secret: salt-call: command not found"
+        message = str(DECRYPT_PASSWD_CMD_ERROR)
         logger.error(f"decrypt_secret: {cmd} resulted in {message} ")
     elif response[0] == 0:
         res = json.loads(response[1])
@@ -106,7 +107,7 @@ def decrypt_secret(auth_key, secret):
             message = f"decrypt_secret data {res}"
             logger.debug(f"decrypt_secret: {cmd} resulted in {message} ")
     else:
-        message = "decrypt_secret: Failed to decrypt Secret"
+        message = str(DECRYPT_PASSWD_FAILED)
         logger.error(f"decrypt_secret: {cmd} resulted in {message} ")
 
     return {"ret_code": response[0],

@@ -39,16 +39,20 @@ class ClusterValidationsCall():
         '''
         response = {}
         node_res = PillarGet.get_pillar("cluster:node_list")
-        #get nodes
-        #if not node_res['ret_code']:
+        if node_res['ret_code']:
+            return node_res
         nodes = node_res['response']
         res = self.cluster.corosync_status()
-        for node in nodes:
-            if node in res[1]: 
-                response["message"]= str(PACEMAKER_HEALTH_CHECK)
-            else:
-                response["message"]= str(PACEMAKER_HEALTH_ERROR)
-        response["ret_code"]= res[0]
+        if res[0]:
+            response["message"]= str(PACEMAKER_HEALTH_ERROR)
+        else:
+            for node in nodes:
+                if node in res[1]:
+                    response["message"]= str(PACEMAKER_HEALTH_CHECK)
+                    response["ret_code"]= 0
+                else:
+                    response["message"]= str(PACEMAKER_HEALTH_ERROR)
+                    response["ret_code"]= 1
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -57,16 +61,20 @@ class ClusterValidationsCall():
         ''' Validations for nodes status
         '''
         response = {}
-        nodes = PillarGet.get_pillar("cluster:node_list")
+        node_res = PillarGet.get_pillar("cluster:node_list")
         #get nodes
-        if not node_res['ret_code']:
-            nodes = node_res['response']
-        res = cluster.nodes_status()
-        for node in nodes:
-            if "Online" and node in res[1]:
-                response["message"]= str(NODES_ONLINE)
-            else:
-                response["message"]= str(NODES_OFFLINE)
+        if node_res['ret_code']:
+            return node_res
+        nodes = node_res['response']
+        res = self.cluster.nodes_status()
+        if res[0]:
+            response["message"]= str(NODES_OFFLINE)
+        else:
+            for node in nodes:
+                if node in res[1]:
+                    response["message"]= str(NODES_ONLINE)
+                else:
+                    response["message"]= str(NODES_OFFLINE)
         response["ret_code"]= res[0]
         response["response"]= res[1]
         response["error_msg"]= res[2]
@@ -76,16 +84,18 @@ class ClusterValidationsCall():
         ''' Validations for resource fail count
         '''
         response = {}
-        nodes = PillarGet.get_pillar("cluster:node_list")
+        node_res = PillarGet.get_pillar("cluster:node_list")
         #get nodes
-        if not node_res['ret_code']:
-            nodes = node_res['response']
-            res = cluster.get_resource_failcount()
-            if res[1] == " ":
-                response["message"]= str(RESOURCE_FAIL_CHECK)
-            else:
-                response["message"]= str(RESOURCE_FAIL_ERROR)
-        response["ret_code"]= res[0]
+        if node_res['ret_code']:
+            return node_res
+        nodes = node_res['response']
+        res = self.cluster.get_resource_failcount()
+        if res[1] == " ":
+            response["message"]= str(RESOURCE_FAIL_CHECK)
+            response["ret_code"]= 0
+        else:
+            response["message"]= str(RESOURCE_FAIL_ERROR)
+            response["ret_code"]= 1
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -94,17 +104,24 @@ class ClusterValidationsCall():
         ''' Validations for cluster status
         '''
         response = {}
-        nodes = PillarGet.get_pillar("cluster:node_list")
+        node_res = PillarGet.get_pillar("cluster:node_list")
         #get nodes
-        if not node_res['ret_code']:
-            nodes = node_res['response']
-        res = cluster.cluster_status()
-        for node in nodes:
-            if "{node}: Online": 
-                response["message"]= "{} in Cluster: Healthy".format(node)
-            else:
-                response["message"]= str(CLUSTER_HEALTH_ERROR)
-        response["ret_code"]= res[0]
+        if node_res['ret_code']:
+            return node_res
+        nodes = node_res['response']
+        res = self.cluster.cluster_status()
+        print ("Cluster Response: " ,res)
+        if res[0]:
+            print ("TEST", response["message"])
+            response["message"]= str(CLUSTER_HEALTH_ERROR)
+        else:
+            for node in nodes:
+                if node in res[1]: 
+                    response["message"]= str(CLUSTER_HEALTH_CHECK)
+                    response["ret_code"]= 0
+                else:
+                    response["message"]= str(CLUSTER_HEALTH_ERROR)
+                    response["ret_code"]= 1
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -113,20 +130,20 @@ class ClusterValidationsCall():
         ''' Validations for STONITH issues
         '''
         response = {}
-        nodes = PillarGet.get_pillar("cluster:node_list")
+        node_res = PillarGet.get_pillar("cluster:node_list")
         #get nodes
-        #if not node_res['ret_code']:
-        #    nodes = node_res['response']
-        #for node in nodes: 
-        res = cluster.stonith_issues()
-        #if (stop_response[0] and reboot_response[0] and err_response[0]) == 0: 
-        if not res[0]:
+        if node_res['ret_code']:
+            return node_res
+        res = self.cluster.stonith_issues()
+        print ("CHECK : ", res)
+        if (res[0][0] and res[1][0] and res[2][0]) == 0: 
             response["message"]= str(STONITH_CHECK) 
+            response["ret_code"]= 0
         else: 
             response["message"]= str(STONITH_ERROR)
-        response["ret_code"]= res[0]
-        response["response"]= res[1]
-        response["error_msg"]= res[2]
+            response["ret_code"]= 1
+        response["response"]= res[1][1]
+        response["error_msg"]= res[2][2]
         return response
 
     def ping_bmc(self):
@@ -153,7 +170,7 @@ class ClusterValidationsCall():
         response = {}
         bmc_res = self.bmc.bmc_accessible()
         bmc_ping_res = self.bmc.ping_bmc() 
-        if bmc_res[0] and bmc_ping_res[0] == 0:
+        if bmc_res["ret_code"] and bmc_ping_res["ret_code"] == 0:
             response["message"]= str(BMC_ACCESSIBLE_CHECK)
         else:
             response["message"]= str(BMC_ACCESSIBLE_ERROR)

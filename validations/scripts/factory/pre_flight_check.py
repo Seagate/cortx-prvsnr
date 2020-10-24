@@ -123,7 +123,6 @@ class PreFlightValidationsCall():
         response["error_msg"]= res[2]
         return response
 
-
     def check_volumes_mapped(self):
         ''' Validations for Enclosure Volumes
         '''

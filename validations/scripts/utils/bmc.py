@@ -36,49 +36,53 @@ class BMCValidations():
         Get BMC IP along with status of command
         '''
         common_response = {}
+        bmc_ip = []
         node_res = PillarGet.get_pillar("cluster:node_list")
-        if not node_res['ret_code']:
-            nodes = node_res['response']
-            for node in nodes:
-                common_response["response"] = PillarGet.get_pillar(f"cluster:{node}:bmc:ip")
-        # TO TEST
-        else:
-            common_response["response"] = "BMC IP Not Found"
-        common_response["ret_code"]= node_res[0]
-        common_response["error_msg"]= node_res[2]
+        if node_res['ret_code']:
+            return node_res
+        nodes = node_res['response']
+        for node in nodes:
+            bmc_ip_get = PillarGet.get_pillar(f"cluster:{node}:bmc:ip")
+            bmc_ip.append(bmc_ip_get["response"])
+
+        common_response["response"] = bmc_ip 
+        common_response["ret_code"]= node_res["ret_code"]
+        common_response["error_msg"]= node_res["error_msg"]
         return common_response
 
     def ping_bmc(self):
         ''' Ping BMC IP
         '''
         response = {}
-        res_ip = self.get_bmc_ip()
-        if not res_ip[0]:
-            ping_check = NetworkValidations.check_ping(res_ip)
-            if ping_check[0] == 0:
-                response["message"]= str(BMC_ACCESSIBLE_CHECK)
-            else:
-                response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        else:
-            response["message"]= str(BMC_IP_ERROR)
-        response["ret_code"]= ping_check[0]
-        response["response"]= ping_check[1]
-        response["error_msg"]= ping_check[2]
+        res_ip_get = self.get_bmc_ip()
+        res_ip = res_ip_get["response"]
+        if res_ip_get['ret_code']:
+            return res_ip_get
+        for ip in res_ip:
+            ping_check = NetworkValidations.check_ping(ip)
+            if ping_check['ret_code']:
+                ping_check["message"]= str(BMC_ACCESSIBLE_ERROR)
+                return ping_check
+
+        response["ret_code"]= ping_check['ret_code']
+        response["message"]= str(BMC_ACCESSIBLE_CHECK)
+        response["response"]= ping_check["response"]
+        response["error_msg"]= ping_check["error_msg"]
         return response
 
     def bmc_accessible(self):
         ''' Validations for BMC accessibility
         '''
+        response = {}
         cmd = "ipmitool chassis status | grep 'System Power'"
         common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        print (common_response)
-        #print (common_response)
         bmc_ping_res = self.ping_bmc()
-        if ("on" in common_response) and (bmc_ping_res[0]) == 0:
+        if (("on" in str(common_response)) and (bmc_ping_res['ret_code'] == 0)):
             response["message"]= str(BMC_ACCESSIBLE_CHECK)
         else:
            response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        response["ret_code"]= res[0]
-        response["response"]= res[1]
-        response["error_msg"]= res[2]
-        return common_response
+        
+        response["ret_code"]= bmc_ping_res["ret_code"]
+        response["response"]= [str(common_response), bmc_ping_res["response"]]
+        response["error_msg"]= bmc_ping_res["error_msg"]
+        return response

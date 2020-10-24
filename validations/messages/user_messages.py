@@ -48,6 +48,7 @@ PILLAR_DATA_CHECK = "get_pillar CHECK: Pillar Config Data Obtained"
 PILLAR_DATA_ERROR = "get_pillar ERROR: Pillar Config Data Error"
 RESOURCE_FAIL_CHECK = "get_resource_failcount CHECK: No Resource Failure Seen. All OK"
 RESOURCE_FAIL_ERROR = "get_resource_failcount ERROR: One or More Resources Seemed To Have Failed. Please Check."
+CLUSTER_HEALTH_CHECK = "cluster_status CHECK: Nodes In The Cluster Are Healthy."
 CLUSTER_HEALTH_ERROR = "cluster_status ERROR: One or More Nodes In The Cluster Not Online. Please Check."
 
 # Post-Factory Deployment: Pacemaker messages
@@ -72,5 +73,6 @@ CLUSTER_IP_CHECK = "Cluster IP is Set in Pillars"
 CLUSTER_IP_ERROR = "Cluster IP is Not Set in Pillars"
 
 # Remote Execution messages
-SSH_CONN_ERROR = "SSH Conection Failed to Establish"
-DECRYPT_PASSWD_FAILED = "Decryption Failed for Given Secret"
+SSH_CONN_ERROR = "ssh_remote_machine ERROR: SSH Conection Failed to Establish"
+DECRYPT_PASSWD_CMD_ERROR = "decrypt_secret ERROR: salt-call: command not found"
+DECRYPT_PASSWD_FAILED = "decrypt_secret ERROR: Failed to decrypt Secret"

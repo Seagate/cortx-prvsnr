@@ -35,7 +35,6 @@ class HardwareValidations():
         '''
         cmd = "yum list yum list mlnx-ofed-all | grep mlnx-ofed*"
         common_response = run_subprocess_cmd(cmd)
-        print ("UTIL: ", common_response)
         return common_response
 
     def mlnx_hca_present(self):

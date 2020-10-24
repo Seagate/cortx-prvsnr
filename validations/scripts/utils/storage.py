@@ -43,6 +43,5 @@ class StorageValidations():
         cmd_priority_10 = "multipath -ll | grep prio=10 | wc -l"
         # TO DO: Create os function in common file
         common_response_50 = subprocess.check_output(cmd_priority_50, stderr=subprocess.STDOUT, shell=True)
-        print ("RESPONSE 50: " , common_response_50)
         common_response_10 = subprocess.check_output(cmd_priority_50, stderr=subprocess.STDOUT, shell=True)
         return common_response_50, common_response_10
