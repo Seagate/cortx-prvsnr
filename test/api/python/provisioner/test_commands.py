@@ -538,7 +538,9 @@ def mock_swupdate(mocker):
         'ensure_salt_master_is_running',
         '_ensure_update_repos_configuration',
         '_update_component',
-        '_apply_provisioner_config'
+        '_apply_provisioner_config',
+        '_consul_export',
+        '_restart_salt_minions',
     ):
         mock = mocker.patch.object(commands, fun, autospec=True)
         # TODO DOC
@@ -609,6 +611,7 @@ def test_commands_SWUpdate_run_happy_path(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -627,8 +630,13 @@ def test_commands_SWUpdate_run_happy_path(
         )
     ] + [
         calls['cluster_maintenance_disable'](),
+        calls['_consul_export']('update-pre-ha-update'),
         calls['apply_ha_post_update'](target),
+        calls['_consul_export']('update-post-ha-update'),
         calls['ensure_cluster_is_healthy'](),
+        calls['_consul_export']('update-post'),
+        calls['config_salt_minions']().__bool__(),
+        calls['_restart_salt_minions'](),
         calls['YumRollbackManager']().__exit__(None, None, None)
     ]
     assert mock_manager.mock_calls == expected_calls
@@ -691,6 +699,7 @@ def test_commands_SWUpdate_run_maintenance_enable_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -751,6 +760,7 @@ def test_commands_SWUpdate_run_sw_stack_update_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -779,8 +789,11 @@ def test_commands_SWUpdate_run_sw_stack_update_failed(
             calls['config_salt_minions'](),
             calls['_apply_provisioner_config'](target),
             calls['cluster_maintenance_disable'](),
+            calls['_consul_export']('rollback-pre-ha-update'),
             calls['apply_ha_post_update'](target),
-            calls['ensure_cluster_is_healthy']()
+            calls['_consul_export']('rollback-post-ha-update'),
+            calls['ensure_cluster_is_healthy'](),
+            calls['_consul_export']('rollback-post'),
         ])
     assert mock_manager.mock_calls == expected_calls
 
@@ -816,6 +829,7 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -850,8 +864,11 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
             calls['config_salt_minions'](),
             calls['_apply_provisioner_config'](target),
             calls['cluster_maintenance_disable'](),
+            calls['_consul_export']('rollback-pre-ha-update'),
             calls['apply_ha_post_update'](target),
-            calls['ensure_cluster_is_healthy']()
+            calls['_consul_export']('rollback-post-ha-update'),
+            calls['ensure_cluster_is_healthy'](),
+            calls['_consul_export']('rollback-post'),
         ])
 
     assert mock_manager.mock_calls == expected_calls
@@ -889,6 +906,7 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -907,6 +925,7 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
         )
     ] + [
         calls['cluster_maintenance_disable'](),
+        calls['_consul_export']('update-pre-ha-update'),
         calls['apply_ha_post_update'](target),
         calls['YumRollbackManager']().__exit__(
             HAPostUpdateError,
@@ -925,8 +944,11 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
             calls['config_salt_minions'](),
             calls['_apply_provisioner_config'](target),
             calls['cluster_maintenance_disable'](),
+            calls['_consul_export']('rollback-pre-ha-update'),
             calls['apply_ha_post_update'](target),
-            calls['ensure_cluster_is_healthy']()
+            calls['_consul_export']('rollback-post-ha-update'),
+            calls['ensure_cluster_is_healthy'](),
+            calls['_consul_export']('rollback-post'),
         ])
 
     assert mock_manager.mock_calls == expected_calls
@@ -963,6 +985,7 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -981,7 +1004,9 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
         )
     ] + [
         calls['cluster_maintenance_disable'](),
+        calls['_consul_export']('update-pre-ha-update'),
         calls['apply_ha_post_update'](target),
+        calls['_consul_export']('update-post-ha-update'),
         calls['ensure_cluster_is_healthy'](),
         calls['YumRollbackManager']().__exit__(
             ClusterNotHealthyError,
@@ -1000,8 +1025,11 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
             calls['config_salt_minions'](),
             calls['_apply_provisioner_config'](target),
             calls['cluster_maintenance_disable'](),
+            calls['_consul_export']('rollback-pre-ha-update'),
             calls['apply_ha_post_update'](target),
-            calls['ensure_cluster_is_healthy']()
+            calls['_consul_export']('rollback-post-ha-update'),
+            calls['ensure_cluster_is_healthy'](),
+            calls['_consul_export']('rollback-post'),
         ])
 
     assert mock_manager.mock_calls == expected_calls
@@ -1037,6 +1065,7 @@ def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -1055,7 +1084,9 @@ def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
         )
     ] + [
         calls['cluster_maintenance_disable'](),
+        calls['_consul_export']('update-pre-ha-update'),
         calls['apply_ha_post_update'](target),
+        calls['_consul_export']('update-post-ha-update'),
         calls['ensure_cluster_is_healthy'](),
         calls['YumRollbackManager']().__exit__(
             ClusterNotHealthyError,
@@ -1075,7 +1106,9 @@ post_rollback_stages = [
     'config_salt_minions',
     '_apply_provisioner_config',
     'cluster_maintenance_disable',
+    '_consul_export:rollback-pre-ha-update',
     'apply_ha_post_update',
+    '_consul_export:rollback-post-ha-update',
     'ensure_cluster_is_healthy'
 ]
 
@@ -1091,6 +1124,12 @@ def test_commands_SWUpdate_run_post_rollback_fail(
 ):
     mock_manager, mocks, calls = mock_swupdate
     _idx = post_rollback_stage_idx
+    stage = post_rollback_stages[_idx]
+    stage_args = []
+    parts = stage.split(':')
+    if len(parts) > 1:
+        stage = parts[0]
+        stage_args = tuple(parts[1:])
     update_lower_exc = TypeError('some-error')
     post_rollback_exc = ValueError('some-post-rollback-error')
     target = 'some-target'
@@ -1108,7 +1147,12 @@ def test_commands_SWUpdate_run_post_rollback_fail(
     )
 
     def yum_rollback_side_effect(*args, **kwargs):
-        mocks[post_rollback_stages[_idx]].side_effect = post_rollback_exc
+        def _side_effect(*args, **kwargs):
+            if not stage_args or args == stage_args:
+                raise post_rollback_exc
+            else:
+                return mocker.DEFAULT
+        mocks[stage].side_effect = _side_effect
         return _curr_yum_rollback_side_effect(*args, **kwargs)
 
     mocks['_update_component'].side_effect = apply_side_effect
@@ -1128,6 +1172,7 @@ def test_commands_SWUpdate_run_post_rollback_fail(
     expected_calls = [
         calls['ensure_cluster_is_healthy'](),
         calls['_ensure_update_repos_configuration'](target),
+        calls['_consul_export']('update-pre'),
         calls['YumRollbackManager'](
             target,
             multiple_targets_ok=True,
@@ -1146,15 +1191,19 @@ def test_commands_SWUpdate_run_post_rollback_fail(
         calls['YumRollbackManager']()._yum_rollback()
     ]
 
-    expected_calls.extend([
-        (
-            calls[stage](target) if stage in (
-                '_apply_provisioner_config',
-                'apply_ha_post_update'
-            ) else calls[stage]()
-        )
-        for stage in post_rollback_stages[:(_idx + 1)]
-    ])
+    for _stage in post_rollback_stages[:(_idx + 1)]:
+        stage_args = []
+        parts = _stage.split(':')
+        if len(parts) > 1:
+            _stage = parts[0]
+            stage_args = parts[1:]
+        elif _stage in (
+            '_apply_provisioner_config',
+            'apply_ha_post_update'
+        ):
+            stage_args = [target]
+
+        expected_calls.append(calls[_stage](*stage_args))
 
     assert mock_manager.mock_calls == expected_calls
 

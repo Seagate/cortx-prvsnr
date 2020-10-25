@@ -1325,13 +1325,27 @@ class YumRollbackManager:
 
     def _resolve_last_txn_ids(self):
         # TODO IMPROVE EOS-9484  stderrr might include valuable info
-        return cmd_run(
+        txn_ids = cmd_run(
             (
                 "yum history 2>/dev/null | grep ID -A 2 | "
                 "tail -n1 | awk '{print $1}'"
             ),
             targets=self.targets
         )
+
+        if (
+            not self.multiple_targets_ok
+            and (len(txn_ids) > 1)
+        ):
+            err_msg = (
+                "Multiple targetting is not expected, "
+                f"matched targets: {list(txn_ids)} for '{self.targets}'"
+            )
+            logger.error(err_msg)
+            raise ValueError(err_msg)
+
+        logger.debug(f'Rollback txns ids: {txn_ids}')
+        return txn_ids
 
     def _yum_rollback(self):
         # TODO IMPROVE minion might be stopped at that moment,
@@ -1348,24 +1362,6 @@ class YumRollbackManager:
 
     def __enter__(self):
         self._last_txn_ids = self._resolve_last_txn_ids()
-
-        if (
-            not self.multiple_targets_ok
-            and (len(self.last_txn_ids) > 1)
-        ):
-            logger.error(
-                "Multiple targetting is not expected, "
-                "matched targets: {} for '{}'"
-                .format(list(self.last_txn_ids), self.targets)
-            )
-            raise ValueError(
-                "Multiple targetting is not expected, "
-                "matched targets: {} for '{}'"
-                .format(list(self.last_txn_ids), self.targets)
-            )
-
-        logger.debug(f'Rollback txns ids: {self._last_txn_ids}')
-
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
