@@ -192,6 +192,8 @@ def _main():
         cmd=parsed_args.cmd, **log_args_view
     )
 
+    # TODO IMPROVE EOS-14361 configure salt loggers
+    #      for secure levels if needed
     _set_logging(output_type, log_args, parsed_args)
 
     general_args = GeneralArgs(

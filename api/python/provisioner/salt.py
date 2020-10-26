@@ -916,7 +916,8 @@ def runner_function_run(
 
     try:
         res = _salt_runner_cmd(
-            fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
+            fun, fun_args=fun_args, fun_kwargs=fun_kwargs,
+            secure=secure, **kwargs
         )
     except Exception:
         logger.exception("Salt runner command failed")
@@ -1012,7 +1013,8 @@ def function_run(
 
     try:
         res = _salt_client_cmd(
-            targets, fun, fun_args=fun_args, fun_kwargs=fun_kwargs, **kwargs
+            targets, fun, fun_args=fun_args, fun_kwargs=fun_kwargs,
+            secure=secure, **kwargs
         )
     except Exception:
         logger.exception("Salt client command failed")
