@@ -617,6 +617,13 @@ def _consul_export(stage):
     consul_export(fn_suffix=stage)
 
 
+def _restart_salt_minions():
+    logger.info("Restarting salt minions")
+    salt_cmd_run(
+        'systemctl restart salt-minion', background=True
+    )
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SWUpdate(CommandParserFillerMixin):
@@ -698,17 +705,16 @@ class SWUpdate(CommandParserFillerMixin):
 
                 _consul_export('update-post')
 
-                try:
+                # NOTE that should be the very final step of the logic
+                #      since salt client will be restarted so the current
+                #      process might start to wait itself
+                if minion_conf_changes:
                     # TODO: Improve salt minion restart logic
                     # please refer to task EOS-14114.
-                    if minion_conf_changes:
-                        logger.info("Restarting salt minions")
-                        salt_cmd_run(
-                            'systemctl restart salt-minion',
-                            background=True
-                        )
-                except Exception:
-                    logger.exception('failed to restart salt minions')
+                    try:
+                        _restart_salt_minions()
+                    except Exception:
+                        logger.exception('failed to restart salt minions')
 
         except Exception as update_exc:
             # TODO TEST
@@ -820,6 +826,7 @@ class FWUpdate(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -1066,6 +1073,7 @@ class RebootController(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -1114,6 +1122,7 @@ class ShutdownController(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -1392,7 +1401,8 @@ class CreateUser(CommandParserFillerMixin):
                 home=str(home_dir),
                 groups=['csm-admin', 'prvsnrusers']
             ),
-            targets=targets
+            targets=targets,
+            secure=True
         )
         logger.info(
             'Setting up passwordless ssh for {uname} user on both the nodes'

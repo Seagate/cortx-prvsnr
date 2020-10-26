@@ -463,6 +463,7 @@ class StorageEnclosureParams():
     controller_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller user"
     )
+    # TODO IMPROVE EOS-14361 mask secret
     controller_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller password"
     )
@@ -494,6 +495,7 @@ class NodeNetworkParams():
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
     )
+    # TODO IMPROVE EOS-14361 mask secret
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
@@ -585,6 +587,7 @@ class NetworkParams():
     primary_bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC User"
     )
+    # TODO IMPROVE EOS-14361 mask secret
     primary_bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC password"
     )
@@ -624,6 +627,7 @@ class NetworkParams():
     secondary_bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC User"
     )
+    # TODO IMPROVE EOS-14361 mask secret
     secondary_bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC password"
     )
