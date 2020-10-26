@@ -2,7 +2,7 @@
 
 # CORTX-Provisioner
 
-The process of setting up your IT Infrastrucure is called Provisioning. Provisioining involves managing access to data and resources to make these available to users and systems. Resource deoployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
+The process of setting up your IT Infrastructure is called Provisioning. Provisioning involves managing access to data and resources to make these available to users and systems. Resource deployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
 
 - Server 
 - Network 
