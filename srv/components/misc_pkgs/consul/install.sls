@@ -34,23 +34,6 @@
 #     - require:
 #       - user: Create Consul user
 
-Consul installed:
-  pkg.installed:
-    - name: consul
-    - version: {{ pillar['commons']['version']['consul'] }}
-
-{% if (0 != salt["cmd.retcode"]("ls /opt/seagate/cortx/hare/bin/consul", 0)) %}
-Create symlink:
-  file.symlink:
-    - name: /opt/seagate/cortx/hare/bin/consul
-    - target: /usr/bin/consul
-    - force: True
-    - makedirs: True
-    - user: root
-    - group: root
-    - mode: 755
-{% endif %}
-
 # Update Consul executable with required permissions:
 #   file.managed:
 #     - name: /usr/bin/consul
@@ -59,3 +42,8 @@ Create symlink:
 #     - mode: 755
 #     - require:
 #       - user: Create Consul user
+
+Consul installed:
+  pkg.installed:
+    - name: consul
+    - version: {{ pillar['commons']['version']['consul'] }}
