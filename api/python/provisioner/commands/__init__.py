@@ -618,8 +618,6 @@ def _consul_export(stage):
 
 
 def _restart_salt_minions():
-    # TODO: Improve salt minion restart logic
-    # please refer to task EOS-14114.
     logger.info("Restarting salt minions")
     salt_cmd_run(
         'systemctl restart salt-minion', background=True
@@ -707,7 +705,12 @@ class SWUpdate(CommandParserFillerMixin):
 
                 _consul_export('update-post')
 
+                # NOTE that should be the very final step of the logic
+                #      since salt client will be restarted so the current
+                #      process might start to wait itself
                 if minion_conf_changes:
+                    # TODO: Improve salt minion restart logic
+                    # please refer to task EOS-14114.
                     try:
                         _restart_salt_minions()
                     except Exception:
@@ -823,6 +826,7 @@ class FWUpdate(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -1069,6 +1073,7 @@ class RebootController(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
@@ -1117,6 +1122,7 @@ class ShutdownController(CommandParserFillerMixin):
         controller_pi_path = KeyPath('storage_enclosure/controller')
         ip = PillarKey(controller_pi_path / 'primary_mc/ip')
         user = PillarKey(controller_pi_path / 'user')
+        # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
