@@ -1395,7 +1395,8 @@ class CreateUser(CommandParserFillerMixin):
                 home=str(home_dir),
                 groups=['csm-admin', 'prvsnrusers']
             ),
-            targets=targets
+            targets=targets,
+            secure=True
         )
         logger.info(
             'Setting up passwordless ssh for {uname} user on both the nodes'
