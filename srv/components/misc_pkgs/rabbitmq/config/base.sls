@@ -32,6 +32,16 @@ Set RabbitMQ environment:
     - watch_in:
       - Start RabbitMQ service
 
+Set RabbitMQ configuration:
+  file.replace:
+    - name: /etc/rabbitmq/rabbitmq.config
+    - pattern: '%% {cluster_partition_handling, ignore},'
+    - repl: '{cluster_partition_handling, autoheal}'
+    - require:
+      - Install RabbitMQ
+    - watch_in:
+      - Start RabbitMQ service
+
 Enable plugin rabbitmq_management:
   rabbitmq_plugin.enabled:
     - name: rabbitmq_management
