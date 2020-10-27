@@ -525,13 +525,13 @@ class SetSWUpdateRepo(Set):
         # against both of those. However if the id or name matches exactly
         # then the repo will be listed even if you are listing enabled repos
         # and it is disabled.
-        cmd = (f"yum repoinfo {release} | grep '^Repo\\-id' | "
+        cmd = (f"yum repoinfo {release} 2>/dev/null | grep '^Repo\\-id' | "
                "awk -F ':' '{ print $NF }'")
 
         res = salt_cmd_run(cmd, targets=local_minion_id(),
                            fun_kwargs=dict(python_shell=True))
 
-        find_repo = res[local_minion_id()].pop().strip().split("/")[0]
+        find_repo = res[local_minion_id()].strip().split("/")[0]
 
         if find_repo:
             logger.debug(f"Found '{release}' repository in repolist")
