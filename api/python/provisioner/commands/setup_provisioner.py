@@ -303,6 +303,17 @@ class RunArgsSetup:
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
+    disable_pip_repo: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "Disable custom pip repository for "
+                    "pip installations"
+                ),
+            }
+        },
+        default=False
+    )
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -373,6 +384,7 @@ class RunArgsSetupProvisionerBase:
     url_cortx_deps: str = attr.ib(init=False, default=None)
     dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
+    disable_pip_repo: bool = RunArgsSetup.disable_pip_repo
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
     rediscover: bool = RunArgsSetup.rediscover
@@ -417,6 +429,14 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         if self.source == 'local':
             if not self.local_repo:
                 raise ValueError("local repo is undefined")
+            if (
+                not self.disable_pip_repo and
+                self.dist_type != config.DistrType.BUNDLE
+            ):
+                raise ValueError(
+                    "Custom pip repo should be disabled using "
+                    "`disable_pip_repo` for cortx distribution type"
+                )
         elif self.source == 'iso':
             if not self.iso_cortx:
                 raise ValueError("ISO for CORTX is undefined")
@@ -431,6 +451,11 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     raise ValueError(
                         "ISO files for CORTX and CORTX dependencies "
                         f"have the same name: {self.iso_cortx.name}"
+                    )
+                if not self.disable_pip_repo:
+                    raise ValueError(
+                        "Custom pip repo should be disabled using "
+                        "`disable_pip_repo` if dependency iso specified"
                     )
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
@@ -458,6 +483,12 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
 
             if not self.iso_cortx_deps:
                 base_dir /= config.CORTX_SINGLE_ISO_DIR
+                if self.disable_pip_repo:
+                    logger.warning(
+                        "`disable_pip_repo` would be ignored for "
+                        "single ISO based installation"
+                    )
+                    self.disable_pip_repo = False
 
             self.target_build = f'file://{base_dir}'
 
@@ -483,6 +514,14 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "for bundle distribution type"
                 )
                 self.url_cortx_deps = None
+            if (
+                not self.disable_pip_repo and
+                self.dist_type != config.DistrType.BUNDLE
+            ):
+                raise ValueError(
+                    "Custom pip repo should be disabled using "
+                    "`disable_pip_repo` for cortx distribution type"
+                )
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
@@ -1157,7 +1196,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         config.CORTX_ISO_DIR: (
                             f"{run_args.target_build}/{config.CORTX_ISO_DIR}"
                         ),
-                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url,
+                        config.CORTX_PIP_ISO_DIR: {
+                            'source': f"{run_args.target_build}/"
+                                        f"{config.CORTX_PIP_ISO_DIR}",
+                            'is_repo': False
+                        }
                     }
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
@@ -1165,7 +1209,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         config.CORTX_ISO_DIR: (
                             f"{run_args.target_build}/cortx_iso"
                         ),
-                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
+                        config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url,
+                        config.CORTX_PIP_ISO_DIR: {
+                            'source': f"{run_args.target_build}/"
+                                        f"{config.CORTX_PIP_ISO_DIR}",
+                            'is_repo': False
+                        }
                     }
                 else:
                     repos = {
@@ -1297,6 +1346,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
+
+        if not run_args.disable_pip_repo:
+            logger.info("Setting up custom python repository")
+            ssh_client.state_apply('repos.pip_config')
 
         logger.info("Setting up paswordless ssh")
         ssh_client.state_apply('ssh')
