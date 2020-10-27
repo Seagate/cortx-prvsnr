@@ -485,7 +485,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
 
             if not self.iso_cortx_deps:
                 base_dir /= config.CORTX_SINGLE_ISO_DIR
- 
+
             self.target_build = f'file://{base_dir}'
 
             if (
@@ -1196,7 +1196,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url,
                         config.CORTX_PIP_ISO_DIR: {
                             'source': f"{run_args.target_build}/"
-                                        f"{config.CORTX_PIP_ISO_DIR}",
+                            f"{config.CORTX_PIP_ISO_DIR}",
                             'is_repo': False
                         }
                     }
@@ -1209,7 +1209,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url,
                         config.CORTX_PIP_ISO_DIR: {
                             'source': f"{run_args.target_build}/"
-                                        f"{config.CORTX_PIP_ISO_DIR}",
+                            f"{config.CORTX_PIP_ISO_DIR}",
                             'is_repo': False
                         }
                     }
