@@ -1073,11 +1073,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 'in_docker': in_docker,
                 'volumes': {
                     'volume_salt_cache_jobs': {
-                        'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
+                        'export_dir': str(config.GLUSTERFS_VOLUME_SALT_JOBS),
                         'mount_dir': '/var/cache/salt/master/jobs'
                     },
                     'volume_prvsnr_data': {
-                        'export_dir': '/srv/glusterfs/volume_prvsnr_data',
+                        'export_dir': str(config.GLUSTERFS_VOLUME_PRVSNR_DATA),
                         'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
                     }
                 }

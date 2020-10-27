@@ -23,6 +23,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerRuntimeError(ProvisionerError, RuntimeError):
+    pass
+
+
 class ProvisionerCliError(ProvisionerError):
     pass
 
