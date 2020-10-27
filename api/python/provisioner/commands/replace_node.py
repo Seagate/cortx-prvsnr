@@ -80,6 +80,7 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
     # not needed: would beset as for initial setup
     source: str = attr.ib(init=False, default=None)
     prvsnr_version: str = attr.ib(init=False, default=None)
+    iso_os: str = attr.ib(init=False, default=None)
     iso_cortx: str = attr.ib(init=False, default=None)
     iso_cortx_deps: str = attr.ib(init=False, default=None)
     url_cortx_deps: str = attr.ib(init=False, default=None)
@@ -147,6 +148,7 @@ class ReplaceNode(SetupProvisioner):
         for _attr in (
             'source',
             'prvsnr_version',
+            'iso_os',
             'iso_cortx',
             'iso_cortx_deps',
             'url_cortx_deps',  # TODO IMPROVE may rely on profile data

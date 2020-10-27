@@ -242,6 +242,17 @@ class RunArgsSetup:
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
+    iso_os: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "the path to a OS ISO",
+                'metavar': 'PATH'
+            }
+        },
+        default=None,
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists
+    )
     # TODO EOS-12076 validate it is a file
     iso_cortx: str = attr.ib(
         metadata={
@@ -377,6 +388,7 @@ class RunArgsSetupProvisionerBase:
     bootstrap_key: str = RunArgsSetup.bootstrap_key
     prvsnr_version: str = RunArgsSetup.prvsnr_version
     local_repo: str = RunArgsSetup.local_repo
+    iso_os: str = RunArgsSetup.iso_os
     iso_cortx: str = RunArgsSetup.iso_cortx
     iso_cortx_deps: str = RunArgsSetup.iso_cortx_deps
     # FIXME url_cortx_deps: str = RunArgsSetup.url_cortx_deps
@@ -441,17 +453,23 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         elif self.source == 'iso':
             if not self.iso_cortx:
                 raise ValueError("ISO for CORTX is undefined")
+
+            iso_names = []
+            if self.iso_os:
+                if self.iso_os.suffix != '.iso':
+                    raise ValueError(
+                        ".iso extension is expected for OS ISO"
+                    )
+                iso_names.append(self.iso_os.name)
+
             if self.iso_cortx.suffix != '.iso':
-                raise ValueError("ISO extension is expected for CORTX repo")
+                raise ValueError(".iso extension is expected for CORTX ISO")
+            iso_names.append(self.iso_cortx.name)
+
             if self.iso_cortx_deps:
                 if self.iso_cortx_deps.suffix != '.iso':
                     raise ValueError(
-                        "ISO extension is expected for CORTX deps repo"
-                    )
-                if self.iso_cortx.name == self.iso_cortx_deps.name:
-                    raise ValueError(
-                        "ISO files for CORTX and CORTX dependencies "
-                        f"have the same name: {self.iso_cortx.name}"
+                        ".iso extension is expected for CORTX deps ISO"
                     )
                 if not self.pypi_repo:
                     logger.warning(
@@ -460,6 +478,13 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                         "hence pip will be configured to install from pypi.org"
                     )
                     self.pypi_repo = True
+                iso_names.append(self.iso_cortx_deps.name)
+
+            if len(iso_names) != len(set(iso_names)):
+                raise ValueError(
+                    "ISO files have collision in names"
+                )
+
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
                     "The type of distribution would be set to "
@@ -983,6 +1008,8 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 pillar['dist_type'] = pillar['dist_type'].value
             if pillar['local_repo']:
                 pillar['local_repo'] = str(pillar['local_repo'])
+            if pillar['iso_os']:
+                pillar['iso_os'] = str(config.PRVSNR_OS_ISO)
             if pillar['iso_cortx']:
                 if pillar['iso_cortx_deps']:
                     pillar['iso_cortx'] = str(config.PRVSNR_CORTX_ISO)
@@ -1111,6 +1138,8 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             add_file_roots = [
                 run_args.iso_cortx.parent,
             ]
+            if run_args.iso_os:
+                add_file_roots.append(run_args.iso_os.parent)
             if run_args.iso_cortx_deps:
                 add_file_roots.append(run_args.iso_cortx_deps.parent)
 
@@ -1203,6 +1232,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         ),
                         config.CORTX_3RD_PARTY_ISO_DIR: deps_bundle_url
                     }
+
+                if run_args.iso_os:
+                    repos[config.OS_ISO_DIR] = f"salt://{run_args.iso_os.name}"
+
             else:  # rpm
                 if run_args.dist_type == config.DistrType.BUNDLE:
                     repos = {
@@ -1306,9 +1339,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.source in ('iso', 'rpm'):
             # do not copy ISO for the node where we are now already
             if (
-                run_args.field_setup and
-                run_args.source == 'iso' and
-                (
+                run_args.field_setup
+                and run_args.source == 'iso'
+                and (
+                    not run_args.iso_os
+                    or run_args.iso_os == config.PRVSNR_OS_ISO
+                )
+                and (
                     run_args.iso_cortx == config.PRVSNR_CORTX_SINGLE_ISO
                     or (
                         run_args.iso_cortx == config.PRVSNR_CORTX_ISO and
