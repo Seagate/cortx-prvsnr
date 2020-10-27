@@ -2,7 +2,7 @@
 
 # CORTX-Provisioner
 
-The process of setting up your IT Infrastrucure is called Provisioning. Provisioining involves managing access to data and resources to make these available to users and systems. Resource deoployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
+The process of setting up your IT Infrastructure is called Provisioning. Provisioning involves managing access to data and resources to make these available to users and systems. Resource deployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
 
 - Server 
 - Network 
@@ -12,7 +12,7 @@ The main feature of the CORTX-Provisioner is to:
 - Let you provision your environments such as Dev, QA, Lab, and Production with minimal user intervention.
 - Allow you to maintain the modularity or granularity of during various stages of Provisioning process so as to help enhancements, maintainability, and training with minimal collateral impacts
 
-Please also read and contribute to our [Wiki](https://github.com/Seagate/cortx-prvsnr/wiki) where we maintain a lot more documentation about these repositories.
+Please also read and contribute to our [Wiki](https://github.com/Seagate/cortx-prvsnr/wiki) and [docs folder](/docs) where we maintain a lot more documentation about these repositories.
 
 ## Get CORTX-Provisioner Ready! 
 

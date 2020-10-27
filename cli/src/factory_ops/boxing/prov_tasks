@@ -25,10 +25,11 @@
 #   5. Backup files 
 #       a. /etc/multipath/bindings 
 #       b. /etc/multipath.conf 
-#   6. Unmount /var/motr and SWAP? (This should be ideally taken care of by OS shutdown)
-#   7. Cleanup /tmp 
-#   8. Create unboxing user.
-#   9. Create boxing flag file on primary node:
+#   6. Configure service port
+#   7. Unmount /var/motr and SWAP? (This should be ideally taken care of by OS shutdown)
+#   8. Cleanup /tmp 
+#   9. Create unboxing user.
+#   10. Create boxing flag file on primary node:
 #       /opt/seagate/cortx/provisioner/generated_config/boxed
 #       Creating file on only one node ensures that the unboxing is executed only on primary node.
 set -euE
@@ -41,12 +42,14 @@ PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
     echo "******************"
 }
 trap trap_handler ERR
+
 
 function stop_rabbitmq_cluster {
     echo -n "INFO: Removing RabbitMQ from both nodes....." | tee -a ${LOG_FILE}
@@ -56,6 +59,7 @@ function stop_rabbitmq_cluster {
     ) && ( echo "Done" | tee -a ${LOG_FILE} )
 }
 
+
 function stop_services {
     echo "INFO: Stop LNET from both nodes if active." | tee -a ${LOG_FILE}
 
@@ -64,6 +68,7 @@ function stop_services {
 
     echo "INFO: Stopped LNET from both nodes if active." | tee -a ${LOG_FILE}
 }
+
 
 function backup_files {
     echo -n "INFO: Backing up files on both nodes....." | tee -a ${LOG_FILE}
@@ -78,6 +83,15 @@ function backup_files {
 
     echo "Done." | tee -a ${LOG_FILE}
 }
+
+
+function configure_service_port {
+    salt "srvnode-1" state.apply components.system.network.mgmt.service_port ${salt_opts} || (
+        echo "ERROR: Failed to configure service port on srvnode-1." | tee -a ${LOG_FILE}
+        exit 10
+    )
+}
+
 
 function update_ssh_settings {
     echo -n "INFO: Updating ssh settings on both nodes....." | tee -a ${LOG_FILE}
@@ -230,6 +244,7 @@ function reset_pub_data_ips {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
+
 function boxing_flag {
     #Flag file is created only on primary node,
     # as this helps to ensure unboxing is executed only on primary node.
@@ -247,8 +262,8 @@ function boxing_flag {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
-sub_manager_check()
-{
+
+function sub_manager_check {
     _node="${1:-srvnode-1}"
 
     grep -q "Red Hat" /etc/*-release || {
@@ -271,8 +286,8 @@ sub_manager_check()
     fi
 }
 
-sub_manager_cleanup()
-{
+
+function sub_manager_cleanup {
     _node="${1:-srvnode-1}"
     grep -q "Red Hat" /etc/*-release || {
         echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
@@ -296,8 +311,8 @@ sub_manager_cleanup()
     ssh $_node "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
 }
 
-seagate_refs_cleanup()
-{
+
+function seagate_refs_cleanup {
     _node_list=("srvnode-1" "srvnode-2")
 
     for _node in "${_node_list[@]}"; do
