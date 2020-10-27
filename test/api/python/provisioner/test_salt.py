@@ -17,13 +17,16 @@
 
 import pytest
 import functools
+from typing import Tuple, Dict
 
 from provisioner import salt
+
+from provisioner.vendor import attr
 from provisioner.errors import (
     SaltCmdRunError, SaltNoReturnError, SaltCmdResultError,
     ProvisionerError
 )
-from provisioner.config import LOCAL_MINION
+from provisioner.config import LOCAL_MINION, SECRET_MASK
 from provisioner import UNCHANGED, MISSED
 
 
@@ -119,13 +122,13 @@ def test_salt_runner_cmd(monkeypatch, eauth):
             _kwargs['print_event'] = False
             _kwargs['full_return'] = True
 
-        for attr in (
+        for _attr in (
             'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
             if type(exc.cmd_args) is dict:
-                assert exc.cmd_args.get(attr) == _locals[attr]
+                assert exc.cmd_args.get(_attr) == _locals[_attr]
             else:
-                assert getattr(exc.cmd_args, attr) == _locals[attr]
+                assert getattr(exc.cmd_args, _attr) == _locals[_attr]
         if type(exc.cmd_args) is dict:
             assert exc.cmd_args['kw'] == _kwargs
         else:
@@ -321,13 +324,13 @@ def test_salt_client_cmd(monkeypatch):  # noqa: C901 FIXME
         _kwargs = dict(_locals['kwargs'])
         _kwargs['full_return'] = True
 
-        for attr in (
+        for _attr in (
             'targets', 'fun', 'fun_args', 'fun_kwargs', 'nowait'
         ):
             if type(exc.cmd_args) is dict:
-                assert exc.cmd_args.get(attr) == _locals[attr]
+                assert exc.cmd_args.get(_attr) == _locals[_attr]
             else:
-                assert getattr(exc.cmd_args, attr) == _locals[attr]
+                assert getattr(exc.cmd_args, _attr) == _locals[_attr]
         if type(exc.cmd_args) is dict:
             assert exc.cmd_args['kw'] == _kwargs
         else:
@@ -550,6 +553,7 @@ def test_salt_function_run(monkeypatch, local_minion_id):
             dict(
                 fun_args=fun_args,
                 fun_kwargs=fun_kwargs,
+                secure=False,
                 **kwargs
             )
         )
@@ -570,6 +574,7 @@ def test_salt_function_run(monkeypatch, local_minion_id):
             dict(
                 fun_args=fun_args,
                 fun_kwargs=fun_kwargs,
+                secure=False,
                 **kwargs
             )
         )
@@ -875,3 +880,45 @@ def test_salt_state_fun_execute(monkeypatch):
             )
         )
     ]
+
+
+def test_SaltArgsMixin_secure():
+
+    @attr.s(auto_attribs=True)
+    class SomeClass(salt.SaltArgsMixin):
+        fun_args: Tuple = attr.ib(
+            converter=lambda v: () if v is None else v, default=None
+        )
+        fun_kwargs: Dict = attr.ib(
+            converter=lambda v: {} if v is None else v, default=None
+        )
+        kw: Dict = attr.Factory(dict)
+        secure: bool = False
+
+    fun_args = (1, 2, 'passwd0')
+    fun_kwargs = dict(a=1, b=2, password='passwd1', password2='passwd2')
+    kw = dict(d=4, e=5, f=6, password='passwd11')
+    sc = SomeClass(fun_args, fun_kwargs, kw, secure=False)
+
+    sc_view = sc._as_dict()
+
+    # passwords are masked in any case
+    assert sc_view['fun_kwargs']['password'] == SECRET_MASK
+    assert sc_view['kw']['password'] == SECRET_MASK
+    assert 'passwd1' not in str(sc)
+
+    # other args are not masked
+    assert sc_view['fun_args'][2] == 'passwd0'
+    assert sc_view['fun_kwargs']['password2'] == 'passwd2'
+    for passwd in ('passwd0', 'passwd2'):
+        assert passwd in str(sc)
+
+    sc.secure = True
+    sc_view = sc._as_dict()
+
+    # everything is masked
+    assert sc_view['kw']['password'] == SECRET_MASK
+    # other args are not masked
+    assert sc_view['fun_args'] == SECRET_MASK
+    assert sc_view['fun_kwargs'] == SECRET_MASK
+    assert 'passwd' not in str(sc)

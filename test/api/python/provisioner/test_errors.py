@@ -33,7 +33,8 @@ def test_SubprocessCmdError_str():
     obj = SubprocessCmdError(cmd, cmd_args, reason)
 
     assert str(obj) == (
-        f"subprocess command failed, reason {reason}, args {cmd_args}")
+        f"subprocess command failed, reason '{reason}', args {cmd_args}"
+    )
 
 
 def test_SaltCmdError_str():

@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def consul_export(fn_suffix='', no_fail=True, targets=ALL_MINIONS):
     # TODO move to configuration routine
     dest_dir = Path('/var/lib/hare/prvsnr_generated')
-    consul_legacy = Path('/opt/seagate/cortx/hare/bin/consul')
+    consul_legacy = Path('/usr/bin/consul')
 
     ts = datetime.now().strftime("%Y%m%dT%H.%M.%S")
     pid = os.getpid()
