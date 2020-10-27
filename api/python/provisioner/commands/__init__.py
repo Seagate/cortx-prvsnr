@@ -518,9 +518,32 @@ class SetSWUpdateRepo(Set):
 
         return Path(pillar[update_dir])
 
-    def _is_repo_enabled(self, release):
+    @staticmethod
+    def _does_repo_exist(release) -> bool:
+        # From yum manpage:
+        # You  can  pass repo id or name arguments, or wildcards which to match
+        # against both of those. However if the id or name matches exactly
+        # then the repo will be listed even if you are listing enabled repos
+        # and it is disabled.
+        cmd = (f"yum repoinfo {release} | grep '^Repo\\-id' | "
+               "awk -F ':' '{ print $NF }'")
+
+        res = salt_cmd_run(cmd, targets=local_minion_id(),
+                           fun_kwargs=dict(python_shell=True))
+
+        find_repo = res[local_minion_id()].pop().strip().split("/")[0]
+
+        if find_repo:
+            logger.debug(f"Found '{release}' repository in repolist")
+        else:
+            logger.debug(f"Didn't find '{release}' repository in repolist")
+
+        return bool(find_repo)
+
+    @staticmethod
+    def _is_repo_enabled(release) -> bool:
         cmd = (
-            "yum repoinfo enabled -q | grep '^Repo\\-id' "
+            "yum repoinfo enabled -q 2>/dev/null | grep '^Repo\\-id' "
             "| awk  -F ':' '{print $NF}'"
         )
         res = salt_cmd_run(
@@ -533,7 +556,8 @@ class SetSWUpdateRepo(Set):
         logger.debug(f"Found enabled repositories: {repos}")
         return release in repos
 
-    def _check_repo_is_valid(self, release):
+    @staticmethod
+    def _check_repo_is_valid(release):
         cmd = (
             "yum --disablerepo='*' "
             f"--enablerepo='sw_update_{release}' "
@@ -566,10 +590,12 @@ class SetSWUpdateRepo(Set):
         #     if found makes sense to raise an error in case the other
         #     logic is still running, if not - forcibly remove the previous
         #     candidate
-        if self._is_repo_enabled(f'sw_update_{candidate_repo.release}'):
+        #   - after first mount 'sw_update_candidate' listed in disabled repos
+        if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
             logger.warning(
-                'other repo candidate was found, proceed with force removal'
+                    'other repo candidate was found, stop command execution'
             )
+            raise SWUpdateError(reason="Other repo candidate was found")
 
         # TODO IMPROVE
         #   - makes sense to try that only on local minion,
@@ -608,9 +634,10 @@ class SetSWUpdateRepo(Set):
                 logger.debug(f"Resolved metadata {metadata}")
 
             # the metadata file includes release info
-            try:
-                release = metadata[ReleaseInfo.RELEASE.value]
-            except KeyError:
+            # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
+            #  well formed
+            release = metadata.get(ReleaseInfo.RELEASE.value, None)
+            if release is None:
                 try:
                     release = (
                         f'{metadata[ReleaseInfo.VERSION.value]}-'
