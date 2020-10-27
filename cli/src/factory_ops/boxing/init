@@ -35,6 +35,43 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . $BASEDIR/prov_tasks
 . $BASEDIR/shutdown
 
+
+serial_number=-
+
+function usage {
+    echo "\
+    
+    Usage:
+        $0
+           [
+            --serial <Lyve Rack r1 serial number>
+           ]
+    Command Args:
+        --serial    <SERIAL_NUMBER>   Lyve Rack r1 serial number
+    "
+}
+
+function die {
+    echo >&2 "$@"
+    usage
+    exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help) usage; help; exit 0
+        ;;
+
+        --serial)
+            [ -z "$2" ] && die "Error: SERIAL NUMBER not provided";
+            serial_number="$2"
+            [ ${#serial_number} -ne 15 ] && die "Error: SERIAL NUMBER invalid";
+            shift 2
+            ;;
+        *) echo "Invalid option $1"; usage; exit 1;;
+    esac
+done
+
 # Check if Boxing flag file is present
 box_flag_file="/opt/seagate/cortx/provisioner/generated_config/boxed"
 if [[ -f $box_flag_file ]]; then
@@ -42,6 +79,13 @@ if [[ -f $box_flag_file ]]; then
     create_unboxing_user
     exit 0
 fi
+
+if [[ -z $serial_number ]]; then
+    echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED" | tee -a ${LOG_FILE}
+else
+    salt "*" cmd.run "${BASEDIR}/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
+fi
+    
 
 # Prepare shutdown
 ensure_healthy_cluster
