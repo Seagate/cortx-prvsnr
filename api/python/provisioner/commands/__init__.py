@@ -593,9 +593,11 @@ class SetSWUpdateRepo(Set):
         #   - after first mount 'sw_update_candidate' listed in disabled repos
         if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
             logger.warning(
-                    'other repo candidate was found, stop command execution'
+                'other repo candidate was found, proceed with force removal'
             )
-            raise SWUpdateError(reason="Other repo candidate was found")
+            # TODO IMPROVE: it is not enough it may lead to locks when
+            #  provisioner doesn't unmount `sw_update_candidate` repo
+            # raise SWUpdateError(reason="Other repo candidate was found")
 
         # TODO IMPROVE
         #   - makes sense to try that only on local minion,
