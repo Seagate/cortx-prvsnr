@@ -433,10 +433,11 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 not self.disable_pip_repo and
                 self.dist_type != config.DistrType.BUNDLE
             ):
-                raise ValueError(
-                    "Custom pip repo should be disabled using "
-                    "`disable_pip_repo` for cortx distribution type"
+                logger.warning(
+                    "Custom pip repo cannot be set for cortx dist-type "
+                    "hence pip will be configured to install from pypi.org "
                 )
+                self.disable_pip_repo = True
         elif self.source == 'iso':
             if not self.iso_cortx:
                 raise ValueError("ISO for CORTX is undefined")
@@ -453,10 +454,11 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                         f"have the same name: {self.iso_cortx.name}"
                     )
                 if not self.disable_pip_repo:
-                    raise ValueError(
-                        "Custom pip repo should be disabled using "
-                        "`disable_pip_repo` if dependency iso specified"
+                    logger.warning(
+                        "Custom pip repo cannot be set "
+                        "hence pip will be configured to install from pypi.org"
                     )
+                    self.disable_pip_repo = True
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
                     "The type of distribution would be set to "
@@ -483,13 +485,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
 
             if not self.iso_cortx_deps:
                 base_dir /= config.CORTX_SINGLE_ISO_DIR
-                if self.disable_pip_repo:
-                    logger.warning(
-                        "`disable_pip_repo` would be ignored for "
-                        "single ISO based installation"
-                    )
-                    self.disable_pip_repo = False
-
+ 
             self.target_build = f'file://{base_dir}'
 
             if (
@@ -518,10 +514,11 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 not self.disable_pip_repo and
                 self.dist_type != config.DistrType.BUNDLE
             ):
-                raise ValueError(
-                    "Custom pip repo should be disabled using "
-                    "`disable_pip_repo` for cortx distribution type"
+                logger.warning(
+                    "Custom pip repo cannot be set "
+                    "hence pip will be configured to install from pypi.org"
                 )
+                self.disable_pip_repo = True
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
