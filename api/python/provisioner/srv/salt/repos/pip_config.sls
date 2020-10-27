@@ -24,6 +24,6 @@ configure pip:
         [global]
         timeout: 60
         index-url: {{ pip_repo_path }}
-{%- if pip_repo_path.startswith(('http://', 'https://')) -%}
+{%- if pip_repo_path.startswith(('http://', 'https://')) %}
         trusted-host: {{ pip_repo_path.split('/')[2] }}
 {%- endif -%}
