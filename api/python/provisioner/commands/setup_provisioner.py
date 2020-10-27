@@ -1513,7 +1513,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
-        # TODO IMPRVOE salt might be restarted in the background,
+        # TODO IMPROVE salt might be restarted in the background,
         #      might require to ensure that it is ready to avoid
         #      a race condition with further commands that relies
         #      on it (e.g. salt calls and provisioner api on a remote).

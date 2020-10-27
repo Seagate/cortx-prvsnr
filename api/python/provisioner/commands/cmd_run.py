@@ -23,6 +23,7 @@ from ..salt import function_run
 from ..vendor import attr
 
 
+# TODO IMPROVE EOS-14361 mask possible secrets in cmd_args and/or cmd_stdin
 @attr.s(auto_attribs=True)
 class CmdRunArgs:
     cmd_name: str = attr.ib(
