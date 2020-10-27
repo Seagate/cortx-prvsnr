@@ -15,6 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .config
-  - .sanity_check
+{% set data_if = pillar["cluster"][grains["id"]]["network"]["data_nw"]["iface"][0] %}
+{% set pub_ip_grains = grains['ip4_interfaces'][data_if][0] %}
+
+Refresh grains:
+  cmd.run:
+   - name: salt-call saltutil.refresh_grains
+
+Verify Public data ip:
+  cmd.run:
+    - name: ifconfig {{ data_if }} | sed -En -e 's/.*inet ([0-9.]+).*/\1/p'| grep {{ pub_ip_grains }}
+    - require: 
+      - Refresh grains
+

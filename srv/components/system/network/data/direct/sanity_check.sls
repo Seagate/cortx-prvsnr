@@ -15,6 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .config
-  - .sanity_check
+{% set data_if = pillar["cluster"][grains["id"]]["network"]["data_nw"]["iface"][1] %}
+{% set pvt_ip_grains = grains['ip4_interfaces'][data_if][0] %}
+
+Verify Private data ip:
+  cmd.run:
+    - name: ifconfig {{ data_if }} | sed -En -e 's/.*inet ([0-9.]+).*/\1/p'| grep {{ pvt_ip_grains }}
+    - require: Refresh grains
