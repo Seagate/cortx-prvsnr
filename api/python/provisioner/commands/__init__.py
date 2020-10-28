@@ -501,7 +501,7 @@ class SetSWUpdateRepo(Set):
         """
         Return the base mount directory for ISO from pillar values
 
-        :return:
+        :return: Path to repo candidate mount destination
         """
         update_dir = PillarKey('release/update/base_dir')
 
