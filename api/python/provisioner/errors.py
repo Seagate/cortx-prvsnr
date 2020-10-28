@@ -304,7 +304,7 @@ class EnsureUpdateRepoConfigError(ProvisionerError):
         return (
             'Repos are not configured or yum package error, reason: {!r}'
             .format(self.reason)
-        )      
+        )
 
 class UpdateComponentError(ProvisionerError):
     _prvsnr_type_ = True
@@ -317,7 +317,7 @@ class UpdateComponentError(ProvisionerError):
             'Failed to update component, reason: {!r}'
             .format(self.reason)
         )
-        
+
 class SaltMasterError(ProvisionerError):
     _prvsnr_type_ = True
 
