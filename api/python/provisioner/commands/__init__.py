@@ -518,7 +518,14 @@ class SetSWUpdateRepo(Set):
         return Path(pillar[update_dir])
 
     @staticmethod
-    def _does_repo_exist(release) -> bool:
+    def _does_repo_exist(release: str) -> bool:
+        """
+        Check if passed `release` repo is listed among yum repositories
+        (enabled or disabled)
+
+        :param str release: release to check existence
+        :return: True if `release` listed in yum repositories
+        """
         # From yum manpage:
         # You  can  pass repo id or name arguments, or wildcards which to match
         # against both of those. However if the id or name matches exactly
@@ -541,6 +548,13 @@ class SetSWUpdateRepo(Set):
 
     @staticmethod
     def _is_repo_enabled(release) -> bool:
+        """
+        Verifies if `release` repo listed in enabled yum repo list
+
+        :param release: repo release for check
+        :return: True if `release` listed in enabled yum repo list and False
+                 otherwise
+        """
         cmd = (
             "yum repoinfo enabled -q 2>/dev/null | grep '^Repo\\-id' "
             "| awk  -F ':' '{print $NF}'"
@@ -557,15 +571,19 @@ class SetSWUpdateRepo(Set):
 
     @staticmethod
     def _check_repo_is_valid(release):
-        cmd = (
-            "yum --disablerepo='*' "
-            f"--enablerepo='sw_update_{release}' "
-            "list available"
-        )
+        """
+        Validate if provided `release` repo is well-formed yum repository
+
+        :param release:
+        :return: None if the repo is correct. Otherwise raise
+                 `SaltCmdResultError` if `release` repo malformed.
+        """
+        cmd = (f"yum --disablerepo='*' --enablerepo='sw_update_{release}' "
+               "list available")
+
         salt_cmd_run(cmd, targets=LOCAL_MINION)
 
     def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):  # noqa: C901, E501
-        metadata = {}
         repo = params
 
         if repo.is_special():
@@ -592,7 +610,7 @@ class SetSWUpdateRepo(Set):
         #   - after first mount 'sw_update_candidate' listed in disabled repos
         if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
             logger.warning(
-                'other repo candidate was found, proceed with force removal'
+                'other repo candidate was found, proceeding with force removal'
             )
             # TODO IMPROVE: it is not enough it may lead to locks when
             #  provisioner doesn't unmount `sw_update_candidate` repo
