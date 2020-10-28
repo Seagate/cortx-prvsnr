@@ -64,6 +64,7 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 
 
 REPO_CANDIDATE_NAME = 'candidate'
+RELEASE_INFO_FILE = 'RELEASE.INFO'
 
 # TODO EOS-12076 EOS-12334
 
@@ -336,3 +337,14 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+
+class ReleaseInfo(Enum):
+    NAME = 'NAME'
+    VERSION = 'VERSION'
+    BUILD = 'BUILD'
+    OS = 'OS'
+    DATETIME = 'DATETIME'
+    KERNEL = 'KERNEL'
+    COMPONENTS = 'COMPONENTS'
+    RELEASE = 'RELEASE'
