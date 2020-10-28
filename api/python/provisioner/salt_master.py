@@ -59,7 +59,7 @@ def check_salt_master_is_restarted(pid_before):
             )
             return False
         else:
-            raise SaltMaster('check_salt_master_is_restarted',exc)
+            raise SaltMasterError('check_salt_master_is_restarted',exc)
     else:
         # "ActiveState": "active",
         # "SubState": "running",

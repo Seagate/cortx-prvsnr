@@ -68,7 +68,7 @@ def cluster_status():
         res = cmd_run('pcs status', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError(err_func="cluster_status", exc)
+        raise HareClusterError('cluster_status', exc)
 
 
 def cluster_stop():
@@ -76,7 +76,7 @@ def cluster_stop():
         res = cmd_run('pcs cluster stop --all', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError(err_func="cluster_stop", exc)    
+        raise HareClusterError('cluster_stop', exc)    
 
 
 def cluster_start():
@@ -84,7 +84,7 @@ def cluster_start():
         res = cmd_run('pcs cluster start --all', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError(err_func="cluster_start", exc)
+        raise HareClusterError('cluster_start', exc)
 
 def cluster_maintenance(
     enable: bool, timeout: int = 600, verbose: bool = False, background=False
