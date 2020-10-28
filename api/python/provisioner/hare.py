@@ -136,7 +136,7 @@ def check_cluster_is_offline():
 
 # TODO TEST EOS-8940
 def check_cluster_is_online():
-    
+
     for path in (
         'cli/common_utils/utility_scripts.sh',
         'cli/src/common_utils/utility_scripts.sh'
@@ -146,7 +146,7 @@ def check_cluster_is_online():
             break
     else:
         raise RuntimeError('check_cluster_is_online: Utility scripts are not found')
-        
+
     try:
         res = cmd_run(
             (
@@ -156,7 +156,7 @@ def check_cluster_is_online():
             targets=LOCAL_MINION
         )
         return next(iter(res.values()))
-    
+
     except Exception as exc:
         logger.debug('check_cluster_is_online: Utility script failed')
         raise errors.HareClusterError('check_cluster_is_online', exc)

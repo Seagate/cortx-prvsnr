@@ -769,7 +769,7 @@ class SWUpdate(CommandParserFillerMixin):
                         SaltMasterConfigurationError,
                         SaltMinionConfigurationError,
                     )
-                ): 
+                ):
                     #DO something here
                     logger.error('Salt Configuration failed')
                     final_error_t = SWUpdateFatalError

@@ -284,7 +284,7 @@ class ReleaseFileNotFoundError(ProvisionerError):
         )
 
 
-class HareClusterError(ProvisionerError):
+class HareError(ProvisionerError):
     _prvsnr_type_ = True
 
     def __init__(self, funct_name: str, reason: Union[Exception, str]):
@@ -297,6 +297,8 @@ class HareClusterError(ProvisionerError):
             .format(self.reason)
         )
 
+class HareClusterError(HareError):
+    pass
 
 class EnsureUpdateRepoConfigError(ProvisionerError):
     _prvsnr_type_ = True
