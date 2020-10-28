@@ -1513,7 +1513,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO DOC how to pass inline pillar
 
         # TODO IMPROVE EOS-9581 log salt-masters as well
-        # TODO IMPRVOE salt might be restarted in the background,
+        # TODO IMPROVE salt might be restarted in the background,
         #      might require to ensure that it is ready to avoid
         #      a race condition with further commands that relies
         #      on it (e.g. salt calls and provisioner api on a remote).
@@ -1660,6 +1660,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         # TODO IMPROVE EOS-8473 FROM THAT POINT REMOTE SALT SYSTEM IS FULLY
         #      CONFIGURED AND MIGHT BE USED INSTEAD OF SALT-SSH BASED CONTROL
+
+        logger.info("Sync salt modules")
+        res = ssh_client.cmd_run("salt-call saltutil.list_extmods")
+        logger.debug(f"Current list of extension modules: {res}")
+        res = ssh_client.cmd_run("salt-call saltutil.sync_modules")
+        logger.debug(f"Synced extension modules: {res}")
 
         logger.info("Configuring provisioner logging")
         for state in [

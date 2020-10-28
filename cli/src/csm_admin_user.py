@@ -25,7 +25,7 @@
 #optional arguments:
 #  -h, --help  show this help message and exit
 #  -c C        Path to consul binary default :
-#              /opt/seagate/cortx/hare/bin/consul
+#              /usr/bin/consul
 #  -i I        Key to User collection in csm default :
 #              cortx/base/user_collection/obj/
 #  -n N        node_id of replacing node i.e. srvnode-1/srvnode-2
@@ -107,8 +107,8 @@ if __name__=='__main__':
     import provisioner    
 
     argParser = argparse.ArgumentParser()
-    argParser.add_argument("-c", type=str, default="/opt/seagate/cortx/hare/bin/consul",
-            help="Path to consul binary default : /opt/seagate/cortx/hare/bin/consul")
+    argParser.add_argument("-c", type=str, default="/usr/bin/consul",
+            help="Path to consul binary default : /usr/bin/consul")
     argParser.add_argument("-i", type=str, default="cortx/base/user_collection/obj/",
             help="Key to User collection in csm default : cortx/base/user_collection/obj/ ")
     argParser.add_argument("-n", type=str,

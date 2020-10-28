@@ -30,7 +30,7 @@ cluster:
     bmc:
       ip:
       user: ADMIN
-      secret: 'adminBMC!'
+      secret:
     network:
       mgmt_nw:                        # Management network interfaces
         iface:
@@ -58,7 +58,7 @@ cluster:
     bmc:
       ip:
       user: ADMIN
-      secret: 'adminBMC!'
+      secret:
     network:
       mgmt_nw:                        # Management network interfaces
         iface:

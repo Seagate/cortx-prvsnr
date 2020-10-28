@@ -48,6 +48,13 @@ def _consul_export(stage):
     consul_export(fn_suffix=stage)
 
 
+def _restart_salt_minions():
+    logger.info("Restarting salt minions")
+    salt_cmd_run(
+        'systemctl restart salt-minion', background=True
+    )
+
+
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SWUpdate(CommandParserFillerMixin):
@@ -134,19 +141,18 @@ class SWUpdate(CommandParserFillerMixin):
                 except Exception as exc:
                     raise ClusterNotHealthyError(exc) from exc
 
-                try:
+                _consul_export('update-post')
+
+                # NOTE that should be the very final step of the logic
+                #      since salt client will be restarted so the current
+                #      process might start to wait itself
+                if minion_conf_changes:
                     # TODO: Improve salt minion restart logic
                     # please refer to task EOS-14114.
-                    if minion_conf_changes:
-                        logger.info("Restarting salt minions")
-                        salt_cmd_run(
-                            'systemctl restart salt-minion',
-                            background=True
-                        )
-                except Exception:
-                    logger.exception('failed to restart salt minions')
-
-                _consul_export('update-post')
+                    try:
+                        _restart_salt_minions()
+                    except Exception:
+                        logger.exception('failed to restart salt minions')
 
         except Exception as update_exc:
             # TODO TEST
