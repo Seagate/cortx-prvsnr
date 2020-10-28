@@ -499,7 +499,8 @@ class SetSWUpdateRepo(Set):
     @staticmethod
     def _get_mount_dir():
         """
-        Return the base mount directory for ISO from pillar values
+        Return the base mount directory of ISO repo candidate based on pillars
+        values configuration
 
         :return: Path to repo candidate mount destination
         """
