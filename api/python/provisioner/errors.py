@@ -288,7 +288,7 @@ class HareClusterError(ProvisionerError):
     _prvsnr_type_ = True
 
     def __init__(self, funct_name: str, reason: Union[Exception, str]):
-        self.funct_name= funct_name
+        self.funct_name = funct_name
         self.reason = reason
 
     def __str__(self):

@@ -654,7 +654,7 @@ class SWUpdate(CommandParserFillerMixin):
         try:
             ensure_cluster_is_healthy()
             try:
-            _ensure_update_repos_configuration(targets)
+                _ensure_update_repos_configuration(targets)
             except Exception as exc:
                     raise EnsureUpdateRepoConfigError(exc) from exc
 
