@@ -14,8 +14,8 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-{% set node = grains['id'] %}
-{% if pillar['cluster'][node]['network']['mgmt_nw']['iface'][1] is defined %}
+
+{% if pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][1] is defined %}
 # Check if the extra NIC is provided in cluster pillar
 # for configuration as service port
   {%- if "srvnode-1" in grains['id'] %}
