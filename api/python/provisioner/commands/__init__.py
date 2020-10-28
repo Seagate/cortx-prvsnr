@@ -503,8 +503,7 @@ class SetSWUpdateRepo(Set):
 
         :return:
         """
-        release_path = KeyPath('release')
-        update_dir = PillarKey(release_path / 'update/base_dir')
+        update_dir = PillarKey('release/update/base_dir')
 
         pillar = PillarResolver(LOCAL_MINION).get((update_dir,))
 
