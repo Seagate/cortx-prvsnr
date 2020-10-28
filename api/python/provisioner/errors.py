@@ -115,11 +115,14 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
 
     def __init__(self, source: str, reason: str):
         self.source = source
-        self.reason = (f'repo source "{self.source}" is not acceptable, '
-                       f'reason: {reason}')
+        # TODO IMPROVE: now we display just SWUpdateRepoSourceError.reason
+        #  as error message on console by default.
+        #  self.source is missed in this output
+        self.reason = reason
 
     def __str__(self):
-        return repr(self.reason)
+        return (f'repo source "{self.source}" is not acceptable, '
+                f'reason: {self.reason}')
 
 
 class PrvsnrCmdError(ProvisionerError):
