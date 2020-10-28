@@ -83,7 +83,7 @@ def cluster_start():
     try:
         res = cmd_run('pcs cluster start --all', targets=LOCAL_MINION)
         return next(iter(res.values()))
-     except Exception as exc:
+    except Exception as exc:
         raise HareClusterError(err_func="cluster_start", exc)
 
 def cluster_maintenance(

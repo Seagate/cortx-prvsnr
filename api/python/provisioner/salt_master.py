@@ -142,5 +142,5 @@ def ensure_salt_master_is_running():
         runner_function_run(
             'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
         )
-    except Exception as exc
+    except Exception as exc:
         raise SaltMasterError('ensure_salt_master_is_running', exc)
