@@ -656,7 +656,7 @@ class SWUpdate(CommandParserFillerMixin):
             try:
                 _ensure_update_repos_configuration(targets)
             except Exception as exc:
-                    raise EnsureUpdateRepoConfigError(exc) from exc
+                raise EnsureUpdateRepoConfigError(exc) from exc
 
             _consul_export('update-pre')
 

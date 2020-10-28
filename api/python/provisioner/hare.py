@@ -23,7 +23,7 @@ from pathlib import Path
 from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
 from .salt import cmd_run, StatesApplier
 from .utils import ensure
-from .errors import HareClusterError
+from . import errors
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def cluster_status():
         res = cmd_run('pcs status', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError('cluster_status', exc)
+        raise errors.HareClusterError('cluster_status', exc)
 
 
 def cluster_stop():
@@ -76,7 +76,7 @@ def cluster_stop():
         res = cmd_run('pcs cluster stop --all', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError('cluster_stop', exc)    
+        raise errors.HareClusterError('cluster_stop', exc)
 
 
 def cluster_start():
@@ -84,7 +84,7 @@ def cluster_start():
         res = cmd_run('pcs cluster start --all', targets=LOCAL_MINION)
         return next(iter(res.values()))
     except Exception as exc:
-        raise HareClusterError('cluster_start', exc)
+        raise errors.HareClusterError('cluster_start', exc)
 
 def cluster_maintenance(
     enable: bool, timeout: int = 600, verbose: bool = False, background=False
@@ -136,28 +136,30 @@ def check_cluster_is_offline():
 
 # TODO TEST EOS-8940
 def check_cluster_is_online():
+    
+    for path in (
+        'cli/common_utils/utility_scripts.sh',
+        'cli/src/common_utils/utility_scripts.sh'
+    ):
+        if (PRVSNR_ROOT_DIR / path).exists():
+            utility_scripts = PRVSNR_ROOT_DIR / path
+            break
+    else:
+        raise RuntimeError('check_cluster_is_online: Utility scripts are not found')
+        
     try:
-        for path in (
-            'cli/common_utils/utility_scripts.sh',
-            'cli/src/common_utils/utility_scripts.sh'
-        ):
-            if (PRVSNR_ROOT_DIR / path).exists():
-                utility_scripts = PRVSNR_ROOT_DIR / path
-                break
-        else:
-            raise RuntimeError('check_cluster_is_online: Utility scripts are not found')
-
-            res = cmd_run(
-                (
-                    f"bash -c "
-                    f"'. {utility_scripts}; ensure_healthy_cluster false'"
-                )   ,
-                targets=LOCAL_MINION
-            )
-            return next(iter(res.values()))
+        res = cmd_run(
+            (
+                f"bash -c "
+                f"'. {utility_scripts}; ensure_healthy_cluster false'"
+            )   ,
+            targets=LOCAL_MINION
+        )
+        return next(iter(res.values()))
+    
     except Exception as exc:
-        logger.exception('check_cluster_is_online: Utility script failed')
-        raise HareClusterError('check_cluster_is_online', exc)
+        logger.debug('check_cluster_is_online: Utility script failed')
+        raise errors.HareClusterError('check_cluster_is_online', exc)
 
 def ensure_cluster_is_stopped(tries=30, wait=1):
     cluster_stop()
