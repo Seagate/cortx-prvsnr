@@ -112,7 +112,8 @@ seagate_refs_cleanup
 #TODO: Remove URLs from release and commons sls
 backup_files
 configure_service_port
-
+#Remove gluster fs mounts
+remove_gfs_mounts
 # Create user for unboxing
 create_unboxing_user
 

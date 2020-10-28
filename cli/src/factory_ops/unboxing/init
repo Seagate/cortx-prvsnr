@@ -204,10 +204,9 @@ check_mgmt_ip
 # Run pre_unbox validations
 pre_unbox
 
-echo "Configuring the Salt services on both nodes" | tee -a ${LOG_FILE}
-echo "Running provisioner replace node api" >> ${LOG_FILE}
-provisioner replace_node --node-host $pvt_ip_b --logfile --logfile-filename ${LOG_FILE}
-echo "Done with provisioner replace node api" >> ${LOG_FILE}
+#echo "Running provisioner replace node api" >> ${LOG_FILE}
+#provisioner replace_node --node-host $pvt_ip_b --logfile --logfile-filename ${LOG_FILE}
+#echo "Done with provisioner replace node api" >> ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
@@ -215,7 +214,11 @@ echo "Done with provisioner replace node api" >> ${LOG_FILE}
 
 # Update /root/.ssh/config file with hosts
 #update_ssh_config taken care of in pre_unbox
-# update_salt_minion
+echo "Configuring gluster volumes on both nodes" | tee -a ${LOG_FILE}
+configure_gluster_vols
+
+echo "Configuring the Salt services on both nodes" | tee -a ${LOG_FILE}
+update_salt_minion
 
 update_cluster_sls "${management_vip}" "${cluster_vip}" "${static_data_ip_a}" "${static_data_ip_b}"
 

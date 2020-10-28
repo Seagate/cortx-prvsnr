@@ -42,26 +42,12 @@ PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
-=======
->>>>>>> Fix bugs found during testing.
 export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
 export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
 server_names=("Server A" "Server B")
 export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
-=======
->>>>>>> Fix bugs found during testing.
+export scp_cmd="scp -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -70,6 +56,15 @@ function trap_handler {
 }
 trap trap_handler ERR
 
+export gfs_vol_prvsnr_data="${gfs_vol_prvsnr_data:-"volume_prvsnr_data"}"
+export gfs_vol_salt_cache_jobs="${gfs_vol_salt_cache_jobs:-"volume_salt_cache_jobs"}"
+export mount_dir_salt_cache="${mount_dir_salt_cache:-"/srv/glusterfs/volume_salt_cache_jobs"}"
+export mountpt_salt_cache_vol="${mountpt_salt_cache_vol:-"/var/cache/salt/master/jobs"}"
+export mountpt_prvsnr_data_vol="${mountpt_prvsnr_data_vol:-"/var/lib/seagate/cortx/provisioner/shared"}"
+export mount_dir_prvsnr_data="${mount_dir_prvsnr_data:-"/srv/glusterfs/volume_prvsnr_data"}"
+
+hostname_a=$(hostname)
+hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
 
 function stop_rabbitmq_cluster {
     echo -n "INFO: Removing RabbitMQ from both nodes....." | tee -a ${LOG_FILE}
@@ -157,13 +152,13 @@ function create_unboxing_user {
 
     ###### Server B #####
     echo -n "INFO: Getting serial numbers and mac addresses for server B.........." | tee -a ${LOG_FILE}
-    _serial_b=`ssh srvnode-2 "dmidecode -t system" | grep Serial | cut -d: -f 2`
-    _mac_bmc_b=`ssh srvnode-2 "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
-    #_interface_mgmt_b=`ssh srvnode-2 "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
+    _serial_b=`$ssh_cmd ${pvt_ip_b} "dmidecode -t system" | grep Serial | cut -d: -f 2`
+    _mac_bmc_b=`$ssh_cmd ${pvt_ip_b} "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
+    #_interface_mgmt_b=`$ssh_cmd ${pvt_ip_b} "ip -o link show" | awk -F': ' '{print $2}' | grep eno1`
     _interface_mgmt_b=`salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface:0 --output=newline_values_only`
-    _mac_mgmt_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_mgmt_b}/address"`
+    _mac_mgmt_b=`$ssh_cmd ${pvt_ip_b} "cat /sys/class/net/${_interface_mgmt_b}/address"`
     _interface_data_b=`salt-call pillar.get cluster:srvnode-2:network:data_nw:iface:0 --output=newline_values_only`
-    _mac_data_b=`ssh srvnode-2 "cat /sys/class/net/${_interface_data_b}/address"`
+    _mac_data_b=`$ssh_cmd ${pvt_ip_b} "cat /sys/class/net/${_interface_data_b}/address"`
     echo "Done" | tee -a ${LOG_FILE}
 
     echo "\
@@ -299,12 +294,7 @@ function boxing_flag {
     echo "Done." | tee -a ${LOG_FILE}
 }
 
-<<<<<<< HEAD
-sub_manager_check()
-{
-=======
 function sub_manager_check() {
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     _pvt_ip="${1:-$pvt_ip_a}"
     _server="${2:-"Server A"}"
 
@@ -328,12 +318,7 @@ function sub_manager_check() {
     fi
 }
 
-<<<<<<< HEAD
-sub_manager_cleanup()
-{
-=======
 function sub_manager_cleanup() {
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     _pvt_ip="${1:-$pvt_ip_a}"
     _server=${2:-"Server A"}
 
@@ -360,12 +345,7 @@ function sub_manager_cleanup() {
     $ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
 }
 
-<<<<<<< HEAD
-seagate_refs_cleanup()
-{
-=======
 function seagate_refs_cleanup() {
->>>>>>> EOS-14289: Unboxing changes, ported fro Beta.
     # 1. Check if subscription manager is enabled
     # 2. Disable and cleanup the subscription
     # 3. Remove all Seagate internal repos from /etc/yum.repos.d
@@ -410,4 +390,67 @@ function seagate_refs_cleanup() {
         fi
         echo "Done" | tee -a ${LOG_FILE}
     done
+}
+
+function remove_gfs_mounts() {
+    #1. Stop salt services
+    #2. Stop Gluster volumes
+    #3. Remove gluster bricks
+    #4. Delete volumes
+    #5. Detach the gluster peer
+    #6. unmount volumes mountpoints
+    #7. Remove entries from fstab
+
+    echo "Stopping Salt services on Server A" | tee -a ${LOG_FILE}
+    systemctl stop salt-master 2>&1 | tee -a ${LOG_FILE}
+    systemctl stop salt-minion 2>&1 | tee -a ${LOG_FILE}
+
+    echo "Stopping Salt services on Server B" | tee -a ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "systemctl stop salt-master" 2>&1 | tee -a ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "systemctl stop salt-minion" 2>&1 | tee -a ${LOG_FILE}
+
+    echo "Stopping gluster volume: ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
+    gluster volume stop ${gfs_vol_prvsnr_data} 2>&1 | tee -a ${LOG_FILE}
+
+    echo "Stopping gluster volume: ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
+    gluster volume stop ${gfs_vol_salt_cache_jobs} 2>&1 | tee -a ${LOG_FILE}
+
+    echo "Removing gluster brick: ${hostname_b}:${mount_dir_salt_cache} for volume: ${gfs_vol_salt_cache_jobs}"
+    $ssh_cmd ${pvt_ip_b} “echo y | gluster volume remove-brick ${gfs_vol_salt_cache_jobs} replica 1 ${hostname_b}:${mount_dir_salt_cache} force”
+
+    echo "Removing gluster brick: ${hostname_b}:${mount_dir_prvsnr_data} for volume: ${gfs_vol_prvsnr_data}"
+    $ssh_cmd ${pvt_ip_b} “echo y | gluster volume remove-brick ${gfs_vol_prvsnr_data} replica 1 ${hostname_b}:${mount_dir_prvsnr_data} force”
+
+    echo "Deleting gluster volumes from Server A" | tee -a ${LOG_FILE}
+    gluster volume delete ${gfs_vol_prvsnr_data}
+    gluster volume delete ${gfs_vol_prvsnr_data}
+
+    echo "Deleting gluster volumes from Server B" | tee -a ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "echo y | gluster peer detach ${hostname_a} force"
+
+    echo "Unmouting the gluster volumes from Server A" | tee -a ${LOG_FILE}
+    umount ${mountpt_salt_cache_vol}
+    umount ${mountpt_prvsnr_data_vol}
+
+    echo "Unmouting the gluster volumes from Server B" | tee -a ${LOG_FILE}
+    $ssh_cmd ${pvt_ip_b} "umount ${mountpt_salt_cache_vol}"
+    $ssh_cmd ${pvt_ip_b} "umount ${mountpt_prvsnr_data_vol}"
+
+    #Remove entries from stab Server A
+    echo "Removing the gluster mountpoints from fstab on Server A" | tee -a ${LOG_FILE}
+    yes | cp -f /etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_server_a.org
+    sed -i.bak "\@^$hostname_a:$gfs_vol_prvsnr_data@d" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
+    sed -i.bak1 "\@^$hostname_a:$gfs_vol_salt_cache_jobs@d" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
+
+    # Remove entries from stab Server B
+    # For simplicity copy fstab of Server B to Server A, remove
+    # gluster vol entries and copy it back to Server B.
+    echo "Removing the gluster mountpoints from fstab on Server B" | tee -a ${LOG_FILE}
+    $scp_cmd ${pvt_ip_b}:/etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_server_b.org
+    $scp_cmd ${pvt_ip_b}:/etc/fstab /tmp/fstab_b
+    sed -i.bak "\@^$hostname_a:$gfs_vol_prvsnr_data@d" /tmp/fstab_b 2>&1 | tee -a ${LOG_FILE}
+    sed -i.bak1 "\@^$hostname_a:$gfs_vol_salt_cache_jobs@d" /tmp/fstab_b 2>&1 | tee -a ${LOG_FILE}
+    $scp_cmd /tmp/fstab_b ${pvt_ip_b}:/etc/fstab 2>&1 | tee -a ${LOG_FILE}
+
+    echo "Done" | tee -a ${LOG_FILE}
 }
