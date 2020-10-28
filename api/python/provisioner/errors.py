@@ -282,6 +282,8 @@ class ReleaseFileNotFoundError(ProvisionerError):
             "{}(reason={!r})"
             .format(self.__class__.__name__, self.reason)
         )
+
+
 class HareClusterError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -294,6 +296,8 @@ class HareClusterError(ProvisionerError):
             'Hare Cluster not in healthy state, reason: {!r}'
             .format(self.reason)
         )
+
+
 class EnsureUpdateRepoConfigError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -305,6 +309,7 @@ class EnsureUpdateRepoConfigError(ProvisionerError):
             'Repos are not configured or yum package error, reason: {!r}'
             .format(self.reason)
         )
+
 
 class UpdateComponentError(ProvisionerError):
     _prvsnr_type_ = True
@@ -318,6 +323,7 @@ class UpdateComponentError(ProvisionerError):
             .format(self.reason)
         )
 
+
 class SaltMasterError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -329,7 +335,9 @@ class SaltMasterError(ProvisionerError):
         return (
             'Error occured at Salt Master, reason: {!r}'
             .format(self.reason)
-        )   
+        )
+
+
 class SaltMinionError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -341,7 +349,9 @@ class SaltMinionError(ProvisionerError):
         return (
             'Error occurred at Salt Minion, reason: {!r}'
             .format(self.reason)
-        )                        
+        )
+
+
 class SaltMasterConfigurationError(SaltMasterError):
     _prvsnr_type_ = True
 
@@ -352,7 +362,8 @@ class SaltMasterConfigurationError(SaltMasterError):
         return (
             'Failed Salt Master configuration, reason: {!r}'
             .format(self.reason)
-        )        
+        )
+
 
 class SaltMinionConfigurationError(SaltMinionError):
     _prvsnr_type_ = True
