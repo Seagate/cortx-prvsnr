@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set pip_repo_path = pillar['release']['base']['repos']['python_deps']['source'] %}
+{% set python_repo_path = pillar['release']['python_repo'] %}
 
 configure pip:
   file.managed:
@@ -23,7 +23,7 @@ configure pip:
     - contents: |
         [global]
         timeout: 60
-        index-url: {{ pip_repo_path }}
-{%- if pip_repo_path.startswith(('http://', 'https://')) %}
-        trusted-host: {{ pip_repo_path.split('/')[2] }}
+        index-url: {{ python_repo_path }}
+{%- if python_repo_path.startswith(('http://', 'https://')) %}
+        trusted-host: {{ python_repo_path.split('/')[2] }}
 {%- endif -%}

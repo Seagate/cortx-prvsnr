@@ -70,7 +70,7 @@ REPO_CANDIDATE_NAME = 'candidate'
 CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
-CORTX_PIP_ISO_DIR = 'python_deps'
+CORTX_PYTHON_ISO_DIR = 'python_deps'
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
@@ -83,9 +83,6 @@ PRVSNR_CORTX_ISO = (
 )
 PRVSNR_CORTX_DEPS_ISO = (
     PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_3RD_PARTY_ISO_DIR}.iso'
-)
-PRVNSR_PIP_ISO_DIR = (
-    PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_PIP_ISO_DIR}.iso'
 )
 
 # FIXME EOS-12334 should be inside factory installation directory
