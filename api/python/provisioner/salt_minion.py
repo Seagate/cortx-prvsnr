@@ -21,7 +21,7 @@ import functools
 
 
 from .config import ALL_MINIONS
-from .errors import ProvisionerError
+from .errors import ProvisionerError,SaltMinionError
 from .salt import runner_function_run, StatesApplier, function_run
 from .utils import ensure
 
@@ -47,9 +47,11 @@ def list_minions():
 
 # TODO TEST
 def check_salt_minions_are_ready(targets: List):
-    ready = list_minions()
-    return not (set(targets) - set(ready))
-
+    try:
+        ready = list_minions()
+        return not (set(targets) - set(ready))
+    except Exception as exc:
+        raise SaltMinionError('check_salt_minions_are_ready', exc)    
 
 def ensure_salt_minions_are_ready(targets: List):
     ensure(
@@ -93,7 +95,7 @@ def config_salt_minions(targets=ALL_MINIONS):
     minions = list(res)
 
     if not minions:
-        raise ProvisionerError('no minions found')
+        raise ProvisionerError('config_salt_minions:no minions found')
 
     pids = {
         minion_id: _res['MainPID'] for minion_id, _res in res.items()

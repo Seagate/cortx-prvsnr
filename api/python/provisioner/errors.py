@@ -282,3 +282,86 @@ class ReleaseFileNotFoundError(ProvisionerError):
             "{}(reason={!r})"
             .format(self.__class__.__name__, self.reason)
         )
+class HareClusterError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, funct_name: str, reason: Union[Exception, str]):
+        self.funct_name= funct_name
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Hare Cluster not in healthy state, reason: {!r}'
+            .format(self.reason)
+        )
+class EnsureUpdateRepoConfigError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Repos are not configured or yum package error, reason: {!r}'
+            .format(self.reason)
+        )      
+
+class UpdateComponentError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Failed to update component, reason: {!r}'
+            .format(self.reason)
+        )
+        
+class SaltMasterError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, funct_name: str, reason: Union[Exception, str]):
+        self.funct_name= funct_name
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Error occured at Salt Master, reason: {!r}'
+            .format(self.reason)
+        )   
+class SaltMinionError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, funct_name: str, reason: Union[Exception, str]):
+        self.funct_name= funct_name
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Error occurred at Salt Minion, reason: {!r}'
+            .format(self.reason)
+        )                        
+class SaltMasterConfigurationError(SaltMasterError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Failed Salt Master configuration, reason: {!r}'
+            .format(self.reason)
+        )        
+
+class SaltMinionConfigurationError(SaltMinionError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'Failed Salt Master configuration, reason: {!r}'
+            .format(self.reason)
+        )

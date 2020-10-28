@@ -1143,15 +1143,22 @@ def provisioner_cmd(
 def states_apply(
     states: List[Union[str, State]], targets=ALL_MINIONS, **kwargs
 ):
-    # TODO multiple states at once
-    ret = {}
-    for state in states:
-        state = State(state)
-        res = function_run(
-            'state.apply', fun_args=[state.name], targets=targets, **kwargs
-        )
-        ret[state.name] = res
+    try:
+        # TODO multiple states at once
+        ret = {}
+        for state in states:
+            state = State(state)
+            res = function_run(
+                'state.apply', fun_args=[state.name], targets=targets, **kwargs
+            )
+            ret[state.name] = res
 
+        return ret
+    except Exception:
+        logger.exception(
+            "Failed to apply state {} on {}".format(state, targets)
+        )
+        raise
     return ret
 
 

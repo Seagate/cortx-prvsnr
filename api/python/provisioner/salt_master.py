@@ -25,7 +25,8 @@ from .salt_minion import (
 )
 from .utils import ensure
 from .errors import (
-    SaltCmdRunError, SaltCmdResultError
+    SaltCmdRunError, SaltCmdResultError,
+    SaltMasterError
 )
 import logging
 
@@ -58,7 +59,7 @@ def check_salt_master_is_restarted(pid_before):
             )
             return False
         else:
-            raise
+            raise SaltMaster('check_salt_master_is_restarted',exc)
     else:
         # "ActiveState": "active",
         # "SubState": "running",
@@ -86,7 +87,7 @@ def check_salt_master_is_responded():
             )
             return False
         else:
-            raise
+            raise SaltMasterError('check_salt_master_is_responded', exc)
     else:
         return True
 
@@ -136,7 +137,10 @@ def config_salt_master():
 
 
 def ensure_salt_master_is_running():
-    logger.info("Ensuring salt-master is running")
-    runner_function_run(
-        'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
-    )
+    try:
+        logger.info("Ensuring salt-master is running")
+        runner_function_run(
+            'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
+        )
+    except Exception as exc
+        raise SaltMasterError('ensure_salt_master_is_running', exc)

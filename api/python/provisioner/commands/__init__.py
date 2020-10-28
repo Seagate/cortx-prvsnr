@@ -37,7 +37,11 @@ from ..errors import (
     HAPostUpdateError,
     ClusterNotHealthyError,
     SSLCertsUpdateError,
-    ReleaseFileNotFoundError
+    ReleaseFileNotFoundError,
+    SaltMinionConfigurationError,
+    SaltMasterConfigurationError,
+    UpdateComponentError,
+    EnsureUpdateRepoConfigError
 )
 from ..config import (
     ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
@@ -607,9 +611,14 @@ def _update_component(component, targets=ALL_MINIONS):
 
 
 def _apply_provisioner_config(targets=ALL_MINIONS):
-    logger.info(f"Applying Provisioner config logic on {targets}")
-    StatesApplier.apply(["components.provisioner.config"], targets)
-
+    try:
+        logger.info(f"Applying Provisioner config logic on {targets}")
+        StatesApplier.apply(["components.provisioner.config"], targets)
+    except Exception:
+        logger.exception(
+            "Failed to appy Provisioner config logic on on {}".format(targets)
+        )
+        raise
 
 def _consul_export(stage):
     # TODO make that configurable to turn off if not needed
@@ -644,8 +653,10 @@ class SWUpdate(CommandParserFillerMixin):
         minion_conf_changes = None
         try:
             ensure_cluster_is_healthy()
-
+            try:
             _ensure_update_repos_configuration(targets)
+            except Exception as exc:
+                    raise EnsureUpdateRepoConfigError(exc) from exc
 
             _consul_export('update-pre')
 
@@ -662,22 +673,32 @@ class SWUpdate(CommandParserFillerMixin):
 
                 # update SW stack packages and configuration
                 try:
-                    _update_component('provisioner', targets)
+                    try:
+                        _update_component('provisioner', targets)
+                    except Exception as exc:
+                        raise UpdateComponentError(exc) from exc
+                    try:
+                        config_salt_master()
+                    except Exception as exc:
+                        raise SaltMasterConfigurationError(exc) from exc
+                    try:
+                        minion_conf_changes = config_salt_minions()
+                    except Exception as exc:
+                        raise SaltMinionConfigurationError(exc) from exc
 
-                    config_salt_master()
-
-                    minion_conf_changes = config_salt_minions()
-
-                    for component in (
-                        'motr',
-                        's3server',
-                        'hare',
-                        'ha.cortx-ha',
-                        'sspl',
-                        'csm',
-                        'uds'
-                    ):
-                        _update_component(component, targets)
+                    try:
+                        for component in (
+                            'motr',
+                            's3server',
+                            'hare',
+                            'ha.cortx-ha',
+                            'sspl',
+                            'csm',
+                            'uds'
+                        ):
+                            _update_component(component, targets)
+                    except Exception as exc:
+                        raise UpdateComponentError(exc) from exc
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc
 
@@ -741,6 +762,17 @@ class SWUpdate(CommandParserFillerMixin):
                     # fail to start - fail gracefully:  disable
                     # maintenance in the background
                     cluster_maintenance_disable(background=True)
+                elif isinstance(
+                    # salt configuration is stopped here
+                    update_exc,
+                    (
+                        SaltMasterConfigurationError,
+                        SaltMinionConfigurationError,
+                    )
+                ): 
+                    #DO something here
+                    logger.error('Salt Configuration failed')
+                    final_error_t = SWUpdateFatalError
                 elif isinstance(
                     # cluster is stopped here
                     update_exc,
