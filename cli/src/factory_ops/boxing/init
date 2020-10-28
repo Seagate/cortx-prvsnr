@@ -23,7 +23,7 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 
 function trap_handler {
-    echo "***** ERROR! *****"
+    echo -e "\n***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
     echo "******************"
 }
@@ -36,7 +36,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 . $BASEDIR/shutdown
 
 
-serial_number=-
+serial_number=
 
 function usage {
     echo "\
@@ -76,7 +76,12 @@ done
 box_flag_file="/opt/seagate/cortx/provisioner/generated_configs/boxed"
 if [[ -f $box_flag_file ]]; then
     echo "INFO: Boxing script already run, printing system details required for unboxing" | tee -a ${LOG_FILE}
-    create_unboxing_user
+    file=$(ls -lrt /root/Lyve_rack_SystemID_*.txt | tail -1 | awk '{ print $9 }')
+    if [[ -f $file ]]; then
+        cat $file
+    else
+        echo "Could not find the file generated during boxing" | tee -a ${LOG_FILE}
+    fi
     exit 0
 fi
 
@@ -85,7 +90,7 @@ if [[ -z $serial_number ]]; then
 else
     salt "*" cmd.run "${BASEDIR}/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
 fi
-    
+
 
 # Prepare shutdown
 ensure_healthy_cluster
@@ -106,6 +111,7 @@ fi
 # Provisioner tasks
 #stop_rabbitmq_cluster #This is taken care for now by having internalhostnames
 stop_services
+get_nw_interface_names
 reset_vips
 reset_pub_data_ips
 seagate_refs_cleanup

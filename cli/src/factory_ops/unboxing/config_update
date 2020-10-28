@@ -131,39 +131,89 @@ function configure_gluster_vols() {
     stop_salt_services
 
     echo "Adding peer in gluster configuration" | tee -a ${LOG_FILE}
-    gluster peer probe ${hostname_B}
-    #Redundent, not needed
-    #$ssh_cmd $pvt_ip_b "gluster peer probe ${hostname_A}"
+    if ! gluster peer status | grep ${hostname_B}; then
+        echo "adding gluser peer" >> ${LOG_FILE}
+        echo y | gluster peer probe ${hostname_B} 2>&1 | tee -a ${LOG_FILE}
+        sleep 5
+    else
+        echo "peer ${hostname_B} already added in gluser configuration" >> ${LOG_FILE}
+    fi
 
     #volume_salt_cache_jobs:
-    echo "Creating gluster volume brick for ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
-    echo y | gluster volume create ${gfs_vol_salt_cache_jobs} replica 2 ${hostname_A}:${mount_dir_salt_cache} ${hostname_B}:${mount_dir_salt_cache} force
+    echo -e "\nCreating gluster volume brick for ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
+    if ! gluster volume list | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "creating gluster volume ${gfs_vol_salt_cache_jobs}" >> ${LOG_FILE}
+        echo y | gluster volume create ${gfs_vol_salt_cache_jobs} replica 2 ${hostname_A}:${mount_dir_salt_cache} ${hostname_B}:${mount_dir_salt_cache} force
+        sleep 5
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} already created, ignoring" >> ${LOG_FILE}
+    fi
 
-    echo "Starting the gluster volume ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
-    gluster volume start ${gfs_vol_salt_cache_jobs}
+    echo -e "\nStarting the gluster volume ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
+    start_status=$(gluster volume info ${gfs_vol_salt_cache_jobs} | grep Status: | awk '{ print $2}')
+    if [[ "${start_status}" == "Started" ]]; then
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already started, ignoring" >> ${LOG_FILE}
+    else
+        echo "starting the volume ${gfs_vol_salt_cache_jobs}" >> ${LOG_FILE}
+        echo y | gluster volume start ${gfs_vol_salt_cache_jobs}
+        sleep 5
+    fi
 
-    echo "Mounting gluster volume ${hostname_A}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server A" | tee -a ${LOG_FILE}
-    mount -t glusterfs ${hostname_A}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}
+    echo -e "\nMounting gluster volume ${hostname_A}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server A" | tee -a ${LOG_FILE}
+    if ! mount | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "mounting the gluster volume ${gfs_vol_salt_cache_jobs} on Server A" >> ${LOG_FILE}
+        mount -t glusterfs ${hostname_A}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already mounted on Server A, ignoring" >> ${LOG_FILE}
+    fi
 
-    echo "Mounting gluster volume ${hostname_B}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server B" | tee -a ${LOG_FILE}
-    $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_B}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}"
+    echo -e "\nMounting gluster volume ${hostname_B}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server B" | tee -a ${LOG_FILE}
+    if ! $ssh_cmd $pvt_ip_b mount | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "mounting the gluster volume ${gfs_vol_salt_cache_jobs} on Server B" >> ${LOG_FILE}
+        $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_B}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}"
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already mounted on Server B, ignoring" >> ${LOG_FILE}
+    fi
 
     #volume_prvsnr_data:
-    echo "Creating gluster volume brick for ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
-    echo y | gluster volume create ${gfs_vol_prvsnr_data} replica 2 ${hostname_A}:${mount_dir_prvsnr_data} ${hostname_B}:${mount_dir_prvsnr_data} force
+    echo -e "\nCreating gluster volume brick for ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
+    if ! gluster volume list | grep ${gfs_vol_prvsnr_data}; then
+        echo "creating gluster volume ${gfs_vol_prvsnr_data}" >> ${LOG_FILE}
+        echo y | gluster volume create ${gfs_vol_prvsnr_data} replica 2 ${hostname_A}:${mount_dir_prvsnr_data} ${hostname_B}:${mount_dir_prvsnr_data} force
+        sleep 5
+    else
+        echo "gluster volume ${gfs_vol_prvsnr_data} already created, ignoring" >> ${LOG_FILE}
+    fi
 
-    echo "Starting the gluster volume ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
-    gluster volume start ${gfs_vol_prvsnr_data}
+    echo -e "\nStarting the gluster volume ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
+    start_status=$(gluster volume info ${gfs_vol_prvsnr_data} | grep Status: | awk '{ print $2}')
+    if [[ "${start_status}" == "Started" ]]; then
+        echo "gluster volume ${gfs_vol_prvsnr_data} is already started, ignoring" >> ${LOG_FILE}
+    else
+        echo "starting the volume ${gfs_vol_prvsnr_data}" >> ${LOG_FILE}
+        echo y | gluster volume start ${gfs_vol_prvsnr_data}
+        sleep 5
+    fi
 
-    echo "Mounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server A" | tee -a ${LOG_FILE}
-    mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}
+    echo -e "\nMounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server A" | tee -a ${LOG_FILE}
+    if ! mount | grep ${gfs_vol_prvsnr_data}; then
+        echo "mounting the gluster volume ${gfs_vol_prvsnr_data} on Server A" >> ${LOG_FILE}
+        mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}
+    else
+        echo "gluster volume ${gfs_vol_prvsnr_data} is already mounted on Server A, ignoring" >> ${LOG_FILE}
+    fi
 
-    echo "Mounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server B" | tee -a ${LOG_FILE}
-    $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}"
+    echo -e "\nMounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server B" | tee -a ${LOG_FILE}
+    if ! $ssh_cmd $pvt_ip_b mount | grep ${gfs_vol_prvsnr_data}; then
+        echo "mounting the gluster volume ${gfs_vol_prvsnr_data} on Server B" >> ${LOG_FILE}
+        $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}"
+    else
+        echo "gluster volume ${fs_vol_prvsnr_data} is already mounted on Server B, ignoring" >> ${LOG_FILE}
+    fi
 
     # add entries in fstab server A
     time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
-    echo "Adding entry for gluster volume (${gfs_vol_salt_cache_jobs}) in fstab of Server A" | tee -a ${LOG_FILE}
+    echo -e "\nAdding entry for gluster volume (${gfs_vol_salt_cache_jobs}) in fstab of Server A" | tee -a ${LOG_FILE}
     yes | cp -f /etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_a_unboxing_${time_stamp}
     if grep -q ${gfs_vol_salt_cache_jobs} /etc/fstab; then
         echo "/etc/fstab already has the entry for ${gfs_vol_salt_cache_jobs} on Server A" >> ${LOG_FILE}

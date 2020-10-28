@@ -215,19 +215,22 @@ seagate_refs_cleanup()
         echo "_n_repos=$_n_repos" >> ${LOG_FILE}
         if [[ $_n_repos -ne 0 ]]; then
             echo "Checking if there is salt or seagate references in repos" >> ${LOG_FILE}
-            if $ssh_cmd ${pvt_ips[$i]} 'grep -liEq "seagate|salt" /etc/yum.repos.d/*.repo'; then
-                $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -liE "seagate|salt" /etc/yum.repos.d/*.repo`;\
+            if $ssh_cmd ${pvt_ips[$i]} 'grep -liEq "cortx|seagate|salt" /etc/yum.repos.d/*.repo'; then
+                $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -liE "cortx|seagate|salt" /etc/yum.repos.d/*.repo`;\
                     do if ! grep -q "file://" $file; then\
                         echo "Removing repo file: $file";
                         mkdir -p /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing
                         yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing/; 
                         fi;
                     done'
-                echo "Done." | tee -a ${LOG_FILE}
-                echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
-                $ssh_cmd ${pvt_ips[$i]} "yum clean all || true" >> ${LOG_FILE}
-                echo "Done." | tee -a ${LOG_FILE}
             fi
+            $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "baseurl=None|baseurl=/3rd_party|baseurl=/cortx_iso" /etc/yum.repos.d/*.repo`;\
+                    do\
+                    echo "Removing repo: $file";\
+                    yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing;\
+                    done'  >> ${LOG_FILE}
+            echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
+            $ssh_cmd ${pvt_ips[$i]} "yum clean all || true"  >> ${LOG_FILE}
         else
             echo "No repos found with seagate references, ignoring" >> ${LOG_FILE}
         fi
