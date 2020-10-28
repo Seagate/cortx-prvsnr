@@ -511,9 +511,9 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "for bundle distribution type"
                 )
                 self.url_cortx_deps = None
-            if not (
-                self.pypi_repo and
-                self.dist_type == config.DistrType.BUNDLE
+            if (
+                not self.pypi_repo and
+                self.dist_type != config.DistrType.BUNDLE
             ):
                 logger.warning(
                     "Custom pip repo cannot be used "

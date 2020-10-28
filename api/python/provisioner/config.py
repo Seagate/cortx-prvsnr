@@ -85,6 +85,7 @@ PRVSNR_CORTX_DEPS_ISO = (
     PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_3RD_PARTY_ISO_DIR}.iso'
 )
 
+
 # FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
