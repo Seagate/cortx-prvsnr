@@ -1030,7 +1030,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     )
                 }
             }
-
             dump_yaml(pillar_path,  pillar)
 
         return pillar
