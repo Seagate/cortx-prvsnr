@@ -303,6 +303,16 @@ class RunArgsSetup:
         # default='github/release/rhel-7.7.1908/last_successful',
         # converter=(lambda v: f'{config.CORTX_REPOS_BASE_URL}/{v}')
     )
+    pypi_repo: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "Use pypi.org as source for pip installations"
+                ),
+            }
+        },
+        default=False
+    )
     ha: bool = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -373,6 +383,7 @@ class RunArgsSetupProvisionerBase:
     url_cortx_deps: str = attr.ib(init=False, default=None)
     dist_type: str = RunArgsSetup.dist_type
     target_build: str = RunArgsSetup.target_build
+    pypi_repo: bool = RunArgsSetup.pypi_repo
     salt_master: str = RunArgsSetup.salt_master
     update: bool = RunArgsSetup.update
     rediscover: bool = RunArgsSetup.rediscover
@@ -417,6 +428,16 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
         if self.source == 'local':
             if not self.local_repo:
                 raise ValueError("local repo is undefined")
+            if (
+                not self.pypi_repo and
+                self.dist_type != config.DistrType.BUNDLE
+            ):
+                logger.warning(
+                    "Custom pip repo cannot be used "
+                    "for non bundled distributions "
+                    "hence pip will be configured to install from pypi.org "
+                )
+                self.pypi_repo = True
         elif self.source == 'iso':
             if not self.iso_cortx:
                 raise ValueError("ISO for CORTX is undefined")
@@ -432,6 +453,13 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                         "ISO files for CORTX and CORTX dependencies "
                         f"have the same name: {self.iso_cortx.name}"
                     )
+                if not self.pypi_repo:
+                    logger.warning(
+                        "Custom python repo can be used only "
+                        "for single ISO based setup "
+                        "hence pip will be configured to install from pypi.org"
+                    )
+                    self.pypi_repo = True
             if self.dist_type != config.DistrType.BUNDLE:
                 logger.info(
                     "The type of distribution would be set to "
@@ -483,6 +511,16 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                     "for bundle distribution type"
                 )
                 self.url_cortx_deps = None
+            if (
+                not self.pypi_repo and
+                self.dist_type != config.DistrType.BUNDLE
+            ):
+                logger.warning(
+                    "Custom pip repo cannot be used "
+                    "for non bundled distributions "
+                    "hence pip will be configured to install from pypi.org"
+                )
+                self.pypi_repo = True
         else:
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
@@ -983,7 +1021,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     'deps_bundle_url': run_args.url_cortx_deps,
                     'base': {
                         'repos': repos_data
-                    }
+                    },
+                    'python_repo': (
+                        f"{run_args.target_build}/"
+                        f"{config.CORTX_PYTHON_ISO_DIR}"
+                        if not run_args.pypi_repo
+                        else 'https://pypi.org/'
+                    )
                 }
             }
             dump_yaml(pillar_path,  pillar)
@@ -1297,6 +1341,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.state_apply('repos')
         else:
             ssh_client.state_apply('cortx_repos')
+
+        if not run_args.pypi_repo:
+            logger.info("Setting up custom python repository")
+            ssh_client.state_apply('repos.pip_config')
 
         logger.info("Setting up paswordless ssh")
         ssh_client.state_apply('ssh')
