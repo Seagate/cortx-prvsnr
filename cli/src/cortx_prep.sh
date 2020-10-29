@@ -37,7 +37,7 @@ function install_prvsnr() {
     mkdir -p /tmp/iso_mount/{cortx,cortx-os}
 
     if [[ `find /opt/isos -name *.iso` ]]; then
-        cortx_iso=$(ls -t /opt/isos/cortx-1.0-*-single.iso | head -1 | xargs basename)
+        cortx_iso=$(ls -t /opt/isos/cortx-*-single.iso | head -1 | xargs basename)
         os_iso=$(ls -t /opt/isos/cortx-os-*.iso 2> /dev/null | head -1 | xargs basename)
 
         echo "INFO: Mounting ${cortx_iso} ${os_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
