@@ -16,11 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
 set -euE
-
-
-BASEDIR=$(dirname "${BASH_SOURCE}")
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/cortx_prep.log}"
 export LOG_FILE
@@ -67,8 +63,13 @@ EOF
           exit 1
         fi
 
+        echo "INFO: Removing /etc/yum.repos.d/bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
+        rm -rf /etc/yum.repos.d/bootstrap.repo
+        yum clean all || true
+
         echo "INFO: Unmounting ${cortx_iso} from /tmp/iso_mount" 2>&1 | tee -a ${LOG_FILE}
         umount /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
+
         echo "Done." 2>&1 | tee -a ${LOG_FILE}
     else
         echo "ERROR: CORTX Release ISO not found at /root/iso/" 2>&1 | tee -a ${LOG_FILE}
