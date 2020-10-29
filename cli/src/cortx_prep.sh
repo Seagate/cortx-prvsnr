@@ -19,7 +19,10 @@
 set -euE
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/cortx_prep.log}"
-export LOG_FILE
+if [[ ! -e "$LOG_FILE" ]]; then
+    mkdir -p $(dirname "${LOG_FILE}")
+    touch "${LOG_FILE}"
+fi
 
 function trap_handler {
     echo -e "\n***** FAILED!!*****" 2>&1 | tee -a $LOG_FILE
@@ -31,12 +34,12 @@ trap trap_handler ERR
 function install_prvsnr() {
 
     echo "INFO: Creating a directory to serve as the mount point" 2>&1 | tee -a ${LOG_FILE}
-    mkdir -p /tmp/iso_mount 
-   
-    if [[ `find /root/iso -name *.iso` ]]; then       
+    mkdir -p /tmp/iso_mount
+
+    if [[ `find /root/iso -name *.iso` ]]; then
         cortx_iso=$(ls -t /root/iso/cortx-1.0-*-single.iso | head -1 | xargs basename)
         echo "INFO: Mounting ${cortx_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
-        mount -t iso9660 ${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
+        mount -t iso9660 /root/iso/${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
         touch /etc/yum.repos.d/bootstrap.repo
@@ -84,11 +87,16 @@ Usage: $0
 Installs cortx-prvsnr
 
 Must be run from primary node.
-
-General options:
-$base_options_usage
 "
 }
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help) usage; exit 0
+        ;;
+        *) echo "Invalid option $1"; usage; exit 1;;
+    esac
+done
 
 install_prvsnr
 
