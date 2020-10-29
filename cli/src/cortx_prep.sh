@@ -36,10 +36,8 @@ function install_prvsnr() {
 
     echo "INFO: Creating a directory to serve as the mount point" 2>&1 | tee -a ${LOG_FILE}
     mkdir -p /tmp/iso_mount 
-
-    
-    if [[ `test -f /root/iso/*.iso` ]]; then
-        
+   
+    if [[ `test -f /root/iso/*.iso` ]]; then       
         cortx_iso=$(ls -t /root/iso/cortx-1.0-*-single.iso | head -1 | xargs basename)
         echo "INFO: Mounting ${cortx_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
         mount -o iso9660 ${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
@@ -71,7 +69,6 @@ EOF
         echo "INFO: Unmounting ${cortx_iso} from /tmp/iso_mount" 2>&1 | tee -a ${LOG_FILE}
         umount /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
         echo "Done." 2>&1 | tee -a ${LOG_FILE}
-
     else
         echo "ERROR: CORTX Release ISO not found at /root/iso/" 2>&1 | tee -a ${LOG_FILE}
         exit 1
@@ -82,7 +79,7 @@ function usage {
   echo "\
 Usage: $0
 
-Installs cortx-prvsnr from CORTX-ISO 
+Installs cortx-prvsnr
 
 Must be run from primary node.
 
