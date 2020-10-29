@@ -16,13 +16,9 @@
 #
 
 import logging
-import os
-import sys
-from scripts.utils.cluster import ClusterValidations
 from scripts.utils.pillar_get import PillarGet
 from scripts.utils.bmc import BMCValidations
 from scripts.utils.common import *
-from scripts.utils.network_connectivity_checks import NetworkValidations
 from messages.user_messages import *
 logger = logging.getLogger(__name__)
 
@@ -31,88 +27,100 @@ class UnboxingValidationsCall():
     def __init__(self):
         ''' Validations for Pre-Unboxing
         '''
-        self.cluster = ClusterValidations()
         self.bmc = BMCValidations()
         pass
-
-#    def check_cluster_status(self):
-#        ''' Validations for cluster status
-#        '''
-#        response = {}
-#        nodes = PillarGet.get_pillar("cluster:node_list")
-#        #get nodes
-#        if not node_res['ret_code']:
-#            nodes = node_res['response']
-#            res = self.cluster.cluster_status()
-#            for node in nodes:
-#                if "{node}: Online":
-#                    response["message"]= "{} in Cluster: Healthy".format(node)
-#                else:
-#                    response["message"]= str(CLUSTER_HEALTH_ERROR)
-#                response["ret_code"]= res[0]
-#                response["response"]= res[1]
-#                response["error_msg"]= res[2]
-#        else:
-#            response["ret_code"]= node_res['ret_code']
-#            response["response"]= node_res['response']
-#            response["error_msg"]= node_res["error_msg"]
-#            response["message"]= str(NODES_OFFLINE)
-#        return response
-#
-#    def check_stonith_issues(self):
-#        ''' Validations for STONITH issues
-#        '''
-#        response = {}
-#        nodes = PillarGet.get_pillar("cluster:node_list")
-#        res = self.cluster.stonith_issues()
-#        #if (stop_response[0] and reboot_response[0] and err_response[0]) == 0:
-#        if not res[0]:
-#            response["message"]= str(STONITH_CHECK) 
-#        else: 
-#            response["message"]= str(STONITH_ERROR)
-#        response["ret_code"]= res[0]
-#        response["response"]= res[1]
-#        response["error_msg"]= res[2]
-#        return response
-
-
-    def check_bmc_accessible(self):
-        ''' Validations for BMC accessibility
-        '''
-        response = {}
-        bmc_res = self.bmc.bmc_accessible()
-        if not bmc_res["ret_code"]:
-            response["message"]= str(BMC_ACCESSIBLE_CHECK)
-        else:
-            response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        response["ret_code"]= bmc_res["ret_code"]
-        response["response"]= bmc_res["response"]
-        response["error_msg"]= bmc_res["error_msg"]
-        return response
-
 
     def check_controller_mc_accessible(self):
         ''' Validations for Controllers accessibility
         '''
-        response = {}
-        node_res = PillarGet.get_pillar("cluster:node_list")
-        if not node_res['ret_code']:
-            nodes = node_res['response']
-            for node in nodes:
-                ctrl_ip = PillarGet.get_pillar("cluster:{node}:bmc:ip")
-                user = PillarGet.get_pillar("cluster:{node}:bmc:user")
-                enc_secret = PillarGet.get_pillar("cluster:{node}:bmc:secret")
-                get_decrypt_secret = decrypt_secret("ldap", enc_secret)
-                if not get_decrypt_secret["ret_code"]:
-                    passwd = get_decrypt_secret["response"]
-                    ssh_ctrl_ip = ssh_remote_machine(hostname, user, passwd)
-                    response["message"]= ssh_ctrl_ip["message"]
-                else:
-                    response["message"]= str(DECRYPT_PASSWD_FAILED)
-        else:
-            response["message"]= str(CTRL_IP_ACCESSIBLE_ERROR)
+        logger.info("Validations for Controllers accessibility")
 
-        response["ret_code"]= res[0]
-        response["response"]= res[1]
-        response["error_msg"]= res[2]
+        response = {}
+        ctrls = ['primary_mc', 'secondary_mc']
+        for ctrl in ctrls:
+            logger.info(f"Get controller IP for '{ctrl}'.")
+            ctrl_ip = PillarGet.get_pillar(f"storage_enclosure:controller:{ctrl}:ip")
+            if ctrl_ip['ret_code']:
+                logger.error(f"Failed to get controller IP. Response : '{ctrl_ip}'")
+                return ctrl_ip
+            logger.info(f"Received controller IP for '{ctrl}' successfully.")
+
+            logger.info(f"Get controller user for '{ctrl}'.")
+            user = PillarGet.get_pillar(f"storage_enclosure:controller:user")
+            if user['ret_code']:
+                logger.error(f"Failed to get controller user. Response : '{user}'")
+                return user
+            logger.info(f"Received controller user for '{ctrl}'.")
+
+            logger.info(f"Get controller secret for '{ctrl}'.")
+            enc_secret = PillarGet.get_pillar(f"storage_enclosure:controller:secret")
+
+            if enc_secret['ret_code']:
+                logger.error(f"Failed to get controller secret. Response : '{enc_secret}'")
+                return enc_secret
+            logger.info(f"Received controller secret for '{ctrl}'.")
+            logger.info(f"Decrypt controller secret for '{ctrl}'.")
+            get_decrypt_secret = decrypt_secret("storage_enclosure", enc_secret["response"])
+
+            if get_decrypt_secret['ret_code']:
+                logger.error(f"Failed to decrypt secret. Response : '{get_decrypt_secret}'")
+                return get_decrypt_secret
+            logger.info(f"Decrypted controller secret for '{ctrl}' successfully.")
+
+            logger.info(f"Checking SSH connection.")
+            response = ssh_remote_machine(hostname=ctrl_ip["response"],
+                                          username=user["response"],
+                                          password=get_decrypt_secret["response"])
+            if response['ret_code']:
+                logger.error(f"SSH connection failed.")
+                return response
+
+        response['message'] = "Both Controller MC are accessible."
         return response
+
+    def check_bmc_stonith_config(self):
+        ''' Validations for BMC STONITH
+        '''
+        logger.info("Validations for BMC STONITH")
+
+        logger.info(f"Get node list.")
+        node_res = PillarGet.get_pillar("cluster:node_list")
+        if node_res['ret_code']:
+            return node_res
+
+        nodes = node_res['response']
+        for node in nodes:
+            logger.info(f"Get BMC IP.")
+            bmc_ip_get = PillarGet.get_pillar(f"cluster:{node}:bmc:ip")
+            if bmc_ip_get['ret_code']:
+                logger.error(f"Failed to get BMC IP.")
+                return bmc_ip_get
+
+            logger.info(f"Get BMC user.")
+            user = PillarGet.get_pillar(f"cluster:{node}:bmc:user")
+            if user['ret_code']:
+                logger.error(f"Failed to get BMC user.")
+                return user
+
+            logger.info(f"Get BMC secret.")
+            secret = PillarGet.get_pillar(f"cluster:{node}:bmc:secret")
+            if secret['ret_code']:
+                logger.error(f"Failed to get BMC secret.")
+                return secret
+
+            logger.info(f"Decrypt BMC secret.")
+            decrypt_passwd = decrypt_secret("cluster", secret["response"])
+            if decrypt_passwd['ret_code']:
+                logger.error(f"Failed to decrypt BMC secret.")
+                return decrypt_passwd
+
+            bmc_ip = bmc_ip_get["response"]
+            bmc_user = user["response"]
+            bmc_passwd = decrypt_passwd["response"]
+            bmc_stonith_check = self.bmc.bmc_stonith_config(bmc_ip, bmc_user, bmc_passwd)
+            if bmc_stonith_check['ret_code']:
+                bmc_stonith_check["message"]= str(BMC_STONITH_ERROR)
+                return bmc_stonith_check
+
+        bmc_stonith_check["message"]= str(BMC_STONITH_CHECK)
+        return bmc_stonith_check

@@ -16,8 +16,8 @@
 #
 
 import logging
-import os, subprocess
-from scripts.utils.common import run_subprocess_cmd
+import subprocess
+from scripts.utils.common import run_subprocess_cmd, check_subprocess_output
 from scripts.utils.pillar_get import PillarGet
 from messages.user_messages import *
 from scripts.utils.network_connectivity_checks import NetworkValidations
@@ -27,62 +27,83 @@ logger = logging.getLogger(__name__)
 class BMCValidations():
 
     def __init__(self):
-        ''' Validations for BMC steps
-        '''
+        """ Validations for BMC steps
+        """
         pass
 
+
     def get_bmc_ip(self):
-        '''
-        Get BMC IP along with status of command
-        '''
-        common_response = {}
-        bmc_ip = []
-        node_res = PillarGet.get_pillar("cluster:node_list")
-        if node_res['ret_code']:
-            return node_res
-        nodes = node_res['response']
-        for node in nodes:
-            bmc_ip_get = PillarGet.get_pillar(f"cluster:{node}:bmc:ip")
-            bmc_ip.append(bmc_ip_get["response"])
-
-        common_response["response"] = bmc_ip 
-        common_response["ret_code"]= node_res["ret_code"]
-        common_response["error_msg"]= node_res["error_msg"]
-        return common_response
-
-    def ping_bmc(self):
-        ''' Ping BMC IP
-        '''
+        """ Get BMC IP along with status of command
+        """
+        logger.debug("Get BMC IP along with status of command")
         response = {}
-        res_ip_get = self.get_bmc_ip()
-        res_ip = res_ip_get["response"]
-        if res_ip_get['ret_code']:
-            return res_ip_get
-        for ip in res_ip:
-            ping_check = NetworkValidations.check_ping(ip)
-            if ping_check['ret_code']:
-                ping_check["message"]= str(BMC_ACCESSIBLE_ERROR)
-                return ping_check
 
-        response["ret_code"]= ping_check['ret_code']
-        response["message"]= str(BMC_ACCESSIBLE_CHECK)
-        response["response"]= ping_check["response"]
-        response["error_msg"]= ping_check["error_msg"]
+        cmd = "ipmitool lan print 1 | grep 'IP Address'"
+        res = check_subprocess_output(cmd)
+
+        if res[0]:
+            response['response'] = res[1]
+            response['message'] = str(BMC_GET_IP_ERROR)
+        else:
+            response['response'] = res[1].split()[-1]
+            response['message'] = str(BMC_GET_IP_SUCCESS).format(response['response'])
+
+        response['ret_code'] = res[0]
+        response['error_msg'] = res[2]
+
+        logger.debug(response)
         return response
 
-    def bmc_accessible(self):
-        ''' Validations for BMC accessibility
-        '''
+
+    def ping_bmc(self):
+        """ Ping BMC IP
+        """
+        logger.debug("Ping BMC IP")
+
+        response = self.get_bmc_ip()
+        if response['ret_code']:
+            return response
+
+        response = NetworkValidations.check_ping(response['response'])
+        logger.debug(response)
+        return response
+
+
+    def get_bmc_power_status(self):
+        """ Get BMC power status
+        """
+        logger.debug("Get BMC power status")
+
         response = {}
         cmd = "ipmitool chassis status | grep 'System Power'"
-        common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        bmc_ping_res = self.ping_bmc()
-        if (("on" in str(common_response)) and (bmc_ping_res['ret_code'] == 0)):
-            response["message"]= str(BMC_ACCESSIBLE_CHECK)
+        res = check_subprocess_output(cmd)
+
+        if res[0]:
+            response['response'] = res[1]
+            response['message'] = str(BMC_POWER_STATUS_ERROR)
         else:
-           response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        
-        response["ret_code"]= bmc_ping_res["ret_code"]
-        response["response"]= [str(common_response), bmc_ping_res["response"]]
-        response["error_msg"]= bmc_ping_res["error_msg"]
+            response['response'] = res[1].split()[-1]
+            response['message'] = str(BMC_POWER_STATUS_SUCCESS).format(response['response'])
+
+        response['ret_code'] = res[0]
+        response['error_msg'] = res[2]
+
+        logger.debug(response)
+        return response
+
+
+    def bmc_stonith_config(self, bmc_ip, bmc_user, bmc_passwd):
+        """ Validations for BMC STONITH accessibility
+        """
+        response = {}
+        cmd = f"fence_ipmilan -P -a {bmc_ip} -o status -l {bmc_user} -p {bmc_passwd}"
+        common_response = run_subprocess_cmd(cmd)
+        if not common_response[0]:
+            response["message"]= str(BMC_STONITH_CHECK)
+        else:
+            response["message"]= str(BMC_STONITH_ERROR)
+
+        response["ret_code"]= common_response[0]
+        response["response"]= common_response[1]
+        response["error_msg"]= common_response[2]
         return response

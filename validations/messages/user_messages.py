@@ -37,9 +37,12 @@ VOLUMES_MAPPED_TO_CNTRLRS_ERROR = "volumes_mapped ERROR: Enclosure Volumes Not M
 # BMC Accessible
 BMC_ACCESSIBLE_CHECK = "check_bmc_accessible CHECK: BMC Is Accessible On Both Servers"
 BMC_ACCESSIBLE_ERROR = "check_bmc_accessible ERROR: BMC Is Inaccessible On Servers. Please Check."
-PING_BMC_IP_CHECK = "ping_bmc CHECK: BMC IP Ping Success"
-PING_BMC_IP_ERROR = "ping_bmc ERROR: BMC IP Not Reachable"
-BMC_IP_ERROR = "ping_bmc ERROR: Failed to get BMC IP."
+BMC_POWER_STATUS_SUCCESS = "CHECK: BMC Power Status : '{}'"
+BMC_POWER_STATUS_ERROR = "ERROR: Failed to get BMC power status"
+BMC_GET_IP_SUCCESS = "CHECK: BMC IP : '{}'"
+BMC_GET_IP_ERROR = "ERROR: Failed to get BMC IP."
+BMC_STONITH_CHECK = "check_bmc_stonith_config CHECK: BMC STONITH Config is Proper and BMC Is Accessible"
+BMC_STONITH_ERROR = "check_bmc_stonith_config ERROR: Please Check BMC STONITH Config"
 
 # Nodes Status
 NODES_ONLINE = "nodes_status CHECK: All Nodes Active and Online"
@@ -73,6 +76,18 @@ CLUSTER_IP_CHECK = "Cluster IP is Set in Pillars"
 CLUSTER_IP_ERROR = "Cluster IP is Not Set in Pillars"
 
 # Remote Execution messages
+SSH_CONN_CHECK = "ssh_remote_machine CHECK: SSH Connection Success"
 SSH_CONN_ERROR = "ssh_remote_machine ERROR: SSH Conection Failed to Establish"
+
+# Decrypt Secret
 DECRYPT_PASSWD_CMD_ERROR = "decrypt_secret ERROR: salt-call: command not found"
 DECRYPT_PASSWD_FAILED = "decrypt_secret ERROR: Failed to decrypt Secret"
+DECRYPT_SECRET_SUCCESS = "SUCCESS: Secret decrypted successfully. Decrypted Data: '{}'"
+DECRYPT_SECRET_ERROR = "Could not decrypt secret data: '{}'"
+
+# Network Check
+NW_SHOW_DEV_ERROR = "ERROR: Failed to get information for dev '{}'"
+NW_DEVICE_DOES_NOT_EXIST = "ERROR: Dev '{}' does not exist."
+NW_IP_DEV_INVALID_OP = "ERROR: Invalid output. 'inet' is missing"
+NW_IP_FOUND = "CHECK: Network IP '{}' found from dev '{}' for node '{}'."
+NW_PUB_DATA_IP_SUCCESS = "CHECK: Public data IP is configured for both nodes."

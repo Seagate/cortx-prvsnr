@@ -33,7 +33,8 @@ class HardwareValidations():
     def mlnx_ofed_installed(self):
         ''' Validations for Mellanox drivers
         '''
-        cmd = "yum list yum list mlnx-ofed-all | grep mlnx-ofed*"
+        #cmd = "yum list yum list mlnx-ofed-all | grep mlnx-ofed*"
+        cmd = "rpm -qa | grep mlnx-ofed-all"
         common_response = run_subprocess_cmd(cmd)
         return common_response
 
@@ -63,6 +64,12 @@ class HardwareValidations():
         ''' Validations for LUNs
         '''
         cmd = "ls /sys/class/scsi_host/ | wc -l"
-        # TO DO: Check os function result
+        common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        return common_response
+
+    def lvm_equal_sized(self):
+        ''' Validations for LVMs
+        '''
+        cmd = "lsscsi -s|grep -e disk |grep -e SEAGATE"
         common_response = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         return common_response

@@ -16,8 +16,6 @@
 #
 
 import logging
-import os
-import sys
 from scripts.utils.cluster import ClusterValidations
 from scripts.utils.pillar_get import PillarGet
 from scripts.utils.bmc import BMCValidations
@@ -53,6 +51,8 @@ class ClusterValidationsCall():
                 else:
                     response["message"]= str(PACEMAKER_HEALTH_ERROR)
                     response["ret_code"]= 1
+                    break
+
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -62,7 +62,6 @@ class ClusterValidationsCall():
         '''
         response = {}
         node_res = PillarGet.get_pillar("cluster:node_list")
-        #get nodes
         if node_res['ret_code']:
             return node_res
         nodes = node_res['response']
@@ -75,6 +74,8 @@ class ClusterValidationsCall():
                     response["message"]= str(NODES_ONLINE)
                 else:
                     response["message"]= str(NODES_OFFLINE)
+                    break
+
         response["ret_code"]= res[0]
         response["response"]= res[1]
         response["error_msg"]= res[2]
@@ -85,7 +86,6 @@ class ClusterValidationsCall():
         '''
         response = {}
         node_res = PillarGet.get_pillar("cluster:node_list")
-        #get nodes
         if node_res['ret_code']:
             return node_res
         nodes = node_res['response']
@@ -96,6 +96,7 @@ class ClusterValidationsCall():
         else:
             response["message"]= str(RESOURCE_FAIL_ERROR)
             response["ret_code"]= 1
+
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -105,23 +106,22 @@ class ClusterValidationsCall():
         '''
         response = {}
         node_res = PillarGet.get_pillar("cluster:node_list")
-        #get nodes
         if node_res['ret_code']:
             return node_res
         nodes = node_res['response']
         res = self.cluster.cluster_status()
-        print ("Cluster Response: " ,res)
         if res[0]:
-            print ("TEST", response["message"])
             response["message"]= str(CLUSTER_HEALTH_ERROR)
         else:
             for node in nodes:
-                if node in res[1]: 
+                if node in res[1]:
                     response["message"]= str(CLUSTER_HEALTH_CHECK)
                     response["ret_code"]= 0
+                    break
                 else:
                     response["message"]= str(CLUSTER_HEALTH_ERROR)
                     response["ret_code"]= 1
+
         response["response"]= res[1]
         response["error_msg"]= res[2]
         return response
@@ -131,50 +131,34 @@ class ClusterValidationsCall():
         '''
         response = {}
         node_res = PillarGet.get_pillar("cluster:node_list")
-        #get nodes
         if node_res['ret_code']:
             return node_res
         res = self.cluster.stonith_issues()
-        print ("CHECK : ", res)
-        if (res[0][0] and res[1][0] and res[2][0]) == 0: 
-            response["message"]= str(STONITH_CHECK) 
+        if (res[0][0] and res[1][0] and res[2][0]) == 0:
+            response["message"]= str(STONITH_CHECK)
             response["ret_code"]= 0
-        else: 
+        else:
             response["message"]= str(STONITH_ERROR)
             response["ret_code"]= 1
         response["response"]= res[1][1]
         response["error_msg"]= res[2][2]
         return response
 
-    def ping_bmc(self):
-        ''' Ping BMC IP
-        '''
-        response = {}
-        res_ip = self.bmc.get_bmc_ip()
-        if not res_ip[0]:
-            ping_check = NetworkValidations.check_ping(res_ip)
-            if ping_check[0] == 0:
-                response["message"]= str(BMC_ACCESSIBLE_CHECK)
-            else:
-                response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        else:
-            response["message"]= str(BMC_IP_ERROR)
-        response["ret_code"]= ping_check[0]
-        response["response"]= ping_check[1]
-        response["error_msg"]= ping_check[2]
-        return response
-
     def check_bmc_accessible(self):
         ''' Validations for BMC accessibility
         '''
-        response = {}
-        bmc_res = self.bmc.bmc_accessible()
-        bmc_ping_res = self.bmc.ping_bmc() 
-        if bmc_res["ret_code"] and bmc_ping_res["ret_code"] == 0:
-            response["message"]= str(BMC_ACCESSIBLE_CHECK)
-        else:
-            response["message"]= str(BMC_ACCESSIBLE_ERROR)
-        response["ret_code"]= res[0]
-        response["response"]= res[1]
-        response["error_msg"]= res[2]
+        response = self.bmc.get_bmc_power_status()
+        if response['ret_code']:
+            return response
+
+        if response['response'] != 'on':
+            response['ret_code'] = 1
+            response['message'] += f' {str(BMC_ACCESSIBLE_ERROR)}'
+            return response
+
+        response = self.bmc.ping_bmc()
+        if response['ret_code']:
+            return response
+
+        response["message"]= str(BMC_ACCESSIBLE_CHECK)
         return response

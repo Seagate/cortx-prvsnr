@@ -16,8 +16,6 @@
 #
 
 import logging
-import os
-import sys
 from scripts.utils.cortx import CortxValidations
 from messages.user_messages import *
 logger = logging.getLogger(__name__)

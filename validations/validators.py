@@ -63,9 +63,9 @@ class Validators():
 if __name__ == '__main__':
     import argparse
     import sys
-    #from scripts.utils.log import setup_logging
+    from scripts.utils.log import setup_logging
 
-    #setup_logging()
+    setup_logging()
 
     argParser = argparse.ArgumentParser()
     argParser.add_argument(

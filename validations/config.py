@@ -15,21 +15,11 @@ FACTORY_POST_CHECK = {
     'check_nodes_status': 'ClusterValidationsCall',
     'check_get_resource_failcount': 'ClusterValidationsCall',
     'check_cluster_status': 'ClusterValidationsCall',
-    'check_stonith_issues': 'ClusterValidationsCall',
+#    'check_stonith_issues': 'ClusterValidationsCall',  #TO DO: verify alternative for log files check
     'check_bmc_accessible': 'ClusterValidationsCall',
     'check_consul_service': 'CortxValidationsCall',
     'check_elasticsearch_service': 'CortxValidationsCall',
-    'check_ioservice_service': 'CortxValidationsCall',
-    'verify_nodes_online': 'ServerValidations',
-    'verif_node_communication': 'ServerValidations',
-    'verify_mgmt_vip': 'NetworkChecks',
-    'verify_cluster_ip': 'NetworkChecks',
-    'verify_public_data_ip': 'NetworkChecks',
-    'verify_private_data_ip': 'NetworkChecks',
-    'verify_luns_consistency': 'StorageValidations',
-    'verify_access_to_controller': 'ControllerValidations',
-    'verify_passwordless': 'ServerValidations',
-    'verify_lvm': 'StorageValidations'
+    'check_ioservice_service': 'CortxValidationsCall'
 }
 
 
@@ -40,10 +30,15 @@ FW_UPDATE_CHECK = {
 }
 
 UNBOXING_CHECK = {
-    'check_stonith_issues': 'UnboxingValidationsCall',
-    'check_bmc_accessible': 'UnboxingValidationsCall',
-    'check_controller_mc_accessible': 'UnboxingValidationsCall'
+    'verify_public_data_interface_ip': 'NetworkChecks',
+    'check_bmc_accessible': 'ClusterValidationsCall',
+    'check_controller_mc_accessible': 'UnboxingValidationsCall',
+    'check_bmc_stonith_config': 'UnboxingValidationsCall'
 }
+
+#UNBOXING_POST_CHECK = {
+#    'check_stonith_issues': 'ClusterValidationsCall'
+#}
 
 ALL_CHECKS = {
 }

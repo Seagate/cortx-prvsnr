@@ -16,8 +16,6 @@
 #
 
 import logging
-import os
-import sys
 from scripts.utils.hardware import HardwareValidations
 from scripts.utils.storage import StorageValidations
 from messages.user_messages import *
@@ -65,7 +63,7 @@ class PreFlightValidationsCall():
         '''
         response = {}
         res = self.hw.mlnx_hca_req_ports()
-        if res[0] != 0:
+        if res != 0:
             response["message"]= str(MLNX_HCA_PORTS_CHECK)
             response["ret_code"]= 0
             response["response"]= int(res)
