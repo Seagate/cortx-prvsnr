@@ -34,12 +34,15 @@ trap trap_handler ERR
 function install_prvsnr() {
 
     echo "INFO: Creating a directory to serve as the mount point" 2>&1 | tee -a ${LOG_FILE}
-    mkdir -p /tmp/iso_mount
+    mkdir -p /tmp/iso_mount/{cortx,cortx-os}
 
-    if [[ `find /root/iso -name *.iso` ]]; then
-        cortx_iso=$(ls -t /root/iso/cortx-1.0-*-single.iso | head -1 | xargs basename)
-        echo "INFO: Mounting ${cortx_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
-        mount -t iso9660 /root/iso/${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
+    if [[ `find /opt/isos -name *.iso` ]]; then
+        cortx_iso=$(ls -t /opt/isos/cortx-1.0-*-single.iso | head -1 | xargs basename)
+        os_iso=$(ls -t /opt/isos/cortx-os-*.iso 2> /dev/null | head -1 | xargs basename)
+
+        echo "INFO: Mounting ${cortx_iso} ${os_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
+        mount -t iso9660 /opt/isos/${cortx_iso} /tmp/iso_mount/cortx 2>&1 | tee -a ${LOG_FILE}
+        mount -t iso9660 /opt/isos/${os_iso} /tmp/iso_mount/cortx-os 2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
         touch /etc/yum.repos.d/bootstrap.repo
@@ -47,15 +50,29 @@ function install_prvsnr() {
         do
 cat >> /etc/yum.repos.d/bootstrap.repo <<EOF
 [$repo]
-baseurl=file:///tmp/iso_mount/${repo}
+baseurl=file:///tmp/iso_mount/cortx/${repo}
 gpgcheck=0
 name=Repository ${repo}
 enabled=1
 
 EOF
       done
+
+        echo "INFO: Creating base.repo" 2>&1 | tee -a ${LOG_FILE}
+        touch /etc/yum.repos.d/base.repo
+cat >> /etc/yum.repos.d/base.repo <<EOF
+[Base]
+baseurl=file:///tmp/iso_mount/cortx-os
+gpgcheck=0
+name=Repository Base
+enabled=1
+EOF
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
-        yum install python36-m2crypto salt salt-master salt-minion python36-cortx-prvsnr -y 2>&1 | tee -a ${LOG_FILE}
+        yum install -y \
+        python36-m2crypto \
+        salt salt-master salt-minion \
+        python36-cortx-prvsnr \
+        2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Verifying cortx-prvsnr installation" 2>&1 | tee -a ${LOG_FILE}
         prvsnr_version=$(provisioner --version)
@@ -67,15 +84,16 @@ EOF
         fi
 
         echo "INFO: Removing /etc/yum.repos.d/bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
-        rm -rf /etc/yum.repos.d/bootstrap.repo
+        rm -f /etc/yum.repos.d/bootstrap.repo && rm -f /etc/yum.repos.d/base.repo
         yum clean all || true
 
-        echo "INFO: Unmounting ${cortx_iso} from /tmp/iso_mount" 2>&1 | tee -a ${LOG_FILE}
-        umount /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
+        echo "INFO: Unmounting ${cortx_iso} ${os_iso} from /tmp/iso_mount" 2>&1 | tee -a ${LOG_FILE}
+        umount /tmp/iso_mount/cortx 2>&1 | tee -a ${LOG_FILE}
+        umount /tmp/iso_mount/cortx-os 2>&1 | tee -a ${LOG_FILE}
 
         echo "Done." 2>&1 | tee -a ${LOG_FILE}
     else
-        echo "ERROR: CORTX Release ISO not found at /root/iso/" 2>&1 | tee -a ${LOG_FILE}
+        echo "ERROR: OS and CORTX ISO not found at /opt/isos/" 2>&1 | tee -a ${LOG_FILE}
         exit 1
     fi
 }
@@ -84,9 +102,9 @@ function usage {
   echo "\
 Usage: $0
 
-Installs cortx-prvsnr
+Installs cortx-prvsnr API (python36-cortx-prvsnr)
 
-Must be run from primary node.
+Must preferably be run from primary node.
 "
 }
 
