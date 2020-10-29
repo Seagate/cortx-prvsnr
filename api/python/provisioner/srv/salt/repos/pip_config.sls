@@ -15,34 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+{% set python_repo_path = pillar['release']['python_repo'] %}
 
-{% if pillar['release']['target_build'] %}
-Add CSM uploads repo:
-  pkgrepo.managed:
-    - name: {{ defaults.csm.uploads_repo.id }}
-    - enabled: True
-    - humanname: csm_uploads
-    - baseurl: {{ defaults.csm.uploads_repo.url }}
-    - gpgcheck: 0
-
-Add CSM repo:
-  pkgrepo.managed:
-    - name: {{ defaults.csm.repo.id }}
-    - enabled: True
-    - humanname: csm
-    - baseurl: {{ defaults.csm.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.csm.repo.gpgkey }}
-{% endif %}
-
-{% if 'single' not in pillar['cluster']['type'] %}
-Render CSM ha input params template:
+configure pip:
   file.managed:
-    - name: /opt/seagate/cortx/ha/conf/build-ha-csm-args.yaml
-    - source: salt://components/csm/files/ha-params.tmpl
-    - template: jinja
-    - mode: 444
-    - makedirs: True
-{% endif %}
-
+    - name: /etc/pip.conf
+    - contents: |
+        [global]
+        timeout: 60
+        index-url: {{ python_repo_path }}
+{%- if python_repo_path.startswith(('http://', 'https://')) %}
+        trusted-host: {{ python_repo_path.split('/')[2] }}
+{%- endif -%}

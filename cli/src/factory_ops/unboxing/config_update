@@ -38,17 +38,20 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
-# private_data_ip_node_1=$(grep -m1 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-# private_data_ip_node_2=$(grep -m2 -A8 -P "data_nw:" ${PRVSNR_ROOT}/pillar/user/groups/all/cluster.sls|grep "pvt_ip_addr"|tail -n1|cut -d':' -f2|tr -d "[:space:]")
-#private_data_ip_node_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-#private_data_ip_node_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
-
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
     echo "******************"
 }
 trap trap_handler ERR
+
+export gfs_vol_prvsnr_data="${gfs_vol_prvsnr_data:-"volume_prvsnr_data"}"
+export gfs_vol_salt_cache_jobs="${gfs_vol_salt_cache_jobs:-"volume_salt_cache_jobs"}"
+export mount_dir_salt_cache="${mount_dir_salt_cache:-"/srv/glusterfs/volume_salt_cache_jobs"}"
+export mountpt_salt_cache_vol="${mountpt_salt_cache_vol:-"/var/cache/salt/master/jobs"}"
+export mountpt_prvsnr_data_vol="${mountpt_prvsnr_data_vol:-"/var/lib/seagate/cortx/provisioner/shared"}"
+export mount_dir_prvsnr_data="${mount_dir_prvsnr_data:-"/srv/glusterfs/volume_prvsnr_data"}"
+
 
 function update_ssh_config {
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
@@ -63,9 +66,9 @@ function update_ssh_config {
         echo "Ok." | tee -a ${LOG_FILE}
 
         # Replace node-2 entry
-        echo "private_data_ip_node_2: $private_data_ip_node_2"
-        echo -n "Updating server B hostname in ssh config file of server A..................." 2>&1|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        echo "Private n/w IP (Server B): $pvt_ip_b" | tee -a ${LOG_FILE}
+        echo -n "Updating server B hostname in ssh config file of server A..................." | tee -a ${LOG_FILE}
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -73,10 +76,10 @@ function update_ssh_config {
         sed -i "${line_to_replace}s|HostName.*|HostName ${secondary_host}|" /root/.ssh/config
         echo "Ok." | tee -a ${LOG_FILE}
     else
-        echo "private_data_ip_node_1: $private_data_ip_node_1"
+        echo "Private n/w IP (Server A): $pvt_ip_a" | tee -a ${LOG_FILE}
         echo -n "Updating server B hostname in ssh config file of server B..................." 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
-        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_1} "hostname")
+        local primary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_a} "hostname")
         # echo ${primary_host}
         local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -96,13 +99,170 @@ function update_ssh_config {
     fi
 }
 
+function stop_salt_services() {
+    echo -n "Stoping salt-minion on Server A.........................................." |tee -a ${LOG_FILE}
+    systemctl stop salt-minion
+    echo "Ok." | tee -a ${LOG_FILE}
+
+    echo -n "Stoping salt-minion on Server B.........................................." |tee -a ${LOG_FILE}
+    ${ssh_cmd} ${pvt_ip_b} "systemctl stop salt-minion"
+    echo "Ok." | tee -a ${LOG_FILE}
+
+    sleep 5
+
+    echo -n "Stoping salt-master on Server A.........................................." 2>&1 | tee -a ${LOG_FILE}
+    systemctl stop salt-master
+    echo "Ok." | tee -a ${LOG_FILE}
+
+    echo -n "Stoping salt-master on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
+    ${ssh_cmd} ${pvt_ip_b} "systemctl stop salt-master"
+    echo "Ok." | tee -a ${LOG_FILE}
+}
+
+function configure_gluster_vols() {
+
+    #1. Add peer
+    #2. create bricks
+    #3. start volume
+    #4. mount volume
+    #5. add entry in fstab
+
+    echo "Stopping the Salt services before updating gluster configuration" | tee -a ${LOG_FILE}
+    stop_salt_services
+
+    echo "Adding peer in gluster configuration" | tee -a ${LOG_FILE}
+    if ! gluster peer status | grep ${hostname_B}; then
+        echo "adding gluser peer" >> ${LOG_FILE}
+        echo y | gluster peer probe ${hostname_B} 2>&1 | tee -a ${LOG_FILE}
+        sleep 5
+    else
+        echo "peer ${hostname_B} already added in gluser configuration" >> ${LOG_FILE}
+    fi
+
+    #volume_salt_cache_jobs:
+    echo -e "\nCreating gluster volume brick for ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
+    if ! gluster volume list | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "creating gluster volume ${gfs_vol_salt_cache_jobs}" >> ${LOG_FILE}
+        echo y | gluster volume create ${gfs_vol_salt_cache_jobs} replica 2 ${hostname_A}:${mount_dir_salt_cache} ${hostname_B}:${mount_dir_salt_cache} force
+        sleep 5
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} already created, ignoring" >> ${LOG_FILE}
+    fi
+
+    echo -e "\nStarting the gluster volume ${gfs_vol_salt_cache_jobs}" | tee -a ${LOG_FILE}
+    start_status=$(gluster volume info ${gfs_vol_salt_cache_jobs} | grep Status: | awk '{ print $2}')
+    if [[ "${start_status}" == "Started" ]]; then
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already started, ignoring" >> ${LOG_FILE}
+    else
+        echo "starting the volume ${gfs_vol_salt_cache_jobs}" >> ${LOG_FILE}
+        echo y | gluster volume start ${gfs_vol_salt_cache_jobs}
+        sleep 5
+    fi
+
+    echo -e "\nMounting gluster volume ${hostname_A}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server A" | tee -a ${LOG_FILE}
+    if ! mount | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "mounting the gluster volume ${gfs_vol_salt_cache_jobs} on Server A" >> ${LOG_FILE}
+        mount -t glusterfs ${hostname_A}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already mounted on Server A, ignoring" >> ${LOG_FILE}
+    fi
+
+    echo -e "\nMounting gluster volume ${hostname_B}:${gfs_vol_salt_cache_jobs} at ${mountpt_salt_cache_vol} on Server B" | tee -a ${LOG_FILE}
+    if ! $ssh_cmd $pvt_ip_b mount | grep ${gfs_vol_salt_cache_jobs}; then
+        echo "mounting the gluster volume ${gfs_vol_salt_cache_jobs} on Server B" >> ${LOG_FILE}
+        $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_B}:/${gfs_vol_salt_cache_jobs} ${mountpt_salt_cache_vol}"
+    else
+        echo "gluster volume ${gfs_vol_salt_cache_jobs} is already mounted on Server B, ignoring" >> ${LOG_FILE}
+    fi
+
+    #volume_prvsnr_data:
+    echo -e "\nCreating gluster volume brick for ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
+    if ! gluster volume list | grep ${gfs_vol_prvsnr_data}; then
+        echo "creating gluster volume ${gfs_vol_prvsnr_data}" >> ${LOG_FILE}
+        echo y | gluster volume create ${gfs_vol_prvsnr_data} replica 2 ${hostname_A}:${mount_dir_prvsnr_data} ${hostname_B}:${mount_dir_prvsnr_data} force
+        sleep 5
+    else
+        echo "gluster volume ${gfs_vol_prvsnr_data} already created, ignoring" >> ${LOG_FILE}
+    fi
+
+    echo -e "\nStarting the gluster volume ${gfs_vol_prvsnr_data}" | tee -a ${LOG_FILE}
+    start_status=$(gluster volume info ${gfs_vol_prvsnr_data} | grep Status: | awk '{ print $2}')
+    if [[ "${start_status}" == "Started" ]]; then
+        echo "gluster volume ${gfs_vol_prvsnr_data} is already started, ignoring" >> ${LOG_FILE}
+    else
+        echo "starting the volume ${gfs_vol_prvsnr_data}" >> ${LOG_FILE}
+        echo y | gluster volume start ${gfs_vol_prvsnr_data}
+        sleep 5
+    fi
+
+    echo -e "\nMounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server A" | tee -a ${LOG_FILE}
+    if ! mount | grep ${gfs_vol_prvsnr_data}; then
+        echo "mounting the gluster volume ${gfs_vol_prvsnr_data} on Server A" >> ${LOG_FILE}
+        mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}
+    else
+        echo "gluster volume ${gfs_vol_prvsnr_data} is already mounted on Server A, ignoring" >> ${LOG_FILE}
+    fi
+
+    echo -e "\nMounting gluster volume ${hostname_A}:/${gfs_vol_prvsnr_data} at ${mountpt_prvsnr_data_vol} on Server B" | tee -a ${LOG_FILE}
+    if ! $ssh_cmd $pvt_ip_b mount | grep ${gfs_vol_prvsnr_data}; then
+        echo "mounting the gluster volume ${gfs_vol_prvsnr_data} on Server B" >> ${LOG_FILE}
+        $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}"
+    else
+        echo "gluster volume ${fs_vol_prvsnr_data} is already mounted on Server B, ignoring" >> ${LOG_FILE}
+    fi
+
+    # add entries in fstab server A
+    time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
+    echo -e "\nAdding entry for gluster volume (${gfs_vol_salt_cache_jobs}) in fstab of Server A" | tee -a ${LOG_FILE}
+    yes | cp -f /etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_a_unboxing_${time_stamp}
+    if grep -q ${gfs_vol_salt_cache_jobs} /etc/fstab; then
+        echo "/etc/fstab already has the entry for ${gfs_vol_salt_cache_jobs} on Server A" >> ${LOG_FILE}
+        #Comment the existing entry and add the new one
+        sed -i "/${gfs_vol_salt_cache_jobs}/ s/^/#/" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
+    fi
+    echo "${hostname_A}:${gfs_vol_salt_cache_jobs}      ${mountpt_salt_cache_vol}    glusterfs    _netdev,defaults,acl    0 0" >> /etc/fstab
+
+    echo "Adding entry for gluster volume (${gfs_vol_prvsnr_data}) in fstab of Server A" | tee -a ${LOG_FILE}
+    if grep -q ${gfs_vol_prvsnr_data} /etc/fstab; then
+        echo "/etc/fstab already has the entry for ${gfs_vol_prvsnr_data} on Server A" >> ${LOG_FILE}
+        #Comment the existing entry and add the new one
+        sed -i "/${gfs_vol_prvsnr_data}/ s/^/#/" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
+    fi
+    echo "${hostname_A}:${gfs_vol_prvsnr_data}      ${mountpt_prvsnr_data_vol}    glusterfs    _netdev,defaults,acl    0 0" >> /etc/fstab
+
+    # add entries in fstab server B
+    echo "Adding entry for gluster volume (${gfs_vol_salt_cache_jobs}) in fstab of Server B" | tee -a ${LOG_FILE}
+    fstab_b="/tmp/fstab_b_unboxing"
+    echo "Copying the fstab from Server B to Server A for update" >> ${LOG_FILE}
+    ${scp_cmd} ${pvt_ip_b}:/etc/fstab ${fstab_b}
+    yes | cp -f ${fstab_b} /opt/seagate/cortx/provisioner/generated_configs/fstab_b_unboxing_${time_stamp}
+    if grep -q ${gfs_vol_salt_cache_jobs} ${fstab_b}; then
+        echo "/etc/fstab already has the entry for ${gfs_vol_salt_cache_jobs} on Server B" >> ${LOG_FILE}
+        #Comment the existing entry and add the new one
+        sed -i "/${gfs_vol_salt_cache_jobs}/ s/^/#/" ${fstab_b} 2>&1 | tee -a ${LOG_FILE}
+    fi
+    echo "${hostname_A}:${gfs_vol_salt_cache_jobs}      ${mountpt_salt_cache_vol}    glusterfs    _netdev,defaults,acl    0 0" >> ${fstab_b}
+
+    echo "Adding entry for gluster volume (${gfs_vol_prvsnr_data}) in fstab of Server B" | tee -a ${LOG_FILE}
+    if grep -q ${gfs_vol_prvsnr_data} ${fstab_b}; then
+        echo "/etc/fstab already has the entry for ${gfs_vol_prvsnr_data} on Server B" >> ${LOG_FILE}
+        #Comment the existing entry and add the new one
+        sed -i "/${gfs_vol_prvsnr_data}/ s/^/#/" ${fstab_b} 2>&1 | tee -a ${LOG_FILE}
+    fi
+    echo "${hostname_A}:${gfs_vol_prvsnr_data}      ${mountpt_prvsnr_data_vol}    glusterfs    _netdev,defaults,acl    0 0" >> ${fstab_b}
+
+    echo "Copying the fstab from Server A to Server B after update" >> ${LOG_FILE}
+    ${scp_cmd} ${fstab_b} ${pvt_ip_b}:/etc/fstab
+
+}
+
 function update_salt_minion {
 
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
         # Getting '127.0.0.1'. This can be hard-coded also
         local localhost_ip=$(awk '{print $1; exit}' /etc/hosts)
         local primary_host=$(hostname)
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         # echo ${secondary_host}
         local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
         # echo ${line_to_replace}
@@ -112,16 +272,16 @@ function update_salt_minion {
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Setting salt-master on server B (secondary node)............................" 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "sed -i \"${line_to_replace}s|^master:.*|master: \['${primary_host}', '${localhost_ip}'\]|\" /etc/salt/minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "sed -i \"${line_to_replace}s|^master:.*|master: \['${primary_host}', '${localhost_ip}'\]|\" /etc/salt/minion"
         echo "Ok." | tee -a ${LOG_FILE}
-        
+
         # It's safe to restart service on both nodes
         echo -n "Restarting salt-minion on Server A.........................................." 2>&1|tee -a ${LOG_FILE}
         systemctl restart salt-minion
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Restarting salt-minion on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-minion"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "systemctl restart salt-minion"
         echo "Ok." | tee -a ${LOG_FILE}
 
         sleep 5
@@ -131,15 +291,15 @@ function update_salt_minion {
         echo "Ok." | tee -a ${LOG_FILE}
 
         echo -n "Restarting salt-master on Server B.........................................." 2>&1|tee -a ${LOG_FILE}
-        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "systemctl restart salt-master"
+        ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "systemctl restart salt-master"
         echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Listing salt keys..........................................................." 2>&1 | tee -a ${LOG_FILE}
-        salt-key -L ${salt_opts}
-        echo "Ok." | tee -a ${LOG_FILE}
-        echo -n "Accepting salt keys........................................................." 2>&1 | tee -a ${LOG_FILE}
-        salt-key -A -y >> ${LOG_FILE}
-        echo "Ok." | tee -a ${LOG_FILE}
+#        echo -n "Listing salt keys..........................................................." 2>&1 | tee -a ${LOG_FILE}
+#        salt-key -L ${salt_opts}
+#        echo "Ok." | tee -a ${LOG_FILE}
+#        echo -n "Accepting salt keys........................................................." 2>&1 | tee -a ${LOG_FILE}
+#        salt-key -A -y >> ${LOG_FILE}
+#        echo "Ok." | tee -a ${LOG_FILE}
 
         sleep 5
     fi
@@ -151,88 +311,71 @@ function update_cluster_sls {
     local _static_ip_a=${3:-}
     local _static_ip_b=${4:-}
 
-    #local _cluster_sls_path=${PRVSNR_ROOT}/pillar/components/cluster.sls
-    #if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-    #    _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-    #elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-    #    _cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-    #else
-    #    echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
-    #    exit 1
-    #fi
-
     if [[ "srvnode-1" == "$(cat /etc/salt/minion_id)" ]]; then
-        echo -n "Updating Management VIP in pillar..........................................." 2>&1|tee -a ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "mgmt_vip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #sed -i "${line_to_replace},/mgmt_vip:*/ s|mgmt_vip:.*|mgmt_vip: ${mgmt_vip}|" ${_cluster_sls_path}
+        echo "Updating Management VIP in pillar" 2>&1|tee -a ${LOG_FILE}
         provisioner pillar_set cluster/mgmt_vip \"${mgmt_vip}\"
-        echo "Ok." | tee -a ${LOG_FILE}
 
-        echo -n "Updating Cluster IP in pillar..............................................." 2>&1|tee -a ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "cluster_ip:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #sed -i "${line_to_replace},/cluster_ip:*/ s|cluster_ip:.*|cluster_ip: ${cluster_vip}|" ${_cluster_sls_path}
+        echo "Updating Cluster IP in pillar" 2>&1|tee -a ${LOG_FILE}
         provisioner pillar_set cluster/cluster_ip \"${cluster_vip}\"
-        echo "Ok." |tee -a ${LOG_FILE}
 
          #Update public data interface ips
         if [[ ! -z ${_static_ip_a} && ! -z ${_static_ip_b} ]]; then
             echo "Updating static IP of public data network in pillar for both servers" |tee -a ${LOG_FILE}
             echo "Updating static data ip ($_static_ip_a) for server A" >> $LOG_FILE
-            #line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-            #sed -ie "${line_node1_ip}s/.*/                public_ip_addr: ${_static_ip_a}/" $_cluster_sls_path
             provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${_static_ip_a}\"
             
             echo "Updating static data ip ($_static_ip_b) for server B" >> $LOG_FILE
-            #line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-            #sed -ie "${line_node2_ip}s/.*/                public_ip_addr: ${_static_ip_b}/" $_cluster_sls_path
             provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${_static_ip_b}\"
             echo "Done" | tee -a ${LOG_FILE}
         fi
 
-        echo -n "Updating hostname of Server A..............................................." 2>&1|tee -a ${LOG_FILE}
+        echo "Updating hostname of Server A" 2>&1|tee -a ${LOG_FILE}
         # Replace node-1 entry
         # Hostname
         local primary_host=$(hostname)
         echo "DEBUG:primary_host: ${primary_host}" >> ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "srvnode-1:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
-        #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${primary_host}|" ${_cluster_sls_path}
         provisioner pillar_set cluster/srvnode-1/hostname \"${primary_host}\"
-        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
-        # grep -m1 -A10 -n "srvnode-1:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
-        # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
-            echo -n "Fetching and updating BMC IP for Server A..................................." 2>&1|tee -a ${LOG_FILE}
-            update_bmc_ip "srvnode-1" >> ${LOG_FILE}
-            echo "Ok." | tee -a ${LOG_FILE}
+            echo "Fetching and updating BMC IP for Server A" 2>&1|tee -a ${LOG_FILE}
+            #update_bmc_ip "srvnode-1" >> ${LOG_FILE}
+            _ip_line=$(ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
+            _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
+            if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
+                echo "BMC_IP (Server A): ${_ip}" >> ${LOG_FILE}
+                provisioner pillar_set cluster/srvnode-1/bmc:ip \"${_ip}\"
+            else
+                echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
+                exit 1
+            fi
+            echo "Done." >> ${LOG_FILE}
+
         }
 
         # Replace node-2 entry
         # Hostname
-        echo -n "Updating hostname of Server B..............................................." 2>&1|tee -a ${LOG_FILE}
-        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${private_data_ip_node_2} "hostname")
+        echo "Updating hostname of Server B" 2>&1|tee -a ${LOG_FILE}
+        local secondary_host=$(ssh -i /root/.ssh/id_rsa_prvsnr -o "StrictHostKeyChecking no" ${pvt_ip_b} "hostname")
         echo "DEBUG: secondary_host: ${secondary_host}" >> ${LOG_FILE}
-        #local line_to_replace=$(grep -m1 -n "srvnode-2:" ${_cluster_sls_path}|tail -1|cut -d: -f1)
-        #echo "DEBUG: line_to_replace: ${line_to_replace}" >> ${LOG_FILE}
-        #sed -i "${line_to_replace},/hostname:*/ s|hostname:.*|hostname: ${secondary_host}|" ${_cluster_sls_path}
         provisioner pillar_set cluster/srvnode-2/hostname \"${secondary_host}\"
-        echo "Ok." | tee -a ${LOG_FILE}
         # BMC IP-address
-        # grep -m1 -A10 -n "srvnode-2:" ${_cluster_sls_path}|grep -m1 -A3 "bmc"|grep -m1 "ip"|cut -d: -f2|tr -d [:space:]
-        # sed -i "${line_to_replace},/ip:*/ s|ip:.*|ip: ${primary_host}|" ${_cluster_sls_path}
-        # echo "Updated cluster.sls for node-1 hostname on primary node" 2>&1|tee -a ${LOG_FILE}
         (hostnamectl status | grep Chassis | grep -q server) && {
-            echo -n "Fetching and updating BMC IP for Server B..................................." 2>&1|tee -a ${LOG_FILE}
-            update_bmc_ip "srvnode-2" "srvnode-2" >> ${LOG_FILE}
-            echo "Ok." | tee -a ${LOG_FILE}
-        }
+            echo "Fetching and updating BMC IP for Server B" 2>&1|tee -a ${LOG_FILE}
+            #update_bmc_ip "srvnode-2" "srvnode-2" >> ${LOG_FILE}
+            _ip_line=$(${ssh_cmd} ${pvt_ip_b} ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
+            _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
+            if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
+                echo "BMC_IP (Server B): ${_ip}" >> ${LOG_FILE}
+                provisioner pillar_set cluster/srvnode-2/bmc:ip \"${_ip}\"
+            else
+                echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
+                exit 1
+            fi
+            echo "Done." >> ${LOG_FILE}
 
-        echo -n "Refreshing Salt pillar from Server A........................................" 2>&1|tee -a ${LOG_FILE}
-        sleep 5
-        salt "*" saltutil.refresh_pillar ${salt_opts}
-        echo "Ok." 2>&1|tee -a ${LOG_FILE}
+        }
+        echo "BMC_IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
+        echo "BMC_IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
     fi
 }
 
@@ -243,6 +386,7 @@ function recover_rabbitmq_cluster {
     salt "srvnode-2" state.apply components.misc_pkgs.rabbitmq ${salt_opts}; sleep 5
     echo "Done"
 }
+
 
 
 function lock_unboxing_user {
@@ -276,10 +420,10 @@ function lock_unboxing_user {
 }
 
 function remove_boxing_flag {
-    if [[ -f '/opt/seagate/cortx/provisioner/generated_config/boxed' ]]
+    if [[ -f '/opt/seagate/cortx/provisioner/generated_configs/boxed' ]]
     then
         echo "DEBUG: Boxed file found. Removing boxed file." >> ${LOG_FILE}
-        rm -f /opt/seagate/cortx/provisioner/generated_config/boxed || true
+        rm -f /opt/seagate/cortx/provisioner/generated_configs/boxed || true
     else
         echo "\
 ERROR: Boxing command was not run
