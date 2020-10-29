@@ -31,10 +31,10 @@ Sync data:
 # {% endfor %}
 # {%- endif %}
 
-# Configure yum:
-#   file.managed:
-#     - name: /etc/yum.conf
-#     - source: salt://components/system/files/etc/yum.conf
+Configure yum:
+  file.managed:
+    - name: /etc/yum.conf
+    - source: salt://components/system/files/etc/yum.conf
 
 # Reset EPEL:
 #   cmd.run:
@@ -71,16 +71,16 @@ Sync data:
 #     - require:
 #       - Add EPEL repo
 
-# Clean yum local:
-#   cmd.run:
-#     - name: yum clean all
-#     - require:
-#       - Configure yum
-#       - Add commons yum repo
-#       - Add Saltsatck repo
-#       - Add EPEL repo
+Clean yum local:
+  cmd.run:
+    - name: yum clean all
+    - require:
+      - Configure yum
+      - Add commons yum repo
+      - Add Saltsatck repo
+      - Add EPEL repo
 
-# Clean yum cache:
-#   cmd.run:
-#     - name: rm -rf /var/cache/yum
-#     - requrie: Clean yum local
+Clean yum cache:
+  cmd.run:
+    - name: rm -rf /var/cache/yum
+    - requrie: Clean yum local
