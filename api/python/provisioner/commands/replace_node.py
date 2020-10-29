@@ -19,7 +19,8 @@ import logging
 
 from .. import (
     config,
-    inputs
+    inputs,
+    errors
 )
 from ..vendor import attr
 from ..utils import (
@@ -121,12 +122,19 @@ class ReplaceNode(SetupProvisioner):
         if "cp -i" in ret_val.stdout:
             run_subprocess_cmd(['unalias', 'cp'])
 
+        factory_profile = config.PRVSNR_FACTORY_PROFILE_DIR
+        if not factory_profile.is_dir():
+            factory_profile = (
+                config.GLUSTERFS_VOLUME_PRVSNR_DATA / 'factory_profile'
+            )
+
+        if not factory_profile.is_dir():
+            raise errors.ProvisionerRuntimeError(
+                'factory profile directory is not found'
+            )
+
         run_subprocess_cmd(
-            [
-                'cp', '-fr',
-                str(config.PRVSNR_FACTORY_PROFILE_DIR),
-                str(run_args.profile)
-            ]
+            ['cp', '-fr', str(factory_profile), str(run_args.profile)]
         )
 
         paths = config.profile_paths(

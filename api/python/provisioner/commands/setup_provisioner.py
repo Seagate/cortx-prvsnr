@@ -1073,11 +1073,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 'in_docker': in_docker,
                 'volumes': {
                     'volume_salt_cache_jobs': {
-                        'export_dir': '/srv/glusterfs/volume_salt_cache_jobs',
+                        'export_dir': str(config.GLUSTERFS_VOLUME_SALT_JOBS),
                         'mount_dir': '/var/cache/salt/master/jobs'
                     },
                     'volume_prvsnr_data': {
-                        'export_dir': '/srv/glusterfs/volume_prvsnr_data',
+                        'export_dir': str(config.GLUSTERFS_VOLUME_PRVSNR_DATA),
                         'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
                     }
                 }
@@ -1383,11 +1383,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             logger.info("Setting up custom python repository")
             ssh_client.state_apply('repos.pip_config')
 
-        logger.info("Setting up paswordless ssh")
-        ssh_client.state_apply('ssh')
-
-        logger.info("Checking paswordless ssh")
-        ssh_client.state_apply('ssh.check')
+        try:
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
+        except SaltCmdResultError:
+            logger.info("Setting up paswordless ssh")
+            ssh_client.state_apply('ssh')
+            logger.info("Checking paswordless ssh")
+            ssh_client.state_apply('ssh.check')
 
         # Does not hang after adding glusterfs logic.
         logger.info("Configuring the firewall")
@@ -1494,6 +1497,26 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.state_single(
                     "service.dead", fun_args=['salt-mininon']
                 )
+
+                # TODO move to teardown states
+                logger.info("Stopping 'glusterfssharedstorage' service")
+                ssh_client.state_single(
+                    "service.dead",
+                    fun_args=['glusterfssharedstorage.service']
+                )
+
+                logger.info(f"Removing glusterfs mounts")
+                for _, _, mount_dir in glusterfs_client_pillar[
+                    'glusterfs_mounts'
+                ]:
+                    logger.debug(f"Removing mount {mount_dir}")
+                    ssh_client.state_single(
+                        'mount.unmounted',
+                        fun_kwargs={
+                            'name': mount_dir,
+                            'persist': True
+                        }
+                    )
 
                 secondaries = tuple([
                     node.ping_addrs[0] for node in run_args.secondaries
