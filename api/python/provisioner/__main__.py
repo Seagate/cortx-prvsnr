@@ -139,6 +139,8 @@ def _set_logging(output_type, log_args=None, other_args=None):
         if hasattr(log_args, config.LOG_FILE_HANDLER):
             # enable file logging
             setattr(log_args, config.LOG_FILE_HANDLER, True)
+
+            setattr(log_args, config.LOG_FILE_SALT_HANDLER, True)
             # set file to log if default value is set
             filename_attr = f'{config.LOG_FILE_HANDLER}_filename'
             if (
