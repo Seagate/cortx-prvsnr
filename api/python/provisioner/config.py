@@ -117,6 +117,9 @@ PRVSNR_USER_PILLAR_HOST_DIR_TMPL = str(
 #    PRVSNR_USER_LOCAL_PILLAR_DIR / 'minions/{minion_id}'
 # )
 
+GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
+GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
+
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
 SEAGATE_USER_FILEROOT_DIR_TMPL = str(
