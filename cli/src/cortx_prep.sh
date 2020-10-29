@@ -37,21 +37,22 @@ function install_prvsnr() {
     echo "INFO: Creating a directory to serve as the mount point" 2>&1 | tee -a ${LOG_FILE}
     mkdir -p /tmp/iso_mount 
    
-    if [[ `test -f /root/iso/*.iso` ]]; then       
+    if [[ `find /root/iso -name *.iso` ]]; then       
         cortx_iso=$(ls -t /root/iso/cortx-1.0-*-single.iso | head -1 | xargs basename)
         echo "INFO: Mounting ${cortx_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
-        mount -o iso9660 ${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
+        mount -t iso9660 ${cortx_iso} /tmp/iso_mount 2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
         touch /etc/yum.repos.d/bootstrap.repo
         for repo in 3rd_party cortx_iso
         do
-cat > /etc/yum.repos.d/bootstrap.repo <<EOF
+cat >> /etc/yum.repos.d/bootstrap.repo <<EOF
 [$repo]
-baseurl=file:///tmp/iso/${repo}
+baseurl=file:///tmp/iso_mount/${repo}
 gpgcheck=0
 name=Repository ${repo}
 enabled=1
+
 EOF
       done
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
