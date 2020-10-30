@@ -234,8 +234,8 @@ def _main():
 
     logger.debug(
         f'Parsed arguments: auth={auth_args_view}, log={log_args_view}, '
-        'cmd={parsed_args.cmd}, args={parsed_args.args}, '
-        'kwargs={parsed_args.kwargs}'
+        f'cmd={parsed_args.cmd}, args={parsed_args.args}, '
+        f'kwargs={parsed_args.kwargs}'
     )
 
     # TODO IMPROVE
