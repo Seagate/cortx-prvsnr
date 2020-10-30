@@ -62,8 +62,8 @@ def test_setup_cluster(
     mhostsrvnode1, mhostsrvnode2, ssh_config,
     env_provider, ssh_key, tmpdir_function
 ):
-    #mhostsrvnode1.check_output('echo root | passwd --stdin root')
-    #mhostsrvnode2.check_output('echo root | passwd --stdin root')
+    # mhostsrvnode1.check_output('echo root | passwd --stdin root')
+    # mhostsrvnode2.check_output('echo root | passwd --stdin root')
     if env_provider == 'vbox':
         for mhost in (mhostsrvnode1, mhostsrvnode2):
             mhost.remote.cmd(
