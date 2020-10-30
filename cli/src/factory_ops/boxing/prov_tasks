@@ -23,6 +23,12 @@ PRVSNR_ROOT="/opt/seagate/eos-prvsnr"
 salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
+export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
+export pvt_ip_b="${pvt_ip_b:-"192.168.0.2"}"
+pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
+server_names=("Server A" "Server B")
+export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
+
 function trap_handler {
     echo "***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
@@ -212,23 +218,24 @@ function boxing_flag {
 
 sub_manager_check()
 {
-    _node="${1:-srvnode-1}"
+    _pvt_ip="${1:-$pvt_ip_a}"
+    _server="${2:-"Server A"}"
 
-    grep -q "Red Hat" /etc/*-release || {
-        echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "grep -qE \"Red Hat\" /etc/*-release" || {
+        echo "$_server is not a RedHat system" | tee -a ${LOG_FILE}
         subscription_enabled=false
         return
     }
 
-    echo "Checking if RHEL subscription manager is enabled on ${_node}" 2>&1 | tee -a ${LOG_FILE}
-    subc_list=`ssh $_node "subscription-manager list" | grep Status: | awk '{ print $2 }'`
-    subc_status=`ssh $_node "subscription-manager status" | grep "Overall Status:" | awk '{ print $3 }'`
+    echo "Checking if Red Hat subscription is enabled on ${_server}" | tee -a ${LOG_FILE}
+    subc_list=`$ssh_cmd $_pvt_ip "subscription-manager list" | grep Status: | awk '{ print $2 }'`
+    subc_status=`$ssh_cmd $_pvt_ip "subscription-manager status" | grep "Overall Status:" | awk '{ print $3 }'`
     if echo "$subc_list" | grep -q "Subscribed"; then
         if [[  "$subc_status" == "Current" ]]; then
-            echo "RedHat subscription manager is enabled on ${_node}." 2>&1 | tee -a ${LOG_FILE}
+            echo "RedHat subscription is enabled on ${_server}." | tee -a ${LOG_FILE}
             subscription_enabled=true
         else
-            echo "RedHat subscription manager is disabled on ${_node}." 2>&1 | tee -a ${LOG_FILE}
+            echo "RedHat subscription is disabled on ${_server}." | tee -a ${LOG_FILE}
             subscription_enabled=false
         fi
     fi
@@ -236,47 +243,81 @@ sub_manager_check()
 
 sub_manager_cleanup()
 {
-    _node="${1:-srvnode-1}"
-    grep -q "Red Hat" /etc/*-release || {
-        echo "${_node} is not a RedHat system" | tee -a ${LOG_FILE}
+    _pvt_ip="${1:-$pvt_ip_a}"
+    _server=${2:-"Server A"}
+
+    $ssh_cmd $_pvt_ip "grep -qE \"Red Hat\" /etc/*-release" || {
+        echo "${_server} is not a RedHat system" | tee -a ${LOG_FILE}
         return
     }
-    echo "Cleaning up the subscription manager on ${_node}" | tee -a ${LOG_FILE}
+    echo "Removing the Red Hat subscription from ${_server}" | tee -a ${LOG_FILE}
 
-    echo "Running the subscription-manager auto-attach on ${_node}" | tee -a ${LOG_FILE}
-    ssh $_node "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
+    echo "DEBUG: Running the subscription-manager list on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager list || true"  | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager remove --all on ${_node}" | tee -a ${LOG_FILE}
-    ssh $_node "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running the subscription-manager auto-attach on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager auto-attach --disable || true"  | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager unregister on ${_node}" | tee -a ${LOG_FILE}
-    ssh $_node "subscription-manager unregister || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager remove --all on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager remove --all || true" | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager clean on ${_node}" | tee -a ${LOG_FILE}
-    ssh $_node "subscription-manager clean || true" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager unregister on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager unregister || true" | tee -a ${LOG_FILE}
 
-    echo "Running subscription-manager config --rhsm.manage_repos=0 on ${_node}" | tee -a ${LOG_FILE}
-    ssh $_node "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running subscription-manager clean on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager clean || true" | tee -a ${LOG_FILE}
+
+    echo "DEBUG: Running subscription-manager config --rhsm.manage_repos=0 on ${_server}" >> ${LOG_FILE}
+    $ssh_cmd $_pvt_ip "subscription-manager config --rhsm.manage_repos=0" | tee -a ${LOG_FILE}
+    echo "Done." | tee -a ${LOG_FILE}
 }
 
 seagate_refs_cleanup()
 {
-    _node_list=("srvnode-1" "srvnode-2")
+    # 1. Check if subscription manager is enabled
+    # 2. Disable and cleanup the subscription
+    # 3. Remove all Seagate internal repos from /etc/yum.repos.d
 
-    for _node in "${_node_list[@]}"; do
+    for i in "${!pvt_ips[@]}"; do
         subscription_enabled=false
-        sub_manager_check "${_node}"
+        sub_manager_check "${pvt_ips[$i]}" "${server_names[$i]}"
         if [[ "$subscription_enabled" == true ]]; then
-            sub_manager_cleanup "$_node"
+            sub_manager_cleanup "${pvt_ips[$i]}" "${server_names[$i]}"
         fi
 
-        echo "Removing following repos from $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'grep -lE "seagate.com" /etc/yum.repos.d/*.repo' | tee -a ${LOG_FILE}
+        echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
+        mkdir -p /opt/seagate/eos-prvsnr/generated_configs/repos_boxing
+        for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`; do\
+            echo "Removing $file";\
+            yes | mv -f "$file /opt/seagate/eos-prvsnr/generated_configs/repos_boxing" ;\
+        done  >> ${LOG_FILE}
 
-        ssh "$_node" 'for file in `grep -lE "seagate.com" /etc/yum.repos.d/*.repo`; do rm -f "$file"; done'
-        echo "Cleaning yum cache on $_node" | tee -a ${LOG_FILE}
-        ssh "$_node" 'yum clean all'
+        for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do\
+            echo "Removing $file";\
+            yes | mv -f "$file /opt/seagate/eos-prvsnr/generated_configs/repos_boxing" ;\
+        done  >> ${LOG_FILE}
 
-        echo "Done" | tee -a ${LOG_FILE}
+        echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
+        yum clean all || true  >> ${LOG_FILE}
+        echo "Done." | tee -a ${LOG_FILE}
+
+        echo "Removing the repos with Seagate URL from Server B" | tee -a ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} 'mkdir -p /opt/seagate/eos-prvsnr/generated_configs/repos_boxing'
+        $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`;\
+                                do\
+                                 echo "Removing repo: $file";\
+                                 yes | mv -f "$file" /opt/seagate/eos-prvsnr/generated_configs/repos_boxing;\
+                                done'  >> ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`;\
+                                do\
+                                 echo "Removing repo: $file";\
+                                 yes | mv -f "$file" /opt/seagate/eos-prvsnr/generated_configs/repos_boxing;\
+                                done'  >> ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} "yum clean all || true"  >> ${LOG_FILE}
+
+        echo "Done." | tee -a ${LOG_FILE}
+        echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
+        $ssh_cmd ${pvt_ips[$i]} "yum clean all || true" >> ${LOG_FILE}
+        echo "Done." | tee -a ${LOG_FILE}
     done
 }
