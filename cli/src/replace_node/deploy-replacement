@@ -231,10 +231,10 @@ function controlpath_states {
         "sspl.install"
         "sspl.config"
         "sspl.health_view"
+        "uds"
         "csm.prepare"
         "csm.install"
         "csm.config"
-        "uds"
     )
 
     l_info "=================================================="
