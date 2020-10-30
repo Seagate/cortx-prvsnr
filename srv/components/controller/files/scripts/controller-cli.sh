@@ -235,7 +235,7 @@ parse_hopts()
         usage
         exit 1
   }
-  echo "parse_hopts():$host, $user, $pass" >> $logfile
+  echo "parse_hopts():$host, $user" >> $logfile
   ssh_cred="$ssh_tool -p $pass"
   ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
   remote_cmd="$ssh_cred $ssh_cmd"
@@ -466,9 +466,9 @@ input_params_validate()
     ret=$?
     case $ret in
         0)
-            echo "Info: The host details [host: $host user: $user password: $pass ] provided are correct" >> $logfile
+            echo "Info: The host details [host: $host user: $user] & the password provided are correct" >> $logfile
             ;;
-        5)  echo "Error: The credentials [user: $user password: $pass ] provided are not correct" | tee -a $logfile 
+        5)  echo "Error: The credentials [user: $user & password] provided are not correct" | tee -a $logfile 
             echo "Error: Please provide the correct credentials and try again" | tee -a $logfile
             exit 1
             ;;
@@ -499,7 +499,7 @@ main()
         || "$shutdown_ctrl_opt" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
         pass=`salt-call lyveutil.decrypt storage_enclosure ${pass} --output=newline_values_only`
-        echo "main(): decrypted password: $pass" >> $logfile
+        #echo "main(): decrypted password: $pass" >> $logfile
         ssh_cred="$ssh_tool -p $pass"
         ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
         remote_cmd="$ssh_cred $ssh_cmd"
