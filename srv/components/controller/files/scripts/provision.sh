@@ -19,6 +19,10 @@
 script_dir=$(dirname $0)
 
 ftp_log="$logdir/fw_upgrade.log"
+ftp_op_timeout=false
+ftp_kill_timeout=false
+ftp_pid=
+
 
 # run_cli_cmd()
 # Arg1: cli command to run on enclosure, e.g. 'show version'
@@ -28,7 +32,7 @@ cmd_run()
 {
    _cmd="$1"
    _tmp_xml="$tmpdir/tmp.xml"
-    echo "cmd_run(): running: '$remote_cmd $_cmd'" >> $logfile
+    #echo "cmd_run(): running: '$remote_cmd $_cmd'" >> $logfile
    echo $_cmd | grep -q -E "restart|shutdown" && {
        timeout -k9 -s6 20s $remote_cmd $_cmd > $_tmp_xml
    } || {
@@ -885,19 +889,70 @@ reqd_pkgs_install()
 ftp_cmd_run()
 {
     _cmd="$1"
+    _ftp_op=
     ftp_cmd="/bin/ftp"
+
+    if echo $_cmd | grep -q flash; then
+        _ftp_op="Firmware Update"
+    else
+        _ftp_op="License load"
+    fi
+
+    echo "ftp_cmd_un(): _ftp_op=$_ftp_op" >> $logfile
+
     if [ -f $ftp_log ]; then
         ts=$(date +"%Y-%m-%d_%H-%M-%S")
         yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
     fi
+
     echo "ftp_cmd_run(): cmd: $_cmd" >> $logfile
     reqd_pkgs_install $ftp_cmd
     echo "ftp_cmd_run(): starting ftp session" >> $logfile
-$ftp_cmd -inv $host > $ftp_log  <<EOF 
+$ftp_cmd -inv $host > $ftp_log  <<EOF &
 user $user "$pass"
 $_cmd
 bye
 EOF
+
+ftp_pid=$!
+echo "ftp PID:$ftp_pid" >> $logfile
+_sleep_time=30
+_max_ntry=120
+_ntry=0
+
+until ! ps -aef | grep $ftp_pid | grep -v grep > /dev/null; do
+    echo "ftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
+    if [[ $_ntry -eq $_max_ntry ]]; then
+        echo "$_ftp_op did not complete after 60 minutes" >> $logfile
+        ftp_op_timeout=true
+        break
+    else
+        echo "$_ftp_op is in progress, please wait, check the $ftp_log for progress..." | tee -a $logfile
+        sleep $_sleep_time
+        _ntry=$(( _ntry + 1 ))
+    fi
+done
+
+_ntry=0
+_sleep_time=2
+_max_ntry=2
+#Hack to not print the output of kill -9 on the std output
+disown $ftp_pid
+
+until ! ps -aef | grep $ftp_pid | grep -v grep > /dev/null; do
+    echo "ftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
+    if [[ $_ntry -eq $_max_ntry ]]; then
+        echo "Could not kill ftp session (PID:$ftp_pid) after $_max_ntry attempts" >> $logfile
+        ftp_kill_timeout=true
+        break
+    else
+        echo "Killing the ftp session(PID:$ftp_pid)" >> $logfile
+        kill -9 $ftp_pid 2>&1 | tee -a $logfile
+        sleep $_sleep_time
+        _ntry=$(( _ntry + 1 ))
+    fi
+done
+
 }
 
 fw_license_load()
@@ -1054,21 +1109,38 @@ fw_update()
     if grep -q "Codeload completed successfully." $ftp_log; then
         # IMPORTANT: Do not change the sequence of the checks below 
         if grep -q "RETURN_CODE: 8" $ftp_log; then
+            echo "Found RETURN_CODE 8 in $ftp_log" >> $logfile
             _error=0
         elif grep -q "RETURN_CODE: 9" $ftp_log; then
+            echo "Found RETURN_CODE 9 in $ftp_log" >> $logfile
             _error=0
         elif grep -q "Not attempted (Versions match)" $ftp_log; then
+            echo "Found 'Not attempted (Versions match)' in $ftp_log" >> $logfile
             _error=0
         fi
 
         if ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
+            echo "No failure or error strings found in $ftp_log" | tee -a $logfile
             _error=0
         else
+            echo "Error: Found failure or error strings in $ftp_log, exiting with failure status..." >> $logfile
             _error=1
         fi
     elif ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
-        _error=0
+        echo "No Codeload related message or fail/error strings in $ftp_log" >> $logfile
+        echo "Checking if there was any ftp issue" >> $logfile
+        if [[ "$ftp_op_timeout" == true ]]; then
+            echo "Warning: The ftp session to the controller was timed out" | tee -a $logfile
+            if [[ "$ftp_kill_timeout" == true ]]; then
+                echo "Warning: The ftp session to the controller($host) could not be killed (PID:$ftp_pid) after it was timed out" | tee -a $logfile
+            fi
+            echo "Please check manually if the firmware got updated and take appropriate action, exiting with failure status..." | tee -a $logfile
+            _error=1
+        else
+            _error=0
+        fi
     else
+        echo "No Codeload related message but found fail/error strings in $ftp_log, exiting with failure status..." >> $logfile
         _error=1
     fi
 
@@ -1077,7 +1149,7 @@ fw_update()
         echo "Check $ftp_log for more details, exiting" 2>&1 | tee -a $logfile
         exit 1
     else
-        echo "ftp_cmd_run(): firmware is updated successfully" 2>&1 | tee -a $logfile
+        echo "fw_update(): firmware is updated successfully" 2>&1 | tee -a $logfile
         echo "The detailed logs are kept at: '$ftp_log'" 2>&1 | tee -a $logfile
     fi
 }

@@ -49,6 +49,9 @@ Apply stonith for node-2:
   cmd.run:
     - name: pcs constraint location stonith-c2 avoids srvnode-2=INFINITY
 
+Set Stonith to poweroff:
+  cmd.run:
+    - name: pcs property set stonith-action=off
 {% else %}
 
 No STONITH application:

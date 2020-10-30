@@ -64,16 +64,21 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 
 
 REPO_CANDIDATE_NAME = 'candidate'
+RELEASE_INFO_FILE = 'RELEASE.INFO'
 
 # TODO EOS-12076 EOS-12334
 
 CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'
+OS_ISO_DIR = 'os'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
 CORTX_PYTHON_ISO_DIR = 'python_deps'
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
+)
+PRVSNR_OS_ISO = (
+    PRVSNR_CORTX_REPOS_BASE_DIR / f'{OS_ISO_DIR}.iso'
 )
 PRVSNR_CORTX_SINGLE_ISO = (
     PRVSNR_CORTX_REPOS_BASE_DIR / f'{CORTX_SINGLE_ISO_DIR}.iso'
@@ -111,6 +116,9 @@ PRVSNR_USER_PILLAR_HOST_DIR_TMPL = str(
 # PRVSNR_USER_LOCAL_PILLAR_HOST_DIR_TMPL = str(
 #    PRVSNR_USER_LOCAL_PILLAR_DIR / 'minions/{minion_id}'
 # )
+
+GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
+GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
 
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
@@ -331,3 +339,14 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+
+class ReleaseInfo(Enum):
+    NAME = 'NAME'
+    VERSION = 'VERSION'
+    BUILD = 'BUILD'
+    OS = 'OS'
+    DATETIME = 'DATETIME'
+    KERNEL = 'KERNEL'
+    COMPONENTS = 'COMPONENTS'
+    RELEASE = 'RELEASE'

@@ -29,7 +29,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 
 function trap_handler {
-    echo "***** ERROR! *****"
+    echo -e "\n***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
     echo "******************"
 }
