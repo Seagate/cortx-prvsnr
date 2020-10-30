@@ -818,8 +818,8 @@ class SWUpdate(CommandParserFillerMixin):
                         'hare',
                         'ha.cortx-ha',
                         'sspl',
-                        'csm',
-                        'uds'
+                        'uds',
+                        'csm'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
