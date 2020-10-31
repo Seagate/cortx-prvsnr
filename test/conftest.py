@@ -432,7 +432,11 @@ def options_list():
 
 @pytest.fixture(scope="session", autouse=True)
 def dump_options(request, options_list):
-    h.dump_options(request, options_list)
+    opts_str = '\n'.join([
+        '{}: {}'.format(opt, request.config.getoption(opt.replace('-', '_')))
+        for opt in options_list
+    ])
+    logger.info('Passed options:\n{}'.format(opts_str))
 
 
 @pytest.fixture(scope="session")
