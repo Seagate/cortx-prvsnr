@@ -79,8 +79,8 @@ deploy_states = dict(
     ],
     controlpath=[
         "sspl",
-        "uds",
-        "csm"
+        "csm",
+        "uds"
     ]
 )
 

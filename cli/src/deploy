@@ -97,8 +97,8 @@ ha_states=(
 # states to be applied in desired sequence
 controlpath_states=(
     "sspl"
-    "uds"
     "csm"
+    "uds"
     "ha.ctrlstack-ha"
     "ha.cortx-ha.ha"
 )
