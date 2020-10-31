@@ -36,8 +36,8 @@ function install_prvsnr() {
     echo "INFO: Creating a directory to serve as the mount point" 2>&1 | tee -a ${LOG_FILE}
     mkdir -p /tmp/iso_mount/{cortx,cortx-os}
 
-    if [[ `find /opt/isos -name *.iso` ]]; then
-        cortx_iso=$(ls -t /opt/isos/cortx-*-single.iso | head -1 | xargs basename)
+    if [[ `find /opt/isos -name '*.iso'` ]]; then
+        cortx_iso=$(ls -t /opt/isos/cortx-*-single.iso 2> /dev/null | head -1 | xargs basename)
         os_iso=$(ls -t /opt/isos/cortx-os-*.iso 2> /dev/null | head -1 | xargs basename)
 
         echo "INFO: Mounting ${cortx_iso} ${os_iso} on /tmp/iso_mount directory" 2>&1 | tee -a ${LOG_FILE}
@@ -83,7 +83,7 @@ EOF
           exit 1
         fi
 
-        echo "INFO: Removing /etc/yum.repos.d/bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
+        echo "INFO: Removing bootstrap and base repo files" 2>&1 | tee -a ${LOG_FILE}
         rm -f /etc/yum.repos.d/bootstrap.repo && rm -f /etc/yum.repos.d/base.repo
         yum clean all || true
 
