@@ -16,16 +16,28 @@
 #
 
 # Zero dependency erlang from: https://github.com/rabbitmq/erlang-rpm/releases
+# Install RabbitMQ prereqs:
+#   pkg.installed:
+#     - pkgs:
+#       - erlang: {{ pillar ['commons']['version']['erlang'] }}
+
 Install RabbitMQ prereqs:
   pkg.installed:
-    - pkgs:
-      - erlang: {{ pillar ['commons']['version']['erlang'] }}
+    - sources:
+      - erlang: https://github.com/rabbitmq/erlang-rpm/releases/download/v23.1.1/erlang-23.1.1-1.el7.x86_64.rpm
+
 
 # RabbitMQ from: https://github.com/rabbitmq/rabbitmq-server/releases
+# Install RabbitMQ:
+#   pkg.installed:
+#     - name: rabbitmq-server
+#     - version: {{ pillar ['commons']['version']['rabbitmq'] }}
+#     - refresh: True
+#     - require:
+#       - Install RabbitMQ prereqs
+
 Install RabbitMQ:
   pkg.installed:
-    - name: rabbitmq-server
-    - version: {{ pillar ['commons']['version']['rabbitmq'] }}
-    - refresh: True
-    - require:
-      - Install RabbitMQ prereqs
+    - sources:
+      - rabbitmq-server: https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.9/rabbitmq-server-3.8.9-1.el7.noarch.rpm
+    
