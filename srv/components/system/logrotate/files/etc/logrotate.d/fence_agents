@@ -1,0 +1,10 @@
+# Stonith resources represented by fence_ipmilan resource agent.
+/var/log/cluster/stonith-c*.log {
+    missingok
+    daily
+    copytruncate
+    rotate 7
+    notifempty
+    size 10M
+    compress
+}
