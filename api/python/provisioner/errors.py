@@ -288,11 +288,10 @@ class ReleaseFileNotFoundError(ProvisionerError):
         )
 
 
-class HareError(ProvisionerError):
+class HareClusterError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, funct_name: str, reason: Union[Exception, str]):
-        self.funct_name = funct_name
+    def __init__(self, reason: Union[Exception, str]):
         self.reason = reason
 
     def __str__(self):
@@ -301,8 +300,6 @@ class HareError(ProvisionerError):
             .format(self.reason)
         )
 
-class HareClusterError(HareError):
-    pass
 
 class EnsureUpdateRepoConfigError(ProvisionerError):
     _prvsnr_type_ = True
@@ -317,24 +314,28 @@ class EnsureUpdateRepoConfigError(ProvisionerError):
         )
 
 
-class UpdateComponentError(ProvisionerError):
+class UpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, reason: Union[Exception, str]):
+    def __init__(self,  component: str, reason: Union[Exception, str]):
         self.reason = reason
+        self.component = component
 
     def __str__(self):
         return (
-            'Failed to update component, reason: {!r}'
-            .format(self.reason)
+            'Failed to update {} component, reason: {!r}'
+            .format(self.component, self.reason)
         )
+
+
+class UpdateComponentError(UpdateError):
+    pass
 
 
 class SaltMasterError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, funct_name: str, reason: Union[Exception, str]):
-        self.funct_name= funct_name
+    def __init__(self, reason: Union[Exception, str]):
         self.reason = reason
 
     def __str__(self):
@@ -347,8 +348,7 @@ class SaltMasterError(ProvisionerError):
 class SaltMinionError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self, funct_name: str, reason: Union[Exception, str]):
-        self.funct_name= funct_name
+    def __init__(self, reason: Union[Exception, str]):
         self.reason = reason
 
     def __str__(self):

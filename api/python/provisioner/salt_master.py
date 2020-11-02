@@ -59,7 +59,7 @@ def check_salt_master_is_restarted(pid_before):
             )
             return False
         else:
-            raise SaltMasterError('check_salt_master_is_restarted',exc)
+            raise SaltMasterError(exc)
     else:
         # "ActiveState": "active",
         # "SubState": "running",
@@ -87,7 +87,7 @@ def check_salt_master_is_responded():
             )
             return False
         else:
-            raise SaltMasterError('check_salt_master_is_responded', exc)
+            raise SaltMasterError(exc)
     else:
         return True
 
@@ -140,7 +140,8 @@ def ensure_salt_master_is_running():
     try:
         logger.info("Ensuring salt-master is running")
         runner_function_run(
-            'salt.cmd', fun_args=('state.single', 'service.running', 'salt-master')
+                    'salt.cmd',
+                    fun_args=('state.single', 'service.running', 'salt-master')
         )
     except Exception as exc:
-        raise SaltMasterError('ensure_salt_master_is_running', exc)
+        raise SaltMasterError(exc)

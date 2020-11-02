@@ -21,7 +21,7 @@ import functools
 
 
 from .config import ALL_MINIONS
-from .errors import ProvisionerError,SaltMinionError
+from .errors import ProvisionerError, SaltMinionError
 from .salt import runner_function_run, StatesApplier, function_run
 from .utils import ensure
 
@@ -51,7 +51,8 @@ def check_salt_minions_are_ready(targets: List):
         ready = list_minions()
         return not (set(targets) - set(ready))
     except Exception as exc:
-        raise SaltMinionError('check_salt_minions_are_ready', exc)
+        raise SaltMinionError(exc)
+
 
 def ensure_salt_minions_are_ready(targets: List):
     ensure(

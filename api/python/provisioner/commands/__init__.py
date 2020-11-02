@@ -41,7 +41,7 @@ from ..errors import (
     SaltMinionConfigurationError,
     SaltMasterConfigurationError,
     UpdateComponentError,
-    EnsureUpdateRepoConfigError
+    EnsureUpdateRepoConfigError,
     SaltCmdResultError,
     SWUpdateRepoSourceError
 )
@@ -755,14 +755,9 @@ def _update_component(component, targets=ALL_MINIONS):
 
 
 def _apply_provisioner_config(targets=ALL_MINIONS):
-    try:
-        logger.info(f"Applying Provisioner config logic on {targets}")
-        StatesApplier.apply(["components.provisioner.config"], targets)
-    except Exception:
-        logger.exception(
-            "Failed to appy Provisioner config logic on on {}".format(targets)
-        )
-        raise
+    logger.info(f"Applying Provisioner config logic on {targets}")
+    StatesApplier.apply(["components.provisioner.config"], targets)
+
 
 def _consul_export(stage):
     # TODO make that configurable to turn off if not needed
@@ -817,10 +812,11 @@ class SWUpdate(CommandParserFillerMixin):
 
                 # update SW stack packages and configuration
                 try:
+
                     try:
                         _update_component('provisioner', targets)
                     except Exception as exc:
-                        raise UpdateComponentError(exc) from exc
+                        raise UpdateComponentError('provisioner', exc) from exc
                     try:
                         config_salt_master()
                     except Exception as exc:
@@ -842,7 +838,7 @@ class SWUpdate(CommandParserFillerMixin):
                         ):
                             _update_component(component, targets)
                     except Exception as exc:
-                        raise UpdateComponentError(exc) from exc
+                        raise UpdateComponentError(component, exc) from exc
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc
 
@@ -906,17 +902,6 @@ class SWUpdate(CommandParserFillerMixin):
                     # fail to start - fail gracefully:  disable
                     # maintenance in the background
                     cluster_maintenance_disable(background=True)
-                elif isinstance(
-                    # salt configuration is stopped here
-                    update_exc,
-                    (
-                        SaltMasterConfigurationError,
-                        SaltMinionConfigurationError,
-                    )
-                ):
-                    #DO something here
-                    logger.error('Salt Configuration failed')
-                    final_error_t = SWUpdateFatalError
                 elif isinstance(
                     # cluster is stopped here
                     update_exc,
