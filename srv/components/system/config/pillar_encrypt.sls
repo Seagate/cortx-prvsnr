@@ -15,25 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Skip cryptography install as it gets installed through cortx-py-utils
-#Ensure cryptography python package absent:
-#  pip.removed:
-#    - name: cryptography
-#    - bin_env: /usr/bin/pip3
-
-#Install cryptography python package:
-#  pip.installed:
-#    - name: cryptography
-#    - bin_env: /usr/bin/pip3
-#    - target: /usr/lib64/python3.6/site-packages/
-#    - require:
-#      - Ensure cryptography python package absent
 
 Install cortx-py-utils:           # Package for cryptography
   pkg.installed:
     - name: cortx-py-utils
-#    - require:
-#      - Install cryptography python package
+
+# Skip cryptography install as it gets installed through cortx-py-utils
+Ensure cryptography python package absent:
+  pip.removed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
+    - require:
+      - Install cortx-py-utils
+
+Install cryptography python package:
+  pip.installed:
+    - name: cryptography
+    - bin_env: /usr/bin/pip3
+    - target: /usr/lib64/python3.6/site-packages/
+    - require:
+      - Ensure cryptography python package absent
+
 
 {% if pillar["cluster"][grains['id']]["is_primary"] %}
 Encrypt_pillar:
