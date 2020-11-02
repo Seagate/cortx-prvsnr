@@ -29,7 +29,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 
 function trap_handler {
-    echo "***** ERROR! *****"
+    echo -e "\n***** ERROR! *****"
     echo "For detailed error logs, please see: $LOG_FILE"
     echo "******************"
 }
@@ -63,14 +63,19 @@ function shutdown_node {
     fi
 
     if [[ "$_node" == "node1" ]]; then
-        echo "INFO: Shutting down srvnode-1 in 1 min." | tee -a ${LOG_FILE}
-        salt srvnode-1 system.shutdown 1 --async
+        echo "INFO: Shutting down Server A now..." | tee -a ${LOG_FILE}
+        #salt srvnode-1 system.shutdown 1 --async
+        shutdown now
     elif [[ "$_node" == "node2" ]]; then
-        echo "INFO: Shutting down srvnode-2 in 1 min." | tee -a ${LOG_FILE}
-        salt srvnode-2 system.shutdown 1 --async
+        echo "INFO: Shutting down Server B now..." | tee -a ${LOG_FILE}
+        #salt srvnode-2 system.shutdown 1 --async
+        $ssh_cmd ${pvt_ip_b} shutdown now
     else
-        echo "INFO: Shutting down both nodes in 1 min." | tee -a ${LOG_FILE}
-        salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
+        echo "INFO: Shutting down both servers now..." | tee -a ${LOG_FILE}
+        echo "INFO: shutting down Server B first.." | tee -a ${LOG_FILE}
+        $ssh_cmd ${pvt_ip_b} shutdown now
+        echo "INFO: shutting down Server A now.." | tee -a ${LOG_FILE}
+        shutdown now
     fi
 }
 

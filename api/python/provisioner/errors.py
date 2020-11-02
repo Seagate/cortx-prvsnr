@@ -23,6 +23,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerRuntimeError(ProvisionerError, RuntimeError):
+    pass
+
+
 class ProvisionerCliError(ProvisionerError):
     pass
 
@@ -115,13 +119,17 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
 
     def __init__(self, source: str, reason: str):
         self.source = source
-        self.reason = reason
+        # TODO IMPROVE: It is generic problem: to display issue on console
+        #  error formatters use <Exception>.reason
+        #  as error message by default. self.source info in this case
+        #  is missed.
+        #  Need to use some more convenient way to display necessary
+        #  error info in console output
+        self.reason = (f'repo source "{self.source}" is not acceptable, '
+                       f'reason: {reason}')
 
     def __str__(self):
-        return (
-            'repo source {} is not acceptable, reason: {!r}'
-            .format(self.source, self.reason)
-        )
+        return repr(self.reason)
 
 
 class PrvsnrCmdError(ProvisionerError):
