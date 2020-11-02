@@ -32,8 +32,8 @@
 Install cortx-py-utils:           # Package for cryptography
   pkg.installed:
     - name: cortx-py-utils
-    - require:
-      - Install cryptography python package
+#    - require:
+#      - Install cryptography python package
 
 {% if pillar["cluster"][grains['id']]["is_primary"] %}
 Encrypt_pillar:
