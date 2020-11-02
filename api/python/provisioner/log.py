@@ -61,30 +61,17 @@ class CommandFilter(logging.Filter):
         record.prvsnrcmd = self._cmd
         return True
 
+
 class LogFileFilter(logging.Filter):
-    def __init__(self, cmd: str = None):
-        self._cmd = cmd
-
-    @property
-    def cmd(self):
-        return self._cmd
-
-    @cmd.setter
-    def cmd(self, cmd: str):
-        self._cmd = cmd
-
     def filter(self, record):
-        record.prvsnrcmd = self._cmd
+        return not(record.name.startswith("salt.")
+                   and (record.levelno < logging.INFO))
 
-        if ( record.name.startswith("salt.") ) and ( record.levelno < logging.INFO ):
-            return False
-        return True
 
 class SaltLogFileFilter(logging.Filter):
     def filter(self, record):
-        if record.name.startswith("salt."):
-            return True
-        return False
+        return record.name.startswith("salt.")
+
 
 class NoTraceExceptionFormatter(logging.Formatter):
     def format(self, record):
@@ -176,13 +163,13 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     converter=(lambda stream: 'ext://sys.{}'.format(stream))
                 )
             return _ConsoleStreamLogHandler
-        elif ( hname == logfile_handler ) or ( hname == saltlogfile_handler ):
+        elif hname in (logfile_handler, saltlogfile_handler):
             @attr.s(auto_attribs=True)
             class _FileLogHandler(_LogHandler):
                 filename: str = attr.ib(
                     metadata={
                         inputs.METADATA_ARGPARSER: {
-                            'help': f"{saltlogfile_handler} handler file path",
+                            'help': f"{hname} handler file path",
                             'metavar': 'FILE'
                         }
                     },
@@ -192,7 +179,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
-                                f"{saltlogfile_handler} handler "
+                                f"{hname} handler "
                                 "max file size in bytes"
                             ),
                             'metavar': 'BYTES',
@@ -206,7 +193,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
-                                f"{saltlogfile_handler} handler "
+                                f"{hname} handler "
                                 "max backup files number"
                             ),
                             'metavar': 'NUMBER',
