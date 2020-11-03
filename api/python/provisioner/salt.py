@@ -206,6 +206,20 @@ class SaltClientArgs(SaltClientArgsBase):
     nowait: bool = False
 
 
+@attr.s(auto_attribs=True)
+class SaltCallerArgs(SaltClientArgsBase):
+    targets: Any = attr.ib(init=False, default=None)
+    kw: Any = attr.ib(init=False, default=attr.Factory(dict))
+
+    @property
+    def args(self):
+        return (self.fun, *self.fun_args)
+
+    @property
+    def kwargs(self):
+        return self.fun_kwargs
+
+
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltSSHArgs(SaltClientArgsBase):
@@ -463,7 +477,9 @@ def salt_caller():
 
 def salt_caller_local():
     global _salt_caller_local
-    if not _salt_caller_local:
+    # FIXME EOS-14233 by some reason pillar.item result are not updated
+    #       for old handlers even if refresh step is called
+    if not _salt_caller_local or True:
         __opts__ = salt.config.minion_config('/etc/salt/minion')
         __opts__['file_client'] = 'local'
         _salt_caller_local = Caller(mopts=__opts__)
@@ -951,25 +967,35 @@ def _salt_client_cmd(
     fun_kwargs: Union[Dict, None] = None,
     nowait=False,
     secure=False,
+    local=False,
     **kwargs
 ):
-    # TODO log username / password ??? / eauth
-    cmd_args = SaltClientArgs(
-        targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait,
-        secure=secure
-    )
+    if local:
+        # TODO IMPROVE some of the arguments would be silently ignored here
+        cmd_args = SaltCallerArgs(
+            fun=fun, fun_args=fun_args, fun_kwargs=fun_kwargs, secure=secure
+        )
+    else:
+        # TODO log username / password ??? / eauth
+        cmd_args = SaltClientArgs(
+            targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait,
+            secure=secure
+        )
 
-    _set_auth(cmd_args.kw)
-    cmd_args.kw['full_return'] = True
+        _set_auth(cmd_args.kw)
+        cmd_args.kw['full_return'] = True
 
     # TODO IMPROVE EOS-14361 make a View class instead
     cmd_args_view = cmd_args._as_dict()
 
     try:
-        _cmd_f = (
-            salt_local_client().cmd_async if nowait
-            else salt_local_client().cmd
-        )
+        if local:
+            _cmd_f = salt_caller_local().cmd
+        else:
+            _cmd_f = (
+                salt_local_client().cmd_async if nowait
+                else salt_local_client().cmd
+            )
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
         # TODO too generic
