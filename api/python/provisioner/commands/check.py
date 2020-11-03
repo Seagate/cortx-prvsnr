@@ -34,6 +34,8 @@ SRVNODE2 = "srvnode-2"
 PENDING_SERVERS = frozenset({SRVNODE1, SRVNODE2})  # to make constant immutable
 
 
+# TODO IMPROVEMENT: Classes and its methods for `CheckEntry` and `CheckResult`
+#  should be covered by basic unit tests
 class CheckEntry:
 
     """Result of the single validation"""
@@ -47,16 +49,16 @@ class CheckEntry:
         self._check_name = check_name
         self._verdict = None
         self._comment = None
-        self._target = None
+        self.checked_target = None
 
     def __str__(self):
         """String representation of the single check"""
         if self.is_set:
             if self._comment:
-                return (f"{self._target}: {self._check_name}: "
+                return (f"{self.checked_target}: {self._check_name}: "
                         f"{self._verdict.value}: {self._comment}")
 
-            return (f"{self._target}: {self._check_name}: "
+            return (f"{self.checked_target}: {self._check_name}: "
                     f"{self._verdict.value}")
 
         return ""  # We can return just None value
@@ -69,38 +71,40 @@ class CheckEntry:
         """
         if self.is_set:
             if self._comment:
-                return {self._check_name: f"{self._target}: "
+                return {self._check_name: f"{self.checked_target}: "
                                           f"{self._verdict.value}: "
                                           f"{self._comment}"}
-            return {self._check_name: f"{self._target}: {self._verdict.value}"}
+            return {
+                self._check_name:
+                    f"{self.checked_target}: {self._verdict.value}"}
 
         return dict()
 
-    def set_fail(self, *, target: str, comment: str = ""):
+    def set_fail(self, *, checked_target: str, comment: str = ""):
         """
         Set fail for the check
         Args:
-            str target: target where validation was run
+            str target: checked_target where validation was run
             str comment: validation result comment (reason of fail)
 
         Returns:
 
         """
         self._verdict = cfg.CheckVerdict.FAIL
-        self._target = target
+        self.checked_target = checked_target
         self._comment = comment
 
-    def set_passed(self, *, target, comment: str = ""):
+    def set_passed(self, *, checked_target, comment: str = ""):
         """
         Set passed for the check
         Args:
-            str target: target where validation was run
+            str checked_target: target where validation was run
             str comment: validation result comment (optional)
         Returns:
 
         """
         self._verdict = cfg.CheckVerdict.PASSED
-        self._target = target
+        self.checked_target = checked_target
         self._comment = comment
 
     @property
@@ -305,13 +309,13 @@ class Check(CommandParserFillerMixin):
         for key in pillar_keys:
             _res = CheckEntry(cfg.Checks.NETWORK.value)
             if not pillar[key] or pillar[key] is values.MISSED:
-                _res.set_fail(target=str(key.keypath),
+                _res.set_fail(checked_target=str(key.keypath),
                               comment="value is not specified")
             elif pillar[key] is None:
-                _res.set_fail(target=str(key.keypath),
+                _res.set_fail(checked_target=str(key.keypath),
                               comment="value is unset")
             else:
-                _res.set_passed(target=str(key.keypath))
+                _res.set_passed(checked_target=str(key.keypath))
 
             res.append(_res)
 
@@ -334,9 +338,9 @@ class Check(CommandParserFillerMixin):
         #  to the list of minions
         # TODO: create check and return list of nodes which are down
         if check_salt_minions_are_ready(targets=targets):
-            res.set_passed(target=local_minion_id())
+            res.set_passed(checked_target=local_minion_id())
         else:
-            res.set_fail(target=local_minion_id())
+            res.set_fail(checked_target=local_minion_id())
 
         return res
 
@@ -355,12 +359,14 @@ class Check(CommandParserFillerMixin):
         minion_id = local_minion_id()
 
         try:
+            # TODO: parse command output if necessary
             _res = cmd_run(_BMC_CHECK_CMD, targets=minion_id,
                            fun_kwargs=dict(python_shell=True))
-            # TODO: parse command output if necessary
-            res.set_passed(target=minion_id, comment=str(_res))
         except SaltCmdResultError as e:
-            res.set_fail(target=minion_id, comment=str(e.reason))
+            res.set_fail(checked_target=minion_id, comment=str(e.reason))
+        else:
+            # If no error occurred
+            res.set_passed(checked_target=minion_id, comment=str(_res))
 
         return res
 
@@ -394,11 +400,12 @@ class Check(CommandParserFillerMixin):
             try:
                 cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                res.set_fail(target=targets,
+                res.set_fail(checked_target=targets,
                              comment=(f"{cfg.CheckVerdict.FAIL.value}: {addr} "
                                       f"is not reachable from {targets}"))
             else:
-                res.set_passed(target=targets)
+                # if no error occurred
+                res.set_passed(checked_target=targets)
 
         return res
 
@@ -441,11 +448,11 @@ class Check(CommandParserFillerMixin):
                 try:
                     cmd_run(cmd, targets=_targets)
                 except SaltCmdResultError as e:
-                    _res.set_fail(target=minion_id,
+                    _res.set_fail(checked_target=minion_id,
                                   comment=f"{log_file}: {str(e.reason)}")
                     return _res
 
-            _res.set_passed(target=minion_id, comment=f"{log_file}")
+            _res.set_passed(checked_target=minion_id, comment=f"{log_file}")
 
             return _res
 
@@ -511,12 +518,13 @@ class Check(CommandParserFillerMixin):
             try:
                 _res = cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                res.set_fail(target=targets,
+                res.set_fail(checked_target=targets,
                              comment=(f"{cfg.CheckVerdict.FAIL.value}: "
                                       f"'{addr}' is not reachable from "
                                       f"{targets} under user {user}"))
             else:
-                res.set_passed(target=targets)
+                # if no error occurred
+                res.set_passed(checked_target=targets)
 
         return res
 
@@ -535,22 +543,23 @@ class Check(CommandParserFillerMixin):
 
         try:
             ensure_cluster_is_healthy()
-            res.set_passed(target=local_minion_id())
         except Exception:
-            res.set_fail(target=local_minion_id())
+            res.set_fail(checked_target=local_minion_id())
+        else:
+            # if no error occurred
+            res.set_passed(checked_target=local_minion_id())
 
         return res
 
-    def run(self, check_name: cfg.Checks = None, check_args: str = "",
-            targets: str = cfg.ALL_MINIONS) -> CheckResult:
+    def run(self, check_name: cfg.Checks = None,
+            check_args: str = "") -> CheckResult:
         """
         Basic run method to execute checks specified by `check_name` or
         perform all checks if `check_name` is omitted
 
         :param str check_name: specific command to be executed on target nodes
         :param str check_args: check specific arguments
-        :param str targets: target nodes where checks are planned
-                            to be executed
+
         :return:
         """
         res: CheckResult = CheckResult()
