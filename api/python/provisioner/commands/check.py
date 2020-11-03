@@ -17,7 +17,7 @@
 from typing import Type, Union, List
 import json
 
-from . import CommandParserFillerMixin
+from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
 from ..errors import SaltCmdResultError
