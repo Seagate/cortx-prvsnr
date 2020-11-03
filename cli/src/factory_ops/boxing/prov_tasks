@@ -39,7 +39,7 @@ mkdir -p $(dirname "${LOG_FILE}")
 truncate -s 0 ${LOG_FILE}
 
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
-salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
 export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
