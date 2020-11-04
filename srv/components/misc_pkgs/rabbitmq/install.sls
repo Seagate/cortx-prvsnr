@@ -21,12 +21,6 @@
 #     - pkgs:
 #       - erlang: {{ pillar ['commons']['version']['erlang'] }}
 
-Install RabbitMQ prereqs:
-  pkg.installed:
-    - sources:
-      - erlang: https://github.com/rabbitmq/erlang-rpm/releases/download/v23.1.1/erlang-23.1.1-1.el7.x86_64.rpm
-
-
 # RabbitMQ from: https://github.com/rabbitmq/rabbitmq-server/releases
 # Install RabbitMQ:
 #   pkg.installed:
@@ -36,8 +30,17 @@ Install RabbitMQ prereqs:
 #     - require:
 #       - Install RabbitMQ prereqs
 
+Install RabbitMQ prereqs:
+  cmd.run:
+    - name: |
+        yum install -y http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/Packages/s/socat-1.7.3.2-2.el7.x86_64.rpm
+        yum install -y https://github.com/rabbitmq/erlang-rpm/releases/download/v23.1.1/erlang-23.1.1-1.el7.x86_64.rpm
+    - unless: yum list installed erlang
+
 Install RabbitMQ:
-  pkg.installed:
-    - sources:
-      - rabbitmq-server: https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.9/rabbitmq-server-3.8.9-1.el7.noarch.rpm
-    
+  cmd.run:
+    - name: |
+        yum install -y https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.9/rabbitmq-server-3.8.9-1.el7.noarch.rpm
+    - require:
+      - Install RabbitMQ prereqs
+    - unless: yum list installed rabbitmq-server
