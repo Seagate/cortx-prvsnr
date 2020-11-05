@@ -251,9 +251,6 @@ Private data zone:
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
     - default: False
-    - sources:
-      - 127.0.0.0/24
-      - 192.168.0.0/16
     - masquerade: False
     - prune_ports: False
     - prune_services: False
