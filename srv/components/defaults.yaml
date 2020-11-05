@@ -69,13 +69,13 @@ tmp_dir: /tmp
 
 
 # finally give env variables a chance
+{% set commons_repo = salt["environ.get"]('CORTX_COMMONS', commons_repo) %}
 {% set release_repo = salt["environ.get"]('REPO_URL', release_repo) %}
 {% set epel_repo = salt["environ.get"]('EPEL', epel_repo) %}
 {% set saltstack_repo = salt["environ.get"]('SALTSTACK', saltstack_repo) %}
 
 
 base_repos:
-  centos_repos: {{ os_repos }}
   epel_repo:
     id: "epel"
     url: {{ epel_repo }}
