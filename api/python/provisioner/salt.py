@@ -1310,7 +1310,8 @@ class SaltJobsRunner:
                     fun=job.function,
                     fun_args=job.arguments
                 )
-                client_res = SaltClientResult(job.result, cmd_args)
+                cmd_args_view = cmd_args._as_dict()
+                client_res = SaltClientResult(job.result, cmd_args_view)
                 return process_provisioner_cmd_res(client_res.results)
         else:
             raise PrvsnrCmdNotFoundError(jid)

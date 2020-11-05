@@ -15,9 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .prepare
-
 Install cortx-sspl packages:
   pkg.installed:
     - name: cortx-sspl
