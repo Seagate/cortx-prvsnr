@@ -350,3 +350,12 @@ class ReleaseInfo(Enum):
     KERNEL = 'KERNEL'
     COMPONENTS = 'COMPONENTS'
     RELEASE = 'RELEASE'
+
+
+SYSTEM_CHECKS = [
+    'post_checks',
+    'pre_checks',
+    'replace_node',
+    'unboxing',
+    'fw_update'
+]
