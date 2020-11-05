@@ -27,4 +27,4 @@ storage_enclosure:
         ip: 10.0.0.3
         port: 80
       user: manage
-      secret: 'passwd'
+      secret:

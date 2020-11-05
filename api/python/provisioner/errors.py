@@ -23,6 +23,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerRuntimeError(ProvisionerError, RuntimeError):
+    pass
+
+
 class ProvisionerCliError(ProvisionerError):
     pass
 
@@ -105,7 +109,7 @@ class PrvsnrTypeDecodeError(ProvisionerError, ValueError):
 
     def __str__(self):
         return (
-            'decode failed for {}, reason: {!r}'
+            'decode failed for {}, reason: {}'
             .format(self.spec, self.reason)
         )
 
@@ -115,13 +119,17 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
 
     def __init__(self, source: str, reason: str):
         self.source = source
-        self.reason = reason
+        # TODO IMPROVE: It is generic problem: to display issue on console
+        #  error formatters use <Exception>.reason
+        #  as error message by default. self.source info in this case
+        #  is missed.
+        #  Need to use some more convenient way to display necessary
+        #  error info in console output
+        self.reason = (f'repo source "{self.source}" is not acceptable, '
+                       f'reason: {reason}')
 
     def __str__(self):
-        return (
-            'repo source {} is not acceptable, reason: {!r}'
-            .format(self.source, self.reason)
-        )
+        return repr(self.reason)
 
 
 class PrvsnrCmdError(ProvisionerError):
@@ -147,7 +155,8 @@ class PillarSetError(ProvisionerError):
 
     def __str__(self):
         return (
-            'pillar update failed: {!r}'.format(self)
+            'pillar update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):
@@ -166,7 +175,7 @@ class ClusterMaintenanceError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to {} cluster maintenance, reason: {!r}'
+            'failed to {} cluster maintenance, reason: {}'
             .format('enable' if self.enable else 'disable', self.reason)
         )
 
@@ -189,7 +198,7 @@ class SWStackUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to update SW stack, reason: {!r}'
+            'failed to update SW stack, reason: {}'
             .format(self.reason)
         )
 
@@ -202,7 +211,7 @@ class HAPostUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to apply Hare post_update logic, reason: {!r}'
+            'failed to apply Hare post_update logic, reason: {}'
             .format(self.reason)
         )
 
@@ -215,7 +224,7 @@ class ClusterNotHealthyError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to apply Hare post_update logic, reason: {!r}'
+            'failed to apply Hare post_update logic, reason: {}'
             .format(self.reason)
         )
 
@@ -230,7 +239,8 @@ class SWUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'update failed: {!r}'.format(self)
+            'update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):
@@ -257,7 +267,8 @@ class SSLCertsUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'SSL Cert update failed: {!r}'.format(self)
+            'SSL Cert update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):

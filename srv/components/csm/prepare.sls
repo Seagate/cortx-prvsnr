@@ -17,6 +17,7 @@
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
+{% if pillar['release']['target_build'] %}
 Add CSM uploads repo:
   pkgrepo.managed:
     - name: {{ defaults.csm.uploads_repo.id }}
@@ -33,6 +34,7 @@ Add CSM repo:
     - baseurl: {{ defaults.csm.repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.csm.repo.gpgkey }}
+{% endif %}
 
 {% if 'single' not in pillar['cluster']['type'] %}
 Render CSM ha input params template:
@@ -43,3 +45,4 @@ Render CSM ha input params template:
     - mode: 444
     - makedirs: True
 {% endif %}
+

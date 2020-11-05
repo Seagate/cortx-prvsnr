@@ -193,14 +193,17 @@ def _main():
 
     output_type = parsed_args.kwargs.pop('output')
 
+    log_args_view = {
+        k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
+        if k in attr.fields_dict(log.LogArgs)
+    }
+
     log_args = log.LogArgs(
-        cmd=parsed_args.cmd,
-        **{
-            k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
-            if k in attr.fields_dict(log.LogArgs)
-        }
+        cmd=parsed_args.cmd, **log_args_view
     )
 
+    # TODO IMPROVE EOS-14361 configure salt loggers
+    #      for secure levels if needed
     _set_logging(output_type, log_args, parsed_args)
 
     general_args = GeneralArgs(
@@ -235,10 +238,14 @@ def _main():
             eauth=auth_args.eauth
         )
 
+    auth_args_view = attr.asdict(auth_args)
+    if auth_args_view['password']:
+        auth_args_view['password'] = config.SECRET_MASK
+
     logger.debug(
-        f'Parsed arguments: auth={auth_args}, log={log_args}, '
-        'cmd={parsed_args.cmd}, args={parsed_args.args}, '
-        'kwargs={parsed_args.kwargs}'
+        f'Parsed arguments: auth={auth_args_view}, log={log_args_view}, '
+        f'cmd={parsed_args.cmd}, args={parsed_args.args}, '
+        f'kwargs={parsed_args.kwargs}'
     )
 
     # TODO IMPROVE

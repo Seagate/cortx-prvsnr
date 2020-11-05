@@ -15,23 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install cortx-sspl packages:
-  pkg.installed:
-    - name: cortx-sspl
-    - version: latest
-    - refresh: True
-    - require:
-      - Add sspl yum repo
+{% set python_repo_path = pillar['release']['python_repo'] %}
 
-Install flask:
-  pip.installed:
-    - name: flask
-    - version: 1.1.1
-
-Install cortx-sspl-test:
-  pkg.installed:
-    - name: cortx-sspl-test
-    - version: latest
-    - require:
-      - Install flask
-      - Install cortx-sspl packages
+configure pip:
+  file.managed:
+    - name: /etc/pip.conf
+    - contents: |
+        [global]
+        timeout: 60
+        index-url: {{ python_repo_path }}
+{%- if python_repo_path.startswith(('http://', 'https://')) %}
+        trusted-host: {{ python_repo_path.split('/')[2] }}
+{%- endif -%}

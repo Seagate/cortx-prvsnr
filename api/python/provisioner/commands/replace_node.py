@@ -19,7 +19,8 @@ import logging
 
 from .. import (
     config,
-    inputs
+    inputs,
+    errors
 )
 from ..vendor import attr
 from ..utils import (
@@ -80,6 +81,7 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
     # not needed: would beset as for initial setup
     source: str = attr.ib(init=False, default=None)
     prvsnr_version: str = attr.ib(init=False, default=None)
+    iso_os: str = attr.ib(init=False, default=None)
     iso_cortx: str = attr.ib(init=False, default=None)
     iso_cortx_deps: str = attr.ib(init=False, default=None)
     url_cortx_deps: str = attr.ib(init=False, default=None)
@@ -120,12 +122,19 @@ class ReplaceNode(SetupProvisioner):
         if "cp -i" in ret_val.stdout:
             run_subprocess_cmd(['unalias', 'cp'])
 
+        factory_profile = config.PRVSNR_FACTORY_PROFILE_DIR
+        if not factory_profile.is_dir():
+            factory_profile = (
+                config.GLUSTERFS_VOLUME_PRVSNR_DATA / 'factory_profile'
+            )
+
+        if not factory_profile.is_dir():
+            raise errors.ProvisionerRuntimeError(
+                'factory profile directory is not found'
+            )
+
         run_subprocess_cmd(
-            [
-                'cp', '-fr',
-                str(config.PRVSNR_FACTORY_PROFILE_DIR),
-                str(run_args.profile)
-            ]
+            ['cp', '-fr', str(factory_profile), str(run_args.profile)]
         )
 
         paths = config.profile_paths(
@@ -147,6 +156,7 @@ class ReplaceNode(SetupProvisioner):
         for _attr in (
             'source',
             'prvsnr_version',
+            'iso_os',
             'iso_cortx',
             'iso_cortx_deps',
             'url_cortx_deps',  # TODO IMPROVE may rely on profile data

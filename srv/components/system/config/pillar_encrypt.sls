@@ -15,10 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
+Install cortx-py-utils:           # Package for cryptography
+  pkg.installed:
+    - name: cortx-py-utils
+
+# Skip cryptography install as it gets installed through cortx-py-utils
 Ensure cryptography python package absent:
   pip.removed:
     - name: cryptography
     - bin_env: /usr/bin/pip3
+    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
+    - require:
+      - Install cortx-py-utils
 
 Install cryptography python package:
   pip.installed:
@@ -28,20 +37,9 @@ Install cryptography python package:
     - require:
       - Ensure cryptography python package absent
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
-    - require:
-      - Install cryptography python package
 
+{% if pillar["cluster"][grains['id']]["is_primary"] %}
 Encrypt_pillar:
-  cmd.run:
-    {% if salt['file.file_exists']("/opt/seagate/cortx/provisioner/cli/pillar_encrypt") %}
-    - name: python3 /opt/seagate/cortx/provisioner/cli/pillar_encrypt       # Prod env
-    {% else %}
-    - name: python3 /opt/seagate/cortx/provisioner/cli/src/pillar_encrypt   # Dev env
-    {% endif %}
-
-Refresh pillar data:
   module.run:
-    - saltutil.refresh_pillar: []
+    - pillar_ops.encrypt: []
+{% endif %}

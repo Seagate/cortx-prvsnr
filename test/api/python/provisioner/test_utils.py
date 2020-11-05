@@ -232,7 +232,7 @@ def test_load_yaml_str_output_check(mocker):
 def test_dump_yaml_str_input_check(mocker, dump_yaml_defaults):
     data = 'some-data'
 
-    run_m = mocker.patch.object(utils.yaml, 'safe_dump', autospec=True)
+    run_m = mocker.patch.object(utils.yaml, 'dump', autospec=True)
 
     utils.dump_yaml_str(data)
 
@@ -244,7 +244,7 @@ def test_dump_yaml_str_output_check(mocker):
     out_data = 'some-out-data'
 
     mocker.patch.object(
-        utils.yaml, 'safe_dump', autospec=True, return_value=out_data
+        utils.yaml, 'dump', autospec=True, return_value=out_data
     )
 
     assert utils.dump_yaml_str(in_data) == out_data

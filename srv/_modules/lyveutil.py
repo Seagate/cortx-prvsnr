@@ -21,7 +21,6 @@
 
 from salt import client
 
-from cortx.utils.security.cipher import Cipher, CipherInvalidToken
 
 def decrypt(component, secret):
     """ Decrypt secret.
@@ -29,6 +28,8 @@ def decrypt(component, secret):
     Args:
       secret: Secret to be decrypted.
     """
+    from cortx.utils.security.cipher import Cipher, CipherInvalidToken
+    
     retval = None
     cluster_id = __grains__['cluster_id']
     cipher_key = Cipher.generate_key(cluster_id, component)
