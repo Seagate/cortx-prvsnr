@@ -14,6 +14,8 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+import logging
+from abc import ABC, abstractmethod
 from typing import Type, Union, List
 import json
 
@@ -26,6 +28,8 @@ from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
 from ..salt_minion import check_salt_minions_are_ready
 from ..vendor import attr
+
+logger = logging.getLogger(__name__)
 
 
 SRVNODE1 = "srvnode-1"
@@ -243,6 +247,56 @@ class CheckResult:
                     result[key] = value
 
         return result
+
+
+class DecisionMaker(ABC):
+
+    """Abstract Decision Maker class"""
+
+    @abstractmethod
+    def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision based on given check_result
+
+        :return:
+        """
+
+
+class SWUpdateDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure and will decide to continue or
+       to stop SW Update routine
+    """
+
+    def _check_critical_errors(self, check_result: CheckResult):
+        """
+        Just as example that `DecisionMaker` child classes can threat some
+        errors as critical to raise appropriate Exception and stop command
+        execution
+
+        :param CheckResult check_result: instance with checks results
+        :return:
+        """
+        # TODO: determine list of critical errors which should trigger
+        #  SW Update exception
+        pass
+
+    def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision for SW Update based on `CheckResult` analysis
+
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+
+        if check_result.is_failed:
+            failed = "; ".join(str(check)
+                               for check in check_result.get_failed())
+            logger.warning("Some SW Update pre-flight checks are failed: "
+                           f"{failed}")
+
+        logger.info("All SW UPdate pre-flight checks are passed")
 
 
 @attr.s(auto_attribs=True)

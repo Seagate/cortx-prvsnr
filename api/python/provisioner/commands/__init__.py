@@ -26,6 +26,7 @@ import yaml
 import importlib
 
 from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
+from .check import Check, SWUpdateDecisionMaker
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -740,7 +741,11 @@ class SWUpdate(CommandParserFillerMixin):
         rollback_ctx = None
         minion_conf_changes = None
         try:
-            ensure_cluster_is_healthy()
+            checker = Check()
+            check_res = checker.run()
+            decision_maker = SWUpdateDecisionMaker()
+
+            decision_maker.make_decision(check_result=check_res)
 
             _ensure_update_repos_configuration(targets)
 
