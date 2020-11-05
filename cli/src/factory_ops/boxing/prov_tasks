@@ -115,8 +115,17 @@ function backup_files {
 function configure_service_port {
     salt "srvnode-1" state.apply components.system.network.mgmt.service_port ${salt_opts} || (
         echo "ERROR: Failed to configure service port on srvnode-1." | tee -a ${LOG_FILE}
-        exit 10
+        exit 25
     )
+}
+
+
+function clear_pillar_entry_for_public_management_ip {
+    echo "Clearing pillar entry for Public Management IP on srvnode-1." | tee -a ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+
+    echo "Clearing pillar entry for Public Management IP on srvnode-2." | tee -a ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr \"\"
 }
 
 

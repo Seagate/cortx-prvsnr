@@ -47,6 +47,22 @@ function get_pillar_data {
     echo ${l_val}
 }
 
+
+# Remote execute a command over private data interface
+function remote_execute {
+    remote_node={$1:-pvt_ip_b}
+    cmd={$2:-}
+
+    if [[ -n ${cmd} ]]; then
+        echo $(ssh -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${remote_node}" "${cmd}")
+        return $?
+    else
+        _lerror "$0: The method for remote execution is called without passing the intended command."
+        return 20
+    fi
+}
+
+
 function ensure_healthy_cluster {
     local _nowait=${1:-}
 

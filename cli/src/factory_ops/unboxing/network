@@ -1,0 +1,271 @@
+#!/usr/bin/bash
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+
+
+# Functions in this file address following:
+#   1.  Accept user choice: DHCP/Static
+#   2.  If DHCP
+#       2.1.  Set cluster entries for public management IP to None
+#       2.2.  Update /etc/resolv.conf using dhclient
+#   3.  If Static
+#       3.1.  IP address for public management interface (E.g. for eno1) <Mandatory>:
+#             for srvnode-1 & srvnode-2
+#       3.2.  Gateway for management network <Mandatory>
+#       3.3.  BMC IP <Mandatory>
+#             for srvnode-1 & srvnode-2
+#   4.  Gateway for Public Data network [Optional]
+#   5.  Present User with captured information for confirmation
+#   6.  Backup exiting ifcfg file with extension .boxing
+#   7.  Apply configuration and restart interface
+#   8.  Test connectivity with a ping
+
+
+set -euE
+
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
+mkdir -p $(dirname "${LOG_FILE}")
+#truncate -s 0 ${LOG_FILE}
+
+BASEDIR=$(dirname "${BASH_SOURCE}")
+
+. ${BASEDIR}/../../common_utils/utility_scripts.sh
+
+export PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
+export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+
+export pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+export pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+
+
+function trap_handler {
+    exit_code=$?
+
+    echo "***** ERROR! *****" | tee -a ${LOG_FILE}
+    echo "For detailed error logs, please see: $LOG_FILE" | tee -a ${LOG_FILE}
+    echo "******************" | tee -a ${LOG_FILE}
+    
+    exit $exit_code
+}
+trap trap_handler ERR
+
+
+function intrpt_handler {
+    exit_code=$?
+
+    echo "***** ERROR! *****" | tee -a ${LOG_FILE}
+    echo "------------------------------------------------------------------" | tee -a ${LOG_FILE}
+    echo "Received Ctrl-c signal, exiting Gracefully. | tee -a ${LOG_FILE}
+    echo "For detailed logs, please see: $LOG_FILE | tee -a ${LOG_FILE}
+    echo "------------------------------------------------------------------" | tee -a ${LOG_FILE}
+
+    exit $exit_code
+}
+trap intrpt_handler SIGTERM SIGINT
+
+
+# 1.  Accept user choice: DHCP/Static
+# Prompt user to choose between DHCP and static
+function choose_nw_config {
+    echo -e "Choose a network configuration for management network:\n  1. DHCP\n  2. Static\n  3. Quit"
+    read choice
+
+    case ${choice} in
+        1)
+            _linfo "${choice} selected. Proceeding with DHCP configuration for Management Network."
+            configure_dhcp
+            ;;
+        2)
+            _linfo "${choice} selected. Proceeding with Static IP configuration for Management Network."
+            configure_static
+            ;;
+        3)
+            _lerror "User decided to exit without selecting Network configuration."
+            _lerror "Exiting..."
+            exit 10
+            ;;
+        *) 
+            _lerror "${choice} selected."
+            _lerror "Invalid option selected. Please try again. Exiting..."
+            exit 11
+            ;;
+    esac
+}
+
+
+function test_mgmt_ips {
+    _linfo "Fetching IP of the nodes"
+    remote_mgmt_ip_srvnode_1=$(hostname -i)
+    remote_mgmt_ip_srvnode_2=$(remote_execute ${pvt_ip_b} "hostname -i")
+    
+    # Test the IP that is set
+    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of srvnode-2 from srvnode-1 to test sanity."
+    ping -c1 ${remote_mgmt_ip_srvnode_2} && ( 
+        _linfo "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is reachable over management network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is not reachable over management network."
+            exit 21
+        )
+    )
+    
+    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of srvnode-1 from srvnode-2 to test sanity."
+    remote_execute ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
+        _linfo "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is reachable over management network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is not reachable over management network."
+            exit 21
+        )
+    )
+}
+
+
+function update_cluster_pillar_for_mgmt_ips {
+    ip_1=${1:-}
+    ip_2=${2:-}
+
+    if [[ ( -z ${ip_1} ) || ( -z ${ip_2} ) ]]; then
+        # Configuration is DHCP. Set blank
+        # Get line number for management network section start for srvnode-1
+        occurance_1=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        # Update pillar file
+        sed -in '${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+
+        # Get line number for management network section start for srvnode-2
+        occurance_2=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        # Update pillar file
+        sed -in '${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+    else
+        # Configuration is static, update pillar
+        # Configuration is DHCP. Set blank
+        # Get line number for management network section start for srvnode-1
+        occurance_1=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        # Update pillar file
+        sed -in '${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+
+        # Get line number for management network section start for srvnode-2
+        occurance_2=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        # Update pillar file
+        sed -in '${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+    fi
+}
+
+
+function backup_ifcfg {
+    node=${1:-pvt_ip_a}
+    if_name=${2:-eno1}
+
+    if [[ -n if_name ]]; then
+        if [[ ! remote_execute ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${mgmt_if}.boxing" ]]; then
+            _linfo "Backing up ifcfg-${if_name} to ifcfg-${if_name}.boxing in dir /etc/sysconfig/network-scripts"
+            remote_execute ${node} "mv /etc/sysconfig/network-scripts/ifcfg-${mgmt_if} /etc/sysconfig/network-scripts/ifcfg-${mgmt_if}.boxing"
+        else
+            _lerror "ifcfg-${if_name}.boxing file from previous boxing already exists. Skipping backup..."
+        fi
+    fi
+}
+
+
+# 2.  If DHCP
+#     2.1.  Set cluster entries for public management IP to None
+#     2.2.  Update /etc/resolv.conf using dhclient
+function configure_dhcp {
+    # Reset cluster value for management network
+    # srvnode-1
+    _linfo "Preparing cluster pillar for setting management network configuration to DHCP on srvnode-2"
+    provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+    # srvnode-2
+    _linfo "Preparing cluster pillar for setting management network configuration to DHCP on srvnode-2"
+    provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+
+    # Set network config to DHCP for pillar value cluster:srvnode-1:network:mgmt_nw:iface:0
+    
+    # Srvnode-1
+    _linfo "Setting DHCP on srvnode-1 for interface: ${mgmt_if}"
+    mgmt_if=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
+    backup_ifcfg ${pvt_ip_a} ${mgmt_if}
+
+    _linfo "Setting /etc/resolv.conf on srvnode-1 for interface: ${mgmt_if}"
+    salt-call --local state.apply components.system.network ${salt_opts}
+    _linfo "Setting ifcfg-${mgmt_if} on srvnode-1"
+    salt-call --local state.apply components.system.network.mgmt.public ${salt_opts}
+    
+    # Srvnode-2
+    _linfo "Setting DHCP on srvnode-2 for interface: ${mgmt_if}"
+    mgmt_if=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
+    backup_ifcfg ${pvt_ip_b} ${mgmt_if}
+    
+    _linfo "Setting /etc/resolv.conf on srvnode-2 for interface: ${mgmt_if}"
+    remote_execute ${pvt_ip_b} "salt-call --local state.apply components.system.network ${salt_opts}"
+    _linfo "Setting ifcfg-${mgmt_if} on srvnode-2"
+    remote_execute ${pvt_ip_b} "salt-call --local state.apply components.system.network.mgmt.public ${salt_opts}"
+    
+    # Update pillar
+    update_cluster_pillar_for_mgmt_ips
+
+    # Sanity check
+    test_mgmt_ips
+}
+
+
+# 3.  If Static
+#     3.1.  IP address for public management interface (E.g. for eno1) <Mandatory>:
+#           for srvnode-1 & srvnode-2
+#     3.2.  Gateway for management network <Mandatory>
+#     3.3.  BMC IP <Mandatory>
+#           for srvnode-1 & srvnode-2
+function configure_static {
+    # User inputs
+
+
+    # Reset cluster value for management network
+    # srvnode-1
+    _linfo "Preparing cluster pillar for setting management network configuration to DHCP on srvnode-2"
+    provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+    # srvnode-2
+    _linfo "Preparing cluster pillar for setting management network configuration to DHCP on srvnode-2"
+    provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+
+    # Set network config to DHCP for pillar value cluster:srvnode-1:network:mgmt_nw:iface:0
+    
+    # Srvnode-1
+    _linfo "Setting DHCP on srvnode-1 for interface: ${mgmt_if}"
+    mgmt_if=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
+    backup_ifcfg ${pvt_ip_a} ${mgmt_if}
+
+    _linfo "Setting /etc/resolv.conf on srvnode-1 for interface: ${mgmt_if}"
+    salt-call --local state.apply components.system.network ${salt_opts}
+    _linfo "Setting ifcfg-${mgmt_if} on srvnode-1"
+    salt-call --local state.apply components.system.network.mgmt.public ${salt_opts}
+    
+    # Srvnode-2
+    _linfo "Setting DHCP on srvnode-2 for interface: ${mgmt_if}"
+    mgmt_if=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
+    backup_ifcfg ${pvt_ip_b} ${mgmt_if}
+    
+    _linfo "Setting /etc/resolv.conf on srvnode-2 for interface: ${mgmt_if}"
+    remote_execute ${pvt_ip_b} "salt-call --local state.apply components.system.network ${salt_opts}"
+    _linfo "Setting ifcfg-${mgmt_if} on srvnode-2"
+    remote_execute ${pvt_ip_b} "salt-call --local state.apply components.system.network.mgmt.public ${salt_opts}"
+    
+    # Update pillar
+    update_cluster_pillar_for_mgmt_ips
+
+    # Sanity check
+    test_mgmt_ips    
+}
+
+# Script entry point
+choose_nw_config
