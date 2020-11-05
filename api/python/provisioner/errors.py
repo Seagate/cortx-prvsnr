@@ -23,6 +23,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class ProvisionerRuntimeError(ProvisionerError, RuntimeError):
+    pass
+
+
 class ProvisionerCliError(ProvisionerError):
     pass
 
@@ -105,7 +109,7 @@ class PrvsnrTypeDecodeError(ProvisionerError, ValueError):
 
     def __str__(self):
         return (
-            'decode failed for {}, reason: {!r}'
+            'decode failed for {}, reason: {}'
             .format(self.spec, self.reason)
         )
 
@@ -151,7 +155,8 @@ class PillarSetError(ProvisionerError):
 
     def __str__(self):
         return (
-            'pillar update failed: {!r}'.format(self)
+            'pillar update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):
@@ -170,7 +175,7 @@ class ClusterMaintenanceError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to {} cluster maintenance, reason: {!r}'
+            'failed to {} cluster maintenance, reason: {}'
             .format('enable' if self.enable else 'disable', self.reason)
         )
 
@@ -193,7 +198,7 @@ class SWStackUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to update SW stack, reason: {!r}'
+            'failed to update SW stack, reason: {}'
             .format(self.reason)
         )
 
@@ -206,7 +211,7 @@ class HAPostUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to apply Hare post_update logic, reason: {!r}'
+            'failed to apply Hare post_update logic, reason: {}'
             .format(self.reason)
         )
 
@@ -219,7 +224,7 @@ class ClusterNotHealthyError(ProvisionerError):
 
     def __str__(self):
         return (
-            'failed to apply Hare post_update logic, reason: {!r}'
+            'failed to apply Hare post_update logic, reason: {}'
             .format(self.reason)
         )
 
@@ -234,7 +239,8 @@ class SWUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'update failed: {!r}'.format(self)
+            'update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):
@@ -261,7 +267,8 @@ class SSLCertsUpdateError(ProvisionerError):
 
     def __str__(self):
         return (
-            'SSL Cert update failed: {!r}'.format(self)
+            'SSL Cert update failed: reason={}, rollback_error={}'
+            .format(self.reason, self.rollback_error)
         )
 
     def __repr__(self):

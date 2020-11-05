@@ -117,6 +117,9 @@ PRVSNR_USER_PILLAR_HOST_DIR_TMPL = str(
 #    PRVSNR_USER_LOCAL_PILLAR_DIR / 'minions/{minion_id}'
 # )
 
+GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
+GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
+
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
 SEAGATE_USER_FILEROOT_DIR_TMPL = str(
@@ -203,8 +206,33 @@ LOG_FORCED_LOGFILE_CMDS = [
     'replace_node'
 ]
 
+
+# List of commands for which we purposely reduce log level severity to suppress
+# logging noise and prevent log files size growing.
+LOG_SUPPRESSION_CMDS = [
+    'get_params',
+    "get_result",
+    "grains_get",
+    "pillar_get",
+    "get_params",
+    "get_cluster_id",
+    "get_node_id",
+    "get_release_version",
+    "get_factory_version",
+    "get_setup_info"
+]
+
+
 LOG_TRUNC_MSG_TMPL = "<TRUNCATED> {} ..."
 LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
+
+
+class LogLevelTypes(Enum):
+
+    RSYSLOG = f"{LOG_RSYSLOG_HANDLER}_level"
+    CONSOLE = f"{LOG_CONSOLE_HANDLER}_level"
+    LOGFILE = f"{LOG_FILE_HANDLER}_level"
+
 
 # bundled salt roots dirs
 BUNDLED_SALT_DIR = CONFIG_MODULE_DIR / 'srv'
