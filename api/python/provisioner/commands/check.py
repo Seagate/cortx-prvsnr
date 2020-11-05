@@ -426,7 +426,7 @@ class Check(CommandParserFillerMixin):
 
     @staticmethod
     def _connectivity(*, servers: Union[list, tuple, set] = PENDING_SERVERS,
-                      args: str) -> CheckEntry:
+                      args: str) -> List[CheckEntry]:
         """
         Check servers connectivity. Ping servers to check for availability
 
@@ -439,9 +439,10 @@ class Check(CommandParserFillerMixin):
         # -W 1 means timeout to wait for a response
         _PING_CMD_TMPL = "ping -c 1 -W 1 {server_addr}"
 
-        res: CheckEntry = CheckEntry(cfg.Checks.CONNECTIVITY.value)
+        res: List[CheckEntry] = list()
 
         for addr in servers:
+            check_entry: CheckEntry = CheckEntry(cfg.Checks.CONNECTIVITY.value)
             # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
@@ -454,12 +455,15 @@ class Check(CommandParserFillerMixin):
             try:
                 cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                res.set_fail(checked_target=targets,
-                             comment=(f"{cfg.CheckVerdict.FAIL.value}: {addr} "
-                                      f"is not reachable from {targets}"))
+                check_entry.set_fail(checked_target=targets,
+                                     comment=(f"{cfg.CheckVerdict.FAIL.value}:"
+                                              f" {addr} is not reachable "
+                                              f"from {targets}"))
             else:
                 # if no error occurred
-                res.set_passed(checked_target=targets)
+                check_entry.set_passed(checked_target=targets)
+
+            res.append(check_entry)
 
         return res
 
