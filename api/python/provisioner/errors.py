@@ -324,7 +324,7 @@ class EnsureUpdateRepoConfigError(ProvisionerError):
 class UpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
-    def __init__(self,  component: str, reason: Union[Exception, str]):
+    def __init__(self, component: str, reason: Union[Exception, str]):
         self.reason = reason
         self.component = component
 
