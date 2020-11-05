@@ -741,11 +741,17 @@ class SWUpdate(CommandParserFillerMixin):
         rollback_ctx = None
         minion_conf_changes = None
         try:
-            checker = Check()
-            check_res = checker.run()
-            decision_maker = SWUpdateDecisionMaker()
+            ensure_cluster_is_healthy()  # TODO: checker.run do that check too
 
-            decision_maker.make_decision(check_result=check_res)
+            checker = Check()
+            try:
+                check_res = checker.run()
+            except Exception as e:
+                logger.warning("During pre-flight checks error happened: "
+                               f"{str(e)}")
+            else:
+                decision_maker = SWUpdateDecisionMaker()
+                decision_maker.make_decision(check_result=check_res)
 
             _ensure_update_repos_configuration(targets)
 
