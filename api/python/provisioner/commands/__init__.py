@@ -671,13 +671,21 @@ class SetSWUpdateRepo(Set):
 
             # there is no the same release repo is already active
             if self._is_repo_enabled(f'sw_update_{release}'):
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    (
-                        f"SW update repository for the release "
-                        f"'{release}' has been already enabled"
-                    )
+                err_msg = (
+                    "SW update repository for the release "
+                    f"'{release}' has been already enabled"
                 )
+                logger.warning(err_msg)
+
+                # TODO IMPROVE later raise and error
+                if False:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        (
+                            f"SW update repository for the release "
+                            f"'{release}' has been already enabled"
+                        )
+                    )
 
             # TODO IMPROVE
             #   - new version is higher then currently installed
@@ -699,6 +707,17 @@ class SetSWUpdateRepo(Set):
     # TODO rollback
     def _run(self, params: inputs.SWUpdateRepo, targets: str):
         repo = params
+
+        # TODO remove that block once that check fails the dynamic validation
+        if self._is_repo_enabled(f'sw_update_{repo.release}'):
+            logger.warning(
+                "removing already enabled repository "
+                f"for the '{repo.release}' release"
+            )
+            _repo = inputs.SWUpdateRepo(
+                repo.release, values.UNDEFINED
+            )
+            super()._run(_repo, targets)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
