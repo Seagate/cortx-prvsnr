@@ -171,7 +171,17 @@ def _set_logging(output_type, log_args=None, other_args=None):
                 else:
                     filename = _generate_logfile_filename(log_args.cmd)
                 setattr(log_args, filename_attr, str(filename))
-            log_args.update_handlers()
+
+    if (cmd in config.LOG_SUPPRESSION_CMDS and
+            hasattr(log_args, config.LOG_RSYSLOG_HANDLER)):
+        setattr(log_args, config.LogLevelTypes.RSYSLOG.value, logging.WARNING)
+    elif hasattr(log_args, config.LOG_FILE_HANDLER):
+        pass  # just to signalize that log_args.update_handlers() is needed
+    else:
+        log.set_logging(log_args)
+        return
+
+    log_args.update_handlers()
 
     # TODO IMPROVE change a copy
     log.set_logging(log_args)
