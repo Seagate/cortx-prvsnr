@@ -88,7 +88,7 @@ fi
 if [[ -z $serial_number ]]; then
     echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED" | tee -a ${LOG_FILE}
 else
-    salt "*" cmd.run "${BASEDIR}/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
+    salt "*" cmd.run "$(realpath ${BASEDIR})/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
 fi
 
 
