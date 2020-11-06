@@ -197,12 +197,12 @@ seagate_refs_cleanup()
         mkdir -p /opt/seagate/eos-prvsnr/generated_configs/repos_unboxing
         for file in `grep -lE "seagate|salt" /etc/yum.repos.d/*.repo`; do\
             echo "Removing $file";\
-            yes | mv -f "$file /opt/seagate/eos-prvsnr/generated_configs/repos_unboxing" ;\
+            yes | mv -f "$file" /opt/seagate/eos-prvsnr/generated_configs/repos_unboxing ;\
         done  >> ${LOG_FILE}
 
         for file in `grep -lE "baseurl=None" /etc/yum.repos.d/*.repo`; do\
             echo "Removing $file";\
-            yes | mv -f "$file /opt/seagate/eos-prvsnr/generated_configs/repos_unboxing" ;\
+            yes | mv -f "$file" /opt/seagate/eos-prvsnr/generated_configs/repos_unboxing ;\
         done  >> ${LOG_FILE}
 
         echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
