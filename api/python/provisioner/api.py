@@ -448,3 +448,18 @@ def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
     :return:
     """
     return _api_call('grains_get', *keys, targets=targets, nowait=nowait)
+
+
+def check(check_name, check_args: str = "",
+          targets: str = ALL_MINIONS):
+    """
+    Verify specific checks for system and beyond
+
+    :param check_name: name of validation. Use `all` parameter to trigger all
+                       supported checks
+    :param check_args: arguments and parameters for check (if supported)
+    :param targets: targets where to execute validations (optional)
+    :return:
+    """
+    return _api_call('check', check_name,
+                     check_args_args=check_args, targets=targets)

@@ -20,16 +20,6 @@
     notifempty
 }
 
-/var/log/salt/key {
-    su root prvsnrusers
-    monthly
-    size 10k
-    missingok
-    rotate 3
-    compress
-    notifempty
-}
-
 # Rotate provisioner log files
 /var/log/seagate/provisioner/fw_upgrade*.log
 /var/log/seagate/provisioner/prvsnr*.log

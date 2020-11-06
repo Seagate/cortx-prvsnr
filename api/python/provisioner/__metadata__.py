@@ -16,7 +16,7 @@
 #
 
 __title__ = 'cortx-prvsnr'
-__version__ = '0.39.0'
+__version__ = '0.40.0'
 __author__ = "Seagate"
 __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'
