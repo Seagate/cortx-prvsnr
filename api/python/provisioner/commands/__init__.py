@@ -835,7 +835,7 @@ class SWUpdate(CommandParserFillerMixin):
                     try:
                         _update_component('provisioner', targets)
                     except Exception as exc:
-                        raise UpdateComponentError('provisioner', exc) from exc
+                        raise UpdateComponentError("provisioner", exc) from exc
                     try:
                         config_salt_master()
                     except Exception as exc:
