@@ -406,13 +406,13 @@ function remove_gfs_mounts {
     #6. unmount volumes mountpoints
     #7. Remove entries from fstab
 
-    echo "Stopping Salt services on Server A" | tee -a ${LOG_FILE}
-    systemctl stop salt-master 2>&1 | tee -a ${LOG_FILE}
-    systemctl stop salt-minion 2>&1 | tee -a ${LOG_FILE}
+    #echo "Stopping Salt services on Server A" | tee -a ${LOG_FILE}
+    #systemctl stop salt-master 2>&1 | tee -a ${LOG_FILE}
+    #systemctl stop salt-minion 2>&1 | tee -a ${LOG_FILE}
 
-    echo "Stopping Salt services on Server B" | tee -a ${LOG_FILE}
-    $ssh_cmd ${pvt_ip_b} "systemctl stop salt-master" 2>&1 | tee -a ${LOG_FILE}
-    $ssh_cmd ${pvt_ip_b} "systemctl stop salt-minion" 2>&1 | tee -a ${LOG_FILE}
+    #echo "Stopping Salt services on Server B" | tee -a ${LOG_FILE}
+    #$ssh_cmd ${pvt_ip_b} "systemctl stop salt-master" 2>&1 | tee -a ${LOG_FILE}
+    #$ssh_cmd ${pvt_ip_b} "systemctl stop salt-minion" 2>&1 | tee -a ${LOG_FILE}
 
     echo -e "\n------ Stopping gluster volume: ${gfs_vol_prvsnr_data} ------" | tee -a ${LOG_FILE}
     echo y | gluster volume stop ${gfs_vol_prvsnr_data} 2>&1 | tee -a ${LOG_FILE}

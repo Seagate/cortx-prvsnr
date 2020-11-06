@@ -31,8 +31,8 @@ function lr_serial_number {
             echo "Lyve Rack r1 Serial Number already set."
             exit 31
         else
-            if [[ $(/usr/local/bin/provisioner --version > /dev/null) ]]; then
-                /usr/local/bin/provisioner pillar_set cluster/lr-serial-number $1
+            if [[ $(/usr/bin/provisioner --version > /dev/null 2>&1) ]]; then
+                /usr/bin/provisioner pillar_set cluster/lr-serial-number $1
             fi
             echo $1 > /opt/seagate/lr-serial-number
             chmod 0644 /opt/seagate/lr-serial-number

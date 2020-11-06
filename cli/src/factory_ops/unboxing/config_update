@@ -208,7 +208,7 @@ function configure_gluster_vols() {
         echo "mounting the gluster volume ${gfs_vol_prvsnr_data} on Server B" >> ${LOG_FILE}
         $ssh_cmd $pvt_ip_b "mount -t glusterfs ${hostname_A}:/${gfs_vol_prvsnr_data} ${mountpt_prvsnr_data_vol}"
     else
-        echo "gluster volume ${fs_vol_prvsnr_data} is already mounted on Server B, ignoring" >> ${LOG_FILE}
+        echo "gluster volume ${gfs_vol_prvsnr_data} is already mounted on Server B, ignoring" >> ${LOG_FILE}
     fi
 
     # add entries in fstab server A
@@ -343,7 +343,7 @@ function update_cluster_sls {
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
                 echo "BMC_IP (Server A): ${_ip}" >> ${LOG_FILE}
-                provisioner pillar_set cluster/srvnode-1/bmc:ip \"${_ip}\"
+                provisioner pillar_set cluster/srvnode-1/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
                 exit 1
@@ -366,7 +366,7 @@ function update_cluster_sls {
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
                 echo "BMC_IP (Server B): ${_ip}" >> ${LOG_FILE}
-                provisioner pillar_set cluster/srvnode-2/bmc:ip \"${_ip}\"
+                provisioner pillar_set cluster/srvnode-2/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
                 exit 1

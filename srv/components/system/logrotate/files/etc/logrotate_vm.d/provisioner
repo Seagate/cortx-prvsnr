@@ -3,23 +3,14 @@
 /var/log/seagate/provisioner/destroy.log
 /var/log/seagate/provisioner/boxing.log
 /var/log/seagate/provisioner/unboxing.log
+/var/log/seagate/provisioner/cortx-prereqs.log
 /var/log/seagate/provisioner/controller-cli.log
 /var/log/seagate/provisioner/provisioner-bundler.log
+/var/log/seagate/provisioner/replace_node.log
 /var/log/seagate/provisioner/pillar-encrypt.log
 /var/log/seagate/provisioner/storage_metadata_reset.log
 /var/log/seagate/provisioner/salt_master.log
 /var/log/seagate/provisioner/salt_minion.log {
-    su root prvsnrusers
-    weekly
-    missingok
-    rotate 4
-    maxage 30
-    compress
-    notifempty
-    size 1M
-}
-
-/var/log/salt/key {
     su root prvsnrusers
     weekly
     missingok
