@@ -19,8 +19,8 @@ commons:
   cortx_commons:
     # includes different 3rd party artifacts
     # (multiple rpm repositories, raw archives, bash scirpts etc.)
-    RedHat: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/rhel/rhel-7.7.1908/
-    CentOS: http://cortx-storage.colo.seagate.com/releases/cortx/uploads/centos/centos-7.7.1908/
+    RedHat:
+    CentOS:
   version:
     consul: 1.7.8-1
     # elasticsearch: 6.8.8-1
@@ -35,4 +35,4 @@ commons:
   repo:
     # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
     # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
-    lustre: http://cortx-storage.colo.seagate.com/releases/cortx/lustre/custom/
+    lustre:
