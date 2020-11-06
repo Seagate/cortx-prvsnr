@@ -408,6 +408,11 @@ function update_salt_n_system {
     # Add SWAP to /etc/fstab
     l_info "Adding SWAP entries to /etc/fstab"
     $cmd salt "${tgt_node}" mount.set_fstab /dev/vg_metadata_${tgt_node}/lv_main_swap none swap ${salt_opts}
+    
+    # Copy serial number from healthy node and make it immutable
+    _serial=$(cat /opt/seagate/lr-serial-number)
+    $cmd salt "${tgt_node}" cmd.run "$(realpath ${BASEDIR})/../common_utils/lr-serial-number ${_serial}"
+    l_info "Serial number set for Replaced Node as: " ${_serial}
 }
 
 
