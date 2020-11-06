@@ -206,8 +206,33 @@ LOG_FORCED_LOGFILE_CMDS = [
     'replace_node'
 ]
 
+
+# List of commands for which we purposely reduce log level severity to suppress
+# logging noise and prevent log files size growing.
+LOG_SUPPRESSION_CMDS = [
+    'get_params',
+    "get_result",
+    "grains_get",
+    "pillar_get",
+    "get_params",
+    "get_cluster_id",
+    "get_node_id",
+    "get_release_version",
+    "get_factory_version",
+    "get_setup_info"
+]
+
+
 LOG_TRUNC_MSG_TMPL = "<TRUNCATED> {} ..."
 LOG_TRUNC_MSG_SIZE_MAX = 4096 - len(LOG_TRUNC_MSG_TMPL)
+
+
+class LogLevelTypes(Enum):
+
+    RSYSLOG = f"{LOG_RSYSLOG_HANDLER}_level"
+    CONSOLE = f"{LOG_CONSOLE_HANDLER}_level"
+    LOGFILE = f"{LOG_FILE_HANDLER}_level"
+
 
 # bundled salt roots dirs
 BUNDLED_SALT_DIR = CONFIG_MODULE_DIR / 'srv'
@@ -339,6 +364,39 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+
+class Checks(Enum):
+
+    """Enumeration for available checks/validations"""
+
+    ALL = "all"
+    NETWORK = "network"
+    CONNECTIVITY = "connectivity"
+    BMC_ACCESSIBILITY = "bmc_accessibility"
+    COMMUNICABILITY = "communicability"
+    CLUSTER_STATUS = "cluster_status"
+    LOGS_ARE_GOOD = "logs_are_good"
+    PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+
+
+# Set of supported validations/checks
+CHECKS = {
+    Checks.NETWORK.value,
+    Checks.CONNECTIVITY.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value
+}
+
+
+class CheckVerdict(Enum):
+
+    """Values which represent validation status"""
+    PASSED = "passed"
+    FAIL = "fail"
 
 
 class ReleaseInfo(Enum):

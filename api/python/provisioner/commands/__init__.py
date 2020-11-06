@@ -25,6 +25,8 @@ import json
 import yaml
 import importlib
 
+from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
+from .check import Check, SWUpdateDecisionMaker
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -93,32 +95,9 @@ _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
 
 
-class RunArgs:
-    targets: str = attr.ib(
-        default=ALL_MINIONS,
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "command's host targets"
-            }
-        }
-    )
-    dry_run: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "perform validation only"
-            }
-        }, default=False
-    )
-
-
 @attr.s(auto_attribs=True)
 class RunArgsEmpty:
     pass
-
-
-@attr.s(auto_attribs=True)
-class RunArgsBase:
-    targets: str = RunArgs.targets
 
 
 @attr.s(auto_attribs=True)
@@ -243,31 +222,6 @@ class RunArgsUser:
         }
     )
     targets: str = RunArgs.targets
-
-
-class CommandParserFillerMixin:
-    _run_args_type = RunArgsBase
-
-    @classmethod
-    def _run_args_types(cls):
-        ret = cls._run_args_type
-        return ret if type(ret) is list else [ret]
-
-    @classmethod
-    def fill_parser(cls, parser):
-        for arg_type in cls._run_args_types():
-            inputs.ParserFiller.fill_parser(arg_type, parser)
-
-    @classmethod
-    def from_spec(cls):
-        return cls()
-
-    @classmethod
-    def extract_positional_args(cls, kwargs):
-        for arg_type in cls._run_args_types():
-            return inputs.ParserFiller.extract_positional_args(
-                arg_type, kwargs
-            )
 
 
 #  - Notes:
@@ -671,13 +625,21 @@ class SetSWUpdateRepo(Set):
 
             # there is no the same release repo is already active
             if self._is_repo_enabled(f'sw_update_{release}'):
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    (
-                        f"SW update repository for the release "
-                        f"'{release}' has been already enabled"
-                    )
+                err_msg = (
+                    "SW update repository for the release "
+                    f"'{release}' has been already enabled"
                 )
+                logger.warning(err_msg)
+
+                # TODO IMPROVE later raise and error
+                if False:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        (
+                            f"SW update repository for the release "
+                            f"'{release}' has been already enabled"
+                        )
+                    )
 
             # TODO IMPROVE
             #   - new version is higher then currently installed
@@ -699,6 +661,17 @@ class SetSWUpdateRepo(Set):
     # TODO rollback
     def _run(self, params: inputs.SWUpdateRepo, targets: str):
         repo = params
+
+        # TODO remove that block once that check fails the dynamic validation
+        if self._is_repo_enabled(f'sw_update_{repo.release}'):
+            logger.warning(
+                "removing already enabled repository "
+                f"for the '{repo.release}' release"
+            )
+            _repo = inputs.SWUpdateRepo(
+                repo.release, values.UNDEFINED
+            )
+            super()._run(_repo, targets)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
@@ -787,7 +760,17 @@ class SWUpdate(CommandParserFillerMixin):
         rollback_ctx = None
         minion_conf_changes = None
         try:
-            ensure_cluster_is_healthy()
+            ensure_cluster_is_healthy()  # TODO: checker.run do that check too
+
+            checker = Check()
+            try:
+                check_res = checker.run()
+            except Exception as e:
+                logger.warning("During pre-flight checks error happened: "
+                               f"{str(e)}")
+            else:
+                decision_maker = SWUpdateDecisionMaker()
+                decision_maker.make_decision(check_result=check_res)
 
             _ensure_update_repos_configuration(targets)
 

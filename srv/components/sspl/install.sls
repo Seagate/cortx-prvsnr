@@ -15,16 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .prepare
-
 Install cortx-sspl packages:
   pkg.installed:
     - name: cortx-sspl
     - version: latest
     - refresh: True
-    - require:
-      - Add sspl yum repo
 
 Install flask:
   pip.installed:
