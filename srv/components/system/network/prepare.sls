@@ -15,10 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Stop and disable NetworkManager service:
-#   service.dead:
-#     - name: NetworkManager
-#     - enable: False
+Stop and disable NetworkManager service:
+  service.dead:
+    - name: NetworkManager
+    - enable: False
 
 # Remove NetworkManager package:
 #   pkg.purged:
@@ -37,13 +37,13 @@
 
 # Disabling NetworkManager doesn't kill dhclient process.
 # If not killed explicitly, it causes network restart to fail: COSTOR-439
-# Kill dhclient:
-#   cmd.run:
-#     - name: pkill -SIGTERM dhclient
-#     - onlyif: pgrep dhclient
-#     - requires:
-#       - service: Stop and disable NetworkManager service
+Kill dhclient:
+  cmd.run:
+    - name: pkill -SIGTERM dhclient
+    - onlyif: pgrep dhclient
+    - requires:
+      - service: Stop and disable NetworkManager service
 
-Dummy placeholder for network.prepare:
-  test.show_notification:
-    - text: "A yaml file with comments results in minion non-zero exit"
+# Dummy placeholder for network.prepare:
+#   test.show_notification:
+#     - text: "A yaml file with comments results in minion non-zero exit"

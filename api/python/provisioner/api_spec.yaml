@@ -36,6 +36,8 @@ get_factory_version:
   type: GetFactoryVersion
 get_setup_info:
   type: GetSetupInfo
+check:
+  type: Check
 
 # config commands
 pillar_set:
