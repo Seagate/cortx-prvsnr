@@ -775,12 +775,11 @@ class SWUpdate(CommandParserFillerMixin):
             else:
                 decision_maker = SWUpdateDecisionMaker()
                 decision_maker.make_decision(check_result=check_res)
-           
             try:
                 _ensure_update_repos_configuration(targets)
             except Exception as exc:
                 raise EnsureUpdateRepoConfigError(exc) from exc
-            
+
             _consul_export('update-pre')
 
             with YumRollbackManager(
