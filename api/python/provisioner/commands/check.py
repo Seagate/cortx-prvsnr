@@ -609,6 +609,106 @@ class Check(CommandParserFillerMixin):
 
         return res
 
+    @staticmethod
+    def _storage_lvms(*, args: str) -> CheckEntry:
+        """Storage lvms check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LVMS.value)
+        try:
+            from cortx.utils.kvstore.pillar import PillarStorage
+            from cortx.utils.validator.v_storage import StorageV
+        except ImportError:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+        try:
+            nodes = PillarStorage().get("cluster:node_list")
+            StorageV().validate('lvms', nodes)
+        except Exception as exc:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=cfg.ALL_MINIONS)
+
+        return res
+
+    @staticmethod
+    def _storage_luns(*, args: str) -> CheckEntry:
+        """Storage lvm check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
+        try:
+            from cortx.utils.kvstore.pillar import PillarStorage
+            from cortx.utils.validator.v_storage import StorageV
+        except ImportError:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+        try:
+            nodes = PillarStorage().get("cluster:node_list")
+            StorageV().validate('luns', nodes)
+        except Exception as exc:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=cfg.ALL_MINIONS)
+
+        return res
+
+    @staticmethod
+    def _mgmt_vip(*, args: str) -> CheckEntry:
+        """Network mgmt vip check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.MGMT_VIP.value)
+        try:
+            from cortx.utils.kvstore.pillar import PillarStorage
+            from cortx.utils.validator.v_network import NetworkV
+        except ImportError:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment="Package cortx-py-utils not installed")
+            return res
+        try:
+            mgmt_vip = PillarStorage().get("cluster:mgmt_vip")
+            NetworkV().validate('connectivity', [mgmt_vip])
+        except Exception as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=local_minion_id())
+
+        return res
+
+    @staticmethod
+    def _hostnames(*, args: str) -> CheckEntry:
+        """Validate hostnames check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+
+        try:
+            from cortx.utils.kvstore.pillar import PillarStorage
+            from cortx.utils.validator.v_network import NetworkV
+        except ImportError:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment="Package cortx-py-utils not installed")
+            return res
+
+        res: List[CheckEntry] = list()
+        try:
+            check_salt: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+            nodes = PillarStorage().get("cluster:node_list")
+
+            for node in nodes:
+                check_ent: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+                try:
+                    hostname = PillarStorage().get(f"cluster:{node}:hostname")
+                    NetworkV().validate('connectivity', [hostname])
+                except Exception as exc:
+                    check_ent.set_fail(checked_target=local_minion_id(),
+                                       comment=str(exc))
+                check_ent.set_passed(checked_target=hostname)
+                res.append(check_ent)
+
+        except Exception as exc:
+            check_salt.set_fail(checked_target=local_minion_id(),
+                                comment=str(exc))
+        return res
+
     def run(self, check_name: cfg.Checks = None,
             check_args: str = "") -> CheckResult:
         """
@@ -623,7 +723,14 @@ class Check(CommandParserFillerMixin):
         res: CheckResult = CheckResult()
 
         if check_name is None or check_name == cfg.Checks.ALL.value:
-            for check_name in cfg.CHECKS:
+            check_lists = cfg.SWUPDATE_CHECKS
+        else:
+            try:
+                check_lists = getattr(cfg, check_name.strip().upper())
+            except AttributeError:
+                check_lists = None
+        if check_lists:
+            for check_name in check_lists:
                 _res = getattr(self,
                                self._PRV_METHOD_MOD + check_name)(
                                                             args=check_args)
