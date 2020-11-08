@@ -63,6 +63,19 @@ function remote_execute {
 }
 
 
+# Check if user wants to proceed
+function proceed_check {
+    while true; do
+        read -n1 -p "Do you wish to proceed? (y/n): " _ans
+        case $_ans in
+            [Yy]* ) break;;
+            [Nn]* ) exit 10;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+}
+
+
 function ensure_healthy_cluster {
     local _nowait=${1:-}
 
