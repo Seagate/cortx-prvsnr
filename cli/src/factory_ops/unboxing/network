@@ -167,10 +167,84 @@ function backup_ifcfg {
 }
 
 
+# Set BMC network configs
+function set_bmc_static_config {
+    _linfo "================================================================================"
+    _linfo "Setting BMC Network Information"
+    _linfo "================================================================================"
+    
+    read -p "BMC IP for server-node-1: " bmc_srv_1
+    read -p "BMC IP for server-node-2: " bmc_srv_2
+    read -p "Gateway IP for BMC interfaces on both nodes: " gw_ip
+    read -p "Netmask for BMC network on both servers [255.255.255.0]: " netmask
+    [[ -z ${netmask} ]] && netmask=255.255.255.0
+
+    while true; do
+        _linfo "********************************************************************************"
+        _linfo "You have provided the following information:"
+        _linfo "    BMC IP for server-node-1:                       ${mgmt_ip_1}"
+        _linfo "    BMC IP for server-node-2:                       ${mgmt_ip_2}"
+        _linfo "    Gateway IP for BMC interfaces on both nodes:    ${gw_ip}"
+        _linfo "    Netmask for BMC network on both servers:        ${netmask}"
+        _linfo "********************************************************************************"
+        _linfo "    "
+        read -n1 -p "Given the above information,
+          do you wish to proceed with Static IP based NW configuration
+          for management network interface?(y/n): " _ans
+
+        case $_ans in
+            [Yy]* ) break;;
+            [Nn]* ) exit 10;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+
+    # BMC settings update for node-1
+    if [[ -n ${bmc_srv_1} ]]; then
+        ipmitool lan set 1 ipsrc static
+        ipmitool lan set 1 ipaddr ${bmc_srv_1}
+        ipmitool lan set 1 defgw ipaddr ${gw_ip}
+        # ipmitool lan set 1 netmask ${netmask}
+        # ipmitool lan set 1 arp respond on
+        ipmitool lan set 1 access on
+        sleep 30
+
+        _linfo "********************************************************************************"
+        _linfo "BMC LAN settings have been updated to: "
+        _linfo "********************************************************************************"
+        ipmitool lan print 1
+        _linfo "********************************************************************************"
+    fi
+
+    # BMC settings update for node-2
+    if [[ -n ${bmc_srv_2} ]]; then
+        ipmitool lan set 1 ipsrc static
+        ipmitool lan set 1 ipaddr ${bmc_srv_2}
+        ipmitool lan set 1 defgw ipaddr ${gw_ip}
+        # ipmitool lan set 1 netmask ${netmask}
+        # ipmitool lan set 1 arp respond on
+        ipmitool lan set 1 access on
+        sleep 30
+
+        _linfo "********************************************************************************"
+        _linfo "BMC LAN settings have been updated to: "
+        _linfo "********************************************************************************"
+        ipmitool lan print 1
+        _linfo "********************************************************************************"
+    fi
+
+    _linfo "================================================================================"
+}
+
+
 # 2.  If DHCP
 #     2.1.  Set cluster entries for public management IP to None
 #     2.2.  Update /etc/resolv.conf using dhclient
 function configure_dhcp {
+    _linfo "================================================================================"
+    _linfo "Setting Management Network to DHCP"
+    _linfo "================================================================================"
+
     # Reset cluster value for management network
     _linfo "You have selected to proceed with DHCP based configuration for management network interface."
     while true; do
@@ -224,6 +298,10 @@ function configure_dhcp {
 #     3.3.  BMC IP <Mandatory>
 #           for srvnode-1 & srvnode-2
 function configure_static {
+    _linfo "================================================================================"
+    _linfo "Setting Management Network to Static"
+    _linfo "================================================================================"
+
     # User inputs
     _linfo "You have selected to proceed with DHCP based configuration for management network interface."
 
@@ -236,15 +314,17 @@ function configure_static {
     read -p "DNS search domain for both nodes: " search_domains
     read -p "DNS server IP for both nodes: " dns_server
 
-    while true; do
-        _linfo "You have provided the following information:"
-        _linfo "    Management IP for interface ${mgmt_if_1} on server-node 1: ${mgmt_ip_1}"
-        _linfo "    Management IP for interface ${mgmt_if_2} on server-node 2: ${mgmt_ip_2}"
-        _linfo "    Gateway IP for both servers: ${gw_ip}"
-        _linfo "    Search domain for both servers: ${search_domains}"
-        _linfo "    DNS server IP for both servers: ${dns_server}"
-        _linfo "    "
 
+    while true; do
+        _linfo "********************************************************************************"
+        _linfo "You have provided the following information:"
+        _linfo "    Management IP for interface ${mgmt_if_1} on server-node 1:  ${mgmt_ip_1}"
+        _linfo "    Management IP for interface ${mgmt_if_2} on server-node 2:  ${mgmt_ip_2}"
+        _linfo "    Gateway IP for both servers:                                ${gw_ip}"
+        _linfo "    Search domain for both servers:                             ${search_domains}"
+        _linfo "    DNS server IP for both servers:                             ${dns_server}"
+        _linfo "********************************************************************************"
+        _linfo "    "
         read -n1 -p "Given the above information,
           do you wish to proceed with Static IP based NW configuration
           for management network interface?(y/n): " _ans
@@ -283,8 +363,12 @@ function configure_static {
     remote_execute ${pvt_ip_b} "salt-call --local state.apply components.system.network.mgmt.public ${SALT_OPTS}"
     
     # Sanity check
-    test_mgmt_ips    
+    test_mgmt_ips
+
+    # BMC setup
+    set_bmc_static_config
 }
+
 
 # Script entry point
 choose_nw_config
