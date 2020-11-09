@@ -36,7 +36,6 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
@@ -239,10 +238,22 @@ function reset_vips {
     #Remove VIPs for data and management network from Salt pillars
 
     echo "Removing the VIPs from Salt configuration" | tee -a ${LOG_FILE}
-    echo "Removing Data VIP from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/cluster_ip \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Removing Management VIP from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/mgmt_vip \"\" --logfile --logfile-filename ${LOG_FILE}
+    echo "Fetching Data VIP from cluster pillar" >> ${LOG_FILE}
+    current_cip=$(salt 'srvnode-1' pillar.get cluster:cluster_ip --output=newline_values_only)
+    if [[ ! -z $current_cip ]]; then
+        echo "Removing Data VIP from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/cluster_ip \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Data VIP already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
+    echo "Fetching Management VIP from cluster pillar" >> ${LOG_FILE}
+    current_vip=$(salt 'srvnode-1' pillar.get cluster:mgmt_vip --output=newline_values_only)
+    if [[ ! -z $current_vip ]]; then
+        echo "Removing Management VIP from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/mgmt_vip \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Management VIP already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 
 }
@@ -272,15 +283,32 @@ function reset_pub_data_ips {
     # fi
 
     echo "Removing the IPs of public data network from Salt configuration" | tee -a ${LOG_FILE}
-    echo "Removing public data IP for Server A from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Removing public data IP for Server B from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Done" | tee -a ${LOG_FILE}
+
+    echo "Fetching public data IP for server A from cluster pillar" >> ${LOG_FILE}
+    pub_dip1=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    if [[ ! -z $pub_dip1 ]]; then
+        echo "Removing public data IP for server A from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Public data IP for server A already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
+
+
+    echo "Fetching public data IP for server B from cluster pillar" >> ${LOG_FILE}
+    pub_dip2=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    if [[ ! -z $pub_dip2 ]]; then
+        echo "Removing public data IP for server B from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Public data IP for server B already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}
-    salt '*' state.apply components.system.network.data.direct ${salt_opts}
-    echo "Done." | tee -a ${LOG_FILE}
+    if [[ ! -z $pub_dip1 && ! -z $pub_dip2 ]]; then
+        salt '*' state.apply components.system.network.data.direct ${salt_opts}
+    else
+        echo "The IPs of public data network interface are already reset on both nodes"
+    fi
 }
 
 
@@ -453,11 +481,11 @@ function remove_gfs_mounts {
         echo y | gluster peer detach ${hostname_b} force
     fi
 
-    echo -e "\n------ Unmouting the gluster volumes from Server A ------" | tee -a ${LOG_FILE}
+    echo -e "\n------ Unmounting the gluster volumes from Server A ------" | tee -a ${LOG_FILE}
     if mount | grep -q ${mountpt_salt_cache_vol}; then umount ${mountpt_salt_cache_vol}; fi
     if mount | grep -q ${mountpt_prvsnr_data_vol}; then umount ${mountpt_prvsnr_data_vol}; fi
 
-    echo -e "\n------ Unmouting the gluster volumes from Server B ------" | tee -a ${LOG_FILE}
+    echo -e "\n------ Unmounting the gluster volumes from Server B ------" | tee -a ${LOG_FILE}
     $ssh_cmd ${pvt_ip_b} "if mount | grep -q ${mountpt_salt_cache_vol}; then umount ${mountpt_salt_cache_vol}; fi"
     $ssh_cmd ${pvt_ip_b} "if mount | grep -q ${mountpt_prvsnr_data_vol}; then umount ${mountpt_prvsnr_data_vol}; fi"
 

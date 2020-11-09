@@ -21,7 +21,6 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_shutdown.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 

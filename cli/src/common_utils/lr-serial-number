@@ -29,7 +29,7 @@ function lr_serial_number {
     else
         if [[ -f /opt/seagate/lr-serial-number ]]; then
             echo "Lyve Rack r1 Serial Number already set."
-            exit 0
+            exit 31
         else
             if [[ $(/usr/bin/provisioner --version > /dev/null 2>&1) ]]; then
                 /usr/bin/provisioner pillar_set cluster/lr-serial-number $1
