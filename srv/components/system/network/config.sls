@@ -15,7 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr'] %}
+{% if (pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr'] is defined)
+    and (pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr']) %}
 # Configuration is Static
 {% if ((pillar['cluster']['search_domains']) and (pillar['cluster']['dns_servers'])) %}
 Update resolv.conf:
@@ -39,7 +40,9 @@ No DNS config to apply:
 # Configuration is DHCP
 Update resolv.conf:
   cmd.run:
-    - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+    - name: |
+        pkill -9 dhclient
+        dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
 {% endif %}
 
 # lo:

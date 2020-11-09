@@ -53,28 +53,34 @@ mkdir -p $(dirname "${LOG_FILE}")
 # 1.  Accept user choice: DHCP/Static
 # Prompt user to choose between DHCP and static
 function choose_nw_config {
-    echo -e "Choose a network configuration for management network:\n  1. DHCP\n  2. Static\n  3. Quit"
-    read -n1 choice
+    echo -e "\n  1. DHCP\n  2. Static\n  3. Quit\n"
+    read -p "  Choose a network configuration for management network: " -n1 choice
 
     case ${choice} in
         1)
+            _linfo "\n\n"
             _linfo "${choice} selected. Proceeding with DHCP configuration for Management Network."
             set_mgmt_dhcp_config
             set_data_public_dhcp_config
             set_bmc_dhcp_config
             ;;
         2)
+            _linfo "\n\n"
             _linfo "${choice} selected. Proceeding with Static IP configuration for Management Network."
             set_mgmt_static_config
             set_data_public_static_config
             set_bmc_static_config
             ;;
         3)
+            _lerror "        "
+            _lerror "        "
             _lerror "User decided to exit without selecting Network configuration."
             _lerror "Exiting..."
             exit 10
             ;;
-        *) 
+        *)
+            _lerror "        "
+            _lerror "        "
             _lerror "${choice} selected."
             _lerror "Invalid option selected. Please try again. Exiting..."
             exit 11

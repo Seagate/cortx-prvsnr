@@ -129,6 +129,15 @@ function clear_pillar_entry_for_public_management_ip {
 }
 
 
+function clear_pillar_entry_for_public_data_ip {
+    echo "Clearing pillar entry for Public Data IP on srvnode-1." | tee -a ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\"
+
+    echo "Clearing pillar entry for Public Data IP on srvnode-2." | tee -a ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\"
+}
+
+
 function update_ssh_settings {
     echo -n "INFO: Updating ssh settings on both nodes....." | tee -a ${LOG_FILE}
 

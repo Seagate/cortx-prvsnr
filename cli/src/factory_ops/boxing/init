@@ -150,11 +150,19 @@ reset_pub_data_ips
 seagate_refs_cleanup
 #TODO: Remove URLs from release and commons sls
 backup_files
+
+# The next 2 steps creates a blank entry for public_ip_address in uu_cluster.sls
 # Management network changes
 clear_pillar_entry_for_public_management_ip
+# Public data network changes
+clear_pillar_entry_for_public_data_ip
+
+# Set unused management network on Server-A for service use
 configure_service_port
+
 #Remove gluster fs mounts
 remove_gfs_mounts
+
 # Create user for unboxing
 dump_unboxing_data "$service_user_name" "$service_user_secret"
 

@@ -19,10 +19,7 @@
 
 set -euE
 
-BASEDIR=$(dirname "${BASH_SOURCE}")
-. ${BASEDIR}/../../../common_utils/utility_scripts.sh
-
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_commons.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 #truncate -s 0 ${LOG_FILE}
 
@@ -41,9 +38,9 @@ export remotes=(
 function trap_handler {
     exit_code=$?
 
-    echo "***** ERROR! *****" | tee -a ${LOG_FILE}
+    echo "*************** ERROR! ***************" | tee -a ${LOG_FILE}
     echo "For detailed error logs, please see: $LOG_FILE" | tee -a ${LOG_FILE}
-    echo "******************" | tee -a ${LOG_FILE}
+    echo "**************************************" | tee -a ${LOG_FILE}
     
     # exit $exit_code
 }
@@ -53,11 +50,12 @@ trap trap_handler ERR
 function intrpt_handler {
     exit_code=$?
 
-    echo "***** ERROR! *****" | tee -a ${LOG_FILE}
+    echo "*************** ERROR! ***************" | tee -a ${LOG_FILE}
     echo "------------------------------------------------------------------" | tee -a ${LOG_FILE}
     echo "Received Ctrl-c signal, exiting Gracefully. | tee -a ${LOG_FILE}
     echo "For detailed logs, please see: $LOG_FILE | tee -a ${LOG_FILE}
     echo "------------------------------------------------------------------" | tee -a ${LOG_FILE}
+    echo "**************************************" | tee -a ${LOG_FILE}
 
     # exit $exit_code
 }
@@ -69,7 +67,7 @@ function backup_ifcfg {
     if_name=${2:-eno1}
 
     if [[ -n if_name ]]; then
-        if [[ ! remote_execute ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing" ]]; then
+        if [[ ! $(remote_execute ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing" >/dev/null 2>&1) ]]; then
             _linfo "Backing up ifcfg-${if_name} to ifcfg-${if_name}.boxing in dir /etc/sysconfig/network-scripts"
             remote_execute ${node} "mv /etc/sysconfig/network-scripts/ifcfg-${if_name} /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing"
         else

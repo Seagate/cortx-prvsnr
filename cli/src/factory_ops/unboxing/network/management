@@ -19,8 +19,6 @@
 
 set -euE
 
-BASEDIR=$(dirname "${BASH_SOURCE}")
-. ${BASEDIR}/network/commons
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
 mkdir -p $(dirname "${LOG_FILE}")
@@ -33,18 +31,18 @@ function test_mgmt_ips {
     remote_mgmt_ip_srvnode_2=$(remote_execute ${pvt_ip_b} "hostname -i")
     
     # Test the IP that is set
-    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of srvnode-2 from srvnode-1 to test sanity."
+    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
     ping -c1 ${remote_mgmt_ip_srvnode_2} && ( 
-        _linfo "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is reachable over management network." || (
-            _lerror "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is not reachable over management network."
+        _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over management network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over management network."
             exit 21
         )
     )
     
-    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of srvnode-1 from srvnode-2 to test sanity."
+    _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
     remote_execute ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
-        _linfo "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is reachable over management network." || (
-            _lerror "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is not reachable over management network."
+        _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over management network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over management network."
             exit 21
         )
     )
@@ -60,23 +58,26 @@ function update_cluster_pillar_for_mgmt_ips {
     # Configuration is static, update pillar with provided IPs
     # If Configuration is DHCP. Set blank
 
-    if [[ -e "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+    if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
         # Get line number for management network section start for srvnode-1
-        occurance_1=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        occurance_1=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        _linfo "occurance_1: ${occurance_1}"
         # Update pillar file
-        sed -in '${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
 
         # Get line number for management network section start for srvnode-2
-        occurance_2=$(grep -m2 -n mgmt_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        occurance_2=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        _linfo "occurance_2: ${occurance_2}"
         # Update pillar file
-        sed -in '${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
 
         # Gluster would take care of this after unboxing
-        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        _linfo "pvt_ip_b: ${pvt_ip_b}"
+        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
     else
         _lerror "Cluster pillar file for user data doesn't exist. Exiting..."
         exit 41
@@ -126,10 +127,7 @@ function set_mgmt_dhcp_config {
     _linfo "    "
 
     # srvnode-1
-    _linfo "Preparing cluster pillar for setting management network configuration to DHCP."
-    # provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
-    # provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
-    
+    _linfo "Preparing cluster pillar for setting management network configuration to DHCP."    
     # Update pillar
     update_cluster_pillar_for_mgmt_ips
 
@@ -163,8 +161,8 @@ function set_mgmt_static_config {
     mgmt_if_2=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
     
     # User inputs
-    read -p "Management IP for ${mgmt_if_2} on node-1: " mgmt_ip_1
-    read -p "Management IP for ${mgmt_if_2} on node-2: " mgmt_ip_2
+    read -p "Management IP for ${mgmt_if_2} on Server-A: " mgmt_ip_1
+    read -p "Management IP for ${mgmt_if_2} on Server-B: " mgmt_ip_2
     read -p "Gateway IP for Management interfaces on both nodes: " gw_ip
     read -p "DNS search domain for both nodes: " search_domains
     read -p "DNS server IP for both nodes: " dns_server
@@ -173,8 +171,8 @@ function set_mgmt_static_config {
 
     _linfo "********************************************************************************"
     _linfo "You have provided the following information:"
-    _linfo "    Management IP for interface ${mgmt_if_1} on server-node 1:  ${mgmt_ip_1}"
-    _linfo "    Management IP for interface ${mgmt_if_2} on server-node 2:  ${mgmt_ip_2}"
+    _linfo "    Management IP for interface ${mgmt_if_1} on Server-A:  ${mgmt_ip_1}"
+    _linfo "    Management IP for interface ${mgmt_if_2} on Server-B:  ${mgmt_ip_2}"
     _linfo "    Gateway IP for both servers:                                ${gw_ip}"
     _linfo "    Netamsk for both servers:                                   ${netmask}"
     _linfo "    Search domain for both servers:                             ${search_domains}"
@@ -191,10 +189,10 @@ function set_mgmt_static_config {
     if [[ -z ${mgmt_ip_1} ]]; then
         _lerror "No value provided for Management IP for interface ${mgmt_if_1}. Exiting..."
         exit 31
-    if [[ -z ${mgmt_ip_2} ]]; then
+    elif [[ -z ${mgmt_ip_2} ]]; then
         _lerror "No value provided for Management IP for interface ${mgmt_if_2}. Exiting..."
         exit 32
-    if [[ -z ${gw_ip} ]]; then
+    elif [[ -z ${gw_ip} ]]; then
         _lerror "No value provided for Management Gateway IP. Exiting..."
         exit 33
     else

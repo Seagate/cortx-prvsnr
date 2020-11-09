@@ -29,7 +29,8 @@ function _lerror {
 
 function _linfo {
     local msg=${1}
-    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" >> ${LOG_FILE}  2>&1
 }
 
 function get_pillar_data {

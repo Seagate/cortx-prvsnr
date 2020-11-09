@@ -19,10 +19,8 @@
 
 set -euE
 
-BASEDIR=$(dirname "${BASH_SOURCE}")
-. ${BASEDIR}/network/commons
 
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_public_data.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 #truncate -s 0 ${LOG_FILE}
 
@@ -33,18 +31,18 @@ mkdir -p $(dirname "${LOG_FILE}")
 #     remote_data_ip_srvnode_2=$()
     
 #     # Test the IP that is set
-#     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of srvnode-2 from srvnode-1 to test sanity."
+#     _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
 #     ping -c1 ${remote_mgmt_ip_srvnode_2} && ( 
-#         _linfo "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is reachable over management network." || (
-#             _lerror "IP ${remote_mgmt_ip_srvnode_2} set on srvnode-2 is not reachable over management network."
+#         _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over public data network." || (
+#             _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over public data network."
 #             exit 21
 #         )
 #     )
     
-#     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of srvnode-1 from srvnode-2 to test sanity."
+#     _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
 #     remote_execute ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
-#         _linfo "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is reachable over management network." || (
-#             _lerror "IP ${remote_mgmt_ip_srvnode_1} set on srvnode-1 is not reachable over management network."
+#         _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over public data network." || (
+#             _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over public data network."
 #             exit 21
 #         )
 #     )
@@ -60,23 +58,23 @@ function update_cluster_pillar_for_public_data_ips {
     # Configuration is static, update pillar with provided IPs
     # If Configuration is DHCP. Set blank
 
-    if [[ -e "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-        # Get line number for management network section start for srvnode-1
-        occurance_1=$(grep -m2 -n data_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+    if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
+        # Get line number for public data network section start for srvnode-1
+        occurance_1=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
         # Update pillar file
-        sed -in '${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
 
-        # Get line number for management network section start for srvnode-2
-        occurance_2=$(grep -m2 -n data_nw /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        # Get line number for public data network section start for srvnode-2
+        occurance_2=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
         # Update pillar file
-        sed -in '${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-        sed -in '${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p' /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
 
         # Gluster would take care of this after unboxing
-        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
+        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
     else
         _lerror "Cluster pillar file for user data doesn't exist. Exiting..."
         exit 41
@@ -116,12 +114,12 @@ function set_data_public_dhcp_config {
     _linfo "Setting Public Data Network to DHCP"
     _linfo "================================================================================"
 
-    # Reset cluster value for management network
+    # Reset cluster value for public data network
     _linfo "You have selected to proceed with DHCP based configuration for public data network interface."
     proceed_check
 
     # srvnode-1
-    _linfo "Preparing cluster pillar for setting management network configuration to DHCP."
+    _linfo "Preparing cluster pillar for setting public data network configuration to DHCP."
     
     # Update pillar
     update_cluster_pillar_for_public_data_ips
@@ -148,24 +146,24 @@ function set_data_public_static_config {
     _linfo "Setting Public Data Network to Static IP based configuraion"
     _linfo "================================================================================"
 
-    _linfo "You have selected to proceed with static IP based configuration for management network interface."
+    _linfo "You have selected to proceed with static IP based configuration for public data network interface."
     _linfo "    "
 
     data_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
     data_if_2=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
     
     # User inputs
-    read -p "Public Data IP for ${data_if_2} on node-1: " data_ip_1
-    read -p "Public Data IP for ${data_if_2} on node-2: " data_ip_2
+    read -p "Public Data IP for ${data_if_1} on Server_A: " data_ip_1
+    read -p "Public Data IP for ${data_if_2} on Server-B: " data_ip_2
     read -p "Gateway IP for Public Data interfaces on both nodes [Optional]: " gw_ip
     read -p "Netmask for Public Data interfaces on both nodes [Optional]: " netmask
 
     _linfo "********************************************************************************"
     _linfo "You have provided the following information:"
-    _linfo "    Public Data IP for interface ${data_if_1} on server-node 1: ${data_ip_1}"
-    _linfo "    Public Data IP for interface ${data_if_2} on server-node 2: ${data_ip_2}"
-    _linfo "    Gateway IP for both servers:                                ${gw_ip}"
-    _linfo "    Netmask for both servers:                                   ${netmask}"
+    _linfo "    Public Data IP for interface ${data_if_1} on Server-A:  ${data_ip_1}"
+    _linfo "    Public Data IP for interface ${data_if_2} on Server-B:  ${data_ip_2}"
+    _linfo "    Gateway IP for both servers:                            ${gw_ip}"
+    _linfo "    Netmask for both servers:                               ${netmask}"
     _linfo "********************************************************************************"
     _linfo "    "
     _linfo "Given the above information, 
@@ -176,10 +174,10 @@ function set_data_public_static_config {
     proceed_check
 
     if [[ -z ${data_ip_1} ]]; then
-        _lerror "No value provided for Management IP for interface ${data_if_1}. Exiting..."
+        _lerror "No value provided for public data network IP for interface ${data_if_1}. Exiting..."
         exit 31
-    if [[ -z ${data_ip_2} ]]; then
-        _lerror "No value provided for Management IP for interface ${data_if_2}. Exiting..."
+    elif [[ -z ${data_ip_2} ]]; then
+        _lerror "No value provided for public data network for interface ${data_if_2}. Exiting..."
         exit 32
     else
         # This should never be hit
@@ -188,7 +186,7 @@ function set_data_public_static_config {
     fi
 
     # Update pillar
-    _linfo "Preparing cluster pillar for setting management network configuration to DHCP."
+    _linfo "Preparing cluster pillar for setting public data network configuration to Static IP."
     update_cluster_pillar_for_public_data_ips ${data_ip_1} ${data_ip_2} ${gw_ip} ${netmask}
 
     set_public_data_nw_config
