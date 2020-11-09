@@ -68,8 +68,8 @@ export mountpt_prvsnr_data_vol="${mountpt_prvsnr_data_vol:-"/var/lib/seagate/cor
 export mount_dir_prvsnr_data="${mount_dir_prvsnr_data:-"/srv/glusterfs/volume_prvsnr_data"}"
 
 
-hostname_a=$(hostname)
-hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
+export hostname_a=$(hostname)
+export hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
 
 function get_nw_interface_names {
     interface_mgmt_a=$(salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface:0 --output=newline_values_only)

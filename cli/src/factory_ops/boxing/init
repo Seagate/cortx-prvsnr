@@ -90,9 +90,15 @@ time_stamp=$(date)
  echo "          Boxing the Cortx Lyve Drive Rack               " | tee -a ${LOG_FILE}
  echo "*********************************************************" | tee -a ${LOG_FILE}
  echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+ echo "Hostname Server A: $hostname_a" | tee -a ${LOG_FILE}
+ echo "Hostname Server B: $hostname_b" | tee -a ${LOG_FILE}
+ echo "IP configuration at factory for Server A" >> ${LOG_FILE}
+ ip a >> ${LOG_FILE}
+ echo "IP configuration at factory for Server A" >> ${LOG_FILE}
+ $ssh_cmd $pvt_ip_b ip a >> ${LOG_FILE}
 
 # Prepare shutdown
-#ensure_healthy_cluster
+ensure_healthy_cluster
 
 if [[ -z $serial_number ]]; then
     echo "Warning: The Serial Number is not provided.." | tee -a ${LOG_FILE}
@@ -111,6 +117,10 @@ if ! hctl status 2> /dev/null; then
     echo "Cortx cluster is not running"
 else
     echo "Cortx cluster is running" | tee -a ${LOG_FILE}
+    echo "Dumping hctl cluster status" >> ${LOG_FILE}
+    hctl status >> ${LOG_FILE}
+    echo "Dumping pcs cluster status" >> ${LOG_FILE}
+    pcs status >> ${LOG_FILE}
     echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
@@ -140,4 +150,4 @@ boxing_flag $box_flag_file
 
 # Power-off sequence
 #shutdown_controller
-#shutdown_node
+shutdown_node
