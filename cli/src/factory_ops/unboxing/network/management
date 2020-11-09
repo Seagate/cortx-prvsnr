@@ -20,9 +20,35 @@
 set -euE
 
 
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
+LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 #truncate -s 0 ${LOG_FILE}
+
+PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
+SALT_OPTS="--no-color --out-file=${LOG_FILE} --out-file-append"
+
+pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+
+remotes=(
+    ${pvt_ip_a}
+    ${pvt_ip_b}
+)
+
+
+function backup_ifcfg {
+    node=${1:-${pvt_ip_a}}
+    if_name=${2:-}
+
+    if [[ -n if_name ]]; then
+        if [[ ! $(remote_execute ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing" >/dev/null 2>&1) ]]; then
+            _linfo "Backing up ifcfg-${if_name} to ifcfg-${if_name}.boxing in dir /etc/sysconfig/network-scripts"
+            remote_execute ${node} "cp /etc/sysconfig/network-scripts/ifcfg-${if_name} /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing"
+        else
+            _lerror "ifcfg-${if_name}.boxing file from previous boxing already exists. Skipping backup..."
+        fi
+    fi
+}
 
 
 function test_mgmt_ips {
@@ -87,6 +113,8 @@ function update_cluster_pillar_for_mgmt_ips {
 
 function set_mgmt_nw_config {
     local srvnode=null
+
+    echo ${remotes[@]}
 
     for remote in ${remotes[@]}; do
         if [[ ${remote} == ${pvt_ip_a} ]]; then

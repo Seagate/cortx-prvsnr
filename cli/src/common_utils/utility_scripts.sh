@@ -51,8 +51,8 @@ function get_pillar_data {
 
 # Remote execute a command over private data interface
 function remote_execute {
-    remote_node={$1:-pvt_ip_b}
-    cmd={$2:-}
+    remote_node=${1:-192.168.0.2}
+    cmd=${2:-}
 
     if [[ -n ${cmd} ]]; then
         echo $(ssh -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${remote_node}" "${cmd}")
