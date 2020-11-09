@@ -1738,6 +1738,18 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     ), targets=run_args.primary.minion_id
                 )
 
+            logger.info(f"Generating a password for the service user")
+            service_user_password = str(uuid.uuid4()).split('-')[0]
+            ssh_client.cmd_run(
+                (
+                    'provisioner pillar_set'
+                    f' system/service_user/password '
+                    f' \'"{service_user_password}"\''
+                ),
+                targets=run_args.primary.minion_id,
+                secure=True
+            )
+
         if run_args.target_build:
             # TODO IMPROVE non idempotent now
             logger.info("Get release factory version")
