@@ -94,7 +94,7 @@ time_stamp=$(date)
  echo "Hostname Server B: $hostname_b" | tee -a ${LOG_FILE}
  echo "IP configuration at factory for Server A" >> ${LOG_FILE}
  ip a >> ${LOG_FILE}
- echo "IP configuration at factory for Server A" >> ${LOG_FILE}
+ echo "IP configuration at factory for Server B" >> ${LOG_FILE}
  $ssh_cmd $pvt_ip_b ip a >> ${LOG_FILE}
 
 # Prepare shutdown

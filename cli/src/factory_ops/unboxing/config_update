@@ -343,7 +343,7 @@ function update_cluster_sls {
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
                 echo "BMC IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
-                provisioner pillar_set cluster/srvnode-1/bmc:ip \"${_ip}\"
+                provisioner pillar_set cluster/srvnode-1/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
                 exit 1
@@ -366,7 +366,7 @@ function update_cluster_sls {
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
                 echo "BMC IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
-                provisioner pillar_set cluster/srvnode-2/bmc:ip \"${_ip}\"
+                provisioner pillar_set cluster/srvnode-2/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
                 exit 1
