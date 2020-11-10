@@ -50,10 +50,10 @@ function set_bmc_dhcp_config {
     for remote in ${remotes[@]}; do
         _linfo "Setting BMC Network Information for DHCP on ${remote}"
 
-        remote_execute ${remote} "ipmitool lan set 1 ipsrc dhcp"
-        remote_execute ${remote} "ipmitool lan set 1 access on"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipsrc dhcp"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 access on"
         _linfo "Sleeping for 30 secs for the settings to take effect"
-        remote_execute ${remote} "sleep 30"
+        ssh_over_pvt_data ${remote} "sleep 30"
 
         if [[ ${remote} == ${pvt_ip_a} ]]; then
             srvnode=srvnode-A
@@ -68,7 +68,7 @@ function set_bmc_dhcp_config {
         _linfo "********************************************************************************"
         _linfo "BMC LAN settings on ${srvnode} have been updated to: "
         _linfo "********************************************************************************"
-        remote_execute ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
+        ssh_over_pvt_data ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
         _linfo "********************************************************************************"
     done
 
@@ -90,56 +90,49 @@ function set_bmc_static_config {
     read -p "Netmask for BMC network on both servers [255.255.252.0]: " netmask
     [[ -z ${netmask} ]] && netmask=255.255.252.0
 
-    while true; do
-        _linfo "********************************************************************************"
-        _linfo "You have provided the following information:"
-        _linfo "    BMC IP for Server-A:                            ${mgmt_ip_1}"
-        _linfo "    BMC IP for Server-B:                            ${mgmt_ip_2}"
-        _linfo "    Gateway IP for BMC interfaces on both nodes:    ${gw_ip}"
-        _linfo "    Netmask for BMC network on both servers:        ${netmask}"
-        _linfo "********************************************************************************"
-        _linfo "    "
-        read -n1 -p "Given the above information,
-        do you wish to proceed with Static IP based NW configuration
-        for BMC interfaces?(y/n): " _ans
-
-        case $_ans in
-            [Yy]* ) break;;
-            [Nn]* ) exit 10;;
-            * ) echo "Please answer y or n.";;
-        esac
-    done
-
+    _linfo "********************************************************************************"
+    _linfo "You have provided the following information:"
+    _linfo "    BMC IP for Server-A:                            ${mgmt_ip_1}"
+    _linfo "    BMC IP for Server-B:                            ${mgmt_ip_2}"
+    _linfo "    Gateway IP for BMC interfaces on both nodes:    ${gw_ip}"
+    _linfo "    Netmask for BMC network on both servers:        ${netmask}"
+    _linfo "********************************************************************************"
+    _linfo "    "
+    _linfo "Given the above information,
+    the process shall proceed with Static IP based NW configuration for BMC interfaces"
+    _linfo "    "
+    proceed_check    
+    
     local node_name=null
     for remote in ${remotes[@]}; do
         _linfo "Setting BMC Network Information for Static IP on ${remote}"
-        remote_execute ${remote} "ipmitool lan set 1 ipsrc static"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipsrc static"
         
         if [[ (${remote} == ${pvt_ip_a}) && (-n ${bmc_srv_1}) ]]; then
             # BMC settings update for node-1
             node_name=srvnode-A
-            remote_execute ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_1}"
+            ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_1}"
         elif [[ (${remote} == ${pvt_ip_b}) && (-n ${bmc_srv_2}) ]]; then
             # BMC settings update for node-2
             node_name=srvnode-B
-            remote_execute ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_2}"
+            ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_2}"
         else
             # Do nothing
             :
         fi
 
-        remote_execute ${remote} "ipmitool lan set 1 defgw ipaddr ${gw_ip}"
-        remote_execute ${remote} "ipmitool lan set 1 netmask ${netmask}"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 defgw ipaddr ${gw_ip}"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 netmask ${netmask}"
         # ipmitool lan set 1 arp respond on
-        remote_execute ${remote} "ipmitool lan set 1 access on"
+        ssh_over_pvt_data ${remote} "ipmitool lan set 1 access on"
 
         _linfo "Sleeping for 30 secs for the settings to take effect"
-        remote_execute ${remote} "sleep 30"
+        ssh_over_pvt_data ${remote} "sleep 30"
 
         _linfo "********************************************************************************"
         _linfo "BMC LAN settings on ${node_name} have been updated to: "
         _linfo "********************************************************************************"
-        remote_execute ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
+        ssh_over_pvt_data ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
         _linfo "********************************************************************************"
         
     done

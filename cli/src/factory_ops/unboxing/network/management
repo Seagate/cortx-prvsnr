@@ -41,9 +41,9 @@ function backup_ifcfg {
     if_name=${2:-}
 
     if [[ -n if_name ]]; then
-        if [[ ! $(remote_execute ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing" >/dev/null 2>&1) ]]; then
+        if [[ ! $(ssh_over_pvt_data ${node} "test -e /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing" >/dev/null 2>&1) ]]; then
             _linfo "Backing up ifcfg-${if_name} to ifcfg-${if_name}.boxing in dir /etc/sysconfig/network-scripts"
-            remote_execute ${node} "cp /etc/sysconfig/network-scripts/ifcfg-${if_name} /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing"
+            ssh_over_pvt_data ${node} "cp /etc/sysconfig/network-scripts/ifcfg-${if_name} /etc/sysconfig/network-scripts/ifcfg-${if_name}.boxing"
         else
             _lerror "ifcfg-${if_name}.boxing file from previous boxing already exists. Skipping backup..."
         fi
@@ -53,8 +53,8 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    remote_mgmt_ip_srvnode_1=$(remote_execute ${pvt_ip_a} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
-    remote_mgmt_ip_srvnode_2=$(remote_execute ${pvt_ip_b} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     
     # Test the IP that is set
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
@@ -66,7 +66,7 @@ function test_mgmt_ips {
     )
     
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
-    remote_execute ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
+    ssh_over_pvt_data ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
         _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over management network." || (
             _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over management network."
             exit 21
@@ -131,9 +131,9 @@ function set_mgmt_nw_config {
         backup_ifcfg ${remote} ${mgmt_if}
         
         _linfo "Setting /etc/resolv.conf on ${node_name} for interface: ${mgmt_if}"
-        remote_execute ${remote} "salt-call --local state.apply components.system.network ${SALT_OPTS}"
+        ssh_over_pvt_data ${remote} "salt-call --local state.apply components.system.network ${SALT_OPTS}"
         _linfo "Setting ifcfg-${mgmt_if} on ${node_name}"
-        remote_execute ${remote} "salt-call --local state.apply components.system.network.mgmt.public ${SALT_OPTS}"
+        ssh_over_pvt_data ${remote} "salt-call --local state.apply components.system.network.mgmt.public ${SALT_OPTS}"
 
     done
 }

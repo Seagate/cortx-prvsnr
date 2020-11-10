@@ -52,7 +52,7 @@ function get_pillar_data {
 
 
 # Remote execute a command over private data interface
-function remote_execute {
+function ssh_over_pvt_data {
     remote_node=${1:-192.168.0.2}
     cmd=${2:-}
 
