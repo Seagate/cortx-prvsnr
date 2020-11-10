@@ -20,7 +20,6 @@
 set -eu
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
-truncate -s 0 ${LOG_FILE}
 
 
 function _lerror {
