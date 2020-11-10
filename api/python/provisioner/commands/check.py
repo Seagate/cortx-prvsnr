@@ -719,7 +719,6 @@ class Check(CommandParserFillerMixin):
     @staticmethod
     def _get_pillar_data(key):
         """Retrieve pillar data."""
-
         pillar_key = PillarKey(key)
         pillar = PillarResolver(cfg.LOCAL_MINION).get([pillar_key])
         pillar = next(iter(pillar.values()))
