@@ -18,6 +18,8 @@
 
 
 set -eu
+# ifndef behavior
+export COMMON_UTILS_UTILITY_SCRIPTS=1
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
 

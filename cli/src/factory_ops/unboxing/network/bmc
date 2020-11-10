@@ -18,6 +18,7 @@
 
 
 set -euE
+export NETWORK_BMC=1
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_bmc.log}"
 mkdir -p $(dirname "${LOG_FILE}")
@@ -36,28 +37,43 @@ remotes=(
 
 # Set BMC dhcp network configs
 function set_bmc_dhcp_config {
+    _linfo "================================================================================"
+    _linfo "Setting BMC network information to DHCP on both nodes"
+    _linfo "================================================================================"
+    _linfo "    "
+    _linfo "You have selected to proceed with DHCP based configuration for management network interface."
+    _linfo "    "
+    proceed_check
+    _linfo "    "
+
 
     for remote in ${remotes[@]}; do
-        _linfo "================================================================================"
         _linfo "Setting BMC Network Information for DHCP on ${remote}"
-        _linfo "================================================================================"
 
         remote_execute ${remote} "ipmitool lan set 1 ipsrc dhcp"
         remote_execute ${remote} "ipmitool lan set 1 access on"
         _linfo "Sleeping for 30 secs for the settings to take effect"
         remote_execute ${remote} "sleep 30"
 
+        if [[ ${remote} == ${pvt_ip_a} ]]; then
+            srvnode=srvnode-A
+        elif [[ ${remote} == ${pvt_ip_b} ]]; then
+            srvnode=srvnode-B
+        else
+            # This should never be hit
+            _lerror "This should never be seen. If you see this, there is something unexpected heppening."
+            exit 23
+        fi
+
         _linfo "********************************************************************************"
-        _linfo "BMC LAN settings have been updated to: "
+        _linfo "BMC LAN settings on ${srvnode} have been updated to: "
         _linfo "********************************************************************************"
-        remote_execute ${remote} "ipmitool lan print 1"
+        remote_execute ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
         _linfo "********************************************************************************"
     done
 
     _linfo "================================================================================"
     _linfo "        "
-
-    proceed_check
 }
 
 
@@ -71,21 +87,21 @@ function set_bmc_static_config {
     read -p "BMC IP for Server-A: " bmc_srv_1
     read -p "BMC IP for Server-B: " bmc_srv_2
     read -p "Gateway IP for BMC interfaces on both nodes: " gw_ip
-    read -p "Netmask for BMC network on both servers [255.255.255.0]: " netmask
-    [[ -z ${netmask} ]] && netmask=255.255.255.0
+    read -p "Netmask for BMC network on both servers [255.255.252.0]: " netmask
+    [[ -z ${netmask} ]] && netmask=255.255.252.0
 
     while true; do
         _linfo "********************************************************************************"
         _linfo "You have provided the following information:"
-        _linfo "    BMC IP for Server-A:                       ${mgmt_ip_1}"
-        _linfo "    BMC IP for Server-B:                       ${mgmt_ip_2}"
+        _linfo "    BMC IP for Server-A:                            ${mgmt_ip_1}"
+        _linfo "    BMC IP for Server-B:                            ${mgmt_ip_2}"
         _linfo "    Gateway IP for BMC interfaces on both nodes:    ${gw_ip}"
         _linfo "    Netmask for BMC network on both servers:        ${netmask}"
         _linfo "********************************************************************************"
         _linfo "    "
         read -n1 -p "Given the above information,
-          do you wish to proceed with Static IP based NW configuration
-          for BMC interfaces?(y/n): " _ans
+        do you wish to proceed with Static IP based NW configuration
+        for BMC interfaces?(y/n): " _ans
 
         case $_ans in
             [Yy]* ) break;;
@@ -99,18 +115,17 @@ function set_bmc_static_config {
         _linfo "Setting BMC Network Information for Static IP on ${remote}"
         remote_execute ${remote} "ipmitool lan set 1 ipsrc static"
         
-        if [[ -n ${bmc_srv_1} ]]; then
+        if [[ (${remote} == ${pvt_ip_a}) && (-n ${bmc_srv_1}) ]]; then
             # BMC settings update for node-1
-            node_name=srvnode-1
+            node_name=srvnode-A
             remote_execute ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_1}"
-        elif [[ -n ${bmc_srv_2} ]]; then
+        elif [[ (${remote} == ${pvt_ip_b}) && (-n ${bmc_srv_2}) ]]; then
             # BMC settings update for node-2
-            node_name=srvnode-2
+            node_name=srvnode-B
             remote_execute ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_2}"
         else
-            # This should never be hit
-            _lerror "This should never be seen. If you see this, there is something unexpected heppening."
-            exit 23
+            # Do nothing
+            :
         fi
 
         remote_execute ${remote} "ipmitool lan set 1 defgw ipaddr ${gw_ip}"
@@ -124,7 +139,7 @@ function set_bmc_static_config {
         _linfo "********************************************************************************"
         _linfo "BMC LAN settings on ${node_name} have been updated to: "
         _linfo "********************************************************************************"
-        remote_execute ${remote} "ipmitool lan print 1"
+        remote_execute ${remote} "ipmitool lan print 1" | tee -a ${LOG_FILE}
         _linfo "********************************************************************************"
         
     done

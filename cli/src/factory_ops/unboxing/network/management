@@ -18,7 +18,7 @@
 
 
 set -euE
-
+export NETWORK_MANAGEMENT=1
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
 mkdir -p $(dirname "${LOG_FILE}")
@@ -53,12 +53,12 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    remote_mgmt_ip_srvnode_1=$(hostname -i)
-    remote_mgmt_ip_srvnode_2=$(remote_execute ${pvt_ip_b} "hostname -i")
+    remote_mgmt_ip_srvnode_1=$(remote_execute ${pvt_ip_a} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_2=$(remote_execute ${pvt_ip_b} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     
     # Test the IP that is set
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
-    ping -c1 ${remote_mgmt_ip_srvnode_2} && ( 
+    ping -c1 ${remote_mgmt_ip_srvnode_2} && (
         _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over management network." || (
             _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over management network."
             exit 21
@@ -87,7 +87,6 @@ function update_cluster_pillar_for_mgmt_ips {
     if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
         # Get line number for management network section start for srvnode-1
         occurance_1=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
-        _linfo "occurance_1: ${occurance_1}"
         # Update pillar file
         sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
         sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
@@ -95,7 +94,6 @@ function update_cluster_pillar_for_mgmt_ips {
 
         # Get line number for management network section start for srvnode-2
         occurance_2=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
-        _linfo "occurance_2: ${occurance_2}"
         # Update pillar file
         sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
         sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
@@ -112,15 +110,16 @@ function update_cluster_pillar_for_mgmt_ips {
 
 
 function set_mgmt_nw_config {
-    local srvnode=null
-
-    echo ${remotes[@]}
+    local srvnode=
+    local node_name=
 
     for remote in ${remotes[@]}; do
         if [[ ${remote} == ${pvt_ip_a} ]]; then
             srvnode=srvnode-1
+            node_name=Server-A
         elif [[ ${remote} == ${pvt_ip_b} ]]; then
             srvnode=srvnode-2
+            node_name=Server-B
         else
             # This should never be hit
             _lerror "This should never be seen. If you see this, there is something unexpected heppening."
@@ -131,9 +130,9 @@ function set_mgmt_nw_config {
         _linfo "Setting DHCP on ${srvnode} for interface: ${mgmt_if}"
         backup_ifcfg ${remote} ${mgmt_if}
         
-        _linfo "Setting /etc/resolv.conf on ${srvnode} for interface: ${mgmt_if}"
+        _linfo "Setting /etc/resolv.conf on ${node_name} for interface: ${mgmt_if}"
         remote_execute ${remote} "salt-call --local state.apply components.system.network ${SALT_OPTS}"
-        _linfo "Setting ifcfg-${mgmt_if} on ${srvnode}"
+        _linfo "Setting ifcfg-${mgmt_if} on ${node_name}"
         remote_execute ${remote} "salt-call --local state.apply components.system.network.mgmt.public ${SALT_OPTS}"
 
     done
@@ -149,6 +148,7 @@ function set_mgmt_dhcp_config {
     _linfo "================================================================================"
 
     # Reset cluster value for management network
+    _linfo "    "
     _linfo "You have selected to proceed with DHCP based configuration for management network interface."
     _linfo "    "
     proceed_check
@@ -194,17 +194,17 @@ function set_mgmt_static_config {
     read -p "Gateway IP for Management interfaces on both nodes: " gw_ip
     read -p "DNS search domain for both nodes: " search_domains
     read -p "DNS server IP for both nodes: " dns_server
-    read -p "Netmask for Management interfaces on both nodes [255.255.255.0]: " netmask
-    [[ -z ${netmask} ]] && netmask=255.255.255.0
+    read -p "Netmask for Management interfaces on both nodes [255.255.252.0]: " netmask
+    [[ -z ${netmask} ]] && netmask=255.255.252.0
 
     _linfo "********************************************************************************"
     _linfo "You have provided the following information:"
-    _linfo "    Management IP for interface ${mgmt_if_1} on Server-A:  ${mgmt_ip_1}"
-    _linfo "    Management IP for interface ${mgmt_if_2} on Server-B:  ${mgmt_ip_2}"
-    _linfo "    Gateway IP for both servers:                                ${gw_ip}"
-    _linfo "    Netamsk for both servers:                                   ${netmask}"
-    _linfo "    Search domain for both servers:                             ${search_domains}"
-    _linfo "    DNS server IP for both servers:                             ${dns_server}"
+    _linfo "    Management IP for interface ${mgmt_if_1} on Server-A:   ${mgmt_ip_1}"
+    _linfo "    Management IP for interface ${mgmt_if_2} on Server-B:   ${mgmt_ip_2}"
+    _linfo "    Gateway IP for both servers:                            ${gw_ip}"
+    _linfo "    Netamsk for both servers:                               ${netmask}"
+    _linfo "    Search domain for both servers:                         ${search_domains}"
+    _linfo "    DNS server IP for both servers:                         ${dns_server}"
     _linfo "********************************************************************************"
     _linfo "    "
     _linfo "Given the above information, 
@@ -224,9 +224,8 @@ function set_mgmt_static_config {
         _lerror "No value provided for Management Gateway IP. Exiting..."
         exit 33
     else
-        # This should never be hit
-        _lerror "This should never be seen. If you see this, there is something unexpected heppening."
-        exit 27
+        # Do nothing
+        :
     fi
 
     # Reset cluster value for management network

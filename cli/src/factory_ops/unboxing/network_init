@@ -40,7 +40,6 @@ set -euE
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
-. ${BASEDIR}/network/commons
 . ${BASEDIR}/network/bmc
 . ${BASEDIR}/network/management
 . ${BASEDIR}/network/public_data
@@ -72,7 +71,7 @@ function intrpt_handler {
     echo "------------------------------------------------------------------" | tee -a ${LOG_FILE}
     echo "**************************************" | tee -a ${LOG_FILE}
 
-    # exit $exit_code
+    exit $exit_code
 }
 trap intrpt_handler SIGTERM SIGINT
 
