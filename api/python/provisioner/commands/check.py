@@ -31,12 +31,12 @@ from ..vendor import attr
 
 logger = logging.getLogger(__name__)
 
-import_error = False
+cortx_py_utils_import_error = False
 try:
     from cortx.utils.validator.v_network import NetworkV
     from cortx.utils.validator.v_storage import StorageV
 except ImportError:
-    import_error = True
+    cortx_py_utils_import_error = True
 
 
 SRVNODE1 = "srvnode-1"
@@ -621,8 +621,7 @@ class Check(CommandParserFillerMixin):
         """Storage lvms check."""
         res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LVMS.value)
 
-        global import_error
-        if import_error:
+        if cortx_py_utils_import_error:
             res.set_fail(checked_target=cfg.ALL_MINIONS,
                          comment="Package cortx-py-utils not installed")
             return res
@@ -643,8 +642,7 @@ class Check(CommandParserFillerMixin):
         """Storage lvm check."""
         res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
-        global import_error
-        if import_error:
+        if cortx_py_utils_import_error:
             res.set_fail(checked_target=cfg.ALL_MINIONS,
                          comment="Package cortx-py-utils not installed")
             return res
@@ -665,8 +663,7 @@ class Check(CommandParserFillerMixin):
         """Network mgmt vip check."""
         res: CheckEntry = CheckEntry(cfg.Checks.MGMT_VIP.value)
 
-        global import_error
-        if import_error:
+        if cortx_py_utils_import_error:
             res.set_fail(checked_target=cfg.ALL_MINIONS,
                          comment="Package cortx-py-utils not installed")
             return res
@@ -687,8 +684,7 @@ class Check(CommandParserFillerMixin):
         """Validate hostnames check."""
         res: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
 
-        global import_error
-        if import_error:
+        if cortx_py_utils_import_error:
             res.set_fail(checked_target=cfg.ALL_MINIONS,
                          comment="Package cortx-py-utils not installed")
             return res
