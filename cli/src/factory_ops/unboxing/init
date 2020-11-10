@@ -367,7 +367,6 @@ echo "Ok." | tee -a ${LOG_FILE}
 # lock unboxing user
 lock_unboxing_user
 
-# FIXME the value might be encrypted
 service_user=$(salt srvnode-2 pillar.get system:service_user:name --output=newline_values_only)
 if [[ -n "$service_user" ]]; then
     echo -n "Activating service user $service_user on the Server B node................." | tee -a ${LOG_FILE}

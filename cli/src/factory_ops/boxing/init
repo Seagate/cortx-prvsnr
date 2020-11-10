@@ -109,14 +109,14 @@ else
 fi
 
 echo "INFO: Resolving service user credentials" | tee -a ${LOG_FILE}
-# FIXME these values might be encrypted
 service_user_name=$(salt-call pillar.get system:service_user:name --output=newline_values_only)
-service_user_secret=$(salt-call pillar.get system:service_user:password --output=newline_values_only)
+service_user_secret_encrypted=$(salt-call pillar.get system:service_user:password --output=newline_values_only)
+service_user_secret=$(salt-call lyveutil.decrypt system "$service_user_secret_encrypted" --output=newline_values_only)
 
 if [[ -z "$service_user_name" || -z "$service_user_secret" ]]; then
     msg="ERROR: credentials for a service user are not found"
     echo "$msg" | tee -a ${LOG_FILE}
-    die "$msg"
+    exit 1
 fi
 
 # Shutdown HA
