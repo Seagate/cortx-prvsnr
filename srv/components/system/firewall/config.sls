@@ -314,7 +314,6 @@ Management zone:
       - ntpd
       - openldap
       - smtp
-      - rabbitmq
       - saltmaster
       - ssh
       - uds
@@ -339,7 +338,6 @@ Management zone:
       - ntpd
       - openldap
       - smtp
-      - rabbitmq
       - saltmaster
       - uds
       - www
