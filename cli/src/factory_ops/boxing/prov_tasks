@@ -289,8 +289,6 @@ function reset_pub_data_ips {
     if [[ ! -z $pub_dip1 ]]; then
         echo "Removing public data IP for server A from cluster pillar" >> ${LOG_FILE}
         provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
     else
         echo "Public data IP for server A already reset from Salt configuration" | tee -a ${LOG_FILE}
     fi
@@ -301,8 +299,6 @@ function reset_pub_data_ips {
     if [[ ! -z $pub_dip2 ]]; then
         echo "Removing public data IP for server B from cluster pillar" >> ${LOG_FILE}
         provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
     else
         echo "Public data IP for server B already reset from Salt configuration" | tee -a ${LOG_FILE}
     fi
@@ -313,21 +309,6 @@ function reset_pub_data_ips {
     else
         echo "The IPs of public data network interface are already reset on both nodes"
     fi
-}
-
-
-function reset_pub_mgmt_ips {
-    echo "Removing the IPs of public management network from Salt Pillar" | tee -a ${LOG_FILE}
-    echo "Removing public management IP for Server A from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
-
-    echo "Removing public management IP for Server B from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Done" | tee -a ${LOG_FILE}
 }
 
 
