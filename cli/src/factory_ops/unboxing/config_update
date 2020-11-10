@@ -342,7 +342,7 @@ function update_cluster_sls {
             _ip_line=$(ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
-                echo "BMC_IP (Server A): ${_ip}" >> ${LOG_FILE}
+                echo "BMC IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
                 provisioner pillar_set cluster/srvnode-1/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server A" | tee -a ${LOG_FILE}
@@ -365,7 +365,7 @@ function update_cluster_sls {
             _ip_line=$(${ssh_cmd} ${pvt_ip_b} ipmitool lan print 1|grep -oP 'IP Address.+:.*\d+')
             _ip=$(echo ${_ip_line}|cut -f2 -d':'|tr -d ' ')
             if [[ -n "$_ip" && "$_ip" != "0.0.0.0" ]]; then
-                echo "BMC_IP (Server B): ${_ip}" >> ${LOG_FILE}
+                echo "BMC IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
                 provisioner pillar_set cluster/srvnode-2/bmc/ip \"${_ip}\"
             else
                 echo "ERROR: BMC_IP is not configured on Server B" | tee -a ${LOG_FILE}
@@ -374,8 +374,6 @@ function update_cluster_sls {
             echo "Done." >> ${LOG_FILE}
 
         }
-        echo "BMC_IP (Server A): ${_ip}" | tee -a ${LOG_FILE}
-        echo "BMC_IP (Server B): ${_ip}" | tee -a ${LOG_FILE}
     fi
 }
 
