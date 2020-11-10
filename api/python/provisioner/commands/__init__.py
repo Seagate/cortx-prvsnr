@@ -764,7 +764,7 @@ class SWUpdate(CommandParserFillerMixin):
 
             checker = Check()
             try:
-                check_res = checker.run()
+                check_res = checker.run("swupdate_checks")
             except Exception as e:
                 logger.warning("During pre-flight checks error happened: "
                                f"{str(e)}")

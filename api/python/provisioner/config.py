@@ -370,7 +370,6 @@ class Checks(Enum):
 
     """Enumeration for available checks/validations"""
 
-    ALL = "all"
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
@@ -382,26 +381,21 @@ class Checks(Enum):
     STORAGE_LUNS = "storage_luns"
     MGMT_VIP = "mgmt_vip"
     HOSTNAMES = "hostnames"
+
+
+class GroupChecks(Enum):
+
+    """Enum for group checks"""
+    ALL = "all"
     POST_CHECKS = "post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
+    SWUPDATE_CHECKS = "swupdate_checks"
 
 
 # Set of supported validations/checks
-CHECKS = {
-    Checks.NETWORK.value,
-    Checks.CONNECTIVITY.value,
-    Checks.BMC_ACCESSIBILITY.value,
-    Checks.COMMUNICABILITY.value,
-    Checks.CLUSTER_STATUS.value,
-    Checks.LOGS_ARE_GOOD.value,
-    Checks.PASSWORDLESS_SSH_ACCESS.value,
-    Checks.STORAGE_LVMS.value,
-    Checks.STORAGE_LUNS.value,
-    Checks.MGMT_VIP.value,
-    Checks.HOSTNAMES.value,
-    Checks.POST_CHECKS.value,
-    Checks.REPLACENODE_CHECKS.value
-}
+CHECKS = [check.value for check in Checks]
+
+GROUP_CHECKS = [check.value for check in GroupChecks]
 
 SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
