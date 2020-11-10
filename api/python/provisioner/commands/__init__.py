@@ -106,6 +106,16 @@ class RunArgsUpdate:
     dry_run: bool = RunArgs.dry_run
 
 
+@attr.s(auto_attribs=True)
+class RunArgsPillarGet(RunArgsBase):
+    local: bool = RunArgs.local
+
+
+@attr.s(auto_attribs=True)
+class RunArgsPillarSet(RunArgsUpdate):
+    local: bool = RunArgs.local
+
+
 # TODO DRY
 @attr.s(auto_attribs=True)
 class RunArgsFWUpdate:
@@ -189,6 +199,13 @@ class RunArgsConfigureCortx:
             }
         }, default=False
     )
+    local: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "use local salt client (salt-call --local)"
+            }
+        }, default=False
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -236,6 +253,7 @@ class RunArgsUser:
 @attr.s(auto_attribs=True)
 class PillarGet(CommandParserFillerMixin):
     input_type: Type[inputs.PillarKeysList] = inputs.PillarKeysList
+    _run_args_type = RunArgsPillarGet
 
     @classmethod
     def from_spec(
@@ -243,9 +261,12 @@ class PillarGet(CommandParserFillerMixin):
     ):
         return cls(input_type=getattr(inputs, input_type))
 
-    def run(self, *args, targets: str = ALL_MINIONS, **kwargs):
+    def run(
+        self, *args, targets: str = ALL_MINIONS, local: bool = False,
+        **kwargs
+    ):
         pi_keys = self.input_type.from_args(*args, **kwargs)
-        pillar_resolver = PillarResolver(targets=targets)
+        pillar_resolver = PillarResolver(targets=targets, local=local)
 
         if len(pi_keys):
             res_raw = pillar_resolver.get(pi_keys)
@@ -262,7 +283,7 @@ class PillarSet(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
     input_type: Type[inputs.PillarInputBase] = inputs.PillarInputBase
 
-    _run_args_type = RunArgsUpdate
+    _run_args_type = RunArgsPillarSet
 
     # TODO input class type
     @classmethod
@@ -276,7 +297,9 @@ class PillarSet(CommandParserFillerMixin):
     # TODO
     # - class for pillar file
     # - caching (load once)
-    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
+    def run(
+        self, *args, targets=ALL_MINIONS, dry_run=False, local=False, **kwargs
+    ):
         # static validation
         if len(args) == 1 and isinstance(args[0], self.input_type):
             input_data = args[0]
@@ -291,7 +314,7 @@ class PillarSet(CommandParserFillerMixin):
         rollback_exc = None
 
         try:
-            pillar_updater = PillarUpdater(targets)
+            pillar_updater = PillarUpdater(targets, local=local)
             pillar_updater.update(input_data)
 
             try:

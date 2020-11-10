@@ -179,12 +179,15 @@ class PillarEntry:
 @attr.s(auto_attribs=True)
 class PillarResolver:
     targets: str = ALL_MINIONS
+    local: bool = False
     _pillar: Dict = None
 
     @property
     def pillar(self):
         if self._pillar is None:
-            self._pillar = pillar_get(targets=self.targets)
+            self._pillar = pillar_get(
+                targets=self.targets, local=self.local
+            )
         return self._pillar
 
     def get(self, pi_keys: Iterable[PillarKeyAPI]):  # TODO return value
@@ -206,6 +209,7 @@ class PillarResolver:
 @attr.s(auto_attribs=True)
 class PillarUpdater:
     targets: str = ALL_MINIONS
+    local: bool = False
     _pillars: Dict = attr.Factory(dict)
     _p_entries: List[PillarEntry] = attr.Factory(list)
 
