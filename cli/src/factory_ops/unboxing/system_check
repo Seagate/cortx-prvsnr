@@ -88,7 +88,12 @@ function check_hostname {
 }
 
 function check_pvt_data_connectivity {
-    local private_data_if=$(grep -m1 -A5 -P "data_nw:" ${cluster_sls_path}|grep -A2 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    # local private_data_if=$(grep -m1 -A5 -P "data_nw:" ${cluster_sls_path}|grep -A2 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+
+    local private_data_if=$(get_pillar_data cluster:srvnode-1:network:data_nw:iface:1)
+    pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+    pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+
     echo "      Private n/w IP (Server A): $pvt_ip_a" | tee -a ${LOG_FILE}
     echo "      Private n/w IP (Server B): $pvt_ip_b" | tee -a ${LOG_FILE}
     echo -n "Checking connectivity from server A to server B over private network........" | tee -a ${LOG_FILE}
