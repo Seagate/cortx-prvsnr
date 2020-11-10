@@ -59,7 +59,7 @@ function die {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -h|--help) usage; help; exit 0
+        -h|--help) usage; exit 0
         ;;
 
         --serial)
@@ -85,24 +85,46 @@ if [[ -f $box_flag_file ]]; then
     exit 0
 fi
 
-if [[ -z $serial_number ]]; then
-    echo "WARNING: SERIAL NUMBER HAS NOT BEEN PROVIDED" | tee -a ${LOG_FILE}
-else
-    salt "*" cmd.run "$(realpath ${BASEDIR})/../../common_utils/lr-serial-number ${serial_number}" | tee -a ${LOG_FILE}
-fi
-
+time_stamp=$(date)
+ echo "*********************************************************" | tee -a ${LOG_FILE}
+ echo "          Boxing the Cortx Lyve Drive Rack               " | tee -a ${LOG_FILE}
+ echo "*********************************************************" | tee -a ${LOG_FILE}
+ echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+ echo "Hostname Server A: $hostname_a" | tee -a ${LOG_FILE}
+ echo "Hostname Server B: $hostname_b" | tee -a ${LOG_FILE}
+ echo "IP configuration at factory for Server A" >> ${LOG_FILE}
+ ip a >> ${LOG_FILE}
+ echo "IP configuration at factory for Server B" >> ${LOG_FILE}
+ $ssh_cmd $pvt_ip_b ip a >> ${LOG_FILE}
 
 # Prepare shutdown
 ensure_healthy_cluster
 
+if [[ -z $serial_number ]]; then
+    echo "Warning: The Serial Number is not provided.." | tee -a ${LOG_FILE}
+else
+    salt "*" cmd.run "$(realpath ${BASEDIR})/../../common_utils/lr-serial-number ${serial_number}" ${salt_opts}
+    echo "Genrating the Manifest file..." | tee -a ${LOG_FILE}
+    cortxcli support_bundle generate manifest -c "manifest" 2>&1 | tee -a ${LOG_FILE}
+fi
+
 # Shutdown HA
-if command -v pcs ; then
+if ! command -v pcs; then
+    echo "ERROR: Command 'pcs' not found"
+    exit 1
+fi
+if ! hctl status 2> /dev/null; then
+    echo "Cortx cluster is not running"
+else
+    echo "Cortx cluster is running" | tee -a ${LOG_FILE}
+    echo "Dumping hctl cluster status" >> ${LOG_FILE}
+    hctl status >> ${LOG_FILE}
+    echo "Dumping pcs cluster status" >> ${LOG_FILE}
+    pcs status >> ${LOG_FILE}
     echo "INFO: Starting Cortx cluster in maintenance mode..." 2>&1 | tee -a ${LOG_FILE}
     hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Initiating HA cluster stop..." 2>&1 | tee -a ${LOG_FILE}
     pcs cluster stop --all  2>&1 | tee -a ${LOG_FILE}
-else
-    echo "[ERROR    ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
 fi
 
 # Set remote root login only through private ips
