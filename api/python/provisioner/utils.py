@@ -45,7 +45,7 @@ def validator_path(instance, attribute, value):
         if attribute.default is not None:
             raise ValueError(f"{attribute.name} should be defined")
     elif not isinstance(value, Path):
-            raise TypeError(f"{attribute.name} should be a Path")
+        raise TypeError(f"{attribute.name} should be a Path")
 
 
 def validator_path_exists(instance, attribute, value):
