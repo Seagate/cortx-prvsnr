@@ -48,15 +48,32 @@ PRVSNR_DATA_SHARED_DIR = Path('/var/lib/seagate/cortx/provisioner/shared')
 PRVSNR_DATA_LOCAL_DIR = Path('/var/lib/seagate/cortx/provisioner/local')
 
 PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
-# PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
+PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
 
 # reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
-# PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
+PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 # reflects pillar/top.sls
 PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
-# PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
+PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
+
+# Notes:
+# 1. how salt's pillar roots organized:
+#   - salt searches for files in each root
+#   - if a file (with the same path, path is relative to pillar root)
+#     has been found in one of the previous roots - it is ignored
+#   - all found files are sorted alphabetically
+#   - then merge logic happens: later files win
+#     (e.g. file zzz.sls wins aaa.sls)
+# 2. why we nee prefixes:
+#   - we don't want the same pillar file paths in different roots
+#   - we need them to be sorted according to priorities we have in
+#     salt master/minion config files
+#     (e.g. default ones have less priority than user ones,
+#           shared user pillar has less priority than local one)
+PRVSNR_USER_PILLAR_PREFIX = 'uu_'
+PRVSNR_USER_LOCAL_PILLAR_PREFIX = 'zzz_'
 
 PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
@@ -98,24 +115,6 @@ PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
-
-# pillar structures
-PRVSNR_DEF_PILLAR_HOST_DIR_TMPL = str(
-    PRVSNR_PILLAR_DIR / 'minions/{minion_id}'
-)
-
-PRVSNR_USER_PILLAR_PREFIX = 'uu_'
-PRVSNR_USER_PILLAR_ALL_HOSTS_DIR = PRVSNR_USER_PILLAR_DIR / 'groups/all'
-PRVSNR_USER_PILLAR_HOST_DIR_TMPL = str(
-    PRVSNR_USER_PILLAR_DIR / 'minions/{minion_id}'
-)
-
-# PRVSNR_USER_LOCAL_PILLAR_ALL_HOSTS_DIR = (
-#    PRVSNR_USER_LOCAL_PILLAR_DIR / 'groups/all'
-# )
-# PRVSNR_USER_LOCAL_PILLAR_HOST_DIR_TMPL = str(
-#    PRVSNR_USER_LOCAL_PILLAR_DIR / 'minions/{minion_id}'
-# )
 
 GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
 GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
