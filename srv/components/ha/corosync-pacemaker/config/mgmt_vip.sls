@@ -17,9 +17,16 @@
 
 {% if 'primary' in grains['roles'] 
   and pillar['cluster']['mgmt_vip'] %}
+
+{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
+  {%- set mgmt_if = 'mgmt0' -%}
+{% else %}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
+{% endif %}
+
 Update Management VIP:
   cmd.run:
-    - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }}
+    - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }} cidr_netmask=$(echo `ip addr show { mgmt_if } | grep "inet\b" | awk '{print $2}' | cut -d "/" -f2` | awk '{print $1;})
 
 {% else %}
 
