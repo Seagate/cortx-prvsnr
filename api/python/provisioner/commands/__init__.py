@@ -199,13 +199,6 @@ class RunArgsConfigureCortx:
             }
         }, default=False
     )
-    local: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "use local salt client (salt-call --local)"
-            }
-        }, default=False
-    )
 
 
 @attr.s(auto_attribs=True)
