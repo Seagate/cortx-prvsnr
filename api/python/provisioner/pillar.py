@@ -29,8 +29,8 @@ from .config import (
     PRVSNR_PILLAR_DIR
 )
 from .paths import (
-    user_shared_pillar,
-    user_local_pillar
+    USER_SHARED_PILLAR,
+    USER_LOCAL_PILLAR
 )
 # from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
@@ -218,7 +218,7 @@ class PillarUpdater:
 
     def __attrs_post_init__(self):
         self._pillar_path = (
-            user_local_pillar if self.local else user_shared_pillar
+            USER_LOCAL_PILLAR if self.local else USER_SHARED_PILLAR
         )
 
     @staticmethod
@@ -230,7 +230,7 @@ class PillarUpdater:
     @classmethod
     def add_merge_prefix(cls, path: Path, local=False):
         pillar_path = (
-            user_local_pillar if local else user_shared_pillar
+            USER_LOCAL_PILLAR if local else USER_SHARED_PILLAR
         )
 
         if path.name.startswith(pillar_path.prefix):
@@ -392,7 +392,7 @@ class PillarUpdater:
     ):
         # NOTE only shared dir is considered (possibly not always ok)
         path = (
-            user_shared_pillar / '{}.sls'.format(component)
+            USER_SHARED_PILLAR / '{}.sls'.format(component)
         )
         if show:
             if not path.exists():

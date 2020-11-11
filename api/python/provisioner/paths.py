@@ -53,14 +53,14 @@ class PillarPath:
         return self._all_hosts_dir
 
 
-default_pillar = PillarPath(config.PRVSNR_PILLAR_DIR)
+DEFAULT_PILLAR = PillarPath(config.PRVSNR_PILLAR_DIR)
 
-user_shared_pillar = PillarPath(
+USER_SHARED_PILLAR = PillarPath(
     config.PRVSNR_USER_PILLAR_DIR,
     config.PRVSNR_USER_PILLAR_PREFIX
 )
 
-user_local_pillar = PillarPath(
+USER_LOCAL_PILLAR = PillarPath(
     config.PRVSNR_USER_LOCAL_PILLAR_DIR,
     config.PRVSNR_USER_LOCAL_PILLAR_PREFIX
 )
