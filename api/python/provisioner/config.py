@@ -368,7 +368,7 @@ NOT_AVAILABLE = "N/A"
 
 class Checks(Enum):
 
-    """Enumeration for available checks/validations"""
+    """ Enumeration for available checks/validations """
 
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
@@ -388,7 +388,7 @@ class Checks(Enum):
 
 class GroupChecks(Enum):
 
-    """Enum for group checks."""
+    """ Enum for group checks. """
 
     ALL = "all"
     POST_CHECKS = "post_checks"

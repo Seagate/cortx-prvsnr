@@ -883,8 +883,8 @@ class Check(CommandParserFillerMixin):
                 check_ret: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
 
                 try:
-                    primary_mc_ip = Check._get_pillar_data(f"storage_enclosure/controller/primary_mc/ip")
-                    secondary_mc_ip = Check._get_pillar_data(f"storage_enclosure/controller/secondary_mc/ip")
+                    primary_mc_ip = Check._get_pillar_data("storage_enclosure/controller/primary_mc/ip")
+                    secondary_mc_ip = Check._get_pillar_data("storage_enclosure/controller/secondary_mc/ip")
 
                     # Check for connectivity of received IP
                     NetworkV().validate('connectivity', [primary_mc_ip, secondary_mc_ip])
