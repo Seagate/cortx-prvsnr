@@ -370,7 +370,6 @@ class Checks(Enum):
 
     """Enumeration for available checks/validations"""
 
-    ALL = "all"
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
@@ -378,10 +377,35 @@ class Checks(Enum):
     CLUSTER_STATUS = "cluster_status"
     LOGS_ARE_GOOD = "logs_are_good"
     PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+    STORAGE_LUNS = "storage_luns"
+    STORAGE_HBA = "storage_hba"
+    NETWORK_DRIVERS = "network_drivers"
+    NETWORK_HCA = "network_hca"
+
+
+class GroupChecks(Enum):
+
+    """Enum for group checks."""
+
+    ALL = "all"
+    PRE_CHECKS = "pre_checks"
+    POST_CHECKS = "post_checks"
+    SWUPDATE_CHECKS = "swupdate_checks"
 
 
 # Set of supported validations/checks
-CHECKS = {
+CHECKS = [check.value for check in Checks]
+
+GROUP_CHECKS = [check.value for check in GroupChecks]
+
+PRE_CHECKS = {
+    Checks.NETWORK_DRIVERS.value,
+    Checks.NETWORK_HCA.value,
+    Checks.STORAGE_HBA.value,
+    Checks.STORAGE_LUNS.value
+}
+
+SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
     Checks.CONNECTIVITY.value,
     Checks.BMC_ACCESSIBILITY.value,
@@ -390,6 +414,18 @@ CHECKS = {
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
+
+POST_CHECKS = {
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.STORAGE_LUNS.value
+}
+
+
+# validations parameters
+NETWORK_DRIVER = "mlnx-ofed"
+HCA_PROVIDER = "mellanox"
+HBA_PROVIDER = "lsi"
+LUNS_CHECKS = ['accessible', 'mapped', 'size']
 
 
 class CheckVerdict(Enum):
