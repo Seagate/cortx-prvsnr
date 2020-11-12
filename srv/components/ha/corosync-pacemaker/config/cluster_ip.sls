@@ -42,8 +42,7 @@ Setup ClusterIP resouce:
 
 Update ClusterIP:
   cmd.run:
-    - name: pcs resource update ClusterIP cidr_netmask=$(echo `ip addr show { data_if } | grep "inet\b" | awk '{print $2}' | cut -d "/" -f2` | awk '{print $1;})
-    - onlyif: pcs resource show ClusterIP
+    - name: pcs resource update ClusterIP cidr_netmask=$(echo `ip addr show { data_if } | grep "inet\b" | awk '{print $2}' | cut -d "/" -f2` | awk '{print $1;}')
 
 Add stickiness metadata to ClusterIP resource:
   cmd.run:
