@@ -618,10 +618,12 @@ class Check(CommandParserFillerMixin):
 
     @staticmethod
     def _network_drivers(*, args: str) -> List[CheckEntry]:
-        """Validates if Network Drivers are proper
-        network_drivers <driver_name> <nodes>
         """
+        Check if Network Drivers are proper
 
+        :param args: network_drivers check specific parameters and arguments
+        :return:
+        """
         res: List[CheckEntry] = list()
         driver_name = [cfg.NETWORK_DRIVER]
 
@@ -658,10 +660,12 @@ class Check(CommandParserFillerMixin):
 
     @staticmethod
     def _network_hca(*, args: str) -> List[CheckEntry]:
-        """Validates the Network HCA
-        network_hca <provider_name> <nodes>
         """
+        Check if Network HCA are proper
 
+        :param args: network_hca check specific parameters and arguments
+        :return:
+        """
         res: List[CheckEntry] = list()
         provider = [cfg.HCA_PROVIDER]
 
@@ -697,10 +701,12 @@ class Check(CommandParserFillerMixin):
 
     @staticmethod
     def _storage_luns(*, args: str) -> List[CheckEntry]:
-        """Check storage LUNs
-        storage_luns <v_check> <nodes>
         """
+        Check if Storage LUNs are proper
 
+        :param args: storage_luns check specific parameters and arguments
+        :return:
+        """
         res: List[CheckEntry] = list()
 
         if cortx_py_utils_import_error:
@@ -722,7 +728,7 @@ class Check(CommandParserFillerMixin):
                     lun_args = [luns_check] + nodes
                     StorageV().validate('luns', lun_args)
                     check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                         comment="LUNs Accessibility, " 
+                                         comment="LUNs Accessibility, "
                                          "Volume Size and Mapping "
                                          f"Validated: {lun_args}")
 
@@ -739,10 +745,12 @@ class Check(CommandParserFillerMixin):
 
     @staticmethod
     def _storage_hba(*, args: str) -> List[CheckEntry]:
-        """Check storage HBA
-        storage_hba <provider_name> <nodes>
         """
+        Check if Storage HBA is proper
 
+        :param args: storage_hba check specific parameters and arguments
+        :return:
+        """
         res: List[CheckEntry] = list()
         provider = [cfg.HBA_PROVIDER]
 

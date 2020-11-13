@@ -385,7 +385,7 @@ class Checks(Enum):
 
 class GroupChecks(Enum):
 
-    """Enum for group checks."""
+    """Enum for group checks"""
 
     ALL = "all"
     PRE_CHECKS = "pre_checks"
