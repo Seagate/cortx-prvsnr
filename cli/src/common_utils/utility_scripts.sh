@@ -20,7 +20,6 @@
 set -eu
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
-truncate -s 0 ${LOG_FILE}
 
 
 function _lerror {
@@ -44,7 +43,7 @@ function get_pillar_data {
         exit 1
     fi
 
-    local l_val=$(salt-call pillar.get ${l_key} --output=newline_values_only)
+    local l_val=$(salt-call --local pillar.get "${l_key}" --output=newline_values_only)
     echo ${l_val}
 }
 
