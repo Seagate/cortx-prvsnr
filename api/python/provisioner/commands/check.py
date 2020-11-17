@@ -624,37 +624,26 @@ class Check(CommandParserFillerMixin):
         :param args: network_drivers check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
-        driver_name = [cfg.NETWORK_DRIVER]
+        res: CheckEntry = CheckEntry(cfg.Checks.NETWORK_DRIVERS.value)
 
         if cortx_py_utils_import_error:
-            err_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_DRIVERS.value)
-            err_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                             comment="Package cortx-py-utils not installed")
-            res.append(err_res)
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
             return res
 
-        check_value : CheckEntry = CheckEntry(cfg.Checks.NETWORK_DRIVERS.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-            check_res : CheckEntry = CheckEntry(
-                                     cfg.Checks.NETWORK_DRIVERS.value)
-            try:
-                driver_args = driver_name + nodes
-                NetworkV().validate('drivers', driver_args)
-                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                     comment="Network Driver "
-                                     f"Validated: {driver_args}")
 
-            except Exception as exc:
-                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                   comment=str(exc))
-            res.append(check_res)
+            driver_args = [cfg.NETWORK_DRIVER] + nodes
+            NetworkV().validate('drivers', driver_args)
 
         except Exception as exc:
-            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment=str(exc))
-            res.append(check_value)
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=cfg.ALL_MINIONS,
+                           comment="Network Driver "
+                           f"Validated: {driver_args}")
 
         return res
 
@@ -667,7 +656,6 @@ class Check(CommandParserFillerMixin):
         :return:
         """
         res: List[CheckEntry] = list()
-        provider = [cfg.HCA_PROVIDER]
 
         if cortx_py_utils_import_error:
             err_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
@@ -679,18 +667,21 @@ class Check(CommandParserFillerMixin):
         check_value : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-            check_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
-            try:
-                hca_args = provider + nodes
-                NetworkV().validate('hca', hca_args)
-                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                     comment="HCA Presence and "
-                                     f"Ports Validated: {hca_args}")
 
-            except Exception as exc:
-                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                   comment=str(exc))
-            res.append(check_res)
+            for provider in (cfg.HCA_PROVIDER):
+                check_res : CheckEntry = CheckEntry(
+                                         cfg.Checks.NETWORK_HCA.value)
+                try:
+                    hca_args = [provider] + nodes
+                    NetworkV().validate('hca', hca_args)
+                    check_res.set_passed(checked_target=cfg.ALL_MINIONS,
+                                         comment="HCA Presence and "
+                                         f"Ports Validated: {hca_args}")
+
+                except Exception as exc:
+                    check_res.set_fail(checked_target=cfg.ALL_MINIONS,
+                                       comment=str(exc))
+                res.append(check_res)
 
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
@@ -719,9 +710,8 @@ class Check(CommandParserFillerMixin):
         check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-            available_luns_checks = (cfg.LUNS_CHECKS)
 
-            for luns_check in available_luns_checks:
+            for luns_check in (cfg.LUNS_CHECKS):
                 check_res : CheckEntry = CheckEntry(
                                          cfg.Checks.STORAGE_LUNS.value)
                 try:
@@ -736,9 +726,10 @@ class Check(CommandParserFillerMixin):
                     check_res.set_fail(checked_target=cfg.ALL_MINIONS,
                                        comment=str(exc))
                 res.append(check_res)
+
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment=str(exc))
+                         comment=str(exc))
             res.append(check_value)
 
         return res
@@ -752,7 +743,6 @@ class Check(CommandParserFillerMixin):
         :return:
         """
         res: List[CheckEntry] = list()
-        provider = [cfg.HBA_PROVIDER]
 
         if cortx_py_utils_import_error:
             err_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
@@ -764,18 +754,22 @@ class Check(CommandParserFillerMixin):
         check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-            check_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
-            try:
-                hba_args = provider + nodes
-                StorageV().validate('hba', hba_args)
-                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                     comment="HBA Presence and Ports "
-                                     f"Validated: {hba_args}")
 
-            except Exception as exc:
-                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                   comment=str(exc))
-            res.append(check_res)
+            for provider in (cfg.HBA_PROVIDER):
+                check_res : CheckEntry = CheckEntry(
+                                         cfg.Checks.STORAGE_HBA.value)
+                try:
+                    hba_args = [provider] + nodes
+                    StorageV().validate('hba', hba_args)
+                    check_res.set_passed(checked_target=cfg.ALL_MINIONS,
+                                         comment="HBA Presence and Ports "
+                                         f"Validated: {hba_args}")
+
+                except Exception as exc:
+                    check_res.set_fail(checked_target=cfg.ALL_MINIONS,
+                                       comment=str(exc))
+                res.append(check_res)
+
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))

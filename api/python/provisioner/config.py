@@ -367,7 +367,6 @@ NOT_AVAILABLE = "N/A"
 
 
 class Checks(Enum):
-
     """Enumeration for available checks/validations"""
 
     NETWORK = "network"
@@ -384,7 +383,6 @@ class Checks(Enum):
 
 
 class GroupChecks(Enum):
-
     """Enum for group checks"""
 
     ALL = "all"
@@ -423,8 +421,8 @@ POST_CHECKS = {
 
 # validations parameters
 NETWORK_DRIVER = "mlnx-ofed"
-HCA_PROVIDER = "mellanox"
-HBA_PROVIDER = "lsi"
+HCA_PROVIDER = ["mellanox"]
+HBA_PROVIDER = ["lsi"]
 LUNS_CHECKS = ['accessible', 'mapped', 'size']
 
 
