@@ -1738,7 +1738,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     ), targets=run_args.primary.minion_id
                 )
 
-            logger.info(f"Generating a password for the service user")
+            logger.info("Generating a password for the service user")
             service_user_password = str(uuid.uuid4()).split('-')[0]
             ssh_client.cmd_run(
                 (
