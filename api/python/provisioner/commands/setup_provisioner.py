@@ -1798,7 +1798,20 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
         logger.info("Updating BMC IPs")
-        ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
+
+        if run_args.ha:
+            # NOTE. in HA mode cluster.sls is shared across all nodes
+            #       so update it in a sequence to avoid possible race
+            #       condition (EOS-15134)
+            for node in run_args.nodes:
+                ssh_client.cmd_run(
+                    "salt-call state.apply components.misc_pkgs.ipmi",
+                    targets=node.minion_id
+                )
+        else:
+            ssh_client.cmd_run(
+                "salt-call state.apply components.misc_pkgs.ipmi"
+            )
 
         return setup_ctx
 
