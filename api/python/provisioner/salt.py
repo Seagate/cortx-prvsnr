@@ -532,11 +532,16 @@ class SaltClientBase(ABC):
         except Exception as exc:
             # TODO too generic
             raise SaltCmdRunError(cmd_args_view, exc) from exc
+
+        res = self.parse_res(salt_res, cmd_args_view)
+
+        if res.fails:
+            raise SaltCmdResultError(cmd_args_view, res.fails)
         else:
             try:
                 logger.debug(
                     "Function '{}' on '{}' resulted in {}"
-                    .format(fun, targets, salt_res)
+                    .format(fun, targets, res.results)
                 )
             except Exception as exc:
                 if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
@@ -544,11 +549,6 @@ class SaltClientBase(ABC):
                 else:
                     raise exc
 
-        res = self.parse_res(salt_res, cmd_args_view)
-
-        if res.fails:
-            raise SaltCmdResultError(cmd_args_view, res.fails)
-        else:
             return res.results
 
     def state_apply(self, state: str, targets=ALL_MINIONS, **kwargs):
@@ -624,7 +624,18 @@ class SaltSSHClient(SaltClientBase):
         return SaltSSHClientResult
 
     def _run(self, cmd_args: SaltSSHArgs):
-        return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
+        salt_logger = logging.getLogger('salt.client.ssh')
+        salt_log_level = None
+
+        if cmd_args.secure and salt_logger.isEnabledFor(logging.DEBUG):
+            salt_log_level = salt_logger.getEffectiveLevel()
+            salt_logger.setLevel(logging.INFO)
+
+        try:
+            return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
+        finally:
+            if salt_log_level is not None:
+                salt_logger.setLevel(salt_log_level)
 
     # TODO TEST EOS-8473
     def ensure_access(
