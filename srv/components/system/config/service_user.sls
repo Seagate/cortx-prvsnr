@@ -15,13 +15,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-system:
-  ntp:
-    time_server: time.seagate.com
-    timezone: UTC             #To be replaced with input
-  service_user:
-    name: cortxub
-    password:
-    groups:
-      - wheel
-    shell: /usr/bin/bash
+{% if salt['pillar.get']('system:service_user:password') %}
+
+    {% set base_dir = '/opt/seagate/users' %}
+    {% set user_data = salt['pillar.get']('system:service_user') %}
+
+seagate_users_dir_created:
+  file.directory:
+    - name: {{ base_dir }}
+    - user: root
+    - group: root
+    - mode: 755
+
+service_user_configured:
+  user.present:
+    - name: {{ user_data['name'] }}
+    - password: {{ salt['lyveutil.decrypt']('system', user_data['password']) }}
+    - hash_password: True
+    - home: {{ base_dir }}/{{ user_data['name'] }}
+    - shell: {{ user_data['shell'] }}
+    - groups: {{ user_data['groups'] }}
+    # would be activated at unboxing time
+    {% if not pillar['cluster'][grains['id']]['is_primary'] -%}
+    - expire: 1
+    {% endif %}
+
+{% else %}
+
+no_password:
+  test.nop: []
+
+{% endif %}
