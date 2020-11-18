@@ -25,7 +25,7 @@
 
 Update ClusterIP:
   cmd.run:
-    - name: pcs resource update ClusterIP ip={{ pillar['cluster']['cluster_ip'] }}
+    - name: pcs resource update ClusterIP ip={{ pillar['cluster']['cluster_ip'] }} cidr_netmask=$(ip addr show { data_if } | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2) op monitor interval=30s
     - onlyif: pcs resource show ClusterIP
 
 {% else %}  # Is pcs installed & ClusterIP exists
