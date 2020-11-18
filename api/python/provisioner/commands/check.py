@@ -655,38 +655,37 @@ class Check(CommandParserFillerMixin):
         :param args: network_hca check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
+        check_value : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
 
         if cortx_py_utils_import_error:
-            err_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
-            err_res.set_fail(checked_target=cfg.ALL_MINIONS,
+            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                              comment="Package cortx-py-utils not installed")
-            res.append(err_res)
-            return res
+            return check_value
 
-        check_value : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-
-            for provider in (cfg.HCA_PROVIDER):
-                check_res : CheckEntry = CheckEntry(
-                                         cfg.Checks.NETWORK_HCA.value)
-                try:
-                    hca_args = [provider] + nodes
-                    NetworkV().validate('hca', hca_args)
-                    check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                         comment="HCA Presence and "
-                                         f"Ports Validated: {hca_args}")
-
-                except Exception as exc:
-                    check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                       comment=str(exc))
-                res.append(check_res)
-
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
-            res.append(check_value)
+            return check_value
+
+        res: List[CheckEntry] = list()
+
+        for provider in cfg.HCA_PROVIDER:
+            check_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
+
+            try:
+                hca_args = [provider] + nodes
+                NetworkV().validate('hca', hca_args)
+            except Exception as exc:
+                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
+                                   comment=str(exc))
+            else:
+                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
+                                     comment="HCA Presence and "
+                                     f"Ports Validated: {hca_args}")
+
+            res.append(check_res)
 
         return res
 
@@ -698,39 +697,38 @@ class Check(CommandParserFillerMixin):
         :param args: storage_luns check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
+        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
         if cortx_py_utils_import_error:
-            err_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
-            err_res.set_fail(checked_target=cfg.ALL_MINIONS,
+            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                              comment="Package cortx-py-utils not installed")
-            res.append(err_res)
-            return res
+            return check_value
 
-        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-
-            for luns_check in (cfg.LUNS_CHECKS):
-                check_res : CheckEntry = CheckEntry(
-                                         cfg.Checks.STORAGE_LUNS.value)
-                try:
-                    lun_args = [luns_check] + nodes
-                    StorageV().validate('luns', lun_args)
-                    check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                         comment="LUNs Accessibility, "
-                                         "Volume Size and Mapping "
-                                         f"Validated: {lun_args}")
-
-                except Exception as exc:
-                    check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                       comment=str(exc))
-                res.append(check_res)
-
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                         comment=str(exc))
-            res.append(check_value)
+                                 comment=str(exc))
+            return check_value
+
+        res: List[CheckEntry] = list()
+
+        for luns_check in cfg.LUNS_CHECKS:
+            check_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
+
+            try:
+                lun_args = [luns_check] + nodes
+                StorageV().validate('luns', lun_args)
+            except Exception as exc:
+                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
+                                   comment=str(exc))
+            else:
+                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
+                                     comment="LUNs Accessibility, "
+                                     "Volume Size and Mapping "
+                                     f"Validated: {lun_args}")
+
+            res.append(check_res)
 
         return res
 
@@ -742,38 +740,37 @@ class Check(CommandParserFillerMixin):
         :param args: storage_hba check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
+        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
 
         if cortx_py_utils_import_error:
-            err_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
-            err_res.set_fail(checked_target=cfg.ALL_MINIONS,
+            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                              comment="Package cortx-py-utils not installed")
-            res.append(err_res)
-            return res
+            return check_value
 
-        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
         try:
             nodes = Check._get_pillar_data("cluster/node_list")
-
-            for provider in (cfg.HBA_PROVIDER):
-                check_res : CheckEntry = CheckEntry(
-                                         cfg.Checks.STORAGE_HBA.value)
-                try:
-                    hba_args = [provider] + nodes
-                    StorageV().validate('hba', hba_args)
-                    check_res.set_passed(checked_target=cfg.ALL_MINIONS,
-                                         comment="HBA Presence and Ports "
-                                         f"Validated: {hba_args}")
-
-                except Exception as exc:
-                    check_res.set_fail(checked_target=cfg.ALL_MINIONS,
-                                       comment=str(exc))
-                res.append(check_res)
-
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
-            res.append(check_value)
+            return check_value
+
+        res: List[CheckEntry] = list()
+
+        for provider in cfg.HBA_PROVIDER:
+            check_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
+
+            try:
+                hba_args = [provider] + nodes
+                StorageV().validate('hba', hba_args)
+            except Exception as exc:
+                check_res.set_fail(checked_target=cfg.ALL_MINIONS,
+                                   comment=str(exc))
+            else:
+                check_res.set_passed(checked_target=cfg.ALL_MINIONS,
+                                     comment="HBA Presence and "
+                                     f"Ports Validated: {hba_args}")
+
+            res.append(check_res)
 
         return res
 
