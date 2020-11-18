@@ -33,6 +33,7 @@ class PillarPath:
     _all_hosts_dir: Path = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
+        """Post init logic."""
         self._host_dir_tmpl = str(self.base_dir / 'minions/{minion_id}')
         self._all_hosts_dir = self.base_dir / 'groups/all'
 
