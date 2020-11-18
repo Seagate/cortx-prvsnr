@@ -436,57 +436,55 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _bmc_stonith(*, args: str) -> List[CheckEntry]:
+    def _bmc_stonith(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check BMC Stonith Configuration
 
         :param args: bmc stonith configuration check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
-
+        check_entry: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
         # Check for import errors
         if cortx_py_utils_import_error:
-            _res: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
-            _res.set_fail(checked_target=cfg.ALL_MINIONS,
-                          comment="Package cortx-py-utils not installed")
-            res.append(_res)
-            return res
-
-        _DECRYPT_SECRET_CMD='salt-call lyveutil.decrypt cluster {secret} --output=newline_values_only'
-        check_salt: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment="Package cortx-py-utils not installed")
+            return check_entry
 
         try:
             # Get node list
             nodes = Check._get_pillar_data("cluster/node_list")
-
-            for node in nodes:
-                check_stonith: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
-
-                try:
-                    # Get BMC IP, user and secret.
-                    bmc_ip = Check._get_pillar_data(f"cluster/{node}/bmc/ip")
-                    bmc_user = Check._get_pillar_data(f"cluster/{node}/bmc/user")
-                    secret = Check._get_pillar_data(f"cluster/{node}/bmc/secret")
-
-                    # Decrypt the secret
-                    cmd = _DECRYPT_SECRET_CMD.format(secret=secret)
-                    minion_id = local_minion_id()
-                    bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
-
-                    # Check the stonith configuration
-                    BmcV().validate('stonith',
-                                    [node, bmc_ip, bmc_user, bmc_passwd])
-                    check_stonith.set_passed(checked_target=node)
-                except Exception as exc:
-                    check_stonith.set_fail(checked_target=node, comment=str(exc))
-
-                res.append(check_stonith)
-
         except Exception as exc:
-            check_salt.set_fail(checked_target=cfg.ALL_MINIONS,
-                                comment=str(exc))
-            res.append(check_salt)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
+
+        res: List[CheckEntry] = list()
+        _DECRYPT_SECRET_CMD = 'salt-call lyveutil.decrypt cluster {secret}'\
+                              ' --output=newline_values_only'
+
+        for node in nodes:
+            check_stonith: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
+
+            try:
+                # Get BMC IP, user and secret.
+                bmc_ip = Check._get_pillar_data(f"cluster/{node}/bmc/ip")
+                bmc_user = Check._get_pillar_data(f"cluster/{node}/bmc/user")
+                secret = Check._get_pillar_data(f"cluster/{node}/bmc/secret")
+
+                # Decrypt the secret
+                cmd = _DECRYPT_SECRET_CMD.format(secret=secret)
+                minion_id = local_minion_id()
+                bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
+
+                # Check the stonith configuration
+                BmcV().validate('stonith',
+                                [node, bmc_ip, bmc_user, bmc_passwd])
+            except Exception as exc:
+                check_stonith.set_fail(checked_target=node, comment=str(exc))
+            else:
+                check_stonith.set_passed(checked_target=node)
+
+            res.append(check_stonith)
 
         return res
 
@@ -701,48 +699,55 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _storage_luns(*, args: str) -> List[CheckEntry]:
+    def _storage_luns(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check storage luns
 
         :param args: storage_luns check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
+        check_entry: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
         if cortx_py_utils_import_error:
-            _res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
-            _res.set_fail(checked_target=cfg.ALL_MINIONS,
-                          comment="Package cortx-py-utils not installed")
-            res.append(_res)
-            return res
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment="Package cortx-py-utils not installed")
+            return check_entry
 
-        check_salt : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
         try:
+            # Get node list
             nodes = Check._get_pillar_data("cluster/node_list")
-            luns_checks = ['accessible', 'mapped', 'size']
-
-            for check in luns_checks:
-                check_ret : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
-                try:
-                    lun_args = [check] + nodes
-                    StorageV().validate('luns', lun_args)
-                    check_ret.set_passed(checked_target=cfg.ALL_MINIONS,
-                                         comment=f'Validated luns {lun_args}')
-                except Exception as exc:
-                    check_ret.set_fail(checked_target=cfg.ALL_MINIONS,
-                                       comment=str(exc))
-                res.append(check_ret)
         except Exception as exc:
-            check_salt.set_fail(checked_target=cfg.ALL_MINIONS,
-                                comment=str(exc))
-            res.append(check_salt)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
+
+        res: List[CheckEntry] = list()
+        luns_checks = ['accessible', 'mapped', 'size']
+
+        for check in luns_checks:
+            check_ret : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
+            try:
+                lun_args = [check] + nodes
+                StorageV().validate('luns', lun_args)
+            except Exception as exc:
+                check_ret.set_fail(checked_target=cfg.ALL_MINIONS,
+                                   comment=str(exc))
+            else:
+                check_ret.set_passed(checked_target=cfg.ALL_MINIONS,
+                                     comment=f'Validated luns {lun_args}')
+
+            res.append(check_ret)
 
         return res
 
     @staticmethod
     def _mgmt_vip(*, args: str) -> CheckEntry:
-        """Network mgmt vip check."""
+        """
+        Check Network mgmt vip
+
+        :param args: mgmt_vip check specific parameters and arguments
+        :return:
+        """
         res: CheckEntry = CheckEntry(cfg.Checks.MGMT_VIP.value)
 
         if cortx_py_utils_import_error:
@@ -762,141 +767,149 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _hostnames(*, args: str) -> CheckEntry:
-        """Validate hostnames check."""
-        res: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+    def _hostnames(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
+        """
+        Check hostnames
+
+        :param args: hostnames check specific parameters and arguments
+        :return:
+        """
+        check_entry: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
 
         if cortx_py_utils_import_error:
-            res.set_fail(checked_target=cfg.ALL_MINIONS,
-                         comment="Package cortx-py-utils not installed")
-            return res
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment="Package cortx-py-utils not installed")
+            return check_entry
+
+        try:
+            # Get node list
+            nodes = Check._get_pillar_data("cluster/node_list")
+        except Exception as exc:
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
 
         res: List[CheckEntry] = list()
-        try:
-            check_salt: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
-            nodes = Check._get_pillar_data("cluster/node_list")
-            for node in nodes:
-                check_ent: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
-                try:
-                    hostname = Check._get_pillar_data(
-                                   f"cluster/{node}/hostname")
-                    NetworkV().validate('connectivity', [hostname])
-                except Exception as exc:
-                    check_ent.set_fail(checked_target=local_minion_id(),
-                                       comment=str(exc))
-                else:
-                    check_ent.set_passed(checked_target=hostname)
-                res.append(check_ent)
 
-        except Exception as exc:
-            check_salt.set_fail(checked_target=local_minion_id(),
-                                comment=str(exc))
-            res.append(check_salt)
+        for node in nodes:
+            check_ent: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+            try:
+                hostname = Check._get_pillar_data(
+                                f"cluster/{node}/hostname")
+                NetworkV().validate('connectivity', [hostname])
+            except Exception as exc:
+                check_ent.set_fail(checked_target=local_minion_id(),
+                                   comment=str(exc))
+            else:
+                check_ent.set_passed(checked_target=hostname)
+
+            res.append(check_ent)
+
         return res
 
     @staticmethod
-    def _public_data_ip(*, args: str) -> List[CheckEntry]:
+    def _public_data_ip(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check public data ip
 
         :param args: public_data_ip check specific parameters and arguments
         :return:
         """
-        _IP_DEV_IFACE_TMPL = "ip addr show dev {ifc} | grep 'inet' | grep '{ifc}'"
-        res: List[CheckEntry] = list()
+        check_entry: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
 
-        # Check for import errors
         if cortx_py_utils_import_error:
-            _res: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
-            _res.set_fail(checked_target=cfg.ALL_MINIONS,
-                          comment="Package cortx-py-utils not installed")
-            res.append(_res)
-            return res
-
-        check_salt: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment="Package cortx-py-utils not installed")
+            return check_entry
 
         try:
             # Get node list
             nodes = Check._get_pillar_data("cluster/node_list")
-            for node in nodes:
-                check_ret: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
-
-                try:
-                    # Get list data network interfaces
-                    iface = Check._get_pillar_data(f"cluster/{node}/network/data_nw/iface")
-
-                    ifc = [ifc for ifc in iface if 's0f0' in ifc]
-
-                    if ifc:
-                        # Get IP address assigned to interface
-                        cmd = _IP_DEV_IFACE_TMPL.format(ifc=ifc[0])
-                        _ip = cmd_run(cmd, targets=node,
-                                      fun_kwargs=dict(python_shell=True))
-
-                        # Extract IP address
-                        ip = _ip[node].split()[1].split('/')[0]
-
-                        # Check for connectivity of received IP
-                        NetworkV().validate('connectivity', [ip])
-                        check_ret.set_passed(checked_target=node)
-                    else:
-                        check_ret.set_fail(checked_target=node,
-                                           comment="Public data interface " \
-                                                    "'s0f0' not found. iface "\
-                                                    f"available: {iface}")
-
-                except Exception as exc:
-                    check_ret.set_fail(checked_target=node, comment=str(exc))
-
-                res.append(check_ret)
-
         except Exception as exc:
-            check_salt.set_fail(checked_target=cfg.ALL_MINIONS, comment=str(exc))
-            res.append(check_salt)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
+
+        res: List[CheckEntry] = list()
+        _IP_DEV_IFACE_TMPL = "ip addr show dev {ifc} | grep 'inet' | grep '{ifc}'"
+
+        for node in nodes:
+            check_ret: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
+
+            try:
+                # Get list data network interfaces
+                iface = Check._get_pillar_data(
+                    f"cluster/{node}/network/data_nw/iface")
+
+                ifc = [ifc for ifc in iface if 's0f0' in ifc]
+
+                if ifc:
+                    # Get IP address assigned to interface
+                    cmd = _IP_DEV_IFACE_TMPL.format(ifc=ifc[0])
+                    _ip = cmd_run(cmd, targets=node,
+                                  fun_kwargs=dict(python_shell=True))
+
+                    # Extract IP address
+                    ip = _ip[node].split()[1].split('/')[0]
+
+                    # Check for connectivity of received IP
+                    NetworkV().validate('connectivity', [ip])
+                    check_ret.set_passed(checked_target=node)
+                else:
+                    check_ret.set_fail(checked_target=node,
+                                        comment="Public data interface " \
+                                                "'s0f0' not found. iface "\
+                                                f"available: {iface}")
+            except Exception as exc:
+                check_ret.set_fail(checked_target=node, comment=str(exc))
+
+            res.append(check_ret)
 
         return res
 
     @staticmethod
-    def _controller_ip(*, args: str) -> List[CheckEntry]:
+    def _controller_ip(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check controller ips
 
         :param args: controller_ip check specific parameters and arguments
         :return:
         """
-        res: List[CheckEntry] = list()
+        check_entry: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
 
-        # Check for import errors
         if cortx_py_utils_import_error:
-            _res: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
-            _res.set_fail(checked_target=cfg.ALL_MINIONS,
-                          comment="Package cortx-py-utils not installed")
-            res.append(_res)
-            return res
-
-        check_salt: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment="Package cortx-py-utils not installed")
+            return check_entry
 
         try:
             # Get node list
             nodes = Check._get_pillar_data("cluster/node_list")
-            for node in nodes:
-                check_ret: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
-
-                try:
-                    primary_mc_ip = Check._get_pillar_data("storage_enclosure/controller/primary_mc/ip")
-                    secondary_mc_ip = Check._get_pillar_data("storage_enclosure/controller/secondary_mc/ip")
-
-                    # Check for connectivity of received IP
-                    NetworkV().validate('connectivity', [primary_mc_ip, secondary_mc_ip])
-                    check_ret.set_passed(checked_target=node)
-                except Exception as exc:
-                    check_ret.set_fail(checked_target=node, comment=str(exc))
-
-                res.append(check_ret)
-
         except Exception as exc:
-            check_salt.set_fail(checked_target=cfg.ALL_MINIONS, comment=str(exc))
-            res.append(check_salt)
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
+
+        res: List[CheckEntry] = list()
+
+        for node in nodes:
+            check_ret: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
+
+            try:
+                primary_mc_ip = Check._get_pillar_data(
+                                "storage_enclosure/controller/primary_mc/ip")
+                secondary_mc_ip = Check._get_pillar_data(
+                                "storage_enclosure/controller/secondary_mc/ip")
+
+                # Check for connectivity of received IPs
+                NetworkV().validate('connectivity',
+                                    [primary_mc_ip, secondary_mc_ip])
+            except Exception as exc:
+                check_ret.set_fail(checked_target=node, comment=str(exc))
+            else:
+                check_ret.set_passed(checked_target=node)
+
+            res.append(check_ret)
 
         return res
 
@@ -912,7 +925,7 @@ class Check(CommandParserFillerMixin):
         else:
             return pillar[pillar_key]
 
-    def run(self, check_name: cfg.Checks = None,
+    def run(self, check_name: str = "",
             check_args: str = "") -> CheckResult:
         """
         Basic run method to execute checks specified by `check_name` or
@@ -924,32 +937,27 @@ class Check(CommandParserFillerMixin):
         :return:
         """
         res: CheckResult = CheckResult()
-        check_lists = None
+        check_lists = []
 
+        # Check whether to execute all checks
         if check_name is None or check_name == cfg.GroupChecks.ALL.value:
             check_lists = cfg.CHECKS
 
-        if not check_lists and check_name in cfg.GROUP_CHECKS:
+        # Check whether to perform group check
+        elif check_name in cfg.GROUP_CHECKS:
             check_lists = getattr(cfg, check_name.strip().upper())
 
-        if check_lists:
-            for check_name in check_lists:
-                _res = getattr(self,
-                               self._PRV_METHOD_MOD + check_name)(
-                                                            args=check_args)
-                res.add_checks(_res)  # aggregate all check results
-
-            return res
-
-        check_name = check_name.strip().lower()
-
-        if check_name in cfg.CHECKS:
-            _res = getattr(self,
-                           self._PRV_METHOD_MOD + check_name)(args=check_args)
-
-            res.add_checks(_res)  # aggregate all check results
+        # Check for supported check name
+        elif check_name.strip().lower() in cfg.CHECKS:
+            check_lists = [check_name.strip().lower()]
 
         else:
             raise ValueError(f'Check "{check_name}" is not supported')
+
+        for check_name in check_lists:
+            _res = getattr(self,
+                            self._PRV_METHOD_MOD + check_name)(
+                                                        args=check_args)
+            res.add_checks(_res)  # aggregate all check results
 
         return res

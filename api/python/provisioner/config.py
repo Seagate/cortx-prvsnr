@@ -424,7 +424,8 @@ POST_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.STORAGE_LVMS.value,
     Checks.STORAGE_LUNS.value,
-    Checks.MGMT_VIP.value
+    Checks.MGMT_VIP.value,
+    Checks.BMC_ACCESSIBILITY.value,
 }
 
 UNBOXING_PRE_CHECKS = {
