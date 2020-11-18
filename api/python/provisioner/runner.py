@@ -16,25 +16,19 @@
 #
 
 import os
-from typing import Union, Any
+from typing import Union, Any, List
 
 from .vendor import attr
 from . import inputs
 from .salt import provisioner_cmd
-from .commands import commands
 from .errors import ProvisionerError
 
 
 # TODO TESTS
 @attr.s(auto_attribs=True)
 class SimpleRunner:
-    nowait: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "run the command as a salt job in async mode"
-            }
-        }, default=False
-    )
+    commands: List
+    nowait: bool = False
 
     @classmethod
     def fill_parser(cls, parser):
@@ -69,5 +63,5 @@ class SimpleRunner:
             except Exception as exc:
                 raise ProvisionerError(repr(exc)) from exc
         else:
-            cmd = commands[command]
+            cmd = self.commands[command]
             return cmd.run(*args, **kwargs)

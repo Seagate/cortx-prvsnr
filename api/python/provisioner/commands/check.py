@@ -574,7 +574,7 @@ class Check(CommandParserFillerMixin):
             cmd = _PSWDLESS_SSH_CHECK_CMD_TMPL.format(user=user,
                                                       hostname=addr)
             try:
-                _res = cmd_run(cmd, targets=targets)
+                _ = cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
                 res.set_fail(checked_target=targets,
                              comment=(f"{cfg.CheckVerdict.FAIL.value}: "

@@ -15,28 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.42.0'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "GNU Affero General Public License"  # TODO
+from .base import SaltClientBase
+from .client import SaltLocalClient
+from .runner import SaltRunnerClient
+from .caller import SaltCallerClient, SaltLocalCallerClient
+from .ssh import SaltSSHClient
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
+client_types = [
+    SaltClientBase,
+    SaltLocalClient,
+    SaltRunnerClient,
+    SaltCallerClient,
+    SaltLocalCallerClient,
+    SaltSSHClient
 ]

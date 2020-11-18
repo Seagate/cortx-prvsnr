@@ -98,6 +98,8 @@ cmd_run:
   type: CmdRun
 configure_setup:
   type: ConfigureSetup
+salt:
+  type: SaltClient
 
 # setup commands
 setup_provisioner:
