@@ -305,6 +305,10 @@ echo "Removing build URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
 
+echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+sleep 15
+
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
@@ -321,10 +325,6 @@ echo "Ok." | tee -a ${LOG_FILE}
 echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
-
-echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
-hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 5
 
 echo "Removing Lustre URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}; sleep 2
