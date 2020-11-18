@@ -277,6 +277,21 @@ class SaltSSHClient(SaltClientBase):
             }
         }
     )
+    profile: str = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "path to ssh profile, if specified"
+                    "'--c-path', '--roster-file', '--pillar-path'"
+                    "and '--fileroot-path' options would be set "
+                    "automatically"
+                )
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists
+    )
     ssh_options: Optional[Dict] = attr.ib(
         default=attr.Factory(
             lambda: [

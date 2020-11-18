@@ -225,9 +225,8 @@ class SaltClientBaseParams:
 class SaltClientBase(ABC):
     c_path: str = None
 
-    fileroot_path: Union[FileRootPath, str] = (
-        SaltClientBaseParams.fileroot_path
-    )
+    fileroot_path: Union[
+        FileRootPath, str] = SaltClientBaseParams.fileroot_path
     pillar_path: Union[PillarPath, str] = SaltClientBaseParams.pillar_path
 
     @property
@@ -280,6 +279,11 @@ class SaltClientBase(ABC):
         #     issues with ioloop, possibly related one
         #     https://github.com/saltstack/salt/issues/46905
         # return _salt_caller_cmd(fun, *args, **kwargs)
+
+        if isinstance(kwargs.get('targets'), (list, tuple)):
+            kwargs['targets'] = '|'.join(kwargs['targets'])
+            # XXX hard-coded
+            kwargs['tgt_type'] = 'pcre'
 
         # TODO log username / password ??? / eauth
         cmd_args = self._build_cmd_args(
@@ -420,10 +424,6 @@ class SaltClientBase(ABC):
             targets=targets,
             client=self
         )
-
-    def fileroot_writer(self):
-        from ..fileroot import FileRoot  # FIXME
-        return FileRoot(self.fileroot_path)
 
     def add_file_roots(self, roots: List[Path]):
         raise NotImplementedError

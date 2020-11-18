@@ -18,7 +18,7 @@
 import salt.config
 from salt.runner import RunnerClient
 from typing import (
-    List, Dict, Any, Type, Union, Tuple
+    List, Dict, Any, Type, Union, Tuple, Optional
 )
 import logging
 
@@ -177,6 +177,18 @@ class SaltRunnerClient(SaltClientBase):
             return self._client.cmd_sync(low, full_return=True)
         else:
             return self._client.cmd(*cmd_args.args, **cmd_args.kwargs)
+
+    def _fun_fun(
+        self,
+        fun,
+        fun_fun: str,
+        fun_args: Optional[Union[List, Tuple]] = None,
+        **kwargs
+    ):
+        fun_args = [fun_fun] + list(fun_args or [])
+        return super()._fun_fun(
+            'salt.cmd', fun, fun_args=fun_args, **kwargs
+        )
 
 
 @attr.s(auto_attribs=True)

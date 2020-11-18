@@ -138,6 +138,43 @@ class RunArgsSaltClientParams:
 @attr.s(auto_attribs=True)
 class RunArgsBase:
     targets: str = RunArgs.targets
+    runner_minion_id: str = RunArgs.runner_minion_id
+
+
+@attr.s(auto_attribs=True)
+class RunArgsSaltClient:
+    salt_client_type: str = RunArgsSaltClientParams.salt_client_type
+    salt_c_path: str = RunArgsSaltClientParams.salt_c_path
+    salt_ssh_roster: str = RunArgsSaltClientParams.salt_ssh_roster
+    salt_ssh_profile: str = RunArgsSaltClientParams.salt_ssh_profile
+    fileroot_path: Union[FileRootPath, str] = (
+        SaltClientBaseParams.fileroot_path
+    )
+    pillar_path: Union[PillarPath, str] = SaltClientBaseParams.pillar_path
+
+    client: str = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        kwargs = dict(
+            c_path=self.salt_c_path,
+            fileroot_path=self.fileroot_path,
+            pillar_path=self.pillar_path
+        )
+
+        if issubclass(self.salt_client_type, SaltSSHClient):
+            # XXX EOS-17600 re_config always True here
+            kwargs.update(dict(
+                profile=self.salt_ssh_profile,
+                roster_file=self.salt_ssh_roster,
+                re_config=True
+            ))
+
+        self.client = self.salt_client_type(**kwargs)
+
+
+@attr.s(auto_attribs=True)
+class ProvisionerCommand:
+    """Base class for provisioner commands."""
 
 
 @attr.s(auto_attribs=True)
