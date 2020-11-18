@@ -26,7 +26,7 @@
 
 Update Management VIP:
   cmd.run:
-    - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }} cidr_netmask=$(ip addr show { mgmt_if } | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2)
+    - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }} cidr_netmask=$(ip addr show {{ mgmt_if }} | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2)
 
 {% else %}
 
