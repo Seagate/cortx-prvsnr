@@ -44,7 +44,7 @@ function install_prvsnr() {
         mount -t iso9660 /opt/isos/${cortx_iso} /tmp/iso_mount/cortx 2>&1 | tee -a ${LOG_FILE}
         mount -t iso9660 /opt/isos/${os_iso} /tmp/iso_mount/cortx-os 2>&1 | tee -a ${LOG_FILE}
 
-        echo "INFO: Backing up exisitng repositories" 2>&1 | tee -a ${LOG_FILE}
+        echo "INFO: Backing up exisitng repositories" 2>&1 | tee -a "${LOG_FILE}"
         mv /etc/yum.repos.d /etc/yum.repos.d.bak
 
         echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
