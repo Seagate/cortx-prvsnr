@@ -38,11 +38,14 @@ No DNS config to apply:
 
 {% else %}
 # Configuration is DHCP
-Update resolv.conf:
-  cmd.run:
-    - name: |
-        pkill -9 dhclient
-        dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+# Update resolv.conf:
+#   cmd.run:
+#     - name: |
+#         pkill -9 dhclient
+#         dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+
+include:
+  - components.system.network.prepare
 {% endif %}
 
 # lo:

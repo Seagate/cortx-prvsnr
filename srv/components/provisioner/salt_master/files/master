@@ -853,7 +853,7 @@ pillar_roots:
   base:
     - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
-    - /srv/glusterfs/volume_prvsnr_data/srv/pillar  # fallback for read-only queries
+    - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
     - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
