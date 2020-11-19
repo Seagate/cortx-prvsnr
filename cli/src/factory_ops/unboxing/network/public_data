@@ -51,28 +51,28 @@ function backup_ifcfg {
 }
 
 
-# function test_data_ips {
-#     _linfo "Fetching IP of the nodes"
-#     remote_data_ip_srvnode_1=$()
-#     remote_data_ip_srvnode_2=$()
+function test_data_ips {
+    _linfo "Fetching IP of the nodes"
+    remote_data_ip_srvnode_1=$()
+    remote_data_ip_srvnode_2=$()
     
-#     # Test the IP that is set
-#     _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
-#     ping -c1 ${remote_mgmt_ip_srvnode_2} && ( 
-#         _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over public data network." || (
-#             _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over public data network."
-#             exit 21
-#         )
-#     )
+    # Test the IP that is set
+    _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
+    ping -c 1 -I ${remote_mgmt_ip_srvnode_1}  ${remote_mgmt_ip_srvnode_2} && ( 
+        _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over public data network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over public data network."
+            exit 21
+        )
+    )
     
-#     _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
-#     ssh_over_pvt_data ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
-#         _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over public data network." || (
-#             _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over public data network."
-#             exit 21
-#         )
-#     )
-# }
+    _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
+    ssh_over_pvt_data ${pvt_ip_b} "ping -c 1 -I ${remote_mgmt_ip_srvnode_2} ${remote_mgmt_ip_srvnode_1}" && ( 
+        _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over public data network." || (
+            _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over public data network."
+            exit 21
+        )
+    )
+}
 
 
 function update_cluster_pillar_for_public_data_ips {
@@ -86,21 +86,30 @@ function update_cluster_pillar_for_public_data_ips {
 
     if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
         # Get line number for public data network section start for srvnode-1
-        occurance_1=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
-        # Update pillar file
-        sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # occurance_1=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        # # Update pillar file
+        # sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+
+        provisioner pillar_set --local cluster/srvnode-1/network/data_nw/public_ip_addr \"${ip_1}\"
+        provisioner pillar_set --local cluster/srvnode-1/network/data_nw/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode-1/network/data_nw/netmask \"${netmask}\"
 
         # Get line number for public data network section start for srvnode-2
-        occurance_2=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
-        # Update pillar file
-        sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # occurance_2=$(grep -m2 -n data_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        # # Update pillar file
+        # sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+
+        provisioner pillar_set --local cluster/srvnode-2/network/data_nw/public_ip_addr \"${ip_2}\"
+        provisioner pillar_set --local cluster/srvnode-2/network/data_nw/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode-2/network/data_nw/netmask \"${netmask}\"
 
         # Gluster would take care of this after unboxing
-        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        ssh -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${pvt_ip_b}" "mkdir -p /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all"
+        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all/* "${pvt_ip_b}":/var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all/
     else
         _lerror "Cluster pillar file for user data doesn't exist. Exiting..."
         exit 41
@@ -185,7 +194,8 @@ function set_data_public_static_config {
     read -p "Public Data IP for ${data_if_1} on Server-A: " data_ip_1
     read -p "Public Data IP for ${data_if_2} on Server-B: " data_ip_2
     read -p "Gateway IP for Public Data interfaces on both nodes [Optional]: " gw_ip
-    read -p "Netmask for Public Data interfaces on both nodes [Optional]: " netmask
+    read -p "Netmask for Public Data interfaces on both nodes [255.255.252.0]: " netmask
+    [[ -z ${netmask} ]] && netmask=255.255.252.0
 
     _linfo "********************************************************************************"
     _linfo "You have provided the following information:"
@@ -220,7 +230,7 @@ function set_data_public_static_config {
     set_public_data_nw_config
     
     # Sanity check
-    # test_data_ips
+    test_data_ips
 
     _linfo "================================================================================"
     _linfo "        "

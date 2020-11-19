@@ -86,22 +86,31 @@ function update_cluster_pillar_for_mgmt_ips {
 
     if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
         # Get line number for management network section start for srvnode-1
-        occurance_1=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
-        # Update pillar file
-        sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # occurance_1=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|head -1|cut -d: -f1)
+        # # Update pillar file
+        # sed -in "${occurance_1},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_1}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_1},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_1},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+
+        provisioner pillar_set --local cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"${ip_1}\"
+        provisioner pillar_set --local cluster/srvnode-1/network/mgmt_nw/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode-1/network/mgmt_nw/netmask \"${netmask}\"
 
         # Get line number for management network section start for srvnode-2
-        occurance_2=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
-        # Update pillar file
-        sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-        sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # occurance_2=$(grep -m2 -n mgmt_nw /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls|tail -1|cut -d: -f1)
+        # # Update pillar file
+        # sed -in "${occurance_2},/public_ip_addr/ s/public_ip_addr:.*/public_ip_addr: \"${ip_2}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_2},/gateway/ s/gateway:.*/gateway: \"${gw_ip}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        # sed -in "${occurance_2},/netmask/ s/netmask:.*/netmask: \"${netmask}\"/p" /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+
+        provisioner pillar_set --local cluster/srvnode-2/network/mgmt_nw/public_ip_addr \"${ip_2}\"
+        provisioner pillar_set --local cluster/srvnode-2/network/mgmt_nw/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode-2/network/mgmt_nw/netmask \"${netmask}\"
 
         # Gluster would take care of this after unboxing
         _linfo "pvt_ip_b: ${pvt_ip_b}"
-        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls "${pvt_ip_b}":/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
+        ssh -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${pvt_ip_b}" "mkdir -p /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all"
+        scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all/* "${pvt_ip_b}":/var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all/
     else
         _lerror "Cluster pillar file for user data doesn't exist. Exiting..."
         exit 41

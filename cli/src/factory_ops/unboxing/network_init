@@ -41,7 +41,7 @@ set -euE
 BASEDIR=$(dirname "${BASH_SOURCE}")
 . ${BASEDIR}/../../common_utils/utility_scripts.sh
 . ${BASEDIR}/network/bmc
-. ${BASEDIR}/network/management
+. ${BASEDIR}/network/public_mgmt
 . ${BASEDIR}/network/public_data
 
 LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/unboxing_nw_update.log}"
