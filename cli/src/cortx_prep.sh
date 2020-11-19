@@ -44,8 +44,11 @@ function install_prvsnr() {
         mount -t iso9660 /opt/isos/${cortx_iso} /tmp/iso_mount/cortx 2>&1 | tee -a ${LOG_FILE}
         mount -t iso9660 /opt/isos/${os_iso} /tmp/iso_mount/cortx-os 2>&1 | tee -a ${LOG_FILE}
 
+        echo "INFO: Backing up exisitng repositories" 2>&1 | tee -a ${LOG_FILE}
+        mv /etc/yum.repos.d /etc/yum.repos.d.bak
+
         echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
-        touch /etc/yum.repos.d/bootstrap.repo
+        mkdir -p /etc/yum.repos.d && touch /etc/yum.repos.d/bootstrap.repo
         for repo in 3rd_party cortx_iso
         do
 cat >> /etc/yum.repos.d/bootstrap.repo <<EOF
@@ -68,8 +71,9 @@ name=Repository Base
 enabled=1
 EOF
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
+        yum clean all || true
         yum install -y \
-        python36-m2crypto \
+        python3 python36-m2crypto \
         salt salt-master salt-minion \
         python36-cortx-prvsnr \
         2>&1 | tee -a ${LOG_FILE}
