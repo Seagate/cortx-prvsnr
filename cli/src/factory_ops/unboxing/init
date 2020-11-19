@@ -294,8 +294,11 @@ salt "*" state.apply components.csm.prepare ${salt_opts}
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing build URL from Salt configuration" | tee -a ${LOG_FILE}
-provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
-sleep 2
+target_build=$(salt-call pillar.get release:target_build --output=newline_values_only)
+if [[ $target_build != file:///* ]]; then
+    provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
+    sleep 2
+fi
 
 echo "Removing stale URL (CentOS) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
