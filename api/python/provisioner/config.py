@@ -370,7 +370,6 @@ class Checks(Enum):
 
     """Enumeration for available checks/validations"""
 
-    ALL = "all"
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
@@ -378,10 +377,28 @@ class Checks(Enum):
     CLUSTER_STATUS = "cluster_status"
     LOGS_ARE_GOOD = "logs_are_good"
     PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+    STORAGE_LVMS = "storage_lvms"
+    STORAGE_LUNS = "storage_luns"
+    MGMT_VIP = "mgmt_vip"
+    HOSTNAMES = "hostnames"
+
+
+class GroupChecks(Enum):
+
+    """Enum for group checks."""
+
+    ALL = "all"
+    POST_CHECKS = "post_checks"
+    REPLACENODE_CHECKS = "replacenode_checks"
+    SWUPDATE_CHECKS = "swupdate_checks"
 
 
 # Set of supported validations/checks
-CHECKS = {
+CHECKS = [check.value for check in Checks]
+
+GROUP_CHECKS = [check.value for check in GroupChecks]
+
+SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
     Checks.CONNECTIVITY.value,
     Checks.BMC_ACCESSIBILITY.value,
@@ -389,6 +406,20 @@ CHECKS = {
     Checks.CLUSTER_STATUS.value,
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
+}
+
+REPLACENODE_CHECKS = {
+    Checks.STORAGE_LUNS.value,
+    Checks.MGMT_VIP.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.HOSTNAMES.value
+}
+
+POST_CHECKS = {
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.STORAGE_LVMS.value,
+    Checks.STORAGE_LUNS.value,
+    Checks.MGMT_VIP.value
 }
 
 
