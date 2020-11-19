@@ -20,9 +20,7 @@
 set -eu
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
-# truncate -s 0 ${LOG_FILE}
 
-SALT_OPTS="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 function _lerror {
     local msg=${1}
@@ -45,7 +43,7 @@ function get_pillar_data {
         exit 1
     fi
 
-    local l_val=$(salt-call --local pillar.get "${l_key}" --output=newline_values_only '${SALT_OPTS}')
+    local l_val=$(salt-call --local pillar.get "${l_key}" --output=newline_values_only)
     echo ${l_val}
 }
 

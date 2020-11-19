@@ -44,8 +44,8 @@ remove_prvsnr=false
 
 controlpath_states=(
 # states to be applied in desired sequence
-    "uds"
     "csm"
+    "uds"
     "sspl"
 )
 
