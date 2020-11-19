@@ -21,14 +21,6 @@
 %}
 
 {% if (0 == salt['cmd.retcode']('command -v pcs')) %}
-{% if (0 == salt['cmd.retcode']('pcs resource show ClusterIP-clone')) %}
-
-Update ClusterIP:
-  cmd.run:
-    - name: pcs resource update ClusterIP ip={{ pillar['cluster']['cluster_ip'] }}
-    - onlyif: pcs resource show ClusterIP
-
-{% else %}  # Is pcs installed & ClusterIP exists
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
   {%- set data_if = 'data0' -%}
@@ -36,9 +28,18 @@ Update ClusterIP:
   {%- set data_if = pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] -%}
 {%- endif -%}
 
+{% if (0 == salt['cmd.retcode']('pcs resource show ClusterIP-clone')) %}
+
+Update ClusterIP:
+  cmd.run:
+    - name: pcs resource update ClusterIP ip={{ pillar['cluster']['cluster_ip'] }} cidr_netmask=$(ip addr show {{ data_if }} | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2) op monitor interval=30s
+    - onlyif: pcs resource show ClusterIP
+
+{% else %}  # Is pcs installed & ClusterIP exists
+
 Setup ClusterIP resouce:
   cmd.run:
-    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} mac=$(echo "01:00:5e:`echo {{ grains['hwaddr_interfaces'][data_if] }} | cut -d ":" -f 1-3`") nic={{ data_if }} op monitor interval=30s
+    - name: pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip={{ pillar['cluster']['cluster_ip'] }} mac=$(echo "01:00:5e:`echo {{ grains['hwaddr_interfaces'][data_if] }} | cut -d ":" -f 1-3`") nic={{ data_if }} cidr_netmask=$(ip addr show {{ data_if }} | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2) op monitor interval=30s
 
 Add stickiness metadata to ClusterIP resource:
   cmd.run:

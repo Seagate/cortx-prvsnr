@@ -48,8 +48,8 @@ tgt_node=srvnode-2
 controlpath_states=(
 # states to be applied in desired sequence
     "ha.ctrlstack-ha.teardown"
-    "uds.teardown"
     "csm.teardown"
+    "uds.teardown"
     "sspl.teardown"
 )
 

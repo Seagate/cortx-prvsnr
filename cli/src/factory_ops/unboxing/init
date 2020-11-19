@@ -257,10 +257,6 @@ echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
 pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
 sleep 2
 
-echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
-hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 5
-
 if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
     # Assign Static IPs on both the nodes
     echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
@@ -308,6 +304,10 @@ sleep 2
 echo "Removing build URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
+
+echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+sleep 15
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
@@ -366,6 +366,17 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
+
+service_user=$(salt srvnode-2 pillar.get system:service_user:name --output=newline_values_only)
+if [[ -n "$service_user" ]]; then
+    echo -n "Activating service user $service_user on the Server B node................." | tee -a ${LOG_FILE}
+    salt "srvnode-2" state.single user.present name="$service_user" expire=-1 ${salt_opts}
+    sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
+else
+    # backward compatibility
+    echo -n "WARNING: Skipping service user activation on the Server B node, the user is not set" | tee -a ${LOG_FILE}
+fi
 
 # Unboxing SUCCESS
 remove_boxing_flag

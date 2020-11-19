@@ -20,4 +20,5 @@ include:
   - components.system.config.hosts
   - components.system.config.journald
   - components.system.config.pillar_encrypt
+  - components.system.config.service_user
   - components.system.config.sshd

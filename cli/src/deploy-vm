@@ -78,8 +78,8 @@ iopath_states=(
 controlpath_states=(
     # states to be applied in desired sequence
         "sspl"
-        "csm"
         "uds"
+        "csm"
     )
 
 sync_states=(

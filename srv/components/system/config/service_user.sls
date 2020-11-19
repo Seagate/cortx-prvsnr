@@ -15,23 +15,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if 'primary' in grains['roles'] 
-  and pillar['cluster']['mgmt_vip'] %}
+{% if salt['pillar.get']('system:service_user:password') %}
 
-{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-  {%- set mgmt_if = 'mgmt0' -%}
+    {% set base_dir = '/opt/seagate/users' %}
+    {% set user_data = salt['pillar.get']('system:service_user') %}
+
+seagate_users_dir_created:
+  file.directory:
+    - name: {{ base_dir }}
+    - user: root
+    - group: root
+    - mode: 755
+
+service_user_configured:
+  user.present:
+    - name: {{ user_data['name'] }}
+    - password: {{ salt['lyveutil.decrypt']('system', user_data['password']) }}
+    - hash_password: True
+    - home: {{ base_dir }}/{{ user_data['name'] }}
+    - shell: {{ user_data['shell'] }}
+    - groups: {{ user_data['groups'] }}
+    # would be activated at unboxing time
+    {% if not pillar['cluster'][grains['id']]['is_primary'] -%}
+    - expire: 1
+    {% endif %}
+
 {% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
-{% endif %}
 
-Update Management VIP:
-  cmd.run:
-    - name: pcs resource update kibana-vip ip={{ pillar['cluster']['mgmt_vip'] }} cidr_netmask=$(ip addr show {{ mgmt_if }} | grep -m 1 "inet\b" | awk '{print $2}' | cut -d "/" -f2)
-
-{% else %}
-
-No Management VIP application:
-  test.show_notification:
-    - text: "Management VIP application only applies to primary node. Either this is not a primary node or value of Management Network VIP is missing in cluster pillar."
+no_password:
+  test.nop: []
 
 {% endif %}
