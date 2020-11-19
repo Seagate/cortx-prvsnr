@@ -605,8 +605,8 @@ fileserver_backend:
 # is False.
 #fileserver_limit_traversal: False
 
-gitfs_remotes:
-   - https://github.com/saltstack-formulas/docker-formula
+#gitfs_remotes:
+#   - https://github.com/saltstack-formulas/docker-formula
 
 # The hash_type is the hash to use when discovering the hash of a file on
 # the local fileserver. The default is sha256, but md5, sha1, sha224, sha384
