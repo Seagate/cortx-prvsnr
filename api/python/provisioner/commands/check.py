@@ -617,7 +617,7 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _network_drivers(*, args: str) -> List[CheckEntry]:
+    def _network_drivers(*, args: str) -> CheckEntry:
         """
         Check if Network Drivers are proper
 
@@ -648,18 +648,19 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _network_hca(*, args: str) -> List[CheckEntry]:
+    def _network_hca(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check if Network HCA are proper
 
         :param args: network_hca check specific parameters and arguments
         :return:
         """
-        check_value : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
+        check_value: CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
 
         if cortx_py_utils_import_error:
-            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                             comment="Package cortx-py-utils not installed")
+            check_value.set_fail(
+                            checked_target=cfg.ALL_MINIONS,
+                            comment="Package cortx-py-utils not installed")
             return check_value
 
         try:
@@ -672,7 +673,7 @@ class Check(CommandParserFillerMixin):
         res: List[CheckEntry] = list()
 
         for provider in cfg.HCA_PROVIDER:
-            check_res : CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
+            check_res: CheckEntry = CheckEntry(cfg.Checks.NETWORK_HCA.value)
 
             try:
                 hca_args = [provider] + nodes
@@ -690,18 +691,19 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _storage_luns(*, args: str) -> List[CheckEntry]:
+    def _storage_luns(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check if Storage LUNs are proper
 
         :param args: storage_luns check specific parameters and arguments
         :return:
         """
-        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
+        check_value: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
         if cortx_py_utils_import_error:
-            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                             comment="Package cortx-py-utils not installed")
+            check_value.set_fail(
+                            checked_target=cfg.ALL_MINIONS,
+                            comment="Package cortx-py-utils not installed")
             return check_value
 
         try:
@@ -714,7 +716,7 @@ class Check(CommandParserFillerMixin):
         res: List[CheckEntry] = list()
 
         for luns_check in cfg.LUNS_CHECKS:
-            check_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
+            check_res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
             try:
                 lun_args = [luns_check] + nodes
@@ -733,18 +735,19 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _storage_hba(*, args: str) -> List[CheckEntry]:
+    def _storage_hba(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
         """
         Check if Storage HBA is proper
 
         :param args: storage_hba check specific parameters and arguments
         :return:
         """
-        check_value : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
+        check_value: CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
 
         if cortx_py_utils_import_error:
-            check_value.set_fail(checked_target=cfg.ALL_MINIONS,
-                             comment="Package cortx-py-utils not installed")
+            check_value.set_fail(
+                                checked_target=cfg.ALL_MINIONS,
+                                comment="Package cortx-py-utils not installed")
             return check_value
 
         try:
@@ -757,7 +760,7 @@ class Check(CommandParserFillerMixin):
         res: List[CheckEntry] = list()
 
         for provider in cfg.HBA_PROVIDER:
-            check_res : CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
+            check_res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_HBA.value)
 
             try:
                 hba_args = [provider] + nodes
