@@ -415,8 +415,13 @@ class Validation():
     @staticmethod
     def check_ip4(instace, attribute, value):
         try:
+            ip = None
             if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
-                ipaddress.IPv4Address(value)
+                ip = ipaddress.IPv4Address(value)
+                # TODO : Improve logic internally convert ip to
+                # canonical forms.
+                if str(ip) != value:
+                    raise ValueError
         except ValueError:
             raise ValueError(
                 f"{attribute.name}: invalid ip4 address {value}"
