@@ -32,6 +32,24 @@ Stage - Config Cortx-cli:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/cli/conf/setup.yaml', 'cli:config')
     - onlyif: rpm -q cortx-cli
 
+Add USL native.key file:
+  file.managed:
+    - source: salt://components/csm/files/tls/native.key
+    - name: /var/csm/tls/native.key
+    - makedirs: True
+    - mode: 600
+    - user: csm
+    - group: csm
+
+Add USL native.crt file:
+  file.managed:
+    - source: salt://components/csm/files/tls/native.crt
+    - name: /var/csm/tls/native.crt
+    - makedirs: True
+    - mode: 600
+    - user: csm
+    - group: csm
+
 Add csm user to certs group:
   group.present:
     - name: certs
