@@ -778,6 +778,81 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
+    def _storage_lvms(*, args: str) -> CheckEntry:
+        """Storage lvms check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LVMS.value)
+
+        if cortx_py_utils_import_error:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+
+        try:
+            nodes = Check._get_pillar_data("cluster/node_list")
+            StorageV().validate('lvms', nodes)
+        except Exception as exc:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=cfg.ALL_MINIONS)
+
+        return res
+
+    @staticmethod
+    def _mgmt_vip(*, args: str) -> CheckEntry:
+        """Network mgmt vip check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.MGMT_VIP.value)
+
+        if cortx_py_utils_import_error:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+
+        try:
+            mgmt_vip = Check._get_pillar_data("cluster/mgmt_vip")
+            NetworkV().validate('connectivity', [mgmt_vip])
+        except Exception as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=local_minion_id())
+
+        return res
+
+    @staticmethod
+    def _hostnames(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
+        """Validate hostnames check."""
+        res: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+
+        if cortx_py_utils_import_error:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+
+        res: List[CheckEntry] = list()
+        try:
+            check_salt: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+            nodes = Check._get_pillar_data("cluster/node_list")
+            for node in nodes:
+                check_ent: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
+                try:
+                    hostname = Check._get_pillar_data(
+                                   f"cluster/{node}/hostname")
+                    NetworkV().validate('connectivity', [hostname])
+                except Exception as exc:
+                    check_ent.set_fail(checked_target=local_minion_id(),
+                                       comment=str(exc))
+                else:
+                    check_ent.set_passed(checked_target=hostname)
+                res.append(check_ent)
+
+        except Exception as exc:
+            check_salt.set_fail(checked_target=local_minion_id(),
+                                comment=str(exc))
+            res.append(check_salt)
+        return res
+
+    @staticmethod
     def _get_pillar_data(key):
         """Retrieve pillar data."""
         pillar_key = PillarKey(key)

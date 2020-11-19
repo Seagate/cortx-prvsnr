@@ -108,6 +108,17 @@ else
     cortxcli support_bundle generate manifest -c "manifest" 2>&1 | tee -a ${LOG_FILE}
 fi
 
+echo "INFO: Resolving service user credentials" | tee -a ${LOG_FILE}
+service_user_name=$(salt-call pillar.get system:service_user:name --output=newline_values_only)
+service_user_secret_encrypted=$(salt-call pillar.get system:service_user:password --output=newline_values_only)
+service_user_secret=$(salt-call lyveutil.decrypt system "$service_user_secret_encrypted" --output=newline_values_only)
+
+if [[ -z "$service_user_name" || -z "$service_user_secret" ]]; then
+    msg="ERROR: credentials for a service user are not found"
+    echo "$msg" | tee -a ${LOG_FILE}
+    exit 1
+fi
+
 # Shutdown HA
 if ! command -v pcs; then
     echo "ERROR: Command 'pcs' not found"
@@ -143,7 +154,7 @@ configure_service_port
 #Remove gluster fs mounts
 remove_gfs_mounts
 # Create user for unboxing
-create_unboxing_user
+dump_unboxing_data "$service_user_name" "$service_user_secret"
 
 # Create flag file
 boxing_flag $box_flag_file

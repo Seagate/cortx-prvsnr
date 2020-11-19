@@ -1738,6 +1738,18 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     ), targets=run_args.primary.minion_id
                 )
 
+            logger.info("Generating a password for the service user")
+            service_user_password = str(uuid.uuid4()).split('-')[0]
+            ssh_client.cmd_run(
+                (
+                    'provisioner pillar_set'
+                    f' system/service_user/password '
+                    f' \'"{service_user_password}"\''
+                ),
+                targets=run_args.primary.minion_id,
+                secure=True
+            )
+
         if run_args.target_build:
             # TODO IMPROVE non idempotent now
             logger.info("Get release factory version")
@@ -1786,7 +1798,20 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
         logger.info("Updating BMC IPs")
-        ssh_client.cmd_run("salt-call state.apply components.misc_pkgs.ipmi")
+
+        if run_args.ha:
+            # NOTE. in HA mode cluster.sls is shared across all nodes
+            #       so update it in a sequence to avoid possible race
+            #       condition (EOS-15134)
+            for node in run_args.nodes:
+                ssh_client.cmd_run(
+                    "salt-call state.apply components.misc_pkgs.ipmi",
+                    targets=node.minion_id
+                )
+        else:
+            ssh_client.cmd_run(
+                "salt-call state.apply components.misc_pkgs.ipmi"
+            )
 
         return setup_ctx
 

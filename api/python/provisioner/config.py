@@ -376,18 +376,22 @@ class Checks(Enum):
     CLUSTER_STATUS = "cluster_status"
     LOGS_ARE_GOOD = "logs_are_good"
     PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+    STORAGE_LVMS = "storage_lvms"
     STORAGE_LUNS = "storage_luns"
+    MGMT_VIP = "mgmt_vip"
+    HOSTNAMES = "hostnames"
     STORAGE_HBA = "storage_hba"
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
 
 
 class GroupChecks(Enum):
-    """Enum for group checks"""
+    """Enum for group checks."""
 
     ALL = "all"
     PRE_CHECKS = "pre_checks"
     POST_CHECKS = "post_checks"
+    REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
 
 
@@ -413,9 +417,18 @@ SWUPDATE_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
 
+REPLACENODE_CHECKS = {
+    Checks.STORAGE_LUNS.value,
+    Checks.MGMT_VIP.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.HOSTNAMES.value
+}
+
 POST_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value,
-    Checks.STORAGE_LUNS.value
+    Checks.STORAGE_LVMS.value,
+    Checks.STORAGE_LUNS.value,
+    Checks.MGMT_VIP.value
 }
 
 
