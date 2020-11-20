@@ -26,13 +26,13 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
 
 function _lerror {
     local msg=${1}
-    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a "${LOG_FILE}"
 }
 
 function _linfo {
     local msg=${1}
-    echo -e "${msg}" 2>&1 | tee -a ${LOG_FILE}
-    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" >> ${LOG_FILE}  2>&1
+    echo -e "${msg}" 2>&1 | tee -a "${LOG_FILE}"
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" >> "${LOG_FILE}"  2>&1
 }
 
 function get_pillar_data {
@@ -124,7 +124,7 @@ function ensure_healthy_cluster {
                     elif [[ "$_nowait" == false ]]; then
                         answer='n'
                     else
-                        echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
+                        echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a "${LOG_FILE}"
                         read answer
                     fi
 
@@ -133,7 +133,7 @@ function ensure_healthy_cluster {
                         # Break the loop and proceed
                         break
                     else
-                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."{LOG_FILE}
+                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."
                         sleep 10
                     fi
                 fi
