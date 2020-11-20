@@ -310,7 +310,9 @@ sleep 2
 
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 120
+
+echo "Ensure cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
