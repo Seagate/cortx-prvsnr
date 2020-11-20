@@ -740,7 +740,8 @@ file_roots:
 # To use multiple backends list them in the order they are searched:
 fileserver_backend:
   - roots
-  - gitfs
+#  - gitfs
+
 #
 # Uncomment the line below if you do not want the file_server to follow
 # symlinks when walking the filesystem tree. This is set to True
@@ -809,8 +810,8 @@ fileserver_backend:
 # environments.
 # Note: file:// repos will be treated as a remote, so refs you want used must
 # exist in that repo as *local* refs.
-gitfs_remotes:
-   - https://github.com/saltstack-formulas/docker-formula
+#gitfs_remotes:
+#   - https://github.com/saltstack-formulas/docker-formula
 
 #gitfs_remotes:
 #  - git://github.com/saltstack/salt-states.git
@@ -850,9 +851,9 @@ gitfs_remotes:
 #  - cmd_yaml: cat /etc/salt/yaml
 pillar_roots:
   base:
-    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
-    - /srv/glusterfs/volume_prvsnr_data/srv/pillar  # fallback for read-only queries
+    - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
     - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
