@@ -58,7 +58,7 @@ function test_mgmt_ips {
     
     # Test the IP that is set
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
-    ping -c1 ${remote_mgmt_ip_srvnode_2} && (
+    ping -c1 -W2 -I"${remote_mgmt_ip_srvnode_1}" "${remote_mgmt_ip_srvnode_2}" && (
         _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over management network." || (
             _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over management network."
             exit 21
@@ -66,7 +66,7 @@ function test_mgmt_ips {
     )
     
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
-    ssh_over_pvt_data ${pvt_ip_b} "ping -c1 ${remote_mgmt_ip_srvnode_1}" && ( 
+    ssh_over_pvt_data ${pvt_ip_b} "ping -c1 -W2 -I${remote_mgmt_ip_srvnode_2} ${remote_mgmt_ip_srvnode_1}" && ( 
         _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over management network." || (
             _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over management network."
             exit 21
@@ -195,7 +195,7 @@ function set_mgmt_static_config {
     _linfo "    "
 
     mgmt_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
-    mgmt_if_2=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
     
     # User inputs
     read -p "Management IP for ${mgmt_if_2} on Server-A: " mgmt_ip_1

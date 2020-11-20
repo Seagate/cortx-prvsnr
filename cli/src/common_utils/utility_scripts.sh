@@ -57,7 +57,7 @@ function ssh_over_pvt_data {
     cmd=${2:-}
 
     if [[ -n ${cmd} ]]; then
-        echo $(ssh -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${remote_node}" "${cmd}")
+        echo $(ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${remote_node}" "${cmd}")
         return $?
     else
         _lerror "$0: The method for remote execution is called without passing the intended command."
