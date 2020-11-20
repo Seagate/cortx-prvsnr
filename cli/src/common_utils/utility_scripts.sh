@@ -140,7 +140,7 @@ function ensure_healthy_cluster {
             else
                 _linfo "Something's not right. All resources are not started..."
 
-                if [[ ${attempt} -ge 10 ]]; then
+                if [[ ${attempt} -ge 20 ]]; then
                     _lerror "Giving up after ${attempt} attempts."
                     exit 20
                 fi
