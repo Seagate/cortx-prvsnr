@@ -106,7 +106,7 @@ def _generate_logfile_filename(cmd):
     return (config.LOG_ROOT_DIR / f'{cmd}.{ts}.{pid}.{threadid}.log')
 
 
-def _set_logging(output_type, log_args=None, other_args=None):
+def _set_logging(output_type, log_args=None, other_args=None):  # noqa: C901
     if log_args is None:
         log_args = log.LogArgs()
 
