@@ -206,6 +206,20 @@ class SaltClientArgs(SaltClientArgsBase):
     nowait: bool = False
 
 
+@attr.s(auto_attribs=True)
+class SaltCallerArgs(SaltClientArgsBase):
+    targets: Any = attr.ib(init=False, default=None)
+    kw: Any = attr.ib(init=False, default=attr.Factory(dict))
+
+    @property
+    def args(self):
+        return (self.fun, *self.fun_args)
+
+    @property
+    def kwargs(self):
+        return self.fun_kwargs
+
+
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltSSHArgs(SaltClientArgsBase):
@@ -354,6 +368,7 @@ class SaltClientResult:
 
     raw: Any
     cmd_args_view: Dict
+    client: Dict = None
     results: Any = attr.ib(init=False, default=attr.Factory(dict))
     fails: Any = attr.ib(init=False, default=attr.Factory(dict))
 
@@ -410,6 +425,36 @@ class SaltClientResult:
         return fails
 
 
+@attr.s(auto_attribs=True)
+class SaltCallerClientResult(SaltClientResult):
+    def __attrs_post_init__(self):
+        self.raw = {
+            'local': {
+                'ret': self.raw,
+                # XXX not declared salt internals, no other way to
+                #     detect a failure
+                'retcode': self.client.sminion.functions.pack[
+                    '__context__'].get('retcode', 0)
+            }
+        }
+        super().__attrs_post_init__()
+
+    def _parse_raw_dict(self):
+        ret = self.raw['local']['ret']
+
+        if (
+            self.cmd_args_view['fun'].startswith('state.')
+            and (type(ret) is dict)
+        ):
+            self.results['local'] = ret
+
+            _fails = self._get_state_fails(ret)
+            if _fails:
+                self.fails['local'] = _fails
+        else:
+            super()._parse_raw_dict()
+
+
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltSSHClientResult(SaltClientResult):
@@ -463,7 +508,9 @@ def salt_caller():
 
 def salt_caller_local():
     global _salt_caller_local
-    if not _salt_caller_local:
+    # FIXME EOS-14233 by some reason pillar.item result are not updated
+    #       for old handlers even if refresh step is called
+    if not _salt_caller_local or True:
         __opts__ = salt.config.minion_config('/etc/salt/minion')
         __opts__['file_client'] = 'local'
         _salt_caller_local = Caller(mopts=__opts__)
@@ -951,29 +998,46 @@ def _salt_client_cmd(
     fun_kwargs: Union[Dict, None] = None,
     nowait=False,
     secure=False,
+    local=False,
     **kwargs
 ):
-    # TODO log username / password ??? / eauth
-    cmd_args = SaltClientArgs(
-        targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait,
-        secure=secure
-    )
-
-    _set_auth(cmd_args.kw)
-    cmd_args.kw['full_return'] = True
+    if local:
+        # TODO IMPROVE some of the arguments would be silently ignored here
+        cmd_args = SaltCallerArgs(
+            fun=fun, fun_args=fun_args, fun_kwargs=fun_kwargs, secure=secure
+        )
+    else:
+        # TODO log username / password ??? / eauth
+        cmd_args = SaltClientArgs(
+            targets, fun, fun_args, fun_kwargs, kw=kwargs, nowait=nowait,
+            secure=secure
+        )
+        _set_auth(cmd_args.kw)
+        cmd_args.kw['full_return'] = True
 
     # TODO IMPROVE EOS-14361 make a View class instead
     cmd_args_view = cmd_args._as_dict()
 
+    if local:
+        client = salt_caller_local()
+        salt_res_t = SaltCallerClientResult
+    else:
+        client = salt_local_client()
+        salt_res_t = SaltClientResult
+
     try:
-        _cmd_f = (
-            salt_local_client().cmd_async if nowait
-            else salt_local_client().cmd
-        )
+        if local:
+            _cmd_f = client.cmd
+        else:
+            _cmd_f = (
+                client.cmd_async if nowait
+                else salt_local_client().cmd
+            )
+
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
         # TODO too generic
-        raise SaltCmdRunError(cmd_args_view, exc) from exc
+        raise SaltCmdRunError(cmd_args_view, repr(exc)) from exc
 
     if not salt_res:
         reason = (
@@ -985,7 +1049,7 @@ def _salt_client_cmd(
     if nowait:
         return salt_res
 
-    res = SaltClientResult(salt_res, cmd_args_view)
+    res = salt_res_t(salt_res, cmd_args_view, client)
 
     if res.fails:
         raise SaltCmdResultError(cmd_args_view, res.fails)
@@ -1040,8 +1104,8 @@ def function_run(
     return res
 
 
-def pillar_get(targets=ALL_MINIONS):
-    return function_run('pillar.items', targets=targets)
+def pillar_get(targets=ALL_MINIONS, **kwargs):
+    return function_run('pillar.items', targets=targets, **kwargs)
 
 
 def pillar_refresh(targets=ALL_MINIONS):
