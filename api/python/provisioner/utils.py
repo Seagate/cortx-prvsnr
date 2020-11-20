@@ -39,12 +39,24 @@ logger = logging.getLogger(__name__)
 
 
 # TODO TEST
-def validator_path_exists(instance, attribute, value):
+
+def validator_path(instance, attribute, value):
     if value is None:
         if attribute.default is not None:
             raise ValueError(f"{attribute.name} should be defined")
-    elif not value.exists():
+    elif not isinstance(value, Path):
+        raise TypeError(f"{attribute.name} should be a Path")
+
+
+def validator_path_exists(instance, attribute, value):
+    validator_path(instance, attribute, value)
+
+    if value and not value.exists():
         raise ValueError(f"Path {value} doesn't exist")
+
+
+def converter_path(value):
+    return value if value is None else Path(str(value))
 
 
 def converter_path_resolved(value):

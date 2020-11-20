@@ -33,7 +33,7 @@ Public direct network:
     - type: eth
     - enabled: True
     - nm_controlled: no
-    - onboot: yes
+    # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: yes
 {% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] %}
