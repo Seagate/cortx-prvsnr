@@ -146,13 +146,23 @@ fi
 stop_services
 get_nw_interface_names
 reset_vips
+
+# The next 2 steps creates a blank entry for public_ip_address in uu_cluster.sls
+# Management network changes
+reset_pub_mgmt_ips
+# Public data network changes
 reset_pub_data_ips
+
 seagate_refs_cleanup
 #TODO: Remove URLs from release and commons sls
 backup_files
+
+# Set unused management network on Server-A for service use
 configure_service_port
+
 #Remove gluster fs mounts
 remove_gfs_mounts
+
 # Create user for unboxing
 dump_unboxing_data "$service_user_name" "$service_user_secret"
 

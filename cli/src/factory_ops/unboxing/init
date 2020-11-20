@@ -49,6 +49,7 @@ management_vip=
 
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
+. ${BASEDIR}/network_init
 . ${BASEDIR}/pre_unbox
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
