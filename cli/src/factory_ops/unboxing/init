@@ -310,7 +310,7 @@ sleep 2
 
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 15
+sleep 120
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
@@ -357,6 +357,12 @@ echo -n "UDS...................................." | tee -a ${LOG_FILE}
 pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "HAProxy................................" | tee -a ${LOG_FILE}
+pcs resource refresh haproxy-c1 >> ${LOG_FILE}
+pcs resource refresh haproxy-c2 >> ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 5
 
 echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
 echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}
