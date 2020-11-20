@@ -54,8 +54,8 @@ from ..config import (
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
     REPO_CANDIDATE_NAME,
     RELEASE_INFO_FILE,
-    ReleaseInfo,
-    GroupChecks
+    GroupChecks,
+    ReleaseInfo
 )
 from ..pillar import (
     KeyPath,
