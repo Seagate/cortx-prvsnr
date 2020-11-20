@@ -316,21 +316,21 @@ function update_pillar_from_local {
     # Server Node A
     srv1_public_mgmt_ip=$(salt-call --local pillar.get cluster:srvnode-1:network:mgmt_nw:public_ip_addr --output=newline_values_only)
     if [[ "${srv1_public_mgmt_ip}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"${srv1_public_mgmt_ip}\"
     fi
 
     srv1_public_gateway=$(salt-call --local pillar.get cluster:srvnode-1:network:mgmt_nw:gateway --output=newline_values_only)
     if [[ "${srv1_public_gateway}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway \"\"
+        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway \"${srv1_public_gateway}\"
     fi
 
     srv1_public_netmask=$(salt-call --local pillar.get cluster:srvnode-1:network:mgmt_nw:netmask --output=newline_values_only)
     if [[ "${srv1_public_netmask}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask \"\"
+        provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask \"${srv1_public_netmask}\"
     fi
@@ -338,21 +338,21 @@ function update_pillar_from_local {
     # Server Node B
     srv1_public_mgmt_ip=$(salt-call --local pillar.get cluster:srvnode-2:network:mgmt_nw:public_ip_addr --output=newline_values_only)
     if [[ "${srv1_public_mgmt_ip}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr \"${srv1_public_mgmt_ip}\"
     fi
 
     srv1_public_gateway=$(salt-call --local pillar.get cluster:srvnode-2:network:mgmt_nw:gateway --output=newline_values_only)
     if [[ "${srv1_public_gateway}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway \"\"
+        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway \"${srv1_public_gateway}\"
     fi
 
     srv1_public_netmask=$(salt-call --local pillar.get cluster:srvnode-2:network:mgmt_nw:netmask --output=newline_values_only)
     if [[ "${srv1_public_netmask}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask \"\"
+        provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask \"${srv1_public_netmask}\"
     fi
@@ -361,21 +361,21 @@ function update_pillar_from_local {
     # Server Node A
     srv1_public_mgmt_ip=$(salt-call --local pillar.get cluster:srvnode-1:network:data_nw:public_ip_addr --output=newline_values_only)
     if [[ "${srv1_public_mgmt_ip}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${srv1_public_mgmt_ip}\"
     fi
 
     srv1_public_gateway=$(salt-call --local pillar.get cluster:srvnode-1:network:data_nw:gateway --output=newline_values_only)
     if [[ "${srv1_public_gateway}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway \"\"
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway \"${srv1_public_gateway}\"
     fi
 
     srv1_public_netmask=$(salt-call --local pillar.get cluster:srvnode-1:network:data_nw:netmask --output=newline_values_only)
     if [[ "${srv1_public_netmask}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask \"\"
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask \"${srv1_public_netmask}\"
     fi
@@ -383,21 +383,21 @@ function update_pillar_from_local {
     # Server Node B
     srv1_public_mgmt_ip=$(salt-call --local pillar.get cluster:srvnode-2:network:data_nw:public_ip_addr --output=newline_values_only)
     if [[ "${srv1_public_mgmt_ip}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${srv1_public_mgmt_ip}\"
     fi
 
     srv1_public_gateway=$(salt-call --local pillar.get cluster:srvnode-2:network:data_nw:gateway --output=newline_values_only)
     if [[ "${srv1_public_gateway}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway \"${srv1_public_gateway}\"
     fi
 
     srv1_public_netmask=$(salt-call --local pillar.get cluster:srvnode-2:network:data_nw:netmask --output=newline_values_only)
     if [[ "${srv1_public_netmask}" == "None" ]]; then
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask \"\"
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask \"${srv1_public_netmask}\"
     fi
