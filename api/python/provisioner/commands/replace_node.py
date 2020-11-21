@@ -16,6 +16,7 @@
 #
 
 import logging
+import os
 
 from .. import (
     config,
@@ -123,7 +124,7 @@ class ReplaceNode(SetupProvisioner):
             run_subprocess_cmd(['unalias', 'cp'])
 
         factory_profile = config.PRVSNR_FACTORY_PROFILE_DIR
-        if not factory_profile.is_dir():
+        if (not factory_profile.is_dir()) or (len(os.listdir())):
             factory_profile = (
                 config.GLUSTERFS_VOLUME_PRVSNR_DATA / 'factory_profile'
             )
