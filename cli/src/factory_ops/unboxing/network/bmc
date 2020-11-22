@@ -92,8 +92,8 @@ function set_bmc_static_config {
 
     _linfo "********************************************************************************"
     _linfo "You have provided the following information:"
-    _linfo "    BMC IP for Server-A:                            ${mgmt_ip_1}"
-    _linfo "    BMC IP for Server-B:                            ${mgmt_ip_2}"
+    _linfo "    BMC IP for Server-A:                            ${bmc_srv_1}"
+    _linfo "    BMC IP for Server-B:                            ${bmc_srv_2}"
     _linfo "    Gateway IP for BMC interfaces on both nodes:    ${gw_ip}"
     _linfo "    Netmask for BMC network on both servers:        ${netmask}"
     _linfo "********************************************************************************"
@@ -127,7 +127,7 @@ function set_bmc_static_config {
         ssh_over_pvt_data ${remote} "ipmitool lan set 1 access on"
 
         _linfo "Sleeping for 30 secs for the settings to take effect"
-        ssh_over_pvt_data ${remote} "sleep 30"
+        sleep 30
 
         _linfo "********************************************************************************"
         _linfo "BMC LAN settings on ${node_name} have been updated to: "
