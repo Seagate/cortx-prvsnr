@@ -248,6 +248,11 @@ salt '*' saltutil.refresh_grains ${salt_opts}
 sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
+# Re-configure firewall
+echo -n "Re-configuring firewall................................." | tee -a ${LOG_FILE}
+salt "*" state.apply components.system.firewall.config ${salt_opts}
+# sleep 5     # Mindfulness break
+echo "Ok." | tee -a ${LOG_FILE}
 
 if ! command -v pcs ; then
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
@@ -258,13 +263,13 @@ echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
 pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
 sleep 2
 
-if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
-    # Assign Static IPs on both the nodes
-    echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
-    salt "*" state.apply components.system.network.data.direct ${salt_opts}
-    sleep 5     # Mindfulness break
-    echo "Ok." | tee -a ${LOG_FILE}
-fi
+# if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
+#     # Assign Static IPs on both the nodes
+#     echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
+#     salt "*" state.apply components.system.network.data.direct ${salt_opts}
+#     sleep 5     # Mindfulness break
+#     echo "Ok." | tee -a ${LOG_FILE}
+# fi
 
 # Update ClusterIP
 echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
@@ -272,13 +277,13 @@ salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip 
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
+# Update HAProxy config
 echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
 salt "*" state.apply components.ha.haproxy.config ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Update Management_vip
-
 echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
 sleep 5     # Mindfulness break
