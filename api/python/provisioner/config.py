@@ -366,7 +366,6 @@ NOT_AVAILABLE = "N/A"
 
 
 class Checks(Enum):
-
     """Enumeration for available checks/validations"""
 
     NETWORK = "network"
@@ -380,13 +379,16 @@ class Checks(Enum):
     STORAGE_LUNS = "storage_luns"
     MGMT_VIP = "mgmt_vip"
     HOSTNAMES = "hostnames"
+    STORAGE_HBA = "storage_hba"
+    NETWORK_DRIVERS = "network_drivers"
+    NETWORK_HCA = "network_hca"
 
 
 class GroupChecks(Enum):
-
     """Enum for group checks."""
 
     ALL = "all"
+    PRE_CHECKS = "pre_checks"
     POST_CHECKS = "post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
@@ -396,6 +398,13 @@ class GroupChecks(Enum):
 CHECKS = [check.value for check in Checks]
 
 GROUP_CHECKS = [check.value for check in GroupChecks]
+
+PRE_CHECKS = {
+    Checks.NETWORK_DRIVERS.value,
+    Checks.NETWORK_HCA.value,
+    Checks.STORAGE_HBA.value,
+    Checks.STORAGE_LUNS.value
+}
 
 SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
@@ -420,6 +429,13 @@ POST_CHECKS = {
     Checks.STORAGE_LUNS.value,
     Checks.MGMT_VIP.value
 }
+
+
+# validations parameters
+NETWORK_DRIVER = "mlnx-ofed"
+HCA_PROVIDER = ["mellanox"]
+HBA_PROVIDER = ["lsi"]
+LUNS_CHECKS = ['accessible', 'mapped', 'size']
 
 
 class CheckVerdict(Enum):
