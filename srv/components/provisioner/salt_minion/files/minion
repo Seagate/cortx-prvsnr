@@ -587,7 +587,7 @@ file_roots:
 
 fileserver_backend:
   - roots
-  - gitfs
+#  - gitfs
 
 
 #
@@ -605,8 +605,8 @@ fileserver_backend:
 # is False.
 #fileserver_limit_traversal: False
 
-gitfs_remotes:
-   - https://github.com/saltstack-formulas/docker-formula
+#gitfs_remotes:
+#   - https://github.com/saltstack-formulas/docker-formula
 
 # The hash_type is the hash to use when discovering the hash of a file on
 # the local fileserver. The default is sha256, but md5, sha1, sha224, sha384
@@ -628,8 +628,9 @@ gitfs_remotes:
 
 pillar_roots:
   base:
-    - /var/lib/seagate/cortx/provisioner/local/srv/pillar  # new style
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
     - /opt/seagate/cortx/provisioner/pillar
 
 
