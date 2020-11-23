@@ -366,11 +366,13 @@ NOT_AVAILABLE = "N/A"
 
 
 class Checks(Enum):
-    """Enumeration for available checks/validations"""
+
+    """ Enumeration for available checks/validations """
 
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
+    BMC_STONITH = "bmc_stonith"
     COMMUNICABILITY = "communicability"
     CLUSTER_STATUS = "cluster_status"
     LOGS_ARE_GOOD = "logs_are_good"
@@ -379,19 +381,24 @@ class Checks(Enum):
     STORAGE_LUNS = "storage_luns"
     MGMT_VIP = "mgmt_vip"
     HOSTNAMES = "hostnames"
+    PUB_DATA_IP = "public_data_ip"
+    CONTROLLER_IP = "controller_ip"
     STORAGE_HBA = "storage_hba"
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
 
 
 class GroupChecks(Enum):
-    """Enum for group checks."""
+
+    """ Enum for group checks. """
 
     ALL = "all"
     PRE_CHECKS = "pre_checks"
     POST_CHECKS = "post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
+    UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
+    UNBOXING_POST_CHECKS = "unboxing_post_checks"
 
 
 # Set of supported validations/checks
@@ -427,7 +434,21 @@ POST_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.STORAGE_LVMS.value,
     Checks.STORAGE_LUNS.value,
-    Checks.MGMT_VIP.value
+    Checks.MGMT_VIP.value,
+    Checks.BMC_ACCESSIBILITY.value,
+}
+
+UNBOXING_PRE_CHECKS = {
+    Checks.PUB_DATA_IP.value,
+    Checks.HOSTNAMES.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.STORAGE_LUNS.value,
+    Checks.CONTROLLER_IP.value,
+}
+
+UNBOXING_POST_CHECKS = {
+    Checks.BMC_STONITH.value,
 }
 
 
