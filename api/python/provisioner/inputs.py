@@ -415,11 +415,20 @@ class Validation():
     @staticmethod
     def check_ip4(instace, attribute, value):
         try:
+            ip = None
             if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
-                ipaddress.IPv4Address(value)
-        except ValueError:
+                ip = ipaddress.IPv4Address(value)
+                # TODO : Improve logic internally convert ip to
+                # canonical forms.
+                if str(ip) != value:
+                    raise ValueError(
+                        "IP is not in canonical form."
+                        f"Canonical form of IP can be {str(ip)}"
+                    )
+        except ValueError as exc:
             raise ValueError(
-                f"{attribute.name}: invalid ip4 address {value}"
+                f"{attribute.name}: invalid ip4 address {value} "
+                f"Error: {str(exc)}"
             )
 
 
