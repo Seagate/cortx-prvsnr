@@ -18,19 +18,21 @@
 
 
 set -eu
+# ifndef behavior
+export COMMON_UTILS_UTILITY_SCRIPTS=1
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
-truncate -s 0 ${LOG_FILE}
 
 
 function _lerror {
     local msg=${1}
-    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "[ERROR  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a "${LOG_FILE}"
 }
 
 function _linfo {
     local msg=${1}
-    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" 2>&1 | tee -a ${LOG_FILE}
+    echo -e "${msg}" 2>&1 | tee -a "${LOG_FILE}"
+    echo -e "[INFO  $(date +'%Y-%m-%d %H:%M:%S')] ${msg}" >> "${LOG_FILE}"  2>&1
 }
 
 function get_pillar_data {
@@ -44,9 +46,38 @@ function get_pillar_data {
         exit 1
     fi
 
-    local l_val=$(salt-call pillar.get ${l_key} --output=newline_values_only)
+    local l_val=$(salt-call --local pillar.get "${l_key}" --output=newline_values_only)
     echo ${l_val}
 }
+
+
+# Remote execute a command over private data interface
+function ssh_over_pvt_data {
+    remote_node=${1:-192.168.0.2}
+    cmd=${2:-}
+
+    if [[ -n ${cmd} ]]; then
+        echo $(ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr "${remote_node}" "${cmd}")
+        return $?
+    else
+        _lerror "$0: The method for remote execution is called without passing the intended command."
+        return 20
+    fi
+}
+
+
+# Check if user wants to proceed
+function proceed_check {
+    while true; do
+        read -n1 -p "Do you wish to proceed? (y/n): " _ans
+        case $_ans in
+            [Yy]* ) break;;
+            [Nn]* ) exit 10;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+}
+
 
 function ensure_healthy_cluster {
     local _nowait=${1:-}
@@ -93,7 +124,7 @@ function ensure_healthy_cluster {
                     elif [[ "$_nowait" == false ]]; then
                         answer='n'
                     else
-                        echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a ${LOG_FILE}
+                        echo -n "Proceed ('y' to proceed/'n' to wait)? " 2>&1 | tee -a "${LOG_FILE}"
                         read answer
                     fi
 
@@ -102,14 +133,14 @@ function ensure_healthy_cluster {
                         # Break the loop and proceed
                         break
                     else
-                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."{LOG_FILE}
+                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."
                         sleep 10
                     fi
                 fi
             else
                 _linfo "Something's not right. All resources are not started..."
 
-                if [[ ${attempt} -ge 10 ]]; then
+                if [[ ${attempt} -ge 20 ]]; then
                     _lerror "Giving up after ${attempt} attempts."
                     exit 20
                 fi

@@ -36,10 +36,9 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-truncate -s 0 ${LOG_FILE}
 
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
-salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
+export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 subscription_enabled=false
 
 export pvt_ip_a="${pvt_ip_a:-"192.168.0.1"}"
@@ -69,8 +68,8 @@ export mountpt_prvsnr_data_vol="${mountpt_prvsnr_data_vol:-"/var/lib/seagate/cor
 export mount_dir_prvsnr_data="${mount_dir_prvsnr_data:-"/srv/glusterfs/volume_prvsnr_data"}"
 
 
-hostname_a=$(hostname)
-hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
+export hostname_a=$(hostname)
+export hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
 
 function get_nw_interface_names {
     interface_mgmt_a=$(salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface:0 --output=newline_values_only)
@@ -116,7 +115,7 @@ function backup_files {
 function configure_service_port {
     salt "srvnode-1" state.apply components.system.network.mgmt.service_port ${salt_opts} || (
         echo "ERROR: Failed to configure service port on srvnode-1." | tee -a ${LOG_FILE}
-        exit 10
+        exit 25
     )
 }
 
@@ -133,20 +132,14 @@ function update_ssh_settings {
 }
 
 
-function create_unboxing_user {
+function dump_unboxing_data {
     set -euE
+    _user="$1"
+    _secret="$2"
+
     _create_date=$(date '+%Y-%m-%d')
     _output_file="/root/Lyve_rack_SystemID_${_create_date}.txt"
-    _user="cortxub"
-    _secret=$(/usr/bin/uuidgen | cut -d- -f 5)
     _lr_serial=-
-
-    id $_user > /dev/null && {
-        userdel -r -f $_user
-    }
-    echo "INFO: Creating user for first time login" | tee -a ${LOG_FILE}
-    useradd --base-dir /tmp --inactive 2 --groups wheel --shell /usr/bin/bash --password $(openssl passwd -1 ${_secret}) cortxub
-    passwd -e $_user
 
     ###### Lyve Rack Serial Number ######
     echo -n "INFO: Getting Lyve Rack serial numbers " | tee -a ${LOG_FILE}
@@ -239,48 +232,73 @@ function reset_vips {
     #Remove VIPs for data and management network from Salt pillars
 
     echo "Removing the VIPs from Salt configuration" | tee -a ${LOG_FILE}
-    echo "Removing Data VIP from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/cluster_ip \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Removing Management VIP from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/mgmt_vip \"\" --logfile --logfile-filename ${LOG_FILE}
+    echo "Fetching Data VIP from cluster pillar" >> ${LOG_FILE}
+    current_cip=$(salt 'srvnode-1' pillar.get cluster:cluster_ip --output=newline_values_only)
+    if [[ ! -z $current_cip ]]; then
+        echo "Removing Data VIP from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/cluster_ip \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Data VIP already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
+    echo "Fetching Management VIP from cluster pillar" >> ${LOG_FILE}
+    current_vip=$(salt 'srvnode-1' pillar.get cluster:mgmt_vip --output=newline_values_only)
+    if [[ ! -z $current_vip ]]; then
+        echo "Removing Management VIP from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/mgmt_vip \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Management VIP already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 
 }
 
 function reset_pub_data_ips {
-    #Reset IPs for public data network
-    #Update public data interface ips
-    # if [[ -f "/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-    #     _cluster_sls_path=/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_cluster.sls
-    # elif [[ -f "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-    #     _cluster_sls_path=/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls
-    # else
-    #     echo "ERROR: Cluster data is not updated correctly" >> ${LOG_FILE}
-    #     exit 1
-    # fi
-
-    # echo "Removing the static IPs of public data network from pillar file for both servers" |tee -a ${LOG_FILE}
-    # echo "Removing static data ip from $_cluster_sls_path for server A" >> $LOG_FILE
-    # line_node1_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | head -1`
-    # if [[ -n ${line_node1_ip} ]]; then
-    #     sed -ie "${line_node1_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
-    # fi
-    # echo "Removing static data ip from $_cluster_sls_path for server B" >> $LOG_FILE
-    # line_node2_ip=`grep -A8 -n "data_nw:"  $_cluster_sls_path | grep "public_ip_addr:" | cut -d- -f1 | tail -1`
-    # if [[ -n ${line_node2_ip} ]]; then
-    #     sed -ie "${line_node2_ip}s/.*/                public_ip_addr:/" $_cluster_sls_path
-    # fi
-
     echo "Removing the IPs of public data network from Salt configuration" | tee -a ${LOG_FILE}
-    echo "Removing public data IP for Server A from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Removing public data IP for Server B from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-    echo "Done" | tee -a ${LOG_FILE}
+
+    echo "Fetching public data IP for server A from cluster pillar" >> ${LOG_FILE}
+    pub_dip1=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    if [[ ! -z $pub_dip1 ]]; then
+        echo "Removing public data IP for server A from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Public data IP for server A already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
+
+
+    echo "Fetching public data IP for server B from cluster pillar" >> ${LOG_FILE}
+    pub_dip2=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    if [[ ! -z $pub_dip2 ]]; then
+        echo "Removing public data IP for server B from cluster pillar" >> ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
+    else
+        echo "Public data IP for server B already reset from Salt configuration" | tee -a ${LOG_FILE}
+    fi
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}
-    salt '*' state.apply components.system.network.data.direct ${salt_opts}
-    echo "Done." | tee -a ${LOG_FILE}
+    if [[ ! -z $pub_dip1 && ! -z $pub_dip2 ]]; then
+        salt '*' state.apply components.system.network.data.direct ${salt_opts}
+    else
+        echo "The IPs of public data network interface are already reset on both nodes"
+    fi
+}
+
+
+function reset_pub_mgmt_ips {
+    echo "Removing the IPs of public management network from Salt Pillar" | tee -a ${LOG_FILE}
+    echo "Removing public management IP for Server A from cluster pillar" >> ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+
+    echo "Removing public management IP for Server B from cluster pillar" >> ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    echo "Done" | tee -a ${LOG_FILE}
 }
 
 
@@ -453,11 +471,11 @@ function remove_gfs_mounts {
         echo y | gluster peer detach ${hostname_b} force
     fi
 
-    echo -e "\n------ Unmouting the gluster volumes from Server A ------" | tee -a ${LOG_FILE}
+    echo -e "\n------ Unmounting the gluster volumes from Server A ------" | tee -a ${LOG_FILE}
     if mount | grep -q ${mountpt_salt_cache_vol}; then umount ${mountpt_salt_cache_vol}; fi
     if mount | grep -q ${mountpt_prvsnr_data_vol}; then umount ${mountpt_prvsnr_data_vol}; fi
 
-    echo -e "\n------ Unmouting the gluster volumes from Server B ------" | tee -a ${LOG_FILE}
+    echo -e "\n------ Unmounting the gluster volumes from Server B ------" | tee -a ${LOG_FILE}
     $ssh_cmd ${pvt_ip_b} "if mount | grep -q ${mountpt_salt_cache_vol}; then umount ${mountpt_salt_cache_vol}; fi"
     $ssh_cmd ${pvt_ip_b} "if mount | grep -q ${mountpt_prvsnr_data_vol}; then umount ${mountpt_prvsnr_data_vol}; fi"
 

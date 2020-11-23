@@ -80,8 +80,8 @@ deploy_states = dict(
     # states to be applied in desired sequence
     controlpath=[
         "sspl",
-        "csm",
         "uds",
+        "csm",
         "ha.ctrlstack-ha",
         "ha.cortx-ha.ha"
     ],

@@ -250,8 +250,9 @@ luns_availability_check()
         _nluns=$($ssh_cmd ${pvt_ips[$i]} "lsblk -S" | grep sas | wc -l)
         echo "DEBUG: Number of luns on server ${server_names[$i]}: $_nluns" >> ${LOG_FILE}
         if [[ $_nluns -eq 0 || $_nluns -ne $nvols ]]; then
+            echo "---------- FAILED!!! -------------" | tee -a ${LOG_FILE}
             echo "Error: The number of LUNs from storage enclosure ($_nluns) are not correct on ${server_names[$i]}." | tee -a ${LOG_FILE}
-            echo "Try following steps before running the command again: \
+            echo -e "Try following steps before running the command again:\n\
 1. Please make sure the storage enclosure is connected to servers as shown in the user guide.
 2. If the connections to the storage enclosure are correct, then try rebooting the ${server_names[$i]} once.
 3. After the reboot of server(s) run 'lsblk -S | grep sas | wc -l', to check the number of LUNs available.

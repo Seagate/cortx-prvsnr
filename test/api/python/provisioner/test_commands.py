@@ -626,7 +626,7 @@ def test_commands_SWUpdate_run_happy_path(
     ] + [
         calls['_update_component'](component, target)
         for component in (
-            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm', 'uds'
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'uds', 'csm'
         )
     ] + [
         calls['cluster_maintenance_disable'](),
@@ -844,7 +844,7 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
     ] + [
         calls['_update_component'](component, target)
         for component in (
-            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm', 'uds'
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'uds', 'csm'
         )
     ] + [
         calls['cluster_maintenance_disable'](),
@@ -921,7 +921,7 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
     ] + [
         calls['_update_component'](component, target)
         for component in (
-            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm', 'uds'
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'uds', 'csm'
         )
     ] + [
         calls['cluster_maintenance_disable'](),
@@ -1000,7 +1000,7 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
     ] + [
         calls['_update_component'](component, target)
         for component in (
-            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'csm', 'uds'
+            'motr', 's3server', 'hare', 'ha.cortx-ha', 'sspl', 'uds', 'csm'
         )
     ] + [
         calls['cluster_maintenance_disable'](),

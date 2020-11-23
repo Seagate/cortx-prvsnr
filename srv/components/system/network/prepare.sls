@@ -44,6 +44,14 @@ Kill dhclient:
     - requires:
       - service: Stop and disable NetworkManager service
 
+Start dhclient:
+  cmd.run:
+    # - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+    - name: dhclient
+    - unless: pgrep dhclient
+    - listen:
+      - Kill dhclient
+
 # Dummy placeholder for network.prepare:
 #   test.show_notification:
 #     - text: "A yaml file with comments results in minion non-zero exit"

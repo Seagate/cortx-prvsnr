@@ -19,3 +19,9 @@ system:
   ntp:
     time_server: time.seagate.com
     timezone: UTC             #To be replaced with input
+  service_user:
+    name: cortxub
+    password:
+    groups:
+      - wheel
+    shell: /usr/bin/bash

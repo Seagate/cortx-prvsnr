@@ -15,8 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if (pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr'] is defined)
+    and (pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr']) %}
+# Configuration is Static
 {% if ((pillar['cluster']['search_domains']) and (pillar['cluster']['dns_servers'])) %}
-Modify resolv.conf:
+Update resolv.conf:
   file.managed:
     - name: /etc/resolv.conf
     - source: salt://components/system/network/files/resolv.conf
@@ -28,9 +31,21 @@ Modify resolv.conf:
     - create: True
     - allow_empty: True
 {% else %}
-No nw config to apply:
+No DNS config to apply:
   test.show_notification:
     - text: "dns_servers and search_domains are not specified in cluster.sls"
+{% endif %}
+
+{% else %}
+# Configuration is DHCP
+# Update resolv.conf:
+#   cmd.run:
+#     - name: |
+#         pkill -9 dhclient
+#         dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+
+include:
+  - components.system.network.prepare
 {% endif %}
 
 # lo:

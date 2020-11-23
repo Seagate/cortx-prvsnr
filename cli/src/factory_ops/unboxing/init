@@ -49,6 +49,7 @@ management_vip=
 
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
+. ${BASEDIR}/network_init
 . ${BASEDIR}/pre_unbox
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
@@ -247,6 +248,11 @@ salt '*' saltutil.refresh_grains ${salt_opts}
 sleep 2
 echo "Ok." | tee -a ${LOG_FILE}
 
+# Re-configure firewall
+echo -n "Re-configuring firewall................................." | tee -a ${LOG_FILE}
+salt "*" state.apply components.system.firewall.config ${salt_opts}
+# sleep 5     # Mindfulness break
+echo "Ok." | tee -a ${LOG_FILE}
 
 if ! command -v pcs ; then
     echo "[ERROR  ]: Command 'pcs' not found" 2>&1 | tee -a ${LOG_FILE}
@@ -257,17 +263,13 @@ echo "Starting Cortx cluster" 2>&1 | tee -a ${LOG_FILE}
 pcs cluster start --all 2>&1 | tee -a ${LOG_FILE}
 sleep 2
 
-echo "Starting Lyve Drive Rack services" 2>&1 | tee -a ${LOG_FILE}
-hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 5
-
-if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
-    # Assign Static IPs on both the nodes
-    echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
-    salt "*" state.apply components.system.network.data.direct ${salt_opts}
-    sleep 5     # Mindfulness break
-    echo "Ok." | tee -a ${LOG_FILE}
-fi
+# if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
+#     # Assign Static IPs on both the nodes
+#     echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
+#     salt "*" state.apply components.system.network.data.direct ${salt_opts}
+#     sleep 5     # Mindfulness break
+#     echo "Ok." | tee -a ${LOG_FILE}
+# fi
 
 # Update ClusterIP
 echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
@@ -275,13 +277,13 @@ salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip 
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
+# Update HAProxy config
 echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
 salt "*" state.apply components.ha.haproxy.config ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Update Management_vip
-
 echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
 salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
 sleep 5     # Mindfulness break
@@ -298,8 +300,11 @@ salt "*" state.apply components.csm.prepare ${salt_opts}
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing build URL from Salt configuration" | tee -a ${LOG_FILE}
-provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
-sleep 2
+target_build=$(salt-call pillar.get release:target_build --output=newline_values_only)
+if [[ $target_build != file:///* ]]; then
+    provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
+    sleep 2
+fi
 
 echo "Removing stale URL (CentOS) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
@@ -308,6 +313,12 @@ sleep 2
 echo "Removing build URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/RedHat \"\" --logfile --logfile-filename ${LOG_FILE}
 sleep 2
+
+echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
+
+echo "Ensure cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
@@ -318,13 +329,13 @@ echo -n "Configuring Cortx RAS services on server B.............................
 salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
-# echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
-# salt "srvnode-2" state.apply components.csm.config ${salt_opts}; sleep 5
-# echo "Ok." | tee -a ${LOG_FILE}
+echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
+salt "srvnode-2" state.apply components.csm.config ${salt_opts}; sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
 
-# echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
-# salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
-# echo "Ok." | tee -a ${LOG_FILE}
+echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
+salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
+echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing Lustre URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${LOG_FILE}; sleep 2
@@ -355,6 +366,12 @@ pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
+echo -n "HAProxy................................" | tee -a ${LOG_FILE}
+pcs resource refresh haproxy-c1 >> ${LOG_FILE}
+pcs resource refresh haproxy-c2 >> ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 5
+
 echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
 echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}
 pcs stonith history cleanup >> ${LOG_FILE}
@@ -366,6 +383,17 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 # lock unboxing user
 lock_unboxing_user
+
+service_user=$(salt srvnode-2 pillar.get system:service_user:name --output=newline_values_only)
+if [[ -n "$service_user" ]]; then
+    echo -n "Activating service user $service_user on the Server B node................." | tee -a ${LOG_FILE}
+    salt "srvnode-2" state.single user.present name="$service_user" expire=-1 ${salt_opts}
+    sleep 5     # Mindfulness break
+    echo "Ok." | tee -a ${LOG_FILE}
+else
+    # backward compatibility
+    echo -n "WARNING: Skipping service user activation on the Server B node, the user is not set" | tee -a ${LOG_FILE}
+fi
 
 # Unboxing SUCCESS
 remove_boxing_flag
