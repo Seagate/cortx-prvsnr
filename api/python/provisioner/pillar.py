@@ -26,10 +26,11 @@ from .utils import load_yaml, dump_yaml
 from .salt import pillar_get, pillar_refresh
 from .config import (
     ALL_MINIONS,
-    PRVSNR_PILLAR_DIR,
-    PRVSNR_USER_PILLAR_PREFIX,
-    PRVSNR_USER_PILLAR_ALL_HOSTS_DIR,
-    PRVSNR_USER_PILLAR_HOST_DIR_TMPL
+    PRVSNR_PILLAR_DIR
+)
+from .paths import (
+    USER_SHARED_PILLAR,
+    USER_LOCAL_PILLAR
 )
 # from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
@@ -179,12 +180,15 @@ class PillarEntry:
 @attr.s(auto_attribs=True)
 class PillarResolver:
     targets: str = ALL_MINIONS
+    local: bool = False
     _pillar: Dict = None
 
     @property
     def pillar(self):
         if self._pillar is None:
-            self._pillar = pillar_get(targets=self.targets)
+            self._pillar = pillar_get(
+                targets=self.targets, local=self.local
+            )
         return self._pillar
 
     def get(self, pi_keys: Iterable[PillarKeyAPI]):  # TODO return value
@@ -206,8 +210,16 @@ class PillarResolver:
 @attr.s(auto_attribs=True)
 class PillarUpdater:
     targets: str = ALL_MINIONS
+    local: bool = False
+
+    _pillar_path: Path = attr.ib(init=False, default=None)
     _pillars: Dict = attr.Factory(dict)
     _p_entries: List[PillarEntry] = attr.Factory(list)
+
+    def __attrs_post_init__(self):
+        self._pillar_path = (
+            USER_LOCAL_PILLAR if self.local else USER_SHARED_PILLAR
+        )
 
     @staticmethod
     def ensure_exists(path: Path):
@@ -216,11 +228,15 @@ class PillarUpdater:
             path.touch()
 
     @classmethod
-    def add_merge_prefix(cls, path: Path):
-        if path.name.startswith(PRVSNR_USER_PILLAR_PREFIX):
+    def add_merge_prefix(cls, path: Path, local=False):
+        pillar_path = (
+            USER_LOCAL_PILLAR if local else USER_SHARED_PILLAR
+        )
+
+        if path.name.startswith(pillar_path.prefix):
             return path
         else:
-            return path.with_name(f"{PRVSNR_USER_PILLAR_PREFIX}{path.name}")
+            return path.with_name(f"{pillar_path.prefix}{path.name}")
 
     # TODO create task
     # TODO test
@@ -285,13 +301,13 @@ class PillarUpdater:
     #       2-5. minion-value: set value for a minion
     def pillar(self, path: Path):
         if self.targets == ALL_MINIONS:
-            _path = PRVSNR_USER_PILLAR_ALL_HOSTS_DIR / path
+            _path = self._pillar_path.all_hosts_dir / path
         else:
             _path = Path(
-                PRVSNR_USER_PILLAR_HOST_DIR_TMPL.format(minion_id=self.targets)
+                self._pillar_path.host_dir_tmpl.format(minion_id=self.targets)
             ) / path
 
-        _path = self.add_merge_prefix(_path)
+        _path = self.add_merge_prefix(_path, local=self.local)
 
         if _path not in self._pillars:
             self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
@@ -374,9 +390,9 @@ class PillarUpdater:
         reset: bool = False,
         pillar: Dict = None
     ):
+        # NOTE only shared dir is considered (possibly not always ok)
         path = (
-            PRVSNR_USER_PILLAR_ALL_HOSTS_DIR /
-            '{}.sls'.format(component)
+            USER_SHARED_PILLAR / '{}.sls'.format(component)
         )
         if show:
             if not path.exists():

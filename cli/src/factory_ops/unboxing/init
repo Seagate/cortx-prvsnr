@@ -49,6 +49,7 @@ management_vip=
 
 export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
+. ${BASEDIR}/network_init
 . ${BASEDIR}/pre_unbox
 . ${BASEDIR}/system_check
 . ${BASEDIR}/config_update
@@ -294,8 +295,11 @@ salt "*" state.apply components.csm.prepare ${salt_opts}
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing build URL from Salt configuration" | tee -a ${LOG_FILE}
-provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
-sleep 2
+target_build=$(salt-call pillar.get release:target_build --output=newline_values_only)
+if [[ $target_build != file:///* ]]; then
+    provisioner pillar_set release/target_build \"\" --logfile --logfile-filename ${LOG_FILE}
+    sleep 2
+fi
 
 echo "Removing stale URL (CentOS) from Salt configuration" | tee -a ${LOG_FILE}
 provisioner pillar_set commons/cortx_commons/CentOS \"\" --logfile --logfile-filename ${LOG_FILE}
@@ -307,7 +311,9 @@ sleep 2
 
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
-sleep 15
+
+echo "Ensure cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
@@ -354,6 +360,12 @@ echo -n "UDS...................................." | tee -a ${LOG_FILE}
 pcs resource refresh uds >> ${LOG_FILE}
 sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
+
+echo -n "HAProxy................................" | tee -a ${LOG_FILE}
+pcs resource refresh haproxy-c1 >> ${LOG_FILE}
+pcs resource refresh haproxy-c2 >> ${LOG_FILE}
+echo "Ok." | tee -a ${LOG_FILE}
+sleep 5
 
 echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
 echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}

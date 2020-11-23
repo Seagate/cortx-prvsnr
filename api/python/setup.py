@@ -87,9 +87,9 @@ setup(
     install_requires=[
         'PyYAML',
         'salt==3001.1',  # FIXME 2019.2.0 is buggy,
-                       # 3000.3 lacks support of glusterfs 7.0 updated prompt
-                       # TODO update salt packages for provisioner
-                       # setup rpm as well
+                         # 3000.3 lacks support of glusterfs 7.0 updated prompt
+                         # TODO update salt packages for provisioner
+                         # setup rpm as well
     ],  # TODO
     setup_requires=([] + pytest_runner),
     extras_require={

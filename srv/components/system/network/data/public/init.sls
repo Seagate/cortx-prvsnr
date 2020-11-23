@@ -25,7 +25,7 @@ Public direct network:
     - type: eth
     - enabled: True
     - nm_controlled: no
-    - onboot: yes
+    # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: no
     - mtu: 9000
