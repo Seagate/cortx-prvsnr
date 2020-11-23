@@ -48,6 +48,10 @@ cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
 
 
+%post
+# Set Permissions
+/bin/chmod -R 754 /opt/seagate/cortx/provisioner/cli
+
 %clean
 rm -rf %{buildroot}
 
