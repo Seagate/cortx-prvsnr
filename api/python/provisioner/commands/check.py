@@ -459,8 +459,8 @@ class Check(CommandParserFillerMixin):
             return check_entry
 
         res: List[CheckEntry] = list()
-        _DECRYPT_SECRET_CMD = 'salt-call lyveutil.decrypt cluster {val}'\
-                              ' --output=newline_values_only'
+        _DECRYPT_PSWD_CMD = 'salt-call lyveutil.decrypt cluster {val}'\
+                            ' --output=newline_values_only'
 
         for node in nodes:
             check_stonith: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
@@ -472,7 +472,7 @@ class Check(CommandParserFillerMixin):
                 secret = Check._get_pillar_data(f"cluster/{node}/bmc/secret")
 
                 # Decrypt the secret
-                cmd = _DECRYPT_SECRET_CMD.format(val=secret)
+                cmd = _DECRYPT_PSWD_CMD.format(val=secret)
                 minion_id = local_minion_id()
                 bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
 
