@@ -384,6 +384,9 @@ class Checks(Enum):
     HOSTNAMES = "hostnames"
     PUB_DATA_IP = "public_data_ip"
     CONTROLLER_IP = "controller_ip"
+    STORAGE_HBA = "storage_hba"
+    NETWORK_DRIVERS = "network_drivers"
+    NETWORK_HCA = "network_hca"
 
 
 class GroupChecks(Enum):
@@ -391,6 +394,7 @@ class GroupChecks(Enum):
     """ Enum for group checks. """
 
     ALL = "all"
+    PRE_CHECKS = "pre_checks"
     POST_CHECKS = "post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
@@ -402,6 +406,13 @@ class GroupChecks(Enum):
 CHECKS = [check.value for check in Checks]
 
 GROUP_CHECKS = [check.value for check in GroupChecks]
+
+PRE_CHECKS = {
+    Checks.NETWORK_DRIVERS.value,
+    Checks.NETWORK_HCA.value,
+    Checks.STORAGE_HBA.value,
+    Checks.STORAGE_LUNS.value
+}
 
 SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
@@ -440,6 +451,13 @@ UNBOXING_PRE_CHECKS = {
 UNBOXING_POST_CHECKS = {
     Checks.BMC_STONITH.value,
 }
+
+
+# validations parameters
+NETWORK_DRIVER = "mlnx-ofed"
+HCA_PROVIDER = ["mellanox"]
+HBA_PROVIDER = ["lsi"]
+LUNS_CHECKS = ['accessible', 'mapped', 'size']
 
 
 class CheckVerdict(Enum):
