@@ -459,8 +459,8 @@ class Check(CommandParserFillerMixin):
             return check_entry
 
         res: List[CheckEntry] = list()
-        _DECRYPT_PSWD_CMD = 'salt-call lyveutil.decrypt cluster {val}'\
-                            ' --output=newline_values_only'
+        _DECRYPT_PSWD_CMD = ('salt-call lyveutil.decrypt cluster {val}'
+                             ' --output=newline_values_only')
 
         for node in nodes:
             check_stonith: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
@@ -976,9 +976,9 @@ class Check(CommandParserFillerMixin):
                     check_ret.set_passed(checked_target=node)
                 else:
                     check_ret.set_fail(checked_target=node,
-                                        comment="Public data interface " \
-                                                "'s0f0' not found. iface "\
-                                                f"available: {iface}")
+                                       comment=("Public data interface "
+                                                "'s0f0' not found. iface "
+                                                f"available: {iface}"))
             except Exception as exc:
                 check_ret.set_fail(checked_target=node, comment=str(exc))
 
@@ -1075,8 +1075,7 @@ class Check(CommandParserFillerMixin):
 
         for check_name in check_lists:
             _res = getattr(self,
-                            self._PRV_METHOD_MOD + check_name)(
-                                                        args=check_args)
+                           self._PRV_METHOD_MOD + check_name)(args=check_args)
             res.add_checks(_res)  # aggregate all check results
 
         return res
