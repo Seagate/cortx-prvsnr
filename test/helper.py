@@ -134,7 +134,7 @@ class Container(Remote):
     image = attr.ib()
     hostname = attr.ib(default=None)
     container = attr.ib(init=False, default=None)
-    specific = attr.ib(default=dict)
+    specific = attr.ib(default=attr.Factory(dict))
     volumes = attr.ib(
         init=False,
         default=attr.Factory(lambda: {
