@@ -309,6 +309,7 @@ function add_node_states {
     add_node_states=(
         "ha.cortx-ha.replace_node.refresh_config"
         "ha.cortx-ha.replace_node.add_node"
+        "ha.haproxy.start"
     )
 
     l_info "=================================================="
