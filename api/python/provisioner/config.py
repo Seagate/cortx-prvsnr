@@ -254,7 +254,7 @@ def profile_base_dir(
     setup_name: Optional[str] = 'default'
 ):
     if location is None:
-        location = Path.cwd() / PROFILE_DIR_NAME
+        location = Path.home() / PROFILE_DIR_NAME
     else:
         location = location.resolve()
 
