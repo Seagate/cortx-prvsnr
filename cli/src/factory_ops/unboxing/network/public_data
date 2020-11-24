@@ -136,7 +136,7 @@ function set_public_data_nw_config {
     
         # Set network config to DHCP for pillar value cluster:srvnode-1:network:data_nw:iface:0    
         public_data_if=$(get_pillar_data cluster:${srvnode}:network:data_nw:iface:0)
-        _linfo "Setting DHCP on ${node_name} for interface: ${public_data_if}"
+        _linfo "Setting up network on ${node_name} for interface: ${public_data_if}"
         backup_ifcfg ${remote} ${public_data_if}
         
         _linfo "Setting ifcfg-${public_data_if} on ${node_name}"
