@@ -385,8 +385,8 @@ def test_build_isos(
     res = []
 
     mhost.check_output("yum install -y createrepo genisoimage")
-    single_repo = Path(f'/tmp/single')
-    swupdate_repo = Path(f'/tmp/cortx')
+    single_repo = Path('/tmp/single')
+    swupdate_repo = Path('/tmp/cortx')
     cortx_repo = single_repo / config.CORTX_ISO_DIR
     deps_repo = single_repo / config.CORTX_3RD_PARTY_ISO_DIR
 
