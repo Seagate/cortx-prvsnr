@@ -15,6 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set nwmanager_is_running = salt['service.status']('NetworkManager') %}
+
+{% if nwmanager_is_running %}
+
 Stop and disable NetworkManager service:
   service.dead:
     - name: NetworkManager
@@ -51,6 +55,13 @@ Start dhclient:
     - unless: pgrep dhclient
     - listen:
       - Kill dhclient
+
+{% else  %}
+
+network_manager_is_not_running:
+  test.nop: []
+
+{% endif %}
 
 # Dummy placeholder for network.prepare:
 #   test.show_notification:
