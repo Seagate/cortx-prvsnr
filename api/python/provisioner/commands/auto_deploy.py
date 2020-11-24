@@ -18,10 +18,12 @@
 from typing import Type
 import logging
 
-from .. import (
-    config,
-    inputs
+from ..config import (
+    PRVSNR_PILLAR_CONFIG_INI,
+    GroupChecks
 )
+from .. import inputs
+
 from ..vendor import attr
 
 from . import (
@@ -31,6 +33,10 @@ from .setup_provisioner import (
     RunArgsSetupProvisionerGeneric,
     SetupProvisioner,
     SetupCmdBase
+)
+from .check import (
+    Check,
+    DeploymentDecisionMaker
 )
 from . import deploy_dual
 
@@ -44,6 +50,19 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         RunArgsSetupProvisionerGeneric,
         deploy_dual.run_args_type
     ]
+
+
+    def deployment_validations(self, deploy_check):
+        checker = Check()
+        decision_maker = DeploymentDecisionMaker()
+
+        try:
+            check_res = checker.run(deploy_check)
+        except Exception as exc:
+            raise ValueError("Error During Deployment "
+                            f"{deploy_check} Validations: {str(exc)}")
+        else:
+            decision_maker.make_decision(check_result=check_res)
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
@@ -66,7 +85,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             setup_ctx.ssh_client.cmd_run(
                 (
                     'provisioner configure_setup '
-                    f'{config.PRVSNR_PILLAR_CONFIG_INI} '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} '
                     f'{len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
@@ -77,9 +96,19 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
 
+        logger.info("Deployment Pre-Flight Validations")
+
+        self.deployment_validations(GroupChecks.PRE_CHECKS.value)
+        logger.info("DEPLOYMENT PRE-FLIGHT CHECKS DONE")
+
         logger.info("Deploy")
         deploy_dual.DeployDual(setup_ctx=setup_ctx).run(
             **deploy_args
         )
+
+        logger.info("Post-Deployment Validations")
+
+        self.deployment_validations(GroupChecks.POST_CHECKS.value)
+        logger.info("DEPLOYMENT POST-CHECKS DONE")
 
         logger.info("Done")

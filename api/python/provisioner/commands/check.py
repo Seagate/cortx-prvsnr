@@ -269,6 +269,42 @@ class DecisionMaker(ABC):
         :return:
         """
 
+class DeploymentDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure and will decide
+       to continue or to stop Factory Deployment routine
+    """
+
+    def _check_critical_errors(self, check_result: CheckResult):
+        """
+        Just as example that `DecisionMaker` child classes can threat some
+        errors as critical to raise appropriate Exception and stop command
+        execution
+
+        :param CheckResult check_result: instance with checks results
+        :return:
+        """
+        # TODO: determine list of critical errors which should trigger
+        # Factory Deployment exception
+        pass
+
+    def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision for Factory Deployment
+        based on `CheckResult` analysis
+
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+        if check_result.is_failed:
+            failed = "; ".join(str(check)
+                               for check in check_result.get_failed())
+            raise ValueError("ONE OR MORE FACTORY DEPLOYMENT "
+                             f"VALIDATIONS HAVE FAILED: {failed}")
+
+        logger.info("ALL FACTORY DEPLOYMENT CHECKS HAVE PASSED")
+
 
 class SWUpdateDecisionMaker(DecisionMaker):
 
@@ -547,7 +583,7 @@ class Check(CommandParserFillerMixin):
                                     'exit 1 ; }} ; '
                                     'grep -i "{key_phrase}" {log_filename} '
                                     '1>/dev/null && '
-                                    'echo "{key_phrase} exists in logfile" && '
+                                    'echo "\'{key_phrase}\' exists in logfile" && '
                                     'exit 1')
 
         minion_id = local_minion_id()

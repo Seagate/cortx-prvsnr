@@ -431,11 +431,17 @@ REPLACENODE_CHECKS = {
 }
 
 POST_CHECKS = {
+    Checks.MGMT_VIP.value,
+    Checks.PUB_DATA_IP.value,
+    Checks.HOSTNAMES.value,
+    Checks.CONNECTIVITY.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.COMMUNICABILITY.value,
     Checks.STORAGE_LVMS.value,
     Checks.STORAGE_LUNS.value,
-    Checks.MGMT_VIP.value,
-    Checks.BMC_ACCESSIBILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.BMC_ACCESSIBILITY.value
 }
 
 UNBOXING_PRE_CHECKS = {
