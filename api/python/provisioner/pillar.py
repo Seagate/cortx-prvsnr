@@ -376,7 +376,8 @@ class PillarUpdater:
     # TODO test
     def apply(self) -> None:
         self.dump()
-        self.refresh(self.targets)
+        if not self.local:
+            self.refresh(self.targets)
 
     @staticmethod
     def refresh(targets: str = ALL_MINIONS):
