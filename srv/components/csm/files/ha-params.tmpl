@@ -5,8 +5,8 @@
 {%- endif -%}
 interface: {{ mgmt_if }}
 vip: {{ pillar['cluster']['mgmt_vip'] }}
-{% set netmask = pillar['cluster'][grains['id']]['network']['mgmt_nw']['netmask'] %}
-{% set cidr = salt['network.calc_net'](pillar['cluster']['mgmt_vip'], netmask)).split("/")[1] %}
+{% set netmask = pillar['cluster'][grains['id']]['network']['mgmt_nw']['netmask'] -%}
+{% set cidr = salt['network.calc_net'](pillar['cluster']['mgmt_vip'], netmask).split("/")[1] -%}
 cidr: {{ cidr }}
 left-node: srvnode-1
 right-node: srvnode-2

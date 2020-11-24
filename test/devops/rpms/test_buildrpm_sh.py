@@ -24,6 +24,7 @@ from pathlib import Path
 import test.helper as h
 import provisioner
 from provisioner import config
+from provisioner.utils import dump_yaml
 
 from test.helper import (
     PRVSNRUSERS_GROUP, PROJECT_PATH
@@ -379,14 +380,48 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
 
 @pytest.mark.env_level('base')
 def test_build_isos(
-    mhost, rpm_prvsnr, rpm_prvsnr_api
+    mhost, rpm_prvsnr, rpm_prvsnr_api, tmpdir_function
 ):
-    res = {}
+    res = []
 
     mhost.check_output("yum install -y createrepo genisoimage")
-    single_repo = Path(f'/tmp/single')
+    single_repo = Path('/tmp/single')
+    swupdate_repo = Path('/tmp/cortx')
     cortx_repo = single_repo / config.CORTX_ISO_DIR
     deps_repo = single_repo / config.CORTX_3RD_PARTY_ISO_DIR
+
+    release_info = {
+        'BUILD': '277',
+        'DATETIME': '14-Oct-2020 11:21 UTC',
+        'KERNEL': '3.10.0_1062.el7',
+        'NAME': 'CORTX',
+        'OS': 'Red Hat Enterprise Linux Server release 7.7 (Maipo)',
+        'VERSION': '1.0.0',
+        'COMPONENTS': [
+            'cortx-csm_agent-1.0.0-25_9d988be.x86_64.rpm',
+            'cortx-csm_web-1.0.0-58_65d6f8b.x86_64.rpm',
+            'cortx-ha-1.0.0-34_eacae4e.x86_64.rpm',
+            'cortx-hare-1.0.0-50_git584adaa.el7.x86_64.rpm',
+            'cortx-libsspl_sec-1.0.0-33_gitf0c05e3.el7.x86_64.rpm',
+            'cortx-libsspl_sec-devel-1.0.0-33_gitf0c05e3.el7.x86_64.rpm',
+            'cortx-libsspl_sec-method_none-1.0.0-33_gitf0c05e3.el7.x86_64.rpm',
+            'cortx-libsspl_sec-method_pki-1.0.0-33_gitf0c05e3.el7.x86_64.rpm',
+            'cortx-motr-1.0.0-45_git7fc6c26_3.10.0_1062.el7.x86_64.rpm',
+            'cortx-motr-devel-1.0.0-45_git7fc6c26_3.10.0_1062.el7.x86_64.rpm',
+            'cortx-motr-tests-ut-1.0.0-45_git7fc6c26_3.10.0_1062.el7.x86_64.rpm',  # noqa: E501
+            'cortx-prvsnr-1.0.0-75_gitb9b751c_el7.x86_64.rpm',
+            'cortx-prvsnr-cli-1.0.0-75_gitb9b751c_el7.x86_64.rpm',
+            'cortx-s3iamcli-1.0.0-75_git28a01f6.noarch.rpm',
+            'cortx-s3iamcli-devel-1.0.0-75_git28a01f6.noarch.rpm',
+            'cortx-s3server-1.0.0-75_git28a01f6_el7.x86_64.rpm',
+            'cortx-sspl-1.0.0-33_gitf0c05e3.el7.noarch.rpm',
+            'cortx-sspl-cli-1.0.0-33_gitf0c05e3.el7.noarch.rpm',
+            'cortx-sspl-test-1.0.0-33_gitf0c05e3.el7.noarch.rpm',
+            'python36-cortx-prvsnr-0.39.0-75_gitb9b751c.x86_64.rpm',
+            'uds-pyi-1.1.1-1.r6.el7.x86_64.rpm',
+            'udx-discovery-0.1.2-3.el7.x86_64.rpm'
+        ]
+    }
 
     for pkg, repo_dir in (
         ('prvsnr', cortx_repo),
@@ -395,21 +430,19 @@ def test_build_isos(
         iso_path = Path(f'/tmp/{repo_dir.name}.iso')
 
         mhost.check_output(
-            "mkdir -p {repo_dir}"
+            "mkdir -p {repo_dir} {swupdate_repo}"
             " && cp {rpm_path} {repo_dir}"
+            " && cp {rpm_path} {swupdate_repo}"
             " && createrepo {repo_dir}"
             " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
             .format(
                 repo_dir=repo_dir,
+                swupdate_repo=swupdate_repo,
                 rpm_path=getattr(mhost, f"rpm_{pkg}"),
                 iso_path=iso_path
             )
         )
-        iso = mhost.copy_from_host(iso_path)
-        res[pkg] = iso
-
-        dest = PROJECT_PATH / f"tmp/{iso.name}"
-        dest.write_bytes(iso.read_bytes())
+        res.append(mhost.copy_from_host(iso_path))
 
     # prepare single iso
     iso_path = Path(f'/tmp/{single_repo.name}.iso')
@@ -420,8 +453,28 @@ def test_build_isos(
             iso_path=iso_path
         )
     )
-    iso = mhost.copy_from_host(iso_path)
-    res[pkg] = iso
+    res.append(mhost.copy_from_host(iso_path))
 
-    dest = PROJECT_PATH / f"tmp/{iso.name}"
-    dest.write_bytes(iso.read_bytes())
+    # prepare swupdate iso
+    iso_path = Path(f'/tmp/{swupdate_repo.name}.iso')
+
+    release_info_file = tmpdir_function / config.RELEASE_INFO_FILE
+    dump_yaml(release_info_file, release_info)
+    mhost.copy_to_host(
+        release_info_file, swupdate_repo / release_info_file.name
+    )
+
+    mhost.check_output(
+        (
+            "createrepo {repo_dir}"
+            " && mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
+        ).format(
+            repo_dir=swupdate_repo,
+            iso_path=iso_path
+        )
+    )
+    res.append(mhost.copy_from_host(iso_path))
+
+    for iso_path in res:
+        dest = PROJECT_PATH / f"tmp/{iso_path.name}"
+        dest.write_bytes(iso_path.read_bytes())
