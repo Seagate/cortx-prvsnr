@@ -175,7 +175,7 @@ function prvsnr_check {
 }
 
 function check_public_data_interfaces {
-    echo -n "Checking IP addresses for public data interfaces are set........" | tee -a ${LOG_FILE}
+    echo -n "Checking if IP addresses for public data interfaces are set........" | tee -a ${LOG_FILE}
     prvsnr_check public_data_ip
 }
 
