@@ -25,7 +25,7 @@ cluster:
     - srvnode-1
     - srvnode-2
   srvnode-1:
-    hostname:
+    hostname: srvnode-1
     is_primary: true
     bmc:
       ip:
