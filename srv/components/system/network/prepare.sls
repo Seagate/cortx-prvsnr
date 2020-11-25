@@ -51,7 +51,7 @@ Kill dhclient:
 Start dhclient:
   cmd.run:
     # - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
-    - name: dhclient
+    - name: dhclient -H {{ grains["host"] }}
     - unless: pgrep dhclient
     - listen:
       - Kill dhclient
