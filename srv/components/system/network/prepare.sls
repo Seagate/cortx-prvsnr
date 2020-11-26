@@ -43,7 +43,8 @@ Stop and disable NetworkManager service:
 # If not killed explicitly, it causes network restart to fail: COSTOR-439
 Kill dhclient:
   cmd.run:
-    - name: pkill -SIGTERM dhclient
+    # - name: pkill -SIGTERM dhclient
+    - name: dhclient -x
     - onlyif: pgrep dhclient
     - requires:
       - service: Stop and disable NetworkManager service
@@ -51,7 +52,7 @@ Kill dhclient:
 Start dhclient:
   cmd.run:
     # - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
-    - name: dhclient -H {{ grains["host"] }}
+    - name: dhclient -1 -q -H {{ grains["host"] }} {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
     - unless: pgrep dhclient
     - listen:
       - Kill dhclient
