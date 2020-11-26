@@ -22,7 +22,7 @@ import json
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
-from ..errors import SaltCmdResultError
+from ..errors import SaltCmdResultError, ValidationError
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
@@ -268,42 +268,46 @@ class DecisionMaker(ABC):
 
         :return:
         """
+    def get_failed_checks(self, check_result: CheckResult) -> str:
+        failed_checks = ""
 
-class DeploymentDecisionMaker(DecisionMaker):
+        if check_result.is_failed:
+            failed_checks = "; ".join(str(check)
+                                    for check in check_result.get_failed())
 
-    """Class analyses `CheckResult` structure and will decide
-       to continue or to stop Factory Deployment routine
+        return failed_checks
+
+class PreChecksDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure for all
+       Pre-Checks - Deployment, and Replace Nodes
+       and in case of errors, will stop the flow right there.
     """
 
-    def _check_critical_errors(self, check_result: CheckResult):
-        """
-        Just as example that `DecisionMaker` child classes can threat some
-        errors as critical to raise appropriate Exception and stop command
-        execution
+    def make_decision(self, check_result: CheckResult):
 
-        :param CheckResult check_result: instance with checks results
-        :return:
-        """
-        # TODO: determine list of critical errors which should trigger
-        # Factory Deployment exception
-        pass
+        failed = self.get_failed_checks(check_result)
+        if failed:
+            raise ValidationError("One or more Pre-Flight "
+                                  f"Checks have failed: {failed}")
+
+        logger.info("All Pre-Flight Checks have Passed")
+
+class PostChecksDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure for all
+       Post-Checks - Deployment, and Replace Nodes
+       and in case of errors, will raise Warning to the User.
+    """
 
     def make_decision(self, check_result: CheckResult):
-        """
-        Make a decision for Factory Deployment
-        based on `CheckResult` analysis
 
-        :param CheckResult check_result: instance with all checks needed for
-                                         to make a decision
-        :return:
-        """
-        if check_result.is_failed:
-            failed = "; ".join(str(check)
-                               for check in check_result.get_failed())
-            raise ValueError("ONE OR MORE FACTORY DEPLOYMENT "
-                             f"VALIDATIONS HAVE FAILED: {failed}")
+        failed = self.get_failed_checks(check_result)
+        if failed:
+            logger.warning("One or more Post-routine Validations "
+                           f"have failed: {failed}")
 
-        logger.info("ALL FACTORY DEPLOYMENT CHECKS HAVE PASSED")
+        logger.info("Post-Routine Validations Completed")
 
 
 class SWUpdateDecisionMaker(DecisionMaker):
@@ -334,9 +338,8 @@ class SWUpdateDecisionMaker(DecisionMaker):
         :return:
         """
 
-        if check_result.is_failed:
-            failed = "; ".join(str(check)
-                               for check in check_result.get_failed())
+        failed = self.get_failed_checks(check_result)
+        if failed:
             logger.warning("Some SW Update pre-flight checks are failed: "
                            f"{failed}")
 

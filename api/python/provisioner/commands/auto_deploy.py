@@ -36,7 +36,8 @@ from .setup_provisioner import (
 )
 from .check import (
     Check,
-    DeploymentDecisionMaker
+    PreChecksDecisionMaker,
+    PostChecksDecisionMaker
 )
 from . import deploy_dual
 
@@ -54,7 +55,6 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
 
     def deployment_validations(self, deploy_check):
         checker = Check()
-        decision_maker = DeploymentDecisionMaker()
 
         try:
             check_res = checker.run(deploy_check)
@@ -62,7 +62,11 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             raise ValueError("Error During Deployment "
                             f"{deploy_check} Validations: {str(exc)}")
         else:
-            decision_maker.make_decision(check_result=check_res)
+            if "pre" in deploy_check:
+                PreChecksDecisionMaker().make_decision(check_result=check_res)
+
+            else:
+                PostChecksDecisionMaker().make_decision(check_result=check_res)
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
@@ -97,9 +101,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             )
 
         logger.info("Deployment Pre-Flight Validations")
-
-        self.deployment_validations(GroupChecks.PRE_CHECKS.value)
-        logger.info("DEPLOYMENT PRE-FLIGHT CHECKS DONE")
+        self.deployment_validations(GroupChecks.DEPLOY_PRE_CHECKS.value)
 
         logger.info("Deploy")
         deploy_dual.DeployDual(setup_ctx=setup_ctx).run(
@@ -107,8 +109,6 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         )
 
         logger.info("Post-Deployment Validations")
-
-        self.deployment_validations(GroupChecks.POST_CHECKS.value)
-        logger.info("DEPLOYMENT POST-CHECKS DONE")
+        self.deployment_validations(GroupChecks.DEPLOY_POST_CHECKS.value)
 
         logger.info("Done")

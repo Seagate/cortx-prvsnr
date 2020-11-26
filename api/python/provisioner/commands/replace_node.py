@@ -35,7 +35,10 @@ from .setup_provisioner import (
     RunArgsSetupProvisionerBase,
     SetupProvisioner
 )
-
+from .check import (
+    Check,
+    PreChecksDecisionMaker
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +107,17 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
 @attr.s(auto_attribs=True)
 class ReplaceNode(SetupProvisioner):
     _run_args_type = RunArgsReplaceNode
+
+    def repl_nodes_validations(self, repl_check):
+        checker = Check()
+
+        try:
+            check_res = checker.run(repl_check)
+        except Exception as exc:
+            raise errors.ValidationError("Error During Replace Nodes "
+                            f"{repl_check} Validations: {str(exc)}")
+        else:
+            PreChecksDecisionMaker().make_decision(check_result=check_res)
 
     def run(self, **kwargs):
         run_args = RunArgsReplaceNode(**kwargs)
@@ -195,6 +209,9 @@ class ReplaceNode(SetupProvisioner):
             nodes=[nodes.pop(primary_id)] + list(nodes.values()),
             **kwargs
         )
+
+        logger.info("Replace Nodes Pre-Routine Validations")
+        self.repl_nodes_validations(config.GroupChecks.REPLACENODE_CHECKS.value)
 
         logger.info("Updating replace node data in pillar")
         setup_ctx.ssh_client.cmd_run(

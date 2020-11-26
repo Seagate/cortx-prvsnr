@@ -132,6 +132,16 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
         return repr(self.reason)
 
 
+class ValidationError(ProvisionerError, ValueError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: str):
+        self.reason = (f'Validation Failed. Reason: {reason}')
+
+    def __str__(self):
+        return repr(self.reason)
+
+
 class PrvsnrCmdError(ProvisionerError):
     def __init__(self, cmd_id: str):
         self.cmd_id = cmd_id
