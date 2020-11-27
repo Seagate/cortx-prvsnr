@@ -296,6 +296,7 @@ class ReleaseFileNotFoundError(ProvisionerError):
 
 
 class ValidationError(ProvisionerError):
+
     """Base Validation Exception."""
 
     _prvsnr_type_ = True
@@ -308,6 +309,7 @@ class ValidationError(ProvisionerError):
 
 
 class CriticalValidationError(ValidationError):
+
     """Critical validation Exception."""
 
     def __str__(self):
