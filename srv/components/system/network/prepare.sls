@@ -15,14 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set nwmanager_is_running = salt['service.status']('NetworkManager') %}
+{#% set nwmanager_is_running = salt['service.status']('NetworkManager') %#}
 
-{% if nwmanager_is_running %}
+{#% if nwmanager_is_running %#}
 
-Stop and disable NetworkManager service:
-  service.dead:
-    - name: NetworkManager
-    - enable: False
+# Stop and disable NetworkManager service:
+#   service.dead:
+#     - name: NetworkManager
+#     - enable: False
 
 # Remove NetworkManager package:
 #   pkg.purged:
@@ -58,13 +58,13 @@ Stop and disable NetworkManager service:
 #       - Kill dhclient
 {#% endif %#}
 
-{% else  %}
+{#% else  %#}
 
-network_manager_is_not_running:
-  test.nop: []
+# network_manager_is_not_running:
+#   test.nop: []
 
-{% endif %}
+{#% endif %#}
 
-# Dummy placeholder for network.prepare:
-#   test.show_notification:
-#     - text: "A yaml file with comments results in minion non-zero exit"
+Dummy placeholder for network.prepare:
+  test.show_notification:
+    - text: "A yaml file with comments results in minion non-zero exit"
