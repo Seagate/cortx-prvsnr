@@ -53,8 +53,11 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
-    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    mgmt_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
+
+    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     
     # Test the IP that is set
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
