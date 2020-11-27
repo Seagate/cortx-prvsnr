@@ -49,13 +49,14 @@ Kill dhclient:
     - requires:
       - service: Stop and disable NetworkManager service
 
+{% if not pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr'] %}
 Start dhclient:
   cmd.run:
-    # - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
-    - name: dhclient -1 -q -H {{ grains["host"] }} {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+    - name: dhclient -1 -q -H $(hostname -s) {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
     - unless: pgrep dhclient
     - listen:
       - Kill dhclient
+{% endif %}
 
 {% else  %}
 
