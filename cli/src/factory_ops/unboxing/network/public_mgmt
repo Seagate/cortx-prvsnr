@@ -201,7 +201,7 @@ function set_mgmt_static_config {
     mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
     
     # User inputs
-    read -p "Management IP for ${mgmt_if_2} on Server-A: " mgmt_ip_1
+    read -p "Management IP for ${mgmt_if_1} on Server-A: " mgmt_ip_1
     read -p "Management IP for ${mgmt_if_2} on Server-B: " mgmt_ip_2
     read -p "Gateway IP for Management interfaces on both nodes: " gw_ip
     read -p "DNS search domain for both nodes: " search_domains
