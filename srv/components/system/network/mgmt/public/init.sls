@@ -25,16 +25,18 @@ Gateway not provided:
 
 {% else %}
 
+{% set mgmt_if = pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] %}
 # Setup network for data interfaces
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] }}
-    - device: {{ pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] }}
+    - name: {{ mgmt_if }}
+    - device: {{ mgmt_if }}
     - type: eth
     - enabled: True
     - nm_controlled: no
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
+    - hwaddr: {{ grains['hwaddr_interfaces'][mgmt_if] }}
     - defroute: yes
 {% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] %}
     - proto: none
