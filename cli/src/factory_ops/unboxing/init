@@ -120,16 +120,16 @@ while [[ $# -gt 0 ]]; do
             management_vip="$2"
             shift 2
             ;;
-        --Ia)
-            [ -z "$2" ] && die "Error: Static IP for public data network on server A is not provided";
-            static_data_ip_a="$2"
-            shift 2
-            ;;
-        --Ib)
-            [ -z "$2" ] && die "Error: Static IP for public data network on server B is not provided";
-            static_data_ip_b="$2"
-            shift 2
-            ;;
+        # --Ia)
+        #     [ -z "$2" ] && die "Error: Static IP for public data network on server A is not provided";
+        #     static_data_ip_a="$2"
+        #     shift 2
+        #     ;;
+        # --Ib)
+        #     [ -z "$2" ] && die "Error: Static IP for public data network on server B is not provided";
+        #     static_data_ip_b="$2"
+        #     shift 2
+        #     ;;
         *) echo "Invalid option $1"; usage; exit 1;;
     esac
 done
