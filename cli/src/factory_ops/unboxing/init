@@ -60,21 +60,10 @@ function usage {
     
     Usage:
         $0 -M <management_vip> -C <data_network_vip>
-           [
-            --Ia <static IP of data n/w for server A>
-            --Ib <static IP of data n/w for server B>
-           ]
-
+           
     Command Args:
         -M    <IP ADDRESS>   Static vip on management network
         -C    <IP ADDRESS>   Static vip on data network
-      --Ia    <IP ADDRESS>   Static ip address of public data network for server A.
-                             Optional, if skipped it is assumed that the IP address will
-                             be assigned through DHCP.
-      --Ib    <IP ADDRESS>   Static ip address of public data network for server B.
-                             Optional, if skipped it is assumed that the IP address will
-                             be assigned through DHCP.
-
     "
 }
 
@@ -99,11 +88,8 @@ function help {
     2. Unbox Cortx setup with following Management & Data VIPs:
        1. Management VIP   : 10.20.100.201
        2. Data network VIP : 172.19.100.100 
-       3. Static IPs for public data network: 
-          server A: 172.19.100.110
-          server B: 172.19.100.120
 
-       $ sudo /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100 --Ia 172.19.100.110 --Ib 172.19.100.120
+       $ sudo /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100
 
          Note: In this case it is assumed that there were no IPs assigned to the public data interfaces
                on both servers.
