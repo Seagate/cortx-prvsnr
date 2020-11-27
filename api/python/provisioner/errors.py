@@ -297,7 +297,7 @@ class ReleaseFileNotFoundError(ProvisionerError):
 
 class ValidationError(ProvisionerError):
 
-    """Base Validation Exception."""
+    """ Base Validation Exception. """
 
     _prvsnr_type_ = True
 
@@ -310,7 +310,7 @@ class ValidationError(ProvisionerError):
 
 class CriticalValidationError(ValidationError):
 
-    """Critical validation Exception."""
+    """ Critical validation Exception. """
 
     def __str__(self):
         return f'Critical checks failed: reason="{self.reason}"'
