@@ -22,7 +22,7 @@ import json
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
-from ..errors import SaltCmdResultError
+from ..errors import SaltCmdResultError, CriticalValidationError
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
@@ -54,6 +54,7 @@ class CheckEntry:
         self._verdict = None
         self._comment = None
         self.checked_target = None
+        self._critical = None  # mark that check is critical
 
     def __str__(self):
         """String representation of the single check"""
@@ -137,6 +138,37 @@ class CheckEntry:
         """
         return self._verdict is not None
 
+    @property
+    def is_critical(self) -> bool:
+        """
+        Return True if check result is marked as critical and False otherwise
+        """
+        return bool(self._critical)
+
+    @property
+    def check_name(self):
+        """
+
+        :return:
+        """
+        return self._check_name
+
+    def set_critical(self) -> None:
+        """
+        Mark that check result is critical (belongs to critical validation)
+
+        :return:
+        """
+        self._critical = True
+
+    def set_non_critical(self) -> None:
+        """
+        Mark that check result is not critical
+
+        :return:
+        """
+        self._critical = False
+
 
 class CheckResult:
 
@@ -190,7 +222,19 @@ class CheckResult:
         """
         return any(check.is_failed for check in self._check_entries)
 
-    def add_checks(self, check: Union[CheckEntry, List[CheckEntry]]) -> None:
+    @property
+    def has_critical_failure(self) -> bool:
+        """
+        Verify if at lease one critical check is failed
+        NOTE: self.is_failed is not equal to self.has_critical_failure
+
+        :return: True if at least one critical error failed and False otherwise
+        """
+        return any(check.is_failed and check.is_critical
+                   for check in self._check_entries)
+
+    def add_checks(self, check: Union[CheckEntry, List[CheckEntry]],
+                   critical: bool = False) -> None:
         """
         Add check entry to the check entries chain
 
@@ -202,6 +246,9 @@ class CheckResult:
         """
         def _add_check(check_entry: CheckEntry):
             if check_entry.is_set:
+                if critical:
+                    check_entry.set_critical()
+
                 self._check_entries.append(check_entry)
             else:
                 raise ValueError("Check verdict is not set")
@@ -220,13 +267,55 @@ class CheckResult:
         """
         return [check for check in self._check_entries if check.is_passed]
 
-    def get_failed(self) -> list:
+    def get_failed(self, critical: bool = None) -> list:
         """
-        Return all check entries which failed
-        Returns: list with all failed checks
+        Return all check entries which failed. If critical is set to True,
+        return only critical checks that failed. If critical is set to False,
+        return only non-critical checks that failed. If critical is set to
+        None, return all failed checks.
+
+        :param bool critical: parameter to filter returning check results
+
+        :return: list with failed checks satisfying the given condition
+        """
+        if critical is None:
+            return [check for check in self._check_entries if check.is_failed]
+
+        return list(filter(lambda x: x.is_critical == critical,
+                           self._check_entries))
+
+    def get_checks(self, critical: bool = None) -> List[CheckEntry]:
+        """
+        Return check entries satisfying the given parameter. If critical is
+        None, function returns all checks. Otherwise, it returns check entries,
+        which satisfy the given parameter.
+
+        :param bool critical: parameter to filter returning check results
+        :return: all check entries marked as critical.
+                 Note: it can return passed and failed checks together
 
         """
-        return [check for check in self._check_entries if check.is_failed]
+        if critical is None:
+            return list(self._check_entries)
+
+        return [check for check in self._check_entries
+                if check.is_critical == critical]
+
+    def get_by_name(self, *check_names: str) -> list:
+        """
+        Return group of check entries by its names
+
+        Usage:
+            check_result.get_by_name("hostnames")
+            check_result.get_by_name("cluster_status", "network",
+                                     "logs_are_good")
+
+        :param check_names: single check name or list of check names
+        :return: list (can be empty) of check entries
+                 with requested check names
+        """
+        return [check_entry for check_entry in self._check_entries
+                if check_entry.check_name in check_names]
 
     def to_dict(self) -> dict:
         """
@@ -250,36 +339,44 @@ class CheckResult:
 
 
 class DecisionMaker(ABC):
+    """Abstract Decision Maker class."""
 
-    """Abstract Decision Maker class"""
+    @staticmethod
+    def format_checks(*check_entries: CheckEntry) -> str:
+        """
+        Format all passed check entries to a single string
 
-    @abstractmethod
+        :param CheckEntry check_entries: one or more CheckEntry objects
+
+        :return: string representation of all passed check entries
+        """
+        return "; ".join(str(check) for check in check_entries)
+
     def make_decision(self, check_result: CheckResult):
         """
         Make a decision based on given check_result
 
         :return:
         """
+        if check_result.is_failed:
+            # Get non-critical errors first
+            warnings = check_result.get_checks(critical=False)
+            warning_msg = self.format_checks(*warnings)
+            logger.warning(f"Some checks are failed: {warning_msg}")
+
+            # verify if some of critical errors failed
+            if check_result.has_critical_failure:
+                critical_checks = check_result.get_failed(critical=True)
+                error_msg = self.format_checks(*critical_checks)
+                raise CriticalValidationError(error_msg)
+
+        logger.info("All checks are passed")
 
 
 class SWUpdateDecisionMaker(DecisionMaker):
-
     """Class analyses `CheckResult` structure and will decide to continue or
-       to stop SW Update routine
+       to stop SW Update routine.
     """
-
-    def _check_critical_errors(self, check_result: CheckResult):
-        """
-        Just as example that `DecisionMaker` child classes can threat some
-        errors as critical to raise appropriate Exception and stop command
-        execution
-
-        :param CheckResult check_result: instance with checks results
-        :return:
-        """
-        # TODO: determine list of critical errors which should trigger
-        #  SW Update exception
-        pass
 
     def make_decision(self, check_result: CheckResult):
         """
@@ -289,14 +386,13 @@ class SWUpdateDecisionMaker(DecisionMaker):
                                          to make a decision
         :return:
         """
-
         if check_result.is_failed:
-            failed = "; ".join(str(check)
-                               for check in check_result.get_failed())
-            logger.warning("Some SW Update pre-flight checks are failed: "
-                           f"{failed}")
+            # Threat all errors as warnings
+            warnings = check_result.get_checks(critical=False)
+            warning_msg = self.format_checks(*warnings)
+            logger.warning(f"Some checks are failed: {warning_msg}")
 
-        logger.info("All SW UPdate pre-flight checks are passed")
+        logger.info("All SW Update pre-flight checks are passed")
 
 
 @attr.s(auto_attribs=True)
