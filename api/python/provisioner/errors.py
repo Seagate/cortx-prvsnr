@@ -133,13 +133,13 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
 
 
 class ValidationError(ProvisionerError):
+
     """ Validation Exceptions """
 
     _prvsnr_type_ = True
 
     def __init__(self, reason: str):
         """ Handled all validation errors """
-
         self.reason = (f'Validation Failed. Reason: {reason}')
 
     def __str__(self):
