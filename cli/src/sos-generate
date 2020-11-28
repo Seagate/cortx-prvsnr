@@ -56,14 +56,14 @@ if [[ -z "$(rpm -qa | grep sos)" ]]; then
     exit 1
 fi
 
-if [[ -z "$(grep -F "Red Hat Enterprise Linux" /etc/redhat-release)" ]]; then
-    l_error "We need RHEL OS to run this script."
+if ! which sosreport &>/dev/null; then
+    l_error "sosreport executable is not found in PATH."
     exit 1
 fi
 
 parse_arguments "$@"
 
-sosreport_path=$DIR_PATH/os/os_$BUNDLE_ID.tar.gz
+sosreport_path=$DIR_PATH/os/os_$BUNDLE_ID.tar.xz
 mkdir -p $DIR_PATH/os
 l_info "Generating SOS logs"
 sosreport --all-logs --case-id=$BUNDLE_ID --debug --batch 2>&1|tee ${LOG_FILE}  #sosreport -k rpm.rpmva=off

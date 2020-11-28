@@ -51,6 +51,9 @@ function shutdown_node {
 
     local _node="${1:-both}"
 
+    local pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
+    local pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+
     if [[ $# -gt 1 ]]; then
         echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
         exit 2
@@ -63,13 +66,17 @@ function shutdown_node {
 
     if [[ "$_node" == "node1" ]]; then
         echo "INFO: Shutting down srvnode-1 in 1 min." | tee -a ${LOG_FILE}
-        salt srvnode-1 system.shutdown 1 --async
+        # salt srvnode-1 system.shutdown 1 --async
+        shutdown -P +1 'Shutting down srvnode-1 in 1 min' || true
     elif [[ "$_node" == "node2" ]]; then
         echo "INFO: Shutting down srvnode-2 in 1 min." | tee -a ${LOG_FILE}
-        salt srvnode-2 system.shutdown 1 --async
+        # salt srvnode-2 system.shutdown 1 --async
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
     else
         echo "INFO: Shutting down both nodes in 1 min." | tee -a ${LOG_FILE}
-        salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
+        # salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
+        shutdown -P +1 'Shutting down srvnode-1 in 1 min' || true
     fi
 }
 
