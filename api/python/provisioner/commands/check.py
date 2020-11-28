@@ -268,7 +268,9 @@ class DecisionMaker(ABC):
 
         :return:
         """
-    def get_failed_checks(self, check_result: CheckResult) -> str:
+
+    @staticmethod
+    def get_failed_checks(check_result: CheckResult) -> str:
         failed_checks = ""
 
         if check_result.is_failed:

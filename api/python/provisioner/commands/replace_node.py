@@ -108,7 +108,8 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
 class ReplaceNode(SetupProvisioner):
     _run_args_type = RunArgsReplaceNode
 
-    def repl_nodes_validations(self, repl_check):
+    @staticmethod
+    def repl_node_validations(repl_check):
         checker = Check()
 
         try:
@@ -211,7 +212,7 @@ class ReplaceNode(SetupProvisioner):
         )
 
         logger.info("Replace Nodes Pre-Routine Validations")
-        self.repl_nodes_validations(config.GroupChecks.REPLACENODE_CHECKS.value)
+        self.repl_node_validations(config.GroupChecks.REPLACENODE_CHECKS.value)
 
         logger.info("Updating replace node data in pillar")
         setup_ctx.ssh_client.cmd_run(

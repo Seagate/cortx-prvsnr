@@ -53,7 +53,8 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
     ]
 
 
-    def deployment_validations(self, deploy_check):
+    @staticmethod
+    def deployment_validations(deploy_check):
         checker = Check()
 
         try:

@@ -424,9 +424,6 @@ SWUPDATE_CHECKS = {
 }
 
 REPLACENODE_CHECKS = {
-    Checks.NETWORK_DRIVERS.value,
-    Checks.STORAGE_LVMS.value,
-    Checks.CLUSTER_STATUS.value,
     Checks.STORAGE_LUNS.value,
     Checks.MGMT_VIP.value,
     Checks.BMC_ACCESSIBILITY.value,
