@@ -183,7 +183,7 @@ function prereq_states {
     
     # states to be applied in desired sequence
     prereq_states=(
-        "misc_pkgs.rhel_sos"
+        "misc_pkgs.sos"
         "misc_pkgs.ipmi.bmc_watchdog"
         "misc_pkgs.ssl_certs"
         "ha.haproxy"
@@ -475,14 +475,14 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
 
         prereq_states
 
-        iopath_states
-
-        controlpath_states
-
         sync_states
+
+        iopath_states
 
         ha_states
 
+        controlpath_states
+        
         restore_states
 
         add_node_states
