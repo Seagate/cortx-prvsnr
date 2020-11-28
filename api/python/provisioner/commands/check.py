@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from abc import ABC, abstractmethod
 from typing import Type, Union, List
 import json
 
@@ -338,7 +337,7 @@ class CheckResult:
         return result
 
 
-class DecisionMaker(ABC):
+class DecisionMaker:
 
     """ Basic Decision Maker class. """
 
