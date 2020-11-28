@@ -401,7 +401,7 @@ echo -e "Ok.\n"
 echo "\
 ************************* SUCCESS!!! **************************************
 
-Lyve Rack cluster is successfully initialized!!  
+Lyve Rack cluster is successfully initialized!!
 
 IMPORTANT:
    - Before you start using the system please ensure that the Cortx cluster
