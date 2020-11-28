@@ -50,7 +50,6 @@ function shutdown_node {
     echo "DEBUG: Shutdown either or both nodes." >> ${LOG_FILE}
 
     local _node="${1:-both}"
-    local ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
 
     local pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
     local pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
@@ -72,11 +71,11 @@ function shutdown_node {
     elif [[ "$_node" == "node2" ]]; then
         echo "INFO: Shutting down srvnode-2 in 1 min." | tee -a ${LOG_FILE}
         # salt srvnode-2 system.shutdown 1 --async
-        ${ssh_cmd} "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
     else
         echo "INFO: Shutting down both nodes in 1 min." | tee -a ${LOG_FILE}
         # salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
-        ${ssh_cmd} "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
         shutdown -P +1 'Shutting down srvnode-1 in 1 min' || true
     fi
 }
