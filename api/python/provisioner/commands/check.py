@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from typing import Type, Union, List
+from typing import Type, Union, List, Optional
 import json
 
 from ._basic import CommandParserFillerMixin
@@ -152,21 +152,15 @@ class CheckEntry:
         """
         return self._check_name
 
-    def set_critical(self) -> None:
+    def set_critical(self, critical: bool) -> None:
         """
         Mark that check result is critical (belongs to critical validation)
 
+        :param bool critical: value to mark the check result as critical or
+                              non-critical
         :return:
         """
-        self._critical = True
-
-    def set_non_critical(self) -> None:
-        """
-        Mark that check result is not critical
-
-        :return:
-        """
-        self._critical = False
+        self._critical = critical
 
 
 class CheckResult:
@@ -245,9 +239,7 @@ class CheckResult:
         """
         def _add_check(check_entry: CheckEntry):
             if check_entry.is_set:
-                if critical:
-                    check_entry.set_critical()
-
+                check_entry.set_critical(critical)
                 self._check_entries.append(check_entry)
             else:
                 raise ValueError("Check verdict is not set")
@@ -266,7 +258,7 @@ class CheckResult:
         """
         return [check for check in self._check_entries if check.is_passed]
 
-    def get_failed(self, critical: bool = None) -> list:
+    def get_failed(self, critical: Optional[bool] = None) -> list:
         """
         Return all check entries which failed. If critical is set to True,
         return only critical checks that failed. If critical is set to False,
@@ -277,13 +269,10 @@ class CheckResult:
 
         :return: list with failed checks satisfying the given condition
         """
-        if critical is None:
-            return [check for check in self._check_entries if check.is_failed]
+        return [check for check in self.get_checks(critical=critical)
+                if check.is_failed]
 
-        return list(filter(lambda x: x.is_critical == critical,
-                           self._check_entries))
-
-    def get_checks(self, critical: bool = None) -> List[CheckEntry]:
+    def get_checks(self, critical: Optional[bool] = None) -> List[CheckEntry]:
         """
         Return check entries satisfying the given parameter. If critical is
         None, function returns all checks. Otherwise, it returns check entries,
@@ -388,7 +377,7 @@ class SWUpdateDecisionMaker(DecisionMaker):
         """
         if check_result.is_failed:
             # Threat all errors as warnings
-            warnings = check_result.get_checks(critical=False)
+            warnings = check_result.get_failed()
             warning_msg = self.format_checks(*warnings)
             logger.warning(f"Some checks are failed: {warning_msg}")
 
