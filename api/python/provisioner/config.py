@@ -393,8 +393,8 @@ class GroupChecks(Enum):
     """ Enum for group checks. """
 
     ALL = "all"
-    PRE_CHECKS = "pre_checks"
-    POST_CHECKS = "post_checks"
+    DEPLOY_PRE_CHECKS = "deploy_pre_checks"
+    DEPLOY_POST_CHECKS = "deploy_post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
     UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
@@ -406,7 +406,7 @@ CHECKS = [check.value for check in Checks]
 
 GROUP_CHECKS = [check.value for check in GroupChecks]
 
-PRE_CHECKS = {
+DEPLOY_PRE_CHECKS = {
     Checks.NETWORK_DRIVERS.value,
     Checks.NETWORK_HCA.value,
     Checks.STORAGE_HBA.value,
@@ -430,12 +430,18 @@ REPLACENODE_CHECKS = {
     Checks.HOSTNAMES.value
 }
 
-POST_CHECKS = {
+DEPLOY_POST_CHECKS = {
+    Checks.MGMT_VIP.value,
+    Checks.PUB_DATA_IP.value,
+    Checks.HOSTNAMES.value,
+    Checks.CONNECTIVITY.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.COMMUNICABILITY.value,
     Checks.STORAGE_LVMS.value,
     Checks.STORAGE_LUNS.value,
-    Checks.MGMT_VIP.value,
-    Checks.BMC_ACCESSIBILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.BMC_ACCESSIBILITY.value
 }
 
 UNBOXING_PRE_CHECKS = {

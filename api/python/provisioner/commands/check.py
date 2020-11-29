@@ -22,7 +22,7 @@ import json
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
-from ..errors import SaltCmdResultError
+from ..errors import SaltCmdResultError, ValidationError
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
@@ -269,6 +269,48 @@ class DecisionMaker(ABC):
         :return:
         """
 
+    @staticmethod
+    def get_failed_checks(check_result: CheckResult) -> str:
+        failed_checks = ""
+
+        if check_result.is_failed:
+            failed_checks = "; ".join(str(check)
+                                    for check in check_result.get_failed())
+
+        return failed_checks
+
+class PreChecksDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure for all
+       Pre-Checks - Deployment, and Replace Nodes
+       and in case of errors, will stop the flow right there.
+    """
+
+    def make_decision(self, check_result: CheckResult):
+
+        failed = self.get_failed_checks(check_result)
+        if failed:
+            raise ValidationError("One or more Pre-Flight "
+                                  f"Checks have failed: {failed}")
+
+        logger.info("All Pre-Flight Checks have Passed")
+
+class PostChecksDecisionMaker(DecisionMaker):
+
+    """Class analyses `CheckResult` structure for all
+       Post-Checks - Deployment, and Replace Nodes
+       and in case of errors, will raise Warning to the User.
+    """
+
+    def make_decision(self, check_result: CheckResult):
+
+        failed = self.get_failed_checks(check_result)
+        if failed:
+            logger.warning("One or more Post-routine Validations "
+                           f"have failed: {failed}")
+
+        logger.info("Post-Routine Validations Completed")
+
 
 class SWUpdateDecisionMaker(DecisionMaker):
 
@@ -298,9 +340,8 @@ class SWUpdateDecisionMaker(DecisionMaker):
         :return:
         """
 
-        if check_result.is_failed:
-            failed = "; ".join(str(check)
-                               for check in check_result.get_failed())
+        failed = self.get_failed_checks(check_result)
+        if failed:
             logger.warning("Some SW Update pre-flight checks are failed: "
                            f"{failed}")
 
@@ -547,7 +588,7 @@ class Check(CommandParserFillerMixin):
                                     'exit 1 ; }} ; '
                                     'grep -i "{key_phrase}" {log_filename} '
                                     '1>/dev/null && '
-                                    'echo "{key_phrase} exists in logfile" && '
+                                    'echo "\'{key_phrase}\' exists in logfile" && '
                                     'exit 1')
 
         minion_id = local_minion_id()
