@@ -817,7 +817,7 @@ class Check(CommandParserFillerMixin):
 
         res: List[CheckEntry] = list()
 
-        for luns_check in cfg.LUNS_CHECK:
+        for luns_check in cfg.LUNS_CHECKS:
             check_res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
             try:
