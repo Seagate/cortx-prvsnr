@@ -17,6 +17,7 @@
 
 from typing import Type
 import logging
+from importlib import import_module
 
 from ..config import (
     PRVSNR_PILLAR_CONFIG_INI,
@@ -34,11 +35,6 @@ from .setup_provisioner import (
     SetupProvisioner,
     SetupCmdBase
 )
-from .check import (
-    Check,
-    PreChecksDecisionMaker,
-    PostChecksDecisionMaker
-)
 from . import deploy_dual
 
 logger = logging.getLogger(__name__)
@@ -55,19 +51,24 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
 
     @staticmethod
     def deployment_validations(deploy_check):
-        checker = Check()
+        check_import = import_module(
+            'provisioner.commands.check'
+        )
+        check_cmd = getattr(check_import, 'Check')
+        precheck_dm = getattr(check_import, 'PreChecksDecisionMaker')
+        postcheck_dm = getattr(check_import, 'PostChecksDecisionMaker')
 
         try:
-            check_res = checker.run(deploy_check)
+            check_res = check_cmd().run(deploy_check)
         except Exception as exc:
             raise ValueError("Error During Deployment "
                             f"{deploy_check} Validations: {str(exc)}")
         else:
             if "pre" in deploy_check:
-                PreChecksDecisionMaker().make_decision(check_result=check_res)
+                precheck_dm().make_decision(check_result=check_res)
 
             else:
-                PostChecksDecisionMaker().make_decision(check_result=check_res)
+                postcheck_dm().make_decision(check_result=check_res)
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {

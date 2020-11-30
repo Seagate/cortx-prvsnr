@@ -817,7 +817,7 @@ class Check(CommandParserFillerMixin):
 
         res: List[CheckEntry] = list()
 
-        for luns_check in cfg.LUNS_CHECKS:
+        for luns_check in cfg.LUNS_CHECK:
             check_res: CheckEntry = CheckEntry(cfg.Checks.STORAGE_LUNS.value)
 
             try:
@@ -829,10 +829,41 @@ class Check(CommandParserFillerMixin):
             else:
                 check_res.set_passed(checked_target=cfg.ALL_MINIONS,
                                      comment="LUNs Accessibility, "
-                                     "Volume Size and Mapping "
+                                     "and Volume Size "
                                      f"Validated: {lun_args}")
 
             res.append(check_res)
+
+        return res
+
+    @staticmethod
+    def _luns_mapped(*, args: str) -> CheckEntry:
+        """
+        Check if Storage LUNs are properly mapped
+
+        :param args: luns_mapped check specific parameters and arguments
+        :return:
+        """
+        res: CheckEntry = CheckEntry(cfg.Checks.LUNS_MAPPED.value)
+
+        if cortx_py_utils_import_error:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment="Package cortx-py-utils not installed")
+            return res
+
+        try:
+            nodes = Check._get_pillar_data("cluster/node_list")
+
+            lun_args = [cfg.LUNS_MAPPED_CHECK] + nodes
+            StorageV().validate('luns', lun_args)
+
+        except Exception as exc:
+            res.set_fail(checked_target=cfg.ALL_MINIONS,
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=cfg.ALL_MINIONS,
+                           comment="LUNs Mapped "
+                           f"Validated: {lun_args}")
 
         return res
 

@@ -379,6 +379,7 @@ class Checks(Enum):
     PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
     STORAGE_LVMS = "storage_lvms"
     STORAGE_LUNS = "storage_luns"
+    LUNS_MAPPED = "luns_mapped"
     MGMT_VIP = "mgmt_vip"
     HOSTNAMES = "hostnames"
     PUB_DATA_IP = "public_data_ip"
@@ -439,6 +440,7 @@ DEPLOY_POST_CHECKS = {
     Checks.COMMUNICABILITY.value,
     Checks.STORAGE_LVMS.value,
     Checks.STORAGE_LUNS.value,
+    Checks.LUNS_MAPPED.value,
     Checks.CLUSTER_STATUS.value,
     Checks.LOGS_ARE_GOOD.value,
     Checks.BMC_ACCESSIBILITY.value
@@ -450,6 +452,7 @@ UNBOXING_PRE_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.BMC_ACCESSIBILITY.value,
     Checks.STORAGE_LUNS.value,
+    Checks.LUNS_MAPPED.value,
     Checks.CONTROLLER_IP.value,
 }
 
@@ -462,7 +465,8 @@ UNBOXING_POST_CHECKS = {
 NETWORK_DRIVER = "mlnx-ofed"
 HCA_PROVIDER = ["mellanox"]
 HBA_PROVIDER = ["lsi"]
-LUNS_CHECKS = ['accessible', 'mapped', 'size']
+LUNS_CHECKS = ['accessible', 'size']
+LUNS_MAPPED_CHECK = "mapped"
 
 
 class CheckVerdict(Enum):
