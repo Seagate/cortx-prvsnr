@@ -23,3 +23,63 @@ sspl:
     secret:
   role: cortx
   Version: 1.0.0
+  SYSTEM_INFORMATION:
+    operating_system: "centos7"
+    product: "ECS"
+    cli_type: "CS-A"
+    setup: "cortx"
+    data_path: "/var/cortx/sspl/data/"
+    cluster_id: "001"
+    site_id: "001"
+    rack_id: "001"
+    node_id: "001"
+    log_level: "INFO"
+    sspl_log_file_path: "/var/log/cortx/sspl/sspl.log"
+    syslog_host: "localhost"
+    syslog_port: "514"
+  LOGGINGPROCESSOR:
+    virtual_host: "SSPL"
+    queue_name: "iem-queue"
+    exchange_name: "sspl-in"
+    routing_key: "iem-key"
+    username: "sspluser"
+    password:
+    primary_rabbitmq_host: "localhost"
+  LOGGINGMSGHANDLER:
+    iem_routing_enabled: "false"
+    iem_log_locally: "true"
+  NODEDATAMSGHANDLER:
+    transmit_interval: "10"
+    units: "MB"
+    disk_usage_threshold: "80"
+    cpu_usage_threshold: "80"
+    host_memory_usage_threshold: "80"
+  LOGEMAILER:
+    priority: "LOG_ERR"
+  DATASTORE:
+    store_type: "consul"
+    consul_host: "127.0.0.1"
+    consul_port: "8500"
+  RABBITMQINGRESSPROCESSOR:
+    virtual_host: "SSPL"
+    queue_name: "actuator-req-queue"
+    exchange_name: "sspl-in"
+    routing_key: "actuator-req-key"
+    username: "sspluser"
+    password:
+    primary_rabbitmq_host: "localhost"
+  RABBITMQEGRESSPROCESSOR:
+    virtual_host: "SSPL"
+    queue_name: "sensor-queue"
+    exchange_name: "sspl-out"
+    routing_key: "sensor-key"
+    ack_queue_name: "sensor-queue"
+    ack_exchange_name: "sspl-out"
+    ack_routing_key: "sensor-key"
+    username: "sspluser"
+    password:
+    message_signature_username: "sspl-ll"
+    message_signature_token: "ALOIUD986798df69a8koDISLKJ282983"
+    message_signature_expires: "3600"
+    iem_route_exchange_name: "sspl-out"
+    primary_rabbitmq_host: "localhost"
