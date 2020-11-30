@@ -17,7 +17,7 @@
 
 from typing import Type
 import logging
-from importlib import import_module
+import importlib
 
 from ..config import (
     PRVSNR_PILLAR_CONFIG_INI,
@@ -35,6 +35,7 @@ from .setup_provisioner import (
     SetupProvisioner,
     SetupCmdBase
 )
+from . import check
 from . import deploy_dual
 
 logger = logging.getLogger(__name__)
@@ -51,9 +52,8 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
 
     @staticmethod
     def deployment_validations(deploy_check):
-        check_import = import_module(
-            'provisioner.commands.check'
-        )
+        check_import = importlib.reload(check)
+
         check_cmd = getattr(check_import, 'Check')
         precheck_dm = getattr(check_import, 'PreChecksDecisionMaker')
         postcheck_dm = getattr(check_import, 'PostChecksDecisionMaker')
