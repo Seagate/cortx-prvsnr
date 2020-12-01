@@ -39,3 +39,7 @@ Reload updated services:
     - name: systemctl daemon-reload
     - onchanges:
       - file: Update glusterfshsaredstorage.service
+
+Enable glusterfssharedstorage.service:
+  service.enabled:
+    - name: glusterfssharedstorage.service
