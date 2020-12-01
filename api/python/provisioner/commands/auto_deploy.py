@@ -54,9 +54,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
     def deployment_validations(deploy_check):
         check_import = importlib.reload(check)
 
-        check_cmd = getattr(check_import, 'Check')
-        precheck_dm = getattr(check_import, 'PreChecksDecisionMaker')
-        postcheck_dm = getattr(check_import, 'PostChecksDecisionMaker')
+        check_cmd = check_import.Check
 
         try:
             check_res = check_cmd().run(deploy_check)
@@ -65,10 +63,10 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                             f"{deploy_check} Validations: {str(exc)}")
         else:
             if "pre" in deploy_check:
-                precheck_dm().make_decision(check_result=check_res)
+                check_import.PreChecksDecisionMaker().make_decision(check_result=check_res)
 
             else:
-                postcheck_dm().make_decision(check_result=check_res)
+                check_import.PostChecksDecisionMaker().make_decision(check_result=check_res)
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
