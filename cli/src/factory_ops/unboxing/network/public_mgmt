@@ -53,8 +53,11 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
-    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev eno1 | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    mgmt_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
+
+    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     
     # Test the IP that is set
     _linfo "Ping management IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
@@ -136,7 +139,7 @@ function set_mgmt_nw_config {
         fi
 
         mgmt_if=$(get_pillar_data cluster:${srvnode}:network:mgmt_nw:iface:0)
-        _linfo "Setting DHCP on ${srvnode} for interface: ${mgmt_if}"
+        _linfo "Setting up network on ${srvnode} for interface: ${mgmt_if}"
         backup_ifcfg ${remote} ${mgmt_if}
         
         _linfo "Setting /etc/resolv.conf on ${node_name} for interface: ${mgmt_if}"
@@ -198,7 +201,7 @@ function set_mgmt_static_config {
     mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
     
     # User inputs
-    read -p "Management IP for ${mgmt_if_2} on Server-A: " mgmt_ip_1
+    read -p "Management IP for ${mgmt_if_1} on Server-A: " mgmt_ip_1
     read -p "Management IP for ${mgmt_if_2} on Server-B: " mgmt_ip_2
     read -p "Gateway IP for Management interfaces on both nodes: " gw_ip
     read -p "DNS search domain for both nodes: " search_domains
