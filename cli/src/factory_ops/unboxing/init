@@ -394,10 +394,8 @@ do
 done
 echo -e "Ok.\n"
 
-
 echo "Ensuring the cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
 ensure_healthy_cluster
-
 
 echo "\
 ************************* SUCCESS!!! **************************************
