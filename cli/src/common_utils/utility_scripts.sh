@@ -165,7 +165,7 @@ function ensure_healthy_cluster {
                 if [[ "$_exit_on_err" == true ]]; then
                     exit 10
                 else
-                    ret_ensure_healthy_cluster=20
+                    ret_ensure_healthy_cluster=10
                     break
                 fi
             fi
