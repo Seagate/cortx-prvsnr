@@ -20,6 +20,7 @@
 set -eu
 # ifndef behavior
 export COMMON_UTILS_UTILITY_SCRIPTS=1
+export ret_ensure_healthy_cluster=0
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/utils.log}"
 
@@ -81,6 +82,9 @@ function proceed_check {
 
 function ensure_healthy_cluster {
     local _nowait=${1:-}
+    local _exit_on_err="${2:-true}"
+    ret_ensure_healthy_cluster=0
+
 
     _linfo "*****************************************************************"
     _linfo "Performing HA cluster health-check."
@@ -113,7 +117,7 @@ function ensure_healthy_cluster {
             if [[ "${running}" == "$(( configured - disabled ))" ]]; then
                 if [[ "0" == "${stopped}" ]]; then
                     _linfo " Cluster is Online and all services have started. "
-                    
+                    ret_ensure_healthy_cluster=0
                     # Break the loop
                     break
                 else
@@ -142,7 +146,12 @@ function ensure_healthy_cluster {
 
                 if [[ ${attempt} -ge 20 ]]; then
                     _lerror "Giving up after ${attempt} attempts."
-                    exit 20
+                    if [[ "$_exit_on_err" == true ]]; then
+                        exit 20
+                    else
+                        ret_ensure_healthy_cluster=20
+                        break
+                    fi
                 fi
             fi
 
@@ -153,7 +162,12 @@ function ensure_healthy_cluster {
             if [[ ${attempt} -ge 10 ]]; then
                 _lerror "One or more nodes in cluster is/are Offline."
                 _lerror "Giving up after 10 attempts."
-                exit 10
+                if [[ "$_exit_on_err" == true ]]; then
+                    exit 10
+                else
+                    ret_ensure_healthy_cluster=20
+                    break
+                fi
             fi
         fi
 

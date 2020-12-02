@@ -304,7 +304,16 @@ echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 
 echo "Ensure cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
-ensure_healthy_cluster
+
+ensure_healthy_cluster "false" "false"
+if [[ $ret_ensure_healthy_cluster -ne 0 ]]; then
+    echo "Checking if cleaning the cluster resources helps" | tee -a ${LOG_FILE}
+    echo  -n "Cleaning failed resource history......" | tee -a ${LOG_FILE}
+    pcs resource cleanup >> ${LOG_FILE}
+    echo "Ok." | tee -a ${LOG_FILE}
+    echo "Checking again if cluster is back in the healthy state" | tee -a ${LOG_FILE}
+    ensure_healthy_cluster
+fi
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
