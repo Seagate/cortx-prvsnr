@@ -169,6 +169,9 @@ dump_unboxing_data "$service_user_name" "$service_user_secret"
 # Create flag file
 boxing_flag $box_flag_file
 
+# Cleanup /etc/hosts
+cleanup_hosts
+
 # Power-off sequence
 #shutdown_controller
 shutdown_node
