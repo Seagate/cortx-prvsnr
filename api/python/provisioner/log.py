@@ -83,7 +83,16 @@ class NoErrorSysLogHandler(logging.handlers.SysLogHandler):
             # is already formatted
             record.args = tuple()
             _len = LOG_TRUNC_MSG_SIZE_MAX
-            while True:
+            # Note.
+            #   as part of EOS-15450 it was encountered that the following loop
+            #   may lead to 0 _len, likely it happened due to glitch in
+            #   underlying logging engines (rsyslog likely),
+            #   so try to log until _len is reasonably long
+            #   to avoid infinite loop
+            # TODO IMPROVE
+            #      if we were not able to log anythin need
+            #      to (try) register that fact somewhere anyway
+            while _len > len(LOG_TRUNC_MSG_TMPL):
                 record.msg = LOG_TRUNC_MSG_TMPL.format(_msg[:_len])
                 try:
                     super().emit(record)
