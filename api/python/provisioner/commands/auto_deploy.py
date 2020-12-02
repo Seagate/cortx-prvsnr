@@ -61,12 +61,15 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             raise ValueError("Error During Deployment "
                              f"{deploy_check} Validations: {str(exc)}")
         else:
-            if "pre" in deploy_check:
+            if deploy_check == GroupChecks.DEPLOY_PRE_CHECKS.value:
                 check_import.PreChecksDecisionMaker().make_decision(
                     check_result=check_res)
-            else:
+            elif deploy_check == GroupChecks.DEPLOY_POST_CHECKS.value:
                 check_import.PostChecksDecisionMaker().make_decision(
                     check_result=check_res)
+            else:
+                raise ValueError(
+                    f'Group Check "{deploy_check}" is not supported')
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
