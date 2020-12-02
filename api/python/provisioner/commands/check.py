@@ -1079,8 +1079,10 @@ class Check(CommandParserFillerMixin):
             return check_entry
 
         res: List[CheckEntry] = list()
+        #  TODO use of salt python API with function_run
         _DECRYPT_PSWD_CMD = ('salt-call lyveutil.decrypt cluster {val}'
                              ' --output=newline_values_only')
+        minion_id = local_minion_id()
 
         for node in nodes:
             check_res: CheckEntry = CheckEntry(bmc_check)
@@ -1093,7 +1095,6 @@ class Check(CommandParserFillerMixin):
 
                 # Decrypt the secret
                 cmd = _DECRYPT_PSWD_CMD.format(val=secret)
-                minion_id = local_minion_id()
                 bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
 
                 # Check the stonith configuration
