@@ -385,6 +385,9 @@ class Check(CommandParserFillerMixin):
 
     _PRV_METHOD_MOD = "_"  # private method modificator
 
+    STONITH = "stonith"
+    ACCESSIBLE = "accessible"
+
     @staticmethod
     def _network(*, args: str) -> List[CheckEntry]:
         """
@@ -449,18 +452,17 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    @staticmethod
-    def _bmc_accessibility(*, args: str) -> CheckEntry:
+    def _bmc_accessibility(self, *, args: str) -> CheckEntry:
         """
         Check BMC accessibility
 
         :param args: bmc accessibility check specific parameters and arguments
         :return:
         """
-        return Check._validate_bmc_check('accessible')
+        return self._validate_bmc_check(self.ACCESSIBLE)
 
-    @staticmethod
-    def _bmc_stonith(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
+    def _bmc_stonith(self, *, args: str) -> Union[CheckEntry,
+                                                  List[CheckEntry]]:
         """
         Check BMC Stonith Configuration
 
@@ -468,7 +470,7 @@ class Check(CommandParserFillerMixin):
                      parameters and arguments
         :return:
         """
-        return Check._validate_bmc_check('stonith')
+        return self._validate_bmc_check(self.STONITH)
 
     @staticmethod
     def _connectivity(*, servers: Union[list, tuple, set] = PENDING_SERVERS,
@@ -1051,13 +1053,14 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    @staticmethod
-    def _validate_bmc_check(check: str):
+    def _validate_bmc_check(self, check: str):
 
-        if check == "stonith":
+        if check == self.STONITH:
             bmc_check = cfg.Checks.BMC_STONITH.value
-        else:  # accessible
+        elif check == self.ACCESSIBLE:
             bmc_check = cfg.Checks.BMC_ACCESSIBILITY.value
+        else:
+            raise ValueError(f'BMC Check "{check}" is not supported')
 
         check_entry: CheckEntry = CheckEntry(bmc_check)
         # Check for import errors
