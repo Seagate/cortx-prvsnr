@@ -360,7 +360,7 @@ echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}
 pcs stonith history cleanup >> ${LOG_FILE}
 echo "Ok." | tee -a ${LOG_FILE}
 echo  -n "Cleaning failed resource history......" | tee -a ${LOG_FILE}
-pcs resource cleanup >> ${LOG_FILE}
+pcs resource cleanup --all >> ${LOG_FILE}
 echo "Ok." | tee -a ${LOG_FILE}
 
 
