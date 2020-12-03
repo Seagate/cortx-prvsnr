@@ -275,9 +275,10 @@ class DecisionMaker(ABC):
 
         if check_result.is_failed:
             failed_checks = "; ".join(str(check)
-                                    for check in check_result.get_failed())
+                                      for check in check_result.get_failed())
 
         return failed_checks
+
 
 class PreChecksDecisionMaker(DecisionMaker):
 
@@ -294,6 +295,7 @@ class PreChecksDecisionMaker(DecisionMaker):
                                   f"Checks have failed: {failed}")
 
         logger.info("All Pre-Flight Checks have Passed")
+
 
 class PostChecksDecisionMaker(DecisionMaker):
 
@@ -383,6 +385,9 @@ class Check(CommandParserFillerMixin):
 
     _PRV_METHOD_MOD = "_"  # private method modificator
 
+    STONITH = "stonith"
+    ACCESSIBLE = "accessible"
+
     @staticmethod
     def _network(*, args: str) -> List[CheckEntry]:
         """
@@ -448,88 +453,6 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _bmc_accessibility(*, args: str) -> CheckEntry:
-        """
-        Check BMC accessibility
-
-        :param args: bmc accessibility check specific parameters and arguments
-        :return:
-        """
-        res: CheckEntry = CheckEntry(cfg.Checks.BMC_ACCESSIBILITY.value)
-
-        # Check for import errors
-        if cortx_py_utils_import_error:
-            res.set_fail(checked_target=cfg.ALL_MINIONS,
-                         comment="Package cortx-py-utils not installed")
-            return res
-
-        try:
-            # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
-            # Check if BMC is accessible for these nodes
-            BmcV().validate('accessible', nodes)
-        except Exception as exc:
-            res.set_fail(checked_target=cfg.ALL_MINIONS,
-                         comment=str(exc))
-        else:
-            res.set_passed(checked_target=cfg.ALL_MINIONS)
-
-        return res
-
-    @staticmethod
-    def _bmc_stonith(*, args: str) -> Union[CheckEntry, List[CheckEntry]]:
-        """
-        Check BMC Stonith Configuration
-
-        :param args: bmc stonith configuration check specific parameters and arguments
-        :return:
-        """
-        check_entry: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
-        # Check for import errors
-        if cortx_py_utils_import_error:
-            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment="Package cortx-py-utils not installed")
-            return check_entry
-
-        try:
-            # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
-        except Exception as exc:
-            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment=str(exc))
-            return check_entry
-
-        res: List[CheckEntry] = list()
-        _DECRYPT_PSWD_CMD = ('salt-call lyveutil.decrypt cluster {val}'
-                             ' --output=newline_values_only')
-
-        for node in nodes:
-            check_stonith: CheckEntry = CheckEntry(cfg.Checks.BMC_STONITH.value)
-
-            try:
-                # Get BMC IP, user and secret.
-                bmc_ip = Check._get_pillar_data(f"cluster/{node}/bmc/ip")
-                bmc_user = Check._get_pillar_data(f"cluster/{node}/bmc/user")
-                secret = Check._get_pillar_data(f"cluster/{node}/bmc/secret")
-
-                # Decrypt the secret
-                cmd = _DECRYPT_PSWD_CMD.format(val=secret)
-                minion_id = local_minion_id()
-                bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
-
-                # Check the stonith configuration
-                BmcV().validate('stonith',
-                                [node, bmc_ip, bmc_user, bmc_passwd])
-            except Exception as exc:
-                check_stonith.set_fail(checked_target=node, comment=str(exc))
-            else:
-                check_stonith.set_passed(checked_target=node)
-
-            res.append(check_stonith)
-
-        return res
-
-    @staticmethod
     def _connectivity(*, servers: Union[list, tuple, set] = PENDING_SERVERS,
                       args: str) -> List[CheckEntry]:
         """
@@ -583,13 +506,13 @@ class Check(CommandParserFillerMixin):
         """
         # TODO: do we need to fail if logfile doesn't exist?
         _LOGS_ARE_GOOD_CHECK_CMD_TMPL = (
-                                    'test -f {log_filename} || '
-                                    '{{ echo "logfile does not exist" && '
-                                    'exit 1 ; }} ; '
-                                    'grep -i "{key_phrase}" {log_filename} '
-                                    '1>/dev/null && '
-                                    'echo "\'{key_phrase}\' exists in logfile" && '
-                                    'exit 1')
+                            'test -f {log_filename} || '
+                            '{{ echo "logfile does not exist" && '
+                            'exit 1 ; }} ; '
+                            'grep -i "{key_phrase}" {log_filename} '
+                            '1>/dev/null && '
+                            'echo "\'{key_phrase}\' exists in logfile" && '
+                            'exit 1')
 
         minion_id = local_minion_id()
         res: List[CheckEntry] = list()
@@ -679,14 +602,16 @@ class Check(CommandParserFillerMixin):
             cmd = _PSWDLESS_SSH_CHECK_CMD_TMPL.format(user=user,
                                                       hostname=addr)
 
-            check_ret : CheckEntry = CheckEntry(cfg.Checks.PASSWORDLESS_SSH_ACCESS.value)
+            check_ret: CheckEntry = CheckEntry(
+                cfg.Checks.PASSWORDLESS_SSH_ACCESS.value)
             try:
-                _res = cmd_run(cmd, targets=targets)
+                cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
-                check_ret.set_fail(checked_target=targets,
-                             comment=(f"{cfg.CheckVerdict.FAIL.value}: "
-                                      f"'{addr}' is not reachable from "
-                                      f"{targets} under user {user}"))
+                check_ret.set_fail(
+                    checked_target=targets,
+                    comment=(f"{cfg.CheckVerdict.FAIL.value}: "
+                             f"'{addr}' is not reachable from "
+                             f"{targets} under user {user}"))
             else:
                 # if no error occurred
                 check_ret.set_passed(checked_target=targets)
@@ -968,8 +893,9 @@ class Check(CommandParserFillerMixin):
         check_entry: CheckEntry = CheckEntry(cfg.Checks.HOSTNAMES.value)
 
         if cortx_py_utils_import_error:
-            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment="Package cortx-py-utils not installed")
+            check_entry.set_fail(
+                checked_target=cfg.ALL_MINIONS,
+                comment="Package cortx-py-utils not installed")
             return check_entry
 
         try:
@@ -1009,8 +935,9 @@ class Check(CommandParserFillerMixin):
         check_entry: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
 
         if cortx_py_utils_import_error:
-            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment="Package cortx-py-utils not installed")
+            check_entry.set_fail(
+                checked_target=cfg.ALL_MINIONS,
+                comment="Package cortx-py-utils not installed")
             return check_entry
 
         try:
@@ -1022,7 +949,8 @@ class Check(CommandParserFillerMixin):
             return check_entry
 
         res: List[CheckEntry] = list()
-        _IP_DEV_IFACE_TMPL = "ip addr show dev {ifc} | grep 'inet' | grep '{ifc}'"
+        _IP_DEV_IFACE_TMPL = (
+            "ip addr show dev {ifc} | grep 'inet' | grep '{ifc}'")
 
         for node in nodes:
             check_ret: CheckEntry = CheckEntry(cfg.Checks.PUB_DATA_IP.value)
@@ -1069,8 +997,9 @@ class Check(CommandParserFillerMixin):
         check_entry: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
 
         if cortx_py_utils_import_error:
-            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
-                                 comment="Package cortx-py-utils not installed")
+            check_entry.set_fail(
+                checked_target=cfg.ALL_MINIONS,
+                comment="Package cortx-py-utils not installed")
             return check_entry
 
         try:
@@ -1101,6 +1030,81 @@ class Check(CommandParserFillerMixin):
                 check_ret.set_passed(checked_target=node)
 
             res.append(check_ret)
+
+        return res
+
+    def _bmc_accessibility(self, *, args: str) -> CheckEntry:
+        """
+        Check BMC accessibility
+
+        :param args: bmc accessibility check specific parameters and arguments
+        :return:
+        """
+        return self._validate_bmc_check(self.ACCESSIBLE)
+
+    def _bmc_stonith(self, *, args: str) -> Union[CheckEntry,
+                                                  List[CheckEntry]]:
+        """
+        Check BMC Stonith Configuration
+
+        :param args: bmc stonith configuration check specific
+                     parameters and arguments
+        :return:
+        """
+        return self._validate_bmc_check(self.STONITH)
+
+    def _validate_bmc_check(self, check: str):
+
+        if check == self.STONITH:
+            bmc_check = cfg.Checks.BMC_STONITH.value
+        elif check == self.ACCESSIBLE:
+            bmc_check = cfg.Checks.BMC_ACCESSIBILITY.value
+        else:
+            raise ValueError(f'BMC Check "{check}" is not supported')
+
+        check_entry: CheckEntry = CheckEntry(bmc_check)
+        # Check for import errors
+        if cortx_py_utils_import_error:
+            check_entry.set_fail(
+                checked_target=cfg.ALL_MINIONS,
+                comment="Package cortx-py-utils not installed")
+            return check_entry
+
+        try:
+            # Get node list
+            nodes = Check._get_pillar_data("cluster/node_list")
+        except Exception as exc:
+            check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
+                                 comment=str(exc))
+            return check_entry
+
+        res: List[CheckEntry] = list()
+        #  TODO use of salt python API with function_run
+        _DECRYPT_PSWD_CMD = ('salt-call lyveutil.decrypt cluster {val}'
+                             ' --output=newline_values_only')
+        minion_id = local_minion_id()
+
+        for node in nodes:
+            check_res: CheckEntry = CheckEntry(bmc_check)
+
+            try:
+                # Get BMC IP, user and secret.
+                bmc_ip = Check._get_pillar_data(f"cluster/{node}/bmc/ip")
+                bmc_user = Check._get_pillar_data(f"cluster/{node}/bmc/user")
+                secret = Check._get_pillar_data(f"cluster/{node}/bmc/secret")
+
+                # Decrypt the secret
+                cmd = _DECRYPT_PSWD_CMD.format(val=secret)
+                bmc_passwd = cmd_run(cmd, targets=minion_id)[minion_id]
+
+                # Check the stonith configuration
+                BmcV().validate(check, [node, bmc_ip, bmc_user, bmc_passwd])
+            except Exception as exc:
+                check_res.set_fail(checked_target=node, comment=str(exc))
+            else:
+                check_res.set_passed(checked_target=node)
+
+            res.append(check_res)
 
         return res
 

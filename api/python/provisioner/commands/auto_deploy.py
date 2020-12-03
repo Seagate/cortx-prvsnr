@@ -49,7 +49,6 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         deploy_dual.run_args_type
     ]
 
-
     @staticmethod
     def deployment_validations(deploy_check):
         check_import = importlib.reload(check)
@@ -60,13 +59,17 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             check_res = check_cmd().run(deploy_check)
         except Exception as exc:
             raise ValueError("Error During Deployment "
-                            f"{deploy_check} Validations: {str(exc)}")
+                             f"{deploy_check} Validations: {str(exc)}")
         else:
-            if "pre" in deploy_check:
-                check_import.PreChecksDecisionMaker().make_decision(check_result=check_res)
-
+            if deploy_check == GroupChecks.DEPLOY_PRE_CHECKS.value:
+                check_import.PreChecksDecisionMaker().make_decision(
+                    check_result=check_res)
+            elif deploy_check == GroupChecks.DEPLOY_POST_CHECKS.value:
+                check_import.PostChecksDecisionMaker().make_decision(
+                    check_result=check_res)
             else:
-                check_import.PostChecksDecisionMaker().make_decision(check_result=check_res)
+                raise ValueError(
+                    f'Group Check "{deploy_check}" is not supported')
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {

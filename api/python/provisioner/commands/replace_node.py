@@ -115,8 +115,9 @@ class ReplaceNode(SetupProvisioner):
         try:
             check_res = checker.run(repl_check)
         except Exception as exc:
-            raise errors.ValidationError("Error During Replace Nodes "
-                            f"{repl_check} Validations: {str(exc)}")
+            raise errors.ValidationError(
+                "Error During Replace Nodes"
+                f"{repl_check} Validations: {str(exc)}")
         else:
             PreChecksDecisionMaker().make_decision(check_result=check_res)
 
