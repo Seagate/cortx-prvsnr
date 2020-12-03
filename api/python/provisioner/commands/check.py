@@ -452,26 +452,6 @@ class Check(CommandParserFillerMixin):
 
         return res
 
-    def _bmc_accessibility(self, *, args: str) -> CheckEntry:
-        """
-        Check BMC accessibility
-
-        :param args: bmc accessibility check specific parameters and arguments
-        :return:
-        """
-        return self._validate_bmc_check(self.ACCESSIBLE)
-
-    def _bmc_stonith(self, *, args: str) -> Union[CheckEntry,
-                                                  List[CheckEntry]]:
-        """
-        Check BMC Stonith Configuration
-
-        :param args: bmc stonith configuration check specific
-                     parameters and arguments
-        :return:
-        """
-        return self._validate_bmc_check(self.STONITH)
-
     @staticmethod
     def _connectivity(*, servers: Union[list, tuple, set] = PENDING_SERVERS,
                       args: str) -> List[CheckEntry]:
@@ -1052,6 +1032,26 @@ class Check(CommandParserFillerMixin):
             res.append(check_ret)
 
         return res
+
+    def _bmc_accessibility(self, *, args: str) -> CheckEntry:
+        """
+        Check BMC accessibility
+
+        :param args: bmc accessibility check specific parameters and arguments
+        :return:
+        """
+        return self._validate_bmc_check(self.ACCESSIBLE)
+
+    def _bmc_stonith(self, *, args: str) -> Union[CheckEntry,
+                                                  List[CheckEntry]]:
+        """
+        Check BMC Stonith Configuration
+
+        :param args: bmc stonith configuration check specific
+                     parameters and arguments
+        :return:
+        """
+        return self._validate_bmc_check(self.STONITH)
 
     def _validate_bmc_check(self, check: str):
 
