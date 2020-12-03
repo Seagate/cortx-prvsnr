@@ -59,6 +59,7 @@ class SaltArgsBase:
         return dict(arg=self.fun_args, kwarg=self.fun_kwargs, **self.kw)
 
     def __str__(self):
+        """Return str presentation."""
         _dct = self._as_dict()
         _self_safe = type(self)(**_dct)
         return str(attr.asdict(_self_safe))
@@ -95,16 +96,17 @@ class SaltClientResultBase:
 class SaltClientJIDResult(SaltClientResultBase):
 
     def __attrs_post_init__(self):
+        """Do post init."""
         if not isinstance(self.raw, str):
             self.fails = (
-                'not a valid salt job ID value type: {type(self.raw)}'
+                f'not a valid salt job ID value type: {type(self.raw)}'
             )
 
         try:
             self.results = int(self.raw)
         except ValueError:
             self.fails = (
-                'not a valid salt job ID value: {self.raw}'
+                f'not a valid salt job ID value: {self.raw}'
             )
 
 
@@ -112,8 +114,9 @@ class SaltClientJIDResult(SaltClientResultBase):
 class SaltClientJobResult(SaltClientResultBase):
 
     def __attrs_post_init__(self):
+        """Do post init."""
         # TODO is it a valid case actually ?
-        if type(self.raw) is not dict:
+        if not isinstance(self.raw, dict):
             self.results = self.raw
         else:
             try:
@@ -126,7 +129,7 @@ class SaltClientJobResult(SaltClientResultBase):
         # TODO HARDEN check format of result
         for target, job_result in self.raw.items():
             ret = None
-            if type(job_result) is dict:
+            if isinstance(job_result, dict):
                 # result format as a part of job differs (async result) from
                 # sync case:
                 #   - 'ret' for sync
@@ -147,7 +150,7 @@ class SaltClientJobResult(SaltClientResultBase):
             if job_result.get('retcode') != 0:
                 if (
                     self.cmd_args_view['fun'].startswith('state.')
-                    and (type(ret) is dict)
+                    and isinstance(ret, dict)
                 ):
                     _fails = self._get_state_fails(ret)
                 else:
@@ -157,7 +160,8 @@ class SaltClientJobResult(SaltClientResultBase):
                 self.fails[target] = _fails
 
         # TODO TESTS
-    def _get_state_fails(self, ret: Dict):
+    @staticmethod
+    def _get_state_fails(ret: Dict):
         fails = {}
         for task, tresult in ret.items():
             if not tresult['result']:
@@ -176,11 +180,11 @@ class SaltClientBase(ABC):
     @property
     @abstractmethod
     def _cmd_args_t(self) -> Type[SaltArgsBase]:
-        ...
+        """Return type of arguments."""
 
     @property
     def _salt_client_res_t(self) -> Type[SaltClientResultBase]:
-        ...
+        """Return client result type."""
 
     def _build_cmd_args(
         self,
@@ -203,7 +207,7 @@ class SaltClientBase(ABC):
 
     @abstractmethod
     def _run(self, cmd_args: SaltArgsBase):
-        ...
+        """Do salt call with provided arguments."""
 
     def _parse_res(
         self, salt_res, cmd_args_view: Dict

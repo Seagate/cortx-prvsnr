@@ -84,7 +84,8 @@ class SaltRunnerSchemaResult:
 class SaltRunnerClientResult(SaltClientResultBase):
 
     def __attrs_post_init__(self):
-        if type(self.raw) is not dict:
+        """Do post init."""
+        if not isinstance(self.raw, dict):
             self.fails = (
                 "RunnerClient result type is not a dictionary: "
                 f"{type(self.raw)}"
@@ -134,6 +135,7 @@ class SaltRunnerClient(SaltClientBase):
     _client: RunnerClient = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
+        """Do post init."""
         if self.shared:
             self._client = salt_runner_client()
         else:
@@ -181,6 +183,7 @@ class SaltRunnerClient(SaltClientBase):
 class SaltRunnerAsyncClient(SaltRunnerClient):
 
     def __attrs_post_init__(self):
+        """Do post init."""
         raise NotImplementedError(
             'async calls for RunnerClient are not supported yet'
         )

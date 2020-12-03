@@ -99,6 +99,7 @@ class SaltLocalClient(SaltClientBase):
     _client: LocalClient = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
+        """Do post init."""
         if self.shared:
             self._client = salt_local_client()
         else:

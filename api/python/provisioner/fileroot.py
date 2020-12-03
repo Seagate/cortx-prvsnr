@@ -34,6 +34,7 @@ class FileRoot:
     _runner_client: SaltRunnerClient = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._runner_client = SaltRunnerClient()
 
     def refresh(self):

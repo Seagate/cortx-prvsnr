@@ -81,6 +81,7 @@ class SaltCallerClientResult(SaltClientJobResult):
     client: Caller
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self.raw = {
             'local': {
                 'ret': self.raw,
@@ -97,7 +98,7 @@ class SaltCallerClientResult(SaltClientJobResult):
 
         if (
             self.cmd_args_view['fun'].startswith('state.')
-            and (type(ret) is dict)
+            and isinstance(ret, dict)
         ):
             self.results['local'] = ret
 
@@ -125,6 +126,7 @@ class SaltCallerClientBase(SaltClientBase):
     _client: Caller = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
+        """Do post init."""
         if self.shared:
             if self._local:
                 self._client = salt_caller_local()
@@ -169,7 +171,7 @@ class SaltCallerClient(SaltCallerClientBase):
 def local_minion_id():
     global _local_minion_id
     if not _local_minion_id:
-        _local_minion_id = SaltLocalCallerClient.run(
+        _local_minion_id = SaltLocalCallerClient().run(
             'grains.get', fun_args=['id']
         )['local']
     return _local_minion_id

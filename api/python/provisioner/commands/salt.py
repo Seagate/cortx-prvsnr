@@ -157,7 +157,8 @@ class SaltClient(CommandParserFillerMixin):
 
         return _args, kwargs
 
-    def run(self, client_t, fun, *args, **kwargs):
+    @staticmethod
+    def run(client_t, fun, *args, **kwargs):
         client_kwargs = {
             k: kwargs.pop(k) for k in list(kwargs)
             if k in attr.fields_dict(client_t)

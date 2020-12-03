@@ -83,6 +83,7 @@ class SaltSSHRawResultSchema(SaltSSHResultSchemaBase):
     other: Dict = attr.ib(init=False, default=attr.Factory(dict))
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._result = self.raw
 
 
@@ -94,6 +95,7 @@ class SaltSSHSimpleResultSchema(SaltSSHResultSchemaBase):
     stdout: str
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._result = self.stdout
         if self.retcode:
             self._fail = f'STDERR: {self.stderr}, STDOUT: {self.stdout}'
@@ -109,11 +111,12 @@ class SaltSSHJobResultSchema(SaltSSHResultSchemaBase):
     jresult: Any
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._result = self.jresult
 
         # TODO IMPROVE better error presentation
         if self.retcode or (
-            type(self._result) is dict and
+            isinstance(self._result, dict) and
             self._result.get('retcode')
         ):
             self._fail = self._result
@@ -124,12 +127,14 @@ class SaltSSHJobResultSchema(SaltSSHResultSchemaBase):
 class SaltSSHStateJobResultSchema(SaltSSHJobResultSchema):
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._result, _fail = self._get_state_results(self.jresult)
         if _fail:
             self._fail = _fail
 
     # TODO IMPROVE EOS-8473
-    def _get_state_results(self, ret: Dict):
+    @staticmethod
+    def _get_state_results(ret: Dict):
         results = {}
         fails = {}
         for task, tresult in ret.items():
@@ -165,7 +170,7 @@ class SaltSSHResultParser:
 
     @classmethod
     def from_salt_res(cls, data: Any, cmd_args_view: Dict):
-        if type(data) is dict:
+        if isinstance(data, dict):
             _data = {cls._sanitize_key(k): v for k, v in data.items()}
             _types = [
                 SaltSSHSimpleResultSchema,
@@ -252,20 +257,20 @@ class SaltSSHClient(SaltClientBase):
     _def_roster_data: Dict = attr.ib(init=False, default=attr.Factory(dict))
 
     def __attrs_post_init__(self):
+        """Do post init."""
         self._client = SSHClient(c_path=str(self.c_path))
-        '''
-        if self.roster_file is None:
-            path = USER_SHARED_PILLAR.all_hosts_path(
-                'roster.sls'
-            )
-            if not path.exists():
-                path = GLUSTERFS_VOLUME_PILLAR_DIR.all_hosts_path(
-                    'roster.sls'
-                )
 
-            if path.exists():
-                self.roster_file = path
-        '''
+        # if self.roster_file is None:
+        #     path = USER_SHARED_PILLAR.all_hosts_path(
+        #         'roster.sls'
+        #     )
+        #     if not path.exists():
+        #        path = GLUSTERFS_VOLUME_PILLAR_DIR.all_hosts_path(
+        #            'roster.sls'
+        #        )
+
+        #    if path.exists():
+        #        self.roster_file = path
 
         if self.roster_file:
             logger.debug(f'default roster is set to {self.roster_file}')
