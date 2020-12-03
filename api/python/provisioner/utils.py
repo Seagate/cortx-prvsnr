@@ -20,6 +20,7 @@ import logging
 import subprocess
 import time
 import yaml
+from shlex import quote
 
 from pathlib import Path, PosixPath
 from typing import (
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO TEST
-
+# FIXME remove on behalf of ones from attr_gen
 def validator_path(instance, attribute, value):
     if value is None:
         if attribute.default is not None:
@@ -120,6 +121,10 @@ def load_yaml(path):
 def dump_yaml(path, data, **kwargs):
     path = Path(str(path))
     path.write_text(dump_yaml_str(data, **kwargs))
+
+
+def quote_shell_cmd(cmd: List):
+    return [quote(p) for p in cmd]
 
 
 # TODO IMPROVE:

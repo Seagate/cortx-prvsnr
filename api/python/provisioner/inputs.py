@@ -22,6 +22,7 @@ import functools
 from typing import List, Union, Any, Iterable, Tuple, Dict
 from pathlib import Path
 
+from . import config
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
@@ -34,6 +35,9 @@ from .values import (
     is_special
 )
 from .serialize import PrvsnrType, loads
+from .utils import load_yaml
+
+cli_spec = load_yaml(config.CLI_SPEC_PATH)
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
@@ -93,6 +97,8 @@ class AttrParserArgs:
 
         if self.prefix:
             self.name = self.prefix + self.name
+
+        parser_args = {}
 
         parser_args = self._attr.metadata.get(
             METADATA_ARGPARSER, {}
@@ -182,6 +188,9 @@ class ParserFiller:
             if METADATA_ARGPARSER in _attr.metadata:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
+
+                if isinstance(metadata, str):
+                    metadata = KeyPath(metadata).value(cli_spec)
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (

@@ -119,6 +119,8 @@ generate_roster:
 # setup commands
 setup_provisioner:
   type: SetupProvisioner
+setup_provisioner_poc:
+  type: SetupProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:

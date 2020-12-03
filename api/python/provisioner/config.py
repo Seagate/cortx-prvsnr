@@ -33,6 +33,11 @@ else:
             PROJECT_PATH = None
             break
 
+API_SPEC_PATH = MODULE_DIR / 'api_spec.yaml'
+PARAMS_SPEC_PATH = MODULE_DIR / 'params_spec.yaml'
+CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
+ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
+
 # TODO
 #  - rename to defaults.py or constants.py or ...
 #  - then rename base.py to config.py
@@ -75,6 +80,7 @@ PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
 #     salt master/minion config files
 #     (e.g. default ones have less priority than user ones,
 #           shared user pillar has less priority than local one)
+PRVSNR_FACTORY_PILLAR_PREFIX = f"u_factory_"
 PRVSNR_USER_PILLAR_PREFIX = 'uu_'
 PRVSNR_USER_LOCAL_PILLAR_PREFIX = 'zzz_'
 
@@ -132,6 +138,9 @@ SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
 SEAGATE_USER_FILEROOT_DIR_TMPL = str(
     'components/provisioner/files/users/{uname}'
 )
+
+SSH_PRIV_KEY = Path('/root/.ssh/id_rsa_prvsnr')
+SSH_PUB_KEY = Path('/root/.ssh/id_rsa_prvsnr.pub')
 
 ALL_MINIONS = '*'
 LOCAL_MINION = '__local__'
@@ -373,6 +382,8 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+CLI_NEW_SERVICE_USER_PWD_VALUE = 'GENERATE'
 
 
 class Checks(Enum):
