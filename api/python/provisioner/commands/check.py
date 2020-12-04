@@ -250,44 +250,36 @@ class CheckResult:
         else:
             _add_check(check)
 
-    def get_passed(self) -> list:
+    def get_checks(self, *, failed: Optional[bool] = None,
+                   critical: Optional[bool] = None) -> List[CheckEntry]:
         """
-        Return all check entries which passed
-        Returns: list with all passed checks
+        Return check entries that satisfying the given parameters.
+        If both parameters ``failed`` and ``critical`` are ``None``,
+        the function returns all checks. Otherwise, it returns check entries,
+        which satisfy either one or both parameters.
 
-        """
-        return [check for check in self._check_entries if check.is_passed]
+        :param Optional[bool] failed: parameter to filter check results by
+                                      failed value
+        :param Optional[bool] critical: parameter to filter returning check
+                                        results by the critical value
 
-    def get_failed(self, critical: Optional[bool] = None) -> list:
-        """
-        Return all check entries which failed. If critical is set to True,
-        return only critical checks that failed. If critical is set to False,
-        return only non-critical checks that failed. If critical is set to
-        None, return all failed checks.
-
-        :param bool critical: parameter to filter returning check results
-
-        :return: list with failed checks satisfying the given condition
-        """
-        return [check for check in self.get_checks(critical=critical)
-                if check.is_failed]
-
-    def get_checks(self, critical: Optional[bool] = None) -> List[CheckEntry]:
-        """
-        Return check entries satisfying the given parameter. If critical is
-        None, function returns all checks. Otherwise, it returns check entries,
-        which satisfy the given parameter.
-
-        :param bool critical: parameter to filter returning check results
-        :return: all check entries marked as critical.
+        :return: check entries selected on the given parameters
                  Note: it can return passed and failed checks together
 
+        Examples:
+            Get all passed check entries (both critical and non-critical):
+                ``check_result.get_checks(failed=False)``
+            Get all critical failed check entries:
+                ``check_result.get_checks(failed=True, critical=True)``
+            Get all check entries added to `CheckResult` instance:
+                ``check_result.get_checks()``
         """
         if critical is None:
-            return list(self._check_entries)
+            return [check for check in self._check_entries
+                    if check.is_failed == failed]
 
         return [check for check in self._check_entries
-                if check.is_critical == critical]
+                if check.is_critical == critical and check.is_failed == failed]
 
     def get_by_name(self, *check_names: str) -> list:
         """
@@ -349,13 +341,15 @@ class DecisionMaker:
         """
         if check_result.is_failed:
             # Get non-critical errors first
-            warnings = check_result.get_checks(critical=False)
+            warnings = check_result.get_checks(failed=True,
+                                               critical=False)
             warning_msg = self.format_checks(*warnings)
             logger.warning(f"Some checks are failed: {warning_msg}")
 
             # verify if some of critical errors failed
             if check_result.has_critical_failure:
-                critical_checks = check_result.get_failed(critical=True)
+                critical_checks = check_result.get_checks(failed=True,
+                                                          critical=True)
                 error_msg = self.format_checks(*critical_checks)
                 raise CriticalValidationError(error_msg)
 
@@ -377,7 +371,7 @@ class SWUpdateDecisionMaker(DecisionMaker):
         """
         if check_result.is_failed:
             # Threat all errors as warnings
-            warnings = check_result.get_failed()
+            warnings = check_result.get_checks(failed=True)
             warning_msg = self.format_checks(*warnings)
             logger.warning(f"Some checks are failed: {warning_msg}")
 
