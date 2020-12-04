@@ -16,13 +16,15 @@
 #
 
 hostsfile:
-  file.managed:
+  file.blockreplace:
     - name: /etc/hosts
-    - contents: |
+    - backup: False
+    - marker_start: "#---pvt_data_start---"
+    - marker_end: "#---pvt_data_end---"
+    - append_if_not_found: True
+    - template: jinja
+    - content: |
         {%- if pillar['cluster']['node_list']|length > 1 %}
-        127.0.0.1     localhost localhost.localdomain localhost4 localhost4.localdomain4
-        ::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
-        -------------------------------------------------------------------------------
         {%- for node in pillar['cluster']['node_list'] %}
         {%- if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
         {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node -}}
@@ -32,10 +34,4 @@ hostsfile:
         {% endfor -%}
         {% endif -%}
         {% endfor %}
-        {%- else %}
-        127.0.0.1     localhost localhost.localdomain localhost4 localhost4.localdomain4 {{ grains['id'] }}
-        ::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
-        -------------------------------------------------------------------------------
         {%- endif %}
-    - user: root
-    - group: root
