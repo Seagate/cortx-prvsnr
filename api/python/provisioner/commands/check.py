@@ -320,7 +320,8 @@ class CheckResult:
 
 class DecisionMaker:
 
-    """ Basic Decision Maker class. """
+    """Basic Decision Maker class.
+    """
 
     @staticmethod
     def format_checks(*check_entries: CheckEntry) -> str:
