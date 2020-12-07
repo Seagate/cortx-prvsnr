@@ -467,6 +467,13 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     l_info "=================================================="
     $cmd salt ${tgt_node} state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
 
+    # update provisioner
+    $cmd salt ${tgt_node} state.apply components.provisioner.update ${salt_opts}
+    $cmd salt ${tgt_node} state.sls_id salt_master_config_updated components.provisioner.salt_master.config ${salt_opts}
+    $cmd salt ${tgt_node} state.sls_id salt_minion_config_updated components.provisioner.salt_minion.config  ${salt_opts}
+    $cmd salt ${tgt_node} cmd.run 'systemctl restart salt-minion salt-master' ${salt_opts}
+    python3 -c "from provisioner import salt_minion; salt_minion.ensure_salt_minions_are_ready(['$tgt_node'])"
+
     if [[ "$run_all" == true ]]; then
 
         remove_node_states
@@ -529,7 +536,7 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     if [[ "$run_finalization_states" == true ]]; then
         finalization_states
     fi
-    
+
     l_info "***** SUCCESS! *****"
     l_info "The detailed logs can be seen at: $LOG_FILE"
     l_info "Done"
