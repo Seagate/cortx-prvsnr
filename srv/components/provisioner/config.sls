@@ -28,8 +28,13 @@ provisioner_rsyslog_conf_updated:
     - watch_in:
       - service: Start rsyslog
 
-# Always start glusterfshsaredstorage before salt-minion
-Update glusterfshsaredstorage.service:
+# Always start glusterfshsaredstorage before salt-master
+Update salt-master.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/salt-master.service
+    - source: salt://components/provisioner/salt_master/files/salt-master.service
+
+Update glusterfssharedstorage.service:
   file.managed:
     - name: /usr/lib/systemd/system/glusterfssharedstorage.service
     - source: salt://components/provisioner/files/glusterfshsaredstorage.service
@@ -38,8 +43,4 @@ Reload updated services:
   cmd.run:
     - name: systemctl daemon-reload
     - onchanges:
-      - file: Update glusterfshsaredstorage.service
-
-Enable glusterfssharedstorage.service:
-  service.enabled:
-    - name: glusterfssharedstorage.service
+      - file: Update salt-master.service

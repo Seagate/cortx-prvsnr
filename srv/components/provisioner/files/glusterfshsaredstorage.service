@@ -1,7 +1,6 @@
 [Unit]
 Description=Mount glusterfs sharedstorage
 After=glusterd.service
-Before=salt-master.service
 Requires=glusterd.service remote-fs-pre.target local-fs.target
 
 [Service]
@@ -12,4 +11,4 @@ RestartSec=3
 RestartForceExitStatus=1
 
 [Install]
-WantedBy=multi-user.target salt-master.service
+WantedBy=multi-user.target
