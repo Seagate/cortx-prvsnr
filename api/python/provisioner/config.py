@@ -177,6 +177,7 @@ LOG_ROOT_DIR = (
 LOG_NULL_HANDLER = '_null'
 LOG_CONSOLE_HANDLER = 'console'
 LOG_FILE_HANDLER = 'logfile'
+LOG_FILE_SALT_HANDLER = 'saltlogfile'
 LOG_RSYSLOG_HANDLER = 'rsyslog'
 LOG_CMD_FILTER = 'cmd_filter'
 
