@@ -368,20 +368,54 @@ NOT_AVAILABLE = "N/A"
 
 class Checks(Enum):
 
-    """Enumeration for available checks/validations"""
+    """ Enumeration for available checks/validations """
 
-    ALL = "all"
     NETWORK = "network"
     CONNECTIVITY = "connectivity"
     BMC_ACCESSIBILITY = "bmc_accessibility"
+    BMC_STONITH = "bmc_stonith"
     COMMUNICABILITY = "communicability"
     CLUSTER_STATUS = "cluster_status"
     LOGS_ARE_GOOD = "logs_are_good"
     PASSWORDLESS_SSH_ACCESS = "passwordless_ssh_access"
+    STORAGE_LVMS = "storage_lvms"
+    STORAGE_LUNS = "storage_luns"
+    LUNS_MAPPED = "luns_mapped"
+    MGMT_VIP = "mgmt_vip"
+    HOSTNAMES = "hostnames"
+    PUB_DATA_IP = "public_data_ip"
+    CONTROLLER_IP = "controller_ip"
+    STORAGE_HBA = "storage_hba"
+    NETWORK_DRIVERS = "network_drivers"
+    NETWORK_HCA = "network_hca"
+
+
+class GroupChecks(Enum):
+
+    """ Enum for group checks. """
+
+    ALL = "all"
+    DEPLOY_PRE_CHECKS = "deploy_pre_checks"
+    DEPLOY_POST_CHECKS = "deploy_post_checks"
+    REPLACENODE_CHECKS = "replacenode_checks"
+    SWUPDATE_CHECKS = "swupdate_checks"
+    UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
+    UNBOXING_POST_CHECKS = "unboxing_post_checks"
 
 
 # Set of supported validations/checks
-CHECKS = {
+CHECKS = [check.value for check in Checks]
+
+GROUP_CHECKS = [check.value for check in GroupChecks]
+
+DEPLOY_PRE_CHECKS = {
+    Checks.NETWORK_DRIVERS.value,
+    Checks.NETWORK_HCA.value,
+    Checks.STORAGE_HBA.value,
+    Checks.STORAGE_LUNS.value
+}
+
+SWUPDATE_CHECKS = {
     Checks.NETWORK.value,
     Checks.CONNECTIVITY.value,
     Checks.BMC_ACCESSIBILITY.value,
@@ -390,6 +424,50 @@ CHECKS = {
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
+
+REPLACENODE_CHECKS = {
+    Checks.STORAGE_LUNS.value,
+    Checks.MGMT_VIP.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.HOSTNAMES.value
+}
+
+DEPLOY_POST_CHECKS = {
+    Checks.MGMT_VIP.value,
+    Checks.PUB_DATA_IP.value,
+    Checks.HOSTNAMES.value,
+    Checks.CONNECTIVITY.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.STORAGE_LVMS.value,
+    Checks.STORAGE_LUNS.value,
+    Checks.LUNS_MAPPED.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.BMC_ACCESSIBILITY.value
+}
+
+UNBOXING_PRE_CHECKS = {
+    Checks.PUB_DATA_IP.value,
+    Checks.HOSTNAMES.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.STORAGE_LUNS.value,
+    Checks.LUNS_MAPPED.value,
+    Checks.CONTROLLER_IP.value,
+}
+
+UNBOXING_POST_CHECKS = {
+    Checks.BMC_STONITH.value,
+}
+
+
+# validations parameters
+NETWORK_DRIVER = "mlnx-ofed"
+HCA_PROVIDER = ["mellanox"]
+HBA_PROVIDER = ["lsi"]
+LUNS_CHECKS = ['accessible', 'size']
+LUNS_MAPPED_CHECK = "mapped"
 
 
 class CheckVerdict(Enum):
