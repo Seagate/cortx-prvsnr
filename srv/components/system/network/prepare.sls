@@ -54,9 +54,19 @@
 #   cmd.run:
 #     - name: dhclient -1 -q -H $(hostname -s) {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
 #     - unless: pgrep dhclient
-#     - listen:
+#     - onchanges:
 #       - Kill dhclient
+#
+# Check_DNS:
+#  cmd.script:
+#    - source: salt://components/system/network/files/dns_check.sh
+#    - require:
+#      - Start dhclient
+#    - retry:
+#        attempts: 20
+#        interval: 30
 {#% endif %#}
+
 
 {#% else  %#}
 
