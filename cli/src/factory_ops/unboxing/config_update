@@ -361,14 +361,14 @@ function update_pillar_from_local {
     if [[ "${search_domains}" == "None" ]]; then
         provisioner pillar_set cluster/search_domains PRVSNR_UNDEFINED
     else
-        provisioner pillar_set cluster/search_domains \"${search_domains}\"
+        provisioner pillar_set cluster/search_domains ${search_domains}
     fi
 
     public_dns_servers=$(salt-call --local pillar.get cluster:dns_servers --output=newline_values_only)
     if [[ "${public_dns_servers}" == "None" ]]; then
         provisioner pillar_set cluster/dns_servers PRVSNR_UNDEFINED
     else
-        provisioner pillar_set cluster/dns_servers \"${public_dns_servers}\"
+        provisioner pillar_set cluster/dns_servers ${public_dns_servers}
     fi
 
     

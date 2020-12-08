@@ -99,20 +99,20 @@ function update_cluster_pillar_for_mgmt_ips {
         provisioner pillar_set --local cluster/srvnode-2/network/mgmt_nw/netmask \"${netmask}\"
         
         # DNS servers deserves special treatment
-        pillar_list_of_dns_servers=\"[
+        pillar_list_of_dns_servers=[
         flag=false
         for dns_server in $( echo ${dns_servers}|sed "s/,/ /g" ) ; do
             flag=true
-            pillar_list_of_dns_servers=${pillar_list_of_dns_servers}\\\"${dns_server}\\\",
+            pillar_list_of_dns_servers=${pillar_list_of_dns_servers}\"${dns_server}\",
         done
         # Remove last comma
         if $flag ; then
-            pillar_list_of_dns_servers=${pillar_list_of_dns_servers%?}]\"
+            pillar_list_of_dns_servers=${pillar_list_of_dns_servers%?}]
         else
             pillar_list_of_dns_servers=PRVNSR_UNDEFINED
         fi
 
-        provisioner pillar_set --local cluster/dns_servers ${pillar_list_of_dns_servers}
+        provisioner pillar_set --local cluster/dns_servers "${pillar_list_of_dns_servers}"
         provisioner pillar_set --local cluster/search_domains \"${search_domain}\"
 
         # Gluster would take care of this after unboxing
