@@ -113,7 +113,7 @@ function update_cluster_pillar_for_mgmt_ips {
         fi
 
         provisioner pillar_set --local cluster/dns_servers "${pillar_list_of_dns_servers}"
-        provisioner pillar_set --local cluster/search_domains \"${search_domain}\"
+        provisioner pillar_set --local cluster/search_domains "[\"${search_domain}\"]"
 
         # Gluster would take care of this after unboxing
         _linfo "pvt_ip_b: ${pvt_ip_b}"
