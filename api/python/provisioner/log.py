@@ -35,6 +35,7 @@ from .config import (
     LOG_NULL_HANDLER as null_handler,
     LOG_CONSOLE_HANDLER as console_handler,
     LOG_FILE_HANDLER as logfile_handler,
+    LOG_FILE_SALT_HANDLER as saltlogfile_handler,
     LOG_CMD_FILTER as cmd_filter,
     LOG_HUMAN_FORMATTER,
     LOG_TRUNC_MSG_TMPL,
@@ -61,6 +62,17 @@ class CommandFilter(logging.Filter):
         return True
 
 
+class LogFileFilter(logging.Filter):
+    def filter(self, record):
+        return not(record.name.startswith("salt.")
+                   and (record.levelno < logging.INFO))
+
+
+class SaltLogFileFilter(logging.Filter):
+    def filter(self, record):
+        return record.name.startswith("salt.")
+
+
 class NoTraceExceptionFormatter(logging.Formatter):
     def format(self, record):
         # ensure cache won't be used for exception formatting
@@ -83,7 +95,16 @@ class NoErrorSysLogHandler(logging.handlers.SysLogHandler):
             # is already formatted
             record.args = tuple()
             _len = LOG_TRUNC_MSG_SIZE_MAX
-            while True:
+            # Note.
+            #   as part of EOS-15450 it was encountered that the following loop
+            #   may lead to 0 _len, likely it happened due to glitch in
+            #   underlying logging engines (rsyslog likely),
+            #   so try to log until _len is reasonably long
+            #   to avoid infinite loop
+            # TODO IMPROVE
+            #      if we were not able to log anythin need
+            #      to (try) register that fact somewhere anyway
+            while _len > len(LOG_TRUNC_MSG_TMPL):
                 record.msg = LOG_TRUNC_MSG_TMPL.format(_msg[:_len])
                 try:
                     super().emit(record)
@@ -151,13 +172,13 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     converter=(lambda stream: 'ext://sys.{}'.format(stream))
                 )
             return _ConsoleStreamLogHandler
-        elif hname == logfile_handler:
+        elif hname in (logfile_handler, saltlogfile_handler):
             @attr.s(auto_attribs=True)
             class _FileLogHandler(_LogHandler):
                 filename: str = attr.ib(
                     metadata={
                         inputs.METADATA_ARGPARSER: {
-                            'help': f"{logfile_handler} handler file path",
+                            'help': f"{hname} handler file path",
                             'metavar': 'FILE'
                         }
                     },
@@ -167,7 +188,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
-                                f"{logfile_handler} handler "
+                                f"{hname} handler "
                                 "max file size in bytes"
                             ),
                             'metavar': 'BYTES',
@@ -181,7 +202,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
-                                f"{logfile_handler} handler "
+                                f"{hname} handler "
                                 "max backup files number"
                             ),
                             'metavar': 'NUMBER',
