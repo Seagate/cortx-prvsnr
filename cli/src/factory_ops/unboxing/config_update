@@ -357,14 +357,14 @@ function update_pillar_from_local {
         provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask \"${srv2_public_netmask}\"
     fi
 
-    search_domains=$(salt-call --local pillar.get cluster:search_domains --output=newline_values_only)
+    search_domains=$(salt-call --local pillar.get cluster:search_domains --output=json|jq --compact-output .local)
     if [[ "${search_domains}" == "None" ]]; then
         provisioner pillar_set cluster/search_domains PRVSNR_UNDEFINED
     else
         provisioner pillar_set cluster/search_domains ${search_domains}
     fi
 
-    public_dns_servers=$(salt-call --local pillar.get cluster:dns_servers --output=newline_values_only)
+    public_dns_servers=$(salt-call --local pillar.get cluster:dns_servers --output=json|jq --compact-output .local)
     if [[ "${public_dns_servers}" == "None" ]]; then
         provisioner pillar_set cluster/dns_servers PRVSNR_UNDEFINED
     else
