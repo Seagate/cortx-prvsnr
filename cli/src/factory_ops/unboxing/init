@@ -57,10 +57,10 @@ export salt_opts="--no-color --out-file=${LOG_FILE} --out-file-append"
 
 function usage {
     echo "\
-    
+
     Usage:
         $0 -M <management_vip> -C <data_network_vip>
-           
+
     Command Args:
         -M    <IP ADDRESS>   Static vip on management network
         -C    <IP ADDRESS>   Static vip on data network
@@ -76,7 +76,7 @@ function help {
         b. Data Network VIP:    Static vip on data network
 
     -------- Sample commands ---------
-    
+
     1. Unbox Cortx setup with following Manangement and Data VIPs:
        1. Management VIP   : 10.20.100.201
        2. Data network VIP : 172.19.100.100
@@ -87,7 +87,7 @@ function help {
 
     2. Unbox Cortx setup with following Management & Data VIPs:
        1. Management VIP   : 10.20.100.201
-       2. Data network VIP : 172.19.100.100 
+       2. Data network VIP : 172.19.100.100
 
        $ sudo /opt/seagate/cortx/provisioner/cli/factory_ops/unboxing/init -M 10.20.100.201 -C 172.19.100.100
 
@@ -188,6 +188,15 @@ check_hostname
 check_pvt_data_connectivity
 check_mgmt_ip
 
+# Check IP addresses for public data interfaces are set
+check_public_data_interfaces
+
+# Check BMC is accessible on both servers
+check_bmc_accessibility
+
+# Check Server-A and Server-B can access (ping) Controller-A and Controller-B on the enclosure
+check_controller_ip
+
 # Run pre_unbox validations
 pre_unbox
 
@@ -197,7 +206,7 @@ pre_unbox
 
 # Check salt services is required as one of initial steps
 # This is requried to fetch pillar data on master node
-# check_salt_services 
+# check_salt_services
 
 # Update /root/.ssh/config file with hosts
 #update_ssh_config taken care of in pre_unbox
@@ -303,9 +312,6 @@ sleep 2
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 
-echo "Ensure cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
-ensure_healthy_cluster
-
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
@@ -363,7 +369,7 @@ echo  -n "Cleaning stonith history.............." | tee -a ${LOG_FILE}
 pcs stonith history cleanup >> ${LOG_FILE}
 echo "Ok." | tee -a ${LOG_FILE}
 echo  -n "Cleaning failed resource history......" | tee -a ${LOG_FILE}
-pcs resource cleanup >> ${LOG_FILE}
+pcs resource cleanup --all >> ${LOG_FILE}
 echo "Ok." | tee -a ${LOG_FILE}
 
 
@@ -397,6 +403,14 @@ do
 done
 echo -e "Ok.\n"
 
+echo "logging the output of pcs status before the cluster health check validation" >> ${LOG_FILE}
+pcs status >> ${LOG_FILE}
+
+echo "Ensuring the cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
+
+echo "logging the output of pcs status after the cluster health check validation" >> ${LOG_FILE}
+pcs status >> ${LOG_FILE}
 
 echo "\
 ************************* SUCCESS!!! **************************************

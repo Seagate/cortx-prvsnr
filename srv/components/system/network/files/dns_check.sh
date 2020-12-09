@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,23 +16,40 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-hostsfile:
-  file.blockreplace:
-    - name: /etc/hosts
-    - backup: False
-    - marker_start: "#---pvt_data_start---"
-    - marker_end: "#---pvt_data_end---"
-    - append_if_not_found: True
-    - template: jinja
-    - content: |
-        {%- if pillar['cluster']['node_list']|length > 1 %}
-        {%- for node in pillar['cluster']['node_list'] %}
-        {%- if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
-        {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node -}}
-        {%- else %}
-        {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0] }}   {{ srvnode -}}
-        {% endfor -%}
-        {% endif -%}
-        {% endfor %}
-        {%- endif %}
+set -eu
+
+domain="${1:-$(hostname)}"
+
+echo "Checking DNS resolution for domain '$domain'"
+
+res="$(getent -s hosts:dns ahosts "$domain" | paste -sd " " -)"
+
+if [[ -z "$res" ]]; then
+    >&2 echo "No DNS data found"
+    exit 1
+fi
+
+echo "Resolved into: '$res'"
+
+exit 0
+
+#ns_servers=$(dig +short NS "$domain" | paste -sd " " -)
+
+#if [[ -z "$ns_servers" ]]; then
+#    >&2 echo "No DNS servers found"
+#    exit 1
+#else
+#    echo "DNS servers detected: $ns_servers"
+#fi
+
+#for ns in $ns_servers; do
+#    echo "Trying NS '$ns'"
+#    res=$(dig +short +timeout=3 "@${ns}" "$domain")
+
+#    if [[ -z "$res" ]]; then
+#        >&2 echo "DNS failed for NS '$ns'"
+#        exit 1
+#    fi
+#done
+
+#echo "Domain '$domain' is resolved by all DNS servers"
