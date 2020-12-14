@@ -99,7 +99,7 @@ function update_cluster_pillar_for_mgmt_ips {
         provisioner pillar_set --local cluster/srvnode-2/network/mgmt_nw/netmask \"${netmask}\"
         
         # DNS servers deserves special treatment
-        pillar_list_of_dns_servers=[
+        pillar_list_of_dns_servers=
         flag=false
         for dns_server in $( echo ${dns_servers}|sed "s/,/ /g" ) ; do
             flag=true
@@ -107,22 +107,23 @@ function update_cluster_pillar_for_mgmt_ips {
         done
         # Remove last comma
         if $flag ; then
-            pillar_list_of_dns_servers=${pillar_list_of_dns_servers%?}]
+            pillar_list_of_dns_servers=[${pillar_list_of_dns_servers%?}]
         else
             pillar_list_of_dns_servers=PRVNSR_UNDEFINED
         fi
         provisioner pillar_set --local cluster/dns_servers "${pillar_list_of_dns_servers}"
 
         # Search domains deserves special treatment
-        pillar_list_of_search_domains=[
+        pillar_list_of_search_domains=
         flag=false
         for search_domain in $( echo ${search_domains}|sed "s/,/ /g" ) ; do
             flag=true
             pillar_list_of_search_domains=${pillar_list_of_search_domains}\"${search_domain}\",
         done
+
         # Remove last comma
         if $flag ; then
-            pillar_list_of_search_domains=${pillar_list_of_search_domains%?}]
+            pillar_list_of_search_domains=[${pillar_list_of_search_domains%?}]
         else
             pillar_list_of_search_domains=PRVNSR_UNDEFINED
         fi
