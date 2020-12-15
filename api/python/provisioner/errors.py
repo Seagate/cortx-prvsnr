@@ -20,31 +20,27 @@ import json
 from typing import Dict, Union, Any
 
 
-class CustomFormat():
+def dict_to_str(obj):
 
-    def __init__(self, obj):
-        self._obj = obj
+    if isinstance(obj, dict):
+        res = ''
 
-    def dict_to_str(self):
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                value = json.dumps(value, indent=4)
+            res = res + f"\n\t{key}: {value},"
 
-        if isinstance(self._obj, dict):
-            res = ''
+        return f"{{ {res} \n }}"
+    else:
+        return obj
 
-            for key, value in self._obj.items():
-                if isinstance(value, dict):
-                    value = json.dumps(value, indent=4)
-                res = res + f"{key}: {value},\n"
 
-            return f"{{ {res} }}"
-        else:
-            return self._obj
+def dict_to_json(obj):
 
-    def dict_to_json(self):
-
-        if isinstance(self._obj, dict):
-            return json.dumps(self._obj, indent=4)
-        else:
-            return self._obj
+    if isinstance(obj, dict):
+        return json.dumps(obj, indent=4)
+    else:
+        return obj
 
 
 class ProvisionerError(Exception):
@@ -108,8 +104,8 @@ class SaltCmdError(SaltError):
         self.reason = reason
 
     def __str__(self):
-        reason = CustomFormat(self.reason).dict_to_str()
-        cmd_args = CustomFormat(self.cmd_args).dict_to_json()
+        reason = dict_to_str(self.reason)
+        cmd_args = dict_to_json(self.cmd_args)
         return (
             "salt command failed, reason {}, args {}"
             .format(reason, cmd_args)

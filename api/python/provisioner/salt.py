@@ -33,7 +33,7 @@ from .config import (
    SECRET_MASK
 )
 from .errors import (
-    ProvisionerError, CustomFormat,
+    ProvisionerError,
     SaltError, SaltNoReturnError,
     SaltCmdRunError, SaltCmdResultError,
     PrvsnrCmdNotFinishedError, PrvsnrCmdNotFoundError
@@ -588,8 +588,7 @@ class SaltClientBase(ABC):
             try:
                 logger.debug(
                     "Function '{}' on '{}' resulted in {}"
-                    .format(fun, targets,
-                            CustomFormat(res.results).dict_to_str())
+                    .format(fun, targets, res.results)
                 )
             except Exception as exc:
                 if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
@@ -984,7 +983,7 @@ def runner_function_run(
 
     logger.debug(
         "Runner function '{}' resulted in {}".format(
-            fun, CustomFormat(res).dict_to_str()
+            fun, res
         )
     )
 
@@ -1098,7 +1097,7 @@ def function_run(
 
     logger.debug(
         "Function '{}' on '{}' resulted in {}".format(
-            fun, targets, CustomFormat(res).dict_to_str()
+            fun, targets, res
         )
     )
 
