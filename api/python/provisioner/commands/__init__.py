@@ -1519,7 +1519,7 @@ class CreateUser(CommandParserFillerMixin):
                           '/usr/sbin/smartctl, '
                           '/usr/bin/ipmitool, '
                           '/opt/seagate/cortx/sspl/bin/sspl_bundle_generate, '
-                          '/opt/seagate/cortx/sspl/lib/sspl_bundle_generate, '
+                          '/opt/seagate/cortx/sspl/bin/sspl_bundle_generate, '
                           '/usr/bin/rabbitmqctl, '
                           '/usr/sbin/rabbitmqctl, '
                           '/var/lib/rabbitmq, '
