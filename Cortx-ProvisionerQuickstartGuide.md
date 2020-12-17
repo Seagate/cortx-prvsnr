@@ -22,7 +22,8 @@ Ensure that you have the correct hardware cofiguration before moving on to the p
 * [x] Ensure that you are on a Centos 7.7.1908 Operating System.                                                                                                                 
 
   :page_with_curl: **Notes:** 
-  - Install the vanilla OS for Centos 7.7.1908 release. 
+  - Install the vanilla OS for Centos 7.8.2003 release with Kernel 1127. 
+  - Download and install [Mellanox version 4.9-0.1.7.0](http://linux.mellanox.com/public/repo/mlnx_ofed/4.9-0.1.7.0/rhel7.8/)
   - Ensure you have root credentials.                                      
                                 
 * [x] Network:                                                                                                
