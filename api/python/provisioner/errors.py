@@ -17,7 +17,11 @@
 
 import subprocess
 import json
+import logging
 from typing import Dict, Union, Any
+
+
+logger = logging.getLogger(__name__)
 
 
 def dict_to_str(obj):
@@ -104,6 +108,9 @@ class SaltCmdError(SaltError):
         self.reason = reason
 
     def __str__(self):
+        logger.error(
+            "salt command failed, reason {}, args {}"
+            .format(self.reason, self.cmd_args))
         reason = dict_to_str(self.reason)
         cmd_args = dict_to_json(self.cmd_args)
         return (
