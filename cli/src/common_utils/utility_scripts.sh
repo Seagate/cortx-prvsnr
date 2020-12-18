@@ -97,8 +97,8 @@ function ensure_healthy_cluster {
             _linfo " Cluster is Online, we are part happy.  "
             _linfo " But, would continue further with few more checks. "
 
-            configured=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f1)
-            disabled=$(pcs cluster status | grep "resources configured" | xargs | cut -d ' ' -f4 | cut -d '(' -f2)
+            configured=$(pcs cluster status | grep "resource instances configured" | xargs | cut -d ' ' -f1)
+            disabled=$(pcs cluster status | grep "resource instances configured" | xargs | cut -d ' ' -f5 | cut -d '(' -f2)
             running_node1=$(jq .nodes[0].resources_running /tmp/hctl_cluster_health.json)
             running_node2=$(jq .nodes[1].resources_running /tmp/hctl_cluster_health.json)
             # running=$(jq .resources.statistics.started /tmp/hctl_cluster_health.json)
