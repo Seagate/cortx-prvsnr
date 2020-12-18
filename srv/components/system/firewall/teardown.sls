@@ -53,7 +53,9 @@ Remove public and private data interfaces:
   cmd.run:
     - names:
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }} --zone=public-data-zone --permanent
+{%- if pillar['cluster'][node]['network']['data_nw']['iface']|length > 1 %}
       - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }} --zone=trusted --permanent
+{%- endif %}
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service

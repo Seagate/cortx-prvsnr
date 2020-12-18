@@ -156,16 +156,18 @@ def _inject_storage_enclosure(config_dict={}):
 
 
 def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
-  
+
   local = salt.client.LocalClient()
   health_map_path = __pillar__['sspl']['health_map_path']
   health_map_file = __pillar__['sspl']['health_map_file']
 
   data = local.cmd('*', 'file.read', [source_json])
   node1_data = json.loads(data["srvnode-1"])
-  node2_data = json.loads(data["srvnode-2"])
-
-  node1_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"].update(node2_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"])
+  for node in __pillar__["cluster"]["node_list"]:
+    if node is "srvnode-1":
+      continue
+    node_data = json.loads(data[node])
+    node1_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"].update(node_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"])
   local.cmd('*', 'file.mkdir',[health_map_path])
   local.cmd('*', 'file.write', [ os.path.join(health_map_path, health_map_file), json.dumps(node1_data, indent=4)])
 

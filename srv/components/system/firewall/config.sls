@@ -245,6 +245,7 @@ Public data zone:
       - www
       - s3
 
+{%- if pillar['cluster'][grains['id']]['network']['data_nw']['iface']|length > 1 %}
 Private data zone:
   firewalld.present:
     - name: trusted
@@ -255,6 +256,7 @@ Private data zone:
     - prune_ports: False
     - prune_services: False
     - prune_interfaces: False
+{%- endif %}
 
 # Add private data zone:
 #   cmd.run:

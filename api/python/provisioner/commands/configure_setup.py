@@ -222,7 +222,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'mgmt_nw.iface' in key:
+            elif 'mgmt_nw.iface' in key or 'data_nw.iface' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -263,6 +263,9 @@ class ConfigureSetup(CommandParserFillerMixin):
                 pillar_type = f'cluster/{section}'
                 count = count - 1
                 node_list.append(f"\"{section}\"")
+                run_subprocess_cmd([
+                    "provisioner", "pillar_set",
+                    f'cluster/{section}', ""])
 
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])

@@ -23,7 +23,7 @@
 #     - cluster.nw_roaming_ip: []
 #     - saltutil.refresh_pillar: []
 {#{% endif %}#}
-
+{%- if pillar['cluster'][node]['network']['data_nw']['iface']|length > 1 %}
 Private direct network:
   network.managed:
     - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
@@ -42,4 +42,10 @@ Private direct network:
     - mtu: 9000
 {%- else %}
     - proto: dhcp
+{%- endif %}
+{%- else %}
+
+No pvt data iface found:
+  test.show_notification:
+    - text: "No private data interface found. System would provision with one public data iface and one mgmt iface."
 {%- endif %}
