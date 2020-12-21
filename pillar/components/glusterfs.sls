@@ -1,5 +1,6 @@
 glusterfs:
   in_docker: false
+  network_type: mgmt  # mgmt/data
   volumes:
     - name: volume_prvsnr_data
       export_dir: /srv/glusterfs/volume_prvsnr_data

@@ -15,36 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% for volume in salt['pillar.get']('glusterfs:volumes', []) %}
-
-# unmount gluster volume
-glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
-  mount.unmounted:
-    - name: {{ volume['mount_dir'] }}
-    - persist: True
-
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
-
-# remove gluster volume
-glusterfs_volume_{{ volume['name'] }}_removed:
-  module.run:
-    - glusterfs.delete_volume:
-      - target: {{ volume['name'] }}
-
-{% endif %}
-
-# remove mount dir
-Remove gluster_{{ volume['mount_dir'] }}_mount_dir:
-  file.absent:
-    - name: {{ volume['mount_dir'] }}
-
-# remove brick dir
-Remove gluster_{{ volume['export_dir'] }}_brick_dir:
-  file.absent:
-    - name: {{ volume['export_dir'] }}
-
-{% endfor %}
-
 {% if pillar['cluster'][grains['id']]['is_primary'] %}
 
 {% for node_id in salt['pillar.get']('cluster:node_list', []) %}
@@ -61,11 +31,3 @@ detach_peer_{{ node_id }}_from_gluster:
 {% endfor %}
 
 {% endif %}
-
-# remove  all glusterfs packages
-Remove_glusterfs_packages:
-  pkg.purged:
-    - pkgs:
-      - glusterfs
-      - glusterfs-fuse
-      - glusterfs-server
