@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from typing import Type, Union, List, Optional
+from typing import Type, Union, List, Optional, Any
 import json
 
 from ._basic import CommandParserFillerMixin
@@ -274,12 +274,20 @@ class CheckResult:
             Get all check entries added to `CheckResult` instance:
                 ``check_result.get_checks()``
         """
-        if critical is None:
-            return [check for check in self._check_entries
-                    if check.is_failed == failed]
+        def _in(left: Union[str, int, float, bool],
+                right: Union[set, list, tuple, str]) -> bool:
+            return left in right
+
+        def _and(*args: Any) -> bool:
+            return all(args)
+
+        bool_values = {False, True}
+        critical_values = bool_values if critical is None else {critical}
+        failed_values = bool_values if failed is None else {failed}
 
         return [check for check in self._check_entries
-                if check.is_critical == critical and check.is_failed == failed]
+                if _and(_in(check.is_failed, critical_values),
+                        _in(check.is_critical, failed_values))]
 
     def get_by_name(self, *check_names: str) -> list:
         """
@@ -342,15 +350,14 @@ class DecisionMaker:
         """
         if check_result.is_failed:
             # Get non-critical errors first
-            warnings = check_result.get_checks(failed=True,
-                                               critical=False)
+            warnings = check_result.get_checks(**cfg.NON_CRITICALLY_FAILED)
             warning_msg = self.format_checks(*warnings)
             logger.warning(f"Some checks are failed: {warning_msg}")
 
             # verify if some of critical errors failed
             if check_result.has_critical_failure:
-                critical_checks = check_result.get_checks(failed=True,
-                                                          critical=True)
+                critical_checks = check_result.get_checks(
+                                                    **cfg.CRITICALLY_FAILED)
                 error_msg = self.format_checks(*critical_checks)
                 raise CriticalValidationError(error_msg)
 

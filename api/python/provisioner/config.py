@@ -407,3 +407,8 @@ class ReleaseInfo(Enum):
     KERNEL = 'KERNEL'
     COMPONENTS = 'COMPONENTS'
     RELEASE = 'RELEASE'
+
+
+# NOTE: for more convenient usage of check.CheckResult.get_checks method
+CRITICALLY_FAILED = {"critical": True, "failed": False}
+NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
