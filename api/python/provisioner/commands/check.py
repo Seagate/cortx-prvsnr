@@ -15,8 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from abc import ABC, abstractmethod
-from typing import Type, Union, List
+from typing import Type, Union, List, Optional, Any
 import json
 
 from ._basic import CommandParserFillerMixin
@@ -356,6 +355,8 @@ class DecisionMaker:
         """
         Make a decision based on given check_result
 
+        :param check_result: `CheckResult` instance
+
         :return:
         """
         if check_result.is_failed:
@@ -373,16 +374,6 @@ class DecisionMaker:
 
         logger.info("All checks are passed")
 
-    @staticmethod
-    def get_failed_checks(check_result: CheckResult) -> str:
-        failed_checks = ""
-
-        if check_result.is_failed:
-            failed_checks = "; ".join(str(check)
-                                      for check in check_result.get_failed())
-
-        return failed_checks
-
 
 class PreChecksDecisionMaker(DecisionMaker):
 
@@ -392,11 +383,18 @@ class PreChecksDecisionMaker(DecisionMaker):
     """
 
     def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision based on given check_result
 
-        failed = self.get_failed_checks(check_result)
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+        failed = check_result.get_checks(failed=True)
         if failed:
+            failed_msg = self.format_checks(*failed)
             raise ValidationError("One or more Pre-Flight "
-                                  f"Checks have failed: {failed}")
+                                  f"Checks have failed: {failed_msg}")
 
         logger.info("All Pre-Flight Checks have Passed")
 
@@ -409,11 +407,18 @@ class PostChecksDecisionMaker(DecisionMaker):
     """
 
     def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision based on given check_result
 
-        failed = self.get_failed_checks(check_result)
-        if failed:
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+        if check_result.is_failed:
+            failed = check_result.get_checks(failed=True)
+            failed_msg = self.format_checks(*failed)
             logger.warning("One or more Post-routine Validations "
-                           f"have failed: {failed}")
+                           f"have failed: {failed_msg}")
 
         logger.info("Post-Routine Validations Completed")
 
@@ -659,7 +664,7 @@ class Check(CommandParserFillerMixin):
     def _passwordless_ssh_access(
                             *,
                             servers: Union[list, tuple, set] = PENDING_SERVERS,
-                            args: str) -> CheckEntry:
+                            args: str) -> List[CheckEntry]:
         """
         Check if passwordless SSH access is possible between nodes
 
@@ -1222,7 +1227,6 @@ class Check(CommandParserFillerMixin):
         :return:
         """
         res: CheckResult = CheckResult()
-        check_lists = []
 
         # Check whether to execute all checks
         if check_name is None or check_name == cfg.GroupChecks.ALL.value:
