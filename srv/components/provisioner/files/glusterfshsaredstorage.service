@@ -1,9 +1,7 @@
 [Unit]
 Description=Mount glusterfs sharedstorage
 After=glusterd.service
-Before=salt-minion.service
-Requires=glusterd.service salt-minion.service remote-fs-pre.target local-fs.target
-BindsTo=glusterd.service salt-minion.service
+Requires=glusterd.service remote-fs-pre.target local-fs.target
 
 [Service]
 Type=forking
