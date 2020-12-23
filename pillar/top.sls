@@ -24,6 +24,7 @@ base:
     - components.cluster                    # default all minions vars (here and below) TODO create task: move to groups.all.components...
     - components.commons
     - components.corosync-pacemaker
+    - components.csm
     - components.elasticsearch
     - components.motr
     - components.haproxy
