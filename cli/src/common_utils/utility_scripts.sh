@@ -94,8 +94,10 @@ function ensure_healthy_cluster {
 
         if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
             # Cluster is Online, we are part happy but would continue further with checks
-            _linfo " Cluster is Online, we are part happy.  "
-            _linfo " But, would continue further with few more checks. "
+            if [[ $attempt -eq 0 ]]; then 
+                _linfo " Cluster is Online.  "
+                _linfo " Checking the cluster health, it may take some time, please be patient"
+            fi
 
             configured=$(pcs cluster status | grep "resource instances configured" | xargs | cut -d ' ' -f1)
             disabled=$(pcs cluster status | grep "resource instances configured" | xargs | cut -d ' ' -f5 | cut -d '(' -f2)
@@ -112,12 +114,12 @@ function ensure_healthy_cluster {
 
             if [[ "${running}" == "$(( configured - disabled ))" ]]; then
                 if [[ "0" == "${stopped}" ]]; then
-                    _linfo " Cluster is Online and all services have started. "
+                    _linfo " Cluster is Online and in healthy state. "
                     
                     # Break the loop
                     break
                 else
-                    _linfo " Cluster is Online, we are part happy as it seems few services are disabled. "
+                    _linfo "Some Cortx services are stopped.."
 
                     if [[ "$_nowait" == true ]]; then
                         answer='y'
@@ -129,36 +131,40 @@ function ensure_healthy_cluster {
                     fi
 
                     if [ "$answer" != "${answer#[Yy]}" ] ;then
-                        _linfo "User has decided to proceed with the current HA status."
+                        _linfo "Skipping the wait time and proceeding..."
                         # Break the loop and proceed
                         break
                     else
-                        _linfo "User has decided to proceed with wait. Re-attempting in 10 secs."
-                        sleep 10
+                        _linfo "waiting for the services to start, please wait"
                     fi
                 fi
             else
-                _linfo "Something's not right. All resources are not started..."
-
                 if [[ ${attempt} -ge 20 ]]; then
-                    _lerror "Giving up after ${attempt} attempts."
+                    _lerror "The services did not come online after ${attempt} attempts.."
+                    _lerror "Please contact Seagate Support for further assistance"
+                    echo "Exiting.." | tee -a $LOG_FILE
                     exit 20
+                else
+                    _linfo "Cluster is not in a healthy state, some services are not started..."
+                    _linfo "Waiting for services to come online, please be patient"
+
                 fi
             fi
 
         else
-            _lerror "One or more nodes in cluster is/are Offline. Attempt: ${attempt}"
-            
             # Try 10 attempts and give-up
             if [[ ${attempt} -ge 10 ]]; then
                 _lerror "One or more nodes in cluster is/are Offline."
                 _lerror "Giving up after 10 attempts."
                 exit 10
+            else
+                _lerror "One or more nodes in cluster is/are Offline... please wait"
             fi
         fi
 
         # Increment attempt count
         attempt=$(( attempt+1 ))
+        echo "Attempt: ${attempt}" >> $LOG_FILE
         sleep 10
     done
 
