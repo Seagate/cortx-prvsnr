@@ -440,7 +440,8 @@ class SWUpdateDecisionMaker(DecisionMaker):
             # Threat all errors as warnings
             warnings = check_result.get_checks(failed=True)
             warning_msg = self.format_checks(*warnings)
-            logger.warning(f"Some checks are failed: {warning_msg}")
+            logger.warning("Some SW Update pre-flight checks are failed: "
+                           f"{warning_msg}")
         else:
             logger.info("All SW Update pre-flight checks are passed")
 
