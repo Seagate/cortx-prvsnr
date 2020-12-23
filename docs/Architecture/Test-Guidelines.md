@@ -77,19 +77,20 @@ python3 -m pytest -k deploy -s
 
 * All individual TestCases must follow the below naming convention:
   * Start with “test_ “, followed by corresponding test suite name, followed by the function they represent, followed by test case definition.
-  * Ex: `test_deploy_bootstrap_ssh`, `test_deploy_bootstrap_configure`, etc.
-
-```
-Format:
-
-test_<testsuite>_<function>_<definition>
-```
+  * Ex: `test_deploy_bootstrap_ssh`, `test_deploy_bootstrap_configure`, etc.  
+  
+    **Format:**
+    ```
+    test_<testsuite>_<function>_<definition>
+    ```
 
 * A Test Suite (TS) can be broken down to multiple other test suites based on the functions it represents.
 
 * A Test Module (TM) is an even larger collection of test suites and will form the root parent folder structure.
 
 * Test Suite and Test Module are always directories and Test Case is a file with one or more methods implemented.
+
+* All the test names are sample and design ideas are liable to more changes.
 
 
 **Test Hierarchy and Design**
@@ -98,9 +99,11 @@ For Integration tests, here are the formats of Test Framework Hierarchy and Desi
 
 ![test_folder_hierarchy](https://user-images.githubusercontent.com/70517184/102914245-fa073100-44a5-11eb-8a7d-5da0efa7b538.png)
 
-A more scrutinized format of this hierechy: 
+**A more scrutinized format of this hierarchy:**
 
-![test_guidelines_design](https://user-images.githubusercontent.com/70517184/102914340-21f69480-44a6-11eb-8b28-d90752596ae9.png)
+![test_guidelines_design](https://user-images.githubusercontent.com/70517184/102972259-c7e6e500-4520-11eb-9271-89e3f154883c.png)
+
+
 
 **Sample Folder Structure** 
 
