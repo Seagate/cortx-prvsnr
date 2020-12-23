@@ -295,8 +295,8 @@ class CheckResult:
         failed_values = bool_values if failed is None else {failed}
 
         return [check for check in self._check_entries
-                if _and(_in(check.is_failed, critical_values),
-                        _in(check.is_critical, failed_values))]
+                if _and(_in(check.is_failed, failed_values),
+                        _in(check.is_critical, critical_values))]
 
     def get_by_name(self, *check_names: str) -> list:
         """
@@ -371,8 +371,8 @@ class DecisionMaker:
                                                     **cfg.CRITICALLY_FAILED)
                 error_msg = self.format_checks(*critical_checks)
                 raise CriticalValidationError(error_msg)
-
-        logger.info("All checks are passed")
+        else:
+            logger.info("All checks are passed")
 
 
 class PreChecksDecisionMaker(DecisionMaker):
@@ -419,8 +419,8 @@ class PostChecksDecisionMaker(DecisionMaker):
             failed_msg = self.format_checks(*failed)
             logger.warning("One or more Post-routine Validations "
                            f"have failed: {failed_msg}")
-
-        logger.info("Post-Routine Validations Completed")
+        else:
+            logger.info("Post-Routine Validations Completed")
 
 
 class SWUpdateDecisionMaker(DecisionMaker):
@@ -441,8 +441,8 @@ class SWUpdateDecisionMaker(DecisionMaker):
             warnings = check_result.get_checks(failed=True)
             warning_msg = self.format_checks(*warnings)
             logger.warning(f"Some checks are failed: {warning_msg}")
-
-        logger.info("All SW Update pre-flight checks are passed")
+        else:
+            logger.info("All SW Update pre-flight checks are passed")
 
 
 @attr.s(auto_attribs=True)
