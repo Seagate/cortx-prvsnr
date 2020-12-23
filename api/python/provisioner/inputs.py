@@ -456,6 +456,26 @@ class Release(ParamGroupInputBase):
     target_build: str = ReleaseParams.target_build
 
 
+class ServerDefaultParams():
+    _param_group = 'srv_default'
+    type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Common Server configuration"
+    )
+    search_domains: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Search Domains"
+    )
+    dns_servers: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" DNS Servers"
+    )
+
+
+@attr.s(auto_attribs=True)
+class ServerDefault(ParamGroupInputBase):
+    search_domains: str = ServerDefaultParams.search_domains
+    dns_servers: str = ServerDefaultParams.dns_servers
+    # TO DO: Include Network, Storage params
+
+
 class StorageEnclosureParams():
     _param_group = 'storage_enclosure'
     type: str = ParamGroupInputBase._attr_ib(

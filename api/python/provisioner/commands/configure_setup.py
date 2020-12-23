@@ -22,9 +22,12 @@ from typing import Type, List
 from copy import deepcopy
 from pathlib import Path
 
-from ..inputs import (
-    NetworkParams, ReleaseParams, StorageEnclosureParams,
-    NodeNetworkParams
+from validate_setup import (
+    NetworkParamsValidation,
+    ReleaseParamsValidation,
+    StorageEnclosureParamsValidation,
+    NodeParamsValidation,
+    ServerDefaultParamsValidation
 )
 from .. import inputs
 from ..vendor import attr
@@ -96,107 +99,13 @@ class RunArgsConfigureSetup:
 
 
 @attr.s(auto_attribs=True)
-class NetworkParamsValidation:
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    _optional_param = ['cluster_ip', 'mgmt_vip']
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
-    target_build: str = ReleaseParams.target_build
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureParamsValidation:
-    type: str = StorageEnclosureParams.type
-    primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
-    secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    controller_type: str = StorageEnclosureParams.controller_type
-    _optional_param = [
-        'controller_type'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        # FIXME why we allow any params for the following types?
-        types = ['JBOD', 'virtual', 'RBOD', 'other']
-        if params['type'] in types:
-            return
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class NodeParamsValidation:
-    hostname: str = NodeNetworkParams.hostname
-    is_primary: str = NodeNetworkParams.is_primary
-    data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
-    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
-    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
-    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
-    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
-    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
-    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
-    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
-    bmc_user: str = NodeNetworkParams.bmc_user
-    bmc_secret: str = NodeNetworkParams.bmc_secret
-
-    _optional_param = [
-        'data_nw_public_ip_addr',
-        'is_primary',
-        'data_nw_netmask',
-        'data_nw_gateway',
-        'pvt_ip_addr',
-        'mgmt_nw_iface',
-        'mgmt_nw_public_ip_addr',
-        'mgmt_nw_netmask',
-        'mgmt_nw_gateway'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
     validate_map = {"cluster": NetworkParamsValidation,
                     "node": NodeParamsValidation,
+                    "srv_default": ServerDefaultParamsValidation,
                     "storage_enclosure": StorageEnclosureParamsValidation}
 
     def _parse_params(self, input):
