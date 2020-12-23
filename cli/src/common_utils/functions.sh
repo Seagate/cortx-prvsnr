@@ -1165,9 +1165,9 @@ function install_provisioner {
 
     local _cluster_sls_src
     if [[ "$_singlenode" == true ]]; then
-        _cluster_sls_src="$_installdir/pillar/components/samples/singlenode.cluster.sls"
+        _cluster_sls_src="$_installdir/pillar/samples/singlenode.cluster.sls"
     else
-        _cluster_sls_src="$_installdir/pillar/components/samples/dualnode.cluster.sls"
+        _cluster_sls_src="$_installdir/pillar/samples/dualnode.cluster.sls"
     fi
 
     l_info "Installing repo on '$_hostspec' into $_installdir with $_repo_src as a source (version is $_prvsnr_version), singlenode is $_singlenode"
