@@ -83,6 +83,8 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 
+SALT_ROSTER_DEFAULT = '/etc/salt/roster'
+
 # TODO EOS-12076 EOS-12334
 
 CORTX_SINGLE_ISO_DIR = 'cortx_single_iso'
@@ -119,6 +121,8 @@ SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
 GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
 
+GLUSTERFS_VOLUME_FILEROOT_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/salt'
+GLUSTERFS_VOLUME_PILLAR_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/pillar'
 
 SEAGATE_USER_HOME_DIR = Path('/opt/seagate/users')
 SEAGATE_USER_FILEROOT_DIR_TMPL = str(
