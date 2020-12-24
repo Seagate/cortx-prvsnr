@@ -15,35 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
-{% set logfile = "/var/log/seagate/provisioner/sanity_tests.log" %}
-Create SSPL Sanity test script:
-  file.managed:
-      - name: /tmp/sspl-sanity.sh
-      - create: True
-      - makedirs: True
-      - replace: True
-      - user: root
-      - group: root
-      - mode: 755
-      - contents: |
-          #!/bin/bash
-          echo "Runnign SSPL sanity"
-          echo "state=active" > /var/cortx/sspl/data/state.txt
-          PID=$(/usr/bin/pgrep -d " " -f /usr/bin/sspl_ll_d)
-            kill -s SIGHUP $PID
-          sh /opt/seagate/cortx/sspl/sspl_test/run_tests.sh
+{% if pillar['cluster'][grains['id']]['is_primary'] %}
 
-Run SSPL Sanity tests:
+{% for node_id in salt['pillar.get']('cluster:node_list', []) %}
+
+{% if grains['id'] != node_id %}
+
+# remove node from cluster
+detach_peer_{{ node_id }}_from_gluster:
   cmd.run:
-    - name: bash /tmp/sspl-sanity.sh 2>&1 | tee {{ logfile }}
-    - require:
-      - Create SSPL Sanity test script
+    - name: echo 'y' |gluster peer detach {{ pillar['cluster'][node_id]['hostname'] }}
 
-Housekeeping:
-  file.absent:
-    - name: /tmp/sspl-sanity.sh
-    - require:
-      - Run SSPL Sanity tests
+{% endif %}
+
+{% endfor %}
 
 {% endif %}

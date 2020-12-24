@@ -337,3 +337,24 @@ class ReleaseFileNotFoundError(ProvisionerError):
             "{}(reason={!r})"
             .format(self.__class__.__name__, self.reason)
         )
+
+
+class ValidationError(ProvisionerError):
+
+    """ Base Validation Exception. """
+
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return f'Validation failed: reason="{self.reason}"'
+
+
+class CriticalValidationError(ValidationError):
+
+    """ Critical validation Exception. """
+
+    def __str__(self):
+        return f'Critical checks failed: reason="{self.reason}"'
