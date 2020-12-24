@@ -322,7 +322,15 @@ create_salt_repo "saltstack_2019_2_0" $url_saltstack_repo
 echo -n "INFO: Cleaning yum cache............................................." 2>&1 | tee -a ${LOG_FILE}
 yum clean all >> ${LOG_FILE}
 echo "Done." 2>&1 | tee -a ${LOG_FILE} && sleep 1
-hostnamectl status | grep Chassis | grep -q server && {
+
+# Install lspci command
+rpm -qa|grep "pciutils-"|grep -qv "pciutils-lib" && {
+    echo "INFO: pciutils package is already installed." 2>&1 | tee -a ${LOG_FILE}
+} || {
+    echo "INFO: Installing pciutils package" 2>&1 | tee -a ${LOG_FILE}
+    yum install -y pciutils 2>&1 | tee -a ${LOG_FILE}
+}
+if ( lspci -d"15b3:*"|grep Mellanox ) ; then 
     rpm -qa | grep -q mlnx-ofed-all && rpm -qa | grep -q mlnx-fw-updater && {
         echo "INFO: Mellanox Drivers are already installed." 2>&1 | tee -a ${LOG_FILE}
     } || {
@@ -335,7 +343,7 @@ hostnamectl status | grep Chassis | grep -q server && {
     yum install -y sg3_utils 2>&1 | tee -a ${LOG_FILE}
     echo "INFO: Scanning SCSI bus............................................" | tee -a ${LOG_FILE}
     /usr/bin/rescan-scsi-bus.sh -a >> ${LOG_FILE}
-}
+fi
 
 echo -n "INFO: Disabling default time syncronization mechanism..........." 2>&1 | tee -a ${LOG_FILE}
 if [ `rpm -qa chrony` ]; then

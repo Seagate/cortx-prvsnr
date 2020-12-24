@@ -4,6 +4,8 @@ Install_base_packages:
       - sudo
       - ipmitool
       - python3
+      - ftp
+      - sshpass
     - reload_modules: True
 
 Install policy packages for SELinux:

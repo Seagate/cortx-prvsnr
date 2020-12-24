@@ -81,7 +81,7 @@ chmod -R g+rws /opt/seagate/eos-prvsnr/pillar/user
 setfacl -Rdm g:prvsnrusers:rwx /opt/seagate/eos-prvsnr/pillar/user
 
 #   install api globally using pip
-pip3 install -U /opt/seagate/eos-prvsnr/api/python
+pip3 install -U --upgrade-strategy only-if-needed /opt/seagate/eos-prvsnr/api/python
 
 chown -R :prvsnrusers /opt/seagate/eos-prvsnr/cli
 chmod -R 750 /opt/seagate/eos-prvsnr/cli

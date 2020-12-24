@@ -369,6 +369,11 @@ def _ensure_update_repos_configuration(targets=ALL_MINIONS):
         ['components.misc_pkgs.eosupdate.repo'], targets
     )
 
+    logger.info("Check yum repos are good")
+    StatesApplier.apply(
+        ['components.misc_pkgs.eosupdate.repo.sanity_check'], targets
+    )
+
 
 def _pre_yum_rollback(
     rollback_ctx, exc_type, exc_value, exc_traceback
@@ -446,7 +451,7 @@ class EOSUpdate(CommandParserFillerMixin):
                     config_salt_minions()
 
                     for component in (
-                        'eoscore', 's3server', 'hare', 'sspl', 'csm'
+                        'eoscore', 's3server', 'hare', 'sspl', 'csm', 'uds'
                     ):
                         _update_component(component, targets)
                 except Exception as exc:
