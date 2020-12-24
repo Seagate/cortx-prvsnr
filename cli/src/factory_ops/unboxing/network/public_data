@@ -53,22 +53,25 @@ function backup_ifcfg {
 
 function test_data_ips {
     _linfo "Fetching IP of the nodes"
-    remote_data_ip_srvnode_1=$()
-    remote_data_ip_srvnode_2=$()
-    
+    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:iface:0)
+    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:iface:0)
+
+    remote_data_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${data_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_data_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${data_if_2} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+
     # Test the IP that is set
-    _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_2} of Server-B from Server-A to test sanity."
-    ping -c1 -W2 -I"${remote_mgmt_ip_srvnode_1}" "${remote_mgmt_ip_srvnode_2}" && ( 
-        _linfo "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is reachable over public data network." || (
-            _lerror "IP ${remote_mgmt_ip_srvnode_2} set on Server-B is not reachable over public data network."
+    _linfo "Ping public data IP ${remote_data_ip_srvnode_2} of Server-B from Server-A to test sanity."
+    ping -c1 -W2 -I"${remote_data_ip_srvnode_1}" "${remote_data_ip_srvnode_2}" && ( 
+        _linfo "IP ${remote_data_ip_srvnode_2} set on Server-B is reachable over public data network." || (
+            _lerror "IP ${remote_data_ip_srvnode_2} set on Server-B is not reachable over public data network."
             exit 21
         )
     )
     
-    _linfo "Ping public data IP ${remote_mgmt_ip_srvnode_1} of Server-A from Server-B to test sanity."
-    ssh_over_pvt_data ${pvt_ip_b} "ping -c1 -W2 -I${remote_mgmt_ip_srvnode_2} ${remote_mgmt_ip_srvnode_1}" && ( 
-        _linfo "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is reachable over public data network." || (
-            _lerror "IP ${remote_mgmt_ip_srvnode_1} set on Server-A is not reachable over public data network."
+    _linfo "Ping public data IP ${remote_data_ip_srvnode_1} of Server-A from Server-B to test sanity."
+    ssh_over_pvt_data ${pvt_ip_b} "ping -c1 -W2 -I${remote_data_ip_srvnode_2} ${remote_data_ip_srvnode_1}" && ( 
+        _linfo "IP ${remote_data_ip_srvnode_1} set on Server-A is reachable over public data network." || (
+            _lerror "IP ${remote_data_ip_srvnode_1} set on Server-A is not reachable over public data network."
             exit 21
         )
     )
@@ -136,7 +139,7 @@ function set_public_data_nw_config {
     
         # Set network config to DHCP for pillar value cluster:srvnode-1:network:data_nw:iface:0    
         public_data_if=$(get_pillar_data cluster:${srvnode}:network:data_nw:iface:0)
-        _linfo "Setting DHCP on ${node_name} for interface: ${public_data_if}"
+        _linfo "Setting up network on ${node_name} for interface: ${public_data_if}"
         backup_ifcfg ${remote} ${public_data_if}
         
         _linfo "Setting ifcfg-${public_data_if} on ${node_name}"
@@ -171,7 +174,7 @@ function set_data_public_dhcp_config {
     set_public_data_nw_config
     
     # Sanity check
-    # test_data_ips
+    test_data_ips
 
     _linfo "================================================================================"
     _linfo "        "
@@ -187,8 +190,8 @@ function set_data_public_static_config {
     _linfo "You have selected to proceed with static IP based configuration for public data network interface."
     _linfo "    "
 
-    data_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt_nw:iface:0)
-    data_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt_nw:iface:0)
+    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data_nw:iface:0)
+    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data_nw:iface:0)
     
     # User inputs
     read -p "Public Data IP for ${data_if_1} on Server-A: " data_ip_1
@@ -228,7 +231,7 @@ function set_data_public_static_config {
     update_cluster_pillar_for_public_data_ips ${data_ip_1} ${data_ip_2} ${gw_ip} ${netmask}
 
     set_public_data_nw_config
-    
+
     # Sanity check
     test_data_ips
 

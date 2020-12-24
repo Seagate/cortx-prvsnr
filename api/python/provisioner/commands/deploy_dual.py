@@ -51,7 +51,7 @@ deploy_states = dict(
         "system.chrony"
     ],
     prereq=[
-        "misc_pkgs.rhel_sos",
+        "misc_pkgs.sos",
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
         "misc_pkgs.openldap",

@@ -29,9 +29,12 @@ from .config import (
     PRVSNR_PILLAR_DIR
 )
 from .paths import (
+    PillarPath,
     USER_SHARED_PILLAR,
     USER_LOCAL_PILLAR
 )
+
+# from .salt_api import SaltClientBase
 # from .inputs import ParamGroupInputBase, ParamDictItemInputBase
 from .values import UNCHANGED, DEFAULT, MISSED, UNDEFINED
 
@@ -200,6 +203,28 @@ class PillarResolver:
                 pk: PillarEntry(pk.keypath, pillar).get() for pk in pi_keys
             }
         return res
+
+
+# FIXME EOS-15022 rename once tested enough
+@attr.s(auto_attribs=True)
+class PillarResolverNew(PillarResolver):
+    # FIXME EOS-15022 cross import issue
+    # client: SaltClientBase = None
+    client: Any = None
+
+    @property
+    def pillar(self):
+        if self._pillar is None:
+            if self.client is None:
+                self._pillar = pillar_get(
+                    targets=self.targets, local=self.local
+                )
+            else:
+                # TODO IMPROVE optional targetting should
+                #      be taken care only inside client parameters
+                #      for now
+                self._pillar = self.client.pillar_get(targets=self.targets)
+        return self._pillar
 
 
 # TODO verify that targets are resoloved to real minions
@@ -376,7 +401,8 @@ class PillarUpdater:
     # TODO test
     def apply(self) -> None:
         self.dump()
-        self.refresh(self.targets)
+        if not self.local:
+            self.refresh(self.targets)
 
     @staticmethod
     def refresh(targets: str = ALL_MINIONS):
@@ -407,3 +433,34 @@ class PillarUpdater:
         elif pillar:
             cls.ensure_exists(path)
             dump_yaml(path, pillar)
+
+
+# FIXME EOS-15022 rename once tested enough
+@attr.s(auto_attribs=True)
+class PillarUpdaterNew(PillarUpdater):
+    pillar_path: PillarPath = USER_SHARED_PILLAR
+
+    def __attrs_post_init__(self):
+        if self.local:
+            self.pillar_path = USER_LOCAL_PILLAR
+
+    @classmethod
+    def add_merge_prefix(cls, path: Path, local=False):
+        pillar_path = (
+            USER_LOCAL_PILLAR if local else USER_SHARED_PILLAR
+        )
+
+        if path.name.startswith(pillar_path.prefix):
+            return path
+        else:
+            return path.with_name(f"{pillar_path.prefix}{path.name}")
+
+    def pillar(self, path: Path):
+        if self.targets == ALL_MINIONS:
+            _path = self.pillar_path.all_hosts_path(path)
+        else:
+            _path = self.pillar_path.host_path(path, self.targets)
+
+        if _path not in self._pillars:
+            self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
+        return self._pillars[_path]

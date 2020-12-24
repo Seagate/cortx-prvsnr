@@ -26,11 +26,6 @@ if [[ "$verbosity" -ge 2 ]]; then
 fi
 
 
-
-# Create SEAGATE_USER_HOME_DIR requried for create users
-mkdir -p "/opt/seagate/users"
-chmod 644 "/opt/seagate/users"
-
 # set api
 prvsnr_group=prvsnrusers
 echo "Creating group '$prvsnr_group'..."

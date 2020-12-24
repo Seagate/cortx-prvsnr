@@ -21,6 +21,7 @@ import logging
 from .salt import auth_init as _auth_init
 from .api_spec import api_spec
 from .runner import SimpleRunner
+from .commands import commands
 
 
 # TODO
@@ -46,7 +47,7 @@ def run(command: str, *args, nowait=False, **kwargs):
     kwargs.pop('username', None)
     kwargs.pop('eauth', None)
     logger.debug("Executing command {}".format(command))
-    return SimpleRunner(nowait=nowait).run(command, *args, **kwargs)
+    return SimpleRunner(commands, nowait=nowait).run(command, *args, **kwargs)
 
 
 def _api_wrapper(fun):

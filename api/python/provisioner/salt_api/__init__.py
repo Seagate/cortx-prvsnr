@@ -15,18 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "RedHat" in grains['os'] %}
-Remove sos:
-  pkg.removed:
-    - name: sos
+from .base import SaltClientBase
+from .client import SaltLocalClient
+from .runner import SaltRunnerClient
+from .caller import SaltCallerClient, SaltLocalCallerClient
+from .ssh import SaltSSHClient
 
-Remove SOS report directory:
-  file.absent:
-    - name: /opt/seagate/os
-
-{% else %}
-No HA cleanup for CSM:
-  test.show_notification:
-      - text: "SOS is not required for Non RedHat systems, skipping.."
-
-{% endif %}
+client_types = [
+    SaltClientBase,
+    SaltLocalClient,
+    SaltRunnerClient,
+    SaltCallerClient,
+    SaltLocalCallerClient,
+    SaltSSHClient
+]

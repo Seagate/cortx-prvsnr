@@ -17,11 +17,14 @@
 
 from typing import Type
 import logging
+import importlib
 
-from .. import (
-    config,
-    inputs
+from ..config import (
+    PRVSNR_PILLAR_CONFIG_INI,
+    GroupChecks
 )
+from .. import inputs
+
 from ..vendor import attr
 
 from . import (
@@ -32,6 +35,7 @@ from .setup_provisioner import (
     SetupProvisioner,
     SetupCmdBase
 )
+from . import check
 from . import deploy_dual
 
 logger = logging.getLogger(__name__)
@@ -44,6 +48,28 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         RunArgsSetupProvisionerGeneric,
         deploy_dual.run_args_type
     ]
+
+    @staticmethod
+    def deployment_validations(deploy_check):
+        check_import = importlib.reload(check)
+
+        check_cmd = check_import.Check
+
+        try:
+            check_res = check_cmd().run(deploy_check)
+        except Exception as exc:
+            raise ValueError("Error During Deployment "
+                             f"{deploy_check} Validations: {str(exc)}")
+        else:
+            if deploy_check == GroupChecks.DEPLOY_PRE_CHECKS.value:
+                check_import.PreChecksDecisionMaker().make_decision(
+                    check_result=check_res)
+            elif deploy_check == GroupChecks.DEPLOY_POST_CHECKS.value:
+                check_import.PostChecksDecisionMaker().make_decision(
+                    check_result=check_res)
+            else:
+                raise ValueError(
+                    f'Group Check "{deploy_check}" is not supported')
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
@@ -66,7 +92,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             setup_ctx.ssh_client.cmd_run(
                 (
                     'provisioner configure_setup '
-                    f'{config.PRVSNR_PILLAR_CONFIG_INI} '
+                    f'{PRVSNR_PILLAR_CONFIG_INI} '
                     f'{len(nodes)}'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
@@ -77,9 +103,15 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
 
+        logger.info("Deployment Pre-Flight Validations")
+        self.deployment_validations(GroupChecks.DEPLOY_PRE_CHECKS.value)
+
         logger.info("Deploy")
         deploy_dual.DeployDual(setup_ctx=setup_ctx).run(
             **deploy_args
         )
+
+        logger.info("Post-Deployment Validations")
+        self.deployment_validations(GroupChecks.DEPLOY_POST_CHECKS.value)
 
         logger.info("Done")

@@ -15,8 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Copy setup.yaml to /opt/seagate/os/conf:
-  file.managed:
-    - name: /opt/seagate/os/conf/setup.yaml
-    - source: salt://components/misc_pkgs/rhel_sos/files/setup.yaml
-    - makedirs: True
+{% if pillar['cluster'][grains['id']]['is_primary'] %}
+
+{% for node_id in salt['pillar.get']('cluster:node_list', []) %}
+
+{% if grains['id'] != node_id %}
+
+# remove node from cluster
+detach_peer_{{ node_id }}_from_gluster:
+  cmd.run:
+    - name: echo 'y' |gluster peer detach {{ pillar['cluster'][node_id]['hostname'] }}
+
+{% endif %}
+
+{% endfor %}
+
+{% endif %}

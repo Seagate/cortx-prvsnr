@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,13 +16,40 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "RedHat" in grains['os'] %}
-include:
-  - .prepare
-  - .install
-  - .config
-{% else %}
-No HA cleanup for CSM:
-  test.show_notification:
-      - text: "SOS is not required for Non RedHat systems, skipping.."
-{% endif %}
+set -eu
+
+domain="${1:-$(hostname)}"
+
+echo "Checking DNS resolution for domain '$domain'"
+
+res="$(getent -s hosts:dns ahosts "$domain" | paste -sd " " -)"
+
+if [[ -z "$res" ]]; then
+    >&2 echo "No DNS data found"
+    exit 1
+fi
+
+echo "Resolved into: '$res'"
+
+exit 0
+
+#ns_servers=$(dig +short NS "$domain" | paste -sd " " -)
+
+#if [[ -z "$ns_servers" ]]; then
+#    >&2 echo "No DNS servers found"
+#    exit 1
+#else
+#    echo "DNS servers detected: $ns_servers"
+#fi
+
+#for ns in $ns_servers; do
+#    echo "Trying NS '$ns'"
+#    res=$(dig +short +timeout=3 "@${ns}" "$domain")
+
+#    if [[ -z "$res" ]]; then
+#        >&2 echo "DNS failed for NS '$ns'"
+#        exit 1
+#    fi
+#done
+
+#echo "Domain '$domain' is resolved by all DNS servers"

@@ -139,6 +139,8 @@ def _set_logging(output_type, log_args=None, other_args=None):  # noqa: C901
         if hasattr(log_args, config.LOG_FILE_HANDLER):
             # enable file logging
             setattr(log_args, config.LOG_FILE_HANDLER, True)
+
+            setattr(log_args, config.LOG_FILE_SALT_HANDLER, True)
             # set file to log if default value is set
             filename_attr = f'{config.LOG_FILE_HANDLER}_filename'
             if (
@@ -189,7 +191,7 @@ def _set_logging(output_type, log_args=None, other_args=None):  # noqa: C901
 def _main():
     global output_type
 
-    parsed_args = cli_parser.parse_args()
+    parsed_args = cli_parser.parse_args(commands=commands)
 
     output_type = parsed_args.kwargs.pop('output')
 

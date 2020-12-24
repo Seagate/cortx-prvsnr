@@ -21,11 +21,11 @@
 import sys
 import argparse
 import logging
+from typing import List, Optional
 
 from .vendor import attr
 from . import config, errors, runner, log
 from .base import prvsnr_config
-from .commands import commands
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,28 @@ class ErrorHandlingArgumentParser(argparse.ArgumentParser):
             super().print_help(*args, **kwargs)
 
 
-def parse_args(args=None):
+class KeyValueListAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest, {})
+
+        if not isinstance(res, (dict, type(None))):
+            raise TypeError(
+                f"value for {self.dest} should be a dictionary or None, "
+                f"provided: {type(res)}"
+            )
+
+        if res is None:
+            res = {}
+
+        if values:
+            for kv in values:
+                k, v = kv.split("=", 1)
+                res[k.strip()] = v
+
+        setattr(namespace, self.dest, res)
+
+
+def parse_args(args=None, commands: Optional[List] = None):
     parser_common = argparse.ArgumentParser(add_help=False)
 
     general_group = parser_common.add_argument_group('general')
@@ -99,31 +120,34 @@ def parse_args(args=None):
     )
     runner.SimpleRunner.fill_parser(cmd_runner_group)
 
+    common_parsers = [parser_common]
+
     parser = ErrorHandlingArgumentParser(
         verbose=(
             prvsnr_config.env['PRVSNR_OUTPUT']
             not in config.PRVSNR_CLI_MACHINE_OUTPUT
         ),
         description="CORTX Provisioner CLI",
-        parents=[parser_common],
+        parents=common_parsers,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
-    subparsers = parser.add_subparsers(
-        dest='command',
-        title='sub commands',
-        description='valid subcommands'
-    )
-
-    # TODO description and help strings
-    for cmd_name, cmd in commands.items():
-        subparser = subparsers.add_parser(
-            cmd_name, description='{} configuration'.format(cmd_name),
-            help='{} help'.format(cmd_name), parents=[parser_common],
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    if commands:
+        subparsers = parser.add_subparsers(
+            dest='command',
+            title='sub commands',
+            description='valid subcommands'
         )
-        cmd.fill_parser(subparser)
-        cmd.input_type.fill_parser(subparser)
+
+        # TODO description and help strings
+        for cmd_name, cmd in commands.items():
+            subparser = subparsers.add_parser(
+                cmd_name, description='{} configuration'.format(cmd_name),
+                help='{} help'.format(cmd_name), parents=common_parsers,
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+            cmd.fill_parser(subparser, list(common_parsers))
+            cmd.input_type.fill_parser(subparser)
 
     kwargs = vars(parser.parse_args(args=args))
     cmd = kwargs.pop('command')

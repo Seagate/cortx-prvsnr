@@ -15,10 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop and disable NetworkManager service:
-  service.dead:
-    - name: NetworkManager
-    - enable: False
+{#% set nwmanager_is_running = salt['service.status']('NetworkManager') %#}
+
+{#% if nwmanager_is_running %#}
+
+# Stop and disable NetworkManager service:
+#   service.dead:
+#     - name: NetworkManager
+#     - enable: False
 
 # Remove NetworkManager package:
 #   pkg.purged:
@@ -37,21 +41,40 @@ Stop and disable NetworkManager service:
 
 # Disabling NetworkManager doesn't kill dhclient process.
 # If not killed explicitly, it causes network restart to fail: COSTOR-439
-Kill dhclient:
-  cmd.run:
-    - name: pkill -SIGTERM dhclient
-    - onlyif: pgrep dhclient
-    - requires:
-      - service: Stop and disable NetworkManager service
+# Kill dhclient:
+#   cmd.run:
+#     # - name: pkill -SIGTERM dhclient
+#     - name: dhclient -x
+#     - onlyif: pgrep dhclient
+#     - requires:
+#       - service: Stop and disable NetworkManager service
 
-Start dhclient:
-  cmd.run:
-    # - name: dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
-    - name: dhclient
-    - unless: pgrep dhclient
-    - listen:
-      - Kill dhclient
+{#% if not pillar['cluster'][grains['id']]['network']['mgmt_nw']['public_ip_addr'] %#}
+# Start dhclient:
+#   cmd.run:
+#     - name: dhclient -1 -q -H $(hostname -s) {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] }}
+#     - unless: pgrep dhclient
+#     - onchanges:
+#       - Kill dhclient
+#
+# Check_DNS:
+#  cmd.script:
+#    - source: salt://components/system/network/files/dns_check.sh
+#    - require:
+#      - Start dhclient
+#    - retry:
+#        attempts: 20
+#        interval: 30
+{#% endif %#}
 
-# Dummy placeholder for network.prepare:
-#   test.show_notification:
-#     - text: "A yaml file with comments results in minion non-zero exit"
+
+{#% else  %#}
+
+# network_manager_is_not_running:
+#   test.nop: []
+
+{#% endif %#}
+
+Dummy placeholder for network.prepare:
+  test.show_notification:
+    - text: "A yaml file with comments results in minion non-zero exit"
