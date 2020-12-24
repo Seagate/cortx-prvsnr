@@ -15,28 +15,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '0.42.0'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "GNU Affero General Public License"  # TODO
+{% for volume in salt['pillar.get']('glusterfs:volumes', []) %}
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+# unmount gluster volume
+glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
+  mount.unmounted:
+    - name: {{ volume['mount_dir'] }}
+    - persist: True
+
+{% if pillar['cluster'][grains['id']]['is_primary'] %}
+
+# remove gluster volume
+glusterfs_volume_{{ volume['name'] }}_removed:
+  module.run:
+    - glusterfs.delete_volume:
+      - target: {{ volume['name'] }}
+
+{% endif %}
+
+# remove mount dir
+# Remove gluster_{{ volume['mount_dir'] }}_mount_dir:
+#  file.absent:
+#    - name: {{ volume['mount_dir'] }}
+#    - require:
+#      - glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount
+
+# remove brick dir
+# Remove gluster_{{ volume['export_dir'] }}_brick_dir:
+# file.absent:
+#    - name: {{ volume['export_dir'] }}
+
+{% endfor %}

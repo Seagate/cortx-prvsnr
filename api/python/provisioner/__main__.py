@@ -191,7 +191,7 @@ def _set_logging(output_type, log_args=None, other_args=None):  # noqa: C901
 def _main():
     global output_type
 
-    parsed_args = cli_parser.parse_args()
+    parsed_args = cli_parser.parse_args(commands=commands)
 
     output_type = parsed_args.kwargs.pop('output')
 
