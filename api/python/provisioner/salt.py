@@ -1029,10 +1029,7 @@ def _salt_client_cmd(
         if local:
             _cmd_f = client.cmd
         else:
-            _cmd_f = (
-                client.cmd_async if nowait
-                else salt_local_client().cmd
-            )
+            _cmd_f = (client.cmd_async if nowait else client.cmd)
 
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:

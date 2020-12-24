@@ -145,3 +145,11 @@ Configure OpenLDAP - Enable openldap log:
       - password: {{ ldap_password }}
     - watch_in:
       - Restart slapd service
+
+Configure OpenLDAP - Set ldap results set size:
+  cmd.run:
+    - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx/provisioner/generated_configs/ldap/resultssizelimit.ldif
+    - env:
+      - password: {{ ldap_password }}
+    - watch_in:
+      - Restart slapd service

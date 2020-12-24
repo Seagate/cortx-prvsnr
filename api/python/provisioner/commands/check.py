@@ -701,7 +701,7 @@ class Check(CommandParserFillerMixin):
             check_ret: CheckEntry = CheckEntry(
                 cfg.Checks.PASSWORDLESS_SSH_ACCESS.value)
             try:
-                cmd_run(cmd, targets=targets)
+                _ = cmd_run(cmd, targets=targets)
             except SaltCmdResultError:
                 check_ret.set_fail(
                     checked_target=targets,
