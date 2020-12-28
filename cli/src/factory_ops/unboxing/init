@@ -336,7 +336,10 @@ echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
 seagate_refs_cleanup
 
 echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
-pcs resource refresh --all --force >> ${LOG_FILE}
+echo "INFO: Bringing HCTL cluster in maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
+echo "INFO: Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 sleep 5
 echo "OK." | tee -a ${LOG_FILE}
 
