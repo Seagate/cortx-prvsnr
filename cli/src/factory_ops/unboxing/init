@@ -335,7 +335,7 @@ provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${L
 echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
 seagate_refs_cleanup
 
-echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
+echo "Restarting the cluster resources through switching maintenance mode........" | tee -a ${LOG_FILE}
 echo "INFO: Bringing HCTL cluster in maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
 echo "INFO: Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
