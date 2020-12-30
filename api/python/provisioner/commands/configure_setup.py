@@ -263,9 +263,6 @@ class ConfigureSetup(CommandParserFillerMixin):
                 pillar_type = f'cluster/{section}'
                 count = count - 1
                 node_list.append(f"\"{section}\"")
-                run_subprocess_cmd([
-                    "provisioner", "pillar_set",
-                    f'cluster/{section}', ""])
 
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])

@@ -38,7 +38,7 @@ Install cryptography python package:
       - Ensure cryptography python package absent
 
 
-{% if pillar["cluster"][grains['id']]["is_primary"] %}
+{% if grains['id'] in pillar["cluster"] and pillar["cluster"][grains['id']]["is_primary"] %} #TODO revisit the logic 
 Encrypt_pillar:
   module.run:
     - pillar_ops.encrypt: []
