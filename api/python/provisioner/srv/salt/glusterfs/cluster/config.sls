@@ -26,6 +26,10 @@ glusterfs_servers_peered:
 
 {% for volume, bricks in salt['pillar.get']('glusterfs_volumes', {}).items() %}
 
+{% set list_volumes = salt['glusterfs.list_volumes']() %}
+
+{% if volume not in list_volumes %}
+
 glusterfs_volume_{{ volume }}_created:
   glusterfs.volume_present:
     - name: {{ volume }}
@@ -42,5 +46,20 @@ glusterfs_volume_{{ volume }}_created:
         attempts: 10
         until: True
         interval: 3
+
+{% else %}
+
+{% for server, path in bricks.items() %}
+
+add_brick_to_volume_{{ volume }}_on_{{ server }}:
+  module.run:
+    - name: gluster.add_brick
+    - volume: {{ volume }}
+    - brick: {{ server }}:{{ path }}
+
+
+{% endfor %}
+
+{% endif %}
 
 {% endfor %}

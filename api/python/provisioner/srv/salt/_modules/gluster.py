@@ -20,7 +20,6 @@
 # salt-call gluster.add_brick <volume> <brick>
 # salt-call gluster.remove_brick <volume> <brick>
 # salt-call gluster.is_brick_present <volume> <brick>
-# salt-call gluster.remove_peer <hostname>
 
 
 def add_brick(volume, brick):
@@ -81,25 +80,3 @@ def is_brick_present(volume, brick):
             is_present = True
 
     return is_present
-
-
-def _detach_node(node):
-    """Remove node from cluster
-    """
-    cmd = f"echo 'y'|gluster peer detach {node}"
-    res = __salt__["cmd.shell"](cmd)
-    return res
-
-
-def remove_peer(node):
-    """Remove bricks from this node and detach
-       from cluster
-    """
-    volumes = __pillar__['glusterfs']['volumes']
-
-    for volume in volumes:
-        brick = f"{node}:{volume['export_dir']}"
-        if is_brick_present(volume['name'], brick):
-            remove_brick(volume['name'], brick)
-
-    return _detach_node(node)
