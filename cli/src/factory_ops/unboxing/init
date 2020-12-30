@@ -335,33 +335,11 @@ provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${L
 echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
 seagate_refs_cleanup
 
-echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
-echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
-pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
-pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Stonith................................" | tee -a ${LOG_FILE}
-pcs resource refresh stonith-c1 >> ${LOG_FILE}
-pcs resource refresh stonith-c2 >> ${LOG_FILE}
-echo "Ok." | tee -a ${LOG_FILE}
-sleep 5
-
-echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
-pcs resource refresh csm-kibana >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "UDS...................................." | tee -a ${LOG_FILE}
-pcs resource refresh uds >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "HAProxy................................" | tee -a ${LOG_FILE}
-pcs resource refresh haproxy-c1 >> ${LOG_FILE}
-pcs resource refresh haproxy-c2 >> ${LOG_FILE}
-echo "Ok." | tee -a ${LOG_FILE}
+echo "Restarting the Cortx Services" | tee -a ${LOG_FILE}
+echo "DEBUG: Bringing HCTL cluster in maintenance mode" >> ${LOG_FILE}
+hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
+echo "DEBUG: Bringing HCTL cluster out of maintenance mode" >> ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 sleep 5
 
 echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
