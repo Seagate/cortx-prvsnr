@@ -303,6 +303,9 @@ sleep 2
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 
+echo "Ensuring the cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
+
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
