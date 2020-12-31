@@ -278,7 +278,7 @@ Private data zone:
 #       - lnet
 #       - s3
 #     - interfaces:
-#       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+#       - {#{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }#G}
 #     # - rich_rules:
 #     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
 #     - require:

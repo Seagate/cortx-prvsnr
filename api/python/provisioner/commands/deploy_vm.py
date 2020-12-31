@@ -135,6 +135,15 @@ class DeployVM(Deploy):
             self._cmd_run(
                 (
                     'provisioner pillar_set '
+                    f'cluster/{minion_id}/bmc/ip  '
+                    '\\"\\"'
+                ),
+                targets=self._primary_id()
+            )            
+
+            self._cmd_run(
+                (
+                    'provisioner pillar_set '
                     f'cluster/{minion_id}/network/data_nw/roaming_ip  '
                     '\\"127.0.0.1\\"'
                 ),
