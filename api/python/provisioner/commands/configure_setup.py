@@ -167,6 +167,7 @@ class NodeParamsValidation:
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
+    bmc_ip: str = NodeNetworkParams.bmc_ip
 
     _optional_param = [
         'data_nw_public_ip_addr',
@@ -177,7 +178,8 @@ class NodeParamsValidation:
         'mgmt_nw_iface',
         'mgmt_nw_public_ip_addr',
         'mgmt_nw_netmask',
-        'mgmt_nw_gateway'
+        'mgmt_nw_gateway',
+        'bmc_ip'
     ]
 
     def __attrs_post_init__(self):
