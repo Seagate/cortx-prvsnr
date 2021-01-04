@@ -22,7 +22,8 @@ ftp_log="$logdir/fw_upgrade.log"
 ftp_op_timeout=false
 ftp_kill_timeout=false
 ftp_pid=
-
+controller_A_ver=
+controller_B_ver=
 
 # run_cli_cmd()
 # Arg1: cli command to run on enclosure, e.g. 'show version'
@@ -789,8 +790,9 @@ fw_ver_get()
        printf '%-15s' "${arr[@]}" >> $_fw_ver
        printf '\n' >> $_fw_ver
     done < $_tmp_file
+    controller_A_ver=$(cat $_fw_ver | grep -A1 bundle-version | tail -1)
+    controller_B_ver=$(cat $_fw_ver | grep -A2 bundle-version | tail -1)
     cat $_fw_ver
-
 }
 
 midplane_serial_get()
@@ -1010,6 +1012,83 @@ ftp_enable()
     } && echo "ftp_enable(): ftp is already enabled" >> $logfile
 }
 
+sftp_cmd_run()
+{
+    _cmd="$1"
+    _sftp_op=
+    sftp_cmd="/bin/sftp"
+
+    if echo $_cmd | grep -q flash; then
+        _sftp_op="Firmware Update"
+    else
+        _sftp_op="License load"
+    fi
+
+    echo "sftp_cmd_un(): _sftp_op=$_sftp_op" >> $logfile
+
+    if [ -f $ftp_log ]; then
+        ts=$(date +"%Y-%m-%d_%H-%M-%S")
+        yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
+    fi
+
+    echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
+    reqd_pkgs_install $sftp_cmd
+    echo "sftp_cmd_run(): starting sftp session" >> $logfile
+$sftp_cmd -P 1022 $host > $ftp_log  <<EOF &
+user $user "$pass"
+$_cmd
+bye
+EOF
+
+}
+
+is_sftp_enabled()
+{
+    _tmp_file="$tmpdir/is_sftp_enabled"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    # objects name in the xml
+    _xml_obj_bt="security-communications-protocols"
+    _xml_obj_plist=("sftp")
+    # run command to get the details of advanced settings params
+    echo "is_sftp_enabled():Getting protocols details.." >> $logfile
+    _cmd="show protocols"
+    cmd_run "$_cmd"
+    echo "is_sftp_enabled():Checking if sftp service is enabled" >> $logfile
+
+    # parse xml to get required values of properties
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "is_sftp_enabled(): No sftp setting found" >> $logfile
+        rm -rf $_tmp_file
+        return 0
+    }
+    ret=$(grep -q "Enabled" $_tmp_file)
+    if [[ $ret -eq 0 ]]; then
+        echo "Enabled"
+    else
+        echo "Disabled"
+    fi
+}
+
+sftp_enable()
+{
+    _tmp_file="$tmpdir/sftp_enable"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    echo "sftp_enable(): Checking if sftp service is enabled" >> $logfile
+    is_sftp_enabled > $_tmp_file
+    grep -q "Enabled" $_tmp_file || {
+        echo "sftp_enable(): sftp disabled, enabling sftp" >> $logfile
+        _cmd="set protocols sftp on"
+        cmd_run "$_cmd"
+        is_sftp_enabled > $_tmp_file
+        echo "sftp_enable(): Checking if sftp got enabled" >> $logfile
+        grep -q "Enabled" $_tmp_file || {
+           echo "sftp_enable(): Error: Could not enable sftp service"
+           exit 1
+        }
+    } && echo "sftp_enable(): sftp service is already enabled" >> $logfile
+}
+
 is_pfu_enabled()
 {
     _tmp_file="$tmpdir/is_pfu_enabled"
@@ -1090,21 +1169,44 @@ fw_upgrade_health_check()
 fw_update()
 {
     _error=0
-    
+
     fw_upgrade_health_check
     pfu_enable
-    ftp_enable
+    #ftp_enable
+    sftp_enable #TBD
     echo "Updating the firmware on host: $host" >> $logfile
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
 
-    echo "Firmware Version before update:" | tee -a $logfile
-    fw_ver_get | tee -a $logfile
+    echo "Getting the fw version from the input bundle" >> $logfile
+    ver=$(grep -a "<BUNDLE version=" GN265R009-03.bin | awk '{ print $2 }' | cut -d= -f 2)
+    # Sample output of grep command
+    # grep -a "<BUNDLE version=" GN265R009-03.bin 
+    # <BUNDLE version="GN265R009-03" build_date="Wed Sep 19 13:36:08 MDT 2018" seconds="180">
+    
+    #ver would have quotes around it, remove the quotes:
+    bundle_fw_ver="${ver%\"}" #remove quote at the end
+    bundle_fw_ver="${bundle_fw_ver#\"}" # remove quote at the start
 
-    ftp_cmd_run "put $fw_bundle flash"
+    echo "Firmware Version in the input bundle provided: $bundle_fw_ver" | tee -a $logfile
 
-    echo "Firmware Version after update:" | tee -a $logfile
-    fw_ver_get | tee -a $logfile
+    echo "Getting current fw versions (before update)" >> $logfile
+    fw_ver_get >> $logfile
+    echo "Firmware Version on the controller before update:" | tee -a $logfile
+    echo "Controller A: $controller_A_ver, Controller B: $controller_B_ver" | tee -a $logfile
+    _ctrl_a_ver_pre_update=$controller_A_ver
+    _ctrl_b_ver_pre_update=$controller_B_ver
+
+    sftp_cmd_run "put $fw_bundle flash"
+
+    #TBD: Poll the controller to get the status
+
+    echo "Getting current fw versions (after update)" >> $logfile
+    fw_ver_get >> $logfile
+    echo "Firmware Version on the controller after update:" | tee -a $logfile
+    echo "Controller A: $controller_A_ver, Controller B: $controller_B_ver" | tee -a $logfile
+    _ctrl_a_ver_post_update=$controller_A_ver
+    _ctrl_b_ver_post_update=$controller_B_ver
 
     if grep -q "Codeload completed successfully." $ftp_log; then
         # IMPORTANT: Do not change the sequence of the checks below 
