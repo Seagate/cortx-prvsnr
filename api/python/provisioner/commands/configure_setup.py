@@ -226,10 +226,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
+            elif 'is_primary' in key:
+                input[key] = f'{input[key]}'.lower()
             else:
                 if input[key]:
                     if input[key] == 'None':
-                        input[key] = '\"\"'
+                        input[key] = 'null'
                     else:
                         input[key] = f'\"{input[key]}\"'
                 else:
