@@ -58,7 +58,7 @@ class CommandParserFillerMixin:
         return ret if type(ret) is list else [ret]
 
     @classmethod
-    def fill_parser(cls, parser):
+    def fill_parser(cls, parser, parents=None):
         for arg_type in cls._run_args_types():
             inputs.ParserFiller.fill_parser(arg_type, parser)
 
