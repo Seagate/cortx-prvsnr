@@ -482,14 +482,14 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
 
         prereq_states
 
-        iopath_states
-
-        controlpath_states
-
         sync_states
+
+        iopath_states
 
         ha_states
 
+        controlpath_states
+        
         restore_states
 
         add_node_states
