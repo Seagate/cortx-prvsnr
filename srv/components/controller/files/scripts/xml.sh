@@ -69,3 +69,32 @@ parse_xml()
     done
     echo "parse_xml(): done" >> $logfile
 }
+
+ctrl_activity_get()
+{
+    _xml_doc=$1
+    echo "parse_progress_xml(): parsing $_xml_doc" >> $logfile
+
+    #parse progress xml file to check the progress
+    # Sample xml file
+    #   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    #   <ACTIVITY>
+    #   <RESPONSE VERSION="1.0" ACTIVITY="none" TIMESTRING="2020-12-23 07:25:47" TIME="1608708347">
+    #   </RESPONSE>
+    #   <RESPONSE VERSION="1.0" CONTROLLER="B" ACTIVITY="none" TIMESTRING="2020-12-23 07:25:49" TIME="1608708349">
+    #   </RESPONSE>
+    #   </ACTIVITY>
+
+    # Sample output of xml command:
+    # xmllint --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' /tmp/progress
+    #  ACTIVITY="none" 
+
+    _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
+    activity_a="${_activity%\"}" #remove quote at the end
+    activity_a="${activity_a#\"}" # remove quote at the start
+
+    _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="B"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
+    activity_b="${_activity%\"}" #remove quote at the end
+    activity_b="${activity_b#\"}" # remove quote at the start
+
+}

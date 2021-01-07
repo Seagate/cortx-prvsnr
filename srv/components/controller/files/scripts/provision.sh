@@ -19,11 +19,22 @@
 script_dir=$(dirname $0)
 
 ftp_log="$logdir/fw_upgrade.log"
+
+if [ -f $ftp_log ]; then
+    ts=$(date +"%Y-%m-%d_%H-%M-%S")
+    yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
+fi
+
 ftp_op_timeout=false
 ftp_kill_timeout=false
 ftp_pid=
 controller_A_ver=
 controller_B_ver=
+activity_a=
+activity_b=
+ret_fw_versions_compare=999
+fw_update_status=999
+bundle_fw_ver=
 
 # run_cli_cmd()
 # Arg1: cli command to run on enclosure, e.g. 'show version'
@@ -1012,36 +1023,6 @@ ftp_enable()
     } && echo "ftp_enable(): ftp is already enabled" >> $logfile
 }
 
-sftp_cmd_run()
-{
-    _cmd="$1"
-    _sftp_op=
-    sftp_cmd="/bin/sftp"
-
-    if echo $_cmd | grep -q flash; then
-        _sftp_op="Firmware Update"
-    else
-        _sftp_op="License load"
-    fi
-
-    echo "sftp_cmd_un(): _sftp_op=$_sftp_op" >> $logfile
-
-    if [ -f $ftp_log ]; then
-        ts=$(date +"%Y-%m-%d_%H-%M-%S")
-        yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
-    fi
-
-    echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
-    reqd_pkgs_install $sftp_cmd
-    echo "sftp_cmd_run(): starting sftp session" >> $logfile
-$sftp_cmd -P 1022 $host > $ftp_log  <<EOF &
-user $user "$pass"
-$_cmd
-bye
-EOF
-
-}
-
 is_sftp_enabled()
 {
     _tmp_file="$tmpdir/is_sftp_enabled"
@@ -1166,50 +1147,169 @@ fw_upgrade_health_check()
     }
 }
 
-fw_update()
+
+sftp_cmd_run()
 {
-    _error=0
-
-    fw_upgrade_health_check
-    pfu_enable
-    #ftp_enable
-    sftp_enable #TBD
-    echo "Updating the firmware on host: $host" >> $logfile
-    [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
+    _batch_file="$1"
+    _cmd=$(cat $_batch_file)
+    _sftp_op=
+    
+    if ! command  -v sftp; then
+        echo "ERROR: sftp command could not be found" | tee -a $logfile
+        echo "Please install sftp and try again" | tee -a $logfile
         exit 1
+    fi
+    if echo $_cmd | grep -q flash; then
+        _sftp_op="Firmware Update"
+    else
+        _sftp_op="License load"
+    fi
 
+    echo "sftp_cmd_run(): _sftp_op=$_sftp_op" >> $logfile
+
+    echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
+    reqd_pkgs_install $sftp_cmd
+    echo "sftp_cmd_run(): starting sftp session" >> $logfile
+sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF
+$_cmd
+bye
+EOF
+
+}
+
+fw_codeload_status_get()
+{
+    _sftp_cmd="get progress:lastcodeload:text $ftp_log"
+    printf '%s\n' '$_sftp_cmd' > $tmpdir/fw_upd.bf
+    sftp_cmd_run "${tmpdir}/fw_upd.bf"
+}
+
+# Get the fw version from input bundle
+bundle_ver_get()
+{
+    if [[ -z $fw_bundle || ! -f $fw_bundle ]]; then
+        echo "ERROR: Invalid input bundle provided, exiting" | tee -a $logfile
+        exit 1
+    fi
     echo "Getting the fw version from the input bundle" >> $logfile
-    ver=$(grep -a "<BUNDLE version=" GN265R009-03.bin | awk '{ print $2 }' | cut -d= -f 2)
+    _bundle_ver=$(grep -a "<BUNDLE version=" $fw_bundle | awk '{ print $2 }' | cut -d= -f 2)
     # Sample output of grep command
     # grep -a "<BUNDLE version=" GN265R009-03.bin 
     # <BUNDLE version="GN265R009-03" build_date="Wed Sep 19 13:36:08 MDT 2018" seconds="180">
-    
+
+    if [[ -z $_bundle_ver ]]; then
+        echo "ERROR: Could not get the target fw version from the input bundle" | tee -a $logfile
+        echo "ERROR: Please check if the bundle is valid" | tee -a $logfile
+        exit 1
+    fi
     #ver would have quotes around it, remove the quotes:
-    bundle_fw_ver="${ver%\"}" #remove quote at the end
+    bundle_fw_ver="${_bundle_ver%\"}" #remove quote at the end
     bundle_fw_ver="${bundle_fw_ver#\"}" # remove quote at the start
 
     echo "Firmware Version in the input bundle provided: $bundle_fw_ver" | tee -a $logfile
+}
 
-    echo "Getting current fw versions (before update)" >> $logfile
+# Compare current versions of the ctrl fw with the
+# target version and the versions before update was triggered. 
+
+# Return value is set in variable: ret_fw_versions_compare
+# Return values
+# Both controller got updated: 0
+# A is updated but B is not  : 1
+# B is updated but A is not  : 2
+# Both controller not updated: 3
+fw_versions_compare()
+{
+    # read the fw version captured before starting the update
+    #TODO: check input params are not empty
+    _ctrl_a_ver_old=$1
+    _ctrl_b_ver_old=$2
+    ret_fw_versions_compare=99
+    echo "Old firmware version:" | tee -a $logfile
+    echo "Controller A: $_ctrl_a_ver_old, Controller B: $_ctrl_b_ver_old" | tee -a $logfile
+
+    echo "Getting current fw versions on the controller" >> $logfile
     fw_ver_get >> $logfile
-    echo "Firmware Version on the controller before update:" | tee -a $logfile
+    echo "Current firmware version on the controller:" | tee -a $logfile
     echo "Controller A: $controller_A_ver, Controller B: $controller_B_ver" | tee -a $logfile
-    _ctrl_a_ver_pre_update=$controller_A_ver
-    _ctrl_b_ver_pre_update=$controller_B_ver
+    _ctrl_a_ver_current=$controller_A_ver
+    _ctrl_b_ver_current=$controller_B_ver
+    bundle_ver_get
 
-    sftp_cmd_run "put $fw_bundle flash"
+    echo "DEBUG: Versions before the update was triggered:" >> $logfile
+    echo "Controller A: ${_ctrl_a_ver_old}, Controller B: ${_ctrl_b_ver_old}" >> $logfile
+    echo "DEBUG: Target version: ${bundle_fw_ver}" >> $logfile
+    echo "DEBUG: Current versions:" >> $logfile
+    echo "Controller A: ${_ctrl_a_ver_current}, Controller B: ${_ctrl_b_ver_current}" >> $logfile
 
-    #TBD: Poll the controller to get the status
+    # Compare versions and set the return values
+    # Both controller got updated: 0
+    # A is updated but B is not  : 1
+    # B is updated but A is not  : 2
+    # Both controller not updated: 3
+    if [[ ${_ctrl_a_ver_old} != ${_ctrl_a_ver_current} && ${_ctrl_b_ver_old} != ${_ctrl_b_ver_current} ]]; then
+        # both controller's current fw version doesn't match with older versions, the update
+        # seems to have happened, check current version with the version of the input bundle.
+        echo "DEBUG: FW versions of both the controllers are different than the older version" >> $logfile
+        echo "DEBUG: Checking if the versions match with target version from the input bundle" >> $logfile
+        if [[  ${bundle_fw_ver} == ${_ctrl_a_ver_current} && ${bundle_fw_ver} == ${_ctrl_b_ver_current} ]]; then
+            echo "Firmware is updated successfully" | tee -a $logfile
+            ret_fw_versions_compare=0
+        else
+            echo "DEBUG:  Firmware version is updated but it doesn't match with the target version (${bundle_fw_ver})" >> $logfile
+            ret_fw_versions_compare=3
+        fi
+    elif [[ ${_ctrl_a_ver_old} != ${_ctrl_a_ver_current} && ${_ctrl_b_ver_old} == ${_ctrl_b_ver_current} ]]; then
+        # Possibly controller A got update but controller B didn't, confirm by
+        # checking fw ver on A with the target version.
+        echo "DEBUG: FW version on controller A got changed but Controller B is still on the older version" >> $logfile
+        echo "DEBUG: Checking if FW version on controller A matches with the target FW version" >> $logfile
+        if [[ "$bundle_fw_ver" == "${_ctrl_a_ver_current}" ]]; then
+            ret_fw_versions_compare=1
+        else
+            # Controller A is neither on the target ver nor on the older version,
+            # this is unexpected, the update didn't happen, so return failure.
+            echo "ERROR: Controller A is neither on the target FW version nor on the original version" | tee -a $logfile
+            echo "Please contact Seagate support for further assistance. Exiting with failure." | tee -a $logfile
+            ret_fw_versions_compare=3
+        fi
+    elif [[ ${_ctrl_a_ver_old} == ${_ctrl_a_ver_current} && ${_ctrl_b_ver_old} != ${_ctrl_b_ver_current} ]]; then
+        # Possibly controller B got update but controller A didn't, confirm by
+        # checking fw ver on B with the target version.
+        echo "DEBUG: FW version on controller B got changed but Controller A is still on the older version" >> $logfile
+        echo "DEBUG: Checking if FW version on controller B matches with the target FW version" >> $logfile
+        if [[ "$bundle_fw_ver" == "${_ctrl_b_ver_current}" ]]; then
+            ret_fw_versions_compare=2
+        else
+            # Controller B is neither on the target ver nor on the older version,
+            # this is unexpected, the update didn't happen, so return failure.
+            echo "ERROR: Controller B is neither on the target FW version nor on the original version" | tee -a $logfile
+            echo "Please contact Seagate support for further assistance. Exiting with failure." | tee -a $logfile
+            ret_fw_versions_compare=3
+        fi
+    elif [[ ${_ctrl_a_ver_old} == ${_ctrl_a_ver_current} && ${_ctrl_b_ver_old} == ${_ctrl_b_ver_current} ]]; then
+        echo "DEBUG: FW Versions for both controllers didn't change." >> $logfile
+        echo "DEBUG: Checking if versions match with the target version" >> $logfile
+        if [[ "$bundle_fw_ver" == "${_ctrl_a_ver_current}" && "$bundle_fw_ver" == "${_ctrl_b_ver_current}" ]]; then
+            # Target ver in bundle and the verion on controllers are same,
+            # The fw update was triggered with the same version, return success.
+            echo "DEBUG: Target FW version in the input bundle and the FW verion on controllers are same" >> $logfile
+            ret_fw_versions_compare=0
+        else
+            # Both the controllers are neither on the target version nor on the older version,
+            # this is unexpected, the update didn't happen, so return failure.
+            echo "ERROR: Both the controllers are neither on the target FW version nor on the original version" | tee -a $logfile
+            echo "Please contact Seagate support for further assistance. Exiting with failure." | tee -a $logfile
+            ret_fw_versions_compare=3
+        fi
+    fi
+}
 
-    echo "Getting current fw versions (after update)" >> $logfile
-    fw_ver_get >> $logfile
-    echo "Firmware Version on the controller after update:" | tee -a $logfile
-    echo "Controller A: $controller_A_ver, Controller B: $controller_B_ver" | tee -a $logfile
-    _ctrl_a_ver_post_update=$controller_A_ver
-    _ctrl_b_ver_post_update=$controller_B_ver
-
+fw_update_status_parse()
+{
+    _error=0
     if grep -q "Codeload completed successfully." $ftp_log; then
-        # IMPORTANT: Do not change the sequence of the checks below 
+        # IMPORTANT: Do not change the sequence of the checks below
         if grep -q "RETURN_CODE: 8" $ftp_log; then
             echo "Found RETURN_CODE 8 in $ftp_log" >> $logfile
             _error=0
@@ -1230,29 +1330,138 @@ fw_update()
         fi
     elif ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
         echo "No Codeload related message or fail/error strings in $ftp_log" >> $logfile
-        echo "Checking if there was any ftp issue" >> $logfile
-        if [[ "$ftp_op_timeout" == true ]]; then
-            echo "Warning: The ftp session to the controller was timed out" | tee -a $logfile
-            if [[ "$ftp_kill_timeout" == true ]]; then
-                echo "Warning: The ftp session to the controller($host) could not be killed (PID:$ftp_pid) after it was timed out" | tee -a $logfile
-            fi
-            echo "Please check manually if the firmware got updated and take appropriate action, exiting with failure status..." | tee -a $logfile
-            _error=1
-        else
-            _error=0
-        fi
+        _error=0
     else
         echo "No Codeload related message but found fail/error strings in $ftp_log, exiting with failure status..." >> $logfile
         _error=1
     fi
+    fw_update_status=$_error
+}
 
-    if [[ $_error -eq 1 ]]; then
-        echo "Error: Firmware upgrade failed" | tee -a $logfile
-        echo "Check $ftp_log for more details, exiting" 2>&1 | tee -a $logfile
+fw_update()
+{
+    fw_upgrade_health_check
+    pfu_enable
+    sftp_enable
+    echo "Updating the firmware on host: $host" >> $logfile
+    [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
+
+    # Save the current version of the firmware on the controllers
+    echo "Getting current fw versions (before update)" >> $logfile
+    fw_ver_get >> $logfile
+    echo "Firmware Version on the controller before update:" | tee -a $logfile
+    echo "Controller A: $controller_A_ver, Controller B: $controller_B_ver" | tee -a $logfile
+
+    _sftp_cmd="put $fw_bundle flash"
+    if echo $controller_A_ver | grep GN265 ||
+       echo $controller_B_ver | grep GN265; then
+        # Known issue, update from GN265 to GN280+ fails due
+        # to partner communication issue, use force keywork to bypass
+        _sftp_cmd="${_sftp_cmd}:force"
+    fi
+    printf '%s\n' '$_sftp_cmd' > $tmpdir/fw_upd.bf
+    sftp_cmd_run "${tmpdir}/fw_upd.bf"
+
+    # while true
+    #   timeout checks, break if update is not done in stipulated time (1 hour).
+    #   if controller is reachable
+    #      get progress from the controller over sftp (the output wil be in xml format)
+    #      parse the progress xml for both the controllers
+    #      if activity is "none" for both the controllers
+    #        1. Run: "get progress:lastcodeload:text code_load_status.txt" to get last codeload status
+    #        2. Parse fwstatus.txt file to check if update was successful (check for return code 8)
+    #        3. set the update status to success and break the loop
+    #      if activity is not "none" for any of the controller
+    #        This means the update is in progress, wait and continue the loop.
+    #   else
+    #      # possibly it's getting rebooted after update.
+    #      # wait for some time and continue to poll the controller again
+    # end while
+    # Check the bundle version against the current version on the controllers
+    # Check the update status and fw version and return accrodingly.
+    _sleep_time=120
+    _max_ntry=30
+    _ntry=0
+    _sftp_timedout=false
+    while true; do
+        echo "sftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
+        if [[ $_ntry -eq $_max_ntry ]]; then
+            echo "Something went wrong, controller didn't respond within 60 monutes, timing out..." >> $logfile
+            _sftp_timedout=true
+            break
+        fi
+        if ping -c1 -W2 $host > /dev/null; then
+            # controller is reachable, check the update progress
+            echo "Getting the progress on fw update, please wait..." | tee -a $logfile
+            printf '%s\n' 'lcd $tmpdir' 'get progress' > $tmpdir/progress.bf
+            sftp_cmd_run "${tmpdir}/progress.bf"
+            ctrl_activity_get "$tmpdir/progress"
+            if [[ $ctrl_activity_a == "none" && $ctrl_activity_b == "none" ]]; then
+                # no activity on any of the controller, update is finished
+                # get the codeload status and parse it
+                echo "No ongoing activity on both controllers, checking the codeload status" | tee -a $logfile
+                fw_codeload_status_get
+                echo "Parsing the codeload status" | tee -a $file
+                fw_update_status_parse
+                break
+            else
+                echo "Controllers has following activities:" >> $logfile
+                echo "ctrl_activity_a: $ctrl_activity_a" >> $logfile
+                echo "ctrl_activity_b: $ctrl_activity_b" >> $logfile
+            fi
+        fi
+        # update in progress
+        echo "Update is in progress, please wait, check the $ftp_log for details..." | tee -a $logfile
+        sleep $_sleep_time
+        _ntry=$(( _ntry + 1 ))
+    done
+
+    if [[ "$_sftp_timedout" == true ]]; then
+        echo "The fw update was timed out, checking the current firmware versions..." | tee -a $logfile
+        fw_versions_compare "$controller_A_ver" "$controller_A_ver"
+        case ${ret_fw_versions_compare} in
+           0)
+                # Update was successfull
+                echo "SUCCESS!!! The fw versions on the controller are updated successfully " | tee -a $logfile
+                echo "The detailed logs are captured at $logfile" | tee -a $logfile
+                exit 0
+            ;;
+           1)
+                # partial update, controller A is updated but controller B
+                # is still on the older/original fw version.
+                #TODO: find the way to check if controller B is still getting updated.
+                echo "ERROR: The fw is updated on controller A but not on controller B" | tee -a $logfile
+                echo "ERROR: Exiting on timeout, please check the status manually" | tee -a $logfile
+                echo "ERROR: Please check $logfile for more details" | tee -a $logfile
+                exit 1
+            ;;
+           2)
+                # partial update, controller B is updated but controller A
+                # is still on the older/original fw version.
+                #TODO: find the way to check if controller A is still getting updated. 
+                echo "ERROR: The fw is updated on controller B but not on controller A" | tee -a $logfile
+                echo "ERROR: Exiting on timeout, please check the status manually" | tee -a $logfile
+                echo "ERROR: Please check $logfile for more details" | tee -a $logfile
+                exit 1
+            ;;
+           3)
+                # Update was not successfull
+                echo "ERROR: The controller fw could not be updated" | tee -a $logfile
+                echo "ERROR: Please check $logfile for more details" | tee -a $logfile
+                exit 1
+            ;;
+        esac
+    fi
+
+    if [[ $fw_update_status -eq 0 ]]; then
+        echo "The firmware is updated successfully" tee -a $logfile
+        echo "The detailed logs are captured and kept at: '$ftp_log'" | tee -a $logfile
+        exit 0
     else
-        echo "fw_update(): firmware is updated successfully" 2>&1 | tee -a $logfile
-        echo "The detailed logs are kept at: '$ftp_log'" 2>&1 | tee -a $logfile
+        echo "Error: The controller firmware could not be updated" | tee -a $logfile
+        echo "ERROR: Please check $logfile for more details, exiting with error $fw_update_status" | tee -a $logfile
+        exit $fw_update_status
     fi
 }
 
