@@ -119,7 +119,7 @@ For Integration tests, here are the formats of Test Framework Hierarchy and Desi
 
 **A more scrutinized format of this hierarchy:**
 
-![test_guidelines_design_v2](https://user-images.githubusercontent.com/70517184/103939575-fe904280-5151-11eb-9fb0-b973eb33dcc3.png)
+![test_guidelines_design_v2](https://user-images.githubusercontent.com/70517184/103944818-3c916480-515a-11eb-8893-52c1a284e622.png)
 
 
 
