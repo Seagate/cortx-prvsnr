@@ -33,7 +33,7 @@ Remove stonith id stonith-c2 if already present:
 # Ref: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_high_availability_clusters/assembly_configuring-fencing-configuring-and-managing-high-availability-clusters
 Prepare for stonith on node-1:
   cmd.run:
-    - name: pcs stonith create stonith-c1 fence_ipmilan ipaddr={{ pillar['cluster']['srvnode-1']['bmc']['ip'] }} login={{ pillar['cluster']['srvnode-1']['bmc']['user'] }} passwd={{ salt['lyveutil.decrypt']('cluster', pillar['cluster']['srvnode-1']['bmc']['secret']) }} delay=5 pcmk_host_list=srvnode-1 pcmk_host_check=static-list lanplus=true auth=PASSWORD power_timeout=40 verbose=true op monitor interval=10s meta failure-timeout=15s
+    - name: pcs stonith create stonith-c1 fence_ipmilan ipaddr={{ pillar['cluster']['srvnode-1']['bmc']['ip'] }} login={{ pillar['cluster']['srvnode-1']['bmc']['user'] }} passwd={{ salt['lyveutil.decrypt']('cluster', pillar['cluster']['srvnode-1']['bmc']['secret']) }} delay=20 pcmk_host_list=srvnode-1 pcmk_host_check=static-list lanplus=true auth=PASSWORD power_timeout=40 verbose=true op monitor interval=10s meta failure-timeout=15s
     - unless: pcs stonith show stonith-c1
 
 Prepare for stonith on node-2:
