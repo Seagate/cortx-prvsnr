@@ -504,10 +504,16 @@ function cleanup_hosts {
     remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${interface_mgmt_a} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${interface_mgmt_b} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
 
-    _linfo "Removing management IPs from /etc/hosts"
+    echo "Removing management IPs from /etc/hosts"
     sed -i "s/${remote_mgmt_ip_srvnode_1}.*//g" /etc/hosts
     sed -i "s/${remote_mgmt_ip_srvnode_2}.*//g" /etc/hosts
 
-    _linfo "Copying updated /etc/hosts to Server node B"
-    scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /etc/hosts "${pvt_ip_b}":/etc/hosts
+    echo "Copying updated /etc/hosts to Server node B"
+    scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /etc/hosts "${pvt_ip_b}":/etc/hosts ||
+        echo "scp command failed to copy files to ${pvt_ip_b} / 
+        Check if ssh command works: /
+            ssh -o \"StrictHostKeyChecking=no\" -i /root/.ssh/id_rsa_prvsnr ${pvt_ip_b} 'hostname'
+        Check if /etc/hosts file exists on current node: /
+            ls -l /etc/hosts
+        "
 }
