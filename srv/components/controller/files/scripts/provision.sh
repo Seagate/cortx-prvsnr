@@ -32,8 +32,8 @@ controller_A_ver=
 controller_B_ver=
 export ctrl_activity_a=
 export ctrl_activity_b=
-ret_fw_versions_compare=999
-fw_update_status=999
+ret_fw_versions_compare=99 # 99 - default value
+fw_update_status=99 
 bundle_fw_ver=
 
 # run_cli_cmd()
@@ -1023,6 +1023,7 @@ ftp_enable()
     } && echo "ftp_enable(): ftp is already enabled" >> $logfile
 }
 
+# Check if sftp service is enabled on controller
 is_sftp_enabled()
 {
     _tmp_file="$tmpdir/is_sftp_enabled"
@@ -1051,6 +1052,7 @@ is_sftp_enabled()
     fi
 }
 
+# Enable the sftp service on the controller.
 sftp_enable()
 {
     _tmp_file="$tmpdir/sftp_enable"
@@ -1147,7 +1149,9 @@ fw_upgrade_health_check()
     }
 }
 
-
+# Run the commands on controller over sftp
+# create sftp session and run the commands
+# provided in the batchfile as input to the function.
 sftp_cmd_run()
 {
     _batch_file="$1"
@@ -1168,9 +1172,12 @@ EOF
 
 }
 
+# Prepare the command string to get the last code
+# load status & invoke the command over sftp
 fw_codeload_status_get()
 {
     _sftp_cmd="get progress:lastcodeload:text $ftp_log"
+    # Prepare the batch file of sftp commands to be executed over sftp.
     printf '%s\n' "$_sftp_cmd" > $tmpdir/fw_upd.bf
     echo "DEBUG: fw_codeload_status_get() _sftp_cmd=$_sftp_cmd." >> $logfile
     echo "DEBUG: fw_codeload_status_get() contents of $tmpdir/fw_upd.bf" >> $logfile
@@ -1299,6 +1306,7 @@ fw_versions_compare()
     fi
 }
 
+# Parse the code load status file.
 fw_update_status_parse()
 {
     _error=0
@@ -1312,6 +1320,7 @@ fw_update_status_parse()
             echo "Found RETURN_CODE 9 in $ftp_log" >> $logfile
             _error=0
         elif grep -q "Not attempted (Versions match)" $ftp_log; then
+            # Target fw ver and current fw versions were same - update to same ver.
             echo "Found 'Not attempted (Versions match)' in $ftp_log" >> $logfile
             _error=0
         fi
@@ -1333,6 +1342,31 @@ fw_update_status_parse()
     fw_update_status=$_error
 }
 
+# Update the controller firmware over sftp protocol
+# Algorithm for fw update over sftp:
+# Check if controller is healthy state to do the fw update
+# Enable PFU (Partner Firmware Update), this ensures the other controller gets updated too.
+# Enable sftp service on controller.
+# Get & save the current version of the firmware on both the controller (required for validation post update)
+# while true
+#   Check timeout, break if update is not done in stipulated time (1 hour, soft timeout limit).
+#   Check the codeload status, if update is till in progress, wait for some more time (hard timeout).
+#   if controller is reachable
+#      get progress from the controller over sftp (the output wil be in xml format)
+#      parse the progress xml for both the controllers, it will show the activity on both controllers
+#      if activity is "none" for both the controllers
+#        1. Run: "get progress:lastcodeload:text $ftp_log" to get last codeload status
+#        2. Parse $ftp_log file to check if update was successful (check for return code 8)
+#        3. set the update status to success and break the loop
+#      if activity is not "none" for any of the controller
+#        This means the update is in progress, wait and continue the loop.
+#   else
+#      # possibly it's getting rebooted after update.
+#      # wait for some time and continue to poll the controller again
+# end while
+# Check the current fw versions against the bundle version & the older version on the controllers
+# Check the update status and fw version and return accrodingly.
+
 fw_update()
 {
     fw_upgrade_health_check
@@ -1351,7 +1385,8 @@ fw_update()
     _sftp_cmd="put $fw_bundle flash"
     if echo $controller_A_ver | grep GN265 ||
        echo $controller_B_ver | grep GN265; then
-        # Known issue, update from GN265 to GN280+ fails due
+        # Workaround for known issue - FMW-42117
+        # update from GN265* to GN280* fails due
         # to partner communication issue, use force keywork to bypass
         _sftp_cmd="${_sftp_cmd}:force"
     fi
@@ -1362,23 +1397,6 @@ fw_update()
 
     sftp_cmd_run "${tmpdir}/fw_upd.bf"
 
-    # while true
-    #   timeout checks, break if update is not done in stipulated time (1 hour).
-    #   if controller is reachable
-    #      get progress from the controller over sftp (the output wil be in xml format)
-    #      parse the progress xml for both the controllers
-    #      if activity is "none" for both the controllers
-    #        1. Run: "get progress:lastcodeload:text code_load_status.txt" to get last codeload status
-    #        2. Parse fwstatus.txt file to check if update was successful (check for return code 8)
-    #        3. set the update status to success and break the loop
-    #      if activity is not "none" for any of the controller
-    #        This means the update is in progress, wait and continue the loop.
-    #   else
-    #      # possibly it's getting rebooted after update.
-    #      # wait for some time and continue to poll the controller again
-    # end while
-    # Check the bundle version against the current version on the controllers
-    # Check the update status and fw version and return accrodingly.
     _sleep_time=120
     _max_ntry=30
     _max_ntry_topup=5 # hard limit for timeout - additional 10 minutes
@@ -1389,24 +1407,27 @@ fw_update()
     while true; do
         echo "sftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
         if [[ $_ntry -eq $_max_ntry ]]; then
-            # update process didn't respond within the timeout limit.
+            # update process didn't complete within the timeout limit.
             # Check if update is still in progress, if yes, wait for 
-            # some time until _max_ntry_hard_timeout limit is reached.
+            # some time more until _max_ntry_hard_timeout limit is reached.
 
             # get the current activity on the controller
             ctrl_activity_get "$tmpdir/progress"
             if [[ $ctrl_activity_a == "codeload" ]]; then
-                # TODO: also check done status
+                #TODO: also check the "done" status from the output of "get progress" xml file
                 # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
                 # codeload is still in progress on A, wait till hard timeout is reached.
                 echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
                 wait_till_hard_timeout=true
             elif [[ $ctrl_activity_b == "codeload" ]]; then
-                #TODO: also check done status
+                #TODO: also check the "done" status from the output of "get progress" xml file
                 # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
                 # codeload is still in progress on B, wait till hard timeout is reached.
                 echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
                 wait_till_hard_timeout=true
+            else
+                # set the wait_till_hard_timeout to false
+                wait_till_hard_timeout=false
             fi
             if [[ "$wait_till_hard_timeout" == true ]]; then
                 if [[ $_ntry -eq $_hard_timeout ]]; then
@@ -1415,9 +1436,6 @@ fw_update()
                     break
                 else
                     echo "DEBUG: fw_update() Waiting till hard timeout is reached.." >> $logfile
-                    # sleep $_sleep_time
-                    # _ntry=$(( _ntry + 1 ))
-                    # continue
                 fi
             else
                 echo "ERROR: The update didn't complete within the time limit, timing out..." | tee -a $logfile
@@ -1457,7 +1475,7 @@ fw_update()
 
     if [[ "$_sftp_timedout" == true ]]; then
         echo "The fw update was timed out, checking the current firmware versions..." | tee -a $logfile
-        fw_versions_compare "$controller_A_ver" "$controller_A_ver"
+        fw_versions_compare "$controller_A_ver" "$controller_B_ver"
         case ${ret_fw_versions_compare} in
            0)
                 # Update was successfull
@@ -1493,7 +1511,7 @@ fw_update()
     fi
 
     if [[ $fw_update_status -eq 0 ]]; then
-        echo "The firmware is updated successfully" tee -a $logfile
+        echo "SUCCESS!! The firmware is updated successfully" | tee -a $logfile
         echo "The detailed logs are captured and kept at: '$logfile'" | tee -a $logfile
         exit 0
     else
