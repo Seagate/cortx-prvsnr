@@ -175,3 +175,11 @@ cleanup_hosts
 # Power-off sequence
 #shutdown_controller
 shutdown_node
+
+echo "\
+************************* SUCCESS!!! **************************************
+
+Lyve Rack cluster is successfully boxed!!
+
+The detailed logs can be seen at: $LOG_FILE
+***************************************************************************" | tee -a ${LOG_FILE}

@@ -219,7 +219,7 @@ NOTE: The above system details are required for unboxing and is stored at: $_out
     echo -e "\nThe cluster nodes are going to shutdown now, please copy the above details\n" | tee -a ${LOG_FILE}
 
     while true; do
-        read -p "Have you copied the above details?" _ans
+        read -p "Have you copied the above details? " _ans
         case $_ans in
             [Yy]* ) break;;
             [Nn]* ) echo "Please copy and press y to proceed..."; continue;;

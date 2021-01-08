@@ -387,7 +387,7 @@ pcs status >> ${LOG_FILE}
 echo "\
 ************************* SUCCESS!!! **************************************
 
-Lyve Drive Rack Cortx cluster is successfully initialized!!  
+Lyve Rack cluster is successfully initialized!!
 
 IMPORTANT:
    - Before you start using the system please ensure that the Cortx cluster
