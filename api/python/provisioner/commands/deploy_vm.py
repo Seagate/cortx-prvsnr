@@ -224,7 +224,7 @@ class DeployVM(Deploy):
                 self._run_states('sync', run_args)
 
             self._run_states('iopath', run_args)
-            self._run_states('controlpath', run_args)
+            #self._run_states('controlpath', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
