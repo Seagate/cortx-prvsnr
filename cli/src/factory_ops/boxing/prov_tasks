@@ -19,15 +19,15 @@
 
 # Functions in this file address following:
 #   1. Stop rabbitmq cluster, if running
-#   2. Ref: Stop and restart a RabbitMQ cluster, RMQ clustering 
-#   3. Ensure Lnet service is stopped 
+#   2. Ref: Stop and restart a RabbitMQ cluster, RMQ clustering
+#   3. Ensure Lnet service is stopped
 #   4. Collect system-wide support bundle using CSM CLI interface
-#   5. Backup files 
-#       a. /etc/multipath/bindings 
-#       b. /etc/multipath.conf 
+#   5. Backup files
+#       a. /etc/multipath/bindings
+#       b. /etc/multipath.conf
 #   6. Configure service port
 #   7. Unmount /var/motr and SWAP? (This should be ideally taken care of by OS shutdown)
-#   8. Cleanup /tmp 
+#   8. Cleanup /tmp
 #   9. Create unboxing user.
 #   10. Create boxing flag file on primary node:
 #       /opt/seagate/cortx/provisioner/generated_config/boxed
@@ -143,7 +143,7 @@ function dump_unboxing_data {
 
     ###### Lyve Rack Serial Number ######
     echo -n "INFO: Getting Lyve Rack serial numbers " | tee -a ${LOG_FILE}
-    [[ -f /opt/seagate/lr-serial-number ]] && _lr_serial=$(cat /opt/seagate/lr-serial-number) || echo "WARNING: Lyve Rack serial number has not been provided" 
+    [[ -f /opt/seagate/lr-serial-number ]] && _lr_serial=$(cat /opt/seagate/lr-serial-number) || echo "WARNING: Lyve Rack serial number has not been provided"
 
     ###### Server A #####
     echo -n "INFO: Getting serial numbers and mac addresses for server A.........." | tee -a ${LOG_FILE}
@@ -156,7 +156,7 @@ function dump_unboxing_data {
     ###### Server B #####
     echo -n "INFO: Getting serial numbers and mac addresses for server B.........." | tee -a ${LOG_FILE}
     _serial_b=`$ssh_cmd ${pvt_ip_b} "dmidecode -t system" | grep Serial | cut -d: -f 2`
-    _mac_bmc_b=`$ssh_cmd ${pvt_ip_b} "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`    
+    _mac_bmc_b=`$ssh_cmd ${pvt_ip_b} "ipmitool lan print" | grep 'MAC Address' | awk '{ print $4 }'`
     _mac_mgmt_b=`$ssh_cmd ${pvt_ip_b} "cat /sys/class/net/${interface_mgmt_b}/address"`
     _mac_data_b=`$ssh_cmd ${pvt_ip_b} "cat /sys/class/net/${interface_data_b}/address"`
     echo "Done" | tee -a ${LOG_FILE}
@@ -171,7 +171,7 @@ NOTE: Store following information for unboxing.
 *             Lyve Drive Rack                    *
 **************************************************
 *         Lyve Drive Rack System ID              *
-*------------------------------------------------* 
+*------------------------------------------------*
 *                                                *
 * Lyve Rack Serial number  : $_lr_serial         *
 *                                                *
@@ -184,7 +184,7 @@ NOTE: Store following information for unboxing.
   user     : $_user
   password : $_secret
 
-  NOTE: Password expires on first login.    
+  NOTE: Password expires on first login.
 
 **************************************************
 
@@ -192,7 +192,7 @@ NOTE: Store following information for unboxing.
 **************************************************
 *                 Server A                       *
 *------------------------------------------------*
-  Serial Number            : $_serial_a           
+  Serial Number            : $_serial_a
   Management Interface MAC : $_mac_mgmt_a
   BMC Interface MAC        : $_mac_bmc_a
   Data Interface MAC       : $_mac_data_a
@@ -496,4 +496,24 @@ function remove_gfs_mounts {
     $scp_cmd /tmp/fstab_b ${pvt_ip_b}:/etc/fstab 2>&1 | tee -a ${LOG_FILE}
 
     echo -e "\nDone" | tee -a ${LOG_FILE}
+}
+
+function cleanup_hosts {
+    # Remove entries for management IP from /etc/hosts
+
+    remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${interface_mgmt_a} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+    remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${interface_mgmt_b} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
+
+    echo "Removing management IPs from /etc/hosts"
+    sed -i "s/${remote_mgmt_ip_srvnode_1}.*//g" /etc/hosts
+    sed -i "s/${remote_mgmt_ip_srvnode_2}.*//g" /etc/hosts
+
+    echo "Copying updated /etc/hosts to Server node B"
+    scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /etc/hosts "${pvt_ip_b}":/etc/hosts ||
+        echo "scp command failed to copy files to ${pvt_ip_b} / 
+        Check if ssh command works: /
+            ssh -o \"StrictHostKeyChecking=no\" -i /root/.ssh/id_rsa_prvsnr ${pvt_ip_b} 'hostname'
+        Check if /etc/hosts file exists on current node: /
+            ls -l /etc/hosts
+        "
 }
