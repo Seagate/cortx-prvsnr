@@ -73,8 +73,14 @@ parse_xml()
 ctrl_activity_get()
 {
     _xml_doc=$1
-    echo "parse_progress_xml(): parsing $_xml_doc" >> $logfile
 
+    if [[ ! -f $_xml_doc ]]; then
+        echo "ERROR: could not find the file $_xml_doc." | tee -a $logfile 
+    fi
+
+    echo "DEBUG: ctrl_activity_get(): parsing $_xml_doc" >> $logfile
+    echo "DEBUG: ctrl_activity_get() contents of progress xml" >> $logfile
+    cat $_xml_doc >> $logfile
     #parse progress xml file to check the progress
     # Sample xml file
     #   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -90,11 +96,12 @@ ctrl_activity_get()
     #  ACTIVITY="none" 
 
     _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
-    activity_a="${_activity%\"}" #remove quote at the end
-    activity_a="${activity_a#\"}" # remove quote at the start
+    ctrl_activity_a="${_activity%\"}" #remove quote at the end
+    ctrl_activity_a="${ctrl_activity_a#\"}" # remove quote at the start
+    echo "DEBUG: ctrl_activity_get(): ctrl_activity_a=$ctrl_activity_a." >> $logfile
 
     _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="B"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
-    activity_b="${_activity%\"}" #remove quote at the end
-    activity_b="${activity_b#\"}" # remove quote at the start
-
+    ctrl_activity_b="${_activity%\"}" #remove quote at the end
+    ctrl_activity_b="${ctrl_activity_b#\"}" # remove quote at the start
+    echo "DEBUG: ctrl_activity_get(): ctrl_activity_b=$ctrl_activity_b." >> $logfile
 }

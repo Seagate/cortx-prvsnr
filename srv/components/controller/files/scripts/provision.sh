@@ -30,8 +30,8 @@ ftp_kill_timeout=false
 ftp_pid=
 controller_A_ver=
 controller_B_ver=
-activity_a=
-activity_b=
+export ctrl_activity_a=
+export ctrl_activity_b=
 ret_fw_versions_compare=999
 fw_update_status=999
 bundle_fw_ver=
@@ -801,8 +801,8 @@ fw_ver_get()
        printf '%-15s' "${arr[@]}" >> $_fw_ver
        printf '\n' >> $_fw_ver
     done < $_tmp_file
-    controller_A_ver=$(cat $_fw_ver | grep -A1 bundle-version | tail -1)
-    controller_B_ver=$(cat $_fw_ver | grep -A2 bundle-version | tail -1)
+    controller_A_ver=$(cat $_fw_ver | grep -A1 bundle-version | tail -1 | xargs)
+    controller_B_ver=$(cat $_fw_ver | grep -A2 bundle-version | tail -1 | xargs)
     cat $_fw_ver
 }
 
@@ -1152,23 +1152,14 @@ sftp_cmd_run()
 {
     _batch_file="$1"
     _cmd=$(cat $_batch_file)
-    _sftp_op=
-    
+
     if ! command  -v sftp; then
         echo "ERROR: sftp command could not be found" | tee -a $logfile
         echo "Please install sftp and try again" | tee -a $logfile
         exit 1
     fi
-    if echo $_cmd | grep -q flash; then
-        _sftp_op="Firmware Update"
-    else
-        _sftp_op="License load"
-    fi
-
-    echo "sftp_cmd_run(): _sftp_op=$_sftp_op" >> $logfile
 
     echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
-    reqd_pkgs_install $sftp_cmd
     echo "sftp_cmd_run(): starting sftp session" >> $logfile
 sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF
 $_cmd
@@ -1180,7 +1171,10 @@ EOF
 fw_codeload_status_get()
 {
     _sftp_cmd="get progress:lastcodeload:text $ftp_log"
-    printf '%s\n' '$_sftp_cmd' > $tmpdir/fw_upd.bf
+    printf '%s\n' "$_sftp_cmd" > $tmpdir/fw_upd.bf
+    echo "DEBUG: fw_codeload_status_get() _sftp_cmd=$_sftp_cmd." >> $logfile
+    echo "DEBUG: fw_codeload_status_get() contents of $tmpdir/fw_upd.bf" >> $logfile
+    cat $tmpdir/fw_upd.bf >> $logfile
     sftp_cmd_run "${tmpdir}/fw_upd.bf"
 }
 
@@ -1296,10 +1290,10 @@ fw_versions_compare()
             echo "DEBUG: Target FW version in the input bundle and the FW verion on controllers are same" >> $logfile
             ret_fw_versions_compare=0
         else
-            # Both the controllers are neither on the target version nor on the older version,
-            # this is unexpected, the update didn't happen, so return failure.
-            echo "ERROR: Both the controllers are neither on the target FW version nor on the original version" | tee -a $logfile
-            echo "Please contact Seagate support for further assistance. Exiting with failure." | tee -a $logfile
+            # Both the controllers are at the same older version and does not match the
+            # target version, fw update did not happen, report failure.
+            echo "ERROR: Both the controllers are at the same older version." | tee -a $logfile
+            echo "ERROR: The firmware update did not happen." | tee -a $logfile
             ret_fw_versions_compare=3
         fi
     fi
@@ -1308,6 +1302,7 @@ fw_versions_compare()
 fw_update_status_parse()
 {
     _error=0
+    echo "DEBUG: fw_update_status_parse() entry" >> $logfile
     if grep -q "Codeload completed successfully." $ftp_log; then
         # IMPORTANT: Do not change the sequence of the checks below
         if grep -q "RETURN_CODE: 8" $ftp_log; then
@@ -1360,7 +1355,11 @@ fw_update()
         # to partner communication issue, use force keywork to bypass
         _sftp_cmd="${_sftp_cmd}:force"
     fi
-    printf '%s\n' '$_sftp_cmd' > $tmpdir/fw_upd.bf
+    printf '%s\n' "$_sftp_cmd" > $tmpdir/fw_upd.bf
+    echo "DEBUG: _sftp_cmd=$_sftp_cmd" >> $logfile
+    echo "DEBUG: contents of $tmpdir/fw_upd.bf" >> $logfile
+    cat $tmpdir/fw_upd.bf >> $logfile
+
     sftp_cmd_run "${tmpdir}/fw_upd.bf"
 
     # while true
@@ -1382,19 +1381,56 @@ fw_update()
     # Check the update status and fw version and return accrodingly.
     _sleep_time=120
     _max_ntry=30
+    _max_ntry_topup=5 # hard limit for timeout - additional 10 minutes
+    _hard_timeout=$(( _max_ntry + _max_ntry_topup ))
     _ntry=0
     _sftp_timedout=false
+    wait_till_hard_timeout=false
     while true; do
         echo "sftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
         if [[ $_ntry -eq $_max_ntry ]]; then
-            echo "Something went wrong, controller didn't respond within 60 monutes, timing out..." >> $logfile
-            _sftp_timedout=true
-            break
+            # update process didn't respond within the timeout limit.
+            # Check if update is still in progress, if yes, wait for 
+            # some time until _max_ntry_hard_timeout limit is reached.
+
+            # get the current activity on the controller
+            ctrl_activity_get "$tmpdir/progress"
+            if [[ $ctrl_activity_a == "codeload" ]]; then
+                # TODO: also check done status
+                # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
+                # codeload is still in progress on A, wait till hard timeout is reached.
+                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
+                wait_till_hard_timeout=true
+            elif [[ $ctrl_activity_b == "codeload" ]]; then
+                #TODO: also check done status
+                # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
+                # codeload is still in progress on B, wait till hard timeout is reached.
+                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
+                wait_till_hard_timeout=true
+            fi
+            if [[ "$wait_till_hard_timeout" == true ]]; then
+                if [[ $_ntry -eq $_hard_timeout ]]; then
+                    echo "DEBUG: fw_update() Hard timeout limit is reached, breaking the loop" >> $logfile
+                    _sftp_timedout=true
+                    break
+                else
+                    echo "DEBUG: fw_update() Waiting till hard timeout is reached.." >> $logfile
+                    # sleep $_sleep_time
+                    # _ntry=$(( _ntry + 1 ))
+                    # continue
+                fi
+            else
+                echo "ERROR: The update didn't complete within the time limit, timing out..." | tee -a $logfile
+                _sftp_timedout=true
+                break
+            fi
         fi
         if ping -c1 -W2 $host > /dev/null; then
             # controller is reachable, check the update progress
             echo "Getting the progress on fw update, please wait..." | tee -a $logfile
-            printf '%s\n' 'lcd $tmpdir' 'get progress' > $tmpdir/progress.bf
+            printf '%s\n' "lcd $tmpdir" "get progress" > $tmpdir/progress.bf
+            echo "DEBUG: contents of $tmpdir/progress.bf:" >> $logfile
+            cat $tmpdir/progress.bf
             sftp_cmd_run "${tmpdir}/progress.bf"
             ctrl_activity_get "$tmpdir/progress"
             if [[ $ctrl_activity_a == "none" && $ctrl_activity_b == "none" ]]; then
@@ -1410,9 +1446,11 @@ fw_update()
                 echo "ctrl_activity_a: $ctrl_activity_a" >> $logfile
                 echo "ctrl_activity_b: $ctrl_activity_b" >> $logfile
             fi
+        else
+            echo "DEBUG: fw_update() Controller host [$host] isn't reachable.." >> $logfile
         fi
         # update in progress
-        echo "Update is in progress, please wait, check the $ftp_log for details..." | tee -a $logfile
+        echo "Update is in progress, please wait, check the $logfile for more details..." | tee -a $logfile
         sleep $_sleep_time
         _ntry=$(( _ntry + 1 ))
     done
@@ -1447,8 +1485,8 @@ fw_update()
             ;;
            3)
                 # Update was not successfull
-                echo "ERROR: The controller fw could not be updated" | tee -a $logfile
-                echo "ERROR: Please check $logfile for more details" | tee -a $logfile
+                echo "ERROR: The controller fw update failed." | tee -a $logfile
+                echo "ERROR: Please check $logfile for more details." | tee -a $logfile
                 exit 1
             ;;
         esac
@@ -1456,7 +1494,7 @@ fw_update()
 
     if [[ $fw_update_status -eq 0 ]]; then
         echo "The firmware is updated successfully" tee -a $logfile
-        echo "The detailed logs are captured and kept at: '$ftp_log'" | tee -a $logfile
+        echo "The detailed logs are captured and kept at: '$logfile'" | tee -a $logfile
         exit 0
     else
         echo "Error: The controller firmware could not be updated" | tee -a $logfile
