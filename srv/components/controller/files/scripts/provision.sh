@@ -1026,6 +1026,7 @@ ftp_enable()
 # Check if sftp service is enabled on controller
 is_sftp_enabled()
 {
+    _ret=1
     _tmp_file="$tmpdir/is_sftp_enabled"
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     # objects name in the xml
@@ -1042,14 +1043,11 @@ is_sftp_enabled()
     [ -s $_tmp_file ] || {
         echo "is_sftp_enabled(): No sftp setting found" >> $logfile
         rm -rf $_tmp_file
-        return 0
+        exit 1
     }
-    ret=$(grep -q "Enabled" $_tmp_file)
-    if [[ $ret -eq 0 ]]; then
-        echo "Enabled"
-    else
-        echo "Disabled"
-    fi
+    grep -q "Enabled" $_tmp_file && _ret=0
+    echo "is_sftp_enabled(): _ret=$_ret" >> $logfile
+    return $_ret
 }
 
 # Enable the sftp service on the controller.
@@ -1058,17 +1056,15 @@ sftp_enable()
     _tmp_file="$tmpdir/sftp_enable"
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     echo "sftp_enable(): Checking if sftp service is enabled" >> $logfile
-    is_sftp_enabled > $_tmp_file
-    grep -q "Enabled" $_tmp_file || {
-        echo "sftp_enable(): sftp disabled, enabling sftp" >> $logfile
-        _cmd="set protocols sftp on"
+    is_sftp_enabled || {
+        echo "sftp_enable(): sftp is disabled, enabling sftp" >> $logfile
+        _cmd="set protocols sftp enable"
         cmd_run "$_cmd"
-        is_sftp_enabled > $_tmp_file
-        echo "sftp_enable(): Checking if sftp got enabled" >> $logfile
-        grep -q "Enabled" $_tmp_file || {
+        echo "sftp_enable(): Checking again if sftp got enabled now" >> $logfile
+        is_sftp_enabled || {
            echo "sftp_enable(): Error: Could not enable sftp service"
            exit 1
-        }
+        } && echo "sftp_enable(): sftp service is now enabled" >> $logfile
     } && echo "sftp_enable(): sftp service is already enabled" >> $logfile
 }
 
@@ -1372,6 +1368,7 @@ fw_update()
     fw_upgrade_health_check
     pfu_enable
     sftp_enable
+
     echo "Updating the firmware on host: $host" >> $logfile
     [ -z $fw_bundle ] && echo "Error: No firmware bundle provided" &&
         exit 1
