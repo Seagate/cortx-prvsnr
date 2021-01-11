@@ -22,7 +22,7 @@ from typing import Type, List
 from copy import deepcopy
 from pathlib import Path
 
-from validate_setup import (
+from .validate_setup import (
     NetworkParamsValidation,
     ReleaseParamsValidation,
     StorageEnclosureParamsValidation,
@@ -113,8 +113,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         for key in input:
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
-                'netmask', 'public_ip_addr', 'type'
+                'ip', 'user', 'secret', 'ipaddr', 'interfaces', 'gateway',
+                'netmask', 'public_ip_addr', 'type', 'id', 'roles', 'devices'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
@@ -131,7 +131,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'mgmt_nw.iface' in key:
+            elif 'network.mgmt.interfaces' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -167,7 +167,13 @@ class ConfigureSetup(CommandParserFillerMixin):
         for section in content:
             input_type = section
             pillar_type = section
-            if 'srvnode' in section:
+            if 'default' in section:
+                #for sect in ['srv_default', 'storage_enclosure_default']:
+                input_type = 'srv_default' 
+                pillar_type = f'cluster/{section}'
+                count = count - 1
+                node_list.append(f"\"{section}\"")
+            elif 'srvnode' in section:
                 input_type = 'node'
                 pillar_type = f'cluster/{section}'
                 count = count - 1

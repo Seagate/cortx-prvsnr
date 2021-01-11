@@ -472,10 +472,47 @@ class ServerDefaultParams():
         _param_group, descr="Common Server configuration"
     )
     search_domains: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Search Domains"
+        _param_group, descr="list of search domains as json"
     )
     dns_servers: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" DNS Servers"
+        _param_group, descr="list of dns servers as json"
+    )
+    cluster_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Cluster ID"
+    )
+    network_mgmt_interfaces: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Mgmt Interfaces"
+    )
+    network_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Mgmt Netmask",
+        validator=Validation.check_ip4
+    )
+    network_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Mgmt Gateway",
+        validator=Validation.check_ip4
+    )
+    network_data_interfaces: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Data Interfaces"
+    )
+    network_data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Data Netmask",
+        validator=Validation.check_ip4
+    )
+    network_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Network Data Gateway",
+        validator=Validation.check_ip4
+    )
+    storage_metadata_device: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Storage Metadata Device"
+    )
+    storage_data_devices: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Storage Data Devices"
+    )
+    bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC User"
+    )
+    bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC password"
     )
 
 
@@ -483,7 +520,17 @@ class ServerDefaultParams():
 class ServerDefault(ParamGroupInputBase):
     search_domains: str = ServerDefaultParams.search_domains
     dns_servers: str = ServerDefaultParams.dns_servers
-    # TO DO: Include Network, Storage params
+    cluster_id: str = ServerDefaultParams.cluster_id
+    bmc_user: str = ServerDefaultParams.bmc_user
+    bmc_secret: str = ServerDefaultParams.bmc_secret
+    network_mgmt_interfaces: str = ServerDefaultParams.network_mgmt_interfaces
+    network_mgmt_netmask: str = ServerDefaultParams.network_mgmt_netmask
+    network_mgmt_gateway: str = ServerDefaultParams.network_mgmt_gateway
+    network_data_interfaces: str = ServerDefaultParams.network_data_interfaces
+    network_data_netmask: str = ServerDefaultParams.network_data_netmask
+    network_data_gateway: str = ServerDefaultParams.network_data_gateway
+    storage_metadata_device: str = ServerDefaultParams.storage_metadata_device
+    storage_data_devices: str = ServerDefaultParams.storage_data_devices
 
 
 class StorageEnclosureParams():
@@ -528,7 +575,7 @@ class NodeNetworkParams():
         _param_group, descr="mark node as a primary",
         converter=bool
     )
-    data_nw_iface: List = ParamGroupInputBase._attr_ib(
+    network_data_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data network iface"
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
@@ -538,30 +585,30 @@ class NodeNetworkParams():
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
-    mgmt_nw_gateway: str = ParamGroupInputBase._attr_ib(
+    network_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node mgmt gateway IP",
         validator=Validation.check_ip4
     )
-    mgmt_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management iface IP",
         validator=Validation.check_ip4
     )
-    mgmt_nw_netmask: str = ParamGroupInputBase._attr_ib(
+    network_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management iface netmask",
         validator=Validation.check_ip4
     )
-    mgmt_nw_iface: List = ParamGroupInputBase._attr_ib(
+    network_mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network iface"
     )
-    data_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
-    data_nw_netmask: str = ParamGroupInputBase._attr_ib(
+    network_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface netmask",
         validator=Validation.check_ip4
     )
-    data_nw_gateway: str = ParamGroupInputBase._attr_ib(
+    network_data_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data gateway IP",
         validator=Validation.check_ip4
     )
@@ -573,6 +620,23 @@ class NodeNetworkParams():
         _param_group, descr="node BMC  IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
+
+@attr.s(auto_attribs=True)
+class NodeNetwork(ParamGroupInputBase):
+    hostname: str = NodeNetworkParams.hostname
+    is_primary: str = NodeNetworkParams.is_primary
+    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
+    bmc_user: str = NodeNetworkParams.bmc_user
+    bmc_secret: str = NodeNetworkParams.bmc_secret
+    network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
+    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
+    network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
+    network_mgmt_interfaces: str = NodeNetworkParams.network_mgmt_interfaces
+    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
+    network_data_netmask: str = NodeNetworkParams.network_data_netmask
+    network_data_gateway: str = NodeNetworkParams.network_data_gateway
+    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+    bmc_ip: str = NodeNetworkParams.bmc_ip
 
 
 class NetworkParams():

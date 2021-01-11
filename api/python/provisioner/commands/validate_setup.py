@@ -39,6 +39,44 @@ from . import (
 
 logger = logging.getLogger(__name__)
 
+@attr.s(auto_attribs=True)
+class ServerDefaultParamsValidation:
+    search_domains: str = ServerDefaultParams.search_domains
+    dns_servers: str = ServerDefaultParams.dns_servers
+    cluster_id: str = ServerDefaultParams.cluster_id
+    bmc_user: str = ServerDefaultParams.bmc_user
+    bmc_secret: str = ServerDefaultParams.bmc_secret
+    network_mgmt_interfaces: str = ServerDefaultParams.network_mgmt_interfaces
+    network_mgmt_netmask: str = ServerDefaultParams.network_mgmt_netmask
+    network_mgmt_gateway: str = ServerDefaultParams.network_mgmt_gateway
+    network_data_interfaces: str = ServerDefaultParams.network_data_interfaces
+    network_data_netmask: str = ServerDefaultParams.network_data_netmask
+    network_data_gateway: str = ServerDefaultParams.network_data_gateway
+    storage_metadata_device: str = ServerDefaultParams.storage_metadata_device
+    storage_data_devices: str = ServerDefaultParams.storage_data_devices
+
+    _optional_param = [
+        'search_domains',
+        'dns_servers',
+        'cluster_id',
+        'network_mgmt_interfaces',
+        'network_mgmt_netmask',
+        'network_mgmt_gateway',
+        'network_data_netmask',
+        'network_data_gateway',
+        'storage_metadata_device',
+        'storage_data_devices'
+    ]
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
 
 @attr.s(auto_attribs=True)
 class NetworkParamsValidation:
@@ -101,47 +139,29 @@ class StorageEnclosureParamsValidation:
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
     is_primary: str = NodeNetworkParams.is_primary
-    data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
-    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
-    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
-    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
-    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
-    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
-    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
+    network_data_interfaces: List = NodeNetworkParams.network_data_interfaces
+    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
+    network_data_netmask: str = NodeNetworkParams.network_data_netmask
+    network_data_gateway: str = NodeNetworkParams.network_data_gateway
+    network_mgmt_interfaces: List = NodeNetworkParams.network_mgmt_interfaces
+    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
+    network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
+    network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
     _optional_param = [
-        'data_nw_public_ip_addr',
+        'network_data_public_ip_addr',
         'is_primary',
-        'data_nw_netmask',
-        'data_nw_gateway',
+        'network_data_netmask',
+        'network_data_gateway',
         'pvt_ip_addr',
-        'mgmt_nw_iface',
-        'mgmt_nw_public_ip_addr',
-        'mgmt_nw_netmask',
-        'mgmt_nw_gateway'
+        'network_mgmt_interfaces',
+        'network_mgmt_public_ip_addr',
+        'network_mgmt_netmask',
+        'network_mgmt_gateway'
     ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class ServerDefaultParamsValidation:
-    search_domains: str = ServerDefaultParams.search_domains
-    dns_servers: str = ServerDefaultParams.dns_servers
-    # TO DO: Include Network, Storage params
-
-    _optional_param = []
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)
