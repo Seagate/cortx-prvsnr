@@ -54,6 +54,7 @@ from ..config import (
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
     REPO_CANDIDATE_NAME,
     RELEASE_INFO_FILE,
+    GroupChecks,
     ReleaseInfo
 )
 from ..pillar import (
@@ -780,7 +781,7 @@ class SWUpdate(CommandParserFillerMixin):
 
             checker = Check()
             try:
-                check_res = checker.run()
+                check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
             except Exception as e:
                 logger.warning("During pre-flight checks error happened: "
                                f"{str(e)}")
@@ -1517,8 +1518,8 @@ class CreateUser(CommandParserFillerMixin):
                           '/bin/rsync, '
                           '/usr/sbin/smartctl, '
                           '/usr/bin/ipmitool, '
-                          '/opt/seagate/cortx/sspl/bin/sspl_bundle_generate, '
-                          '/opt/seagate/cortx/sspl/lib/sspl_bundle_generate, '
+                          '/usr/bin/sspl_bundle_generate, '
+                          '/usr/bin/sspl_bundle_generate, '
                           '/usr/bin/rabbitmqctl, '
                           '/usr/sbin/rabbitmqctl, '
                           '/var/lib/rabbitmq, '
