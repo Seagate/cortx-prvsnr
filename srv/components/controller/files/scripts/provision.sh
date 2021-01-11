@@ -1057,14 +1057,17 @@ sftp_enable()
     [ -f $_tmp_file ] && rm -rf $_tmp_file
     echo "sftp_enable(): Checking if sftp service is enabled" >> $logfile
     is_sftp_enabled || {
-        echo "sftp_enable(): sftp is disabled, enabling sftp" >> $logfile
-        _cmd="set protocols sftp enable"
-        cmd_run "$_cmd"
-        echo "sftp_enable(): Checking again if sftp got enabled now" >> $logfile
-        is_sftp_enabled || {
-           echo "sftp_enable(): Error: Could not enable sftp service"
-           exit 1
-        } && echo "sftp_enable(): sftp service is now enabled" >> $logfile
+        echo "ERROR: The sftp service is not enabled on the controller, please enable it manually and run the command again!!" | tee -a $logfile
+        exit 1
+        # TODO: Following code doesn't work find a way to enable sftp through shell script
+            # echo "sftp_enable(): sftp is disabled, enabling sftp" >> $logfile
+            # _cmd="set protocols sftp enable"
+            # cmd_run "$_cmd"
+            # echo "sftp_enable(): Checking again if sftp got enabled now" >> $logfile
+            # is_sftp_enabled || {
+            #    echo "sftp_enable(): Error: Could not enable sftp service"
+            #    exit 1
+            # } && echo "sftp_enable(): sftp service is now enabled" >> $logfile
     } && echo "sftp_enable(): sftp service is already enabled" >> $logfile
 }
 
