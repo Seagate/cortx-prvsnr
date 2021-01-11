@@ -138,7 +138,7 @@ parse_args()
             cortx_deps_repo="${tgt_build}/3rd_party"
             epel_repo="${cortx_deps_repo}/EPEL-7"
 
-            url_saltstack_repo="${cortx_deps_repo}/commons/saltstack-3001"
+            url_saltstack_repo="${cortx_deps_repo}/commons/saltstack-3002"
             url_local_repo_commons_rhel="$cortx_deps_repo"
             url_local_repo_commons="$cortx_deps_repo"
 

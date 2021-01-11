@@ -25,7 +25,7 @@ Install teamd:
 
 Create data0 interface file:
     network.managed:
-    # - name: data0
+    - name: data0
     # - device: data0
     - type: team
     - enabled: True
@@ -56,7 +56,7 @@ Create data0 interface file:
 {% for iface in pillar['cluster'][node]['network']['data_nw']['iface'] %}
 {{ iface }}:
     network.managed:
-    # - name: {{ iface }}
+    - name: {{ iface }}
     # - device:  {{ iface }}
     - type: teamport
     - team_master: data0

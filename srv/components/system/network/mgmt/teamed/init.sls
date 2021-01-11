@@ -33,7 +33,7 @@ Install teamd:
 
 Create mgmt0 interface file:
     network.managed:
-    # - name: mgmt0
+    - name: mgmt0
     # - device: mgmt0
     - type: team
     - enabled: True
@@ -64,7 +64,7 @@ Create mgmt0 interface file:
 {% for iface in pillar['cluster'][node]['network']['mgmt_nw']['iface'] %}
 {{ iface }}:
     network.managed:
-    # - name: {{ iface }}
+    - name: {{ iface }}
     # - device:  {{ iface }}
     - type: teamport
     - team_master: mgmt0
