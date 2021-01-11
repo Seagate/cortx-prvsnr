@@ -927,8 +927,8 @@ def test_functions_install_provisioner_proper_cluster_pillar(
     assert res.rc == 0
 
     source_path = h.PRVSNR_REPO_INSTALL_DIR / (
-        'pillar/components/samples/singlenode.cluster.sls' if singlenode
-        else 'pillar/components/samples/dualnode.cluster.sls'
+        'pillar/samples/singlenode.cluster.sls' if singlenode
+        else 'pillar/samples/dualnode.cluster.sls'
     )
     dest_path = h.PRVSNR_REPO_INSTALL_DIR / 'pillar/components/cluster.sls'
     h.check_output(mhost, 'diff -us {} {}'.format(source_path, dest_path))

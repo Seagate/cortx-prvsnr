@@ -189,7 +189,7 @@ def test_set_network(
     mhostsrvnode1, run_test, cortx_hosts, project_path
 ):
     mhostsrvnode1.copy_to_host(
-        project_path / "pillar/components/samples/dualnode.cluster.sls",
+        project_path / "pillar/samples/dualnode.cluster.sls",
         host_path=Path(
             "{}/pillar/components/cluster.sls"
             .format(PRVSNR_ROOT_DIR)
