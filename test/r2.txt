@@ -4,8 +4,8 @@ Step-1: Deploy Cortx software stack on VM/HW and verify update-post-boot.service
         `$systemctl status update-post-boot.service`
 
 Step-2: Create update_states.sls pillar and add provisioner commands stating which states will run before and after reboot
-        `$provisioner pillar_set update_states/pre_boot [\"command1\",\ \"command2\"]
-        '$provisioner pillar_set update_states/post_boot [\"command1\",\ \"command2\"]`
+        `$provisioner pillar_set update_states/pre_boot [\"command1\",\ \"command2\"]`
+        `$provisioner pillar_set update_states/post_boot [\"command1\",\ \"command2\"]`
 
 Step-3: Reboot servers
 
