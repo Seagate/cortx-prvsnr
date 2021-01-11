@@ -23,7 +23,7 @@ Install teamd:
   pkg.installed:
     - name: teamd
 
-Create mgmt0 interface file:
+Create data0 interface file:
     network.managed:
     # - name: data0
     # - device: data0
