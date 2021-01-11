@@ -1,5 +1,7 @@
 [Unit]
-Before=network.target
+Description=Perform provisioner post boot operations
+After=salt-minion.service
+Requires=salt-minion.service
 
 [Service]
 Type=oneshot

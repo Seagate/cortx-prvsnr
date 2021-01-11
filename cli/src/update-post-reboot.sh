@@ -34,7 +34,7 @@ trap trap_handler ERR
 function post_boot_operations() {
 
     post_boot_op=$(salt-call pillar.get update_states:post_boot --output=newline_values_only)
-    if [ ${post_boot_op} ]; then
+    if [[ ${post_boot_op} ]]; then
         for state in ${post_boot_op}; do
             echo "Performing ${state} on target nodes" 2>&1 | tee -a ${LOG_FILE}
             provisioner ${state} 
