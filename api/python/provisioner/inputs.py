@@ -471,14 +471,17 @@ class ServerDefaultParams():
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Common Server configuration"
     )
-    search_domains: str = ParamGroupInputBase._attr_ib(
+    search_domains: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of search domains as json"
     )
-    dns_servers: str = ParamGroupInputBase._attr_ib(
+    dns_servers: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of dns servers as json"
     )
-    cluster_id: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Cluster ID"
+    bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC User"
+    )
+    bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC password"
     )
     network_mgmt_interfaces: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Network Mgmt Interfaces"
@@ -502,24 +505,21 @@ class ServerDefaultParams():
         _param_group, descr=" Network Data Gateway",
         validator=Validation.check_ip4
     )
+    cluster_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Cluster ID"
+    )
     storage_metadata_device: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Storage Metadata Device"
     )
     storage_data_devices: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Storage Data Devices"
     )
-    bmc_user: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC User"
-    )
-    bmc_secret: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC password"
-    )
 
 
 @attr.s(auto_attribs=True)
 class ServerDefault(ParamGroupInputBase):
-    search_domains: str = ServerDefaultParams.search_domains
-    dns_servers: str = ServerDefaultParams.dns_servers
+    search_domains: List = ServerDefaultParams.search_domains
+    dns_servers: List = ServerDefaultParams.dns_servers
     cluster_id: str = ServerDefaultParams.cluster_id
     bmc_user: str = ServerDefaultParams.bmc_user
     bmc_secret: str = ServerDefaultParams.bmc_secret
@@ -533,16 +533,17 @@ class ServerDefault(ParamGroupInputBase):
     storage_data_devices: str = ServerDefaultParams.storage_data_devices
 
 
-class StorageEnclosureParams():
-    _param_group = 'storage_enclosure'
+
+class StorageEnclosureDefaultParams():
+    _param_group = 'storage_enclosure_default'
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Type of storage"
     )
-    primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    controller_primary_mc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller A IP",
         validator=Validation.check_ip4
     )
-    secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    controller_secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller B IP",
         validator=Validation.check_ip4
     )
@@ -559,17 +560,34 @@ class StorageEnclosureParams():
 
 
 @attr.s(auto_attribs=True)
-class StorageEnclosure(ParamGroupInputBase):
-    controller_a_ip: str = StorageEnclosureParams.primary_mc_ip
-    controller_b_ip: str = StorageEnclosureParams.secondary_mc_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
+class StorageEnclosureDefault(ParamGroupInputBase):
+    controller_a_ip: str = StorageEnclosureDefaultParams.controller_primary_mc_ip
+    controller_b_ip: str = StorageEnclosureDefaultParams.controller_secondary_mc_ip
+    controller_user: str = StorageEnclosureDefaultParams.controller_user
+    controller_secret: str = StorageEnclosureDefaultParams.controller_secret
+
+
+class StorageNodeParams():
+    _param_group = 'storage_node'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Hostname"
+    )
+
+@attr.s(auto_attribs=True)
+class StorageNode(ParamGroupInputBase):
+    hostname: str = StorageNodeParams.hostname
 
 
 class NodeNetworkParams():
     _param_group = 'node'
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
+    )
+    roles: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" role of the node"
+    )
+    cluster_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr=" Cluster ID"
     )
     is_primary: bool = ParamGroupInputBase._attr_ib(
         _param_group, descr="mark node as a primary",
@@ -624,6 +642,8 @@ class NodeNetworkParams():
 @attr.s(auto_attribs=True)
 class NodeNetwork(ParamGroupInputBase):
     hostname: str = NodeNetworkParams.hostname
+    roles: str = NodeNetworkParams.roles
+    cluster_id: str = NodeNetworkParams.cluster_id
     is_primary: str = NodeNetworkParams.is_primary
     network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
     bmc_user: str = NodeNetworkParams.bmc_user

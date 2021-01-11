@@ -25,8 +25,9 @@ from pathlib import Path
 from .validate_setup import (
     NetworkParamsValidation,
     ReleaseParamsValidation,
-    StorageEnclosureParamsValidation,
+    StorageEnclosureDefaultParamsValidation,
     NodeParamsValidation,
+    StorageNodeParamsValidation,
     ServerDefaultParamsValidation
 )
 from .. import inputs
@@ -105,17 +106,23 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     validate_map = {"cluster": NetworkParamsValidation,
                     "node": NodeParamsValidation,
+                    "controller": StorageNodeParamsValidation,
                     "srv_default": ServerDefaultParamsValidation,
-                    "storage_enclosure": StorageEnclosureParamsValidation}
+                    "storage_enclosure_default": StorageEnclosureDefaultParamsValidation}
 
     def _parse_params(self, input):
         params = {}
         for key in input:
             val = key.split(".")
-            if len(val) > 1 and val[-1] in [
+            conf_values = [
                 'ip', 'user', 'secret', 'ipaddr', 'interfaces', 'gateway',
-                'netmask', 'public_ip_addr', 'type', 'id', 'roles', 'devices'
-            ]:
+                'netmask', 'public_ip_addr', 'type',
+                'id', 'roles', 'data_devices', 'metadata_device' ]
+
+            if len(val) > 2 and val[-1] in conf_values:
+                params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = input[key]
+
+            elif len(val) > 1 and val[-1] in conf_values:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
                 params[val[-1]] = input[key]
@@ -131,7 +138,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'network.mgmt.interfaces' in key:
+            #elif 'network.mgmt.interfaces' in key:
+            elif 'interfaces' or 'device' or 'devices' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -164,18 +172,32 @@ class ConfigureSetup(CommandParserFillerMixin):
         node_list = []
         count = int(number_of_nodes)
 
+        pillar_map = {"srv_default": "cluster",
+                      "storage_enclosure_default": "storage_enclosure"}
+
         for section in content:
             input_type = section
             pillar_type = section
             if 'default' in section:
-                #for sect in ['srv_default', 'storage_enclosure_default']:
-                input_type = 'srv_default' 
-                pillar_type = f'cluster/{section}'
+                #for section_name in ['srv_default', 'storage_enclosure_default']:
+                if 'srvnode' in section:
+                    input_type = 'srv_default'
+                elif 'storage' in section:
+                    input_type = 'storage_enclosure_default'
+                pillar_map_type = pillar_map[input_type]
+                pillar_type = f'{pillar_map_type}/{section}'
                 count = count - 1
                 node_list.append(f"\"{section}\"")
-            elif 'srvnode' in section:
-                input_type = 'node'
-                pillar_type = f'cluster/{section}'
+
+            else:
+                if 'srvnode' in section:
+                    input_type = 'node'
+                    pillar_type = f'cluster/{section}'
+                elif 'storage' in section:
+                    # TODO: verify input_type and 
+                    # pillar_type for storage_enclosure
+                    input_type = 'controller'
+                    pillar_type = f'storage_enclosure/{section}'
                 count = count - 1
                 node_list.append(f"\"{section}\"")
 
