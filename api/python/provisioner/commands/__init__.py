@@ -707,7 +707,7 @@ def _ensure_update_repos_configuration(targets=ALL_MINIONS):
 
     logger.info("Check yum repos are good")
     StatesApplier.apply(
-        ['components.misc_pkgs.eosupdate.repo.sanity_check'], targets
+        ['components.misc_pkgs.sw_update.repo.sanity_check'], targets
     )
 
 
