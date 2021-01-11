@@ -83,6 +83,7 @@ deploy_states = dict(
     ],
     ha=[
         "ha.corosync-pacemaker",
+        "ha.haproxy.start",
         "hare",
         "ha.cortx-ha",
         "ha.iostack-ha"

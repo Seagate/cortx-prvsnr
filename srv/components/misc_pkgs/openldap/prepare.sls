@@ -56,6 +56,8 @@ Create tmp dir:
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/slapdlog.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/test_data.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/test_data.ldif' },
+    { "src": 'salt://components/misc_pkgs/openldap/files/resultssizelimit.ldif',
+      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/resultssizelimit.ldif' },
     ]
 %}
 {{ filename.dest }}:

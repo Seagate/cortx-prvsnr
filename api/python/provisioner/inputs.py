@@ -84,6 +84,13 @@ class AttrParserArgs:
     def __attrs_post_init__(self):  # noqa: C901 FIXME
         self.name = self._attr.name
 
+        if self.name.startswith('__'):
+            raise ValueError(
+                f"{self.name}: multiple leading underscores are not expected"
+            )
+
+        self.name = self.name.lstrip('_')
+
         if self.prefix:
             self.name = self.prefix + self.name
 
@@ -123,7 +130,10 @@ class AttrParserArgs:
         if self._attr.default is not attr.NOTHING:
             # optional argument
             self.name = '--' + self.name.replace('_', '-')
-            self.default = self._attr.default
+            default_v = self._attr.default
+            if isinstance(default_v, attr.Factory):
+                default_v = default_v.factory()
+            self.default = default_v
             self.metavar = (
                 parser_args.get('metavar')
                 or (self._attr.type.__name__ if self._attr.type else None)
