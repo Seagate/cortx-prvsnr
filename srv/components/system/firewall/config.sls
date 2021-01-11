@@ -229,6 +229,9 @@ Public data zone:
       - uds
       - www
       - s3
+{%- if pillar['cluster'][grains['id']]['network']['data_nw']['iface']|length < 2 %}
+      - lnet
+{%- endif %}
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
     # - rich_rules:
