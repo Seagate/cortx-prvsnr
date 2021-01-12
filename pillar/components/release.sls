@@ -29,3 +29,8 @@ release:
         repos: {}  # dictionary with (release, source) pairs,
                    # source should be either an url (starts with 'http://' or 'https://')
                    # or one of special values: 'dir', 'iso'
+    upgrade:
+        base_dir: /opt/seagate/cortx/upgrades
+        repos: {}  # dictionary with (release, source) pairs,
+                   # source should be either an url (starts with 'http://' or 'https://')
+                   # or one of special values: 'dir', 'iso'
