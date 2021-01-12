@@ -1024,6 +1024,36 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         return pillar
 
+    def _prepare_cluster_pillar(
+        self, profile_paths, run_args, force=False
+    ):
+        logger.info(
+                f"Preaparing cluster.sls for {len(run_args.nodes)} node configuration."
+            )
+        
+        cluster_sls_sample_path = (
+            config.PRVSNR_PILLAR_DIR / 'samples/dualnode.cluster.sls'
+        )
+        if len(run_args.nodes) == 1:
+            cluster_sls_sample_path = (
+                config.PRVSNR_PILLAR_DIR / 'samples/singlenode.cluster.sls'
+            )
+        
+        pillar_dir = config.PRVSNR_DATA_ROOT_DIR / "shared/srv/pillar/groups/all"
+        pillar_dir.mkdir(parents=True, exist_ok=True)
+        cluster_sls_path = add_pillar_merge_prefix(
+            pillar_dir / 'cluster.sls'
+        )
+        
+        run_subprocess_cmd(
+            [
+                'cp', '-f',
+                str(cluster_sls_sample_path),
+                str(cluster_sls_path)
+            ]
+        )
+
+
     def _prepare_release_pillar(
         self, profile_paths, repos_data: Dict, run_args, force=False
     ):
@@ -1267,6 +1297,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     )
                 })
 
+            self._prepare_cluster_pillar(
+                paths, run_args, force=run_args.field_setup
+            )
+            
             # FIXME we just shoudn't copy that file
             #       as part of factory profile
             self._prepare_release_pillar(
