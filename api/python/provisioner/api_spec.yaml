@@ -77,7 +77,13 @@ set_swupdate_repo:
   input_type: SWUpdateRepo
   states:
     post:
-    - components.misc_pkgs.swupdate.repo
+    - components.misc_pkgs.swupdate.
+set_swupgrade_repo:
+  type: SetSWUpgradeRepo
+  input_type: SWUpgradeRepo
+  states:
+    post:
+    - components.misc_pkgs.swupgrade.repo
 sw_update:
   type: SWUpdate
 fw_update:
