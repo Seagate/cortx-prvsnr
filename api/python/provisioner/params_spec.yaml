@@ -70,3 +70,10 @@ swupdate:
   repo:
     _type: ParamDictItem
     parent: release/update/repos
+
+swupgrade:
+  _path: release.sls
+  repos: release/upgrade/repos
+  repo:
+    _type: ParamDictItem
+    parent: release/upgrade/repos
