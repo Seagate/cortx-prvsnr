@@ -18,140 +18,33 @@
 include:
   - .start
 
-consul:
-  firewalld.service:
-    - name: consul
-    - ports:
-      - 8600/tcp
-      - 8600/udp
-      - 8500/tcp
-      - 8301/tcp
-      - 8301/udp
-      - 8302/tcp
-      - 8302/udp
-      - 8300/tcp
+{% set services = [] %}
 
-csm:
-  firewalld.service:
-    - name: csm
-    - ports:
-      - 28100/tcp
-      - 28101/tcp
-      - 28102/tcp
-      - 28103/tcp
+{% for nic in salt['pillar.get']('firewall').keys() %}
 
-dhclient:
-  firewalld.service:
-    - name: dhclient
-    - ports:
-      - 68/udp
+{% for service in salt['pillar.get']('firewall:' + nic + ':ports') %}
 
-dhserver:
-  firewalld.service:
-    - name: dhserver
-    - ports:
-      - 67/udp
+{% if service not in services %}
 
-elasticsearch:
+{{ service }}:
   firewalld.service:
-    - name: elasticsearch
+    - name: {{ service }}
     - ports:
-      - 9200/tcp
-      - 9300/tcp
-
-haproxy:
-  firewalld.service:
-    - name: haproxy
-
-hare:
-  firewalld.service:
-    - name: hare
-    - ports:
-      - 8008/tcp
-
-lnet:
-  firewalld.service:
-    - name: lnet
-    - ports:
-      - 988/tcp
-
-nfs:
-  firewalld.service:
-    - name: nfs
-    - ports:
-      - 2049/tcp
-      - 2049/udp
-      - 32803/tcp
-      - 892/tcp
-      - 875/tcp
-
-ntpd:
-  firewalld.service:
-    - name: ntpd
-    - ports:
-      - 123/udp
-
-smtp:
-  firewalld.service:
-    - name: smtp
-    - ports:
-      - 25/tcp      # SMTP
-
-rabbitmq:
-  firewalld.service:
-    - name: rabbitmq
-    - ports:
-      - 4369/tcp          # epmd
-      - 5671/tcp          # AMQP 0-9-1 and 1.0 clients without and with TLS
-      - 5672/tcp          # AMQP 0-9-1 and 1.0 clients without and with TLS
-      - 25672/tcp         # inter-node and CLI tools communication
-{% for port in range(35672,35682) %}
-      - {{ port }}/tcp    # CLI tools (Erlang distribution client ports) for communication with nodes
-{% endfor %}
-      - 15672/tcp         #  HTTP API clients, management UI and rabbitmqadmin
-
-openldap:
-  firewalld.service:
-    - name: openldap
-    - ports:
-      - 389/tcp     # over insecure channel
-      # - 636/tcp     # over secure channel
-
-s3:
-  firewalld.service:
-    - name: s3
-    - ports:
-      - 7081/tcp
-      {% for port in range(8081, 8099) %}
-      - {{ port }}/tcp
+      {% for port in salt['pillar.get']('firewall:' + nic + ':ports' + service ) %}
+      - port
       {% endfor %}
-      - 514/tcp
-      - 514/udp
-      - 8125/tcp
-      - 6379/tcp
-      # - 9080/tcp
-      - 9443/tcp
-      - 9086/tcp
 
-saltmaster:
-  firewalld.service:
-    - name: saltmaster
-    - ports:
-      - 4505/tcp
-      - 4506/tcp
 
-uds:
-  firewalld.service:
-    - name: uds
-    - ports:
-      - 5000/tcp
-      - 5125/udp  #UDS advertises remote volumes over UDP multicast over this port
 
-www:
-  firewalld.service:
-    - ports:
-      # - 80/tcp
-      - 443/tcp     # HTTPS
+{% do services.append(service) %}
+{% endif %}
+
+
+{% endfor %}
+
+{% endfor %}
+
+
 
 Add public data zone:
   cmd.run:
@@ -171,29 +64,17 @@ Data-zone:
     - prune_services: True
     - prune_interfaces: True
     - services:
-      - consul
-      - dhclient
-      - dhserver
-      - haproxy
-      - nfs
-      - hare
-      - high-availability
-      - lnet
-      - s3
-      - uds
-      - www
+      {% for service in salt['pillar.get']('firewall:data_public:services') %}
+      - {{ service }}
+      {% endfor %}
+      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
     - require:
       - Add public data zone
-      - consul
-      - dhclient
-      - dhserver
-      - haproxy
-      - nfs
-      - hare
-      - lnet
-      - s3
-      - uds
-      - www
+      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
 
 # No restrictions for localhost
 Localhost:
@@ -218,32 +99,21 @@ Public data zone:
     - prune_services: True
     - prune_interfaces: True
     - services:
-      - consul
-      - dhclient
-      - dhserver
-      - hare
-      - haproxy
-      - high-availability
-      - nfs
-      - ssh
-      - uds
-      - www
-      - s3
+      {% for service in salt['pillar.get']('firewall:data_public:services') %}
+      - {{ service }}
+      {% endfor %}
+      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
     # - rich_rules:
     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add public data zone
-      - consul
-      - dhclient
-      - dhserver
-      - hare
-      - haproxy
-      - nfs
-      - uds
-      - www
-      - s3
+      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
 
 Private data zone:
   firewalld.present:
@@ -251,40 +121,16 @@ Private data zone:
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
     - default: False
+    - sources:
+      - 127.0.0.0/24
+      - 192.168.0.0/16
     - masquerade: False
     - prune_ports: False
     - prune_services: False
     - prune_interfaces: False
 
-# Add private data zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --new-zone private-data-zone
-#     - unless: firewall-cmd --get-zones | grep private-data-zone
-#     - watch_in:
-#       - Start and enable firewalld service
 
-# Private data zone:
-#   firewalld.present:
-#     - name: private-data-zone
-#     - default: False
-#     - prune_ports: True
-#     - prune_services: True
-#     - prune_interfaces: True
-#     - services:
-#       - hare
-#       - high-availability
-#       - lnet
-#       - s3
-#     - interfaces:
-#       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
-#     # - rich_rules:
-#     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
-#     - require:
-#       - Add private data zone
-#       - hare
-#       - lnet
-#       - s3
-{%- endif -%}
+{% endif %}
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
@@ -305,19 +151,12 @@ Management zone:
     - prune_ports: True
     - prune_services: True
     - services:
-      - consul
-      - dhclient
-      - csm
-      - elasticsearch
-      - ftp
-      - high-availability
-      - ntpd
-      - openldap
-      - smtp
-      - saltmaster
-      - ssh
-      - uds
-      - www
+      {% for service in salt['pillar.get']('firewall:mgmt_public:services') %}
+      - {{ service }}
+      {% endfor %}
+      {% for service in salt['pillar.get']('firewall:mgmt_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
       {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
       {% endif %}
@@ -331,16 +170,9 @@ Management zone:
       {% endif %}
     - require:
       # - Add management zone
-      - consul
-      - dhclient
-      - csm
-      - elasticsearch
-      - ntpd
-      - openldap
-      - smtp
-      - saltmaster
-      - uds
-      - www
+      {% for service in salt['pillar.get']('firewall:mgmt_public:ports').keys() %}
+      - {{ service }}
+      {% endfor %}
 
 # Public Zone:
 #   firewalld.present:
@@ -362,3 +194,4 @@ Restart firewalld:
   module.run:
     - service.restart:
       - firewalld
+
