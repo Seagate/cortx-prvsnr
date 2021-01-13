@@ -754,7 +754,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE use salt caller and file-managed instead
         # set proper cluster.sls from template
         cluster_sls_sample_path = (
-            repo_dir / 'pillar/components/samples/dualnode.cluster.sls'
+            repo_dir / 'pillar/samples/dualnode.cluster.sls'
         )
         cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
         run_subprocess_cmd(
