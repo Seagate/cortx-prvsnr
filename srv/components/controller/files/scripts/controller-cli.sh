@@ -30,6 +30,7 @@ function trap_handler {
     echo "***** FAILED!! *****" | tee -a $logfile
     echo "For more details see $logfile" | tee -a $logfile
     echo "Exiting from trap_handler" >> $logfile
+    rm -rf $tmpdir || true
     exit 2
 }
 
@@ -38,8 +39,10 @@ function trap_handler_exit {
     if [[ $ret -ne 0 ]]; then
         echo "***** FAILED!! *****" | tee -a $logfile
         echo "For more details see $logfile" | tee -a $logfile
+        echo "Exiting with return code: $ret" >> $logfile
+        rm -rf $tmpdir || true
     else
-        echo "Exiting with ret code: $ret" >> $logfile
+        echo "Exiting with return code: $ret" >> $logfile
         exit $ret
     fi
 }

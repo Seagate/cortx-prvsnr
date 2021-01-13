@@ -20,7 +20,6 @@ base:
     - components.system
     - components.system.storage
     # Dependecies
-    - components.misc_pkgs.build_ssl_cert_rpms
     - components.misc_pkgs.rsyslog
     - components.ha.corosync-pacemaker
     - components.ha.haproxy
@@ -38,4 +37,5 @@ base:
     - components.hare
     # Management Stack
     - components.sspl
+    - components.uds
     - components.csm
