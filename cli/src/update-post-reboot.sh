@@ -25,8 +25,8 @@ if [[ ! -e "$LOG_FILE" ]]; then
 fi
 
 function trap_handler {
-    echo -e "\n***** FAILED!!*****" 2>&1 | tee -a $LOG_FILE
-    echo "Detailed error log is kept at: $LOG_FILE" 2>&1 | tee -a $LOG_FILE
+    echo -e "\n***** FAILED!!*****" 2>&1 | tee -a "$LOG_FILE"
+    echo "Detailed error log is kept at: $LOG_FILE" 2>&1 | tee -a "$LOG_FILE"
     exit 1
 }
 trap trap_handler ERR
@@ -36,11 +36,11 @@ function post_boot_operations() {
     post_boot_op=$(salt-call pillar.get update_states:post_boot --output=newline_values_only)
     if [[ ${post_boot_op} ]]; then
         for state in ${post_boot_op}; do
-            echo "Performing ${state} on target nodes" 2>&1 | tee -a ${LOG_FILE}
-            provisioner ${state} 
+            echo "Performing ${state} on target nodes" 2>&1 | tee -a "${LOG_FILE}"
+            provisioner "${state}"
         done 
     else
-        echo "No operations to perform !!" 2>&1 | tee -a ${LOG_FILE}
+        echo "No operations to perform !!" 2>&1 | tee -a "${LOG_FILE}""
     fi
 }
 
@@ -62,6 +62,6 @@ done
 
 post_boot_operations
 
-echo "***** SUCCESS! *****" 2>&1 | tee -a ${LOG_FILE}
-echo "The detailed logs can be seen at: $LOG_FILE" 2>&1 | tee -a ${LOG_FILE}
-echo "Done" 2>&1 | tee -a ${LOG_FILE}
+echo "***** SUCCESS! *****" 2>&1 | tee -a "${LOG_FILE}"
+echo "The detailed logs can be seen at: $LOG_FILE" 2>&1 | tee -a "${LOG_FILE}"
+echo "Done" 2>&1 | tee -a "${LOG_FILE}"
