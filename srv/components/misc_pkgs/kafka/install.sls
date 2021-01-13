@@ -15,25 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-commons:
-  cortx_commons:
-    # includes different 3rd party artifacts
-    # (multiple rpm repositories, raw archives, bash scirpts etc.)
-    RedHat:
-    CentOS:
-  version:
-    consul: 1.7.8-1
-    # elasticsearch: 6.8.8-1
-    elasticsearch-oss: 6.8.8-1
-    erlang: latest
-    kibana-oss: 6.8.8-1
-    nodejs: v12.13.0
-    rabbitmq: latest
-    rsyslog: 8.40.0-1.el7
-    rsyslog-elasticsearch: 8.40.0-1.el7
-    rsyslog-mmjsonparse: 8.40.0-1.el7
-    kafka: 2.12-2.5.0
-  repo:
-    # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
-    # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
-    lustre:
+{% import_yaml 'components/defaults.yaml' as defaults %}
+
+{% set kafka_version = pillar['commons']['version']['kafka'] %}
+
+Install Java:
+  pkg.installed:
+    - pkgs:
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+
+Extract Kafka:
+  archive.extracted:
+    - name: /opt/kafka
+    - source: {{ defaults.commons.repo.url }}/commons/kafka/kafka_{{ kafka_version }}.tgz
+    - keep_source: True
+    - clean: True
+    - trim_output: True
+    - skip_verify: True
