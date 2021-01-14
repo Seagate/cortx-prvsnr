@@ -21,8 +21,10 @@ Start zoopkeper:
   cmd.run:
     - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
     - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'zoopkeper' | grep -v grep
 
 Start kafka:
   cmd.run:
     - name: ./bin/kafka-server-start.sh -daemon config/server.properties
     - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'kafka.Kafka' | grep -v grep

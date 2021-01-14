@@ -22,8 +22,8 @@
 Install Java:
   pkg.installed:
     - pkgs:
-      - java-1.8.0-openjdk
-      - java-1.8.0-openjdk-devel
+      - java-1.8.0-openjdk-headless
+      #- java-1.8.0-openjdk-devel
 
 Extract Kafka:
   archive.extracted:
