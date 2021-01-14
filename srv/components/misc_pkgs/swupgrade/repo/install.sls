@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{# TODO: leave it for debug. We should make this for each yum repo in iso file #}
 {% macro repo_added(release, source, source_type, repo_params={}) %}
 
     {% from './iso/mount.sls' import repo_mounted with context %}

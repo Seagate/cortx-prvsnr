@@ -48,6 +48,7 @@ unexpected_repo_source:
 
     {% endif %}
 
+{# TODO: Make it in loop for each single directory in mount iso dir #}
 {{ repo_added(release, source, source_type, repo_params) }}
 
     {% else %}

@@ -495,3 +495,31 @@ class ReleaseInfo(Enum):
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
 CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
+
+
+class SWUpgradeRepos(Enum):
+
+    """List of supported SW Upgrade Repositories"""
+
+    OS = "os"  # yum repo
+    third_party = "3rd_party"  # yum repo
+    cortx = "cortx"  # yum repo
+    python = "python"  # python index
+
+
+YUM_REPO_TYPE = "yum"
+
+SW_UPGRADE_REPOS = {
+    SWUpgradeRepos.OS.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.third_party.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.cortx.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.python.value: {
+        YUM_REPO_TYPE: False
+    }
+}
