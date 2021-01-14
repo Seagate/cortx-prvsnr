@@ -27,4 +27,4 @@ Start kafka:
   cmd.run:
     - name: ./bin/kafka-server-start.sh -daemon config/server.properties
     - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - unless: ps ax | grep 'kafka.Kafka' | grep -v grep
+    - unless: ps ax | grep 'kafka' | grep -v grep
