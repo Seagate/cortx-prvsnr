@@ -40,32 +40,25 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         repo = params
 
         if repo.is_special():
-            logger.info(
-                "Skipping update repo validation for special value: "
-                f"{repo.source}"
-            )
+            logger.info("Skipping update repo validation for special value: "
+                        f"{repo.source}")
             return
 
-        logger.info(
-            f"Validating update repo: release {repo.release}, "
-            f"source {repo.source}"
-        )
+        logger.info(f"Validating upgrade repo: release {repo.release}, "
+                    f"source {repo.source}")
 
-        candidate_repo = inputs.SWUpdateRepo(
-            REPO_CANDIDATE_NAME, repo.source
-        )
+        candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
+
         try:
-            logger.debug(
-                "Configuring update candidate repo for validation"
-            )
+            logger.debug("Configuring upgrade candidate repo for validation")
             self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            super()._run(candidate_repo, targets)
+            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
 
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            super()._run(candidate_repo, targets)
+            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
 
         return repo.metadata
