@@ -30,8 +30,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        params
-        targets
+        params: inputs.SWUpgradeRepo
+            Input repository parameters
+        targets: str
+            Salt target to perform base mount and validation logic
 
         Returns
         -------
