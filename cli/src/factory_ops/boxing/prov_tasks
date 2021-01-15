@@ -509,5 +509,11 @@ function cleanup_hosts {
     sed -i "s/${remote_mgmt_ip_srvnode_2}.*//g" /etc/hosts
 
     _linfo "Copying updated /etc/hosts to Server node B"
-    scp -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /etc/hosts "${pvt_ip_b}":/etc/hosts
+    scp -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i /root/.ssh/id_rsa_prvsnr /etc/hosts "${pvt_ip_b}":/etc/hosts ||
+        echo "scp command failed to copy files to ${pvt_ip_b} / 
+        Check if ssh command works: /
+            ssh -o \"StrictHostKeyChecking=no\" -i /root/.ssh/id_rsa_prvsnr ${pvt_ip_b} 'hostname'
+        Check if /etc/hosts file exists on current node: /
+            ls -l /etc/hosts
+        "
 }
