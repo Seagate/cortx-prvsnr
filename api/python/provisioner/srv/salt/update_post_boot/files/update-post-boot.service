@@ -5,7 +5,7 @@ Requires=salt-minion.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/seagate/cortx/provisioner/cli/update-post-reboot.sh
+ExecStart=/opt/seagate/cortx/provisioner/cli/upgrade/update-post-reboot.sh
 
 [Install]
 WantedBy=multi-user.target

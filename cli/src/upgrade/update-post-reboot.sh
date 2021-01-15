@@ -39,8 +39,9 @@ function post_boot_operations() {
             echo "Performing ${state} on target nodes" 2>&1 | tee -a "${LOG_FILE}"
             provisioner "${state}"
         done 
+        provisioner pillar_set update_states/post_boot PRVSNR_UNDEFINED
     else
-        echo "No operations to perform !!" 2>&1 | tee -a "${LOG_FILE}""
+        echo "No operations to perform !!" 2>&1 | tee -a "${LOG_FILE}"
     fi
 }
 
