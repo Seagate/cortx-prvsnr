@@ -162,6 +162,7 @@ function system_states {
         # "system.storage.multipath.install"
         # "system.storage.multipath.config"
         "system.network"
+        "system.network.mgmt.service_port"
         "system.network.data.public"
         "system.network.data.direct"
         "misc_pkgs.rsyslog"
