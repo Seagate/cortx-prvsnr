@@ -29,15 +29,15 @@ provisioner_rsyslog_conf_updated:
       - service: Start rsyslog
 
 # Always start glusterfshsaredstorage before salt-master
-Update salt-master.service:
-  file.managed:
-    - name: /usr/lib/systemd/system/salt-master.service
-    - source: salt://components/provisioner/salt_master/files/salt-master.service
-
 Update glusterfssharedstorage.service:
   file.managed:
     - name: /usr/lib/systemd/system/glusterfssharedstorage.service
     - source: salt://components/provisioner/files/glusterfshsaredstorage.service
+    
+Update salt-master.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/salt-master.service
+    - source: salt://components/provisioner/salt_master/files/salt-master.service
 
 Reload updated services:
   cmd.run:
