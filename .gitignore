@@ -16,5 +16,6 @@ build
 .provisioner
 .eggs
 *.egg-info
+.coverage
 tmp
 venv/
