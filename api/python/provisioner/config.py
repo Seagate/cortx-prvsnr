@@ -113,6 +113,7 @@ PRVSNR_CORTX_DEPS_ISO = (
 # FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
+PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('misc_pkgs/swupgrade/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )

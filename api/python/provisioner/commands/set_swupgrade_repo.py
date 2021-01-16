@@ -18,12 +18,15 @@ import logging
 
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
-from ..config import REPO_CANDIDATE_NAME, SW_UPGRADE_REPOS, YUM_REPO_TYPE
+from ..config import (REPO_CANDIDATE_NAME, SW_UPGRADE_REPOS, YUM_REPO_TYPE,
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR)
 
 logger = logging.getLogger(__name__)
 
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
+
+    _REPO_DEST = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
 
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
         """

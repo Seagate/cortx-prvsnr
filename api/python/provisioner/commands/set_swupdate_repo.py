@@ -48,9 +48,9 @@ logger = logging.getLogger(__name__)
 class SetSWUpdateRepo(Set):
     # TODO at least either pre or post should be defined
     input_type: Type[inputs.SWUpdateRepo] = inputs.SWUpdateRepo
+    _REPO_DEST = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR
 
-    @staticmethod
-    def _prepare_repo_for_apply(repo: inputs.SWUpdateRepo,
+    def _prepare_repo_for_apply(self, repo: inputs.SWUpdateRepo,
                                 enabled: bool = True):
         """
         Prepare repository for apply
@@ -71,7 +71,7 @@ class SetSWUpdateRepo(Set):
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
         if repo.is_local():
-            dest = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR / repo.release
+            dest = self._REPO_DEST / repo.release
 
             if not repo.is_dir():  # iso file
                 dest = dest.with_name(dest.name + '.iso')
