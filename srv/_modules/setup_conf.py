@@ -43,23 +43,23 @@ def conf_cmd(conf_file, conf_key):
 
     logger.debug(f"Setup config file {conf_file}")
 
-    replacement_url = __pillar__['provisioner']['common_config']['url']
+    confstore_url = __pillar__['provisioner']['common_config']['url']
     ret_val = ''
     with open(conf_file, 'r') as fd:
         try:
-            yml_dict = yaml.safe_load(fd)
+            config_info = yaml.safe_load(fd)
 
             # This split is hard-coded as this is the input format expected
             # during call from the sls file.
-            root_node = conf_key.split(':')[0]
-            config_stage = conf_key.split(':')[1]
-            cmd = yml_dict[root_node][config_stage]['cmd']
-            logger.debug(f"The command path from yaml file: {cmd}")
+            component_setup = conf_key.split(':')[0]
+            component_interface = conf_key.split(':')[1]
+            component_interface_cmd = config_info[component_setup][component_interface]['cmd']
+            logger.debug(f"The command path from yaml file: {component_interface_cmd}")
 
             # Check if command exists
             try:
                 subprocess.check_call(
-                    f"{cmd} --help",
+                    f"{component_interface_cmd} --help",
                     stdout=subprocess.DEVNULL,
                     shell=True
                 )
@@ -69,23 +69,23 @@ def conf_cmd(conf_file, conf_key):
                 logger.exception(cp_err)
 
             # Proceed to process args, only if command has been specified
-            if cmd:
-                args = yml_dict[root_node][config_stage]['args']
+            if component_interface_cmd:
+                component_interface_cmd_args = config_info[component_setup][component_interface]['args']
 
                 # If args is a string, do nothing.
                 # If args is a list, join the elements into a string
-                if isinstance(args, list):
-                    args = ' '.join(args)
-                    args.replace("$URL", replacement_url)
-                    logger.debug(f"Arguments for command {cmd}: {args}")
+                if isinstance(component_interface_cmd_args, list):
+                    component_interface_cmd_args = ' '.join(component_interface_cmd_args)
+                    component_interface_cmd_args.replace("$URL", confstore_url)
+                    logger.debug(f"Arguments for command {component_interface_cmd}: {component_interface_cmd_args}")
 
-                ret_val = cmd + " " + str(args)
-                logger.debug(f"{ret_val}")
+                ret_val = component_interface_cmd + " " + str(component_interface_cmd_args)
+                logger.debug(f"Command formed for execution: {ret_val}")
 
         except yaml.YAMLError as ymlerr:
             # Oops, yaml file was not well formed
-            logger.debug(f"Error parsing yaml file {conf_file}:\n {ymlerr}")
+            logger.debug(f"Error parsing component setup config - {conf_file}: {ymlerr}")
             ret_val = None
 
-    logger.info(ret_val)
+    logger.info(f"Component setup command: {ret_val}")
     return ret_val
