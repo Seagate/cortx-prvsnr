@@ -32,7 +32,7 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
-    kafka: kafka_2.13-2.7.0
+    kafka: 2.13-2.7.0
   repo:
     # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
     # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
