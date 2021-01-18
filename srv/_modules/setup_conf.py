@@ -17,37 +17,60 @@
 
 # How to test:
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
-# salt-call setup_conf.conf_cmd "../files/samples/setup.yaml" 'test:post_install'
+# salt-call setup_conf.conf_cmd "../files/samples/setup.yaml"
+#   'test:post_install'
+
 import errno
+import logging
 import os
 import yaml
 
+
+logging.basicConfig(format='%(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
+
+
 def conf_cmd(conf_file, conf_key):
-  if not os.path.exists(conf_file):
-    print("[ERROR   ] Setup config file {0} doesn't exist.".format(conf_file))
-    raise FileNotFoundError(
-      errno.ENOENT,
-      os.strerror(errno.ENOENT),
-      conf_file
-    )
+    if not os.path.exists(conf_file):
+        logger.error(f"Setup config file {conf_file} doesn't exist.")
+        raise FileNotFoundError(
+          errno.ENOENT,
+          os.strerror(errno.ENOENT),
+          conf_file
+        )
 
-  # print("Setup config file {0}".format(conf_file))
+    logger.debug(f"Setup config file {conf_file}")
 
-  ret_val = ''
-  with open(conf_file, 'r') as fd:
-    try:
-      yml_dict = yaml.safe_load(fd)
+    replacement_url = __pillar__['provisioner']['common_config']['url']
+    ret_val = ''
+    with open(conf_file, 'r') as fd:
+        try:
+            yml_dict = yaml.safe_load(fd)
 
-      script_path = yml_dict[conf_key.split(':')[0]][conf_key.split(':')[1]]['script']
-      if script_path and os.path.exists(script_path):
-        args = yml_dict[conf_key.split(':')[0]][conf_key.split(':')[1]]['args']
-        if isinstance(args, list):
-          args = ' '.join(args)
+            # This split is hard-coded as this is the input format expected
+            # during call from the sls file.
+            root_node = conf_key.split(':')[0]
+            config_stage = conf_key.split(':')[1]
+            cmd_path = yml_dict[root_node][config_stage]['cmd']
+            logger.debug(f"The command path from yaml file: {cmd_path}")
 
-        ret_val = script_path + " " + str(args)
+            # Proceed to process args, only if command has been specified
+            if cmd_path and os.path.exists(cmd_path):
+                args = yml_dict[root_node][config_stage]['args']
 
-    except yaml.YAMLError as ymlerr:
-      print("Error parsing yaml file {0}".format(ymlerr))
-      ret_val = None
-  
-  return ret_val
+                # If args is a string, do nothing.
+                # If args is a list, join the elements into a string
+                if isinstance(args, list):
+                    args = ' '.join(args)
+                    args.replace("$URL", replacement_url)
+                    logger.debug(f"Arguments for command {cmd_path}: {args}")
+
+                ret_val = cmd_path + " " + str(args)
+                logger.debug(f"{ret_val}")
+
+        except yaml.YAMLError as ymlerr:
+            # Oops, yaml file was not well formed
+            logger.debug(f"Error parsing yaml file {conf_file}:\n {ymlerr}")
+            ret_val = None
+
+    return ret_val

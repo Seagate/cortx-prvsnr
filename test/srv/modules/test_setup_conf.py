@@ -15,26 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-test:
-    post_install:
-        cmd: echo
-        args:
-          - 'Stage:'
-          - Post Install
-          - --config $URL
-    config:
-        cmd: "echo 'Stage: config '"
-        args: --config $URL
-    init:
-        cmd: "echo 'Stage: '"
-        args: init
-    test:
-        cmd: echo
-        args:
-          - 'Stage:'
-          - test
-    reset:
-        cmd: echo
-        args:
-          - 'Stage:'
-          - reset
+import logging
+import pytest
+
+
+logging.basicConfig(format='%(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
+
+
+@pytest.mark.isolated
+@pytest.mark.hosts(['srvnode1'])
+@pytest.mark.env_level('salt-installed')
+def test_conf_cmd():
+    pass
