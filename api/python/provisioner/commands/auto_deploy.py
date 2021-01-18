@@ -18,6 +18,7 @@
 from typing import Type
 import logging
 import importlib
+import site
 
 from ..config import (
     PRVSNR_PILLAR_CONFIG_INI,
@@ -51,6 +52,11 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
 
     @staticmethod
     def deployment_validations(deploy_check):
+
+        # even if cortx-py-util package is installed during runtime
+        # it failed to import, reload of site pkg helped here
+        importlib.reload(site)
+
         check_import = importlib.reload(check)
 
         check_cmd = check_import.Check
