@@ -229,6 +229,9 @@ Public data zone:
       - uds
       - www
       - s3
+{%- if pillar['cluster'][grains['id']]['network']['data_nw']['iface']|length < 2 %}
+      - lnet
+{%- endif %}
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
     # - rich_rules:
@@ -245,6 +248,7 @@ Public data zone:
       - www
       - s3
 
+{%- if pillar['cluster'][grains['id']]['network']['data_nw']['iface']|length > 1 %}
 Private data zone:
   firewalld.present:
     - name: trusted
@@ -255,6 +259,7 @@ Private data zone:
     - prune_ports: False
     - prune_services: False
     - prune_interfaces: False
+{%- endif %}
 
 # Add private data zone:
 #   cmd.run:
@@ -276,7 +281,7 @@ Private data zone:
 #       - lnet
 #       - s3
 #     - interfaces:
-#       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+#       - {#{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }#}
 #     # - rich_rules:
 #     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
 #     - require:

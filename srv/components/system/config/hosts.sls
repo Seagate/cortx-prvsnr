@@ -29,8 +29,13 @@ hostsfile:
         {%- if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
         {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node -}}
         {%- else %}
+        {%- if pillar['cluster'][node]['network']['data_nw']['iface']|length < 2 %}
+        {%- set iface = pillar['cluster'][node]['network']['data_nw']['iface'][0] %}
+        {%- else %}
+        {%- set iface = pillar['cluster'][node]['network']['data_nw']['iface'][1] %}
+        {%- endif %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0] }}   {{ srvnode -}}
+        {{ ip_data[iface][0] }}   {{ srvnode -}}
         {% endfor -%}
         {% endif -%}
         {% endfor %}

@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import json
 from typing import Type, Optional
 import logging
 
@@ -94,11 +95,15 @@ class DeployVM(Deploy):
     setup_ctx: Optional[SetupCtx] = None
 
     def set_pillar_data(self, setup_type):
-        minions_ids = ['srvnode-1']
-        disk = []
+        
+        key = "cluster/node_list"
+        res = self._cmd_run(
+            f"provisioner pillar_get {key} --output json",
+            targets=self._primary_id()
+        )
 
-        if setup_type != SetupType.SINGLE:
-            minions_ids.append('srvnode-2')
+        minions_ids = json.loads(res[self._primary_id()])["ret"][self._primary_id()][key]
+        disk = []
 
         # TODO: EOS-14248 remote setup vm deployment
         res = self._cmd_run(
@@ -126,6 +131,15 @@ class DeployVM(Deploy):
                     ),
                     targets=self._primary_id()
                 )
+
+            self._cmd_run(
+                (
+                    'provisioner pillar_set '
+                    f'cluster/{minion_id}/bmc/ip  '
+                    '\\"\\"'
+                ),
+                targets=self._primary_id()
+            )            
 
             self._cmd_run(
                 (
@@ -210,7 +224,7 @@ class DeployVM(Deploy):
                 self._run_states('sync', run_args)
 
             self._run_states('iopath', run_args)
-            self._run_states('controlpath', run_args)
+            #self._run_states('controlpath', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")

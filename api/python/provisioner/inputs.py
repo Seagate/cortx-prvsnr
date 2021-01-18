@@ -518,6 +518,10 @@ class NodeNetworkParams():
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
+    bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC ip",
+        validator=Validation.check_ip4
+    )
     mgmt_nw_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node mgmt gateway IP",
         validator=Validation.check_ip4
