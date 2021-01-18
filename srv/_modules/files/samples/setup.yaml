@@ -19,22 +19,18 @@ test:
     post_install:
         cmd: ls
         args:
-          - 'Stage:'
-          - Post Install
           - --config $URL
     config:
         cmd: "ls -l"
         args: --config $URL
     init:
         cmd: "ls"
-        args: init
+        args: -a -l
     test:
         cmd: ls
         args:
-          - 'Stage:'
-          - test
+          - -l
     reset:
         cmd: ls
         args:
-          - 'Stage:'
-          - reset
+          - -lrt
