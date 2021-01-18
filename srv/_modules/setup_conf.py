@@ -17,12 +17,14 @@
 
 # How to test:
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
-# salt-call setup_conf.conf_cmd "../files/samples/setup.yaml"
-#   'test:post_install'
+# salt-call setup_conf.conf_cmd 
+#   "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml"
+#   "test:post_install"
 
 import errno
 import logging
 import os
+import subprocess
 import yaml
 
 
@@ -51,11 +53,17 @@ def conf_cmd(conf_file, conf_key):
             # during call from the sls file.
             root_node = conf_key.split(':')[0]
             config_stage = conf_key.split(':')[1]
-            cmd_path = yml_dict[root_node][config_stage]['cmd']
-            logger.debug(f"The command path from yaml file: {cmd_path}")
+            cmd = yml_dict[root_node][config_stage]['cmd']
+            logger.debug(f"The command path from yaml file: {cmd}")
+
+            # Check if command exists
+            try:
+                subprocess.call([cmd, "--help"])
+            except FileNotFoundError as fnf_err:
+                logger.exception(fnf_err)
 
             # Proceed to process args, only if command has been specified
-            if cmd_path and os.path.exists(cmd_path):
+            if cmd:
                 args = yml_dict[root_node][config_stage]['args']
 
                 # If args is a string, do nothing.
@@ -63,9 +71,9 @@ def conf_cmd(conf_file, conf_key):
                 if isinstance(args, list):
                     args = ' '.join(args)
                     args.replace("$URL", replacement_url)
-                    logger.debug(f"Arguments for command {cmd_path}: {args}")
+                    logger.debug(f"Arguments for command {cmd}: {args}")
 
-                ret_val = cmd_path + " " + str(args)
+                ret_val = cmd + " " + str(args)
                 logger.debug(f"{ret_val}")
 
         except yaml.YAMLError as ymlerr:

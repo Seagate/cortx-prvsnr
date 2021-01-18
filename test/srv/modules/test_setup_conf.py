@@ -26,5 +26,6 @@ logger = logging.getLogger(__name__)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
+@pytest.mark.parametrize()
 def test_conf_cmd():
     pass
