@@ -1797,6 +1797,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 targets=master_targets
             )
 
+        logger.info("Configuring provisioner for future updates")
+        for node in run_args.nodes:
+            ssh_client.state_apply(
+                'update_post_boot',
+                targets=node.minion_id
+            )
+
         logger.info("Updating BMC IPs")
 
         if run_args.ha:
