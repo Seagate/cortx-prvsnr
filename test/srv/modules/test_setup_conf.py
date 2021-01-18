@@ -18,14 +18,30 @@
 import logging
 import pytest
 
+from salt.client import Caller
+
 
 logging.basicConfig(format='%(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
+
+test_data = [
+  ("/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+  "test:post_install"),
+  ("/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+  "test:config"),
+  ("/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+  "test:init"),
+  ("/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+  "test:test")
+]
 
 
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.parametrize()
-def test_conf_cmd():
-    pass
+@pytest.mark.parametrize("config_path,config_key", test_data)
+def test_conf_cmd(config_path: str, config_key: str):
+    salt_client_caller = Caller()
+    salt_client_caller.cmd('saltutil.clear_cache')
+    salt_client_caller.cmd('saltutil.sync_modules')
+    salt_client_caller.cmd(f"setup_conf.conf_cmd conf_file={config_path} conf_key={config_key}")

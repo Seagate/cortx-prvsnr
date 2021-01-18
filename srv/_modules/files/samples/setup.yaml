@@ -17,24 +17,24 @@
 
 test:
     post_install:
-        cmd: echo
+        cmd: ls
         args:
           - 'Stage:'
           - Post Install
           - --config $URL
     config:
-        cmd: "echo 'Stage: config '"
+        cmd: "ls -l"
         args: --config $URL
     init:
-        cmd: "echo 'Stage: '"
+        cmd: "ls"
         args: init
     test:
-        cmd: echo
+        cmd: ls
         args:
           - 'Stage:'
           - test
     reset:
-        cmd: echo
+        cmd: ls
         args:
           - 'Stage:'
           - reset

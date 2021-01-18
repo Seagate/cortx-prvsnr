@@ -1,5 +1,5 @@
-#
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -58,9 +58,15 @@ def conf_cmd(conf_file, conf_key):
 
             # Check if command exists
             try:
-                subprocess.call([cmd, "--help"])
+                subprocess.check_call(
+                    f"{cmd} --help",
+                    stdout=subprocess.DEVNULL,
+                    shell=True
+                )
             except FileNotFoundError as fnf_err:
                 logger.exception(fnf_err)
+            except subprocess.CalledProcessError as cp_err:
+                logger.exception(cp_err)
 
             # Proceed to process args, only if command has been specified
             if cmd:
@@ -81,4 +87,5 @@ def conf_cmd(conf_file, conf_key):
             logger.debug(f"Error parsing yaml file {conf_file}:\n {ymlerr}")
             ret_val = None
 
+    logger.info(ret_val)
     return ret_val
