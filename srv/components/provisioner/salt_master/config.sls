@@ -20,6 +20,22 @@ salt_master_config_updated:
     - name: /etc/salt/master
     - source: salt://components/provisioner/salt_master/files/master
 
+# Always start glusterfshsaredstorage before salt-master
+Update glusterfssharedstorage.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/glusterfssharedstorage.service
+    - source: salt://components/provisioner/files/glusterfshsaredstorage.service
+
+Update salt-master.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/salt-master.service
+    - source: salt://components/provisioner/salt_master/files/salt-master.service
+
+Reload updated services:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Update salt-master.service
 
 salt_master_service_enabled:
   service.enabled:
