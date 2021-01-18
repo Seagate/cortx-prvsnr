@@ -15,8 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-s3server:
-    version:
-        cortx-s3server: latest
-        cortx-s3iamcli: latest
-    no_of_inst: 11
+storage:
+    enclosure-1:
+      type: RBOD                      # RBOD/JBOD/Virtual/Other
+      primary:
+        ip: 10.0.0.2
+        port: 80
+      secondary:
+        ip: 10.0.0.3
+        port: 80
+      user: manage
+      secret:

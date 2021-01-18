@@ -77,7 +77,7 @@ def ensure_hw_configuration(mhost, tmpdir):
     cluster_dev_data = cluster_sls['cluster']['srvnode-1']['storage']
 
     if (
-        mgmt_dev != cluster_dev_data['metadata_device'][0]
+        mgmt_dev != cluster_dev_data['metadata_devices'][0]
         or data_dev != cluster_dev_data['data_devices'][0]
     ):
         logger.warning(
@@ -86,7 +86,7 @@ def ensure_hw_configuration(mhost, tmpdir):
             " Reconfiguring cluster.sls ..."
             .format(mgmt_dev, data_dev, cluster_dev_data)
         )
-        cluster_dev_data['metadata_device'][0] = mgmt_dev
+        cluster_dev_data['metadata_devices'][0] = mgmt_dev
         cluster_dev_data['data_devices'][0] = data_dev
 
         tmp_file = tmpdir / 'cluster.sls.new'

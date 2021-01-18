@@ -607,10 +607,10 @@ def test_functions_collect_addrs(
     )
 
     # Note. will include ip6 as well
-    for iface in ifaces.strip().split(os.linesep):
+    for interface in ifaces.strip().split(os.linesep):
         # TODO verify that it will work for all cases
         expected += [
-            addr for addr in mhost.host.interface(iface).addresses
+            addr for addr in mhost.host.interface(interface).addresses
             if ':' not in addr
         ]
 
@@ -628,7 +628,7 @@ def test_functions_check_host_reachable(
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
 
-    host_ips = mhost.host.interface(mhost.iface).addresses
+    host_ips = mhost.host.interface(mhost.interface).addresses
 
     for dest in host_ips + [mhost.hostname]:
         script = """
@@ -649,8 +649,8 @@ def test_functions_check_host_reachable(
 
 # TODO
 #   - multiplte names case (need multiple ifaces reachable between nodes)
-#   - case when some iface is not shared between them
-#   - case when they have the same IP in some non-shared iface
+#   - case when some interface is not shared between them
+#   - case when they have the same IP in some non-shared interface
 #     (vbox only case for now)
 #   - actually we don't need cortx specific here, just two hosts
 @pytest.mark.isolated
@@ -1177,7 +1177,7 @@ def test_functions_accept_salt_key_cluster(
     with_sudo = 'false'  # TODO
 
     salt_server_ip = mhostsrvnode1.host.interface(
-        mhostsrvnode1.iface
+        mhostsrvnode1.interface
     ).addresses[0]
 
     # configure srvnode-1

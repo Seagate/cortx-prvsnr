@@ -59,8 +59,8 @@ Delete common config - BMC to Consul:
 Delete common config - storage enclosure to Consul:
   cmd.run:
     - name: |
-        consul kv delete storage_enclosure/controller/primary_mc/ip
-        consul kv delete storage_enclosure/controller/primary_mc/port
+        consul kv delete storage_enclosure/controller/primary/ip
+        consul kv delete storage_enclosure/controller/primary/port
         consul kv delete storage_enclosure/controller/secondary_mc/ip
         consul kv delete storage_enclosure/controller/secondary_mc/port
         consul kv delete storage_enclosure/controller/user

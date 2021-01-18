@@ -1,6 +1,6 @@
 {%- set private_ip_list = [] -%}
 {%- for node in pillar['cluster']['node_list'] -%}
-{%- do private_ip_list.append(pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr']) %}
+{%- do private_ip_list.append(pillar['cluster'][node]['network']['data']['private_ip']) %}
 {%- endfor %}
 
 Set PermitRootLogin:

@@ -968,7 +968,7 @@ class FWUpdate(CommandParserFillerMixin):
         )
 
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
+        ip = PillarKey(controller_pi_path / 'primary/ip')
         user = PillarKey(controller_pi_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
@@ -1215,7 +1215,7 @@ class RebootController(CommandParserFillerMixin):
         )
 
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
+        ip = PillarKey(controller_pi_path / 'primary/ip')
         user = PillarKey(controller_pi_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')
@@ -1264,7 +1264,7 @@ class ShutdownController(CommandParserFillerMixin):
         )
 
         controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
+        ip = PillarKey(controller_pi_path / 'primary/ip')
         user = PillarKey(controller_pi_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
         passwd = PillarKey(controller_pi_path / 'secret')

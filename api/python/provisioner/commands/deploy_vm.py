@@ -115,7 +115,7 @@ class DeployVM(Deploy):
                 self._cmd_run(
                     (
                         'provisioner pillar_set '
-                        f' cluster/{minion_id}/storage/metadata_device '
+                        f' cluster/{minion_id}/storage/metadata_devices '
                         f'[\\"{disk[-2]}\\"]'
                     ),
                     targets=self._primary_id()
@@ -132,7 +132,7 @@ class DeployVM(Deploy):
             self._cmd_run(
                 (
                     'provisioner pillar_set '
-                    f'cluster/{minion_id}/network/data_nw/roaming_ip '
+                    f'cluster/{minion_id}/network/data/roaming_ip  '
                     '\\"127.0.0.1\\"'
                 ),
                 targets=self._primary_id()
@@ -244,7 +244,7 @@ class DeployVM(Deploy):
 
                 if run_args.setup_type != SetupType.SINGLE:
                     metadata_device_keypath = PillarKey(
-                        f"cluster/{self._primary_id()}/storage/metadata_device"
+                        f"cluster/{self._primary_id()}/storage/metadata_devices"
                     )
                     logger.info(
                         f"Resolving pillar key {metadata_device_keypath}"
@@ -252,18 +252,18 @@ class DeployVM(Deploy):
                     pillar = PillarResolver(self._primary_id()).get(
                         [metadata_device_keypath]
                     )
-                    metadata_device = pillar[self._primary_id()][metadata_device_keypath][0]  # noqa: E501
-                    metadata_device = f"{metadata_device}1"
+                    metadata_devices = pillar[self._primary_id()][metadata_device_keypath][0]  # noqa: E501
+                    metadata_devices = f"{metadata_devices}1"
                     # TODO IMPROVE EOS-12076 hard coded
                     mount_point = '/var/motr'
 
                     logger.info(
-                        f"Mounting partition {metadata_device} "
+                        f"Mounting partition {metadata_devices} "
                         f"into {mount_point} (with fstab record)"
                     )
                     fun_kwargs = dict(
                                    name=mount_point,
-                                   device=metadata_device,
+                                   device=metadata_devices,
                                    fstype='ext4',
                                    mkmnt=True,
                                    persist=True)

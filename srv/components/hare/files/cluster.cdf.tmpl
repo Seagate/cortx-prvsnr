@@ -3,7 +3,7 @@ nodes:
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {% set data_if = 'data0' %}
 {% else %}
-  {% set data_if = pillar['cluster'][node]['network']['data_nw']['iface'][1] %}
+  {% set data_if = pillar['cluster'][node]['network']['data']['interface'][1] %}
 {% endif %}
   - hostname: {{ node }}
     data_iface: {{ data_if }}

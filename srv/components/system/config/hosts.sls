@@ -26,11 +26,11 @@ hostsfile:
     - content: |
         {%- if pillar['cluster']['node_list']|length > 1 %}
         {%- for node in pillar['cluster']['node_list'] %}
-        {%- if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
-        {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node -}}
+        {%- if pillar['cluster'][node]['network']['data']['private_ip'] %}
+        {{ pillar['cluster'][node]['network']['data']['private_ip'] }}   {{ node -}}
         {%- else %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0] }}   {{ srvnode -}}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['interface'][1]][0] }}   {{ srvnode -}}
         {% endfor -%}
         {% endif -%}
         {%- endfor %}

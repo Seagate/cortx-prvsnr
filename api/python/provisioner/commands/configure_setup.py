@@ -164,7 +164,7 @@ class NodeParamsValidation:
     mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
     mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
     mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
-    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+    private_ip: str = NodeNetworkParams.private_ip
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
@@ -173,7 +173,7 @@ class NodeParamsValidation:
         'is_primary',
         'data_nw_netmask',
         'data_nw_gateway',
-        'pvt_ip_addr',
+        'private_ip',
         'mgmt_nw_iface',
         'mgmt_nw_public_ip_addr',
         'mgmt_nw_netmask',
@@ -204,8 +204,8 @@ class ConfigureSetup(CommandParserFillerMixin):
         for key in input:
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
-                'netmask', 'public_ip_addr', 'type'
+                'ip', 'user', 'secret', 'ipaddr', 'interface', 'gateway',
+                'netmask', 'public_ip', 'type'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
@@ -222,7 +222,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'mgmt_nw.iface' in key:
+            elif 'mgmt.interface' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'

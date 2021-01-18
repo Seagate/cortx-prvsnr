@@ -143,10 +143,10 @@ def _inject_storage_enclosure(config_dict={}):
     config_dict['STORAGE_ENCLOSURE']['user'] = storage_enclosure['user']
   if storage_enclosure['secret']:
     config_dict['STORAGE_ENCLOSURE']['secret'] = storage_enclosure['secret']
-  if storage_enclosure['primary_mc']['ip']:
-    config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = storage_enclosure['primary_mc']['ip']
-  if storage_enclosure['primary_mc']['port']:
-    config_dict['STORAGE_ENCLOSURE']['primary_controller_port'] = storage_enclosure['primary_mc']['port']
+  if storage_enclosure['primary']['ip']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_ip'] = storage_enclosure['primary']['ip']
+  if storage_enclosure['primary']['port']:
+    config_dict['STORAGE_ENCLOSURE']['primary_controller_port'] = storage_enclosure['primary']['port']
   if storage_enclosure['secondary_mc']['ip']:
     config_dict['STORAGE_ENCLOSURE']['secondary_controller_ip'] = storage_enclosure['secondary_mc']['ip']
   if storage_enclosure['secondary_mc']['port']:

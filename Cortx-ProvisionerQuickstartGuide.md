@@ -590,14 +590,14 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
          ```shell
 	 
           network:
-            mgmt_nw:                  # Management network interfaces
-              iface:
+            mgmt:                  # Management network interfaces
+              interface:
                 - eno1
                 - eno2
               ipaddr: 
               netmask: 
-            data_nw:                  # Data network interfaces
-              iface: 
+            data:                  # Data network interfaces
+              interface: 
                 - enp175s0f0
                 - enp175s0f0
               ipaddr: 172.19.10.101
@@ -609,13 +609,13 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 	    
           ```
           network:
-            mgmt_nw:                  # Management network interfaces
-              iface:
+            mgmt:                  # Management network interfaces
+              interface:
                 - eno1
               ipaddr: 
               netmask: 
-            data_nw:                  # Data network interfaces
-              iface: 
+            data:                  # Data network interfaces
+              interface: 
                 - bond0
               ipaddr:
               netmask: 255.255.255.0
@@ -641,23 +641,23 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
             		hostname: srvnode-1
             		is_primary: true
             		network:
-              		mgmt_nw:                  # Management network interfaces
-                		iface:	- eth0
+              		mgmt:                  # Management network interfaces
+                		interface:	- eth0
                 		ipaddr: 
                 		netmask: 255.255.255.0
-              		data_nw:                  # Data network interfaces
-                		iface: - eth1
+              		data:                  # Data network interfaces
+                		interface: - eth1
                 		ipaddr: 
                 		netmask: 255.255.255.0
               		floating_ip:
               		gateway_ip:               # Gateway IP of network
             		storage:
-              		metadata_device:                # Device for /var/mero and possibly SWAP - /dev/sdb
+              		metadata_devices:                # Device for /var/mero and possibly SWAP - /dev/sdb
               		data_devices:                   # Data device/LUN from storage enclosure - /dev/sdc
           		storage_enclosure:
             		id: storage_node_1            # equivalent to fqdn for server node
             		type: RBOD                    # Type of enclosure. E.g. RBOD
-              		primary_mc:
+              		primary
                 		ip: 127.0.0.1
                 		port: 80
               		secondary_mc:

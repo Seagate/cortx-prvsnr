@@ -305,7 +305,7 @@ ctrl_ip_addr_get_set()
     echo "Updating IP addresses of storage enclosure in Salt pillar" |tee -a ${LOG_FILE}
 
     echo "Updating storage enclosure pillar with new controller A IP address" | tee -a ${LOG_FILE}
-    _current_ip=$(grep -A1 primary_mc ${_storage_encl_sls_path} | tail -1 | awk '{ print $2 }')
+    _current_ip=$(grep -A1 primary ${_storage_encl_sls_path} | tail -1 | awk '{ print $2 }')
     echo "DEBUG:_current_ip=${_current_ip}" >> ${LOG_FILE}
     cat ${_storage_encl_sls_path} | sed -e "s/${_current_ip}/${ctrl_ip_a}/" > /tmp/ctrla-sed.tmp
     diff_lines=$(diff ${_storage_encl_sls_path} /tmp/ctrla-sed.tmp | grep "<" | wc -l)
@@ -599,7 +599,7 @@ hosts_resolution_check()
         echo "ERROR: \"${_cluster_sls_path}\" no such file or directory"
         exit 1
     fi
-    local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${_cluster_sls_path}|grep -A1 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    local mgmt_if=$(grep -m1 -A3 -P "mgmt:" ${_cluster_sls_path}|grep -A1 "interface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     if [[ -z "$mgmt_if" ]]; then
         if ip -o addr | grep -q eno1; then

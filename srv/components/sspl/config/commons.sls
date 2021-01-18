@@ -47,8 +47,8 @@ Add common config - BMC to Consul:
 Add common config - storage enclosure to Consul:
   cmd.run:
     - name: |
-        consul kv put storage_enclosure/controller/primary_mc/ip {{ pillar['storage_enclosure']['controller']['primary_mc']['ip'] }}
-        consul kv put storage_enclosure/controller/primary_mc/port {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}
+        consul kv put storage_enclosure/controller/primary/ip {{ pillar['storage_enclosure']['controller']['primary']['ip'] }}
+        consul kv put storage_enclosure/controller/primary/port {{ pillar['storage_enclosure']['controller']['primary']['port'] }}
         consul kv put storage_enclosure/controller/secondary_mc/ip {{ pillar['storage_enclosure']['controller']['secondary_mc']['ip'] }}
         consul kv put storage_enclosure/controller/secondary_mc/port {{ pillar['storage_enclosure']['controller']['secondary_mc']['port'] }}
         consul kv put storage_enclosure/controller/user {{ pillar['storage_enclosure']['controller']['user'] }}

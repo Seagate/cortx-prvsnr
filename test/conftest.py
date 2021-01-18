@@ -128,7 +128,7 @@ class HostMeta:
     label = attr.ib(converter=lambda v: '' if not v else v, default='')
     machine_name = attr.ib(default=None)
     hostname = attr.ib(default=None)
-    iface = attr.ib(default=None)
+    interface = attr.ib(default=None)
 
     _hostname = attr.ib(init=False, default=None)
     _tmpdir = attr.ib(init=False, default=None)
@@ -138,18 +138,18 @@ class HostMeta:
     _rpm_prvsnr_api = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        # TODO more smarter logic to get iface that is asseccible from host
+        # TODO more smarter logic to get interface that is asseccible from host
         # (relates to https://github.com/hashicorp/vagrant/issues/2779)
-        if self.iface is None:
+        if self.interface is None:
             if (
                 isinstance(self.remote, h.VagrantMachine) and
                 (self.remote.provider == 'vbox')
             ):
-                self.iface = 'enp0s8'
+                self.interface = 'enp0s8'
             else:
-                self.iface = 'eth0'
+                self.interface = 'eth0'
 
-        assert self.host.interface(self.iface).exists
+        assert self.host.interface(self.interface).exists
 
     @property
     def hostname(self):
@@ -159,7 +159,7 @@ class HostMeta:
 
     @property
     def ssh_host(self):
-        return self.host.interface(self.iface).addresses[0]
+        return self.host.interface(self.interface).addresses[0]
 
     @property
     def tmpdir(self):
@@ -1278,7 +1278,7 @@ def cortx_primary_mhost(cortx_primary_host_label, request):
 @pytest.fixture
 def cortx_primary_host_ip(cortx_primary_mhost):
     return cortx_primary_mhost.host.interface(
-        cortx_primary_mhost.iface
+        cortx_primary_mhost.interface
     ).addresses[0]
 
 
@@ -1354,7 +1354,7 @@ def sync_salt_modules(cortx_primary_mhost, install_provisioner):
 @pytest.fixture
 def mlocalhost(localhost, request):
     return LocalHostMeta(
-        None, localhost, None, request, label=None, iface='lo'
+        None, localhost, None, request, label=None, interface='lo'
     )
 
 
@@ -1498,7 +1498,7 @@ def discover_remote(
         request,
         label=host_fixture_label,
         machine_name=remote.name,
-        iface=_iface
+        interface=_iface
     )
 
 

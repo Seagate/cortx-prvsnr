@@ -16,8 +16,8 @@
 #
 
 {% set node = grains['id'] %}
-{% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr']
-    and not pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] %}
+{% if pillar['cluster'][node]['network']['mgmt']['public_ip']
+    and not pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] %}
 
 Gateway not provided:
   test.fail_with_changes:
@@ -25,7 +25,7 @@ Gateway not provided:
 
 {% else %}
 
-{% set mgmt_if = pillar['cluster'][node]['network']['mgmt_nw']['iface'][0] %}
+{% set mgmt_if = pillar['cluster'][node]['network']['mgmt']['interface'][0] %}
 # Setup network for data interfaces
 Public direct network:
   network.managed:
@@ -38,17 +38,17 @@ Public direct network:
     - userctl: no
     - hwaddr: {{ grains['hwaddr_interfaces'][mgmt_if] }}
     - defroute: yes
-{% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] %}
+{% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
     - mtu: 1500
 {%- else %}
     - proto: dhcp
 {%- endif %}
-{% if pillar['cluster'][node]['network']['mgmt_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['mgmt_nw']['netmask'] }}
+{% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
 {%- endif %}
-{% if pillar['cluster'][node]['network']['mgmt_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] }}
+{% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
 {% endif %}
 {% endif %} # Gateway check end

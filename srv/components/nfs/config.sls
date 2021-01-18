@@ -16,7 +16,7 @@
 #
 
 {% set node = grains['id'] %}
-{% set data_if = pillar['cluster'][node]['network']['data_nw']['iface'] %}
+{% set data_if = pillar['cluster'][node]['network']['data']['interface'] %}
 
 Create index:
   cmd.run:

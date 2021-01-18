@@ -26,9 +26,9 @@
 
 Private direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
+    - name: {{ pillar['cluster'][node]['network']['data']['interface'][1] }}
     - enabled: True
-    - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][1] }}
+    - device: {{ pillar['cluster'][node]['network']['data']['interface'][1] }}
     - type: eth
     - onboot: yes
     - defroute: no
@@ -36,9 +36,9 @@ Private direct network:
     - peerdns: no
     - userctl: no
     - prefix: 24
-{% if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
+{% if pillar['cluster'][node]['network']['data']['private_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data']['private_ip'] }}
     - mtu: 9000
 {%- else %}
     - proto: dhcp

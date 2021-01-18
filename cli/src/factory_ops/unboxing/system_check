@@ -88,7 +88,7 @@ function check_hostname {
 }
 
 function check_pvt_data_connectivity {
-    # local private_data_if=$(grep -m1 -A5 -P "data_nw:" ${cluster_sls_path}|grep -A2 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    # local private_data_if=$(grep -m1 -A5 -P "data:" ${cluster_sls_path}|grep -A2 "interface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     echo "      Private n/w IP (Server A): $pvt_ip_a" | tee -a ${LOG_FILE}
     echo "      Private n/w IP (Server B): $pvt_ip_b" | tee -a ${LOG_FILE}
@@ -108,7 +108,7 @@ function check_mgmt_ip {
     # Although ways to test public data IP are available;
     # Only management IP would be tested as public data IP would be later updated during onboarding.
 
-    local mgmt_if=$(grep -m1 -A3 -P "mgmt_nw:" ${cluster_sls_path}|grep -A1 "iface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    local mgmt_if=$(grep -m1 -A3 -P "mgmt:" ${cluster_sls_path}|grep -A1 "interface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
     if [[ -z "$mgmt_if" ]]; then
         if ip -o addr | grep -q eno1; then
             mgmt_if="eno1"

@@ -509,7 +509,7 @@ class NodeNetworkParams():
         converter=bool
     )
     data_nw_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data network iface"
+        _param_group, descr="node data network interface"
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -523,30 +523,30 @@ class NodeNetworkParams():
         validator=Validation.check_ip4
     )
     mgmt_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface IP",
+        _param_group, descr="node management interface IP",
         validator=Validation.check_ip4
     )
     mgmt_nw_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface netmask",
+        _param_group, descr="node management interface netmask",
         validator=Validation.check_ip4
     )
     mgmt_nw_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management network iface"
+        _param_group, descr="node management network interface"
     )
     data_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface IP", default=UNCHANGED,
+        _param_group, descr="node data interface IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
     data_nw_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface netmask",
+        _param_group, descr="node data interface netmask",
         validator=Validation.check_ip4
     )
     data_nw_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data gateway IP",
         validator=Validation.check_ip4
     )
-    pvt_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface private IP",
+    private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
         validator=Validation.check_ip4
     )
     bmc_ip: str = ParamGroupInputBase._attr_ib(
@@ -584,20 +584,20 @@ class NetworkParams():
         _param_group, descr="primary node mgmt gateway IP"
     )
     primary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node management iface IP"
+        _param_group, descr="primary node management interface IP"
     )
     primary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node management iface netmask"
+        _param_group, descr="primary node management interface netmask"
     )
     primary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data iface IP",
+        _param_group, descr="primary node data interface IP",
         validator=Validation.check_ip4
     )
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data iface netmask"
+        _param_group, descr="primary node data interface netmask"
     )
     primary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data network iface"
+        _param_group, descr="primary node data network interface"
     )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC  IP",
@@ -623,21 +623,21 @@ class NetworkParams():
         _param_group, descr="secondary node mgmt gateway IP"
     )
     secondary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node management iface IP",
+        _param_group, descr="secondary node management interface IP",
         validator=Validation.check_ip4
     )
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node management iface netmask"
+        _param_group, descr="secondary node management interface netmask"
     )
     secondary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node node data iface IP",
+        _param_group, descr="secondary node node data interface IP",
         validator=Validation.check_ip4
     )
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data iface netmask"
+        _param_group, descr="secondary node data interface netmask"
     )
     secondary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data network iface"
+        _param_group, descr="secondary node data network interface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC  IP",

@@ -67,7 +67,7 @@ def storage_enclosure_data(mocker):
     test_pillar = dict(someminionid={
         "storage_enclosure": {
             "controller": {
-                "primary_mc": {
+                "primary": {
                     "ip": f"{ip}"
                 },
                 "user": f"{user}",

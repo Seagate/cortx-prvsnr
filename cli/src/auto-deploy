@@ -384,19 +384,19 @@ update_pillar()
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/interface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/interface [\"${pub_din}\",\ \"${pvt_din}\"]
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${pub_dip1}\"
+        provisioner pillar_set cluster/srvnode-1/network/data/public_ip \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${pub_dip2}\"
+        provisioner pillar_set cluster/srvnode-2/network/data/public_ip \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
@@ -427,7 +427,7 @@ update_pillar()
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/primary_mc/ip \"${ctrl_a_ip}\"
+        provisioner pillar_set storage_enclosure/controller/primary/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2

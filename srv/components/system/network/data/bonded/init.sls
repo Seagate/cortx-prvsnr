@@ -22,22 +22,22 @@ Ensure bonding config for data bond:
     - contents: options bonding max_bonds=0
 
 # Setup network for data interfaces
-{% for iface in pillar['cluster'][node]['network']['data_nw']['iface'] %}
-{{ iface }}:
+{% for interface in pillar['cluster'][node]['network']['data']['interface'] %}
+{{ interface }}:
   network.managed:
-    - device: {{ iface }}
+    - device: {{ interface }}
     - enabled: True
     - type: slave
     - master: data0
     - requires_in:
       - Setup data0 bonding
     - watch_in:
-      - Shutdown {{ iface }}
+      - Shutdown {{ interface }}
 
-Shutdown {{ iface }}:
+Shutdown {{ interface }}:
   cmd.run:
-    - name: ifdown {{ iface }}
-    - onlyif: '[ "up" == "$(cat /sys/class/net/{{iface}}/operstate)" ]'
+    - name: ifdown {{ interface }}
+    - onlyif: '[ "up" == "$(cat /sys/class/net/{{interface}}/operstate)" ]'
 {% endfor %}
 
 Setup data0 bonding:
@@ -53,15 +53,15 @@ Setup data0 bonding:
     - miimon: 100
     - lacp_rate: fast
     - xmit_hash_policy: layer2+3
-{% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
+{% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
 {%- else %}
     - proto: dhcp
 {%- endif %}
-{% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
+{% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
-{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
+{% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
 {% endif %}

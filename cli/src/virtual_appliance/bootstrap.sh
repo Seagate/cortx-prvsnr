@@ -35,7 +35,7 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 echo "INFO: Configuring haproxy" | tee -a ${LOG_FILE}
 salt "*" state.apply components.ha.haproxy.config | tee -a ${LOG_FILE}
 echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a ${LOG_FILE}
-DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data_nw:iface:0 --output=newline_values_only)
+DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:interface:0 --output=newline_values_only)
 DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
 provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
 salt "*" state.apply components.s3clients.config | tee -a ${LOG_FILE}

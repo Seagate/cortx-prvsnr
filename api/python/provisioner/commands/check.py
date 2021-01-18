@@ -497,11 +497,11 @@ class Check(CommandParserFillerMixin):
         minion_id = local_minion_id()
 
         cluster_path = KeyPath('cluster')
-        node_network_path = KeyPath(f'cluster/{minion_id}/network/data_nw')
+        node_network_path = KeyPath(f'cluster/{minion_id}/network/data')
 
         pillar_keys = (PillarKey(cluster_path / 'type'),
-                       PillarKey(node_network_path / "public_ip_addr"),
-                       PillarKey(node_network_path / "pvt_ip_addr"),
+                       PillarKey(node_network_path / "public_ip"),
+                       PillarKey(node_network_path / "private_ip"),
                        PillarKey(cluster_path / "cluster_ip"))
 
         # maybe we need to call it from the all targets and analyze the output
@@ -1053,10 +1053,10 @@ class Check(CommandParserFillerMixin):
 
             try:
                 # Get list data network interfaces
-                iface = Check._get_pillar_data(
-                    f"cluster/{node}/network/data_nw/iface")
+                interface = Check._get_pillar_data(
+                    f"cluster/{node}/network/data/interface")
 
-                ifc = [ifc for ifc in iface if 's0f0' in ifc]
+                ifc = [ifc for ifc in interface if 's0f0' in ifc]
 
                 if ifc:
                     # Get IP address assigned to interface
@@ -1073,8 +1073,8 @@ class Check(CommandParserFillerMixin):
                 else:
                     check_ret.set_fail(checked_target=node,
                                        comment=("Public data interface "
-                                                "'s0f0' not found. iface "
-                                                f"available: {iface}"))
+                                                "'s0f0' not found. interface "
+                                                f"available: {interface}"))
             except Exception as exc:
                 check_ret.set_fail(checked_target=node, comment=str(exc))
 
@@ -1113,7 +1113,7 @@ class Check(CommandParserFillerMixin):
 
             try:
                 primary_mc_ip = Check._get_pillar_data(
-                                "storage_enclosure/controller/primary_mc/ip")
+                                "storage_enclosure/controller/primary/ip")
                 secondary_mc_ip = Check._get_pillar_data(
                                 "storage_enclosure/controller/secondary_mc/ip")
 

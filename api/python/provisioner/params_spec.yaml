@@ -26,29 +26,29 @@ network:
   dns_servers: cluster/dns_servers
   search_domains: cluster/search_domains
   #dns_server: # TODO not supported in states
-  #'key_path': ('cluster', 'srvnode-2', 'network', 'data_nw', 'public_ip_addr'),
+  #'key_path': ('cluster', 'srvnode-2', 'network', 'data', 'public_ip'),
   # TODO use nested group to reduce copy-paste in paths
   primary_hostname: cluster/srvnode-1/hostname
   primary_floating_ip: cluster/srvnode-1/network/floating_ip
-  primary_mgmt_ip: cluster/srvnode-1/network/mgmt_nw/ipaddr
-  primary_mgmt_netmask: cluster/srvnode-1/network/mgmt_nw/netmask
-  primary_mgmt_gateway: cluster/srvnode-1/network/mgmt_nw/gateway
-  primary_data_ip: cluster/srvnode-1/network/data_nw/public_ip_addr
-  primary_data_netmask: cluster/srvnode-1/network/data_nw/netmask
-  primary_data_gateway: cluster/srvnode-1/network/data_nw/gateway
-  primary_data_network_iface: cluster/srvnode-1/network/data_nw/iface
+  primary_mgmt_ip: cluster/srvnode-1/network/mgmt/ipaddr
+  primary_mgmt_netmask: cluster/srvnode-1/network/mgmt/netmask
+  primary_mgmt_gateway: cluster/srvnode-1/network/mgmt/gateway
+  primary_data_ip: cluster/srvnode-1/network/data/public_ip
+  primary_data_netmask: cluster/srvnode-1/network/data/netmask
+  primary_data_gateway: cluster/srvnode-1/network/data/gateway
+  primary_data_network_iface: cluster/srvnode-1/network/data/interface
   primary_bmc_ip: cluster/srvnode-1/bmc/ip
   primary_bmc_user: cluster/srvnode-1/bmc/user
   primary_bmc_secret: cluster/srvnode-1/bmc/secret
   secondary_hostname: cluster/srvnode-2/hostname
   secondary_floating_ip: cluster/srvnode-2/network/floating_ip
-  secondary_mgmt_ip: cluster/srvnode-2/network/mgmt_nw/ipaddr
-  secondary_mgmt_netmask: cluster/srvnode-2/network/mgmt_nw/netmask
-  secondary_mgmt_gateway: cluster/srvnode-2/network/mgmt_nw/gateway
-  secondary_data_ip: cluster/srvnode-2/network/data_nw/public_ip_addr
-  secondary_data_netmask: cluster/srvnode-2/network/data_nw/netmask
-  secondary_data_gateway: cluster/srvnode-2/network/data_nw/gateway
-  secondary_data_network_iface: cluster/srvnode-2/network/data_nw/iface 
+  secondary_mgmt_ip: cluster/srvnode-2/network/mgmt/ipaddr
+  secondary_mgmt_netmask: cluster/srvnode-2/network/mgmt/netmask
+  secondary_mgmt_gateway: cluster/srvnode-2/network/mgmt/gateway
+  secondary_data_ip: cluster/srvnode-2/network/data/public_ip
+  secondary_data_netmask: cluster/srvnode-2/network/data/netmask
+  secondary_data_gateway: cluster/srvnode-2/network/data/gateway
+  secondary_data_network_iface: cluster/srvnode-2/network/data/interface 
   secondary_bmc_ip: cluster/srvnode-2/bmc/ip
   secondary_bmc_user: cluster/srvnode-2/bmc/user
   secondary_bmc_secret: cluster/srvnode-2/bmc/secret
@@ -59,7 +59,7 @@ release:
 
 storage_enclosure:
   _path: storage_enclosure.sls
-  controller_a_ip: storage_enclosure/controller/primary_mc/ip
+  controller_a_ip: storage_enclosure/controller/primary/ip
   controller_b_ip: storage_enclosure/controller/secondary_mc/ip
   controller_user: storage_enclosure/controller/user
   controller_secret: storage_enclosure/controller/secret

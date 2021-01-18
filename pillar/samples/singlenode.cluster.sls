@@ -16,38 +16,45 @@
 #
 
 cluster:
-  cluster_ip:                         # Cluster IP for HAProxy
-  mgmt_vip:                           # Management VIP for CSM
+  cluster_id:
+  storage_sets:
+    storage_set_1: []
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: single                        # single/dual/generic/3_node
-  node_list:
-    - srvnode-1
+  server_nodes:
+    - <machine_id_1>: srvnode_1
   srvnode-1:
+    rack_id:
+    site_id:
+    storage_set_id:
+    node_id:
     hostname: srvnode-1
-    is_primary: true
+    roles:
+      - primary
+      - openldap_master
     bmc:
       ip:
       user: ADMIN
       secret:
     network:
-      mgmt_nw:                        # Management network interfaces
-        iface:
+      mgmt:                           # Management network interfaces
+        interfaces:
           - eth0
-        public_ip_addr:               # DHCP is assumed if left blank
+        public_ip:                    # DHCP is assumed if left blank
         netmask:
         gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
-      data_nw:                        # Data network interfaces
-        iface:
+      data:                           # Data network interfaces
+        interfaces:
           - eth1                      # Public Data
-          - eth2                       # Private Data (direct connect)
-        public_ip_addr:               # DHCP is assumed if left blank
+          - eth2                      # Private Data (direct connect)
+        public_ip:                    # DHCP is assumed if left blank
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr:                  # Fixed IP of Private Data Network
-        roaming_ip:                   # Applies to private data network
+        private_ip: 192.168.0.1       # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.3       # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/motr and possibly SWAP
+      enclosure_id: enclosure-1
+      metadata_devices:                # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc

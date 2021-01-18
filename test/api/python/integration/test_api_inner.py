@@ -310,10 +310,10 @@ def test_set_network():
 
     pillar_nw_primary_mgmt_ip = pillar[
         'srvnode-1'
-    ]['cluster']['srvnode-1']['network']['mgmt_nw']['ipaddr']
+    ]['cluster']['srvnode-1']['network']['mgmt']['ipaddr']
     pillar_nw_primary_data_ip = pillar[
         'srvnode-1'
-    ]['cluster']['srvnode-1']['network']['data_nw']['public_ip_addr']
+    ]['cluster']['srvnode-1']['network']['data']['public_ip']
     pillar_nw_primary_gateway_ip = pillar[
         'srvnode-1'
     ]['cluster']['srvnode-1']['network']['gateway_ip']
