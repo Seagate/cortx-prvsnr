@@ -17,4 +17,5 @@
 
 include:
   - .install
+  - .config
   - .start
