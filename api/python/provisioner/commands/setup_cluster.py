@@ -42,12 +42,12 @@ class RunArgsSetupCluster(RunArgsSetupSinglenode):
     srvnode2: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "srvnode-2 host specification",
+                'help': "srvnode_2 host specification",
                 'metavar': '[user@]hostname[:port]'
             }
         },
-        default='srvnode-2',
-        converter=(lambda s: Node.from_spec(f"srvnode-2:{s}"))
+        default='srvnode_2',
+        converter=(lambda s: Node.from_spec(f"srvnode_2:{s}"))
     )
     field_setup: bool = attr.ib(init=False, default=False)
 

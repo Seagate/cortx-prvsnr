@@ -65,7 +65,7 @@ usage()
     echo "\
 Usage:
 For Dual Node:
-sh auto-deploy-vm -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+sh auto-deploy-vm -s <secondary node hostname (srvnode_2)> -p <password for sec node>
                   -t <target build url for CORTX>
 For Single Node:
 sh auto-deploy-vm -S -t <target build url for CORTX> 
@@ -117,13 +117,13 @@ while [[ $# -gt 0 ]]; do
         -s)
             srvnode_2_host_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode-2 not provided" && exit 1;
+                echo "Error: srvnode_2 not provided" && exit 1;
             srvnode_2_host="$2"
             shift 2 ;;
         -p)
             srvnode_2_passwd_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode-2 password not provided" && exit 1;
+                echo "Error: srvnode_2 password not provided" && exit 1;
             srvnode_2_passwd="$2"
             shift 2 ;;
         -S)
@@ -174,13 +174,13 @@ while [[ $# -gt 0 ]]; do
 	-i)
 	    pvt_dip1_opt=true
 	    [ -z "$2" ] &&
-		echo "Error: srvnode-1 private_ip for data not provided" && exit 1;
+		echo "Error: srvnode_1 private_ip for data not provided" && exit 1;
 	    pvt_dip1="$2"
 	    shift 2 ;;
 	-I)
 	    pvt_dip2_opt=true
 	    [ -z "$2" ] &&
-		echo "Error: srvnode-2 private_ip for data not provided" && exit 1;
+		echo "Error: srvnode_2 private_ip for data not provided" && exit 1;
 	    pvt_dip2="$2"
 	    shift 2 ;;
         -t)
@@ -230,7 +230,7 @@ install_prvsnr_cli()
     # Install cortx-prvsnr-cli rpm from cortx-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
-    if [[ "$target_node" = "srvnode-1" ]]; then
+    if [[ "$target_node" = "srvnode_1" ]]; then
 	rpm -qa | grep -q 'cortx' && {
         echo "ERROR: cortx packages are already installed"
         echo "Please clean-up previous installtion from both the nodes and retry"
@@ -259,11 +259,11 @@ install_config_prvsnr()
 	set -eu
 	echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
 	sleep 1
-	install_prvsnr_cli "srvnode-2"
+	install_prvsnr_cli "srvnode_2"
     fi
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    install_prvsnr_cli "srvnode-1"
+    install_prvsnr_cli "srvnode_1"
 
     #export PATH=/usr/local/bin:$PATH
     #if [[ "$singlenode" == false ]]; then
@@ -275,8 +275,8 @@ install_config_prvsnr()
     sleep 1
     if [[ "$singlenode" == false ]]; then
         echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/src/setup-provisioner"\
-	        "--srvnode-2='$srvnode_2_host' $tgt_build" 2>&1 | tee -a $LOG_FILE
-        sh /opt/seagate/cortx/provisioner/cli/src/setup-provisioner --srvnode-2="$srvnode_2_host" $tgt_build 2>&1 | tee -a $LOG_FILE
+	        "--srvnode_2='$srvnode_2_host' $tgt_build" 2>&1 | tee -a $LOG_FILE
+        sh /opt/seagate/cortx/provisioner/cli/src/setup-provisioner --srvnode_2="$srvnode_2_host" $tgt_build 2>&1 | tee -a $LOG_FILE
 	echo "Done" 2>&1 | tee -a $LOG_FILE
     else
         echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/src/setup-provisioner"\
@@ -290,60 +290,60 @@ update_pillar()
 {
     # Update cluster.sls
     echo -e "\n\t***** INFO: Updating cluster.sls *****" 2>&1 | tee -a $LOG_FILE
-    provisioner pillar_set cluster/srvnode-1/hostname \"`hostname -f`\"
-    provisioner pillar_set cluster/srvnode-1/network/data/roaming_ip \"127.0.0.1\"
+    provisioner pillar_set cluster/srvnode_1/hostname \"`hostname -f`\"
+    provisioner pillar_set cluster/srvnode_1/network/data/roaming_ip \"127.0.0.1\"
 
     if [[ "$mgmt_din_opt" == true ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/mgmt/interface [\"$mgmt_din\"]
+        provisioner pillar_set cluster/srvnode_1/network/mgmt/interface [\"$mgmt_din\"]
     else
-        provisioner pillar_set cluster/srvnode-1/network/mgmt/interface [\"eth0\"]
+        provisioner pillar_set cluster/srvnode_1/network/mgmt/interface [\"eth0\"]
     fi
 
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/data/interface [\"$pub_din\",\"$pvt_din\"]
+        provisioner pillar_set cluster/srvnode_1/network/data/interface [\"$pub_din\",\"$pvt_din\"]
     else
-        provisioner pillar_set cluster/srvnode-1/network/data/interface [\"eth1\",\"eth2\"]
+        provisioner pillar_set cluster/srvnode_1/network/data/interface [\"eth1\",\"eth2\"]
     fi
 
     if [[ "$pvt_dip1_opt" == true ]]; then
-        provisioner pillar_set cluster/srvnode-1/network/data/private_ip \"$pvt_dip1\"
+        provisioner pillar_set cluster/srvnode_1/network/data/private_ip \"$pvt_dip1\"
     else
-        provisioner pillar_set cluster/srvnode-1/network/data/private_ip \"\"
+        provisioner pillar_set cluster/srvnode_1/network/data/private_ip \"\"
     fi
     
     disk_list=($(lsblk -ndp | grep disk | awk '{ print $1 }')) 
 
-    provisioner pillar_set cluster/srvnode-1/storage/metadata_devices [\"${disk_list[-2]}\"]
+    provisioner pillar_set cluster/srvnode_1/storage/metadata_devices [\"${disk_list[-2]}\"]
 
-    provisioner pillar_set cluster/srvnode-1/storage/data_devices [\"${disk_list[-1]}\"]
+    provisioner pillar_set cluster/srvnode_1/storage/data_devices [\"${disk_list[-1]}\"]
 
     if [[ "$singlenode" == false ]]; then
-        provisioner pillar_set cluster/srvnode-2/hostname \"$srvnode_2_host\"
-        provisioner pillar_set cluster/srvnode-2/network/data/roaming_ip \"127.0.0.1\"
+        provisioner pillar_set cluster/srvnode_2/hostname \"$srvnode_2_host\"
+        provisioner pillar_set cluster/srvnode_2/network/data/roaming_ip \"127.0.0.1\"
         
         if [[ "$mgmt_din_opt" == true ]]; then
-            provisioner pillar_set cluster/srvnode-2/network/mgmt/interface [\"$mgmt_din\"]
+            provisioner pillar_set cluster/srvnode_2/network/mgmt/interface [\"$mgmt_din\"]
         else
-            provisioner pillar_set cluster/srvnode-2/network/mgmt/interface [\"eth0\"]
+            provisioner pillar_set cluster/srvnode_2/network/mgmt/interface [\"eth0\"]
         fi
 
         if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
-            provisioner pillar_set cluster/srvnode-2/network/data/interface [\"$pub_din\",\"$pvt_din\"]
+            provisioner pillar_set cluster/srvnode_2/network/data/interface [\"$pub_din\",\"$pvt_din\"]
         else
-            provisioner pillar_set cluster/srvnode-2/network/data/interface [\"eth1\",\"eth2\"]
+            provisioner pillar_set cluster/srvnode_2/network/data/interface [\"eth1\",\"eth2\"]
         fi
 
         if [[ "$pvt_dip2_opt" == true ]]; then
-            provisioner pillar_set cluster/srvnode-2/network/data/private_ip \"$pvt_dip2\"
+            provisioner pillar_set cluster/srvnode_2/network/data/private_ip \"$pvt_dip2\"
         else
-            provisioner pillar_set cluster/srvnode-2/network/data/private_ip \"\"
+            provisioner pillar_set cluster/srvnode_2/network/data/private_ip \"\"
         fi
 
         disk_list=($($remote_cmd lsblk -ndp | grep disk | awk '{ print $1 }'))
 
-        provisioner pillar_set cluster/srvnode-2/storage/metadata_devices [\"${disk_list[-2]}\"]
+        provisioner pillar_set cluster/srvnode_2/storage/metadata_devices [\"${disk_list[-2]}\"]
 
-        provisioner pillar_set cluster/srvnode-2/storage/data_devices [\"${disk_list[-1]}\"]
+        provisioner pillar_set cluster/srvnode_2/storage/data_devices [\"${disk_list[-1]}\"]
 
 
     fi
@@ -380,11 +380,11 @@ update_pillar()
     #    fi
     #done
     #data_disk=${data_disk: :-1}
-    #provisioner pillar_set cluster/srvnode-1/storage/metadata_devices [$meta_disk]
-    #provisioner pillar_set cluster/srvnode-1/storage/data_devices [$data_disk]
+    #provisioner pillar_set cluster/srvnode_1/storage/metadata_devices [$meta_disk]
+    #provisioner pillar_set cluster/srvnode_1/storage/data_devices [$data_disk]
     #if [[ "$singlenode" == false ]]; then
-    #    provisioner pillar_set cluster/srvnode-2/storage/metadata_devices [$meta_disk]
-    #    provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
+    #    provisioner pillar_set cluster/srvnode_2/storage/metadata_devices [$meta_disk]
+    #    provisioner pillar_set cluster/srvnode_2/storage/data_devices [$data_disk]
     #fi
     	
     # Update s3server.sls

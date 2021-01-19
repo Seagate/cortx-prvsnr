@@ -7,5 +7,5 @@ interface: {{ mgmt_if }}
 vip: {{ pillar['cluster']['mgmt_vip'] }}
 {% set cidr = salt['cmd.shell']("ip addr show {0}| grep -m 1 'inet' | awk '{{print $2}}' | cut -d '/' -f2".format(mgmt_if)) -%}
 cidr: {{ cidr }}
-left-node: srvnode-1
-right-node: srvnode-2
+left-node: srvnode_1
+right-node: srvnode_2

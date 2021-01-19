@@ -47,12 +47,12 @@ Delete common config - rabbitmq cluster to Consul:
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |
-        consul kv delete bmc/srvnode-1/ip
-        consul kv delete bmc/srvnode-1/user
-        consul kv delete bmc/srvnode-1/secret['secret']
-        consul kv delete bmc/srvnode-2/ip
-        consul kv delete bmc/srvnode-2/user
-        consul kv delete bmc/srvnode-2/secret
+        consul kv delete bmc/srvnode_1/ip
+        consul kv delete bmc/srvnode_1/user
+        consul kv delete bmc/srvnode_1/secret['secret']
+        consul kv delete bmc/srvnode_2/ip
+        consul kv delete bmc/srvnode_2/user
+        consul kv delete bmc/srvnode_2/secret
     - require:
       - Delete sspl checkpoint flag
 

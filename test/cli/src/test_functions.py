@@ -935,7 +935,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 
 
 @pytest.mark.isolated
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode_1', 'is_primary': True}})
 @pytest.mark.env_level('network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
@@ -1042,7 +1042,7 @@ def test_functions_configure_salt(
         'srv/components/provisioner/salt_minion/files/minion'
     )
     mhost.check_output(
-        'sed -i "s/^master: .*/master: srvnode-1/g" {}'
+        'sed -i "s/^master: .*/master: srvnode_1/g" {}'
         .format(minion_config_source)
     )
     mhost.check_output(
@@ -1069,7 +1069,7 @@ def test_functions_configure_salt(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode_1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "master_host",
@@ -1081,7 +1081,7 @@ def test_functions_configure_salt_master_host(
     ssh_config, remote, master_host, project_path,
     install_provisioner
 ):
-    default_cortx_salt_master = 'srvnode-1'
+    default_cortx_salt_master = 'srvnode_1'
 
     minion_id = 'some-minion-id'
     hostspec = mhost.hostname if remote else "''"
@@ -1180,7 +1180,7 @@ def test_functions_accept_salt_key_cluster(
         mhostsrvnode1.interface
     ).addresses[0]
 
-    # configure srvnode-1
+    # configure srvnode_1
     script = """
         configure_salt {0} {1} '' {2} true localhost
     """.format(
@@ -1191,7 +1191,7 @@ def test_functions_accept_salt_key_cluster(
     res = run_script(script, mhost=mhostsrvnode1)
     assert res.rc == 0
 
-    # configure srvnode-2
+    # configure srvnode_2
     script = """
         configure_salt {} '' '' {} false {}
     """.format(
@@ -1226,7 +1226,7 @@ def test_functions_accept_salt_key_cluster(
 # (TODO might need to improve)
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode_1', 'is_primary': True}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
@@ -1271,7 +1271,7 @@ def test_functions_cortx_pillar_show_skeleton(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode_1', 'is_primary': True}})
 def test_functions_cortx_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
 ):
@@ -1289,7 +1289,7 @@ def test_functions_cortx_pillar_update_fail(
 #     to split into separate tests
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode_1', 'is_primary': True}})
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(

@@ -106,12 +106,12 @@ DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_CLUSTER_SPEC = {
     'srvnode1': {
-        'hostname': 'srvnode-1',
-        'minion_id': 'srvnode-1',
+        'hostname': 'srvnode_1',
+        'minion_id': 'srvnode_1',
         'is_primary': True,
     }, 'srvnode2': {
-        'hostname': 'srvnode-2',
-        'minion_id': 'srvnode-2',
+        'hostname': 'srvnode_2',
+        'minion_id': 'srvnode_2',
         'is_primary': False,
     }
 }
@@ -501,7 +501,7 @@ def hosts_spec(request):
     return {
         'srvnode1': {
             'remote': {
-                'hostname': 'srvnode-1',
+                'hostname': 'srvnode_1',
                 'specific': {
                     'vbox': {
                         'memory': 4096,
@@ -511,11 +511,11 @@ def hosts_spec(request):
                     }
                 }
             },
-            'minion_id': 'srvnode-1',
+            'minion_id': 'srvnode_1',
             'is_primary': True,
         }, 'srvnode2': {
             'remote': {
-                'hostname': 'srvnode-2',
+                'hostname': 'srvnode_2',
                 'specific': {
                     'vbox': {
                         'memory': 4096,
@@ -525,7 +525,7 @@ def hosts_spec(request):
                     }
                 }
             },
-            'minion_id': 'srvnode-2',
+            'minion_id': 'srvnode_2',
             'is_primary': False,
         }
     }

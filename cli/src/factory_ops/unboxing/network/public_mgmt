@@ -27,8 +27,8 @@ mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 SALT_OPTS="--no-color --out-file=${LOG_FILE} --out-file-append"
 
-pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data:private_ip)
-pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data:private_ip)
+pvt_ip_a=$(get_pillar_data cluster:srvnode_1:network:data:private_ip)
+pvt_ip_b=$(get_pillar_data cluster:srvnode_2:network:data:private_ip)
 
 remotes=(
     ${pvt_ip_a}
@@ -53,8 +53,8 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    mgmt_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt:interface:0)
-    mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt:interface:0)
+    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interface:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interface:0)
 
     remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
@@ -90,13 +90,13 @@ function update_cluster_pillar_for_mgmt_ips {
     # If Configuration is DHCP. Set blank
 
     if [[ -e "/srv/glusterfs/volume_prvsnr_data/srv/pillar/groups/all/uu_cluster.sls" ]]; then
-        provisioner pillar_set --local cluster/srvnode-1/network/mgmt/public_ip \"${ip_1}\"
-        provisioner pillar_set --local cluster/srvnode-1/network/mgmt/gateway \"${gw_ip}\"
-        provisioner pillar_set --local cluster/srvnode-1/network/mgmt/netmask \"${netmask}\"
+        provisioner pillar_set --local cluster/srvnode_1/network/mgmt/public_ip \"${ip_1}\"
+        provisioner pillar_set --local cluster/srvnode_1/network/mgmt/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode_1/network/mgmt/netmask \"${netmask}\"
         
-        provisioner pillar_set --local cluster/srvnode-2/network/mgmt/public_ip \"${ip_2}\"
-        provisioner pillar_set --local cluster/srvnode-2/network/mgmt/gateway \"${gw_ip}\"
-        provisioner pillar_set --local cluster/srvnode-2/network/mgmt/netmask \"${netmask}\"
+        provisioner pillar_set --local cluster/srvnode_2/network/mgmt/public_ip \"${ip_2}\"
+        provisioner pillar_set --local cluster/srvnode_2/network/mgmt/gateway \"${gw_ip}\"
+        provisioner pillar_set --local cluster/srvnode_2/network/mgmt/netmask \"${netmask}\"
         
         # DNS servers deserves special treatment
         pillar_list_of_dns_servers=
@@ -146,10 +146,10 @@ function set_mgmt_nw_config {
 
     for remote in ${remotes[@]}; do
         if [[ ${remote} == ${pvt_ip_a} ]]; then
-            srvnode=srvnode-1
+            srvnode=srvnode_1
             node_name=Server-A
         elif [[ ${remote} == ${pvt_ip_b} ]]; then
-            srvnode=srvnode-2
+            srvnode=srvnode_2
             node_name=Server-B
         else
             # This should never be hit
@@ -185,12 +185,12 @@ function set_mgmt_dhcp_config {
     proceed_check
     _linfo "    "
 
-    # srvnode-1
+    # srvnode_1
     _linfo "Preparing cluster pillar for setting management network configuration to DHCP."    
     # Update pillar
     update_cluster_pillar_for_mgmt_ips
 
-    # Set network config to DHCP for pillar value cluster:srvnode-1:network:mgmt:interface:0
+    # Set network config to DHCP for pillar value cluster:srvnode_1:network:mgmt:interface:0
     set_mgmt_nw_config
     
     # Sanity check
@@ -203,10 +203,10 @@ function set_mgmt_dhcp_config {
 
 # 3.  If Static
 #     3.1.  IP address for public management interface (E.g. for eno1) <Mandatory>:
-#           for srvnode-1 & srvnode-2
+#           for srvnode_1 & srvnode_2
 #     3.2.  Gateway for management network <Mandatory>
 #     3.3.  BMC IP <Mandatory>
-#           for srvnode-1 & srvnode-2
+#           for srvnode_1 & srvnode_2
 function set_mgmt_static_config {
     _linfo "================================================================================"
     _linfo "Setting Management Network to Static"
@@ -216,8 +216,8 @@ function set_mgmt_static_config {
     _linfo "You have selected to proceed with static IP based configuration for management network interface."
     _linfo "    "
 
-    mgmt_if_1=$(get_pillar_data cluster:srvnode-1:network:mgmt:interface:0)
-    mgmt_if_2=$(get_pillar_data cluster:srvnode-2:network:mgmt:interface:0)
+    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interface:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interface:0)
     
     # User inputs
     read -p "Management IP for ${mgmt_if_1} on Server-A: " mgmt_ip_1
@@ -262,9 +262,9 @@ function set_mgmt_static_config {
     fi
 
     # Reset cluster value for management network
-    # srvnode-1
-    _linfo "Preparing cluster pillar for setting management network configuration to static on srvnode-1"
-    # provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt/public_ip \"${mgmt_ip_1}\"
+    # srvnode_1
+    _linfo "Preparing cluster pillar for setting management network configuration to static on srvnode_1"
+    # provsioner pillar_set provisioner pillar_set cluster/srvnode_1/network/mgmt/public_ip \"${mgmt_ip_1}\"
     update_cluster_pillar_for_mgmt_ips ${mgmt_ip_1} ${mgmt_ip_2} ${gw_ip} ${netmask} ${search_domains} ${dns_servers}
 
     set_mgmt_nw_config

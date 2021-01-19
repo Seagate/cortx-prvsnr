@@ -45,7 +45,7 @@ def test_path(request):
 
 @pytest.fixture
 def test_host_hostname():
-    return 'srvnode-1'
+    return 'srvnode_1'
 
 
 @pytest.fixture

@@ -55,8 +55,8 @@ fi
 # TODO IMPROVE current workaround is to prevent conflicts
 #              with provisioner main rpm instllation
 /bin/cat <<EOL > ssh_config
-Host srvnode-1 srvnode-1.localdomain
-    HostName srvnode-1.localdomain
+Host srvnode_1 srvnode_1.localdomain
+    HostName srvnode_1.localdomain
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
@@ -65,8 +65,8 @@ Host srvnode-1 srvnode-1.localdomain
     LogLevel ERROR
     BatchMode yes
 
-Host srvnode-2 srvnode-2.localdomain
-    HostName srvnode-2.localdomain
+Host srvnode_2 srvnode_2.localdomain
+    HostName srvnode_2.localdomain
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no

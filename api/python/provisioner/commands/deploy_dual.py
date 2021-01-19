@@ -109,8 +109,8 @@ class DeployDual(Deploy):
     setup_ctx: Optional[SetupCtx] = None
 
     def check_consul_running(self):
-        consul_map = {"srvnode-1": "hare-consul-agent-c1",
-                      "srvnode-2": "hare-consul-agent-c2"}
+        consul_map = {"srvnode_1": "hare-consul-agent-c1",
+                      "srvnode_2": "hare-consul-agent-c2"}
         result_flag = True
         for target in consul_map:
             if self.setup_ctx:

@@ -51,8 +51,8 @@
 # 6. Update hostnames in ssh config files
 #     1. Update new hostnames in /root/.ssh/config file on Server A
 #     2. Copy using scp file /root/.ssh/config from Server A to Server B
-#     3. Check ssh connectivity, from server A to server B using alias/minion id (srvnode-2)
-#     4. Check ssh connectivity, from server B to server A using alias/minion id (srvnode-1)
+#     3. Check ssh connectivity, from server A to server B using alias/minion id (srvnode_2)
+#     4. Check ssh connectivity, from server B to server A using alias/minion id (srvnode_1)
 #     5. Check, if the ssh works without password from Server A to Server B using new hostname
 #     6. Check, if the ssh works without password from Server B to Server A using new hostname
 # 7. Update minion files on both the nodes to point master to server A hostname
@@ -97,7 +97,7 @@ export ssh_cmd="ssh -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey
 export scp_cmd="scp -q -o ConnectTimeout=5 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no -i /root/.ssh/id_rsa_prvsnr"
 
 pvt_ips=("${pvt_ip_a}" "${pvt_ip_b}")
-minion_ids=("srvnode-1" "srvnode-2")
+minion_ids=("srvnode_1" "srvnode_2")
 server_names=("Server A" "Server B") #Required for logging messages
 
 # Variables for stpring inputs from user
@@ -616,7 +616,7 @@ hosts_resolution_check()
     echo "Management IP on Server A    : ${mgmt_ip_A}" | tee -a ${LOG_FILE}
 
     # Get management ip address for node2
-    mgmt_ip_B=$(($ssh_cmd ${pvt_ip_b} "ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po \"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\"" || (echo "ERROR: IP address missing for ${mgmt_if} on srvnode-2" | tee -a ${LOG_FILE}; echo 1))|head -1)
+    mgmt_ip_B=$(($ssh_cmd ${pvt_ip_b} "ip addr show dev ${mgmt_if}|grep inet|grep -v inet6|grep -Po \"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\"" || (echo "ERROR: IP address missing for ${mgmt_if} on srvnode_2" | tee -a ${LOG_FILE}; echo 1))|head -1)
     echo "Management IP on Server B    : ${mgmt_ip_B}" | tee -a ${LOG_FILE}
 
     # Get current hostnames of the servers
@@ -912,13 +912,13 @@ ssh_connectivity_check()
         return
     fi
 
-    # Check if the ssh works without password from Server A to Server B using alias (srvnode-2)
+    # Check if the ssh works without password from Server A to Server B using alias (srvnode_2)
      echo "Checking passwordless ssh connectivity from Server A to Server B using alias" | tee -a ${LOG_FILE}
-     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-2 "exit"; then
-         echo "SUCCESS: Passwordless ssh worked from Server A to Server B alias (srvnode-2)" | tee -a ${LOG_FILE}
+     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode_2 "exit"; then
+         echo "SUCCESS: Passwordless ssh worked from Server A to Server B alias (srvnode_2)" | tee -a ${LOG_FILE}
          ssh_A_to_B=true
      else
-         echo "ERROR: Could not connect Server B(srvnode-2) from Server A over ssh using alias" | tee -a ${LOG_FILE}
+         echo "ERROR: Could not connect Server B(srvnode_2) from Server A over ssh using alias" | tee -a ${LOG_FILE}
          ssh_A_to_B=false
          return
      fi
@@ -934,14 +934,14 @@ ssh_connectivity_check()
         ssh_B_to_A=false
     fi
 
-    # Check if the ssh works without password from Server B to Server A using alias (srvnode-1)
+    # Check if the ssh works without password from Server B to Server A using alias (srvnode_1)
      echo "Checking passwordless ssh connectivity from Server B to Server A using alias" | tee -a ${LOG_FILE}
-     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-2 \
-         "ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode-1 exit; exit"; then
-         echo "SUCCESS: Passwordless ssh worked from Server B (srvnode-2) to Server A (srvnode-1) using aliases" | tee -a ${LOG_FILE}
+     if ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode_2 \
+         "ssh -q -o "ConnectTimeout=5" -o  "PreferredAuthentications=publickey" srvnode_1 exit; exit"; then
+         echo "SUCCESS: Passwordless ssh worked from Server B (srvnode_2) to Server A (srvnode_1) using aliases" | tee -a ${LOG_FILE}
          ssh_B_to_A=true
      else
-         echo "ERROR: Could not connect Server A(srvnode-1) from Server B(srvnode-2) over ssh using alias" | tee -a ${LOG_FILE}
+         echo "ERROR: Could not connect Server A(srvnode_1) from Server B(srvnode_2) over ssh using alias" | tee -a ${LOG_FILE}
          ssh_B_to_A=false
          return
      fi
@@ -953,8 +953,8 @@ ssh_config_update()
     # 1. Check if hostnames are up to date in ssh config, if yes, skip step 2.
     # 2. Update new hostnames in /root/.ssh/config file on Server A
     # 3. scp /root/.ssh/config file from Server A to Server B
-    # 4. Check ssh connectivity from server A to server B using alias/minion id (srvnode-2)
-    # 5. Check ssh connectivity from server B to server A using alias/minion id (srvnode-1)
+    # 4. Check ssh connectivity from server A to server B using alias/minion id (srvnode_2)
+    # 5. Check ssh connectivity from server B to server A using alias/minion id (srvnode_1)
     # 6. Check if the ssh works without password from Server A to Server B using hostname
     # 7. Check if the ssh works without password from Server B to Server A using hostname
 
@@ -997,7 +997,7 @@ ssh_config_update()
         fi
         echo "Updating server A hostname (${hostname_A}) in ssh config file of server A" | tee -a ${LOG_FILE}
         local line_to_replace=$(grep -m1 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
-        sed -i "s|Host srvnode-1.*|Host srvnode-1 ${hostname_A}|" /root/.ssh/config
+        sed -i "s|Host srvnode_1.*|Host srvnode_1 ${hostname_A}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${hostname_A}|" /root/.ssh/config
         echo "Done" | tee -a ${LOG_FILE}
     fi
@@ -1006,7 +1006,7 @@ ssh_config_update()
         # Replace Server B entry
         echo "Updating server B hostname (${hostname_B}) in ssh config file of server A" | tee -a ${LOG_FILE}
         local line_to_replace=$(grep -m2 -noP "HostName" /root/.ssh/config|tail -1|cut -d: -f1)
-        sed -i "s|Host srvnode-2.*|Host srvnode-2 ${hostname_B}|" /root/.ssh/config
+        sed -i "s|Host srvnode_2.*|Host srvnode_2 ${hostname_B}|" /root/.ssh/config
         sed -i "${line_to_replace}s|HostName.*|HostName ${hostname_B}|" /root/.ssh/config
         echo "Done" | tee -a ${LOG_FILE}
     fi
@@ -1017,15 +1017,15 @@ ssh_config_update()
 
     # Check if the ssh works without password from Server A to Server B
     echo "Checking if the ssh works without password from Server A to Server B" | tee -a ${LOG_FILE}
-    ssh -q -o "ConnectTimeout=5" srvnode-2 exit || {
-        echo "ERROR: Server B is not reachable using alias (srvnode-2) over ssh" | tee -a ${LOG_FILE}
+    ssh -q -o "ConnectTimeout=5" srvnode_2 exit || {
+        echo "ERROR: Server B is not reachable using alias (srvnode_2) over ssh" | tee -a ${LOG_FILE}
         exit 1
     }
     echo "Done." | tee -a ${LOG_FILE}
     # Check if the ssh works without password from Server B to Server A
     echo "Checking if the ssh works without password from Server B to Server A" | tee -a ${LOG_FILE}
-    ssh -q -o "ConnectTimeout=5" srvnode-2 \
-        "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
+    ssh -q -o "ConnectTimeout=5" srvnode_2 \
+        "ssh -q -o ConnectTimeout=5 srvnode_1 exit; exit" || {
         echo "Server A is not reachable from Server B over ssh" | tee -a ${LOG_FILE}
         exit 1
     }
@@ -1075,15 +1075,15 @@ minion_config_update()
         # Check if salt '*' test.ping works
         echo "Waiting for minion on Server A to become ready" | tee -a ${LOG_FILE}
         try=1; max_tries=10
-        until salt -t 1 srvnode-1 test.ping >/dev/null 2>&1
+        until salt -t 1 srvnode_1 test.ping >/dev/null 2>&1
         do
             if [[ "$try" -gt "$max_tries" ]]; then
                 echo "
-ERROR: minion srvnode-1 seems still not ready after $max_tries attempts.\
+ERROR: minion srvnode_1 seems still not ready after $max_tries attempts.\
 Check following things:
 1. Restart salt-master service on Server A [systemctl restart salt-master]
 2. Restart salt-minion service on Server A [systemctl restart salt-minion]
-3. Restart salt-minion service on Server B [ssh srvnode-2 'systemctl restart salt-minion']
+3. Restart salt-minion service on Server B [ssh srvnode_2 'systemctl restart salt-minion']
 4. Check the status again [salt '*' test.ping]
 5. If step 4 works, rerun the pre-unbox command
 pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
@@ -1117,15 +1117,15 @@ pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}
 
         echo "Waiting for minion on Server B to become ready" | tee -a ${LOG_FILE}
         try=1; max_tries=10
-        until salt -t 1 srvnode-2 test.ping >/dev/null 2>&1
+        until salt -t 1 srvnode_2 test.ping >/dev/null 2>&1
         do
             if [[ "$try" -gt "$max_tries" ]]; then
                 echo "
-ERROR: minion srvnode-2 seems still not ready after $max_tries attempts.\
+ERROR: minion srvnode_2 seems still not ready after $max_tries attempts.\
 Check following things:
 1. restart salt-master service on Server A [systemctl restart salt-master]
 2. restart salt-minion service on Server A [systemctl restart salt-minion]
-3. restart salt-minion service on Server B [ssh srvnode-2 'systemctl restart salt-minion']
+3. restart salt-minion service on Server B [ssh srvnode_2 'systemctl restart salt-minion']
 4. check the status again [salt '*' test.ping]
 5. if step 4 works, rerun the pre-unbox command
 pre-unbox script did not run successfully, exiting." | tee -a ${LOG_FILE}

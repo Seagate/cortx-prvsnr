@@ -40,8 +40,8 @@ except ImportError:
     cortx_py_utils_import_error = True
 
 
-SRVNODE1 = "srvnode-1"
-SRVNODE2 = "srvnode-2"
+SRVNODE1 = "srvnode_1"
+SRVNODE2 = "srvnode_2"
 
 PENDING_SERVERS = frozenset({SRVNODE1, SRVNODE2})  # to make constant immutable
 
@@ -567,7 +567,7 @@ class Check(CommandParserFillerMixin):
 
         for addr in servers:
             check_entry: CheckEntry = CheckEntry(cfg.Checks.CONNECTIVITY.value)
-            # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
+            # NOTE: check ping of 'srvnode_2' from 'srvnode_1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
             #  check cross connectivity if nodes > 2 and all possible pairs
@@ -686,7 +686,7 @@ class Check(CommandParserFillerMixin):
 
         user = "root"
         for addr in servers:
-            # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
+            # NOTE: check ping of 'srvnode_2' from 'srvnode_1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
             #  check cross connectivity if nodes > 2

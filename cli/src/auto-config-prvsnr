@@ -78,7 +78,7 @@ usage()
 {
     echo "\
 Usage:
-auto-config-prvsnr { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
+auto-config-prvsnr { -s <secondary node hostname (srvnode_2)> -p <password for sec node>
                   -C <cluster-ip> -V <management VIP>
                   -t <target build url for CORTX>
                   [Optional Arguments] }
@@ -134,13 +134,13 @@ while [[ $# -gt 0 ]]; do
         -s)
             srvnode_2_host_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode-2 not provided" && exit 1;
+                echo "Error: srvnode_2 not provided" && exit 1;
             srvnode_2_host="$2"
             shift 2 ;;
         -p)
             srvnode_2_passwd_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode-2 password not provided" && exit 1;
+                echo "Error: srvnode_2 password not provided" && exit 1;
             srvnode_2_passwd="$2"
             shift 2 ;;
         -C)
@@ -270,7 +270,7 @@ install_prvsnr_cli()
     # Install cortx-prvsnr-cli rpm from cortx-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
-    if [[ "$target_node" = "srvnode-1" ]]; then
+    if [[ "$target_node" = "srvnode_1" ]]; then
         rpm -qa | grep -q cortx && {
             echo "ERROR: cortx packages are already installed"
             echo "Please clean-up previous installtion from both the nodes and retry"
@@ -298,18 +298,18 @@ install_config_prvsnr()
     set -eu
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    install_prvsnr_cli "srvnode-2"
+    install_prvsnr_cli "srvnode_2"
 
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    install_prvsnr_cli "srvnode-1"
+    install_prvsnr_cli "srvnode_1"
 
     # Run setup provisioner
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
     echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/setup-provisioner"\
-        "--srvnode-2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $LOG_FILE
-    sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
+        "--srvnode_2='$srvnode_2_host' '$tgt_build'" 2>&1 | tee -a $LOG_FILE
+    sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode_2="$srvnode_2_host" "$tgt_build" 2>&1 | tee -a $LOG_FILE
     echo "Done" 2>&1 | tee -a $LOG_FILE
 }
 

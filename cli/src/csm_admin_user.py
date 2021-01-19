@@ -18,7 +18,7 @@
 
 
 
-# test this using command : python3 csm_admin_user.py -n <srvnode-2>
+# test this using command : python3 csm_admin_user.py -n <srvnode_2>
 
 #usage: csm_admin_user.py [-h] [-c C] [-i I] [-n N]
 #
@@ -28,7 +28,7 @@
 #              /usr/bin/consul
 #  -i I        Key to User collection in csm default :
 #              cortx/base/user_collection/obj/
-#  -n N        node_id of replacing node i.e. srvnode-1/srvnode-2
+#  -n N        node_id of replacing node i.e. srvnode_1/srvnode_2
 #  --syncpass  Sync csm admin user password
  
 import subprocess
@@ -112,7 +112,7 @@ if __name__=='__main__':
     argParser.add_argument("-i", type=str, default="cortx/base/user_collection/obj/",
             help="Key to User collection in csm default : cortx/base/user_collection/obj/ ")
     argParser.add_argument("-n", type=str,
-            help="node_id of replacing node i.e. srvnode-1/srvnode-2")
+            help="node_id of replacing node i.e. srvnode_1/srvnode_2")
     argParser.add_argument("--syncpass", action='store_true',
             help="Sync csm admin user password")
     argParser.set_defaults(func=get_admin_user)

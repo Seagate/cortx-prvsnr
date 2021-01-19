@@ -162,8 +162,8 @@ def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
   health_map_file = __pillar__['sspl']['health_map_file']
 
   data = local.cmd('*', 'file.read', [source_json])
-  node1_data = json.loads(data["srvnode-1"])
-  node2_data = json.loads(data["srvnode-2"])
+  node1_data = json.loads(data["srvnode_1"])
+  node2_data = json.loads(data["srvnode_2"])
 
   node1_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"].update(node2_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"])
   local.cmd('*', 'file.mkdir',[health_map_path])

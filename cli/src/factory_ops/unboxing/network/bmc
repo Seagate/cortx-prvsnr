@@ -27,8 +27,8 @@ mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 SALT_OPTS="--no-color --out-file=${LOG_FILE} --out-file-append"
 
-pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data:private_ip)
-pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data:private_ip)
+pvt_ip_a=$(get_pillar_data cluster:srvnode_1:network:data:private_ip)
+pvt_ip_b=$(get_pillar_data cluster:srvnode_2:network:data:private_ip)
 
 remotes=(
     ${pvt_ip_a}
@@ -56,9 +56,9 @@ function set_bmc_dhcp_config {
         ssh_over_pvt_data ${remote} "sleep 30"
 
         if [[ ${remote} == ${pvt_ip_a} ]]; then
-            srvnode=srvnode-A
+            srvnode=srvnode_A
         elif [[ ${remote} == ${pvt_ip_b} ]]; then
-            srvnode=srvnode-B
+            srvnode=srvnode_B
         else
             # This should never be hit
             _lerror "This should never be seen. If you see this, there is something unexpected heppening."
@@ -112,11 +112,11 @@ function set_bmc_static_config {
         
         if [[ (${remote} == ${pvt_ip_a}) && (-n ${bmc_srv_1}) ]]; then
             # BMC settings update for node-1
-            node_name=srvnode-A
+            node_name=srvnode_A
             ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_1}"
         elif [[ (${remote} == ${pvt_ip_b}) && (-n ${bmc_srv_2}) ]]; then
             # BMC settings update for node-2
-            node_name=srvnode-B
+            node_name=srvnode_B
             ssh_over_pvt_data ${remote} "ipmitool lan set 1 ipaddr ${bmc_srv_2}"
         else
             # Do nothing

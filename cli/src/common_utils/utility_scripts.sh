@@ -92,7 +92,7 @@ function ensure_healthy_cluster {
     while /usr/bin/true; do
         hctl node status --full > /tmp/hctl_cluster_health.json
 
-        if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode-1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode-2").online' /tmp/hctl_cluster_health.json)") ]]; then
+        if [[ ("true" == "$(jq '.nodes[]|select(.name=="srvnode_1").online' /tmp/hctl_cluster_health.json)") && ("true" == "$(jq '.nodes[]|select(.name=="srvnode_2").online' /tmp/hctl_cluster_health.json)") ]]; then
             # Cluster is Online, we are part happy but would continue further with checks
             if [[ $attempt -eq 0 ]]; then 
                 _linfo " Cluster is Online.  "

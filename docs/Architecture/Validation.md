@@ -293,14 +293,14 @@ In-place validations for each components modules can and shall be performed usin
     },
     "nodes": [
       {
-        "name": "srvnode-1",
+        "name": "srvnode_1",
         "online": true,
         "standby": false,
         "unclean": false,
         "resources_running": 39
       },
       {
-        "name": "srvnode-2",
+        "name": "srvnode_2",
         "online": true,
         "standby": false,
         "unclean": false,
@@ -315,7 +315,7 @@ In-place validations for each components modules can and shall be performed usin
 
     ```
     $ pcs status | grep kibana-vip
-     kibana-vip (ocf::heartbeat:IPaddr2):       Started srvnode-1
+     kibana-vip (ocf::heartbeat:IPaddr2):       Started srvnode_1
 
     $ salt-call pillar.get cluster:cluster_ip --output=newline_values_only
     172.16.200.11
@@ -325,8 +325,8 @@ In-place validations for each components modules can and shall be performed usin
 
     ```
     $ pcs status | grep ClusterIP:
-     ClusterIP:0        (ocf::heartbeat:IPaddr2):       Started srvnode-1
-     ClusterIP:1        (ocf::heartbeat:IPaddr2):       Started srvnode-2
+     ClusterIP:0        (ocf::heartbeat:IPaddr2):       Started srvnode_1
+     ClusterIP:1        (ocf::heartbeat:IPaddr2):       Started srvnode_2
     $ salt-call pillar.get cluster:mgmt_vip --output=newline_values_only
      10.100.200.11
     ```

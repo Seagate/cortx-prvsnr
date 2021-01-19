@@ -21,7 +21,7 @@
 
 set -eu
 
-node="${1:-srvnode-1}"
+node="${1:-srvnode_1}"
 verbosity="${2:-0}"
 
 if [[ "$verbosity" -ge 2 ]]; then

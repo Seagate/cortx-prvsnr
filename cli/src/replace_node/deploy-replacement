@@ -44,7 +44,7 @@ run_restore_states=false
 run_ha_states=false
 run_add_node_states=false
 run_finalization_states=false
-tgt_node=srvnode-2
+tgt_node=srvnode_2
 
 salt_opts=
 salt_opts_dry_run=
@@ -375,10 +375,10 @@ function run_states {
                     $cmd salt "$local_node" state.apply components.$state $salt_opts
                 fi
             elif [[ $state == "sspl.health_view" ]]; then
-                l_info "Generating HealthMap Schema: srvnode-2"
-                $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
-                l_info "Generating HealthMap Schema: srvnode-1"
-                $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
+                l_info "Generating HealthMap Schema: srvnode_2"
+                $cmd salt "srvnode_2" state.apply components.sspl.health_view $salt_opts
+                l_info "Generating HealthMap Schema: srvnode_1"
+                $cmd salt "srvnode_1" state.apply components.sspl.health_view $salt_opts
                 l_info "HealthMap Schema ready for CSM."
             else
                 l_info "Applying 'components.$state' on node: ${tgt_node}"

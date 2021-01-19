@@ -6,20 +6,20 @@
 # read vm configuration(s) from JSON file
 salt_nodes = [
   {
-    "name" => "srvnode-1",
+    "name" => "srvnode_1",
     "cpus" => 2,
     "memory" => 2048,
     "mgmt0" => "172.16.10.101",
     "data0" => "172.19.10.101",
-    "minion_id" => "srvnode-1"
+    "minion_id" => "srvnode_1"
   },
   {
-    "name"=> "srvnode-2",
+    "name"=> "srvnode_2",
     "cpus"=> 2,
     "memory"=> 2048,
     "mgmt0" => "172.16.10.102",
     "data0" => "172.19.10.102",
-    "minion_id" => "srvnode-2"
+    "minion_id" => "srvnode_2"
   },
   {
     "name"=> "s3client",
@@ -235,35 +235,35 @@ Vagrant.configure("2") do |config|
 
           touch /etc/salt/minion_id
           echo #{node["minion_id"]} |tee /etc/salt/minion_id
-          [ '#{node["minion_id"]}' == 'srvnode-1' ] && salt-key -D -y
+          [ '#{node["minion_id"]}' == 'srvnode_1' ] && salt-key -D -y
           sudo systemctl restart salt-minion
           sleep 2
           sudo salt-key -A -y
           sleep 2
 
-          #sudo salt srvnode-1 state.apply components.system
-          #sudo salt srvnode-1 state.apply components.system.storage
+          #sudo salt srvnode_1 state.apply components.system
+          #sudo salt srvnode_1 state.apply components.system.storage
           
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.build_ssl_cert_rpms
           # HA component
-          #sudo salt srvnode-1 state.apply components.ha.corosync-pacemaker
-          #sudo salt srvnode-1 state.apply components.ha.haproxy
+          #sudo salt srvnode_1 state.apply components.ha.corosync-pacemaker
+          #sudo salt srvnode_1 state.apply components.ha.haproxy
           # Others
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.consul
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.elasticsearch
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.kibana
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.statsd
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.nodejs
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.consul
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.elasticsearch
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.kibana
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.statsd
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.nodejs
+          #sudo salt srvnode_1 state.apply components.misc_pkgs.openldap
           
           # IP path components
-          #sudo salt srvnode-1 state.apply components.motr
-          #sudo salt srvnode-1 state.apply components.s3server
-          #sudo salt srvnode-1 state.apply components.hare
+          #sudo salt srvnode_1 state.apply components.motr
+          #sudo salt srvnode_1 state.apply components.s3server
+          #sudo salt srvnode_1 state.apply components.hare
 
           # Management path components
-          #sudo salt srvnode-1 state.apply components.sspl
-          #sudo salt srvnode-1 state.apply components.csm
+          #sudo salt srvnode_1 state.apply components.sspl
+          #sudo salt srvnode_1 state.apply components.csm
 
         SHELL
 

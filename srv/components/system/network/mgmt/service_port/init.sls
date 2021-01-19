@@ -19,8 +19,8 @@
 {% if pillar['cluster'][node]['network']['mgmt']['interface'][1] is defined %}
 # Check if the extra NIC is provided in cluster pillar
 # for configuration as service port
-  {%- if "srvnode-1" in grains['id'] %}
-  # Apply only on srvnode-1
+  {%- if "srvnode_1" in grains['id'] %}
+  # Apply only on srvnode_1
 
 Public direct network:
   network.managed:
