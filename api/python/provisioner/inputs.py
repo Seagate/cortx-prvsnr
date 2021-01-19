@@ -467,15 +467,18 @@ class Release(ParamGroupInputBase):
 
 
 class StorageEnclosureParams():
-    _param_group = 'storage_enclosure'
+    _param_group = 'storage'
+    enclosure_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Enclosure ID"
+    )
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Type of storage"
     )
-    primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    primary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller A IP",
         validator=Validation.check_ip4
     )
-    secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    secondary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller B IP",
         validator=Validation.check_ip4
     )
@@ -493,8 +496,8 @@ class StorageEnclosureParams():
 
 @attr.s(auto_attribs=True)
 class StorageEnclosure(ParamGroupInputBase):
-    controller_a_ip: str = StorageEnclosureParams.primary_mc_ip
-    controller_b_ip: str = StorageEnclosureParams.secondary_mc_ip
+    controller_a_ip: str = StorageEnclosureParams.primary_ip
+    controller_b_ip: str = StorageEnclosureParams.secondary_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
 

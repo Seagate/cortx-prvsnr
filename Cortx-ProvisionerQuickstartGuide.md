@@ -552,12 +552,6 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
   
   6. Prepare the CORTX deployment configuration file: cluster.sls
     
-      ```
-    	  WIP:  
-          1. Auto-update hostname in /opt/seagate/cortx/provisioner/pillar/components/cluster.sls 
-          2. Auto-update section ['cluster']['storage_enclosure'] once inband is setup between server and storage.
-          3. Freeze section ['cluster']['srvnode_1']['network'] to use mgmt0 and data0 established using kickstart
-       ```
       **Example:** hostname of server node, network interface for management, and data channels, storage enclosure details, etc.  
     
        1. Check network interfaces:
@@ -574,7 +568,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 		
 		 ```shell
 		 
-		   [root@eos-democ-197 /]# ip r
+		   [root@democ-197 /]# ip r
                    default via 10.230.160.1 dev eth0 proto dhcp metric 100 
                    10.230.160.0/21 dev eth0 proto kernel scope link src 10.230.161.141 metric 100 
                    192.168.0.0/24 dev eth1 proto kernel scope link src 192.168.0.194 metric 101
@@ -591,16 +585,16 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 	 
           network:
             mgmt:                  # Management network interfaces
-              interface:
+              interfaces:
                 - eno1
                 - eno2
-              ipaddr: 
+              public_ip: 
               netmask: 
             data:                  # Data network interfaces
-              interface: 
+              interfaces: 
                 - enp175s0f0
                 - enp175s0f0
-              ipaddr: 172.19.10.101
+              public_ip: 172.19.10.101
               netmask: 255.255.255.0
             gateway_ip: 10.230.160.1              # Gateway IP of network
           ```  
@@ -610,14 +604,14 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
           ```
           network:
             mgmt:                  # Management network interfaces
-              interface:
+              interfaces:
                 - eno1
-              ipaddr: 
+              public_ip: 
               netmask: 
             data:                  # Data network interfaces
-              interface: 
+              interfaces: 
                 - bond0
-              ipaddr:
+              public_ip:
               netmask: 255.255.255.0
             gateway_ip: 10.230.160.1              # Gateway IP of network
           ```  
@@ -642,29 +636,29 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
             		is_primary: true
             		network:
               		mgmt:                  # Management network interfaces
-                		interface:	- eth0
-                		ipaddr: 
+                		interfaces:	- eth0
+                		public_ip: 
                 		netmask: 255.255.255.0
               		data:                  # Data network interfaces
-                		interface: - eth1
-                		ipaddr: 
+                		interfaces: - eth1
+                		public_ip: 
                 		netmask: 255.255.255.0
               		floating_ip:
               		gateway_ip:               # Gateway IP of network
             		storage:
               		metadata_devices:                # Device for /var/mero and possibly SWAP - /dev/sdb
               		data_devices:                   # Data device/LUN from storage enclosure - /dev/sdc
-          		storage_enclosure:
-            		id: storage_node_1            # equivalent to fqdn for server node
-            		type: RBOD                    # Type of enclosure. E.g. RBOD
-              		primary
-                		ip: 127.0.0.1
-                		port: 80
-              		secondary_mc:
-                		ip: 127.0.0.1
-                		port: 80
-              		user: user
-              		password: 'passwd'
+            storage:
+               enclosure_1:            # equivalent to fqdn for server node
+                  type: RBOD                    # Type of enclosure. E.g. RBOD
+                  primary:
+                     ip: 127.0.0.1
+                     port: 80
+                  secondary:
+                     ip: 127.0.0.1
+                     port: 80
+                  user: user
+                  secret: 'passwd'
  		    ```
 	
  			:page_with_curl: **NoteS**: 

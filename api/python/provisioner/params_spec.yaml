@@ -29,26 +29,26 @@ network:
   #'key_path': ('cluster', 'srvnode_2', 'network', 'data', 'public_ip'),
   # TODO use nested group to reduce copy-paste in paths
   primary_hostname: cluster/srvnode_1/hostname
-  primary_floating_ip: cluster/srvnode_1/network/floating_ip
-  primary_mgmt_ip: cluster/srvnode_1/network/mgmt/ipaddr
+  primary_roaming_ip: cluster/srvnode_1/network/data/roaming_ip
+  primary_mgmt_ip: cluster/srvnode_1/network/mgmt/public_ip
   primary_mgmt_netmask: cluster/srvnode_1/network/mgmt/netmask
   primary_mgmt_gateway: cluster/srvnode_1/network/mgmt/gateway
   primary_data_ip: cluster/srvnode_1/network/data/public_ip
   primary_data_netmask: cluster/srvnode_1/network/data/netmask
   primary_data_gateway: cluster/srvnode_1/network/data/gateway
-  primary_data_network_iface: cluster/srvnode_1/network/data/interface
+  primary_data_network_interfaces: cluster/srvnode_1/network/data/interfaces
   primary_bmc_ip: cluster/srvnode_1/bmc/ip
   primary_bmc_user: cluster/srvnode_1/bmc/user
   primary_bmc_secret: cluster/srvnode_1/bmc/secret
   secondary_hostname: cluster/srvnode_2/hostname
-  secondary_floating_ip: cluster/srvnode_2/network/floating_ip
-  secondary_mgmt_ip: cluster/srvnode_2/network/mgmt/ipaddr
+  secondary_roaming_ip: cluster/srvnode_2/network/data/roaming_ip
+  secondary_mgmt_ip: cluster/srvnode_2/network/mgmt/public_ip
   secondary_mgmt_netmask: cluster/srvnode_2/network/mgmt/netmask
   secondary_mgmt_gateway: cluster/srvnode_2/network/mgmt/gateway
   secondary_data_ip: cluster/srvnode_2/network/data/public_ip
   secondary_data_netmask: cluster/srvnode_2/network/data/netmask
   secondary_data_gateway: cluster/srvnode_2/network/data/gateway
-  secondary_data_network_iface: cluster/srvnode_2/network/data/interface 
+  secondary_data_network_interfaces: cluster/srvnode_2/network/data/interfaces
   secondary_bmc_ip: cluster/srvnode_2/bmc/ip
   secondary_bmc_user: cluster/srvnode_2/bmc/user
   secondary_bmc_secret: cluster/srvnode_2/bmc/secret
@@ -57,12 +57,12 @@ release:
   _path: release.sls
   target_build: release/target_build
 
-storage_enclosure:
-  _path: storage_enclosure.sls
-  controller_a_ip: storage_enclosure/controller/primary/ip
-  controller_b_ip: storage_enclosure/controller/secondary_mc/ip
-  controller_user: storage_enclosure/controller/user
-  controller_secret: storage_enclosure/controller/secret
+storage:
+  _path: storage.sls
+  controller_a_ip: storage/enclosure_1/primary/ip
+  controller_b_ip: storage/enclosure_1/secondary/ip
+  controller_user: storage/enclosure_1/user
+  controller_secret: storage/enclosure_1/secret
 
 swupdate:
   _path: release.sls

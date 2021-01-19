@@ -16,7 +16,7 @@
 #
 
 {% set node = grains['id'] %}
-{% if pillar['cluster'][node]['network']['mgmt']['interface'][1] is defined %}
+{% if pillar['cluster'][node]['network']['mgmt']['interfaces'][1] is defined %}
 # Check if the extra NIC is provided in cluster pillar
 # for configuration as service port
   {%- if "srvnode_1" in grains['id'] %}
@@ -24,8 +24,8 @@
 
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['mgmt']['interface'][1] }}
-    - device: {{ pillar['cluster'][node]['network']['mgmt']['interface'][1] }}
+    - name: {{ pillar['cluster'][node]['network']['mgmt']['interfaces'][1] }}
+    - device: {{ pillar['cluster'][node]['network']['mgmt']['interfaces'][1] }}
     - type: eth
     - enabled: True
     - onboot: yes
@@ -45,5 +45,5 @@ Public direct network:
 {% else %}
 Network interface for service port not specified:
   test.show_notification:
-    - text: "A dedicated network interface for service port not specified in cluster pillar. Please contact Seagate support to help specify a second interface in addtion to {{ pillar['cluster'][node]['network']['mgmt']['interface'][0] }} and re-run this state formula."
+    - text: "A dedicated network interface for service port not specified in cluster pillar. Please contact Seagate support to help specify a second interface in addtion to {{ pillar['cluster'][node]['network']['mgmt']['interfaces'][0] }} and re-run this state formula."
 {% endif %}

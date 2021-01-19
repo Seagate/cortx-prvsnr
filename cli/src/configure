@@ -83,7 +83,7 @@ function positional_args_parser {
 
     if [[ $# -eq 1 ]]; then
         case "$1" in
-            cluster|commons|controller|corosync-pacemaker|elasticsearch|motr|haproxy|keepalived|openldap|rabbitmq.sls|release|rsyslog.sls|s3clients|s3server|sspl|storage_enclosure.sls|system|uds)
+            cluster|commons|controller|corosync-pacemaker|elasticsearch|motr|haproxy|keepalived|openldap|rabbitmq|release|rsyslog|s3clients|s3server|sspl|storage|system|uds)
                 component=$1
                 ;;
             *)

@@ -106,7 +106,7 @@ Public data zone:
       - {{ service }}
       {% endfor %}
     - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['data']['interface'][0] }}
+      - {{ pillar['cluster'][grains['id']]['network']['data']['interfaces'][0] }}
     # - rich_rules:
     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
@@ -119,7 +119,7 @@ Private data zone:
   firewalld.present:
     - name: trusted
     - interfaces:
-      - {{ pillar['cluster'][grains['id']]['network']['data']['interface'][1] }}
+      - {{ pillar['cluster'][grains['id']]['network']['data']['interfaces'][1] }}
     - default: False
     - sources:
       - 127.0.0.0/24
@@ -135,7 +135,7 @@ Private data zone:
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
 {% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interface'][0] -%}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {% endif %}
 # Add management zone:
 #   cmd.run:
@@ -164,9 +164,9 @@ Management zone:
       - {{ mgmt_if }}
     - port_fwd:
       {% if pillar['cluster'][grains['id']]['is_primary'] %}
-      - {{ pillar['storage_enclosure']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['primary']['ip'] }}
+      - {{ pillar['storage']['enclosure_1']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure_1']['primary']['ip'] }}
       {% else %}
-      - {{ pillar['storage_enclosure']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['secondary_mc']['ip'] }}
+      - {{ pillar['storage']['enclosure_1']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure_1']['secondary']['ip'] }}
       {% endif %}
     - require:
       # - Add management zone

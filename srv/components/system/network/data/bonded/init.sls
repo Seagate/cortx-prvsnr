@@ -22,7 +22,7 @@ Ensure bonding config for data bond:
     - contents: options bonding max_bonds=0
 
 # Setup network for data interfaces
-{% for interface in pillar['cluster'][node]['network']['data']['interface'] %}
+{% for interface in pillar['cluster'][node]['network']['data']['interfaces'] %}
 {{ interface }}:
   network.managed:
     - device: {{ interface }}

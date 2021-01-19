@@ -52,7 +52,7 @@
 {#% if not pillar['cluster'][grains['id']]['network']['mgmt']['public_ip'] %#}
 # Start dhclient:
 #   cmd.run:
-#     - name: dhclient -1 -q -H $(hostname -s) {{ pillar['cluster'][grains['id']]['network']['mgmt']['interface'][0] }}
+#     - name: dhclient -1 -q -H $(hostname -s) {{ pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] }}
 #     - unless: pgrep dhclient
 #     - onchanges:
 #       - Kill dhclient

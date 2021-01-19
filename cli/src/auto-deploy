@@ -134,7 +134,7 @@ echo "\
 2. Ensure the setup is clean and no cortx rpms are installed.
 3. Ensure the ~/.ssh directory is empty.
 4. If optional arguments are skipped the default values in cluster.sls and
-storage_enclosure.sls are used.
+storage.sls are used.
 5. Ensure the BMC user and password are same for both nodes in the cluster.
 
 -------- Sample command ---------
@@ -384,8 +384,8 @@ update_pillar()
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_1/network/data/interface [\"${pub_din}\",\ \"${pvt_din}\"]
-        provisioner pillar_set cluster/srvnode_2/network/data/interface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode_1/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode_2/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
     fi
 
     #Update interface ips
@@ -421,31 +421,31 @@ update_pillar()
         provisioner pillar_set cluster/srvnode_2/bmc/secret \"${bmc2_passwd}\"
     fi
 
-    #Update storage_enclosure pillar
+    #Update storage pillar
     echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/primary/ip \"${ctrl_a_ip}\"
+        provisioner pillar_set storage/enclosure_1/primary/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/secondary_mc/ip \"${ctrl_b_ip}\"
+        provisioner pillar_set storage/enclosure_1/secondary/ip \"${ctrl_b_ip}\"
     fi
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
         echo "Updating controller user" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/user \"${ctrl_user}\"
+        provisioner pillar_set storage/enclosure_1/user \"${ctrl_user}\"
     fi
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
         echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/secret \"${ctrl_passwd}\"
+        provisioner pillar_set storage/enclosure_1/secret \"${ctrl_passwd}\"
     fi
 
     # Update s3client.sls

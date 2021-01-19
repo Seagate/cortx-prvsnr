@@ -41,13 +41,13 @@ cluster:
       secret:
     network:
       mgmt:                        # Management network interfaces
-        inetrfaces:
+        interfaces:
           - eth0
         public_ip:               # DHCP is assumed if left blank
         netmask:
         gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data:                        # Data network interfaces
-        inetrfaces:
+        interfaces:
           - eth1                      # Public Data
           - eth2                       # Private Data (direct connect)
         public_ip:               # DHCP is assumed if left blank

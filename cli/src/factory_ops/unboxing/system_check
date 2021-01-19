@@ -88,7 +88,7 @@ function check_hostname {
 }
 
 function check_pvt_data_connectivity {
-    # local private_data_if=$(grep -m1 -A5 -P "data:" ${cluster_sls_path}|grep -A2 "interface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    # local private_data_if=$(grep -m1 -A5 -P "data:" ${cluster_sls_path}|grep -A2 "interfaces:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     echo "      Private n/w IP (Server A): $pvt_ip_a" | tee -a ${LOG_FILE}
     echo "      Private n/w IP (Server B): $pvt_ip_b" | tee -a ${LOG_FILE}

@@ -967,11 +967,13 @@ class FWUpdate(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO: Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure_1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
@@ -1214,11 +1216,13 @@ class RebootController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO:Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure_1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
@@ -1263,11 +1267,13 @@ class ShutdownController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO:Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure_1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))

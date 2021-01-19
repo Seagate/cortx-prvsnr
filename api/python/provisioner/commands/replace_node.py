@@ -219,7 +219,7 @@ class ReplaceNode(SetupProvisioner):
         setup_ctx.ssh_client.cmd_run(
             (
                 'provisioner pillar_set --fpath cluster.sls '
-                f'cluster/replace_node/minion_id \'"{run_args.node_id}"\''
+                f'cluster/replace_node/minion_id \"{run_args.node_id}\"'
             ), targets=run_args.node_id
         )
 

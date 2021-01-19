@@ -22,7 +22,7 @@
 # 3. Get the controller IPs from user as an input
 #     3.1 Prompt user to provide IP address for controller A
 #     3.2 Prompt user to provide IP address for controller B
-#     3.3 Update the IP addresses in storage_enclosure pillar
+#     3.3 Update the IP addresses in storage pillar
 #         3.1 If the ips provided by user matches the current values in pillar, do nothing.
 # 4. Check, if the hostname contains 'seagate.com', if yes, take input for new hostname
 #     4.1 Get the current hostname
@@ -267,7 +267,7 @@ ctrl_ip_addr_get_set()
 {
     # 1.  Prompt user to provide IP address for controller A
     # 2.  Prompt user to provide IP address for controller B
-    # 3.  Update the IP addresses in storage_enclosure pillar
+    # 3.  Update the IP addresses in storage pillar
     # 3.1 If the ips provided by user matches the current values in pillar, do nothing.
 
     echo "Please provide the IP addresses for storage enclosure (should be already configured)" | tee -a ${LOG_FILE}
@@ -296,8 +296,8 @@ ctrl_ip_addr_get_set()
         fi
     done
 
-    #Update the storage_enclosure pillar with new controller IP.
-    _storage_encl_sls_path="${pillar_root}/uu_storage_enclosure.sls"
+    #Update the storage pillar with new controller IP.
+    _storage_encl_sls_path="${pillar_root}/uu_storage.sls"
     if [[ ! -f "${_storage_encl_sls_path}" ]]; then
         echo "ERROR: \"${_storage_encl_sls_path}\" no such file or directory"
         exit 1
@@ -336,7 +336,7 @@ ctrl_ip_addr_get_set()
     echo "Done" | tee -a ${LOG_FILE}
 
     echo "Updating storage enclosure pillar with new controller B IP address" | tee -a ${LOG_FILE}
-    _current_ip=$(grep -A1 secondary_mc ${_storage_encl_sls_path} | tail -1 | awk '{ print $2 }')
+    _current_ip=$(grep -A1 secondary ${_storage_encl_sls_path} | tail -1 | awk '{ print $2 }')
     cat ${_storage_encl_sls_path} | sed -e "s/${_current_ip}/${ctrl_ip_b}/" > /tmp/ctrlb-sed.tmp
     diff_lines=$(diff ${_storage_encl_sls_path} /tmp/ctrlb-sed.tmp | grep "<" | wc -l)
     #Check and ensure there is only one line change in the diff
@@ -599,7 +599,7 @@ hosts_resolution_check()
         echo "ERROR: \"${_cluster_sls_path}\" no such file or directory"
         exit 1
     fi
-    local mgmt_if=$(grep -m1 -A3 -P "mgmt:" ${_cluster_sls_path}|grep -A1 "interface:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
+    local mgmt_if=$(grep -m1 -A3 -P "mgmt:" ${_cluster_sls_path}|grep -A1 "interfaces:"|tail -1|cut -d'-' -f2|tr -d "[:space:]")
 
     if [[ -z "$mgmt_if" ]]; then
         if ip -o addr | grep -q eno1; then

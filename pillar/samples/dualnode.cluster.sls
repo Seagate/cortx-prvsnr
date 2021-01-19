@@ -67,8 +67,8 @@ cluster:
     site_id:
     storage_set_id:
     node_id:
-    roles:
-      - secondary
+    machine_id:
+    is_primary: false
     bmc:
       ip:
       user: ADMIN

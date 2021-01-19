@@ -1053,13 +1053,13 @@ class Check(CommandParserFillerMixin):
 
             try:
                 # Get list data network interfaces
-                interface = Check._get_pillar_data(
-                    f"cluster/{node}/network/data/interface")
+                interfaces = Check._get_pillar_data(
+                    f"cluster/{node}/network/data/interfaces")
 
-                ifc = [ifc for ifc in interface if 's0f0' in ifc]
+                ifc = [ifc for ifc in interfaces if 's0f0' in ifc]
 
                 if ifc:
-                    # Get IP address assigned to interface
+                    # Get IP address assigned to interfaces
                     cmd = _IP_DEV_IFACE_TMPL.format(ifc=ifc[0])
                     _ip = cmd_run(cmd, targets=node,
                                   fun_kwargs=dict(python_shell=True))
@@ -1073,8 +1073,8 @@ class Check(CommandParserFillerMixin):
                 else:
                     check_ret.set_fail(checked_target=node,
                                        comment=("Public data interface "
-                                                "'s0f0' not found. interface "
-                                                f"available: {interface}"))
+                                                "'s0f0' not found. interfaces "
+                                                f"available: {interfaces}"))
             except Exception as exc:
                 check_ret.set_fail(checked_target=node, comment=str(exc))
 
@@ -1112,14 +1112,19 @@ class Check(CommandParserFillerMixin):
             check_ret: CheckEntry = CheckEntry(cfg.Checks.CONTROLLER_IP.value)
 
             try:
-                primary_mc_ip = Check._get_pillar_data(
-                                "storage_enclosure/controller/primary/ip")
-                secondary_mc_ip = Check._get_pillar_data(
-                                "storage_enclosure/controller/secondary_mc/ip")
+                # TODO: Update logic to dynamically identify
+                # enclosure_id from node_id
+                enclosure = "enclosure_1"
+                primary_ip = Check._get_pillar_data(
+                                f"storage/{enclosure}/primary/ip"
+                            )
+                secondary_ip = Check._get_pillar_data(
+                                f"storage/{enclosure}/secondary/ip"
+                            )
 
                 # Check for connectivity of received IPs
                 NetworkV().validate('connectivity',
-                                    [primary_mc_ip, secondary_mc_ip])
+                                    [primary_ip, secondary_ip])
             except Exception as exc:
                 check_ret.set_fail(checked_target=node, comment=str(exc))
             else:

@@ -1,7 +1,7 @@
 {% if 'eth0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['eth0'] %}
   {%- set mgmt_if = 'eth0' -%}
 {% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interface'][0] -%}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {%- endif -%}
 interface: {{ mgmt_if }}
 vip: {{ pillar['cluster']['mgmt_vip'] }}

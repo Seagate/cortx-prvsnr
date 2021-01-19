@@ -137,7 +137,7 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param dns_servers: (optional) list of dns servers
     :param search_domains: (optional) list of search domains
     :param primary_hostname: (optional) primary node hostname
-    :param primary_floating_ip: (optional) primary node floating ip address
+    :param primary_roaming_ip: (optional) primary node roaming ip address
     :param primary_mgmt_ip: (optional) primary node management interface ip address
     :param primary_mgmt_netmask: (optional) primary node management
         interface netmask
@@ -146,7 +146,7 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param primary_data_netmask: (optional) primary node data interface netmask
     :param primary_data_gateway: (optional) primary node data interface gateway
     :param secondary_hostname: (optional) secondary node hostname
-    :param secondary_floating_ip: (optional) secondary node floating ip address
+    :param secondary_roaming_ip: (optional) secondary node roaming ip address
     :param secondary_mgmt_ip: (optional) secondary node management
         interface ip address
     :param secondary_mgmt_netmask: (optional) secondary node management

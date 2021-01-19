@@ -153,7 +153,7 @@ PRVSNR_CORTX_COMPONENTS = [
     's3clients',
     's3server',
     'sspl',
-    'storage_enclosure',
+    'storage',
     'system',
     'uds'
 ]

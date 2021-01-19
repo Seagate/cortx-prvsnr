@@ -44,27 +44,30 @@ Delete common config - rabbitmq cluster to Consul:
     - require:
       - Delete sspl checkpoint flag
 
+{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode_" in node] %}
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |
-        consul kv delete bmc/srvnode_1/ip
-        consul kv delete bmc/srvnode_1/user
-        consul kv delete bmc/srvnode_1/secret['secret']
-        consul kv delete bmc/srvnode_2/ip
-        consul kv delete bmc/srvnode_2/user
-        consul kv delete bmc/srvnode_2/secret
+    {% for node_id in server_nodes %}
+        consul kv delete bmc/{{ node_id }}/ip
+        consul kv delete bmc/{{ node_id }}/user
+        consul kv delete bmc/{{ node_id }}/secret['secret']
+    {% endfor %}
     - require:
       - Delete sspl checkpoint flag
 
+{% enclosures = [enclosure for enclosure in pillar['storage'].keys() if "enclosure_" in enclosure] %}
 Delete common config - storage enclosure to Consul:
   cmd.run:
     - name: |
-        consul kv delete storage_enclosure/controller/primary/ip
-        consul kv delete storage_enclosure/controller/primary/port
-        consul kv delete storage_enclosure/controller/secondary_mc/ip
-        consul kv delete storage_enclosure/controller/secondary_mc/port
-        consul kv delete storage_enclosure/controller/user
-        consul kv delete storage_enclosure/controller/password
+{% for enclosure_id in enclosures %}
+        consul kv delete storage/{{ enclosure_id }}/primary/ip
+        consul kv delete storage/{{ enclosure_id }}/primary/port
+        consul kv delete storage/{{ enclosure_id }}/secondary/ip
+        consul kv delete storage/{{ enclosure_id }}/secondary/port
+        consul kv delete storage/{{ enclosure_id }}/user
+        consul kv delete storage/{{ enclosure_id }}/password
+{% endfor %}
     - require:
       - Delete sspl checkpoint flag
 

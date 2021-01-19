@@ -21,7 +21,7 @@
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {%- set mgmt_if = 'mgmt0' -%}
 {% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interface'][0] -%}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {%- endif -%}
 include:
   - .start
@@ -52,8 +52,8 @@ Remove public data interfaces:
 Remove public and private data interfaces:
   cmd.run:
     - names:
-      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data']['interface'][0] }} --zone=public-data-zone --permanent
-      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data']['interface'][1] }} --zone=trusted --permanent
+      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data']['interfaces'][0] }} --zone=public-data-zone --permanent
+      - firewall-cmd --remove-interface={{ pillar['cluster'][grains['id']]['network']['data']['interfaces'][1] }} --zone=trusted --permanent
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service

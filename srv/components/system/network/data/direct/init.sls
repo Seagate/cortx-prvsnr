@@ -26,9 +26,9 @@
 
 Private direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data']['interface'][1] }}
+    - name: {{ pillar['cluster'][node]['network']['data']['interfaces'][1] }}
     - enabled: True
-    - device: {{ pillar['cluster'][node]['network']['data']['interface'][1] }}
+    - device: {{ pillar['cluster'][node]['network']['data']['interfaces'][1] }}
     - type: eth
     - onboot: yes
     - defroute: no

@@ -310,7 +310,7 @@ def test_set_network():
 
     pillar_nw_primary_mgmt_ip = pillar[
         'srvnode_1'
-    ]['cluster']['srvnode_1']['network']['mgmt']['ipaddr']
+    ]['cluster']['srvnode_1']['network']['mgmt']['public_ip']
     pillar_nw_primary_data_ip = pillar[
         'srvnode_1'
     ]['cluster']['srvnode_1']['network']['data']['public_ip']

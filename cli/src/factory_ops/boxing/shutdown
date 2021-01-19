@@ -108,11 +108,11 @@ function shutdown_controller {
 
     local ctrl_cli="/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
     
-    local ctrl_user=$(get_pillar_data storage_enclosure:controller:user)
-    local ctrl_secret=$(get_pillar_data storage_enclosure:controller:secret)
-    local ctrl_ip=$(get_pillar_data storage_enclosure:controller:primary:ip)
+    local ctrl_user=$(get_pillar_data storage:enclosure_1:user)
+    local ctrl_secret=$(get_pillar_data storage:enclosure_1:secret)
+    local ctrl_ip=$(get_pillar_data storage:enclosure_1:primary:ip)
     if [[ "$(salt-call grains.get id --output=newline_values_only)" == "srvnode_2" ]]; then
-        ctrl_ip=$(get_pillar_data storage_enclosure:controller:secondary_mc:ip)
+        ctrl_ip=$(get_pillar_data storage:enclosure_1:secondary:ip)
     fi
 
     if [[ "$_node" == "node1" ]]; then

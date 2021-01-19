@@ -53,8 +53,8 @@ function backup_ifcfg {
 
 function test_mgmt_ips {
     _linfo "Fetching IP of the nodes"
-    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interface:0)
-    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interface:0)
+    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interfaces:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interfaces:0)
 
     remote_mgmt_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     remote_mgmt_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${mgmt_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
@@ -157,7 +157,7 @@ function set_mgmt_nw_config {
             exit 23
         fi
 
-        mgmt_if=$(get_pillar_data cluster:${srvnode}:network:mgmt:interface:0)
+        mgmt_if=$(get_pillar_data cluster:${srvnode}:network:mgmt:interfaces:0)
         _linfo "Setting up network on ${srvnode} for interface: ${mgmt_if}"
         backup_ifcfg ${remote} ${mgmt_if}
         
@@ -190,7 +190,7 @@ function set_mgmt_dhcp_config {
     # Update pillar
     update_cluster_pillar_for_mgmt_ips
 
-    # Set network config to DHCP for pillar value cluster:srvnode_1:network:mgmt:interface:0
+    # Set network config to DHCP for pillar value cluster:srvnode_1:network:mgmt:interfaces:0
     set_mgmt_nw_config
     
     # Sanity check
@@ -216,8 +216,8 @@ function set_mgmt_static_config {
     _linfo "You have selected to proceed with static IP based configuration for management network interface."
     _linfo "    "
 
-    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interface:0)
-    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interface:0)
+    mgmt_if_1=$(get_pillar_data cluster:srvnode_1:network:mgmt:interfaces:0)
+    mgmt_if_2=$(get_pillar_data cluster:srvnode_2:network:mgmt:interfaces:0)
     
     # User inputs
     read -p "Management IP for ${mgmt_if_1} on Server-A: " mgmt_ip_1

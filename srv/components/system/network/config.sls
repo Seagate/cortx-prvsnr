@@ -42,7 +42,7 @@ No DNS config to apply:
 #   cmd.run:
 #     - name: |
 #         pkill -9 dhclient
-#         dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt']['interface'][0] }}
+#         dhclient {{ pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] }}
 
 include:
   - components.system.network.prepare

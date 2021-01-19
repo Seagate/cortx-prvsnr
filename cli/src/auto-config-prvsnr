@@ -115,7 +115,7 @@ help()
 2. Ensure the setup is clean and no cortx rpms are installed.
 3. Ensure the ~/.ssh directory is empty.
 4. If optional arguments are skipped the default values in cluster.sls and
-   storage_enclosure.sls are used.
+   storage.sls are used.
 5. Ensure the BMC user and password are same for both nodes in the cluster.
 
 -------- Sample command ---------
@@ -390,10 +390,10 @@ update_pillar()
         sed -ie "${line_n2_bmc_passwd}s/.*/      secret: ${bmc2_passwd}/" $_cluster_sls_path
     fi
 
-    #Update storage_enclosure pillar
+    #Update storage pillar
     echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
-    _storage_sls_path="/opt/seagate/cortx/provisioner/pillar/components/storage_enclosure.sls"
+    _storage_sls_path="/opt/seagate/cortx/provisioner/pillar/components/storage.sls"
     cp $_storage_sls_path ${_storage_sls_path}.orig
 
     #Update controller_ip1
@@ -407,7 +407,7 @@ update_pillar()
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        field="secondary_mc"
+        field="secondary"
         line=`grep -A1 -n "${field}:" $_storage_sls_path | tail -1 | cut -f1 -d-`
         sed -ie "${line}s/.*/      ip: ${ctrl_b_ip}/" $_storage_sls_path
     fi

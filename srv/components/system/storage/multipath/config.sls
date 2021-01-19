@@ -39,12 +39,16 @@ Copy multipath config:
 #   cmd.run:
 #     - name: multipath -F
 
-{% if not 'JBOD' in pillar["storage_enclosure"]["type"] %}
+
+{% set enclosure_id = "enclosure_" + ((grains['id']).split('_'))[1] %}
+{% if not 'JBOD' in pillar["storage"][enclosure_id]["type"] %}
 {% if (not pillar['cluster'][grains['id']]['is_primary'])
     or (pillar['cluster']['replace_node']['minion_id']
     and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
-{% set node_id = (pillar['cluster']['node_list'] | difference(grains['id']))[0] %}
+
+{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode_" in node] %}
+{% set node_id = (server_nodes | difference(grains['id']))[0] %}
 # Execute only on Secondary node
 Copy multipath bindings:
   cmd.run:

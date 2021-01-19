@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if (pillar['cluster'][node]['network']['mgmt'ipaddr']) and (not pillar['cluster'][grains['id']]['network']['mgmmgmtteway']) %}
+{%- if (pillar['cluster'][node]['network']['mgmt'ipaddr']) and (not pillar['cluster'][grains['id']]['network']['mgmt']['gateway']) %}
 Management network config failure:
   test.fail_without_changes:
     - name: Static network configuration in absense of Gateway IP would result in node inaccessibility.
@@ -29,7 +29,7 @@ Ensure bonding config for management bond:
     - contents: options bonding max_bonds=0
 
 # Setup network for management interfaces
-{% for interface in pillar['cluster'][node]['network']['mgmt'interface'] %}
+{% for interface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
 {{ interface }}:
   network.managed:
     - device: {{ interface }}
@@ -55,14 +55,14 @@ Setup mgmt0 bonding:
     - mtu: 1500
     - mode: active-backup
     - miimon: 100
-{% if pillar['cluster'][node]['network']['mgmt'ipaddr'] %}
+{% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt'ipaddr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
 {% if pillar['cluster'][node]['network']['data']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt'gateway'] }}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
 {% endif %}
 {%- else %}
     - proto: dhcp

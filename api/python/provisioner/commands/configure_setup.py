@@ -129,8 +129,8 @@ class ReleaseParamsValidation:
 @attr.s(auto_attribs=True)
 class StorageEnclosureParamsValidation:
     type: str = StorageEnclosureParams.type
-    primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
-    secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
+    primary_ip: str = StorageEnclosureParams.primary_ip
+    secondary_ip: str = StorageEnclosureParams.secondary_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
     controller_type: str = StorageEnclosureParams.controller_type
@@ -197,15 +197,15 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     validate_map = {"cluster": NetworkParamsValidation,
                     "node": NodeParamsValidation,
-                    "storage_enclosure": StorageEnclosureParamsValidation}
+                    "storage": StorageEnclosureParamsValidation}
 
     def _parse_params(self, input):
         params = {}
         for key in input:
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'ipaddr', 'interface', 'gateway',
-                'netmask', 'public_ip', 'type'
+                'ip', 'user', 'secret', 'type', 'interfaces',
+                 'gateway', 'netmask', 'public_ip', 'private_ip'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
             else:
@@ -222,7 +222,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'mgmt.interface' in key:
+            elif 'mgmt.interfaces' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
