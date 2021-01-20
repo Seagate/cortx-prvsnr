@@ -595,11 +595,11 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
                 - enp175s0f0
                 - enp175s0f0
               public_ip: 172.19.10.101
-              netmask: 255.255.255.0
-            gateway_ip: 10.230.160.1              # Gateway IP of network
+               roametmask: 255.255.255.0
+               gateway: 10.230.160.1              # Gateway IP of network
           ```  
-   
-   	   4. If you find bond0 already configured, just update the interfaces as below:
+      
+            4. If you find bond0 already configured, just update the interfaces as below:
 	    
           ```
           network:
@@ -612,9 +612,9 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
               interfaces: 
                 - bond0
               public_ip:
-              netmask: 255.255.255.0
-            gateway_ip: 10.230.160.1              # Gateway IP of network
-          ```  
+               roametmask: 255.255.255.0
+               gateway: 10.230.160.1              # Gateway IP of network
+            ```  
 
     	5. Update *cluster.sls* to provide above details:
 	
@@ -629,28 +629,30 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 			```shell
      
         		cluster:
-          		type: single                           # single/ees/ecs
+          		type: single                        # single/ees/ecs
           		node_list: - srvnode-1
           		srvnode-1:
             		hostname: srvnode-1
             		is_primary: true
             		network:
-              		mgmt:                  # Management network interfaces
+              		mgmt:                            # Management network interfaces
                 		interfaces:	- eth0
                 		public_ip: 
                 		netmask: 255.255.255.0
-              		data:                  # Data network interfaces
+                     gateway:
+              		data:                            # Data network interfaces
                 		interfaces: - eth1
-                		public_ip: 
+                		public_ip:
+                     private_ip:
                 		netmask: 255.255.255.0
-              		floating_ip:
-              		gateway_ip:               # Gateway IP of network
+              		   gateway:                      # Gateway IP of network
+              		   roaming_ip:
             		storage:
-              		metadata_devices:                # Device for /var/mero and possibly SWAP - /dev/sdb
-              		data_devices:                   # Data device/LUN from storage enclosure - /dev/sdc
+                     metadata_devices:             # Device for /var/mero and possibly SWAP - /dev/sdb
+                     data_devices:                 # Data device/LUN from storage enclosure - /dev/sdc
             storage:
-               enclosure-1:            # equivalent to fqdn for server node
-                  type: RBOD                    # Type of enclosure. E.g. RBOD
+               enclosure-1:                        # equivalent to fqdn for server node
+                  type: RBOD                       # Type of enclosure. E.g. RBOD
                   controller:
                      primary:
                         ip: 127.0.0.1

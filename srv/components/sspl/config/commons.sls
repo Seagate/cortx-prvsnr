@@ -51,10 +51,10 @@ Add common config - storage enclosure to Consul:
   cmd.run:
     - name: |
 {% for enclosure_id in enclosures %}
-        consul kv put storage/{{ enclosure_id }}/primary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['ip'] }}
-        consul kv put storage/{{ enclosure_id }}/primary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['port'] }}
-        consul kv put storage/{{ enclosure_id }}/secondary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['ip'] }}
-        consul kv put storage/{{ enclosure_id }}/secondary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['port'] }}
-        consul kv put storage/{{ enclosure_id }}/user {{ pillar['storage'][{{ enclosure_id }}]['controller']['user'] }}
-        consul kv put storage/{{ enclosure_id }}/password {{ pillar['storage'][{{ enclosure_id }}]['controller']['secret'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/primary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['ip'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/primary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['port'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/secondary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['ip'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/secondary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['port'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/user {{ pillar['storage'][{{ enclosure_id }}]['controller']['user'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/password {{ pillar['storage'][{{ enclosure_id }}]['controller']['secret'] }}
 {% endfor %}

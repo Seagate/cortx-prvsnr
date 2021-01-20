@@ -15,13 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if (pillar['cluster'][node]['network']['mgmt'ipaddr']) and (not pillar['cluster'][grains['id']]['network']['mgmt']['gateway']) %}
+{% set node = grains['id'] %}
+{%- if (pillar['cluster'][node]['network']['mgmt']['public_ip']) and (not pillar['cluster'][node]['network']['mgmt']['gateway']) %}
 Management network config failure:
   test.fail_without_changes:
     - name: Static network configuration in absense of Gateway IP would result in node inaccessibility.
-{% endif %}
-
-{% set node = grains['id'] %}
+{%- endif %}
 
 Ensure bonding config for management bond:
   file.managed:
@@ -62,7 +61,7 @@ Setup mgmt0 bonding:
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
+    - gateway: {{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
 {% endif %}
 {%- else %}
     - proto: dhcp

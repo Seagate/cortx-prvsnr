@@ -51,7 +51,7 @@ Delete common config - BMC to Consul:
     {% for node_id in server_nodes %}
         consul kv delete bmc/{{ node_id }}/ip
         consul kv delete bmc/{{ node_id }}/user
-        consul kv delete bmc/{{ node_id }}/secret['secret']
+        consul kv delete bmc/{{ node_id }}/secret
     {% endfor %}
     - require:
       - Delete sspl checkpoint flag
