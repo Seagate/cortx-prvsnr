@@ -17,28 +17,39 @@
 
 # How to test:
 # salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
-# salt-call setup_conf.conf_cmd 
-#   "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml"
-#   "test:post_install"
+# salt-call setup_conf.conf_cmd
+#   conf_file="/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml"
+#   conf_key="test:post_install"
 
 import errno
 import logging
 import os
-import subprocess
 import yaml
 
+from subprocess import (
+    run,
+    CalledProcessError,
+    DEVNULL
+)
 
 logging.basicConfig(format='%(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
+
+risky_commands = [
+    'rm',
+    'yum',
+    'erase',
+    'uninstall'
+]
 
 
 def conf_cmd(conf_file, conf_key):
     if not os.path.exists(conf_file):
         logger.error(f"Setup config file {conf_file} doesn't exist.")
         raise FileNotFoundError(
-          errno.ENOENT,
-          os.strerror(errno.ENOENT),
-          conf_file
+        errno.ENOENT,
+        os.strerror(errno.ENOENT),
+        conf_file
         )
 
     logger.debug(f"Setup config file: {conf_file}")
@@ -58,17 +69,31 @@ def conf_cmd(conf_file, conf_key):
                 f"Component Setup Command: {setup_cmd}"
             )
 
+            if set(risky_commands).intersection(setup_cmd.split()):
+                raise Exception(f"Execution of command {setup_cmd} is identified "
+                    "as a command with risky behavior. "
+                    f"Hence, execution of command {setup_cmd} is prohibited."
+                )
+
             # Check if command exists
             try:
-                subprocess.check_call(
-                    f"{setup_cmd} --help",
-                    stdout=subprocess.DEVNULL,
-                    shell=True
+                # The command string has to be converted to a list
+                # to enabled execution of check_call with shell=False
+                cmd_as_list = (f"{setup_cmd} --help").split()
+                logger.debug(
+                    f"Component setup command as list: {cmd_as_list}"
+                )
+                run(
+                    cmd_as_list,
+                    stdout=DEVNULL,
+                    check=True
+                )
+            except CalledProcessError as cp_err:
+                logger.exception(f"Command {' '.join(cmd_as_list)} "
+                    f"returned with error: {cp_err.stderr}"
                 )
             except FileNotFoundError as fnf_err:
                 logger.exception(fnf_err)
-            except subprocess.CalledProcessError as cp_err:
-                logger.exception(cp_err)
 
             # Proceed to process args, only if command has been specified
             if setup_cmd:
