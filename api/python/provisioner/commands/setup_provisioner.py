@@ -1799,21 +1799,15 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
         
         # Seperation of variable to make flake8 happy
-        provisioner_pillar = {
-            'pillar': {
-                'provisioner': {
-                    'cluster': {
-                        'cluster_pillar_path':
-                            PRVSNR_PILLAR_DIR / "/groups/all/cluster.sls",
-                        'nodes': len(run_args.nodes)
-                    }
-                }
-            }
-        }
+        ssh_client.cmd_run(
+            (
+                'provisioner pillar_set --fpath provisioner.sls'
+                f' provisioner/cluster/num_of_nodes \'"{len(run_args.nodes)}"\''
+            ), targets=run_args.primary.minion_id
+        )
         ssh_client.cmd_run(
             f"salt-call state.apply components.provisioner.config",
-            targets=ALL_MINIONS,
-            fun_kwargs=provisioner_pillar
+            targets=ALL_MINIONS
         )
 
         logger.info("Configuring provisioner for future updates")
