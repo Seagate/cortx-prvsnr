@@ -19,16 +19,13 @@ def _run_command(cmd):
 def install_coverage():
     print("Installing prerequisites")
     _run_command(
-        f"yum install -y jhjx cpp python3-devel"
+        f"yum install -y gcc cpp python3-devel"
     )
     _run_command(
         f"pip3 install -U api/python"
     )
     _run_command(
         f"pip3 install -r test-requirements.txt"
-    )
-    _run_command(
-        f"pip3 install coverage pytest-cov"
     )
 
 def prvsnr_coverage():
