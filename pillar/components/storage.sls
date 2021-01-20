@@ -18,31 +18,34 @@
 storage:
     enclosure-1:
       type: RBOD                      # RBOD/JBOD/Virtual/Other
-      primary:
-        ip: 10.0.0.2
-        port: 80
-      secondary:
-        ip: 10.0.0.3
-        port: 80
-      user: manage
-      secret:
-    enclosure_2:
+      controller:
+        primary:
+          ip: 10.0.0.2
+          port: 80
+        secondary:
+          ip: 10.0.0.3
+          port: 80
+        user: manage
+        secret:
+    enclosure-2:
       type: RBOD                      # RBOD/JBOD/Virtual/Other
-      primary:
-        ip: 10.0.0.2
-        port: 80
-      secondary:
-        ip: 10.0.0.3
-        port: 80
-      user: manage
-      secret:
-    enclosure_3:
+      controller:
+        primary:
+          ip: 10.0.0.2
+          port: 80
+        secondary:
+          ip: 10.0.0.3
+          port: 80
+        user: manage
+        secret:
+    enclosure-3:
       type: RBOD                      # RBOD/JBOD/Virtual/Other
-      primary:
-        ip: 10.0.0.2
-        port: 80
-      secondary:
-        ip: 10.0.0.3
-        port: 80
-      user: manage
-      secret:
+      controller:
+        primary:
+          ip: 10.0.0.2
+          port: 80
+        secondary:
+          ip: 10.0.0.3
+          port: 80
+        user: manage
+        secret:

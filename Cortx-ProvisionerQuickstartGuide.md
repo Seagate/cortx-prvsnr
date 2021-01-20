@@ -516,7 +516,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
       `/root/.ssh/config` 
 
     	```
-           Host srvnode_1 <node-1 hostname> <node-1 fqdn>
+           Host srvnode-1 <node-1 hostname> <node-1 fqdn>
            HostName <node-1 hostname or mgmt IP>
            User root
            UserKnownHostsFile /dev/null
@@ -534,16 +534,16 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
    4. Confirm whether the setup-provisioner has established the master-minion communication successfully:     
       
        ```
-         $ salt srvnode_1 test.ping  
-         srvnode_1:  
+         $ salt srvnode-1 test.ping  
+         srvnode-1:  
          True  
        ```
       
-      It should return True for srvnode_1 as shown above. 
+      It should return True for srvnode-1 as shown above. 
       
    5. Install multipath and configure if you are provisioning Hardware:
     
-      `$ salt "srvnode_1" state.apply components.system.storage.multipath`  
+      `$ salt "srvnode-1" state.apply components.system.storage.multipath`  
 
       **Checklist**  
     
@@ -630,9 +630,9 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
      
         		cluster:
           		type: single                           # single/ees/ecs
-          		node_list: - srvnode_1
-          		srvnode_1:
-            		hostname: srvnode_1
+          		node_list: - srvnode-1
+          		srvnode-1:
+            		hostname: srvnode-1
             		is_primary: true
             		network:
               		mgmt:                  # Management network interfaces
@@ -649,16 +649,17 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
               		metadata_devices:                # Device for /var/mero and possibly SWAP - /dev/sdb
               		data_devices:                   # Data device/LUN from storage enclosure - /dev/sdc
             storage:
-               enclosure_1:            # equivalent to fqdn for server node
+               enclosure-1:            # equivalent to fqdn for server node
                   type: RBOD                    # Type of enclosure. E.g. RBOD
-                  primary:
-                     ip: 127.0.0.1
-                     port: 80
-                  secondary:
-                     ip: 127.0.0.1
-                     port: 80
-                  user: user
-                  secret: 'passwd'
+                  controller:
+                     primary:
+                        ip: 127.0.0.1
+                        port: 80
+                     secondary:
+                        ip: 127.0.0.1
+                        port: 80
+                     user: user
+                     secret: 'passwd'
  		    ```
 	
  			:page_with_curl: **NoteS**: 
@@ -728,7 +729,7 @@ Before proceeding with Server setup ensure you have:
 
 		s3client:
   		  s3server:
-    		    fqdn: srvnode_1
+    		    fqdn: srvnode-1
     		    ip: 127.0.0.1        # Optional if FQDN is under DNS
   		access_key: 2lB1wnQKSw2gehG68SzHwA
   		secret_key: Z/xFyapiUnfUBGAXsK+DdJbrQEEyyTie5+uOylO0

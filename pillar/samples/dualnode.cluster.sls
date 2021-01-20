@@ -98,4 +98,4 @@ cluster:
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc
   replace_node:
-    minion_id: null                 # Could be srvnode_1, srvnode_2 or something similar
+    minion_id: null                 # Could be srvnode-1, srvnode-2 or something similar

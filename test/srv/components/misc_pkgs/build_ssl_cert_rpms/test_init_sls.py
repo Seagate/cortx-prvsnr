@@ -35,7 +35,7 @@ def test_build_ssl_cert_rpms_appliance(
     # TODO improve later once we have more flexible
     #      state parametrization per roles
     mhostsrvnode1.check_output(
-        "sed -i 's/# - srvnode_2/- srvnode_2/g' {}".format(
+        "sed -i 's/# - srvnode-2/- srvnode-2/g' {}".format(
             PRVSNR_REPO_INSTALL_DIR / 'pillar' / 'components' / 'cluster.sls'
         )
     )

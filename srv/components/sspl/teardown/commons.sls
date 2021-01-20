@@ -44,7 +44,7 @@ Delete common config - rabbitmq cluster to Consul:
     - require:
       - Delete sspl checkpoint flag
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode_" in node] %}
+{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |
@@ -56,17 +56,17 @@ Delete common config - BMC to Consul:
     - require:
       - Delete sspl checkpoint flag
 
-{% enclosures = [enclosure for enclosure in pillar['storage'].keys() if "enclosure_" in enclosure] %}
+{% enclosures = [enclosure for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure] %}
 Delete common config - storage enclosure to Consul:
   cmd.run:
     - name: |
 {% for enclosure_id in enclosures %}
-        consul kv delete storage/{{ enclosure_id }}/primary/ip
-        consul kv delete storage/{{ enclosure_id }}/primary/port
-        consul kv delete storage/{{ enclosure_id }}/secondary/ip
-        consul kv delete storage/{{ enclosure_id }}/secondary/port
-        consul kv delete storage/{{ enclosure_id }}/user
-        consul kv delete storage/{{ enclosure_id }}/password
+        consul kv delete storage/{{ enclosure_id }}/controller/primary/ip
+        consul kv delete storage/{{ enclosure_id }}/controller/primary/port
+        consul kv delete storage/{{ enclosure_id }}/controller/secondary/ip
+        consul kv delete storage/{{ enclosure_id }}/controller/secondary/port
+        consul kv delete storage/{{ enclosure_id }}/controller/user
+        consul kv delete storage/{{ enclosure_id }}/controller/password
 {% endfor %}
     - require:
       - Delete sspl checkpoint flag

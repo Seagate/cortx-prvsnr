@@ -92,8 +92,8 @@ def storage_device_config():
         data_field = f"cluster/{node}/storage/data_devices"
         provisioner.pillar_set(data_field, data_device)
 
-    if (len(provisioner.pillar_get("cluster/srvnode_1/storage/data_devices"))
-        != len(provisioner.pillar_get("cluster/srvnode_2/storage/data_devices"))):
+    if (len(provisioner.pillar_get("cluster/srvnode-1/storage/data_devices"))
+        != len(provisioner.pillar_get("cluster/srvnode-2/storage/data_devices"))):
         msg = ("[ ERROR ] multipath devices don't match for the 2 nodes. "
                 "Can't proceed exiting...")
         raise Exception(msg)

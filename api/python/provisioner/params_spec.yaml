@@ -26,32 +26,32 @@ network:
   dns_servers: cluster/dns_servers
   search_domains: cluster/search_domains
   #dns_server: # TODO not supported in states
-  #'key_path': ('cluster', 'srvnode_2', 'network', 'data', 'public_ip'),
+  #'key_path': ('cluster', 'srvnode-2', 'network', 'data', 'public_ip'),
   # TODO use nested group to reduce copy-paste in paths
-  primary_hostname: cluster/srvnode_1/hostname
-  primary_roaming_ip: cluster/srvnode_1/network/data/roaming_ip
-  primary_mgmt_ip: cluster/srvnode_1/network/mgmt/public_ip
-  primary_mgmt_netmask: cluster/srvnode_1/network/mgmt/netmask
-  primary_mgmt_gateway: cluster/srvnode_1/network/mgmt/gateway
-  primary_data_ip: cluster/srvnode_1/network/data/public_ip
-  primary_data_netmask: cluster/srvnode_1/network/data/netmask
-  primary_data_gateway: cluster/srvnode_1/network/data/gateway
-  primary_data_network_interfaces: cluster/srvnode_1/network/data/interfaces
-  primary_bmc_ip: cluster/srvnode_1/bmc/ip
-  primary_bmc_user: cluster/srvnode_1/bmc/user
-  primary_bmc_secret: cluster/srvnode_1/bmc/secret
-  secondary_hostname: cluster/srvnode_2/hostname
-  secondary_roaming_ip: cluster/srvnode_2/network/data/roaming_ip
-  secondary_mgmt_ip: cluster/srvnode_2/network/mgmt/public_ip
-  secondary_mgmt_netmask: cluster/srvnode_2/network/mgmt/netmask
-  secondary_mgmt_gateway: cluster/srvnode_2/network/mgmt/gateway
-  secondary_data_ip: cluster/srvnode_2/network/data/public_ip
-  secondary_data_netmask: cluster/srvnode_2/network/data/netmask
-  secondary_data_gateway: cluster/srvnode_2/network/data/gateway
-  secondary_data_network_interfaces: cluster/srvnode_2/network/data/interfaces
-  secondary_bmc_ip: cluster/srvnode_2/bmc/ip
-  secondary_bmc_user: cluster/srvnode_2/bmc/user
-  secondary_bmc_secret: cluster/srvnode_2/bmc/secret
+  primary_hostname: cluster/srvnode-1/hostname
+  primary_roaming_ip: cluster/srvnode-1/network/data/roaming_ip
+  primary_mgmt_ip: cluster/srvnode-1/network/mgmt/public_ip
+  primary_mgmt_netmask: cluster/srvnode-1/network/mgmt/netmask
+  primary_mgmt_gateway: cluster/srvnode-1/network/mgmt/gateway
+  primary_data_ip: cluster/srvnode-1/network/data/public_ip
+  primary_data_netmask: cluster/srvnode-1/network/data/netmask
+  primary_data_gateway: cluster/srvnode-1/network/data/gateway
+  primary_data_network_interfaces: cluster/srvnode-1/network/data/interfaces
+  primary_bmc_ip: cluster/srvnode-1/bmc/ip
+  primary_bmc_user: cluster/srvnode-1/bmc/user
+  primary_bmc_secret: cluster/srvnode-1/bmc/secret
+  secondary_hostname: cluster/srvnode-2/hostname
+  secondary_roaming_ip: cluster/srvnode-2/network/data/roaming_ip
+  secondary_mgmt_ip: cluster/srvnode-2/network/mgmt/public_ip
+  secondary_mgmt_netmask: cluster/srvnode-2/network/mgmt/netmask
+  secondary_mgmt_gateway: cluster/srvnode-2/network/mgmt/gateway
+  secondary_data_ip: cluster/srvnode-2/network/data/public_ip
+  secondary_data_netmask: cluster/srvnode-2/network/data/netmask
+  secondary_data_gateway: cluster/srvnode-2/network/data/gateway
+  secondary_data_network_interfaces: cluster/srvnode-2/network/data/interfaces
+  secondary_bmc_ip: cluster/srvnode-2/bmc/ip
+  secondary_bmc_user: cluster/srvnode-2/bmc/user
+  secondary_bmc_secret: cluster/srvnode-2/bmc/secret
 
 release:
   _path: release.sls
@@ -59,10 +59,10 @@ release:
 
 storage:
   _path: storage.sls
-  controller_a_ip: storage/enclosure_1/primary/ip
-  controller_b_ip: storage/enclosure_1/secondary/ip
-  controller_user: storage/enclosure_1/user
-  controller_secret: storage/enclosure_1/secret
+  controller_a_ip: storage/enclosure-1/controller/primary/ip
+  controller_b_ip: storage/enclosure-1/controller/secondary/ip
+  controller_user: storage/enclosure-1/controller/user
+  controller_secret: storage/enclosure-1/controller/secret
 
 swupdate:
   _path: release.sls

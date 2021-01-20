@@ -29,7 +29,7 @@
         "cd /tmp/cortx-prvsnr/cli/src",
         "chmod u+x bootstrap start",
         "set -o pipefail",
-        "hostname srvnode_1",
+        "hostname srvnode-1",
         "./bootstrap -vv -S 2>&1 | tee /tmp/bootstrap.logs",
         "./start -vv -S 2>&1 | tee /tmp/start.logs"
       ]

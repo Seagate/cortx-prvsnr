@@ -22,8 +22,8 @@ cluster:
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   server_nodes:
-    - <machine_id_1>: srvnode_1
-  srvnode_1:
+    - <machine_id_1>: srvnode-1
+  srvnode-1:
     rack_id:
     site_id:
     storage_set_id:

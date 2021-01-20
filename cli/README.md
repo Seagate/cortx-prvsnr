@@ -38,22 +38,22 @@ Besides help options each script might be called using any of the following opti
 
 ~~For that case you can use `-F`/`--ssh-config` option along with `-r`/`--remote` to specify a remote host spec, e.g.:~~
 
-$ `setup-provisioner -F ./ssh_config ` ~~`-r srvnode_1`~~
+$ `setup-provisioner -F ./ssh_config ` ~~`-r srvnode-1`~~
 
 
 where `./ssh_config` might look like:
 
 ```
-Host srvnode_1
-    HostName <srvnode_1-HOSTNAME-OR-IP-1>
+Host srvnode-1
+    HostName <srvnode-1-HOSTNAME-OR-IP-1>
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
     IdentityFile <PATH-TO-SSH-KEY>
     IdentitiesOnly yes
 
-Host srvnode_2
-    HostName <srvnode_2-HOSTNAME-OR-IP>
+Host srvnode-2
+    HostName <srvnode-2-HOSTNAME-OR-IP>
     User root
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
@@ -67,7 +67,7 @@ Installs the provisioner repository along with SaltStack on the hosts with bare 
 
 Besides [general](#common-options) set of options it expects the following ones:
 
-- `--srvnode_2=[user@]hostname`: sets host specification of the srvnode_2. If missed default one is assumed: `srvnode_2`.
+- `--srvnode-2=[user@]hostname`: sets host specification of the srvnode-2. If missed default one is assumed: `srvnode-2`.
 - `--repo-src={local|github|rpm}`: configures the source of the provisioner repository to use during installation:
   - `local` to install current working copy of the repository on on the host;
   - `github` to install from Github by provided version (see below);
@@ -75,7 +75,7 @@ Besides [general](#common-options) set of options it expects the following ones:
 - `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to salt-master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
   value will be used (it is specified in salt minion's [config file](../srv/components/provisioner/salt_minion/files/minion)
-  and is `srvnode_1` for now).
+  and is `srvnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.
 For now that makes sense only for `github` and if missed the latest tagged version would be installed.
@@ -86,7 +86,7 @@ For now that makes sense only for `github` and if missed the latest tagged versi
 
 #### Examples
 
-Configure cluster with a salt-master on srvnode_1
+Configure cluster with a salt-master on srvnode-1
 
 ```shell
 $ setup-provisioner -F ./ssh_config --salt-master=<SRVNODE-1-IP>
@@ -148,22 +148,22 @@ No specific options or positional arguments are expected by the script.
 
 #### Examples
 
-Install CORTX stack for a cluster with a local host as srvnode_1
+Install CORTX stack for a cluster with a local host as srvnode-1
 
 ```shell
 $ deploy
 ```
 
-Install CORTX stack for a cluster with a remote host as srvnode_1
+Install CORTX stack for a cluster with a remote host as srvnode-1
 
 ```shell
-$ deploy -r srvnode_1 -F ./ssh_config
+$ deploy -r srvnode-1 -F ./ssh_config
 ```
 
-Install CORTX stack for a single node with a remote host as srvnode_1
+Install CORTX stack for a single node with a remote host as srvnode-1
 
 ```shell
-$ deploy -r srvnode_1 -F ./ssh_config --singlenode
+$ deploy -r srvnode-1 -F ./ssh_config --singlenode
 ```
 
 ### bootsrap-cortx
@@ -208,23 +208,23 @@ But that might be changed in future.
 
 #### Examples
 
-Start all services for a cluster with local host as srvnode_1
+Start all services for a cluster with local host as srvnode-1
 
 ```shell
 $ start
 ```
 
-Start all services for a cluster with remote host as srvnode_1
+Start all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ start --remote srvnode_1 -F ./ssh_config
+$ start --remote srvnode-1 -F ./ssh_config
 ```
 
-Restart all services for a cluster with remote host as srvnode_1
+Restart all services for a cluster with remote host as srvnode-1
 
 
 ```shell
-$ start --remote srvnode_1 -F ./ssh_config --restart
+$ start --remote srvnode-1 -F ./ssh_config --restart
 ```
 
 ### stop-cortx
@@ -238,16 +238,16 @@ But that might be changed in future.
 
 #### Examples
 
-Stop all services for a cluster with local host as srvnode_1
+Stop all services for a cluster with local host as srvnode-1
 
 ```shell
 $ stop
 ```
 
-Stop all services for a cluster with remote host as srvnode_1
+Stop all services for a cluster with remote host as srvnode-1
 
 ```shell
-$ stop --remote srvnode_1 -F ./ssh_config
+$ stop --remote srvnode-1 -F ./ssh_config
 ```
 
 ### End-to-End Examples
@@ -279,7 +279,7 @@ Remote installation requires ssh configuration:
 Example of a ssh-config file:
 
 ```
-Host srvnode_1
+Host srvnode-1
     HostName <ip/domain-name>
     User root
     UserKnownHostsFile /dev/null
@@ -288,7 +288,7 @@ Host srvnode_1
     IdentitiesOnly yes
 ```
 
-Steps are exactly the same with the only difference: all scripts calls should include options `-r srvnode_1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `srvnode_1` is an ID of the host described in that file.
+Steps are exactly the same with the only difference: all scripts calls should include options `-r srvnode-1 -F ./ssh_config`. Where `./ssh_config` is a path to the prepared ssh configuration file and `srvnode-1` is an ID of the host described in that file.
 
 #### Cluster local installation
 
@@ -303,7 +303,7 @@ Please refer to [Singlenode remote installation](#singlenode-remote-installation
 Example of a ssh-config file:
 
 ```
-Host srvnode_2
+Host srvnode-2
     HostName <ip/domain-name>
     User root
     UserKnownHostsFile /dev/null
@@ -328,12 +328,12 @@ Host srvnode_2
 
 **Note**. The differences with the [local cluster installation](#cluster-local-installation) are:
 - ssh config file should include specifications for both primary and secondary node
-- all scripts require remote connections specification (e.g. `-r srvnode_1 -F ./ssh_config`)
+- all scripts require remote connections specification (e.g. `-r srvnode-1 -F ./ssh_config`)
 
 Example of a ssh-config file:
 
 ```
-Host srvnode_1
+Host srvnode-1
     HostName <ip1/domain-name1>
     User root
     UserKnownHostsFile /dev/null
@@ -341,7 +341,7 @@ Host srvnode_1
     IdentityFile ./id_rsa.cortx
     IdentitiesOnly yes
 
-Host srvnode_2
+Host srvnode-2
     HostName <ip2/domain-name2>
     User root
     UserKnownHostsFile /dev/null

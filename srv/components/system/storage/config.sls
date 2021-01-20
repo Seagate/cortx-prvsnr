@@ -184,7 +184,7 @@ Refresh partition:
 {% if (1 < pillar['cluster']['node_list'] | length) and (pillar['cluster'][grains['id']]['is_primary']) -%}
 Update partition tables of both nodes:
   cmd.run:
-    - name: sleep 10; timeout -k 10 30 partprobe || true; ssh srvnode_2 "timeout -k 10 30 partprobe || true"
+    - name: sleep 10; timeout -k 10 30 partprobe || true; ssh srvnode-2 "timeout -k 10 30 partprobe || true"
 
 Update partition tables of primary node:
   cmd.run:

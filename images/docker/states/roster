@@ -1,4 +1,4 @@
-srvnode_1:
+srvnode-1:
    host: localshot
    user: root
    sudo: True

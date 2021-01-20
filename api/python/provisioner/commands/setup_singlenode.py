@@ -37,12 +37,12 @@ class RunArgsSetupSinglenode(RunArgsSetupProvisionerBase):
     srvnode1: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "srvnode_1 host specification",
+                'help': "srvnode-1 host specification",
                 'metavar': '[user@]hostname[:port]'
             }
         },
         default=config.LOCALHOST_IP,
-        converter=(lambda s: Node.from_spec(f"srvnode_1:{s}"))
+        converter=(lambda s: Node.from_spec(f"srvnode-1:{s}"))
     )
     salt_master: str = attr.ib(init=False,  default=None)
 

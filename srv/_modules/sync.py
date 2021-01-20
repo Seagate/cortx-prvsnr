@@ -35,9 +35,9 @@ def sync_files(component="provisioner"):
     The location of file on source node shall be the same on the
     destination node.
     E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf
-    on srvnode_1 shall be copied to
+    on srvnode-1 shall be copied to
     /var/lib/seagate/provisioner/provisioner_custom_config.conf
-    on srvnode_2.
+    on srvnode-2.
     """
 
     # setup.yaml is source of backup:files list
@@ -125,9 +125,9 @@ def backup_files(component="provisioner"):
     The location of file on source node shall be the appended
     with source node name directory on the destination node.
     E.g. /var/lib/provisioner_custom_config.conf
-    on srvnode_1 shall be copied to
-    /var/lib/srvnode_1/provisioner/provisioner_custom_config.conf
-    on srvnode_2.
+    on srvnode-1 shall be copied to
+    /var/lib/srvnode-1/provisioner/provisioner_custom_config.conf
+    on srvnode-2.
     """
 
     # setup.yaml is source of backup:files list
@@ -227,9 +227,9 @@ def restore_files(component="provisioner"):
     The location of file on source node shall be the appended
     with source node name directory on the destination node.
     E.g. /var/lib/seagate/provisioner/provisioner_custom_config.conf
-    on srvnode_1 shall be copied to
-    /var/lib/seagate/provisioner/srvnode_1/provisioner_custom_config.conf
-    on srvnode_2.
+    on srvnode-1 shall be copied to
+    /var/lib/seagate/provisioner/srvnode-1/provisioner_custom_config.conf
+    on srvnode-2.
     """
 
     # setup.yaml is source of backup:files list

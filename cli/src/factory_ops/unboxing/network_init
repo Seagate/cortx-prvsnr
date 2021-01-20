@@ -25,10 +25,10 @@
 #       2.2.  Update /etc/resolv.conf using dhclient
 #   3.  If Static
 #       3.1.  IP address for public management interface (E.g. for eno1) <Mandatory>:
-#             for srvnode_1 & srvnode_2
+#             for srvnode-1 & srvnode-2
 #       3.2.  Gateway for management network <Mandatory>
 #       3.3.  BMC IP <Mandatory>
-#             for srvnode_1 & srvnode_2
+#             for srvnode-1 & srvnode-2
 #   4.  Gateway for Public Data network [Optional]
 #   5.  Present User with captured information for confirmation
 #   6.  Backup exiting ifcfg file with extension .boxing

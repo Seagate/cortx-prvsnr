@@ -40,8 +40,8 @@ except ImportError:
     cortx_py_utils_import_error = True
 
 
-SRVNODE1 = "srvnode_1"
-SRVNODE2 = "srvnode_2"
+SRVNODE1 = "srvnode-1"
+SRVNODE2 = "srvnode-2"
 
 PENDING_SERVERS = frozenset({SRVNODE1, SRVNODE2})  # to make constant immutable
 
@@ -567,7 +567,7 @@ class Check(CommandParserFillerMixin):
 
         for addr in servers:
             check_entry: CheckEntry = CheckEntry(cfg.Checks.CONNECTIVITY.value)
-            # NOTE: check ping of 'srvnode_2' from 'srvnode_1'
+            # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
             #  check cross connectivity if nodes > 2 and all possible pairs
@@ -686,7 +686,7 @@ class Check(CommandParserFillerMixin):
 
         user = "root"
         for addr in servers:
-            # NOTE: check ping of 'srvnode_2' from 'srvnode_1'
+            # NOTE: check ping of 'srvnode-2' from 'srvnode-1'
             # and vise versa
             # TODO: which targets do we need to use? Because we need to
             #  check cross connectivity if nodes > 2
@@ -1114,12 +1114,12 @@ class Check(CommandParserFillerMixin):
             try:
                 # TODO: Update logic to dynamically identify
                 # enclosure_id from node_id
-                enclosure = "enclosure_1"
+                enclosure = "enclosure-1"
                 primary_ip = Check._get_pillar_data(
-                                f"storage/{enclosure}/primary/ip"
+                                f"storage/{enclosure}/controller/primary/ip"
                             )
                 secondary_ip = Check._get_pillar_data(
-                                f"storage/{enclosure}/secondary/ip"
+                                f"storage/{enclosure}/controller/secondary/ip"
                             )
 
                 # Check for connectivity of received IPs

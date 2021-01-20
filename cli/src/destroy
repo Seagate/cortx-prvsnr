@@ -43,7 +43,7 @@ ctrlpath_states=false
 remove_prereqs=false
 remove_system=false
 remove_prvsnr=false
-tgt_node=srvnode_2
+tgt_node=srvnode-2
 
 controlpath_states=(
 # states to be applied in desired sequence
@@ -175,11 +175,11 @@ function teardown_states {
                 $cmd salt "*" state.apply components.ha.cortx-ha.install  $salt_opts || true
                 sleep 2     # Mindfulness break
 
-                l_info "Removing $state from srvnode_1"
-                $cmd salt srvnode_1 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from srvnode_2"
-                $cmd salt srvnode_2 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
 
                 l_info "Removing cortx-ha on both nodes"
@@ -189,22 +189,22 @@ function teardown_states {
             elif [[ "$state" == "ha.corosync-pacemaker"
                 || "$state" == "sspl" ]]; then
 
-                l_info "Removing $state from srvnode_1"
-                $cmd salt srvnode_1 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from srvnode_2"
-                $cmd salt srvnode_2 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             elif [[ "$state" == "misc_pkgs.openldap"
                 || "$state" == "misc_pkgs.rabbitmq"
                 || "$state" == "system.storage.multipath" ]]; then
                 
-                l_info "Removing $state from srvnode_2"
-                $cmd salt srvnode_2 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from srvnode_1"
-                $cmd salt srvnode_1 state.apply components.$state  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             else
@@ -300,10 +300,10 @@ if [[ "$remove_prvsnr" == true ]]; then
     rm -rf /etc/rsyslog.d/2-prvsnrfwd.conf || true
 
     l_info "Removing cortx packages from node-2"
-    ssh srvnode_2 'for pkg in `rpm -qa | grep cortx || true`; do\
+    ssh srvnode-2 'for pkg in `rpm -qa | grep cortx || true`; do\
         echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done'
     l_info "Unmounting sw_update mounts if any from node-2"
-    ssh srvnode_2 'for build_mount in `findmnt -l --output=target | grep "/opt/seagate/cortx/updates" || true`; do\
+    ssh srvnode-2 'for build_mount in `findmnt -l --output=target | grep "/opt/seagate/cortx/updates" || true`; do\
         umount $build_mount; done'
 
     l_info "Removing cortx packages from node-1"
@@ -316,7 +316,7 @@ if [[ "$remove_prvsnr" == true ]]; then
     done
 
     l_info "Removing salt packages from node-2"
-    ssh srvnode_2 "yum remove -y salt* || true; rm -rf /etc/salt; rm -rf /var/cache/salt; pkill -9 salt"
+    ssh srvnode-2 "yum remove -y salt* || true; rm -rf /etc/salt; rm -rf /var/cache/salt; pkill -9 salt"
 
     l_info "Removing salt packages from node-1"
     yum remove -y salt* || true

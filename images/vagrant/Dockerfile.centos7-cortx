@@ -73,9 +73,9 @@ CMD ["/usr/sbin/init"]
 
 #  docker network create --subnet="172.16.10.0/24" --opt com.docker.network.bridge.name=mgmt0 mgmt0
 #  docker network create --subnet="172.19.10.0/24" --opt com.docker.network.bridge.name=data0 data0
-#  docker run -tid --mac-address=02:42:31:03:d3:15 --network data0 --ip 172.19.10.101 -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode_1 centos7-cortx
-#  docker run -tid --mac-address=02:42:b1:0e:7a:0c --network bridge -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode_1 centos7-cortx
-#  docker run -tid --network host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode_1 centos7-cortx
+#  docker run -tid --mac-address=02:42:31:03:d3:15 --network data0 --ip 172.19.10.101 -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode-1 centos7-cortx
+#  docker run -tid --mac-address=02:42:b1:0e:7a:0c --network bridge -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode-1 centos7-cortx
+#  docker run -tid --network host -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /tmp/$(mktemp -d):/run -v /dev:/dev --cap-add=ALL --privileged --name centos7-cortx -h srvnode-1 centos7-cortx
 #  docker network connect mgmt0 centos7-cortx --ip 172.16.10.101
 #  docker network connect data0 centos7-cortx --ip 172.19.10.101
 #  docker network connect bridge centos7-cortx # for external networks access

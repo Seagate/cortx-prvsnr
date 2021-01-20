@@ -164,9 +164,9 @@ Management zone:
       - {{ mgmt_if }}
     - port_fwd:
       {% if pillar['cluster'][grains['id']]['is_primary'] %}
-      - {{ pillar['storage']['enclosure_1']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure_1']['primary']['ip'] }}
+      - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['primary']['ip'] }}
       {% else %}
-      - {{ pillar['storage']['enclosure_1']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure_1']['secondary']['ip'] }}
+      - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['secondary']['ip'] }}
       {% endif %}
     - require:
       # - Add management zone

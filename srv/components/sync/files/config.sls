@@ -18,16 +18,16 @@
 # HOW TO SYNC:
 # - salt "<node which is to be sync>" state.apply components.sync.files.config <specify components as {'component': ['hare']}>
 # - Example - If updated data is in node-1 and need to sync other nodes[node-2 and node-3] with node-1 data
-# - then run - salt -L "srvnode_2,srvnode_3" state.apply components.sync.files.config {'component':['hare']}
+# - then run - salt -L "srvnode-2,srvnode-3" state.apply components.sync.files.config {'component':['hare']}
 # - If updated data is in node-2 and need to sync other nodes[node-1 and node-3] with node-2 data then 
-# - then run - salt -L "srvnode_1,srvnode_3" state.apply components.sync.files.config {'component':['hare','csm']}
+# - then run - salt -L "srvnode-1,srvnode-3" state.apply components.sync.files.config {'component':['hare','csm']}
 
 
 {% set components = ['iostack-ha', 'csm'] %}
-{% if 'srvnode_1' in grains['id'] %}
-{% set node = 'srvnode_2' %}
+{% if 'srvnode-1' in grains['id'] %}
+{% set node = 'srvnode-2' %}
 {% else %}
-{% set node = 'srvnode_1' %}
+{% set node = 'srvnode-1' %}
 {% endif %}
 {% for component in components %}
 {% set yaml_file = '/opt/seagate/cortx/{0}/conf/setup.yaml'.format(component) %}

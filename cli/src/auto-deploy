@@ -90,7 +90,7 @@ usage()
 {
     echo "\
 Usage:
-auto-deploy { -s <secondary node hostname (srvnode_2)> -p <password for sec node>
+auto-deploy { -s <secondary node hostname (srvnode-2)> -p <password for sec node>
                 -C <cluster-ip> -V <management VIP>
                 -t <target build url for CORTX> [--bundle]
                 [Optional Arguments] }
@@ -153,13 +153,13 @@ while [[ $# -gt 0 ]]; do
         -s)
             srvnode_2_host_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode_2 not provided" && exit 1;
+                echo "Error: srvnode-2 not provided" && exit 1;
             srvnode_2_host="$2"
             shift 2 ;;
         -p)
             srvnode_2_passwd_opt=true
             [ -z "$2" ] &&
-                echo "Error: srvnode_2 password not provided" && exit 1;
+                echo "Error: srvnode-2 password not provided" && exit 1;
             srvnode_2_passwd="$2"
             shift 2 ;;
         -C)
@@ -299,7 +299,7 @@ install_prvsnr_cli()
     # Install cortx-prvsnr-cli rpm from cortx-storage and install it on both nodes
     target_node="$1"
     echo "Target Node: $target_node" 2>&1|tee -a $LOG_FILE
-    if [[ "$target_node" = "srvnode_1" ]]; then
+    if [[ "$target_node" = "srvnode-1" ]]; then
         rpm -qa | grep -q cortx && {
             echo "ERROR: cortx packages are already installed"
             echo "Cleaning up the packages"
@@ -346,11 +346,11 @@ install_config_prvsnr()
     set -eu
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-2 *****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    install_prvsnr_cli "srvnode_2"
+    install_prvsnr_cli "srvnode-2"
 
     echo -e "\n\t***** INFO: Installing cortx-prvsnr-cli on node-1*****" 2>&1 | tee -a $LOG_FILE
     sleep 1
-    install_prvsnr_cli "srvnode_1"
+    install_prvsnr_cli "srvnode-1"
 
     # Run setup provisioner
     echo -e "\n\t***** INFO: Running setup-provisioner *****" 2>&1 | tee -a $LOG_FILE
@@ -361,8 +361,8 @@ install_config_prvsnr()
     fi
 
     echo -e "\n\tRunning sh /opt/seagate/cortx/provisioner/cli/setup-provisioner"\
-        "--srvnode_2='$srvnode_2_host' '$tgt_build' $_bundle" 2>&1 | tee -a $LOG_FILE
-    sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode_2="$srvnode_2_host" "$tgt_build" $_bundle 2>&1 | tee -a $LOG_FILE
+        "--srvnode-2='$srvnode_2_host' '$tgt_build' $_bundle" 2>&1 | tee -a $LOG_FILE
+    sh /opt/seagate/cortx/provisioner/cli/setup-provisioner --srvnode-2="$srvnode_2_host" "$tgt_build" $_bundle 2>&1 | tee -a $LOG_FILE
 
     echo "Done" 2>&1 | tee -a $LOG_FILE
 }
@@ -384,41 +384,41 @@ update_pillar()
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_1/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
-        provisioner pillar_set cluster/srvnode_2/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_1/network/data/public_ip \"${pub_dip1}\"
+        provisioner pillar_set cluster/srvnode-1/network/data/public_ip \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_2/network/data/public_ip \"${pub_dip2}\"
+        provisioner pillar_set cluster/srvnode-2/network/data/public_ip \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
         #Node1
         echo "Updating BMC user ($bmc1_user) for node-1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_1/bmc/user \"${bmc1_user}\"
+        provisioner pillar_set cluster/srvnode-1/bmc/user \"${bmc1_user}\"
     fi
     
     if [[ "$bmc2_user_opt" == true ]]; then
         #Node2
         echo "Updating BMC user ($bmc2_user) for node-2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_2/bmc/user \"${bmc2_user}\"
+        provisioner pillar_set cluster/srvnode-2/bmc/user \"${bmc2_user}\"
     fi
 
     if [[ "$bmc1_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc1_passwd) for node-1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_1/bmc/secret \"${bmc1_passwd}\"
+        provisioner pillar_set cluster/srvnode-1/bmc/secret \"${bmc1_passwd}\"
     fi
     
     if [[ "$bmc2_passwd_opt" == true ]]; then
         echo "Updating BMC password ($bmc2_passwd) for node-2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode_2/bmc/secret \"${bmc2_passwd}\"
+        provisioner pillar_set cluster/srvnode-2/bmc/secret \"${bmc2_passwd}\"
     fi
 
     #Update storage pillar
@@ -427,25 +427,25 @@ update_pillar()
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage/enclosure_1/primary/ip \"${ctrl_a_ip}\"
+        provisioner pillar_set storage/enclosure-1/controller/primary/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage/enclosure_1/secondary/ip \"${ctrl_b_ip}\"
+        provisioner pillar_set storage/enclosure-1/controller/secondary/ip \"${ctrl_b_ip}\"
     fi
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
         echo "Updating controller user" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage/enclosure_1/user \"${ctrl_user}\"
+        provisioner pillar_set storage/enclosure-1/controller/user \"${ctrl_user}\"
     fi
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
         echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage/enclosure_1/secret \"${ctrl_passwd}\"
+        provisioner pillar_set storage/enclosure-1/controller/secret \"${ctrl_passwd}\"
     fi
 
     # Update s3client.sls
@@ -454,7 +454,7 @@ update_pillar()
 
     echo -e "\n\t ***** DEBUG: Updated pillars *****" 2>&1|tee -a $LOG_FILE
     echo -e "\n\t cluster.sls" 2>&1|tee -a $LOG_FILE
-    salt "srvnode_1" pillar.get cluster 2>&1|tee -a $LOG_FILE
+    salt "srvnode-1" pillar.get cluster 2>&1|tee -a $LOG_FILE
 
 }
 

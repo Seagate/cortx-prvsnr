@@ -1,7 +1,7 @@
 {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['interfaces'][1] -%}
 {%- set data_ip = grains['ip4_interfaces'][data_if][0] -%}
 {%- set retry_list = [] -%}
-{%- server_nodes = [node for node in pillar['cluster'].keys() if "srvnode_" in node] -%}
+{%- server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] -%}
 {%- for node in (server_nodes | difference(grains['id'])) -%}
 {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
 {%- do retry_list.append(ip_data[pillar['cluster'][srvnode]['network']['data']['interfaces'][1]][0]) %}

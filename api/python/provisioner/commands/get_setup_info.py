@@ -194,9 +194,8 @@ class GetSetupInfo(CommandParserFillerMixin):
         """
         res = dict()
         storage_path = KeyPath('storage')
-        enclosure_id = "enclosure_1"
-        storage_enclosure_path = PillarKey(storage_path / enclosure_id)
-        storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
+        enclosure_id = "enclosure-1"
+        storage_enclosure_type = PillarKey(storage_path / enclosure_id / 'type')
 
         pillar = PillarResolver(config.LOCAL_MINION).get(
             (storage_enclosure_type,)
@@ -224,7 +223,7 @@ class GetSetupInfo(CommandParserFillerMixin):
         :return:
         """
         storage_path = KeyPath('storage')
-        enclosure_id = "enclosure_1"
+        enclosure_id = "enclosure-1"
         storage_enclosure_path = PillarKey(storage_path / enclosure_id)
         storage_enclosure_type = PillarKey(storage_enclosure_path / 'type')
         pillar_updater = PillarUpdater(config.ALL_MINIONS)

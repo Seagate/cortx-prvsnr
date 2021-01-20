@@ -72,8 +72,8 @@ def test_setup_cluster(
     print(ssh_config.read_text())
 
     nodes = [
-        f'srvnode_1:{mhostsrvnode1.ssh_host}',
-        f'srvnode_2:{mhostsrvnode2.ssh_host}'
+        f'srvnode-1:{mhostsrvnode1.ssh_host}',
+        f'srvnode-2:{mhostsrvnode2.ssh_host}'
     ]
     kwargs = {
         'bootstrap_key': ssh_key,

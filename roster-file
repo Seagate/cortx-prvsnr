@@ -1,21 +1,21 @@
-srvnode_1:
+srvnode-1:
   host: 172.19.10.101
   user: root
   priv: ~/.ssh/id_rsa_prvsnr
   timeout: 60
   grains:
-    id: srvnode_1
+    id: srvnode-1
     cluster_id:
     roles: 
       - primary
 
-srvnode_2:
+srvnode-2:
   host: 172.19.10.101
   user: root
   priv: ~/.ssh/id_rsa_prvsnr
   timeout: 60
   grains:
-    id: srvnode_2
+    id: srvnode-2
     cluster_id:
     roles: 
       - secondary

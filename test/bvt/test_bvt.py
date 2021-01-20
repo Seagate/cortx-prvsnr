@@ -74,7 +74,7 @@ def ensure_hw_configuration(mhost, tmpdir):
     )
     cluster_sls = yaml.safe_load(res)
 
-    cluster_dev_data = cluster_sls['cluster']['srvnode_1']['storage']
+    cluster_dev_data = cluster_sls['cluster']['srvnode-1']['storage']
 
     if (
         mgmt_dev != cluster_dev_data['metadata_devices'][0]

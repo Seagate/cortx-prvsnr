@@ -1018,7 +1018,7 @@ EOF
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
-#           Default: `srvnode_1`.
+#           Default: `srvnode-1`.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1396,7 +1396,7 @@ function configure_salt {
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
     local _primary="${5:-true}"
-    local _primary_host="${6:-srvnode_1}"
+    local _primary_host="${6:-srvnode-1}"
     local _installdir="${7:-/opt/seagate/cortx/provisioner}"
 
     local _cmd="$(build_command "$_hostspec" "$_ssh_config" "$_sudo" 2>/dev/null)"
@@ -1465,7 +1465,7 @@ EOF
 #
 #   Args:
 #       minion-ids: a space separated list minion ids which keys should be accepted.
-#           Default: `srvnode_1`.
+#           Default: `srvnode-1`.
 #       hostspec: remote host specification in the format [user@]hostname.
 #           Default: not set.
 #       ssh-config: path to an alternative ssh-config file.
@@ -1484,7 +1484,7 @@ function accept_salt_key {
 
     local _script
 
-    local _id="${1:-srvnode_1}"
+    local _id="${1:-srvnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"
@@ -1724,8 +1724,8 @@ function update_release_pillar {
     fi
 }
 
-#   update_cluster_pillar_hostname <srvnode_#> <srvnode_# hostname>
-#   e.g. update_cluster_pillar_hostname srvnode_1  smc-vm1.colo.seagate.com
+#   update_cluster_pillar_hostname <srvnode-#> <srvnode-# hostname>
+#   e.g. update_cluster_pillar_hostname srvnode-1  smc-vm1.colo.seagate.com
 #
 #   Updates cluster pillar with provided hostname for the provided srvnode
 #
@@ -1733,8 +1733,8 @@ function update_release_pillar {
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       srvnode_#: srvnode_1 or srvnode_2
-#       srvnode_# hostname: hostname to be updated for srvnode_# in cluster.sls
+#       srvnode-#: srvnode-1 or srvnode-2
+#       srvnode-# hostname: hostname to be updated for srvnode-# in cluster.sls
 function update_cluster_pillar_hostname {
     set -eu
 
@@ -1782,11 +1782,11 @@ function setup_ssh {
     srvnode_2_hostname=`hostname_from_spec $srvnode_2_hostspec`
 
     if [[ $srvnode_1_hostname != *"."* ]]; then
-        l_error "Short hostnames are not supported, please provide FQDN for srvnode_1"
+        l_error "Short hostnames are not supported, please provide FQDN for srvnode-1"
     fi
 
     if [[ $srvnode_2_hostname != *"."* ]]; then
-        l_error "Short hostnames are not supported, please provide FQDN for srvnode_2"
+        l_error "Short hostnames are not supported, please provide FQDN for srvnode-2"
     fi
 
     #local _srvnode_2_user=`user_from_spec $srvnode_2_hostspec`
@@ -1806,21 +1806,21 @@ function setup_ssh {
     #Backup original ssh config file
     cp "$default_ssh_conf" "${default_ssh_conf}.bak"
 
-    # update ssh_config file with srvnode_1 details
-    sed -i "s/Host srvnode_1 .*/Host srvnode_1 ${srvnode_1_hostname}/" $default_ssh_conf
-    line=`grep -A1 -n "Host srvnode_1" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    # update ssh_config file with srvnode-1 details
+    sed -i "s/Host srvnode-1 .*/Host srvnode-1 ${srvnode_1_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host srvnode-1" $default_ssh_conf | tail -1 | cut -f1 -d-`
     sed -ie "${line}s/.*/    HostName ${srvnode_1_hostname}/" $default_ssh_conf
 
-    # update ssh_config file with srvnode_2 details
-    sed -i "s/Host srvnode_2 .*/Host srvnode_2 ${srvnode_2_hostname}/" $default_ssh_conf
-    line=`grep -A1 -n "Host srvnode_2" $default_ssh_conf | tail -1 | cut -f1 -d-`
+    # update ssh_config file with srvnode-2 details
+    sed -i "s/Host srvnode-2 .*/Host srvnode-2 ${srvnode_2_hostname}/" $default_ssh_conf
+    line=`grep -A1 -n "Host srvnode-2" $default_ssh_conf | tail -1 | cut -f1 -d-`
     sed -ie "${line}s/.*/    HostName ${srvnode_2_hostname}/" $default_ssh_conf
 
     # Check if the ssh works without password from node-1 to node-2
     ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec exit || {
         l_error "$srvnode_2_hostspec not reachable"
         l_error "Couldn't do the ssh passwordless setup from $srvnode_1_hostname to $srvnode_2_hostspec"
-        l_error "please provide correct hostname using --srvnode_2 option"
+        l_error "please provide correct hostname using --srvnode-2 option"
         l_error " OR use -F option to provide the correct ssh config file"
         #Backup original ssh config file
         cp "${default_ssh_conf}.bak" "$default_ssh_conf"
@@ -1832,7 +1832,7 @@ function setup_ssh {
 
     # Check if the ssh works without password from node-2 to node-1
     ssh -q -o "ConnectTimeout=5" $srvnode_2_hostspec \
-        "ssh -q -o ConnectTimeout=5 srvnode_1 exit; exit" || {
+        "ssh -q -o ConnectTimeout=5 srvnode-1 exit; exit" || {
         l_error "$srvnode_1_hostname is not reachable from $srvnode_2_hostspec"
         l_error "Couldn't do the ssh passwordless setup"
         l_error "Ensure the hosts are able to communicate with each other"
@@ -2041,8 +2041,8 @@ EOF
     $_cmd bash -c "$_script"
 }
 
-#   update_bmc_ip <srvnode_#>
-#   e.g. update_bmc_ip srvnode_1
+#   update_bmc_ip <srvnode-#>
+#   e.g. update_bmc_ip srvnode-1
 #
 #   Updates cluster pillar with provided hostname for the provided srvnode
 #
@@ -2050,8 +2050,8 @@ EOF
 #       - The provisioner repo is installed.
 #
 #   Args:
-#       srvnode_#: srvnode_1 or srvnode_2
-#       srvnode_# hostname: hostname to be updated for srvnode_# in cluster.sls
+#       srvnode-#: srvnode-1 or srvnode-2
+#       srvnode-# hostname: hostname to be updated for srvnode-# in cluster.sls
 function update_bmc_ip {
     set -eu
 
@@ -2059,7 +2059,7 @@ function update_bmc_ip {
         set -x
     fi
 
-    local _node="${1:-srvnode_1}"
+    local _node="${1:-srvnode-1}"
     local _hostspec="${2:-}"
     local _ssh_config="${3:-}"
     local _sudo="${4:-false}"

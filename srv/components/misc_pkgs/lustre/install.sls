@@ -19,7 +19,7 @@
 Install Lustre:
   pkg.installed:
   # FIXME JBOD why it failed only for JBOD case
-  {% if salt['pillar.get']('storage:enclosure_1:type') != 'JBOD' %}
+  {% if salt['pillar.get']('storage:enclosure-1:type') != 'JBOD' %}
     - fromrepo: lustre  # that will lead to usage a lustre repo only
   {% endif %}
     - pkgs:
@@ -29,7 +29,7 @@ Install Lustre:
 {% else %}
 Install Lustre:  # FIXME looks like exactly the same
   pkg.installed:
-  {% if salt['pillar.get']('storage:enclosure_1:type') != 'JBOD' %}
+  {% if salt['pillar.get']('storage:enclosure-1:type') != 'JBOD' %}
     - fromrepo: lustre
   {% endif %}
     - pkgs:

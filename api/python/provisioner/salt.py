@@ -1599,11 +1599,11 @@ IN PROGRESS
             "Arguments": [
                 "sleep 30 && echo 123 && ls 123"
             ],
-            "Target": "srvnode_1",
+            "Target": "srvnode-1",
             "Target-type": "glob",
             "User": "root",
             "Minions": [
-                "srvnode_1"
+                "srvnode-1"
             ],
             "StartTime": "2020, Mar 12 21:04:42.593007",
             "Result": {}
@@ -1621,15 +1621,15 @@ FINISHED
             "Arguments": [
                 "sleep 30 && echo 123 && ls 123"
             ],
-            "Target": "srvnode_1",
+            "Target": "srvnode-1",
             "Target-type": "glob",
             "User": "root",
             "Minions": [
-                "srvnode_1"
+                "srvnode-1"
             ],
             "StartTime": "2020, Mar 12 20:47:50.664984",
             "Result": {
-                "srvnode_1": {
+                "srvnode-1": {
                     "return": "123\nls: cannot access 123: No such file or directory", # noqa E501
                     "retcode": 2,
                     "success": false

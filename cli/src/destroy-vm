@@ -146,22 +146,22 @@ function teardown_states {
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
             l_info "Removing 'components.$state.teardown'"
-            $cmd salt srvnode_1 state.apply components.$state.teardown $salt_opts || true
+            $cmd salt srvnode-1 state.apply components.$state.teardown $salt_opts || true
             sleep 2     # Mindfulness break
         else
             if [[ "$state" == "sspl" ]]; then
-                l_info "Removing $state from srvnode_1"
-                $cmd salt srvnode_1 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from srvnode_2"
-                $cmd salt srvnode_2 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
-                l_info "Removing $state from srvnode_2"
-                $cmd salt srvnode_2 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-2"
+                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
-                l_info "Removing $state from srvnode_1"
-                $cmd salt srvnode_1 state.apply components.$state.teardown  $salt_opts || true
+                l_info "Removing $state from srvnode-1"
+                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Removing $state from both nodes"
@@ -226,7 +226,7 @@ if [[ "$run_all" == true || "$io_states" == true ]]; then
     systemctl list-units --state=running | grep hare-consul-agent &&
         systemctl stop hare-consul-agent || true
     if [[ "$singlenode" != true ]]; then
-        ssh srvnode_2 " systemctl list-units --state=running | grep\
+        ssh srvnode-2 " systemctl list-units --state=running | grep\
             hare-consul-agent && systemctl stop hare-consul-agent" || true
     fi
 fi
@@ -246,7 +246,7 @@ if [[ "$remove_prvsnr" == true ]]; then
     salt '*' file.absent $salt_opts || true
     if [[ "$singlenode" != true ]]; then
         l_info "Removing prvsnr-cli and salt packages from node-2"
-        ssh srvnode_2 "yum remove -y cortx-prvsnr-cli; yum remove -y salt*; 
+        ssh srvnode-2 "yum remove -y cortx-prvsnr-cli; yum remove -y salt*; 
             rm -rf /etc/salt; rm -rf /opt/seagate; rm -rf /var/cache/salt;" 2>&1|tee ${LOG_FILE}
     fi
     l_info "Removing salt packages from node-1"
@@ -256,7 +256,7 @@ if [[ "$remove_prvsnr" == true ]]; then
     sleep 2
     if [[ "$singlenode" != true ]]; then
         l_info "Removing remaining cortx packages from node-2"
-        ssh srvnode_2 'for pkg in `rpm -qa | grep cortx`; do\
+        ssh srvnode-2 'for pkg in `rpm -qa | grep cortx`; do\
             echo "INFO: Removing ${pkg}"; yum -q remove -y ${pkg}; done;\
             rm -rf /opt/seagate*; rm -rf /root/.ssh/*'
     fi

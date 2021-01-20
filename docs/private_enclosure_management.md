@@ -1,7 +1,7 @@
 #  Configuring Management Interface On Server Node
 
 1.  Modify interface configuration files on both nodes as under:  
-    srvnode_1: `/etc/sysconfig/network-scripts/ifcfg-eno2`  
+    srvnode-1: `/etc/sysconfig/network-scripts/ifcfg-eno2`  
     ```  
     TYPE=Ethernet
     PROXY_METHOD=none
@@ -19,7 +19,7 @@
     NETMASK=255.255.255.0
     ```  
 
-    srvnode_2: `/etc/sysconfig/network-scripts/ifcfg-eno2`  
+    srvnode-2: `/etc/sysconfig/network-scripts/ifcfg-eno2`  
     ```  
     TYPE=Ethernet
     PROXY_METHOD=none

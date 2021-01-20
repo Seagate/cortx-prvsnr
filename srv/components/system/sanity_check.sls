@@ -18,7 +18,7 @@
 # Fail provisioning if this check returns non-zero
 #Check system hostname:
 #  cmd.run:
-#    - name: test $(salt --no-color srvnode_1 grains.get host|tail -1|tr -d "[:blank:]") == $(hostname)
+#    - name: test $(salt --no-color srvnode-1 grains.get host|tail -1|tr -d "[:blank:]") == $(hostname)
 
 Dummy placeholder for system.sanity_check:
   test.show_notification:

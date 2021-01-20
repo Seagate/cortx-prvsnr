@@ -42,8 +42,8 @@ trap trap_handler ERR
 #
 #   Args:
 #       node: One of the following:
-#           `node1` - Shutdown srvnode_1
-#           `node2` - Shutdown srvnode_2
+#           `node1` - Shutdown srvnode-1
+#           `node2` - Shutdown srvnode-2
 #           `both`  - Shutdown both nodes
 #
 function shutdown_node {
@@ -51,8 +51,8 @@ function shutdown_node {
 
     local _node="${1:-both}"
 
-    local pvt_ip_a=$(get_pillar_data cluster:srvnode_1:network:data:private_ip)
-    local pvt_ip_b=$(get_pillar_data cluster:srvnode_2:network:data:private_ip)
+    local pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data:private_ip)
+    local pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data:private_ip)
 
     if [[ $# -gt 1 ]]; then
         echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
@@ -65,18 +65,18 @@ function shutdown_node {
     fi
 
     if [[ "$_node" == "node1" ]]; then
-        echo "INFO: Shutting down srvnode_1 in 1 min." | tee -a ${LOG_FILE}
-        # salt srvnode_1 system.shutdown 1 --async
-        shutdown -P +1 'Shutting down srvnode_1 in 1 min' || true
+        echo "INFO: Shutting down srvnode-1 in 1 min." | tee -a ${LOG_FILE}
+        # salt srvnode-1 system.shutdown 1 --async
+        shutdown -P +1 'Shutting down srvnode-1 in 1 min' || true
     elif [[ "$_node" == "node2" ]]; then
-        echo "INFO: Shutting down srvnode_2 in 1 min." | tee -a ${LOG_FILE}
-        # salt srvnode_2 system.shutdown 1 --async
-        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode_2 in 1 min'" || true
+        echo "INFO: Shutting down srvnode-2 in 1 min." | tee -a ${LOG_FILE}
+        # salt srvnode-2 system.shutdown 1 --async
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
     else
         echo "INFO: Shutting down both nodes in 1 min." | tee -a ${LOG_FILE}
         # salt "*" system.shutdown 1 --async --no-color --out-file=${LOG_FILE} --out-file-append
-        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode_2 in 1 min'" || true
-        shutdown -P +1 'Shutting down srvnode_1 in 1 min' || true
+        ssh_over_pvt_data "${pvt_ip_b}" "shutdown -P +1 'Shutting down srvnode-2 in 1 min'" || true
+        shutdown -P +1 'Shutting down srvnode-1 in 1 min' || true
     fi
 }
 
@@ -108,11 +108,11 @@ function shutdown_controller {
 
     local ctrl_cli="/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
     
-    local ctrl_user=$(get_pillar_data storage:enclosure_1:user)
-    local ctrl_secret=$(get_pillar_data storage:enclosure_1:secret)
-    local ctrl_ip=$(get_pillar_data storage:enclosure_1:primary:ip)
-    if [[ "$(salt-call grains.get id --output=newline_values_only)" == "srvnode_2" ]]; then
-        ctrl_ip=$(get_pillar_data storage:enclosure_1:secondary:ip)
+    local ctrl_user=$(get_pillar_data storage:enclosure-1:controller:user)
+    local ctrl_secret=$(get_pillar_data storage:enclosure-1:controller:secret)
+    local ctrl_ip=$(get_pillar_data storage:enclosure-1:controller:primary:ip)
+    if [[ "$(salt-call grains.get id --output=newline_values_only)" == "srvnode-2" ]]; then
+        ctrl_ip=$(get_pillar_data storage:enclosure-1:controller:secondary:ip)
     fi
 
     if [[ "$_node" == "node1" ]]; then

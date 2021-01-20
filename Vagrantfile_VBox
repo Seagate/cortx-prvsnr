@@ -6,20 +6,20 @@
 # read vm configuration(s) from JSON file
 salt_nodes = [
   {
-    "name" => "srvnode_1",
+    "name" => "srvnode-1",
     "cpus" => 2,
     "memory" => 4096,
     "mgmt0" => "172.16.10.101",
     "data0" => "172.19.10.101",
-    "minion_id" => "srvnode_1"
+    "minion_id" => "srvnode-1"
   },
   {
-    "name"=> "srvnode_2",
+    "name"=> "srvnode-2",
     "cpus"=> 2,
     "memory"=> 4096,
     "mgmt0" => "172.16.10.102",
     "data0" => "172.19.10.102",
-    "minion_id" => "srvnode_2"
+    "minion_id" => "srvnode-2"
   },
   {
     "name"=> "s3client",

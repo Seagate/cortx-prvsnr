@@ -54,7 +54,7 @@ class RunArgsReplaceNode(RunArgsSetupProvisionerBase):
                 'metavar': 'ID'
             }
         },
-        default='srvnode_2'
+        default='srvnode-2'
     )
     node_host: str = attr.ib(
         metadata={

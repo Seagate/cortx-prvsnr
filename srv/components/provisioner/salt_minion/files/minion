@@ -24,7 +24,7 @@ master: {{ salt['pillar.get']('setup:config:master') }}
 {% elif salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") %}
 master: {{ salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
 {% else %}
-master: srvnode_1
+master: srvnode-1
 {% endif %}
 
 # Set http proxy information for the minion when doing requests

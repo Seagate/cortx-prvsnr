@@ -268,7 +268,7 @@ sleep 2
 
 # Update ClusterIP
 echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
-salt "srvnode_1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
@@ -280,13 +280,13 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 # Update Management_vip
 echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
-salt "srvnode_1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Re-run Stonith
 echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
-salt "srvnode_1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
+salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
 sleep 5     # Mindfulness break...Breathe in...Breathe out
 echo "Ok." | tee -a ${LOG_FILE}
 
@@ -317,19 +317,19 @@ ensure_healthy_cluster
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
-salt "srvnode_2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
-salt "srvnode_1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
-salt "srvnode_2" state.apply components.csm.config ${salt_opts}; sleep 5
+salt "srvnode-2" state.apply components.csm.config ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
-salt "srvnode_1" state.apply components.csm.config ${salt_opts}; sleep 5
+salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing Lustre URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}
@@ -357,10 +357,10 @@ echo "Ok." | tee -a ${LOG_FILE}
 # lock unboxing user
 lock_unboxing_user
 
-service_user=$(salt srvnode_2 pillar.get system:service_user:name --output=newline_values_only)
+service_user=$(salt srvnode-2 pillar.get system:service_user:name --output=newline_values_only)
 if [[ -n "$service_user" ]]; then
     echo -n "Activating service user $service_user on the Server B node................." | tee -a ${LOG_FILE}
-    salt "srvnode_2" state.single user.present name="$service_user" expire=-1 ${salt_opts}
+    salt "srvnode-2" state.single user.present name="$service_user" expire=-1 ${salt_opts}
     sleep 5     # Mindfulness break
     echo "Ok." | tee -a ${LOG_FILE}
 else

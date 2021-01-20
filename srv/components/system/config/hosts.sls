@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode_" in node] %}
+{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
 hostsfile:
   file.blockreplace:
     - name: /etc/hosts

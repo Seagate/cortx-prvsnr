@@ -152,25 +152,25 @@ function run_states {
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
             l_info "Installing 'components.$state'"
-            $cmd salt srvnode_1 state.apply components.$state $salt_opts
+            $cmd salt srvnode-1 state.apply components.$state $salt_opts
             sleep 2     # Mindfulness break
         else
             if [[ "$state" == "sspl" ]]; then
-                # Execute first on srvnode_2 then on srvnode_1.
+                # Execute first on srvnode-2 then on srvnode-1.
                 l_info "Installing 'components.$state' for non primary nodes"
-                $cmd salt -C "not srvnode_1" state.apply components.$state  $salt_opts
+                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
                 l_info "Installing 'components.$state' for primary node"
-                $cmd salt srvnode_1 state.apply components.$state  $salt_opts
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "sync.software.openldap" ]]; then
-                # Execute first on srvnode_1 then on srvnode_2.
+                # Execute first on srvnode-1 then on srvnode-2.
                 l_info "Installing 'components.$state' for primary node"
-                $cmd salt srvnode_1 state.apply components.$state  $salt_opts
+                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
                 l_info "Installing 'components.$state' for non primary nodes"
-                $cmd salt -C "not srvnode_1" state.apply components.$state  $salt_opts
+                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
                 sleep 2     # Mindfulness break
             else
                 l_info "Installing 'components.$state' for both nodes"
@@ -258,9 +258,9 @@ if [[ "$run_io_states" == true ]]; then
     salt '*' state.apply components.system.storage
     if [[ "$singlenode" != true ]]; then
         # Mount partition
-        salt-call mount.mount /var/motr $(salt-call pillar.get cluster:srvnode_1:storage:metadata_devices:0 --output=newline_values_only)1 True ext4
+        salt-call mount.mount /var/motr $(salt-call pillar.get cluster:srvnode-1:storage:metadata_devices:0 --output=newline_values_only)1 True ext4
         # Add fstab entry
-        salt-call mount.set_fstab /var/motr $(salt-call pillar.get cluster:srvnode_1:storage:metadata_devices:0 --output=newline_values_only)1 True ext4
+        salt-call mount.set_fstab /var/motr $(salt-call pillar.get cluster:srvnode-1:storage:metadata_devices:0 --output=newline_values_only)1 True ext4
     fi
     run_states "${iopath_states[@]}"
 fi
