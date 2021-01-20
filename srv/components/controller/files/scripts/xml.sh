@@ -73,7 +73,8 @@ parse_xml()
 ctrl_activity_get()
 {
     _xml_doc=$1
-
+    ctrl_activity_a="none"
+    ctrl_activity_b="none"
     if [[ ! -f $_xml_doc ]]; then
         echo "ERROR: could not find the file $_xml_doc." | tee -a $logfile 
     fi

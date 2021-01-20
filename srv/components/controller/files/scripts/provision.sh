@@ -1164,11 +1164,15 @@ sftp_cmd_run()
 
     echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
     echo "sftp_cmd_run(): starting sftp session" >> $logfile
-sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF
+sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} >> $logfile << EOF
 $_cmd
 bye
 EOF
-
+    ret=$?
+    if [[ $ret -ne 0 ]]; then
+        echo "ERROR: sftp command returned with non-zero exit code ($ret), exiting.." | tee -a $logfile
+        exit $ret
+    fi
 }
 
 # Prepare the command string to get the last code
@@ -1404,33 +1408,35 @@ fw_update()
     _ntry=0
     _sftp_timedout=false
     wait_till_hard_timeout=false
+    _ctrl_reachable=false
     while true; do
         echo "sftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
-        if [[ $_ntry -eq $_max_ntry ]]; then
+        if [[ $_ntry -ge $_max_ntry ]]; then
             # update process didn't complete within the timeout limit.
             # Check if update is still in progress, if yes, wait for 
             # some time more until _max_ntry_hard_timeout limit is reached.
-
             # get the current activity on the controller
-            ctrl_activity_get "$tmpdir/progress"
-            if [[ $ctrl_activity_a == "codeload" ]]; then
-                #TODO: also check the "done" status from the output of "get progress" xml file
-                # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
-                # codeload is still in progress on A, wait till hard timeout is reached.
-                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
-                wait_till_hard_timeout=true
-            elif [[ $ctrl_activity_b == "codeload" ]]; then
-                #TODO: also check the "done" status from the output of "get progress" xml file
-                # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
-                # codeload is still in progress on B, wait till hard timeout is reached.
-                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
-                wait_till_hard_timeout=true
-            else
-                # set the wait_till_hard_timeout to false
-                wait_till_hard_timeout=false
+            if [[ "$_ctrl_reachable" == true ]]; then
+                ctrl_activity_get "$tmpdir/progress"
+                if [[ $ctrl_activity_a == "codeload" ]]; then
+                    #TODO: also check the "done" status from the output of "get progress" xml file
+                    # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
+                    # codeload is still in progress on A, wait till hard timeout is reached.
+                    echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
+                    wait_till_hard_timeout=true
+                elif [[ $ctrl_activity_b == "codeload" ]]; then
+                    #TODO: also check the "done" status from the output of "get progress" xml file
+                    # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
+                    # codeload is still in progress on B, wait till hard timeout is reached.
+                    echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
+                    wait_till_hard_timeout=true
+                else
+                    # set the wait_till_hard_timeout to false
+                    wait_till_hard_timeout=false
+                fi
             fi
             if [[ "$wait_till_hard_timeout" == true ]]; then
-                if [[ $_ntry -eq $_hard_timeout ]]; then
+                if [[ $_ntry -ge $_hard_timeout ]]; then
                     echo "DEBUG: fw_update() Hard timeout limit is reached, breaking the loop" >> $logfile
                     _sftp_timedout=true
                     break
@@ -1445,6 +1451,7 @@ fw_update()
         fi
         if ping -c1 -W2 $host > /dev/null; then
             # controller is reachable, check the update progress
+            _ctrl_reachable=true
             echo "Getting the progress on fw update, please wait..." | tee -a $logfile
             printf '%s\n' "lcd $tmpdir" "get progress" > $tmpdir/progress.bf
             echo "DEBUG: contents of $tmpdir/progress.bf:" >> $logfile
@@ -1466,6 +1473,7 @@ fw_update()
             fi
         else
             echo "DEBUG: fw_update() Controller host [$host] isn't reachable.." >> $logfile
+            _ctrl_reachable=false
         fi
         # update in progress
         echo "Update is in progress, please wait, check the $logfile for more details..." | tee -a $logfile
