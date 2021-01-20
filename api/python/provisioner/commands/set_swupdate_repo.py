@@ -49,6 +49,7 @@ class SetSWUpdateRepo(Set):
     # TODO at least either pre or post should be defined
     input_type: Type[inputs.SWUpdateRepo] = inputs.SWUpdateRepo
     _REPO_DEST = PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR
+    _BASE_DIR_PILLAR = 'release/update/base_dir'
 
     def _prepare_repo_for_apply(self, repo: inputs.SWUpdateRepo,
                                 enabled: bool = True):
@@ -82,8 +83,7 @@ class SetSWUpdateRepo(Set):
             if not enabled:
                 repo.repo_params = dict(enabled=False)
 
-    @staticmethod
-    def _get_mount_dir():
+    def _get_mount_dir(self):
         """
         Return the base mount directory of ISO repo candidate based on pillars
         values configuration
@@ -93,7 +93,7 @@ class SetSWUpdateRepo(Set):
         Path
             Path to repo candidate mount destination
         """
-        update_dir = PillarKey('release/update/base_dir')
+        update_dir = PillarKey(self._BASE_DIR_PILLAR)
 
         pillar = PillarResolver(LOCAL_MINION).get((update_dir,))
 
@@ -174,7 +174,7 @@ class SetSWUpdateRepo(Set):
         return release in repos
 
     @staticmethod
-    def _check_repo_is_valid(release):
+    def _check_repo_is_valid(release, repo_name="sw_update"):
         """
         Validate if provided `release` repo is well-formed yum repository
 
@@ -182,6 +182,8 @@ class SetSWUpdateRepo(Set):
         ----------
         release
             repo release for check
+        repo_name: str
+            repository name. Default: "sw_update"
 
         Returns
         -------
@@ -194,13 +196,13 @@ class SetSWUpdateRepo(Set):
             If `release` repo malformed.
 
         """
-        cmd = (f"yum --disablerepo='*' --enablerepo='sw_update_{release}' "
+        cmd = (f"yum --disablerepo='*' --enablerepo='{repo_name}_{release}' "
                "list available")
 
         salt_cmd_run(cmd, targets=LOCAL_MINION)
 
-    def _dynamic_validation(self, repo: inputs.SWUpdateRepo,
-                            candidate_repo: inputs.SWUpdateRepo):
+    def _single_repo_validation(self, repo: inputs.SWUpdateRepo,
+                                candidate_repo: inputs.SWUpdateRepo):
         """
         Separate private method for basic single repo validations.
         It allows to call this method in child classes several times for
@@ -322,7 +324,7 @@ class SetSWUpdateRepo(Set):
             super()._run(candidate_repo, targets)
 
             # Method raises exception if validation fails
-            self._dynamic_validation(repo, candidate_repo)
+            self._single_repo_validation(repo, candidate_repo)
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED

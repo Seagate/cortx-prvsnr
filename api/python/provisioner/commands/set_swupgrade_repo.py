@@ -15,11 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
+import os
 
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
 from ..config import (REPO_CANDIDATE_NAME, SW_UPGRADE_REPOS, YUM_REPO_TYPE,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR)
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR, RELEASE_INFO_FILE,
+                      ReleaseInfo
+                      )
+from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
+from ..utils import load_yaml
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +32,54 @@ logger = logging.getLogger(__name__)
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
     _REPO_DEST = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+    _BASE_DIR_PILLAR = "release/upgrade/base_dir"
+
+    def _single_repo_validation(self, release, repo_name):
+        """
+        Separate private method for basic single repo validations.
+
+        Parameters
+        ----------
+        release:
+            Single Upgrade ISO release version
+        repo_name: str
+            Repository name
+
+        Returns
+        -------
+
+        """
+        logger.info(f"Validate single SW upgrade repo '{repo_name}' "
+                    f"of release {release}")
+
+        # general check from pkg manager point of view
+        try:
+            self._check_repo_is_valid(release, repo_name)
+        except SaltCmdResultError as exc:
+            raise SWUpdateRepoSourceError(
+                                        repo_name, f"malformed repo: '{exc}'")
+
+        # there is no the same release repo is already active
+        if self._is_repo_enabled(f'sw_update_{release}'):
+            err_msg = (
+                "SW update repository for the release "
+                f"'{release}' has been already enabled"
+            )
+            logger.warning(err_msg)
+
+            # TODO IMPROVE later raise and error
+            if False:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    (
+                        f"SW update repository for the release "
+                        f"'{release}' has been already enabled"
+                    )
+                )
 
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
         """
+        Validate single SW upgrade ISO structure.
 
         Parameters
         ----------
@@ -59,13 +109,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #     logic is still running, if not - forcibly remove the previous
         #     candidate
         #   - after first mount 'sw_update_candidate' listed in disabled repos
-        if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
-            logger.warning(
-                'other repo candidate was found, proceeding with force removal'
-            )
-            # TODO IMPROVE: it is not enough it may lead to locks when
-            #  provisioner doesn't unmount `sw_update_candidate` repo
-            # raise SWUpdateError(reason="Other repo candidate was found")
+        # TODO: need to have logic for sw upgrade
+        # if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
+        #     logger.warning(
+        #         'other repo candidate was found, proceeding with force removal'
+        #     )
+        # TODO IMPROVE: it is not enough it may lead to locks when
+        #  provisioner doesn't unmount `sw_update_candidate` repo
+        # raise SWUpdateError(reason="Other repo candidate was found")
 
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
@@ -73,18 +124,48 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
 
-            for repo_name, repo_info in SW_UPGRADE_REPOS.items():
-                if repo_info[YUM_REPO_TYPE]:
-                    # TODO: We have a single ISO which contains all repositories
-                    # We can pass repo_name directly or give it from inputs.SWUpgrade
-                    # instance. Another option is creation new instance for single
-                    # repo
-                    super(SetSWUpgradeRepo, self)._dynamic_validation(
-                                                        repo, candidate_repo)
+            iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
+
+            release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
+            try:
+                metadata = load_yaml(release_file)
+            except Exception as exc:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                )
+            else:
+                repo.metadata = metadata
+                logger.debug(f"Resolved metadata {metadata}")
+
+            # the metadata file includes release info
+            # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
+            #  well formed
+            release = metadata.get(ReleaseInfo.RELEASE.value, None)
+            if release is None:
+                try:
+                    release = (
+                        f'{metadata[ReleaseInfo.VERSION.value]}-'
+                        f'{metadata[ReleaseInfo.BUILD.value]}'
+                    )
+                except KeyError:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"No release data found in '{RELEASE_INFO_FILE}'"
+                    )
+
+            with os.scandir(iso_mount_dir) as dir_iter:
+                for entry in dir_iter:
+                    if not entry.name.startswith('.') and entry.is_dir():
+                        self._single_repo_validation(candidate_repo.release,
+                                                     entry.name)
+
+            repo.release = release
+
         finally:
             # remove the repo
-            candidate_repo.source = values.UNDEFINED
+            # candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
+            # super(SetSWUpdateRepo, self)._run(candidate_repo, targets
 
         return repo.metadata

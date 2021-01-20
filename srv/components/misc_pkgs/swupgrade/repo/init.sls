@@ -48,8 +48,43 @@ unexpected_repo_source:
 
     {% endif %}
 
-{# TODO: Make it in loop for each single directory in mount iso dir #}
-{{ repo_added(release, source, source_type, repo_params) }}
+{% from './iso/mount.sls' import repo_mounted with context %}
+
+    {% if source_type == 'iso' %}
+
+        {% set iso_path = source + '.iso' %}
+
+copy_repo_iso_{{ release }}:
+  file.managed:
+    - name: {{ iso_path }}
+    - source: salt://misc_pkgs/swupgrade/repo/files/{{ release }}.iso
+    - makedirs: True
+    - require_in:
+      - sw_upgrade_repo_iso_mounted_{{ release }}
+      - sw_upgrade_repo_added_{{ release }}
+
+
+{{ repo_mounted(release, iso_path, source) }}
+
+    {% elif source_type == 'dir' %}
+
+
+copy_repo_dir_{{ release }}:
+  file.recurse:
+    - name: {{ source }}
+    - source: salt://misc_pkgs/swupgrade/repo/files/{{ release }}
+    - require_in:
+      - sw_upgrade_repo_added_{{ release }}
+
+
+    {% endif %}
+
+{# TODO: Get YUM repos directly from mount dir #}
+{% for repo_name in ('3rdparty', 'cortx', 'os' %}
+
+{{ repo_added(release, source, source_type, repo_name, repo_params) }}
+
+{% endfor %}
 
     {% else %}
 

@@ -15,49 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{# TODO: leave it for debug. We should make this for each yum repo in iso file #}
-{% macro repo_added(release, source, source_type, repo_params={}) %}
-
-    {% from './iso/mount.sls' import repo_mounted with context %}
-
-    {% if source_type == 'iso' %}
-
-        {% set iso_path = source + '.iso' %}
-
-copy_repo_iso_{{ release }}:
-  file.managed:
-    - name: {{ iso_path }}
-    - source: salt://misc_pkgs/swupgrade/repo/files/{{ release }}.iso
-    - makedirs: True
-    - require_in:
-      - sw_upgrade_repo_iso_mounted_{{ release }}
-      - sw_upgrade_repo_added_{{ release }}
+{% macro repo_added(release, source, source_type, repo_name, repo_params={}) %}
 
 
-{{ repo_mounted(release, iso_path, source) }}
-
-    {% elif source_type == 'dir' %}
-
-
-copy_repo_dir_{{ release }}:
-  file.recurse:
-    - name: {{ source }}
-    - source: salt://misc_pkgs/swupgrade/repo/files/{{ release }}
-    - require_in:
-      - sw_upgrade_repo_added_{{ release }}
-
-
-    {% endif %}
-
-
-sw_upgrade_repo_added_{{ release }}:
+sw_upgrade_repo_added_{{ repo_name }}_{{ release }}:
   pkgrepo.managed:
-    - name: sw_upgrade_{{ release }}
-    - humanname: Cortx Upgrade repo {{ release }}
+    - name: sw_upgrade_{{ repo_name }}_{{ release }}
+    - humanname: Cortx Upgrade repo {{ repo_name }}-{{ release }}
     {% if source_type == 'url' %}
-    - baseurl: {{ source }}
+    - baseurl: {{ source }}/{{ repo_name }}
     {% else %}
-    - baseurl: file://{{ source }}
+    - baseurl: file://{{ source }}/{{ repo_name }}
     {% endif %}
     - enabled: {{ repo_params.get('enabled', True) }}
     - gpgcheck: 0
@@ -67,9 +35,9 @@ sw_upgrade_repo_added_{{ release }}:
     {% endif %}
 
 
-sw_upgrade_repo_metadata_cleaned_{{ release }}:
+sw_upgrade_repo_metadata_cleaned_{{ repo_name }}_{{ release }}:
   cmd.run:
-    - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ release }}" clean metadata
+    - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ repo_name }}_{{ release }}" clean metadata
     - require:
       - sw_upgrade_repo_added_{{ release }}
 
