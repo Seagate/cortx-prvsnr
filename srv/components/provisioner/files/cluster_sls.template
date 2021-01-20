@@ -30,10 +30,10 @@ cluster:
   type: generic                       # single/dual/generic/3_node
   {%- endif %}
   node_list:
-    {% for num in range(pillar['provisioner']['cluster']['nodes']) %}
+    {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
     - srvnode-{{ int(num) + 1 }}
     {% endfor %}
-  {% for num in range(pillar['provisioner']['cluster']['nodes']) %}
+  {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
   srvnode-{{ int(num) + 1 }}:
     hostname: srvnode-{{ int(num) + 1 }}
     {% if int(num) == 0 %}
