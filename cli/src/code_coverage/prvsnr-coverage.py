@@ -8,7 +8,7 @@ import shlex
 
 def _run_command(cmd):
     try:
-        res = subprocess.run(shlex.split(cmd), shell=True)
+        res = subprocess.run(shlex.split(cmd), shell=False)
         if res.returncode:
             print(f"failed to run command {cmd} ")
             sys.exit(1)
