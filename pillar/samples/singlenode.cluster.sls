@@ -28,7 +28,9 @@ cluster:
     site_id:
     storage_set_id:
     node_id:
+    machine_id:
     hostname: srvnode-1
+    is_primary: true
     roles:
       - primary
       - openldap_master
