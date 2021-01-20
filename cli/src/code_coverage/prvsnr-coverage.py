@@ -4,11 +4,11 @@ import argparse
 import subprocess
 import sys
 import os.path
-import pathlib
+import shlex
 
 def _run_command(cmd):
     try:
-        res = subprocess.run(cmd, shell=True)
+        res = subprocess.run(shlex.split(cmd), shell=True)
         if res.returncode:
             print(f"failed to run command {cmd} ")
             sys.exit(1)
