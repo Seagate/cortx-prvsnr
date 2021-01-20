@@ -35,7 +35,10 @@ Add common config - rabbitmq cluster to Consul:
         consul kv put rabbitmq/cluster_nodes {{ pillar['rabbitmq']['cluster_nodes'] }}
         consul kv put rabbitmq/erlang_cookie {{ pillar['rabbitmq']['erlang_cookie'] }}
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
+{% set server_nodes = [] -%}
+{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
+{{- server_nodes.append(node) or "" -}}
+{%- endfor -%}
 Add common config - BMC to Consul:
   cmd.run:
     - name: |
@@ -46,7 +49,10 @@ Add common config - BMC to Consul:
 {% endfor %}
 
 
-{% enclosures = [enclosure for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure] %}
+{% set enclosures = [] -%}
+{%- for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure -%}
+{{- enclosures.append(enclosure) or "" -}}
+{%- endfor -%}
 Add common config - storage enclosure to Consul:
   cmd.run:
     - name: |

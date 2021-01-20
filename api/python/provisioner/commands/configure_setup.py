@@ -156,28 +156,28 @@ class StorageEnclosureParamsValidation:
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
     is_primary: str = NodeNetworkParams.is_primary
-    data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
-    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
-    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
-    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
-    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
-    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
-    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
-    private_ip: str = NodeNetworkParams.private_ip
+    data_interfaces: List = NodeNetworkParams.data_interfaces
+    data_public_ip: str = NodeNetworkParams.data_public_ip
+    data_netmask: str = NodeNetworkParams.data_netmask
+    data_gateway: str = NodeNetworkParams.data_gateway
+    mgmt_interfaces: List = NodeNetworkParams.mgmt_interfaces
+    mgmt_public_ip: str = NodeNetworkParams.mgmt_public_ip
+    mgmt_netmask: str = NodeNetworkParams.mgmt_netmask
+    mgmt_gateway: str = NodeNetworkParams.mgmt_gateway
+    data_private_ip: str = NodeNetworkParams.data_private_ip
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
     _optional_param = [
-        'data_nw_public_ip_addr',
+        'data_public_ip',
         'is_primary',
-        'data_nw_netmask',
-        'data_nw_gateway',
-        'private_ip',
-        'mgmt_nw_iface',
-        'mgmt_nw_public_ip_addr',
-        'mgmt_nw_netmask',
-        'mgmt_nw_gateway'
+        'data_netmask',
+        'data_gateway',
+        'data_private_ip',
+        'mgmt_interfaces',
+        'mgmt_public_ip',
+        'mgmt_netmask',
+        'mgmt_gateway'
     ]
 
     def __attrs_post_init__(self):
@@ -195,20 +195,25 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    validate_map = {"cluster": NetworkParamsValidation,
-                    "node": NodeParamsValidation,
-                    "storage": StorageEnclosureParamsValidation}
+    validate_map = {
+        "cluster": NetworkParamsValidation,
+        "node": NodeParamsValidation,
+        "storage": StorageEnclosureParamsValidation
+    }
 
     def _parse_params(self, input):
         params = {}
         for key in input:
+            logger.debug(f"Key being processed: {key}")
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
                 'ip', 'user', 'secret', 'type', 'interfaces',
                  'gateway', 'netmask', 'public_ip', 'private_ip'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
+                logger.debug(f"Params generated: {params}")
             else:
+                logger.debug(f"Params generated: {params}")
                 params[val[-1]] = input[key]
         return params
 

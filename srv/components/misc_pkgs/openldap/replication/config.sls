@@ -23,7 +23,7 @@ include:
 
 {% if pillar['cluster']['node_list']|length > 1 -%}
 
-{% set ldap_password = salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) %}
+{% set ldap_password = salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) %}
 
 Load provider module:
   cmd.run:

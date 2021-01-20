@@ -15,11 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-openldap:
-  backend_db: mdb
-  root:
-    user: admin
-    secret:
-  sgiam:
-    user: admin
-    secret:
+s3server:
+    version:
+        cortx-s3server: latest
+        cortx-s3iamcli: latest
+    no_of_inst: 11

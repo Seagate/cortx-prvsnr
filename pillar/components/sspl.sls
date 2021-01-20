@@ -15,11 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-openldap:
-  backend_db: mdb
-  root:
-    user: admin
-    secret:
-  sgiam:
-    user: admin
+sspl:
+  health_map_path: /opt/seagate/cortx_configs/healthmap/
+  health_map_file: healthmap-schema.json
+  rmq:
+    user: rmq
     secret:

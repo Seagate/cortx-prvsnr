@@ -166,8 +166,11 @@ class DeployVM(Deploy):
         for state in states:
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
-                self._apply_state(f"components.{state}", primary, stages)
+                logger.debug("Executing for single node.")
+                if not "sync" in state:
+                    self._apply_state(f"components.{state}", primary, stages)
             else:
+                logger.debug("Executing for multiple nodes.")
                 # FIXME EOS-12076 the following logic is only
                 #       for legacy dual node setup
                 if state == "sspl":

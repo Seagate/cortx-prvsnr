@@ -47,7 +47,10 @@ Copy multipath config:
     and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
+{% set server_nodes = [] -%}
+{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
+{{- server_nodes.append(node) or "" -}}
+{%- endfor -%}
 {% set node_id = (server_nodes | difference(grains['id']))[0] %}
 # Execute only on Secondary node
 Copy multipath bindings:

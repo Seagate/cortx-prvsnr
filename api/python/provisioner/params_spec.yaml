@@ -30,10 +30,10 @@ network:
   # TODO use nested group to reduce copy-paste in paths
   primary_hostname: cluster/srvnode-1/hostname
   primary_roaming_ip: cluster/srvnode-1/network/data/roaming_ip
-  primary_mgmt_ip: cluster/srvnode-1/network/mgmt/public_ip
+  primary_mgmt_public_ip: cluster/srvnode-1/network/mgmt/public_ip
   primary_mgmt_netmask: cluster/srvnode-1/network/mgmt/netmask
   primary_mgmt_gateway: cluster/srvnode-1/network/mgmt/gateway
-  primary_data_ip: cluster/srvnode-1/network/data/public_ip
+  primary_data_public_ip: cluster/srvnode-1/network/data/public_ip
   primary_data_netmask: cluster/srvnode-1/network/data/netmask
   primary_data_gateway: cluster/srvnode-1/network/data/gateway
   primary_data_network_interfaces: cluster/srvnode-1/network/data/interfaces
@@ -42,10 +42,10 @@ network:
   primary_bmc_secret: cluster/srvnode-1/bmc/secret
   secondary_hostname: cluster/srvnode-2/hostname
   secondary_roaming_ip: cluster/srvnode-2/network/data/roaming_ip
-  secondary_mgmt_ip: cluster/srvnode-2/network/mgmt/public_ip
+  secondary_mgmt_public_ip: cluster/srvnode-2/network/mgmt/public_ip
   secondary_mgmt_netmask: cluster/srvnode-2/network/mgmt/netmask
   secondary_mgmt_gateway: cluster/srvnode-2/network/mgmt/gateway
-  secondary_data_ip: cluster/srvnode-2/network/data/public_ip
+  secondary_data_public_ip: cluster/srvnode-2/network/data/public_ip
   secondary_data_netmask: cluster/srvnode-2/network/data/netmask
   secondary_data_gateway: cluster/srvnode-2/network/data/gateway
   secondary_data_network_interfaces: cluster/srvnode-2/network/data/interfaces

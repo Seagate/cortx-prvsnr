@@ -15,7 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
+{% set server_nodes = [] -%}
+{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
+{{- server_nodes.append(node) or "" -}}
+{%- endfor -%}
+
 hostsfile:
   file.blockreplace:
     - name: /etc/hosts
@@ -27,7 +31,9 @@ hostsfile:
     - content: |
         {%- if server_nodes|length > 1 %}
         {%- for node in server_nodes %}
-        {%- if pillar['cluster'][node]['network']['data']['private_ip'] %}
+        {%- if pillar['cluster'][node]['network'] is defined and
+          pillar['cluster'][node]['network']['data']['private_ip'] is defined
+        %}
         {{ pillar['cluster'][node]['network']['data']['private_ip'] }}   {{ node -}}
         {%- else %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
@@ -35,6 +41,6 @@ hostsfile:
         {% endfor -%}
         {% endif -%}
         {% endfor %}
-        {% else %}}
+        {% else %}
         127.0.0.2    srvnode-1
         {%- endif %}

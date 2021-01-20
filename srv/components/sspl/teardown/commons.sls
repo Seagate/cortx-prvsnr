@@ -44,7 +44,10 @@ Delete common config - rabbitmq cluster to Consul:
     - require:
       - Delete sspl checkpoint flag
 
-{% server_nodes = [node for node in pillar['cluster'].keys() if "srvnode-" in node] %}
+{% set server_nodes = [] -%}
+{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
+{{- server_nodes.append(node) or "" -}}
+{%- endfor -%}
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |
@@ -56,7 +59,10 @@ Delete common config - BMC to Consul:
     - require:
       - Delete sspl checkpoint flag
 
-{% enclosures = [enclosure for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure] %}
+{% set enclosures = [] -%}
+{%- for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure -%}
+{{- enclosures.append(enclosure) or "" -}}
+{%- endfor -%}
 Delete common config - storage enclosure to Consul:
   cmd.run:
     - name: |
