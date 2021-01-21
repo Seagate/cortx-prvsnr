@@ -76,7 +76,7 @@ ctrl_activity_get()
     ctrl_activity_a=
     ctrl_activity_b=
     if [[ ! -f $_xml_doc ]]; then
-        echo "WARNING: could not find the file "$_xml_doc", not parsing the progress file" | tee -a $logfile
+        echo "WARNING: could not find the file \"$_xml_doc\", not parsing the progress file" | tee -a $logfile
         return
     fi
 
