@@ -20,22 +20,13 @@ cluster:
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  {% if 1 == pillar['provisioner']['cluster']['nodes'] -%}
-  type: single                        # single/dual/generic/3_node
-  {% elif 2 == pillar['provisioner']['cluster']['nodes'] -%}
-  type: dual                        # single/dual/generic/3_node
-  {% elif 3 == pillar['provisioner']['cluster']['nodes'] -%}
-  type: 3_node                        # single/dual/generic/3_node
-  {% else -%}
-  type: generic                       # single/dual/generic/3_node
-  {%- endif %}
   node_list:
     {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
-    - srvnode-{{ int(num) + 1 }}
+    - srvnode-{{ str(int(num) + 1) }}
     {% endfor %}
   {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
-  srvnode-{{ int(num) + 1 }}:
-    hostname: srvnode-{{ int(num) + 1 }}
+  srvnode-{{ str(int(num) + 1) }}:
+    hostname: srvnode-{{ str(int(num) + 1) }}
     {% if int(num) == 0 %}
     is_primary: true
     {% else %}
