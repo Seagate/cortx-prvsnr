@@ -23,6 +23,9 @@ grains_get:
 pillar_get:
   type: PillarGet
   input_type: PillarKeysList
+pillar_dump:
+  type: PillarDump
+  input_type: PillarKeysList
 get_params:
   type: Get
   input_type: ParamsList
