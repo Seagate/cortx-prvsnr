@@ -162,6 +162,13 @@ CONTROLLER_A = 'a'
 CONTROLLER_B = 'b'
 CONTROLLER_BOTH = 'both'
 
+# configure_setup related Params
+CLUSTER = "cluster"
+STORAGE_ENCLOSURE = "storage-enclosure"
+NODE = "node"
+NODE_DEFAULT = "srvnode-default"
+STORAGE_DEFAULT = "storage-enclosure-default"
+
 PRVSNRUSERS_GROUP = 'prvsnrusers'
 
 PRVSNR_CLI_MACHINE_OUTPUT = ('json', 'yaml')

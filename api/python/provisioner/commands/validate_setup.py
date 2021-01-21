@@ -16,66 +16,17 @@
 #
 
 import logging
-import configparser
-from enum import Enum
-from typing import Type, List
-from copy import deepcopy
-from pathlib import Path
+from typing import List
 
 from ..inputs import (
-    NetworkParams, ReleaseParams, StorageEnclosureDefaultParams,
-    NodeNetworkParams, ServerDefaultParams, StorageNodeParams
+    NetworkParams, ReleaseParams, StorageEnclosureParams,
+    NodeNetworkParams, StorageNodeParams, NodeParams
 )
-from .. import inputs
 from ..vendor import attr
 
-from ..utils import run_subprocess_cmd
-
 from ..values import UNCHANGED
-from . import (
-    CommandParserFillerMixin
-)
-
 
 logger = logging.getLogger(__name__)
-
-@attr.s(auto_attribs=True)
-class ServerDefaultParamsValidation:
-    search_domains: str = ServerDefaultParams.search_domains
-    dns_servers: str = ServerDefaultParams.dns_servers
-    cluster_id: str = ServerDefaultParams.cluster_id
-    bmc_user: str = ServerDefaultParams.bmc_user
-    bmc_secret: str = ServerDefaultParams.bmc_secret
-    network_mgmt_interfaces: str = ServerDefaultParams.network_mgmt_interfaces
-    network_mgmt_netmask: str = ServerDefaultParams.network_mgmt_netmask
-    network_mgmt_gateway: str = ServerDefaultParams.network_mgmt_gateway
-    network_data_interfaces: str = ServerDefaultParams.network_data_interfaces
-    network_data_netmask: str = ServerDefaultParams.network_data_netmask
-    network_data_gateway: str = ServerDefaultParams.network_data_gateway
-    storage_metadata_device: str = ServerDefaultParams.storage_metadata_device
-    storage_data_devices: str = ServerDefaultParams.storage_data_devices
-
-    _optional_param = [
-        'search_domains',
-        'dns_servers',
-        'cluster_id',
-        'network_mgmt_interfaces',
-        'network_mgmt_netmask',
-        'network_mgmt_gateway',
-        'network_data_netmask',
-        'network_data_gateway',
-        'storage_metadata_device',
-        'storage_data_devices'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
 
 
 @attr.s(auto_attribs=True)
@@ -110,13 +61,15 @@ class ReleaseParamsValidation:
 
 
 @attr.s(auto_attribs=True)
-class StorageEnclosureDefaultParamsValidation:
-    type: str = StorageEnclosureDefaultParams.type
-    controller_primary_mc_ip: str = StorageEnclosureDefaultParams.controller_primary_mc_ip
-    controller_secondary_mc_ip: str = StorageEnclosureDefaultParams.controller_secondary_mc_ip
-    controller_user: str = StorageEnclosureDefaultParams.controller_user
-    controller_secret: str = StorageEnclosureDefaultParams.controller_secret
-    controller_type: str = StorageEnclosureDefaultParams.controller_type
+class StorageEnclosureParamsValidation:
+    type: str = StorageEnclosureParams.type
+    controller_primary_mc_ip: str = (
+                        StorageEnclosureParams.controller_primary_mc_ip)
+    controller_secondary_mc_ip: str = (
+                        StorageEnclosureParams.controller_secondary_mc_ip)
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+    controller_type: str = StorageEnclosureParams.controller_type
     _optional_param = [
         'controller_type'
     ]
@@ -134,6 +87,7 @@ class StorageEnclosureDefaultParamsValidation:
         if len(missing_params) > 0:
             raise ValueError(f"Mandatory param missing {missing_params}")
 
+
 @attr.s(auto_attribs=True)
 class StorageNodeParamsValidation:
     hostname: str = StorageNodeParams.hostname
@@ -150,33 +104,60 @@ class StorageNodeParamsValidation:
 
 
 @attr.s(auto_attribs=True)
-class NodeParamsValidation:
-    hostname: str = NodeNetworkParams.hostname
-    is_primary: str = NodeNetworkParams.is_primary
-    roles: str = NodeNetworkParams.roles
+class NodeNetworkParamsValidation:
+    search_domains: str = NodeNetworkParams.search_domains
+    dns_servers: str = NodeNetworkParams.dns_servers
     cluster_id: str = NodeNetworkParams.cluster_id
-    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
+    storage_metadata_device: str = NodeNetworkParams.storage_metadata_device
+    storage_data_devices: str = NodeNetworkParams.storage_data_devices
+    bmc_user: str = NodeNetworkParams.bmc_user
+    bmc_secret: str = NodeNetworkParams.bmc_secret
+    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
     network_data_netmask: str = NodeNetworkParams.network_data_netmask
     network_data_gateway: str = NodeNetworkParams.network_data_gateway
     network_mgmt_interfaces: List = NodeNetworkParams.network_mgmt_interfaces
-    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
     network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
     network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
-    bmc_ip: str = NodeNetworkParams.bmc_ip
 
     _optional_param = [
-        'network_data_public_ip_addr',
-        'is_primary',
-        'roles',
+        'search_domains',
+        'dns_servers',
         'cluster_id',
+        'storage_metadata_device',
+        'storage_data_devices',
         'network_data_netmask',
         'network_data_gateway',
         'pvt_ip_addr',
         'network_mgmt_interfaces',
-        'network_mgmt_public_ip_addr',
         'network_mgmt_netmask',
         'network_mgmt_gateway'
+    ]
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class NodeParamsValidation:
+    hostname: str = NodeParams.hostname
+    is_primary: str = NodeParams.is_primary
+    roles: str = NodeParams.roles
+    bmc_ip: str = NodeParams.bmc_ip
+    network_data_public_ip_addr: str = NodeParams.network_data_public_ip_addr
+    network_mgmt_public_ip_addr: str = NodeParams.network_mgmt_public_ip_addr
+
+    _optional_param = [
+        'is_primary',
+        'roles',
+        'network_data_public_ip_addr',
+        'network_mgmt_public_ip_addr'
     ]
 
     def __attrs_post_init__(self):

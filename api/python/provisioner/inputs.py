@@ -457,7 +457,7 @@ class NTP(ParamGroupInputBase):
 class ReleaseParams():
     _param_group = 'release'
     target_build: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Cortx deployment build"
+        _param_group, descr="Cortx deployment build"
     )
 
 
@@ -466,8 +466,53 @@ class Release(ParamGroupInputBase):
     target_build: str = ReleaseParams.target_build
 
 
-class ServerDefaultParams():
-    _param_group = 'srv_default'
+class StorageEnclosureParams():
+    _param_group = 'storage_enclosure'
+    type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Type of storage"
+    )
+    controller_primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Controller A IP",
+        validator=Validation.check_ip4
+    )
+    controller_secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Controller B IP",
+        validator=Validation.check_ip4
+    )
+    controller_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Controller user"
+    )
+    # TODO IMPROVE EOS-14361 mask secret
+    controller_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Controller password"
+    )
+    controller_type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Controller type"
+    )
+
+
+@attr.s(auto_attribs=True)
+class StorageEnclosure(ParamGroupInputBase):
+    controller_a_ip: str = StorageEnclosureParams.controller_primary_mc_ip
+    controller_b_ip: str = StorageEnclosureParams.controller_secondary_mc_ip
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+
+
+class StorageNodeParams():
+    _param_group = 'storage_node'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Hostname"
+    )
+
+
+@attr.s(auto_attribs=True)
+class StorageNode(ParamGroupInputBase):
+    hostname: str = StorageNodeParams.hostname
+
+
+class NodeNetworkParams():
+    _param_group = 'node'
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Common Server configuration"
     )
@@ -477,121 +522,14 @@ class ServerDefaultParams():
     dns_servers: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of dns servers as json"
     )
-    bmc_user: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC User"
-    )
-    bmc_secret: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC password"
-    )
-    network_mgmt_interfaces: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Mgmt Interfaces"
-    )
-    network_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Mgmt Netmask",
-        validator=Validation.check_ip4
-    )
-    network_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Mgmt Gateway",
-        validator=Validation.check_ip4
-    )
-    network_data_interfaces: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Data Interfaces"
-    )
-    network_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Data Netmask",
-        validator=Validation.check_ip4
-    )
-    network_data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Network Data Gateway",
-        validator=Validation.check_ip4
-    )
     cluster_id: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Cluster ID"
+        _param_group, descr="Cluster ID"
     )
     storage_metadata_device: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Storage Metadata Device"
+        _param_group, descr="Storage Metadata Device"
     )
     storage_data_devices: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Storage Data Devices"
-    )
-
-
-@attr.s(auto_attribs=True)
-class ServerDefault(ParamGroupInputBase):
-    search_domains: List = ServerDefaultParams.search_domains
-    dns_servers: List = ServerDefaultParams.dns_servers
-    cluster_id: str = ServerDefaultParams.cluster_id
-    bmc_user: str = ServerDefaultParams.bmc_user
-    bmc_secret: str = ServerDefaultParams.bmc_secret
-    network_mgmt_interfaces: str = ServerDefaultParams.network_mgmt_interfaces
-    network_mgmt_netmask: str = ServerDefaultParams.network_mgmt_netmask
-    network_mgmt_gateway: str = ServerDefaultParams.network_mgmt_gateway
-    network_data_interfaces: str = ServerDefaultParams.network_data_interfaces
-    network_data_netmask: str = ServerDefaultParams.network_data_netmask
-    network_data_gateway: str = ServerDefaultParams.network_data_gateway
-    storage_metadata_device: str = ServerDefaultParams.storage_metadata_device
-    storage_data_devices: str = ServerDefaultParams.storage_data_devices
-
-
-
-class StorageEnclosureDefaultParams():
-    _param_group = 'storage_enclosure_default'
-    type: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Type of storage"
-    )
-    controller_primary_mc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller A IP",
-        validator=Validation.check_ip4
-    )
-    controller_secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller B IP",
-        validator=Validation.check_ip4
-    )
-    controller_user: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller user"
-    )
-    # TODO IMPROVE EOS-14361 mask secret
-    controller_secret: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller password"
-    )
-    controller_type: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Controller type"
-    )
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureDefault(ParamGroupInputBase):
-    controller_a_ip: str = StorageEnclosureDefaultParams.controller_primary_mc_ip
-    controller_b_ip: str = StorageEnclosureDefaultParams.controller_secondary_mc_ip
-    controller_user: str = StorageEnclosureDefaultParams.controller_user
-    controller_secret: str = StorageEnclosureDefaultParams.controller_secret
-
-
-class StorageNodeParams():
-    _param_group = 'storage_node'
-    hostname: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Hostname"
-    )
-
-@attr.s(auto_attribs=True)
-class StorageNode(ParamGroupInputBase):
-    hostname: str = StorageNodeParams.hostname
-
-
-class NodeNetworkParams():
-    _param_group = 'node'
-    hostname: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node hostname"
-    )
-    roles: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" role of the node"
-    )
-    cluster_id: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr=" Cluster ID"
-    )
-    is_primary: bool = ParamGroupInputBase._attr_ib(
-        _param_group, descr="mark node as a primary",
-        converter=bool
+        _param_group, descr="Storage Data Devices"
     )
     network_data_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data network iface"
@@ -607,20 +545,12 @@ class NodeNetworkParams():
         _param_group, descr="node mgmt gateway IP",
         validator=Validation.check_ip4
     )
-    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface IP",
-        validator=Validation.check_ip4
-    )
     network_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management iface netmask",
         validator=Validation.check_ip4
     )
     network_mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network iface"
-    )
-    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
     )
     network_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface netmask",
@@ -634,29 +564,60 @@ class NodeNetworkParams():
         _param_group, descr="node data iface private IP",
         validator=Validation.check_ip4
     )
-    bmc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC  IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
+
 
 @attr.s(auto_attribs=True)
 class NodeNetwork(ParamGroupInputBase):
-    hostname: str = NodeNetworkParams.hostname
-    roles: str = NodeNetworkParams.roles
+    search_domains: List = NodeNetworkParams.search_domains
+    dns_servers: List = NodeNetworkParams.dns_servers
     cluster_id: str = NodeNetworkParams.cluster_id
-    is_primary: str = NodeNetworkParams.is_primary
+    storage_metadata_device: str = NodeNetworkParams.storage_metadata_device
+    storage_data_devices: str = NodeNetworkParams.storage_data_devices
     network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
     network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
-    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
     network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
     network_mgmt_interfaces: str = NodeNetworkParams.network_mgmt_interfaces
-    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
     network_data_netmask: str = NodeNetworkParams.network_data_netmask
     network_data_gateway: str = NodeNetworkParams.network_data_gateway
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
-    bmc_ip: str = NodeNetworkParams.bmc_ip
+
+
+class NodeParams():
+    _param_group = 'node'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node hostname"
+    )
+    roles: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="role of the node"
+    )
+    is_primary: bool = ParamGroupInputBase._attr_ib(
+        _param_group, descr="mark node as a primary",
+        converter=bool
+    )
+    bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC  IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data iface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management iface IP",
+        validator=Validation.check_ip4
+    )
+
+
+@attr.s(auto_attribs=True)
+class Node(ParamGroupInputBase):
+    hostname: str = NodeParams.hostname
+    roles: str = NodeParams.roles
+    is_primary: str = NodeParams.is_primary
+    bmc_ip: str = NodeParams.bmc_ip
+    network_data_public_ip_addr: str = NodeParams.network_data_public_ip_addr
+    network_mgmt_public_ip_addr: str = NodeParams.network_mgmt_public_ip_addr
 
 
 class NetworkParams():

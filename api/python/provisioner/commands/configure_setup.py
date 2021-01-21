@@ -18,20 +18,25 @@
 import logging
 import configparser
 from enum import Enum
-from typing import Type, List
+from typing import Type
 from copy import deepcopy
 from pathlib import Path
 
 from .validate_setup import (
     NetworkParamsValidation,
-    ReleaseParamsValidation,
-    StorageEnclosureDefaultParamsValidation,
-    NodeParamsValidation,
+    StorageEnclosureParamsValidation,
     StorageNodeParamsValidation,
-    ServerDefaultParamsValidation
+    NodeParamsValidation,
+    NodeNetworkParamsValidation
 )
 from .. import inputs
 from ..vendor import attr
+from ..config import (
+    NODE_DEFAULT,
+    STORAGE_DEFAULT,
+    CLUSTER, NODE,
+    STORAGE_ENCLOSURE
+)
 
 from ..utils import run_subprocess_cmd
 
@@ -104,11 +109,11 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    validate_map = {"cluster": NetworkParamsValidation,
-                    "node": NodeParamsValidation,
-                    "controller": StorageNodeParamsValidation,
-                    "srv_default": ServerDefaultParamsValidation,
-                    "storage_enclosure_default": StorageEnclosureDefaultParamsValidation}
+    validate_map = {f'{CLUSTER}': NetworkParamsValidation,
+                    f'{NODE}': NodeParamsValidation,
+                    f'{STORAGE_ENCLOSURE}': StorageNodeParamsValidation,
+                    f'{NODE_DEFAULT}': NodeNetworkParamsValidation,
+                    f'{STORAGE_DEFAULT}': StorageEnclosureParamsValidation}
 
     def _parse_params(self, input):
         params = {}
@@ -117,7 +122,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             conf_values = [
                 'ip', 'user', 'secret', 'ipaddr', 'interfaces', 'gateway',
                 'netmask', 'public_ip_addr', 'type',
-                'id', 'roles', 'data_devices', 'metadata_device' ]
+                'id', 'roles', 'data_devices', 'metadata_device']
 
             if len(val) > 2 and val[-1] in conf_values:
                 params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = input[key]
@@ -138,8 +143,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            #elif 'network.mgmt.interfaces' in key:
-            elif 'interfaces' or 'device' or 'devices' in key:
+            elif ('interfaces' or 'device' or 'devices') in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -172,34 +176,25 @@ class ConfigureSetup(CommandParserFillerMixin):
         node_list = []
         count = int(number_of_nodes)
 
-        pillar_map = {"srv_default": "cluster",
-                      "storage_enclosure_default": "storage_enclosure"}
+        pillar_map = {f'{NODE_DEFAULT}': f'{CLUSTER}',
+                      f'{NODE}': f'{CLUSTER}',
+                      f'{STORAGE_ENCLOSURE}': f'{STORAGE_ENCLOSURE}',
+                      f'{STORAGE_DEFAULT}': f'{STORAGE_ENCLOSURE}'}
 
         for section in content:
             input_type = section
             pillar_type = section
-            if 'default' in section:
-                #for section_name in ['srv_default', 'storage_enclosure_default']:
-                if 'srvnode' in section:
-                    input_type = 'srv_default'
-                elif 'storage' in section:
-                    input_type = 'storage_enclosure_default'
-                pillar_map_type = pillar_map[input_type]
-                pillar_type = f'{pillar_map_type}/{section}'
-                count = count - 1
-                node_list.append(f"\"{section}\"")
+            if 'srvnode' in section:
+                input_type = (f'{NODE_DEFAULT}' if 'default' in section
+                              else f'{NODE}')
+            elif 'storage' in section:
+                input_type = (f'{STORAGE_DEFAULT}' if 'default' in section
+                              else f'{STORAGE_ENCLOSURE}')
 
-            else:
-                if 'srvnode' in section:
-                    input_type = 'node'
-                    pillar_type = f'cluster/{section}'
-                elif 'storage' in section:
-                    # TODO: verify input_type and 
-                    # pillar_type for storage_enclosure
-                    input_type = 'controller'
-                    pillar_type = f'storage_enclosure/{section}'
-                count = count - 1
-                node_list.append(f"\"{section}\"")
+            pillar_map_type = pillar_map[input_type]
+            pillar_type = f'{pillar_map_type}/{section}'
+            count = count - 1
+            node_list.append(f"\"{section}\"")
 
             self._validate_params(input_type, content[section])
             self._parse_input(content[section])
