@@ -53,8 +53,7 @@ class SetSWUpdateRepo(Set):
 
     def _prepare_repo_for_apply(self, repo: inputs.SWUpdateRepo,
                                 enabled: bool = True):
-        """
-        Prepare repository for apply
+        """Prepare repository for apply.
 
         Parameters
         ----------

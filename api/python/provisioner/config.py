@@ -499,8 +499,7 @@ NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 
 
 class SWUpgradeRepos(Enum):
-
-    """List of supported SW Upgrade Repositories"""
+    """List of supported SW Upgrade Repositories."""
 
     OS = "os"  # yum repo
     third_party = "3rdparty"  # yum repo
