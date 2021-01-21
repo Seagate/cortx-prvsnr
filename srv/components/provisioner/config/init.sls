@@ -18,6 +18,6 @@
 
 # TODO IMPROVE salt configs might go here as well
 include:
-  - components.system.config.pillar_encrypt
-  - components.provisioner.config.rsyslog_config
   - components.provisioner.config.generate_cluster_pillar
+  - components.provisioner.config.rsyslog_config
+  - components.system.config.pillar_encrypt

@@ -15,23 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
+{% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
 cluster:
   cluster_ip:                         # Cluster IP for HAProxy
   mgmt_vip:                           # Management VIP for CSM
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   node_list:
-    {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
-    - srvnode-{{ str(int(num) + 1) }}
+    {% for num in range(num_of_nodes) %}
+    - srvnode-{{ (num + 1) }}
     {% endfor %}
-  {% for num in range(pillar['provisioner']['cluster']['num_of_nodes']) %}
-  srvnode-{{ str(int(num) + 1) }}:
-    hostname: srvnode-{{ str(int(num) + 1) }}
-    {% if int(num) == 0 %}
-    is_primary: true
-    {% else %}
-    is_primary: false
-    {% endif %}
+  {% for num in range(num_of_nodes) %}
+  srvnode-{{ (num + 1) }}:
+    hostname: srvnode-{{ (num + 1) }}
+    roles: []
     bmc:
       ip:
       user: ADMIN

@@ -18,7 +18,7 @@
 
 Generate basic cluster.sls file:
   file.managed:
-    - name: {{ pillar["provisioner"]["cluster"]["cluster_pillar_path"] }}
+    - name: {{ pillar["provisioner"]["cluster_info"]["cluster_pillar_path"] }}
     - source: salt://components/provisioner/files/cluster_sls.template
     - template: jinja
     - makedirs: True

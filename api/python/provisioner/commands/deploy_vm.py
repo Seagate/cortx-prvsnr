@@ -93,12 +93,13 @@ class DeployVM(Deploy):
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
-    def set_pillar_data(self, setup_type):
+    def set_pillar_data(self, setup_type, targets):
         minions_ids = ['srvnode-1']
         disk = []
 
         if setup_type != SetupType.SINGLE:
-            minions_ids.append('srvnode-2')
+            for target in targets:
+                minions_ids.append(f"{target}")
 
         # TODO: EOS-14248 remote setup vm deployment
         res = self._cmd_run(
@@ -130,7 +131,7 @@ class DeployVM(Deploy):
             self._cmd_run(
                 (
                     'provisioner pillar_set '
-                    f'cluster/{minion_id}/network/data_nw/roaming_ip  '
+                    f'cluster/{minion_id}/network/data_nw/roaming_ip '
                     '\\"127.0.0.1\\"'
                 ),
                 targets=self._primary_id()
@@ -147,7 +148,12 @@ class DeployVM(Deploy):
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
-        setup_type = run_args.setup_type
+        setup_type = (
+            SetupType.SINGLE 
+            if (1 == len(run_args.targets))
+            else run_args.setup_type
+        )
+        
         targets = run_args.targets
         states = deploy_states[states_group]
         stages = run_args.stages
@@ -192,7 +198,7 @@ class DeployVM(Deploy):
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
 
-        self.set_pillar_data(run_args.setup_type)
+        self.set_pillar_data(run_args.setup_type, run_args.targets)
         if self._is_hw():
             # TODO EOS-12076 less generic error
             raise errors.ProvisionerError(
