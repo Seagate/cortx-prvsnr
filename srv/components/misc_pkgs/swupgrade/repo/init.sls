@@ -61,7 +61,6 @@ copy_repo_iso_{{ release }}:
     - makedirs: True
     - require_in:
       - sw_upgrade_repo_iso_mounted_{{ release }}
-      - sw_upgrade_repo_added_{{ release }}
 
 
 {{ repo_mounted(release, iso_path, source) }}
@@ -73,14 +72,11 @@ copy_repo_dir_{{ release }}:
   file.recurse:
     - name: {{ source }}
     - source: salt://misc_pkgs/swupgrade/repo/files/{{ release }}
-    - require_in:
-      - sw_upgrade_repo_added_{{ release }}
-
 
     {% endif %}
 
 {# TODO: Get YUM repos directly from mount dir #}
-{% for repo_name in ('3rdparty', 'cortx', 'os' %}
+{% for repo_name in ('3rdparty', 'cortx', 'os') %}
 
 {{ repo_added(release, source, source_type, repo_name, repo_params) }}
 

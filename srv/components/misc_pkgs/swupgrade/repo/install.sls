@@ -38,7 +38,5 @@ sw_upgrade_repo_added_{{ repo_name }}_{{ release }}:
 sw_upgrade_repo_metadata_cleaned_{{ repo_name }}_{{ release }}:
   cmd.run:
     - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ repo_name }}_{{ release }}" clean metadata
-    - require:
-      - sw_upgrade_repo_added_{{ release }}
 
 {% endmacro %}
