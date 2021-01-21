@@ -25,6 +25,13 @@ if [ -f $ftp_log ]; then
     yes | cp -f $ftp_log ${logdir}/fw_upgrade_${ts}.log
 fi
 
+sftp_log="$logdir/sftp_fw_upgrade.log"
+
+if [ -f $sftp_log ]; then
+    ts=$(date +"%Y-%m-%d_%H-%M-%S")
+    yes | cp -f $sftp_log ${logdir}/sftp_fw_upgrade_${ts}.log
+fi
+
 ftp_op_timeout=false
 ftp_kill_timeout=false
 ftp_pid=
@@ -1153,8 +1160,16 @@ fw_upgrade_health_check()
 # provided in the batchfile as input to the function.
 sftp_cmd_run()
 {
-    _batch_file="$1"
-    _cmd=$(cat $_batch_file)
+    local _batch_file="$1"
+    local _cmd=$(cat $_batch_file)
+    local _scr_sleep_time=30
+    local _scr_max_ntry=10
+    local _scr_ntry=0
+    local _scr_ret=
+    local _sftp_log="$tmpdir/sftp.log"
+    if [[ ! -f $_sftp_log ]]; then
+        touch $_sftp_log
+    fi
 
     if ! command  -v sftp; then
         echo "ERROR: sftp command could not be found" | tee -a $logfile
@@ -1162,13 +1177,43 @@ sftp_cmd_run()
         exit 1
     fi
 
-    echo "sftp_cmd_run(): cmd: $_cmd" >> $logfile
-    echo "sftp_cmd_run(): starting sftp session" >> $logfile
-sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF
+    while true; do
+        echo "DEBUG: sftp_cmd_run(): _scr_ntry=$_scr_ntry, _scr_max_ntry=$_scr_max_ntry" >> $logfile
+        if [[ $_scr_ntry -ge $_scr_max_ntry ]]; then
+            echo "ERROR: Could not establish the sftp session with $host after many attempts, exiting.." | tee -a $logfile
+            exit 1
+        fi
+        echo "DEBUG: sftp_cmd_run(): starting sftp session" >> $logfile
+        echo "DEBUG: sftp_cmd_run(): Running cmd: $_cmd" >> $logfile
+sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF 2>&1 | tee $_sftp_log
 $_cmd
 bye
 EOF
-
+        _scr_ret=${PIPESTATUS[0]}
+        # copy the sftp logs to the main sftp log file (reqd for debugging purpose)
+        cat $_sftp_log >> $sftp_log
+        echo "DEBUG: sftp_cmd_run(): sftp returned with exit code: $_scr_ret" >> $logfile
+        if [[ $_scr_ret -ne 0 ]]; then
+            if [[ $_scr_ret -eq 255 ]]; then
+                #ssh error to the host, may be after the restart ssh service isn't up yet.
+                # wait for some time and try again.
+                echo "DEBUG: sftp_cmd_run(): ssh error, controller host may be getting rebooted, trying again in a while.." >> $logfile
+                sleep $_scr_sleep_time
+                _scr_ntry=$(( _scr_ntry + 1 ))
+                continue
+            elif grep -q 'File "/progress" not found' $_sftp_log; then
+                #ignore the error 'File "/progress" not found'
+                break
+            else
+                # Exit on all other error cases
+                echo "ERROR: sftp command returned with non-zero exit code ($_scr_ret) please check $sftp_log for more details.." | tee -a $logfile
+                exit $_scr_ret
+            fi
+        else
+            break
+        fi
+    done
+    echo "DEBUG: sftp_cmd_run() done" >> $logfile
 }
 
 # Prepare the command string to get the last code
@@ -1404,33 +1449,35 @@ fw_update()
     _ntry=0
     _sftp_timedout=false
     wait_till_hard_timeout=false
+    _ctrl_reachable=false
     while true; do
-        echo "sftp_cmd_run(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
-        if [[ $_ntry -eq $_max_ntry ]]; then
+        echo "fw_update(): _ntry:$_ntry, _max_ntry:$_max_ntry" >> $logfile
+        if [[ $_ntry -ge $_max_ntry ]]; then
             # update process didn't complete within the timeout limit.
             # Check if update is still in progress, if yes, wait for 
             # some time more until _max_ntry_hard_timeout limit is reached.
-
             # get the current activity on the controller
-            ctrl_activity_get "$tmpdir/progress"
-            if [[ $ctrl_activity_a == "codeload" ]]; then
-                #TODO: also check the "done" status from the output of "get progress" xml file
-                # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
-                # codeload is still in progress on A, wait till hard timeout is reached.
-                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
-                wait_till_hard_timeout=true
-            elif [[ $ctrl_activity_b == "codeload" ]]; then
-                #TODO: also check the "done" status from the output of "get progress" xml file
-                # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
-                # codeload is still in progress on B, wait till hard timeout is reached.
-                echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
-                wait_till_hard_timeout=true
-            else
-                # set the wait_till_hard_timeout to false
-                wait_till_hard_timeout=false
+            if [[ "$_ctrl_reachable" == true ]]; then
+                ctrl_activity_get "$tmpdir/progress"
+                if [[ $ctrl_activity_a == "codeload" ]]; then
+                    #TODO: also check the "done" status from the output of "get progress" xml file
+                    # if [[ $ctrl_activity_a == "codeload" && $ctrl_a_done_status == "false" ]]; then
+                    # codeload is still in progress on A, wait till hard timeout is reached.
+                    echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller A" >> $logfile
+                    wait_till_hard_timeout=true
+                elif [[ $ctrl_activity_b == "codeload" ]]; then
+                    #TODO: also check the "done" status from the output of "get progress" xml file
+                    # elif [[ $ctrl_activity_b == "codeload" && $ctrl_b_done_status == "false" ]]; then
+                    # codeload is still in progress on B, wait till hard timeout is reached.
+                    echo "DEBUG: fw_update() Timeout!! But codeload is still in progress on Controller B" >> $logfile
+                    wait_till_hard_timeout=true
+                else
+                    # set the wait_till_hard_timeout to false
+                    wait_till_hard_timeout=false
+                fi
             fi
             if [[ "$wait_till_hard_timeout" == true ]]; then
-                if [[ $_ntry -eq $_hard_timeout ]]; then
+                if [[ $_ntry -ge $_hard_timeout ]]; then
                     echo "DEBUG: fw_update() Hard timeout limit is reached, breaking the loop" >> $logfile
                     _sftp_timedout=true
                     break
@@ -1445,27 +1492,39 @@ fw_update()
         fi
         if ping -c1 -W2 $host > /dev/null; then
             # controller is reachable, check the update progress
+            _ctrl_reachable=true
             echo "Getting the progress on fw update, please wait..." | tee -a $logfile
+            # Prepare the batchfile (progress.bf) as an input for sftp.
+            # The 'get progress' command returns the progress file (xml)
+            # in pwd, so cd to the tmpdir to fetch the file there.
             printf '%s\n' "lcd $tmpdir" "get progress" > $tmpdir/progress.bf
             echo "DEBUG: contents of $tmpdir/progress.bf:" >> $logfile
-            cat $tmpdir/progress.bf
+            cat $tmpdir/progress.bf >> $logfile
             sftp_cmd_run "${tmpdir}/progress.bf"
             ctrl_activity_get "$tmpdir/progress"
             if [[ $ctrl_activity_a == "none" && $ctrl_activity_b == "none" ]]; then
                 # no activity on any of the controller, update is finished
                 # get the codeload status and parse it
-                echo "No ongoing activity on both controllers, checking the codeload status" | tee -a $logfile
-                fw_codeload_status_get
-                echo "Parsing the codeload status" | tee -a $file
-                fw_update_status_parse
-                break
+                echo "DEBUG: fw_update() No ongoing activity on both controllers reported" >> $logfile
+                if [[ $_ntry -gt 10 ]]; then
+                    # no activity within first 20 mins could be a false alarm, check the
+                    # codeload status only after 10 retries (~20 mins) are over
+                    echo "No activity for more than 10 minutes, checking the codeload status" | tee -a $logfile
+                    fw_codeload_status_get
+                    echo "Parsing the codeload status" | tee -a $logfile
+                    fw_update_status_parse
+                    break
+                fi
+            elif [[ -z $ctrl_activity_a && -z $ctrl_activity_b ]]; then
+                echo "DEBUG: fw_update() Could not get the progress from controller, update must be in progress, ignoring.." >> $logfile
             else
-                echo "Controllers has following activities:" >> $logfile
-                echo "ctrl_activity_a: $ctrl_activity_a" >> $logfile
-                echo "ctrl_activity_b: $ctrl_activity_b" >> $logfile
+                echo "DEBUG: fw_update() Controllers has following activities:" >> $logfile
+                echo "DEBUG: fw_update() ctrl_activity_a: $ctrl_activity_a" >> $logfile
+                echo "DEBUG: fw_update() ctrl_activity_b: $ctrl_activity_b" >> $logfile
             fi
         else
             echo "DEBUG: fw_update() Controller host [$host] isn't reachable.." >> $logfile
+            _ctrl_reachable=false
         fi
         # update in progress
         echo "Update is in progress, please wait, check the $logfile for more details..." | tee -a $logfile
@@ -1475,6 +1534,10 @@ fw_update()
 
     if [[ "$_sftp_timedout" == true ]]; then
         echo "The fw update was timed out, checking the current firmware versions..." | tee -a $logfile
+        if [[ "$_ctrl_reachable" == false ]]; then
+            echo "ERROR: controller is not reachable, please check the firmware version manually, exiting with error." | tee -a $logfile
+            exit 1
+        fi
         fw_versions_compare "$controller_A_ver" "$controller_B_ver"
         case ${ret_fw_versions_compare} in
            0)
