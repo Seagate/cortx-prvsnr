@@ -35,7 +35,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
     _BASE_DIR_PILLAR = "release/upgrade/base_dir"
 
     def _single_repo_validation(self, release, repo_name):
-        """Separate private method for basic single repo validations.
+        """
+        Separate private method for basic single repo validations.
 
         Parameters
         ----------
@@ -77,7 +78,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 )
 
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
-        """Validate single SW upgrade ISO structure.
+        """
+        Validate single SW upgrade ISO structure.
 
         Parameters
         ----------

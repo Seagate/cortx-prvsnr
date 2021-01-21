@@ -53,7 +53,8 @@ class SetSWUpdateRepo(Set):
 
     def _prepare_repo_for_apply(self, repo: inputs.SWUpdateRepo,
                                 enabled: bool = True):
-        """Prepare repository for apply.
+        """
+        Prepare repository for apply.
 
         Parameters
         ----------
@@ -85,7 +86,7 @@ class SetSWUpdateRepo(Set):
     def _get_mount_dir(self):
         """
         Return the base mount directory of ISO repo candidate based on pillars
-        values configuration
+        values configuration.
 
         Returns
         -------
@@ -200,84 +201,6 @@ class SetSWUpdateRepo(Set):
 
         salt_cmd_run(cmd, targets=LOCAL_MINION)
 
-    def _single_repo_validation(self, repo: inputs.SWUpdateRepo,
-                                candidate_repo: inputs.SWUpdateRepo):
-        """
-        Separate private method for basic single repo validations.
-        It allows to call this method in child classes several times for
-        different repos validations
-
-        Returns
-        -------
-
-        """
-        # general check from pkg manager point of view
-        try:
-            self._check_repo_is_valid(candidate_repo.release)
-        except SaltCmdResultError as exc:
-            raise SWUpdateRepoSourceError(
-                str(repo.source), f"malformed repo: '{exc}'"
-            )
-
-        # TODO: take it from pillar
-        # the repo includes metadata file
-        iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
-        release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
-        try:
-            metadata = load_yaml(release_file)
-        except Exception as exc:
-            raise SWUpdateRepoSourceError(
-                str(repo.source),
-                f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
-            )
-        else:
-            repo.metadata = metadata
-            logger.debug(f"Resolved metadata {metadata}")
-
-        # the metadata file includes release info
-        # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
-        #  well formed
-        release = metadata.get(ReleaseInfo.RELEASE.value, None)
-        if release is None:
-            try:
-                release = (
-                    f'{metadata[ReleaseInfo.VERSION.value]}-'
-                    f'{metadata[ReleaseInfo.BUILD.value]}'
-                )
-            except KeyError:
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    f"No release data found in '{RELEASE_INFO_FILE}'"
-                )
-
-        # there is no the same release repo is already active
-        if self._is_repo_enabled(f'sw_update_{release}'):
-            err_msg = (
-                "SW update repository for the release "
-                f"'{release}' has been already enabled"
-            )
-            logger.warning(err_msg)
-
-            # TODO IMPROVE later raise and error
-            if False:
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    (
-                        f"SW update repository for the release "
-                        f"'{release}' has been already enabled"
-                    )
-                )
-
-        # TODO IMPROVE
-        #   - new version is higher then currently installed
-
-        # Optional: try to get current version of the repository
-        # TODO: use digit-character regex to retrieve repository release
-        # cmd = ('yum repoinfo enabled | '
-        #        'sed -rn "s/Repo-id\\s+:.*sw_update_(.*)$/\\1/p"')
-
-        repo.release = release
-
     def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):  # noqa: C901, E501
         repo = params
 
@@ -322,8 +245,73 @@ class SetSWUpdateRepo(Set):
 
             super()._run(candidate_repo, targets)
 
-            # Method raises exception if validation fails
-            self._single_repo_validation(repo, candidate_repo)
+            # general check from pkg manager point of view
+            try:
+                self._check_repo_is_valid(candidate_repo.release)
+            except SaltCmdResultError as exc:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source), f"malformed repo: '{exc}'"
+                )
+
+            # TODO: take it from pillar
+            # the repo includes metadata file
+            iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
+            release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
+            try:
+                metadata = load_yaml(release_file)
+            except Exception as exc:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                )
+            else:
+                repo.metadata = metadata
+                logger.debug(f"Resolved metadata {metadata}")
+
+            # the metadata file includes release info
+            # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
+            #  well formed
+            release = metadata.get(ReleaseInfo.RELEASE.value, None)
+            if release is None:
+                try:
+                    release = (
+                        f'{metadata[ReleaseInfo.VERSION.value]}-'
+                        f'{metadata[ReleaseInfo.BUILD.value]}'
+                    )
+                except KeyError:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"No release data found in '{RELEASE_INFO_FILE}'"
+                    )
+
+            # there is no the same release repo is already active
+            if self._is_repo_enabled(f'sw_update_{release}'):
+                err_msg = (
+                    "SW update repository for the release "
+                    f"'{release}' has been already enabled"
+                )
+                logger.warning(err_msg)
+
+                # TODO IMPROVE later raise and error
+                if False:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        (
+                            f"SW update repository for the release "
+                            f"'{release}' has been already enabled"
+                        )
+                    )
+
+            # TODO IMPROVE
+            #   - new version is higher then currently installed
+
+            # Optional: try to get current version of the repository
+            # TODO: use digit-character regex to retrieve repository release
+            # cmd = ('yum repoinfo enabled | '
+            #        'sed -rn "s/Repo-id\\s+:.*sw_update_(.*)$/\\1/p"')
+
+            repo.release = release
+
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
