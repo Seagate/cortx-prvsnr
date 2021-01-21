@@ -871,24 +871,4 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
-    _param_di = param_spec['swupgrade/repo']  # FIXME: is should effect the salt configuration
-    release: str = ParamDictItemInputBase._attr_ib(
-        is_key=True,
-        descr="release version"
-    )
-    source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
-        descr=(
-            "repo source, might be a local path to a repo folder or iso file"
-            " or an url to a remote repo, "
-            "{} might be used to remove the repo"
-            .format(UNDEFINED)
-        ),
-        metavar='str',
-        converter=lambda v: (
-            UNCHANGED if v is None else (
-                v if is_special(v) or isinstance(v, Path) else str(v)
-            )
-        )
-    )
-    _repo_params: Dict = attr.ib(init=False, default=attr.Factory(dict))
-    _metadata: Dict = attr.ib(init=False, default=attr.Factory(dict))
+    _param_di = param_spec['swupgrade/repo']
