@@ -1494,6 +1494,9 @@ fw_update()
             # controller is reachable, check the update progress
             _ctrl_reachable=true
             echo "Getting the progress on fw update, please wait..." | tee -a $logfile
+            # Prepare the batchfile (progress.bf) as an input for sftp.
+            # The 'get progress' command returns the progress file (xml)
+            # in pwd, so cd to the tmpdir to fetch the file there.
             printf '%s\n' "lcd $tmpdir" "get progress" > $tmpdir/progress.bf
             echo "DEBUG: contents of $tmpdir/progress.bf:" >> $logfile
             cat $tmpdir/progress.bf >> $logfile
