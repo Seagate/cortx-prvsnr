@@ -73,9 +73,11 @@ parse_xml()
 ctrl_activity_get()
 {
     _xml_doc=$1
-
+    ctrl_activity_a=
+    ctrl_activity_b=
     if [[ ! -f $_xml_doc ]]; then
-        echo "ERROR: could not find the file $_xml_doc." | tee -a $logfile 
+        echo "WARNING: could not find the file '${_xml_doc}', not parsing the progress file" | tee -a "${logfile}"
+        return
     fi
 
     echo "DEBUG: ctrl_activity_get(): parsing $_xml_doc" >> $logfile
@@ -93,15 +95,20 @@ ctrl_activity_get()
 
     # Sample output of xml command:
     # xmllint --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' /tmp/progress
-    #  ACTIVITY="none" 
+    #  ACTIVITY="none"
 
-    _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
+    _activity=$("$xml_cmd" --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="A"]/@ACTIVITY' "$_xml_doc" | cut -d= -f2) || {
+        _activity=$(grep "RESPONSE VERSION" "$_xml_doc" | grep 'CONTROLLER="A"' | awk '{ print $4 }' | cut -d= -f2)
+    }
     ctrl_activity_a="${_activity%\"}" #remove quote at the end
     ctrl_activity_a="${ctrl_activity_a#\"}" # remove quote at the start
     echo "DEBUG: ctrl_activity_get(): ctrl_activity_a=$ctrl_activity_a." >> $logfile
 
-    _activity=$($xml_cmd --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="B"]/@ACTIVITY' $_xml_doc | cut -d= -f2)
+    _activity=$("$xml_cmd" --xpath '/ACTIVITY/RESPONSE[@CONTROLLER="B"]/@ACTIVITY' "$_xml_doc" | cut -d= -f2) || {
+        _activity=$(grep "RESPONSE VERSION" "$_xml_doc" | grep 'CONTROLLER="B"' | awk '{ print $4 }' | cut -d= -f2)
+    }
     ctrl_activity_b="${_activity%\"}" #remove quote at the end
     ctrl_activity_b="${ctrl_activity_b#\"}" # remove quote at the start
     echo "DEBUG: ctrl_activity_get(): ctrl_activity_b=$ctrl_activity_b." >> $logfile
+    rm -f "$_xml_doc"
 }
