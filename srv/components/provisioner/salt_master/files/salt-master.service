@@ -5,7 +5,6 @@ After=network.target glusterfssharedstorage.service
 Requires=glusterfssharedstorage.service
 Before=salt-minion.service
 
-
 [Service]
 LimitNOFILE=100000
 Type=notify
@@ -14,4 +13,3 @@ ExecStart=/usr/bin/salt-master
 
 [Install]
 WantedBy=multi-user.target
-

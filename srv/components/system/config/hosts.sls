@@ -33,5 +33,7 @@ hostsfile:
         {{ ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0] }}   {{ srvnode -}}
         {% endfor -%}
         {% endif -%}
-        {% endfor %}
+        {%- endfor %}
+        {%- else %}
+        127.0.0.1    srvnode-1
         {%- endif %}

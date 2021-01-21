@@ -15,31 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Service to autoatically perform post-reboot update operations
+configure update-post-boot:
+  file.managed:
+    - name: /etc/systemd/system/update-post-boot.service
+    - source: salt://update_post_boot/files/update-post-boot.service
+    - mode: 664
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
-
-# Skip cryptography install as it gets installed through cortx-py-utils
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
-    - require:
-      - Install cortx-py-utils
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-
-{% if "srvnode-1" == grains['id'] %}
-Encrypt_pillar:
-  module.run:
-    - pillar_ops.encrypt: []
-{% endif %}
+Reload service units post adding update-post-boot:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: configure update-post-boot
+  
+Enable update-post-boot.service:
+  service.enabled:
+    - name: update-post-boot.service

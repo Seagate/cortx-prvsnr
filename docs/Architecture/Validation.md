@@ -16,6 +16,8 @@ Table of Contents:
 - [Checks](#checks)
   - [Hardware check](#hardware-check)
   - [Software Check](#software-check)
+- [Provisioner Validations](#provisioner-validations)
+  - [Check API](#check-api)
 
 
 ## General Guidelines
@@ -328,3 +330,72 @@ In-place validations for each components modules can and shall be performed usin
     $ salt-call pillar.get cluster:mgmt_vip --output=newline_values_only
      10.100.200.11
     ```
+
+
+# Provisioner Validations
+
+Certain requirements are mandatory to be available in the setup before and after major processes in Provisioner.  
+These verifications have been implemented as part in Provisioner **Validations Framework** to ensure all the mandatory checkpoints are covered and works without any glitches.
+
+## Check API
+
+A new API (**_provisioner check_**) has been created for this purpose and it can be run on CLI.
+
+`check` api has been created for the below processes:
+
+1. Before Deployment
+2. After Deployment
+3. Before Unboxing
+4. After Unboxing
+5. Before Node Replacement
+6. Before SW Upgrade
+
+These six categories form the six groups of validations and individual checks will be grouped under either one the above group.
+
+In case of any failure in validations, based on the severity or the significance of the check in the above processes, the flow will either be stopped or the user will be warned of the error and proceeded next.
+
+For example, any error in Pre-Deployment or Pre-Unboxing checks will raise Exception and **the proccess will be stopped right at that step**.  
+Whereas, an error in Post-Deployment or Post-Unboxing checks will only raise a Warning with the error details to the user and **the process will continue without any break**.
+
+Though these validations have been seamlessly integrated into the code and are handled as part of the process, they can still be invoked directly on the CLI as,
+
+`provisioner check <check_name>`
+
+### Singular Checks
+
+```
+provisioner check network_drivers
+provisioner check network_hca
+provisioner check storage_hba
+provisioner check storage_luns
+provisioner check luns_mapped
+provisioner check storage_lvms
+provisioner check network
+provisioner check connectivity
+provisioner check bmc_accessibility
+provisioner check bmc_stonith
+provisioner check communicability
+provisioner check cluster_status
+provisioner check passwordless_ssh_access
+provisioner check mgmt_vip
+provisioner check hostnames
+provisioner check public_data_ip
+provisioner check controller_ip
+provisioner check logs_are_good
+```
+
+### Group Checks
+
+```
+provisioner check deploy_pre_checks
+provisioner check deploy_post_checks
+provisioner check replacenode_checks
+provisioner check swupdate_checks
+provisioner check unboxing_pre_checks
+provisioner check unboxing_post_checks
+```
+
+To execute ALL of the above validations, the below command works,
+
+`provisioner check all`  
+
