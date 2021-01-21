@@ -503,7 +503,7 @@ class SWUpgradeRepos(Enum):
     """List of supported SW Upgrade Repositories"""
 
     OS = "os"  # yum repo
-    third_party = "3rd_party"  # yum repo
+    third_party = "3rdparty"  # yum repo
     cortx = "cortx"  # yum repo
     python = "python"  # python index
 

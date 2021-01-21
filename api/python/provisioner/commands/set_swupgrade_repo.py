@@ -54,7 +54,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         # general check from pkg manager point of view
         try:
-            self._check_repo_is_valid(release, repo_name)
+            self._check_repo_is_valid(release, f"sw_upgrade_{repo_name}")
         except SaltCmdResultError as exc:
             raise SWUpdateRepoSourceError(
                                         repo_name, f"malformed repo: '{exc}'")
@@ -112,7 +112,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # TODO: need to have logic for sw upgrade
         # if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
         #     logger.warning(
-        #         'other repo candidate was found, proceeding with force removal'
+        #       'other repo candidate was found, proceeding with force removal'
         #     )
         # TODO IMPROVE: it is not enough it may lead to locks when
         #  provisioner doesn't unmount `sw_update_candidate` repo
@@ -157,15 +157,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             with os.scandir(iso_mount_dir) as dir_iter:
                 for entry in dir_iter:
                     if not entry.name.startswith('.') and entry.is_dir():
-                        self._single_repo_validation(candidate_repo.release,
-                                                     entry.name)
+                        repo_info = SW_UPGRADE_REPOS.get(entry.name, None)
+                        if repo_info is None:
+                            raise SWUpdateRepoSourceError(
+                                str(repo.source),
+                                "Unexpected repository in single ISO: "
+                                f"{entry.name}")
+                        if repo_info[YUM_REPO_TYPE]:
+                            self._single_repo_validation(
+                                                        candidate_repo.release,
+                                                        entry.name)
 
             repo.release = release
 
         finally:
             # remove the repo
-            # candidate_repo.source = values.UNDEFINED
+            candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            # super(SetSWUpdateRepo, self)._run(candidate_repo, targets
+            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
 
         return repo.metadata
