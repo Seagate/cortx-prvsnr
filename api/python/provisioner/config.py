@@ -38,8 +38,8 @@ else:
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
-PRVSNR_CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
-PRVSNR_CORTX_CONFIG_FILE = PRVSNR_CORTX_CONFIG_DIR / 'provisioner_cluster.json'
+CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
+CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'

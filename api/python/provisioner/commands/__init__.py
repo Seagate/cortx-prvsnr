@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import sys, os
+import sys
 from typing import List, Dict, Type, Union
 from copy import deepcopy
 import logging
@@ -49,8 +49,6 @@ from ..config import (
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
     PRVSNR_CLI_DIR,
-    PRVSNR_CORTX_CONFIG_DIR,
-    PRVSNR_CORTX_CONFIG_FILE,
     CONTROLLER_BOTH,
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
@@ -111,11 +109,6 @@ class RunArgsUpdate:
 
 @attr.s(auto_attribs=True)
 class RunArgsPillarGet(RunArgsBase):
-    local: bool = RunArgs.local
-
-
-@attr.s(auto_attribs=True)
-class RunArgsPillarDump(RunArgsBase):
     local: bool = RunArgs.local
 
 
@@ -437,34 +430,6 @@ class Set(CommandParserFillerMixin):
             return res
 
         return self._run(params, targets)
-
-@attr.s(auto_attribs=True)
-class PillarDump(CommandParserFillerMixin):
-    input_type: Type[inputs.PillarKeysList] = inputs.PillarKeysList
-    _run_args_type = RunArgsPillarDump
-
-    @classmethod
-    def from_spec(
-        cls, input_type: str = 'PillarKeysList'
-    ):
-        return cls(input_type=getattr(inputs, input_type))
-
-
-    def run(
-        self, *args, targets: str = ALL_MINIONS, local: bool = False,
-        **kwargs
-    ):
-        res = PillarGet.run(self)
-        os.makedirs(f"{PRVSNR_CORTX_CONFIG_DIR}", exist_ok=True)
-
-        resp_loaded = json.loads(json.dumps(res).replace('null', '""'))
-        for key in resp_loaded.keys():
-            resp_loaded[key] = ({k:v
-                 for k, v in resp_loaded[key].items() if not k == "mine_functions"})
-        resp_dumped = json.dumps(resp_loaded, indent=4, sort_keys=True)
-        resp_unload = open(f'{PRVSNR_CORTX_CONFIG_FILE}', "w").write(resp_dumped)
-
-        return resp_dumped
 
 
 # assumtions / limitations

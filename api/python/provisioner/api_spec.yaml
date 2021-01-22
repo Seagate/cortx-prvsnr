@@ -23,8 +23,8 @@ grains_get:
 pillar_get:
   type: PillarGet
   input_type: PillarKeysList
-pillar_dump:
-  type: PillarDump
+pillar_translate:
+  type: PillarTranslate
   input_type: PillarKeysList
 get_params:
   type: Get
