@@ -68,6 +68,7 @@ deploy_states = dict(
         "misc_pkgs.openldap",
         "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
+        "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
         "misc_pkgs.statsd"
@@ -253,7 +254,11 @@ class Deploy(CommandParserFillerMixin):
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
-        setup_type = run_args.setup_type
+        setup_type = (
+            SetupType.SINGLE 
+            if (1 == len(run_args.targets))
+            else run_args.setup_type
+        )
         targets = run_args.targets
         states = deploy_states[states_group]
         stages = run_args.stages

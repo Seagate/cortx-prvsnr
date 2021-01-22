@@ -35,6 +35,7 @@ from ..errors import (
 )
 from ..config import (
     ALL_MINIONS,
+    PRVSNR_PILLAR_DIR
 )
 from ..pillar import PillarUpdater
 # TODO IMPROVE EOS-8473
@@ -1024,6 +1025,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         return pillar
 
+
     def _prepare_release_pillar(
         self, profile_paths, repos_data: Dict, run_args, force=False
     ):
@@ -1790,12 +1792,23 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Configuring provisioner logging")
         for state in [
             'components.system.prepare',
-            'components.provisioner.config'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
                 targets=master_targets
             )
+        
+        # Seperation of variable to make flake8 happy
+        ssh_client.cmd_run(
+            (
+                'provisioner pillar_set --fpath provisioner.sls'
+                f' provisioner/cluster/num_of_nodes \'"{len(run_args.nodes)}"\''
+            ), targets=run_args.primary.minion_id
+        )
+        ssh_client.cmd_run(
+            f"salt-call state.apply components.provisioner.config",
+            targets=ALL_MINIONS
+        )
 
         logger.info("Configuring provisioner for future updates")
         for node in run_args.nodes:

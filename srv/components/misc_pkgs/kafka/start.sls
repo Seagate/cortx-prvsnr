@@ -15,31 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set kafka_version = pillar['commons']['version']['kafka'] %}
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
+Start zoopkeper:
+  cmd.run:
+    - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'zookeeper' | grep -v grep
 
-# Skip cryptography install as it gets installed through cortx-py-utils
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
-    - require:
-      - Install cortx-py-utils
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-
-{% if "srvnode-1" == grains['id'] %}
-Encrypt_pillar:
-  module.run:
-    - pillar_ops.encrypt: []
-{% endif %}
+Start kafka:
+  cmd.run:
+    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
+    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'kafka' | grep -v grep

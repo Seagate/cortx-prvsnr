@@ -15,31 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
 
-Install cortx-py-utils:           # Package for cryptography
+{% set kafka_version = pillar['commons']['version']['kafka'] %}
+
+Install Java:
   pkg.installed:
-    - name: cortx-py-utils
+    - pkgs:
+      - java-1.8.0-openjdk-headless
+      #- java-1.8.0-openjdk-devel
 
-# Skip cryptography install as it gets installed through cortx-py-utils
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
-    - require:
-      - Install cortx-py-utils
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-
-{% if "srvnode-1" == grains['id'] %}
-Encrypt_pillar:
-  module.run:
-    - pillar_ops.encrypt: []
-{% endif %}
+Extract Kafka:
+  archive.extracted:
+    - name: /opt/kafka
+    - source: {{ defaults.commons.repo.url }}/commons/kafka/kafka_{{ kafka_version }}.tgz
+    - keep_source: True
+    - clean: True
+    - trim_output: True
+    - skip_verify: True
