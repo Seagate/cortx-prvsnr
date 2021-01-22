@@ -507,12 +507,14 @@ class NodeNetworkParams():
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
     )
-    is_primary: bool = ParamGroupInputBase._attr_ib(
-        _param_group, descr="mark node as a primary",
-        converter=bool
+    roles: List  = ParamGroupInputBase._attr_ib(
+        _param_group, descr="List of roles assigned to the node"
     )
-    data_interfaces: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data network interface"
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data public network interfaces"
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data private network interfaces"
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -534,7 +536,7 @@ class NodeNetworkParams():
         validator=Validation.check_ip4
     )
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management network interface"
+        _param_group, descr="node management network interfaces"
     )
     data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data interface IP", default=UNCHANGED,

@@ -42,9 +42,13 @@ logger = logging.getLogger(__name__)
 
 def storage_device_config():
 
-    for node in provisioner.pillar_get("cluster/node_list"):
-        cluster_dict = provisioner.pillar_get(f"cluster/{node}/is_primary", targets=node)
-        if cluster_dict[node][f"cluster/{node}/is_primary"]:
+    server_nodes = [
+        node for node in provisioner.pillar_get("cluster").keys()
+        if "srvnode-" in node
+    ]
+    for node in server_nodes:
+        cluster_dict = provisioner.pillar_get(f"cluster/{node}/roles", targets=node)
+        if "primary" in cluster_dict[node][f"cluster/{node}/roles"]:
             cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
         else:
             cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"

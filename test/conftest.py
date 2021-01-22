@@ -108,11 +108,11 @@ DEFAULT_CLUSTER_SPEC = {
     'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
-        'is_primary': True,
+        'roles': ['primary'],
     }, 'srvnode2': {
         'hostname': 'srvnode-2',
         'minion_id': 'srvnode-2',
-        'is_primary': False,
+        'roles': ['secondary'],
     }
 }
 
@@ -512,7 +512,7 @@ def hosts_spec(request):
                 }
             },
             'minion_id': 'srvnode-1',
-            'is_primary': True,
+            'roles': ['primary'],
         }, 'srvnode2': {
             'remote': {
                 'hostname': 'srvnode-2',
@@ -526,7 +526,7 @@ def hosts_spec(request):
                 }
             },
             'minion_id': 'srvnode-2',
-            'is_primary': False,
+            'roles': ['secondary'],
         }
     }
 
@@ -1248,7 +1248,7 @@ def cortx_spec(request):
 # cortx_spec sanity checks
 @pytest.fixture
 def _cortx_spec(cortx_spec):
-    assert len({k: v for k, v in cortx_spec.items() if v['is_primary']}) == 1
+    assert len({k: v for k, v in cortx_spec.items() if "primary" in v['roles']}) == 1
     return cortx_spec
 
 
@@ -1258,8 +1258,8 @@ def cortx_hosts(hosts, _cortx_spec, request):
     for label in hosts:
         if label in _cortx_spec:
             _hosts[label]['minion_id'] = _cortx_spec[label]['minion_id']
-            _hosts[label]['is_primary'] = _cortx_spec[label].get(
-                'is_primary', True
+            _hosts[label]['roles'] = _cortx_spec[label].get(
+                'roles', True
             )
 
     return _hosts
@@ -1267,7 +1267,7 @@ def cortx_hosts(hosts, _cortx_spec, request):
 
 @pytest.fixture
 def cortx_primary_host_label(cortx_hosts):
-    return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
+    return [k for k, v in cortx_hosts.items() if "primary" in v['roles']][0]
 
 
 @pytest.fixture
@@ -1317,10 +1317,10 @@ def configure_salt(
     for label, host_spec in cortx_hosts.items():
         minion_id = host_spec['minion_id']
         is_primary = (
-            'true' if host_spec['is_primary'] else 'false'
+            'true' if "primary" in host_spec['roles'] else 'false'
         )
         primary_host = (
-            "localhost" if host_spec['is_primary'] else cortx_primary_host_ip
+            "localhost" if "primary" in host_spec['roles'] else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(

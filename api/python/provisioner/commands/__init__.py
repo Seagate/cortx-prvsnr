@@ -1344,15 +1344,24 @@ class CreateUser(CommandParserFillerMixin):
         keyfile = user_fileroots_dir / f'id_rsa_{uname}'
         keyfile_pub = keyfile.with_name(f'{keyfile.name}.pub')
 
-        nodes = PillarKey('cluster/node_list')
+        # nodes = PillarKey('cluster/node_list')
 
-        nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
-        nodelist_pillar = next(iter(nodelist_pillar.values()))
+        # nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
+        # nodelist_pillar = next(iter(nodelist_pillar.values()))
 
-        if (not nodelist_pillar[nodes] or
-                nodelist_pillar[nodes] is values.MISSED):
+        local_minion = local_minion_id()
+        cluster_path = PillarKey('cluster')
+        get_result = PillarResolver(local_minion).get([cluster_path])
+        cluster_pillar = get_result[local_minion][cluster_path]
+        nodes_list = [
+            node for node in cluster_pillar.keys()
+            if 'srvnode-' in node
+        ]
+
+        if (not cluster_pillar[cluster_path] or
+                cluster_pillar[cluster_path] is values.MISSED):
             raise BadPillarDataError(
-                'value for {} is not specified'.format(nodes.pi_key)
+                'value for {} is not specified'.format(cluster_path.pi_key)
             )
 
         def _prepare_user_fileroots_dir():
@@ -1388,7 +1397,7 @@ class CreateUser(CommandParserFillerMixin):
             )
 
         def _generate_ssh_config():
-            for node in nodelist_pillar[nodes]:
+            for node in nodes_list:
                 hostname = PillarKey(
                     'cluster/'+node+'/hostname'
                 )

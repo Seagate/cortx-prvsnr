@@ -85,14 +85,7 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        if self.number_of_nodes == 1:
-            self.setup_type = SetupType.SINGLE
-        elif self.number_of_nodes == 2:
-            self.setup_type = SetupType.DUAL
-        elif self.number_of_nodes == 3:
-            self.setup_type = SetupType._3_NODE
-        else:
-            self.setup_type = SetupType.GENERIC
+        pass
 
 
 @attr.s(auto_attribs=True)
@@ -155,8 +148,9 @@ class StorageEnclosureParamsValidation:
 @attr.s(auto_attribs=True)
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
-    is_primary: str = NodeNetworkParams.is_primary
-    data_interfaces: List = NodeNetworkParams.data_interfaces
+    roles: List = NodeNetworkParams.roles
+    data_public_interfaces: List = NodeNetworkParams.data_public_interfaces
+    data_private_interfaces: List = NodeNetworkParams.data_private_interfaces
     data_public_ip: str = NodeNetworkParams.data_public_ip
     data_netmask: str = NodeNetworkParams.data_netmask
     data_gateway: str = NodeNetworkParams.data_gateway
@@ -170,7 +164,7 @@ class NodeParamsValidation:
 
     _optional_param = [
         'data_public_ip',
-        'is_primary',
+        'roles',
         'data_netmask',
         'data_gateway',
         'data_private_ip',
@@ -207,7 +201,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             logger.debug(f"Key being processed: {key}")
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'type',
+                'ip', 'user', 'secret', 'type', 'interfaces',
                 'private_interfaces', 'public_interfaces',
                 'gateway', 'netmask', 'public_ip', 'private_ip'
             ]:
@@ -229,6 +223,10 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = ','.join(value)
                 input[key] = f'[{value}]'
             elif 'mgmt.interfaces' in key:
+                # special case single value as array
+                # Need to fix this array having single value
+                input[key] = f'[\"{input[key]}\"]'
+            elif 'roles' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -279,34 +277,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                        "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
-        # Update cluster/node_list
-        run_subprocess_cmd([
-            "provisioner", "pillar_set",
-            "cluster/node_list", f"[{','.join(node_list)}]"])
-
         if content.get('cluster', None):
             if content.get('cluster').get('cluster_ip', None):
                 run_subprocess_cmd([
                        "provisioner", "pillar_set",
                        "s3clients/ip",
                        f"{content.get('cluster').get('cluster_ip')}"])
-
-        if 3 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"3_node\""])
-        elif 2 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"dual\""])
-        elif 1 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"single\""])
-        else:
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"generic\""])
 
         if count > 0:
             raise ValueError(f"Node information for {count} node missing")

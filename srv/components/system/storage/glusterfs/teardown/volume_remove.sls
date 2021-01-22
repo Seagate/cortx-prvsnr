@@ -23,7 +23,7 @@ glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
     - name: {{ volume['mount_dir'] }}
     - persist: True
 
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 # remove gluster volume
 glusterfs_volume_{{ volume['name'] }}_removed:

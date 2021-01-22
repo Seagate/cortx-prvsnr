@@ -15,11 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set server_nodes = [] -%}
-{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
-{{- server_nodes.append(node) or "" -}}
-{%- endfor -%}
-
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 hostsfile:
   file.blockreplace:
     - name: /etc/hosts
@@ -29,7 +30,7 @@ hostsfile:
     - append_if_not_found: True
     - template: jinja
     - content: |
-        {%- if server_nodes|length > 1 %}
+        {%- if 1 < (server_nodes|length) %}
         {%- for node in server_nodes %}
         {%- if pillar['cluster'][node]['network'] is defined and
           pillar['cluster'][node]['network']['data']['private_ip'] is defined

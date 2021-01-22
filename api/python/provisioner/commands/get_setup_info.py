@@ -138,51 +138,65 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
 
         cluster_path = KeyPath('cluster')
-        node_list_key = PillarKey(cluster_path / 'node_list')
-        type_key = PillarKey(cluster_path / 'type')
+        get_result = PillarResolver(local_minion_id()).get([cluster_path])
+        cluster_pillar = get_result[local_minion_id()][cluster_path]
+        nodes_list = [
+            node for node in cluster_pillar.keys()
+            if 'srvnode-' in node
+        ]
 
-        pillar = PillarResolver(config.LOCAL_MINION).get(
-            (node_list_key, type_key)
-        )
+        # node_list_key = PillarKey(cluster_path / 'node_list')
+        # type_key = PillarKey(cluster_path / 'type')
 
-        pillar = pillar.get(local_minion_id())  # type: dict
+        # pillar = PillarResolver(config.LOCAL_MINION).get(
+        #     (node_list_key, type_key)
+        # )
+        # pillar = PillarResolver(config.LOCAL_MINION).get(
+        #     (node_list_key)
+        # )
 
-        for key in (node_list_key, type_key):
-            if not pillar[key] or pillar[key] is values.MISSED:
-                raise BadPillarDataError(f'value for {key.keypath} '
-                                         f'is not specified')
+        # pillar = pillar.get(local_minion_id())  # type: dict
 
-        cluster_type = pillar.get(type_key)
-        if cluster_type == SetupType.SINGLE.value:
-            res[config.SERVERS_PER_NODE] = 1
-        elif cluster_type == SetupType.DUAL.value:
-            res[config.SERVERS_PER_NODE] = 2
-        elif cluster_type.lower() == SETUP_TYPE:
-            # TODO: EOS-12418-improvement:
-            #  does this value can be used in real configuration?
-            res[config.SERVERS_PER_NODE] = 2
-        elif cluster_type.lower() == SetupType.THREE_NODE.value:
-            # NOTE: in this case we have 3 servers + 3 enclosures
-            # TODO: what is the difference between
-            #  '3_node' and 'single' values?
-            res[config.SERVERS_PER_NODE] = 1
-        elif cluster_type.lower() == SetupType.GENERIC.value:
-            res[config.SERVERS_PER_NODE] = 1
-        else:
-            raise ValueError(f"Unsupported value '{cluster_type}' for "
-                             f"'cluster/type' pillar value")
+        # for key in (node_list_key, type_key):
+        #     if not pillar[key] or pillar[key] is values.MISSED:
+        #         raise BadPillarDataError(f'value for {key.keypath} '
+        #                                  f'is not specified')
+
+        # cluster_type = pillar.get(type_key)
+        # if cluster_type == SetupType.SINGLE.value:
+        #     res[config.SERVERS_PER_NODE] = 1
+        # elif cluster_type == SetupType.DUAL.value:
+        #     res[config.SERVERS_PER_NODE] = 2
+        # elif cluster_type.lower() == SETUP_TYPE:
+        #     # TODO: EOS-12418-improvement:
+        #     #  does this value can be used in real configuration?
+        #     res[config.SERVERS_PER_NODE] = 2
+        # elif cluster_type.lower() == SetupType.THREE_NODE.value:
+        #     # NOTE: in this case we have 3 servers + 3 enclosures
+        #     # TODO: what is the difference between
+        #     #  '3_node' and 'single' values?
+        #     res[config.SERVERS_PER_NODE] = 1
+        # elif cluster_type.lower() == SetupType.GENERIC.value:
+        #     res[config.SERVERS_PER_NODE] = 1
+        # else:
+        #     raise ValueError(f"Unsupported value '{cluster_type}' for "
+        #                      f"'cluster/type' pillar value")
 
         # Assumption: number of nodes in 'cluster/node_list' should be
         # multiple by 'cluster/type'
-        if (len(pillar[node_list_key]) % res[config.SERVERS_PER_NODE]) != 0:
-            raise ValueError("Unknown cluster configuration: "
-                             "total number of nodes(servers) = "
-                             f"{pillar[node_list_key]}\n"
-                             f"cluster type = {cluster_type}")
+        # if (len(pillar[node_list_key]) % res[config.SERVERS_PER_NODE]) != 0:
+        #     raise ValueError("Unknown cluster configuration: "
+        #                      "total number of nodes(servers) = "
+        #                      f"{pillar[node_list_key]}\n"
+        #                      f"cluster type = {cluster_type}")
+
+        # res[config.NODES] = (
+        #         len(pillar[node_list_key]) // res[config.SERVERS_PER_NODE]
+        # )
 
         res[config.NODES] = (
-                len(pillar[node_list_key]) // res[config.SERVERS_PER_NODE])
-
+            len(nodes_list)
+        )
         return res
 
     @staticmethod

@@ -44,10 +44,12 @@ Delete common config - rabbitmq cluster to Consul:
     - require:
       - Delete sspl checkpoint flag
 
-{% set server_nodes = [] -%}
-{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
-{{- server_nodes.append(node) or "" -}}
-{%- endfor -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |

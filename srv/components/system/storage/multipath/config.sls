@@ -42,15 +42,17 @@ Copy multipath config:
 
 {% set enclosure_id = "enclosure-" + ((grains['id']).split('_'))[1] %}
 {% if not 'JBOD' in pillar['storage'][enclosure_id]['controller']['type'] %}
-{% if (not pillar['cluster'][grains['id']]['is_primary'])
+{% if (not "primary" in pillar["cluster"][grains["id"]]["roles"])
     or (pillar['cluster']['replace_node']['minion_id']
     and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}
 
-{% set server_nodes = [] -%}
-{%- for node in pillar['cluster'].keys() if "srvnode-" in node -%}
-{{- server_nodes.append(node) or "" -}}
-{%- endfor -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 {% set node_id = (server_nodes | difference(grains['id']))[0] %}
 # Execute only on Secondary node
 Copy multipath bindings:
@@ -65,7 +67,7 @@ Start multipath service:
     - watch:
       - file: Copy multipath config
 
-{% if pillar['cluster'][grains['id']]['is_primary'] 
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"]
     and not (pillar['cluster']['replace_node']['minion_id']
     and grains['id'] == pillar['cluster']['replace_node']['minion_id'])
 %}

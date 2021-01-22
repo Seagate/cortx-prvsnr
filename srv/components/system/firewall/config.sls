@@ -165,7 +165,7 @@ Management zone:
     - interfaces:
       - {{ mgmt_if }}
     - port_fwd:
-      {% if pillar['cluster'][grains['id']]['is_primary'] %}
+      {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
       - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['primary']['ip'] }}
       {% else %}
       - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['secondary']['ip'] }}

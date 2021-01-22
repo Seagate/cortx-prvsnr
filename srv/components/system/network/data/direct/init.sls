@@ -17,7 +17,7 @@
 
 {% set node = grains['id'] %}
 
-{#{% if pillar['cluster'][grains['id']]['is_primary'] %}#}
+{#{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}#}
 # Update roaming IPs in cluster.sls pillar:
 #   module.run:
 #     - cluster.nw_roaming_ip: []

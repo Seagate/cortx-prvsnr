@@ -17,12 +17,18 @@
 
 # This state file is ignored if run on replacement node
 # replacement node check & priamry node check
+{% set server_nodes = [ ] %}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 {% if not salt["environ.get"]('REPLACEMENT_NODE')
   and 'primary' in grains['roles'] %}
 Setup Cluster:
   pcs.cluster_setup:
     - nodes:
-      {%- for node_id in pillar['cluster']['node_list'] %}
+      {%- for node_id in server_nodes %}
       - {{ node_id }}
       {%- endfor %}
     - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}

@@ -36,7 +36,7 @@ service_user_configured:
     - shell: {{ user_data['shell'] }}
     - groups: {{ user_data['groups'] }}
     # would be activated at unboxing time
-    {% if not pillar['cluster'][grains['id']]['is_primary'] -%}
+    {% if not "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
     - expire: 1
     {% endif %}
 
