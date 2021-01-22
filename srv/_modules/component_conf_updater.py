@@ -17,13 +17,13 @@
 
 # This file is for reference only and should not be used.
 
-import sys
-import yaml
-
 # How to test:
 # $ salt-call saltutil.clear_cache
 # $ salt-call saltutil.sync_modules && salt-call cortx.conf_update "/opt/seagate/s3/conf/s3config.yaml" s3server
 
+
+import sys
+import yaml
 
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
 def conf_update(name, ref_pillar, type=None, backup=True):

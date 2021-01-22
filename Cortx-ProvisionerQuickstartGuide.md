@@ -628,7 +628,7 @@ In such scenarios the destroy may get stuck somewhere due to some unknown reason
 	    
 	    	:page_with_curl: **Note:** The reference template for single node can be seen at: 											
 		
-			`/opt/seagate/cortx/provisioner/pillar/components/samples/singlenode.cluster.sls`
+			`/opt/seagate/cortx/provisioner/pillar/samples/singlenode.cluster.sls`
 
 			A sample *cluster.sls* for single node CORTX deployment might look like this: 
 			

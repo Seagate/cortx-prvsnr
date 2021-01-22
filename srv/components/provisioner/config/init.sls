@@ -15,32 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 # TODO IMPROVE salt configs might go here as well
 include:
-  - components.misc_pkgs.rsyslog
+  - components.provisioner.config.generate_cluster_pillar
+  - components.provisioner.config.rsyslog_config
   - components.system.config.pillar_encrypt
-
-provisioner_rsyslog_conf_updated:
-  file.managed:
-    - name: /etc/rsyslog.d/prvsnrfwd.conf
-    - source: salt://components/provisioner/files/prvsnrfwd.conf
-    - makedirs: True
-    - watch_in:
-      - service: Start rsyslog
-
-# Always start glusterfshsaredstorage before salt-master
-Update salt-master.service:
-  file.managed:
-    - name: /usr/lib/systemd/system/salt-master.service
-    - source: salt://components/provisioner/salt_master/files/salt-master.service
-
-Update glusterfssharedstorage.service:
-  file.managed:
-    - name: /usr/lib/systemd/system/glusterfssharedstorage.service
-    - source: salt://components/provisioner/files/glusterfshsaredstorage.service
-
-Reload updated services:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-      - file: Update salt-master.service

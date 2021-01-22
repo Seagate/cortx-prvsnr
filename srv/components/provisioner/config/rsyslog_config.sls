@@ -16,30 +16,13 @@
 #
 
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
+include:
+  - components.misc_pkgs.rsyslog
 
-# Skip cryptography install as it gets installed through cortx-py-utils
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
-    - require:
-      - Install cortx-py-utils
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-
-{% if "srvnode-1" == grains['id'] %}
-Encrypt_pillar:
-  module.run:
-    - pillar_ops.encrypt: []
-{% endif %}
+provisioner_rsyslog_conf_updated:
+  file.managed:
+    - name: /etc/rsyslog.d/prvsnrfwd.conf
+    - source: salt://components/provisioner/files/prvsnrfwd.conf
+    - makedirs: True
+    - watch_in:
+      - service: Start rsyslog

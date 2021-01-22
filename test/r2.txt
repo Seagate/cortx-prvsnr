@@ -1,0 +1,14 @@
+[EOS-15766]: Test- Resume update process after reboot
+
+Step-1: Deploy Cortx software stack on VM/HW and verify update-post-boot.service is enabled
+        `$systemctl status update-post-boot.service`
+
+Step-2: Create update_states.sls pillar and add provisioner commands stating which states will run before and after reboot
+        `$provisioner pillar_set update_states/pre_boot [\"command1\",\ \"command2\"]`
+        `$provisioner pillar_set update_states/post_boot [\"command1\",\ \"command2\"]`
+
+Step-3: Reboot servers
+
+Step-4: Check update-post-boot.service status once the system's are back. 
+        Service should be inactive but `/opt/seagate/cortx/provisioner/cli/update-post-reboot.sh` should have got executed. 
+        Also commands added in update_states/post_boot should be executed.

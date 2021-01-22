@@ -15,31 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.kafka'.format(grains['id'])) %}
+include:
+  - .install
+  - .config
+  - .start
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
-
-# Skip cryptography install as it gets installed through cortx-py-utils
-Ensure cryptography python package absent:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - onlyif: test -d /usr/local/lib64/python3.6/site-packages/cryptography
-    - require:
-      - Install cortx-py-utils
-
-Install cryptography python package:
-  pip.installed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
-    - require:
-      - Ensure cryptography python package absent
-
-
-{% if "srvnode-1" == grains['id'] %}
-Encrypt_pillar:
-  module.run:
-    - pillar_ops.encrypt: []
+Generate kafka checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kafka
+    - makedirs: True
+    - create: True
+{%- else -%}
+Kafka already applied:
+  test.show_notification:
+    - text: "Kafka states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.Kafka.teardown' to reprovision these states."
 {% endif %}

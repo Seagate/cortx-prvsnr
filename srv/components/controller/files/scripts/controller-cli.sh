@@ -16,6 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+set -euE
 
 script_dir=$(dirname $0)
 export logdir="/var/log/seagate/provisioner"
@@ -38,8 +39,9 @@ function trap_handler_exit {
     if [[ $ret -ne 0 ]]; then
         echo "***** FAILED!! *****" | tee -a $logfile
         echo "For more details see $logfile" | tee -a $logfile
+        echo "Exiting with return code: $ret" >> $logfile
     else
-        echo "Exiting with ret code: $ret" >> $logfile
+        echo "Exiting with return code: $ret" >> $logfile
         exit $ret
     fi
 }
