@@ -1,54 +1,61 @@
 #!/usr/bin/python3
 
 import argparse
+import os.path
 import subprocess
 import sys
-import os.path
-import shlex
 
-def _run_command(cmd):
+safe_commands = [
+    'yum',
+    'install',
+    'coverage'
+]
+
+def _run(cmd):
+    if not set(safe_commands).intersection(cmd.split()):
+        raise Exception(f"Execution of command {cmd} is identified "
+            "as a command with risky behavior. "
+            f"Hence, execution of command {cmd} is prohibited."
+        )
     try:
-        res = subprocess.run(shlex.split(cmd), shell=False)
-        if res.returncode:
-            print(f"failed to run command {cmd} ")
-            sys.exit(1)
+        subprocess.run(cmd.split(), shell=False, check=True)
     except Exception as e:
         print(e)
         sys.exit(1)
 
 def install_coverage():
     print("Installing prerequisites")
-    _run_command(
-        f"yum install -y gcc cpp python3-devel"
+    _run(
+        "yum install -y gcc cpp python3-devel"
     )
-    _run_command(
-        f"pip3 install -U api/python"
+    _run(
+        "pip3 install -U api/python"
     )
-    _run_command(
-        f"pip3 install -r test-requirements.txt"
+    _run(
+        "pip3 install -r test-requirements.txt"
     )
 
 def prvsnr_coverage():
     print("Executing provisioner test cases and generating coverage report")
-    _run_command(
-        f"coverage run -m pytest \
+    _run(
+        "coverage run -m pytest \
         --cov test/ --cov-report=xml"
     )
-    if os.path.isfile(f'coverage.xml'):
+    if os.path.isfile('coverage.xml'):
         print("Coverage report generated successfully!!")
     else:
         print("Coverage report generation failed!!")
         sys.exit(1)
     print("Done")
 
-def parse_args():
+def _parse_args():
     parser = argparse.ArgumentParser(description='''Provisioner code-coverage automation ''')
     args=parser.parse_args()
     return args
 
 if __name__ == "__main__":
     try:
-        args = parse_args()
+        _parse_args()
         install_coverage()
         prvsnr_coverage()
     except KeyboardInterrupt:
