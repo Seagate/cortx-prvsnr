@@ -18,7 +18,7 @@
 cluster:
   cluster_id:
   storage_sets:
-    storage_set_1: []
+    storage-set-1: 
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   server_nodes:

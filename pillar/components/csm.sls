@@ -1,3 +1,0 @@
-csm:
-  user: csm
-  secret:

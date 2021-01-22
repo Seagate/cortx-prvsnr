@@ -16,6 +16,9 @@
 #
 
 commons:
+  health_map_schema:
+    path: /opt/seagate/cortx_configs/healthmap/
+    filename: healthmap-schema.json
   cortx_commons:
     # includes different 3rd party artifacts
     # (multiple rpm repositories, raw archives, bash scirpts etc.)

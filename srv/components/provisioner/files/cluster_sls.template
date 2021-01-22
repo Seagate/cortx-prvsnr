@@ -20,12 +20,17 @@
 cluster:
   cluster_id:
   storage_sets:
-    storage_set_1: []
+    storage-set-1:
+      {% for num in range(num_of_nodes) %}
+      {% if 0 <= num <= 2 %}
+      - srvnode-{{ (num + 1) }}
+      {% endif %}
+      {% endfor %}
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   server_nodes:
     {% for num in range(num_of_nodes) %}
-    - <machine-id>: srvnode-{{ (num + 1) }}
+    - {{ grains['machine_id'] }}: srvnode-{{ (num + 1) }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
   srvnode-{{ (num + 1) }}:
@@ -33,8 +38,16 @@ cluster:
     site_id:
     storage_set_id:
     node_id:
+    machine_id: {{ grains['machine_id'] }}
     hostname: srvnode-{{ (num + 1) }}
-    roles: []
+    roles:
+      {% if 0 == num %}
+      - primary
+      - openldap_server
+      {% else %}
+      - secondary
+      - openldap_client
+      {% endif %}
     {% if 0 == num %}
     is_primary: True
     {% else %}
@@ -50,21 +63,21 @@ cluster:
           - eth0
         public_ip:               # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Management Network. Not required for DHCP.
       data:                        # Data network interfaces
         interfaces:
           - eth1                      # Public Data
           - eth2                       # Private Data (direct connect)
         public_ip:               # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
+        gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
         private_ip:                  # Fixed IP of Private Data Network
         roaming_ip:                   # Applies to private data network
     storage:
       {% for num in range(num_of_nodes) -%}
       enclosure_id: enclosure-{{ (num + 1) }}
       {%- endfor %}
-      metadata_device:                # Device for /var/motr and possibly SWAP
+      metadata_devices:                # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
