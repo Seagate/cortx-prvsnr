@@ -62,6 +62,7 @@ deploy_states = dict(
         "misc_pkgs.openldap",
         "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
+        "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
         "misc_pkgs.statsd",

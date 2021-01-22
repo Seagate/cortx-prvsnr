@@ -15,25 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-commons:
-  cortx_commons:
-    # includes different 3rd party artifacts
-    # (multiple rpm repositories, raw archives, bash scirpts etc.)
-    RedHat:
-    CentOS:
-  version:
-    consul: 1.7.8-1
-    # elasticsearch: 6.8.8-1
-    elasticsearch-oss: 6.8.8-1
-    erlang: latest
-    kibana-oss: 6.8.8-1
-    nodejs: v12.13.0
-    rabbitmq: latest
-    rsyslog: 8.40.0-1.el7
-    rsyslog-elasticsearch: 8.40.0-1.el7
-    rsyslog-mmjsonparse: 8.40.0-1.el7
-    kafka: 2.13-2.7.0
-  repo:
-    # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
-    # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
-    lustre:
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.kafka'.format(grains['id'])) %}
+include:
+  - .install
+  - .config
+  - .start
+
+Generate kafka checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kafka
+    - makedirs: True
+    - create: True
+{%- else -%}
+Kafka already applied:
+  test.show_notification:
+    - text: "Kafka states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.Kafka.teardown' to reprovision these states."
+{% endif %}
