@@ -53,8 +53,8 @@ function backup_ifcfg {
 
 function test_data_ips {
     _linfo "Fetching IP of the nodes"
-    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data:interfaces:0)
-    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data:interfaces:0)
+    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data:public_interfaces:0)
+    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data:public_interfaces:0)
 
     remote_data_ip_srvnode_1=$(ssh_over_pvt_data ${pvt_ip_a} "ip -4 address show dev ${data_if_1} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
     remote_data_ip_srvnode_2=$(ssh_over_pvt_data ${pvt_ip_b} "ip -4 address show dev ${data_if_2} | grep inet | head -1 | awk '{print \$2}' | awk -F '/' '{print \$1}'")
@@ -137,8 +137,8 @@ function set_public_data_nw_config {
             exit 23
         fi
     
-        # Set network config to DHCP for pillar value cluster:srvnode-1:network:data:interfaces:0    
-        public_data_if=$(get_pillar_data cluster:${srvnode}:network:data:interfaces:0)
+        # Set network config to DHCP for pillar value cluster:srvnode-1:network:data:public_interfaces:0    
+        public_data_if=$(get_pillar_data cluster:${srvnode}:network:data:public_interfaces:0)
         _linfo "Setting up network on ${node_name} for interface: ${public_data_if}"
         backup_ifcfg ${remote} ${public_data_if}
         
@@ -165,9 +165,9 @@ function set_data_public_dhcp_config {
     # Update pillar
     update_cluster_pillar_for_public_data_ips
 
-    # Set network config to DHCP for pillar value cluster:srvnode-1:network:data:interfaces:0    
+    # Set network config to DHCP for pillar value cluster:srvnode-1:network:data:public_interfaces:0    
     # Srvnode-1
-    public_data_if=$(get_pillar_data cluster:srvnode-1:network:data:interfaces:0)
+    public_data_if=$(get_pillar_data cluster:srvnode-1:network:data:public_interfaces:0)
     _linfo "Setting DHCP on srvnode-1 for interface: ${public_data_if}"
     backup_ifcfg ${pvt_ip_a} ${public_data_if}
 
@@ -190,8 +190,8 @@ function set_data_public_static_config {
     _linfo "You have selected to proceed with static IP based configuration for public data network interface."
     _linfo "    "
 
-    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data:interfaces:0)
-    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data:interfaces:0)
+    data_if_1=$(get_pillar_data cluster:srvnode-1:network:data:public_interfaces:0)
+    data_if_2=$(get_pillar_data cluster:srvnode-2:network:data:public_interfaces:0)
     
     # User inputs
     read -p "Public Data IP for ${data_if_1} on Server-A: " data_ip_1

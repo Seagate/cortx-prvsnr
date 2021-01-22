@@ -18,7 +18,7 @@
 
 {% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
 cluster:
-  cluster_id:
+  cluster_id: {{ grains["cluster_id"] }}
   storage_sets:
     storage-set-1:
       {% for num in range(num_of_nodes) %}
@@ -30,13 +30,13 @@ cluster:
   dns_servers:                        # Do not update
   server_nodes:
     {% for num in range(num_of_nodes) %}
-    - {{ grains['machine_id'] }}: srvnode-{{ (num + 1) }}
+    {{ grains['machine_id'] }}: srvnode-{{ (num + 1) }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
   srvnode-{{ (num + 1) }}:
     rack_id:
     site_id:
-    storage_set_id:
+    storage_set_id: storage-set-1
     node_id:
     machine_id: {{ grains['machine_id'] }}
     hostname: srvnode-{{ (num + 1) }}
@@ -44,6 +44,7 @@ cluster:
       {% if 0 == num %}
       - primary
       - openldap_server
+      - kafka_server
       {% else %}
       - secondary
       - openldap_client
@@ -58,27 +59,31 @@ cluster:
       user: ADMIN
       secret:
     network:
-      mgmt:                        # Management network interfaces
+      mgmt:                           # Management network interfaces
         interfaces:
           - eth0
-        public_ip:               # DHCP is assumed if left blank
+        public_ip:                    # DHCP is assumed if left blank
         netmask:
         gateway:                      # Gateway IP of Management Network. Not required for DHCP.
-      data:                        # Data network interfaces
-        interfaces:
+      data:                           # Data network interfaces
+        public_interfaces:
           - eth1                      # Public Data
-          - eth2                       # Private Data (direct connect)
-        public_ip:               # DHCP is assumed if left blank
+        private_interfaces:
+          - eth2                      # Private Data (direct connect)
+        interface_type: tcp           # tcp/o2ib
+        transport_type: lnet          # lnet/libfabric
+        public_ip:                    # DHCP is assumed if left blank
+        private_ip:                   # Fixed IP of Private Data Network
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
-        private_ip:                  # Fixed IP of Private Data Network
         roaming_ip:                   # Applies to private data network
     storage:
       {% for num in range(num_of_nodes) -%}
       enclosure_id: enclosure-{{ (num + 1) }}
       {%- endfor %}
-      metadata_devices:                # Device for /var/motr and possibly SWAP
+      metadata_devices:               # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
+    s3_instances: 11
   {% endfor %}

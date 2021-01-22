@@ -18,10 +18,13 @@
 system:
   ntp:
     time_server: time.seagate.com
-    timezone: UTC             #To be replaced with input
+    time_zone: UTC             #To be replaced with input
   service_user:
     name: cortxub
-    password:
+    secret:
     groups:
       - wheel
     shell: /usr/bin/bash
+  cortx_user:
+    name: cortxcli
+    secret:

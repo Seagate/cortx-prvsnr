@@ -26,18 +26,24 @@
 #     - name: firewall-cmd --permanent --zone=management-zone --list-interfaces | grep {{ mgmt_if }}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-  {%- set data_if = 'data0' -%}
+  {%- set data_if = ['data0'] -%}
 {% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['interfaces'][0] -%}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
 {% endif %}
 Verify NIC opened for public-data-zone:
   cmd.run:
-    - name: firewall-cmd --permanent --zone=public-data-zone --list-interfaces | grep {{ data_if }}
+    - name: |
+    {% for interface in data_if %}
+    firewall-cmd --permanent --zone=public-data-zone --list-interfaces | grep {{ interface }}
+    {% endfor %}
 
 {% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 Verify NIC opened for private-data-zone:
   cmd.run:
-    - name: firewall-cmd --permanent --zone=trusted --list-interfaces | grep {{ pillar['cluster'][grains['id']]['network']['data']['interfaces'][1] }}
+    - name: |
+    {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
+    firewall-cmd --permanent --zone=trusted --list-interfaces | grep {{ interface }}
+    {% endfor %}
 {% endif %}
 
 # Verify saltmaster ports:

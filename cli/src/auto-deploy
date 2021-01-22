@@ -384,8 +384,10 @@ update_pillar()
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-1/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
-        provisioner pillar_set cluster/srvnode-2/network/data/interfaces [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/private_interfaces [\"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/public_interfaces [\"${pub_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/public_interfaces [\"${pub_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/private_interfaces [\"${pvt_din}\"]
     fi
 
     #Update interface ips

@@ -20,8 +20,8 @@
 # Setup network for data interfaces
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data']['interfaces'][0] }}
-    - device: {{ pillar['cluster'][node]['network']['data']['interfaces'][0] }}
+    - name: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
+    - device: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
     - type: eth
     - enabled: True
     - nm_controlled: no

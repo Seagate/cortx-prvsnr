@@ -37,7 +37,7 @@ hostsfile:
         {{ pillar['cluster'][node]['network']['data']['private_ip'] }}   {{ node -}}
         {%- else %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['interfaces'][1]][0] }}   {{ srvnode -}}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode -}}
         {% endfor -%}
         {% endif -%}
         {% endfor %}

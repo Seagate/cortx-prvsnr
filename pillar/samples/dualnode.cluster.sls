@@ -42,27 +42,28 @@ cluster:
       user: ADMIN
       secret:
     network:
-      mgmt:                        # Management network interfaces
+      mgmt:                         # Management network interfaces
         interfaces:
           - eno1
-        public_ip:               # DHCP is assumed if left blank
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
-      data:                        # Data network interfaces
-        interfaces:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
-        public_ip:                       # DHCP is assumed if left blank
+        gateway:                    # Gateway IP of Management Network. Not requried for DHCP.
+      data:                         # Data network interfaces
+        public_interfaces:
+          - enp175s0f0              # Public Data
+        private_interfaces:
+          - enp175s0f1              # Private Data (direct connect)
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
-        private_ip: 192.168.0.1      # Fixed IP of Private Data Network
-        roaming_ip: 192.168.0.3       # Applies to private data network
+        gateway:                    # Gateway IP of Public Data Network. Not requried for DHCP.
+        private_ip: 192.168.0.1     # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.3     # Applies to private data network
     storage:
       enclosure_id: enclosure-1 
-      metadata_devices:                # Device for /var/motr and possibly SWAP
-        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
-      data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
+      metadata_devices:             # Device for /var/motr and possibly SWAP
+        - /dev/sdb                  # Auto-populated by components.system.storage.multipath
+      data_devices:                 # Data device/LUN from storage enclosure
+        - /dev/sdc                  # Auto-populated by components.system.storage.multipath
   srvnode-2:
     hostname: srvnode-2
     rack_id:
@@ -76,24 +77,25 @@ cluster:
       user: ADMIN
       secret:
     network:
-      mgmt:                        # Management network interfaces
+      mgmt:                         # Management network interfaces
         interfaces:
           - eno1
-        public_ip:                       # DHCP is assumed if left blank
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                   # Gateway IP of Management Network. Not requried for DHCP.
-      data:                        # Data network interfaces
-        interfaces:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
-        public_ip:               # DHCP is assumed, if left blank
+        gateway:                    # Gateway IP of Management Network. Not requried for DHCP.
+      data:                         # Data network interfaces
+        public_interfaces:
+          - enp175s0f0              # Public Data
+        private_interfaces:
+          - enp175s0f1              # Private Data (direct connect)
+        public_ip:                  # DHCP is assumed, if left blank
         netmask:
-        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
-        private_ip: 192.168.0.2      # Fixed IP of Private Data Network
-        roaming_ip: 192.168.0.4       # Applies to private data network
+        gateway:                    # Gateway IP of Public Data Network. Not requried for DHCP.
+        private_ip: 192.168.0.2     # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.4     # Applies to private data network
     storage:
       enclosure_id: enclosure-2
-      metadata_devices:              # Device for /var/motr and possibly SWAP
+      metadata_devices:             # Device for /var/motr and possibly SWAP
         - /dev/sdb
       data_devices:                 # Data device/LUN from storage enclosure
         - /dev/sdc

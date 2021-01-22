@@ -51,7 +51,7 @@ def test_singlenode_deploy_ready_env(mhostsrvnode1, request):
 
     pillar_file_dict = yaml.safe_load(res.stdout)
     assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt']['interfaces'] == 'lo'  # noqa: E501
-    assert pillar_file_dict['cluster']['srvnode-1']['network']['data']['interfaces'] == 'lo'  # noqa: E501
+    assert pillar_file_dict['cluster']['srvnode-1']['network']['data']['public_interfaces'] == 'lo'  # noqa: E501
     def_gateway = mhostsrvnode1.check_output(
         'ip route | grep default | head -1'
     ).split()[2]
@@ -136,7 +136,7 @@ def test_s3_sanity_singlenode_env(
     pillar_file_dict = yaml.safe_load(res.stdout)
 
     assert pillar_file_dict['cluster']['srvnode-1']['network']['mgmt']['interfaces'] == mhostsrvnode1.interface  # noqa: E501
-    assert pillar_file_dict['cluster']['srvnode-1']['network']['data']['interfaces'] == mhostsrvnode1.interface  # noqa: E501
+    assert pillar_file_dict['cluster']['srvnode-1']['network']['data']['public_interfaces'] == mhostsrvnode1.interface  # noqa: E501
     def_gateway = mhostsrvnode1.check_output(
         'ip route | grep default | head -1'
     ).split()[2]

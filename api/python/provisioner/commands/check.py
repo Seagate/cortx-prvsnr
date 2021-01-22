@@ -1054,7 +1054,7 @@ class Check(CommandParserFillerMixin):
             try:
                 # Get list data network interfaces
                 interfaces = Check._get_pillar_data(
-                    f"cluster/{node}/network/data/interfaces")
+                    f"cluster/{node}/network/data/public_interfaces")
 
                 ifc = [ifc for ifc in interfaces if 's0f0' in ifc]
 

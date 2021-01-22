@@ -1,14 +1,14 @@
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
   {%- set data_if = 'data0' -%}
 {%- else %}
-  {%- set data_if = pillar['cluster']['srvnode-1']['network']['data']['interfaces'][1] -%}
+  {%- set data_if = pillar['cluster']['srvnode-1']['network']['data']['private_interfaces'][0] -%}
 {%- endif -%}
 left-interface: {{ data_if }}
 
 {%- if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {%- set data_if = 'data0' %}
 {%- else %}
-  {%- set data_if = pillar['cluster']['srvnode-2']['network']['data']['interfaces'][1] %}
+  {%- set data_if = pillar['cluster']['srvnode-2']['network']['data']['private_interfaces'][0] %}
 {%- endif %}
 right-interface: {{ data_if }}
 

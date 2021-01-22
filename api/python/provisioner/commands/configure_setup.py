@@ -207,8 +207,9 @@ class ConfigureSetup(CommandParserFillerMixin):
             logger.debug(f"Key being processed: {key}")
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'type', 'interfaces',
-                 'gateway', 'netmask', 'public_ip', 'private_ip'
+                'ip', 'user', 'secret', 'type',
+                'private_interfaces', 'public_interfaces',
+                'gateway', 'netmask', 'public_ip', 'private_ip'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
                 logger.debug(f"Params generated: {params}")

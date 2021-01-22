@@ -46,8 +46,9 @@ cluster:
         netmask:
         gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
       data:                           # Data network interfaces
-        interfaces:
+        public_interfaces:
           - eth1                      # Public Data
+        private_interfaces:
           - eth2                      # Private Data (direct connect)
         public_ip:                    # DHCP is assumed if left blank
         netmask:
