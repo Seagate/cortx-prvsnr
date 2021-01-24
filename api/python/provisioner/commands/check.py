@@ -791,7 +791,6 @@ class Check(CommandParserFillerMixin):
 
         try:
             # nodes = Check._get_pillar_data("cluster/node_list")
-            
             cluster_dict = Check._get_pillar_data("cluster")
             nodes = [ node for node in cluster_dict.keys()
                 if 'srvnode-' in node

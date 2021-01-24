@@ -194,5 +194,7 @@ Management zone:
 
 Restart firewalld:
   module.run:
-    - service.restart:
-      - firewalld
+    - cmd.run:
+      - firewalld --reload
+    # - service.restart:
+    #   - firewalld
