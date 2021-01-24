@@ -21,28 +21,29 @@
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {%- endif -%}
 
-# Verify NIC opened for management-zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --zone=management-zone --list-interfaces | grep {{ mgmt_if }}
+Verify NIC opened for public zone on management interface:
+  cmd.run:
+    - name: firewall-cmd --permanent --zone=public --list-interfaces | grep {{ mgmt_if }}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-  {%- set data_if = ['data0'] -%}
+  {%- set public_data_if = ['data0'] -%}
 {% else %}
-  {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
+  {%- set public_data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
 {% endif %}
 Verify NIC opened for public-data-zone:
   cmd.run:
     - name: |
-    {% for interface in data_if %}
-    firewall-cmd --permanent --zone=public-data-zone --list-interfaces | grep {{ interface }}
+    {% for interface in public_data_if %}
+        firewall-cmd --permanent --zone=public-data-zone --list-interfaces | grep {{ interface }}
     {% endfor %}
 
-{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
+{%- set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
 Verify NIC opened for private-data-zone:
   cmd.run:
     - name: |
-    {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
-    firewall-cmd --permanent --zone=trusted --list-interfaces | grep {{ interface }}
+    {% for interface in private_data_if %}
+        firewall-cmd --permanent --zone=trusted --list-interfaces | grep {{ interface }}
     {% endfor %}
 {% endif %}
 

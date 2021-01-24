@@ -793,10 +793,9 @@ class Check(CommandParserFillerMixin):
             # nodes = Check._get_pillar_data("cluster/node_list")
             
             cluster_dict = Check._get_pillar_data("cluster")
-        nodes = [
-            node for node in cluster_dict.keys()
-            if 'srvnode-' in node
-        ]
+            nodes = [ node for node in cluster_dict.keys()
+                if 'srvnode-' in node
+            ]
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
