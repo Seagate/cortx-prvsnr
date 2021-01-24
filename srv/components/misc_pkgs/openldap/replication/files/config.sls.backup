@@ -3,7 +3,13 @@ include:
   - components.misc_pkgs.openldap.replication.prepare
   - components.misc_pkgs.openldap.start
 
-{% if pillar['cluster']['type'] != "single" -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if 1 < (server_nodes|length) -%}
 Configure unique olcserver Id:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) }} -f /opt/seagate/cortx/provisioner/generated_configs/ldap/olcserverid.ldif && sleep 2

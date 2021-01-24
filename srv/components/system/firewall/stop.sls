@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop and disable Firewalld service:
+Stop and disable firewalld service:
   service.dead:
     - name: firewalld
     - enable: False

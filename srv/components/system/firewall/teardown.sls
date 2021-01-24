@@ -37,7 +37,7 @@ public:
     - require:
       - Start and enable firewalld service
     - watch_in:
-      - Stop and disable Firewalld service
+      - Stop and disable firewalld service
 
 {% if ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 Remove public data interfaces:
@@ -47,22 +47,31 @@ Remove public data interfaces:
     - require:
       - Start and enable firewalld service
     - watch_in:
-      - Stop and disable Firewalld service
+      - Stop and disable firewalld service
 {% else %}
-Remove public and private data interfaces:
+Remove public data interfaces:
   cmd.run:
     - names:
       {% for interface in pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
       - firewall-cmd --remove-interface={{ interface }} --zone=public-data-zone --permanent
       {% endfor -%}
-      {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
-      - firewall-cmd --remove-interface={{ interface }} --zone=trusted --permanent
-      {% endfor %}
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service
     - watch_in:
-      - Stop and disable Firewalld service
+      - Stop and disable firewalld service
+
+Remove private data interfaces:
+  cmd.run:
+    - names:
+      {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
+      - firewall-cmd --remove-interface={{ interface }} --zone=trusted --permanent
+      {% endfor %}
+    - onlyif: firewall-cmd --get-zones | grep trusted
+    - require:
+      - Start and enable firewalld service
+    - watch_in:
+      - Stop and disable firewalld service
 {% endif %}
 
 Remove public-data-zone:
@@ -73,7 +82,7 @@ Remove public-data-zone:
       - Start and enable firewalld service
       - public
     - watch_in:
-      - Stop and disable Firewalld service
+      - Stop and disable firewalld service
 
 #{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
 # Remove private-data-zone:
@@ -84,7 +93,7 @@ Remove public-data-zone:
 #       - Start and enable firewalld service
 #       - public
 #     - watch_in:
-#       - Stop and disable Firewalld service
+#       - Stop and disable firewalld service
 #{% endif %}
 
 # Remove management-zone:
@@ -95,7 +104,7 @@ Remove public-data-zone:
 #       - Start and enable firewalld service
 #       - public
 #     - watch_in:
-#       - Stop and disable Firewalld service
+#       - Stop and disable firewalld service
 
 {% endif %}
 

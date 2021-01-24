@@ -21,7 +21,7 @@
 {% do server_nodes.append(node)-%}
 {% endif -%}
 {% endfor -%}
-{%- if pillar['cluster']['type'] != "single" -%}
+{% if 1 < (server_nodes|length) -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/create_replication_account.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif' },

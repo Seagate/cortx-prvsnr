@@ -15,12 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if 1 == (server_nodes|length) -%}
+{% set product_type = 'SINGLE' -%}
+{% elif 2 == (server_nodes|length) -%}
+{% set product_type = 'LDR-R1' -%}
+{% else %}
+{% set product_type = 'LDR-R2' -%}
+{% endif %}
 Add common config - system information to Consul:
   cmd.run:
     - name: |
         consul kv put system_information/operating_system "$(cat /etc/system-release)"
         consul kv put system_information/kernel_version {{ grains['kernelrelease'] }}
-        consul kv put system_information/product {{ pillar['cluster']['type'] }}
+        consul kv put system_information/product {{ product_type }}
         consul kv put system_information/site_id 001
         consul kv put system_information/rack_id 001
         consul kv put system_information/cluster_id {{ grains['cluster_id'] }}
