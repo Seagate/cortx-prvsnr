@@ -47,11 +47,11 @@ class PillarExport(PillarGet):
     _run_args_type = RunArgsPillarExport
 
     def _convert_to_str(self, obj, repl=''):
-
         """
-        Method to address ConfStore LIMITATION
-        on accepting ONLY string values
-        Can be commented when it is addressed.
+        Method to address ConfStore LIMITATION.
+
+        Currently, ConfStore accepts ONLY string values.
+        This can be commented when limitation is addressed.
 
         Converts all values (arrays, null, bool, int) to string
 
