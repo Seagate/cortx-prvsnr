@@ -42,13 +42,16 @@ class RunArgsPillarExport(RunArgsBase):
     local: bool = RunArgs.local
 
 
-class PillarJSONEncoder():
+@attr.s(auto_attribs=True)
+class PillarExport(PillarGet):
+    _run_args_type = RunArgsPillarExport
 
     def _convert_to_str(self, obj, repl=''):
+
         """
         Method to address ConfStore LIMITATION
         on accepting ONLY string values
-        Can be commented when the bug is addressed.
+        Can be commented when it is addressed.
 
         Converts all values (arrays, null, bool, int) to string
 
@@ -59,11 +62,6 @@ class PillarJSONEncoder():
         elif isinstance(obj, Mapping):
             return {k: self._convert_to_str(v, repl) for k, v in obj.items()}
         return obj
-
-
-@attr.s(auto_attribs=True)
-class PillarExport(PillarGet):
-    _run_args_type = RunArgsPillarExport
 
     def run(
         self, *args, targets: str = ALL_MINIONS, local: bool = False,
@@ -79,8 +77,7 @@ class PillarExport(PillarGet):
                     if filter_key in unwanted_keys:
                         del full_pillar_load[key][filter_key]
 
-            convert_obj = PillarJSONEncoder()._convert_to_str
-            convert_data = convert_obj(full_pillar_load, "")
+            convert_data = self._convert_to_str(full_pillar_load, "")
 
             with open(CONFSTORE_CLUSTER_CONFIG, "w") as file_value:
                 json.dump(convert_data, file_value)
