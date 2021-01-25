@@ -15,10 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt['pillar.get']('system:service_user:secret') %}
+{% if salt['pillar.get']('system:service-user:secret') %}
 
     {% set base_dir = '/opt/seagate/users' %}
-    {% set user_data = salt['pillar.get']('system:service_user') %}
+    {% set user_data = salt['pillar.get']('system:service-user') %}
 
 seagate_users_dir_created:
   file.directory:

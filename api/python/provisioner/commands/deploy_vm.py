@@ -138,15 +138,6 @@ class DeployVM(Deploy):
                 targets=self._primary_id()
             )
 
-        self._cmd_run(
-            (
-                'provisioner pillar_set '
-                's3server/no_of_inst  '
-                '1'
-            ),
-            targets=self._primary_id()
-        )
-
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = (

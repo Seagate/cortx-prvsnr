@@ -19,12 +19,12 @@ system:
   ntp:
     time_server: time.seagate.com
     time_zone: UTC             #To be replaced with input
-  service_user:
+  service-user:
     name: cortxub
     secret:
     groups:
       - wheel
     shell: /usr/bin/bash
-  cortx_user:
+  cortx-user:
     name: cortxcli
     secret:

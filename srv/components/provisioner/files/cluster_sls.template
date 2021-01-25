@@ -40,6 +40,7 @@ cluster:
     node_id:
     machine_id: {{ grains['machine_id'] }}
     hostname: srvnode-{{ (num + 1) }}
+    node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
     roles:
       {% if 0 == num %}
       - primary
@@ -85,5 +86,9 @@ cluster:
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
+    {% if "physical" in grains["virtual"] %}
     s3_instances: 11
+    {% else %}
+    s3_instances: 1
+    {% endif %}
   {% endfor %}

@@ -387,9 +387,6 @@ update_pillar()
     #    provisioner pillar_set cluster/srvnode-2/storage/data_devices [$data_disk]
     #fi
     	
-    # Update s3server.sls
-    echo -e "\n\t***** INFO: Updating s3server.sls *****" 2>&1 | tee -a $LOG_FILE
-    provisioner pillar_set s3server/no_of_inst '1'
     salt-call pillar.get cluster
 }
 

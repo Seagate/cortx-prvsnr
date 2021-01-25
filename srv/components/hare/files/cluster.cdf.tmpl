@@ -31,7 +31,7 @@ nodes:
 
     m0_clients:
 {%- if "physical" in grains['virtual'] %}
-      s3: {{ pillar['s3server']['no_of_inst'] }}
+      s3: {{ pillar['cluster'][grains['id']]['s3_instances'] }}
 {%- else %}
       s3: 1
 {%- endif %}
