@@ -13,12 +13,17 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
-#
 
 include:
   - .generate
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] and 'single' not in pillar['cluster']['type']%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] and 1 < (server_nodes|length) %}
 Merge healthschema:
   module.run:
     - sspl.merge_health_map_schema:

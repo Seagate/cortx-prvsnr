@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 HA cleanup for CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:ha-cleanup')

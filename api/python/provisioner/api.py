@@ -137,24 +137,24 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param dns_servers: (optional) list of dns servers
     :param search_domains: (optional) list of search domains
     :param primary_hostname: (optional) primary node hostname
-    :param primary_floating_ip: (optional) primary node floating ip address
-    :param primary_mgmt_ip: (optional) primary node management iface ip address
+    :param primary_roaming_ip: (optional) primary node roaming ip address
+    :param primary_mgmt_public_ip: (optional) primary node management interface ip address
     :param primary_mgmt_netmask: (optional) primary node management
-        iface netmask
+        interface netmask
     :param primary_mgmt_gateway: (optional) primary node gateway ip address
-    :param primary_data_ip: (optional) primary node data iface ip address
-    :param primary_data_netmask: (optional) primary node data iface netmask
-    :param primary_data_gateway: (optional) primary node data iface gateway
+    :param primary_data_public_ip: (optional) primary node data interface ip address
+    :param primary_data_netmask: (optional) primary node data interface netmask
+    :param primary_data_gateway: (optional) primary node data interface gateway
     :param secondary_hostname: (optional) secondary node hostname
-    :param secondary_floating_ip: (optional) secondary node floating ip address
-    :param secondary_mgmt_ip: (optional) secondary node management
-        iface ip address
+    :param secondary_roaming_ip: (optional) secondary node roaming ip address
+    :param secondary_mgmt_public_ip: (optional) secondary node management
+        interface ip address
     :param secondary_mgmt_netmask: (optional) secondary node management
-        iface netmask
+        interface netmask
     :param secondary_mgmt_gateway: (optional) secondary node gateway ip address
-    :param secondary_data_ip: (optional) secondary node data iface ip address
-    :param secondary_data_netmask: (optional) secondary node data iface netmask
-    :param secondary_data_gateway: (optional) secondary node data iface gateway
+    :param secondary_data_public_ip: (optional) secondary node data interface ip address
+    :param secondary_data_netmask: (optional) secondary node data interface netmask
+    :param secondary_data_gateway: (optional) secondary node data interface gateway
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """

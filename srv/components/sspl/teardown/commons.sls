@@ -44,27 +44,38 @@ Delete common config - rabbitmq cluster to Consul:
     - require:
       - Delete sspl checkpoint flag
 
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 Delete common config - BMC to Consul:
   cmd.run:
     - name: |
-        consul kv delete bmc/srvnode-1/ip
-        consul kv delete bmc/srvnode-1/user
-        consul kv delete bmc/srvnode-1/secret['secret']
-        consul kv delete bmc/srvnode-2/ip
-        consul kv delete bmc/srvnode-2/user
-        consul kv delete bmc/srvnode-2/secret
+    {% for node_id in server_nodes %}
+        consul kv delete bmc/{{ node_id }}/ip
+        consul kv delete bmc/{{ node_id }}/user
+        consul kv delete bmc/{{ node_id }}/secret
+    {% endfor %}
     - require:
       - Delete sspl checkpoint flag
 
+{% set enclosures = [] -%}
+{%- for enclosure in pillar['storage'].keys() if "enclosure-" in enclosure -%}
+{{- enclosures.append(enclosure) or "" -}}
+{%- endfor -%}
 Delete common config - storage enclosure to Consul:
   cmd.run:
     - name: |
-        consul kv delete storage_enclosure/controller/primary_mc/ip
-        consul kv delete storage_enclosure/controller/primary_mc/port
-        consul kv delete storage_enclosure/controller/secondary_mc/ip
-        consul kv delete storage_enclosure/controller/secondary_mc/port
-        consul kv delete storage_enclosure/controller/user
-        consul kv delete storage_enclosure/controller/password
+{% for enclosure_id in enclosures %}
+        consul kv delete storage/{{ enclosure_id }}/controller/primary/ip
+        consul kv delete storage/{{ enclosure_id }}/controller/primary/port
+        consul kv delete storage/{{ enclosure_id }}/controller/secondary/ip
+        consul kv delete storage/{{ enclosure_id }}/controller/secondary/port
+        consul kv delete storage/{{ enclosure_id }}/controller/user
+        consul kv delete storage/{{ enclosure_id }}/controller/password
+{% endfor %}
     - require:
       - Delete sspl checkpoint flag
 

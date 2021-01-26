@@ -40,7 +40,7 @@ def script_name():
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
-    {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
+    {'': {'minion_id': 'some-minion-id', 'roles': ['primary']}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_cortx_show(
@@ -74,7 +74,7 @@ def test_configure_cortx_show(
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
-    {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
+    {'': {'minion_id': 'some-minion-id', 'roles': ['primary']}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_configure_cortx_update_and_load_default(

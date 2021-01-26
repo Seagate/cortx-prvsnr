@@ -15,6 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 include:
   - components.misc_pkgs.rabbitmq.start
 
@@ -24,7 +30,7 @@ Start rabbitmq app and join cluster if available:
         rabbitmqctl start_app
         rabbitmqctl stop_app
         {#% for node in (salt['saltutil.runner']("manage.up") | difference(grains['id'])) %#}
-        {% for node in (pillar['cluster']['node_list'] | difference(grains['id'])) %}
+        {% for node in (server_nodes | difference(grains['id'])) %}
         rabbitmqctl join_cluster rabbit@{{ node }} || true
         {% endfor %}
         rabbitmqctl start_app

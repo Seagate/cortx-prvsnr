@@ -51,8 +51,8 @@ function shutdown_node {
 
     local _node="${1:-both}"
 
-    local pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data_nw:pvt_ip_addr)
-    local pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data_nw:pvt_ip_addr)
+    local pvt_ip_a=$(get_pillar_data cluster:srvnode-1:network:data:private_ip)
+    local pvt_ip_b=$(get_pillar_data cluster:srvnode-2:network:data:private_ip)
 
     if [[ $# -gt 1 ]]; then
         echo "[ERROR] $0: Only one positional argument is expected, provided: $@" | tee -a ${LOG_FILE}
@@ -108,11 +108,11 @@ function shutdown_controller {
 
     local ctrl_cli="/opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh"
     
-    local ctrl_user=$(get_pillar_data storage_enclosure:controller:user)
-    local ctrl_secret=$(get_pillar_data storage_enclosure:controller:secret)
-    local ctrl_ip=$(get_pillar_data storage_enclosure:controller:primary_mc:ip)
+    local ctrl_user=$(get_pillar_data storage:enclosure-1:controller:user)
+    local ctrl_secret=$(get_pillar_data storage:enclosure-1:controller:secret)
+    local ctrl_ip=$(get_pillar_data storage:enclosure-1:controller:primary:ip)
     if [[ "$(salt-call grains.get id --output=newline_values_only)" == "srvnode-2" ]]; then
-        ctrl_ip=$(get_pillar_data storage_enclosure:controller:secondary_mc:ip)
+        ctrl_ip=$(get_pillar_data storage:enclosure-1:controller:secondary:ip)
     fi
 
     if [[ "$_node" == "node1" ]]; then
