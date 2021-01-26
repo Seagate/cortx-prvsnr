@@ -16,70 +16,88 @@
 #
 
 cluster:
-  cluster_ip:                         # Cluster IP for HAProxy
-  mgmt_vip:                           # Management VIP for CSM
+  cluster_id:
+  storage_sets:
+    storage_set_1:
+      - srvnode-1
+      - srvnode-2
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  type: dual                          # single/dual/generic/3_node
-  node_list:
-    - srvnode-1
-    - srvnode-2
+  server_nodes:
+    - <machine_id_1>: srvnode-1
+    - <machine_id_2>: srvnode-2
   srvnode-1:
+    rack_id:
+    site_id:
+    storage_set_id:
+    node_id:
+    machine_id:
     hostname: srvnode-1
     is_primary: true
+    roles:
+      - primary
+      - openldap_master
     bmc:
       ip:
       user: ADMIN
       secret:
     network:
-      mgmt_nw:                        # Management network interfaces
-        iface:
+      mgmt:                         # Management network interfaces
+        interfaces:
           - eno1
-        public_ip_addr:               # DHCP is assumed if left blank
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
-      data_nw:                        # Data network interfaces
-        iface:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
-        public_ip_addr:                       # DHCP is assumed if left blank
+        gateway:                    # Gateway IP of Management Network. Not requried for DHCP.
+      data:                         # Data network interfaces
+        public_interfaces:
+          - enp175s0f0              # Public Data
+        private_interfaces:
+          - enp175s0f1              # Private Data (direct connect)
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr: 192.168.0.1      # Fixed IP of Private Data Network
-        roaming_ip: 192.168.0.3       # Applies to private data network
+        gateway:                    # Gateway IP of Public Data Network. Not requried for DHCP.
+        private_ip: 192.168.0.1     # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.3     # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/motr and possibly SWAP
-        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
-      data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
+      enclosure_id: enclosure-1 
+      metadata_devices:             # Device for /var/motr and possibly SWAP
+        - /dev/sdb                  # Auto-populated by components.system.storage.multipath
+      data_devices:                 # Data device/LUN from storage enclosure
+        - /dev/sdc                  # Auto-populated by components.system.storage.multipath
   srvnode-2:
     hostname: srvnode-2
+    rack_id:
+    site_id:
+    storage_set_id:
+    node_id:
+    machine_id:
     is_primary: false
     bmc:
       ip:
       user: ADMIN
       secret:
     network:
-      mgmt_nw:                        # Management network interfaces
-        iface:
+      mgmt:                         # Management network interfaces
+        interfaces:
           - eno1
-        public_ip_addr:               # DHCP is assumed if left blank
+        public_ip:                  # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
-      data_nw:                        # Data network interfaces
-        iface:
-          - enp175s0f0                # Public Data
-          - enp175s0f1                # Private Data (direct connect)
-        public_ip_addr:                       # DHCP is assumed if left blank
+        gateway:                    # Gateway IP of Management Network. Not requried for DHCP.
+      data:                         # Data network interfaces
+        public_interfaces:
+          - enp175s0f0              # Public Data
+        private_interfaces:
+          - enp175s0f1              # Private Data (direct connect)
+        public_ip:                  # DHCP is assumed, if left blank
         netmask:
-        gateway:                   # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr: 192.168.0.2      # Fixed IP of Private Data Network
-        roaming_ip: 192.168.0.4       # Applies to private data network
+        gateway:                    # Gateway IP of Public Data Network. Not requried for DHCP.
+        private_ip: 192.168.0.2     # Fixed IP of Private Data Network
+        roaming_ip: 192.168.0.4     # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/motr and possibly SWAP
-        - /dev/sdb                    # Auto-populated by components.system.storage.multipath
-      data_devices:                   # Data device/LUN from storage enclosure
-        - /dev/sdc                    # Auto-populated by components.system.storage.multipath
+      enclosure_id: enclosure-2
+      metadata_devices:             # Device for /var/motr and possibly SWAP
+        - /dev/sdb
+      data_devices:                 # Data device/LUN from storage enclosure
+        - /dev/sdc
   replace_node:
     minion_id: null                 # Could be srvnode-1, srvnode-2 or something similar
-

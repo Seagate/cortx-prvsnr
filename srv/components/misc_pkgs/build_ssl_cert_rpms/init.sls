@@ -17,7 +17,7 @@
 
 {% set node = grains['id'] %}
 {% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.build_ssl_cert_rpms'.format(grains['id'])) %}
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(node), false) %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 include:
   - components.misc_pkgs.build_ssl_cert_rpms.install
@@ -27,8 +27,14 @@ include:
   - components.misc_pkgs.build_ssl_cert_rpms.sanity_check
 
 # Copy generated cert from primary server node
-{%- for node_id in pillar['cluster']['node_list'] -%}
-{%- if not pillar['cluster'][node_id]['is_primary'] %}
+{% set server_nodes = [ ] %}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{%- for node_id in server_nodes -%}
+{%- if not "primary" in pillar['cluster'][node_id]['roles'] %}
 # Requries pip install scp
 # Copy certs to non-primary:
 #   module.run:

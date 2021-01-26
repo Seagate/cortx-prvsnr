@@ -46,9 +46,13 @@ def _run_command(cmd):
            return res.stdout.decode("utf-8")
 
 def _get_node_list():
-    res = _run_command(f" salt-call pillar.get cluster:node_list --out=json ")
-    result = json.loads(res)
-    return result["local"]
+    result = _run_command(f"salt-call pillar.item cluster --out=json ")
+    result = json.loads(result)
+    server_nodes = [
+        node for node in result["local"].keys()
+        if "srvnode-" in node
+    ]
+    return server_nodes
 
 def _get_all_csm_users(user_key, consul_path):
     res = _run_command(f"{consul_path} kv get -keys {user_key}")

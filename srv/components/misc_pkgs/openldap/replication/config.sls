@@ -21,9 +21,14 @@ include:
   - components.misc_pkgs.openldap.start
   - components.misc_pkgs.openldap.sanity_check
 
-{% if pillar['cluster']['node_list']|length > 1 -%}
-
-{% set ldap_password = salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) %}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if 1 < (server_nodes|length) -%}
+{% set ldap_password = salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) -%}
 
 Load provider module:
   cmd.run:

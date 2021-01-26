@@ -85,14 +85,7 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        if self.number_of_nodes == 1:
-            self.setup_type = SetupType.SINGLE
-        elif self.number_of_nodes == 2:
-            self.setup_type = SetupType.DUAL
-        elif self.number_of_nodes == 3:
-            self.setup_type = SetupType._3_NODE
-        else:
-            self.setup_type = SetupType.GENERIC
+        pass
 
 
 @attr.s(auto_attribs=True)
@@ -129,8 +122,8 @@ class ReleaseParamsValidation:
 @attr.s(auto_attribs=True)
 class StorageEnclosureParamsValidation:
     type: str = StorageEnclosureParams.type
-    primary_mc_ip: str = StorageEnclosureParams.primary_mc_ip
-    secondary_mc_ip: str = StorageEnclosureParams.secondary_mc_ip
+    primary_ip: str = StorageEnclosureParams.primary_ip
+    secondary_ip: str = StorageEnclosureParams.secondary_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
     controller_type: str = StorageEnclosureParams.controller_type
@@ -155,29 +148,30 @@ class StorageEnclosureParamsValidation:
 @attr.s(auto_attribs=True)
 class NodeParamsValidation:
     hostname: str = NodeNetworkParams.hostname
-    is_primary: str = NodeNetworkParams.is_primary
-    data_nw_iface: List = NodeNetworkParams.data_nw_iface
-    data_nw_public_ip_addr: str = NodeNetworkParams.data_nw_public_ip_addr
-    data_nw_netmask: str = NodeNetworkParams.data_nw_netmask
-    data_nw_gateway: str = NodeNetworkParams.data_nw_gateway
-    mgmt_nw_iface: List = NodeNetworkParams.mgmt_nw_iface
-    mgmt_nw_public_ip_addr: str = NodeNetworkParams.mgmt_nw_public_ip_addr
-    mgmt_nw_netmask: str = NodeNetworkParams.mgmt_nw_netmask
-    mgmt_nw_gateway: str = NodeNetworkParams.mgmt_nw_gateway
-    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+    roles: List = NodeNetworkParams.roles
+    data_public_interfaces: List = NodeNetworkParams.data_public_interfaces
+    data_private_interfaces: List = NodeNetworkParams.data_private_interfaces
+    data_public_ip: str = NodeNetworkParams.data_public_ip
+    data_netmask: str = NodeNetworkParams.data_netmask
+    data_gateway: str = NodeNetworkParams.data_gateway
+    mgmt_interfaces: List = NodeNetworkParams.mgmt_interfaces
+    mgmt_public_ip: str = NodeNetworkParams.mgmt_public_ip
+    mgmt_netmask: str = NodeNetworkParams.mgmt_netmask
+    mgmt_gateway: str = NodeNetworkParams.mgmt_gateway
+    data_private_ip: str = NodeNetworkParams.data_private_ip
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
 
     _optional_param = [
-        'data_nw_public_ip_addr',
-        'is_primary',
-        'data_nw_netmask',
-        'data_nw_gateway',
-        'pvt_ip_addr',
-        'mgmt_nw_iface',
-        'mgmt_nw_public_ip_addr',
-        'mgmt_nw_netmask',
-        'mgmt_nw_gateway'
+        'data_public_ip',
+        'roles',
+        'data_netmask',
+        'data_gateway',
+        'data_private_ip',
+        'mgmt_interfaces',
+        'mgmt_public_ip',
+        'mgmt_netmask',
+        'mgmt_gateway'
     ]
 
     def __attrs_post_init__(self):
@@ -195,20 +189,26 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    validate_map = {"cluster": NetworkParamsValidation,
-                    "node": NodeParamsValidation,
-                    "storage_enclosure": StorageEnclosureParamsValidation}
+    validate_map = {
+        "cluster": NetworkParamsValidation,
+        "node": NodeParamsValidation,
+        "storage": StorageEnclosureParamsValidation
+    }
 
     def _parse_params(self, input):
         params = {}
         for key in input:
+            logger.debug(f"Key being processed: {key}")
             val = key.split(".")
             if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'ipaddr', 'iface', 'gateway',
-                'netmask', 'public_ip_addr', 'type'
+                'ip', 'user', 'secret', 'type', 'interfaces',
+                'private_interfaces', 'public_interfaces',
+                'gateway', 'netmask', 'public_ip', 'private_ip'
             ]:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
+                logger.debug(f"Params generated: {params}")
             else:
+                logger.debug(f"Params generated: {params}")
                 params[val[-1]] = input[key]
         return params
 
@@ -222,7 +222,11 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif 'mgmt_nw.iface' in key:
+            elif 'mgmt.interfaces' in key:
+                # special case single value as array
+                # Need to fix this array having single value
+                input[key] = f'[\"{input[key]}\"]'
+            elif 'roles' in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -273,34 +277,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                        "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
-        # Update cluster/node_list
-        run_subprocess_cmd([
-            "provisioner", "pillar_set",
-            "cluster/node_list", f"[{','.join(node_list)}]"])
-
         if content.get('cluster', None):
             if content.get('cluster').get('cluster_ip', None):
                 run_subprocess_cmd([
                        "provisioner", "pillar_set",
                        "s3clients/ip",
                        f"{content.get('cluster').get('cluster_ip')}"])
-
-        if 3 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"3_node\""])
-        elif 2 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"dual\""])
-        elif 1 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"single\""])
-        else:
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"generic\""])
 
         if count > 0:
             raise ValueError(f"Node information for {count} node missing")

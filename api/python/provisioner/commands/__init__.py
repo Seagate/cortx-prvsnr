@@ -698,11 +698,13 @@ class FWUpdate(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO: Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure-1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'controller/user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'controller/secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
@@ -945,11 +947,13 @@ class RebootController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO:Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure-1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'controller/user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'controller/secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
@@ -994,11 +998,13 @@ class ShutdownController(CommandParserFillerMixin):
             'components/controller/files/scripts/controller-cli.sh'
         )
 
-        controller_pi_path = KeyPath('storage_enclosure/controller')
-        ip = PillarKey(controller_pi_path / 'primary_mc/ip')
-        user = PillarKey(controller_pi_path / 'user')
+        # TODO:Update logic to find enclosure_N based on current node_id
+        enclosure="enclosure-1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'controller/user')
         # TODO IMPROVE EOS-14361 mask secret
-        passwd = PillarKey(controller_pi_path / 'secret')
+        passwd = PillarKey(enclosure_pillar_path / 'controller/secret')
 
         pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
         pillar = next(iter(pillar.values()))
@@ -1069,15 +1075,24 @@ class CreateUser(CommandParserFillerMixin):
         keyfile = user_fileroots_dir / f'id_rsa_{uname}'
         keyfile_pub = keyfile.with_name(f'{keyfile.name}.pub')
 
-        nodes = PillarKey('cluster/node_list')
+        # nodes = PillarKey('cluster/node_list')
 
-        nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
-        nodelist_pillar = next(iter(nodelist_pillar.values()))
+        # nodelist_pillar = PillarResolver(LOCAL_MINION).get([nodes])
+        # nodelist_pillar = next(iter(nodelist_pillar.values()))
 
-        if (not nodelist_pillar[nodes] or
-                nodelist_pillar[nodes] is values.MISSED):
+        local_minion = local_minion_id()
+        cluster_path = PillarKey('cluster')
+        get_result = PillarResolver(local_minion).get([cluster_path])
+        cluster_pillar = get_result[local_minion][cluster_path]
+        nodes_list = [
+            node for node in cluster_pillar.keys()
+            if 'srvnode-' in node
+        ]
+
+        if (not cluster_pillar[cluster_path] or
+                cluster_pillar[cluster_path] is values.MISSED):
             raise BadPillarDataError(
-                'value for {} is not specified'.format(nodes.pi_key)
+                'value for {} is not specified'.format(cluster_path.pi_key)
             )
 
         def _prepare_user_fileroots_dir():
@@ -1113,7 +1128,7 @@ class CreateUser(CommandParserFillerMixin):
             )
 
         def _generate_ssh_config():
-            for node in nodelist_pillar[nodes]:
+            for node in nodes_list:
                 hostname = PillarKey(
                     'cluster/'+node+'/hostname'
                 )

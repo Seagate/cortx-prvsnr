@@ -17,7 +17,7 @@
 
 Setup time zone:
   timezone.system:
-    - name: {{ pillar['system']['ntp']['timezone'] }}
+    - name: {{ pillar['system']['ntp']['time_zone'] }}
 
 Setup NTP config file:
   file.managed:
