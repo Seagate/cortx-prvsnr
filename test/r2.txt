@@ -15,6 +15,18 @@ Step-4: Check update-post-boot.service status once the system's are back.
 
 [EOS-15751]: Test - Setup R2 upgrade release bundle
 
+Pre-requisites:
+    1. Need to be installed
+        - glusterfs
+        - saltstack
+        - provisioner api
+    2. It is enough to configure provisioner using the following command, for example:
+        ```
+        run provisioner setup_cluster --source local --srvnode1 <IP1> --srvnode2 <IP2> --ha --logfile --logfile-filename ./setup.log --console-formatter full
+        ```
+       where
+       <IP1> and <IP2> - ip addresses of VM nodes
+
 Step-1: Ensure that there are not enabled or disabled `sw_upgrade_*` yum repos
         `$ yum repolist enabled`
         `$ yum repolist disabled`
@@ -26,18 +38,18 @@ Step-2: a)  For testing `set_swupgrade` command is enough to download any valid 
 
         b)  To create the valid Singe SW Upgrade ISO structure is needed to create
 
-            1) `$ mkdir sw_upgrade`
-            2) `$ cd sw_upgrade`
-            3) `$ mkdir 3rdparty`
-            4) `$ mkdir os`
-            5) `$ mkdir cortx`
-            6) `$ mkdir python`
-            7) `$ sudo cortx-1.0-280.iso /mnt/iso`
-            8) `$ cp -r /mnt/iso ./3rdparty`
-            9) `$ cp -r /mnt/iso ./cortx`
-            10) `$ cp -r /mnt/iso ./os`
-            11) `$ cd ..`
-            12) `$ mkisofs -graft-points -r -l -iso-level 2 -J -o sw_upgrade.iso ./sw_upgrade/`
+            1. `$ mkdir sw_upgrade`
+            2. `$ cd sw_upgrade`
+            3. `$ mkdir 3rdparty`
+            4. `$ mkdir os`
+            5. `$ mkdir cortx`
+            6. `$ mkdir python`
+            7. `$ sudo cortx-1.0-280.iso /mnt/iso`
+            8. `$ cp -r /mnt/iso ./3rdparty`
+            9. `$ cp -r /mnt/iso ./cortx`
+            10. `$ cp -r /mnt/iso ./os`
+            11. `$ cd ..`
+            12. `$ mkisofs -graft-points -r -l -iso-level 2 -J -o sw_upgrade.iso ./sw_upgrade/`
 
         c)  After the steps mentioned above we have the `sw_upgrade.iso` which can be used for the
             `set_swupgrade` command testing
