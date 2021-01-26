@@ -276,7 +276,7 @@ def test_setup_provisioner_cluster_with_salt_master_host_provided(
     mhostsrvnode1, mhostsrvnode2, ssh_config, mlocalhost, run_script
 ):
     salt_server_ip = mhostsrvnode1.host.interface(
-        mhostsrvnode1.iface
+        mhostsrvnode1.interface
     ).addresses[0]
 
     ssh_config = '--ssh-config {}'.format(ssh_config)

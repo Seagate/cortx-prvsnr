@@ -15,14 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-s3clients:
-  access_key:
-  output: text      # json/text/table
-  region: US
-  s3server:
-    ip:
-    iam_admin:
-      user: "sgiamadmin"
-      secret: 
-  s3endpoint: s3.seagate.com
-  secret_key:
+storage:
+    enclosure-1:
+      type: RBOD                      # RBOD/JBOD/Virtual/Other
+      controller:
+        type:
+        primary:
+          ip: 10.0.0.2
+          port: 80
+        secondary:
+          ip: 10.0.0.3
+          port: 80
+        user: manage
+        secret:

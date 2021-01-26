@@ -15,9 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if "primary" in pillar['cluster'][grains['id']]['roles'] %}
 
-{% for node_id in salt['pillar.get']('cluster:node_list', []) %}
+{% for node_id in server_nodes %}
 
 {% if grains['id'] != node_id %}
 

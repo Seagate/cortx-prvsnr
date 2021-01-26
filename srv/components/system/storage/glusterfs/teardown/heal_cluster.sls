@@ -15,10 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% for node in salt['pillar.get']('cluster:node_list', []) %}
-
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% for node in server_nodes %}
 {% set hostname = salt['pillar.get']('cluster:'+node+':hostname') %}
-
 {% if not salt['network.ping'](hostname, return_boolean=True, timeout=1) %}
 
 Remove_node_from_cluster_{{hostname}}:
@@ -27,5 +31,4 @@ Remove_node_from_cluster_{{hostname}}:
       - node: {{hostname}}
 
 {% endif %}
-
 {% endfor %}

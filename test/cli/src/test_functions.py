@@ -607,10 +607,10 @@ def test_functions_collect_addrs(
     )
 
     # Note. will include ip6 as well
-    for iface in ifaces.strip().split(os.linesep):
+    for interface in ifaces.strip().split(os.linesep):
         # TODO verify that it will work for all cases
         expected += [
-            addr for addr in mhost.host.interface(iface).addresses
+            addr for addr in mhost.host.interface(interface).addresses
             if ':' not in addr
         ]
 
@@ -628,7 +628,7 @@ def test_functions_check_host_reachable(
     hostspec = mhost.hostname if remote else "''"
     ssh_config = ssh_config if remote else "''"
 
-    host_ips = mhost.host.interface(mhost.iface).addresses
+    host_ips = mhost.host.interface(mhost.interface).addresses
 
     for dest in host_ips + [mhost.hostname]:
         script = """
@@ -649,8 +649,8 @@ def test_functions_check_host_reachable(
 
 # TODO
 #   - multiplte names case (need multiple ifaces reachable between nodes)
-#   - case when some iface is not shared between them
-#   - case when they have the same IP in some non-shared iface
+#   - case when some interface is not shared between them
+#   - case when they have the same IP in some non-shared interface
 #     (vbox only case for now)
 #   - actually we don't need cortx specific here, just two hosts
 @pytest.mark.isolated
@@ -935,7 +935,7 @@ def test_functions_install_provisioner_proper_cluster_pillar(
 
 
 @pytest.mark.isolated
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 @pytest.mark.env_level('network-manager-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
@@ -1069,7 +1069,7 @@ def test_functions_configure_salt(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "master_host",
@@ -1109,7 +1109,7 @@ def test_functions_configure_salt_master_host(
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
-    {'': {'minion_id': 'some-minion-id', 'is_primary': True}}
+    {'': {'minion_id': 'some-minion-id', 'roles': ['primary']}}
 )
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_accept_salt_key_singlenode(
@@ -1177,7 +1177,7 @@ def test_functions_accept_salt_key_cluster(
     with_sudo = 'false'  # TODO
 
     salt_server_ip = mhostsrvnode1.host.interface(
-        mhostsrvnode1.iface
+        mhostsrvnode1.interface
     ).addresses[0]
 
     # configure srvnode-1
@@ -1226,7 +1226,7 @@ def test_functions_accept_salt_key_cluster(
 # (TODO might need to improve)
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(
     "component",
@@ -1271,7 +1271,7 @@ def test_functions_cortx_pillar_show_skeleton(
 
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 def test_functions_cortx_pillar_update_fail(
     run_script, mhost, ssh_config, install_provisioner
 ):
@@ -1289,7 +1289,7 @@ def test_functions_cortx_pillar_update_fail(
 #     to split into separate tests
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
-@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'is_primary': True}})
+@pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 @pytest.mark.parametrize(

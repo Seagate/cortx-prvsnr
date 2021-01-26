@@ -68,7 +68,7 @@ include:
 #     - name: consul
 
 Remove Consul:
-  package.purged:
+  pkg.purged:
     - name: consul
 
 Delete consul checkpoint flag:

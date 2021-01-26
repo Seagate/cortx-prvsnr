@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Teardown UDS HA:
   cmd.run:
     - name: sh /opt/seagate/cortx/ha/conf/script/prov-ha-uds-reset
