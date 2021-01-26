@@ -16,9 +16,10 @@
 #
 
 openldap:
-  admin:
-    secret:
   backend_db: mdb
-  iam_admin:
-    user: "sgiamadmin"
+  root:
+    user: admin
+    secret:
+  sgiam:
+    user: admin
     secret:

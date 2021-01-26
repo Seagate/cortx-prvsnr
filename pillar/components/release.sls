@@ -16,6 +16,8 @@
 #
 
 release:
+    product: LR2
+    setup: cortx
     type: internal  # value 'bundle' will switch to bundled distribution
                     # repo structure assumptions, where 'target_build'
                     # defines the base url:

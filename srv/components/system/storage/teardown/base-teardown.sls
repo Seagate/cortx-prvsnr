@@ -59,30 +59,30 @@ Remove VG:
 
 Remove PV:
   lvm.pv_absent:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}2
+    - name: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2
     - require: 
       - Remove VG
 
 Remove LVM partition:
   module.run:
     - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
       - minor: 2
 
 Unmount /var/motr partition:
   mount.unmounted:
-    - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}1
+    - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}1
 
 Remove /var/motr partition:
   module.run:
     - partition.rm:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_device'][0] }}
+      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
       - minor: 1
 # done with the sequence
 
 Refresh partition:
   module.run:
     - partition.probe: 
-      {% for device in pillar['cluster'][node]['storage']['metadata_device'] %}
+      {% for device in pillar['cluster'][node]['storage']['metadata_devices'] %}
       - {{ device }}
       {% endfor %}

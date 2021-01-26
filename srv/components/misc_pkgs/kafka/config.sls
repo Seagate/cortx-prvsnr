@@ -19,7 +19,13 @@
 
 {%- set node_ids = {} -%}
 {%- set node_hosts = [] -%}
-{%- for node in salt['pillar.get']('cluster:node_list', []) -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{%- for node in server_nodes -%}
     {%- set x=node_ids.update({node:loop.index}) -%}
     {%- set y=node_hosts.append(pillar['cluster'][node]['hostname'] + ":2181") -%}
 {%- endfor -%}
