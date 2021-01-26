@@ -222,8 +222,7 @@ def set_swupdate_repo(
 
 
 def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
-    r"""
-    Configures upgrade repository.
+    r"""Configures upgrade repository.
 
     Installs or removes a repository for sw upgrade release.
 

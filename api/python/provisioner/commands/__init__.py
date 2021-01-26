@@ -379,7 +379,7 @@ class Set(CommandParserFillerMixin):
             post_states=[State(state) for state in states.get('post', [])]
         )
 
-    def _run(self, params, targets):
+    def _apply(self, params, targets):
         pillar_updater = PillarUpdater(targets)
 
         pillar_updater.update(params)
@@ -404,6 +404,9 @@ class Set(CommandParserFillerMixin):
             # if rollback happened
             StatesApplier.apply(self.post_states)
             raise
+
+    def _run(self, params, targets):
+        self._apply(params, targets)
 
     def dynamic_validation(self, params, targets):
         pass

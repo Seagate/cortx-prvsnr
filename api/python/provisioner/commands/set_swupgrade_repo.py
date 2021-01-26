@@ -122,7 +122,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.debug("Configuring upgrade candidate repo for validation")
             self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
+            self._apply(candidate_repo, targets)
 
             iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
 
@@ -174,6 +174,6 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # remove the repo
             candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            super(SetSWUpdateRepo, self)._run(candidate_repo, targets)
+            self._apply(candidate_repo, targets)
 
         return repo.metadata
