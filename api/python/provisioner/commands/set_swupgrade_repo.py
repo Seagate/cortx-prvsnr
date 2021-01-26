@@ -16,6 +16,7 @@
 #
 import logging
 import os
+from pathlib import Path
 
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
@@ -154,19 +155,17 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            with os.scandir(iso_mount_dir) as dir_iter:
-                for entry in dir_iter:
-                    if not entry.name.startswith('.') and entry.is_dir():
-                        repo_info = SW_UPGRADE_REPOS.get(entry.name, None)
-                        if repo_info is None:
-                            raise SWUpdateRepoSourceError(
-                                str(repo.source),
-                                "Unexpected repository in single ISO: "
-                                f"{entry.name}")
-                        if repo_info[YUM_REPO_TYPE]:
-                            self._single_repo_validation(
-                                                        candidate_repo.release,
-                                                        entry.name)
+            for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
+                              if entry.is_dir()):
+                repo_info = SW_UPGRADE_REPOS.get(dir_entry.name, None)
+                if repo_info is None:
+                    raise SWUpdateRepoSourceError(
+                                    str(repo.source),
+                                    "Unexpected repository in single ISO: "
+                                    f"{dir_entry.name}")
+                if repo_info[YUM_REPO_TYPE]:
+                    self._single_repo_validation(candidate_repo.release,
+                                                 dir_entry.name)
 
             repo.release = release
 
