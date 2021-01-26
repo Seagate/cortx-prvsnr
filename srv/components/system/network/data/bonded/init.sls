@@ -56,12 +56,12 @@ Setup data0 bonding:
 {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
-{%- else %}
-    - proto: dhcp
-{%- endif %}
 {% if pillar['cluster'][node]['network']['data']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
-{% endif %}
+{%- endif %}
+{%- else %}
+    - proto: dhcp
+{%- endif %}

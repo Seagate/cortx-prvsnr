@@ -42,13 +42,13 @@ Public direct network:
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
     - mtu: 1500
-{%- else %}
-    - proto: dhcp
-{%- endif %}
 {% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
 {% endif %}
-{% endif %} # Gateway check end
+{%- else %}
+    - proto: dhcp
+{%- endif -%}
+{% endif -%} # Gateway check end
