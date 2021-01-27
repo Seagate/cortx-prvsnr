@@ -15,13 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if (pillar['cluster'][node]['network']['mgmt_nw']['ipaddr']) and (not pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway']) %}
+{% set node = grains['id'] %}
+{%- if (pillar['cluster'][node]['network']['mgmt']['public_ip']) and (not pillar['cluster'][node]['network']['mgmt']['gateway']) %}
 Management network config failure:
   test.fail_without_changes:
     - name: Static network configuration in absense of Gateway IP would result in node inaccessibility.
-{% endif %}
-
-{% set node = grains['id'] %}
+{%- endif %}
 
 Ensure bonding config for management bond:
   file.managed:
@@ -29,18 +28,18 @@ Ensure bonding config for management bond:
     - contents: options bonding max_bonds=0
 
 # Setup network for management interfaces
-{% for iface in pillar['cluster'][node]['network']['mgmt_nw']['iface'] %}
-{{ iface }}:
+{% for interface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
+{{ interface }}:
   network.managed:
-    - device: {{ iface }}
+    - device: {{ interface }}
     - enabled: True
     - type: slave
     - master: mgmt0
 
-Shutdown {{ iface }}:
+Shutdown {{ interface }}:
   cmd.run:
-    - name: ifdown {{ iface }}
-    - onlyif: '[ "up" == "$(cat /sys/class/net/{{iface}}/operstate)" ]'
+    - name: ifdown {{ interface }}
+    - onlyif: '[ "up" == "$(cat /sys/class/net/{{interface}}/operstate)" ]'
 {% endfor %}
 
 Setup mgmt0 bonding:
@@ -55,14 +54,14 @@ Setup mgmt0 bonding:
     - mtu: 1500
     - mode: active-backup
     - miimon: 100
-{% if pillar['cluster'][node]['network']['mgmt_nw']['ipaddr'] %}
+{% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt_nw']['ipaddr'] }}
-{% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
+{% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
-{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] }}
+{% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
 {% endif %}
 {%- else %}
     - proto: dhcp

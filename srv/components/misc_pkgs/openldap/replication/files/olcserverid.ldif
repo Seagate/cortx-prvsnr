@@ -3,10 +3,16 @@
 # number of nodes you have in cluster.
 # Command to add configuration to ldap:
 # ldapmodify -Y EXTERNAL  -H ldapi:/// -f config.ldif
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 dn: cn=config
 changetype: modify
 add: olcServerID
-{% for node in salt['pillar.get']('cluster:node_list', []) -%}
+{% for node in server_nodes -%}
 {% if grains['id'] == node -%}
 olcServerID: {{ loop.index }}
 {%- endif %}

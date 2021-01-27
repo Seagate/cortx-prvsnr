@@ -25,7 +25,7 @@ Configure Elasticsearch:
     - source: salt://components/misc_pkgs/elasticsearch/files/elasticsearch.yml.j2
     - template: jinja
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Create elastic_search index:
   module.run:
     - name: http.query

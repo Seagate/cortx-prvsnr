@@ -74,7 +74,6 @@ deploy_states = dict(
         "misc_pkgs.statsd"
     ],
     sync=[
-        "sync.software.openldap",
         "sync.software.rabbitmq"
     ],
     iopath=[
@@ -270,7 +269,8 @@ class Deploy(CommandParserFillerMixin):
         if setup_type == SetupType.SINGLE:
             # TODO use salt orchestration
             for state in states:
-                self._apply_state(f"components.{state}", targets, stages)
+                if not "sync" in state:
+                    self._apply_state(f"components.{state}", targets, stages)
         else:
             # FIXME EOS-12076 the following logic is only
             #       for legacy dual node setup

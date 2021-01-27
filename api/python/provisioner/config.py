@@ -39,6 +39,9 @@ else:
 #  - remove PRVSNR_ prefix
 
 CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
+CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
+CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
+
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
@@ -154,7 +157,7 @@ PRVSNR_CORTX_COMPONENTS = [
     's3clients',
     's3server',
     'sspl',
-    'storage_enclosure',
+    'storage',
     'system',
     'uds'
 ]

@@ -16,7 +16,7 @@
 #
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 include:
   - components.hare.stop
 

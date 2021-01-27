@@ -36,13 +36,19 @@ Add CSM repo:
     - gpgkey: {{ defaults.csm.repo.gpgkey }}
 {% endif %}
 
-{#% if 'single' not in pillar['cluster']['type'] %#}
-#Render CSM ha input params template:
-#  file.managed:
-#    - name: /opt/seagate/cortx/ha/conf/build-ha-csm-args.yaml
-#    - source: salt://components/csm/files/ha-params.tmpl
-#    - template: jinja
-#    - mode: 444
-#    - makedirs: True
+{#% set server_nodes = [ ] -%#}
+{#% for node in pillar['cluster'].keys() -%#}
+{#% if "srvnode-" in node -%#}
+{#% do server_nodes.append(node)-%#}
+{#% endif -%#}
+{#% endfor -%#}
+{#% if 1 < (server_nodes|length) %#}
+# Render CSM ha input params template:
+#   file.managed:
+#     - name: /opt/seagate/cortx/ha/conf/build-ha-csm-args.yaml
+#     - source: salt://components/csm/files/ha-params.tmpl
+#     - template: jinja
+#     - mode: 444
+#     - makedirs: True
 {#% endif %#}
 
