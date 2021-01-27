@@ -17,13 +17,17 @@
 
 import logging
 import json
-import sys
+
 from pathlib import Path
 from collections.abc import Mapping
 
 from ..config import (
     CORTX_CONFIG_DIR,
     CONFSTORE_CLUSTER_CONFIG
+)
+
+from ..salt import (
+    local_minion_id
 )
 
 from ..vendor import attr
@@ -76,29 +80,46 @@ class PillarExport(PillarGet):
             return {k: self._convert_to_str(v, repl) for k, v in obj.items()}
         return obj
 
-    def run(self, *args, **kwargs):
-        try:
-            full_pillar_load = PillarGet.run(self, *args)
-            Path(CORTX_CONFIG_DIR).mkdir(exist_ok=True)
+    def run(
+        self,
+        *args,
+        **kwargs
+    ):
+        """pillar_export command execution method.
 
+        Keyword arguments:
+        *args: Pillar path in <root_node>/child_node format.
+        (default: all pillar data)
+        **kwargs: accepts the following keys:
+            export_file: Output file for pillar dump
+        """
+
+        try:
+            full_pillar_load = PillarGet().run(
+                *args,
+                targets=local_minion_id()
+            )[local_minion_id()]
+
+            # Knock off the unwanted keys
             unwanted_keys = ["mine_functions", "provisioner", "glusterfs"]
-            for key in full_pillar_load.keys():
-                for filter_key in list(full_pillar_load[key].keys()):
-                    if filter_key in unwanted_keys:
-                        del full_pillar_load[key][filter_key]
+            for key in full_pillar_load.copy().keys():
+                if key in unwanted_keys:
+                    del full_pillar_load[key]
 
             convert_data = self._convert_to_str(full_pillar_load, "")
 
-            if ("--export-file" in sys.argv[2:]):
-                file_to_write = kwargs["export_file"]
-            else:
-                file_to_write = f'{CONFSTORE_CLUSTER_CONFIG}'
+            pillar_dump_file = (
+                kwargs["export_file"] if "export_file" in kwargs
+                else CORTX_CONFIG_DIR
+            )
 
-            with open(file_to_write, "w") as file_value:
+            Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+            with open(pillar_dump_file, "w") as file_value:
                 json.dump(convert_data, file_value)
 
-            logger.info(f"Pillar data exported as JSON to file '{file_to_write}' Successfully.")
-            return (f"Pillar data exported as JSON to file '{file_to_write}' Successfully.")
+            logger.info("SUCCESS: Pillar data exported as JSON to file "
+                f"'{pillar_dump_file}'."
+            )
 
         except Exception as exc:
             raise ValueError(
