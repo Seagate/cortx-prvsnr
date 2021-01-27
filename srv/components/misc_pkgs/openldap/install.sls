@@ -65,6 +65,6 @@ Copy mdb ldiff file, if not present:
       - service: slapd
 {% endif %}
 
-# slapd:
-  # service.running:
-  #   - enable: True
+slapd:
+  service.running:
+    - enable: True
