@@ -18,7 +18,7 @@
 Install openldap pkgs:
   pkg.installed:
     - pkgs:
-    {% if "openldap_master" in pillar["cluster"]["roles"] %}
+    {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
       - openldap-servers
     {% endif %}
       - openldap-clients
