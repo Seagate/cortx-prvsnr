@@ -363,6 +363,7 @@ class ServerType(Enum):
 
 # Constant block for setup info fields
 NODES = "nodes"
+STORAGE_SETS = "1"
 SERVERS_PER_NODE = "servers_per_node"
 STORAGE_TYPE = "storage_type"
 SERVER_TYPE = "server_type"

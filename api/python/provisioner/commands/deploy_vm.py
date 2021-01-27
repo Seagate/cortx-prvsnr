@@ -140,11 +140,11 @@ class DeployVM(Deploy):
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = (
-            SetupType.SINGLE 
+            SetupType.SINGLE
             if (1 == len(run_args.targets))
             else run_args.setup_type
         )
-        
+
         targets = run_args.targets
         states = deploy_states[states_group]
         stages = run_args.stages
@@ -157,7 +157,7 @@ class DeployVM(Deploy):
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
                 logger.debug("Executing for single node.")
-                if not "sync" in state:
+                if "sync" not in state:
                     self._apply_state(f"components.{state}", primary, stages)
             else:
                 logger.debug("Executing for multiple nodes.")
@@ -237,7 +237,8 @@ class DeployVM(Deploy):
 
                 if run_args.setup_type != SetupType.SINGLE:
                     metadata_device_keypath = PillarKey(
-                        f"cluster/{self._primary_id()}/storage/metadata_devices"
+                        f"cluster/{self._primary_id()}"
+                        "/storage/metadata_devices"
                     )
                     logger.info(
                         f"Resolving pillar key {metadata_device_keypath}"

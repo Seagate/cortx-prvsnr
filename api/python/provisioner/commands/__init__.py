@@ -972,7 +972,7 @@ class FWUpdate(CommandParserFillerMixin):
         )
 
         # TODO: Update logic to find enclosure_N based on current node_id
-        enclosure="enclosure-1"
+        enclosure = "enclosure-1"
         enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
         ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
         user = PillarKey(enclosure_pillar_path / 'controller/user')
@@ -1221,7 +1221,7 @@ class RebootController(CommandParserFillerMixin):
         )
 
         # TODO:Update logic to find enclosure_N based on current node_id
-        enclosure="enclosure-1"
+        enclosure = "enclosure-1"
         enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
         ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
         user = PillarKey(enclosure_pillar_path / 'controller/user')
@@ -1272,7 +1272,7 @@ class ShutdownController(CommandParserFillerMixin):
         )
 
         # TODO:Update logic to find enclosure_N based on current node_id
-        enclosure="enclosure-1"
+        enclosure = "enclosure-1"
         enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
         ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
         user = PillarKey(enclosure_pillar_path / 'controller/user')

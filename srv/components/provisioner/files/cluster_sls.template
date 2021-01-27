@@ -44,10 +44,13 @@ cluster:
     roles:
       {% if 0 == num %}
       - primary
+      {% else %}
+      - secondary
+      {% endif %}
+      {% if 0 == (num % 3) %}
       - openldap_server
       - kafka_server
       {% else %}
-      - secondary
       - openldap_client
       {% endif %}
     {% if 0 == num %}

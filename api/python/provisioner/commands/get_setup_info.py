@@ -32,11 +32,7 @@ from ..vendor import attr
 
 logger = logging.getLogger(__name__)
 
-# TODO: EOS-12418-improvement:
-#  for some reason this setup type is not listed in
-#  configure_setup.SetupType but can be set in
-#  VM configuration cluster.sls file
-SETUP_TYPE = "ldr-r1"
+# SETUP_TYPE = SetupType.LDR_R1
 
 
 class OutputScheme:
@@ -145,58 +141,52 @@ class GetSetupInfo(CommandParserFillerMixin):
             if 'srvnode-' in node
         ]
 
-        # node_list_key = PillarKey(cluster_path / 'node_list')
-        # type_key = PillarKey(cluster_path / 'type')
+        cluster_key = PillarKey(cluster_path / 'cluster')
+        type_key = PillarKey(cluster_path / 'node_type')
 
-        # pillar = PillarResolver(config.LOCAL_MINION).get(
-        #     (node_list_key, type_key)
-        # )
-        # pillar = PillarResolver(config.LOCAL_MINION).get(
-        #     (node_list_key)
-        # )
-
-        # pillar = pillar.get(local_minion_id())  # type: dict
-
-        # for key in (node_list_key, type_key):
-        #     if not pillar[key] or pillar[key] is values.MISSED:
-        #         raise BadPillarDataError(f'value for {key.keypath} '
-        #                                  f'is not specified')
-
-        # cluster_type = pillar.get(type_key)
-        # if cluster_type == SetupType.SINGLE.value:
-        #     res[config.SERVERS_PER_NODE] = 1
-        # elif cluster_type == SetupType.DUAL.value:
-        #     res[config.SERVERS_PER_NODE] = 2
-        # elif cluster_type.lower() == SETUP_TYPE:
-        #     # TODO: EOS-12418-improvement:
-        #     #  does this value can be used in real configuration?
-        #     res[config.SERVERS_PER_NODE] = 2
-        # elif cluster_type.lower() == SetupType.THREE_NODE.value:
-        #     # NOTE: in this case we have 3 servers + 3 enclosures
-        #     # TODO: what is the difference between
-        #     #  '3_node' and 'single' values?
-        #     res[config.SERVERS_PER_NODE] = 1
-        # elif cluster_type.lower() == SetupType.GENERIC.value:
-        #     res[config.SERVERS_PER_NODE] = 1
-        # else:
-        #     raise ValueError(f"Unsupported value '{cluster_type}' for "
-        #                      f"'cluster/type' pillar value")
-
-        # Assumption: number of nodes in 'cluster/node_list' should be
-        # multiple by 'cluster/type'
-        # if (len(pillar[node_list_key]) % res[config.SERVERS_PER_NODE]) != 0:
-        #     raise ValueError("Unknown cluster configuration: "
-        #                      "total number of nodes(servers) = "
-        #                      f"{pillar[node_list_key]}\n"
-        #                      f"cluster type = {cluster_type}")
-
-        # res[config.NODES] = (
-        #         len(pillar[node_list_key]) // res[config.SERVERS_PER_NODE]
-        # )
-
-        res[config.NODES] = (
-            len(nodes_list)
+        pillar = PillarResolver(config.LOCAL_MINION).get(
+            (cluster_key)
         )
+        pillar = pillar.get(local_minion_id())  # type: dict
+
+        for key in [cluster_key]:
+            if not pillar[key] or pillar[key] is values.MISSED:
+                raise BadPillarDataError(f'value for {key.keypath} '
+                                         f'is not specified')
+
+        cluster_info = pillar.get(type_key)
+        node_list = [
+            node for node in cluster_info
+            if "srvnode-" in node
+        ]
+
+        if 1 == len(node_list):
+            res[config.SERVERS_PER_NODE] = 1
+        elif 2 == len(node_list):
+            res[config.SERVERS_PER_NODE] = 2
+            SETUP_TYPE = SetupType.LDR_R1
+            res[config.NODES] = (
+                len(pillar[nodes_list])
+            )
+            res[config.STORAGE_SETS] = None
+        elif (
+            1 <= (len(node_list) // 3) and
+            0 != (len(node_list) % 3)
+        ):
+            res[config.SERVERS_PER_NODE] = 1
+            SETUP_TYPE = SetupType.LDR_R2
+            res[config.NODES] = (
+                len(pillar[nodes_list])
+            )
+            res[config.STORAGE_SETS] = (
+                len(pillar[nodes_list]) // res[config.SERVERS_PER_NODE]
+            )
+        else:
+            raise ValueError(
+                f"Unsupported number of nodes '{len(node_list)}'"
+                f"for '{SETUP_TYPE}' pillar value"
+            )
+
         return res
 
     @staticmethod
@@ -209,7 +199,9 @@ class GetSetupInfo(CommandParserFillerMixin):
         res = dict()
         storage_path = KeyPath('storage')
         enclosure_id = "enclosure-1"
-        storage_enclosure_type = PillarKey(storage_path / enclosure_id / 'type')
+        storage_enclosure_type = PillarKey(
+            storage_path / enclosure_id / 'type'
+        )
 
         pillar = PillarResolver(config.LOCAL_MINION).get(
             (storage_enclosure_type,)

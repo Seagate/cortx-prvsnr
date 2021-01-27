@@ -137,24 +137,35 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param dns_servers: (optional) list of dns servers
     :param search_domains: (optional) list of search domains
     :param primary_hostname: (optional) primary node hostname
-    :param primary_roaming_ip: (optional) primary node roaming ip address
-    :param primary_mgmt_public_ip: (optional) primary node management interface ip address
-    :param primary_mgmt_netmask: (optional) primary node management
-        interface netmask
-    :param primary_mgmt_gateway: (optional) primary node gateway ip address
-    :param primary_data_public_ip: (optional) primary node data interface ip address
-    :param primary_data_netmask: (optional) primary node data interface netmask
-    :param primary_data_gateway: (optional) primary node data interface gateway
+    :param primary_roaming_ip: (optional) ip address for
+        primary node roaming
+    :param primary_mgmt_public_ip: (optional) ip address for
+        primary node management interface
+    :param primary_mgmt_netmask: (optional) netmask for
+        primary node management interface
+    :param primary_mgmt_gateway: (optional) gateway ip address for
+        primary node
+    :param primary_data_public_ip: (optional) ip address for
+        primary node data interface
+    :param primary_data_netmask: (optional) netmask for
+        primary node data interface
+    :param primary_data_gateway: (optional) gateway for
+        primary node data interface
     :param secondary_hostname: (optional) secondary node hostname
-    :param secondary_roaming_ip: (optional) secondary node roaming ip address
-    :param secondary_mgmt_public_ip: (optional) secondary node management
-        interface ip address
-    :param secondary_mgmt_netmask: (optional) secondary node management
-        interface netmask
-    :param secondary_mgmt_gateway: (optional) secondary node gateway ip address
-    :param secondary_data_public_ip: (optional) secondary node data interface ip address
-    :param secondary_data_netmask: (optional) secondary node data interface netmask
-    :param secondary_data_gateway: (optional) secondary node data interface gateway
+    :param secondary_roaming_ip: (optional) ip address for
+        secondary node roaming
+    :param secondary_mgmt_public_ip: (optional) ip address for
+        secondary node management interface
+    :param secondary_mgmt_netmask: (optional) netmask for
+        secondary node management interface
+    :param secondary_mgmt_gateway: (optional) ip address for
+        secondary node gateway
+    :param secondary_data_public_ip: (optional) ip address for
+        secondary node data interface
+    :param secondary_data_netmask: (optional) netmask for
+        secondary node data interface
+    :param secondary_data_gateway: (optional) gateway for
+        secondary node data interface
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """
