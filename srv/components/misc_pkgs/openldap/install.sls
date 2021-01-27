@@ -18,7 +18,9 @@
 Install openldap pkgs:
   pkg.installed:
     - pkgs:
+    {% if "openldap_master" in pillar["cluster"]["roles"] %}
       - openldap-servers
+    {% endif %}
       - openldap-clients
 
 Update to latest selinux-policy:
@@ -35,8 +37,8 @@ Backup slapd config file:
     - preserve: True
 
 Generate Slapdpasswds:
-   cmd.run:
-     - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
+  cmd.run:
+    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
 
 Stop slapd:
   service.dead:
@@ -63,6 +65,6 @@ Copy mdb ldiff file, if not present:
       - service: slapd
 {% endif %}
 
-slapd:
-  service.running:
-    - enable: True
+#slapd:
+#  service.running:
+#    - enable: True

@@ -539,6 +539,10 @@ class SWUpdate(CommandParserFillerMixin):
                 try:
                     _update_component('provisioner', targets)
 
+                    # re-apply provisioner configuration to ensure
+                    # that updated pillar is taken into account
+                    _apply_provisioner_config(targets)
+
                     config_salt_master()
 
                     minion_conf_changes = config_salt_minions()
