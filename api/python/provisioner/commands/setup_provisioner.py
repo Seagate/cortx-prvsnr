@@ -406,7 +406,7 @@ class RunArgsSetupProvisionerBase:
 class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     ha: bool = RunArgsSetup.ha
     glusterfs_docker: bool = RunArgsSetup.glusterfs_docker
-    nodes: List = attr.ib(
+    nodes: str = attr.ib(
         kw_only=True,
         metadata={
             inputs.METADATA_ARGPARSER: {
