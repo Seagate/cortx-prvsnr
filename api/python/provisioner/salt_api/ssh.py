@@ -208,6 +208,7 @@ class SaltSSHClientResult(SaltClientJobResult):
             if ssh_res.fail is not None:
                 self.fails[target] = ssh_res.fail
 
+
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltSSHClient(SaltClientBase):

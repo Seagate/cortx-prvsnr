@@ -507,7 +507,7 @@ class NodeNetworkParams():
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
     )
-    roles: List  = ParamGroupInputBase._attr_ib(
+    roles: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="List of roles assigned to the node"
     )
     data_public_interfaces: List = ParamGroupInputBase._attr_ib(

@@ -755,10 +755,10 @@ class Check(CommandParserFillerMixin):
             return res
 
         try:
-            nodes = [node
-            for node in Check._get_pillar_data("cluster").keys()
-            if 'srvnode-' in node
-        ]
+            nodes = [
+                node for node in Check._get_pillar_data("cluster").keys()
+                if 'srvnode-' in node
+            ]
 
             driver_args = [cfg.NETWORK_DRIVER] + nodes
             NetworkV().validate('drivers', driver_args)
@@ -792,7 +792,8 @@ class Check(CommandParserFillerMixin):
         try:
             # nodes = Check._get_pillar_data("cluster/node_list")
             cluster_dict = Check._get_pillar_data("cluster")
-            nodes = [ node for node in cluster_dict.keys()
+            nodes = [
+                node for node in cluster_dict.keys()
                 if 'srvnode-' in node
             ]
         except Exception as exc:
