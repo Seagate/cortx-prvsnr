@@ -17,18 +17,17 @@
 
 import logging
 import json
+import sys
 from pathlib import Path
 from collections.abc import Mapping
 
-from ._basic import RunArgs, RunArgsBase
-
 from ..config import (
-    ALL_MINIONS,
     CORTX_CONFIG_DIR,
     CONFSTORE_CLUSTER_CONFIG
 )
 
 from ..vendor import attr
+from .. import inputs
 
 from . import (
     PillarGet
@@ -37,9 +36,23 @@ from . import (
 logger = logging.getLogger(__name__)
 
 
+class RunArgsPillarExportAttrs:
+    export_file: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "output file to export JSON format of pillar data"
+            }
+        },
+        default=CONFSTORE_CLUSTER_CONFIG
+    )
+
+
 @attr.s(auto_attribs=True)
-class RunArgsPillarExport(RunArgsBase):
-    local: bool = RunArgs.local
+class RunArgsPillarExport:
+    export_file: str = RunArgsPillarExportAttrs.export_file
+
+    def __attrs_post_init__(self):
+        pass
 
 
 @attr.s(auto_attribs=True)
@@ -63,12 +76,9 @@ class PillarExport(PillarGet):
             return {k: self._convert_to_str(v, repl) for k, v in obj.items()}
         return obj
 
-    def run(
-        self, *args, targets: str = ALL_MINIONS, local: bool = False,
-        **kwargs
-    ):
+    def run(self, *args, **kwargs):
         try:
-            full_pillar_load = PillarGet.run(self, *args, **kwargs)
+            full_pillar_load = PillarGet.run(self, *args)
             Path(CORTX_CONFIG_DIR).mkdir(exist_ok=True)
 
             unwanted_keys = ["mine_functions", "provisioner", "glusterfs"]
@@ -79,11 +89,16 @@ class PillarExport(PillarGet):
 
             convert_data = self._convert_to_str(full_pillar_load, "")
 
-            with open(CONFSTORE_CLUSTER_CONFIG, "w") as file_value:
+            if ("--export-file" in sys.argv[2:]):
+                file_to_write = kwargs["export_file"]
+            else:
+                file_to_write = f'{CONFSTORE_CLUSTER_CONFIG}'
+
+            with open(file_to_write, "w") as file_value:
                 json.dump(convert_data, file_value)
 
-            logger.info("Pillar data exported as JSON to file Successfully.")
-            return ("Pillar data exported as JSON to file Successfully.")
+            logger.info(f"Pillar data exported as JSON to file '{file_to_write}' Successfully.")
+            return (f"Pillar data exported as JSON to file '{file_to_write}' Successfully.")
 
         except Exception as exc:
             raise ValueError(
