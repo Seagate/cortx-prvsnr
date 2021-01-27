@@ -22,7 +22,8 @@ import site
 
 from ..config import (
     PRVSNR_PILLAR_CONFIG_INI,
-    GroupChecks
+    GroupChecks,
+    ALL_MINIONS
 )
 from .. import inputs
 
@@ -107,6 +108,14 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                     'salt-call state.apply '
                     'components.system.config.pillar_encrypt'
                 ), targets=setup_ctx.run_args.primary.minion_id
+            )
+
+            # The ConfStore JSON is required to be generated on all nodes
+            # TODO: To be parameterized when addressing EOS-16560
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'provisioner pillar_export '
+                ), targets=ALL_MINIONS
             )
 
         logger.info("Deployment Pre-Flight Validations")
