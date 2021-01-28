@@ -17,18 +17,21 @@
 
 import logging
 import json
+
 from pathlib import Path
 from collections.abc import Mapping
 
-from ._basic import RunArgs, RunArgsBase
-
 from ..config import (
-    ALL_MINIONS,
     CORTX_CONFIG_DIR,
     CONFSTORE_CLUSTER_CONFIG
 )
 
+from ..salt import (
+    local_minion_id
+)
+
 from ..vendor import attr
+from .. import inputs
 
 from . import (
     PillarGet
@@ -37,9 +40,23 @@ from . import (
 logger = logging.getLogger(__name__)
 
 
+class RunArgsPillarExportAttrs:
+    export_file: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "output file to export JSON format of pillar data"
+            }
+        },
+        default=CONFSTORE_CLUSTER_CONFIG
+    )
+
+
 @attr.s(auto_attribs=True)
-class RunArgsPillarExport(RunArgsBase):
-    local: bool = RunArgs.local
+class RunArgsPillarExport:
+    export_file: str = RunArgsPillarExportAttrs.export_file
+
+    def __attrs_post_init__(self):
+        pass
 
 
 @attr.s(auto_attribs=True)
@@ -64,26 +81,45 @@ class PillarExport(PillarGet):
         return obj
 
     def run(
-        self, *args, targets: str = ALL_MINIONS, local: bool = False,
+        self,
+        *args,
         **kwargs
     ):
-        try:
-            full_pillar_load = PillarGet.run(self, *args, **kwargs)
-            Path(CORTX_CONFIG_DIR).mkdir(exist_ok=True)
+        """pillar_export command execution method.
 
+        Keyword arguments:
+        *args: Pillar path in <root_node>/child_node format.
+        (default: all pillar data)
+        **kwargs: accepts the following keys:
+            export_file: Output file for pillar dump
+        """
+
+        try:
+            full_pillar_load = PillarGet().run(
+                *args,
+                targets=local_minion_id()
+            )[local_minion_id()]
+
+            # Knock off the unwanted keys
             unwanted_keys = ["mine_functions", "provisioner", "glusterfs"]
-            for key in full_pillar_load.keys():
-                for filter_key in list(full_pillar_load[key].keys()):
-                    if filter_key in unwanted_keys:
-                        del full_pillar_load[key][filter_key]
+            for key in full_pillar_load.copy().keys():
+                if key in unwanted_keys:
+                    del full_pillar_load[key]
 
             convert_data = self._convert_to_str(full_pillar_load, "")
 
-            with open(CONFSTORE_CLUSTER_CONFIG, "w") as file_value:
+            pillar_dump_file = (
+                kwargs["export_file"] if "export_file" in kwargs
+                else CORTX_CONFIG_DIR
+            )
+
+            Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+            with open(pillar_dump_file, "w") as file_value:
                 json.dump(convert_data, file_value)
 
-            logger.info("Pillar data exported as JSON to file Successfully.")
-            return ("Pillar data exported as JSON to file Successfully.")
+            logger.info("SUCCESS: Pillar data exported as JSON to file "
+                f"'{pillar_dump_file}'."
+            )
 
         except Exception as exc:
             raise ValueError(
