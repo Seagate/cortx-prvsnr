@@ -33,3 +33,9 @@ Extract Kafka:
     - clean: True
     - trim_output: True
     - skip_verify: True
+
+Install kafka client python package:
+  pip.installed:
+    - name: confluent-kafka
+    - bin_env: /usr/bin/pip3
+    - target: /usr/lib64/python3.6/site-packages/
