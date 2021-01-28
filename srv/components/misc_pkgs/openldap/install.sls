@@ -18,7 +18,7 @@
 Install openldap pkgs:
   pkg.installed:
     - pkgs:
-    {% if "openldap_master" in pillar["cluster"]["roles"] %}
+    {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
       - openldap-servers
     {% endif %}
       - openldap-clients
@@ -65,6 +65,6 @@ Copy mdb ldiff file, if not present:
       - service: slapd
 {% endif %}
 
-#slapd:
-#  service.running:
-#    - enable: True
+slapd:
+  service.running:
+    - enable: True

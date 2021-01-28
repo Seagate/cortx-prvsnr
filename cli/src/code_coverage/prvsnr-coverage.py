@@ -11,9 +11,11 @@ safe_commands = [
     'coverage'
 ]
 
+
 def _run(cmd):
     if not set(safe_commands).intersection(cmd.split()):
-        raise Exception(f"Execution of command {cmd} is identified "
+        raise Exception(
+            f"Execution of command {cmd} is identified "
             "as a command with risky behavior. "
             f"Hence, execution of command {cmd} is prohibited."
         )
@@ -22,6 +24,7 @@ def _run(cmd):
     except Exception as e:
         print(e)
         sys.exit(1)
+
 
 def install_coverage():
     print("Installing prerequisites")
@@ -34,6 +37,7 @@ def install_coverage():
     _run(
         "pip3 install -r test-requirements.txt"
     )
+
 
 def prvsnr_coverage():
     print("Executing provisioner test cases and generating coverage report")
@@ -48,10 +52,14 @@ def prvsnr_coverage():
         sys.exit(1)
     print("Done")
 
+
 def _parse_args():
-    parser = argparse.ArgumentParser(description='''Provisioner code-coverage automation ''')
-    args=parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Provisioner code-coverage automation."
+    )
+    args = parser.parse_args()
     return args
+
 
 if __name__ == "__main__":
     try:
@@ -59,5 +67,8 @@ if __name__ == "__main__":
         install_coverage()
         prvsnr_coverage()
     except KeyboardInterrupt:
-        print("\n\nWARNING: User aborted command, It is advised to re-run the command.")
+        print(
+            "\n\nWARNING: User aborted command, "
+            "It is advised to re-run the command."
+        )
         sys.exit(1)

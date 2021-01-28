@@ -15,12 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove existing certs:
-  pkg.removed:
-    - pkgs:
-      - stx-s3-certs
-      - stx-s3-client-certs
-
 Create tmp dir:
   file.directory:
     - name: /opt/seagate/cortx/provisioner/generated_configs/ldap

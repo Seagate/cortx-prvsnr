@@ -1248,7 +1248,14 @@ def cortx_spec(request):
 # cortx_spec sanity checks
 @pytest.fixture
 def _cortx_spec(cortx_spec):
-    assert len({k: v for k, v in cortx_spec.items() if "primary" in v['roles']}) == 1
+    assert (
+        len(
+            {
+                k: v for k, v in cortx_spec.items()
+                if "primary" in v['roles']
+            }
+        ) == 1
+    )
     return cortx_spec
 
 
@@ -1320,7 +1327,8 @@ def configure_salt(
             'true' if "primary" in host_spec['roles'] else 'false'
         )
         primary_host = (
-            "localhost" if "primary" in host_spec['roles'] else cortx_primary_host_ip
+            "localhost" if "primary" in host_spec['roles']
+            else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(

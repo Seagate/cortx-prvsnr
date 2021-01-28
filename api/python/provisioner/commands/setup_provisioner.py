@@ -34,8 +34,7 @@ from ..errors import (
     SaltCmdRunError
 )
 from ..config import (
-    ALL_MINIONS,
-    PRVSNR_PILLAR_DIR
+    ALL_MINIONS
 )
 from ..pillar import PillarUpdater
 # TODO IMPROVE EOS-8473
@@ -1025,7 +1024,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         return pillar
 
-
     def _prepare_release_pillar(
         self, profile_paths, repos_data: Dict, run_args, force=False
     ):
@@ -1481,7 +1479,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 # - stopping salt-master first to drop all new requests
                 #   for salt jobs
                 try:
-                    logger.info(f"Stopping 'salt-master' service")
+                    logger.info("Stopping 'salt-master' service")
                     ssh_client.state_single(
                         "service.dead", fun_args=['salt-master']
                     )
@@ -1495,7 +1493,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             'cmd.run', fun_args=['systemctl stop salt-master']
                         )
 
-                logger.info(f"Stopping 'salt-minion' service")
+                logger.info("Stopping 'salt-minion' service")
                 ssh_client.state_single(
                     "service.dead", fun_args=['salt-mininon']
                 )
@@ -1507,7 +1505,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     fun_args=['glusterfssharedstorage.service']
                 )
 
-                logger.info(f"Removing glusterfs mounts")
+                logger.info("Removing glusterfs mounts")
                 for _, _, mount_dir in glusterfs_client_pillar[
                     'glusterfs_mounts'
                 ]:
@@ -1556,7 +1554,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         targets=run_args.primary.minion_id
                     )
 
-                logger.info(f"Removing old glusterfs volumes")
+                logger.info("Removing old glusterfs volumes")
                 for v_name in volumes:
                     if v_name in volume_info:
                         logger.debug(f"Removing glusterfs volume {v_name}")
@@ -1797,16 +1795,17 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=master_targets
             )
-        
+
         # Seperation of variable to make flake8 happy
         ssh_client.cmd_run(
             (
-                'provisioner pillar_set --fpath provisioner.sls'
-                f' provisioner/cluster/num_of_nodes \'"{len(run_args.nodes)}"\''
+                'provisioner pillar_set --fpath provisioner.sls '
+                'provisioner/cluster/num_of_nodes '
+                f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
         ssh_client.cmd_run(
-            f"salt-call state.apply components.provisioner.config",
+            "salt-call state.apply components.provisioner.config",
             targets=ALL_MINIONS
         )
 
