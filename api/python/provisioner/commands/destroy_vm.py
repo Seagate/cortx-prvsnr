@@ -48,9 +48,7 @@ logger = logging.getLogger(__name__)
 deploy_states = dict(
     prvsnr=[
         "system.storage.glusterfs.teardown.volume_remove",
-        "system.storage.glusterfs.teardown.remove_bricks",
-        "system.storage.glusterfs.teardown.stop",
-        "system.storage.glusterfs.teardown.package_remove"
+        "system.storage.glusterfs.teardown"
     ]
 )
 
@@ -58,11 +56,17 @@ run_args_type = build_deploy_run_args(deploy_states)
 
 
 @attr.s(auto_attribs=True)
+class RunArgsDestroy(run_args_type):
+    stages: str = attr.ib(init=False, default=None)
+
+
+@attr.s(auto_attribs=True)
 class DestroyNode(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = run_args_type
+    _run_args_type = RunArgsDestroy
 
-    def _remove_prvsnr(self, nodes):
+    @staticmethod
+    def remove_prvsnr(nodes):
         for node in nodes:
             if local_minion_id() == node:
                 logger.info(f"remove cortx-prvsnr rpms on {node}")
@@ -75,13 +79,15 @@ class DestroyNode(Deploy):
                     f"ssh {node} yum erase -y"
                     "cortx-prvsnr python36-cortx-prvsnr")
 
-    def _remove_passwordless_ssh(self, nodes):
+    @staticmethod
+    def remove_passwordless_ssh(nodes):
         for node in nodes:
             logger.info(f"Remove passwordless configuration with {node}")
             run_subprocess_cmd(
                 f"rm -rf /root/.ssh")
 
-    def _remove_salt(self, nodes):
+    @staticmethod
+    def remove_salt(nodes):
         salt_cache_dir = '/var/cache/salt'
         salt_config = '/etc/salt'
 
@@ -98,7 +104,8 @@ class DestroyNode(Deploy):
             run_subprocess_cmd(f"ssh {node} rm -rf {salt_cache_dir}")
             run_subprocess_cmd(f"ssh {node} rm -rf {salt_config}")
 
-    def _remove_dir(self, list_dir, nodes):
+    @staticmethod
+    def remove_dir(list_dir, nodes):
         for node in nodes:
             for di in list_dir:
                 logger.info(f"cleaning up {di} dir on {node}")
@@ -123,19 +130,30 @@ class DestroyNode(Deploy):
 
         # apply states
         for state in states:
-            if setup_type == SetupType.SINGLE:
+            if setup_type == SetupType.SINGLE and state not in (
+                "system.storage.glusterfs.teardown.volume_remove",
+                "system.storage.glusterfs.teardown"
+            ):
                 self._apply_state(f"components.{state}", primary, stages)
             else:
-                self._apply_state(f"components.{state}", targets, stages)
+                if state == "system.storage.glusterfs.teardown.volume_remove":
+                    # Execute first on secondaries then on primary.
+                    self._apply_state(
+                        f"components.{state}", secondaries, stages
+                    )
+                    self._apply_state(f"components.{state}", primary, stages)
+                else:
+                    self._apply_state(f"components.{state}", targets, stages)
 
+        # salt will not be available so handle teardown using subprocess
         if states_group == 'prvsnr':
             list_dir = []
             list_dir.append(str(config.profile_base_dir().parent))
             list_dir.append(config.CORTX_ROOT_DIR)
-            self._remove_prvsnr(nodes)
-            self._remove_dir(list_dir, nodes)
-            self._remove_salt(nodes)
-            self._remove_passwordless_ssh(nodes)
+            DestroyNode.remove_prvsnr(nodes)
+            DestroyNode.remove_dir(list_dir, nodes)
+            DestroyNode.remove_salt(nodes)
+            DestroyNode.remove_passwordless_ssh(nodes)
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
@@ -152,6 +170,10 @@ class DestroyNode(Deploy):
             if 'prvsnr' in run_args.states:
                 logger.info("Teardown Provisioner Bootstrapped Environment")
                 self._run_states('prvsnr', run_args)
+            else:
+                raise NotImplementedError(
+                    'Only prvsnr state is supported for now'
+                )
 
         logger.info("Destroy VM - Done")
         return run_args
