@@ -33,18 +33,18 @@ Create data0 interface file:
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: yes
-    {% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
+    {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
     - mtu: 9000
     {%- else %}
     - proto: dhcp
     {%- endif %}
-    {% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
+    {% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
     {%- endif %}
-    {% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
+    {% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
     {% endif %}
     - team_config:
         runner:
@@ -53,7 +53,7 @@ Create data0 interface file:
           link_watch:
             name: ethtool
 
-{% for iface in pillar['cluster'][node]['network']['data_nw']['iface'] %}
+{% for iface in pillar['cluster'][node]['network']['data']['interfaces'] %}
 {{ iface }}:
     network.managed:
     - name: {{ iface }}
