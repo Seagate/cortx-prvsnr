@@ -48,8 +48,8 @@ logger = logging.getLogger(__name__)
 deploy_states = dict(
     prvsnr=[
         "system.storage.glusterfs.teardown.volume_remove",
-        "system.storage.glusterfs.teardown.remove_dir",
-        "system.storage.glusterfs.teardown.services",
+        "system.storage.glusterfs.teardown.remove_bricks",
+        "system.storage.glusterfs.teardown.stop",
         "system.storage.glusterfs.teardown.package_remove"
     ]
 )
@@ -58,7 +58,7 @@ run_args_type = build_deploy_run_args(deploy_states)
 
 
 @attr.s(auto_attribs=True)
-class DestroyVM(Deploy):
+class DestroyNode(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = run_args_type
 
