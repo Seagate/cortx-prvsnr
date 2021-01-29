@@ -137,24 +137,35 @@ def set_network(dry_run=False, nowait=False, **kwargs):
     :param dns_servers: (optional) list of dns servers
     :param search_domains: (optional) list of search domains
     :param primary_hostname: (optional) primary node hostname
-    :param primary_floating_ip: (optional) primary node floating ip address
-    :param primary_mgmt_ip: (optional) primary node management iface ip address
-    :param primary_mgmt_netmask: (optional) primary node management
-        iface netmask
-    :param primary_mgmt_gateway: (optional) primary node gateway ip address
-    :param primary_data_ip: (optional) primary node data iface ip address
-    :param primary_data_netmask: (optional) primary node data iface netmask
-    :param primary_data_gateway: (optional) primary node data iface gateway
+    :param primary_roaming_ip: (optional) ip address for
+        primary node roaming
+    :param primary_mgmt_public_ip: (optional) ip address for
+        primary node management interface
+    :param primary_mgmt_netmask: (optional) netmask for
+        primary node management interface
+    :param primary_mgmt_gateway: (optional) gateway ip address for
+        primary node
+    :param primary_data_public_ip: (optional) ip address for
+        primary node data interface
+    :param primary_data_netmask: (optional) netmask for
+        primary node data interface
+    :param primary_data_gateway: (optional) gateway for
+        primary node data interface
     :param secondary_hostname: (optional) secondary node hostname
-    :param secondary_floating_ip: (optional) secondary node floating ip address
-    :param secondary_mgmt_ip: (optional) secondary node management
-        iface ip address
-    :param secondary_mgmt_netmask: (optional) secondary node management
-        iface netmask
-    :param secondary_mgmt_gateway: (optional) secondary node gateway ip address
-    :param secondary_data_ip: (optional) secondary node data iface ip address
-    :param secondary_data_netmask: (optional) secondary node data iface netmask
-    :param secondary_data_gateway: (optional) secondary node data iface gateway
+    :param secondary_roaming_ip: (optional) ip address for
+        secondary node roaming
+    :param secondary_mgmt_public_ip: (optional) ip address for
+        secondary node management interface
+    :param secondary_mgmt_netmask: (optional) netmask for
+        secondary node management interface
+    :param secondary_mgmt_gateway: (optional) ip address for
+        secondary node gateway
+    :param secondary_data_public_ip: (optional) ip address for
+        secondary node data interface
+    :param secondary_data_netmask: (optional) netmask for
+        secondary node data interface
+    :param secondary_data_gateway: (optional) gateway for
+        secondary node data interface
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """
@@ -219,6 +230,36 @@ def set_swupdate_repo(
         'set_swupdate_repo',
         release, source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
+
+
+def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
+    r"""Configures upgrade repository.
+
+    Installs or removes a repository for sw upgrade release.
+
+    Parameters
+    ----------
+    release
+        An update repository release label
+    source
+        (optional) A path to a repository. Might be: a local
+        directory,  a local iso file or an url to a remote repository.
+        If not specified then a repository for a ``release`` will be removed.
+        If path to an iso file is provide then it is mounted before
+        installation and unmounted before removal.
+    dry_run
+        (optional) validate only. Default: False
+    nowait
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    dict
+        repository metadata
+
+    """
+    return _api_call('set_swupgrade_repo', release, source=source,
+                     dry_run=dry_run, nowait=nowait)
 
 
 def set_ssl_certs(

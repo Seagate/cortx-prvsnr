@@ -79,6 +79,14 @@ class AutoDeployVM(SetupCmdBase, CommandParserFillerMixin):
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
 
+            # The ConfStore JSON is required to be generated on all nodes
+            # TODO: To be parameterized when addressing EOS-16560
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'provisioner pillar_export '
+                ), targets=config.ALL_MINIONS
+            )
+
         if len(nodes) == 1:
             deploy_args['setup_type'] = SetupType.SINGLE
         logger.info("Deployment on vm ")

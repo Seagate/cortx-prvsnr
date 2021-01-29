@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
 include:
   - components.s3clients
 

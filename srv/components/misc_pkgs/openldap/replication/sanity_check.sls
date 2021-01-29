@@ -15,7 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if pillar['cluster']['type'] != "single" -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if 1 < (server_nodes|length) -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/create_replication_account.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif' },
@@ -39,9 +45,8 @@ Hostlist file:
   file.managed:
     - name: /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt
     - contents: |
-        {%- set node_list = (pillar['cluster']['node_list']) %}
         {{ grains['id'] -}}
-        {%- for node in node_list | difference([grains['id']]) %}
+        {%- for node in (server_nodes | difference([grains['id']])) %}
         {{ node -}}
         {% endfor %}
     - user: root
@@ -53,7 +58,7 @@ Replication sanity check:
   cmd.run:
     - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p $password || true
     - env:
-      - password: {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['admin']['secret']) }}
+      - password: {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) }}
     - onlyif: test -f /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh
     - watch_in:
       - Restart slapd service

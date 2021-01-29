@@ -312,6 +312,9 @@ sleep 2
 echo "Bringing HCTL cluster out of maintenance mode" 2>&1 | tee -a ${LOG_FILE}
 hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 
+echo "Ensuring the cluster is in healthy state" 2>&1 | tee -a ${LOG_FILE}
+ensure_healthy_cluster
+
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
 salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
@@ -335,33 +338,11 @@ provisioner pillar_set commons/repo/lustre \"\" --logfile --logfile-filename ${L
 echo "Removing the repos with Seagate URL from Server A" | tee -a ${LOG_FILE}
 seagate_refs_cleanup
 
-echo "Restarting the cluster resources.........." | tee -a ${LOG_FILE}
-echo -n "ClusterIP.............................." | tee -a ${LOG_FILE}
-pcs resource refresh ClusterIP:0 >> ${LOG_FILE}
-pcs resource refresh ClusterIP:1 >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "Stonith................................" | tee -a ${LOG_FILE}
-pcs resource refresh stonith-c1 >> ${LOG_FILE}
-pcs resource refresh stonith-c2 >> ${LOG_FILE}
-echo "Ok." | tee -a ${LOG_FILE}
-sleep 5
-
-echo -n "CSM & Kibana..........................." | tee -a ${LOG_FILE}
-pcs resource refresh csm-kibana >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "UDS...................................." | tee -a ${LOG_FILE}
-pcs resource refresh uds >> ${LOG_FILE}
-sleep 5
-echo "Ok." | tee -a ${LOG_FILE}
-
-echo -n "HAProxy................................" | tee -a ${LOG_FILE}
-pcs resource refresh haproxy-c1 >> ${LOG_FILE}
-pcs resource refresh haproxy-c2 >> ${LOG_FILE}
-echo "Ok." | tee -a ${LOG_FILE}
+echo "Restarting the Cortx Services" | tee -a ${LOG_FILE}
+echo "DEBUG: Bringing HCTL cluster in maintenance mode" >> ${LOG_FILE}
+hctl node maintenance --all --timeout-sec=600 2>&1 | tee -a ${LOG_FILE}
+echo "DEBUG: Bringing HCTL cluster out of maintenance mode" >> ${LOG_FILE}
+hctl node unmaintenance --all 2>&1 | tee -a ${LOG_FILE}
 sleep 5
 
 echo "Cleaning up resource history.............." | tee -a ${LOG_FILE}
@@ -376,7 +357,7 @@ echo "Ok." | tee -a ${LOG_FILE}
 # lock unboxing user
 lock_unboxing_user
 
-service_user=$(salt srvnode-2 pillar.get system:service_user:name --output=newline_values_only)
+service_user=$(salt srvnode-2 pillar.get system:service-user:name --output=newline_values_only)
 if [[ -n "$service_user" ]]; then
     echo -n "Activating service user $service_user on the Server B node................." | tee -a ${LOG_FILE}
     salt "srvnode-2" state.single user.present name="$service_user" expire=-1 ${salt_opts}

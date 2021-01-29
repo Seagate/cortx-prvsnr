@@ -134,7 +134,7 @@ echo "\
 2. Ensure the setup is clean and no cortx rpms are installed.
 3. Ensure the ~/.ssh directory is empty.
 4. If optional arguments are skipped the default values in cluster.sls and
-storage_enclosure.sls are used.
+storage.sls are used.
 5. Ensure the BMC user and password are same for both nodes in the cluster.
 
 -------- Sample command ---------
@@ -384,19 +384,21 @@ update_pillar()
     #Update interface names
     if [[ "$pub_din_opt" == true && "$pvt_din_opt" == true ]]; then
         echo "Updating interface names" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/iface [\"${pub_din}\",\ \"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/private_interfaces [\"${pvt_din}\"]
+        provisioner pillar_set cluster/srvnode-1/network/data/public_interfaces [\"${pub_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/public_interfaces [\"${pub_din}\"]
+        provisioner pillar_set cluster/srvnode-2/network/data/private_interfaces [\"${pvt_din}\"]
     fi
 
     #Update interface ips
     if [[ "$pub_dip1_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip1) for node1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"${pub_dip1}\"
+        provisioner pillar_set cluster/srvnode-1/network/data/public_ip \"${pub_dip1}\"
     fi
 
     if [[ "$pub_dip2_opt" == true ]]; then
         echo "Updating interface ip ($pub_dip2) for node2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"${pub_dip2}\"
+        provisioner pillar_set cluster/srvnode-2/network/data/public_ip \"${pub_dip2}\"
     fi
 
     if [[ "$bmc1_user_opt" == true ]]; then
@@ -421,31 +423,31 @@ update_pillar()
         provisioner pillar_set cluster/srvnode-2/bmc/secret \"${bmc2_passwd}\"
     fi
 
-    #Update storage_enclosure pillar
+    #Update storage pillar
     echo -e "\n\t***** INFO: Updating Enclosure details in pillar *****" 2>&1 | tee -a $LOG_FILE
 
     #Update controller_ip1
     if [[ "$ctrl_a_ip_opt" == true ]]; then
         echo "Updating controller_ip1" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/primary_mc/ip \"${ctrl_a_ip}\"
+        provisioner pillar_set storage/enclosure-1/controller/primary/ip \"${ctrl_a_ip}\"
     fi
 
     #Update controller_ip2
     if [[ "$ctrl_b_ip_opt" == true ]]; then
         echo "Updating controller_ip2" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/secondary_mc/ip \"${ctrl_b_ip}\"
+        provisioner pillar_set storage/enclosure-1/controller/secondary/ip \"${ctrl_b_ip}\"
     fi
 
     #Update controller user
     if [[ "$ctrl_user_opt" == true ]]; then
         echo "Updating controller user" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/user \"${ctrl_user}\"
+        provisioner pillar_set storage/enclosure-1/controller/user \"${ctrl_user}\"
     fi
 
     #Update controller_passwd
     if [[ "$ctrl_passwd_opt" == true ]]; then
         echo "Updating controller_passwd" 2>&1|tee -a $LOG_FILE
-        provisioner pillar_set storage_enclosure/controller/secret \"${ctrl_passwd}\"
+        provisioner pillar_set storage/enclosure-1/controller/secret \"${ctrl_passwd}\"
     fi
 
     # Update s3client.sls
