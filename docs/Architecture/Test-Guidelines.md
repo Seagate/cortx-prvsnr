@@ -1,4 +1,3 @@
-
 # Test Guidelines
 
 Table of Contents:
@@ -16,8 +15,8 @@ Test Design implementation is written in PyTest tool in Provisioner. The scope o
 
 ## PyTest Framework
 
-PyTest is full-featured Python testing tool currently implemented in Provisioner.  
-It is installed along with other dependencies as part of `test-requirements.txt` file execution. The latest installed version is 5.1.x.  
+PyTest is full-featured Python testing tool currently implemented in Provisioner. 
+It is installed along with other dependencies as part of `test-requirements.txt` file execution. The latest installed version is 5.1.x.
 Execute the test cases in the directory with the command,
 
 ```
@@ -29,6 +28,7 @@ In the current directory and its subdirectories, PyTest will run all test files 
 ```
 test_*.py
 ```
+
 **Execute Multiple test cases as a Group:**
 
 A group of test cases can be run together by placing them under a common “marker” name or by a common string in the method name as `test_deploy` or file name as `test_deploy.py`.
@@ -59,8 +59,8 @@ A better approach would be to follow the use of string in file name, as we have 
 
 * All individual TestCases must follow the below naming convention:
   * Start with “test_ “, followed by corresponding test suite name, followed by the function they represent, followed by test case definition.
-  * Ex: `test_deploy_bootstrap_ssh`, `test_deploy_bootstrap_configure`, etc.  
-  
+  * Ex: `test_deploy_bootstrap_ssh`, `test_deploy_bootstrap_configure`, etc.
+
     **Format:**
     ```
     test_<testsuite>_<function>_<definition>
@@ -72,41 +72,42 @@ A better approach would be to follow the use of string in file name, as we have 
 
 * Test Suite and Test Module are always directories and Test Case is a python file with one or more methods implemented.
 
-* Each Test Suite (sub-directories) may contain a config file `pytest.ini` which would ideally contain the file names inside that directory. 
-  * This is an option to make testing easier. As we add or remove more files in future to a particular directory, the file names can be listed here and only those would be executed. 
-  * Removing any file name from `pytest.ini` will not have an overall effect in execution of that Test Module. This is only for testing the methods in given Test Suite. 
+* Each Test Suite (sub-directories) may contain a config file `pytest.ini` which would ideally contain the file names inside that directory.
+  * This is an option to make testing easier. As we add or remove more files in future to a particular directory, the file names can be listed here and only those would be executed.
+  * Removing any file name from `pytest.ini` will not have an overall effect in execution of that Test Module. This is only for testing the methods in given Test Suite.
+
   * Example, say a Test Suite (sub-directory named `pre_deploy`) has 5 files, and only 2 have to be tested new, then it can included as,
-  
+
     ```
     [pytest]
     python_files = test_network_checks.py test_env_setup.py
-    
+
     ```
-    **Execution:**  
-    
+    **Execution:**
+
     ```
     [root@xxx pre_deploy]# ls
     __pycache__  pytest.ini  test_driver_setup.py  test_env_setup.py  test_network_checks.py  test_storage_checks.py  test_ssh.py
-    
+
     [root@xxx pre_deploy]# pytest
     ========================================================== test session starts ==========================================================
     platform linux -- Python 3.6.8, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
     rootdir: /root/test/deploy/pre_deploy, inifile: pytest.ini
     plugins: mock-3.4.0, forked-1.3.0, testinfra-3.1.0, xdist-1.29.0, shell-0.2.3, timeout-1.3.4
     collected 4 items
-    
+
     test_env_setup.py ..                                                                                                                  [ 50%]
     test_network_checks.py ..                                                                                                             [100%]
-    
+
     =========================================================== 4 passed in 0.08s ===========================================================
     [root@xxx pre_deploy]# 
 
     ```
 
 * Additionally, PyTest also provides another default config file - `conftest.py`, which is used to import test fixture function to be used in multiple test files and to import external plugins or modules.
-  * It is ideally present in the test/ root folder and can be used to ignore any files from being considered for testing. 
+  * It is ideally present in the test/ root folder and can be used to ignore any files from being considered for testing.
   * This would be useful in case of exclusion of framework-specific files like `setup.py` which is not necessary to include in PyTest execution.
-  
+
 * *NOTE:* All the test names are sample and design ideas are liable to more changes.
 
 
@@ -123,7 +124,7 @@ For Integration tests, here are the formats of Test Framework Hierarchy and Desi
 
 
 
-**Sample Folder Structure** 
+**Sample Folder Structure**
 
 The existing `test/` folder can look similar to this format.
 
@@ -172,7 +173,7 @@ test
 
 ```
 
-With the above design structure, execution of deploy-related test cases can be either one of the following ways, 
+With the above design structure, execution of deploy-related test cases can be either one of the following ways,
 
 ```
 python3 -m pytest -m deploy -s
@@ -183,7 +184,7 @@ OR
 ```
 pytest deploy/
 ```
-For specific execution of deploy-bootstrap-related test cases, 
+For specific execution of deploy-bootstrap-related test cases,
 
 ```
 python3 -m pytest -m bootstrap -s
@@ -202,8 +203,6 @@ cd deploy/bootstrap
 pytest
 ```
 
-### Unit Tests 
+### Unit Tests
 
-This proposed design is more suited for Integration Tests, so the Unit Tests can either be placed under a separate `unittest` folder created for each group as explained in the above Design diagram or can be placed under the existing mirrored architecture in `test/` folder.  
-
-
+This proposed design is more suited for Integration Tests, so the Unit Tests can either be placed under a separate `unittest` folder created for each group as explained in the above Design diagram or can be placed under the existing mirrored architecture in `test/` folder.
