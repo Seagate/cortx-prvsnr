@@ -872,3 +872,8 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
     def is_iso(self):
         return self.is_local() and self.source.is_file()
+
+
+@attr.s(auto_attribs=True)
+class SWUpgradeRepo(SWUpdateRepo):
+    _param_di = param_spec['swupgrade/repo']
