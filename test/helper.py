@@ -738,8 +738,8 @@ def collect_ip4_addrs(host):
         "| sed -n 's/^[0-9]\\+: \\([^:@]\\+\\).*/\\1/p'"
     )
 
-    for iface in ifaces.strip().split(os.linesep):
-        for addr in host.interface(iface).addresses:
+    for interface in ifaces.strip().split(os.linesep):
+        for addr in host.interface(interface).addresses:
             # Note. will include ip6 as well
             # TODO verify that it will work for all cases
             if not (':' in addr or addr in res):

@@ -14,6 +14,12 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+{% set server_nodes = [ ] %}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 
 include:
   - components.ha.corosync-pacemaker.config.base
@@ -22,7 +28,7 @@ Authorize nodes:
   pcs.auth:
     - name: pcs_auth__auth
     - nodes:
-      {%- for node_id in pillar['cluster']['node_list'] %}
+      {%- for node_id in server_nodes %}
       - {{ node_id }}
       {%- endfor %}
     - pcsuser: {{ pillar['corosync-pacemaker']['user'] }}

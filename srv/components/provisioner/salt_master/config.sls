@@ -20,13 +20,36 @@ salt_master_config_updated:
     - name: /etc/salt/master
     - source: salt://components/provisioner/salt_master/files/master
 
+# Always start glusterfshsaredstorage before salt-master
+Update glusterfssharedstorage.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/glusterfssharedstorage.service
+    - source: salt://components/provisioner/files/glusterfshsaredstorage.service
+
+Restart GlusterFSSharedStorage service:
+  service.running:
+    - name: glusterfssharedstorage
+    - enabled: True
+    - watch:
+      - Update glusterfssharedstorage.service
+
+Update salt-master.service:
+  file.managed:
+    - name: /usr/lib/systemd/system/salt-master.service
+    - source: salt://components/provisioner/salt_master/files/salt-master.service
+
+Reload updated services:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Update salt-master.service
+      - file: Update glusterfssharedstorage.service
 
 salt_master_service_enabled:
   service.enabled:
     - name: salt-master
     - require:
       - file: salt_master_config_updated
-
 
 # Note. salt-master restart is in foreground,
 # so salt-minion will reported to restarted salt-master
@@ -39,3 +62,4 @@ salt_master_service_restarted:
     - bg: True
     - onchanges:
       - file: salt_master_config_updated
+      - file: Update salt-master.service

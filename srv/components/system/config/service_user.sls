@@ -15,10 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt['pillar.get']('system:service_user:password') %}
+{% if salt['pillar.get']('system:service-user:secret') %}
 
     {% set base_dir = '/opt/seagate/users' %}
-    {% set user_data = salt['pillar.get']('system:service_user') %}
+    {% set user_data = salt['pillar.get']('system:service-user') %}
 
 seagate_users_dir_created:
   file.directory:
@@ -30,13 +30,13 @@ seagate_users_dir_created:
 service_user_configured:
   user.present:
     - name: {{ user_data['name'] }}
-    - password: {{ salt['lyveutil.decrypt']('system', user_data['password']) }}
+    - password: {{ salt['lyveutil.decrypt']('system', user_data['secret']) }}
     - hash_password: True
     - home: {{ base_dir }}/{{ user_data['name'] }}
     - shell: {{ user_data['shell'] }}
     - groups: {{ user_data['groups'] }}
     # would be activated at unboxing time
-    {% if not pillar['cluster'][grains['id']]['is_primary'] -%}
+    {% if not "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
     - expire: 1
     {% endif %}
 

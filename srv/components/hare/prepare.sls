@@ -26,10 +26,10 @@ Add hare yum repo:
     - gpgcheck: 1
     - gpgkey: {{ defaults.hare.repo.gpgkey }}
 
-Prepare cluster yaml:
-  file.managed:
-    - name: /var/lib/hare/cluster.yaml
-    - source: salt://components/hare/files/cluster.cdf.tmpl
-    - template: jinja
-    - mode: 444
-    - makedirs: True
+#Prepare cluster yaml:
+#  file.managed:
+#    - name: /var/lib/hare/cluster.yaml
+#    - source: salt://components/hare/files/cluster.cdf.tmpl
+#    - template: jinja
+#    - mode: 444
+#    - makedirs: True

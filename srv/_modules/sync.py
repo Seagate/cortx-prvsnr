@@ -53,7 +53,10 @@ def sync_files(component="provisioner"):
     # Find the current node id and drop it from the list
     # Get the 0th node from the remaining list
     # Improve: To copy to all nodes and not just next first available
-    node_list = __pillar__["cluster"]["node_list"]
+    node_list = [
+        node for node in __pillar__["cluster"]
+        if "srvnode-" in node
+    ]
     node_list.remove(__grains__["id"])
     node = node_list[0]
 
@@ -144,7 +147,10 @@ def backup_files(component="provisioner"):
     # Get the 0th node from the remaining list
     # Improve: To copy to all nodes and not just next first available
     current_node = __grains__["id"]
-    node_list = __pillar__["cluster"]["node_list"]
+    node_list = [
+        node for node in __pillar__["cluster"]
+        if "srvnode-" in node
+    ]
     node_list.remove(current_node)
     node = node_list[0]
 
@@ -270,7 +276,10 @@ def restore_files(component="provisioner"):
     # Find the current node id and drop it from the list
     # Get the 0th node from the remaining list
     # Improve: To copy to all nodes and not just next first available
-    # node_list = __pillar__["cluster"]["node_list"]
+    # node_list = [
+    #     node for node in __pillar__["cluster"]
+    #     if "srvnode-" in node
+    # ]
     # node_list.remove(replacement_node)
     # node = node_list[0]
 

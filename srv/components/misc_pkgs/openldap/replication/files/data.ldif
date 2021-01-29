@@ -28,7 +28,13 @@
 dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
 changetype: modify
 add: olcSyncRepl
-{% for node in salt['pillar.get']('cluster:node_list', []) -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% for node in server_nodes -%}
 olcSyncRepl: rid={{ "{0:03d}".format(200+loop.index) }}
   provider=ldap://{{ node }}:389/
   bindmethod=simple

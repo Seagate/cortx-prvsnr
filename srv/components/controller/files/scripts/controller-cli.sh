@@ -16,6 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+set -euE
 
 script_dir=$(dirname $0)
 export logdir="/var/log/seagate/provisioner"
@@ -38,8 +39,9 @@ function trap_handler_exit {
     if [[ $ret -ne 0 ]]; then
         echo "***** FAILED!! *****" | tee -a $logfile
         echo "For more details see $logfile" | tee -a $logfile
+        echo "Exiting with return code: $ret" >> $logfile
     else
-        echo "Exiting with ret code: $ret" >> $logfile
+        echo "Exiting with return code: $ret" >> $logfile
         exit $ret
     fi
 }
@@ -498,7 +500,7 @@ main()
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
         || "$shutdown_ctrl_opt" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
-        pass=`salt-call lyveutil.decrypt storage_enclosure ${pass} --output=newline_values_only`
+        pass=`salt-call lyveutil.decrypt storage ${pass} --output=newline_values_only`
         #echo "main(): decrypted password: $pass" >> $logfile
         ssh_cred="$ssh_tool -p $pass"
         ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"

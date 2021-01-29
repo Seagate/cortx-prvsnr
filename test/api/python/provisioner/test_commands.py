@@ -65,13 +65,18 @@ def storage_enclosure_data(mocker):
     passwd = 'somepasswd'
 
     test_pillar = dict(someminionid={
-        "storage_enclosure": {
-            "controller": {
-                "primary_mc": {
-                    "ip": f"{ip}"
-                },
-                "user": f"{user}",
-                "secret": f"{passwd}"
+        "storage": {
+            "enclosure-1": {
+                "controller": {
+                    "primary": {
+                        "ip": f"{ip}"
+                    },
+                    "secondary": {
+                        "ip": f"{ip}"
+                    },
+                    "user": f"{user}",
+                    "secret": f"{passwd}"
+                }
             }
         }
     })

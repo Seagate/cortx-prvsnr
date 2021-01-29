@@ -38,7 +38,7 @@ Install cryptography python package:
       - Ensure cryptography python package absent
 
 
-{% if pillar["cluster"][grains['id']]["is_primary"] %}
+{% if "srvnode-1" == grains['id'] %}
 Encrypt_pillar:
   module.run:
     - pillar_ops.encrypt: []

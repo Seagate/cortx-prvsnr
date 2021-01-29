@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Stage - Post Install S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
@@ -35,4 +35,3 @@ Stage - Config S3Server:
 Stage - Init S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:init')
-

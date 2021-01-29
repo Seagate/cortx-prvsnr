@@ -16,7 +16,35 @@
 #
 
 import subprocess
+import json
+import logging
 from typing import Dict, Union, Any
+
+
+logger = logging.getLogger(__name__)
+
+
+def dict_to_str(obj):
+
+    if isinstance(obj, dict):
+        res = ''
+
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                value = json.dumps(value, indent=4)
+            res = res + f"\n\t{key}: {value},"
+
+        return f"{{ {res} \n }}"
+    else:
+        return obj
+
+
+def dict_to_json(obj):
+
+    if isinstance(obj, dict):
+        return json.dumps(obj, indent=4)
+    else:
+        return obj
 
 
 class ProvisionerError(Exception):
@@ -80,9 +108,11 @@ class SaltCmdError(SaltError):
         self.reason = reason
 
     def __str__(self):
+        reason = dict_to_str(self.reason)
+        cmd_args = dict_to_json(self.cmd_args)
         return (
             "salt command failed, reason {}, args {}"
-            .format(self.reason, self.cmd_args)
+            .format(reason, cmd_args)
         )
 
 
@@ -132,13 +162,27 @@ class SWUpdateRepoSourceError(ProvisionerError, ValueError):
         return repr(self.reason)
 
 
+# class ValidationError(ProvisionerError):
+
+#     """ Validation Exceptions """
+
+#     _prvsnr_type_ = True
+
+#     def __init__(self, reason: str):
+#         """ Handled all validation errors """
+#         self.reason = (f'Validation Failed. Reason: {reason}')
+
+#     def __str__(self):
+#         return repr(self.reason)
+
+
 class ValidationError(ProvisionerError):
 
-    """ Validation Exceptions """
+    """ Base Validation Exception. """
 
     _prvsnr_type_ = True
 
-    def __init__(self, reason: str):
+    def __init__(self, reason: Union[Exception, str]):
         """ Handled all validation errors """
         self.reason = (f'Validation Failed. Reason: {reason}')
 
@@ -307,19 +351,6 @@ class ReleaseFileNotFoundError(ProvisionerError):
             "{}(reason={!r})"
             .format(self.__class__.__name__, self.reason)
         )
-
-
-class ValidationError(ProvisionerError):
-
-    """ Base Validation Exception. """
-
-    _prvsnr_type_ = True
-
-    def __init__(self, reason: Union[Exception, str]):
-        self.reason = reason
-
-    def __str__(self):
-        return f'Validation failed: reason="{self.reason}"'
 
 
 class CriticalValidationError(ValidationError):

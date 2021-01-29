@@ -170,7 +170,7 @@ multiple test files.
   - `ssh_config`: `ssh_configurations` of the host
   - `machine_name`: Remote hostname
   - `hostname`: Testinfra host instance hostname
-  - `iface`: Interface of host
+  - `interface`: Interface of host
 
 
 #### `safe_filename`

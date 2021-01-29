@@ -34,7 +34,7 @@ from ..errors import (
     SaltCmdRunError
 )
 from ..config import (
-    ALL_MINIONS,
+    ALL_MINIONS
 )
 from ..pillar import PillarUpdater
 # TODO IMPROVE EOS-8473
@@ -754,7 +754,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE use salt caller and file-managed instead
         # set proper cluster.sls from template
         cluster_sls_sample_path = (
-            repo_dir / 'pillar/components/samples/dualnode.cluster.sls'
+            repo_dir / 'pillar/samples/dualnode.cluster.sls'
         )
         cluster_sls_path = repo_dir / 'pillar/components/cluster.sls'
         run_subprocess_cmd(
@@ -1479,7 +1479,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 # - stopping salt-master first to drop all new requests
                 #   for salt jobs
                 try:
-                    logger.info(f"Stopping 'salt-master' service")
+                    logger.info("Stopping 'salt-master' service")
                     ssh_client.state_single(
                         "service.dead", fun_args=['salt-master']
                     )
@@ -1493,7 +1493,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             'cmd.run', fun_args=['systemctl stop salt-master']
                         )
 
-                logger.info(f"Stopping 'salt-minion' service")
+                logger.info("Stopping 'salt-minion' service")
                 ssh_client.state_single(
                     "service.dead", fun_args=['salt-mininon']
                 )
@@ -1505,7 +1505,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     fun_args=['glusterfssharedstorage.service']
                 )
 
-                logger.info(f"Removing glusterfs mounts")
+                logger.info("Removing glusterfs mounts")
                 for _, _, mount_dir in glusterfs_client_pillar[
                     'glusterfs_mounts'
                 ]:
@@ -1554,7 +1554,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         targets=run_args.primary.minion_id
                     )
 
-                logger.info(f"Removing old glusterfs volumes")
+                logger.info("Removing old glusterfs volumes")
                 for v_name in volumes:
                     if v_name in volume_info:
                         logger.debug(f"Removing glusterfs volume {v_name}")
@@ -1743,7 +1743,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
-                    f' system/service_user/password '
+                    f' system/service-user/secret '
                     f' \'"{service_user_password}"\''
                 ),
                 targets=run_args.primary.minion_id,
@@ -1790,11 +1790,30 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Configuring provisioner logging")
         for state in [
             'components.system.prepare',
-            'components.provisioner.config'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
                 targets=master_targets
+            )
+
+        # Seperation of variable to make flake8 happy
+        ssh_client.cmd_run(
+            (
+                'provisioner pillar_set --fpath provisioner.sls '
+                'provisioner/cluster/num_of_nodes '
+                f"\"{len(run_args.nodes)}\""
+            ), targets=run_args.primary.minion_id
+        )
+        ssh_client.cmd_run(
+            "salt-call state.apply components.provisioner.config",
+            targets=ALL_MINIONS
+        )
+
+        logger.info("Configuring provisioner for future updates")
+        for node in run_args.nodes:
+            ssh_client.state_apply(
+                'update_post_boot',
+                targets=node.minion_id
             )
 
         logger.info("Updating BMC IPs")

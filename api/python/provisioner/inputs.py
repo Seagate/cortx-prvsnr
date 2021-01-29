@@ -467,15 +467,18 @@ class Release(ParamGroupInputBase):
 
 
 class StorageEnclosureParams():
-    _param_group = 'storage_enclosure'
+    _param_group = 'storage'
+    enclosure_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Enclosure ID"
+    )
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Type of storage"
     )
-    primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    primary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller A IP",
         validator=Validation.check_ip4
     )
-    secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    secondary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr=" Controller B IP",
         validator=Validation.check_ip4
     )
@@ -493,8 +496,8 @@ class StorageEnclosureParams():
 
 @attr.s(auto_attribs=True)
 class StorageEnclosure(ParamGroupInputBase):
-    controller_a_ip: str = StorageEnclosureParams.primary_mc_ip
-    controller_b_ip: str = StorageEnclosureParams.secondary_mc_ip
+    controller_a_ip: str = StorageEnclosureParams.primary_ip
+    controller_b_ip: str = StorageEnclosureParams.secondary_ip
     controller_user: str = StorageEnclosureParams.controller_user
     controller_secret: str = StorageEnclosureParams.controller_secret
 
@@ -504,12 +507,14 @@ class NodeNetworkParams():
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
     )
-    is_primary: bool = ParamGroupInputBase._attr_ib(
-        _param_group, descr="mark node as a primary",
-        converter=bool
+    roles: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="List of roles assigned to the node"
     )
-    data_nw_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data network iface"
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data public network interfaces"
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data private network interfaces"
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -518,35 +523,35 @@ class NodeNetworkParams():
     bmc_secret: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC password"
     )
-    mgmt_nw_gateway: str = ParamGroupInputBase._attr_ib(
+    mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node mgmt gateway IP",
         validator=Validation.check_ip4
     )
-    mgmt_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface IP",
+    mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface IP",
         validator=Validation.check_ip4
     )
-    mgmt_nw_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface netmask",
+    mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface netmask",
         validator=Validation.check_ip4
     )
-    mgmt_nw_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management network iface"
+    mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network interfaces"
     )
-    data_nw_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface IP", default=UNCHANGED,
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
-    data_nw_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface netmask",
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
         validator=Validation.check_ip4
     )
-    data_nw_gateway: str = ParamGroupInputBase._attr_ib(
+    data_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data gateway IP",
         validator=Validation.check_ip4
     )
-    pvt_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface private IP",
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
         validator=Validation.check_ip4
     )
     bmc_ip: str = ParamGroupInputBase._attr_ib(
@@ -574,7 +579,7 @@ class NetworkParams():
     primary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node hostname"
     )
-    primary_floating_ip: str = ParamGroupInputBase._attr_ib(
+    primary_data_roaming_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node floating IP"
     )
     primary_data_gateway: str = ParamGroupInputBase._attr_ib(
@@ -583,21 +588,21 @@ class NetworkParams():
     primary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node mgmt gateway IP"
     )
-    primary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node management iface IP"
+    primary_mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node management interface IP"
     )
     primary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node management iface netmask"
+        _param_group, descr="primary node management interface netmask"
     )
-    primary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data iface IP",
+    primary_data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data interface IP",
         validator=Validation.check_ip4
     )
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data iface netmask"
+        _param_group, descr="primary node data interface netmask"
     )
     primary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data network iface"
+        _param_group, descr="primary node data network interface"
     )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC  IP",
@@ -622,22 +627,22 @@ class NetworkParams():
     secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node mgmt gateway IP"
     )
-    secondary_mgmt_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node management iface IP",
+    secondary_mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node management interface IP",
         validator=Validation.check_ip4
     )
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node management iface netmask"
+        _param_group, descr="secondary node management interface netmask"
     )
-    secondary_data_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node node data iface IP",
+    secondary_data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node node data interface IP",
         validator=Validation.check_ip4
     )
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data iface netmask"
+        _param_group, descr="secondary node data interface netmask"
     )
     secondary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data network iface"
+        _param_group, descr="secondary node data network interface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC  IP",
@@ -659,20 +664,20 @@ class Network(ParamGroupInputBase):
     dns_servers: List = NetworkParams.dns_servers
     search_domains: List = NetworkParams.search_domains
     primary_hostname: str = NetworkParams.primary_hostname
-    primary_floating_ip: str = NetworkParams.primary_floating_ip
-    primary_mgmt_ip: str = NetworkParams.primary_mgmt_ip
+    primary_data_roaming_ip: str = NetworkParams.primary_data_roaming_ip
+    primary_mgmt_public_ip: str = NetworkParams.primary_mgmt_public_ip
     primary_mgmt_netmask: str = NetworkParams.primary_mgmt_netmask
     primary_mgmt_gateway: str = NetworkParams.primary_mgmt_gateway
     primary_data_netmask: str = NetworkParams.primary_data_netmask
     primary_data_gateway: str = NetworkParams.primary_data_gateway
     primary_data_network_iface: List = NetworkParams.primary_data_network_iface
-    primary_data_ip: str = NetworkParams.primary_data_ip
+    primary_data_public_ip: str = NetworkParams.primary_data_public_ip
     primary_bmc_ip: str = NetworkParams.primary_bmc_ip
     primary_bmc_user: str = NetworkParams.primary_bmc_user
     primary_bmc_secret: str = NetworkParams.primary_bmc_secret
     secondary_hostname: str = NetworkParams.secondary_hostname
     secondary_floating_ip: str = NetworkParams.secondary_floating_ip
-    secondary_mgmt_ip: str = NetworkParams.secondary_mgmt_ip
+    secondary_mgmt_public_ip: str = NetworkParams.secondary_mgmt_public_ip
     secondary_mgmt_netmask: str = NetworkParams.secondary_mgmt_netmask
     secondary_data_gateway: str = NetworkParams.secondary_data_gateway
     secondary_mgmt_gateway: str = NetworkParams.secondary_mgmt_gateway
@@ -681,7 +686,7 @@ class Network(ParamGroupInputBase):
     secondary_bmc_ip: str = NetworkParams.secondary_bmc_ip
     secondary_bmc_user: str = NetworkParams.secondary_bmc_user
     secondary_bmc_secret: str = NetworkParams.secondary_bmc_secret
-    secondary_data_ip: str = NetworkParams.secondary_data_ip
+    secondary_data_public_ip: str = NetworkParams.secondary_data_public_ip
 
 
 # # TODO TEST
@@ -867,3 +872,8 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
     def is_iso(self):
         return self.is_local() and self.source.is_file()
+
+
+@attr.s(auto_attribs=True)
+class SWUpgradeRepo(SWUpdateRepo):
+    _param_di = param_spec['swupgrade/repo']
