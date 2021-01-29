@@ -16,4 +16,6 @@
 #
 
 include:
+  - .backup
   - .install
+  - .config
