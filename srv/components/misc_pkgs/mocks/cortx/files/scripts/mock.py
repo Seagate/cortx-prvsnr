@@ -4,9 +4,7 @@ import sys
 import logging
 
 FORMAT = '%(asctime)s-%(message)s'
-logging.basicConfig(format=FORMAT)
-
-logger = logging.getLogger(__name__)
+LOGGING_FILE = '/tmp/mock.log'
 
 
 def main():
@@ -18,8 +16,13 @@ def main():
     None
 
     """
-    logger.info(f"{sys.argv[1:]}")  # pass all parameters "as is"
+    # pass all parameters "as is"
+    logger.info(f"MOCK: {'-'.join(sys.argv[1:])}")
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format=FORMAT, filename=LOGGING_FILE)
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
     main()
