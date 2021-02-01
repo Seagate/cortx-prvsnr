@@ -577,12 +577,18 @@ class SaltClientBase(ABC):
         try:
             salt_res = self._run(cmd_args)
         except Exception as exc:
+            logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(exc, cmd_args_view))
             # TODO too generic
             raise SaltCmdRunError(cmd_args_view, exc) from exc
 
         res = self.parse_res(salt_res, cmd_args_view)
 
         if res.fails:
+            logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(res.fails, cmd_args_view))
             raise SaltCmdResultError(cmd_args_view, res.fails)
         else:
             try:
@@ -909,6 +915,9 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
             _cmd_f = salt_runner_client().cmd
             salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
+        logger.error(
+            "salt command failed, reason {}, args {}"
+            .format(exc, cmd_args_view))
         raise SaltCmdRunError(cmd_args_view, exc) from exc
 
     if not salt_res:
@@ -917,11 +926,15 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
         )
 
     if type(salt_res) is not dict:
-        raise SaltCmdRunError(
-            cmd_args_view, (
+        reason = (
                 'RunnerClient result type is not a dictionary: {}'
                 .format(type(salt_res))
             )
+        logger.error(
+            "salt command failed, reason {}, args {}"
+            .format(reason, cmd_args_view))
+        raise SaltCmdRunError(
+            cmd_args_view, reason
         )
 
     if nowait:
@@ -929,11 +942,15 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
 
     if eauth:
         if 'data' not in salt_res:
-            raise SaltCmdRunError(
-                cmd_args_view, (
+            reason = (
                     'no data key in RunnerClient result dictionary: {}'
                     .format(salt_res)
                 )
+            logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(reason, cmd_args_view))
+            raise SaltCmdRunError(
+                cmd_args_view, reason
             )
         res = salt_res['data']
     else:
@@ -949,6 +966,9 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     if res.success:
         return res.result
     else:
+        logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(res.result, cmd_args_view))
         raise SaltCmdResultError(cmd_args_view, res.result)
 
 
@@ -1033,6 +1053,9 @@ def _salt_client_cmd(
 
         salt_res = _cmd_f(*cmd_args.args, **cmd_args.kwargs)
     except Exception as exc:
+        logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(repr(exc), cmd_args_view))
         # TODO too generic
         raise SaltCmdRunError(cmd_args_view, repr(exc)) from exc
 
@@ -1049,6 +1072,9 @@ def _salt_client_cmd(
     res = salt_res_t(salt_res, cmd_args_view, client)
 
     if res.fails:
+        logger.error(
+                "salt command failed, reason {}, args {}"
+                .format(res.fails, cmd_args_view))
         raise SaltCmdResultError(cmd_args_view, res.fails)
     else:
         return res.results

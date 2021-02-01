@@ -15,6 +15,31 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for Motr:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:backup')
+{% macro repo_absent(release, repo_dir) %}
+
+    {% from './iso/unmount.sls' import repo_unmounted with context %}
+
+{{ repo_unmounted(release, repo_dir) }}
+
+sw_upgrade_repo_iso_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}.iso
+    - require:
+      - sw_upgrade_repo_iso_unmounted_{{ release }}
+
+
+sw_upgrade_repo_dir_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}
+    - require:
+      - sw_upgrade_repo_absent_{{ release }}
+      - sw_upgrade_repo_iso_unmounted_{{ release }}
+
+
+sw_upgrade_repo_absent_{{ release }}:
+  pkgrepo.absent:
+    - name: sw_upgrade_{{ release }}
+
+# TODO IMPROVE EOS-14348 remove from file root as well
+
+{% endmacro %}

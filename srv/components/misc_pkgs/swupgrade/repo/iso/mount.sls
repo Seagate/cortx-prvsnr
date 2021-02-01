@@ -15,6 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for Motr:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:backup')
+{% macro repo_mounted(release, source, mount_dir) %}
+
+sw_upgrade_repo_iso_mounted_{{ release }}:
+  mount.mounted:
+    - name: {{ mount_dir }}
+    - device: {{ source }}
+    - mkmnt: True
+    - fstype: iso9660
+    - persist: True
+
+{% endmacro %}

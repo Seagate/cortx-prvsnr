@@ -15,6 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for Motr:
+{% macro repo_added(release, source, source_type, repo_name, repo_params={}) %}
+
+
+sw_upgrade_repo_added_{{ repo_name }}_{{ release }}:
+  pkgrepo.managed:
+    - name: sw_upgrade_{{ repo_name }}_{{ release }}
+    - humanname: Cortx Upgrade repo {{ repo_name }}-{{ release }}
+    {% if source_type == 'url' %}
+    - baseurl: {{ source }}/{{ repo_name }}
+    {% else %}
+    - baseurl: file://{{ source }}/{{ repo_name }}
+    {% endif %}
+    - enabled: {{ repo_params.get('enabled', True) }}
+    - gpgcheck: 0
+    {% if source_type == 'iso' %}
+    - require:
+      - sw_upgrade_repo_iso_mounted_{{ release }}
+    {% endif %}
+
+
+sw_upgrade_repo_metadata_cleaned_{{ repo_name }}_{{ release }}:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:backup')
+    - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ repo_name }}_{{ release }}" clean metadata
+
+{% endmacro %}

@@ -237,7 +237,7 @@ class PillarUpdater:
     targets: str = ALL_MINIONS
     local: bool = False
 
-    _pillar_path: Path = attr.ib(init=False, default=None)
+    _pillar_path: PillarPath = attr.ib(init=False, default=None)
     _pillars: Dict = attr.Factory(dict)
     _p_entries: List[PillarEntry] = attr.Factory(list)
 
