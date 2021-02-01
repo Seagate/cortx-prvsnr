@@ -16,10 +16,17 @@
 #
 
 # NOTE: Requires salt version 3002.2+
+{% if "3002" not in salt["test.version"]() %}
+Raise version mismatch exception:
+  module.run:
+    - test.raise_exception:
+      - name: salt.exceptions.CheckError
+      - "Salt version is less than required 3002.x version."
+{% endif %}
 
 {% set node = grains['id'] %}
-{% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr']
-    and not pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] %}
+{% if pillar['cluster'][node]['network']['mgmt']['public_ip']
+    and not pillar['cluster'][node]['network']['mgmt']['gateway'] %}
 
 Gateway not provided:
   test.fail_with_changes:
@@ -41,18 +48,18 @@ Create mgmt0 interface file:
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: yes
-    {% if pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] %}
+    {% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
     - mtu: 1500
     {%- else %}
     - proto: dhcp
     {%- endif %}
-    {% if pillar['cluster'][node]['network']['mgmt_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['mgmt_nw']['netmask'] }}
+    {% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
     {%- endif %}
-    {% if pillar['cluster'][node]['network']['mgmt_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt_nw']['gateway'] }}
+    {% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
+    - gateway: {{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
     {% endif %}
     - team_config:
         runner:
@@ -61,11 +68,11 @@ Create mgmt0 interface file:
           link_watch:
             name: ethtool
 
-{% for iface in pillar['cluster'][node]['network']['mgmt_nw']['iface'] %}
-{{ iface }}:
+{% for interface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
+{{ interface }}:
     network.managed:
-    - name: {{ iface }}
-    # - device:  {{ iface }}
+    - name: {{ interface }}
+    # - device:  {{ interface }}
     - type: teamport
     - team_master: mgmt0
     - team_port_config:

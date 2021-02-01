@@ -16,9 +16,15 @@
 #
 
 # NOTE: Requires salt version 3002.2+
+{% if "3002" not in salt["test.version"]() %}
+Raise version mismatch exception:
+  module.run:
+    - test.raise_exception:
+      - name: salt.exceptions.CheckError
+      - "Salt version is less than required 3002.x version."
+{% endif %}
 
 {% set node = grains['id'] %}
-
 Install teamd:
   pkg.installed:
     - name: teamd
@@ -32,7 +38,7 @@ Create data0 interface file:
     - nm_controlled: no
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
-    - defroute: yes
+    - defroute: no
     {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
@@ -53,11 +59,11 @@ Create data0 interface file:
           link_watch:
             name: ethtool
 
-{% for iface in pillar['cluster'][node]['network']['data']['interfaces'] %}
-{{ iface }}:
+{% for interface in pillar['cluster'][node]['network']['data']['interfaces'] %}
+{{ interface }}:
     network.managed:
-    - name: {{ iface }}
-    # - device:  {{ iface }}
+    - name: {{ interface }}
+    # - device:  {{ interface }}
     - type: teamport
     - team_master: data0
     - team_port_config:
