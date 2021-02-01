@@ -19,7 +19,7 @@ def main():
 
     """
     logger.info(f"{sys.argv[1:]}")  # pass all parameters "as is"
-    
+
 
 if __name__ == '__main__':
     main()

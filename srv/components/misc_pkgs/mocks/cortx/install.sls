@@ -32,8 +32,6 @@ Stage - Install CORTX mock repo:
     - group: root
     - mode: 755
     - makedirs: True
-    - defaults:
-        component: {{ component_name }}
 
 
 {# TODO: use predifned list or scan 'srv/components' directory #}
