@@ -17,7 +17,7 @@ def main():
 
     """
     # pass all parameters "as is"
-    logger.info(f"MOCK: {'-'.join(sys.argv[1:])}")
+    logger.info(f"MOCK: {' '.join(sys.argv[1:])}")
 
 
 if __name__ == '__main__':
