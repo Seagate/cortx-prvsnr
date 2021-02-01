@@ -15,21 +15,31 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.openldap'.format(grains['id'])) %}
-include:
-  - components.misc_pkgs.openldap.prepare
-  - components.misc_pkgs.openldap.install
-  # - components.misc_pkgs.openldap.config
-  # - components.misc_pkgs.openldap.sanity_check
-  - components.misc_pkgs.openldap.start
+{% macro repo_absent(release, repo_dir) %}
 
-Generate openldap checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap
-    - makedirs: True
-    - create: True
-{%- else -%}
-OpenLDAP already applied:
-  test.show_notification:
-    - text: "OpenLDAP states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
-{% endif %}
+    {% from './iso/unmount.sls' import repo_unmounted with context %}
+
+{{ repo_unmounted(release, repo_dir) }}
+
+sw_upgrade_repo_iso_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}.iso
+    - require:
+      - sw_upgrade_repo_iso_unmounted_{{ release }}
+
+
+sw_upgrade_repo_dir_absent_{{ release }}:
+  file.absent:
+    - name: {{ repo_dir }}
+    - require:
+      - sw_upgrade_repo_absent_{{ release }}
+      - sw_upgrade_repo_iso_unmounted_{{ release }}
+
+
+sw_upgrade_repo_absent_{{ release }}:
+  pkgrepo.absent:
+    - name: sw_upgrade_{{ release }}
+
+# TODO IMPROVE EOS-14348 remove from file root as well
+
+{% endmacro %}

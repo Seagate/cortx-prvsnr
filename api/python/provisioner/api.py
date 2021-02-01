@@ -232,6 +232,36 @@ def set_swupdate_repo(
     )
 
 
+def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
+    r"""Configures upgrade repository.
+
+    Installs or removes a repository for sw upgrade release.
+
+    Parameters
+    ----------
+    release
+        An update repository release label
+    source
+        (optional) A path to a repository. Might be: a local
+        directory,  a local iso file or an url to a remote repository.
+        If not specified then a repository for a ``release`` will be removed.
+        If path to an iso file is provide then it is mounted before
+        installation and unmounted before removal.
+    dry_run
+        (optional) validate only. Default: False
+    nowait
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    dict
+        repository metadata
+
+    """
+    return _api_call('set_swupgrade_repo', release, source=source,
+                     dry_run=dry_run, nowait=nowait)
+
+
 def set_ssl_certs(
     source, restart=False, targets=ALL_MINIONS, dry_run=False, nowait=True
 ):

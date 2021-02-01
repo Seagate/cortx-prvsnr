@@ -15,21 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.openldap'.format(grains['id'])) %}
-include:
-  - components.misc_pkgs.openldap.prepare
-  - components.misc_pkgs.openldap.install
-  # - components.misc_pkgs.openldap.config
-  # - components.misc_pkgs.openldap.sanity_check
-  - components.misc_pkgs.openldap.start
+{% macro repo_added(release, source, source_type, repo_name, repo_params={}) %}
 
-Generate openldap checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap
-    - makedirs: True
-    - create: True
-{%- else -%}
-OpenLDAP already applied:
-  test.show_notification:
-    - text: "OpenLDAP states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
-{% endif %}
+
+sw_upgrade_repo_added_{{ repo_name }}_{{ release }}:
+  pkgrepo.managed:
+    - name: sw_upgrade_{{ repo_name }}_{{ release }}
+    - humanname: Cortx Upgrade repo {{ repo_name }}-{{ release }}
+    {% if source_type == 'url' %}
+    - baseurl: {{ source }}/{{ repo_name }}
+    {% else %}
+    - baseurl: file://{{ source }}/{{ repo_name }}
+    {% endif %}
+    - enabled: {{ repo_params.get('enabled', True) }}
+    - gpgcheck: 0
+    {% if source_type == 'iso' %}
+    - require:
+      - sw_upgrade_repo_iso_mounted_{{ release }}
+    {% endif %}
+
+
+sw_upgrade_repo_metadata_cleaned_{{ repo_name }}_{{ release }}:
+  cmd.run:
+    - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ repo_name }}_{{ release }}" clean metadata
+
+{% endmacro %}

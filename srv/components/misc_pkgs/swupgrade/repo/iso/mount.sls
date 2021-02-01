@@ -15,21 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.openldap'.format(grains['id'])) %}
-include:
-  - components.misc_pkgs.openldap.prepare
-  - components.misc_pkgs.openldap.install
-  # - components.misc_pkgs.openldap.config
-  # - components.misc_pkgs.openldap.sanity_check
-  - components.misc_pkgs.openldap.start
+{% macro repo_mounted(release, source, mount_dir) %}
 
-Generate openldap checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap
-    - makedirs: True
-    - create: True
-{%- else -%}
-OpenLDAP already applied:
-  test.show_notification:
-    - text: "OpenLDAP states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
-{% endif %}
+sw_upgrade_repo_iso_mounted_{{ release }}:
+  mount.mounted:
+    - name: {{ mount_dir }}
+    - device: {{ source }}
+    - mkmnt: True
+    - fstype: iso9660
+    - persist: True
+
+{% endmacro %}
