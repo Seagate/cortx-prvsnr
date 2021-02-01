@@ -18,10 +18,8 @@
 # NOTE: Requires salt version 3002.2+
 {% if "3002" not in salt["test.version"]() %}
 Raise version mismatch exception:
-  module.run:
-    - test.raise_exception:
-      - name: salt.exceptions.CheckError
-      - "Salt version is less than required 3002.x version."
+  test.fail_without_changes:
+    - name: "Salt version is less than required 3002.x version."
 {% endif %}
 
 {% set node = grains['id'] %}
