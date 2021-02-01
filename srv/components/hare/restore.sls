@@ -16,6 +16,5 @@
 #
 
 Stage - Restore files for Hare:
-  module.run:
-    - sync.restore_files:
-      - component: hare
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:restore')

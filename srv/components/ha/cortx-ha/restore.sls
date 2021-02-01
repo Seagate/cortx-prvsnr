@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Restore files for SSPL:
+Stage - Restore files for cortx-ha:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:restore')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:restore')
