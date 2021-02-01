@@ -92,7 +92,7 @@ def remove_peer(node):
     """Remove bricks from this node and detach
        from cluster
     """
-    volumes = __pillar__['glusterfs']['volumes']
+    volumes = __pillar__['gluster']['volumes']
 
     for volume in volumes:
         brick = f"{node}:{volume['export_dir']}"

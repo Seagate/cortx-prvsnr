@@ -1,4 +1,4 @@
-glusterfs:
+gluster:
   in_docker: false
   network_type: mgmt  # mgmt/data
   volumes:

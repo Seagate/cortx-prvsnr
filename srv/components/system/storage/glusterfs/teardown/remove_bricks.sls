@@ -18,7 +18,7 @@
 include:
   - .volume_remove
 
-{% for volume in salt['pillar.get']('glusterfs:volumes', []) %}
+{% for volume in salt['pillar.get']('gluster:volumes', []) %}
 
 # remove mount dir
 Remove gluster_{{ volume['mount_dir'] }}_mount_dir:

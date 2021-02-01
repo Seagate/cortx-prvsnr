@@ -15,34 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% for volume in salt['pillar.get']('gluster:volumes', []) %}
+Stop and disable salt-minion service:
+   service.dead:
+     - name: salt-minion
+     - enable: False
 
-# unmount gluster volume
-glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
-  mount.unmounted:
-    - name: {{ volume['mount_dir'] }}
-    - persist: True
-
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-
-# remove gluster volume
-glusterfs_volume_{{ volume['name'] }}_removed:
-  module.run:
-    - glusterfs.delete_volume:
-      - target: {{ volume['name'] }}
-
-{% endif %}
-
-# remove mount dir
-# Remove gluster_{{ volume['mount_dir'] }}_mount_dir:
-#  file.absent:
-#    - name: {{ volume['mount_dir'] }}
-#    - require:
-#      - glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount
-
-# remove brick dir
-# Remove gluster_{{ volume['export_dir'] }}_brick_dir:
-# file.absent:
-#    - name: {{ volume['export_dir'] }}
-
-{% endfor %}
+Stop and disable salt-master service:
+   service.dead:
+     - name: salt-master
+     - enable: False

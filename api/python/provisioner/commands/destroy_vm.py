@@ -15,17 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Type
+from typing import Type, Optional
 import logging
-
+from pathlib import Path
 from .. import (
     inputs,
     errors,
-    config,
-    ALL_MINIONS
+    config
 )
 from ..utils import run_subprocess_cmd
-from ..salt import local_minion_id
+from ..salt import (
+    local_minion_id,
+    SaltSSHClient
+)
 from ..pillar import (
     PillarKey,
     PillarResolver
@@ -47,12 +49,21 @@ logger = logging.getLogger(__name__)
 
 deploy_states = dict(
     prvsnr=[
+        "provisioner.salt.teardown.stop",
         "system.storage.glusterfs.teardown.volume_remove",
-        "system.storage.glusterfs.teardown"
+        "system.storage.glusterfs.teardown",
+        "provisioner.salt.teardown",
+        "provisioner.package_remove",
+        "provisioner.passwordless_remove"
     ]
 )
 
 run_args_type = build_deploy_run_args(deploy_states)
+
+
+@attr.s(auto_attribs=True)
+class SetupCtx:
+    ssh_client: SaltSSHClient
 
 
 @attr.s(auto_attribs=True)
@@ -64,45 +75,36 @@ class RunArgsDestroy(run_args_type):
 class DestroyNode(Deploy):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsDestroy
+    _salt_ssh = None
+    _temp_dir = None
+    setup_ctx: Optional[SetupCtx] = None
 
-    @staticmethod
-    def remove_prvsnr(nodes):
-        for node in nodes:
-            if local_minion_id() == node:
-                logger.info(f"remove cortx-prvsnr rpms on {node}")
-                run_subprocess_cmd(
-                    f"ssh {node} yum erase -y cortx-prvsnr")
-            else:
-                logger.info(
-                    f"remove cortx-prvsnr python36-cortx-prvsnr on {node}")
-                run_subprocess_cmd(
-                    f"ssh {node} yum erase -y"
-                    "cortx-prvsnr python36-cortx-prvsnr")
+    def _primary_id(self):
+        return local_minion_id()
 
-    @staticmethod
-    def remove_passwordless_ssh(nodes):
-        for node in nodes:
-            logger.info(f"Remove passwordless configuration with {node}")
-            run_subprocess_cmd(
-                f"rm -rf /root/.ssh")
+    def _secondaries(self):
+        local_node = self._primary_id()
+        secondaries = []
+        node_list = PillarKey('cluster')
+        pillar = PillarResolver(config.LOCAL_MINION).get([node_list])
+        pillar = next(iter(pillar.values()))
+        nodes = pillar[node_list]
+        for key in nodes.keys():
+            if 'srvnode' in key and local_node != key:
+                secondaries.append(key)
+        return secondaries
 
-    @staticmethod
-    def remove_salt(nodes):
-        salt_cache_dir = '/var/cache/salt'
-        salt_config = '/etc/salt'
-
-        for node in nodes:
-            logger.info(f"stopping salt-minion/salt-master on {node}")
-            run_subprocess_cmd(
-                f"ssh {node} systemctl stop salt-minion salt-master")
-
-            logger.info(f"remove salt rpms on {node}")
-            run_subprocess_cmd(
-                f"ssh {node} yum erase -y salt-minion salt-master salt")
-
-            logger.info(f"Removing salt from node {node}")
-            run_subprocess_cmd(f"ssh {node} rm -rf {salt_cache_dir}")
-            run_subprocess_cmd(f"ssh {node} rm -rf {salt_config}")
+    def _create_ssh_client(self, c_path, roster_file):
+        # TODO IMPROVE EOS-8473 optional support for known hosts
+        ssh_options = [
+            'UserKnownHostsFile=/dev/null',
+            'StrictHostKeyChecking=no'
+        ]
+        return SaltSSHClient(
+            c_path=c_path,
+            roster_file=roster_file,
+            ssh_options=ssh_options
+        )
 
     @staticmethod
     def remove_dir(list_dir, nodes):
@@ -115,18 +117,8 @@ class DestroyNode(Deploy):
         setup_type = run_args.setup_type
         targets = run_args.targets
         states = deploy_states[states_group]
-        stages = run_args.stages
         primary = self._primary_id()
-        secondaries = f"not {primary}"
-        nodes = []
-
-        if states_group == 'prvsnr' and targets == ALL_MINIONS:
-            node_list = PillarKey('cluster/node_list')
-            pillar = PillarResolver(config.LOCAL_MINION).get([node_list])
-            pillar = next(iter(pillar.values()))
-            nodes = pillar[node_list]
-        else:
-            nodes.append(targets)
+        secondaries = self._secondaries()
 
         # apply states
         for state in states:
@@ -134,35 +126,66 @@ class DestroyNode(Deploy):
                 "system.storage.glusterfs.teardown.volume_remove",
                 "system.storage.glusterfs.teardown"
             ):
-                self._apply_state(f"components.{state}", primary, stages)
+                logger.info(f"Applying '{state}' on {primary}")
+                self.setup_ctx.ssh_client.state_apply(
+                    f"components.{state}",
+                    targets=primary
+                )
             else:
-                if state == "system.storage.glusterfs.teardown.volume_remove":
-                    # Execute first on secondaries then on primary.
-                    self._apply_state(
-                        f"components.{state}", secondaries, stages
-                    )
-                    self._apply_state(f"components.{state}", primary, stages)
-                else:
-                    self._apply_state(f"components.{state}", targets, stages)
+                if state in (
+                    "system.storage.glusterfs.teardown.volume_remove",
+                    "provisioner.teardown",
+                    "provisioner.passwordless_remove"
+                ):
+                    if state == 'provisioner.passwordless_remove':
+                        list_dir = []
+                        list_dir.append(str(config.profile_base_dir().parent))
+                        # list_dir.append(config.CORTX_ROOT_DIR)
+                        DestroyNode.remove_dir(list_dir, secondaries)
+                        DestroyNode.remove_dir(list_dir, [primary])
 
-        # salt will not be available so handle teardown using subprocess
-        if states_group == 'prvsnr':
-            list_dir = []
-            list_dir.append(str(config.profile_base_dir().parent))
-            list_dir.append(config.CORTX_ROOT_DIR)
-            DestroyNode.remove_prvsnr(nodes)
-            DestroyNode.remove_dir(list_dir, nodes)
-            DestroyNode.remove_salt(nodes)
-            DestroyNode.remove_passwordless_ssh(nodes)
+                    logger.info(f"Applying '{state}' on {secondaries}")
+                    # Execute first on secondaries then on primary.
+                    self.setup_ctx.ssh_client.state_apply(
+                        f"components.{state}",
+                        targets='|'.join(secondaries)
+                    )
+                    logger.info(f"Applying '{state}' on {primary}")
+                    self.setup_ctx.ssh_client.state_apply(
+                        f"components.{state}",
+                        targets=primary
+                    )
+                else:
+                    logger.info(f"Applying '{state}' on {targets}")
+                    self.setup_ctx.ssh_client.state_apply(
+                        f"components.{state}"
+                    )
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
-
+        temp_dir = Path('/tmp/prvsnr/')
+        temp_dir.mkdir(parents=True, exist_ok=True)
         if self._is_hw():
             raise errors.ProvisionerError(
                 "The command is specifically for VM teardown. "
             )
+        logger.info(f"Copy salt ssh config to tmp")
+        salt_ssh_config = str(
+            config.PRVSNR_FACTORY_PROFILE_DIR / 'srv/config'
+        )
 
+        run_subprocess_cmd(f"cp -rf {salt_ssh_config} {str(temp_dir)}")
+
+        salt_config_master = str(
+            temp_dir / 'config/master'
+        )
+        roster = str(
+            temp_dir / 'config/roster'
+        )
+
+        ssh_client = self._create_ssh_client(salt_config_master, roster)
+
+        self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
             self._run_states('prvsnr', run_args)
 
@@ -174,6 +197,7 @@ class DestroyNode(Deploy):
                 raise NotImplementedError(
                     'Only prvsnr state is supported for now'
                 )
-
+        logger.info(f"Remove salt ssh config from tmp")
+        run_subprocess_cmd(f"rm -rf {str(temp_dir)}")
         logger.info("Destroy VM - Done")
         return run_args

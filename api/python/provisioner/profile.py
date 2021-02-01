@@ -66,6 +66,7 @@ def setup(
             'base': [str(d.resolve()) for d in add_file_roots] + [
                 str(profile_paths['salt_fileroot_dir']),
                 str(profile_paths['salt_factory_fileroot_dir']),
+                str(config.PRVSNR_FILEROOT_DIR),
                 str(config.BUNDLED_SALT_FILEROOT_DIR)
             ]
         },
@@ -74,6 +75,7 @@ def setup(
                 str(d.resolve()) for d in add_pillar_roots
             ] + [
                 str(profile_paths['salt_pillar_dir']),
+                str(config.PRVSNR_PILLAR_DIR),
                 str(config.BUNDLED_SALT_PILLAR_DIR)
             ]
         }

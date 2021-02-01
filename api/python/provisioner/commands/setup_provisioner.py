@@ -1301,7 +1301,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         if not run_args.field_setup:
             logger.info("Preparing factory profile")
-            for path in ('srv/salt', 'srv/pillar', '.ssh'):
+            for path in ('srv/config', 'srv/salt', 'srv/pillar', '.ssh'):
                 _path = paths['salt_factory_profile_dir'] / path
                 run_subprocess_cmd(['rm', '-rf',  str(_path)])
                 _path.parent.mkdir(parents=True, exist_ok=True)
