@@ -39,7 +39,7 @@ Private direct network:
 {% if pillar['cluster'][node]['network']['data']['private_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['private_ip'] }}
-    - mtu: 9000
+    - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
 {%- else %}
     - proto: dhcp
 {%- endif %}
