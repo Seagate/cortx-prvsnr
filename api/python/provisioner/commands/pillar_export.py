@@ -74,7 +74,7 @@ class PillarExport(PillarGet):
 
         """
         if (isinstance(obj,
-           (type(None), bool, list, int))):
+           (type(None), bool, int))):
             return str(obj)
         elif isinstance(obj, Mapping):
             return {k: self._convert_to_str(v, repl) for k, v in obj.items()}
