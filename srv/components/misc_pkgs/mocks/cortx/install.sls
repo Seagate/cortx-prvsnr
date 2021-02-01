@@ -25,13 +25,25 @@ Stage - Install CORTX mock repo:
     - gpgcheck: 0
 
 
+/usr/local/bin/mock:
+  file.managed:
+    - source: salt://components/misc_pkgs/mocks/cortx/files/scripts/mock.py
+    - user: root
+    - group: root
+    - mode: 755
+    - makedirs: True
+    - defaults:
+        component: {{ component_name }}
+
+
 {# TODO: use predifned list or scan 'srv/components' directory #}
 {% for component_name in ('motr', 'ha', 'hare', 'sspl') %}
 
 /opt/seagate/cortx/{{ component_name }}/conf/setup.yaml:
   file.managed:
-    - source: salt://misc_pkgs/mocks/cortx/files/setup.mock.yaml/setup.yaml
+    - source: salt://components/misc_pkgs/mocks/cortx/files/setup.mock.yaml/setup.yaml
     - template: jinja
+    - makedirs: True
     - defaults:
         component: {{ component_name }}
 

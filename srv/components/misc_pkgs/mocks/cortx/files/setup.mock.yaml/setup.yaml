@@ -20,29 +20,29 @@
     cmd: mock
     args:
       - 'Stage: '
-      - 'Post Install'
+      - '{{ component }}: Post Install'
   config:
     cmd: mock
     args:
       - 'Stage: '
-      - 'Config'
+      - '{{ component }}: Config'
   init:
     cmd: mock
     args:
       - 'Stage: '
-      - 'Init'
+      - '{{ component }}: Init'
   test:
     cmd: mock
     args:
       - 'Stage: '
-      - 'Test'
+      - '{{ component }}: Test'
   reset:
     cmd: mock
     args:
       - 'Stage: '
-      - 'Reset'
+      - '{{ component }}: Reset'
   backup:
     cmd: mock
     args:
       - 'Stage: '
-      - 'Backup'
+      - '{{ component }}: Backup'
