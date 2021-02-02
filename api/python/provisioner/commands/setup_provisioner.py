@@ -1260,7 +1260,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                         f"{deps_bundle_url}/EPEL-7"
                     ),
                     '3rd_party_saltstack': (
-                        f"{deps_bundle_url}/commons/saltstack-3001"
+                        f"{deps_bundle_url}/commons/saltstack"
                     ),
                     '3rd_party_glusterfs': (
                         f"{deps_bundle_url}/commons/glusterfs"

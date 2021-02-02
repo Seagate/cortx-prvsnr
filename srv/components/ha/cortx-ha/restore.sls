@@ -15,16 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-system:
-  ntp:
-    time_server: time.seagate.com
-    time_zone: UTC             #To be replaced with input
-  service-user:
-    name: cortxub
-    secret:
-    groups:
-      - wheel
-    shell: /usr/bin/bash
-  cortx-user:
-    name: cortxcli
-    secret:
+Stage - Restore files for cortx-ha:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:restore')

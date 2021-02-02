@@ -14,8 +14,8 @@ Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
 Requires: rsync
-#Requires: salt-master = 2019.2.0
-#Requires: salt-minion = 2019.2.0
+#Requires: salt-master = 3002.2
+#Requires: salt-minion = 3002.2
 #Requires: salt-ssh
 #Requires: salt-syndic
 

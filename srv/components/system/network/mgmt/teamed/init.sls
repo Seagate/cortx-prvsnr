@@ -15,9 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# NOTE: Requires salt version 3002.2+
+{% if "3002" not in salt["test.version"]() %}
+Raise version mismatch exception:
+  test.fail_without_changes:
+    - name: "Salt version is less than required 3002.x version."
+{% endif %}
+
 {% set node = grains['id'] %}
 {% if pillar['cluster'][node]['network']['mgmt']['public_ip']
-    and not pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] %}
+    and not pillar['cluster'][node]['network']['mgmt']['gateway'] %}
 
 Gateway not provided:
   test.fail_with_changes:
@@ -25,30 +32,49 @@ Gateway not provided:
 
 {% else %}
 
-{% set mgmt_if = pillar['cluster'][node]['network']['mgmt']['interfaces'][0] %}
-# Setup network for data interfaces
-Public direct network:
-  network.managed:
-    - name: {{ mgmt_if }}
-    - device: {{ mgmt_if }}
-    - type: eth
+Install teamd:
+  pkg.installed:
+    - name: teamd
+
+Create mgmt0 interface file:
+    network.managed:
+    - name: mgmt0
+    # - device: mgmt0
+    - type: team
     - enabled: True
     - nm_controlled: no
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
-    - hwaddr: {{ grains['hwaddr_interfaces'][mgmt_if] }}
     - defroute: yes
-{% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
+    {% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
-    - mtu: {{ pillar['cluster'][node]['network']['mgmt']['mtu'] }}
-{% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
-{%- endif %}
-{% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
-{% endif %}
-{%- else %}
+    - mtu: 1500
+    {%- else %}
     - proto: dhcp
-{%- endif -%}
-{% endif -%} # Gateway check end
+    {%- endif %}
+    {% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
+    {%- endif %}
+    {% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
+    - gateway: {{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
+    {% endif %}
+    - team_config:
+        runner:
+          hwaddr_policy: by_active
+          name: activebackup
+          link_watch:
+            name: ethtool
+
+{% for interface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
+{{ interface }}:
+    network.managed:
+    - name: {{ interface }}
+    # - device:  {{ interface }}
+    - type: teamport
+    - team_master: mgmt0
+    - team_port_config:
+        prio: 100
+{% endfor %}
+
+{% endif %} # Gateway check end

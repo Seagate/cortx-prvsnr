@@ -50,7 +50,7 @@ tmp_dir: /tmp
 
   {% set epel_repo = "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/" %}
     # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
-  {% set saltstack_repo = "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3001" %}
+  {% set saltstack_repo = "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3002" %}
 
 {% else %}
 # FIXME might be unnecessary, added just because of some experience
@@ -62,7 +62,7 @@ tmp_dir: /tmp
 #   - an standalone url where they mounted
 {% if deps_bundle_url %}
   {% set epel_repo = '/'.join([deps_bundle_url, 'EPEL-7']) %}
-  {% set saltstack_repo = '/'.join([deps_bundle_url, 'commons', 'saltstack-3001']) %}
+  {% set saltstack_repo = '/'.join([deps_bundle_url, 'commons', 'saltstack-3002']) %}
   # {% set glusterfs_repo = '/'.join([deps_bundle_url, 'commons', 'glusterfs']) %}
   {% set commons_repo = deps_bundle_url %}
 {% endif %}
