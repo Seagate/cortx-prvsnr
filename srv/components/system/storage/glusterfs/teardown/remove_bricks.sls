@@ -15,17 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .volume_remove
-
 {% for volume in salt['pillar.get']('gluster:volumes', []) %}
 
 # remove mount dir
 Remove gluster_{{ volume['mount_dir'] }}_mount_dir:
   file.absent:
     - name: {{ volume['mount_dir'] }}
-    - require:
-      - glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount
 
 # remove brick dir
 Remove gluster_{{ volume['export_dir'] }}_brick_dir:

@@ -185,8 +185,6 @@ class DestroyNode(Deploy):
         salt_config_master = str(
             temp_dir / 'config/master'
         )
-        run_subprocess_cmd(
-            f"cp -rf /etc/salt/master {str(salt_config_master)}")
 
         roster = str(
             temp_dir / 'config/roster'
