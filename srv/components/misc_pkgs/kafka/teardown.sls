@@ -43,6 +43,10 @@ Kill kafka process:
       - pid: {{ kafka_pid }}
       - signal: 9
 
+Remove java:
+  pkg.purged:
+    - name: java-1.8.0-openjdk-headless
+
 Remove kafka directory:
   file.absent:
     - name: /opt/kafka/kafka_{{ kafka_version }}

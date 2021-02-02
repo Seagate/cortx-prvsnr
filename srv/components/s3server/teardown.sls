@@ -116,3 +116,8 @@ Remove s3server repo:
 Delete s3server checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3server
+
+{% if salt['file.file_exists']('/var/seagate/s3') %}
+Remove working directory for S3 server:
+  file.absent:
+    - name: /var/seagate/s3
