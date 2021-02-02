@@ -28,7 +28,7 @@ glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
 # remove gluster volume
 glusterfs_volume_{{ volume['name'] }}_removed:
   module.run:
-    - glusterfs.delete_volume:
+    glusterfs.delete_volume:
       - target: {{ volume['name'] }}
 
 {% endif %}
