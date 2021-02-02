@@ -47,7 +47,6 @@ Setup data0 bonding:
     - enabled: True
     - nm_controlled: no
     - userctl: no
-    - mtu: 9000
     - defroute: no
     - mode: 802.3ad
     - miimon: 100
@@ -56,12 +55,13 @@ Setup data0 bonding:
 {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
-{%- else %}
-    - proto: dhcp
-{%- endif %}
+    - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
 {% if pillar['cluster'][node]['network']['data']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
-{% endif %}
+{%- endif %}
+{%- else %}
+    - proto: dhcp
+{%- endif %}

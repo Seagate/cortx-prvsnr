@@ -28,16 +28,17 @@ Public direct network:
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: no
-    - mtu: 9000
 {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
-{%- else %}
-    - proto: dhcp
-{%- endif %}
+    - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
 {% if pillar['cluster'][node]['network']['data']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
     - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
 {% endif %}
+{%- else %}
+    - proto: dhcp
+{%- endif %}
+
