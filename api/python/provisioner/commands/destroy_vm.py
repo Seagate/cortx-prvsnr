@@ -122,15 +122,21 @@ class DestroyNode(Deploy):
 
         # apply states
         for state in states:
-            if setup_type == SetupType.SINGLE and state not in (
-                "system.storage.glusterfs.teardown.volume_remove",
-                "system.storage.glusterfs.teardown"
-            ):
-                logger.info(f"Applying '{state}' on {primary}")
-                self.setup_ctx.ssh_client.state_apply(
-                    f"components.{state}",
-                    targets=primary
-                )
+            if setup_type == SetupType.SINGLE:
+                if state not in (
+                    "system.storage.glusterfs.teardown.volume_remove",
+                    "system.storage.glusterfs.teardown"
+                ):
+                    logger.info(f"Applying '{state}' on {primary}")
+                    self.setup_ctx.ssh_client.state_apply(
+                        f"components.{state}",
+                        targets=primary
+                    )
+                    if state == 'provisioner.passwordless_remove':
+                        list_dir = []
+                        list_dir.append(str(config.profile_base_dir().parent))
+                        list_dir.append(config.CORTX_ROOT_DIR)
+                        DestroyNode.remove_dir(list_dir, [primary])
             else:
                 if state in (
                     "system.storage.glusterfs.teardown.volume_remove",
@@ -140,7 +146,7 @@ class DestroyNode(Deploy):
                     if state == 'provisioner.passwordless_remove':
                         list_dir = []
                         list_dir.append(str(config.profile_base_dir().parent))
-                        # list_dir.append(config.CORTX_ROOT_DIR)
+                        list_dir.append(config.CORTX_ROOT_DIR)
                         DestroyNode.remove_dir(list_dir, secondaries)
                         DestroyNode.remove_dir(list_dir, [primary])
 
