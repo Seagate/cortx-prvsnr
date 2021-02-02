@@ -71,11 +71,10 @@ def setup(
             ]
         },
         'pillar_roots': {
-            'base': [
+            'base': [str(config.PRVSNR_PILLAR_DIR)] + [
                 str(d.resolve()) for d in add_pillar_roots
             ] + [
                 str(profile_paths['salt_pillar_dir']),
-                str(config.PRVSNR_PILLAR_DIR),
                 str(config.BUNDLED_SALT_PILLAR_DIR)
             ]
         }

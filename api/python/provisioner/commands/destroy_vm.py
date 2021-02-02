@@ -48,11 +48,42 @@ logger = logging.getLogger(__name__)
 
 
 deploy_states = dict(
-    prvsnr=[
+    controlpath=[
+        "csm.teardown",
+        "uds.teardown",
+        "sspl.teardown"
+    ],
+    iopath=[
+        "hare.teardown",
+        "s3server.teardown",
+        "motr.teardown"
+    ],
+    prereq=[
+        "misc_pkgs.lustre.teardown",
+        "misc_pkgs.statsd.teardown",
+        "misc_pkgs.kibana.teardown",
+        "misc_pkgs.elasticsearch.teardown",
+        "misc_pkgs.nodejs.teardown",
+        "misc_pkgs.rabbitmq.teardown",
+        "misc_pkgs.consul.teardown",
+        "misc_pkgs.openldap.teardown",
+        "ha.haproxy.teardown",
+        "misc_pkgs.ssl_certs.teardown"
+    ],
+    system=[
+        "system.chrony",
+        "system.logrotate",
+        "system.firewall",
+        "misc_pkgs.rsyslog",
+        "system.storage",
+        "system"
+    ],
+    bootstrap=[
         "provisioner.salt.teardown.stop",
         "system.storage.glusterfs.teardown.volume_remove",
         "system.storage.glusterfs.teardown",
         "provisioner.salt.teardown",
+        "provisioner.salt.teardown.package_remove",
         "provisioner.package_remove",
         "provisioner.passwordless_remove"
     ]
@@ -107,11 +138,40 @@ class DestroyNode(Deploy):
         )
 
     @staticmethod
-    def remove_dir(list_dir, nodes):
+    def remove_dir(list_dir, nodes, setup_type):
         for node in nodes:
             for di in list_dir:
+                if setup_type == SetupType.SINGLE:
+                    cmd = f"rm -rf {di}"
+                else:
+                    cmd = f"ssh {node} rm -rf {di}"
                 logger.info(f"cleaning up {di} dir on {node}")
-                run_subprocess_cmd(f"ssh {node} rm -rf {di}")
+                run_subprocess_cmd(cmd)
+
+    @staticmethod
+    def remove_pkgs(list_pkgs, nodes, setup_type):
+        for node in nodes:
+            for pkg in list_pkgs:
+                if setup_type == SetupType.SINGLE:
+                    cmd = f"yum erase -y {pkg}"
+                else:
+                    cmd = f"ssh {node} yum erase -y {pkg}"
+                logger.info(f"cleaning up pkg {pkg} on {node}")
+                run_subprocess_cmd(cmd)
+
+    def _apply_state(self, state, targets=None):
+        try:
+            if targets:
+                self.setup_ctx.ssh_client.state_apply(
+                    f"components.{state}",
+                    targets=targets
+                )
+            else:
+                self.setup_ctx.ssh_client.state_apply(
+                    f"components.{state}"
+                )
+        except Exception:
+            logger.warn(f"Failed {state} on {targets}")
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         setup_type = run_args.setup_type
@@ -125,47 +185,72 @@ class DestroyNode(Deploy):
             if setup_type == SetupType.SINGLE:
                 if state not in (
                     "system.storage.glusterfs.teardown.volume_remove",
-                    "system.storage.glusterfs.teardown"
+                    "system.storage.glusterfs.teardown",
+                    "provisioner.salt.teardown.package_remove"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
-                    self.setup_ctx.ssh_client.state_apply(
-                        f"components.{state}",
-                        targets=primary
-                    )
-                    if state == 'provisioner.passwordless_remove':
-                        list_dir = []
+                    self._apply_state(state, primary)
+
+                    if state == "provisioner.passwordless_remove":
+                        list_dir = ["/var/cache/salt/"]
+                        list_pkgs = ["salt", "salt-minion", "salt-master"]
                         list_dir.append(str(config.profile_base_dir().parent))
                         list_dir.append(config.CORTX_ROOT_DIR)
-                        DestroyNode.remove_dir(list_dir, [primary])
+                        list_dir.append(config.PRVSNR_DATA_SHARED_DIR)
+                        DestroyNode.remove_dir(list_dir, [primary], setup_type)
+                        DestroyNode.remove_pkgs(list_pkgs,
+                                                [primary],
+                                                setup_type)
             else:
                 if state in (
                     "system.storage.glusterfs.teardown.volume_remove",
                     "provisioner.teardown",
-                    "provisioner.passwordless_remove"
+                    "provisioner.passwordless_remove",
+                    "misc_pkgs.openldap.teardown",
+                    "misc_pkgs.rabbitmq"
                 ):
                     if state == 'provisioner.passwordless_remove':
                         list_dir = []
                         list_dir.append(str(config.profile_base_dir().parent))
-                        list_dir.append(config.CORTX_ROOT_DIR)
-                        DestroyNode.remove_dir(list_dir, secondaries)
-                        DestroyNode.remove_dir(list_dir, [primary])
+                        # list_dir.append(config.CORTX_ROOT_DIR)
+                        DestroyNode.remove_dir(list_dir,
+                                               secondaries,
+                                               setup_type)
+                        DestroyNode.remove_dir(list_dir, [primary], setup_type)
 
                     logger.info(f"Applying '{state}' on {secondaries}")
                     # Execute first on secondaries then on primary.
-                    self.setup_ctx.ssh_client.state_apply(
-                        f"components.{state}",
-                        targets='|'.join(secondaries)
-                    )
+                    self._apply_state(state, '|'.join(secondaries))
+
                     logger.info(f"Applying '{state}' on {primary}")
-                    self.setup_ctx.ssh_client.state_apply(
-                        f"components.{state}",
-                        targets=primary
-                    )
+                    self._apply_state(state, primary)
+
+                    if state == 'provisioner.passwordless_remove':
+                        list_pkgs = ["salt", "salt-minion", "salt-master"]
+                        # TODO hack to remove salt using suboricess
+                        DestroyNode.remove_pkgs(list_pkgs,
+                                                [primary],
+                                                SetupType.SINGLE)
+
+                elif state in (
+                    "sspl.teardown"
+                ):
+                    logger.info(f"Applying '{state}' on {primary}")
+                    self._apply_state(state, primary)
+
+                    logger.info(f"Applying '{state}' on {secondaries}")
+                    # Execute first on secondaries then on primary.
+                    self._apply_state(state, '|'.join(secondaries))
+
+                elif state in (
+                    "provisioner.salt.teardown.package_remove"
+                ):
+                    logger.info(f"Applying '{state}' on {secondaries}")
+                    # Execute first on secondaries then on primary.
+                    self._apply_state(state, '|'.join(secondaries))
                 else:
                     logger.info(f"Applying '{state}' on {targets}")
-                    self.setup_ctx.ssh_client.state_apply(
-                        f"components.{state}"
-                    )
+                    self._apply_state(state)
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
@@ -194,16 +279,32 @@ class DestroyNode(Deploy):
 
         self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
-            self._run_states('prvsnr', run_args)
+            self._run_states('controlpath', run_args)
+            self._run_states('iopath', run_args)
+            self._run_states('prereq', run_args)
+            self._run_states('system', run_args)
+            self._run_states('bootstrap', run_args)
 
         else:
-            if 'prvsnr' in run_args.states:
+            if 'bootstrap' in run_args.states:
                 logger.info("Teardown Provisioner Bootstrapped Environment")
-                self._run_states('prvsnr', run_args)
-            else:
-                raise NotImplementedError(
-                    'Only prvsnr state is supported for now'
-                )
+                self._run_states('bootstrap', run_args)
+            if 'system' in run_args.states:
+                logger.info("Teardown the system states")
+                self._run_states('system', run_args)
+
+            if 'prereq' in run_args.states:
+                logger.info("Teardown the prereq states")
+                self._run_states('prereq', run_args)
+
+            if 'iopath' in run_args.states:
+                logger.info("Teardown the io path states")
+                self._run_states('iopath', run_args)
+
+            if 'controlpath' in run_args.states:
+                logger.info("Teardown the control path states")
+                self._run_states('controlpath', run_args)
+
         logger.info(f"Remove salt ssh config from tmp")
         run_subprocess_cmd(f"rm -rf {str(temp_dir)}")
         logger.info("Destroy VM - Done")
