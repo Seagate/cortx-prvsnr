@@ -242,7 +242,7 @@ class DestroyNode(Deploy):
                     # Execute first on secondaries then on primary.
                     self._apply_state(state, '|'.join(secondaries))
 
-                elif state in (
+                elif state == (
                     "provisioner.salt.teardown.package_remove"
                 ):
                     logger.info(f"Applying '{state}' on {secondaries}")
