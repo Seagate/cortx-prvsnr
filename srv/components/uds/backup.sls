@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for SSPL:
+Stage - Backup files for S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:backup')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', 'uds:backup')
