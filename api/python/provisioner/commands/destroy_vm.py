@@ -125,7 +125,8 @@ class DestroyNode(Deploy):
                 secondaries.append(key)
         return secondaries
 
-    def _create_ssh_client(self, c_path, roster_file):
+    @staticmethod
+    def _create_ssh_client(c_path, roster_file):
         # TODO IMPROVE EOS-8473 optional support for known hosts
         ssh_options = [
             'UserKnownHostsFile=/dev/null',
@@ -159,7 +160,7 @@ class DestroyNode(Deploy):
                 logger.info(f"cleaning up pkg {pkg} on {node}")
                 run_subprocess_cmd(cmd)
 
-    def _apply_state(self, state, targets=None):
+    def _apply_states(self, state, targets=None):
         try:
             if targets:
                 self.setup_ctx.ssh_client.state_apply(
@@ -189,7 +190,7 @@ class DestroyNode(Deploy):
                     "provisioner.salt.teardown.package_remove"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
-                    self._apply_state(state, primary)
+                    self._apply_states(state, primary)
 
                     if state == "provisioner.passwordless_remove":
                         list_dir = ["/var/cache/salt/"]
@@ -220,10 +221,10 @@ class DestroyNode(Deploy):
 
                     logger.info(f"Applying '{state}' on {secondaries}")
                     # Execute first on secondaries then on primary.
-                    self._apply_state(state, '|'.join(secondaries))
+                    self._apply_states(state, '|'.join(secondaries))
 
                     logger.info(f"Applying '{state}' on {primary}")
-                    self._apply_state(state, primary)
+                    self._apply_states(state, primary)
 
                     if state == 'provisioner.passwordless_remove':
                         list_pkgs = ["salt", "salt-minion", "salt-master"]
@@ -236,21 +237,21 @@ class DestroyNode(Deploy):
                     "sspl.teardown"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
-                    self._apply_state(state, primary)
+                    self._apply_states(state, primary)
 
                     logger.info(f"Applying '{state}' on {secondaries}")
                     # Execute first on secondaries then on primary.
-                    self._apply_state(state, '|'.join(secondaries))
+                    self._apply_states(state, '|'.join(secondaries))
 
                 elif state == (
                     "provisioner.salt.teardown.package_remove"
                 ):
                     logger.info(f"Applying '{state}' on {secondaries}")
                     # Execute first on secondaries then on primary.
-                    self._apply_state(state, '|'.join(secondaries))
+                    self._apply_states(state, '|'.join(secondaries))
                 else:
                     logger.info(f"Applying '{state}' on {targets}")
-                    self._apply_state(state)
+                    self._apply_states(state)
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
@@ -275,7 +276,7 @@ class DestroyNode(Deploy):
             temp_dir / 'config/roster'
         )
 
-        ssh_client = self._create_ssh_client(salt_config_master, roster)
+        ssh_client = DestroyNode._create_ssh_client(salt_config_master, roster)
 
         self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
