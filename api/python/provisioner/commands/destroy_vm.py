@@ -212,7 +212,7 @@ class DestroyNode(Deploy):
                     if state == 'provisioner.passwordless_remove':
                         list_dir = []
                         list_dir.append(str(config.profile_base_dir().parent))
-                        # list_dir.append(config.CORTX_ROOT_DIR)
+                        list_dir.append(config.CORTX_ROOT_DIR)
                         DestroyNode.remove_dir(list_dir,
                                                secondaries,
                                                setup_type)
@@ -289,6 +289,7 @@ class DestroyNode(Deploy):
             if 'bootstrap' in run_args.states:
                 logger.info("Teardown Provisioner Bootstrapped Environment")
                 self._run_states('bootstrap', run_args)
+
             if 'system' in run_args.states:
                 logger.info("Teardown the system states")
                 self._run_states('system', run_args)
