@@ -16,6 +16,5 @@
 #
 
 Stage - Backup files for S3Server:
-  module.run:
-    - sync.backup_files:
-      - component: s3
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3server/conf/setup.yaml', 's3server:backup')
