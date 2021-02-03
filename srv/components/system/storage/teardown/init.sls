@@ -15,11 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .base-teardown
-{% if "physical" in grains['virtual'] %}
-  - .tidy-up
-{% endif %}
+# include:
+#   - .base-teardown
+# {#% if "physical" in grains['virtual'] %#}
+#   - .tidy-up
+# {#% endif %#}
 
 Mount default OS swap device:
   cmd.run:
