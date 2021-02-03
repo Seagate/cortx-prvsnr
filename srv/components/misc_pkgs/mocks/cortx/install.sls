@@ -35,7 +35,7 @@ Stage - Install CORTX mock repo:
 
 
 {# TODO: use predifned list or scan 'srv/components' directory #}
-{% for component_name in ('motr', 'ha', 'hare', 'sspl', "s3", "csm", "uds") %}
+{% for component_name in ('motr', 'ha', 'hare', 'sspl', "s3", "csm", "uds", "cli") %}
 
 /opt/seagate/cortx/{{ component_name }}/conf/setup.yaml:
   file.managed:
