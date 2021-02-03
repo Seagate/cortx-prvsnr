@@ -32,8 +32,3 @@ Add s3server yum repo:
     - baseurl: {{ defaults.s3server.repo.url }}
     - gpgcheck: 1
     - gpgkey: {{ defaults.s3server.repo.gpgkey }}
-
-Create working directory for S3 server:
-  file.directory:
-    - name: /var/seagate/s3
-    - makedirs: True
