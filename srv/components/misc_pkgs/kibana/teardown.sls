@@ -28,6 +28,7 @@ Remove kibana config:
       - /etc/kibana
       - /var/lib/kibana
 
+# Failsafe
 Delete kibana service file:
   file.absent:
     - name: /etc/systemd/system/kibana.service

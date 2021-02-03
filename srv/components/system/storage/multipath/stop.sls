@@ -15,16 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Disable chronyd:
+include:
+  - components.system.storage.multipath.install
+
+Stop multipath service:
   service.dead:
-    - name: chronyd
+    - name: multipathd.service
     - enable: false
-
-Remove chrony package:
-  pkg.removed:
-    - name: chrony
-
-Remove chrony configuration:
-  file.absent:
-    - name: /etc/chrony.conf
-...
+    - require:
+      - Install multipath
