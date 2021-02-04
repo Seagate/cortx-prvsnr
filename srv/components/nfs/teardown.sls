@@ -15,6 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% import_yaml 'components/defaults.yaml' as defaults %}
+include:
+  - components.nfs.stop
+
 Remove NFS packages:
   pkg.removed:
     - pkgs:
@@ -48,6 +52,23 @@ Remove prereq packages for NFS:
 # other important system libraries, don't remove them.
       #- libblkid
       #- krb5-libs
+
+# TODO Test
+Delete kvsns.ini file:
+  file.absent:
+    - name: /etc/kvsns.d/kvsns.ini
+
+Delete ganesha conf file:
+  file.absent:
+    - name: /etc/ganesha/ganesha.conf
+
+Delete NFS yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.nfs.repo.id }}
+
+Delete NFS uploads repo:
+  pkgrepo.absent:
+    - name: {{ defaults.nfs.uploads_repo.id }}
 
 Delete nfs checkpoint flag:
   file.absent:

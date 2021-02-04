@@ -15,20 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Disable ntpd:
-  service.dead:
-    - name: ntpd
-    - enable: false
-
-Remove_ntp_package:
-  pkg.removed:
-    - name: ntp
-
-Remove date sync:
-  file.absent:
-    - name: /etc/sysconfig/ntpdate
-
-Remove ntp configuration:
-  file.absent:
-    - name: /etc/ntp
-...
+#Disable and stop nfs service:
+#  service.dead:
+#    - name: nfs-server
+#    - enable: False
