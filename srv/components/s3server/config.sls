@@ -21,12 +21,14 @@ Stage - Post Install S3Server:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
 {% endif %}
 
+{#
 # Update password in authserver.properties:
 #   cmd.run:
 #     - name: /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh -l {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['iam_admin']['secret']) }} -p /opt/seagate/auth/resources/authserver.properties
 #     - onlyif: test -f /opt/seagate/auth/scripts/enc_ldap_passwd_in_cfg.sh
 #     - watch_in:
 #       - service: s3authserver
+#}
 
 Stage - Config S3Server:
   cmd.run:

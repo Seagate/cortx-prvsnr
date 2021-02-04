@@ -15,6 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for SSPL:
+Stage - Post Install SSPL:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:backup')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+
+Stage - Config SSPL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
+
+Stage - Init SSPL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
