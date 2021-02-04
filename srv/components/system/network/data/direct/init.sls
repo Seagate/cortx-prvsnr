@@ -30,7 +30,7 @@ Private direct network:
     - enabled: True
     - device: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][1] }}
     - type: eth
-    - onboot: yes
+    # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - defroute: no
     - nm_controlled: no
     - peerdns: no
