@@ -30,4 +30,6 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
+    cortx-s3server: latest
+    cortx-s3iamcli: latest
     kafka: 2.13-2.7.0
