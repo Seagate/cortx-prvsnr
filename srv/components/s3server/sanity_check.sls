@@ -32,6 +32,6 @@
 #     - name: netstat -plnt | grep :$(grep -Po "(?<=httpsPort=).*" /opt/seagate/cortx/auth/resources/authserver.properties)
 
 # Test section is missing in /opt/seagate/cortx/s3/conf/setup.yaml
-# Stage - Test S3:
-#   cmd.run:
-#     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:test')
+Stage - Test S3:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:test')
