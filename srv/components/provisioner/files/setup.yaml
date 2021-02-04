@@ -29,8 +29,10 @@ provisioner:
     script: null
     args: null
   reset:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/s3/bin/s3_setup
+    args:
+      - restore
+      - --config $URL
   backup:
     files:
       - /var/lib/seagate/cortx/provisioner/shared
