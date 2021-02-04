@@ -24,23 +24,18 @@ from .. import (
     config
 )
 from ..utils import run_subprocess_cmd
-from ..salt import (
-    local_minion_id,
-    SaltSSHClient
-)
-from ..pillar import (
-    PillarKey,
-    PillarResolver
-)
 from ..vendor import attr
 # TODO IMPROVE EOS-8473
 
 from .configure_setup import (
     SetupType
 )
+from .destroy_vm import (
+    DestroyNode,
+    SetupCtx
+)
 from .deploy import (
-    build_deploy_run_args,
-    Deploy
+    build_deploy_run_args
 )
 
 
@@ -49,17 +44,24 @@ logger = logging.getLogger(__name__)
 
 deploy_states = dict(
     controlpath=[
+        "ha.ctrlstack-ha.teardown",
         "csm.teardown",
         "uds.teardown",
         "sspl.teardown"
     ],
+    ha=[
+        "ha.iostack-ha.teardown",
+        "ha.cortx-ha.ha_cleanup",
+        "ha.cortx-ha.teardown",
+        "ha.corosync-pacemaker.teardown",
+        "hare.teardown"
+    ],
     iopath=[
-        "hare.teardown",
         "s3server.teardown",
-        "motr.teardown"
+        "motr.teardown",
+        "misc_pkgs.lustre.teardown"
     ],
     prereq=[
-        "misc_pkgs.lustre.teardown",
         "misc_pkgs.statsd.teardown",
         "misc_pkgs.kibana.teardown",
         "misc_pkgs.elasticsearch.teardown",
@@ -76,6 +78,7 @@ deploy_states = dict(
         "system.firewall.teardown",
         "misc_pkgs.rsyslog.teadrwon",
         "system.storage.teardown",
+        "system.storage.multipath.teardown",
         "system.teardown"
     ],
     bootstrap=[
@@ -93,89 +96,19 @@ run_args_type = build_deploy_run_args(deploy_states)
 
 
 @attr.s(auto_attribs=True)
-class SetupCtx:
-    ssh_client: SaltSSHClient
-
-
-@attr.s(auto_attribs=True)
 class RunArgsDestroy(run_args_type):
     stages: str = attr.ib(init=False, default=None)
 
 
 @attr.s(auto_attribs=True)
-class DestroyNode(Deploy):
+class DestroyHW(DestroyNode):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsDestroy
-    _salt_ssh = None
     _temp_dir = None
     setup_ctx: Optional[SetupCtx] = None
 
-    def _primary_id(self):
-        return local_minion_id()
-
-    def _secondaries(self):
-        local_node = self._primary_id()
-        secondaries = []
-        node_list = PillarKey('cluster')
-        pillar = PillarResolver(config.LOCAL_MINION).get([node_list])
-        pillar = next(iter(pillar.values()))
-        nodes = pillar[node_list]
-        for key in nodes.keys():
-            if 'srvnode' in key and local_node != key:
-                secondaries.append(key)
-        return secondaries
-
-    @staticmethod
-    def _create_ssh_client(c_path, roster_file):
-        # TODO IMPROVE EOS-8473 optional support for known hosts
-        ssh_options = [
-            'UserKnownHostsFile=/dev/null',
-            'StrictHostKeyChecking=no'
-        ]
-        return SaltSSHClient(
-            c_path=c_path,
-            roster_file=roster_file,
-            ssh_options=ssh_options
-        )
-
-    @staticmethod
-    def remove_dir(list_dir, nodes, setup_type):
-        for node in nodes:
-            for di in list_dir:
-                if setup_type == SetupType.SINGLE:
-                    cmd = f"rm -rf {di}"
-                else:
-                    cmd = f"ssh {node} rm -rf {di}"
-                logger.info(f"cleaning up {di} dir on {node}")
-                run_subprocess_cmd(cmd)
-
-    @staticmethod
-    def remove_pkgs(list_pkgs, nodes, setup_type):
-        for node in nodes:
-            for pkg in list_pkgs:
-                if setup_type == SetupType.SINGLE:
-                    cmd = f"yum erase -y {pkg}"
-                else:
-                    cmd = f"ssh {node} yum erase -y {pkg}"
-                logger.info(f"cleaning up pkg {pkg} on {node}")
-                run_subprocess_cmd(cmd)
-
-    def _apply_states(self, state, targets=None):
-        try:
-            if targets:
-                self.setup_ctx.ssh_client.state_apply(
-                    f"components.{state}",
-                    targets=targets
-                )
-            else:
-                self.setup_ctx.ssh_client.state_apply(
-                    f"components.{state}"
-                )
-        except Exception:
-            logger.warn(f"Failed {state} on {targets}")
-
-    def _run_states(self,  # noqa: C901 FIXME
-        states_group: str, run_args: run_args_type):
+    def _run_states(self,
+        states_group: str, run_args: run_args_type):  # noqa: C901 FIXME
         setup_type = run_args.setup_type
         targets = run_args.targets
         states = deploy_states[states_group]
@@ -204,23 +137,18 @@ class DestroyNode(Deploy):
                                                 [primary],
                                                 setup_type)
             else:
-                if state == "hare.teardown":
-                    try:
-                        logger.info("Teardown hctl cluster")
-                        run_subprocess_cmd("hctl shutdown")
-                    except Exception:
-                        logger.warn("Failed to destroy cluster")
                 if state in (
                     "system.storage.glusterfs.teardown.volume_remove",
                     "provisioner.teardown",
                     "provisioner.passwordless_remove",
+                    "system.storage.multipath.teardown"
                     "misc_pkgs.openldap.teardown",
-                    "misc_pkgs.rabbitmq"
+                    "misc_pkgs.rabbitmq.teardown"
                 ):
                     if state == 'provisioner.passwordless_remove':
                         list_dir = []
                         list_dir.append(str(config.profile_base_dir().parent))
-                        list_dir.append(config.CORTX_ROOT_DIR)
+                        # list_dir.append(config.CORTX_ROOT_DIR)
                         DestroyNode.remove_dir(list_dir,
                                                secondaries,
                                                setup_type)
@@ -241,6 +169,7 @@ class DestroyNode(Deploy):
                                                 SetupType.SINGLE)
 
                 elif state in (
+                    "ha.corosync-pacemaker.teardown",
                     "sspl.teardown"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
@@ -250,7 +179,7 @@ class DestroyNode(Deploy):
                     # Execute first on secondaries then on primary.
                     self._apply_states(state, '|'.join(secondaries))
 
-                elif state == (
+                elif state in (
                     "provisioner.salt.teardown.package_remove"
                 ):
                     logger.info(f"Applying '{state}' on {secondaries}")
@@ -264,9 +193,9 @@ class DestroyNode(Deploy):
         run_args = self._run_args_type(**kwargs)
         temp_dir = Path('/tmp/prvsnr/')
         temp_dir.mkdir(parents=True, exist_ok=True)
-        if self._is_hw():
+        if not self._is_hw():
             raise errors.ProvisionerError(
-                "The command is specifically for VM teardown. "
+                "The command is specifically for HW teardown. "
             )
         logger.info(f"Copy salt ssh config to tmp")
         salt_ssh_config = str(
@@ -288,6 +217,7 @@ class DestroyNode(Deploy):
         self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
             self._run_states('controlpath', run_args)
+            self._run_states('ha', run_args)
             self._run_states('iopath', run_args)
             self._run_states('prereq', run_args)
             self._run_states('system', run_args)
@@ -297,7 +227,6 @@ class DestroyNode(Deploy):
             if 'bootstrap' in run_args.states:
                 logger.info("Teardown Provisioner Bootstrapped Environment")
                 self._run_states('bootstrap', run_args)
-
             if 'system' in run_args.states:
                 logger.info("Teardown the system states")
                 self._run_states('system', run_args)
@@ -310,11 +239,16 @@ class DestroyNode(Deploy):
                 logger.info("Teardown the io path states")
                 self._run_states('iopath', run_args)
 
+            if 'ha' in run_args.states:
+                logger.info("Teardown the ha path states")
+                self._run_states('ha', run_args)
+
             if 'controlpath' in run_args.states:
                 logger.info("Teardown the control path states")
                 self._run_states('controlpath', run_args)
 
         logger.info(f"Remove salt ssh config from tmp")
         run_subprocess_cmd(f"rm -rf {str(temp_dir)}")
+
         logger.info("Destroy VM - Done")
         return run_args

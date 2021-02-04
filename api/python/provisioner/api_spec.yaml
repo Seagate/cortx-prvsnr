@@ -137,5 +137,5 @@ deploy_dual:
   type: DeployDual
 
 # destroy commands
-destroy_vm:
-  type: DestroyNode
+destroy:
+  type: Destroy
