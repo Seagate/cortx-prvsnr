@@ -20,7 +20,7 @@ commons:
     path: /opt/seagate/cortx_configs/healthmap/
     file: healthmap-schema.json
   version:
-    consul: 1.7.8-1
+    consul: 1.9.1-1
     # elasticsearch: 6.8.8-1
     elasticsearch-oss: 6.8.8-1
     erlang: latest
