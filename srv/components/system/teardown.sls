@@ -20,11 +20,6 @@ Remove cortx-py-utils dependencies:
     - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
     - bin_env: /usr/bin/pip3
 
-Remove cryptography pip package:
-  pip.removed:
-    - name: cryptography
-    - bin_env: /usr/bin/pip3
-
 Remove cortx-py-utils pip package:
   pkg.purged:
     - name: cortx-py-utils
