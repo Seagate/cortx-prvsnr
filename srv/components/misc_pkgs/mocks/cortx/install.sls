@@ -15,12 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo:
+  file.directory:
+    - mode: 755
+    - makedirs: True
+
+Stage - Install rpm tools:
+  pkg.installed:
+    - pkgs:
+      - rpm-build: latest
+      -  rpmdevtools: latest
+    - refresh: True
+
+Stage - Build mock RPMs:
+  cmd.run:
+    - name: su -c /opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/scripts/buildrpm.sh root
+
 Stage - Install CORTX mock repo:
   pkgrepo.managed:
     - name: cortx_mock_repo
     - humanname: CORTX Mock repo
 {# TODO: use path from pillars or any other configuration #}
-    - baseurl: file:///opt/seagate/cortx/provisioner/srv/components/misc_pkgs/files/cortx.mock.repo
+    - baseurl: file:///opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo
     - enabled: True
     - gpgcheck: 0
 
@@ -39,7 +55,7 @@ Stage - Install CORTX mock repo:
 
 /opt/seagate/cortx/{{ component_name }}/conf/setup.yaml:
   file.managed:
-    - source: salt://components/misc_pkgs/mocks/cortx/files/setup.mock.yaml/setup.yaml
+    - source: salt://components/misc_pkgs/mocks/cortx/files/setup_mock_yaml/setup.yaml
     - template: jinja
     - makedirs: True
     - defaults:
