@@ -15,23 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove_base_packages:
-  pkg.purged:
-    - pkgs:
-      - ipmitool
-      - bind-utils
-      - python3
-      - rsync
-      - ftp
-      - sshpass
-      - jq
-      - policycoreutils 
-      - policycoreutils-python
-      - python3-pip
-#     - python2-pip
-#     - python36-pip
-#     - vi-enhanced
-#     - tmux
+Remove cortx-py-utils dependencies:
+  pip.removed:
+    - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
+    - bin_env: /usr/bin/pip3
 
 Remove cryptography pip package:
   pip.removed:
@@ -41,6 +28,18 @@ Remove cryptography pip package:
 Remove cortx-py-utils pip package:
   pkg.purged:
     - name: cortx-py-utils
+
+Remove_base_packages:
+  pkg.purged:
+    - pkgs:
+      - ipmitool
+      - bind-utils
+      - rsync
+      - ftp
+      - sshpass
+      - jq
+      - policycoreutils 
+      - policycoreutils-python
 
 clean_yum_local:
   cmd.run:
