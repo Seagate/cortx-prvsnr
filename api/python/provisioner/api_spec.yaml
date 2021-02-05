@@ -91,6 +91,8 @@ sw_update:
   type: SWUpdate
 fw_update:
   type: FWUpdate
+rollback_update:
+  type: RollbackUpdate
 set_ssl_certs:
   type: SetSSLCerts
 reboot_server:

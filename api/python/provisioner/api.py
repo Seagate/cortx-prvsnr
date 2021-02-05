@@ -295,6 +295,17 @@ def sw_update(targets=ALL_MINIONS, nowait=False):
         'sw_update', targets=targets, nowait=nowait
     )
 
+def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
+    r"""Runs rollback logic if sw_update failed.
+
+    :param target_version: Target old version to rollback to
+    :param targets: (optional) A host to rollback. Default: all minions
+    :param nowait: (optional) Run asynchronously. Default: False 
+    """
+
+    return _api_call(
+        'rollback_update', target_version, targets=targets, nowait=nowait
+    )
 
 def fw_update(source, dry_run=False, nowait=False):
     r"""Runs firmware update logic.

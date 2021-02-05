@@ -229,6 +229,17 @@ class RunArgsUser:
     targets: str = RunArgs.targets
 
 
+@attr.s(auto_attribs=True)
+class RunArgsRollbackUpdate:
+    target_version: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "CORTX version to rollback"
+            }
+        }
+    )
+    targets: str = RunArgs.targets
+
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
 #          properly pillar itself
@@ -685,7 +696,78 @@ class SWUpdate(CommandParserFillerMixin):
             ) from update_exc
 
 
-# TODO TEST
+@attr.s(auto_attribs=True)
+class RollbackUpdate(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsRollbackUpdate
+
+    def _rollback_component(component, targets):
+        state_name = "components.{}.rollback".format(component)
+        try:
+            logger.info(
+                "Rolling back {} on {}".format(component, targets)
+            )
+            StatesApplier.apply([state_name], targets)
+        except Exception:
+            logger.exception(
+                "Failed to rollback {} on {}".format(component, targets)
+            )
+            raise
+
+    def run(self, target_version, targets):
+
+        rollback_path = PillarKey('rollback')
+        rollback_pillar = PillarResolver(LOCAL_MINION).get([rollback_path])
+        rollback_pillar = rollback_pillar[LOCAL_MINION][rollback_path]
+        cortx_tgt_version = (
+            target_version if target_version in rollback_pillar.keys() else None
+        )
+
+        if cortx_tgt_version is None:
+            logger.exception(
+                f'Rollback {cortx_tgt_version} target version data not available'
+            )
+        else:
+            txn_id_path = PillarKey(f"rollback/{cortx_version}")
+            txn_id_pillar = PillarResolver().get([txn_id_path])
+            txn_id_pillar = next(iter(txn_id_pillar.values()))
+            try:
+                for target in txn_id_pillar[txn_id_path]:
+                    txn_id = txn_id_pillar[txn_id_path][target]['yum_txn_id']
+
+                    if not txn_id or txn_id is values.MISSED:
+                        raise BadPillarDataError(
+                            f"yum txn id not available for {target}"
+                        )
+                    else:
+                        logger.info(f"Starting rollback on target {target}")
+                        salt_cmd_run(
+                            f"yum history rollback -y {txn_id}",
+                            targets=target
+                        )
+                        logger.info(
+                            f"Rollback on target {target} is completed"
+                        )
+
+                    logger.info('Restoring configurations for components')
+                    for component in (
+                        'motr',
+                        's3server',
+                        'hare',
+                        'ha.cortx-ha',
+                        'sspl',
+                        'uds',
+                        'csm'
+                    ):
+                        _rollback_component(component, targets)  
+            except Exception as exc:
+                logger.exception(
+                    'failed to rollback sw stack, reason {}'
+                    .format(exc)
+                )
+
+
+#TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams

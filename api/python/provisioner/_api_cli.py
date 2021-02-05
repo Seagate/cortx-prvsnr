@@ -174,6 +174,7 @@ for fun in [
     'set_network',
     'set_swupdate_repo',
     'sw_update',
+    'rollback_update',
     'set_ssl_certs',
     'fw_update',
     'get_cluster_id',
