@@ -2,8 +2,9 @@
 
 VERSION="2.0.0"
 
-WORKING_DIR="/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/"
+WORKING_DIR=${PWD}/../
 BUILD_DIR=$(realpath ~)
+
 cd ${BUILD_DIR}
 
 rm -rf ${BUILD_DIR}/rpmbuild
@@ -20,10 +21,6 @@ cd SOURCES/
 ls ./ | xargs -I{} tar czf {}.tar.gz {}
 
 cd ../
-ls SPECS/ | xargs -I{} rpmbuild -ba SPECS/{} &>/dev/null
-
-cp -r RPMS/noarch/* ${WORKING_DIR}/cortx_mock_repo/
+ls SPECS/ | xargs -I{} rpmbuild -ba SPECS/{}
 
 cd ${WORKING_DIR}
-
-createrepo ./cortx_mock_repo

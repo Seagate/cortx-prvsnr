@@ -20,16 +20,7 @@
     - mode: 755
     - makedirs: True
 
-Stage - Install rpm tools:
-  pkg.installed:
-    - pkgs:
-      - rpm-build: latest
-      -  rpmdevtools: latest
-    - refresh: True
-
-Stage - Build mock RPMs:
-  cmd.run:
-    - name: su -c /opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/scripts/buildrpm.sh root
+{# NOTE: to build rpm and create cortx mock repo need to execute ./buildrpm.sh #}
 
 Stage - Install CORTX mock repo:
   pkgrepo.managed:
