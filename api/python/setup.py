@@ -85,7 +85,7 @@ setup(
         ],
     },
     install_requires=[
-        'python >= 3.6.8',
+        'python3 >= 3.6.8',
         'PyYAML',
         'salt >= 3002.2'
     ],  # TODO
