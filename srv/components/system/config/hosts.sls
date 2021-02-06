@@ -34,13 +34,13 @@ hostsfile:
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
         # Management Network
         {%- if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-        {{ 'mgmt0' }}   {{ srvnode }}
+        {{ grains['ip4_interfaces']['mgmt0'][0] }}   {{ srvnode }}
         {%- else %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}   {{ srvnode }}
         {%- endif %}
         # Data Network
         {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
-        {{ 'data0' }}   {{ srvnode }}
+        {{ grains['ip4_interfaces']['data0'][0] }}   {{ srvnode }}
         {% else -%}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}   {{ srvnode }}-data-public
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode }}-data-private
