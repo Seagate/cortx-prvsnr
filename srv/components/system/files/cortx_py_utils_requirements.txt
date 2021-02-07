@@ -3,7 +3,7 @@ elasticsearch-dsl==6.4.0
 python-consul==1.1.0
 schematics==2.1.0
 toml==0.10.0
-cryptography==2.8
+cryptography==3.2
 PyYAML==5.1.2
 configparser==4.0.2
 networkx==2.4
