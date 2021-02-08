@@ -301,8 +301,8 @@ def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
 
     Rollback all CORTX components to the specified target_version.
 
-    Assumptions - rollback pillar is updated, with specified target_version 
-    as 'cortx_version' and yum txn ids for each node 
+    Assumptions - rollback pillar is updated, with specified target_version
+    as 'cortx_version' and yum txn ids for each node
     rollback:
       <cortx-version>:
         <node-id-x>:
