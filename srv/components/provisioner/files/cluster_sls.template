@@ -69,6 +69,7 @@ cluster:
         public_ip:                    # DHCP is assumed if left blank
         netmask:
         gateway:                      # Gateway IP of Management Network. Not required for DHCP.
+        mtu: 1500
       data:                           # Data network interfaces
         public_interfaces:
           - eth1                      # Public Data
@@ -80,6 +81,7 @@ cluster:
         private_ip:                   # Fixed IP of Private Data Network
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
+        mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
         roaming_ip:                   # Applies to private data network
     storage:
       {% for num in range(num_of_nodes) -%}

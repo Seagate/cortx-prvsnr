@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Backup files for CSM:
-  module.run:
-    - sync.backup_files:
-      - component: csm
+Stage - Backup files for S3Server:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:backup')

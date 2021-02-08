@@ -28,12 +28,12 @@ Install common runtime libraries:
 Install s3server package:
   pkg.installed:
     - name: cortx-s3server
-    - version: {{ pillar['s3server']['version']['cortx-s3server'] }}
+    - version: {{ pillar['commons']['version']['cortx-s3server'] }}
     - refresh: True
 
 Install cortx-s3iamcli:
   pkg.installed:
     - pkgs:
-      - cortx-s3iamcli: {{ pillar['s3server']['version']['cortx-s3iamcli'] }}
+      - cortx-s3iamcli: {{ pillar['commons']['version']['cortx-s3iamcli'] }}
       # - s3iamcli-devel
       # - s3server-debuginfo

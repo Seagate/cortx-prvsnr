@@ -103,14 +103,14 @@ def conf_cmd(conf_file, conf_key):
                 # If args is a list, join the elements into a string
                 if isinstance(setup_args, list):
                     setup_args = ' '.join(setup_args)
-                    setup_args = setup_args.replace(
-                        "$URL",
-                        confstore_url
-                    )
                     logger.debug(
                         f"Component Setup Command Args: {setup_args}"
                     )
 
+                setup_args = setup_args.replace(
+                    "$URL",
+                    confstore_url
+                )
                 ret_val = setup_cmd + " " + str(setup_args)
                 logger.debug(f"Component Setup: {ret_val}")
 
