@@ -96,14 +96,7 @@ class RunArgsConfigureSetup:
     setup_type: str = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        if self.number_of_nodes == 1:
-            self.setup_type = SetupType.SINGLE
-        elif self.number_of_nodes == 2:
-            self.setup_type = SetupType.DUAL
-        elif self.number_of_nodes == 3:
-            self.setup_type = SetupType._3_NODE
-        else:
-            self.setup_type = SetupType.GENERIC
+        pass
 
 
 @attr.s(auto_attribs=True)
@@ -128,10 +121,14 @@ class ConfigureSetup(CommandParserFillerMixin):
 
             if len(val) > 2 and val[-1] in conf_values:
                 params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = input[key]
+                logger.debug(f"Params generated: {params}")
 
             elif len(val) > 1 and val[-1] in conf_values:
                 params[f'{val[-2]}_{val[-1]}'] = input[key]
+                logger.debug(f"Params generated: {params}")
+
             else:
+                logger.debug(f"Params generated: {params}")
                 params[val[-1]] = input[key]
         return params
 
@@ -207,34 +204,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                        "provisioner", "pillar_set",
                        key, f"{content[section][pillar_key]}"])
 
-        # Update cluster/node_list
-        run_subprocess_cmd([
-            "provisioner", "pillar_set",
-            "cluster/node_list", f"[{','.join(node_list)}]"])
-
         if content.get('cluster', None):
             if content.get('cluster').get('cluster_ip', None):
                 run_subprocess_cmd([
                        "provisioner", "pillar_set",
                        "s3clients/ip",
                        f"{content.get('cluster').get('cluster_ip')}"])
-
-        if 3 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"3_node\""])
-        elif 2 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"dual\""])
-        elif 1 == int(number_of_nodes):
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"single\""])
-        else:
-            run_subprocess_cmd([
-                "provisioner", "pillar_set",
-                "cluster/type", "\"generic\""])
 
         if count > 0:
             raise ValueError(f"Node information for {count} node missing")
