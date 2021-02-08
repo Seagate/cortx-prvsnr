@@ -16,9 +16,9 @@
 #
 
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-# Shutdown Cluster:
-#   cmd.run:
-#     - name: hctl shutdown
+Shutdown Cluster:
+  cmd.run:
+    - name: hctl shutdown
 {% else %}
 Start hare on non-primary node:
   test.show_notification:

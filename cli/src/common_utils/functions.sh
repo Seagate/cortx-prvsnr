@@ -773,7 +773,7 @@ EOF
 
     if [[ -n "$_bundle_base_url" ]]; then
         _cortx_deps_repo="${bundle_base_url}/3rd_party"
-        _saltstack_repo="${_cortx_deps_repo}/commons/saltstack-3001"
+        _saltstack_repo="${_cortx_deps_repo}/commons/saltstack"
         _epel_repo="${_cortx_deps_repo}/EPEL-7"
 
 ! read -r -d '' _script << EOF
@@ -840,11 +840,11 @@ function install_salt_repo {
     local _salt_repo_file="${_repo_base_dir}/saltstack.repo"
     local _salt_repo_bak_file="${_repo_base_dir_backup}/saltstack.repo.bak"
     # local _salt_repo_url="${SALT_REPO_URL:-https://archive.repo.saltstack.com/py3/redhat/\$releasever/\$basearch/archive/2019.2.0}"
-    local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3001}"
+    local _salt_repo_url="${SALT_REPO_URL:-https://repo.saltstack.com/py3/redhat/\$releasever/\$basearch/3002}"
     local _project_repos="$repo_root_dir/files/etc/yum.repos.d"
 
     if [[ -n "$_bundle_base_url" ]]; then
-        _salt_repo_url="${bundle_base_url}/3rd_party/commons/saltstack-3001"
+        _salt_repo_url="${bundle_base_url}/3rd_party/commons/saltstack-3002"
     fi
 
     l_info "Installing Salt repository '$_hostspec'"

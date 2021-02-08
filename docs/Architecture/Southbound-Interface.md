@@ -35,31 +35,36 @@ This file has the following structure:
 
 <component>:
   post_install:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup post_install
+    args: --config <URL>
+    
   config:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup config
+    args: --config <URL>
+    
   init:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup init
+    args: --config <URL>
+    
   test:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup test
+    args: --config <URL>
+    
   reset:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup reset
+    args: --config <URL>
+    
+  cleanup:
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup cleanup
+    args: --config <URL>
+    
   backup:
-    files:
-      - /var/lib/my_file1
-      - /etc/component/my_config_file2
-  sync:                               # No doc: avoid using this
-    files:
-      - /var/lib/my_file1
-      - /etc/component/my_config_file2
-  refresh_config:
-    script: null
-    args: null
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup backup
+    args: --location <URL>
+    
+  restore:
+    cmd: /opt/seagate/cortx/<component>/bin/<component>_setup restore
+    args: --location <URL>
 
 support_bundle:
   - /opt/seagate/cortx/provisioner/cli/provisioner-bundler
@@ -71,8 +76,10 @@ support_bundle:
 
 Each of the sub-sections (unless mentioned explicitly) will have the following parameters:
 
-  * `script`:  Script to be executed provided by component pertaining to this section.
+  * `cmd`:  Command to be executed provided by component pertaining to this section.
   * `args`:  A list of arguments (in YAML format) to be passed to the script.
+  * `--config <URL>`:  Source URL with cluster info
+  * `--location <URL>`:  Target URL as specific end-point to backup/restore config info
 
 Supported **Sub-sections** for `<component>` root node are listed below:
 
@@ -86,11 +93,12 @@ Supported **Sub-sections** for `<component>` root node are listed below:
 
 * `reset`: A reset script is supposed to cleanup the component after itself for any critical/non-critical data before the component package (rpm) is uninstalled.
 
-* `backup`: Backup section is slightly different as here we don't execute any scripts.  However, Provisioner would use a mechanism define in custom execution module `sync.py` to backup files (and restore when required).
-  * `files`: The list of files to be backed-up. The same list would be used as a reference for restore.  If a file specified in this list is missing, it would be skipped with a warning in `/var/log/seagate/provisioner/salt-minion.log`.
+* `cleanup`: Cleanup section would be used by the component to correct any deviations in config file detected by the component, which would have a detrimental impact on the service provided by the component.
 
-* `refresh_config`: Refresh config section would be used by the component to correct any deviations in config file detected by the component, which would have a detrimental impact on the service provided by the component.
+* `backup`: This section is useful to save component specific state and configuration information at specific location URL (Custom endpoint). The backed config will be helpful to recover saved state in case of any detrimental situation and replay same configuration on multiple nodes.
+
+* `restore`: This section is useful to restore component specific state and config information from specific location URL (Custom endpoint). The restored config will be helpful to recover saved state in case of any detrimental situation, provide debugging ability and replay configuration. 
 
 `support_bundle`: This is a special section used by [`cortx-manager`](https://github.com/Seagate/cortx-manager) to locate the script provided by the component for generating component specific support_bundle.
 
-**NOTE**: Any section left blank in `setup.yaml` would be neglected. `refresh_config` as of the time of writing is only called in `deploy_replacement` script on request by the components.
+**NOTE**: Any section left blank in `setup.yaml` would be neglected. `cleanup` as of the time of writing is only called in `deploy_replacement` script on request by the components.

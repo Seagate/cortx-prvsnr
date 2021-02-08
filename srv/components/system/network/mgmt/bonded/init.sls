@@ -51,12 +51,12 @@ Setup mgmt0 bonding:
     - userctl: no
     - defroute: yes
     # - slaves: em1 em2
-    - mtu: 1500
     - mode: active-backup
     - miimon: 100
 {% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
+    - mtu: {{ pillar['cluster'][node]['network']['mgmt']['mtu'] }}
 {% if pillar['cluster'][node]['network']['data']['netmask'] %}
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
