@@ -85,6 +85,8 @@ setup(
         ],
     },
     install_requires=[
+        'jsonschema',
+        'requests',
         'PyYAML',
         'salt >= 3002.2'
     ],  # TODO
