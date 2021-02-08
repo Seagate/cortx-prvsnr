@@ -70,7 +70,8 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run,
+    local_minion_id
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -701,7 +702,7 @@ class RollbackUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsRollbackUpdate
 
-    def _rollback_component(component, targets):
+    def _rollback_component(self, component, targets):
         state_name = "components.{}.rollback".format(component)
         try:
             logger.info(
@@ -716,20 +717,23 @@ class RollbackUpdate(CommandParserFillerMixin):
 
     def run(self, target_version, targets):
 
+        local_minion = local_minion_id()
         rollback_path = PillarKey('rollback')
-        rollback_pillar = PillarResolver(LOCAL_MINION).get([rollback_path])
-        rollback_pillar = rollback_pillar[LOCAL_MINION][rollback_path]
+        rollback_pillar = PillarResolver(local_minion).get([rollback_path])
+        rollback_pillar = rollback_pillar[local_minion][rollback_path]
         cortx_tgt_version = (
-            target_version if target_version in rollback_pillar.keys() else None
+            target_version
+            if target_version in rollback_pillar.keys()
+            else None
         )
 
         if cortx_tgt_version is None:
             logger.exception(
-                f'Rollback {cortx_tgt_version} target version data not available'
+                f'{target_version} version data not available for rollback'
             )
         else:
-            txn_id_path = PillarKey(f"rollback/{cortx_version}")
-            txn_id_pillar = PillarResolver().get([txn_id_path])
+            txn_id_path = PillarKey(f"rollback/{cortx_tgt_version}")
+            txn_id_pillar = PillarResolver(local_minion).get([txn_id_path])
             txn_id_pillar = next(iter(txn_id_pillar.values()))
             try:
                 for target in txn_id_pillar[txn_id_path]:
@@ -759,7 +763,11 @@ class RollbackUpdate(CommandParserFillerMixin):
                         'uds',
                         'csm'
                     ):
-                        _rollback_component(component, targets)  
+                        self._rollback_component(component, targets)
+                    logger.info(
+                        "Configurations restored successfully "
+                        f"on target {target}"
+                    )
             except Exception as exc:
                 logger.exception(
                     'failed to rollback sw stack, reason {}'
@@ -767,7 +775,7 @@ class RollbackUpdate(CommandParserFillerMixin):
                 )
 
 
-#TODO TEST
+# TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams

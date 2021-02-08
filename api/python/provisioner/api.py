@@ -295,17 +295,33 @@ def sw_update(targets=ALL_MINIONS, nowait=False):
         'sw_update', targets=targets, nowait=nowait
     )
 
-def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
-    r"""Runs rollback logic if sw_update failed.
 
-    :param target_version: Target old version to rollback to
-    :param targets: (optional) A host to rollback. Default: all minions
-    :param nowait: (optional) Run asynchronously. Default: False 
+def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
+    r"""Rollback CORTX software stack.
+
+    Rollback all CORTX components to the specified target_version.
+
+    Assumptions - rollback pillar is updated, with specified target_version 
+    as 'cortx_version' and yum txn ids for each node 
+    rollback:
+      <cortx-version>:
+        <node-id-x>:
+          yum_txn_id: <ID>
+
+    Parameters
+    ----------
+    target_version
+        Rollback target old version
+    targets
+        (optional) A host to rollback. Default: all minions
+    nowait
+        (optional) Run asynchronously. Default: False
     """
 
     return _api_call(
         'rollback_update', target_version, targets=targets, nowait=nowait
     )
+
 
 def fw_update(source, dry_run=False, nowait=False):
     r"""Runs firmware update logic.
