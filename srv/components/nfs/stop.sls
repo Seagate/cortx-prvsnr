@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop RabbitMQ service:
-  service.dead:
-    - name: rabbitmq-server
+#Disable and stop nfs service:
+#  service.dead:
+#    - name: nfs-server
+#    - enable: False

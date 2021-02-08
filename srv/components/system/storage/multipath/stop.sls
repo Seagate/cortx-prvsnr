@@ -15,6 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop RabbitMQ service:
+include:
+  - components.system.storage.multipath.install
+
+Stop multipath service:
   service.dead:
-    - name: rabbitmq-server
+    - name: multipathd.service
+    - enable: false
+    - require:
+      - Install multipath

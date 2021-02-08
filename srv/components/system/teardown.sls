@@ -61,6 +61,14 @@ Remove /var/log/journal:
   file.absent:
     - name: /var/log/journal
 
+Remove /var/log/crash:
+  file.absent:
+    - name: /var/log/crash
+
+Remove coredumps_rotate cron.hourly:
+  file.absent:
+    - name: /etc/cron.hourly/coredumps_rotate
+
 Restart systemd-journald:
   module.run:
     - service.restart:
@@ -69,3 +77,7 @@ Restart systemd-journald:
 Delete system checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
+
+#Remove wheel access from sudoers:
+#  file.absent:
+#    - name: /etc/sudoers.d/wheel_access

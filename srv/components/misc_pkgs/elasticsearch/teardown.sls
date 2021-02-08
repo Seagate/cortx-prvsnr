@@ -15,9 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove elasticsearch:
+include:
+  - components.misc_pkgs.elasticsearch.stop
+
+Remove ES and related pkgs:
   pkg.purged:
-    - name: elasticsearch-oss
+    - pkgs:
+      - rsyslog-elasticsearch
+      - rsyslog-mmjsonparse
+      - elasticsearch-oss
+      - java-1.8.0-openjdk-headless
 
 Remove elasticsearch config:
   file.absent:

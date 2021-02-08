@@ -15,22 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Log rotate teardown start
-# logrotate.d
-# Remove logrotate directory:
-#   file.absent:
-#     - name: /etc/logrotate.d
+Remove logrotate package:
+  pkg.purged:
+    - name: logrotate
 
-# # general settings
-# Remove generic logrotate config:
-#   file.absent:
-#     - name: /etc/logrotate.conf
-#     - source: salt://components/system/files/etc/logrotate.conf
+Remove generic logrotate config:
+  file.absent:
+    - name: /etc/logrotate.conf
 
-# Remove logrotate
-# Remove logrotate package:
-#   pkg.purged:
-#     - name: logrotate
+Remove logrotate directory:
+  file.absent:
+    - name: /etc/logrotate.d
+
+Remove logrotate setup directory:
+  file.absent:
+    - name: /etc/logrotate_setup.d
+
+#Remove logrotate cron.daily:
+#  file.absent:
+#    - name: /etc/cron.daily/logrotate
+
+Remove logrotate cron.hourly:
+  file.absent:
+    - name: /etc/cron.hourly/logrotate
 
 Delete logrotate checkpoint flag:
   file.absent:
