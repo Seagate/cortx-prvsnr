@@ -54,6 +54,8 @@ class SetupType(Enum):
     DUAL = "dual"
     GENERIC = "generic"
     THREE_NODE = "3_node"
+    LDR_R1 = "LDR-R1"
+    LDR_R2 = "LDR-R2"
 
 
 class RunArgsConfigureSetupAttrs:
@@ -71,7 +73,7 @@ class RunArgsConfigureSetupAttrs:
                 'choices': [st.value for st in SetupType]
             }
         },
-        default=SetupType.GENERIC.value,
+        default=SetupType.SINGLE.value,
         # TODO EOS-12076 better validation
         converter=(lambda v: SetupType(v))
     )

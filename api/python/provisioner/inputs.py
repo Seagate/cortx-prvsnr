@@ -489,26 +489,27 @@ class StorageEnclosureParams():
     controller_type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Controller type"
     )
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosure(ParamGroupInputBase):
-    controller_a_ip: str = StorageEnclosureParams.controller_primary_mc_ip
-    controller_b_ip: str = StorageEnclosureParams.controller_secondary_mc_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-
-
-class StorageNodeParams():
-    _param_group = 'storage_node'
+    storage_metadata_device: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Storage Metadata Device"
+    )
+    storage_data_devices: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Storage Data Devices"
+    )
     hostname: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Hostname"
+        _param_group, descr="Node Hostname"
     )
 
 
 @attr.s(auto_attribs=True)
-class StorageNode(ParamGroupInputBase):
-    hostname: str = StorageNodeParams.hostname
+class StorageEnclosure(ParamGroupInputBase):
+    type: str = StorageEnclosureParams.type
+    controller_a_ip: str = StorageEnclosureParams.controller_primary_mc_ip
+    controller_b_ip: str = StorageEnclosureParams.controller_secondary_mc_ip
+    controller_user: str = StorageEnclosureParams.controller_user
+    controller_secret: str = StorageEnclosureParams.controller_secret
+    storage_metadata_device: str = StorageEnclosureParams.storage_metadata_device
+    storage_data_devices: str = StorageEnclosureParams.storage_data_devices
+    hostname: str = StorageEnclosureParams.hostname
 
 
 class NodeNetworkParams():
@@ -516,20 +517,8 @@ class NodeNetworkParams():
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Common Server configuration"
     )
-    search_domains: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="list of search domains as json"
-    )
-    dns_servers: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="list of dns servers as json"
-    )
     cluster_id: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Cluster ID"
-    )
-    storage_metadata_device: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Storage Metadata Device"
-    )
-    storage_data_devices: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Storage Data Devices"
     )
     network_data_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data network iface"
@@ -560,6 +549,14 @@ class NodeNetworkParams():
         _param_group, descr="node data gateway IP",
         validator=Validation.check_ip4
     )
+    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data iface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management iface IP",
+        validator=Validation.check_ip4
+    )
     pvt_ip_addr: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data iface private IP",
         validator=Validation.check_ip4
@@ -568,12 +565,7 @@ class NodeNetworkParams():
 
 @attr.s(auto_attribs=True)
 class NodeNetwork(ParamGroupInputBase):
-    search_domains: List = NodeNetworkParams.search_domains
-    dns_servers: List = NodeNetworkParams.dns_servers
     cluster_id: str = NodeNetworkParams.cluster_id
-    storage_metadata_device: str = NodeNetworkParams.storage_metadata_device
-    storage_data_devices: str = NodeNetworkParams.storage_data_devices
-    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
     network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
@@ -581,6 +573,9 @@ class NodeNetwork(ParamGroupInputBase):
     network_mgmt_interfaces: str = NodeNetworkParams.network_mgmt_interfaces
     network_data_netmask: str = NodeNetworkParams.network_data_netmask
     network_data_gateway: str = NodeNetworkParams.network_data_gateway
+    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
+    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
+    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
 
 
@@ -600,14 +595,6 @@ class NodeParams():
         _param_group, descr="node BMC  IP", default=UNCHANGED,
         validator=Validation.check_ip4
     )
-    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data iface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management iface IP",
-        validator=Validation.check_ip4
-    )
 
 
 @attr.s(auto_attribs=True)
@@ -616,8 +603,6 @@ class Node(ParamGroupInputBase):
     roles: str = NodeParams.roles
     is_primary: str = NodeParams.is_primary
     bmc_ip: str = NodeParams.bmc_ip
-    network_data_public_ip_addr: str = NodeParams.network_data_public_ip_addr
-    network_mgmt_public_ip_addr: str = NodeParams.network_mgmt_public_ip_addr
 
 
 class NetworkParams():
@@ -932,3 +917,8 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
     def is_iso(self):
         return self.is_local() and self.source.is_file()
+
+
+@attr.s(auto_attribs=True)
+class SWUpgradeRepo(SWUpdateRepo):
+    _param_di = param_spec['swupgrade/repo']

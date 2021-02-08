@@ -291,18 +291,18 @@ def test_set_network():
     api_call(
         'set_network',
         primary_hostname='host1',
-        primary_floating_ip='1.2.3.4',
+        primary_data_roaming_ip='1.2.3.4',
         primary_gateway_ip='1.2.3.4',
-        primary_mgmt_ip='1.2.3.4',
+        primary_mgmt_public_ip='1.2.3.4',
         primary_mgmt_netmask='255.255.255.0',
-        primary_data_ip='1.2.3.4',
+        primary_data_public_ip='1.2.3.4',
         primary_data_netmask='255.255.255.0',
         secondary_hostname='host2',
         secondary_floating_ip='1.2.3.4',
         secondary_gateway_ip='1.2.3.4',
-        secondary_mgmt_ip='1.2.3.4',
+        secondary_mgmt_public_ip='1.2.3.4',
         secondary_mgmt_netmask='255.255.255.0',
-        secondary_data_ip='1.2.3.4',
+        secondary_data_public_ip='1.2.3.4',
         secondary_data_netmask='255.255.255.0',
     )
 
@@ -310,10 +310,10 @@ def test_set_network():
 
     pillar_nw_primary_mgmt_ip = pillar[
         'srvnode-1'
-    ]['cluster']['srvnode-1']['network']['mgmt_nw']['ipaddr']
+    ]['cluster']['srvnode-1']['network']['mgmt']['public_ip']
     pillar_nw_primary_data_ip = pillar[
         'srvnode-1'
-    ]['cluster']['srvnode-1']['network']['data_nw']['public_ip_addr']
+    ]['cluster']['srvnode-1']['network']['data']['public_ip']
     pillar_nw_primary_gateway_ip = pillar[
         'srvnode-1'
     ]['cluster']['srvnode-1']['network']['gateway_ip']
@@ -349,8 +349,8 @@ def test_set_network():
 
     api_call(
         'set_network',
-        primary_mgmt_ip=new_nw_primary_mgmt_ip,
-        primary_data_ip=new_nw_primary_data_ip,
+        primary_mgmt_public_ip=new_nw_primary_mgmt_ip,
+        primary_data_public_ip=new_nw_primary_data_ip,
         primary_gateway_ip=new_nw_primary_gateway_ip,
         primary_hostname=new_nw_primary_hostname
     )

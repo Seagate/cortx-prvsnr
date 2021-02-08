@@ -72,10 +72,10 @@ export hostname_a=$(hostname)
 export hostname_b=$($ssh_cmd ${pvt_ip_b} hostname)
 
 function get_nw_interface_names {
-    interface_mgmt_a=$(salt-call pillar.get cluster:srvnode-1:network:mgmt_nw:iface:0 --output=newline_values_only)
-    interface_data_a=$(salt-call pillar.get cluster:srvnode-1:network:data_nw:iface:0 --output=newline_values_only)
-    interface_mgmt_b=$(salt-call pillar.get cluster:srvnode-2:network:mgmt_nw:iface:0 --output=newline_values_only)
-    interface_data_b=$(salt-call pillar.get cluster:srvnode-2:network:data_nw:iface:0 --output=newline_values_only)
+    interface_mgmt_a=$(salt-call pillar.get cluster:srvnode-1:network:mgmt:interface:0 --output=newline_values_only)
+    interface_data_a=$(salt-call pillar.get cluster:srvnode-1:network:data:interface:0 --output=newline_values_only)
+    interface_mgmt_b=$(salt-call pillar.get cluster:srvnode-2:network:mgmt:interface:0 --output=newline_values_only)
+    interface_data_b=$(salt-call pillar.get cluster:srvnode-2:network:data:interface:0 --output=newline_values_only)
 }
 
 function stop_rabbitmq_cluster {
@@ -256,24 +256,24 @@ function reset_pub_data_ips {
     echo "Removing the IPs of public data network from Salt configuration" | tee -a ${LOG_FILE}
 
     echo "Fetching public data IP for server A from cluster pillar" >> ${LOG_FILE}
-    pub_dip1=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    pub_dip1=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data/public_ip --output=newline_values_only)
     if [[ ! -z $pub_dip1 ]]; then
         echo "Removing public data IP for server A from cluster pillar" >> ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-1/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data/public_ip \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-1/network/data/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
     else
         echo "Public data IP for server A already reset from Salt configuration" | tee -a ${LOG_FILE}
     fi
 
 
     echo "Fetching public data IP for server B from cluster pillar" >> ${LOG_FILE}
-    pub_dip2=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data_nw/public_ip_addr --output=newline_values_only)
+    pub_dip2=$(salt 'srvnode-1' pillar.get cluster:srvnode-1/network/data/public_ip --output=newline_values_only)
     if [[ ! -z $pub_dip2 ]]; then
         echo "Removing public data IP for server B from cluster pillar" >> ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/public_ip_addr \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
-        provisioner pillar_set cluster/srvnode-2/network/data_nw/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data/public_ip \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data/gateway \"\" --logfile --logfile-filename ${LOG_FILE}
+        provisioner pillar_set cluster/srvnode-2/network/data/netmask \"\" --logfile --logfile-filename ${LOG_FILE}
     else
         echo "Public data IP for server B already reset from Salt configuration" | tee -a ${LOG_FILE}
     fi
@@ -290,14 +290,14 @@ function reset_pub_data_ips {
 function reset_pub_mgmt_ips {
     echo "Removing the IPs of public management network from Salt Pillar" | tee -a ${LOG_FILE}
     echo "Removing public management IP for Server A from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt/public_ip PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-1/network/mgmt/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
 
     echo "Removing public management IP for Server B from cluster pillar" >> ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/public_ip_addr PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
-    provisioner pillar_set cluster/srvnode-2/network/mgmt_nw/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt/public_ip PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt/gateway PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
+    provisioner pillar_set cluster/srvnode-2/network/mgmt/netmask PRVSNR_UNDEFINED --logfile --logfile-filename ${LOG_FILE}
     echo "Done" | tee -a ${LOG_FILE}
 }
 

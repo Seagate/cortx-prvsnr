@@ -1,9 +1,14 @@
-{%- set nodes = pillar['cluster']['node_list'] -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 {%- do nodes.remove(grains['id']) -%}
-{%- set node_ip = nodes[0] -%}
-{%- set data_if = pillar['cluster'][node_ip]['network']['data_if'] -%}
+{%- set remote_node = nodes[0] -%}
+{%- set data_if = pillar['cluster'][remote_node]['network']['data_if'] -%}
 
-{%- for host, ip in salt['mine.get'](node_ip, 'data_ip_addrs').items() -%}
+{%- for host, ip in salt['mine.get'](remote_node, 'data_ip_addrs').items() -%}
 DST={{ ip[0] }}
 {% endfor %}
 SRC={{ grains['ip4_interfaces'][data_if][0] }}

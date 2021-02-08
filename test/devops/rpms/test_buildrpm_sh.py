@@ -155,8 +155,8 @@ def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
 @pytest.mark.env_level('base')
 def test_rpm_prvsnr_depends_on_salt_3001(mhost):
     depends = mhost.check_output('rpm -qpR {}'.format(mhost.rpm_prvsnr))
-    assert 'salt-master = 3001\n' in depends
-    assert 'salt-minion = 3001\n' in depends
+    assert 'salt-master = 3002\n' in depends
+    assert 'salt-minion = 3002\n' in depends
 
 
 @pytest.mark.isolated

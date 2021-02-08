@@ -15,25 +15,47 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-hostsfile:
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+Hostsfile update for manangement interfaces:
   file.blockreplace:
     - name: /etc/hosts
     - backup: False
-    - marker_start: "#---pvt_data_start---"
-    - marker_end: "#---pvt_data_end---"
+    - marker_start: "#---mgmt_nw_start---"
+    - marker_end: "#---mgmt_nw_end---"
     - append_if_not_found: True
     - template: jinja
     - content: |
-        {%- if pillar['cluster']['node_list']|length > 1 %}
-        {%- for node in pillar['cluster']['node_list'] %}
-        {%- if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
-        {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}   {{ node -}}
-        {%- else %}
+        {%- for node in server_nodes %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data_nw']['iface'][1]][0] }}   {{ srvnode -}}
-        {% endfor -%}
-        {% endif -%}
-        {%- endfor %}
-        {%- else %}
-        127.0.0.1    srvnode-1
+        {% if ('mgmt0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['mgmt0'][0]) -%}
+        {{ grains['ip4_interfaces']['mgmt0'][0] }}   {{ srvnode }}
+        {% else -%}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}   {{ srvnode }}
         {%- endif %}
+        {% endfor -%}
+        {%- endfor %}
+        
+Hostsfile update for data interfaces:
+  file.blockreplace:
+    - name: /etc/hosts
+    - backup: False
+    - marker_start: "#---data_nw_start---"
+    - marker_end: "#---data_nw_end---"
+    - append_if_not_found: True
+    - template: jinja
+    - content: |
+        {%- for node in server_nodes %}
+        {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
+        {% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) -%}
+        {{ grains['ip4_interfaces']['data0'][0] }}   {{ srvnode }}
+        {% else -%}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}   {{ srvnode }}-data-public
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode }}-data-private
+        {% endif -%}
+        {% endfor -%}
+        {% endfor -%}

@@ -16,7 +16,7 @@
 #
 
 # start corosync-pacemaker through pcs
-{% if pillar['cluster'][grains['id']]['is_primary'] -%}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
 Start corosync-pacemaker:
   cmd.run:
     - name: pcs cluster start --all

@@ -48,6 +48,10 @@ Remove haproxy:
   pkg.purged:
     - name: haproxy
 
+Remove haproxy service:
+  file.absent:
+    - name: /etc/systemd/system/haproxy.service.d/override.conf
+
 Remove user haproxy:
   user.absent:
     - name: haproxy

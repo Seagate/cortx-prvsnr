@@ -20,24 +20,25 @@
 # Setup network for data interfaces
 Public direct network:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
-    - device: {{ pillar['cluster'][node]['network']['data_nw']['iface'][0] }}
+    - name: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
+    - device: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
     - type: eth
     - enabled: True
     - nm_controlled: no
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: no
-    - mtu: 9000
-{% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
+{% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
-    - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
+    - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
+    - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
+{% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
+{%- endif %}
+{% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
+{% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}
-{% if pillar['cluster'][node]['network']['data_nw']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['data_nw']['netmask'] }}
-{%- endif %}
-{% if pillar['cluster'][node]['network']['data_nw']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['data_nw']['gateway'] }}
-{% endif %}
+

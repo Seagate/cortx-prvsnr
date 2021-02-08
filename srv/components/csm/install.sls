@@ -24,7 +24,7 @@ Install csm package:
 
 Install cortx-cli package:
   pkg.installed:
-    - pkgs: 
+    - pkgs:
       - cortx-cli: latest
     - onlyif: yum info cortx-cli
     - refresh: True

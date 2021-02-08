@@ -15,16 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-storage_enclosure:
-    id: storage_node_1            # equivalent to fqdn for server node
-    type: RBOD                    # RBOD/JBOD/Virtual/Other
-    controller:
-      type: null
-      primary_mc:
-        ip: 10.0.0.2
-        port: 80
-      secondary_mc:
-        ip: 10.0.0.3
-        port: 80
-      user: manage
-      secret:
+include:
+  - components.system.storage.multipath.install
+
+Stop multipath service:
+  service.dead:
+    - name: multipathd.service
+    - enable: false
+    - require:
+      - Install multipath

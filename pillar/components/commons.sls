@@ -16,13 +16,11 @@
 #
 
 commons:
-  cortx_commons:
-    # includes different 3rd party artifacts
-    # (multiple rpm repositories, raw archives, bash scirpts etc.)
-    RedHat:
-    CentOS:
+  health-map:
+    path: /opt/seagate/cortx_configs/healthmap/
+    file: healthmap-schema.json
   version:
-    consul: 1.7.8-1
+    consul: 1.9.1-1
     # elasticsearch: 6.8.8-1
     elasticsearch-oss: 6.8.8-1
     erlang: latest
@@ -32,7 +30,6 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
-  repo:
-    # base urls for lustre yum repositories (one per different networks: tcp, o2ib)
-    # TODO IMPROVE EOS-12508 remove, should be related to cortx_common
-    lustre:
+    cortx-s3server: latest
+    cortx-s3iamcli: latest
+    kafka: 2.13-2.7.0

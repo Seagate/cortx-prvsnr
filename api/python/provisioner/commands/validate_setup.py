@@ -20,7 +20,7 @@ from typing import List
 
 from ..inputs import (
     NetworkParams, ReleaseParams, StorageEnclosureParams,
-    NodeNetworkParams, StorageNodeParams, NodeParams
+    NodeNetworkParams, NodeParams
 )
 from ..vendor import attr
 
@@ -90,7 +90,7 @@ class StorageEnclosureParamsValidation:
 
 @attr.s(auto_attribs=True)
 class StorageNodeParamsValidation:
-    hostname: str = StorageNodeParams.hostname
+    hostname: str = StorageEnclosureParams.hostname
     _optional_param = []
 
     def __attrs_post_init__(self):
@@ -105,11 +105,9 @@ class StorageNodeParamsValidation:
 
 @attr.s(auto_attribs=True)
 class NodeNetworkParamsValidation:
-    search_domains: str = NodeNetworkParams.search_domains
-    dns_servers: str = NodeNetworkParams.dns_servers
+    search_domains: str = NetworkParams.search_domains
+    dns_servers: str = NetworkParams.dns_servers
     cluster_id: str = NodeNetworkParams.cluster_id
-    storage_metadata_device: str = NodeNetworkParams.storage_metadata_device
-    storage_data_devices: str = NodeNetworkParams.storage_data_devices
     bmc_user: str = NodeNetworkParams.bmc_user
     bmc_secret: str = NodeNetworkParams.bmc_secret
     network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
@@ -119,6 +117,9 @@ class NodeNetworkParamsValidation:
     network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
     network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
     pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+    storage_metadata_device: str = StorageEnclosureParams.storage_metadata_device
+    storage_data_devices: str = StorageEnclosureParams.storage_data_devices
+
 
     _optional_param = [
         'search_domains',
@@ -150,12 +151,18 @@ class NodeParamsValidation:
     is_primary: str = NodeParams.is_primary
     roles: str = NodeParams.roles
     bmc_ip: str = NodeParams.bmc_ip
-    network_data_public_ip_addr: str = NodeParams.network_data_public_ip_addr
-    network_mgmt_public_ip_addr: str = NodeParams.network_mgmt_public_ip_addr
+    cluster_id: str = NodeNetworkParams.cluster_id
+    bmc_user: str = NodeNetworkParams.bmc_user
+    bmc_secret: str = NodeNetworkParams.bmc_secret
+    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
+    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
+
 
     _optional_param = [
         'is_primary',
-        'roles',
+        'bmc_user',
+        'bmc_secret',
+        'cluster_id',
         'network_data_public_ip_addr',
         'network_mgmt_public_ip_addr'
     ]

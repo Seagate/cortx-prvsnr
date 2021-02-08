@@ -86,13 +86,18 @@
 # Require explicit names when deleting indices:
 #
 #action.destructive_requires_name: true
-
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 network.bind_host: ['localhost', {{ grains['id'] }} ]
 network.publish_host: [{{ grains['id'] }}]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
-discovery.zen.ping.unicast.hosts: {{ pillar['cluster']['node_list'] }}
-{%- if pillar['cluster']['node_list']|length <= 2 %}
+discovery.zen.ping.unicast.hosts: {{ server_nodes }}
+{%- if 2 >= (server_nodes|length) %}
 discovery.zen.minimum_master_nodes: 1
 {%- endif %} 
 path.data: /var/lib/elasticsearch

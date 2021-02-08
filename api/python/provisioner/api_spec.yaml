@@ -23,6 +23,9 @@ grains_get:
 pillar_get:
   type: PillarGet
   input_type: PillarKeysList
+pillar_export:
+  type: PillarExport
+  input_type: PillarKeysList
 get_params:
   type: Get
   input_type: ParamsList
@@ -78,6 +81,12 @@ set_swupdate_repo:
   states:
     post:
     - components.misc_pkgs.swupdate.repo
+set_swupgrade_repo:
+  type: SetSWUpgradeRepo
+  input_type: SWUpgradeRepo
+  states:
+    post:
+    - components.misc_pkgs.swupgrade.repo
 sw_update:
   type: SWUpdate
 fw_update:

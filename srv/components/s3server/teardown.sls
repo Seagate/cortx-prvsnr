@@ -20,7 +20,7 @@
 #-------------------------
 
 
-{% if pillar["cluster"][grains["id"]]["is_primary"] %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Stage - Post Install S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:reset')
@@ -102,6 +102,12 @@ Remove cortx-s3iamcli:
 #------------------------------
 # Teardown S3IAMCLI End
 #------------------------------
+
+{% if salt['file.directory_exists']('/var/seagate/s3') %}
+Remove working directory for S3 server:
+  file.absent:
+    - name: /var/seagate/s3
+{% endif %}
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 

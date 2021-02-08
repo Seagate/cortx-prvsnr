@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-uds:
-  version:
-    uds-pyi: latest
+#Disable and stop nfs service:
+#  service.dead:
+#    - name: nfs-server
+#    - enable: False

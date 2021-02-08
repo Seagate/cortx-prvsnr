@@ -15,8 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-s3server:
-    version:
-        cortx-s3server: latest
-        cortx-s3iamcli: latest
-    no_of_inst: 11
+{% set kafka_version = pillar['commons']['version']['kafka'] %}
+
+Start zoopkeper:
+  cmd.run:
+    - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'zookeeper' | grep -v grep
+
+Start kafka:
+  cmd.run:
+    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
+    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - unless: ps ax | grep 'kafka' | grep -v grep

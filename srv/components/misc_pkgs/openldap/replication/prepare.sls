@@ -15,7 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if pillar['cluster']['type'] != "single" -%}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{% if 1 < (server_nodes|length) -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/config.ldif',
       "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/config.ldif' },

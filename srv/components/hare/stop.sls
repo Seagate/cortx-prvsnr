@@ -15,10 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt["pillar.get"]('cluster:{0}:is_primary'.format(grains['id']), false) %}
-# Shutdown Cluster:
-#   cmd.run:
-#     - name: hctl shutdown
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+Shutdown Cluster:
+  cmd.run:
+    - name: hctl shutdown
 {% else %}
 Start hare on non-primary node:
   test.show_notification:

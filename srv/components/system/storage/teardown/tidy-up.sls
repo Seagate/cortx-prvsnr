@@ -15,7 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if (pillar['cluster'][grains['id']]['is_primary']) and (1 < pillar['cluster']['node_list'] | length) %}
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
+{%- if ("primary" in pillar['cluster'][grains['id']]['roles']) and
+  (1 < (server_nodes | length))
+%}
 Create tidy-up script:
   file.managed:
       - name: /tmp/storage-tidy-up.sh

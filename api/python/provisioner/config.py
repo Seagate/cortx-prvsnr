@@ -38,6 +38,9 @@ else:
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
+CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
+CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
+
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
 PRVSNR_PILLAR_DIR = PRVSNR_ROOT_DIR / 'pillar'
@@ -113,6 +116,7 @@ PRVSNR_CORTX_DEPS_ISO = (
 # FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
+PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('misc_pkgs/swupgrade/repo/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
@@ -153,7 +157,7 @@ PRVSNR_CORTX_COMPONENTS = [
     's3clients',
     's3server',
     'sspl',
-    'storage_enclosure',
+    'storage',
     'system',
     'uds'
 ]
@@ -367,6 +371,7 @@ class ServerType(Enum):
 
 # Constant block for setup info fields
 NODES = "nodes"
+STORAGE_SETS = "1"
 SERVERS_PER_NODE = "servers_per_node"
 STORAGE_TYPE = "storage_type"
 SERVER_TYPE = "server_type"
@@ -502,3 +507,30 @@ class ReleaseInfo(Enum):
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
 CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
+
+
+class SWUpgradeRepos(Enum):
+    """List of supported SW Upgrade Repositories."""
+
+    OS = "os"  # yum repo
+    third_party = "3rdparty"  # yum repo
+    cortx = "cortx"  # yum repo
+    python = "python"  # python index
+
+
+YUM_REPO_TYPE = "yum"
+
+SW_UPGRADE_REPOS = {
+    SWUpgradeRepos.OS.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.third_party.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.cortx.value: {
+        YUM_REPO_TYPE: True
+    },
+    SWUpgradeRepos.python.value: {
+        YUM_REPO_TYPE: False
+    }
+}

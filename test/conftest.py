@@ -108,11 +108,11 @@ DEFAULT_CLUSTER_SPEC = {
     'srvnode1': {
         'hostname': 'srvnode-1',
         'minion_id': 'srvnode-1',
-        'is_primary': True,
+        'roles': ['primary'],
     }, 'srvnode2': {
         'hostname': 'srvnode-2',
         'minion_id': 'srvnode-2',
-        'is_primary': False,
+        'roles': ['secondary'],
     }
 }
 
@@ -128,7 +128,7 @@ class HostMeta:
     label = attr.ib(converter=lambda v: '' if not v else v, default='')
     machine_name = attr.ib(default=None)
     hostname = attr.ib(default=None)
-    iface = attr.ib(default=None)
+    interface = attr.ib(default=None)
 
     _hostname = attr.ib(init=False, default=None)
     _tmpdir = attr.ib(init=False, default=None)
@@ -138,18 +138,18 @@ class HostMeta:
     _rpm_prvsnr_api = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        # TODO more smarter logic to get iface that is asseccible from host
+        # TODO more smarter logic to get interface that is asseccible from host
         # (relates to https://github.com/hashicorp/vagrant/issues/2779)
-        if self.iface is None:
+        if self.interface is None:
             if (
                 isinstance(self.remote, h.VagrantMachine) and
                 (self.remote.provider == 'vbox')
             ):
-                self.iface = 'enp0s8'
+                self.interface = 'enp0s8'
             else:
-                self.iface = 'eth0'
+                self.interface = 'eth0'
 
-        assert self.host.interface(self.iface).exists
+        assert self.host.interface(self.interface).exists
 
     @property
     def hostname(self):
@@ -159,7 +159,7 @@ class HostMeta:
 
     @property
     def ssh_host(self):
-        return self.host.interface(self.iface).addresses[0]
+        return self.host.interface(self.interface).addresses[0]
 
     @property
     def tmpdir(self):
@@ -512,7 +512,7 @@ def hosts_spec(request):
                 }
             },
             'minion_id': 'srvnode-1',
-            'is_primary': True,
+            'roles': ['primary'],
         }, 'srvnode2': {
             'remote': {
                 'hostname': 'srvnode-2',
@@ -526,7 +526,7 @@ def hosts_spec(request):
                 }
             },
             'minion_id': 'srvnode-2',
-            'is_primary': False,
+            'roles': ['secondary'],
         }
     }
 
@@ -1248,7 +1248,14 @@ def cortx_spec(request):
 # cortx_spec sanity checks
 @pytest.fixture
 def _cortx_spec(cortx_spec):
-    assert len({k: v for k, v in cortx_spec.items() if v['is_primary']}) == 1
+    assert (
+        len(
+            {
+                k: v for k, v in cortx_spec.items()
+                if "primary" in v['roles']
+            }
+        ) == 1
+    )
     return cortx_spec
 
 
@@ -1258,8 +1265,8 @@ def cortx_hosts(hosts, _cortx_spec, request):
     for label in hosts:
         if label in _cortx_spec:
             _hosts[label]['minion_id'] = _cortx_spec[label]['minion_id']
-            _hosts[label]['is_primary'] = _cortx_spec[label].get(
-                'is_primary', True
+            _hosts[label]['roles'] = _cortx_spec[label].get(
+                'roles', True
             )
 
     return _hosts
@@ -1267,7 +1274,7 @@ def cortx_hosts(hosts, _cortx_spec, request):
 
 @pytest.fixture
 def cortx_primary_host_label(cortx_hosts):
-    return [k for k, v in cortx_hosts.items() if v['is_primary']][0]
+    return [k for k, v in cortx_hosts.items() if "primary" in v['roles']][0]
 
 
 @pytest.fixture
@@ -1278,7 +1285,7 @@ def cortx_primary_mhost(cortx_primary_host_label, request):
 @pytest.fixture
 def cortx_primary_host_ip(cortx_primary_mhost):
     return cortx_primary_mhost.host.interface(
-        cortx_primary_mhost.iface
+        cortx_primary_mhost.interface
     ).addresses[0]
 
 
@@ -1317,10 +1324,11 @@ def configure_salt(
     for label, host_spec in cortx_hosts.items():
         minion_id = host_spec['minion_id']
         is_primary = (
-            'true' if host_spec['is_primary'] else 'false'
+            'true' if "primary" in host_spec['roles'] else 'false'
         )
         primary_host = (
-            "localhost" if host_spec['is_primary'] else cortx_primary_host_ip
+            "localhost" if "primary" in host_spec['roles']
+            else cortx_primary_host_ip
         )
         mhost = request.getfixturevalue('mhost' + label)
         mhost.check_output(
@@ -1354,7 +1362,7 @@ def sync_salt_modules(cortx_primary_mhost, install_provisioner):
 @pytest.fixture
 def mlocalhost(localhost, request):
     return LocalHostMeta(
-        None, localhost, None, request, label=None, iface='lo'
+        None, localhost, None, request, label=None, interface='lo'
     )
 
 
@@ -1498,7 +1506,7 @@ def discover_remote(
         request,
         label=host_fixture_label,
         machine_name=remote.name,
-        iface=_iface
+        interface=_iface
     )
 
 

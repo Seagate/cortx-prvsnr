@@ -15,9 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) -%}
+{% set s3client_ip = grains['ip4_interfaces']['data0'][0] %}
+{% else -%}
+{% set s3client_ip = grains['ip4_interfaces'][pillar['cluster'][grains['id']]['network']['data']['public_interfaces'][0]][0] %}
+{% endif -%}
 Append /etc/hosts:
-  file.line:
+  file.blockreplace:
     - name: /etc/hosts
-    - mode: ensure
-    - content: {{ pillar['s3clients']['s3server']['ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
-    - after: "::1.+localhost.+"
+    - backup: False
+    - marker_start: "#---s3client_start---"
+    - marker_end: "#---s3client_end---"
+    - append_if_not_found: True
+    - template: jinja
+    - content: {{ s3client_ip }}  s3.seagate.com sts.seagate.com iam.seagate.com  sts.cloud.seagate.com
+
+Copy client certs:
+  file.managed:
+    - name: /etc/ssl/stx-s3-clients/s3/ca.crt
+    - source: salt://components/s3clients/files/ca.crt
+    - makedirs: True
+    - force: True
+    - mode: 444

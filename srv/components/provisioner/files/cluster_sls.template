@@ -18,41 +18,82 @@
 
 {% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
 cluster:
-  cluster_ip:                         # Cluster IP for HAProxy
-  mgmt_vip:                           # Management VIP for CSM
+  cluster_id: {{ grains["cluster_id"] }}
+  storage_sets:
+    storage-set-1:
+      {% for num in range(num_of_nodes) %}
+      {% if 0 <= num <= 2 %}
+      - srvnode-{{ (num + 1) }}
+      {% endif %}
+      {% endfor %}
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
-  node_list:
+  server_nodes:
     {% for num in range(num_of_nodes) %}
-    - srvnode-{{ (num + 1) }}
+    {{ grains['machine_id'] }}: srvnode-{{ (num + 1) }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
   srvnode-{{ (num + 1) }}:
+    rack_id:
+    site_id:
+    storage_set_id: storage-set-1
+    node_id:
+    machine_id: {{ grains['machine_id'] }}
     hostname: srvnode-{{ (num + 1) }}
-    roles: []
+    node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
+    roles:
+      {% if 0 == num %}
+      - primary
+      {% else %}
+      - secondary
+      {% endif %}
+      {% if 0 == (num % 3) %}
+      - openldap_server
+      - kafka_server
+      {% else %}
+      - openldap_client
+      {% endif %}
+    {% if 0 == num %}
+    is_primary: True
+    {% else %}
+    is_primary: False
+    {% endif %}
     bmc:
       ip:
       user: ADMIN
       secret:
     network:
-      mgmt_nw:                        # Management network interfaces
-        iface:
+      mgmt:                           # Management network interfaces
+        interfaces:
           - eth0
-        public_ip_addr:               # DHCP is assumed if left blank
+        public_ip:                    # DHCP is assumed if left blank
         netmask:
-        gateway:                      # Gateway IP of Management Network. Not requried for DHCP.
-      data_nw:                        # Data network interfaces
-        iface:
+        gateway:                      # Gateway IP of Management Network. Not required for DHCP.
+        mtu: 1500
+      data:                           # Data network interfaces
+        public_interfaces:
           - eth1                      # Public Data
-          - eth2                       # Private Data (direct connect)
-        public_ip_addr:               # DHCP is assumed if left blank
+        private_interfaces:
+          - eth2                      # Private Data (direct connect)
+        interface_type: tcp           # tcp/o2ib
+        transport_type: lnet          # lnet/libfabric
+        public_ip:                    # DHCP is assumed if left blank
+        private_ip:                   # Fixed IP of Private Data Network
         netmask:
-        gateway:                      # Gateway IP of Public Data Network. Not requried for DHCP.
-        pvt_ip_addr:                  # Fixed IP of Private Data Network
+        gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
+        mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
         roaming_ip:                   # Applies to private data network
     storage:
-      metadata_device:                # Device for /var/motr and possibly SWAP
+      {% for num in range(num_of_nodes) -%}
+      enclosure_id: enclosure-{{ (num + 1) }}
+      {%- endfor %}
+      metadata_devices:               # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
+    {% if "physical" in grains["virtual"] %}
+    s3_instances: 11
+    {% else %}
+    s3_instances: 1
+    {% endif %}
   {% endfor %}

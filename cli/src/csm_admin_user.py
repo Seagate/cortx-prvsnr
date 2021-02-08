@@ -30,7 +30,7 @@
 #              cortx/base/user_collection/obj/
 #  -n N        node_id of replacing node i.e. srvnode-1/srvnode-2
 #  --syncpass  Sync csm admin user password
- 
+
 import subprocess
 import json
 import sys
@@ -46,9 +46,13 @@ def _run_command(cmd):
            return res.stdout.decode("utf-8")
 
 def _get_node_list():
-    res = _run_command(f" salt-call pillar.get cluster:node_list --out=json ")
-    result = json.loads(res)
-    return result["local"]
+    result = _run_command(f"salt-call pillar.item cluster --out=json ")
+    result = json.loads(result)
+    server_nodes = [
+        node for node in result["local"].keys()
+        if "srvnode-" in node
+    ]
+    return server_nodes
 
 def _get_all_csm_users(user_key, consul_path):
     res = _run_command(f"{consul_path} kv get -keys {user_key}")
@@ -100,11 +104,11 @@ def _update_password(node_id, user_id, passwd):
     res = _run_command(f" salt {node_id} cmd.run 'usermod {user_id} --password {passwd}' --out=json ")
     result = json.loads(res)
     if result[node_id] == "":
-        print("Admin user password set successfully") 
+        print("Admin user password set successfully")
 
-if __name__=='__main__':      
+if __name__=='__main__':
     import argparse
-    import provisioner    
+    import provisioner
 
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-c", type=str, default="/usr/bin/consul",
