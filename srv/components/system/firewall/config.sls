@@ -30,8 +30,8 @@ include:
   firewalld.service:
     - name: {{ service }}
     - ports:
-      {% for port in salt['pillar.get']('firewall:' + nic + ':ports' + service ) %}
-      - port
+      {% for port in salt['pillar.get']('firewall:' + nic + ':ports:' + service ) %}
+      - {{ port }}
       {% endfor %}
 
 
@@ -195,6 +195,6 @@ Management zone:
 Restart firewalld:
   module.run:
     - cmd.run:
-      - firewalld --reload
+      - firewall-cmd --reload
     # - service.restart:
     #   - firewalld
