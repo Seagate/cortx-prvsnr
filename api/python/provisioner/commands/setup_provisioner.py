@@ -619,7 +619,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 'host': node.host,
                 'user': node.user,
                 'port': node.port,
-                'priv': str(priv_key)
+                'priv': str(priv_key),
+                'minion_opts': {
+                    'use_superseded': ['module.run']
+                }
             } for node in nodes
         }
         dump_yaml(roster_path, roster)
