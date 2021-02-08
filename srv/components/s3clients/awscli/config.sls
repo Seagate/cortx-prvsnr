@@ -15,28 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Setup Credentials:
-  file.managed:
-    - name: ~/.aws/credentials
-    - source: salt://components/s3clients/awscli/files/.aws/credentials
-    - keep_source: False
-    - template: jinja
-    - makedirs: True
-    - replace: False
-    - create: True
-    - user: {{ salt['grains.get']('username') }}
-    - group: {{ salt['grains.get']('groupname') }}
-    - mode: 644
+# Setup Credentials:
+#   file.managed:
+#     - name: ~/.aws/credentials
+#     - source: salt://components/s3clients/awscli/files/.aws/credentials
+#     - keep_source: False
+#     - template: jinja
+#     - makedirs: True
+#     - replace: False
+#     - create: True
+#     - user: {{ grains['username'] }}
+#     - group: {{ grains['groupname'] }}
+#     - mode: 644
 
-Setup Configurations:
-  file.managed:
-    - name: ~/.aws/config
-    - source: salt://components/s3clients/awscli/files/.aws/config
-    - keep_source: False
-    - template: jinja
-    - makedirs: True
-    - replace: False
-    - create: True
-    - user: {{ salt['grains.get']('username') }}
-    - group: {{ salt['grains.get']('groupname') }}
-    - mode: 644
+# Setup Configurations:
+#   file.managed:
+#     - name: ~/.aws/config
+#     - source: salt://components/s3clients/awscli/files/.aws/config
+#     - keep_source: False
+#     - template: jinja
+#     - makedirs: True
+#     - replace: False
+#     - create: True
+#     - user: {{ grains['username'] }}
+#     - group: {{ grains['groupname'] }}
+#     - mode: 644

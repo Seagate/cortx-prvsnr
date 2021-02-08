@@ -20,7 +20,7 @@ commons:
     path: /opt/seagate/cortx_configs/healthmap/
     file: healthmap-schema.json
   version:
-    consul: 1.7.8-1
+    consul: 1.9.1-1
     # elasticsearch: 6.8.8-1
     elasticsearch-oss: 6.8.8-1
     erlang: latest
@@ -30,4 +30,6 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
+    cortx-s3server: latest
+    cortx-s3iamcli: latest
     kafka: 2.13-2.7.0

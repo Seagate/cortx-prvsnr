@@ -15,30 +15,55 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set node = grains['id'] %}
+# NOTE: Requires salt version 3002.2+
+{% if "3002" not in salt["test.version"]() %}
+Raise version mismatch exception:
+  test.fail_without_changes:
+    - name: "Salt version is less than required 3002.x version."
+{% endif %}
 
-# Setup network for data interfaces
-Public direct network:
-  network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
-    - device: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
-    - type: eth
+{% set node = grains['id'] %}
+Install teamd:
+  pkg.installed:
+    - name: teamd
+
+Create data0 interface file:
+    network.managed:
+    - name: data0
+    # - device: data0
+    - type: team
     - enabled: True
     - nm_controlled: no
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: no
-{% if pillar['cluster'][node]['network']['data']['public_ip'] %}
+    {% if pillar['cluster'][node]['network']['data']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['public_ip'] }}
-    - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
-{% if pillar['cluster'][node]['network']['data']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
-{%- endif %}
-{% if pillar['cluster'][node]['network']['data']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
-{% endif %}
-{%- else %}
+    - mtu: 9000
+    {%- else %}
     - proto: dhcp
-{%- endif %}
+    {%- endif %}
+    {% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
+    {%- endif %}
+    {% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
+    {% endif %}
+    - team_config:
+        runner:
+          hwaddr_policy: by_active
+          name: activebackup
+          link_watch:
+            name: ethtool
 
+{% for interface in pillar['cluster'][node]['network']['data']['interfaces'] %}
+{{ interface }}:
+    network.managed:
+    - name: {{ interface }}
+    # - device:  {{ interface }}
+    - type: teamport
+    - team_master: data0
+    - team_port_config:
+        prio: 100
+{% endfor %}

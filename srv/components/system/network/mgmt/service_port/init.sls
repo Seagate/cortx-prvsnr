@@ -33,7 +33,7 @@ Public direct network:
     - nm_controlled: no
     # Never add this NIC to default route
     - defroute: no
-    - mtu: 1500
+    - mtu: {{ pillar['cluster'][node]['network']['mgmt']['mtu'] }}
     # Static IP address
     - proto: none
     - ipaddr: 10.100.100.100

@@ -16,6 +16,5 @@
 #
 
 Stage - Restore files for Motr:
-  module.run:
-    - sync.restore_files:
-      - component: motr
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:restore')

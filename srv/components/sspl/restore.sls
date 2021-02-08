@@ -16,6 +16,5 @@
 #
 
 Stage - Restore files for SSPL:
-  module.run:
-    - sync.restore_files:
-      - component: sspl
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:restore')

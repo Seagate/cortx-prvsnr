@@ -183,7 +183,7 @@ if [[ "$in_docker" == true ]]; then
     output_dir="/tmp/out"
 fi
 
-    # --depends "salt >= 3001" \
+    # --depends "salt >= 3002" \
 $fpm_tool --input-type "python" \
     --output-type "$output_type" \
     --architecture "amd64" \
