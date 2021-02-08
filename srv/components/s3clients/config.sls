@@ -15,9 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 Append /etc/hosts:
   file.line:
     - name: /etc/hosts
     - mode: ensure
-    - content: {{ pillar['s3clients']['s3server']['ip'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
+    - content: {{ grains['ip4_interfaces']['data0'] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+{% else -%}
+    - content: {{ grains['ip4_interfaces'][pillar['cluster'][grains['id']]['network']['data']['public_interfaces'][0]][0] }}  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
+{% endif -%}%}
     - after: "::1.+localhost.+"
