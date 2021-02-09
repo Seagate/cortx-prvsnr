@@ -15,6 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+include:
+  - components.provisioner.teardown.package_remove
+  - components.provisioner.teardown.remove_repos
+
+
 Delete rsyslog provisioner conf:
   file.absent:
     - name: /etc/rsyslog.d/prvsnrfwd.conf
