@@ -33,6 +33,7 @@ from ..errors import (
     PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
+    SWStackRollbackError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
     ClusterMaintenanceDisableError,
@@ -729,7 +730,7 @@ class RollbackUpdate(CommandParserFillerMixin):
         )
 
         if cortx_tgt_version is None:
-            logger.exception(
+            raise ValueError(
                 f'{target_version} version data not available for rollback'
             )
         else:
@@ -770,10 +771,7 @@ class RollbackUpdate(CommandParserFillerMixin):
                         f"on target {target}"
                     )
             except Exception as exc:
-                logger.exception(
-                    'failed to rollback sw stack, reason {}'
-                    .format(exc)
-                )
+                raise SWStackRollbackError(exc) from exc
 
 
 # TODO TEST
