@@ -17,7 +17,6 @@
 
 from typing import Type, Optional
 import logging
-from pathlib import Path
 from .. import (
     inputs,
     errors,
