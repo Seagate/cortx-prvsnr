@@ -84,5 +84,5 @@ Step-4: Check that all yum repositories are listed in `$ yum repolist enabled` o
 Step-1: Ensure rollback pillar data is present/updated as part of sw_update command
         `$salt-call pillar.get rollback`
 
-Step-2: Run rollback_update api
-        `$provisioner rollback_update CORTX_VERSION`
+Step-2: Run sw_rollback api
+        `$provisioner sw_rollback CORTX_VERSION`

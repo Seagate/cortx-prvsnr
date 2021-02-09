@@ -261,7 +261,7 @@ class SWStackUpdateError(ProvisionerError):
         )
 
 
-class SWStackRollbackError(ProvisionerError):
+class SWRollbackError(ProvisionerError):
     _prvsnr_type_ = True
 
     def __init__(self, reason: Union[Exception, str]):

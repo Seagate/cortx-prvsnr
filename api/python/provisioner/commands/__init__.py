@@ -33,7 +33,7 @@ from ..errors import (
     PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
-    SWStackRollbackError,
+    SWRollbackError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
     ClusterMaintenanceDisableError,
@@ -232,7 +232,7 @@ class RunArgsUser:
 
 
 @attr.s(auto_attribs=True)
-class RunArgsRollbackUpdate:
+class RunArgsSWRollback:
     target_version: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -713,9 +713,9 @@ class SWUpdate(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class RollbackUpdate(CommandParserFillerMixin):
+class SWRollback(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsRollbackUpdate
+    _run_args_type = RunArgsSWRollback
 
     def run(self, target_version, targets):
 
@@ -757,13 +757,13 @@ class RollbackUpdate(CommandParserFillerMixin):
 
                     logger.info('Restoring configurations for components')
                     for component in (
-                        'motr',
-                        's3server',
-                        'hare',
-                        'ha.cortx-ha',
-                        'sspl',
+                        'csm',
                         'uds',
-                        'csm'
+                        'sspl',
+                        'ha.cortx-ha',
+                        'hare',
+                        's3server',
+                        'motr'
                     ):
                         _rollback_component(component, targets)
                     logger.info(
@@ -771,7 +771,7 @@ class RollbackUpdate(CommandParserFillerMixin):
                         f"on target {target}"
                     )
             except Exception as exc:
-                raise SWStackRollbackError(exc) from exc
+                raise SWRollbackError(exc) from exc
 
 
 # TODO TEST

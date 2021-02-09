@@ -296,7 +296,7 @@ def sw_update(targets=ALL_MINIONS, nowait=False):
     )
 
 
-def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
+def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     r"""Rollback CORTX software stack.
 
     Rollback all CORTX components to the specified target_version.
@@ -319,7 +319,7 @@ def rollback_update(target_version, targets=ALL_MINIONS, nowait=False):
     """
 
     return _api_call(
-        'rollback_update', target_version, targets=targets, nowait=nowait
+        'sw_rollback', target_version, targets=targets, nowait=nowait
     )
 
 
