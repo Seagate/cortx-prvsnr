@@ -20,9 +20,9 @@ include:
 
 {% set services = [] %}
 
-{% for nic in salt['pillar.get']('firewall').keys() %}
+{% for nic in pillar['firewall'].keys() %}
 
-{% for service in salt['pillar.get']('firewall:' + nic + ':ports') %}
+{% for service in pillar['firewall'][nic]['ports'] %}
 
 {% if service not in services %}
 
@@ -30,8 +30,8 @@ include:
   firewalld.service:
     - name: {{ service }}
     - ports:
-      {% for port in salt['pillar.get']('firewall:' + nic + ':ports' + service ) %}
-      - port
+      {% for port in pillar['firewall'][nic]['ports'][service] %}
+      - {{ port }}
       {% endfor %}
 
 
@@ -64,15 +64,15 @@ Data-zone:
     - prune_services: True
     - prune_interfaces: True
     - services:
-      {% for service in salt['pillar.get']('firewall:data_public:services') %}
+      {% for service in pillar['firewall']['data_public']['services'] %}
       - {{ service }}
       {% endfor %}
-      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
     - require:
       - Add public data zone
-      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
 
@@ -99,10 +99,10 @@ Public data zone:
     - prune_services: True
     - prune_interfaces: True
     - services:
-      {% for service in salt['pillar.get']('firewall:data_public:services') %}
+      {% for service in pillar['firewall']['data_public']['services'] %}
       - {{ service }}
       {% endfor %}
-      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
     - interfaces:
@@ -113,7 +113,7 @@ Public data zone:
     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add public data zone
-      {% for service in salt['pillar.get']('firewall:data_public:ports').keys() %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
 
@@ -153,10 +153,10 @@ Management zone:
     - prune_ports: True
     - prune_services: True
     - services:
-      {% for service in salt['pillar.get']('firewall:mgmt_public:services') %}
+      {% for service in pillar['firewall']['mgmt_public']['services'] %}
       - {{ service }}
       {% endfor %}
-      {% for service in salt['pillar.get']('firewall:mgmt_public:ports').keys() %}
+      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
       {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
@@ -172,7 +172,7 @@ Management zone:
       {% endif %}
     - require:
       # - Add management zone
-      {% for service in salt['pillar.get']('firewall:mgmt_public:ports').keys() %}
+      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
 
@@ -195,6 +195,6 @@ Management zone:
 Restart firewalld:
   module.run:
     - cmd.run:
-      - firewalld --reload
+      - firewall-cmd --reload
     # - service.restart:
     #   - firewalld

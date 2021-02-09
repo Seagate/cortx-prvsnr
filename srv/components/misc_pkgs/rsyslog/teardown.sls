@@ -21,3 +21,7 @@ include:
 Remove rsyslog service:
   pkg.purged:
     - name: rsyslog
+
+Delete rsyslog config file:
+  file.absent:
+    - name: /etc/rsyslog.conf

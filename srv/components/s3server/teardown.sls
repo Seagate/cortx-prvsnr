@@ -103,6 +103,12 @@ Remove cortx-s3iamcli:
 # Teardown S3IAMCLI End
 #------------------------------
 
+{% if salt['file.directory_exists']('/var/seagate/s3') %}
+Remove working directory for S3 server:
+  file.absent:
+    - name: /var/seagate/s3
+{% endif %}
+
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
 Remove s3server_uploads repo:

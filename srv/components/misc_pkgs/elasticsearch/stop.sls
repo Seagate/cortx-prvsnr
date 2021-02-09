@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop RabbitMQ service:
+Stop elasticsearch service:
   service.dead:
-    - name: rabbitmq-server
+    - name: elasticsearch
