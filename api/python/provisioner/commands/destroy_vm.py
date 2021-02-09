@@ -262,13 +262,13 @@ class DestroyNode(Deploy):
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
-        temp_dir = Path('/tmp/prvsnr/')
+        temp_dir = config.PRVSNR_TMP_DIR
         temp_dir.mkdir(parents=True, exist_ok=True)
         if self._is_hw():
             raise errors.ProvisionerError(
                 "The command is specifically for VM teardown. "
             )
-        logger.info(f"Copy salt ssh config to tmp")
+        logger.info(f"Copy salt ssh config to {temp_dir}")
         salt_ssh_config = str(
             config.PRVSNR_FACTORY_PROFILE_DIR / 'srv/config'
         )
