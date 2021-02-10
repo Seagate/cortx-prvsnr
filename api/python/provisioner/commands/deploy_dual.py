@@ -71,20 +71,18 @@ deploy_states = dict(
         "motr",
         "s3server"
     ],
-    ha=[
-        "ha.corosync-pacemaker",
-        "ha.haproxy.start",
-        "hare",
-        "ha.cortx-ha",
-        "ha.iostack-ha"
-    ],
     # states to be applied in desired sequence
     controlpath=[
         "sspl",
         "uds",
-        "csm",
-        "ha.ctrlstack-ha",
-        "ha.cortx-ha.ha"
+        "csm"
+    ],
+    ha=[
+        "ha.corosync-pacemaker.install",
+        "ha.corosync-pacemaker.config.base",
+        "ha.haproxy.start",
+        "hare",
+        "ha.cortx-ha",
     ],
     backup=[
         "provisioner.backup",
@@ -161,26 +159,12 @@ class DeployDual(Deploy):
             # FIXME EOS-12076 the following logic is only
             #       for legacy dual node setup
             for state in states:
-                if state == "ha.corosync-pacemaker":
-                    for _state, target in (
-                        ("install", targets),
-                        ("config.base", targets),
-                        ("config.authorize", primary),
-                        ("config.setup_cluster", primary),
-                        ("config.cluster_ip", primary),
-                        ("config.stonith", primary)
-                    ):
-                        self._apply_state(
-                            f"components.ha.corosync-pacemaker.{_state}",
-                            target,
-                            stages
-                        )
-
-                elif state in (
+                if state in (
                     "system.storage",
                     "sspl",
                     "csm",
-                    "provisioner.backup"
+                    "provisioner.backup",
+                    "ha.cortx-ha"
                 ):
                     # Consul takes time to come online after initialization
                     # (around 2-3 mins at times). We need to ensure
@@ -207,7 +191,7 @@ class DeployDual(Deploy):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-                    if state == "ha.iostack-ha":
+                    if state == "ha.cortx-ha":
                         self.ensure_consul_running()
 
     def run(self, **kwargs):  # noqa: C901 FIXME

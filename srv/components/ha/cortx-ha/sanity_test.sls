@@ -15,6 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+
 Test cortx-ha setup:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:test')
+
+{% else %}
+
+No HA sanity test on secondary node:
+  test.show_notification:
+    - text: "HA sanity test applies to primary node. There's no execution on secondary node"
+
+{% endif %}
