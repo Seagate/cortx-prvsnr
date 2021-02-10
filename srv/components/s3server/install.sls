@@ -31,9 +31,9 @@ Install s3server package:
     - version: {{ pillar['commons']['version']['cortx-s3server'] }}
     - refresh: True
 
-Install cortx-s3iamcli:
-  pkg.installed:
-    - pkgs:
-      - cortx-s3iamcli: {{ pillar['commons']['version']['cortx-s3iamcli'] }}
-      # - s3iamcli-devel
-      # - s3server-debuginfo
+#Install cortx-s3iamcli:
+#  pkg.installed:
+#    - pkgs:
+#      - cortx-s3iamcli: {{ pillar['commons']['version']['cortx-s3iamcli'] }}
+#      # - s3iamcli-devel
+#      # - s3server-debuginfo
