@@ -162,7 +162,7 @@ class DeployVM(Deploy):
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
                 logger.debug("Executing for single node.")
-                if "^sync" not in state:
+                if not state.startswith("sync"):
                     self._apply_state(f"components.{state}", primary, stages)
             else:
                 logger.debug("Executing for multiple nodes.")
