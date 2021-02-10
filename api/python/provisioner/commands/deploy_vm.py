@@ -168,7 +168,7 @@ class DeployVM(Deploy):
                 logger.debug("Executing for multiple nodes.")
                 # FIXME EOS-12076 the following logic is only
                 #       for legacy dual node setup
-                if state in ( 
+                if state in (
                     "sspl",
                     "ha.cortx-ha"
                 ):
