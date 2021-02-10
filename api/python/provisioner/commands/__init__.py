@@ -502,20 +502,6 @@ def _restart_salt_minions():
     )
 
 
-def _rollback_component(component, targets):
-    state_name = "components.{}.rollback".format(component)
-    try:
-        logger.info(
-            "Rolling back {} on {}".format(component, targets)
-        )
-        StatesApplier.apply([state_name], targets)
-    except Exception:
-        logger.exception(
-            "Failed to rollback {} on {}".format(component, targets)
-        )
-        raise
-
-
 # TODO consider to use RunArgsUpdate and support dry-run
 @attr.s(auto_attribs=True)
 class SWUpdate(CommandParserFillerMixin):
@@ -717,6 +703,20 @@ class SWRollback(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSWRollback
 
+    @staticmethod
+    def _rollback_component(component, targets):
+        state_name = "components.{}.rollback".format(component)
+        try:
+            logger.info(
+                "Rolling back {} on {}".format(component, targets)
+            )
+            StatesApplier.apply([state_name], targets)
+        except Exception:
+            logger.exception(
+                "Failed to rollback {} on {}".format(component, targets)
+            )
+            raise
+
     def run(self, target_version, targets):
 
         local_minion = local_minion_id()
@@ -765,7 +765,7 @@ class SWRollback(CommandParserFillerMixin):
                         's3server',
                         'motr'
                     ):
-                        _rollback_component(component, targets)
+                        self._rollback_component(component, targets)
                     logger.info(
                         "Configurations restored successfully "
                         f"on target {target}"
