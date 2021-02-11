@@ -746,16 +746,27 @@ class SWRollback(CommandParserFillerMixin):
                             f"yum txn id not available for {target}"
                         )
                     else:
-                        logger.info(f"Starting rollback on target {target}")
+                        logger.info(
+                            f"Starting yum rollback on target {target}"
+                        )
                         salt_cmd_run(
                             f"yum history rollback -y {txn_id}",
                             targets=target
                         )
                         logger.info(
-                            f"Rollback on target {target} is completed"
+                            f"Yum rollback on target {target} is completed"
                         )
 
                     logger.info('Restoring configurations for components')
+
+                    # TODO
+                    # reconfigure provisioner through rollback state
+                    config_salt_master()
+
+                    config_salt_minions()
+
+                    _apply_provisioner_config(target)
+
                     for component in (
                         'csm',
                         'uds',
@@ -772,6 +783,10 @@ class SWRollback(CommandParserFillerMixin):
                     )
             except Exception as exc:
                 raise SWRollbackError(exc) from exc
+            else:
+                logger.info(
+                    'Rollback completed successfully'
+                )
 
 
 # TODO TEST
