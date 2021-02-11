@@ -47,6 +47,10 @@ logger = logging.getLogger(__name__)
 
 
 deploy_states = dict(
+    ha=[
+        "ha.cortx-ha.teardown",
+        "ha.corosync-pacemaker.teardown"
+    ],
     controlpath=[
         "csm.teardown",
         "uds.teardown",
@@ -240,6 +244,7 @@ class DestroyNode(Deploy):
                                                 SetupType.SINGLE)
 
                 elif state in (
+                    "ha.cortx-ha.teardown",
                     "sspl.teardown"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
@@ -286,6 +291,7 @@ class DestroyNode(Deploy):
 
         self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
+            self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
             self._run_states('iopath', run_args)
             self._run_states('prereq', run_args)
@@ -308,6 +314,10 @@ class DestroyNode(Deploy):
             if 'iopath' in run_args.states:
                 logger.info("Teardown the io path states")
                 self._run_states('iopath', run_args)
+
+            if 'ha' in run_args.states:
+                logger.info("Teardown the ha path states")
+                self._run_states('ha', run_args)
 
             if 'controlpath' in run_args.states:
                 logger.info("Teardown the control path states")

@@ -42,18 +42,16 @@ logger = logging.getLogger(__name__)
 
 
 deploy_states = dict(
+    ha=[
+        "ha.cortx-ha.teardown",
+        "ha.corosync-pacemaker.teardown",
+        "hare.teardown"
+    ],
     controlpath=[
         "ha.ctrlstack-ha.teardown",
         "csm.teardown",
         "uds.teardown",
         "sspl.teardown"
-    ],
-    ha=[
-        "ha.iostack-ha.teardown",
-        "ha.cortx-ha.ha_cleanup",
-        "ha.cortx-ha.teardown",
-        "ha.corosync-pacemaker.teardown",
-        "hare.teardown"
     ],
     iopath=[
         "s3server.teardown",
@@ -169,6 +167,7 @@ class DestroyHW(DestroyNode):
 
                 elif state in (
                     "ha.corosync-pacemaker.teardown",
+                    "ha.cortx-ha.teardown",
                     "sspl.teardown"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
@@ -215,8 +214,8 @@ class DestroyHW(DestroyNode):
 
         self.setup_ctx = SetupCtx(ssh_client)
         if run_args.states is None:  # all states
-            self._run_states('controlpath', run_args)
             self._run_states('ha', run_args)
+            self._run_states('controlpath', run_args)
             self._run_states('iopath', run_args)
             self._run_states('prereq', run_args)
             self._run_states('system', run_args)
