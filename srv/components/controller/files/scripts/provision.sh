@@ -1367,14 +1367,12 @@ fw_update_status_parse()
             # Target fw ver and current fw versions were same - update to same ver.
             echo "Found 'Not attempted (Versions match)' in $ftp_log" >> $logfile
             _error=0
-        fi
-
-        if ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
-            echo "No failure or error strings found in $ftp_log" | tee -a $logfile
-            _error=0
         else
-            echo "Error: Found failure or error strings in $ftp_log, exiting with failure status..." >> $logfile
-            _error=1
+            # no RETURN CODE found in the sftp log file.
+            # still return success as 'codeload completed successfully' message
+            # is found in the sftp logs.
+            echo "Error: No RETURN CODE Found in $ftp_log, still returning with success status..." >> $logfile
+            _error=0
         fi
     elif ! grep -iE "fail|error" $ftp_log | grep -vq "230-"; then
         echo "No Codeload related message or fail/error strings in $ftp_log" >> $logfile
