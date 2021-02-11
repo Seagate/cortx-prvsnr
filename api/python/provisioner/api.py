@@ -296,6 +296,26 @@ def sw_update(targets=ALL_MINIONS, nowait=False):
     )
 
 
+def sw_upgrade(targets=ALL_MINIONS, nowait=False):
+    """Runs software update logic.
+
+    Updates components one by one.
+
+    Parameters
+    ----------
+    targets:
+        (optional) A host to update. Default: all minions
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('sw_upgrade', targets=targets, nowait=nowait)
+
+
 def fw_update(source, dry_run=False, nowait=False):
     r"""Runs firmware update logic.
 
