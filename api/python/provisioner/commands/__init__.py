@@ -757,35 +757,35 @@ class SWRollback(CommandParserFillerMixin):
                             f"Yum rollback on target {target} is completed"
                         )
 
-                    logger.info('Restoring configurations for components')
+                logger.info('Restoring configurations for components')
 
-                    # TODO
-                    # reconfigure provisioner through rollback state
-                    config_salt_master()
+                # TODO
+                # reconfigure provisioner through rollback state
+                config_salt_master()
 
-                    config_salt_minions()
+                config_salt_minions()
 
-                    _apply_provisioner_config(target)
+                _apply_provisioner_config(targets)
 
-                    for component in (
-                        'csm',
-                        'uds',
-                        'sspl',
-                        'ha.cortx-ha',
-                        'hare',
-                        's3server',
-                        'motr'
-                    ):
-                        self._rollback_component(component, targets)
-                    logger.info(
-                        "Configurations restored successfully "
-                        f"on target {target}"
-                    )
+                for component in (
+                    'csm',
+                    'uds',
+                    'sspl',
+                    'ha.cortx-ha',
+                    'hare',
+                    's3server',
+                    'motr'
+                ):
+                    self._rollback_component(component, targets)
+                logger.info(
+                    "Configurations restored "
+                    f"on target {target}"
+                )
             except Exception as exc:
                 raise SWRollbackError(exc) from exc
             else:
                 logger.info(
-                    'Rollback completed successfully'
+                    'Rollback completed '
                 )
 
 
