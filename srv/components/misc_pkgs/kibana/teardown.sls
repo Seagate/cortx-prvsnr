@@ -28,6 +28,11 @@ Remove kibana config:
       - /etc/kibana
       - /var/lib/kibana
 
+# Failsafe
+Delete kibana service file:
+  file.absent:
+    - name: /etc/systemd/system/kibana.service
+
 Delete kibana checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kibana

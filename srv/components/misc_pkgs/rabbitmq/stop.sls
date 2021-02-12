@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start RabbitMQ service:
+Stop RabbitMQ service:
   service.dead:
     - name: rabbitmq-server

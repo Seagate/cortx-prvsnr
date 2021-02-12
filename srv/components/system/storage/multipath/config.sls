@@ -16,13 +16,7 @@
 #
 
 include:
-  - components.system.storage.multipath.install
-
-Stop multipath service:
-  service.dead:
-    - name: multipathd.service
-    - require:
-      - Install multipath
+  - components.system.storage.multipath.stop
 
 Copy multipath config:
   file.managed:

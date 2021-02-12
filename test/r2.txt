@@ -78,3 +78,11 @@ Step-4: Check that all yum repositories are listed in `$ yum repolist enabled` o
          sw_upgrade_cortx_1.0.0-301                                          Cortx Upgrade repo cortx-1.0.0-301                                  22
          sw_upgrade_os_1.0.0-301                                             Cortx Upgrade repo os-1.0.0-301
          ```
+
+[EOS-16927]: New API for upgrade: adjust rollback logic for R2 (singlenode)
+
+Step-1: Ensure rollback pillar data is present/updated as part of sw_update command
+        `$salt-call pillar.get rollback`
+
+Step-2: Run sw_rollback api
+        `$provisioner sw_rollback CORTX_VERSION`

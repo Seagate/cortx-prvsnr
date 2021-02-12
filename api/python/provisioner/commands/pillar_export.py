@@ -26,16 +26,11 @@ from ..config import (
     CONFSTORE_CLUSTER_CONFIG
 )
 
-from ..salt import (
-    local_minion_id
-)
-
-from ..vendor import attr
-from .. import inputs
-
-from . import (
-    PillarGet
-)
+from provisioner.api import grains_get
+from provisioner.commands import PillarGet
+from provisioner.inputs import METADATA_ARGPARSER
+from provisioner.salt import local_minion_id
+from provisioner.vendor import attr
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +38,7 @@ logger = logging.getLogger(__name__)
 class RunArgsPillarExportAttrs:
     export_file: str = attr.ib(
         metadata={
-            inputs.METADATA_ARGPARSER: {
+            METADATA_ARGPARSER: {
                 'help': "output file to export JSON format of pillar data"
             }
         },
@@ -105,6 +100,57 @@ class PillarExport(PillarGet):
             for key in full_pillar_load.copy().keys():
                 if key in unwanted_keys:
                     del full_pillar_load[key]
+
+            ip4_interfaces = grains_get(
+                "ip4_interfaces",
+                targets=local_minion_id()
+            )[local_minion_id()]["ip4_interfaces"]
+
+            # Update interface IPs
+            # Public Management Interface
+            mgmt_if_public = (
+                "mgmt0" if "mgmt0" in ip4_interfaces
+                else full_pillar_load["cluster"] \
+                    [local_minion_id()] \
+                    ["network"] \
+                    ["mgmt"] \
+                    ["interfaces"][0]
+            )
+            full_pillar_load["cluster"] \
+                [local_minion_id()] \
+                ["network"] \
+                ["mgmt"] \
+                ["public_ip"] = ip4_interfaces[mgmt_if_public][0]
+
+            # Public Data Interface
+            data_if_public = (
+                "data0" if "data0" in ip4_interfaces
+                else full_pillar_load["cluster"] \
+                    [local_minion_id()] \
+                    ["network"] \
+                    ["data"] \
+                    ["public_interfaces"][0]
+            )
+            full_pillar_load["cluster"] \
+                [local_minion_id()] \
+                ["network"] \
+                ["data"] \
+                ["public_ip"] = ip4_interfaces[data_if_public][0]
+
+            # Private Data Interface
+            data_if_private = (
+                "data0" if "data0" in ip4_interfaces
+                else full_pillar_load["cluster"] \
+                    [local_minion_id()] \
+                    ["network"] \
+                    ["data"] \
+                    ["private_interfaces"][0]
+            )
+            full_pillar_load["cluster"] \
+                [local_minion_id()] \
+                ["network"] \
+                ["data"] \
+                ["private_ip"] = ip4_interfaces[data_if_private][0]
 
             convert_data = self._convert_to_str(full_pillar_load, "")
 

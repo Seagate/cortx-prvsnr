@@ -15,6 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+include:
+  - components.misc_pkgs.rabbitmq.stop
+
 Disable plugin:
   rabbitmq_plugin.disabled:
     - name: rabbitmq_management
@@ -42,6 +45,10 @@ Remove /usr/lib/rabbitmq:
 Remove /etc/rabbitmq:
   file.absent:
     - name: /etc/rabbitmq
+
+Remove /etc/logrotate.d/rabbitmq-server:
+  file.absent:
+    - name: /etc/logrotate.d/rabbitmq-server
 
 Remove rabbitmq logs:
   file.absent:

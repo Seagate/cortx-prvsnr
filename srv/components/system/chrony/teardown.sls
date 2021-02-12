@@ -24,7 +24,7 @@ Remove chrony package:
   pkg.removed:
     - name: chrony
 
-Remove chrony configutations:
+Remove chrony configuration:
   file.absent:
     - name: /etc/chrony.conf
 ...

@@ -33,6 +33,7 @@ from ..errors import (
     PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
+    SWRollbackError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
     ClusterMaintenanceDisableError,
@@ -70,7 +71,8 @@ from ..salt import (
     State,
     YumRollbackManager,
     SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run
+    copy_to_file_roots, cmd_run as salt_cmd_run,
+    local_minion_id
 )
 from ..hare import (
     cluster_maintenance_enable,
@@ -228,6 +230,17 @@ class RunArgsUser:
     )
     targets: str = RunArgs.targets
 
+
+@attr.s(auto_attribs=True)
+class RunArgsSWRollback:
+    target_version: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "CORTX version to rollback"
+            }
+        }
+    )
+    targets: str = RunArgs.targets
 
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
@@ -683,6 +696,97 @@ class SWUpdate(CommandParserFillerMixin):
             raise final_error_t(
                 update_exc, rollback_error=rollback_error
             ) from update_exc
+
+
+@attr.s(auto_attribs=True)
+class SWRollback(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsSWRollback
+
+    @staticmethod
+    def _rollback_component(component, targets):
+        state_name = "components.{}.rollback".format(component)
+        try:
+            logger.info(
+                "Rolling back {} on {}".format(component, targets)
+            )
+            StatesApplier.apply([state_name], targets)
+        except Exception:
+            logger.exception(
+                "Failed to rollback {} on {}".format(component, targets)
+            )
+            raise
+
+    def run(self, target_version, targets):
+
+        local_minion = local_minion_id()
+        rollback_path = PillarKey('rollback')
+        rollback_pillar = PillarResolver(local_minion).get([rollback_path])
+        rollback_pillar = rollback_pillar[local_minion][rollback_path]
+        cortx_tgt_version = (
+            target_version
+            if target_version in rollback_pillar.keys()
+            else None
+        )
+
+        if cortx_tgt_version is None:
+            raise ValueError(
+                f'{target_version} version data not available for rollback'
+            )
+        else:
+            txn_id_path = PillarKey(f"rollback/{cortx_tgt_version}")
+            txn_id_pillar = PillarResolver(local_minion).get([txn_id_path])
+            txn_id_pillar = next(iter(txn_id_pillar.values()))
+            try:
+                for target in txn_id_pillar[txn_id_path]:
+                    txn_id = txn_id_pillar[txn_id_path][target]['yum_txn_id']
+
+                    if not txn_id or txn_id is values.MISSED:
+                        raise BadPillarDataError(
+                            f"yum txn id not available for {target}"
+                        )
+                    else:
+                        logger.info(
+                            f"Starting yum rollback on target {target}"
+                        )
+                        salt_cmd_run(
+                            f"yum history rollback -y {txn_id}",
+                            targets=target
+                        )
+                        logger.info(
+                            f"Yum rollback on target {target} is completed"
+                        )
+
+                logger.info('Restoring configurations for components')
+
+                # TODO
+                # reconfigure provisioner through rollback state
+                config_salt_master()
+
+                config_salt_minions()
+
+                _apply_provisioner_config(targets)
+
+                for component in (
+                    'csm',
+                    'uds',
+                    'sspl',
+                    'ha.cortx-ha',
+                    'hare',
+                    's3server',
+                    'motr'
+                ):
+                    self._rollback_component(component, targets)
+                logger.info(
+                    "Configurations restored "
+                    f"on target {target}"
+                )
+            except Exception as exc:
+                raise SWRollbackError(exc) from exc
+            else:
+                logger.info(
+                    'Rollback completed '
+                )
 
 
 # TODO TEST

@@ -24,7 +24,11 @@ Remove_ntp_package:
   pkg.removed:
     - name: ntp
 
-Remove ntp configutations:
+Remove date sync:
+  file.absent:
+    - name: /etc/sysconfig/ntpdate
+
+Remove ntp configuration:
   file.absent:
     - name: /etc/ntp
 ...

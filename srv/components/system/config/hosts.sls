@@ -21,27 +21,41 @@
 {% do server_nodes.append(node)-%}
 {% endif -%}
 {% endfor -%}
-hostsfile:
+Hostsfile update for manangement interfaces:
   file.blockreplace:
     - name: /etc/hosts
     - backup: False
-    - marker_start: "#---pvt_data_start---"
-    - marker_end: "#---pvt_data_end---"
+    - marker_start: "#---mgmt_nw_start---"
+    - marker_end: "#---mgmt_nw_end---"
     - append_if_not_found: True
     - template: jinja
     - content: |
-        {%- if 1 < (server_nodes|length) %}
         {%- for node in server_nodes %}
-        {%- if pillar['cluster'][node]['network'] is defined and
-          pillar['cluster'][node]['network']['data']['private_ip'] is defined
-        %}
-        {{ pillar['cluster'][node]['network']['data']['private_ip'] }}   {{ node -}}
-        {%- else %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode -}}
-        {% endfor -%}
-        {% endif -%}
-        {% endfor %}
-        {% else %}
-        127.0.0.2    srvnode-1
+        {% if ('mgmt0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['mgmt0'][0]) -%}
+        {{ grains['ip4_interfaces']['mgmt0'][0] }}   {{ srvnode }}
+        {% else -%}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}   {{ srvnode }}
         {%- endif %}
+        {% endfor -%}
+        {%- endfor %}
+        
+Hostsfile update for data interfaces:
+  file.blockreplace:
+    - name: /etc/hosts
+    - backup: False
+    - marker_start: "#---data_nw_start---"
+    - marker_end: "#---data_nw_end---"
+    - append_if_not_found: True
+    - template: jinja
+    - content: |
+        {%- for node in server_nodes %}
+        {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
+        {% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) -%}
+        {{ grains['ip4_interfaces']['data0'][0] }}   {{ srvnode }}
+        {% else -%}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}   {{ srvnode }}-data-public
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode }}-data-private
+        {% endif -%}
+        {% endfor -%}
+        {% endfor -%}

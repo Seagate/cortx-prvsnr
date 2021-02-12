@@ -25,6 +25,7 @@ Remove csm package:
     - pkgs:
       - cortx-csm_agent
       - cortx-csm_web
+      - cortx-cli
 
 Delete CSM yum repo:
   pkgrepo.absent:

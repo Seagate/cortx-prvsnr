@@ -74,7 +74,7 @@ EOF
         yum clean all || true
         yum install -y \
         python3 python36-m2crypto \
-        salt salt-master salt-minion \
+        salt-api salt-master salt-minion \
         python36-cortx-prvsnr \
         2>&1 | tee -a ${LOG_FILE}
 

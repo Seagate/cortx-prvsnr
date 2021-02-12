@@ -90,18 +90,11 @@ Remove common_runtime libraries:
 # Teardown Common Runtime End
 #------------------------------
 
-#------------------------------
-# Teardown S3IAMCLI Start
-#------------------------------
-Remove cortx-s3iamcli:
-  pkg.removed:
-    - pkgs:
-      - cortx-s3iamcli
-#       # - cortx-s3iamcli
-#       # - s3server-debuginfo
-#------------------------------
-# Teardown S3IAMCLI End
-#------------------------------
+{% if salt['file.directory_exists']('/var/seagate/s3') %}
+Remove working directory for S3 server:
+  file.absent:
+    - name: /var/seagate/s3
+{% endif %}
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
