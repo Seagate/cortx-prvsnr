@@ -61,15 +61,16 @@ deploy_states = dict(
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
         "misc_pkgs.statsd",
-        "misc_pkgs.consul.install"
+        "misc_pkgs.consul.install",
+        "misc_pkgs.lustre"
     ],
     sync=[
         "sync.software.rabbitmq"
     ],
     iopath=[
-        "misc_pkgs.lustre",
         "motr",
-        "s3server"
+        "s3server",
+        "hare"
     ],
     # states to be applied in desired sequence
     controlpath=[
@@ -81,8 +82,7 @@ deploy_states = dict(
         "ha.corosync-pacemaker.install",
         "ha.corosync-pacemaker.config.base",
         "ha.haproxy.start",
-        "hare",
-        "ha.cortx-ha",
+        "ha.cortx-ha"
     ],
     backup=[
         "provisioner.backup",
