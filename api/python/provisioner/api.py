@@ -301,12 +301,16 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
 
     Rollback all CORTX components to the specified target_version.
 
-    Assumptions - rollback pillar is updated, with specified target_version
+    Assumptions - upgrade pillar is updated, with specified target_version
     as 'cortx_version' and yum txn ids for each node
-    rollback:
+    upgrade:
+      sw_list:
+        - motr
+        - s3server
+        ...
+    yum_snapshots:
       <cortx-version>:
-        <node-id-x>:
-          yum_txn_id: <ID>
+        <node-id>: <yum-txn-id>
 
     Parameters
     ----------
