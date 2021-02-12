@@ -31,4 +31,4 @@ Stage - Init S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:init')
     - require:
-      - Stage - Stage - Config S3Server
+      - Stage - Config S3Server
