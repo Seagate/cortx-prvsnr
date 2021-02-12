@@ -720,12 +720,19 @@ class SWRollback(CommandParserFillerMixin):
     def run(self, target_version, targets):
 
         local_minion = local_minion_id()
-        rollback_path = PillarKey('rollback')
-        rollback_pillar = PillarResolver(local_minion).get([rollback_path])
-        rollback_pillar = rollback_pillar[local_minion][rollback_path]
+
+        upgrade_path = PillarKey('upgrade')
+        yum_snapshot_path = PillarKey(f'{upgrade_path}/yum_snapshots')
+        yum_snapshot_pillar = PillarResolver(local_minion).get(
+            [yum_snapshot_path]
+        )
+        yum_snapshot_pillar = (
+            yum_snapshot_pillar[local_minion][yum_snapshot_path]
+        )
+
         cortx_tgt_version = (
             target_version
-            if target_version in rollback_pillar.keys()
+            if target_version in yum_snapshot_pillar.keys()
             else None
         )
 
@@ -734,12 +741,14 @@ class SWRollback(CommandParserFillerMixin):
                 f'{target_version} version data not available for rollback'
             )
         else:
-            txn_id_path = PillarKey(f"rollback/{cortx_tgt_version}")
+
+            txn_id_path = PillarKey(f"{yum_snapshot_path}/{cortx_tgt_version}")
             txn_id_pillar = PillarResolver(local_minion).get([txn_id_path])
             txn_id_pillar = next(iter(txn_id_pillar.values()))
+
             try:
                 for target in txn_id_pillar[txn_id_path]:
-                    txn_id = txn_id_pillar[txn_id_path][target]['yum_txn_id']
+                    txn_id = txn_id_pillar[txn_id_path][target]
 
                     if not txn_id or txn_id is values.MISSED:
                         raise BadPillarDataError(
@@ -767,16 +776,13 @@ class SWRollback(CommandParserFillerMixin):
 
                 _apply_provisioner_config(targets)
 
-                for component in (
-                    'csm',
-                    'uds',
-                    'sspl',
-                    'ha.cortx-ha',
-                    'hare',
-                    's3server',
-                    'motr'
-                ):
+                swlist_path = PillarKey(f'{upgrade_path}/sw_list')
+                swlist_pillar = PillarResolver(local_minion).get([swlist_path])
+                sw_list = swlist_pillar[local_minion][swlist_path]
+
+                for component in reversed(sw_list):
                     self._rollback_component(component, targets)
+
                 logger.info(
                     "Configurations restored "
                     f"on target {target}"
@@ -785,7 +791,7 @@ class SWRollback(CommandParserFillerMixin):
                 raise SWRollbackError(exc) from exc
             else:
                 logger.info(
-                    'Rollback completed '
+                    'Rollback completed'
                 )
 
 
