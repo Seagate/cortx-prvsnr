@@ -20,14 +20,16 @@ from typing import Type
 from api.python.provisioner import inputs
 from api.python.provisioner.commands import (
     CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
-    _apply_provisioner_config, _restart_salt_minions, _update_component)
+    _apply_provisioner_config, _restart_salt_minions, _update_component,
+    _pre_yum_rollback)
 from api.python.provisioner.config import GroupChecks
 from api.python.provisioner.errors import (
     SWStackUpdateError, ClusterNotHealthyError,
-    SWUpdateError, SWUpdateFatalError
+    SWUpdateError, SWUpdateFatalError, ClusterMaintenanceDisableError,
+    HAPostUpdateError
 )
-from api.python.provisioner.hare import ensure_cluster_is_healthy
-from api.python.provisioner.salt import StatesApplier, local_minion_id
+from api.python.provisioner.salt import (
+    StatesApplier, local_minion_id, YumRollbackManager)
 from api.python.provisioner.salt_master import config_salt_master
 from api.python.provisioner.salt_minion import config_salt_minions
 from api.python.provisioner.vendor.attr import attr
@@ -74,8 +76,6 @@ class SWUpgrade(CommandParserFillerMixin):
         #      via ssh as a fallback
         rollback_ctx = None
         try:
-            ensure_cluster_is_healthy()  # TODO: checker.run do that check too
-
             checker = Check()
             try:
                 check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
@@ -88,37 +88,36 @@ class SWUpgrade(CommandParserFillerMixin):
 
             self._ensure_upgrade_repos_configuration()
 
-            try:
-                _update_component('provisioner', targets)
-
-                # re-apply provisioner configuration to ensure
-                # that updated pillar is taken into account
-                _apply_provisioner_config(targets)
-
-                config_salt_master()
-
-                minion_conf_changes = config_salt_minions()
-
-                for component in COMPONENTS_FOR_UPGRADE:
-                    _update_component(component, local_minion_id())
-            except Exception as exc:
-                raise SWStackUpdateError(exc) from exc
-
-            try:
-                ensure_cluster_is_healthy()
-            except Exception as exc:
-                raise ClusterNotHealthyError(exc) from exc
-
-            # NOTE that should be the very final step of the logic
-            #      since salt client will be restarted so the current
-            #      process might start to wait itself
-            if minion_conf_changes:
-                # TODO: Improve salt minion restart logic
-                # please refer to task EOS-14114.
+            with YumRollbackManager(
+                            targets,
+                            multiple_targets_ok=True,
+                            pre_rollback_cb=_pre_yum_rollback) as rollback_ctx:
                 try:
-                    _restart_salt_minions()
-                except Exception:
-                    logger.exception('failed to restart salt minions')
+                    _update_component('provisioner', targets)
+
+                    # re-apply provisioner configuration to ensure
+                    # that updated pillar is taken into account
+                    _apply_provisioner_config(targets)
+
+                    config_salt_master()
+
+                    minion_conf_changes = config_salt_minions()
+
+                    for component in COMPONENTS_FOR_UPGRADE:
+                        _update_component(component, targets)
+                except Exception as exc:
+                    raise SWStackUpdateError(exc) from exc
+
+                # NOTE that should be the very final step of the logic
+                #      since salt client will be restarted so the current
+                #      process might start to wait itself
+                if minion_conf_changes:
+                    # TODO: Improve salt minion restart logic
+                    # please refer to task EOS-14114.
+                    try:
+                        _restart_salt_minions()
+                    except Exception:
+                        logger.exception('failed to restart salt minions')
 
         except Exception as update_exc:
             # TODO TEST
@@ -137,10 +136,29 @@ class SWUpgrade(CommandParserFillerMixin):
 
                 final_error_t = SWUpdateFatalError
             elif rollback_ctx is not None:
-                # yum packages are in initial state here
-                # TODO TEST unit for that case
-                logger.warning(
-                    'Unexpected case: update exc {!r}'.format(update_exc))
+                if isinstance(
+                    # cluster is stopped here
+                    update_exc, (SWStackUpdateError,
+                                 ClusterMaintenanceDisableError,
+                                 HAPostUpdateError,
+                                 ClusterNotHealthyError)):
+                    # rollback provisioner related configuration
+                    try:
+                        config_salt_master()
+                        config_salt_minions()
+                        _apply_provisioner_config(targets)
+                    except Exception as exc:
+                        # unrecoverable state: SW stack is in intermediate
+                        # state, no sense to start the cluster
+                        logger.exception(
+                                'Failed to restore SaltStack configuration')
+                        rollback_error = exc
+                        final_error_t = SWUpdateFatalError
+                else:
+                    # TODO TEST unit for that case
+                    logger.warning(
+                        'Unexpected case: update exc {!r}'.format(update_exc)
+                    )
 
             # TODO IMPROVE
             raise final_error_t(update_exc,
