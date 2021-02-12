@@ -18,7 +18,7 @@
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Run cortx-ha ha setup:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:ha-cleanup')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:cleanup')
 {% else %}
 No HA cleanup on secondary node:
   test.show_notification:
