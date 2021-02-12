@@ -17,22 +17,18 @@
 import logging
 from typing import Type
 
-from api.python.provisioner import inputs
-from api.python.provisioner.commands import (
-    CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
-    _apply_provisioner_config, _restart_salt_minions, _update_component,
-    _pre_yum_rollback)
-from api.python.provisioner.config import GroupChecks
-from api.python.provisioner.errors import (
-    SWStackUpdateError, ClusterNotHealthyError,
-    SWUpdateError, SWUpdateFatalError, ClusterMaintenanceDisableError,
-    HAPostUpdateError
-)
-from api.python.provisioner.salt import (
-    StatesApplier, local_minion_id, YumRollbackManager)
-from api.python.provisioner.salt_master import config_salt_master
-from api.python.provisioner.salt_minion import config_salt_minions
-from api.python.provisioner.vendor.attr import attr
+from .. import inputs
+from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
+                        _apply_provisioner_config, _restart_salt_minions,
+                        _update_component, _pre_yum_rollback)
+from ..config import GroupChecks
+from ..errors import (SWStackUpdateError, ClusterNotHealthyError,
+                      SWUpdateError, SWUpdateFatalError,
+                      ClusterMaintenanceDisableError, HAPostUpdateError)
+from ..salt import StatesApplier, local_minion_id, YumRollbackManager
+from ..salt_master import config_salt_master
+from ..salt_minion import config_salt_minions
+from ..vendor import attr
 
 
 logger = logging.getLogger(__name__)
