@@ -236,7 +236,8 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 # Re-configure firewall
 echo -n "Re-configuring firewall................................." | tee -a ${LOG_FILE}
-salt "*" state.apply components.system.firewall.config ${salt_opts}
+salt "*" state.apply components.system.firewall.teardown ${salt_opts}
+salt "*" state.apply components.system.firewall ${salt_opts}
 # sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
