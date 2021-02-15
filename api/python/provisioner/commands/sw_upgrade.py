@@ -55,7 +55,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     local_minion_id()
         # )
 
-    def run(self, targets):  # pragma: no mccabe
+    def run(self, targets):  # noqa
         # TODO:
         #   - create a state instead
         #   - what about apt and other non-yum pkd managers
