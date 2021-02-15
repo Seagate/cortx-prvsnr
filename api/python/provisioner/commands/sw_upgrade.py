@@ -132,10 +132,7 @@ class SWUpgrade(CommandParserFillerMixin):
             elif rollback_ctx is not None:
                 if isinstance(
                     # cluster is stopped here
-                    update_exc, (SWStackUpdateError,
-                                 ClusterMaintenanceDisableError,
-                                 HAPostUpdateError,
-                                 ClusterNotHealthyError)):
+                    update_exc, (SWStackUpdateError,)):
                     # rollback provisioner related configuration
                     try:
                         config_salt_master()
