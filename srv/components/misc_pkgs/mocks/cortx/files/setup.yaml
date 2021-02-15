@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{{component}}:
+{{ component }}:
   post_install:
     cmd: mock
     args:
@@ -46,3 +46,8 @@
     args:
       - 'Stage: '
       - '{{ component }}: Backup'
+  restore:
+    cmd: mock
+    args:
+      - 'Stage: '
+      - '{{ component }}: Restore'

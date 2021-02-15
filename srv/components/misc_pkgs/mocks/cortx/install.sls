@@ -15,21 +15,31 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo:
+# TODO: use path from pillars or any other configuration
+{% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock' %}
+{% set salt_root = '/opt/seagate/cortx/provisioner/srv' %}
+
+{{ mocks_repo }}:
   file.directory:
     - mode: 755
     - makedirs: True
 
-{# NOTE: to build rpm and create cortx mock repo need to execute ./buildrpm.sh #}
+build_mock_repo:
+  cmd.run:
+    - name: bash {{ salt_root }}/{{ tpldir }}/files/scripts/buildbundle.sh -o {{ mocks_repo }} -t deploy-cortx -r 1.0.0 -vv
+    - creates: {{ mocks_repo }}/repodata
+    - require:
+      - file: {{ mocks_repo }}
 
 Stage - Install CORTX mock repo:
   pkgrepo.managed:
     - name: cortx_mock_repo
     - humanname: CORTX Mock repo
-{# TODO: use path from pillars or any other configuration #}
-    - baseurl: file:///opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo
+    - baseurl: file://{{ mocks_repo }}
     - enabled: True
     - gpgcheck: 0
+    - require:
+      - build_mock_repo
 
 
 /usr/local/bin/mock:
@@ -39,17 +49,3 @@ Stage - Install CORTX mock repo:
     - group: root
     - mode: 755
     - makedirs: True
-
-
-{# TODO: use predifned list or scan 'srv/components' directory #}
-{% for component_name in ('motr', 'ha', 'hare', 'sspl', "s3", "csm", "uds", "cli") %}
-
-/opt/seagate/cortx/{{ component_name }}/conf/setup.yaml:
-  file.managed:
-    - source: salt://components/misc_pkgs/mocks/cortx/files/setup_mock_yaml/setup.yaml
-    - template: jinja
-    - makedirs: True
-    - defaults:
-        component: {{ component_name }}
-
-{% endfor %}
