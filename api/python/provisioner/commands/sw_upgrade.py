@@ -23,8 +23,6 @@ from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         _update_component, _pre_yum_rollback)
 from ..config import GroupChecks
 from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
-from ..salt import StatesApplier, local_minion_id, YumRollbackManager
-from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
 from ..vendor import attr
 
@@ -57,7 +55,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     local_minion_id()
         # )
 
-    def run(self, targets):  # noqa: C901
+    def run(self, targets):  # pragma: no mccabe
         # TODO:
         #   - create a state instead
         #   - what about apt and other non-yum pkd managers
