@@ -21,5 +21,5 @@ openldap:
     user: admin
     secret:
   sgiam:
-    user: admin
+    user: sgiamadmin
     secret:

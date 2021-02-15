@@ -24,11 +24,22 @@ Run cortx-ha post_install:
     - require:
       - Install cortx-ha
 
+
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+
 Run cortx-ha config:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
     - require:
       - Install cortx-ha
+
+{% else %}
+
+No HA config on secondary node:
+  test.show_notification:
+    - text: "HA config  applies to primary node. There's no execution on secondary node"
+
+{% endif %}
 
 Run cortx-ha init:
   cmd.run:

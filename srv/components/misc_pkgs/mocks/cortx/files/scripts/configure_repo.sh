@@ -1,7 +1,14 @@
 #!/bin/bash
 
+if [ "$1" != "" ]; then
+    BUILD_DIR=$1
+else
+   echo "Path to dir with rpmbuild directory which contains rpm artifacts is missed. Usage: ${0} <Path to dir with rpmbuild>"
+   echo "Oridinary, it is the users home dir, e.g.: /home/<your UGID>/"
+   exit 1
+fi
+
 MOCK_REPO_DIR="/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo"
-BUILD_DIR=$(realpath ~)
 
 if [ ! -w "$MOCK_REPO_DIR" ]
 then
