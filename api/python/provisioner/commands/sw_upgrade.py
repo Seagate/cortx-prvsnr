@@ -23,6 +23,8 @@ from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         _update_component, _pre_yum_rollback)
 from ..config import GroupChecks
 from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
+from ..salt import StatesApplier, local_minion_id, YumRollbackManager
+from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
 from ..vendor import attr
 
@@ -55,6 +57,44 @@ class SWUpgrade(CommandParserFillerMixin):
         #     local_minion_id()
         # )
 
+    @staticmethod
+    def _handle_error(update_exc, rollback_ctx, targets):
+        rollback_error = (
+            None if rollback_ctx is None else rollback_ctx.rollback_error
+        )
+        final_error_t = SWUpdateError
+
+        if rollback_error:
+            # unrecoverable state: SW stack is in intermediate state,
+            # no sense to start the cluster ??? verify TODO IMPROVE
+            logger.error(
+                'Rollback failed: {}'.format(rollback_ctx.rollback_error))
+
+            final_error_t = SWUpdateFatalError
+        elif rollback_ctx is not None:
+            if isinstance(update_exc, (SWStackUpdateError,)):
+                # rollback provisioner related configuration
+                try:
+                    config_salt_master()
+                    config_salt_minions()
+                    _apply_provisioner_config(targets)
+                except Exception as exc:
+                    # unrecoverable state: SW stack is in intermediate
+                    # state, no sense to start the cluster
+                    logger.exception(
+                            'Failed to restore SaltStack configuration')
+                    rollback_error = exc
+                    final_error_t = SWUpdateFatalError
+            else:
+                # TODO TEST unit for that case
+                logger.warning(
+                    'Unexpected case: update exc {!r}'.format(update_exc)
+                )
+
+        # TODO IMPROVE
+        raise final_error_t(update_exc,
+                            rollback_error=rollback_error) from update_exc
+
     def run(self, targets):  # noqa
         # TODO:
         #   - create a state instead
@@ -65,17 +105,18 @@ class SWUpgrade(CommandParserFillerMixin):
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
         rollback_ctx = None
-        try:
-            checker = Check()
-            try:
-                check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
-            except Exception as e:
-                logger.warning("During pre-flight checks error happened: "
-                               f"{str(e)}")
-            else:
-                decision_maker = SWUpdateDecisionMaker()
-                decision_maker.make_decision(check_result=check_res)
 
+        checker = Check()
+        try:
+            check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
+        except Exception as e:
+            logger.warning("During pre-flight checks error happened: "
+                           f"{str(e)}")
+        else:
+            decision_maker = SWUpdateDecisionMaker()
+            decision_maker.make_decision(check_result=check_res)
+
+        try:
             self._ensure_upgrade_repos_configuration()
 
             with YumRollbackManager(
@@ -113,40 +154,4 @@ class SWUpgrade(CommandParserFillerMixin):
             # TODO TEST
             logger.exception('SW Upgrade failed')
 
-            rollback_error = (
-                None if rollback_ctx is None else rollback_ctx.rollback_error
-            )
-            final_error_t = SWUpdateError
-
-            if rollback_error:
-                # unrecoverable state: SW stack is in intermediate state,
-                # no sense to start the cluster ??? verify TODO IMPROVE
-                logger.error(
-                    'Rollback failed: {}'.format(rollback_ctx.rollback_error))
-
-                final_error_t = SWUpdateFatalError
-            elif rollback_ctx is not None:
-                if isinstance(
-                    # cluster is stopped here
-                    update_exc, (SWStackUpdateError,)):
-                    # rollback provisioner related configuration
-                    try:
-                        config_salt_master()
-                        config_salt_minions()
-                        _apply_provisioner_config(targets)
-                    except Exception as exc:
-                        # unrecoverable state: SW stack is in intermediate
-                        # state, no sense to start the cluster
-                        logger.exception(
-                                'Failed to restore SaltStack configuration')
-                        rollback_error = exc
-                        final_error_t = SWUpdateFatalError
-                else:
-                    # TODO TEST unit for that case
-                    logger.warning(
-                        'Unexpected case: update exc {!r}'.format(update_exc)
-                    )
-
-            # TODO IMPROVE
-            raise final_error_t(update_exc,
-                                rollback_error=rollback_error) from update_exc
+            self._handle_error(update_exc, rollback_ctx, targets)
