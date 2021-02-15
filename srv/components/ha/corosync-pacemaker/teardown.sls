@@ -15,30 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set server_nodes = [ ] -%}
-{% for node in pillar['cluster'].keys() -%}
-{% if "srvnode-" in node -%}
-{% do server_nodes.append(node)-%}
-{% endif -%}
-{% endfor -%}
-{%- if "primary" in server_nodes %}
-Destroy resource ClusterIP:
-  cmd.run:
-    - name: pcs resource delete ClusterIP
-    - onlyif: pcs resource show ClusterIP
-
-Remove authorized nodes:
-  cmd.run:
-    - names:
-      {%- for node_id in server_nodes %}
-      - pcs cluster node remove {{ node_id }} --force || true
-      {%- endfor %}
-
-Destroy Cluster:
-  cmd.run:
-    - name: pcs cluster destroy --all --force || true
-{% endif %}
-
 Remove user and group:
   user.absent:
     - name: hacluster
