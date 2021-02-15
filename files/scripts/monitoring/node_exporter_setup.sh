@@ -5,9 +5,7 @@ usage()
 	echo "\
 Usage:
 Required Arguments:
-	-p |--pub      	public data network interface name (default -> 'eth1')
 	-pi|--pub_ip    IP address of the public data network.
-	-v |--pvt     	private data network interface name (default -> 'eth2')
 	-vi|--pvt_ip    IP address of the private data network.
 Optional Arguments:
 	-h|--help   	brief info about script
@@ -21,13 +19,12 @@ help()
 1. The command must be run on the linux system to be monitored / target nodes.
 2. The system must have 3 network interfaces.
 -------------------- Sample command ---------------------------------------------
-$ sh node_exporter_setup.sh -p eth1 -pi 192.168.14.157 -v eth2 -vi 192.168.31.255
+$ sh node_exporter_setup.sh -pi 192.168.14.157 -vi 192.168.31.255
 
 "
 }
 
-pub_if="eth1"
-pvt_if="eth2"
+
 pub_ip_addr=
 pvt_ip_addr=
 
@@ -36,19 +33,9 @@ do
 	case $1 in 
 		-h|--help) usage; help; exit 0
 		;;
-		-p|--pub)
-			[ -z "$2" ] && echo "Error: Public data network interface name not provided" && exit 1;
-			pub_if="$2"
-			shift 2
-		;;
 		-pi|--pub_ip)
 			[ -z "$2" ] && echo "Error: IP address of private data network not provided" && exit 1;
 			pub_ip_addr="$2"
-			shift 2
-		;;
-		-v|--pvt)
-			[ -z "$2" ] && echo "Error: Private data network interface name not provided" && exit 1;
-			pvt_if="$2"
 			shift 2
 		;;
 		-vi|--pvt_ip)

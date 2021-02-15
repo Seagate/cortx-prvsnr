@@ -30,13 +30,13 @@ do
 		-t1)
 			[ -z "$2" ] && echo "Error: Target 1 IP address not provided" && exit 1;
 			tar1="$2"
-			count=$(($count + 1))
+			count=$((count + 1))
 			shift 2
 		;;
 		-t2)
 			[ -z "$2" ] && echo "Error: Target 2 IP address not provided" && exit 1;
 			tar2="$2"
-			count=$(($count + 1))
+			count=$((count + 1))
 			shift 2
 		;;
 		*) 
