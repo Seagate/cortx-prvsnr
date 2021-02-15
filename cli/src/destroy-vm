@@ -35,12 +35,17 @@ function trap_handler {
 } 
 
 run_all=true
+run_ha_states=false
 io_states=false
 ctrlpath_states=false
 remove_prereqs=false
 remove_system=false
 remove_prvsnr=false
 
+ha_states=(
+    "ha.cortx-ha"
+    "ha.corosync-pacemaker"
+)
 
 controlpath_states=(
 # states to be applied in desired sequence
@@ -92,6 +97,7 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode     switch to single node mode setup
+       --ha-states           remove only ha states(cortx-ha, corosync-pacemaker)
        --iopath-states       remove only iopath (hare,s3server,motr,lustre) components
        --ctrlpath-states     remove only ctrlpath (uds,csm,sspl) components
        --remove-prvsnr       removes provisioner and system cleanup
@@ -106,6 +112,10 @@ function options_parser {
     case "$1" in
         -S|--singlenode)
             singlenode=true
+            ;;
+        --ha-states)
+            run_ha_states=true
+            run_all=false
             ;;
         --iopath-states)
             io_states=true
@@ -149,7 +159,7 @@ function teardown_states {
             $cmd salt srvnode-1 state.apply components.$state.teardown $salt_opts || true
             sleep 2     # Mindfulness break
         else
-            if [[ "$state" == "sspl" ]]; then
+            if [[ "$state" == "sspl" || "$state" == "ha.cortx-ha" ]]; then
                 l_info "Applying state $state from srvnode-1"
                 $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
@@ -172,7 +182,7 @@ function teardown_states {
     done
 }
 
-parse_args 'S' 'singlenode,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
+parse_args 'S' 'singlenode,ha-states,iopath-states,ctrlpath-states,remove-prvsnr,prereq-states,system-states' options_parser '' "$@"
 
 if [[ "$verbosity" -ge 2 ]]; then
     set -x
@@ -192,10 +202,16 @@ l_info "Updating salt pillar data"
 $cmd salt "*" saltutil.refresh_pillar
 
 if [[ "$run_all" == true ]]; then
+    teardown_states "${ha_states[@]}"
     teardown_states "${controlpath_states[@]}"
     teardown_states "${iopath_states[@]}"
     teardown_states "${prereq_states[@]}"
     teardown_states "${system_states[@]}"
+fi
+
+if [[ "$run_ha_states" == true ]]; then
+    l_info "Removing the ha sates group packages"
+    teardown_states "${ha_states[@]}"
 fi
 
 if [[ "$ctrlpath_states" == true ]]; then
