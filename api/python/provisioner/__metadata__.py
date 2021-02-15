@@ -25,7 +25,7 @@ __url__ = 'https://github.com/Seagate/cortx-prvsnr'
 __description__ = 'Provisioner API for CORTX components'
 __long_description__ = __description__
 __download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO Seagate
+__license__ = "Seagate"  # TODO
 
 __all__ = [
     '__title__',
