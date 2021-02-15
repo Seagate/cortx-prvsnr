@@ -22,9 +22,7 @@ from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         _apply_provisioner_config, _restart_salt_minions,
                         _update_component, _pre_yum_rollback)
 from ..config import GroupChecks
-from ..errors import (SWStackUpdateError, ClusterNotHealthyError,
-                      SWUpdateError, SWUpdateFatalError,
-                      ClusterMaintenanceDisableError, HAPostUpdateError)
+from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
 from ..salt import StatesApplier, local_minion_id, YumRollbackManager
 from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
