@@ -168,7 +168,8 @@ class DestroyNode(Deploy):
             if targets:
                 self.setup_ctx.ssh_client.state_apply(
                     f"components.{state}",
-                    targets=targets
+                    targets=targets,
+                    tgt_type='pcre'
                 )
             else:
                 self.setup_ctx.ssh_client.state_apply(
