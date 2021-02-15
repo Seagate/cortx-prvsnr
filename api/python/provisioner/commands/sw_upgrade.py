@@ -59,9 +59,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     local_minion_id()
         # )
 
-    def run(self, targets):  # noqa: C901 FIXME
-        # logic based on https://jts.seagate.com/browse/EOS-6611?focusedCommentId=1833451&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1833451  # noqa: E501
-
+    def run(self, targets):  # noqa: C901
         # TODO:
         #   - create a state instead
         #   - what about apt and other non-yum pkd managers
