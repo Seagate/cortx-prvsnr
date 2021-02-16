@@ -76,7 +76,7 @@ copy_repo_dir_{{ release }}:
     {% endif %}
 
 {# TODO: Get YUM repos directly from mount dir #}
-{% for repo_name in ('3rdparty', 'cortx', 'os') %}
+{% for repo_name in ('3rd_party', 'cortx_iso', 'os') %}
 
 {{ repo_added(release, source, source_type, repo_name, repo_params) }}
 
