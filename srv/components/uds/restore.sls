@@ -17,4 +17,4 @@
 
 Stage - Restore files for UDS:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', uds:restore')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', 'uds:restore')
