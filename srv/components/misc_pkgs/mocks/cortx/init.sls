@@ -15,25 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Install common runtime libraries:
-#   pkg.installed:
-#     - pkgs:
-#       - java-1.8.0-openjdk-headless
-#       - libxml2
-#       - libyaml
-#       - yaml-cpp
-#       - gflags
-#       - glog
-
-Install s3server package:
-  pkg.installed:
-    - name: cortx-s3server
-    - version: {{ pillar['commons']['version']['cortx']['cortx-s3server'] }}
-    - refresh: True
-
-# Install cortx-s3iamcli:
-#   pkg.installed:
-#     - pkgs:
-#       - cortx-s3iamcli: {{ pillar['commons']['version']['cortx']['cortx-s3iamcli'] }}
-#       - s3iamcli-devel
-#       - s3server-debuginfo
+include:
+  - .prepare
+  - .install

@@ -15,25 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Install common runtime libraries:
-#   pkg.installed:
-#     - pkgs:
-#       - java-1.8.0-openjdk-headless
-#       - libxml2
-#       - libyaml
-#       - yaml-cpp
-#       - gflags
-#       - glog
+# TODO: use path from pillars or any other configuration
+{% set version = '2.0.0' %}
+# XXX hard-coded
+{% set mocks_repo_default = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_{}'.format(version) %}
+{% set mocks_repo = salt['pillar.get']('inline:upgrade_repo_dir', mocks_repo_default) %}
 
-Install s3server package:
-  pkg.installed:
-    - name: cortx-s3server
-    - version: {{ pillar['commons']['version']['cortx']['cortx-s3server'] }}
-    - refresh: True
+{% from './_macros.sls' import bundle_built with context %}
 
-# Install cortx-s3iamcli:
-#   pkg.installed:
-#     - pkgs:
-#       - cortx-s3iamcli: {{ pillar['commons']['version']['cortx']['cortx-s3iamcli'] }}
-#       - s3iamcli-devel
-#       - s3server-debuginfo
+{{ bundle_built(mocks_repo, 'upgrade', version, gen_iso=True) }}

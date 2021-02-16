@@ -15,25 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Install common runtime libraries:
-#   pkg.installed:
-#     - pkgs:
-#       - java-1.8.0-openjdk-headless
-#       - libxml2
-#       - libyaml
-#       - yaml-cpp
-#       - gflags
-#       - glog
+# TODO: use path from pillars or any other configuration
+{% set salt_root = '/opt/seagate/cortx/provisioner/srv' %}
 
-Install s3server package:
-  pkg.installed:
-    - name: cortx-s3server
-    - version: {{ pillar['commons']['version']['cortx']['cortx-s3server'] }}
-    - refresh: True
+{% macro bundle_built(out_dir, out_type, version, gen_iso=False) %}
 
-# Install cortx-s3iamcli:
-#   pkg.installed:
-#     - pkgs:
-#       - cortx-s3iamcli: {{ pillar['commons']['version']['cortx']['cortx-s3iamcli'] }}
-#       - s3iamcli-devel
-#       - s3server-debuginfo
+{{ out_dir }}:
+  file.directory:
+    - mode: 755
+    - makedirs: True
+
+build_mock_repo_{{ out_dir }}:
+  cmd.run:
+    - name: bash {{ salt_root }}/{{ tpldir }}/files/scripts/buildbundle.sh -v -o {{ out_dir }} -t {{ out_type }} -r {{ version }} {{ version }} {{ '--gen-iso' if gen_iso else ''}}
+    - creates: {{ out_dir }}/RELEASE.INFO
+    - require:
+      - file: {{ out_dir }}
+
+{% endmacro %}

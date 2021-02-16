@@ -11,6 +11,8 @@ SPEC_NO_API=cortx-mock-no-api.spec
 
 WORKING_DIR="$(realpath $script_dir/..)"
 
+# TODO a kind of duplication for pillar/components/commons.sls
+# TODO provisioner pkgs
 PKG_COMP_LIST=(
     "cortx-csm_agent,csm"
     "cortx-hare,hare"

@@ -15,25 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Install common runtime libraries:
-#   pkg.installed:
-#     - pkgs:
-#       - java-1.8.0-openjdk-headless
-#       - libxml2
-#       - libyaml
-#       - yaml-cpp
-#       - gflags
-#       - glog
+# TODO: use path from pillars or any other configuration
+{% set version = '1.0.0' %}
+# XXX hard-coded
+{% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
 
-Install s3server package:
-  pkg.installed:
-    - name: cortx-s3server
-    - version: {{ pillar['commons']['version']['cortx']['cortx-s3server'] }}
-    - refresh: True
+{% from './_macros.sls' import bundle_built with context %}
 
-# Install cortx-s3iamcli:
-#   pkg.installed:
-#     - pkgs:
-#       - cortx-s3iamcli: {{ pillar['commons']['version']['cortx']['cortx-s3iamcli'] }}
-#       - s3iamcli-devel
-#       - s3server-debuginfo
+{{ bundle_built(mocks_repo, 'deploy-cortx', version) }}
+
+Stage - Install CORTX mock repo:
+  pkgrepo.managed:
+    - name: cortx_mock_repo
+    - humanname: CORTX Mock repo
+    - baseurl: file://{{ mocks_repo }}
+    - enabled: True
+    - gpgcheck: 0
+    - require:
+      - build_mock_repo_{{ mocks_repo }}
