@@ -17,28 +17,23 @@
 import logging
 from typing import Type
 
-from .. import inputs
+from .. import inputs, values
 from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         _apply_provisioner_config, _restart_salt_minions,
-                        _update_component, _pre_yum_rollback)
-from ..config import GroupChecks
+                        _update_component, _pre_yum_rollback, GetReleaseVersion
+                        )
+from ..config import GroupChecks, ReleaseInfo
 from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
-from ..salt import StatesApplier, local_minion_id, YumRollbackManager
+from ..pillar import PillarKey, PillarResolver, PillarUpdater, KeyPath
+from ..salt import (StatesApplier, local_minion_id, YumRollbackManager,
+                    get_last_txn_ids
+                    )
 from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
 from ..vendor import attr
 
 
 logger = logging.getLogger(__name__)
-
-
-COMPONENTS_FOR_UPGRADE = frozenset({'motr',
-                                    's3server',
-                                    'hare',
-                                    'ha.cortx-ha',
-                                    'sspl',
-                                    'uds',
-                                    'csm'})
 
 
 @attr.s(auto_attribs=True)
@@ -95,6 +90,34 @@ class SWUpgrade(CommandParserFillerMixin):
         raise final_error_t(update_exc,
                             rollback_error=rollback_error) from update_exc
 
+    @staticmethod
+    def _get_pillar(pillar_key_path: str, targets: str):
+        """
+        Get Pillar value
+        Parameters
+        ----------
+        pillar_key_path: str
+            Pillar key path
+
+        targets: str
+            targets to retrieve the pillar values
+
+        Returns
+        -------
+
+        """
+        pillar_path = PillarKey(pillar_key_path)
+        pillar = PillarResolver(targets).get([pillar_path])
+
+        pillar = next(iter(pillar.values()))
+
+        if (not pillar[pillar_path]
+                or pillar[pillar_path] is values.MISSED):
+            raise ValueError("value is not specified for "
+                             f"{pillar_path}")
+        else:
+            return pillar[pillar_path]
+
     def run(self, targets):  # noqa
         # TODO:
         #   - create a state instead
@@ -119,6 +142,35 @@ class SWUpgrade(CommandParserFillerMixin):
         try:
             self._ensure_upgrade_repos_configuration()
 
+            local_minion = local_minion_id()
+
+            version_resolver = GetReleaseVersion()
+            release_info = version_resolver.run(targets=local_minion)
+            cortx_version = (f"{release_info[ReleaseInfo.VERSION.value]}-"
+                             f"{release_info[ReleaseInfo.BUILD.value]}")
+
+            yum_snapshots = self._get_pillar('upgrade/yum_snapshots',
+                                             local_minion)
+
+            if cortx_version not in yum_snapshots:
+                txn_ids_dict = get_last_txn_ids(targets=targets,
+                                                multiple_targets_ok=True)
+
+                pillar_updater = PillarUpdater(targets)
+
+                upgrade_path = KeyPath('upgrade')
+                yum_snapshot_path = PillarKey(
+                            upgrade_path / f"yum_snapshots/{cortx_version}")
+
+                pi_group = inputs.PillarInputBase.from_args(
+                                                    keypath=yum_snapshot_path,
+                                                    value=txn_ids_dict)
+
+                pillar_updater.update((pi_group,))
+                pillar_updater.apply()
+
+            sw_list = self._get_pillar('upgrade/sw_list', local_minion)
+
             with YumRollbackManager(
                             targets,
                             multiple_targets_ok=True,
@@ -134,7 +186,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
                     minion_conf_changes = config_salt_minions()
 
-                    for component in COMPONENTS_FOR_UPGRADE:
+                    for component in sw_list:
                         _update_component(component, targets)
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc

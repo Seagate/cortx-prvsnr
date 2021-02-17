@@ -785,7 +785,7 @@ class SWRollback(CommandParserFillerMixin):
 
                 logger.info(
                     "Configurations restored "
-                    f"on target {target}"
+                    f"on target {targets}"
                 )
             except Exception as exc:
                 raise SWRollbackError(exc) from exc

@@ -1415,6 +1415,39 @@ class SaltJobsRunner:
             raise PrvsnrCmdNotFoundError(jid)
 
 
+def get_last_txn_ids(targets: str, multiple_targets_ok: bool = False) -> dict:
+    """
+    Get latest transition id number from yum transition history
+
+    Parameters
+    ----------
+    targets: str
+        Salt targets
+
+    multiple_targets_ok: bool
+        Flag to indicate that we are waiting only for one transition id number
+
+    Returns
+    -------
+    dict
+        map of targets and their corresponding yum history transaction numbers
+
+    """
+    # TODO IMPROVE EOS-9484  stderrr might include valuable info
+    txn_ids = cmd_run(("yum history 2>/dev/null | grep ID -A 2 | "
+                       "tail -n1 | awk '{print $1}'"),
+                      targets=targets)
+
+    if not multiple_targets_ok and (len(txn_ids) > 1):
+        err_msg = ("Multiple targetting is not expected, "
+                   f"matched targets: {list(txn_ids)} for '{targets}'")
+        logger.error(err_msg)
+        raise ValueError(err_msg)
+
+    logger.debug(f'Rollback txns ids: {txn_ids}')
+    return txn_ids
+
+
 # TODO test
 @attr.s(auto_attribs=True)
 class YumRollbackManager:
@@ -1425,28 +1458,8 @@ class YumRollbackManager:
     _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
     def _resolve_last_txn_ids(self):
-        # TODO IMPROVE EOS-9484  stderrr might include valuable info
-        txn_ids = cmd_run(
-            (
-                "yum history 2>/dev/null | grep ID -A 2 | "
-                "tail -n1 | awk '{print $1}'"
-            ),
-            targets=self.targets
-        )
-
-        if (
-            not self.multiple_targets_ok
-            and (len(txn_ids) > 1)
-        ):
-            err_msg = (
-                "Multiple targetting is not expected, "
-                f"matched targets: {list(txn_ids)} for '{self.targets}'"
-            )
-            logger.error(err_msg)
-            raise ValueError(err_msg)
-
-        logger.debug(f'Rollback txns ids: {txn_ids}')
-        return txn_ids
+        return get_last_txn_ids(targets=self.targets,
+                                multiple_targets_ok=self.multiple_targets_ok)
 
     def _yum_rollback(self):
         # TODO IMPROVE minion might be stopped at that moment,
