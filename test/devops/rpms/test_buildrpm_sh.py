@@ -379,26 +379,26 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
 
 
 @pytest.mark.env_level('base')
-def test_build_bundles(
-    mhost
-):
+def test_build_bundles(mhost, tmpdir_function):
     res = []
 
-    deploy_bundle_dir = Path('/tmp/cortx-deploy')
-    upgrade_bundle_dir = Path('/tmp/cortx-upgrade')
+    deploy_cortx_dir = tmpdir_function / 'cortx-deploy'
+    deploy_bundle_dir = tmpdir_function / 'cortx-deploy-bundle'
+    upgrade_bundle_dir = tmpdir_function / 'cortx-upgrade'
 
     build_script = (
         Path(mhost.repo)
         / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
     )
 
+    # XXX hard-coded
     for b_dir, b_type, b_version in [
-        (deploy_bundle_dir, 'deploy', '1.0.0'),
-        (upgrade_bundle_dir, 'upgrade', '2.0.0')
+        (deploy_cortx_dir, 'deploy-cortx', '2.0.0'),
+        (deploy_bundle_dir, 'deploy-bundle', '2.0.0'),
+        (upgrade_bundle_dir, 'upgrade', '2.1.0')
     ]:
         mhost.check_output(
-            f"mkdir -p {b_dir}"
-            f" && {build_script} -o {b_dir} -t {b_type} -r {b_version}"
+            f"{build_script} -o {b_dir} -t {b_type} -r {b_version} --gen-iso"
         )
         res.append(mhost.copy_from_host(b_dir.with_suffix('.iso')))
 
@@ -414,8 +414,8 @@ def test_build_isos(
     res = []
 
     mhost.check_output("yum install -y createrepo genisoimage")
-    single_repo = Path('/tmp/single')
-    swupdate_repo = Path('/tmp/cortx')
+    single_repo = tmpdir_function / 'single'
+    swupdate_repo = tmpdir_function / 'cortx'
     cortx_repo = single_repo / config.CORTX_ISO_DIR
     deps_repo = single_repo / config.CORTX_3RD_PARTY_ISO_DIR
 
@@ -456,7 +456,7 @@ def test_build_isos(
         ('prvsnr', cortx_repo),
         ('prvsnr_api', deps_repo)
     ):
-        iso_path = Path(f'/tmp/{repo_dir.name}.iso')
+        iso_path = repo_dir.with_suffix('.iso')
 
         mhost.check_output(
             "mkdir -p {repo_dir} {swupdate_repo}"
@@ -474,7 +474,7 @@ def test_build_isos(
         res.append(mhost.copy_from_host(iso_path))
 
     # prepare single iso
-    iso_path = Path(f'/tmp/{single_repo.name}.iso')
+    iso_path = single_repo.with_suffix('.iso')
     mhost.check_output(
         "mkisofs -graft-points -r -l -iso-level 2 -J -o {iso_path} {repo_dir}"  # noqa: E501
         .format(
@@ -485,7 +485,7 @@ def test_build_isos(
     res.append(mhost.copy_from_host(iso_path))
 
     # prepare swupdate iso
-    iso_path = Path(f'/tmp/{swupdate_repo.name}.iso')
+    iso_path = swupdate_repo.with_suffix('.iso')
 
     release_info_file = tmpdir_function / config.RELEASE_INFO_FILE
     dump_yaml(release_info_file, release_info)

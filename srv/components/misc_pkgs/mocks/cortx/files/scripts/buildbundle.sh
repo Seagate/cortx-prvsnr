@@ -78,9 +78,13 @@ function parse_args {
                 ;;
             -o|--out-dir)
                 output_dir="$2"
-                if [[ ! -d "$output_dir" ]]; then
-                    >&2 echo "'$output_dir' not a directory"
-                    exit 5
+                if [[ -e "$output_dir" ]]; then
+                    if [[ ! -d "$output_dir" ]]; then
+                        >&2 echo "'$output_dir' not a directory"
+                        exit 5
+                    fi
+                else
+                    mkdir -p "$output_dir"
                 fi
                 shift 2
                 ;;
@@ -144,7 +148,7 @@ tmp_dir="$(mktemp -d)"
 build_dir="$tmp_dir"
 
 echo -e "Building CORTX rpms, build dir: $build_dir"
-$cmd_prefix ${script_dir}/buildrpm.sh "$cortx_version" "$build_dir"
+$cmd_prefix "${script_dir}/buildrpm.sh" "$cortx_version" "$build_dir"
 
 echo -e "Preparing a $output_type bundle, output dir: $output_dir"
 pushd "$output_dir"
@@ -155,17 +159,17 @@ pushd "$output_dir"
         cp -r "${rpms_dir}"/* .
         yum_repos=.
     else
-        yum_repos="cortx_iso 3rd_party"
+        yum_repos=("cortx_iso" "3rd_party")
 
         if [[ "$output_type" == "upgrade" ]]; then
-            yum_repos+=" os"
+            yum_repos+=("os")
         fi
 
-        mkdir python_deps $yum_repos
+        mkdir python_deps "${yum_repos[@]}"
         cp -r "${rpms_dir}"/* cortx_iso
     fi
 
-    for repo in $yum_repos; do
+    for repo in "${yum_repos[@]}"; do
         createrepo "$repo"
     done
 
@@ -174,7 +178,7 @@ pushd "$output_dir"
     sed_cmds+="; s/{{ DATE }}/$(LC_ALL=en_US.UTF-8 date --utc)/g"
     sed_cmds+="; s/{{ KERNEL }}/$(uname -r)/g"
     sed "$sed_cmds" "${script_dir}/../${release_info}" >"$release_info"
-    pkgs="$(ls "$rpms_dir" | grep '\.rpm')"
+    pkgs="$(find "$rpms_dir" -name '*.rpm' -type f -printf "%f\n")"
     for pkg in $pkgs; do
         echo "- $pkg" >>"$release_info"
     done
