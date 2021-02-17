@@ -299,7 +299,7 @@ def sw_update(targets=ALL_MINIONS, nowait=False):
 def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     r"""Rollback CORTX software stack.
 
-    Rollback all CORTX components to the specified target_version.
+    Rollback CORTX software stack.
 
     Assumptions - upgrade pillar is updated, with specified target_version
     as 'cortx_version' and yum txn ids for each node
@@ -308,14 +308,14 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
         - motr
         - s3server
         ...
-    yum_snapshots:
-      <cortx-version>:
-        <node-id>: <yum-txn-id>
+      yum_snapshots:
+        <cortx-version>:
+          <node-id>: <yum-txn-id>
 
     Parameters
     ----------
     target_version
-        Rollback target old version
+        (optional) Cortex version to rollback in case yum rollback is not performed
     targets
         (optional) A host to rollback. Default: all minions
     nowait
