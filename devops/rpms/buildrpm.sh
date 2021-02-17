@@ -24,7 +24,7 @@ BASEDIR=$(dirname "$SCRIPT_PATH")
 
 BUILD_NUMBER=0
 GIT_VER=
-CORTX_PRVSNR_VERSION=1.0.0
+CORTX_PRVSNR_VERSION=2.0.0
 
 usage() { echo "Usage: $0 [-G <git short revision>] [-S <CORTX Provisioner version>]" 1>&2; exit 1; }
 
