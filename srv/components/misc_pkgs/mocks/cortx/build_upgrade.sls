@@ -15,6 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Restore files for UDS:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', 'uds:restore')
+# TODO: use path from pillars or any other configuration
+{% set version = '2.1.0' %}
+# XXX hard-coded
+{% set mocks_repo_default = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_{}'.format(version) %}
+{% set mocks_repo = salt['pillar.get']('inline:upgrade_repo_dir', mocks_repo_default) %}
+
+{% from './_macros.sls' import bundle_built with context %}
+
+{{ bundle_built(mocks_repo, 'upgrade', version, gen_iso=True) }}

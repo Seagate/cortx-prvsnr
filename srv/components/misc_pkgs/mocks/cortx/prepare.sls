@@ -15,6 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Restore files for UDS:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', 'uds:restore')
+# TODO: use path from pillars or any other configuration
+{% set version = '2.0.0' %}
+# XXX hard-coded
+{% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
+
+{% from './_macros.sls' import bundle_built with context %}
+
+{{ bundle_built(mocks_repo, 'deploy-cortx', version) }}
+
+Stage - Install CORTX mock repo:
+  pkgrepo.managed:
+    - name: cortx_mock_repo
+    - humanname: CORTX Mock repo
+    - baseurl: file://{{ mocks_repo }}
+    - enabled: True
+    - gpgcheck: 0
+    - require:
+      - build_mock_repo_{{ mocks_repo }}
