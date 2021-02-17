@@ -83,7 +83,7 @@ class SWUpgrade(CommandParserFillerMixin):
                     # unrecoverable state: SW stack is in intermediate
                     # state, no sense to start the cluster
                     logger.exception(
-                            'Failed to restore cortex components configuration'
+                            'Failed to restore CORTX components configuration'
                     )
                     rollback_error = exc
                     final_error_t = SWUpdateFatalError

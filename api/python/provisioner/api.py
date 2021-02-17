@@ -315,7 +315,8 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     Parameters
     ----------
     target_version
-        (optional) Cortex version to rollback in case yum rollback is not performed
+        (optional) CORTX version to rollback in case 
+        yum rollback is not performed. Default: None
     targets
         (optional) A host to rollback. Default: all minions
     nowait

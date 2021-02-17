@@ -31,7 +31,7 @@ from ..pillar import (
 )
 from ..salt import (
     StatesApplier,
-    cmd_run as salt_cmd_run,
+    YumRollbackManager,
     local_minion_id
 )
 from ..commands import _apply_provisioner_config
@@ -47,7 +47,7 @@ class RunArgsSWRollback:
     target_version: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "Cortex version to rollback "
+                'help': "CORTX version to rollback "
                 "in case yum rollback is not performed"
             }
         },
@@ -85,32 +85,27 @@ class SWRollback(CommandParserFillerMixin):
 
         try:
             if target_version:
-                yum_snapshots = upgrade_pillar['yum_snapshots']
-                if target_version not in yum_snapshots:
+                yum_txn_ids = upgrade_pillar.get('yum_snapshots', {})
+
+                if not yum_txn_ids:
+                    raise ValueError(
+                        'yum snapshots data not available for rollback'
+                    )
+
+                if target_version not in yum_txn_ids:
                     raise ValueError(
                         f'yum snapshots not available for {target_version}'
                     )
                 else:
-                    for target in yum_snapshots[target_version].keys():
-                        txn_id = (
-                            yum_snapshots[target_version][target]
-                        )
+                    for target in yum_txn_ids[target_version]:
+                        txn_id = (yum_txn_ids[target_version][target])
                         if not txn_id or txn_id is values.MISSED:
                             raise BadPillarDataError(
                                 f"yum txn id not available for {target}"
                             )
                         else:
-                            logger.info(
-                                f"Starting yum rollback on target {target}"
-                            )
-                            salt_cmd_run(
-                                f"yum history rollback -y {txn_id}",
-                                targets=target
-                            )
-                            logger.info(
-                                f"Yum rollback on target {target} is completed"
-                            )
-            logger.info('Restoring cortex components configuration')
+                            YumRollbackManager()._yum_rollback(txn_id, target)
+            logger.info('Restoring CORTX components configuration')
 
             # TODO
             # reconfigure provisioner through rollback state
@@ -120,15 +115,17 @@ class SWRollback(CommandParserFillerMixin):
 
             _apply_provisioner_config(targets)
 
+            sw_list = upgrade_pillar.get('sw_list', [])
+            if not sw_list:
+                logger.warning(
+                    'No components listed for rollback in upgrade/sw_list'
+                )
+
             for component in reversed(upgrade_pillar['sw_list']):
                 self._rollback_component(component, targets)
 
-            logger.info(
-                'Configurations restored successfully'
-            )
+            logger.info('Configurations restored successfully')
         except Exception as exc:
             raise SWRollbackError(exc) from exc
         else:
-            logger.info(
-                'Rollback completed'
-            )
+            logger.info('Rollback completed')
