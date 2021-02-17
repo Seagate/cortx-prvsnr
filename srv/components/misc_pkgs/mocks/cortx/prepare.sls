@@ -16,7 +16,7 @@
 #
 
 # TODO: use path from pillars or any other configuration
-{% set version = '1.0.0' %}
+{% set version = '2.0.0' %}
 # XXX hard-coded
 {% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
 

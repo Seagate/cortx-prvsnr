@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 
-COMPONENTS_FOR_UPGRADE = [
+COMPONENTS_FOR_UPGRADE = (
     'motr',
     's3server',
     'hare',
@@ -41,7 +41,7 @@ COMPONENTS_FOR_UPGRADE = [
     'sspl',
     'uds',
     'csm'
-]
+)
 
 
 @attr.s(auto_attribs=True)

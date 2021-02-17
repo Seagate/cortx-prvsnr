@@ -32,6 +32,9 @@ mkdir -p "${BUILD_DIR}"/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
 pushd ${BUILD_DIR}
     cp ${WORKING_DIR}/specs/cortx-mock.spec "rpmbuild/SPECS/${SPEC}"
+    # not all packages come with setup.yaml (provisioner mini API) since:
+    # - a CORTX component may have multiple pkgs
+    # - but only one of them setups the API
     grep -v setup.yaml ${WORKING_DIR}/specs/cortx-mock.spec >"rpmbuild/SPECS/${SPEC_NO_API}"
 
     pushd rpmbuild
