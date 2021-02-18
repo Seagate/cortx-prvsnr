@@ -1455,7 +1455,7 @@ class YumRollbackManager:
         logger.info(f"Starting rollback on target {target}")
 
         cmd = (f'yum history rollback -y {txn_id}')
-        logger.debug(f'Executing {cmd} on {target}')
+        logger.debug(f'Executing "{cmd}" on {target}')
         cmd_run(
             cmd,
             targets=target

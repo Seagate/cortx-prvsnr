@@ -131,7 +131,7 @@ class SWRollback(CommandParserFillerMixin):
 
             sw_list = upgrade_dict.get('sw_list', [])
             logger.debug(
-                f'Components listed for rollback in upgrade/sw_list {sw_list}'
+                f'Components listed for rollback in upgrade/sw_list: {sw_list}'
             )
 
             for component in reversed(upgrade_dict['sw_list']):
