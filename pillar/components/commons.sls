@@ -30,6 +30,25 @@ commons:
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
-    cortx-s3server: latest
-    cortx-s3iamcli: latest
     kafka: 2.13-2.7.0
+    cortx:
+      # TODO
+      # - update install.sls files for components
+      # - think about generic logic and sls macros, e.g.:
+      #   - define map: pkg - dependencies
+      #   - define map: component - pkgs
+      #   - loop over required and install them along with deps (e.g. using requisites)
+      #   - loop over optional and install if they are available (again - with deps)
+      cortx-csm_agent: latest
+      cortx-csm_web: latest
+      cortx-ha: latest
+      cortx-hare: latest
+      cortx-motr: latest
+      cortx-prvsnr: latest
+      python36-cortx-prvsnr: latest
+      cortx-s3server: latest
+      cortx-s3iamcli: latest
+      cortx-sspl: latest
+      cortx-sspl-test: latest
+      uds-pyi: latest
+      cortx-cli: latest
