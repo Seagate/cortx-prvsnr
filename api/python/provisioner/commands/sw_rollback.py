@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+'''Defines sw_rollback module to perform CORTX software rollback'''
+
 import logging
 from typing import Type
 
@@ -44,6 +46,9 @@ logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class RunArgsSWRollback:
+
+    '''Specify usage of attributes required for rollback'''
+
     target_version: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -58,6 +63,9 @@ class RunArgsSWRollback:
 
 @attr.s(auto_attribs=True)
 class SWRollback(CommandParserFillerMixin):
+
+    '''Defines CORTX software rollback logic'''
+
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSWRollback
 
@@ -65,7 +73,7 @@ class SWRollback(CommandParserFillerMixin):
     def _rollback_component(component, targets):
         state_name = "components.{}.rollback".format(component)
         try:
-            logger.info(
+            logger.debug(
                 "Restoring {} configuration on {}".format(component, targets)
             )
             StatesApplier.apply([state_name], targets)
@@ -77,55 +85,59 @@ class SWRollback(CommandParserFillerMixin):
 
     def run(self, target_version=None, targets=ALL_MINIONS):
 
+        logger.info(f'Starting rollback process on {targets}')
         local_minion = local_minion_id()
 
         upgrade_path = PillarKey('upgrade')
-        upgrade_pillar = PillarResolver(local_minion).get([upgrade_path])
-        upgrade_pillar = upgrade_pillar[local_minion][upgrade_path]
+        upgrade_dict = PillarResolver(local_minion).get([upgrade_path])
+        upgrade_dict = upgrade_dict[local_minion][upgrade_path]
 
         try:
             if target_version:
-                yum_txn_ids = upgrade_pillar.get('yum_snapshots', {})
+                yum_snapshots = upgrade_dict.get('yum_snapshots', {})
 
-                if not yum_txn_ids:
+                if not yum_snapshots:
                     raise ValueError(
                         'yum snapshots data not available for rollback'
                     )
 
-                if target_version not in yum_txn_ids:
+                if target_version not in yum_snapshots:
                     raise ValueError(
                         f'yum snapshots not available for {target_version}'
                     )
                 else:
-                    for target in yum_txn_ids[target_version]:
-                        txn_id = (yum_txn_ids[target_version][target])
+                    yum_txn_ids = yum_snapshots.get(target_version, {})
+                    logger.debug(
+                        'YumRollbackManager will process yum_txn_ids: '
+                        f'{yum_txn_ids}'
+                    )
+                    for target in yum_txn_ids:
+                        txn_id = (yum_txn_ids[target])
                         if not txn_id or txn_id is values.MISSED:
                             raise BadPillarDataError(
                                 f"yum txn id not available for {target}"
                             )
                         else:
                             YumRollbackManager()._yum_rollback(txn_id, target)
-            logger.info('Restoring CORTX components configuration')
 
-            # TODO
+            # TODO Add provisioner to sw_list and
             # reconfigure provisioner through rollback state
+            logger.debug(f'Restoring provisioner configuration on {targets}')
             config_salt_master()
 
             config_salt_minions()
 
             _apply_provisioner_config(targets)
 
-            sw_list = upgrade_pillar.get('sw_list', [])
-            if not sw_list:
-                logger.warning(
-                    'No components listed for rollback in upgrade/sw_list'
-                )
+            sw_list = upgrade_dict.get('sw_list', [])
+            logger.debug(
+                f'Components listed for rollback in upgrade/sw_list {sw_list}'
+            )
 
-            for component in reversed(upgrade_pillar['sw_list']):
+            for component in reversed(upgrade_dict['sw_list']):
                 self._rollback_component(component, targets)
 
-            logger.info('Configurations restored successfully')
         except Exception as exc:
             raise SWRollbackError(exc) from exc
-        else:
-            logger.info('Rollback completed')
+
+        logger.info('Rollback completed')

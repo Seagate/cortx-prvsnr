@@ -1452,13 +1452,17 @@ class YumRollbackManager:
     def _yum_rollback(txn_id, target):
         # TODO IMPROVE minion might be stopped at that moment,
         #      option - use some ssh fallback
-        logger.info("Starting rollback on target {}".format(target))
+        logger.info(f"Starting rollback on target {target}")
+
+        cmd = (f'yum history rollback -y {txn_id}')
+        logger.debug(f'Executing {cmd} on {target}')
         cmd_run(
-            "yum history rollback -y {}".format(txn_id),
+            cmd,
             targets=target
         )
+
         logger.info(
-            "Rollback on target {} is completed".format(target)
+            f"Rollback on target {target} is completed"
         )
 
     def __enter__(self):
@@ -1479,8 +1483,9 @@ class YumRollbackManager:
 
         try:
             for target, txn_id in self._last_txn_ids.items():
-                self.yum_rollback(txn_id, target)
+                self._yum_rollback(txn_id, target)
         except Exception as exc:
+            logger.debug(f'Exception occured: {exc}')
             self._rollback_error = exc
 
     @property
