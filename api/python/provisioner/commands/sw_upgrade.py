@@ -16,6 +16,7 @@
 #
 import logging
 from typing import Type
+import json
 
 from .. import inputs, values
 from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
@@ -145,13 +146,27 @@ class SWUpgrade(CommandParserFillerMixin):
             local_minion = local_minion_id()
 
             version_resolver = GetReleaseVersion()
-            release_info = version_resolver.run(targets=local_minion)
+            release_info = version_resolver.run(targets=local_minion)  # str
+            release_info = json.loads(release_info)
             cortx_version = (f"{release_info[ReleaseInfo.VERSION.value]}-"
                              f"{release_info[ReleaseInfo.BUILD.value]}")
 
-            yum_snapshots = self._get_pillar('upgrade/yum_snapshots',
-                                             local_minion)
+            try:
+                yum_snapshots = self._get_pillar('upgrade/yum_snapshots',
+                                                 local_minion)
+            except ValueError:
+                yum_snapshots = {}  # assume yum_snapshots are empty
 
+            # TODO: we need to compare targets in yum_snapshots and targets
+            #  from parsed income parameter
+            #  for example:
+            #  yum_snapshots:
+            #    - <cortx_version>:
+            #       - srvnode-1: <id>
+            # and input targets = "*" for cluster with >= 2 nodes
+            # so possible scenario:
+            # provisioner sw_upgrade --targets="srvnode-1"
+            # provisioner sw_upgrade --targets="*"
             if cortx_version not in yum_snapshots:
                 txn_ids_dict = get_last_txn_ids(targets=targets,
                                                 multiple_targets_ok=True)
@@ -166,7 +181,7 @@ class SWUpgrade(CommandParserFillerMixin):
                                                     keypath=yum_snapshot_path,
                                                     value=txn_ids_dict)
 
-                pillar_updater.update((pi_group,))
+                pillar_updater.update(pi_group)
                 pillar_updater.apply()
 
             sw_list = self._get_pillar('upgrade/sw_list', local_minion)
