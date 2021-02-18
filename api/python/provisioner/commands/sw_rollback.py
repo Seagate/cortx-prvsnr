@@ -126,9 +126,11 @@ class SWRollback(CommandParserFillerMixin):
             _apply_provisioner_config(targets)
 
             sw_list = upgrade_dict.get('sw_list', [])
-            logger.warning(
+            logger.debug(
                 f'Components listed for rollback in upgrade/sw_list: {sw_list}'
             )
+            if not sw_list:
+                logger.warning('No components listed for rollback')
 
             for component in reversed(upgrade_dict['sw_list']):
                 self._rollback_component(component, targets)
