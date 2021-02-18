@@ -15,34 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{{component}}:
-  post_install:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Post Install'
-  config:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Config'
-  init:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Init'
-  test:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Test'
-  reset:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Reset'
-  backup:
-    cmd: mock
-    args:
-      - 'Stage: '
-      - '{{ component }}: Backup'
+# TODO: use path from pillars or any other configuration
+{% set salt_root = '/opt/seagate/cortx/provisioner/srv' %}
+
+{% macro bundle_built(out_dir, out_type, version, gen_iso=False) %}
+
+{{ out_dir }}:
+  file.directory:
+    - mode: 755
+    - makedirs: True
+
+build_mock_repo_{{ out_dir }}:
+  cmd.run:
+    - name: bash {{ salt_root }}/{{ tpldir }}/files/scripts/buildbundle.sh -v -o {{ out_dir }} -t {{ out_type }} -r {{ version }} {{ version }} {{ '--gen-iso' if gen_iso else ''}}
+    - creates: {{ out_dir }}/RELEASE.INFO
+    - require:
+      - file: {{ out_dir }}
+
+{% endmacro %}

@@ -32,13 +32,16 @@ from ..vendor import attr
 logger = logging.getLogger(__name__)
 
 
-COMPONENTS_FOR_UPGRADE = frozenset({'motr',
-                                    's3server',
-                                    'hare',
-                                    'ha.cortx-ha',
-                                    'sspl',
-                                    'uds',
-                                    'csm'})
+
+COMPONENTS_FOR_UPGRADE = (
+    'motr',
+    's3server',
+    'hare',
+    'ha.cortx-ha',
+    'sspl',
+    'uds',
+    'csm'
+)
 
 
 @attr.s(auto_attribs=True)
