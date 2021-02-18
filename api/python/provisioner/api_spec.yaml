@@ -89,8 +89,12 @@ set_swupgrade_repo:
     - components.misc_pkgs.swupgrade.repo
 sw_update:
   type: SWUpdate
+sw_upgrade:
+  type: SWUpgrade
 fw_update:
   type: FWUpdate
+sw_rollback:
+  type: SWRollback
 set_ssl_certs:
   type: SetSSLCerts
 reboot_server:

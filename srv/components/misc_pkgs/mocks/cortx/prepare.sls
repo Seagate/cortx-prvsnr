@@ -15,42 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove user and group:
-  user.absent:
-    - name: hacluster
-    - purge: True
-    - force: True
+# TODO: use path from pillars or any other configuration
+{% set version = '2.0.0' %}
+# XXX hard-coded
+{% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
 
-{% for serv in ["corosync", "pacemaker", "pcsd"] %}
-Stop service {{ serv }}:
-  service.dead:
-    - name: {{ serv }}
-    - enable: False
-{% endfor %}
+{% from './_macros.sls' import bundle_built with context %}
 
-Remove pcs package:
-  pkg.purged:
-    - pkgs:
-      - pcs
-      - pacemaker
-      - corosync
-      - fence-agents-ipmilan
+{{ bundle_built(mocks_repo, 'deploy-cortx', version) }}
 
-# Remove configuration directory:
-#   file.absent:
-#     - names:
-#       - /etc/corosync
-#       - /etc/pacemaker
-
-Remove corosync-pacemaker data:
-  file.absent:
-    - names:
-      - /var/lib/corosync
-      - /var/lib/pacemaker
-      - /var/lib/pcsd
-
-# Enable and Start Firewall:
-#   cmd.run:
-#     - names:
-#       - systemctl enable firewalld
-#       - systemctl start firewalld
+Stage - Install CORTX mock repo:
+  pkgrepo.managed:
+    - name: cortx_mock_repo
+    - humanname: CORTX Mock repo
+    - baseurl: file://{{ mocks_repo }}
+    - enabled: True
+    - gpgcheck: 0
+    - require:
+      - build_mock_repo_{{ mocks_repo }}

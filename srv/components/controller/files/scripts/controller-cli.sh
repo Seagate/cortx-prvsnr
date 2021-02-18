@@ -42,8 +42,8 @@ function trap_handler_exit {
         echo "Exiting with return code: $ret" >> $logfile
     else
         echo "Exiting with return code: $ret" >> $logfile
-        exit $ret
     fi
+    exit $ret
 }
 
 trap trap_handler ERR

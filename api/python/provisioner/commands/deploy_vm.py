@@ -58,7 +58,6 @@ deploy_states = dict(
     prereq=[
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
-        "ha.haproxy.start",
         "misc_pkgs.openldap",
         "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
@@ -81,6 +80,12 @@ deploy_states = dict(
         "sspl",
         "uds",
         "csm"
+    ],
+    ha=[
+        "ha.corosync-pacemaker.install",
+        "ha.corosync-pacemaker.config.base",
+        "ha.haproxy.start",
+        "ha.cortx-ha"
     ]
 )
 
@@ -157,13 +162,16 @@ class DeployVM(Deploy):
             # TODO use salt orchestration
             if setup_type == SetupType.SINGLE:
                 logger.debug("Executing for single node.")
-                if "sync" not in state:
+                if not state.startswith("sync"):
                     self._apply_state(f"components.{state}", primary, stages)
             else:
                 logger.debug("Executing for multiple nodes.")
                 # FIXME EOS-12076 the following logic is only
                 #       for legacy dual node setup
-                if state == "sspl":
+                if state in (
+                    "sspl",
+                    "ha.cortx-ha"
+                ):
                     # Execute first on secondaries then on primary.
                     self._apply_state(
                         f"components.{state}", secondaries, stages
@@ -181,13 +189,6 @@ class DeployVM(Deploy):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-
-            if state == "hare":
-                logger.info("Bootstraping cluster")
-                self._cmd_run(
-                    "hctl bootstrap --mkfs /var/lib/hare/cluster.yaml",
-                    targets=self._primary_id()
-                )
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
@@ -211,6 +212,7 @@ class DeployVM(Deploy):
 
             self._run_states('iopath', run_args)
             self._run_states('controlpath', run_args)
+            self._run_states('ha', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
@@ -281,6 +283,10 @@ class DeployVM(Deploy):
             if 'controlpath' in run_args.states:
                 logger.info("Deploying the control path states")
                 self._run_states('controlpath', run_args)
+
+            if 'ha' in run_args.states:
+                logger.info("Deploying the ha path states")
+                self._run_states('ha', run_args)
 
         logger.info("Deploy VM - Done")
         return run_args

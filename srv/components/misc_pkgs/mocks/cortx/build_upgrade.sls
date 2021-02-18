@@ -15,42 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove user and group:
-  user.absent:
-    - name: hacluster
-    - purge: True
-    - force: True
+# TODO: use path from pillars or any other configuration
+{% set version = '2.1.0' %}
+# XXX hard-coded
+{% set mocks_repo_default = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_{}'.format(version) %}
+{% set mocks_repo = salt['pillar.get']('inline:upgrade_repo_dir', mocks_repo_default) %}
 
-{% for serv in ["corosync", "pacemaker", "pcsd"] %}
-Stop service {{ serv }}:
-  service.dead:
-    - name: {{ serv }}
-    - enable: False
-{% endfor %}
+{% from './_macros.sls' import bundle_built with context %}
 
-Remove pcs package:
-  pkg.purged:
-    - pkgs:
-      - pcs
-      - pacemaker
-      - corosync
-      - fence-agents-ipmilan
-
-# Remove configuration directory:
-#   file.absent:
-#     - names:
-#       - /etc/corosync
-#       - /etc/pacemaker
-
-Remove corosync-pacemaker data:
-  file.absent:
-    - names:
-      - /var/lib/corosync
-      - /var/lib/pacemaker
-      - /var/lib/pcsd
-
-# Enable and Start Firewall:
-#   cmd.run:
-#     - names:
-#       - systemctl enable firewalld
-#       - systemctl start firewalld
+{{ bundle_built(mocks_repo, 'upgrade', version, gen_iso=True) }}

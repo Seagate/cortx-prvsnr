@@ -261,6 +261,19 @@ class SWStackUpdateError(ProvisionerError):
         )
 
 
+class SWRollbackError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return (
+            'failed to rollback SW stack, reason: {}'
+            .format(self.reason)
+        )
+
+
 class HAPostUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
