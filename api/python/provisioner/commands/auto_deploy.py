@@ -106,8 +106,8 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             setup_ctx.ssh_client.cmd_run(
                 (
                     'salt-call state.apply '
-                    'components.system.config.pillar_encrypt'
-                ), targets=setup_ctx.run_args.primary.minion_id
+                    'components.system.config'
+                )
             )
 
             # The ConfStore JSON is required to be generated on all nodes

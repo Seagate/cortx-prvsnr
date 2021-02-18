@@ -34,7 +34,7 @@ Copy multipath config:
 #     - name: multipath -F
 
 
-{% set enclosure_id = "enclosure-" + ((grains['id']).split('_'))[1] %}
+{% set enclosure_id = "enclosure-" + ((grains['id']).split('-'))[1] %}
 {% if not 'JBOD' in pillar['storage'][enclosure_id]['controller']['type'] %}
 {% if (not "primary" in pillar["cluster"][grains["id"]]["roles"])
     or (pillar['cluster']['replace_node']['minion_id']
