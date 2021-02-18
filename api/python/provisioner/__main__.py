@@ -245,9 +245,10 @@ def _main():
         auth_args_view['password'] = config.SECRET_MASK
 
     logger.debug(
-        f'Parsed arguments: auth={auth_args_view}, log={log_args_view}, '
-        f'cmd={parsed_args.cmd}, args={parsed_args.args}, '
-        f'kwargs={parsed_args.kwargs}'
+        "\nParsed arguments: \n"
+        "auth={}, \nlog={}, \ncmd={}, \nargs={}, \nkwargs={}\n"
+        .format(auth_args_view, log_args_view,
+         parsed_args.cmd, parsed_args.args, parsed_args.kwargs)
     )
 
     # TODO IMPROVE

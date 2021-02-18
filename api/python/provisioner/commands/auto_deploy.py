@@ -65,6 +65,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         try:
             check_res = check_cmd().run(deploy_check)
         except Exception as exc:
+            logger.error("Deployment Failed.\n")
             raise ValueError("Error During Deployment "
                              f"{deploy_check} Validations: {str(exc)}")
         else:
@@ -75,6 +76,9 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                 check_import.PostChecksDecisionMaker().make_decision(
                     check_result=check_res)
             else:
+                logger.error(
+                  "Deployment Failed. Please provide a proper Check name"
+                )
                 raise ValueError(
                     f'Group Check "{deploy_check}" is not supported')
 
@@ -89,7 +93,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             if k in attr.fields_dict(deploy_dual.run_args_type)
         }
 
-        logger.info("Setup provisioner")
+        logger.info("Starting with Setup Provisioner")
         setup_ctx = SetupProvisioner()._run(
             nodes, **setup_provisioner_args
         )

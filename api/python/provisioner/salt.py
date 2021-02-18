@@ -25,6 +25,7 @@ from typing import (
 from salt.client.ssh.client import SSHClient
 from pathlib import Path
 import logging
+from pprint import pformat
 
 from .vendor import attr
 from .config import (
@@ -594,7 +595,7 @@ class SaltClientBase(ABC):
             try:
                 logger.debug(
                     "Function '{}' on '{}' resulted in {}"
-                    .format(fun, targets, res.results)
+                    .format(fun, targets, pformat(res.results))
                 )
             except Exception as exc:
                 if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
@@ -1003,7 +1004,7 @@ def runner_function_run(
 
     logger.debug(
         "Runner function '{}' resulted in {}".format(
-            fun, res
+            fun, pformat(res)
         )
     )
 
@@ -1120,7 +1121,7 @@ def function_run(
 
     logger.debug(
         "Function '{}' on '{}' resulted in {}".format(
-            fun, targets, res
+            fun, targets, pformat(res)
         )
     )
 

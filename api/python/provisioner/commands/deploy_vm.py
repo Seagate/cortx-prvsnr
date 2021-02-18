@@ -191,7 +191,7 @@ class DeployVM(Deploy):
                     self._apply_state(f"components.{state}", targets, stages)
 
             if state == "hare":
-                logger.info("Bootstraping cluster")
+                logger.info("Bootstrapping Cluster")
                 self._cmd_run(
                     "hctl bootstrap --mkfs /var/lib/hare/cluster.yaml",
                     targets=self._primary_id()
@@ -203,6 +203,10 @@ class DeployVM(Deploy):
         self.set_pillar_data(run_args.setup_type, run_args.targets)
         if self._is_hw():
             # TODO EOS-12076 less generic error
+            logger.error(
+                "Setup Type is HW. Executed command is specific for VM. "
+                "For HW please run `deploy`"
+            )
             raise errors.ProvisionerError(
                 "The command is specifically for VM deployment. "
                 "For HW please run `deploy`"
