@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-'''Defines sw_rollback module to perform CORTX software rollback'''
+"""Defines sw_rollback module to perform CORTX software rollback"""
 
 import logging
 from typing import Type
@@ -46,8 +46,7 @@ logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class RunArgsSWRollback:
-
-    '''Specify usage of attributes required for rollback'''
+    """Specify usage of attributes required for rollback"""
 
     target_version: str = attr.ib(
         metadata={
@@ -63,8 +62,7 @@ class RunArgsSWRollback:
 
 @attr.s(auto_attribs=True)
 class SWRollback(CommandParserFillerMixin):
-
-    '''Defines CORTX software rollback logic'''
+    """Defines CORTX software rollback logic"""
 
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsSWRollback
@@ -100,25 +98,23 @@ class SWRollback(CommandParserFillerMixin):
                     raise ValueError(
                         'yum snapshots data not available for rollback'
                     )
-
                 if target_version not in yum_snapshots:
                     raise ValueError(
                         f'yum snapshots not available for {target_version}'
                     )
-                else:
-                    yum_txn_ids = yum_snapshots.get(target_version, {})
-                    logger.debug(
-                        'YumRollbackManager will process yum_txn_ids: '
-                        f'{yum_txn_ids}'
-                    )
-                    for target in yum_txn_ids:
-                        txn_id = (yum_txn_ids[target])
-                        if not txn_id or txn_id is values.MISSED:
-                            raise BadPillarDataError(
-                                f"yum txn id not available for {target}"
-                            )
-                        else:
-                            YumRollbackManager()._yum_rollback(txn_id, target)
+                yum_txn_ids = yum_snapshots.get(target_version, {})
+                logger.debug(
+                    'YumRollbackManager will process yum_txn_ids: '
+                    f'{yum_txn_ids}'
+                )
+                for target in yum_txn_ids:
+                    txn_id = (yum_txn_ids[target])
+                    if not txn_id or txn_id is values.MISSED:
+                        raise BadPillarDataError(
+                            f"yum txn id not available for {target}"
+                        )
+                    else:
+                        YumRollbackManager()._yum_rollback(txn_id, target)
 
             # TODO Add provisioner to sw_list and
             # reconfigure provisioner through rollback state
@@ -130,7 +126,7 @@ class SWRollback(CommandParserFillerMixin):
             _apply_provisioner_config(targets)
 
             sw_list = upgrade_dict.get('sw_list', [])
-            logger.debug(
+            logger.warning(
                 f'Components listed for rollback in upgrade/sw_list: {sw_list}'
             )
 
