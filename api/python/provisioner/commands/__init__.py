@@ -251,6 +251,7 @@ class RunArgsSWRollback:
 #  - ? options to check/ensure sync:
 #     - salt.mine
 #     - periodical states apply
+
 @attr.s(auto_attribs=True)
 class PillarGet(CommandParserFillerMixin):
     input_type: Type[inputs.PillarKeysList] = inputs.PillarKeysList
@@ -332,7 +333,8 @@ class PillarSet(CommandParserFillerMixin):
                 raise
         except Exception as _exc:
             exc = _exc
-            logger.exception('Pillar set failed')
+            logger.exception("Pillar Set failed with Exception: {}"
+                             .format(exc))
         finally:
             if exc:
                 raise PillarSetError(
@@ -406,7 +408,9 @@ class Set(CommandParserFillerMixin):
                 logger.debug('Applying post states')
                 StatesApplier.apply(self.post_states)
             except Exception:
-                logger.warning('Failed to apply changes, starting rollback')
+                logger.warning(
+                    "Failed to apply Pillar changes, Starting Rollback"
+                )
                 # TODO more solid rollback
                 pillar_updater.rollback()
                 pillar_updater.apply()
@@ -444,12 +448,12 @@ class Set(CommandParserFillerMixin):
 
 # TODO IMPROVE EOS-8940 move to separate module
 def _ensure_update_repos_configuration(targets=ALL_MINIONS):
-    logger.info("Ensure update repos are configured")
+    logger.info("Ensuring update repos are configured")
     StatesApplier.apply(
         ['components.misc_pkgs.swupdate.repo'], targets
     )
 
-    logger.info("Check yum repos are good")
+    logger.info("Checking if yum repos are good")
     StatesApplier.apply(
         ['components.misc_pkgs.sw_update.repo.sanity_check'], targets
     )
@@ -463,7 +467,7 @@ def _pre_yum_rollback(
     ):
         try:
             logger.info(
-                "Enable cluster maintenance mode before rollback"
+                "Enabling cluster maintenance mode before rollback"
             )
             cluster_maintenance_enable()
         except Exception as exc:
@@ -518,16 +522,19 @@ class SWUpdate(CommandParserFillerMixin):
         # TODO IMPROVE minions might be stopped here in case of rollback,
         #      options: set up temp ssh config and rollback yum + minion config
         #      via ssh as a fallback
+
         rollback_ctx = None
         minion_conf_changes = None
         try:
+            logger.info("Ensuring Cluster is Healthy")
             ensure_cluster_is_healthy()  # TODO: checker.run do that check too
 
+            logger.info("Ensuring SW Update validatons are in place")
             checker = Check()
             try:
                 check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
             except Exception as e:
-                logger.warning("During pre-flight checks error happened: "
+                logger.warning("Error during  SW Update pre-flight checks: "
                                f"{str(e)}")
             else:
                 decision_maker = SWUpdateDecisionMaker()
@@ -542,18 +549,24 @@ class SWUpdate(CommandParserFillerMixin):
                 multiple_targets_ok=True,
                 pre_rollback_cb=_pre_yum_rollback
             ) as rollback_ctx:
-                # enable "smart maintenance" mode
+                logger.info(
+                    'Enabling "smart maintenance" mode'
+                )
                 try:
                     cluster_maintenance_enable()
                 except Exception as exc:
                     raise ClusterMaintenanceEnableError(exc) from exc
 
-                # update SW stack packages and configuration
+                logger.info(
+                    "Updating SW stack packages and configuration"
+                )
                 try:
                     _update_component('provisioner', targets)
 
-                    # re-apply provisioner configuration to ensure
-                    # that updated pillar is taken into account
+                    logger.info(
+                        "Re-apply provisioner configuration to ensure "
+                        "that updated pillar is taken into account."
+                    )
                     _apply_provisioner_config(targets)
 
                     config_salt_master()
@@ -574,7 +587,9 @@ class SWUpdate(CommandParserFillerMixin):
                     raise SWStackUpdateError(exc) from exc
 
                 # SW stack now in "updated" state
-                # disable "smart maintenance" mode
+                logger.info(
+                    'Disabling "smart maintenance" mode'
+                )
                 try:
                     cluster_maintenance_disable()
                 except Exception as exc:
@@ -583,6 +598,9 @@ class SWUpdate(CommandParserFillerMixin):
                 _consul_export('update-pre-ha-update')
 
                 # call Hare to update cluster configuration
+                logger.info(
+                    "Updating Cluster configuration"
+                )
                 try:
                     apply_ha_post_update(targets)
                 except Exception as exc:
@@ -606,11 +624,12 @@ class SWUpdate(CommandParserFillerMixin):
                     try:
                         _restart_salt_minions()
                     except Exception:
-                        logger.exception('failed to restart salt minions')
+                        logger.exception('Failed to restart salt minions')
 
         except Exception as update_exc:
             # TODO TEST
-            logger.exception('SW Update failed')
+            logger.exception("\nSW Update Failed\n")
+            logger.info("Checking for Rollback")
 
             rollback_error = (
                 None if rollback_ctx is None else rollback_ctx.rollback_error
@@ -632,7 +651,11 @@ class SWUpdate(CommandParserFillerMixin):
                     # failed to activate maintenance, cluster will likely
                     # fail to start - fail gracefully:  disable
                     # maintenance in the background
+                    logger.error(
+                        "Disabling Cluster maintenance to fail gracefully"
+                    )
                     cluster_maintenance_disable(background=True)
+
                 elif isinstance(
                     # cluster is stopped here
                     update_exc,
@@ -644,6 +667,9 @@ class SWUpdate(CommandParserFillerMixin):
                     )
                 ):
                     # rollback provisioner related configuration
+                    logger.error(
+                        "Rollback provisioner related configuration"
+                    )
                     try:
                         ensure_salt_master_is_running()
 
@@ -741,6 +767,7 @@ class SWRollback(CommandParserFillerMixin):
                 f'{target_version} version data not available for rollback'
             )
         else:
+            logger.info(f"Rollback for version {cortx_tgt_version}")
 
             txn_id_path = PillarKey(f"{yum_snapshot_path}/{cortx_tgt_version}")
             txn_id_pillar = PillarResolver(local_minion).get([txn_id_path])
@@ -791,7 +818,7 @@ class SWRollback(CommandParserFillerMixin):
                 raise SWRollbackError(exc) from exc
             else:
                 logger.info(
-                    'Rollback completed'
+                    "\nSW Update Rollback Completed\n"
                 )
 
 
@@ -805,6 +832,8 @@ class FWUpdate(CommandParserFillerMixin):
         source = Path(source).resolve()
 
         if not source.is_file():
+            logger.error(f"Provided input '{source}' is not a file. "
+                         "Please provide a valid file to proceed with FW Update.")
             raise ValueError('{} is not a file'.format(source))
 
         script = (
@@ -831,6 +860,8 @@ class FWUpdate(CommandParserFillerMixin):
 
         if dry_run:
             return
+
+        logger.info("Proceeding to FW Update")
 
         StateFunExecuter.execute(
             'cmd.run',
@@ -988,9 +1019,9 @@ class SetSSLCerts(CommandParserFillerMixin):
                         dest.name))
                 StatesApplier.apply([state_name], targets=targets)
                 logger.info('SSL Certs Updated')
+
             except Exception as exc:
-                logger.exception(
-                    "Failed to apply certs")
+                logger.exception("Failed to apply SSL certs")
                 raise SSLCertsUpdateError(exc) from exc
 
             # disable cluster maintenance mode
@@ -1001,7 +1032,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                 raise ClusterMaintenanceDisableError(exc) from exc
 
         except Exception as ssl_exc:
-            logger.exception('SSL Certs Updation Failed')
+            logger.exception('SSL Certs Update Failed')
             rollback_exc = None
             if isinstance(ssl_exc, ClusterMaintenanceEnableError):
                 cluster_maintenance_disable(background=True)
@@ -1010,7 +1041,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                     SSLCertsUpdateError, ClusterMaintenanceDisableError)):
 
                 try:
-                    logger.info('Restoring old SSL cert ')
+                    logger.info('Restoring old SSL cert')
                     # restores old cert
                     copy_to_file_roots(backup_file_name, dest)
                     StatesApplier.apply([state_name], targets=targets)
@@ -1038,6 +1069,7 @@ class RebootServer(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
 
     def run(self, targets):
+        logger.info("\nServer Reboot\n")
         return function_run(
             'system.reboot',
             targets=targets
@@ -1078,6 +1110,7 @@ class RebootController(CommandParserFillerMixin):
                     'value for {} is not specified'.format(param.keypath)
                 )
 
+        logger.info("\nController Reboot\n")
         StateFunExecuter.execute(
             'cmd.run',
             fun_kwargs=dict(
@@ -1129,6 +1162,7 @@ class ShutdownController(CommandParserFillerMixin):
                     'value for {} is not specified'.format(param.keypath)
                 )
 
+        logger.info("\nController Shutdown\n")
         StateFunExecuter.execute(
             'cmd.run',
             fun_kwargs=dict(
@@ -1178,6 +1212,7 @@ class CreateUser(CommandParserFillerMixin):
         if not SEAGATE_USER_HOME_DIR.exists():
             raise ValueError('/opt/seagate/users directory missing')
 
+        logger.info("Creating New User")
         home_dir = SEAGATE_USER_HOME_DIR / uname
         ssh_dir = home_dir / '.ssh'
 
@@ -1320,7 +1355,8 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
-        # Creating a new group with limited access for csm admin users
+        logger.info("Creating a new group with "
+                    "limited access for csm admin users")
         StateFunExecuter.execute(
             'group.present',
             fun_kwargs=dict(

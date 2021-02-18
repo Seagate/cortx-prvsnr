@@ -20,6 +20,7 @@ from typing import (
     List, Union, Dict, Tuple, Any, Type
 )
 import logging
+from pprint import pformat
 
 from ..vendor import attr
 from ..config import (
@@ -259,8 +260,8 @@ class SaltClientBase(ABC):
 
         try:
             logger.debug(
-                f"'{type(self)}' client: Function '{fun}' resulted in "
-                f"{res.results}"
+                "'{}' client: Function '{}' resulted in: {}"
+                .format(type(self), fun, pformat(res.results))
             )
         except Exception as exc:
             if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501

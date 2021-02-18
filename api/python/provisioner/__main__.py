@@ -78,7 +78,9 @@ def _prepare_output(output_type, res):
         return serialize.dumps(res, sort_keys=True, indent=4)
     else:
         logger.error(
-            "Unexpected output type {}".format(output_type)
+            "Invalid output format provided: '{}'. "
+            "Output type can be yaml or json or just plain."
+            .format(output_type)
         )
         raise ValueError('Unexpected output type {}'.format(output_type))
 
@@ -225,8 +227,9 @@ def _main():
         return __version__
 
     if parsed_args.cmd is None:
-        logger.error("Command is required")
-        raise ValueError('command is required')
+        logger.error("No command Provided. "
+                     "A valid command is required to process further..")
+        raise ValueError("Command is required")
 
     if auth_args.password == '-':
         auth_args.password = next(fileinput.input(['-'])).rstrip()
@@ -283,7 +286,7 @@ def main():
                 exc = None
             raise
         else:
-            logger.exception('provisioner failed')
+            logger.exception("PROVISIONER FAILED")
             sys.exit(1)
     finally:
         '''
