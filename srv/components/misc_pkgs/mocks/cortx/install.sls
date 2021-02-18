@@ -24,8 +24,6 @@
     - makedirs: True
 
 
-{% for pkg_name, pkg_ver in salt['pillar.get']('commons:version:cortx').items() %}
-
 cortx_mock_pkgs_installed:
   pkg.installed:
     - pkgs:
