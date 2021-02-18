@@ -170,6 +170,7 @@ CONTROLLER_BOTH = 'both'
 CLUSTER = "cluster"
 STORAGE_ENCLOSURE = "storage-enclosure"
 NODE = "node"
+SRVNODE = "srvnode"
 NODE_DEFAULT = "srvnode-default"
 STORAGE_DEFAULT = "storage-enclosure-default"
 
