@@ -119,7 +119,7 @@ class SWUpgrade(CommandParserFillerMixin):
                 raise ValueError("value is not specified for "
                                  f"'{pillar_path}' and target '{target}'")
             else:
-                _res[target] = pillar[pillar_path]
+                _res[target] = _pillar[pillar_path]
 
         return _res
 
