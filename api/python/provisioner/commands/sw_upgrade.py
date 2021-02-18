@@ -25,7 +25,7 @@ from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         )
 from ..config import GroupChecks, ReleaseInfo
 from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
-from ..pillar import PillarKey, PillarResolver, PillarUpdater, KeyPath
+from ..pillar import PillarKey, PillarResolver, PillarUpdater
 from ..salt import (StatesApplier, local_minion_id, YumRollbackManager,
                     get_last_txn_ids
                     )
@@ -92,7 +92,7 @@ class SWUpgrade(CommandParserFillerMixin):
                             rollback_error=rollback_error) from update_exc
 
     @staticmethod
-    def _get_pillar(pillar_key_path: str, targets: str):
+    def _get_pillar(pillar_key_path: str, targets: str) -> dict:
         """
         Get Pillar value
         Parameters
@@ -105,19 +105,23 @@ class SWUpgrade(CommandParserFillerMixin):
 
         Returns
         -------
+        dict
+            dictionary with pillar values for each requested target
 
         """
         pillar_path = PillarKey(pillar_key_path)
         pillar = PillarResolver(targets).get([pillar_path])
 
-        pillar = next(iter(pillar.values()))
+        _res = dict()
+        for target, _pillar in pillar.items():
+            if (not _pillar[pillar_path]
+                    or _pillar[pillar_path] is values.MISSED):
+                raise ValueError("value is not specified for "
+                                 f"'{pillar_path}' and target '{target}'")
+            else:
+                _res[target] = pillar[pillar_path]
 
-        if (not pillar[pillar_path]
-                or pillar[pillar_path] is values.MISSED):
-            raise ValueError("value is not specified for "
-                             f"{pillar_path}")
-        else:
-            return pillar[pillar_path]
+        return _res
 
     def run(self, targets):  # noqa
         # TODO:
@@ -151,11 +155,7 @@ class SWUpgrade(CommandParserFillerMixin):
             cortx_version = (f"{release_info[ReleaseInfo.VERSION.value]}-"
                              f"{release_info[ReleaseInfo.BUILD.value]}")
 
-            try:
-                yum_snapshots = self._get_pillar('upgrade/yum_snapshots',
-                                                 local_minion)
-            except ValueError:
-                yum_snapshots = {}  # assume yum_snapshots are empty
+            upgrade_data = self._get_pillar('upgrade', local_minion)
 
             # TODO: we need to compare targets in yum_snapshots and targets
             #  from parsed income parameter
@@ -167,24 +167,25 @@ class SWUpgrade(CommandParserFillerMixin):
             # so possible scenario:
             # provisioner sw_upgrade --targets="srvnode-1"
             # provisioner sw_upgrade --targets="*"
-            if cortx_version not in yum_snapshots:
-                txn_ids_dict = get_last_txn_ids(targets=targets,
-                                                multiple_targets_ok=True)
+            txn_ids_dict = get_last_txn_ids(targets=targets,
+                                            multiple_targets_ok=True)
 
-                pillar_updater = PillarUpdater(targets)
+            pillar_updater = PillarUpdater(targets)
 
-                upgrade_path = KeyPath('upgrade')
-                yum_snapshot_path = PillarKey(
-                            upgrade_path / f"yum_snapshots/{cortx_version}")
+            yum_snapshot_path = PillarKey(
+                                    f"upgrade/yum_snapshots/{cortx_version}")
 
-                pi_group = inputs.PillarInputBase.from_args(
-                                                    keypath=yum_snapshot_path,
-                                                    value=txn_ids_dict)
+            pi_group = inputs.PillarInputBase.from_args(
+                                                keypath=yum_snapshot_path,
+                                                value=txn_ids_dict)
 
-                pillar_updater.update(pi_group)
-                pillar_updater.apply()
+            pillar_updater.update(pi_group)
+            pillar_updater.apply()
 
-            sw_list = self._get_pillar('upgrade/sw_list', local_minion)
+            sw_list = upgrade_data[local_minion].get("sw_list", None)
+
+            if not sw_list:
+                raise ValueError("upgrade/sw_list data is missed")
 
             with YumRollbackManager(
                             targets,

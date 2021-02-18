@@ -1425,7 +1425,9 @@ def get_last_txn_ids(targets: str, multiple_targets_ok: bool = False) -> dict:
         Salt targets
 
     multiple_targets_ok: bool
-        Flag to indicate that we are waiting only for one transition id number
+        Flag to indicate that we are waiting only for one transition id number.
+        If it is `True`, multiple targets are allowed in the result dictionary,
+        otherwise, an `ValueError` exception will be raised.
 
     Returns
     -------
@@ -1457,10 +1459,6 @@ class YumRollbackManager:
     _last_txn_ids: Dict = attr.ib(init=False, default=attr.Factory(dict))
     _rollback_error: Union[Exception, None] = attr.ib(init=False, default=None)
 
-    def _resolve_last_txn_ids(self):
-        return get_last_txn_ids(targets=self.targets,
-                                multiple_targets_ok=self.multiple_targets_ok)
-
     def _yum_rollback(self):
         # TODO IMPROVE minion might be stopped at that moment,
         #      option - use some ssh fallback
@@ -1475,7 +1473,9 @@ class YumRollbackManager:
             )
 
     def __enter__(self):
-        self._last_txn_ids = self._resolve_last_txn_ids()
+        self._last_txn_ids = get_last_txn_ids(
+                                targets=self.targets,
+                                multiple_targets_ok=self.multiple_targets_ok)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
