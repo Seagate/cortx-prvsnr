@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,8 +17,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import logging
 import configparser
+import logging
+import re
 from enum import Enum
 from typing import Type
 from copy import deepcopy
@@ -35,6 +38,7 @@ from ..config import (
     NODE_DEFAULT,
     STORAGE_DEFAULT,
     CLUSTER, NODE,
+    SRVNODE,
     STORAGE_ENCLOSURE
 )
 
@@ -110,6 +114,53 @@ class ConfigureSetup(CommandParserFillerMixin):
                     f'{NODE_DEFAULT}': NodeNetworkParamsValidation,
                     f'{STORAGE_DEFAULT}': StorageEnclosureParamsValidation}
 
+    @staticmethod
+    def _validate_node_count(num_of_nodes, content):
+        """
+        Validates number of nodes.
+
+        Node count can only be multiples of 3.
+        There cannot be mismatch between count of node sections
+        and storage enclosure sections.
+
+        """
+        try:
+            logger.info(
+               "Validating Node Count.."
+            )
+            node_count = 0
+            enclosure_count = 0
+            if not (num_of_nodes == 1 or num_of_nodes % 3 == 0):
+                raise ValueError(
+                  f"{num_of_nodes} nodes provided. "
+                  "Configure Setup can be done only on single node or on node count of 3s")
+
+            else:
+                for section_name in content:
+                    if (section_name.startswith(f"{SRVNODE}") and
+                            bool(re.search(r"\d", section_name))):
+                        node_count = node_count + 1
+
+                    elif (section_name.startswith(f"{STORAGE_ENCLOSURE}") and
+                            bool(re.search(r"\d", section_name))):
+                        enclosure_count = enclosure_count + 1
+
+                if not (node_count == 1 or node_count % 3 == 0):
+                    raise ValueError(
+                      f"Data for {node_count} nodes provided. "
+                      "Configure Setup can be done only on single node or on node count of 3s")
+
+                elif enclosure_count != node_count:
+                    raise ValueError(
+                       f"Number of Storage Enclosure sections: {enclosure_count} "
+                       f"does not match with Number of Nodes: {node_count}")
+
+                else:
+                    logger.info(f"Applying config for {node_count}-node setup")
+
+        except Exception as exc:
+            raise ValueError(f"Config Failed to apply: {str(exc)}")
+
     def _parse_params(self, input):
         params = {}
         for key in input:
@@ -128,7 +179,6 @@ class ConfigureSetup(CommandParserFillerMixin):
                 logger.debug(f"Params generated: {params}")
 
             else:
-                logger.debug(f"Params generated: {params}")
                 params[val[-1]] = input[key]
         return params
 
@@ -142,7 +192,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif ('interfaces' or 'device' or 'devices') in key:
+            elif ('interfaces' or 'device' or 'devices' or 'roles') in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -162,18 +212,26 @@ class ConfigureSetup(CommandParserFillerMixin):
     def run(self, path, number_of_nodes):  # noqa: C901
 
         if not Path(path).is_file():
+            logger.error(
+               "config file is mandatory for setup configure. "
+               "Please provide a valid config file path. "
+            )
             raise ValueError('config file is missing')
 
         config = configparser.ConfigParser()
         config.read(path)
-        logger.info("Updating salt data :")
+        logger.info("Updating salt data..")
         content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
-        logger.debug(f"params data {content}")
+        logger.debug(
+            "Config data read from provided file: {}"
+            .format(content)
+        )
 
         input_type = None
         pillar_type = None
         node_list = []
         count = int(number_of_nodes)
+        self._validate_node_count(count, content)
 
         pillar_map = {f'{NODE_DEFAULT}': f'{CLUSTER}',
                       f'{NODE}': f'{CLUSTER}',
@@ -195,7 +253,12 @@ class ConfigureSetup(CommandParserFillerMixin):
             count = count - 1
             node_list.append(f"\"{section}\"")
 
+            logger.debug(
+               "Validating Params in section: {}"
+               .format(section)
+            )
             self._validate_params(input_type, content[section])
+
             self._parse_input(content[section])
 
             for pillar_key in content[section]:
