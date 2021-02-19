@@ -570,7 +570,7 @@ class NodeNetwork(ParamGroupInputBase):
     bmc_secret: str = NodeNetworkParams.bmc_secret
     network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
     network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
-    network_mgmt_interfaces: str = NodeNetworkParams.network_mgmt_interfaces
+    network_mgmt_interfaces: List = NodeNetworkParams.network_mgmt_interfaces
     network_data_netmask: str = NodeNetworkParams.network_data_netmask
     network_data_gateway: str = NodeNetworkParams.network_data_gateway
     network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
@@ -584,7 +584,7 @@ class NodeParams():
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
     )
-    roles: str = ParamGroupInputBase._attr_ib(
+    roles: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="role of the node"
     )
     is_primary: bool = ParamGroupInputBase._attr_ib(
@@ -600,7 +600,7 @@ class NodeParams():
 @attr.s(auto_attribs=True)
 class Node(ParamGroupInputBase):
     hostname: str = NodeParams.hostname
-    roles: str = NodeParams.roles
+    roles: List = NodeParams.roles
     is_primary: str = NodeParams.is_primary
     bmc_ip: str = NodeParams.bmc_ip
 

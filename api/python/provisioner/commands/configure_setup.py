@@ -113,9 +113,9 @@ class ConfigureSetup(CommandParserFillerMixin):
                     f'{STORAGE_DEFAULT}': StorageEnclosureParamsValidation}
 
     @staticmethod
-    def _parse_params(input):
+    def _parse_params(param_data):
         params = {}
-        for key in input:
+        for key in param_data:
             val = key.split(".")
             conf_values = [
                 'ip', 'user', 'secret', 'ipaddr', 'interfaces', 'gateway',
@@ -123,15 +123,15 @@ class ConfigureSetup(CommandParserFillerMixin):
                 'id', 'roles', 'data_devices', 'metadata_device']
 
             if len(val) > 2 and val[-1] in conf_values:
-                params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = input[key]
+                params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = param_data[key]
                 logger.debug(f"Params generated: {params}")
 
             elif len(val) > 1 and val[-1] in conf_values:
-                params[f'{val[-2]}_{val[-1]}'] = input[key]
+                params[f'{val[-2]}_{val[-1]}'] = param_data[key]
                 logger.debug(f"Params generated: {params}")
 
             else:
-                params[val[-1]] = input[key]
+                params[val[-1]] = param_data[key]
         return params
 
     def _validate_params(self, input_type, content):
@@ -139,24 +139,22 @@ class ConfigureSetup(CommandParserFillerMixin):
         self.validate_map[input_type](**params)
 
     @staticmethod
-    def _parse_input(input):
-        for key in input:
-            if input[key] and "," in input[key]:
-                value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
+    def _parse_input(input_data):
+        for key in input_data:
+            if input_data[key] and "," in input_data[key]:
+                value = [f'\"{x.strip()}\"' for x in input_data[key].split(",")]
                 value = ','.join(value)
-                input[key] = f'[{value}]'
+                input_data[key] = f'[{value}]'
             elif ('interfaces' or 'device' or 'devices' or 'roles') in key:
-                # special case single value as array
-                # Need to fix this array having single value
-                input[key] = f'[\"{input[key]}\"]'
+                input_data[key] = f'[\"{input_data[key]}\"]'
             else:
-                if input[key]:
-                    if input[key] == 'None':
-                        input[key] = '\"\"'
+                if input_data[key]:
+                    if input_data[key] == 'None':
+                        input_data[key] = '\"\"'
                     else:
-                        input[key] = f'\"{input[key]}\"'
+                        input_data[key] = f'\"{input_data[key]}\"'
                 else:
-                    input[key] = UNCHANGED
+                    input_data[key] = UNCHANGED
 
     @staticmethod
     def _parse_pillar_key(key):

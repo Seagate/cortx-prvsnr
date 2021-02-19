@@ -181,6 +181,7 @@ class NodeParamsValidation:
     _optional_param = [
         'is_primary',
         'bmc_user',
+        'bmc_ip',
         'bmc_secret',
         'cluster_id',
         'network_data_public_ip_addr',
