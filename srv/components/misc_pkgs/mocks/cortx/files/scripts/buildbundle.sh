@@ -4,7 +4,7 @@ set -eu
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-cortx_version=1.0.0
+cortx_version=2.0.0
 output_dir=.
 output_type=deploy-cortx
 verbosity=0
@@ -34,7 +34,12 @@ function usage {
   echo "\
 Usage: $0 [options]
 
-Builds provisioner API package using fpm tool
+Builds different types of CORTX distribution.
+
+The type of a distribution, release version and output directory
+can be configured.
+
+If '--gen-iso' is specified then an ISO file is generated as well.
 
 Options:
   -h,  --help           print this help and exit
@@ -42,7 +47,7 @@ Options:
                             default: $output_dir
   -r,  --cortx-ver      cortx release version,
                             default: $cortx_version
-  -t,  --out-type       output bundle type. Possible values: {deploy-cortx|deploy-single|upgrade}
+  -t,  --out-type       output type. Possible values: {deploy-cortx|deploy-single|upgrade}
                             default: $output_type,
   -v,  --verbose        be more verbose
        --gen-iso        generate ISO
