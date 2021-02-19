@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,8 +17,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import logging
 import configparser
+import logging
 from enum import Enum
 from typing import Type
 from copy import deepcopy
@@ -110,7 +112,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                     f'{NODE_DEFAULT}': NodeNetworkParamsValidation,
                     f'{STORAGE_DEFAULT}': StorageEnclosureParamsValidation}
 
-    def _parse_params(self, input):
+    @staticmethod
+    def _parse_params(input):
         params = {}
         for key in input:
             val = key.split(".")
@@ -128,7 +131,6 @@ class ConfigureSetup(CommandParserFillerMixin):
                 logger.debug(f"Params generated: {params}")
 
             else:
-                logger.debug(f"Params generated: {params}")
                 params[val[-1]] = input[key]
         return params
 
@@ -136,13 +138,14 @@ class ConfigureSetup(CommandParserFillerMixin):
         params = self._parse_params(content)
         self.validate_map[input_type](**params)
 
-    def _parse_input(self, input):
+    @staticmethod
+    def _parse_input(input):
         for key in input:
             if input[key] and "," in input[key]:
                 value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
                 value = ','.join(value)
                 input[key] = f'[{value}]'
-            elif ('interfaces' or 'device' or 'devices') in key:
+            elif ('interfaces' or 'device' or 'devices' or 'roles') in key:
                 # special case single value as array
                 # Need to fix this array having single value
                 input[key] = f'[\"{input[key]}\"]'
@@ -155,20 +158,28 @@ class ConfigureSetup(CommandParserFillerMixin):
                 else:
                     input[key] = UNCHANGED
 
-    def _parse_pillar_key(self, key):
+    @staticmethod
+    def _parse_pillar_key(key):
         pillar_key = deepcopy(key)
         return pillar_key.replace(".", "/")
 
     def run(self, path, number_of_nodes):  # noqa: C901
 
         if not Path(path).is_file():
+            logger.error(
+               "config file is mandatory for setup configure. "
+               "Please provide a valid config file path. "
+            )
             raise ValueError('config file is missing')
 
         config = configparser.ConfigParser()
         config.read(path)
-        logger.info("Updating salt data :")
+        logger.info("Updating salt data..")
         content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
-        logger.debug(f"params data {content}")
+        logger.debug(
+            "Config data read from provided file: {}"
+            .format(content)
+        )
 
         input_type = None
         pillar_type = None
@@ -195,7 +206,12 @@ class ConfigureSetup(CommandParserFillerMixin):
             count = count - 1
             node_list.append(f"\"{section}\"")
 
+            logger.debug(
+               "Validating Params in section: {}"
+               .format(section)
+            )
             self._validate_params(input_type, content[section])
+
             self._parse_input(content[section])
 
             for pillar_key in content[section]:

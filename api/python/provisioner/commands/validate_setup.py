@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -42,6 +44,10 @@ class NetworkParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -57,6 +63,10 @@ class ReleaseParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -85,6 +95,10 @@ class StorageEnclosureParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -100,6 +114,10 @@ class StorageNodeParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -125,8 +143,6 @@ class NodeNetworkParamsValidation:
         'search_domains',
         'dns_servers',
         'cluster_id',
-        'storage_metadata_device',
-        'storage_data_devices',
         'network_data_netmask',
         'network_data_gateway',
         'pvt_ip_addr',
@@ -142,6 +158,10 @@ class NodeNetworkParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -174,4 +194,8 @@ class NodeParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
