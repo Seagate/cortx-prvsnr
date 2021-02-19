@@ -23,9 +23,9 @@ Stage - Reset CSM:
 Remove csm package:
   pkg.purged:
     - pkgs:
+      - cortx-cli
       - cortx-csm_agent
       - cortx-csm_web
-      - cortx-cli
 
 Delete CSM yum repo:
   pkgrepo.absent:
