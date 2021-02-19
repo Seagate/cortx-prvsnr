@@ -32,6 +32,7 @@ from ..salt import (StatesApplier, local_minion_id, YumRollbackManager,
 from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
 from ..vendor import attr
+from . import sw_rollback
 
 
 logger = logging.getLogger(__name__)
@@ -69,16 +70,14 @@ class SWUpgrade(CommandParserFillerMixin):
             final_error_t = SWUpdateFatalError
         elif rollback_ctx is not None:
             if isinstance(update_exc, (SWStackUpdateError,)):
-                # rollback provisioner related configuration
                 try:
-                    config_salt_master()
-                    config_salt_minions()
-                    _apply_provisioner_config(targets)
+                    sw_rollback.SWRollback().run(targets=targets)
                 except Exception as exc:
                     # unrecoverable state: SW stack is in intermediate
                     # state, no sense to start the cluster
                     logger.exception(
-                            'Failed to restore SaltStack configuration')
+                            'Failed to restore CORTX components configuration'
+                    )
                     rollback_error = exc
                     final_error_t = SWUpdateFatalError
             else:
