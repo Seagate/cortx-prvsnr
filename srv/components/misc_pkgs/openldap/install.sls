@@ -27,6 +27,15 @@ Update to latest selinux-policy:
   pkg.installed:
     - name: selinux-policy
 
+Install python36-ldap python package:
+  pip.installed:
+    - name: python36-ldap
+    - bin_env: /usr/bin/pip3
+    - target: /usr/lib64/python3.6/site-packages/
+    - require:
+      - Ensure cryptography python package absent
+
+
 # FIXME EOS-12076 the following steps are about configuration, not installation
 
 Backup slapd config file:
