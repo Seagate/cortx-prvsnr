@@ -106,7 +106,13 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             setup_ctx.ssh_client.cmd_run(
                 (
                     'salt-call state.apply '
-                    'components.system.config'
+                    'components.system.config.pillar_encrypt'
+                ), targets=setup_ctx.run_args.primary.minion_id
+            )
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'salt-call state.apply '
+                    'components.system.config.hosts'
                 )
             )
 
