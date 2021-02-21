@@ -33,3 +33,7 @@ Stage - Install CORTX mock repo:
     - gpgcheck: 0
     - require:
       - build_mock_repo_{{ mocks_repo }}
+
+/etc/yum.repos.d/RELEASE_FACTORY.INFO:
+  file.managed:
+    - source: {{ mocks_repo }}/RELEASE.INFO
