@@ -129,7 +129,7 @@ class GenerateRoster(CommandParserFillerMixin):
     def run(self, **kwargs):
 
         if Path(kwargs['roster_path']).is_file():
-            raise ValueError('Roster file already present')
+            logger.warn("Roster file present, Updating roster file.")
 
         if not Path(kwargs['priv_key']).is_file():
             raise ValueError('Private key not present')
