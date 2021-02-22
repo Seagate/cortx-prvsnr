@@ -606,6 +606,7 @@ ssh_update_roster: True
 # The failhard option tells the minions to stop immediately after the first
 # failure detected in the state execution, defaults to False
 #failhard: False
+failhard: True
 
 # The state_verbose and state_output settings can be used to change the way
 # state system data is printed to the display. By default all data is printed.
