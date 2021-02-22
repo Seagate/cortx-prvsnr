@@ -45,7 +45,7 @@ class RunArgsGenerateRosterAttrs:
                 'help': "roster file path"
             }
         },
-        default=str(config.PRVSNR_FACTORY_PROFILE_DIR / 'srv')
+        default=str(config.PRVSNR_FACTORY_PROFILE_DIR / 'srv/roster')
     )
     user: str = attr.ib(
         metadata={
