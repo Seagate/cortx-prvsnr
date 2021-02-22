@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install cortx-sspl packages:
+Install cortx-sspl:
   pkg.installed:
     - name: cortx-sspl
     - version: latest
@@ -32,4 +32,4 @@ Install cortx-sspl-test:
     - version: latest
     - require:
       - Install flask
-      - Install cortx-sspl packages
+      - Install cortx-sspl

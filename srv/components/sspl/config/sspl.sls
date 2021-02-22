@@ -30,7 +30,7 @@ Stage - Post Install SSPL:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
     - failhard: True
     - require:
-      - Install cortx-sspl packages
+      - Install cortx-sspl
 
 Stage - Configure SSPL:
   cmd.run:

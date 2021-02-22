@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install hare:
+Install cortx-hare:
   pkg.installed:
     - name: cortx-hare
     - version: latest

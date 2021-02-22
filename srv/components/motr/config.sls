@@ -23,7 +23,7 @@ Stage - Post Install Motr:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:post_install')
     - failhard: True
     - require:
-      - Install Motr
+      - Install cortx-motr
 
 Stage - Config Motr:
   cmd.run:

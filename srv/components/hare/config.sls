@@ -24,7 +24,7 @@ Stage - Post Install Hare:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
     - failhard: True
     - require:
-      - Install hare
+      - Install cortx-hare
 
 Stage - Configure Hare:
   cmd.run:

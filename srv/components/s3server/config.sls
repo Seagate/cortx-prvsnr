@@ -20,7 +20,7 @@ Stage - Post Install S3Server:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
     - failhard: True
     - require:
-      - Install s3server package
+      - Install cortx-s3server
 
 Stage - Config S3Server:
   cmd.run:
