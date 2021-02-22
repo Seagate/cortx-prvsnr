@@ -15,16 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+include:
+  - components.hare.install
+
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Stage - Post Install Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
+    - failhard: True
+    - require:
+      - Install hare
 
 Stage - Configure Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:config')
+    - failhard: True
+    - require:
+      - Stage - Post Install Hare
 
 Stage - Initialize Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:init')
+    - failhard: True
+    - require:
+      Stage - Configure Hare
 {% endif %}

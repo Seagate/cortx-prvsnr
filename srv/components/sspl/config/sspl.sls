@@ -28,12 +28,14 @@ include:
 Stage - Post Install SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+    - failhard: True
     - require:
       - Install cortx-sspl packages
 
 Stage - Configure SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
+    - failhard: True
     - require:
       - Stage - Post Install SSPL
 {% if not ("replace_node" in pillar["cluster"]
@@ -52,6 +54,7 @@ Stage - Configure SSPL:
 Stage - Initialize SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
+    - failhard: True
     - require:
       - Copy setup.yaml to /opt/seagate/health_view/conf
       - Run Resource Health View
