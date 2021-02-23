@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Python API to generate roster file required for salt-ssh
 import logging
 from typing import Type
 from pathlib import Path
