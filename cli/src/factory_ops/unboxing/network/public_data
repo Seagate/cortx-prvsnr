@@ -228,7 +228,7 @@ function set_data_public_static_config {
 
     # Update pillar
     _linfo "Preparing cluster pillar for setting public data network configuration to Static IP."
-    update_cluster_pillar_for_public_data_ips ${data_ip_1} ${data_ip_2} ${gw_ip} ${netmask}
+    update_cluster_pillar_for_public_data_ips "${data_ip_1}" "${data_ip_2}" "${gw_ip}" "${netmask}"
 
     set_public_data_nw_config
 
