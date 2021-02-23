@@ -139,3 +139,6 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
+show_volume_maps:
+  type: ShowVolumeMaps
+

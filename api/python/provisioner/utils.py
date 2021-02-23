@@ -35,6 +35,13 @@ from .errors import (
     BadPillarDataError, ProvisionerError, SubprocessCmdError
 )
 
+from ..pillar import (
+    KeyPath,
+    PillarKey,
+    PillarUpdater,
+    PillarResolver
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -267,3 +274,13 @@ def node_hostname_validator(
                 f"{node_dict[section]} != {parser_obj[section]['hostname']}"
             )
             raise ValueError(msg)
+
+
+def get_pillar_data(key):
+    pillar_key = PillarKey(key)
+    pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
+    pillar = next(iter(pillar.values()))
+    if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
+        raise ValueError(f"value is not specified for {key}")
+    else:
+        return pillar[pillar_key]

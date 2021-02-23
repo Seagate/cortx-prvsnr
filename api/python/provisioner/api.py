@@ -556,3 +556,14 @@ def check(check_name, check_args: str = "",
     """
     return _api_call('check', check_name,
                      check_args_args=check_args, targets=targets)
+
+
+def show_volume_maps(target_ctrl=CONTROLLER_BOTH, nowait=False):
+    r"""show controller volume mappings.
+
+    :param target_ctrl: (optional) target controller. Default: both
+    """
+    return _api_call(
+        'show_volume_maps',
+        target_ctrl=CONTROLLER_BOTH, nowait=nowait
+    )
