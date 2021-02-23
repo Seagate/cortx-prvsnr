@@ -1185,7 +1185,7 @@ sftp_cmd_run()
         fi
         echo "DEBUG: sftp_cmd_run(): starting sftp session" >> $logfile
         echo "DEBUG: sftp_cmd_run(): Running cmd: $_cmd" >> $logfile
-sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF 2>&1 | tee $_sftp_log
+sshpass -p "$pass" sftp -P 1022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -oBatchMode=no -b - ${user}@${host} << EOF 2>&1 | tee $_sftp_log
 $_cmd
 bye
 EOF
