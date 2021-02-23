@@ -260,9 +260,10 @@ class SaltClientBase(ABC):
 
         try:
             logger.debug(
-                "'{}' client: Function '{}' resulted in: {}"
-                .format(type(self), fun, pformat(res.results))
+                f"Function '{fun}' on '{targets}' "
+                f"resulted in {pformat(res.results)}"
             )
+
         except Exception as exc:
             if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
                 logger.exception("Exception Skipped: {}".format(str(exc.strerror)))  # noqa: E501

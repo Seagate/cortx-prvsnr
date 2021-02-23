@@ -594,8 +594,8 @@ class SaltClientBase(ABC):
         else:
             try:
                 logger.debug(
-                    "Function '{}' on '{}' resulted in {}"
-                    .format(fun, targets, pformat(res.results))
+                    f"Function '{fun}' on '{targets}' "
+                    f"resulted in {pformat(res.results)}"
                 )
             except Exception as exc:
                 if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
@@ -1003,9 +1003,8 @@ def runner_function_run(
         raise
 
     logger.debug(
-        "Runner function '{}' resulted in {}".format(
-            fun, pformat(res)
-        )
+        f"Runner function '{fun}' "
+        f"resulted in {pformat(res)}"
     )
 
     return res
@@ -1120,9 +1119,8 @@ def function_run(
         raise
 
     logger.debug(
-        "Function '{}' on '{}' resulted in {}".format(
-            fun, targets, pformat(res)
-        )
+        f"Function '{fun}' on '{targets}' "
+        f"resulted in {pformat(res)}"
     )
 
     return res
