@@ -79,8 +79,7 @@ class GenerateRoster(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsGenerateRosterAttrs
 
-    @staticmethod
-    def _get_pillar_data(key):
+    def _get_pillar_data(self, key):
         """Retrieve pillar data."""
         pillar_key = PillarKey(key)
         pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
@@ -90,28 +89,25 @@ class GenerateRoster(CommandParserFillerMixin):
         else:
             return pillar[pillar_key]
 
-    @staticmethod
-    def _get_nodes_list():
+    def _get_nodes_list(self):
         """Retrieve node  list from pillar"""
         nodes = []
-        for key in GenerateRoster._get_pillar_data("cluster"):
+        for key in self._get_pillar_data("cluster"):
             if 'srvnode' in key:
                 nodes.append(key)
         return nodes
 
-    @staticmethod
-    def _get_node_host_map():
+    def _get_node_host_map(self):
         """Provide map of node and hostname"""
         host_node_map = {}
-        for node in GenerateRoster._get_nodes_list():
-            host = GenerateRoster._get_pillar_data(
+        for node in self._get_nodes_list():
+            host = self._get_pillar_data(
                        f'cluster/{node}/hostname')
             host_node_map.update({node: host})
         return host_node_map
 
-    @staticmethod
     def _prepare_roster(
-        nodes: dict, **kwargs
+        self, nodes: dict, **kwargs
     ):
         roster = {
             node_id: {
@@ -134,6 +130,6 @@ class GenerateRoster(CommandParserFillerMixin):
         if not Path(kwargs['priv_key']).is_file():
             raise ValueError('Private key not present')
 
-        host_node_map = GenerateRoster._get_node_host_map()
-        GenerateRoster._prepare_roster(host_node_map, **kwargs)
+        host_node_map = self._get_node_host_map()
+        self._prepare_roster(host_node_map, **kwargs)
         logger.info(f"Roster file created {kwargs['roster_path']}")
