@@ -109,6 +109,12 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                     'components.system.config.pillar_encrypt'
                 ), targets=setup_ctx.run_args.primary.minion_id
             )
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'salt-call state.apply '
+                    'components.system.config.hosts'
+                )
+            )
 
             # The ConfStore JSON is required to be generated on all nodes
             # TODO: To be parameterized when addressing EOS-16560

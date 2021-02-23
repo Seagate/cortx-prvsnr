@@ -15,21 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-/usr/local/bin/mock:
-  file.managed:
-    - source: salt://components/misc_pkgs/mocks/cortx/files/scripts/mock.py
-    - user: root
-    - group: root
-    - mode: 755
-    - makedirs: True
-
-
-cortx_mock_pkgs_installed:
-  pkg.installed:
-    - pkgs:
-{% for pkg_name, pkg_ver in salt['pillar.get']('commons:version:cortx').items() %}
-    {% if pkg_name not in ('cortx-prvsnr', 'python36-cortx-prvsnr') %}
-      - {{ pkg_name }}: {{ pkg_ver }}
-    {% endif %}
-{% endfor %}
-    - refresh: True
+upgrade:
+  sw_list:
+    - motr
+    - s3server
+    - hare
+    - ha.cortx-ha
+    - sspl
+    - uds
+    - csm
+  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
+                    # <cortx-version>:
+                    #   <node-id>: <yum-txn-id>
