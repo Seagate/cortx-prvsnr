@@ -243,8 +243,8 @@ function set_mgmt_static_config {
     # Reset cluster value for management network
     # srvnode-1
     _linfo "Preparing cluster pillar for setting management network configuration to static on srvnode-1"
-    # provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt_nw/public_ip_addr \"${mgmt_ip_1}\"
-    update_cluster_pillar_for_mgmt_ips ${mgmt_ip_1} ${mgmt_ip_2} ${gw_ip} ${netmask}
+    # provsioner pillar_set provisioner pillar_set cluster/srvnode-1/network/mgmt/public_ip \"${mgmt_ip_1}\"
+    update_cluster_pillar_for_mgmt_ips "${mgmt_ip_1}" "${mgmt_ip_2}" "${gw_ip}" "${netmask}" "${search_domains}" "${dns_servers}"
 
     set_mgmt_nw_config
     
