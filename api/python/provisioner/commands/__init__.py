@@ -33,7 +33,6 @@ from ..errors import (
     PillarSetError,
     SWUpdateError,
     SWUpdateFatalError,
-    SWRollbackError,
     ClusterMaintenanceEnableError,
     SWStackUpdateError,
     ClusterMaintenanceDisableError,
@@ -43,7 +42,7 @@ from ..errors import (
     ReleaseFileNotFoundError,
 )
 from ..config import (
-    ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
+    ALL_MINIONS,
     PRVSNR_FILEROOT_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
@@ -231,17 +230,6 @@ class RunArgsUser:
     targets: str = RunArgs.targets
 
 
-@attr.s(auto_attribs=True)
-class RunArgsSWRollback:
-    target_version: str = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': "CORTX version to rollback"
-            }
-        }
-    )
-    targets: str = RunArgs.targets
-
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
 #          properly pillar itself
@@ -333,8 +321,7 @@ class PillarSet(CommandParserFillerMixin):
                 raise
         except Exception as _exc:
             exc = _exc
-            logger.exception("Pillar Set failed with Exception: {}"
-                             .format(exc))
+            logger.exception(f"Failed to set pillar with exception: {exc}")
         finally:
             if exc:
                 raise PillarSetError(
@@ -409,7 +396,8 @@ class Set(CommandParserFillerMixin):
                 StatesApplier.apply(self.post_states)
             except Exception:
                 logger.warning(
-                    "Failed to apply Pillar changes, Starting Rollback"
+                    "Starting Rollback: Result of "
+                    "failure to apply pillar changes."
                 )
                 # TODO more solid rollback
                 pillar_updater.rollback()
@@ -471,6 +459,10 @@ def _pre_yum_rollback(
             )
             cluster_maintenance_enable()
         except Exception as exc:
+            logger.error(
+                "Encountered error while enabling "
+                f"cluser maintenance mode: {exc}"
+            )
             raise ClusterMaintenanceEnableError(exc) from exc
 
 
@@ -534,7 +526,7 @@ class SWUpdate(CommandParserFillerMixin):
             try:
                 check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
             except Exception as e:
-                logger.warning("Error during  SW Update pre-flight checks: "
+                logger.warning("SW Update pre-flight checks errored with: "
                                f"{str(e)}")
             else:
                 decision_maker = SWUpdateDecisionMaker()
@@ -555,6 +547,10 @@ class SWUpdate(CommandParserFillerMixin):
                 try:
                     cluster_maintenance_enable()
                 except Exception as exc:
+                    logger.error(
+                        "Encountered error while enabling "
+                        f"cluser maintenance mode: {exc}"
+                    )
                     raise ClusterMaintenanceEnableError(exc) from exc
 
                 logger.info(
@@ -565,7 +561,7 @@ class SWUpdate(CommandParserFillerMixin):
 
                     logger.info(
                         "Re-apply provisioner configuration to ensure "
-                        "that updated pillar is taken into account."
+                        "updated pillar value is reflected correctly."
                     )
                     _apply_provisioner_config(targets)
 
@@ -593,6 +589,10 @@ class SWUpdate(CommandParserFillerMixin):
                 try:
                     cluster_maintenance_disable()
                 except Exception as exc:
+                    logger.error(
+                        "Encountered error while disabling "
+                        f"cluser maintenance mode: {exc}"
+                    )
                     raise ClusterMaintenanceDisableError(exc) from exc
 
                 _consul_export('update-pre-ha-update')
@@ -622,15 +622,20 @@ class SWUpdate(CommandParserFillerMixin):
                     # TODO: Improve salt minion restart logic
                     # please refer to task EOS-14114.
                     try:
+                        logger.info("Restarting salt minions.")
                         _restart_salt_minions()
                     except Exception:
-                        logger.exception('Failed to restart salt minions')
+                        logger.exception(
+                           "FAILED: Restarting salt minions. "
+                           "For more info, check by executing command: \n"
+                           "systemctl status salt-minion -l"
+                        )
 
         except Exception as update_exc:
             # TODO TEST
-            logger.exception("\nSW Update Failed\n")
-            logger.info("Checking for Rollback")
+            logger.exception("FAILED: SW Update")
 
+            logger.info("Checking for Rollback")
             rollback_error = (
                 None if rollback_ctx is None else rollback_ctx.rollback_error
             )
@@ -724,104 +729,6 @@ class SWUpdate(CommandParserFillerMixin):
             ) from update_exc
 
 
-@attr.s(auto_attribs=True)
-class SWRollback(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsSWRollback
-
-    @staticmethod
-    def _rollback_component(component, targets):
-        state_name = "components.{}.rollback".format(component)
-        try:
-            logger.info(
-                "Rolling back {} on {}".format(component, targets)
-            )
-            StatesApplier.apply([state_name], targets)
-        except Exception:
-            logger.exception(
-                "Failed to rollback {} on {}".format(component, targets)
-            )
-            raise
-
-    def run(self, target_version, targets):
-
-        local_minion = local_minion_id()
-
-        upgrade_path = PillarKey('upgrade')
-        yum_snapshot_path = PillarKey(f'{upgrade_path}/yum_snapshots')
-        yum_snapshot_pillar = PillarResolver(local_minion).get(
-            [yum_snapshot_path]
-        )
-        yum_snapshot_pillar = (
-            yum_snapshot_pillar[local_minion][yum_snapshot_path]
-        )
-
-        cortx_tgt_version = (
-            target_version
-            if target_version in yum_snapshot_pillar.keys()
-            else None
-        )
-
-        if cortx_tgt_version is None:
-            raise ValueError(
-                f'{target_version} version data not available for rollback'
-            )
-        else:
-            logger.info(f"Rollback for version {cortx_tgt_version}")
-
-            txn_id_path = PillarKey(f"{yum_snapshot_path}/{cortx_tgt_version}")
-            txn_id_pillar = PillarResolver(local_minion).get([txn_id_path])
-            txn_id_pillar = next(iter(txn_id_pillar.values()))
-
-            try:
-                for target in txn_id_pillar[txn_id_path]:
-                    txn_id = txn_id_pillar[txn_id_path][target]
-
-                    if not txn_id or txn_id is values.MISSED:
-                        raise BadPillarDataError(
-                            f"yum txn id not available for {target}"
-                        )
-                    else:
-                        logger.info(
-                            f"Starting yum rollback on target {target}"
-                        )
-                        salt_cmd_run(
-                            f"yum history rollback -y {txn_id}",
-                            targets=target
-                        )
-                        logger.info(
-                            f"Yum rollback on target {target} is completed"
-                        )
-
-                logger.info('Restoring configurations for components')
-
-                # TODO
-                # reconfigure provisioner through rollback state
-                config_salt_master()
-
-                config_salt_minions()
-
-                _apply_provisioner_config(targets)
-
-                swlist_path = PillarKey(f'{upgrade_path}/sw_list')
-                swlist_pillar = PillarResolver(local_minion).get([swlist_path])
-                sw_list = swlist_pillar[local_minion][swlist_path]
-
-                for component in reversed(sw_list):
-                    self._rollback_component(component, targets)
-
-                logger.info(
-                    "Configurations restored "
-                    f"on target {target}"
-                )
-            except Exception as exc:
-                raise SWRollbackError(exc) from exc
-            else:
-                logger.info(
-                    "\nSW Update Rollback Completed\n"
-                )
-
-
 # TODO TEST
 @attr.s(auto_attribs=True)
 class FWUpdate(CommandParserFillerMixin):
@@ -834,7 +741,7 @@ class FWUpdate(CommandParserFillerMixin):
         if not source.is_file():
             logger.error(f"Provided input '{source}' is not a file. "
                          "Please provide a valid file to proceed with FW Update.")
-            raise ValueError('{} is not a file'.format(source))
+            raise ValueError(f"{source} is not a file")
 
         script = (
             PRVSNR_FILEROOT_DIR /
@@ -861,7 +768,7 @@ class FWUpdate(CommandParserFillerMixin):
         if dry_run:
             return
 
-        logger.info("Proceeding to FW Update")
+        logger.info("Initiating FW Update")
 
         StateFunExecuter.execute(
             'cmd.run',
@@ -994,7 +901,9 @@ class SetSSLCerts(CommandParserFillerMixin):
         state_name = "components.misc_pkgs.ssl_certs"
 
         if not source.is_file():
-            raise ValueError('{} is not a file'.format(source))
+            logger.error(f"Provided input '{source}' is not a file. "
+                         "Please provide a valid SSL file source")
+            raise ValueError(f"{source} is not a file")
 
         if dry_run:
             return
@@ -1005,6 +914,10 @@ class SetSSLCerts(CommandParserFillerMixin):
                 cluster_maintenance_enable()
                 logger.info('Cluster maintenance mode enabled')
             except Exception as exc:
+                logger.error(
+                    "Encountered error while enabling "
+                    f"cluser maintenance mode: {exc}"
+                )
                 raise ClusterMaintenanceEnableError(exc) from exc
 
             copy_to_file_roots(source, dest)
@@ -1021,7 +934,7 @@ class SetSSLCerts(CommandParserFillerMixin):
                 logger.info('SSL Certs Updated')
 
             except Exception as exc:
-                logger.exception("Failed to apply SSL certs")
+                logger.exception(f"FAILED: SSL certs apply due to {exc}")
                 raise SSLCertsUpdateError(exc) from exc
 
             # disable cluster maintenance mode
@@ -1029,10 +942,14 @@ class SetSSLCerts(CommandParserFillerMixin):
                 cluster_maintenance_disable()
                 logger.info('Cluster recovered from maintenance mode')
             except Exception as exc:
+                logger.error(
+                    "Encountered error while disabling "
+                    f"cluser maintenance mode: {exc}"
+                )
                 raise ClusterMaintenanceDisableError(exc) from exc
 
         except Exception as ssl_exc:
-            logger.exception('SSL Certs Update Failed')
+            logger.exception("FAILED: SSL Certs update")
             rollback_exc = None
             if isinstance(ssl_exc, ClusterMaintenanceEnableError):
                 cluster_maintenance_disable(background=True)
@@ -1047,14 +964,16 @@ class SetSSLCerts(CommandParserFillerMixin):
                     StatesApplier.apply([state_name], targets=targets)
                 except Exception as exc:
                     logger.exception(
-                        "Failed to apply backedup certs")
+                        "Failed to apply backedup certs"
+                    )
                     rollback_exc = exc
                 else:
                     try:
                         cluster_maintenance_disable()
                     except Exception as exc:
                         logger.exception(
-                            "Failed to recover Cluster after rollback")
+                            "Failed to recover Cluster after rollback"
+                        )
                         rollback_exc = exc
             else:
                 logger.warning('Unexpected error: {!r}'.format(ssl_exc))
@@ -1069,7 +988,7 @@ class RebootServer(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
 
     def run(self, targets):
-        logger.info("\nServer Reboot\n")
+        logger.info("Server Reboot")
         return function_run(
             'system.reboot',
             targets=targets
@@ -1110,7 +1029,7 @@ class RebootController(CommandParserFillerMixin):
                     'value for {} is not specified'.format(param.keypath)
                 )
 
-        logger.info("\nController Reboot\n")
+        logger.info("Controller Reboot")
         StateFunExecuter.execute(
             'cmd.run',
             fun_kwargs=dict(
@@ -1162,7 +1081,7 @@ class ShutdownController(CommandParserFillerMixin):
                     'value for {} is not specified'.format(param.keypath)
                 )
 
-        logger.info("\nController Shutdown\n")
+        logger.info("Controller Shutdown")
         StateFunExecuter.execute(
             'cmd.run',
             fun_kwargs=dict(
@@ -1212,7 +1131,7 @@ class CreateUser(CommandParserFillerMixin):
         if not SEAGATE_USER_HOME_DIR.exists():
             raise ValueError('/opt/seagate/users directory missing')
 
-        logger.info("Creating New User")
+        logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname
         ssh_dir = home_dir / '.ssh'
 
@@ -1355,12 +1274,13 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
-        logger.info("Creating a new group with "
+        group_name = "csm-admin"
+        logger.info(f"Creating a new group '{group_name}' with "
                     "limited access for csm admin users")
         StateFunExecuter.execute(
             'group.present',
             fun_kwargs=dict(
-                name='csm-admin'
+                name=group_name
             ),
             targets=targets
         )

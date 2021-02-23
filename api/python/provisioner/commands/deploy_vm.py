@@ -190,13 +190,6 @@ class DeployVM(Deploy):
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
 
-            if state == "hare":
-                logger.info("Bootstrapping Cluster")
-                self._cmd_run(
-                    "hctl bootstrap --mkfs /var/lib/hare/cluster.yaml",
-                    targets=self._primary_id()
-                )
-
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)
 

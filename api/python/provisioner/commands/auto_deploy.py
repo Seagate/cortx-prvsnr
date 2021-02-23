@@ -65,7 +65,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         try:
             check_res = check_cmd().run(deploy_check)
         except Exception as exc:
-            logger.error("Deployment Failed.\n")
+            logger.error("FAILED: Deployment.\n")
             raise ValueError("Error During Deployment "
                              f"{deploy_check} Validations: {str(exc)}")
         else:
@@ -77,10 +77,14 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                     check_result=check_res)
             else:
                 logger.error(
-                  "Deployment Failed. Please provide a proper Check name"
+                  "FAILED: Deployment attempted without valid deployment check name. "
+                  "\nValid Check names:"
+                  "\nFor pre-checks: GroupChecks.DEPLOY_PRE_CHECKS.value"
+                  "\nFor post-checks: GroupChecks.DEPLOY_POST_CHECKS.value"
                 )
                 raise ValueError(
-                    f'Group Check "{deploy_check}" is not supported')
+                    f'Group Check "{deploy_check}" is not supported'
+                )
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
@@ -93,7 +97,10 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             if k in attr.fields_dict(deploy_dual.run_args_type)
         }
 
-        logger.info("Starting with Setup Provisioner")
+        logger.info(
+          "Starting with Provisioner Bootstrapping."
+          "\nCommand: setup_provisioner"
+        )
         setup_ctx = SetupProvisioner()._run(
             nodes, **setup_provisioner_args
         )
@@ -112,6 +119,12 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
                     'salt-call state.apply '
                     'components.system.config.pillar_encrypt'
                 ), targets=setup_ctx.run_args.primary.minion_id
+            )
+            setup_ctx.ssh_client.cmd_run(
+                (
+                    'salt-call state.apply '
+                    'components.system.config.hosts'
+                )
             )
 
             # The ConfStore JSON is required to be generated on all nodes

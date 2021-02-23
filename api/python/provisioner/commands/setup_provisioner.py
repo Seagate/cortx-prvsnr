@@ -549,7 +549,8 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 self.pypi_repo = True
         else:
             logger.error(
-                "Invalid or Unsupported Provisioner source provided"
+                "Invalid or Unsupported Provisioner source "
+                f"{self.source} provided for deployment"
             )
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"

@@ -229,7 +229,7 @@ def _main():
     if parsed_args.cmd is None:
         logger.error("No command Provided. "
                      "A valid command is required to process further..")
-        raise ValueError("Command is required")
+        raise ValueError("Empty command argument encountered")
 
     if auth_args.password == '-':
         auth_args.password = next(fileinput.input(['-'])).rstrip()
@@ -249,9 +249,11 @@ def _main():
 
     logger.debug(
         "\nParsed arguments: \n"
-        "auth={}, \nlog={}, \ncmd={}, \nargs={}, \nkwargs={}\n"
-        .format(auth_args_view, log_args_view,
-         parsed_args.cmd, parsed_args.args, parsed_args.kwargs)
+        f"auth={auth_args_view}, \n"
+        f"log={log_args_view}, \n"
+        f"cmd={parsed_args.cmd}, \n"
+        f"args={parsed_args.args}, \n"
+        f"kwargs={parsed_args.kwargs} \n"
     )
 
     # TODO IMPROVE
@@ -286,7 +288,7 @@ def main():
                 exc = None
             raise
         else:
-            logger.exception("PROVISIONER FAILED")
+            logger.exception("PROVISIONER FAILED. Exiting..")
             sys.exit(1)
     finally:
         '''
