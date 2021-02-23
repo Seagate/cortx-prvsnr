@@ -288,7 +288,11 @@ def main():
                 exc = None
             raise
         else:
-            logger.exception("PROVISIONER FAILED. Exiting..")
+            logger.exception(
+               "PROVISIONER FAILED.\n"
+               f"Reason: {exc}\n"
+               "Exiting now.."
+            )
             sys.exit(1)
     finally:
         '''
