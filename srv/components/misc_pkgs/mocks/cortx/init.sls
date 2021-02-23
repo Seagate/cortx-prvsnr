@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Restore files for UDS:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/uds/conf/setup.yaml', 'uds:restore')
+include:
+  - .prepare
+  - .install

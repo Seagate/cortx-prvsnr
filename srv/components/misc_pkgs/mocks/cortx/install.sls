@@ -15,23 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo:
-  file.directory:
-    - mode: 755
-    - makedirs: True
-
-{# NOTE: to build rpm and create cortx mock repo need to execute ./buildrpm.sh #}
-
-Stage - Install CORTX mock repo:
-  pkgrepo.managed:
-    - name: cortx_mock_repo
-    - humanname: CORTX Mock repo
-{# TODO: use path from pillars or any other configuration #}
-    - baseurl: file:///opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/cortx_mock_repo
-    - enabled: True
-    - gpgcheck: 0
-
-
 /usr/local/bin/mock:
   file.managed:
     - source: salt://components/misc_pkgs/mocks/cortx/files/scripts/mock.py
@@ -41,15 +24,12 @@ Stage - Install CORTX mock repo:
     - makedirs: True
 
 
-{# TODO: use predifned list or scan 'srv/components' directory #}
-{% for component_name in ('motr', 'ha', 'hare', 'sspl', "s3", "csm", "uds", "cli") %}
-
-/opt/seagate/cortx/{{ component_name }}/conf/setup.yaml:
-  file.managed:
-    - source: salt://components/misc_pkgs/mocks/cortx/files/setup_mock_yaml/setup.yaml
-    - template: jinja
-    - makedirs: True
-    - defaults:
-        component: {{ component_name }}
-
+cortx_mock_pkgs_installed:
+  pkg.installed:
+    - pkgs:
+{% for pkg_name, pkg_ver in salt['pillar.get']('commons:version:cortx').items() %}
+    {% if pkg_name not in ('cortx-prvsnr', 'python36-cortx-prvsnr') %}
+      - {{ pkg_name }}: {{ pkg_ver }}
+    {% endif %}
 {% endfor %}
+    - refresh: True

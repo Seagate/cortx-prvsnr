@@ -16,6 +16,7 @@
 #
 
 Install requisites:
+  # XXX why it is not a part of cortx-s3iamcli spec?
   pkg.installed:
     - pkgs:
       - python36-boto3
