@@ -18,7 +18,7 @@
 
 {% set old_machine_id = grains['machine_id'] %}
 
-Delete old machine_id {{ old_machine_id }}:
+Delete old machine_id:
   file.absent:
     - name: /etc/machine-id
 
