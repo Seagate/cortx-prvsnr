@@ -33,7 +33,7 @@ Sync data:
 
 {% set new_machine_id = grains['machine_id'] %}
 
-Replace machine id in grains {{ old_machine_id }}_{{ new_machine_id }}:
+Replace machine id in grains file:
   file.line:
     - name: /etc/salt/grains
     - mode: replace
