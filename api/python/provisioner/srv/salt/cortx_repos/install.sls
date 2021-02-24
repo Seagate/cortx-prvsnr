@@ -17,7 +17,9 @@
 
 # TODO TEST
 
-{% if "RedHat" in grains['os'] %}
+# Note. we use True here since currently we do not consider
+#       any usage of an alternative option
+{% if "RedHat" in grains['os'] or True %}
 
 setup_yum_salt_repo:
   file.managed:
@@ -33,6 +35,16 @@ setup_yum_salt_repo:
 clean_yum_salt_repo_metadata:
   cmd.run:
     - name: yum --disablerepo="*" --enablerepo="saltstack" clean metadata
+
+epel_release_installed:
+  pkg.installed:
+    - name: epel-release
+
+# TODO IMPROVE look for specific salt module instead of cmd.run
+# (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+import_yum_salt_repo_key:
+  cmd.run:
+    - name: rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/3002.2/SALTSTACK-GPG-KEY.pub
 
 {% else %}
 
@@ -54,14 +66,3 @@ clean_yum_cache:
     - name: yum clean expire-cache && rm -rf /var/cache/yum
 
 {% endif %}
-
-#epel_release_installed:
-#  pkg.installed:
-#    - name: epel-release
-
-# TODO IMPROVE look for specific salt module instead of cmd.run
-# TODO IMPROVE a temporary fix since later version (2019.2.1) is buggy
-# (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
-import_yum_salt_repo_key:
-  cmd.run:
-    - name: rpm --import https://archive.repo.saltstack.com/py3/redhat/7/x86_64/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
