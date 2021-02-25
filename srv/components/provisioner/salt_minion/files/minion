@@ -578,6 +578,7 @@ file_roots:
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user
     - /opt/seagate/cortx/provisioner/srv
+    - /opt/seagate/cortx/provisioner/srv_ext
 
 # Uncomment the line below if you do not want the file_server to follow
 # symlinks when walking the filesystem tree. This is set to True

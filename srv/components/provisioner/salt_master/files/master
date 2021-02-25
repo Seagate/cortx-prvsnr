@@ -672,6 +672,7 @@ file_roots:
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user   # old style
     - /opt/seagate/cortx/provisioner/srv
+    - /opt/seagate/cortx/provisioner/srv_ext
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.

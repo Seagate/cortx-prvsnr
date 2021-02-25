@@ -69,11 +69,12 @@ pushd ~/rpmbuild/SOURCES/
 
     # Setup the source tar for rpm build
     DEST_DIR=cortx-prvsnr-${CORTX_PRVSNR_VERSION}-git${GIT_VER}
-    mkdir -p ${DEST_DIR}/{cli,files/etc,files/conf,pillar,srv}
+    mkdir -p ${DEST_DIR}/{cli,files/etc,files/conf,pillar,srv,srv_ext}
     cp -R ${BASEDIR}/../../cli/src/* ${DEST_DIR}/cli
     # cp -R ${BASEDIR}/../../srv/components/provisioner/files/setup.yaml ${DEST_DIR}/files/conf
     cp -R ${BASEDIR}/../../pillar ${DEST_DIR}
     cp -R ${BASEDIR}/../../srv ${DEST_DIR}
+    cp -R ${BASEDIR}/../../api/python/provisioner/srv/salt/repos ${DEST_DIR}/srv_ext
 
 
     tar -zcvf ${DEST_DIR}.tar.gz ${DEST_DIR}
