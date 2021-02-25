@@ -186,8 +186,10 @@ def run_subprocess_cmd(cmd, **kwargs):
         logger.exception(f"Failed to run cmd '{cmd}'")
         raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
-        logger.debug("""Subprocess command {} resulted in - stdout: {},returncode: {},stderr: {}""".format(
-            res.args, res.stdout, res.returncode, res.stderr))
+        logger.debug(
+            f"Subprocess command {res.args} resulted in - stdout: {res.stdout}, "
+            f"returncode: {res.returncode},stderr: {res.stderr}"
+        )
         return res
 
 
