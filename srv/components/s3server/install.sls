@@ -25,7 +25,7 @@
 #       - gflags
 #       - glog
 
-Install s3server package:
+Install cortx-s3server:
   pkg.installed:
     - name: cortx-s3server
     - version: {{ pillar['commons']['version']['cortx']['cortx-s3server'] }}
