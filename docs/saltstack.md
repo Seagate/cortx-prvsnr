@@ -53,6 +53,7 @@ Example:
 ```
 
 ### Issue: Grains are not getting refreshed within the same salt state
+Reference: https://github.com/saltstack/salt/issues/55440
 Reason: To apply the state, Salt needs to convert it from YAML format to a data structure. Since it is impossible to parse a YAML file that has Jinja statements inside, Salt needs to parse Jinja first.
 
 In other words, the pipeline looks like this
@@ -65,6 +66,6 @@ In other words, the pipeline looks like this
 Solution:
 
 ```
-1. Access the grain in a second state
-2. use slots
+1. split the logic into two SLS files and resolve the grains in the second one
+2. use slots which are evaluated on step 3
 ```
