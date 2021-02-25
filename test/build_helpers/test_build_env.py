@@ -79,5 +79,6 @@ def test_build_setup_env(
             )
 
     print(ssh_config.read_text())
+    print(f'Path to config: {ssh_config}')
 
     ask_proceed()
