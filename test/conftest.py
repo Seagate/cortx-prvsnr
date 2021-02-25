@@ -42,7 +42,7 @@ DOCKER_IMAGES_REPO = "seagate/cortx-prvsnr"
 VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
 
 SSH_KEY_FILE_NAME = "id_rsa.test"
-MAX_NODES_NUMBER = 3
+MAX_NODES_NUMBER = 6
 
 # TODO 'base' level format is too different
 ENV_LEVELS_HIERARCHY = {
