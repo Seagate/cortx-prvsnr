@@ -33,9 +33,9 @@ Hostsfile update for manangement interfaces:
         {%- for node in server_nodes %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
         {% if ('mgmt0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['mgmt0'][0]) -%}
-        {{ grains['ip4_interfaces']['mgmt0'][0] }}   {{ srvnode }}
+        {{ grains['ip4_interfaces']['mgmt0'][0] }}   {{ srvnode }}.mgmt.public
         {% else -%}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}   {{ srvnode }}
+        {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}   {{ srvnode }}.mgmt.public
         {%- endif %}
         {% endfor -%}
         {%- endfor %}
@@ -52,10 +52,10 @@ Hostsfile update for data interfaces:
         {%- for node in server_nodes %}
         {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
         {% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) -%}
-        {{ grains['ip4_interfaces']['data0'][0] }}   {{ srvnode }}
+        {{ grains['ip4_interfaces']['data0'][0] }}   {{ srvnode }}.data.public
         {% else -%}
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}   {{ srvnode }}-data-public
-        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode }}-data-private
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}   {{ srvnode }}.data.public
+        {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}   {{ srvnode }}.data.private
         {% endif -%}
         {% endfor -%}
         {% endfor -%}
