@@ -14,12 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-
-# TODO IMPROVE salt configs might go here as well
-include:
-  - components.provisioner.config.generate_cluster_pillar
-  - components.provisioner.config.rsyslog_config
-{% if not salt['pillar.get']('inline:no_encrypt', False) %}
-  - components.system.config.pillar_encrypt
-{% endif %}

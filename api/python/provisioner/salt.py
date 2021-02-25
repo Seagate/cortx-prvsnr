@@ -586,9 +586,6 @@ class SaltClientBase(ABC):
         res = self.parse_res(salt_res, cmd_args_view)
 
         if res.fails:
-            logger.error(
-                "salt command failed, reason {}, args {}"
-                .format(res.fails, cmd_args_view))
             raise SaltCmdResultError(cmd_args_view, res.fails)
         else:
             try:
@@ -966,9 +963,6 @@ def _salt_runner_cmd(  # noqa: C901 FIXME
     if res.success:
         return res.result
     else:
-        logger.error(
-                "salt command failed, reason {}, args {}"
-                .format(res.result, cmd_args_view))
         raise SaltCmdResultError(cmd_args_view, res.result)
 
 
@@ -1072,9 +1066,6 @@ def _salt_client_cmd(
     res = salt_res_t(salt_res, cmd_args_view, client)
 
     if res.fails:
-        logger.error(
-                "salt command failed, reason {}, args {}"
-                .format(res.fails, cmd_args_view))
         raise SaltCmdResultError(cmd_args_view, res.fails)
     else:
         return res.results

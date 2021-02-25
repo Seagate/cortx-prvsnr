@@ -1788,11 +1788,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.debug(f"Synced extension modules: {res}")
 
         logger.info("Configuring provisioner logging")
-        for state in [
-            'components.system.prepare',
-        ]:
+        if run_args.source in ('iso', 'rpm'):
             ssh_client.cmd_run(
-                f"salt-call state.apply {state}",
+                "salt-call state.apply components.system.prepare",
                 targets=master_targets
             )
 
@@ -1804,8 +1802,29 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
+
+        inline_pillar = None
+        if run_args.source == 'local':
+            for pkg in [
+                'rsyslog',
+                'rsyslog-elasticsearch',
+                'rsyslog-mmjsonparse'
+            ]:
+                ssh_client.cmd_run(
+                    (
+                        "provisioner pillar_set "
+                        f"commons/version/{pkg} '\"latest\"'"
+                    ), targets=run_args.primary.minion_id
+                )
+                inline_pillar = (
+                    "{\"inline\": {\"no_encrypt\": True}}"
+                )
+
         ssh_client.cmd_run(
-            "salt-call state.apply components.provisioner.config",
+            (
+                "salt-call state.apply components.provisioner.config "
+                f"pillar='{inline_pillar}'" if inline_pillar else ""
+            ),
             targets=ALL_MINIONS
         )
 
