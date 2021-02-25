@@ -51,3 +51,20 @@ Example:
 
 {% endmacro %}
 ```
+
+### Issue: Grains are not getting refreshed within the same salt state
+Reason: To apply the state, Salt needs to convert it from YAML format to a data structure. Since it is impossible to parse a YAML file that has Jinja statements inside, Salt needs to parse Jinja first.
+
+In other words, the pipeline looks like this
+
+1. Parse Jinja
+2. Parse the resulting YAML
+3. Interpret the data structure
+4. Apply the state
+
+Solution:
+
+```
+1. Access the grain in a second state
+2. use slots
+```

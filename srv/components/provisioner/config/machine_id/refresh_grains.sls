@@ -15,30 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-{% set old_machine_id = grains['machine_id'] %}
-
-Delete old machine_id:
-  file.absent:
-    - name: /etc/machine-id
-
-Refresh machine_id on {{ grains['id'] }}:
-  cmd.run:
-    - name: systemd-machine-id-setup
-
-Sync data:
-  module.run:
-    - saltutil.refresh_grains: []
-
-
-{% set new_machine_id = grains['machine_id'] %}
-
-Replace machine id in grains file:
+Replace machine id in grains:
   file.line:
     - name: /etc/salt/grains
     - mode: replace
-    - match: {{ old_machine_id }}
-    - content: 'Machine ID: {{ new_machine_id }}'
+    - match: 'Machine ID:'
+    - content: "Machine ID: {{ grains['machine_id'] }}"
 
 Sync data:
   module.run:
