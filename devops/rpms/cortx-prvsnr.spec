@@ -46,6 +46,7 @@ cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
 cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
+cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
 
 
 %post
@@ -63,3 +64,4 @@ rm -rf %{buildroot}
 /opt/seagate/cortx/provisioner/files
 /opt/seagate/cortx/provisioner/pillar
 /opt/seagate/cortx/provisioner/srv
+/opt/seagate/cortx/provisioner/srv_ext
