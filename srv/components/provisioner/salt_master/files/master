@@ -672,6 +672,7 @@ file_roots:
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user   # old style
     - /opt/seagate/cortx/provisioner/srv
+    - /opt/seagate/cortx/provisioner/srv_ext  # file root for salt extensions
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.
@@ -854,6 +855,7 @@ pillar_roots:
     - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
+    - /opt/seagate/cortx/provisioner/pillar/groups/all/     # for generated cluster.sls and storage.sls files
     - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.

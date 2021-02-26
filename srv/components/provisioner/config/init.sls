@@ -20,4 +20,6 @@
 include:
   - components.provisioner.config.generate_cluster_pillar
   - components.provisioner.config.rsyslog_config
+{% if not salt['pillar.get']('inline:no_encrypt', False) %}
   - components.system.config.pillar_encrypt
+{% endif %}

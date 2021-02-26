@@ -67,6 +67,7 @@ cluster:
         interfaces:
           - eth0
         public_ip:                    # DHCP is assumed if left blank
+        public_fqdn: srvnode-{{ (num + 1) }}.mgmt.public
         netmask:
         gateway:                      # Gateway IP of Management Network. Not required for DHCP.
         mtu: 1500
@@ -78,7 +79,9 @@ cluster:
         interface_type: tcp           # tcp/o2ib
         transport_type: lnet          # lnet/libfabric
         public_ip:                    # DHCP is assumed if left blank
+        public_fqdn: srvnode-{{ (num + 1) }}.data.public
         private_ip:                   # Fixed IP of Private Data Network
+        private_fqdn: srvnode-{{ (num + 1) }}.data.private
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
         mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}

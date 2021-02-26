@@ -15,28 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.hare.install
+Delete old machine_id:
+  file.absent:
+    - name: /etc/machine-id
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-Stage - Post Install Hare:
+Refresh machine_id on {{ grains['id'] }}:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
-    - failhard: True
-    - require:
-      - Install cortx-hare
+    - name: systemd-machine-id-setup
 
-Stage - Configure Hare:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:config')
-    - failhard: True
-    - require:
-      - Stage - Post Install Hare
-
-Stage - Initialize Hare:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:init')
-    - failhard: True
-    - require:
-      - Stage - Configure Hare
-{% endif %}
+Sync grains data after refresh machine_id:
+  module.run:
+    - saltutil.refresh_grains: []
