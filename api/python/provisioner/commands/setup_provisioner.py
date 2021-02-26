@@ -1798,7 +1798,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         ssh_client.cmd_run(
             (
                 'provisioner pillar_set --fpath provisioner.sls '
-                'provisioner/cluster/num_of_nodes '
+                'provisioner/cluster_info/num_of_nodes '
                 f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
@@ -1832,10 +1832,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "{\"inline\": {\"no_encrypt\": True}}"
                 )
 
+        pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
                 "salt-call state.apply components.provisioner.config "
-                f"pillar='{inline_pillar}'" if inline_pillar else ""
+                f"{pillar}"
             ),
             targets=ALL_MINIONS
         )
