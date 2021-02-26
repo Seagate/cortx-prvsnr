@@ -1804,6 +1804,19 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
+
+        # Grains data is not getting refreshed within sls files
+        # if we call init.sls for machine_id states.
+        logger.info("Refresh machine id on the system")
+        for state in [
+            'components.provisioner.config.machine_id.refresh_machine_id',
+            'components.provisioner.config.machine_id.refresh_grains'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
+
         ssh_client.cmd_run(
             "salt-call state.apply components.provisioner.config",
             targets=ALL_MINIONS
