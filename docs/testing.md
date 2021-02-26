@@ -31,7 +31,8 @@ sudo dnf config-manager --disable docker-*
 
 
 <details>
-<summary>2. As docker doesn't support **CGroups2**, enable old **CGroups**</summary>
+<summary>2. As docker doesn't support <strong>CGroups2</strong>, enable old <strong>CGroups</strong>
+</summary>
 
 ```bash
 sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
