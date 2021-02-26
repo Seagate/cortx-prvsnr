@@ -46,7 +46,7 @@ class AutoDeployVM(SetupCmdBase, CommandParserFillerMixin):
         RunArgsSetupProvisionerGeneric,
         deploy_vm.run_args_type
     ]
-    _description = 'API to deploy Cortx on VM'
+    description = 'API to deploy Cortx on VM'
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
