@@ -4,6 +4,7 @@
 
 - [Installation](#Installation)
   - [Docker configuration](#docker-configuration)
+  - [Docker on Fedora 32/33](#docker-on-fedora-33)
   - [Python configuration](#python-configuration)
 - [Basic Docker commands](#basic-docker-commands)    
 
@@ -15,53 +16,75 @@
 The base Docker installation methods for popular Linux distributions are listed here:
 	https://docs.docker.com/engine/install/
 
-Docker is not supported by **Fedora 33** officially. On my host system I used the following method (Moby based approach):
+#### Docker on Fedora 33
 
-1. Delete the old version of docker (if it was installed)
+Docker is not supported by **Fedora 33** officially. You can use the following method (Moby based approach):
 
-   ```bash
-   sudo dnf remove docker-*
-   sudo dnf config-manager --disable docker-*
-   ```
+<details>
+<summary>1. Delete the old version of docker (if it was installed)</summary>
 
-2. As docker doesn't support **CGroups2**, enable old **CGroups**
+```bash
+sudo dnf remove docker-*
+sudo dnf config-manager --disable docker-*
+```
+</details>
 
-   ```bash
-   sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
-   ```
 
-3. Configure firewall
+<details>
+<summary>2. As docker doesn't support **CGroups2**, enable old **CGroups**</summary>
 
-   ```bash
-   sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0
-   sudo firewall-cmd --permanent --zone=FedoraWorkstation --add-masquerade
-   ```
+```bash
+sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+```
+</details>
 
-4. Install Moby (an open-source project created by Docker)
+
+<details>
+<summary>3. Configure firewall</summary>
+
+```bash
+sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0
+sudo firewall-cmd --permanent --zone=FedoraWorkstation --add-masquerade
+```
+</details>
+
+
+<details>
+<summary>4. Install Moby (an open-source project created by Docker)</summary>
 
    ```bash
    sudo dnf install moby-engine docker-compose
    sudo systemctl enable docker
    ```
+</details>
 
-5. Add your user to **docker** group to run docker without **sudo**
 
-   ```bash
-   sudo groupadd docker
-   sudo usermod -aG docker $USER
-   ```
+<details>
+<summary>5. Add your user to **docker** group to run docker without **sudo**</summary>
 
-6. Restart your computer
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+</details>
 
-   ```bash
-   sudo reboot
-   ```
 
-7. To test your installation you need running the following command
+<details>
+<summary>6. Restart your computer</summary>
 
-   ```bash
-   sudo docker run hello-world
-   ```
+```bash
+sudo reboot
+```
+</details>
+
+
+<details>
+<summary>7. To test your installation you need running the following command</summary>
+
+```bash
+sudo docker run hello-world
+```
+</details>
 
 #### Python configuration
 
@@ -91,37 +114,48 @@ Docker is not supported by **Fedora 33** officially. On my host system I used th
   pytest test/build_helpers -k test_build_setup_env -s --root-passwd root --nodes-num 1
   ```
 
-  The command above will create the docker container and will have the following output
-
+  <details>
+  <summary>The command above will create the docker container and will have the following output</summary>
+    
   ```
-  ========================================================================================= test session starts ==========================================================================================
-  platform linux -- Python 3.6.13, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
-  rootdir: /home/fdmitry/Work/cortx-prvsnr, inifile: pytest.ini
-  plugins: timeout-1.3.4, testinfra-3.1.0, mock-3.1.0, xdist-1.29.0, forked-1.3.0
-  timeout: 7200.0s
-  timeout method: signal
-  timeout func_only: False
-  collected 1 item                                                                                                                                                                                       
-  
-  test/build_helpers/test_build_env.py::test_build_setup_env Host srvnode-1
-    Hostname 172.17.0.2
-    Port 22
-    User root
-    UserKnownHostsFile /dev/null
-    StrictHostKeyChecking no
-    IdentityFile /tmp/pytest-of-fdmitry/pytest-10/id_rsa.test
-    IdentitiesOnly yes
-    LogLevel FATAL
-  
-  ```
+    ========================================================================================= test session starts ==========================================================================================
+    platform linux -- Python 3.6.13, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
+    rootdir: /home/fdmitry/Work/cortx-prvsnr, inifile: pytest.ini
+    plugins: timeout-1.3.4, testinfra-3.1.0, mock-3.1.0, xdist-1.29.0, forked-1.3.0
+    timeout: 7200.0s
+    timeout method: signal
+    timeout func_only: False
+    collected 1 item                                                                                                                                                                                       
+    
+    test/build_helpers/test_build_env.py::test_build_setup_env Host srvnode-1
+      Hostname 172.17.0.2
+      Port 22
+      User root
+      UserKnownHostsFile /dev/null
+      StrictHostKeyChecking no
+      IdentityFile /tmp/pytest-of-fdmitry/pytest-10/id_rsa.test
+      IdentitiesOnly yes
+      LogLevel FATAL
+    
+    ```
+  </details>
 
-- Install provisioner API to created docker container
+    Possible options (you may check them using `pytest test/build_helpers --help`, `custom options` part)
+    - `--docker-mount-dev` to mount `/dev` into containers (necessary if you need to mount ISO inside a container)
+    - `--root-passwd <STR>` to set a root password for initial ssh access
+    - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 3
+
+
+- You may set up a provisioner inside the container using the local source mode
 
   ```bash
   provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
   ```
 
   **:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
+
+#### TBD: Test other types of sources.
+#### TBD: Update with examples for multi node setups with HA mode enabled.
 
 ## Basic Docker commands
 
