@@ -50,6 +50,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
         RunArgsSetupProvisionerGeneric,
         deploy_dual.run_args_type
     ]
+    _description = 'API to deploy Cortx on Hardware'
 
     @staticmethod
     def deployment_validations(deploy_check):
