@@ -1820,10 +1820,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "{\"inline\": {\"no_encrypt\": True}}"
                 )
 
+        pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
                 "salt-call state.apply components.provisioner.config "
-                f"pillar='{inline_pillar}'" if inline_pillar else ""
+                f"{pillar}"
             ),
             targets=ALL_MINIONS
         )

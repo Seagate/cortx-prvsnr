@@ -38,5 +38,5 @@ Stage - Initialize Hare:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:init')
     - failhard: True
     - require:
-      Stage - Configure Hare
+      - Stage - Configure Hare
 {% endif %}
