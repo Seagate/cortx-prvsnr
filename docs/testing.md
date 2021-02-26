@@ -76,6 +76,9 @@ Docker is not supported by **Fedora 33** officially. On my host system I used th
   python3.6 -m venv ./venv
   ```
 
+  :warning: NOTE: For more details about Python virtual environment see
+  https://docs.python.org/3.6/library/venv.html
+
 - Install provisioner API to `venv`: 
 
   ```bash
