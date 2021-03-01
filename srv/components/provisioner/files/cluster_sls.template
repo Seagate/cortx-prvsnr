@@ -31,7 +31,7 @@ cluster:
   server_nodes:
     {% for num in range(num_of_nodes) %}
     {% set node = 'srvnode-' + (num + 1)|string %}
-    - {{ salt['mine.get'](node , 'node_machine_id')[node] }} : {{ node }}
+    {{ salt['mine.get'](node , 'node_machine_id')[node] }} : {{ node }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
   {% set node = 'srvnode-' + (num + 1)|string %}
