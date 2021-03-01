@@ -95,6 +95,9 @@ export fw_bundle=""
 export show_fw_ver=false
 export show_license=false
 export load_license=false
+export ntp_opt=false
+export ntp_server=""
+export ntp_tz=""
 
 usage()
 {
@@ -114,6 +117,7 @@ usage()
          [-v|--show-fw-ver]
          [--show-license]
          [-l|--load-license]
+         [-n|--ntp <ntp server ip/fqdn> <timezone>]
          [-h|--help]
 USAGE
 }
@@ -155,6 +159,7 @@ help()
     --shutdown-ctrl:- Shutdown the controller (a|b), if second option is ommited
                       then both the controllers will be shutdown
     -l|--load-license:-
+    -m||--ntp        :- configure ntp (user provided server/ip & timezone) on controllers
 
     Sample commands:
     =========================================================
@@ -211,6 +216,9 @@ help()
        host10.seagate.com, admin, !passwd
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl
+
+    10. Configure NTP with ntp.seagate.com as a NTP server and +5:30 as timezone:
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' -n ntp.seagate.com "+5:30"
 
 USAGE
 }
@@ -443,7 +451,19 @@ parse_args()
                     shift 2
                  }
                 ;;
-
+            -n|--ntp)
+                echo "parse_args(): configure ntp" >> $logfile
+                if [ -z "$2" ]; then
+                    echo "Error: NTP server not provided" && exit 1;
+                fi
+                if [ -z "$3" ]; then
+                    echo "Error: Timezone not provided" && exit 1;
+                fi
+                ntp_server="$2"
+                ntp_tz="$3"
+                echo "parse_args(): "
+                shift 3
+                ntp_opt=true ;;
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
@@ -516,6 +536,7 @@ main()
     [ "$show_license" = true ] && fw_license_show
     [ "$restart_ctrl_opt" = true ] && ctrl_restart
     [ "$shutdown_ctrl_opt" = true ] && ctrl_shutdown
+    [ "$ntp_opt" = true ] && ntp_config
 
     rm -rf $tmpdir $xml_doc
     echo "***** SUCCESS! *****" 2>&1 | tee -a $logfile
