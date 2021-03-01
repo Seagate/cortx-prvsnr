@@ -79,6 +79,7 @@ class RunArgsGenerateRosterAttrs:
 class GenerateRoster(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsGenerateRosterAttrs
+    description = "API to generate roster file from given params"
 
     def _get_pillar_data(self, key):
         """Retrieve pillar data."""
