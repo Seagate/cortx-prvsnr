@@ -1,34 +1,42 @@
 #!/usr/bin/env groovy
 
-def remote = [:]
-remote.name = "srvnode-1"
-remote.host = HOST_NAME
-remote.user = 'root'
-remote.password = PASSWORD
-remote.allowAnyHosts = true
-
 node {
+    properties([
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
+        parameters([
+            string(defaultValue: '', description: 'FQDN of VM to deploy on.', name: 'HOST_NAME', trim: true),
+            password(description: 'root user password for the target node.', name: 'PASSWORD')
+        ])
+    ])
+    
+    def remote = [:]
     withEnv(["SSHPASS=${PASSWORD}"]) {
         ansiColor('xterm') {
+            remote.name = "srvnode-1"
+            remote.host = HOST_NAME
+            remote.user = 'root'
+            remote.password = PASSWORD
+            remote.allowAnyHosts = true
             stage("SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
                 echo "Successfully connected to VM ${HOST_NAME}!"
             }
-
             stage("Teardown of Cortx Stack!") {
                 sshCommand remote: remote, command: """
                     /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
                 """
                 echo "Successfully teardown of Cortx Stack!"
             }
-
             stage("Stop Salt services") {
                 sshCommand remote: remote, command: """
-                    #systemctl stop glustersharedstorage glusterfsd glusterd
-                    systemctl stop salt-minion salt-master || true
+                    systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
+                    systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
+                    systemctl status glusterd >/dev/null && systemctl stop glusterd || true
+                    systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
+                    systemctl status salt-master >/dev/null && systemctl stop salt-master || true
                 """
                 echo "Sucessfully stopped salt and gluster services"
-            }            
+            }
             stage("Uninstall rpms") {
                 sshCommand remote: remote, command: """
                     yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
@@ -36,6 +44,7 @@ node {
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    yum erase -y *cortx*
                     yum autoremove -y
                     yum clean all
                     rm -rf /var/cache/yum
@@ -52,9 +61,9 @@ node {
             stage("Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
-                    rm -rf /opt/seagate/cortx || true
-                    rm -rf /opt/seagate/cortx_configs || true
-                    rm -rf /opt/seagate || true
+                    rm -rf /opt/seagate/cortx
+                    rm -rf /opt/seagate/cortx_configs
+                    rm -rf /opt/seagate
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs
@@ -64,6 +73,7 @@ node {
                     # Cleanup Provisioner profile directory
                     test -e /opt/isos && rm -rf /opt/isos
                     test -e /root/.provisioner && rm -rf /root/.provisioner
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
                     test -e /root/.ssh && rm -rf /root/.ssh
                 """
                 echo "Successfully removed!"
