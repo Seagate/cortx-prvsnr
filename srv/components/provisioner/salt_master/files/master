@@ -855,6 +855,7 @@ pillar_roots:
     - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
     - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
     - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
+    - /opt/seagate/cortx/provisioner/pillar/groups/all/     # for generated cluster.sls and storage.sls files
     - /opt/seagate/cortx/provisioner/pillar
 
 # A list of paths to be recursively decrypted during pillar compilation.
