@@ -22,3 +22,4 @@ include:
   - components.system.config.pillar_encrypt
   - components.system.config.service_user
   - components.system.config.sshd
+  - components.system.config.tmp_conf
