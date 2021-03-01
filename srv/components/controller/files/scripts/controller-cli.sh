@@ -159,7 +159,7 @@ help()
     --shutdown-ctrl:- Shutdown the controller (a|b), if second option is ommited
                       then both the controllers will be shutdown
     -l|--load-license:-
-    -m||--ntp        :- configure ntp (user provided server/ip & timezone) on controllers
+    -n||--ntp        :- configure ntp (user provided server/ip & timezone) on controllers
 
     Sample commands:
     =========================================================
