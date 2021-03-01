@@ -30,11 +30,11 @@ cluster:
   dns_servers:                        # Do not update
   server_nodes:
     {% for num in range(num_of_nodes) %}
-    {% set node = 'srvnode-'  + (num + 1)|string %}
+    {% set node = 'srvnode-' + (num + 1)|string %}
     - {{ salt['mine.get'](node , 'node_machine_id')[node] }} : {{ node }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
-  {% set node = 'srvnode-'  + (num + 1)|string %}
+  {% set node = 'srvnode-' + (num + 1)|string %}
   srvnode-{{ (num + 1) }}:
     rack_id:
     site_id:
