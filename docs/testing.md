@@ -23,7 +23,12 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-After that command, re-login/re-connect to your terminal or VM console. 
+After that command, re-login/re-connect to your terminal or VM console.
+
+:warning: NOTE: for more information about post-installation steps, please,
+visit the official page:
+
+https://docs.docker.com/engine/install/linux-postinstall/
 
 #### Docker on Fedora 33
 
@@ -159,7 +164,7 @@ sudo docker run hello-world
     Possible options (you may check them using `pytest test/build_helpers --help`, `custom options` part)
     - `--docker-mount-dev` to mount `/dev` into containers (necessary if you need to mount ISO inside a container)
     - `--root-passwd <STR>` to set a root password for initial ssh access
-    - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 3
+    - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 6
 
 
 - You may set up a provisioner inside the container using the local source mode

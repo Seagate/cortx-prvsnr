@@ -15,11 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if salt['pillar.get']('api_distr') == 'pip' %}
 set_env_vars:
   environ.setenv:
     - name: LC_ALL
     - value: en_US.UTF-8
     - update_minion: True
+{% endif %}
+
 
 api_installed:
 {% if salt['pillar.get']('api_distr') == 'pip' %}
