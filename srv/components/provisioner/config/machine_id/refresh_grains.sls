@@ -25,4 +25,4 @@ Replace machine id in grains:
 Sync data:
   module.run:
     - saltutil.refresh_grains: []
-
+    - mine.update: []
