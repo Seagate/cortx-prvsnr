@@ -117,7 +117,7 @@ usage()
          [-v|--show-fw-ver]
          [--show-license]
          [-l|--load-license]
-         [-n|--ntp <ntp server ip/fqdn> <timezone>]
+         [-n|--ntp <ntp server ip/fqdn> "<timezone>"]
          [-h|--help]
 USAGE
 }
