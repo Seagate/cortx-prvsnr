@@ -1,0 +1,156 @@
+node {
+    properties([
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
+        parameters([
+            string(defaultValue: '', description: 'FQDN of first VM to deploy.', name: 'HOST_NAME_1', trim: true),
+            string(defaultValue: '', description: 'FQDN of second VM to deploy.', name: 'HOST_NAME_2', trim: true),
+            string(defaultValue: '', description: 'FQDN of third VM to deploy.', name: 'HOST_NAME_3', trim: true),
+            string(defaultValue: '', description: '''Build having following directory structure:
+                3rd_party/
+                cortx_iso/
+                iso/
+                python_deps/
+                README.txt
+                RELEASE.INFO
+                THIRD_PARTY_RELEASE.INFO''', name: 'BUILD_URL', trim: true
+            ),
+            password(description: 'root user password for the target node.', name: 'PASSWORD')
+        ])
+    ])
+    
+    def remotes = []
+    
+    def remote_node = [:]
+    remote_node.name = "srvnode-1"
+    remote_node.host = HOST_NAME_1
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[0] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-2"
+    remote_node.host = HOST_NAME_2
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[1] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-3"
+    remote_node.host = HOST_NAME_3
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[2] = remote_node
+    
+    withEnv(["CORTX_RELEASE_REPO=${BUILD_URL}","SSHPASS=${PASSWORD}"]) {
+        ansiColor('xterm') {
+            stage("Build URL Check") {
+                sh label: '', returnStatus: true, script: 'test 200 == $(curl -ksI ${BUILD_URL}/RELEASE.INFO|grep "HTTP/1.1" | cut -d " " -f 2)'
+            }
+
+            stage("SSH Connectivity Check") {
+                for (remote in remotes) {
+                    sshCommand remote: remote, command: "exit"
+                    echo "Successfully connected to VM ${remote.host}!"
+                }
+            }
+
+            stage("Storage Configuration Check") {
+                for (remote in remotes) {
+                    try { 
+                        sshCommand remote: remote, command: """
+                            test 2 == \$(lsblk -d|grep -E 'sdb|sdc'|wc -l)
+                        """
+                        echo "The VM has exactly 2 nos. of attached disks. Check Successful!"
+                    } catch(Exception ex) {
+                        error 'The VM should have exactly 2 attached disks. Kindly provide a VM with exactly 2 attached disks.'
+                    }
+                }
+            }            
+            
+            stage("Update Machine-ID") {
+                for (remote in remotes) {
+                    sshCommand remote: remote, command: """
+                        rm /etc/machine-id
+                        systemd-machine-id-setup
+                        cat /etc/machine-id
+                    """
+                }
+            }
+            
+            stage("Prepare config.ini") {
+                sshCommand remote: remotes[0], command: """
+                    echo '''
+                    [storage]
+                    type=other''' | sed -e 's/^[ \t]*//' > /root/config.ini
+                """
+                for (remote in remotes)
+                    sshCommand remote: remotes[0], command: """
+                        echo '''
+                        [${remote.name}]
+                        hostname=${remote.host}
+                        network.data.private_ip=None
+                        network.data.public_interfaces=eth1,eth2
+                        network.data.private_interfaces=eth3,eth4
+                        network.mgmt.interfaces=eth0
+                        bmc.user=None
+                        bmc.secret=None
+                        ''' | sed -e 's/^[ \t]*//' >> /root/config.ini
+                    """
+                echo "Successfully created config.ini file!"
+            }
+            
+            stage("Install Provisioner API") {
+                sshCommand remote: remotes[0], command: """
+                    yum install -y yum-utils
+                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
+                    yum install --nogpgcheck -y python3 python36-m2crypto salt salt-master salt-minion
+                    rm -rf /etc/yum.repos.d/*3rd_party*.repo
+                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
+                    yum install --nogpgcheck -y python36-cortx-prvsnr
+                    rm -rf /etc/yum.repos.d/*cortx_iso*.repo
+                    yum clean all
+                    rm -rf /var/cache/yum/
+                    pip3 install jsonschema==3.0.2 requests
+                    provisioner --version
+                """
+                echo "Successfully installed Provisioner API!"
+            }
+        
+            stage("Bootstrap Provisioner") {               
+                nodes = ""
+                for (remote in remotes) {
+                    nodes += "${remote.name}:${remote.host}" + " "
+                }
+        
+                sshCommand remote: remotes[0], command: """
+                    yum install -y sshpass
+                    export SSHPASS=${PASSWORD}
+                    sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
+                    provisioner configure_setup /root/config.ini 1
+                    salt-call state.apply components.system.config.pillar_encrypt
+                    provisioner pillar_export
+                """
+            }
+            
+            stage("Validate Bootstrap Provisioner") {
+                sshCommand remote: remotes[0], command: """
+                    salt '*' test.ping
+                    salt "*" service.stop puppet
+                    salt "*" service.disable puppet
+                    salt '*' pillar.get release
+                    salt '*' grains.get node_id
+                    salt '*' grains.get cluster_id
+                    salt '*' grains.get roles
+                """
+                echo "Successfully validated bootstrap!"
+            }
+        
+        sshGet remote: remote, from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
+        sshGet remote: remote, from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
+        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log', followSymlinks: false
+        }
+    }
+}
