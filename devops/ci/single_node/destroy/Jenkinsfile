@@ -4,7 +4,7 @@ node {
     properties([
         buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
         parameters([
-            string(defaultValue: '', description: 'FQDN of VM to deploy on.', name: 'HOST_NAME', trim: true),
+            string(defaultValue: '', description: 'FQDN of VM to destroy on.', name: 'HOST_NAME', trim: true),
             password(description: 'root user password for the target node.', name: 'PASSWORD')
         ])
     ])
@@ -18,6 +18,9 @@ node {
             remote.password = PASSWORD
             remote.allowAnyHosts = true
             stage("SSH Connectivity Check") {
+                if (PASSWORD.isEmpty()) {
+                    error "Target VM password cannot be empty."
+                }
                 sshCommand remote: remote, command: "exit"
                 echo "Successfully connected to VM ${HOST_NAME}!"
             }
@@ -44,7 +47,9 @@ node {
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    # Brute clean for any cortx rpm packages
                     yum erase -y *cortx*
+                    # Re-condition yum db
                     yum autoremove -y
                     yum clean all
                     rm -rf /var/cache/yum
@@ -65,16 +70,16 @@ node {
                     rm -rf /opt/seagate/cortx_configs
                     rm -rf /opt/seagate
                     # Bricks cleanup
-                    test -e /var/lib/seagate && rm -rf /var/lib/seagate
-                    test -e /srv/glusterfs && rm -rf /srv/glusterfs
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
                     # Cleanup Salt
-                    test -e /var/cache/salt && rm -rf /var/cache/salt
-                    test -e /etc/salt && rm -rf /etc/salt
+                    test -e /var/cache/salt && rm -rf /var/cache/salt || true
+                    test -e /etc/salt && rm -rf /etc/salt || true
                     # Cleanup Provisioner profile directory
-                    test -e /opt/isos && rm -rf /opt/isos
-                    test -e /root/.provisioner && rm -rf /root/.provisioner
-                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
-                    test -e /root/.ssh && rm -rf /root/.ssh
+                    test -e /opt/isos && rm -rf /opt/isos || true
+                    test -e /root/.provisioner && rm -rf /root/.provisioner || true
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
                 echo "Successfully removed!"
             }

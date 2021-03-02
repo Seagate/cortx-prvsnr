@@ -138,4 +138,3 @@ node {
         archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log', followSymlinks: false
     }
 }
-
