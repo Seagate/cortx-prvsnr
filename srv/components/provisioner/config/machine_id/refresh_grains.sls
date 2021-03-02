@@ -15,7 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#Disable and stop nfs service:
-#  service.dead:
-#    - name: nfs-server
-#    - enable: False
+Replace machine id in grains:
+  file.line:
+    - name: /etc/salt/grains
+    - mode: replace
+    - match: 'Machine ID:'
+    - content: "Machine ID: {{ grains['machine_id'] }}"
+
+Sync data:
+  module.run:
+    - saltutil.refresh_grains: []
+    - mine.update: []

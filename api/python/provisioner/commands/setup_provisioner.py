@@ -1788,11 +1788,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.debug(f"Synced extension modules: {res}")
 
         logger.info("Configuring provisioner logging")
-        for state in [
-            'components.system.prepare',
-        ]:
+        if run_args.source in ('iso', 'rpm'):
             ssh_client.cmd_run(
-                f"salt-call state.apply {state}",
+                "salt-call state.apply components.system.prepare",
                 targets=master_targets
             )
 
@@ -1800,12 +1798,46 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         ssh_client.cmd_run(
             (
                 'provisioner pillar_set --fpath provisioner.sls '
-                'provisioner/cluster/num_of_nodes '
+                'provisioner/cluster_info/num_of_nodes '
                 f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
+
+        # Grains data is not getting refreshed within sls files
+        # if we call init.sls for machine_id states.
+        logger.info("Refresh machine id on the system")
+        for state in [
+            'components.provisioner.config.machine_id.refresh_machine_id',
+            'components.provisioner.config.machine_id.refresh_grains'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
+
+        inline_pillar = None
+        if run_args.source == 'local':
+            for pkg in [
+                'rsyslog',
+                'rsyslog-elasticsearch',
+                'rsyslog-mmjsonparse'
+            ]:
+                ssh_client.cmd_run(
+                    (
+                        "provisioner pillar_set "
+                        f"commons/version/{pkg} '\"latest\"'"
+                    ), targets=run_args.primary.minion_id
+                )
+                inline_pillar = (
+                    "{\"inline\": {\"no_encrypt\": True}}"
+                )
+
+        pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
-            "salt-call state.apply components.provisioner.config",
+            (
+                "salt-call state.apply components.provisioner.config "
+                f"{pillar}"
+            ),
             targets=ALL_MINIONS
         )
 

@@ -86,3 +86,46 @@ Step-1: Ensure rollback pillar data is present/updated as part of sw_update comm
 
 Step-2: Run sw_rollback api
         `$provisioner sw_rollback CORTX_VERSION`
+
+
+[EOS-18337]: Make bootstrap API salt states for cortx repositories available in deployed environment
+
+Step-1: Start the docker container
+
+```bash
+pytest test/build_helpers -k test_build_setup_env -s --root-passwd root --nodes-num 1
+```
+
+Step-2: Install provisioner API to created docker container
+
+```bash
+provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
+```
+
+NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
+
+Step-3: Copy the `devops` directory of `cortx-prvsnr` repository
+
+```bash
+cd /PATH/TO/cortx-prvsnr/
+docker cp ./devops/ <CONTAINER ID>:/opt/seagate/cortx/provisioner/devops
+```
+
+Step-4: Build core `cortx-prvsnr` RPM package
+
+```bash
+docker exec -it <CONTAINER ID> bash
+bash -x /opt/seagate/cortx/provisioner/devops/rpms/buildrpm.sh -g 123456
+yum install /root/rpmbuild/RPMS/x86_64/cortx-prvsnr-2.0.0-0_git123456_el7.x86_64.rpm
+```
+
+Step-4: Validate that `repos` states are available and visible for salt commands
+
+```bash
+salt-call state.id_exists "configure pip" repos.pip_config
+```
+
+  NOTE: Useful command to list all salt states
+```bash
+salt-call state.show_top
+```
