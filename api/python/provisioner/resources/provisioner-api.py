@@ -16,32 +16,32 @@
 #
 
 
-import logging
-
-
-logger = logging.getLogger(__name__)
-_mod = sys.modules[__name__]
-
-
-@attr.s(auto_attribs=True)
-class ProvisionerAPI(Resource):
-    name = 'provisioner'
-
-
-class ProvisionerAPISLS(ResourceSLS):
-    resource = ProvisionerAPI
-
-
-@attr.s(auto_attribs=True)
-class Install(ProvisionerAPISLS):
-    name = 'install'
-    state_name = 'provisioner.api.install'
-
-    local: bool = False
-
-    def setup_roots(self, targets):
-        self.pillar_inline = {
-            'api_distr': (
-                'pip' if self.local == 'local' else 'pkg'
-            )
-        }
+# import logging
+#
+#
+# logger = logging.getLogger(__name__)
+# _mod = sys.modules[__name__]
+#
+#
+# @attr.s(auto_attribs=True)
+# class ProvisionerAPI(Resource):
+#     name = 'provisioner'
+#
+#
+# class ProvisionerAPISLS(ResourceSLS):
+#     resource = ProvisionerAPI
+#
+#
+# @attr.s(auto_attribs=True)
+# class Install(ProvisionerAPISLS):
+#     name = 'install'
+#     state_name = 'provisioner.api.install'
+#
+#     local: bool = False
+#
+#     def setup_roots(self, targets):
+#         self.pillar_inline = {
+#             'api_distr': (
+#                 'pip' if self.local == 'local' else 'pkg'
+#             )
+#         }

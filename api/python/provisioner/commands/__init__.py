@@ -42,7 +42,7 @@ from ..errors import (
     ReleaseFileNotFoundError,
 )
 from ..config import (
-    ALL_MINIONS, PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR,
+    ALL_MINIONS,
     PRVSNR_FILEROOT_DIR, LOCAL_MINION,
     PRVSNR_USER_FILES_SSL_CERTS_FILE,
     PRVSNR_CORTX_COMPONENTS,
@@ -1306,6 +1306,7 @@ class CreateUser(CommandParserFillerMixin):
             )
         )
         _passwordless_ssh()
+
 
 commands = {}
 for cmd_name, spec in api_spec.items():

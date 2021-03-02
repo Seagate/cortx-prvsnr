@@ -83,7 +83,7 @@ SALT_JOBS_CACHE_DIR = Path('/var/cache/salt/master/jobs')
 #     salt master/minion config files
 #     (e.g. default ones have less priority than user ones,
 #           shared user pillar has less priority than local one)
-PRVSNR_FACTORY_PILLAR_PREFIX = f"u_factory_"
+PRVSNR_FACTORY_PILLAR_PREFIX = "u_factory_"
 PRVSNR_USER_PILLAR_PREFIX = 'uu_'
 PRVSNR_USER_LOCAL_PILLAR_PREFIX = 'zzz_'
 
@@ -363,11 +363,12 @@ LOCALHOST_DOMAIN = 'localhost'
 # TODO rename to DistType
 class DistrType(Enum):
     """Distribution types"""
-    CORTX = "cortx"       # - only release packages,
-                          #    optional separate os and deps
-    BUNDLE = "bundle"     # - release packages along with all dependencies,
-                          #   optional python index inside,
-                          #   optional separate os
+    # only release packages, optional separate os and deps
+    CORTX = "cortx"
+    # release packages along with all dependencies,
+    # optional python index inside,
+    # optional separate os
+    BUNDLE = "bundle"
 
 
 # Defines a "frozen" list for allowed commands and supported by provisioner
@@ -551,6 +552,7 @@ SW_UPGRADE_REPOS = {
         YUM_REPO_TYPE: False
     }
 }
+
 
 class CortxResourceT(Enum):
     """Resource types in CORTX provisioner"""

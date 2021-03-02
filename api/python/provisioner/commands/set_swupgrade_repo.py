@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-import os
 from pathlib import Path
 
 from .set_swupdate_repo import SetSWUpdateRepo
@@ -71,6 +70,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # TODO IMPROVE later raise and error
             if False:
                 raise SWUpdateRepoSourceError(
+                    # FIXME repo is undefined here
                     str(repo.source),
                     (
                         f"SW update repository for the release "

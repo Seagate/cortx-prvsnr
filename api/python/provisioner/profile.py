@@ -23,6 +23,7 @@ from .utils import dump_yaml, run_subprocess_cmd
 
 logger = logging.getLogger(__name__)
 
+
 # TODO TEST EOS-8473
 def setup(
         profile_paths: Optional[dict] = None,
