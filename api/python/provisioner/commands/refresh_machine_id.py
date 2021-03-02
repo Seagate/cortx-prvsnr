@@ -51,7 +51,8 @@ class RefreshMachineId(CommandParserFillerMixin):
     _run_args_type = RunArgsMachineIdAttrs
     description = "API to refresh machine id on all nodes"
 
-    def run(self, **kwargs):
+    @staticmethod
+    def run(**kwargs):
 
         if kwargs['force']:
             logger.info("Forcefully refresh machine id on all nodes")
