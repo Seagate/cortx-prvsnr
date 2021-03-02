@@ -461,7 +461,7 @@ parse_args()
                 fi
                 ntp_server="$2"
                 ntp_tz="$3"
-                echo "parse_args(): "
+                echo "parse_args(): ntp_server=$ntp_server, ntp_tz=$ntp_tz" >> $logfile
                 shift 3
                 ntp_opt=true ;;
             *) echo "Invalid option $1"; exit 1;;
@@ -475,7 +475,7 @@ parse_args()
         "$show_fw_ver" = false -a "$update_fw" = false -a\
         "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false -a\
         "$ntp_opt" = false ] && {
-        echo "Error: Incomplete arguments provided, exiting.. ntp_opt=$ntp_opt" | tee -a $logfile
+        echo "Error: Incomplete arguments provided, exiting.." | tee -a $logfile
         exit 1
     }
     echo "parse_args(): parsing done" >> $logfile
