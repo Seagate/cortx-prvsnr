@@ -453,10 +453,10 @@ parse_args()
                 ;;
             -n|--ntp)
                 echo "parse_args(): configure ntp" >> $logfile
-                if [ -z "$2" ]; then
+                if [[ -z "$2" ]]; then
                     echo "Error: NTP server not provided" && exit 1;
                 fi
-                if [ -z "$3" ]; then
+                if [[ -z "$3" ]]; then
                     echo "Error: Timezone not provided" && exit 1;
                 fi
                 ntp_server="$2"
@@ -468,13 +468,14 @@ parse_args()
         esac
     done
     [ "$host_optparse_done" = false ] &&
-        echo "Error: Controller details not provided, exiting.." && exit 1
+        echo "Error: Controller details not provided, exiting.." | tee -a $logfile && exit 1
 
     [ "$prov_optparse_done" = false -a "$show_disks" = false -a\
         "$show_license" = false -a "$load_license" = false -a\
         "$show_fw_ver" = false -a "$update_fw" = false -a\
-        "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false ] && {
-        echo "Error: Incomplete arguments provided, exiting.."
+        "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false -a\
+        "$ntp_opt" = false ] && {
+        echo "Error: Incomplete arguments provided, exiting.. ntp_opt=$ntp_opt" | tee -a $logfile
         exit 1
     }
     echo "parse_args(): parsing done" >> $logfile
