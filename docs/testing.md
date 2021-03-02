@@ -23,6 +23,8 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
+After that command, re-login/re-connect to your terminal or VM console. 
+
 #### Docker on Fedora 33
 
 Docker is not supported by **Fedora 33** officially. You can use the following method (Moby based approach):
