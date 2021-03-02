@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% for volume, mount_dir in salt['pillar.get']('glusterfs:client:mounts').items() %}
 
-set -eu
+# TODO IMPROVE EOS-9581 there is a possible issue with fstab, SaltStack #39757
 
+glusterfs_volume_{{ volume }}_mounted:
+  mount.mounted:
+    - name: {{ mount_dir }}
+    - device: {{ salt['pillar.get']('glusterfs:client:mount_server' }}:{{ volume }}
+    - mkmnt: True
+    - fstype: glusterfs
+    - opts: _netdev,defaults,acl
+{%- if salt['grains.get']('virtual') != 'container' %}
+    - persist: True
+{%- else %}
+    - persist: False
+{%- endif %}
+    - dump: 0
+    - pass_num: 0
 
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
-
-
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+{% endfor %}

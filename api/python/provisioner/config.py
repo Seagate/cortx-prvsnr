@@ -33,8 +33,8 @@ else:
             PROJECT_PATH = None
             break
 
-API_SPEC_PATH = MODULE_DIR / 'api_spec.yaml'
-PARAMS_SPEC_PATH = MODULE_DIR / 'params_spec.yaml'
+API_SPEC_PATH = CONFIG_MODULE_DIR / 'api_spec.yaml'
+PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
 CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
 ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
 
@@ -66,6 +66,9 @@ PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
 PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
 
+
+SALT_JOBS_CACHE_DIR = Path('/var/cache/salt/master/jobs')
+
 # Notes:
 # 1. how salt's pillar roots organized:
 #   - salt searches for files in each root
@@ -92,6 +95,8 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 
+SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
+SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
 SALT_ROSTER_DEFAULT = '/etc/salt/roster'
 
 # TODO EOS-12076 EOS-12334
@@ -101,6 +106,7 @@ OS_ISO_DIR = 'os'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
 CORTX_PYTHON_ISO_DIR = 'python_deps'
+
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
@@ -129,7 +135,9 @@ PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
 GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
+GLUSTERFS_VOLUME_NAME_SALT_JOBS = 'volume_salt_cache_jobs'
 GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
+GLUSTERFS_VOLUME_NAME_PRVSNR_DATA = 'volume_prvsnr_data'
 
 GLUSTERFS_VOLUME_FILEROOT_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/salt'
 GLUSTERFS_VOLUME_PILLAR_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/pillar'
@@ -143,6 +151,7 @@ SSH_PRIV_KEY = Path('/root/.ssh/id_rsa_prvsnr')
 SSH_PUB_KEY = Path('/root/.ssh/id_rsa_prvsnr.pub')
 
 ALL_MINIONS = '*'
+ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
@@ -351,10 +360,14 @@ LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
 
 
+# TODO rename to DistType
 class DistrType(Enum):
     """Distribution types"""
-    CORTX = "cortx"       # only release packages
-    BUNDLE = "bundle"     # release packages along with all dependencies
+    CORTX = "cortx"       # - only release packages,
+                          #    optional separate os and deps
+    BUNDLE = "bundle"     # - release packages along with all dependencies,
+                          #   optional python index inside,
+                          #   optional separate os
 
 
 # Defines a "frozen" list for allowed commands and supported by provisioner
@@ -383,7 +396,7 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
 
-CLI_NEW_SERVICE_USER_PWD_VALUE = 'GENERATE'
+CLI_NEW_SERVICE_USER_PWD_VALUE = '__GENERATE__'
 
 
 class Checks(Enum):
@@ -538,3 +551,8 @@ SW_UPGRADE_REPOS = {
         YUM_REPO_TYPE: False
     }
 }
+
+class CortxResourceT(Enum):
+    """Resource types in CORTX provisioner"""
+
+    REPOS = "cortx_repos"

@@ -1307,7 +1307,6 @@ class CreateUser(CommandParserFillerMixin):
         )
         _passwordless_ssh()
 
-
 commands = {}
 for cmd_name, spec in api_spec.items():
     spec = deepcopy(api_spec[cmd_name])  # TODO

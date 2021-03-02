@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if salt['pillar.get']('glusterfs:add_repo', False) %}
 
-set -eu
+# TODO detect centos instead
+    {% if "RedHat" not in grains['os'] %}
 
+glusterfs_repo_is_installed:
+  pkg.installed:
+    - pkgs:
+      - centos-release-gluster7
 
-verbosity="${1:-0}"
+    {% else  %}
 
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
+# FIXME need to use gluster from official  RedHat repos
+# centos-release-gluster7 not available for redhat hence adding repo manually
+glusterfs_repo_is_installed:
+  pkgrepo.managed:
+    - name: glusterfs
+    - humanname: glusterfs-7
+    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
+    - gpgcheck: 0
+    - enabled: 1
 
+    {% endif %}
 
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+{% else  %}
+
+GlusterFS repo setup skipped:
+  test.show_notification:
+    - text: "glusterfs:add_repo pillar flag is not set, skipping repo setup"
+
+{% endif %}

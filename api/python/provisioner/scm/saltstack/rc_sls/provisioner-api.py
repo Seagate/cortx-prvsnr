@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -17,17 +16,32 @@
 #
 
 
-set -eu
+import logging
 
 
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
+logger = logging.getLogger(__name__)
+_mod = sys.modules[__name__]
 
 
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+@attr.s(auto_attribs=True)
+class ProvisionerAPI(Resource):
+    name = 'provisioner'
+
+
+class ProvisionerAPISLS(ResourceSLS):
+    resource = ProvisionerAPI
+
+
+@attr.s(auto_attribs=True)
+class Install(ProvisionerAPISLS):
+    name = 'install'
+    state_name = 'provisioner.api.install'
+
+    local: bool = False
+
+    def setup_roots(self, targets):
+        self.pillar_inline = {
+            'api_distr': (
+                'pip' if self.local == 'local' else 'pkg'
+            )
+        }

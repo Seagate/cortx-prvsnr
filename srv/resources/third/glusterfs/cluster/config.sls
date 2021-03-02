@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,38 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set peers = salt['pillar.get']('glusterfs:peers') %}
 
-set -eu
+glusterfs_servers_peered:
+  glusterfs.peered:
+    - names:
+{% for peer in peers %}
+      - {{ peer }}
+{% endfor %}
 
+{% for volume, export_dir in salt['pillar.get']('glusterfs:volumes').items() %}
 
-verbosity="${1:-0}"
+gluster_brick_directory_{{ export_dir }}_exists:
+  file.directory:
+    - name: {{ export_dir }}
+    - makedirs: true
 
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
+glusterfs_volume_{{ volume }}_created:
+  glusterfs.volume_present:
+    - name: {{ volume }}
+    - bricks:
+    {% for peer in peers %}
+      - {{ peer }}:{{ export_dir }}
+    {% endfor %}
+    - replica: {{ peers|length }}
+    - start: True
+    - force: True
+    - require:
+      - glusterfs_servers_peered
+    #  Added retry here since 'peer probe' seems to be async
+    - retry:
+        attempts: 10
+        until: True
+        interval: 3
 
-
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+{% endfor %}

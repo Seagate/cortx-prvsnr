@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# TODO IMPROVE EOS-8473 salt version from pillar
 
-set -eu
-
-
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
+# TODO IMPROVE EOS-8473 is it needed ???
+# Remove any older saltstack if any.
+# systemctl stop salt-minion salt-master || true
+# yum remove -y salt-minion salt-master
 
 
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+# TODO TEST EOS-8473
+saltstack_installed:
+  pkg.installed:
+    - pkgs:
+      - salt-minion
+
+
+# TODO consider to switch to python3-pygit2 as salt recommends
+#      once it would be availble better for target platforms
+gitfs_fileserver_deps_installed:
+  pkg.installed:
+    - name: GitPython   # FIXME JBOD
+    - onlyif: yum info GitPython

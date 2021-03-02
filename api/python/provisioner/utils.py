@@ -64,6 +64,14 @@ def converter_path_resolved(value):
     return value if value is None else Path(str(value)).resolve()
 
 
+def validator__subclass_of(classinfo):
+    def _f(attribute, value):
+        if not issubclass(value, classinfo):
+            raise TypeError(
+                f"'{attribute.name}' must be subclass of {classinfo}"
+            )
+
+
 def load_yaml_str(data):
     try:
         return yaml.safe_load(data)

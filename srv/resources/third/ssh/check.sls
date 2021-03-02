@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# TODO TEST EOS-8473
 
-set -eu
+{% for node_id in pillar['ssh']['spec'] %}
+    {% if node_id != grains['id'] %}
 
+check_{{ node_id }}_reachable:
+  cmd.run:
+    - name: ssh -q -o "ConnectTimeout=5" {{ node_id }} exit
 
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
-
-
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+    {% endif %}
+{% endfor %}

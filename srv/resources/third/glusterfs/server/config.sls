@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,18 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% for _dir in salt['pillar.get']('glusterfs_dirs', []) %}
 
-set -eu
+gluster_brick_directory_{{ _dir }}_exists:
+  file.directory:
+    - name: {{ _dir }}
+    - makedirs: true
 
-
-verbosity="${1:-0}"
-
-if [[ "$verbosity" -ge 2 ]]; then
-    set -x
-fi
-
-
-# FIXME remove later
-# XXX EOS-17600
-rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
-rm -rf /usr/lib/python3.6/site-packages/provisioner
+{% endfor %}

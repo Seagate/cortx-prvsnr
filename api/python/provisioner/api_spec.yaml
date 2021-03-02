@@ -115,6 +115,10 @@ salt:
   type: SaltClient
 generate_roster:
   type: GenerateRoster
+resource:
+  type: Resource
+generate:
+  type: HelperGenerator
 
 # setup commands
 setup_provisioner:

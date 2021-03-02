@@ -17,10 +17,12 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, List, Dict, Tuple, Iterable, Union
+from typing import Any, List, Dict, Tuple, Iterable, Union, Optional
 from copy import deepcopy
 from pathlib import Path
 
+from . import values
+from .errors import BadPillarDataError
 from .vendor import attr
 from .utils import load_yaml, dump_yaml
 from .salt import pillar_get, pillar_refresh
@@ -138,6 +140,37 @@ class PillarItemsAPI(ABC):
 
 
 @attr.s(auto_attribs=True)
+class PillarIterable(PillarItemsAPI):
+    # XXX better typing: for List and Tuple (path, value) items are expected
+    pi_items: Union[Dict, List, Tuple]
+    # file path relative to pillar roots,
+    # if not specified <key-path-top-level-part>.sls
+    # for each pillar item would be used'
+    fpath: Optional[str] = None
+
+    _pillars: Dict[PillarKey, Any] = attr.Factory(dict)
+
+    def __attrs_post_init__(self):
+        if isinstance(self.pi_items, Dict):
+            self._pillars = {
+                PillarKey(k, fpath=self.fpath): v
+                for k, v in self.pi_items.items()
+            }
+        elif isinstance(List, Tuple):
+            self._pillars = {
+                PillarKey(i[0], fpath=self.fpath): i[1]
+                for i in self.pi_items
+            }
+        else:
+            raise TypeError(
+                f"unxpected type of 'pi_items': '{type(self.pi_items)}'"
+            )
+
+    def pillar_items(self) -> Iterable[Tuple[PillarKeyAPI, Any]]:
+        return tuple(self._pillars.items())
+
+
+@attr.s(auto_attribs=True)
 class PillarEntry:
     key_path: KeyPath = attr.ib(converter=KeyPath)
     pillar: Dict = attr.Factory(dict)
@@ -194,7 +227,12 @@ class PillarResolver:
             )
         return self._pillar
 
-    def get(self, pi_keys: Iterable[PillarKeyAPI]):  # TODO return value
+    # TODO return value
+    def get(
+        self,
+        pi_keys: Iterable[PillarKeyAPI],
+        fail_on_undefined: bool = False
+    ):
         # TODO provide results per target
         # - for now just use the first target's pillar value
         res = {}
@@ -202,6 +240,16 @@ class PillarResolver:
             res[minion_id] = {
                 pk: PillarEntry(pk.keypath, pillar).get() for pk in pi_keys
             }
+
+        if fail_on_undefined:
+            for node_id, pillar in res.items():
+                for pk in pi_keys:
+                    if not pillar[pk] or pillar[pk] is values.MISSED:
+                        raise BadPillarDataError(
+                            f"value for {pk.keypath} is not specified "
+                            f"for node {node_id}"
+                        )
+
         return res
 
 
@@ -399,10 +447,16 @@ class PillarUpdater:
             dump_yaml(path, pillar)
 
     # TODO test
-    def apply(self) -> None:
-        self.dump()
-        if not self.local:
-            self.refresh(self.targets)
+    def apply(self, rollback_on_error=False) -> None:
+        try:
+            self.dump()
+            if not self.local:
+                self.refresh(self.targets)
+        except Exception:
+            if rollback_on_error:
+                self.rollback()
+                self.apply(rollback_on_error=False)
+            raise
 
     @staticmethod
     def refresh(targets: str = ALL_MINIONS):
@@ -439,10 +493,14 @@ class PillarUpdater:
 @attr.s(auto_attribs=True)
 class PillarUpdaterNew(PillarUpdater):
     pillar_path: PillarPath = USER_SHARED_PILLAR
+    client: Any = None
 
     def __attrs_post_init__(self):
         if self.local:
             self.pillar_path = USER_LOCAL_PILLAR
+        # XXX FIXME patch
+        if not self.client:
+            raise ValueError('client should be specified')
 
     @classmethod
     def add_merge_prefix(cls, path: Path, local=False):
@@ -464,3 +522,6 @@ class PillarUpdaterNew(PillarUpdater):
         if _path not in self._pillars:
             self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
         return self._pillars[_path]
+
+    def refresh(self, targets: str = ALL_MINIONS):
+        return self.client.pillar_refresh(targets=targets)

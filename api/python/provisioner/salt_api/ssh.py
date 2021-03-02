@@ -26,7 +26,7 @@ import logging
 from .. import inputs, config
 from ..vendor import attr
 from ..ssh import copy_id
-from ..utils import load_yaml
+from .. import utils
 from ..errors import (
     SaltCmdResultError
 )
@@ -41,7 +41,9 @@ from .base import (
     SaltArgsBase,
     SaltClientBase,
     SaltClientResultBase,
-    SaltClientJobResult
+    SaltClientJobResult,
+    converter__fileroot_path,
+    converter__pillar_path
 )
 from .client import (
     SaltLocalClientArgs
@@ -228,6 +230,21 @@ class SaltSSHClient(SaltClientBase):
             }
         }
     )
+    profile: str = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "path to ssh profile, if specified"
+                    "'--c-path', '--roster-file', '--pillar-path'"
+                    "and '--fileroot-path' options would be set "
+                    "automatically"
+                )
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists
+    )
     ssh_options: Optional[Dict] = attr.ib(
         default=attr.Factory(
             lambda: [
@@ -253,13 +270,31 @@ class SaltSSHClient(SaltClientBase):
             }
         }
     )
+    re_config: bool = False
 
     _client: SSHClient = attr.ib(init=False, default=None)
     _def_roster_data: Dict = attr.ib(init=False, default=attr.Factory(dict))
 
     def __attrs_post_init__(self):
         """Do post init."""
-        self._client = SSHClient(c_path=str(self.c_path))
+
+        if self.profile:
+            paths = config.profile_paths(
+                config.profile_base_dir(
+                    location=self.profile.parent,
+                    setup_name=self.profile.name
+                )
+            )
+            self.c_path = paths['salt_master_file']
+            self.roster_file = paths['salt_roster_file']
+            self.fileroot_path = converter__fileroot_path(
+                paths['salt_fileroot_dir']
+            )
+            self.pillar_path = converter__pillar_path(
+                paths['salt_pillar_dir']
+            )
+
+        self._client_init()
 
         # if self.roster_file is None:
         #     path = USER_SHARED_PILLAR.all_hosts_path(
@@ -275,7 +310,10 @@ class SaltSSHClient(SaltClientBase):
 
         if self.roster_file:
             logger.debug(f'default roster is set to {self.roster_file}')
-            self._def_roster_data = load_yaml(self.roster_file)
+            self._def_roster_data = utils.load_yaml(self.roster_file)
+
+    def _client_init(self):
+        self._client = SSHClient(c_path=str(self.c_path))
 
     @property
     def _cmd_args_t(self) -> Type[SaltArgsBase]:
@@ -285,9 +323,22 @@ class SaltSSHClient(SaltClientBase):
     def _salt_client_res_t(self) -> Type[SaltClientResultBase]:
         return SaltSSHClientResult
 
+    def add_file_roots(self, roots: List[Path]):
+        if not self.re_config:
+            raise RuntimeError('re-configuration is not allowed')
+
+        config = utils.load_yaml(self.c_path)
+        for root in roots:
+            if str(root) not in config['file_roots']['base']:
+                config['file_roots']['base'].append(str(root))
+
+        utils.dump_yaml(self.c_path, config)
+
+        self._client_init()
+
     def roster_data(self, roster_file=None):
         if roster_file:
-            return load_yaml(roster_file)
+            return utils.load_yaml(roster_file)
         else:
             return self._def_roster_data
 
@@ -342,7 +393,7 @@ class SaltSSHClient(SaltClientBase):
                 roster_file = exc.cmd_args.get('kw').get('roster_file')
 
                 if roster_file and ('Permission denied' in reason):
-                    roster = load_yaml(roster_file)
+                    roster = utils.load_yaml(roster_file)
 
                     if bootstrap_roster_file:
                         # NOTE assumptions:

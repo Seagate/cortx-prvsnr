@@ -17,18 +17,26 @@
 
 from abc import ABC, abstractmethod
 from typing import (
-    List, Union, Dict, Tuple, Any, Type
+    List, Union, Dict, Tuple, Any, Type, Optional, Iterable
 )
 import logging
+from pathlib import Path
 
 from ..vendor import attr
-from ..config import (
-   SECRET_MASK
-)
+from .. import config, inputs
 from ..errors import (
     SaltNoReturnError,
-    SaltCmdRunError, SaltCmdResultError
+    SaltCmdRunError,
+    SaltCmdResultError,
+    ProvisionerError
 )
+from ..paths import (
+    PillarPath, FileRootPath, USER_SHARED_PILLAR, USER_SHARED_FILEROOT
+)
+from ..pillar import PillarUpdaterNew
+from .._api_cli import process_cli_result
+from ..values import is_special
+from ..pillar import PillarIterable
 
 logger = logging.getLogger(__name__)
 
@@ -67,17 +75,17 @@ class SaltArgsBase:
     def _as_dict(self):
         _dct = attr.asdict(self)
         if 'password' in _dct['kw']:
-            _dct['kw']['password'] = SECRET_MASK
+            _dct['kw']['password'] = config.SECRET_MASK
 
         if 'password' in _dct['fun_kwargs']:
-            _dct['fun_kwargs']['password'] = SECRET_MASK
+            _dct['fun_kwargs']['password'] = config.SECRET_MASK
 
         # we do not mask the 'kw' more since
         # it should include only salt related parameters
         # that are safe to show
         if self.secure:
-            _dct['fun_args'] = SECRET_MASK
-            _dct['fun_kwargs'] = SECRET_MASK
+            _dct['fun_args'] = config.SECRET_MASK
+            _dct['fun_kwargs'] = config.SECRET_MASK
 
         return _dct
 
@@ -172,10 +180,55 @@ class SaltClientJobResult(SaltClientResultBase):
         return fails
 
 
+def converter__pillar_path(path):
+    if not isinstance(path, PillarPath):
+        # XXX prefix ???
+        path = PillarPath(path, config.PRVSNR_USER_PILLAR_PREFIX)
+    return path
+
+
+def converter__fileroot_path(path):
+    return (
+        path if isinstance(path, FileRootPath) else FileRootPath(path)
+    )
+
+
+class SaltClientBaseParams:
+    pillar_path: Union[PillarPath, str] = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "path to writeable (user) pillar path",
+                'default': str(USER_SHARED_PILLAR.root),
+                'metavar': 'PATH'
+            }
+        },
+        default=USER_SHARED_PILLAR,
+        converter=converter__pillar_path,
+        validator=attr.validators.instance_of(PillarPath)
+    )
+    fileroot_path: Union[FileRootPath, str] = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "path to writeable (user) pillar path",
+                'default': str(USER_SHARED_FILEROOT.root),
+                'metavar': 'PATH'
+            }
+        },
+        default=USER_SHARED_FILEROOT,
+        converter=converter__fileroot_path,
+        validator=attr.validators.instance_of(FileRootPath)
+    )
+
+
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
 class SaltClientBase(ABC):
     c_path: str = None
+
+    fileroot_path: Union[FileRootPath, str] = (
+        SaltClientBaseParams.fileroot_path
+    )
+    pillar_path: Union[PillarPath, str] = SaltClientBaseParams.pillar_path
 
     @property
     @abstractmethod
@@ -218,8 +271,8 @@ class SaltClientBase(ABC):
     def run(
         self,
         fun: str,
-        fun_args: Union[Tuple, None] = None,
-        fun_kwargs: Union[Dict, None] = None,
+        fun_args: Optional[Tuple] = None,
+        fun_kwargs: Optional[Dict] = None,
         secure=False,
         **kwargs
     ):
@@ -274,7 +327,7 @@ class SaltClientBase(ABC):
         self,
         fun,
         fun_fun: str,
-        fun_args: Union[List, Tuple, None] = None,
+        fun_args: Optional[Union[List, Tuple]] = None,
         **kwargs
     ):
         return self.run(
@@ -284,13 +337,103 @@ class SaltClientBase(ABC):
         )
 
     def state_apply(self, state: str, **kwargs):
-        return self.fun_fun('state.apply', state, **kwargs)
+        return self._fun_fun('state.apply', state, **kwargs)
 
     def cmd_run(self, cmd: str, **kwargs):
-        return self.fun_fun('cmd.run', cmd, **kwargs)
+        return self._fun_fun('cmd.run', cmd, **kwargs)
 
     def state_single(self, state_fun: str, **kwargs):
-        return self.fun_fun('state.single', state_fun, **kwargs)
+        return self._fun_fun('state.single', state_fun, **kwargs)
 
     def pillar_get(self, **kwargs):
         return self.run('pillar.items', **kwargs)
+
+    def pillar_refresh(self, **kwargs):
+        return self.run('saltutil.refresh_pillar', **kwargs)
+
+    @staticmethod
+    def process_provisioner_cmd_res(res, runner_minion_id):
+        if not isinstance(res, dict) or len(res) != 1:
+            raise ProvisionerError(
+                f"Expected a dictionary of len = 1, "
+                f"provided: {type(res)}, {res}"
+            )
+
+        # FIXME EOS-9581 it might be other minion id in case of HA
+        if runner_minion_id not in res:
+            logger.warning(
+                f"local minion id {runner_minion_id} is not listed "
+                f"in results: {list(res)}, might be initiated by other node"
+            )
+
+        # provisioner cli output
+        prvsnr_res = next(iter(res.values()))
+        return process_cli_result(prvsnr_res)
+
+    def provisioner_cmd(
+        self,
+        cmd,
+        runner_minion_id,
+        fun_args: Optional[Union[List, Tuple]] = None,
+        fun_kwargs: Optional[Dict] = None,
+        **kwargs
+    ):
+        def _value(v):
+            return str(v) if is_special(v) else v
+
+        _fun_args = fun_args
+        if isinstance(fun_args, Iterable):
+            _fun_args = [_value(v) for v in fun_args]
+
+        _fun_kwargs = fun_kwargs
+        if isinstance(fun_kwargs, Dict):
+            _fun_kwargs = {k: _value(v) for k, v in fun_kwargs.items()}
+
+        try:
+            res = self.run(
+                'provisioner.{}'.format(cmd),
+                fun_args=_fun_args,
+                fun_kwargs=_fun_kwargs,
+                targets=runner_minion_id,
+                **kwargs
+            )
+        except SaltCmdResultError as exc:
+            # XXX async error case
+            # if nowait:
+            #     raise ProvisionerError(
+            #         'SaltCmdResultError is unexpected here: {!r}'.format(exc)
+            #     ) from exc
+            # else:
+            return self.process_provisioner_cmd_res(
+                exc.reason, runner_minion_id
+            )
+        else:
+            # XXX async return case
+            # if nowait:
+            #     return res
+            # else:
+            return self.process_provisioner_cmd_res(res, runner_minion_id)
+
+    def pillar_updater(self, targets=config.ALL_MINIONS):
+        return PillarUpdaterNew(
+            pillar_path=self.pillar_path,
+            targets=targets,
+            client=self
+        )
+
+    def fileroot_writer(self):
+        from ..fileroot import FileRoot  # FIXME
+        return FileRoot(self.fileroot_path)
+
+    def add_file_roots(self, roots: List[Path]):
+        raise NotImplementedError
+
+    def pillar_set(
+        self,
+        pillar_items: Union[Dict, List, Tuple],
+        fpath: str = None,
+        targets=config.ALL_MINIONS
+    ):
+        pi_updater = self.pillar_updater(targets)
+        pi_updater.update(PillarIterable(pillar_items, fpath=fpath))
+        pi_updater.apply()

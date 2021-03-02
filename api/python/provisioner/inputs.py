@@ -59,13 +59,13 @@ def copy_attr(_attr, name=None, **changes):
     if not name:
         name = _attr.name
 
-    _UtilityClass = attr.make_class(
-        "_UtilityClass", {
+    _utility_type = attr.make_class(
+        "_UtilityType", {
             name: attr.ib(**attr_kw)
         }
     )
 
-    return attr.fields_dict(_UtilityClass)[name]
+    return attr.fields_dict(_utility_type)[name]
 
 
 @attr.s(auto_attribs=True)
@@ -136,14 +136,15 @@ class AttrParserArgs:
         if self._attr.default is not attr.NOTHING:
             # optional argument
             self.name = '--' + self.name.replace('_', '-')
-            default_v = self._attr.default
+            # default value for an object (attr) might be more
+            # complicated than for a parser
+            default_v = parser_args.get('default', self._attr.default)
             if isinstance(default_v, attr.Factory):
                 default_v = default_v.factory()
             self.default = default_v
-            self.metavar = (
-                parser_args.get('metavar')
-                or (self._attr.type.__name__ if self._attr.type else None)
-            )
+            self.metavar = parser_args.get('metavar')
+            if not self.metavar and self._attr.type:
+                self.metavar = getattr(self._attr.type, '__name__', None)
             if self.metavar:
                 self.metavar = self.metavar.upper()
 

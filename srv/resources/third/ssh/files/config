@@ -1,0 +1,14 @@
+{% for node_id, node in pillar['ssh']['spec'].items() %}
+
+Host {{ ' '.join(node['host']) }}
+    HostName {{ node['hostname'] }}
+    Port {{ node['port'] }}
+    User {{ node['user'] }}
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentitiesOnly yes
+    LogLevel ERROR
+    BatchMode yes
+
+{% endfor %}
