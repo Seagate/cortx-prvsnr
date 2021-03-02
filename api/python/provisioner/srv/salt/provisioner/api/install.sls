@@ -15,6 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+set_env_vars:
+  environ.setenv:
+    - name: LC_ALL
+    - value: en_US.UTF-8
+    - update_minion: True
+
 api_installed:
 {% if salt['pillar.get']('api_distr') == 'pip' %}
   pip.installed:
@@ -22,6 +28,8 @@ api_installed:
     - bin_env: /usr/bin/pip3
     - upgrade: False  # to reuse already installed dependencies
                       # that may come from rpm repositories
+    - require:
+      - set_env_vars
 {% else %}
   pkg.installed:
     - pkgs:
