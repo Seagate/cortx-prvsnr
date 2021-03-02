@@ -19,3 +19,6 @@ mine_functions:
   node_ip_addrs:
     - mine_function: grains.get
     - ip4_interfaces
+  node_machine_id:
+    - mine_function: grains.get
+    - machine_id
