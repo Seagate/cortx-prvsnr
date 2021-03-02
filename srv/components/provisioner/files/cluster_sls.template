@@ -20,12 +20,14 @@
 cluster:
   cluster_id: {{ grains["cluster_id"] }}
   storage_sets:
-    storage-set-1:
-      {% for num in range(num_of_nodes) %}
-      {% if 0 <= num <= 2 %}
+    {% for set_id in range(0, num_of_nodes, 3) %}
+    storage-set-{{  (set_id//3) + 1 }}:
+      {% for num in range(set_id, set_id+3) %}
+      {% if num < num_of_nodes %}
       - srvnode-{{ (num + 1) }}
       {% endif %}
       {% endfor %}
+    {% endfor %}
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   server_nodes:
@@ -38,7 +40,7 @@ cluster:
   srvnode-{{ (num + 1) }}:
     rack_id:
     site_id:
-    storage_set_id: storage-set-1
+    storage_set_id: storage-set-{{  (num//3) + 1 }}
     node_id:
     machine_id: {{ salt['mine.get'](node , 'node_machine_id')[node] }}
     hostname: srvnode-{{ (num + 1) }}
