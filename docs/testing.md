@@ -16,6 +16,13 @@
 The base Docker installation methods for popular Linux distributions are listed here:
 	https://docs.docker.com/engine/install/
 
+To run Docker commands without **sudo**, add your user to **docker** group
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+
 #### Docker on Fedora 33
 
 Docker is not supported by **Fedora 33** officially. You can use the following method (Moby based approach):
@@ -61,7 +68,7 @@ sudo firewall-cmd --permanent --zone=FedoraWorkstation --add-masquerade
 
 
 <details>
-<summary>5. Add your user to **docker** group to run docker without **sudo**</summary>
+<summary>5. Add your user to <strong>docker</strong> group to run docker without <strong>sudo</strong></summary>
 
 ```bash
 sudo groupadd docker
@@ -102,6 +109,12 @@ sudo docker run hello-world
 
   :warning: NOTE: For more details about Python virtual environment see
   https://docs.python.org/3.6/library/venv.html
+
+- Activate created Python environment
+
+  ```bash
+  source venv/bin/activate
+  ```
 
 - Install provisioner API to `venv`: 
 
