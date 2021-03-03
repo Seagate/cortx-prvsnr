@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Python API to generate roster file required for salt-ssh
+# Provisioner CLI to reset machine id on all nodes
 import logging
 from typing import Type
 
