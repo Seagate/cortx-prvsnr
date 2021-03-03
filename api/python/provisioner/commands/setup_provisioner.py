@@ -1811,7 +1811,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # if we call init.sls for machine_id states.
         logger.info("Refresh machine id on the system")
         for state in [
-            'components.provisioner.config.machine_id.refresh_machine_id',
+            'components.provisioner.config.machine_id.reset',
             'components.provisioner.config.machine_id.refresh_grains'
         ]:
             ssh_client.cmd_run(
