@@ -42,6 +42,7 @@ DOCKER_IMAGES_REPO = "seagate/cortx-prvsnr"
 VAGRANT_VMS_PREFIX = DOCKER_IMAGES_REPO.replace('/', '.')
 
 SSH_KEY_FILE_NAME = "id_rsa.test"
+MAX_NODES_NUMBER = 6
 
 # TODO 'base' level format is too different
 ENV_LEVELS_HIERARCHY = {
@@ -105,15 +106,11 @@ BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
 DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
 
 DEFAULT_CLUSTER_SPEC = {
-    'srvnode1': {
-        'hostname': 'srvnode-1',
-        'minion_id': 'srvnode-1',
-        'roles': ['primary'],
-    }, 'srvnode2': {
-        'hostname': 'srvnode-2',
-        'minion_id': 'srvnode-2',
-        'roles': ['secondary'],
-    }
+    f'srvnode{node_id}': {
+        'hostname': f'srvnode-{node_id}',
+        'minion_id': f'srvnode-{node_id}',
+        'roles': ['primary' if node_id == 1 else 'secondary'],
+    } for node_id in range(1, MAX_NODES_NUMBER + 1)
 }
 
 
@@ -394,8 +391,7 @@ prvsnr_pytest_options = {
 
 
 def pytest_addoption(parser):
-    for name, params in prvsnr_pytest_options.items():
-        parser.addoption("--" + name, **params)
+    h.add_options(parser, prvsnr_pytest_options)
 
 
 # TODO DOC how to modify tests collections
@@ -499,9 +495,9 @@ def patch_logging(request, monkeypatch):
 @pytest.fixture(scope='session')
 def hosts_spec(request):
     return {
-        'srvnode1': {
+        f'srvnode{node_id}': {
             'remote': {
-                'hostname': 'srvnode-1',
+                'hostname': f'srvnode-{node_id}',
                 'specific': {
                     'vbox': {
                         'memory': 4096,
@@ -511,23 +507,9 @@ def hosts_spec(request):
                     }
                 }
             },
-            'minion_id': 'srvnode-1',
-            'roles': ['primary'],
-        }, 'srvnode2': {
-            'remote': {
-                'hostname': 'srvnode-2',
-                'specific': {
-                    'vbox': {
-                        'memory': 4096,
-                        'cpus': 2,
-                        'mgmt_disk_size': 2048,
-                        'data_disk_size': 2048
-                    }
-                }
-            },
-            'minion_id': 'srvnode-2',
-            'roles': ['secondary'],
-        }
+            'minion_id': f'srvnode-{node_id}',
+            'roles': ['primary' if node_id == 1 else 'secondary'],
+        } for node_id in range(1, MAX_NODES_NUMBER + 1)
     }
 
 
@@ -1590,6 +1572,5 @@ def build_mhost_fixture(label=None, module_name=__name__):
 # default 'host' fixture is always present
 build_mhost_fixture()
 # also host fixtures for CORTX stack makes sense
-build_mhost_fixture('srvnode1')
-build_mhost_fixture('srvnode2')
-build_mhost_fixture('srvnode3')
+for node_id in range(1, MAX_NODES_NUMBER + 1):
+    build_mhost_fixture(f'srvnode{node_id}')

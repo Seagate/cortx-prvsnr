@@ -30,15 +30,17 @@ cluster:
   dns_servers:                        # Do not update
   server_nodes:
     {% for num in range(num_of_nodes) %}
-    {{ grains['machine_id'] }}: srvnode-{{ (num + 1) }}
+    {% set node = 'srvnode-' + (num + 1)|string %}
+    {{ salt['mine.get'](node , 'node_machine_id')[node] }} : {{ node }}
     {% endfor %}
   {% for num in range(num_of_nodes) %}
+  {% set node = 'srvnode-' + (num + 1)|string %}
   srvnode-{{ (num + 1) }}:
     rack_id:
     site_id:
     storage_set_id: storage-set-1
     node_id:
-    machine_id: {{ grains['machine_id'] }}
+    machine_id: {{ salt['mine.get'](node , 'node_machine_id')[node] }}
     hostname: srvnode-{{ (num + 1) }}
     node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
     roles:
@@ -67,6 +69,7 @@ cluster:
         interfaces:
           - eth0
         public_ip:                    # DHCP is assumed if left blank
+        public_fqdn: srvnode-{{ (num + 1) }}.mgmt.public
         netmask:
         gateway:                      # Gateway IP of Management Network. Not required for DHCP.
         mtu: 1500
@@ -78,15 +81,15 @@ cluster:
         interface_type: tcp           # tcp/o2ib
         transport_type: lnet          # lnet/libfabric
         public_ip:                    # DHCP is assumed if left blank
+        public_fqdn: srvnode-{{ (num + 1) }}.data.public
         private_ip:                   # Fixed IP of Private Data Network
+        private_fqdn: srvnode-{{ (num + 1) }}.data.private
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
         mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
         roaming_ip:                   # Applies to private data network
     storage:
-      {% for num in range(num_of_nodes) -%}
       enclosure_id: enclosure-{{ (num + 1) }}
-      {%- endfor %}
       metadata_devices:               # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure

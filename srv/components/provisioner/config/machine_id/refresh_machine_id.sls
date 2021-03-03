@@ -15,33 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+Delete old machine_id:
+  file.absent:
+    - name: /etc/machine-id
 
-Add nfs_prereqs yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.nfs.uploads_repo.id }}
-    - enabled: True
-    - humanname: nfs_uploads
-    - baseurl: {{ defaults.nfs.uploads_repo.url }}
-    - gpgcheck: 0
+Refresh machine_id on {{ grains['id'] }}:
+  cmd.run:
+    - name: systemd-machine-id-setup
 
-Add nfs yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.nfs.repo.id }}
-    - enabled: True
-    - humanname: nfs
-    - baseurl: {{ defaults.nfs.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.nfs.repo.gpgkey }}
-
-Copy kvsns.ini file:
-  file.managed:
-    - name: /etc/kvsns.d/kvsns.ini
-    - source: salt://components/nfs/files/etc/kvsns.d/kvsns.ini
-    - makedirs: True
-
-Copy ganesha.conf file:
-  file.managed:
-    - name: /etc/ganesha/ganesha.conf
-    - source: salt://components/nfs/files/etc/ganesha/ganesha.conf
-    - makedirs: True
+Sync grains data after refresh machine_id:
+  module.run:
+    - saltutil.refresh_grains: []

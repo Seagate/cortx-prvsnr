@@ -113,6 +113,8 @@ configure_setup:
   type: ConfigureSetup
 salt:
   type: SaltClient
+generate_roster:
+  type: GenerateRoster
 
 # setup commands
 setup_provisioner:

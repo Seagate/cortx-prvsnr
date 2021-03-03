@@ -21,6 +21,7 @@ include:
 Run cortx-ha post_install:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:post_install')
+    - failhard: True
     - require:
       - Install cortx-ha
 
@@ -30,8 +31,9 @@ Run cortx-ha post_install:
 Run cortx-ha config:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
+    - failhard: True
     - require:
-      - Install cortx-ha
+      - Run cortx-ha post_install
 
 {% else %}
 
@@ -44,5 +46,6 @@ No HA config on secondary node:
 Run cortx-ha init:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:init')
+    - failhard: True
     - require:
-      - Install cortx-ha
+      - Run cortx-ha config
