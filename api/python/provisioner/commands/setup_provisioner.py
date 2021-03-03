@@ -435,6 +435,7 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
 
     def __attrs_post_init__(self):  # noqa: C901
         # TODO review params check logic per dist type
+        logger.debug(f"Provisioner setup Source is: '{self.source}'")
 
         # check sources
         if self.source == 'local':
@@ -547,6 +548,10 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 )
                 self.pypi_repo = True
         else:
+            logger.error(
+                "Invalid or Unsupported Provisioner source "
+                f"{self.source} provided for deployment"
+            )
             raise NotImplementedError(
                 f"{self.source} provisioner source is not supported yet"
             )
@@ -1384,16 +1389,15 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.state_apply('repos.pip_config')
 
         try:
-            logger.info("Checking paswordless ssh")
+            logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
         except SaltCmdResultError:
-            logger.info("Setting up paswordless ssh")
+            logger.info("Setting up passwordless ssh")
             ssh_client.state_apply('ssh')
-            logger.info("Checking paswordless ssh")
+            logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
 
-        # Does not hang after adding glusterfs logic.
-        logger.info("Configuring the firewall")
+        logger.info("Configuring Firewall")
         ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
@@ -1802,6 +1806,18 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"\"{len(run_args.nodes)}\""
             ), targets=run_args.primary.minion_id
         )
+
+        # Grains data is not getting refreshed within sls files
+        # if we call init.sls for machine_id states.
+        logger.info("Refresh machine id on the system")
+        for state in [
+            'components.provisioner.config.machine_id.reset',
+            'components.provisioner.config.machine_id.refresh_grains'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
 
         inline_pillar = None
         if run_args.source == 'local':

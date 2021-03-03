@@ -15,14 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Replace machine id in grains:
-  file.line:
-    - name: /etc/salt/grains
-    - mode: replace
-    - match: 'Machine ID:'
-    - content: "Machine ID: {{ grains['machine_id'] }}"
+Delete old machine_id:
+  file.absent:
+    - names:
+      - /etc/machine-id
+      - /var/lib/dbus/machine-id
 
-Sync data:
+Refresh machine_id on {{ grains['id'] }}:
+  cmd.run:
+    - name: dbus-uuidgen --ensure=/etc/machine-id
+
+Ensure_dbus_uuid_generation:
+  cmd.run:
+    - name: dbus-uuidgen --ensure
+
+Check_network_service:
+  cmd.run:
+    - name: systemctl status network
+
+Sync grains data after refresh machine_id:
   module.run:
     - saltutil.refresh_grains: []
-    - mine.update: []
+

@@ -77,6 +77,8 @@ def test_build_setup_env(
             mhost.remote.cmd(
                'snapshot', 'save', mhost.remote.name, 'initial --force'
             )
+        elif env_provider == 'docker':
+            mhost.check_output('touch /etc/fstab')
 
     print(ssh_config.read_text())
     print(f'Path to config: {ssh_config}')

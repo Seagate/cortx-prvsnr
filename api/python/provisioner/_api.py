@@ -46,7 +46,7 @@ def run(command: str, *args, nowait=False, **kwargs):
     kwargs.pop('password', None)
     kwargs.pop('username', None)
     kwargs.pop('eauth', None)
-    logger.debug("Executing command {}".format(command))
+    logger.debug(f"Executing command: {command}")
     return SimpleRunner(commands, nowait=nowait).run(command, *args, **kwargs)
 
 
