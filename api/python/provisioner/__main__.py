@@ -78,7 +78,9 @@ def _prepare_output(output_type, res):
         return serialize.dumps(res, sort_keys=True, indent=4)
     else:
         logger.error(
-            "Unexpected output type {}".format(output_type)
+            "Invalid output format provided: '{}'. "
+            "Output type can be yaml or json or just plain."
+            .format(output_type)
         )
         raise ValueError('Unexpected output type {}'.format(output_type))
 
@@ -225,8 +227,9 @@ def _main():
         return __version__
 
     if parsed_args.cmd is None:
-        logger.error("Command is required")
-        raise ValueError('command is required')
+        logger.error("No command Provided. "
+                     "A valid command is required to process further..")
+        raise ValueError("Empty command argument encountered")
 
     if auth_args.password == '-':
         auth_args.password = next(fileinput.input(['-'])).rstrip()
@@ -245,9 +248,12 @@ def _main():
         auth_args_view['password'] = config.SECRET_MASK
 
     logger.debug(
-        f'Parsed arguments: auth={auth_args_view}, log={log_args_view}, '
-        f'cmd={parsed_args.cmd}, args={parsed_args.args}, '
-        f'kwargs={parsed_args.kwargs}'
+        "\nParsed arguments: \n"
+        f"auth={auth_args_view}, \n"
+        f"log={log_args_view}, \n"
+        f"cmd={parsed_args.cmd}, \n"
+        f"args={parsed_args.args}, \n"
+        f"kwargs={parsed_args.kwargs} \n"
     )
 
     # TODO IMPROVE
@@ -282,7 +288,11 @@ def main():
                 exc = None
             raise
         else:
-            logger.exception('provisioner failed')
+            logger.exception(
+               "PROVISIONER FAILED.\n"
+               f"Reason: {exc}\n"
+               "Exiting now.."
+            )
             sys.exit(1)
     finally:
         '''

@@ -20,46 +20,49 @@
 cluster:
   cluster_id: {{ grains["cluster_id"] }}
   storage_sets:
-    storage-set-1:
-      {% for num in range(num_of_nodes) %}
-      {% if 0 <= num <= 2 %}
-      - srvnode-{{ (num + 1) }}
-      {% endif %}
-      {% endfor %}
+    {%- for node_num in range(num_of_nodes) %}
+    {%- if (node_num + 1) % 3 == 1 %}
+    {%- set storage_set_id = "storage-set-" + ((node_num // 3) + 1)| string %}
+    {{  storage_set_id }}:
+    {%- endif %}
+      {%- set srvnode = "srvnode-" + ((node_num + 1) | string) %}
+      - {{ srvnode }}
+    {%- endfor %}
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   server_nodes:
-    {% for num in range(num_of_nodes) %}
-    {% set node = 'srvnode-' + (num + 1)|string %}
+    {%- for node_num in range(num_of_nodes) %}
+    {%- set node = "srvnode-" + ((node_num + 1) | string) %}
     {{ salt['mine.get'](node , 'node_machine_id')[node] }} : {{ node }}
-    {% endfor %}
-  {% for num in range(num_of_nodes) %}
-  {% set node = 'srvnode-' + (num + 1)|string %}
-  srvnode-{{ (num + 1) }}:
+    {%- endfor %}
+  {%- for node_num in range(num_of_nodes) %}
+  {%- set srvnode = "srvnode-" + ((node_num + 1) | string) %}
+  {%- set storage_set_id = "storage-set-" + ((node_num // 3) + 1)| string %}
+  {{ srvnode }}:
     rack_id:
     site_id:
-    storage_set_id: storage-set-1
+    storage_set_id: {{ storage_set_id }}
     node_id:
-    machine_id: {{ salt['mine.get'](node , 'node_machine_id')[node] }}
-    hostname: srvnode-{{ (num + 1) }}
+    machine_id: {{ salt['mine.get'](srvnode , 'node_machine_id')[srvnode] }}
+    hostname: {{ srvnode }}
     node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
     roles:
-      {% if 0 == num %}
+      {% if 0 == node_num %}
       - primary
       {% else %}
       - secondary
       {% endif %}
-      {% if 0 == (num % 3) %}
+      {%- if 0 == (node_num % 3) %}
       - openldap_server
       - kafka_server
-      {% else %}
+      {%- else %}
       - openldap_client
-      {% endif %}
-    {% if 0 == num %}
+      {%- endif %}
+    {%- if 0 == node_num %}
     is_primary: True
-    {% else %}
+    {%- else %}
     is_primary: False
-    {% endif %}
+    {%- endif %}
     bmc:
       ip:
       user: ADMIN
@@ -69,7 +72,7 @@ cluster:
         interfaces:
           - eth0
         public_ip:                    # DHCP is assumed if left blank
-        public_fqdn: srvnode-{{ (num + 1) }}.mgmt.public
+        public_fqdn: {{ srvnode }}.mgmt.public
         netmask:
         gateway:                      # Gateway IP of Management Network. Not required for DHCP.
         mtu: 1500
@@ -81,22 +84,22 @@ cluster:
         interface_type: tcp           # tcp/o2ib
         transport_type: lnet          # lnet/libfabric
         public_ip:                    # DHCP is assumed if left blank
-        public_fqdn: srvnode-{{ (num + 1) }}.data.public
+        public_fqdn: {{ srvnode }}.data.public
         private_ip:                   # Fixed IP of Private Data Network
-        private_fqdn: srvnode-{{ (num + 1) }}.data.private
+        private_fqdn: {{ srvnode }}.data.private
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
         mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
         roaming_ip:                   # Applies to private data network
     storage:
-      enclosure_id: enclosure-{{ (num + 1) }}
+      enclosure_id: enclosure-{{ (node_num + 1) }}
       metadata_devices:               # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
         - /dev/sdc
-    {% if "physical" in grains["virtual"] %}
+    {%- if "physical" in grains["virtual"] %}
     s3_instances: 11
-    {% else %}
+    {%- else %}
     s3_instances: 1
-    {% endif %}
-  {% endfor %}
+    {%- endif %}
+  {%- endfor %}

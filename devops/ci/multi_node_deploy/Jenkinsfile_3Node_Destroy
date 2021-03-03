@@ -1,0 +1,125 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+node {
+    properties([
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
+        parameters([
+            string(defaultValue: '', description: 'FQDN of first VM to destroy.', name: 'HOST_NAME_1', trim: true),
+            string(defaultValue: '', description: 'FQDN of second VM to destroy.', name: 'HOST_NAME_2', trim: true),
+            string(defaultValue: '', description: 'FQDN of third VM to destroy.', name: 'HOST_NAME_3', trim: true),
+            password(description: 'root user password for the target node.', name: 'PASSWORD')
+        ])
+    ])
+    
+    def remotes = []
+    
+    def remote_node = [:]
+    remote_node.name = "srvnode-1"
+    remote_node.host = HOST_NAME_1
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[0] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-2"
+    remote_node.host = HOST_NAME_2
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[1] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-3"
+    remote_node.host = HOST_NAME_3
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[2] = remote_node
+
+    ansiColor('xterm') {
+        for ( remote in remotes.reverse() ) {
+            stage("${remote.name}: SSH Connectivity Check") {
+                sshCommand remote: remote, command: "exit"
+                echo "Successfully connected to VM ${remote.host}!"
+            }
+
+            stage("${remote.name}: Teardown of Cortx Stack!") {
+                sshCommand remote: remote, command: """
+                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states || true
+                """
+                echo "Successfully teardown of Cortx Stack!"
+            }
+
+            stage("${remote.name}: Stop Salt services") {
+                sshCommand remote: remote, command: """
+                    systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
+                    systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
+                    systemctl status glusterd >/dev/null && systemctl stop glusterd || true
+                    systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
+                    systemctl status salt-master >/dev/null && systemctl stop salt-master || true
+                """
+                echo "Sucessfully stopped salt and gluster services"
+            }
+
+            stage("${remote.name}: Uninstall rpms") {
+                sshCommand remote: remote, command: """
+                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
+                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
+                    yum erase -y salt-minion salt-master salt-api   # Salt packages
+                    yum erase -y python36-m2crypto                  # Salt dependency
+                    yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    yum erase -y *cortx*
+                    yum autoremove -y
+                    yum clean all
+                    rm -rf /var/cache/yum
+                    # Remove cortx-py-utils
+                    pip3 uninstall -y cortx-py-utils
+                    # Cleanup pip packages
+                    pip3 freeze|xargs pip3 uninstall -y
+                    # Cleanup pip config
+                    test -e /etc/pip.conf && rm -f /etc/pip.conf
+                    rm -rf ~/.cache/pip
+                """
+                echo "Successfully uninstalled rpms"
+            }
+
+            stage("${remote.name}: Cleanup bricks and other directories") {
+                sshCommand remote: remote, command: """
+                    # Cortx software dirs
+                    rm -rf /opt/seagate/cortx
+                    rm -rf /opt/seagate/cortx_configs
+                    rm -rf /opt/seagate
+                    # Bricks cleanup
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs
+                    # Cleanup Salt
+                    test -e /var/cache/salt && rm -rf /var/cache/salt
+                    test -e /etc/salt && rm -rf /etc/salt
+                    # Cleanup Provisioner profile directory
+                    test -e /opt/isos && rm -rf /opt/isos
+                    test -e /root/.provisioner && rm -rf /root/.provisioner
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
+                    test -e /root/.ssh && rm -rf /root/.ssh
+                """
+                echo "Successfully removed!"
+            }
+        }
+    }
+    // archiveArtifacts artifacts: '/opt/seagate/cortx_configs/provisioner_cluster.json,/var/log/seagate/provisioner/setup.log', followSymlinks: false
+}
