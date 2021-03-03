@@ -115,8 +115,8 @@ salt:
   type: SaltClient
 generate_roster:
   type: GenerateRoster
-refresh_machine_id:
-  type: RefreshMachineId
+reset_machine_id:
+  type: ResetMachineId
 
 # setup commands
 setup_provisioner:

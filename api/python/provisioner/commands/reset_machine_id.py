@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Provisioner CLI to refresh machine id
+# Python API to generate roster file required for salt-ssh
 import logging
 from typing import Type
 
@@ -46,25 +46,28 @@ class RunArgsMachineIdAttrs:
 
 
 @attr.s(auto_attribs=True)
-class RefreshMachineId(CommandParserFillerMixin):
+class ResetMachineId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsMachineIdAttrs
-    description = "API to refresh machine id on all nodes"
+    description = "API to reset machine id on all nodes"
 
     @staticmethod
     def run(**kwargs):
 
+        machine_id_reset_states = []
         if kwargs['force']:
-            logger.info("Forcefully refresh machine id on all nodes")
-            state = "components.provisioner.config.machine_id.force_refresh"
+            logger.debug("machine_id on all nodes shall be forcefully reset.")
+            machine_id_reset_states.append(
+                "components.provisioner.config.machine_id.force_reset")
         else:
-            logger.info("Refreshing machine id on all nodes")
-            state = "components.provisioner.config.machine_id.refresh_machine_id"  # noqa: E501
+            logger.debug("machine_id on all nodes shall be reset.")
+            machine_id_reset_states.append(
+                "components.provisioner.config.machine_id.reset")
 
-        StatesApplier.apply([state])
+        logger.debug("Refresh grains on all nodes post machine_id reset.")
+        machine_id_reset_states.append(
+            "components.provisioner.config.machine_id.refresh_grains")
 
-        logger.info("refresh grains on all nodes")
-        StatesApplier.apply(
-            ["components.provisioner.config.machine_id.refresh_grains"]
-        )
-        logger.info("Machine id refreshed successfully.")
+        logger.info("Resetting machine_id on all nodes.")
+        StatesApplier.apply(machine_id_reset_states)
+        logger.info("SUCCESS: machine_id is reset.")
