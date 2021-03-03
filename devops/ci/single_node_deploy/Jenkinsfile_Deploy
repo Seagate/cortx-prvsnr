@@ -149,6 +149,7 @@ node {
         }
 
         sshGet remote: remote, from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
+        sshGet remote: remote, from: '/etc/yum.repos.d/RELEASE.INFO', into: 'archives/RELEASE.INFO', override: true
         sshGet remote: remote, from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
         archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log', followSymlinks: false
     }
