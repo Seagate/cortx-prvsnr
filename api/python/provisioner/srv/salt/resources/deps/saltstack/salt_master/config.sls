@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .install
-  - .config
+{% set onchanges = salt['pillar.get']('inline:saltstack:salt_master:onchanges') %}
+{% from './macros.sls' import salt_master_configured with context %}
+
+{{ salt_master_configured(onchanges) }}

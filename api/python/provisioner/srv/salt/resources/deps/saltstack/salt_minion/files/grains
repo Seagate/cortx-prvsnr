@@ -15,7 +15,4 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .install
-  - .config
-  - .start
+{{ salt['pillar.get']('setup:saltstack:salt_minion:grains')|yaml(False) }}

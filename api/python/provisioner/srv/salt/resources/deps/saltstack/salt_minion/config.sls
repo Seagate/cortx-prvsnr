@@ -15,28 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt['pillar.get']('glusterfs:add_repo', False) %}
+{% set onchanges = salt['pillar.get']('inline:saltstack:salt_minion:onchanges') %}
 
-# TODO detect centos instead
-    {% if "RedHat" not in grains['os'] %}
+{% from './macros.sls' import salt_minion_configured with context %}
 
-glusterfs_repo_is_installed:
-  pkg.installed:
-    - pkgs:
-      - centos-release-gluster7
-
-    {% else  %}
-
-# FIXME need to use gluster from official  RedHat repos
-# centos-release-gluster7 not available for redhat hence adding repo manually
-glusterfs_repo_is_installed:
-  pkgrepo.managed:
-    - name: glusterfs
-    - humanname: glusterfs-7
-    - baseurl: http://mirror.centos.org/centos/7/storage/x86_64/gluster-7/
-    - gpgcheck: 0
-    - enabled: 1
-
-    {% endif %}
-
-{% endif %}
+{{ salt_minion_configured(onchanges) }}
