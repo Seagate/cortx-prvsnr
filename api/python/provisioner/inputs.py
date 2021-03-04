@@ -37,6 +37,8 @@ from .serialize import PrvsnrType, loads
 
 from . import config
 
+# cli_spec = load_yaml(config.CLI_SPEC_PATH)
+
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
@@ -57,13 +59,13 @@ def copy_attr(_attr, name=None, **changes):
     if not name:
         name = _attr.name
 
-    _UtilityClass = attr.make_class(
-        "_UtilityClass", {
+    _utility_type = attr.make_class(
+        "_UtilityType", {
             name: attr.ib(**attr_kw)
         }
     )
 
-    return attr.fields_dict(_UtilityClass)[name]
+    return attr.fields_dict(_utility_type)[name]
 
 
 @attr.s(auto_attribs=True)
@@ -95,6 +97,8 @@ class AttrParserArgs:
 
         if self.prefix:
             self.name = self.prefix + self.name
+
+        parser_args = {}
 
         parser_args = self._attr.metadata.get(
             METADATA_ARGPARSER, {}
@@ -132,14 +136,15 @@ class AttrParserArgs:
         if self._attr.default is not attr.NOTHING:
             # optional argument
             self.name = '--' + self.name.replace('_', '-')
-            default_v = self._attr.default
+            # default value for an object (attr) might be more
+            # complicated than for a parser
+            default_v = parser_args.get('default', self._attr.default)
             if isinstance(default_v, attr.Factory):
                 default_v = default_v.factory()
             self.default = default_v
-            self.metavar = (
-                parser_args.get('metavar')
-                or (self._attr.type.__name__ if self._attr.type else None)
-            )
+            self.metavar = parser_args.get('metavar')
+            if not self.metavar and self._attr.type:
+                self.metavar = getattr(self._attr.type, '__name__', None)
             if self.metavar:
                 self.metavar = self.metavar.upper()
 
@@ -184,6 +189,9 @@ class ParserFiller:
             if METADATA_ARGPARSER in _attr.metadata:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
+
+                # if isinstance(metadata, str):
+                #    metadata = KeyPath(metadata).value(cli_spec)
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (

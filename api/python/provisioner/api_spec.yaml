@@ -121,6 +121,10 @@ generate_roster:
   type: GenerateRoster
 reset_machine_id:
   type: ResetMachineId
+resource:
+  type: Resource
+destroy:
+  type: DestroyNode
 
 # setup commands
 setup_provisioner:
@@ -148,5 +152,6 @@ deploy_jbod:
 deploy_dual:
   type: DeployDual
 
-destroy:
-  type: DestroyNode
+# others
+helper:
+  type: Helper
