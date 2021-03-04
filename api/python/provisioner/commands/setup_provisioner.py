@@ -591,7 +591,6 @@ class SetupCmdBase:
             ).replace(':', '_')
         return res
 
-
 # TODO TEST EOS-8473
 # TODO DOC highlights
 #   - multiple setups support
@@ -602,6 +601,7 @@ class SetupCmdBase:
 #         (each to each reachability is checked)
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
+
 @attr.s(auto_attribs=True)
 class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -1867,6 +1867,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 "salt-call state.apply components.misc_pkgs.ipmi"
             )
+
+        logger.info("Setting unique ClusterID to pillar file")
+        ssh_client.cmd_run(
+            (
+               "provisioner set_cluster_id"
+            ), targets=run_args.primary.minion_id
+        )
 
         return setup_ctx
 
