@@ -27,7 +27,7 @@ Gateway not provided:
 
 {% set mgmt_if = pillar['cluster'][node]['network']['mgmt']['interfaces'][0] %}
 # Setup network for data interfaces
-Public direct network:
+Public management network configuration:
   network.managed:
     - name: {{ mgmt_if }}
     - device: {{ mgmt_if }}
