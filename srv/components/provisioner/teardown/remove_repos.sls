@@ -15,10 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Delete rsyslog provisioner conf:
+Remove 3rd party and cortx repos:
   file.absent:
-    - name: /etc/rsyslog.d/prvsnrfwd.conf
+    - names:
+      - '/etc/yum.repos.d/3rd_party_epel.repo'
+      - '/etc/yum.repos.d/3rd_party_glusterfs.repo'
+      - '/etc/yum.repos.d/3rd_party_saltstack.repo'
+      - '/etc/yum.repos.d/cortx_iso.repo'
+      - '/etc/yum.repos.d/3rd_party.repo'
+      - '/etc/yum.repos.d/RELEASE_FACTORY.INFO'
 
-Delete old rsyslog provisioner conf:
+Remove pip config and cache:
   file.absent:
-    - name: /etc/rsyslog.d/2-prvsnrfwd.conf
+    - names :
+      - '/etc/pip.conf'
+      - '~/.cache/pip'
+
