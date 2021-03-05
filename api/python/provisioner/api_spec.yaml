@@ -86,7 +86,7 @@ set_swupgrade_repo:
   input_type: SWUpgradeRepo
   states:
     post:
-    - repos
+    - repos.upgrade
 sw_update:
   type: SWUpdate
 sw_upgrade:

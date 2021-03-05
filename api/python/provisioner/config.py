@@ -82,8 +82,8 @@ PRVSNR_PILLAR_CONFIG_INI = str(
     PRVSNR_FACTORY_PROFILE_DIR / 'srv/salt/provisioner/files/minions/all/config.ini'  # noqa: E501
 )
 
-# FIXME: add 0 - suffix to get right order of pillars values
-REPO_CANDIDATE_NAME = '0candidate'
+
+REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 
 SALT_ROSTER_DEFAULT = '/etc/salt/roster'
@@ -499,14 +499,5 @@ class ReleaseInfo(Enum):
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
 CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
-
-
-class InstallType(Enum):
-    """List of installation types."""
-
-    BASE = "base"
-    UPDATE = "update"
-    UPGRADE = "upgrade"
-
 
 IS_REPO_KEY = "is_repo"

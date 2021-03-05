@@ -15,10 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-# TODO DRY EOS-12076 it's a copy-paste
-#      of misc_pkgs/swupdate/repo from core
-
 {% from './_macros.sls' import setup_repos with context %}
 
-{{ setup_repos(pillar['release']['base']['repos'], pillar['release']['base']['base_dir']) }}
+{% set base_dir = pillar['release']['upgrade']['base_dir'] %}
+
+{% for version, repos in pillar['release']['upgrade']['repos'].items() %}
+
+    {% set single_iso_repo = {version: repos.pop(version)} %}
+
+    # to mount the singlie ISO first
+    {{ setup_repos(single_iso_repo, base_dir) }}
+
+    {{ setup_repos(repos, base_dir, version) }}
+
+{% endfor %}
