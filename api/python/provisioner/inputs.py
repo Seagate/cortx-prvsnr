@@ -35,6 +35,8 @@ from .values import (
 )
 from .serialize import PrvsnrType, loads
 
+from . import config
+
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
@@ -877,3 +879,58 @@ class SWUpdateRepo(ParamDictItemInputBase):
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
     _param_di = param_spec['swupgrade/repo']
+    target_build: str = attr.ib(
+        default=None,
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': 'file path to base directory for SW upgrade'
+            }
+        }
+    )
+
+    @property
+    def pillar_key(self):
+        # the local root pillar key for 'swupgrade' installation type
+        return "repos"
+
+    @property
+    def pillar_value(self):
+        if self.is_special() or self.is_remote():
+            res = {
+                f"{repo}_{self.release}": None
+                for repo in (config.OS_ISO_DIR,
+                             config.CORTX_ISO_DIR,
+                             config.CORTX_3RD_PARTY_ISO_DIR,
+                             config.CORTX_PYTHON_ISO_DIR)
+            }
+            res[self.release] = None
+
+            return res
+        else:
+            # source = 'iso' if self.source.is_file() else 'dir'
+            return {
+                f'{self.release}': {
+                    'source': f'salt://{self.release}.iso',
+                    'is_repo': False
+                },
+                f'{config.OS_ISO_DIR}_{self.release}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.OS_ISO_DIR}'),
+                    'is_repo': True
+                },
+                f'{config.CORTX_ISO_DIR}_{self.release}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.CORTX_ISO_DIR}'),
+                    'is_repo': True
+                },
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}_{self.release}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
+                    'is_repo': True
+                },
+                f'{config.CORTX_PYTHON_ISO_DIR}_{self.release}': {
+                    'source': f'file://{self.target_build}/{self.release}/'
+                              f'{config.CORTX_PYTHON_ISO_DIR}',
+                    'is_repo': False
+                }
+            }

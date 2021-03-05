@@ -76,4 +76,4 @@ swupgrade:
   repos: release/upgrade/repos
   repo:
     _type: ParamDictItem
-    parent: release/upgrade/repos
+    parent: release/upgrade

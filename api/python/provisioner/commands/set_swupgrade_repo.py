@@ -15,15 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-import os
 from pathlib import Path
 
+from provisioner.pillar import PillarKey, PillarResolver
+
+from ..salt import copy_to_file_roots, local_minion_id
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
-from ..config import (REPO_CANDIDATE_NAME, SW_UPGRADE_REPOS, YUM_REPO_TYPE,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR, RELEASE_INFO_FILE,
-                      ReleaseInfo
-                      )
+from ..config import (REPO_CANDIDATE_NAME, IS_REPO_KEY, RELEASE_INFO_FILE,
+                      ReleaseInfo, PRVSNR_USER_FILEROOT_DIR, InstallType)
 from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
 from ..utils import load_yaml
 
@@ -32,8 +32,74 @@ logger = logging.getLogger(__name__)
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
-    _REPO_DEST = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
     _BASE_DIR_PILLAR = "release/upgrade/base_dir"
+    _INSTALL_TYPE_PILLAR_KEY = "release/install_type"
+
+    def _configure_install_type(self, install_type: str) -> PillarKey:
+        """
+        Configure the installation type for SW upgrade
+
+        Parameters
+        ----------
+        install_type: str
+            value for `install_type` pillar key
+
+        Returns
+        -------
+        PillarKey
+            PillarKey for the further `install_type` pillar update
+
+        """
+        install_type_path = PillarKey(self._INSTALL_TYPE_PILLAR_KEY)
+        return inputs.PillarInputBase.from_args(
+                                        keypath=install_type_path,
+                                        value=install_type)
+
+    def _get_current_install_type(self) -> str:
+        """
+        Get current install type for the local minion
+
+        Returns
+        -------
+        str
+            return `release/install_type` value for backup
+
+        """
+        pillar_path = PillarKey(self._INSTALL_TYPE_PILLAR_KEY)
+        pillar = PillarResolver(local_minion_id()).get([pillar_path])
+
+        for target, _pillar in pillar.items():
+            if (not _pillar[pillar_path]
+                    or _pillar[pillar_path] is values.MISSED):
+                raise ValueError("value is not specified for "
+                                 f"'{pillar_path}' and target '{target}'")
+            else:
+                return _pillar[pillar_path]
+
+    @staticmethod
+    def _prepare_single_iso_for_apply(repo: inputs.SWUpgradeRepo):
+        """Prepare repository for apply.
+
+        Parameters
+        ----------
+        repo : inputs.SWUpgrade
+            SW Update repository parameters
+
+        Returns
+        -------
+        None
+
+        """
+        # if local - copy the repo to salt user file root
+        # TODO consider to use symlink instead
+        if repo.is_local():
+            dest = PRVSNR_USER_FILEROOT_DIR / repo.release
+
+            if not repo.is_dir():  # iso file
+                dest = dest.with_name(dest.name + '.iso')
+
+            logger.debug(f"Copying {repo.source} to file roots")
+            copy_to_file_roots(repo.source, dest)
 
     def _single_repo_validation(self, release, repo_name):
         """
@@ -55,7 +121,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         # general check from pkg manager point of view
         try:
-            self._check_repo_is_valid(release, f"sw_upgrade_{repo_name}")
+            self._check_repo_is_valid(release, f"{repo_name}")
         except SaltCmdResultError as exc:
             raise SWUpdateRepoSourceError(
                                         repo_name, f"malformed repo: '{exc}'")
@@ -103,6 +169,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         logger.info(f"Validating upgrade repo: release {repo.release}, "
                     f"source {repo.source}")
 
+        install_type_backup = self._get_current_install_type()
         candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
@@ -121,11 +188,17 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
-            self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            self._apply(candidate_repo, targets)
+            self._prepare_single_iso_for_apply(candidate_repo)
 
-            iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
+            install_type = self._configure_install_type(
+                                                    InstallType.upgrade.name)
+            base_dir = self._get_mount_dir()
+            candidate_repo.target_build = base_dir
+
+            self._apply(candidate_repo, install_type, targets=targets)
+
+            iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
             release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
             try:
@@ -155,15 +228,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
+            repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
                               if entry.is_dir()):
-                repo_info = SW_UPGRADE_REPOS.get(dir_entry.name, None)
+                repo_name = f"{dir_entry.name}_{candidate_repo.release}"
+                repo_info = repo_map.get(repo_name, None)
+
                 if repo_info is None:
                     raise SWUpdateRepoSourceError(
                                     str(repo.source),
                                     "Unexpected repository in single ISO: "
                                     f"{dir_entry.name}")
-                if repo_info[YUM_REPO_TYPE]:
+                if repo_info[IS_REPO_KEY]:
                     self._single_repo_validation(candidate_repo.release,
                                                  dir_entry.name)
 
@@ -172,7 +248,33 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
-            logger.info("Post-validation cleanup")
-            self._apply(candidate_repo, targets)
 
+            install_type = self._configure_install_type(install_type_backup)
+            logger.info("Post-validation cleanup")
+            self._apply(candidate_repo, install_type, targets=targets)
+
+        return repo.metadata
+
+    def _run(self, params: inputs.SWUpgradeRepo, targets: str):
+        repo = params
+
+        base_dir = self._get_mount_dir()
+        repo.target_build = base_dir
+
+        install_type = self._configure_install_type(InstallType.upgrade.name)
+
+        # TODO remove that block once that check fails the dynamic validation
+        if self._is_repo_enabled(f'sw_update_{repo.release}'):
+            logger.warning(
+                "removing already enabled repository "
+                f"for the '{repo.release}' release"
+            )
+            _repo = inputs.SWUpgradeRepo(repo.release, values.UNDEFINED)
+            self._apply(_repo, targets=targets)
+
+        logger.info(f"Configuring update repo: release {repo.release}")
+        self._prepare_single_iso_for_apply(repo)
+
+        # call default set logic (set pillar, call related states)
+        self._apply(repo, install_type, targets=targets)
         return repo.metadata

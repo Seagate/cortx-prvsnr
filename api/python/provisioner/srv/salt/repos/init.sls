@@ -22,18 +22,21 @@
 {% from './install.sls' import repo_added with context %}
 {% from './teardown.sls' import repo_absent with context %}
 
-{% for release, source in pillar['release']['base']['repos'].items() %}
+{% set default_install_type = 'base' %}
+{% set install_type = salt['pillar.get']('release:install_type', default_install_type) %}
+
+{% for release, source in pillar['release'][install_type]['repos'].items() %}
 
     {% set source_type = None %}
     {% set is_repo = True %}
     {% set repo_dir = '/'.join(
-        [pillar['release']['base']['base_dir'], release]) %}
+        [pillar['release'][install_type]['base_dir'], release]) %}
 
     {% if source %}
 
         {% if source is mapping %}
-            {% set source = source['source'] %}
             {% set is_repo = source['is_repo'] | to_bool %}
+            {% set source = source['source'] %}
         {% endif %}
 
         {% if source.startswith(('http://', 'https://', 'file://')) %}
@@ -82,7 +85,7 @@ unexpected_repo_source:
 {% endfor %}
 
 
-{% if not pillar['release']['base']['repos'] %}
+{% if not pillar['release'][install_type]['repos'] %}
 
 no_repos:
   test.nop: []

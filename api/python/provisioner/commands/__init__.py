@@ -380,10 +380,10 @@ class Set(CommandParserFillerMixin):
             post_states=[State(state) for state in states.get('post', [])]
         )
 
-    def _apply(self, params, targets):
+    def _apply(self, *params, targets):
         pillar_updater = PillarUpdater(targets)
 
-        pillar_updater.update(params)
+        pillar_updater.update(*params)
         try:
             logger.debug('Applying pre states')
             StatesApplier.apply(self.pre_states)
@@ -407,7 +407,7 @@ class Set(CommandParserFillerMixin):
             raise
 
     def _run(self, params, targets):
-        self._apply(params, targets)
+        self._apply(params, targets=targets)
 
     def dynamic_validation(self, params, targets):
         pass

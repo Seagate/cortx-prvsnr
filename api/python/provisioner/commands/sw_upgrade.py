@@ -45,7 +45,7 @@ class SWUpgrade(CommandParserFillerMixin):
     @staticmethod
     def _ensure_upgrade_repos_configuration():
         logger.info("Ensure update repos are configured")
-        StatesApplier.apply(['components.misc_pkgs.swupgrade.repo'],
+        StatesApplier.apply(['repos'],
                             local_minion_id())
 
         # logger.info("Check yum repos are good")
