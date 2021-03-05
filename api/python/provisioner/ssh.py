@@ -66,8 +66,7 @@ def copy_id(
 
     cmd.append(f"{user}@{host}" if user else f"{host}")
 
-    auto_ssh = ['sshpass', '-e'] if os.getenv("SSHPASS") else ''
-    cmd = auto_ssh + cmd
+    cmd = (['sshpass', '-e'] + cmd) if os.getenv("SSHPASS") else cmd
 
     logger.info("Copying keys for ssh password-less connectivity.")
     logger.debug(f"Command: {cmd}")
