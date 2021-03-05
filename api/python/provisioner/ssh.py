@@ -16,6 +16,7 @@
 #
 
 import logging
+import os
 from pathlib import Path
 from typing import Union
 
@@ -63,6 +64,11 @@ def copy_id(
         for opt in ssh_options:
             cmd.extend(['-o', opt])
 
-    cmd.append(f"{user}@{host}" if user else host)
+    cmd.append(f"{user}@{host}" if user else f"{host}")
 
+    auto_ssh = ['sshpass', '-e'] if os.getenv("SSHPASS") else ''
+    cmd = auto_ssh + cmd
+
+    logger.info("Copying keys for ssh password-less connectivity.")
+    logger.debug(f"Command: {cmd}")
     run_subprocess_cmd(cmd)
