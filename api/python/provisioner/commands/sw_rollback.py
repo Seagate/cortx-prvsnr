@@ -71,7 +71,7 @@ class SWRollback(CommandParserFillerMixin):
     def _rollback_component(component, targets):
         state_name = "components.{}.rollback".format(component)
         try:
-            logger.debug(
+            logger.info(
                 "Restoring {} configuration on {}".format(component, targets)
             )
             StatesApplier.apply([state_name], targets)

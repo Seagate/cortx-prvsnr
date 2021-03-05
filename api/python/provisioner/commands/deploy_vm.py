@@ -196,6 +196,10 @@ class DeployVM(Deploy):
         self.set_pillar_data(run_args.setup_type, run_args.targets)
         if self._is_hw():
             # TODO EOS-12076 less generic error
+            logger.error(
+                "Setup Type is HW. Executed command is specific for VM. "
+                "For HW please run `deploy`"
+            )
             raise errors.ProvisionerError(
                 "The command is specifically for VM deployment. "
                 "For HW please run `deploy`"
