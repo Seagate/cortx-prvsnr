@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
     _BASE_DIR_PILLAR = "release/upgrade/base_dir"
-    _INSTALL_TYPE_PILLAR_KEY = "release/install_type"
 
     @staticmethod
     def _prepare_single_iso_for_apply(repo: inputs.SWUpgradeRepo):
