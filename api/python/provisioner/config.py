@@ -504,9 +504,9 @@ NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 class InstallType(Enum):
     """List of installation types."""
 
-    base = "base"
-    update = "update"
-    upgrade = "upgrade"
+    BASE = "base"
+    UPDATE = "update"
+    UPGRADE = "upgrade"
 
 
 IS_REPO_KEY = "is_repo"

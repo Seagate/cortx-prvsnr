@@ -122,7 +122,7 @@ yum install /root/rpmbuild/RPMS/x86_64/cortx-prvsnr-2.0.0-0_git123456_el7.x86_64
 Step-4: Validate that `repos` states are available and visible for salt commands
 
 ```bash
-salt-call '*' state.id_exists "configure pip" repos.pip_config
+salt '*' state.id_exists "configure pip" repos.pip_config
 ```
 
   NOTE: Useful command to list all salt states

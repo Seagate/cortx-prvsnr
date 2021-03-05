@@ -90,6 +90,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         None
 
         """
+        logger.debug(f"Copy single ISO for SW upgrade to salt "
+                     f"roots for release='{repo.release}'")
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
         if repo.is_local():
@@ -192,10 +194,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._prepare_single_iso_for_apply(candidate_repo)
 
             install_type = self._configure_install_type(
-                                                    InstallType.upgrade.name)
+                                                    InstallType.UPGRADE.name)
             base_dir = self._get_mount_dir()
             candidate_repo.target_build = base_dir
 
+            logger.debug("Configure pillars and apply states for "
+                         "candidate SW upgrade ISO")
             self._apply(candidate_repo, install_type, targets=targets)
 
             iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
@@ -261,7 +265,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         base_dir = self._get_mount_dir()
         repo.target_build = base_dir
 
-        install_type = self._configure_install_type(InstallType.upgrade.name)
+        install_type = self._configure_install_type(InstallType.UPGRADE.name)
 
         # TODO remove that block once that check fails the dynamic validation
         if self._is_repo_enabled(f'sw_update_{repo.release}'):
