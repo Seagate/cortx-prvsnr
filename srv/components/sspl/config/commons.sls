@@ -40,7 +40,7 @@ Add common config - system information to Consul:
         consul kv put system_information/{{ grains['id'] }}/node_id {{ grains['node_id'] }}
         consul kv put system_information/syslog_host {{ pillar['rsyslog']['host'] }}
         consul kv put system_information/syslog_port {{ pillar['rsyslog']['port'] }}
-        consul kv put system_information/healthmappath {{ pillar['sspl']['health_map_path'] + '/' + pillar['sspl']['health_map_file'] }}
+        consul kv put system_information/healthmappath {{ pillar['commons']['health-map']['path'] + '/' + pillar['commons']['health-map']['file'] }}
 
 Add common config - rabbitmq cluster to Consul:
   cmd.run:
@@ -72,10 +72,10 @@ Add common config - storage enclosure to Consul:
   cmd.run:
     - name: |
 {% for enclosure_id in enclosures %}
-        consul kv put storage/{{ enclosure_id }}/controller/primary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['ip'] }}
-        consul kv put storage/{{ enclosure_id }}/controller/primary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['primary']['port'] }}
-        consul kv put storage/{{ enclosure_id }}/controller/secondary/ip {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['ip'] }}
-        consul kv put storage/{{ enclosure_id }}/controller/secondary/port {{ pillar['storage'][{{ enclosure_id }}]['controller']['secondary']['port'] }}
-        consul kv put storage/{{ enclosure_id }}/controller/user {{ pillar['storage'][{{ enclosure_id }}]['controller']['user'] }}
-        consul kv put storage/{{ enclosure_id }}/controller/password {{ pillar['storage'][{{ enclosure_id }}]['controller']['secret'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/primary/ip {{ pillar['storage'][ enclosure_id ]['controller']['primary']['ip'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/primary/port {{ pillar['storage'][ enclosure_id ]['controller']['primary']['port'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/secondary/ip {{ pillar['storage'][ enclosure_id ]['controller']['secondary']['ip'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/secondary/port {{ pillar['storage'][ enclosure_id ]['controller']['secondary']['port'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/user {{ pillar['storage'][ enclosure_id ]['controller']['user'] }}
+        consul kv put storage/{{ enclosure_id }}/controller/password {{ pillar['storage'][ enclosure_id ]['controller']['secret'] }}
 {% endfor %}
