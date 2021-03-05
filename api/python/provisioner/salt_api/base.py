@@ -21,6 +21,7 @@ from typing import (
 )
 import logging
 from pathlib import Path
+from pprint import pformat
 
 from ..vendor import attr
 from .. import config, inputs
@@ -312,9 +313,10 @@ class SaltClientBase(ABC):
 
         try:
             logger.debug(
-                f"'{type(self)}' client: Function '{fun}' resulted in "
-                f"{res.results}"
+                f"Function '{fun}' on '{targets}' "
+                f"resulted in {pformat(res.results)}"
             )
+
         except Exception as exc:
             if (type(exc).__name__ == 'OSError' and exc.strerror == 'Message too long'):  # noqa: E501
                 logger.exception("Exception Skipped: {}".format(str(exc.strerror)))  # noqa: E501

@@ -199,7 +199,10 @@ def run_subprocess_cmd(cmd, **kwargs):
         logger.exception(f"Failed to run cmd '{cmd}'")
         raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
-        logger.debug(f"Subprocess command resulted in: {res}")
+        logger.debug(
+            f"Subprocess command {res.args} resulted in - stdout: {res.stdout}, "
+            f"returncode: {res.returncode},stderr: {res.stderr}"
+        )
         return res
 
 
@@ -272,8 +275,8 @@ def node_hostname_validator(
         if (
             "srvnode" in section
             and (
-                    node_dict[section] != parser_obj[section]["hostname"]
-                )
+                node_dict[section] != parser_obj[section]["hostname"]
+            )
         ):
             msg = (
                 "Hostname values from config.ini and CLI did not match. "

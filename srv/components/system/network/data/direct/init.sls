@@ -24,7 +24,7 @@
 #     - saltutil.refresh_pillar: []
 {#{% endif %}#}
 
-Private direct network:
+Private data network configuration:
   network.managed:
     - name: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][1] }}
     - enabled: True

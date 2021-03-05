@@ -15,25 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# TODO: use path from pillars or any other configuration
-{% set version = '2.0.0' %}
-# XXX hard-coded
-{% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
+Delete old machine_id:
+  file.absent:
+    - names:
+      - /etc/machine-id
+      - /var/lib/dbus/machine-id
 
-{% from './_macros.sls' import bundle_built with context %}
+Refresh machine_id on {{ grains['id'] }}:
+  cmd.run:
+    - name: dbus-uuidgen --ensure=/etc/machine-id
 
-{{ bundle_built(mocks_repo, 'deploy-cortx', version) }}
+Ensure_dbus_uuid_generation:
+  cmd.run:
+    - name: dbus-uuidgen --ensure
 
-Stage - Install CORTX mock repo:
-  pkgrepo.managed:
-    - name: cortx_mock_repo
-    - humanname: CORTX Mock repo
-    - baseurl: file://{{ mocks_repo }}
-    - enabled: True
-    - gpgcheck: 0
-    - require:
-      - build_mock_repo_{{ mocks_repo }}
+Check_network_service:
+  cmd.run:
+    - name: systemctl status network
 
-/etc/yum.repos.d/RELEASE_FACTORY.INFO:
-  file.managed:
-    - source: {{ mocks_repo }}/RELEASE.INFO
+Sync grains data after refresh machine_id:
+  module.run:
+    - saltutil.refresh_grains: []
+

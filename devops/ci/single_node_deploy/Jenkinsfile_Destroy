@@ -1,0 +1,105 @@
+/**
+* Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published
+* by the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <https://www.gnu.org/licenses/>.
+* For any questions about this software or licensing,
+* please email opensource@seagate.com or cortx-questions@seagate.com.
+*/
+
+node {
+    properties([
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
+        parameters([
+            string(defaultValue: '', description: 'FQDN of VM to destroy on.', name: 'HOST_NAME', trim: true),
+            password(description: 'root user password for the target node.', name: 'PASSWORD')
+        ])
+    ])
+    
+    def remote = [:]
+    withEnv(["SSHPASS=${PASSWORD}"]) {
+        ansiColor('xterm') {
+            remote.name = "srvnode-1"
+            remote.host = HOST_NAME
+            remote.user = 'root'
+            remote.password = PASSWORD
+            remote.allowAnyHosts = true
+            stage("SSH Connectivity Check") {
+                if (PASSWORD.isEmpty()) {
+                    error "Target VM password cannot be empty."
+                }
+                sshCommand remote: remote, command: "exit"
+                echo "Successfully connected to VM ${HOST_NAME}!"
+            }
+            stage("Teardown of Cortx Stack!") {
+                sshCommand remote: remote, command: """
+                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
+                """
+                echo "Successfully teardown of Cortx Stack!"
+            }
+            stage("Stop Salt services") {
+                sshCommand remote: remote, command: """
+                    systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
+                    systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
+                    systemctl status glusterd >/dev/null && systemctl stop glusterd || true
+                    systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
+                    systemctl status salt-master >/dev/null && systemctl stop salt-master || true
+                """
+                echo "Sucessfully stopped salt and gluster services"
+            }
+            stage("Uninstall rpms") {
+                sshCommand remote: remote, command: """
+                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
+                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
+                    yum erase -y salt-minion salt-master salt-api   # Salt packages
+                    yum erase -y python36-m2crypto                  # Salt dependency
+                    yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    # Brute clean for any cortx rpm packages
+                    yum erase -y *cortx*
+                    # Re-condition yum db
+                    yum autoremove -y
+                    yum clean all
+                    rm -rf /var/cache/yum
+                    # Remove cortx-py-utils
+                    pip3 uninstall -y cortx-py-utils
+                    # Cleanup pip packages
+                    pip3 freeze|xargs pip3 uninstall -y
+                    # Cleanup pip config
+                    test -e /etc/pip.conf && rm -f /etc/pip.conf
+                    rm -rf ~/.cache/pip
+                """
+                echo "Successfully uninstalled rpms"
+            }
+            stage("Cleanup bricks and other directories") {
+                sshCommand remote: remote, command: """
+                    # Cortx software dirs
+                    rm -rf /opt/seagate/cortx
+                    rm -rf /opt/seagate/cortx_configs
+                    rm -rf /opt/seagate
+                    # Bricks cleanup
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
+                    # Cleanup Salt
+                    test -e /var/cache/salt && rm -rf /var/cache/salt || true
+                    test -e /etc/salt && rm -rf /etc/salt || true
+                    # Cleanup Provisioner profile directory
+                    test -e /opt/isos && rm -rf /opt/isos || true
+                    test -e /root/.provisioner && rm -rf /root/.provisioner || true
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    test -e /root/.ssh && rm -rf /root/.ssh || true
+                """
+                echo "Successfully removed!"
+            }
+        }
+        // archiveArtifacts artifacts: '/opt/seagate/cortx_configs/provisioner_cluster.json,/var/log/seagate/provisioner/setup.log', followSymlinks: false
+    }
+}
+
