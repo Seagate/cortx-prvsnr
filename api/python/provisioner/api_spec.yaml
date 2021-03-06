@@ -47,7 +47,7 @@ pillar_set:
   type: PillarSet
   input_type: PillarInputBase
 set_ntp:
-  type: Set
+  type: SetNTP
   input_type: NTP
   states:
     post:

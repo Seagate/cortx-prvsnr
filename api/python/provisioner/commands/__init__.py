@@ -351,6 +351,139 @@ class Get(CommandParserFillerMixin):
         return res
 
 
+@attr.s(auto_attribs=True)
+class SetNTP(CommandParserFillerMixin):
+    # TODO at least either pre or post should be defined
+    input_type: Type[
+        Union[inputs.ParamGroupInputBase, inputs.ParamDictItemInputBase]
+    ]
+    pre_states: List[State] = attr.Factory(list)
+    post_states: List[State] = attr.Factory(list)
+
+    _run_args_type = RunArgsUpdate
+
+    # TODO input class type
+    @classmethod
+    def from_spec(cls, input_type: str, states: Dict):
+        return cls(
+            input_type=getattr(inputs, input_type),
+            pre_states=[State(state) for state in states.get('pre', [])],
+            post_states=[State(state) for state in states.get('post', [])]
+        )
+
+    def _apply(self, params, targets):
+        pillar_updater = PillarUpdater(targets)
+
+        pillar_updater.update(params)
+        try:
+            logger.debug('Applying pre states')
+            StatesApplier.apply(self.pre_states)
+            try:
+                logger.debug('Applying pillar changes')
+                pillar_updater.apply()
+
+                logger.debug('Applying post states')
+                StatesApplier.apply(self.post_states)
+            except Exception:
+                logger.warning(
+                    "Starting Rollback: Result of "
+                    "failure to apply pillar changes."
+                )
+                # TODO more solid rollback
+                pillar_updater.rollback()
+                pillar_updater.apply()
+                raise
+        except Exception:
+            logger.exception('Failed to apply changes')
+            # treat post as restoration for pre, apply
+            # if rollback happened
+            StatesApplier.apply(self.post_states)
+            raise
+
+    def _set_ctrl_ntp(self, params, targets):
+        pillar_updater = PillarUpdater(targets)
+
+        #TODO:
+        #  1. ensure pillar data is updated at this stage
+        #  2. confirm what pillar the NTP data is stored in
+        #  3. test dry run
+        #  4. test from CSM UI.
+
+        pillar_updater.update(params)
+        script = (
+            PRVSNR_FILEROOT_DIR /
+            'components/controller/files/scripts/controller-cli.sh'
+        )
+
+        # TODO: Update logic to find enclosure_N based on current node_id
+        enclosure = "enclosure-1"
+        enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
+        system_pillar_path = KeyPath(f"system/ntp") #TODO: test
+        ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
+        user = PillarKey(enclosure_pillar_path / 'controller/user')
+        passwd = PillarKey(enclosure_pillar_path / 'controller/secret')
+
+        ntp_server = PillarKey(system_pillar_path / 'time_server')
+        timezone = PillarKey(system_pillar_path / 'time_zone')
+
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = next(iter(pillar.values()))
+
+        for param in (ip, user, passwd, ntp_server, timezone):
+            if not pillar[param] or pillar[param] is values.MISSED:
+                raise BadPillarDataError(
+                    'value for {} is not specified'.format(param.keypath)
+                )
+
+        if dry_run:
+            return
+
+        logger.info("Initiating NTP configuration on storage enclosure")
+        logger.debug("Calling controller-cli utility to set NTP")
+        StateFunExecuter.execute(
+            'cmd.run',
+            fun_kwargs=dict(
+                name=(
+                    "{script} host -h {ip} -u {user} -p {passwd} "
+                    "--ntp {ntp_server} '{timezone}'"
+                    .format(
+                        script=script,
+                        ip=pillar[ip],
+                        user=pillar[user],
+                        passwd=pillar[passwd],
+                        ntp_server=pillar[ntp_server],
+                        timezone=pillar[timezone]
+                    )
+                )
+            )
+        )
+
+    def _run(self, params, targets):
+        self._apply(params, targets)
+        self._set_ctrl_ntp(params, targets)
+
+    def dynamic_validation(self, params, targets):
+        pass
+
+    # TODO
+    # - class for pillar file
+    # - caching (load once)
+    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
+        # static validation
+        if len(args) == 1 and isinstance(args[0], self.input_type):
+            params = args[0]
+        else:
+            params = self.input_type.from_args(*args, **kwargs)
+
+        res = self.dynamic_validation(params, targets)
+
+        if dry_run:
+            return res
+
+        return self._run(params, targets)
+
+
+
 # TODO
 #   - how to support targetted pillar
 #       - per group (grains)
