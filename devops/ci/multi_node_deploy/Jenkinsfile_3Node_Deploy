@@ -35,8 +35,9 @@ node {
         ])
     ])
     
+    cleanWs()
+
     def remotes = []
-    
     def remote_node = [:]
     remote_node.name = "srvnode-1"
     remote_node.host = HOST_NAME_1
@@ -166,6 +167,7 @@ node {
             }
         }
         
+        sh label: '', script: "mkdir -p archives/provisioner_cluster.json"
         sshGet remote: remotes[0], from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
         sshGet remote: remotes[0], from: '/etc/yum.repos.d/RELEASE.INFO', into: 'archives/RELEASE.INFO', override: true
         sshGet remote: remotes[0], from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
