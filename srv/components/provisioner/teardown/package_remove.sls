@@ -21,3 +21,4 @@ Remove_salt_packages:
     - pkgs:
       - cortx-prvsnr
       - python36-cortx-prvsnr
+      - rsync

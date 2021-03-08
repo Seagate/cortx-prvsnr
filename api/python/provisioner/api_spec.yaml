@@ -143,3 +143,6 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
+
+destroy:
+  type: DestroyNode
