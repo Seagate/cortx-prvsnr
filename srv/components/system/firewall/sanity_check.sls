@@ -49,8 +49,8 @@ Verify private-data interfaces:
 
 {% for nic in pillar['firewall'].keys() %}
 
-{% set zone = pillar['firewall'][nic]['zone'] %}
-{% set added_services = salt['firewalld.list_services'](zone=zone) %}
+{% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'public'}) %}
+{% set added_services = salt['firewalld.list_services'](zone=zones[nic]) %}
 {% set services = pillar['firewall'][nic]['services'] %}
 {% do services.extend(pillar['firewall'][nic]['ports'].keys() | list) %}
 
@@ -59,8 +59,8 @@ Verify {{ nic }} services:
   test.fail_without_changes:
     - name: "{{ (services | difference(added_services)) }} service not added to {{ nic }} zone"
 {% else %}
-  cmd.run:
-    - name: echo "{{ nic }} services verification successful"
+  test.show_notification:
+    - text: echo {{ nic }} services verification successful
 {% endif %}
 
 {% for service in pillar['firewall'][nic]['ports'] %}
@@ -73,8 +73,8 @@ Verify {{ service }} ports against {{ nic }}:
   test.fail_without_changes:
     - name: "{{ (ports | difference(added_ports)) }} not added to {{ service }} service"
 {% else %}
-  cmd.run:
-    - name: echo "{{ service }} ports verification successful on {{ nic }}"
+  test.show_notification:
+    - text: echo {{ service }} ports verification successful on {{ nic }}
 {% endif %}
 
 
