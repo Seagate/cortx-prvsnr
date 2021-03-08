@@ -99,6 +99,8 @@ node {
                 echo "Successfully removed!"
             }
         }
+
+        // sh label: '', script: "mkdir -p archives/provisioner_cluster.json"
         // archiveArtifacts artifacts: '/opt/seagate/cortx_configs/provisioner_cluster.json,/var/log/seagate/provisioner/setup.log', followSymlinks: false
     }
 }
