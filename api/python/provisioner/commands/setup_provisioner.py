@@ -1868,7 +1868,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 "salt-call state.apply components.misc_pkgs.ipmi"
             )
 
-        logger.info("Setting unique ClusterID to pillar file")
+        logger.info("Setting unique ClusterID to pillar file "
+                    f"on node: {run_args.primary.minion_id}")
+
         ssh_client.cmd_run(
             (
                "provisioner set_cluster_id"

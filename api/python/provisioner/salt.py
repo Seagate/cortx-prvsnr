@@ -1125,6 +1125,10 @@ def pillar_refresh(targets=ALL_MINIONS):
     return function_run('saltutil.refresh_pillar', targets=targets)
 
 
+def grains_refresh(targets=ALL_MINIONS):
+    return function_run('saltutil.refresh_grains', targets=targets)
+
+
 # TODO test
 # TODO IMPROVE EOS-9484 think about better alternative to get separated
 #      stderr and stdout streams that makes sense sometimes even if a command

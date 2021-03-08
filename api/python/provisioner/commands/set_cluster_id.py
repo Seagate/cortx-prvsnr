@@ -18,27 +18,24 @@
 # Python API to set unique ClusterID to pillar file
 
 import logging
+import uuid
 from typing import Type
 
-from .. import (
-    inputs,
-    config
-)
+from .. import inputs
+from ..api import grains_get
 from ..config import LOCAL_MINION
 
-from ..paths import (
-    USER_SHARED_PILLAR
+from ..salt import (
+    pillar_refresh,
+    grains_refresh
 )
+from ..utils import run_subprocess_cmd
 
-from ..utils import (
-    load_yaml,
-    dump_yaml
-)
 from . import (
     CommandParserFillerMixin
 )
 from ..vendor import attr
-# from provisioner.api import grains_get
+from provisioner.salt import local_minion_id
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +47,8 @@ class SetClusterId(CommandParserFillerMixin):
     def run(self, targets=LOCAL_MINION):
         """set_cluster_id command execution method.
 
-        Checks for cluster id in common cluster file.
+        Will be executed only on primary node.
+        Gets cluster id from pillar data.
         If not present, generates an id and sets.
 
         Execution:
@@ -58,52 +56,79 @@ class SetClusterId(CommandParserFillerMixin):
         Takes no mandatory argument as input.
 
         """
-        setup_location = config.profile_base_dir().parent
-        for setup_file_name in setup_location.iterdir():
-            setup_name = str(setup_file_name)
-            paths = config.profile_paths(
-                    config.profile_base_dir(
-                    setup_location, setup_name))
+        try:
+            node_role = grains_get(
+                "roles",
+                local_minion_id()
+            )[local_minion_id()]["roles"]            # displays as a list
 
-            all_minions_dir = (
-                paths['salt_fileroot_dir'] / "provisioner/files/minions/all"
+            if node_role[0] != "primary":
+                logger.error(
+                     "Error: ClusterID can be set only on the Primary node "
+                     f"of the cluster. Node role received: '{node_role[0]}'."
+                )
+                raise ValueError(
+                     "Error: ClusterID can be set only on the Primary node "
+                     f"of the cluster. Node role received: '{node_role[0]}'."
+                )
+
+            logger.info(
+                "This is the Primary node of the cluster."
             )
-            cluster_id_path = all_minions_dir / 'cluster_id'
 
-            if cluster_id_path.exists():
-                logger.info("Bootstrapping done, "
-                            "proceeding to set ClusterID to pillar file")
-                try:
-                    cluster_uuid = load_yaml(cluster_id_path)['cluster_id']
+            cluster_id_from_grains = grains_get(
+                "cluster_id",
+                local_minion_id()
+            )[local_minion_id()]["cluster_id"]
 
-                    cluster_pillar_file = (
-                                     f"{USER_SHARED_PILLAR._all_hosts_dir}/"
-                                     f"{USER_SHARED_PILLAR._prefix}"
-                                     "cluster.sls"
-                                     )
-                    cluster_content = load_yaml(cluster_pillar_file)
+            # double verification
+            cluster_id_from_pillar = run_subprocess_cmd([
+                    'provisioner', 'get_cluster_id'])
 
-                    if cluster_content["cluster"]["cluster_id"]:
-                        logger.info("ClusterID is already set!")
-                    else:
-                        cluster_content["cluster"]["cluster_id"] = cluster_uuid
-                        dump_yaml(cluster_pillar_file, cluster_content)
+            if not cluster_id_from_grains:
+                logger.info(
+                    "ClusterID is not found in grains data. Generating one.."
+                )
+                cluster_uuid = str(uuid.uuid4())
+                logger.info(
+                    "Setting the generated ClusterID across all nodes in the cluster.."
+                )
 
-                    logger.info(
-                        "Success: Unique ClusterID assignment after bootstrap process."
-                    )
+                run_subprocess_cmd([
+                    'provisioner', 'pillar_set',
+                    'cluster/cluster_id', f'\"{cluster_uuid}\"'])
 
-                except Exception as exc:
-                    raise ValueError(
-                        "Failed: Encountered error while setting "
-                        f"cluster_id to Pillar data: {str(exc)}"
-                    )
+                logger.info("Refreshing grains")
+                grains_refresh(targets)
+
+#                raise ValueError(
+#                    "Error: ClusterID can only be set AFTER the bootstrap process. "
+#                    "For Provisioner bootstrapping, please "
+#                    "execute the command: 'setup_provisioner'."
+#                )
+
+            elif cluster_id_from_grains and not cluster_id_from_pillar.stdout:
+                logger.info(
+                    "ClusterID is not set in pillar data. Proceeding to set now.."
+                )
+                run_subprocess_cmd([
+                    'provisioner', 'pillar_set',
+                    'cluster/cluster_id', f'\"{cluster_id_from_grains}\"'])
+
+                logger.info("Refreshing pillar")
+                pillar_refresh(targets)
 
             else:
-                logger.error("Error: A unique ClusterID can be set only AFTER "
-                             "the Provisioner bootstrap process. "
-                             "For bootstrapping, execute the 'setup_provisioner' API.")
-                raise ValueError(
-                    "Error: ClusterID can only be set AFTER the bootstrap process. "
-                    "For Provisioner bootstrapping, please execute the command: 'setup_provisioner'."
+                logger.info(
+                    "Bootstrapping completed and ClusterID is already set!"
                 )
+
+            logger.info(
+                "Success: Unique ClusterID assignment to pillar data."
+            )
+
+        except Exception as exc:
+            raise ValueError(
+                "Failed: Encountered error while setting "
+                f"cluster_id to Pillar data: {str(exc)}"
+            )
