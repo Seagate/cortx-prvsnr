@@ -44,7 +44,8 @@ logger = logging.getLogger(__name__)
 class SetClusterId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets=LOCAL_MINION):
+    @staticmethod
+    def run(targets=LOCAL_MINION):
         """set_cluster_id command execution method.
 
         Will be executed only on primary node.
