@@ -22,7 +22,7 @@
   {%- if "srvnode-1" in grains['id'] %}
   # Apply only on srvnode-1
 
-Public direct network:
+Service port configuration on embedded NIC:
   network.managed:
     - name: {{ pillar['cluster'][node]['network']['mgmt']['interfaces'][1] }}
     - device: {{ pillar['cluster'][node]['network']['mgmt']['interfaces'][1] }}

@@ -76,6 +76,7 @@ EOF
         python3 python36-m2crypto \
         salt-api salt-master salt-minion \
         python36-cortx-prvsnr \
+        sshpass \
         2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Verifying cortx-prvsnr installation" 2>&1 | tee -a ${LOG_FILE}
