@@ -427,7 +427,7 @@ class SetNTP(CommandParserFillerMixin):
         ntp_server = PillarKey(system_pillar_path / 'time_server')
         timezone = PillarKey(system_pillar_path / 'time_zone')
 
-        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd])
+        pillar = PillarResolver(LOCAL_MINION).get([ip, user, passwd, ntp_server, timezone])
         pillar = next(iter(pillar.values()))
 
         for param in (ip, user, passwd, ntp_server, timezone):
@@ -436,28 +436,29 @@ class SetNTP(CommandParserFillerMixin):
                     'value for {} is not specified'.format(param.keypath)
                 )
 
-        if dry_run:
-            return
-
         logger.info("Initiating NTP configuration on storage enclosure")
         logger.debug("Calling controller-cli utility to set NTP")
-        StateFunExecuter.execute(
-            'cmd.run',
-            fun_kwargs=dict(
-                name=(
-                    "{script} host -h {ip} -u {user} -p {passwd} "
-                    "--ntp {ntp_server} '{timezone}'"
-                    .format(
-                        script=script,
-                        ip=pillar[ip],
-                        user=pillar[user],
-                        passwd=pillar[passwd],
-                        ntp_server=pillar[ntp_server],
-                        timezone=pillar[timezone]
+        try:
+            StateFunExecuter.execute(
+                'cmd.run',
+                fun_kwargs=dict(
+                    name=(
+                        "{script} host -h {ip} -u {user} -p {passwd} "
+                        "--ntp {ntp_server} '{timezone}'"
+                        .format(
+                            script=script,
+                            ip=pillar[ip],
+                            user=pillar[user],
+                            passwd=pillar[passwd],
+                            ntp_server=pillar[ntp_server],
+                            timezone=pillar[timezone]
+                        )
                     )
                 )
             )
-        )
+        except Exception:
+            logger.exception('Failed to configure NTP on enclosure')
+            raise
 
     def _run(self, params, targets):
         self._apply(params, targets)
