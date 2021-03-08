@@ -15,9 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-{% if not ("replace_node" in pillar["cluster"]
-  and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
-  - components.sspl.config.commons
-{% endif %}
-  - components.sspl.config.sspl
+Remove 3rd party and cortx repos:
+  file.absent:
+    - names:
+      - '/etc/yum.repos.d/3rd_party_epel.repo'
+      - '/etc/yum.repos.d/3rd_party_glusterfs.repo'
+      - '/etc/yum.repos.d/3rd_party_saltstack.repo'
+      - '/etc/yum.repos.d/cortx_iso.repo'
+      - '/etc/yum.repos.d/3rd_party.repo'
+      - '/etc/yum.repos.d/RELEASE_FACTORY.INFO'
+
+Remove pip config and cache:
+  file.absent:
+    - names :
+      - '/etc/pip.conf'
+      - '~/.cache/pip'
+
