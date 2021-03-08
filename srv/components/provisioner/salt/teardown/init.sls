@@ -16,6 +16,6 @@
 #
 
 include:
-  - components.provisioner.salt.teardown.stop
+  - components.provisioner.salt.stop
   - components.provisioner.salt.teardown.remove_dir
 

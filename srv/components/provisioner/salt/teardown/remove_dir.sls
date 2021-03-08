@@ -18,3 +18,7 @@
 Remove salt config dir:
   file.absent:
     - name: '/etc/salt'
+
+Remove salt cache dir:
+  file.absent:
+    - name: '/var/cache/salt/'
