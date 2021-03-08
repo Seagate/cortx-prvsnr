@@ -1,5 +1,6 @@
 firewall:
       data_public:
+        zone: public-data-zone
         services:
           - ssh
           - high-availability
@@ -42,6 +43,7 @@ firewall:
             - 9443/tcp
             - 9086/tcp
       mgmt_public:
+        zone: public
         services:
           - ssh
           - high-availability

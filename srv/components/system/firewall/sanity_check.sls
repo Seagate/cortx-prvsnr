@@ -16,65 +16,67 @@
 #
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-  {%- set mgmt_if = 'mgmt0' -%}
+  {% set mgmt_if = 'mgmt0' %}
 {% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
-{%- endif -%}
+  {% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] %}
+{% endif %}
 
-Verify NIC opened for public zone on management interface:
+Verify management zone interfaces:
   cmd.run:
-    - name: firewall-cmd --permanent --zone=public --list-interfaces | grep {{ mgmt_if }}
+    - name: firewall-cmd --zone=public --list-interfaces | grep {{ mgmt_if }}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-  {%- set public_data_if = ['data0'] -%}
+  {% set public_data_if = ['data0'] %}
+  {% set private_data_if = ['lo'] %}
 {% else %}
-  {%- set public_data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
+  {% set public_data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
+  {% set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
 {% endif %}
-Verify NIC opened for public-data-zone:
+
+Verify public-data interfaces:
   cmd.run:
     - name: |
     {% for interface in public_data_if %}
-        firewall-cmd --permanent --zone=public-data-zone --list-interfaces | grep {{ interface }}
+        firewall-cmd --zone=public-data-zone --list-interfaces | grep {{ interface }}
     {% endfor %}
 
-{% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
-{%- set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
-Verify NIC opened for private-data-zone:
+Verify private-data interfaces:
   cmd.run:
     - name: |
     {% for interface in private_data_if %}
-        firewall-cmd --permanent --zone=trusted --list-interfaces | grep {{ interface }}
+        firewall-cmd --zone=trusted --list-interfaces | grep {{ interface }}
     {% endfor %}
+
+{% for nic in pillar['firewall'].keys() %}
+
+{% set zone = pillar['firewall'][nic]['zone'] %}
+{% set added_services = salt['firewalld.list_services'](zone=zone) %}
+{% set services = pillar['firewall'][nic]['services'] %}
+{% do services.extend(pillar['firewall'][nic]['ports'].keys() | list) %}
+
+Verify {{ nic }} services:
+{% if (services | difference(added_services)) | length > 0 %}
+  test.fail_without_changes:
+    - name: "{{ (services | difference(added_services)) }} service not added to {{ nic }} zone"
+{% else %}
+  cmd.run:
+    - name: echo "{{ nic }} services verification successful"
 {% endif %}
 
-# Verify saltmaster ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service saltmaster --get-ports | grep -P '(?=.*?4505/tcp)(?=.*?4506/tcp)^.*$'
+{% for service in pillar['firewall'][nic]['ports'] %}
 
-# Verfiy csm ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service csm --get-ports | grep -P '(?=.*?8100/tcp)(?=.*?8101/tcp)(?=.*?8102/tcp)(?=.*8103/tcp)^.*$'
+{% set added_ports = salt['firewalld.get_service_ports'](service=service) %}
+{% set ports = pillar['firewall'][nic]['ports'][service] %}
 
-# Verify consul ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service consul --get-ports | grep -P '(?=.*?8300/tcp)(?=.*?8301/tcp)(?=.*?8302/tcp)(?=.*?8301/udp)(?=.*?8302/udp)(?=.*?8500/tcp)(?=.*?8600/tcp)(?=.*?8600/udp)^.*$'
+Verify {{ service }} ports against {{ nic }}:
+{% if (ports | difference(added_ports)) | length > 0 %}
+  test.fail_without_changes:
+    - name: "{{ (ports | difference(added_ports)) }} not added to {{ service }} service"
+{% else %}
+  cmd.run:
+    - name: echo "{{ service }} ports verification successful on {{ nic }}"
+{% endif %}
 
-# Verify hare ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service hare --get-ports | grep -P '(?=.*?8008/tcp)^.*$'
 
-# Verify lnet ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service lnet --get-ports | grep -P '(?=.*?988/tcp)^.*$'
-
-# Verify nfs ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service nfs --get-ports | grep -P '(?=.*?2049/tcp)(?=.*?2049/udp)(?=.*?32803/tcp)(?=.*?892/tcp)(?=.*?875/tcp)^.*$'
-
-# Verify openldap ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service openldap --get-ports | grep -P '(?=.*?389/tcp)^.*$'
-
-# Verify s3 ports:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --service s3 --get-ports | grep -P '(?=.*?7081/tcp)(?=.*?514/tcp)(?=.*?8125/tcp)(?=.*?6379/tcp)(?=.*?9080/tcp)(?=.*?9443/tcp)(?=.*?9086/tcp)(?=.*?80(8[1-9]))(?=.*?80(9[0-9]))^.*$'
+{% endfor %}
+{% endfor %}
