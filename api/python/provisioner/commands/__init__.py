@@ -403,13 +403,6 @@ class SetNTP(CommandParserFillerMixin):
 
     def _set_ctrl_ntp(self, params, targets):
         pillar_updater = PillarUpdater(targets)
-
-        #TODO:
-        #  1. ensure pillar data is updated at this stage
-        #  2. confirm what pillar the NTP data is stored in
-        #  3. test dry run
-        #  4. test from CSM UI.
-
         pillar_updater.update(params)
         script = (
             PRVSNR_FILEROOT_DIR /
@@ -419,7 +412,7 @@ class SetNTP(CommandParserFillerMixin):
         # TODO: Update logic to find enclosure_N based on current node_id
         enclosure = "enclosure-1"
         enclosure_pillar_path = KeyPath(f"storage/{enclosure}")
-        system_pillar_path = KeyPath(f"system/ntp") #TODO: test
+        system_pillar_path = KeyPath("system/ntp")
         ip = PillarKey(enclosure_pillar_path / 'controller/primary/ip')
         user = PillarKey(enclosure_pillar_path / 'controller/user')
         passwd = PillarKey(enclosure_pillar_path / 'controller/secret')
