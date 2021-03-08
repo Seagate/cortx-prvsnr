@@ -39,6 +39,8 @@ else:
 #  - remove PRVSNR_ prefix
 
 CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
+CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
+PRVSNR_TMP_DIR = Path(  Path.home() / '.tmp/seagate/prvsnr/')
 CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
