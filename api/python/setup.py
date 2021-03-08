@@ -42,7 +42,7 @@ tests_require = [
     'pytest-mock==3.1.0',
 ]
 
-codacy_requrie = [
+codacy_require = [
     'bandit==1.7.0',
     'prospector==1.3.1',
     'pylint==2.5.3',
@@ -98,7 +98,7 @@ setup(
     setup_requires=([] + pytest_runner),
     extras_require={
         'test': tests_require,
-        'codacy': codacy_requrie,
+        'codacy': codacy_require,
     },
     tests_require=tests_require
 )
