@@ -85,7 +85,7 @@ deploy_states = dict(
         "system.teardown"
     ],
     bootstrap=[
-        "provisioner.salt.teardown.stop",
+        "provisioner.salt.stop",
         "system.storage.glusterfs.teardown.volume_remove",
         "system.storage.glusterfs.teardown",
         "provisioner.salt.teardown",
