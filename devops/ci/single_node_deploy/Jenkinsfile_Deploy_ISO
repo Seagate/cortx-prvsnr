@@ -168,9 +168,10 @@ node {
             }
         }
 
-        sh label: '', script: "mkdir -p archives/provisioner_cluster.json"
+        sh label: '', script: "mkdir archives"
         sshGet remote: remote, from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
         sshGet remote: remote, from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
-        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log', followSymlinks: false
+        sshGet remote: remote, from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
+        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
     }
 }
