@@ -363,13 +363,19 @@ class DecisionMaker:
             # Get non-critical errors first
             warnings = check_result.get_checks(**cfg.NON_CRITICALLY_FAILED)
             warning_msg = self.format_checks(*warnings)
-            logger.warning(f"Some checks are failed: {warning_msg}")
+            logger.warning(f"Some of the checks have failed: {warning_msg}."
+                           "\nThe process can still continue. "
+                           "It is best to ensure the issues are resolved.")
 
             # verify if some of critical errors failed
             if check_result.has_critical_failure:
                 critical_checks = check_result.get_checks(
                                                     **cfg.CRITICALLY_FAILED)
                 error_msg = self.format_checks(*critical_checks)
+                logger.error(
+                        f"FAILED: Critical checks - {error_msg}"
+                        "\nCannot proceed further until they pass."
+                )
                 raise CriticalValidationError(error_msg)
         else:
             logger.info("All checks are passed")
@@ -790,12 +796,7 @@ class Check(CommandParserFillerMixin):
             return check_value
 
         try:
-            # nodes = Check._get_pillar_data("cluster/node_list")
-            cluster_dict = Check._get_pillar_data("cluster")
-            nodes = [
-                node for node in cluster_dict.keys()
-                if 'srvnode-' in node
-            ]
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -838,7 +839,7 @@ class Check(CommandParserFillerMixin):
             return check_value
 
         try:
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -881,7 +882,7 @@ class Check(CommandParserFillerMixin):
             return res
 
         try:
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
 
             lun_args = [cfg.LUNS_MAPPED_CHECK] + nodes
             StorageV().validate('luns', lun_args)
@@ -913,7 +914,7 @@ class Check(CommandParserFillerMixin):
             return check_value
 
         try:
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_value.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -950,7 +951,7 @@ class Check(CommandParserFillerMixin):
             return res
 
         try:
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
             StorageV().validate('lvms', nodes)
         except Exception as exc:
             res.set_fail(checked_target=cfg.ALL_MINIONS,
@@ -1004,7 +1005,7 @@ class Check(CommandParserFillerMixin):
 
         try:
             # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -1046,7 +1047,7 @@ class Check(CommandParserFillerMixin):
 
         try:
             # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -1108,7 +1109,7 @@ class Check(CommandParserFillerMixin):
 
         try:
             # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -1181,7 +1182,7 @@ class Check(CommandParserFillerMixin):
 
         try:
             # Get node list
-            nodes = Check._get_pillar_data("cluster/node_list")
+            nodes = Check._get_nodes_list()
         except Exception as exc:
             check_entry.set_fail(checked_target=cfg.ALL_MINIONS,
                                  comment=str(exc))
@@ -1228,6 +1229,15 @@ class Check(CommandParserFillerMixin):
             raise ValueError(f"value is not specified for {key}")
         else:
             return pillar[pillar_key]
+
+    @staticmethod
+    def _get_nodes_list():
+        """Retrieve node  list from pillar"""
+        nodes = []
+        for key in Check._get_pillar_data("cluster"):
+            if 'srvnode' in key:
+                nodes.append(key)
+        return nodes
 
     def run(self, check_name: str = "",
             check_args: str = "") -> CheckResult:

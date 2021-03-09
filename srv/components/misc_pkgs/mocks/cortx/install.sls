@@ -24,13 +24,11 @@
     - makedirs: True
 
 
-{% for pkg_name, pkg_ver in salt['pillar.get']('commons:version:cortx').items() %}
-
 cortx_mock_pkgs_installed:
   pkg.installed:
     - pkgs:
 {% for pkg_name, pkg_ver in salt['pillar.get']('commons:version:cortx').items() %}
-    {% if pkg_name not in ('cortx-prvsnr', 'python36-cortx-prvsnr') %}
+    {% if pkg_name not in ('cortx-prvsnr', 'python36-cortx-prvsnr', 'cortx-s3iamcli') %}
       - {{ pkg_name }}: {{ pkg_ver }}
     {% endif %}
 {% endfor %}

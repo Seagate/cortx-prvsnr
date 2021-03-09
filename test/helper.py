@@ -817,3 +817,8 @@ def dump_options(request, options_list):
         for opt in options_list
     ])
     logger.info('Passed options:\n{}'.format(opts_str))
+
+
+def add_options(parser, options):
+    for name, params in options.items():
+        parser.addoption("--" + name, **params)

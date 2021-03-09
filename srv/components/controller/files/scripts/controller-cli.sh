@@ -16,7 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-set -euE
+#set -euE
 
 script_dir=$(dirname $0)
 export logdir="/var/log/seagate/provisioner"
@@ -95,6 +95,9 @@ export fw_bundle=""
 export show_fw_ver=false
 export show_license=false
 export load_license=false
+export ntp_opt=false
+export ntp_server=""
+export ntp_tz=""
 
 usage()
 {
@@ -114,6 +117,7 @@ usage()
          [-v|--show-fw-ver]
          [--show-license]
          [-l|--load-license]
+         [-n|--ntp <ntp server ip/fqdn> "<timezone>"]
          [-h|--help]
 USAGE
 }
@@ -155,6 +159,7 @@ help()
     --shutdown-ctrl:- Shutdown the controller (a|b), if second option is ommited
                       then both the controllers will be shutdown
     -l|--load-license:-
+    -n||--ntp        :- configure ntp (user provided server/ip & timezone) on controllers
 
     Sample commands:
     =========================================================
@@ -211,6 +216,9 @@ help()
        host10.seagate.com, admin, !passwd
 
        $0 host -h 'host.seagate.com' -u admin -p '!passwd' --shutdown-ctrl
+
+    10. Configure NTP with ntp.seagate.com as a NTP server and +5:30 as timezone:
+       $0 host -h 'host.seagate.com' -u admin -p '!passwd' -n ntp.seagate.com "+5:30"
 
 USAGE
 }
@@ -443,18 +451,33 @@ parse_args()
                     shift 2
                  }
                 ;;
-
+            -n|--ntp)
+                echo "parse_args(): configure ntp" >> $logfile
+                if [[ -z "$2" ]]; then
+                    echo "Error: NTP server not provided" && exit 1;
+                fi
+                if [[ -z "$3" ]]; then
+                    echo "Error: Timezone not provided" && exit 1;
+                fi
+                ntp_server="$2"
+                _tz=":${3}"
+                ntp_tz=$(TZ="$_tz" date +%:z)
+                echo "parse_args(): ntp_server=$ntp_server, _tz=${_tz}, ntp_tz=$ntp_tz" >> $logfile
+                shift 3
+                ntp_opt=true
+                ;;
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
     [ "$host_optparse_done" = false ] &&
-        echo "Error: Controller details not provided, exiting.." && exit 1
+        echo "Error: Controller details not provided, exiting.." | tee -a $logfile && exit 1
 
     [ "$prov_optparse_done" = false -a "$show_disks" = false -a\
         "$show_license" = false -a "$load_license" = false -a\
         "$show_fw_ver" = false -a "$update_fw" = false -a\
-        "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false ] && {
-        echo "Error: Incomplete arguments provided, exiting.."
+        "$shutdown_ctrl_opt" = false -a "$restart_ctrl_opt" = false -a\
+        "$ntp_opt" = false ] && {
+        echo "Error: Incomplete arguments provided, exiting.." | tee -a $logfile
         exit 1
     }
     echo "parse_args(): parsing done" >> $logfile
@@ -498,7 +521,7 @@ main()
 
     # Decrypt the password. Required only for commands received from api
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
-        || "$shutdown_ctrl_opt" = true ]]; then
+        || "$shutdown_ctrl_opt" = true || "$ntp_opt" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
         pass=`salt-call lyveutil.decrypt storage ${pass} --output=newline_values_only`
         #echo "main(): decrypted password: $pass" >> $logfile
@@ -516,6 +539,7 @@ main()
     [ "$show_license" = true ] && fw_license_show
     [ "$restart_ctrl_opt" = true ] && ctrl_restart
     [ "$shutdown_ctrl_opt" = true ] && ctrl_shutdown
+    [ "$ntp_opt" = true ] && ntp_config
 
     rm -rf $tmpdir $xml_doc
     echo "***** SUCCESS! *****" 2>&1 | tee -a $logfile

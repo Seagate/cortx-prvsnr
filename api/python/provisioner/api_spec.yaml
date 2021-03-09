@@ -54,6 +54,7 @@ set_ntp:
     - components.system.chrony.config
     - components.system.chrony.stop
     - components.system.chrony.start
+    - components.controller.ntp
 set_network:
   type: Set
   input_type: Network
@@ -75,6 +76,9 @@ set_network:
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
+
+set_cluster_id:
+  type: SetClusterId
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo
@@ -86,7 +90,7 @@ set_swupgrade_repo:
   input_type: SWUpgradeRepo
   states:
     post:
-    - components.misc_pkgs.swupgrade.repo
+    - repos.upgrade
 sw_update:
   type: SWUpdate
 sw_upgrade:
@@ -113,6 +117,14 @@ configure_setup:
   type: ConfigureSetup
 salt:
   type: SaltClient
+generate_roster:
+  type: GenerateRoster
+reset_machine_id:
+  type: ResetMachineId
+resource:
+  type: Resource
+destroy:
+  type: DestroyNode
 
 # setup commands
 setup_provisioner:
@@ -139,3 +151,7 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
+
+# others
+helper:
+  type: Helper

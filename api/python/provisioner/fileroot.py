@@ -18,18 +18,34 @@
 import logging
 from typing import Any, Union
 from pathlib import Path
+import os
 
 from .vendor import attr
-from .paths import FileRootPath
+from .paths import FileRootPath, USER_SHARED_FILEROOT
 from .salt_api.runner import SaltRunnerClient
-from . import utils, config
+from . import utils
 
 logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
+class ResourcePath:
+    resource: str
+    fname: str
+
+    @property
+    def path(self):
+        return (
+            Path('components')
+            / self.resource.replace('.', os.sep)
+            / 'files'
+            / self.fname
+        )
+
+
+@attr.s(auto_attribs=True)
 class FileRoot:
-    _root: FileRootPath = config.USER_SHARED_FILEROOT
+    _root: FileRootPath = USER_SHARED_FILEROOT
     refresh_on_update: bool = True
     _runner_client: SaltRunnerClient = attr.ib(init=False, default=None)
 
@@ -51,21 +67,29 @@ class FileRoot:
     def root(self):
         return self._root
 
-    def path(self, r_path: Union[str, Path]):
-        return self._root.path(r_path)
+    def path(self, r_path: Union[str, Path, ResourcePath]):
+        if isinstance(r_path, ResourcePath):
+            r_path = r_path.path
 
-    def exists(self, r_path: Union[str, Path]):
+        return self._root / r_path
+
+    def exists(self, r_path: Union[str, Path, ResourcePath]):
         return self.path(r_path).exists()
 
-    def read(self, r_path: Union[str, Path], text: bool = True):
+    def read(self, r_path: Union[str, Path, ResourcePath], text: bool = True):
         path = self.path(r_path)
         return path.read_text() if text else path.read_bytes()
 
-    def read_yaml(self, r_path: Union[str, Path]):
+    def read_yaml(self, r_path: Union[str, Path, ResourcePath]):
         return utils.load_yaml(self.path(r_path))
 
     # TODO make idempotent
-    def write(self, r_path: Union[str, Path], data: Any, text: bool = True):
+    def write(
+        self,
+        r_path: Union[str, Path, ResourcePath],
+        data: Any,
+        text: bool = True
+    ):
         path = self.path(r_path)
 
         if text:
@@ -77,7 +101,7 @@ class FileRoot:
             self.refresh()
 
     # TODO make idempotent
-    def write_yaml(self, r_path: Union[str, Path], data: Any):
+    def write_yaml(self, r_path: Union[str, Path, ResourcePath], data: Any):
         utils.dump_yaml(self.path(r_path), data)
 
     # FIXME mostly duplicates salt:copy_to_file_roots

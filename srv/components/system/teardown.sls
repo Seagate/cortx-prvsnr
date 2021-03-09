@@ -29,7 +29,6 @@ Remove_base_packages:
     - pkgs:
       - ipmitool
       - bind-utils
-      - rsync
       - ftp
       - sshpass
       - jq

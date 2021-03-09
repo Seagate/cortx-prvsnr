@@ -15,14 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Validation module for configure_setup API
+
 import logging
 from typing import List
 
 from ..inputs import (
-    NetworkParams, ReleaseParams, StorageEnclosureParams,
-    NodeNetworkParams, NodeParams
+    ClusterParams,
+    StorageParams,
+    NodeParams
 )
 from ..vendor import attr
+from ..config import (
+    NODE_DEFAULT,
+    STORAGE_DEFAULT
+)
 
 from ..values import UNCHANGED
 
@@ -30,47 +37,122 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class NetworkParamsValidation:
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    _optional_param = ['cluster_ip', 'mgmt_vip']
+class ValidateSetup:
 
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
+    def _parse_nodes(self, content):
+        """
+        Parses the content of nodes.
+
+        The node names are parsed based on config-sections.
+
+        """
+        section_list = []
+        output = {}
+        for section in content:
+            section_list.append(f"{section}")
+
+        # Gives section names of only nodes : srvnode[1-12]
+        servers = [srv for srv in sorted(section_list)
+                   if "srvnode" in srv and "default" not in srv]
+
+        # Gives section names of only nodes : storage-enclosure[1-12]
+        enclosures = [enc for enc in sorted(section_list)
+                      if "storage" in enc and "default" not in enc]
+
+        output["section_list"] = section_list
+        output["server_default"] = f'{NODE_DEFAULT}'
+        output["storage_default"] = f'{STORAGE_DEFAULT}'
+        output["server_list"] = servers
+        output["storage_list"] = enclosures
+
+        return output
+
+    def _validate_node_count(self, num_of_nodes, parsed_nodes):
+        """
+        Validates number of nodes.
+
+        Node count can only be 1 or multiples of 3.
+        There cannot be mismatch between count of
+        node sections and storage sections.
+
+        """
+        try:
+            logger.info(
+               f"Validating data for number of nodes: {num_of_nodes}"
+            )
+            if not (int(num_of_nodes) == 1 or int(num_of_nodes) % 3 == 0):
+                raise ValueError(
+                  f"{num_of_nodes} nodes provided. "
+                  "Setup configuration can be done only on single node or on node count of 3s")
+
+            else:
+                node_list = parsed_nodes["server_list"]
+                node_count = len(node_list)
+                storage_list = parsed_nodes["storage_list"]
+                storage_count = len(storage_list)
+
+                if not (node_count == 1 or node_count % 3 == 0):
+                    raise ValueError(
+                      f"Data for {node_count} nodes provided. "
+                      "Setup configuration can be done only on single node or on node count of 3s")
+
+                elif storage_count != node_count:
+                    logger.error(
+                        "ERROR: Invalid config data encountered. Count of node list "
+                        "and storage list in config file does not match."
+                    )
+                    raise ValueError(
+                       f"Number of storage sections: {storage_count} "
+                       f"does not match with number of nodes: {node_count}")
+
+                else:
+                    logger.info(
+                          "Success: Node Validation done. "
+                          f"Applying config for {node_count}-node setup"
+                    )
+
+        except Exception as exc:
+            raise ValueError(f"Config Failed to apply: {str(exc)}")
 
 
 @attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
-    target_build: str = ReleaseParams.target_build
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureParamsValidation:
-    type: str = StorageEnclosureParams.type
-    controller_primary_mc_ip: str = (
-                        StorageEnclosureParams.controller_primary_mc_ip)
-    controller_secondary_mc_ip: str = (
-                        StorageEnclosureParams.controller_secondary_mc_ip)
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    controller_type: str = StorageEnclosureParams.controller_type
+class ClusterParamsValidation:
+    cluster_ip: str = ClusterParams.cluster_ip
+    mgmt_vip: str = ClusterParams.mgmt_vip
+    cluster_id: str = ClusterParams.cluster_id
     _optional_param = [
+        'cluster_ip',
+        'mgmt_vip',
+        'cluster_id'
+    ]
+
+    def __attrs_post_init__(self):
+        params = attr.asdict(self)
+        missing_params = []
+        for param, value in params.items():
+            if value == UNCHANGED and param not in self._optional_param:
+                missing_params.append(param)
+        if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
+            raise ValueError(f"Mandatory param missing {missing_params}")
+
+
+@attr.s(auto_attribs=True)
+class StorageParamsValidation:
+    type: str = StorageParams.type
+    primary_ip: str = StorageParams.controller_primary_ip
+    secondary_ip: str = StorageParams.controller_secondary_ip
+    controller_user: str = StorageParams.controller_user
+    controller_secret: str = StorageParams.controller_secret
+    controller_type: str = StorageParams.controller_type
+    _optional_param = [
+        'primary_ip',
+        'secondary_ip',
+        'controller_user',
+        'controller_secret',
         'controller_type'
     ]
 
@@ -85,63 +167,10 @@ class StorageEnclosureParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageNodeParamsValidation:
-    hostname: str = StorageEnclosureParams.hostname
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class NodeNetworkParamsValidation:
-    search_domains: str = NetworkParams.search_domains
-    dns_servers: str = NetworkParams.dns_servers
-    cluster_id: str = NodeNetworkParams.cluster_id
-    bmc_user: str = NodeNetworkParams.bmc_user
-    bmc_secret: str = NodeNetworkParams.bmc_secret
-    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
-    network_data_netmask: str = NodeNetworkParams.network_data_netmask
-    network_data_gateway: str = NodeNetworkParams.network_data_gateway
-    network_mgmt_interfaces: List = NodeNetworkParams.network_mgmt_interfaces
-    network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
-    network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
-    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
-    storage_metadata_device: str = StorageEnclosureParams.storage_metadata_device
-    storage_data_devices: str = StorageEnclosureParams.storage_data_devices
-
-
-    _optional_param = [
-        'search_domains',
-        'dns_servers',
-        'cluster_id',
-        'storage_metadata_device',
-        'storage_data_devices',
-        'network_data_netmask',
-        'network_data_gateway',
-        'pvt_ip_addr',
-        'network_mgmt_interfaces',
-        'network_mgmt_netmask',
-        'network_mgmt_gateway'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")
 
 
@@ -151,20 +180,38 @@ class NodeParamsValidation:
     is_primary: str = NodeParams.is_primary
     roles: str = NodeParams.roles
     bmc_ip: str = NodeParams.bmc_ip
-    cluster_id: str = NodeNetworkParams.cluster_id
-    bmc_user: str = NodeNetworkParams.bmc_user
-    bmc_secret: str = NodeNetworkParams.bmc_secret
-    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
-    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
-
+    bmc_user: str = NodeParams.bmc_user
+    bmc_secret: str = NodeParams.bmc_secret
+    data_public_interfaces: List = NodeParams.data_public_interfaces
+    data_private_interfaces: List = NodeParams.data_private_interfaces
+    data_netmask: str = NodeParams.data_netmask
+    data_gateway: str = NodeParams.data_gateway
+    mgmt_interfaces: List = NodeParams.mgmt_interfaces
+    mgmt_netmask: str = NodeParams.mgmt_netmask
+    mgmt_gateway: str = NodeParams.mgmt_gateway
+    data_private_ip: str = NodeParams.data_private_ip
+    search_domains: str = NodeParams.search_domains
+    dns_servers: str = NodeParams.dns_servers
+    data_public_ip: str = NodeParams.data_public_ip
+    mgmt_public_ip: str = NodeParams.mgmt_public_ip
+    metadata_devices: List = StorageParams.storage_metadata_devices
+    data_devices: List = StorageParams.storage_data_devices
 
     _optional_param = [
         'is_primary',
-        'bmc_user',
-        'bmc_secret',
-        'cluster_id',
-        'network_data_public_ip_addr',
-        'network_mgmt_public_ip_addr'
+        'roles',
+        'bmc_ip',
+        'search_domains',
+        'dns_servers',
+        'data_netmask',
+        'data_gateway',
+        'mgmt_netmask',
+        'mgmt_gateway',
+        'data_public_ip',
+        'mgmt_public_ip',
+        'data_public_interfaces',
+        'metadata_devices',
+        'data_devices'
     ]
 
     def __attrs_post_init__(self):
@@ -174,4 +221,8 @@ class NodeParamsValidation:
             if value == UNCHANGED and param not in self._optional_param:
                 missing_params.append(param)
         if len(missing_params) > 0:
+            logger.error(
+                f"{missing_params} cannot be left empty or blank.. "
+                "These are mandatory to configure the setup."
+            )
             raise ValueError(f"Mandatory param missing {missing_params}")

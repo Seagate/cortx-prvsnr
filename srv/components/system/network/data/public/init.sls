@@ -18,7 +18,7 @@
 {% set node = grains['id'] %}
 
 # Setup network for data interfaces
-Public direct network:
+Public data network configuration:
   network.managed:
     - name: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}
     - device: {{ pillar['cluster'][node]['network']['data']['public_interfaces'][0] }}

@@ -19,10 +19,12 @@
 Stage - Post Install CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:post_install')
+    - failhard: True
 
 Stage - Config CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:config')
+    - failhard: True
     - require:
       - Stage - Post Install CSM
 
@@ -69,5 +71,6 @@ Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
 Stage - Init CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:init')
+    - failhard: True
     - require:
       - Add {{ pillar['system']['service-user']['name'] }} user to certs group

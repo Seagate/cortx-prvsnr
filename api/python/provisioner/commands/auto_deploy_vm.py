@@ -46,6 +46,7 @@ class AutoDeployVM(SetupCmdBase, CommandParserFillerMixin):
         RunArgsSetupProvisionerGeneric,
         deploy_vm.run_args_type
     ]
+    description = 'API to deploy Cortx on VM'
 
     def run(self, nodes, **kwargs):
         setup_provisioner_args = {
@@ -58,7 +59,10 @@ class AutoDeployVM(SetupCmdBase, CommandParserFillerMixin):
             if k in attr.fields_dict(deploy_vm.run_args_type)
         }
 
-        logger.info("Setup provisioner")
+        logger.info(
+          "Starting with Provisioner Bootstrapping."
+          "\nCommand: setup_provisioner"
+        )
         setup_ctx = SetupProvisioner()._run(
             nodes, **setup_provisioner_args
         )
@@ -89,7 +93,7 @@ class AutoDeployVM(SetupCmdBase, CommandParserFillerMixin):
 
         if len(nodes) == 1:
             deploy_args['setup_type'] = SetupType.SINGLE
-        logger.info("Deployment on vm ")
+        logger.info("Starting: Deployment on VM")
         deploy_vm.DeployVM().run(
             **deploy_args
         )

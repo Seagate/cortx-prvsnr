@@ -20,6 +20,7 @@ import logging
 import subprocess
 import time
 import yaml
+from shlex import quote
 
 from pathlib import Path, PosixPath
 from typing import (
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO TEST
-
+# FIXME remove on behalf of ones from attr_gen
 def validator_path(instance, attribute, value):
     if value is None:
         if attribute.default is not None:
@@ -61,6 +62,14 @@ def converter_path(value):
 
 def converter_path_resolved(value):
     return value if value is None else Path(str(value)).resolve()
+
+
+def validator__subclass_of(classinfo):
+    def _f(attribute, value):
+        if not issubclass(value, classinfo):
+            raise TypeError(
+                f"'{attribute.name}' must be subclass of {classinfo}"
+            )
 
 
 def load_yaml_str(data):
@@ -120,6 +129,10 @@ def load_yaml(path):
 def dump_yaml(path, data, **kwargs):
     path = Path(str(path))
     path.write_text(dump_yaml_str(data, **kwargs))
+
+
+def quote_shell_cmd(cmd: List):
+    return [quote(p) for p in cmd]
 
 
 # TODO IMPROVE:
@@ -186,7 +199,10 @@ def run_subprocess_cmd(cmd, **kwargs):
         logger.exception(f"Failed to run cmd '{cmd}'")
         raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
-        logger.debug(f"Subprocess command resulted in: {res}")
+        logger.debug(
+            f"Subprocess command {res.args} resulted in - stdout: {res.stdout}, "
+            f"returncode: {res.returncode},stderr: {res.stderr}"
+        )
         return res
 
 
@@ -259,8 +275,8 @@ def node_hostname_validator(
         if (
             "srvnode" in section
             and (
-                    node_dict[section] != parser_obj[section]["hostname"]
-                )
+                node_dict[section] != parser_obj[section]["hostname"]
+            )
         ):
             msg = (
                 "Hostname values from config.ini and CLI did not match. "
