@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 @attr.s(auto_attribs=True)
 class ValidateSetup:
 
-    def _parse_nodes(self, content):
+    @staticmethod
+    def _parse_nodes(content):
         """
         Parses the content of nodes.
 
