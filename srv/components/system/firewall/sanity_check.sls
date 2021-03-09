@@ -23,7 +23,7 @@
 
 Verify management zone interfaces:
   cmd.run:
-    - name: firewall-cmd --zone=public --list-interfaces | grep {{ mgmt_if }}
+    - name: firewall-cmd --zone=management-zone --list-interfaces | grep {{ mgmt_if }}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {% set public_data_if = ['data0'] %}
@@ -49,34 +49,38 @@ Verify private-data interfaces:
 
 {% for nic in pillar['firewall'].keys() %}
 
-{% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'public'}) %}
+{% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'management-zone'}) %}
 {% set added_services = salt['firewalld.list_services'](zone=zones[nic]) %}
 {% set services = pillar['firewall'][nic]['services'] %}
 {% do services.extend(pillar['firewall'][nic]['ports'].keys() | list) %}
 
 Verify {{ nic }} services:
-{% if (services | difference(added_services)) | length > 0 %}
+{% if (added_services | symmetric_difference(services)) %}
   test.fail_without_changes:
-    - name: "{{ (services | difference(added_services)) }} service not added to {{ nic }} zone"
+    - name: "{{ (services | symmetric_difference(added_services)) }} services verification failed on {{ nic }} "
 {% else %}
   test.show_notification:
-    - text: echo {{ nic }} services verification successful
+    - text: {{ nic }} services verification successful
 {% endif %}
+
+{% set ports = [] %}
+{% set added_ports = [] %}
+{% do added_ports.extend(salt['firewalld.list_ports'](zone=zones[nic])) %}
 
 {% for service in pillar['firewall'][nic]['ports'] %}
 
-{% set added_ports = salt['firewalld.get_service_ports'](service=service) %}
-{% set ports = pillar['firewall'][nic]['ports'][service] %}
-
-Verify {{ service }} ports against {{ nic }}:
-{% if (ports | difference(added_ports)) | length > 0 %}
-  test.fail_without_changes:
-    - name: "{{ (ports | difference(added_ports)) }} not added to {{ service }} service"
-{% else %}
-  test.show_notification:
-    - text: echo {{ service }} ports verification successful on {{ nic }}
-{% endif %}
-
+{% do added_ports.extend(salt['firewalld.get_service_ports'](service=service)) %}
+{% do ports.extend(pillar['firewall'][nic]['ports'][service]) %}
 
 {% endfor %}
+
+Verify {{ nic }} ports:
+{% if (added_ports | symmetric_difference(ports)) %}
+  test.fail_without_changes:
+    - name: "{{ (ports | symmetric_difference(added_ports)) }} ports verification failed on {{ nic }}"
+{% else %}
+  test.show_notification:
+    - text: {{ nic }} ports verification successful
+{% endif %}
+
 {% endfor %}

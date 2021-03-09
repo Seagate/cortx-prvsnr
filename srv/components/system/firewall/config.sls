@@ -139,16 +139,16 @@ Private data zone:
 {% else %}
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {% endif %}
-# Add management zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --new-zone management-zone
-#     - unless: firewall-cmd --get-zones | grep management-zone
-#     - watch_in:
-#       - Start and enable firewalld service
+Add management zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --new-zone management-zone
+    - unless: firewall-cmd --get-zones | grep management-zone
+    - watch_in:
+      - Start and enable firewalld service
 
 Management zone:
   firewalld.present:
-    - name: public
+    - name: management-zone
     - default: True
     - prune_ports: True
     - prune_services: True
@@ -171,7 +171,7 @@ Management zone:
       - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['secondary']['ip'] }}
       {% endif %}
     - require:
-      # - Add management zone
+      - Add management zone
       {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}

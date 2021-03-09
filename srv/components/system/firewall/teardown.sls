@@ -29,7 +29,7 @@ Reset default zone:
 {% else -%}
   {% set mgmt_ifs = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'] %}
 {% endif -%}
-Remove public manaement interfaces:
+Remove public management interfaces:
   cmd.run:
     - name: |
         {% for interface in mgmt_ifs -%}
@@ -63,6 +63,13 @@ Remove public-data-zone:
   cmd.run:
     - name: firewall-cmd --permanent --delete-zone=public-data-zone
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
+    - require:
+      - Reset default zone
+
+Remove management-zone:
+  cmd.run:
+    - name: firewall-cmd --permanent --delete-zone=management-zone
+    - onlyif: firewall-cmd --get-zones | grep management-zone
     - require:
       - Reset default zone
 
