@@ -25,7 +25,7 @@ from ..vendor import attr
 from .. import inputs
 
 from ._basic import (
-    RunArgsBase,
+    RunArgsRemote,
     RunArgsSaltClient,
     CommandParserFillerMixin
 )
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 @attr.s(auto_attribs=True)
 class Resource(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = [RunArgsBase, RunArgsSaltClient]
+    _run_args_type = [RunArgsRemote, RunArgsSaltClient]
 
     @classmethod
     def fill_parser(cls, parser, parents=None):
@@ -110,7 +110,7 @@ class Resource(CommandParserFillerMixin):
         return _args, kwargs
 
     @staticmethod
-    def run( state_t, *args, **kwargs):
+    def run(state_t, *args, **kwargs):
         _kwargs = deepcopy(kwargs)
 
         salt_args = RunArgsSaltClient(**{
@@ -118,9 +118,9 @@ class Resource(CommandParserFillerMixin):
             if k in attr.fields_dict(RunArgsSaltClient)
         })
 
-        run_args = RunArgsBase(**{
+        run_args = RunArgsRemote(**{
             k: kwargs.pop(k) for k in list(kwargs)
-            if k in attr.fields_dict(RunArgsBase)
+            if k in attr.fields_dict(RunArgsRemote)
         })
 
         if run_args.runner_minion_id:

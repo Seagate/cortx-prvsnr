@@ -138,6 +138,10 @@ class RunArgsSaltClientParams:
 @attr.s(auto_attribs=True)
 class RunArgsBase:
     targets: str = RunArgs.targets
+
+
+@attr.s(auto_attribs=True)
+class RunArgsRemote(RunArgsBase):
     runner_minion_id: str = RunArgs.runner_minion_id
 
 
@@ -180,7 +184,7 @@ class RunArgsSaltClient:
                 re_config=True
             ))
 
-        self.client = self.salt_client_type(**kwargs)  # pylint: disable=not-callable
+        self.client = self.salt_client_type(**kwargs)  # noqa: E501 pylint: disable=not-callable
 
 
 @attr.s(auto_attribs=True)
