@@ -1284,6 +1284,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         setup_ctx = SetupCtx(run_args, paths, ssh_client)
 
+        # we iterate explicitly here to make the progress clearer in console
         for node in run_args.nodes:
             logger.info(
                 f"Ensuring '{node.minion_id}' is ready to accept commands"

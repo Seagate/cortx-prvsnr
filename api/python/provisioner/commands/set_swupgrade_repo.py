@@ -102,6 +102,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # TODO IMPROVE later raise and error
             if False:
                 raise SWUpdateRepoSourceError(
+                    # FIXME repo is undefined here
                     str(repo.source),
                     (
                         f"SW upgrade repository for the release "

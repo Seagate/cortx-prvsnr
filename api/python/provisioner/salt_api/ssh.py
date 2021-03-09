@@ -26,7 +26,7 @@ import logging
 from .. import inputs, config
 from ..vendor import attr
 from ..ssh import copy_id
-from ..utils import load_yaml
+from .. import utils
 from ..errors import (
     SaltCmdResultError
 )
@@ -36,12 +36,15 @@ from ..errors import (
 # )
 from ..cli_parser import KeyValueListAction
 # from ..commands._basic import RunArgs
+from ..node import Node
 
 from .base import (
     SaltArgsBase,
     SaltClientBase,
     SaltClientResultBase,
-    SaltClientJobResult
+    SaltClientJobResult,
+    converter__fileroot_path,
+    converter__pillar_path
 )
 from .client import (
     SaltLocalClientArgs
@@ -218,7 +221,8 @@ class SaltSSHClient(SaltClientBase):
             inputs.METADATA_ARGPARSER: {
                 'help': "config path"
             }
-        }
+        },
+        converter=utils.converter_path_resolved,
     )
     roster_file: str = attr.ib(
         default=config.SALT_ROSTER_DEFAULT,
@@ -226,7 +230,22 @@ class SaltSSHClient(SaltClientBase):
             inputs.METADATA_ARGPARSER: {
                 'help': "path to roster file"
             }
-        }
+        },
+        converter=utils.converter_path_resolved,
+    )
+    profile: str = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "path to ssh profile, if specified"
+                    "'--c-path', '--roster-file', '--pillar-path'"
+                    "and '--fileroot-path' options would be set "
+                    "automatically"
+                )
+            }
+        },
+        converter=utils.converter_path_resolved
     )
     ssh_options: Optional[Dict] = attr.ib(
         default=attr.Factory(
@@ -253,13 +272,28 @@ class SaltSSHClient(SaltClientBase):
             }
         }
     )
+    re_config: bool = False
 
     _client: SSHClient = attr.ib(init=False, default=None)
     _def_roster_data: Dict = attr.ib(init=False, default=attr.Factory(dict))
 
     def __attrs_post_init__(self):
         """Do post init."""
-        self._client = SSHClient(c_path=str(self.c_path))
+
+        if self.profile:
+            paths = config.profile_paths(
+                config.profile_base_dir(profile=self.profile)
+            )
+            self.c_path = paths['salt_master_file']
+            self.roster_file = paths['salt_roster_file']
+            self.fileroot_path = converter__fileroot_path(
+                paths['salt_fileroot_dir']
+            )
+            self.pillar_path = converter__pillar_path(
+                paths['salt_pillar_dir']
+            )
+
+        self._client_init()
 
         # if self.roster_file is None:
         #     path = USER_SHARED_PILLAR.all_hosts_path(
@@ -275,7 +309,10 @@ class SaltSSHClient(SaltClientBase):
 
         if self.roster_file:
             logger.debug(f'default roster is set to {self.roster_file}')
-            self._def_roster_data = load_yaml(self.roster_file)
+            self._def_roster_data = utils.load_yaml(self.roster_file)
+
+    def _client_init(self):
+        self._client = SSHClient(c_path=str(self.c_path))
 
     @property
     def _cmd_args_t(self) -> Type[SaltArgsBase]:
@@ -285,14 +322,36 @@ class SaltSSHClient(SaltClientBase):
     def _salt_client_res_t(self) -> Type[SaltClientResultBase]:
         return SaltSSHClientResult
 
+    def _add_file_roots(self, roots: List[Path]):
+        config = utils.load_yaml(self.c_path)
+        for root in roots:
+            if str(root) not in config['file_roots']['base']:
+                config['file_roots']['base'].append(str(root))
+
+        utils.dump_yaml(self.c_path, config)
+
+        self._client_init()
+
+    def add_file_roots(self, roots: List[Path]):
+        if not self.re_config:
+            raise RuntimeError('re-configuration is not allowed')
+
+        return self._add_file_roots(roots)
+
     def roster_data(self, roster_file=None):
         if roster_file:
-            return load_yaml(roster_file)
+            return utils.load_yaml(roster_file)
         else:
             return self._def_roster_data
 
     def roster_targets(self, roster_file=None):
         return list(self.roster_data(roster_file))
+
+    def roster_nodes(self, roster_file=None):
+        return [
+            Node(target, params['host'], params['user'], params['post'])
+            for target, params in self.roster_data(roster_file).items()
+        ]
 
     def _run(self, cmd_args: SaltSSHArgs):
         salt_logger = logging.getLogger('salt.client.ssh')
@@ -317,7 +376,9 @@ class SaltSSHClient(SaltClientBase):
         **kwargs
     ):
         for arg in ('roster_file', 'ssh_options', 'targets'):
-            arg_v = kwargs.pop(arg, getattr(self, arg))
+            arg_v = kwargs.pop(arg, None)
+            if arg_v is None:
+                arg_v = getattr(self, arg)
             if arg_v:
                 kwargs[arg] = (
                     str(arg_v) if arg == 'roster_file' else arg_v
@@ -327,11 +388,15 @@ class SaltSSHClient(SaltClientBase):
 
     # TODO TEST EOS-8473
     def ensure_access(
-        self, targets: List, bootstrap_roster_file=None
+        self, targets: Optional[List] = None, bootstrap_roster_file=None
     ):
+        if not targets:
+            targets = self.roster_targets()
+
         for target in targets:
             try:
                 # try to reach using default (class-level) settings
+                logger.debug(f"Checking access to '{target}'")
                 self.run(
                     'uname',
                     targets=target,
@@ -342,14 +407,20 @@ class SaltSSHClient(SaltClientBase):
                 roster_file = exc.cmd_args.get('kw').get('roster_file')
 
                 if roster_file and ('Permission denied' in reason):
-                    roster = load_yaml(roster_file)
+                    roster = utils.load_yaml(roster_file)
 
+                    priv_key = Path(roster.get(target, {}).get('priv'))
+
+                    self._add_file_roots([priv_key.parent])
+
+                    logger.debug(f"Copying access key to '{target}'")
                     if bootstrap_roster_file:
                         # NOTE assumptions:
                         #   - python3 is already there since it can be
                         #     installed using the bootstrap key
                         #     (so salt modules might be used now)
                         #   - bootstrap key is availble in salt-ssh file roots
+                        #   - access key is availble in salt-ssh file roots
 
                         self.run(
                             'state.single',
@@ -369,8 +440,7 @@ class SaltSSHClient(SaltClientBase):
                                 user=roster.get(target, {}).get(
                                     'user', 'root'
                                 ),
-                                # FIXME hardcoded path to production pub key
-                                source="salt://provisioner/files/minions/all/id_rsa_prvsnr.pub"  # noqa: E501
+                                source=f"salt://{priv_key.name}.pub"
                             ),
                             targets=target,
                             roster_file=bootstrap_roster_file
@@ -380,7 +450,7 @@ class SaltSSHClient(SaltClientBase):
                             host=roster.get(target, {}).get('host'),
                             user=roster.get(target, {}).get('user'),
                             port=roster.get(target, {}).get('port'),
-                            priv_key_path=roster.get(target, {}).get('priv'),
+                            priv_key_path=priv_key,
                             ssh_options=exc.cmd_args.get('kw').get(
                                 'ssh_options'
                             ),
@@ -392,10 +462,14 @@ class SaltSSHClient(SaltClientBase):
     # TODO TEST EOS-8473
     def ensure_python3(
         self,
-        targets: List,
+        targets: Optional[List] = None,
         roster_file=None
     ):
+        if not targets:
+            targets = self.roster_targets()
+
         for target in targets:
+            logger.debug(f"Ensuring python3 is installed on '{target}'")
             try:
                 self.run(
                     'python3 --version',
@@ -405,9 +479,11 @@ class SaltSSHClient(SaltClientBase):
                 )
             except SaltCmdResultError as exc:
                 reason = exc.reason.get(target)
+
                 # TODO IMPROVE EOS-8473 better search string / regex
                 roster_file = exc.cmd_args.get('kw').get('roster_file')
                 if roster_file and ("not found" in reason):
+                    logger.debug(f"Installing python3 on '{target}'")
                     self.run(
                         'yum install -y python3',
                         targets=target,
@@ -418,10 +494,29 @@ class SaltSSHClient(SaltClientBase):
                 else:
                     raise
 
+    @staticmethod
+    def build_roster(
+        nodes: List[Node], priv_key, roster_path
+    ):
+        roster = {
+            node.minion_id: {
+                'host': node.host,
+                'user': node.user,
+                'port': node.port,
+                'priv': str(priv_key)
+            } for node in nodes
+        }
+        utils.dump_yaml(roster_path, roster)
+
     # TODO TEST EOS-8473
     def ensure_ready(
-            self, targets: List, bootstrap_roster_file: Optional[Path] = None,
+            self,
+            targets: Optional[List] = None,
+            bootstrap_roster_file: Optional[Path] = None,
     ):
+        if not targets:
+            targets = self.roster_targets()
+
         if bootstrap_roster_file:
             self.ensure_python3(targets, roster_file=bootstrap_roster_file)
 

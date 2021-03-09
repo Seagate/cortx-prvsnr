@@ -66,7 +66,7 @@
 
         {% else  %}
 
-unexpected_repo_source:
+unexpected_repo_source_{{ source }}:
   test.fail_without_changes:
     - name: {{ source }}
 
