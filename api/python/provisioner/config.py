@@ -118,7 +118,7 @@ PRVSNR_CORTX_DEPS_ISO = (
 # FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
-PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('misc_pkgs/swupgrade/repo/files')
+PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('repos/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
@@ -503,29 +503,4 @@ class ReleaseInfo(Enum):
 CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 
-
-class SWUpgradeRepos(Enum):
-    """List of supported SW Upgrade Repositories."""
-
-    OS = "os"  # yum repo
-    third_party = "3rd_party"  # yum repo
-    cortx = "cortx_iso"  # yum repo
-    python = "python_deps"  # python index
-
-
-YUM_REPO_TYPE = "yum"
-
-SW_UPGRADE_REPOS = {
-    SWUpgradeRepos.OS.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.third_party.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.cortx.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.python.value: {
-        YUM_REPO_TYPE: False
-    }
-}
+IS_REPO_KEY = "is_repo"

@@ -15,28 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% macro repo_added(release, source, source_type, repo_name, repo_params={}) %}
+{% from './_macros.sls' import setup_repos with context %}
 
+{% set base_dir = pillar['release']['upgrade']['base_dir'] %}
 
-sw_upgrade_repo_added_{{ repo_name }}_{{ release }}:
-  pkgrepo.managed:
-    - name: sw_upgrade_{{ repo_name }}_{{ release }}
-    - humanname: Cortx Upgrade repo {{ repo_name }}-{{ release }}
-    {% if source_type == 'url' %}
-    - baseurl: {{ source }}/{{ repo_name }}
-    {% else %}
-    - baseurl: file://{{ source }}/{{ repo_name }}
-    {% endif %}
-    - enabled: {{ repo_params.get('enabled', True) }}
-    - gpgcheck: 0
-    {% if source_type == 'iso' %}
-    - require:
-      - sw_upgrade_repo_iso_mounted_{{ release }}
-    {% endif %}
+{% for version, repos in pillar['release']['upgrade']['repos'].items() %}
 
+    {% set single_iso_repo = {version: repos.pop(version)} %}
 
-sw_upgrade_repo_metadata_cleaned_{{ repo_name }}_{{ release }}:
-  cmd.run:
-    - name: yum --disablerepo="*" --enablerepo="sw_upgrade_{{ repo_name }}_{{ release }}" clean metadata
+    # to mount the single ISO first
+    {{ setup_repos(single_iso_repo, base_dir) }}
 
-{% endmacro %}
+    {% set upgrade_repos = dict() %}
+    {% for release in repos %}
+    {% set key =  'sw_upgrade_' ~ release ~ '_' ~ version %}
+    {% set _dummy = upgrade_repos.update({key: repos[release]}) %}
+    {% endfor %}
+
+    {{ setup_repos(upgrade_repos, base_dir) }}
+
+{% endfor %}
