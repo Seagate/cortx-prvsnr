@@ -188,7 +188,7 @@ CONTROLLER_BOTH = 'both'
 
 # configure_setup related Params
 CLUSTER = "cluster"
-STORAGE_ENCLOSURE = "storage"
+STORAGE = "storage"
 NODE = "node"
 NODE_DEFAULT = "srvnode-default"
 STORAGE_DEFAULT = "storage-default"
