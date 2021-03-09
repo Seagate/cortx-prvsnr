@@ -879,22 +879,10 @@ class SWUpdateRepo(ParamDictItemInputBase):
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
     _param_di = param_spec['swupgrade/repo']
-    target_build: str = attr.ib(
-        default=None,
-        metadata={
-            METADATA_ARGPARSER: {
-                'help': 'file path to base directory for SW upgrade'
-            }
-        }
-    )
-    enabled: bool = attr.ib(
-        default=False,
-        metadata={
-            METADATA_ARGPARSER: {
-                'help': 'parameter to enable or disabled repository'
-            }
-        }
-    )
+    # file path to base directory for SW upgrade
+    _target_build: str = attr.ib(default=None)
+    # parameter to enable or disabled repository
+    _enabled: bool = attr.ib(default=False)
 
     @property
     def pillar_key(self):
@@ -903,11 +891,9 @@ class SWUpgradeRepo(SWUpdateRepo):
 
     @property
     def pillar_value(self):
-        prefix = "sw_upgrade"
-
-        if self.is_special() or self.is_remote():
+        if self.is_special():
             res = {
-                f"{prefix}_{repo}": None
+                f"{repo}": None
                 for repo in (config.OS_ISO_DIR,
                              config.CORTX_ISO_DIR,
                              config.CORTX_3RD_PARTY_ISO_DIR,
@@ -916,32 +902,35 @@ class SWUpgradeRepo(SWUpdateRepo):
             res[self.release] = None
 
             return res
+        elif self.is_remote():
+            return self.source
         else:
             # source = 'iso' if self.source.is_file() else 'dir'
+            iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
             return {
                 f'{self.release}': {
-                    'source': f'salt://{self.release}.iso',
+                    'source': f'salt://{iso_dir}/{self.release}.iso',
                     'is_repo': False
                 },
-                f'{prefix}_{config.OS_ISO_DIR}': {
+                f'{config.OS_ISO_DIR}': {
                     'source': (f'file://{self.target_build}/{self.release}/'
                                f'{config.OS_ISO_DIR}'),
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'{prefix}_{config.CORTX_ISO_DIR}': {
+                f'{config.CORTX_ISO_DIR}': {
                     'source': (f'file://{self.target_build}/{self.release}/'
                                f'{config.CORTX_ISO_DIR}'),
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'{prefix}_{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
                     'source': (f'file://{self.target_build}/{self.release}/'
                                f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'{prefix}_{config.CORTX_PYTHON_ISO_DIR}': {
+                f'{config.CORTX_PYTHON_ISO_DIR}': {
                     'source': f'file://{self.target_build}/{self.release}/'
                               f'{config.CORTX_PYTHON_ISO_DIR}',
                     'is_repo': False

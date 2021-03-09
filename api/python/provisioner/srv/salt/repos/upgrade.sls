@@ -23,9 +23,15 @@
 
     {% set single_iso_repo = {version: repos.pop(version)} %}
 
-    # to mount the singlie ISO first
+    # to mount the single ISO first
     {{ setup_repos(single_iso_repo, base_dir) }}
 
-    {{ setup_repos(repos, base_dir, version) }}
+    {% set upgrade_repos = dict() %}
+    {% for release in repos %}
+    {% set key =  'sw_upgrade_' ~ release ~ '_' ~ version %}
+    {% set _dummy = upgrade_repos.update({key: repos[release]}) %}
+    {% endfor %}
+
+    {{ setup_repos(upgrade_repos, base_dir) }}
 
 {% endfor %}

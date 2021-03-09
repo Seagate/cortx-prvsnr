@@ -16,6 +16,7 @@
 #
 import logging
 from pathlib import Path
+from typing import Type
 
 from ..salt import copy_to_file_roots
 from .set_swupdate_repo import SetSWUpdateRepo
@@ -24,7 +25,7 @@ from ..config import (REPO_CANDIDATE_NAME,
                       IS_REPO_KEY,
                       RELEASE_INFO_FILE,
                       ReleaseInfo,
-                      PRVSNR_USER_FILEROOT_DIR
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
                       )
 from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
 from ..utils import load_yaml
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
+    input_type: Type[inputs.SWUpgradeRepo] = inputs.SWUpgradeRepo
     _BASE_DIR_PILLAR = "release/upgrade/base_dir"
 
     @staticmethod
@@ -42,7 +44,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        repo : inputs.SWUpgrade
+        repo : inputs.SWUpgradeRepo
             SW Update repository parameters
 
         Returns
@@ -55,7 +57,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # if local - copy the repo to salt user file root
         # TODO consider to use symlink instead
         if repo.is_local():
-            dest = PRVSNR_USER_FILEROOT_DIR / repo.release
+            dest = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR / repo.release
 
             if not repo.is_dir():  # iso file
                 dest = dest.with_name(dest.name + '.iso')
@@ -195,8 +197,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
                               if entry.is_dir()):
-                repo_name = f"sw_upgrade_{dir_entry.name}"
-                repo_info = repo_map.get(repo_name, None)
+                repo_info = repo_map.get(dir_entry.name, None)
 
                 if repo_info is None:
                     raise SWUpdateRepoSourceError(
@@ -226,7 +227,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         repo.enabled = True
 
         # TODO remove that block once that check fails the dynamic validation
-        if self._is_repo_enabled(f'sw_update_{repo.release}'):
+        # FIXME: Currently we use 'os' repo is indicator
+        if self._is_repo_enabled(f'sw_upgrade_os_{repo.release}'):
             logger.warning(
                 "removing already enabled repository "
                 f"for the '{repo.release}' release"

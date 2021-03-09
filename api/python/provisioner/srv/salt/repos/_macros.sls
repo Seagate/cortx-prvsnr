@@ -16,7 +16,7 @@
 #
 
 
-{% macro setup_repos(repos, base_dir, version=None) %}
+{% macro setup_repos(repos, base_dir) %}
 
 {% from './install.sls' import repo_added with context %}
 {% from './teardown.sls' import repo_absent with context %}
@@ -71,13 +71,6 @@ unexpected_repo_source:
     - name: {{ source }}
 
         {% endif %}  # source value inspection
-
-{% if version  %}
-
-    # Add version to the repo name
-    {% set release = "_".join([release, version]) %}
-
-{% endif %}
 
 {{ repo_added(release, source, source_type, repo_dir, is_repo, enabled) }}
 
