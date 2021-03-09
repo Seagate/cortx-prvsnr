@@ -25,15 +25,12 @@ from .. import inputs
 from ..api import grains_get
 from ..config import LOCAL_MINION
 
-from ..salt import (
-    pillar_refresh,
-    grains_refresh
+from provisioner.commands import (
+     PillarSet,
+     GetClusterId
 )
-from ..utils import run_subprocess_cmd
+from . import CommandParserFillerMixin
 
-from . import (
-    CommandParserFillerMixin
-)
 from ..vendor import attr
 from provisioner.salt import local_minion_id
 
@@ -50,7 +47,7 @@ class SetClusterId(CommandParserFillerMixin):
 
         Will be executed only on primary node.
         Gets cluster id from pillar data.
-        If not present, generates an id and sets.
+        If not present, generates a uuid and sets.
 
         Execution:
         `provisioner set_cluster_id`
@@ -65,11 +62,11 @@ class SetClusterId(CommandParserFillerMixin):
 
             if node_role[0] != "primary":
                 logger.error(
-                     "Error: ClusterID can be set only on the Primary node "
+                     "Error: ClusterID can be set only in the Primary node "
                      f"of the cluster. Node role received: '{node_role[0]}'."
                 )
                 raise ValueError(
-                     "Error: ClusterID can be set only on the Primary node "
+                     "Error: ClusterID can be set only in the Primary node "
                      f"of the cluster. Node role received: '{node_role[0]}'."
                 )
 
@@ -83,41 +80,30 @@ class SetClusterId(CommandParserFillerMixin):
             )[local_minion_id()]["cluster_id"]
 
             # double verification
-            cluster_id_from_pillar = run_subprocess_cmd([
-                    'provisioner', 'get_cluster_id'])
+            cluster_id_from_pillar = GetClusterId.run(targets)
 
             if not cluster_id_from_grains:
                 logger.info(
                     "ClusterID is not found in grains data. Generating one.."
                 )
                 cluster_uuid = str(uuid.uuid4())
-                logger.info(
-                    "Setting the generated ClusterID across all nodes in the cluster.."
+                logger.info("Setting the generated ClusterID across all nodes..")
+
+                PillarSet().run(
+                    'cluster/cluster_id',
+                    f'{cluster_uuid}',
+                    targets=targets
                 )
 
-                run_subprocess_cmd([
-                    'provisioner', 'pillar_set',
-                    'cluster/cluster_id', f'\"{cluster_uuid}\"'])
-
-                logger.info("Refreshing grains")
-                grains_refresh(targets)
-
-#                raise ValueError(
-#                    "Error: ClusterID can only be set AFTER the bootstrap process. "
-#                    "For Provisioner bootstrapping, please "
-#                    "execute the command: 'setup_provisioner'."
-#                )
-
-            elif cluster_id_from_grains and not cluster_id_from_pillar.stdout:
+            elif cluster_id_from_grains and not cluster_id_from_pillar:
                 logger.info(
                     "ClusterID is not set in pillar data. Proceeding to set now.."
                 )
-                run_subprocess_cmd([
-                    'provisioner', 'pillar_set',
-                    'cluster/cluster_id', f'\"{cluster_id_from_grains}\"'])
-
-                logger.info("Refreshing pillar")
-                pillar_refresh(targets)
+                PillarSet().run(
+                    'cluster/cluster_id',
+                    f'{cluster_id_from_grains}',
+                    targets=targets
+                )
 
             else:
                 logger.info(
