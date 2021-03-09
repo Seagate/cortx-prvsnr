@@ -54,6 +54,7 @@ set_ntp:
     - components.system.chrony.config
     - components.system.chrony.stop
     - components.system.chrony.start
+    - components.controller.ntp
 set_network:
   type: Set
   input_type: Network

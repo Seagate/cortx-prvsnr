@@ -27,6 +27,7 @@ import importlib
 
 from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
 from .check import Check, SWUpdateDecisionMaker
+
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -349,7 +350,6 @@ class Get(CommandParserFillerMixin):
         for minion_id, data in res_raw.items():
             res[minion_id] = {str(p): v for p, v in data.items()}
         return res
-
 
 # TODO
 #   - how to support targetted pillar
