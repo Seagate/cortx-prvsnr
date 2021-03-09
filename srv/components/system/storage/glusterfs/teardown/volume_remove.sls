@@ -23,13 +23,20 @@ glusterfs_volume_dir_{{ volume['mount_dir'] }}_unmount:
     - name: {{ volume['mount_dir'] }}
     - persist: True
 
+# remove mount dir from fstab
+Remove mount_{{ volume['mount_dir'] }}_present_in_fstab:
+  file.line:
+    - name: '/etc/fstab'
+    - mode: delete
+    - match: {{ volume['mount_dir'] }}
+
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 # remove gluster volume
 glusterfs_volume_{{ volume['name'] }}_removed:
   module.run:
-    - glusterfs.delete_volume:
-      - target: {{ volume['name'] }}
+    - name: glusterfs.delete_volume
+    - target: {{ volume['name'] }}
 
 {% endif %}
 

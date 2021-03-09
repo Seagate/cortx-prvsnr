@@ -1185,7 +1185,7 @@ sftp_cmd_run()
         fi
         echo "DEBUG: sftp_cmd_run(): starting sftp session" >> $logfile
         echo "DEBUG: sftp_cmd_run(): Running cmd: $_cmd" >> $logfile
-sshpass -p "$pass" sftp -P 1022 -oBatchMode=no -b - ${user}@${host} << EOF 2>&1 | tee $_sftp_log
+sshpass -p "$pass" sftp -P 1022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -oBatchMode=no -b - ${user}@${host} << EOF 2>&1 | tee $_sftp_log
 $_cmd
 bye
 EOF
@@ -1746,4 +1746,74 @@ do_provision()
         [ -s $_prvinfo ] && cat $_prvinfo ||
             echo "No provisioning details found on the controller"
     }
+}
+
+ntp_status_get()
+{
+    ## objects name in the xml
+    _xml_obj_bt="ntp-status"
+    # Property value to be extracted from xml
+    _xml_obj_plist=("ntp-status" "ntp-server-address" "ntp-contact-time")
+
+    _tmp_file="$tmpdir/ntp"
+    _ntpinfo="$tmpdir/ntp_info"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+    [ -f $_ntpinfo ] && rm -rf $_ntpinfo
+
+    _cmd="show ntp-status"
+    echo "ntp_status_get(): Entry" >> $logfile
+    echo "ntp_status_get(): running command: '$_cmd'" >> $logfile
+    cmd_run "$_cmd" 
+    parse_xml $xml_doc $_xml_obj_bt "${_xml_obj_plist[@]}" > $_tmp_file
+    [ -s $_tmp_file ] || {
+        echo "ntp_status_get(): No NTP status found on the controller" >> $logfile
+        rm -rf $_tmp_file
+        return 1
+    }
+    echo "ntp_status_get(): --------- NTP status -------" >> $logfile
+    cat $_tmp_file >> $logfile
+    echo "ntp_status_get(): ---------------------" >> $logfile
+    printf '%s'"--------------------- NTP -----------------------\n" > $_ntpinfo
+    printf '%-15s' "${_xml_obj_plist[@]}" >> $_ntpinfo
+    printf '\n' >> $_ntpinfo
+    while IFS=' ' read -r line
+    do
+       arr=($line)
+       printf '%-15s' "${arr[@]}" >> $_ntpinfo
+       printf '\n' >> $_ntpinfo
+    done < $_tmp_file
+    cat $_ntpinfo
+}
+
+
+ntp_config()
+{
+    echo "ntp_config(): Entry" >> $logfile
+    # Run the following command on controller:
+    # set ntp-parameters ntp enabled ntpaddress <$ntp_server> timezone <$ntp_tz> 
+
+    _tmp_file="$tmpdir/ntp_config"
+    [ -f $_tmp_file ] && rm -rf $_tmp_file
+
+    _ntp_status_before="$tmpdir/_ntp_status_before"
+    _ntp_status_after="$tmpdir/_ntp_status_after"
+
+    # Get current ntp status
+    echo "Getting current NTP session (before configuring)" >> $logfile
+    ntp_status_get >> $_ntp_status_before
+
+    # Run command to set the provided ntp address
+    _cmd="set ntp-parameters ntp enabled ntpaddress ${ntp_server} timezone \"${ntp_tz}\""
+    echo "ntp_config(): Running command _cmd=${_cmd}" >> $logfile
+    cmd_run "$_cmd"
+
+    # Get ntp status again
+    echo "Getting current NTP session (after configuring)" >> $logfile
+    ntp_status_get >> $_ntp_status_after
+
+    if grep "${ntp_server}" $_ntp_status_after; then
+        echo "NTP server set successfully on the controller" | tee -a $logfile
+    else
+        echo "ERROR: NTP server could not be set on the controller" | tee -a $logfile
+    fi
 }

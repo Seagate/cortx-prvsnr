@@ -141,8 +141,10 @@ def parse_args(args=None, commands: Optional[List] = None):
 
         # TODO description and help strings
         for cmd_name, cmd in commands.items():
+            desc = getattr(cmd, 'description', f'{cmd_name} configuration')
+
             subparser = subparsers.add_parser(
-                cmd_name, description='{} configuration'.format(cmd_name),
+                cmd_name, description='{}'.format(desc),
                 help='{} help'.format(cmd_name), parents=common_parsers,
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )

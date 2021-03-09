@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -20,16 +18,15 @@
 import configparser
 import logging
 from enum import Enum
-from typing import Type
 from copy import deepcopy
 from pathlib import Path
+from typing import Type
 
 from .validate_setup import (
-    NetworkParamsValidation,
-    StorageEnclosureParamsValidation,
-    StorageNodeParamsValidation,
+    ValidateSetup,
+    ClusterParamsValidation,
+    StorageParamsValidation,
     NodeParamsValidation,
-    NodeNetworkParamsValidation
 )
 from .. import inputs
 from ..vendor import attr
@@ -37,7 +34,7 @@ from ..config import (
     NODE_DEFAULT,
     STORAGE_DEFAULT,
     CLUSTER, NODE,
-    STORAGE_ENCLOSURE
+    STORAGE
 )
 
 from ..utils import run_subprocess_cmd
@@ -106,11 +103,11 @@ class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsConfigureSetup
 
-    validate_map = {f'{CLUSTER}': NetworkParamsValidation,
+    validate_map = {f'{CLUSTER}': ClusterParamsValidation,
                     f'{NODE}': NodeParamsValidation,
-                    f'{STORAGE_ENCLOSURE}': StorageNodeParamsValidation,
-                    f'{NODE_DEFAULT}': NodeNetworkParamsValidation,
-                    f'{STORAGE_DEFAULT}': StorageEnclosureParamsValidation}
+                    f'{NODE_DEFAULT}': NodeParamsValidation,
+                    f'{STORAGE}': StorageParamsValidation,
+                    f'{STORAGE_DEFAULT}': StorageParamsValidation}
 
     @staticmethod
     def _parse_params(param_data):
@@ -118,20 +115,19 @@ class ConfigureSetup(CommandParserFillerMixin):
         for key in param_data:
             val = key.split(".")
             conf_values = [
-                'ip', 'user', 'secret', 'ipaddr', 'interfaces', 'gateway',
-                'netmask', 'public_ip_addr', 'type',
-                'id', 'roles', 'data_devices', 'metadata_device']
+                'ip', 'user', 'secret', 'type', 'gateway',
+                'netmask', 'public_ip', 'private_ip',
+                'public_interfaces', 'private_interfaces',
+                'id', 'roles', 'devices', 'interfaces'
+            ]
 
-            if len(val) > 2 and val[-1] in conf_values:
-                params[f'{val[-3]}_{val[-2]}_{val[-1]}'] = param_data[key]
-                logger.debug(f"Params generated: {params}")
-
-            elif len(val) > 1 and val[-1] in conf_values:
+            if len(val) > 1 and val[-1] in conf_values:
                 params[f'{val[-2]}_{val[-1]}'] = param_data[key]
-                logger.debug(f"Params generated: {params}")
 
             else:
                 params[val[-1]] = param_data[key]
+
+        logger.debug(f"Params generated: {params}")
         return params
 
     def _validate_params(self, input_type, content):
@@ -141,12 +137,17 @@ class ConfigureSetup(CommandParserFillerMixin):
     @staticmethod
     def _parse_input(input_data):
         for key in input_data:
+            keys_of_type_list = [
+                'interfaces', 'devices', 'roles'
+            ]
             if input_data[key] and "," in input_data[key]:
                 value = [f'\"{x.strip()}\"' for x in input_data[key].split(",")]
                 value = ','.join(value)
                 input_data[key] = f'[{value}]'
-            elif ('interfaces' or 'device' or 'devices' or 'roles') in key:
+
+            elif key in keys_of_type_list:
                 input_data[key] = f'[\"{input_data[key]}\"]'
+
             else:
                 if input_data[key]:
                     if input_data[key] == 'None':
@@ -161,8 +162,40 @@ class ConfigureSetup(CommandParserFillerMixin):
         pillar_key = deepcopy(key)
         return pillar_key.replace(".", "/")
 
+    def _update_pillar_data(self, content, section, pillar_type):
+        """
+        Set pillar data.
+
+        Config content of default sections will be applied
+        across all nodes.
+
+        """
+        for pillar_key in content[section]:
+
+            key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
+            value_to_set = f"{content[section][pillar_key]}"
+
+            run_subprocess_cmd([
+                   "provisioner", "pillar_set",
+                   key, value_to_set])
+
+        if content.get('cluster', None):
+            if content.get('cluster').get('cluster_ip', None):
+                run_subprocess_cmd([
+                       "provisioner", "pillar_set",
+                       "s3clients/ip",
+                       f"{content.get('cluster').get('cluster_ip')}"])
+
+        logger.info(f"Data for '{section}' section updated.")
+
     def run(self, path, number_of_nodes):  # noqa: C901
 
+        logger.debug(
+            f"Number of nodes received to configure: {number_of_nodes}"
+        )
+        validate = ValidateSetup()
+
+        # TODO: Move to Path definition
         if not Path(path).is_file():
             logger.error(
                "config file is mandatory for setup configure. "
@@ -173,59 +206,58 @@ class ConfigureSetup(CommandParserFillerMixin):
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data..")
-        content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
+        content = {section: dict(config.items(section))
+                   for section in config.sections()}  # noqa: E501
+
         logger.debug(
-            "Config data read from provided file: {}"
-            .format(content)
+            f"Config data read from provided file: {content}"
         )
 
-        input_type = None
-        pillar_type = None
-        node_list = []
-        count = int(number_of_nodes)
+        # Config sections segregated default-wise, node-wise.
+        parsed_nodes = validate._parse_nodes(content)
 
         pillar_map = {f'{NODE_DEFAULT}': f'{CLUSTER}',
                       f'{NODE}': f'{CLUSTER}',
-                      f'{STORAGE_ENCLOSURE}': f'{STORAGE_ENCLOSURE}',
-                      f'{STORAGE_DEFAULT}': f'{STORAGE_ENCLOSURE}'}
+                      f'{CLUSTER}': f'{CLUSTER}',
+                      f'{STORAGE}': f'{STORAGE}',
+                      f'{STORAGE_DEFAULT}': f'{STORAGE}'}
 
-        for section in content:
-            input_type = section
-            pillar_type = section
+        for section in parsed_nodes['section_list']:
             if 'srvnode' in section:
                 input_type = (f'{NODE_DEFAULT}' if 'default' in section
                               else f'{NODE}')
             elif 'storage' in section:
                 input_type = (f'{STORAGE_DEFAULT}' if 'default' in section
-                              else f'{STORAGE_ENCLOSURE}')
+                              else f'{STORAGE}')
 
-            pillar_map_type = pillar_map[input_type]
-            pillar_type = f'{pillar_map_type}/{section}'
-            count = count - 1
-            node_list.append(f"\"{section}\"")
+            elif 'cluster' in section:
+                input_type = f'{CLUSTER}'
 
             logger.debug(
-               "Validating Params in section: {}"
-               .format(section)
+               f"Validating Params in section: {section}"
             )
-            self._validate_params(input_type, content[section])
 
+            self._validate_params(input_type, content[section])
             self._parse_input(content[section])
 
-            for pillar_key in content[section]:
-                key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
-                run_subprocess_cmd([
-                       "provisioner", "pillar_set",
-                       key, f"{content[section][pillar_key]}"])
+            pillar_map_type = pillar_map[input_type]
 
-        if content.get('cluster', None):
-            if content.get('cluster').get('cluster_ip', None):
-                run_subprocess_cmd([
-                       "provisioner", "pillar_set",
-                       "s3clients/ip",
-                       f"{content.get('cluster').get('cluster_ip')}"])
+            # Contents of 'default' sections will be applied to each node
+            if input_type == f'{NODE_DEFAULT}':
+                for each_node in parsed_nodes['server_list']:
+                    pillar_type = f'{pillar_map_type}/{each_node}'
+                    self._update_pillar_data(content, section, pillar_type)
 
-        if count > 0:
-            raise ValueError(f"Node information for {count} node missing")
+            elif input_type == f'{STORAGE_DEFAULT}':
+                for each_node in parsed_nodes['storage_list']:
+                    pillar_type = f'{pillar_map_type}/{each_node}'
+                    self._update_pillar_data(content, section, pillar_type)
+
+            else:
+                if input_type == f'{CLUSTER}':
+                    pillar_type = pillar_map_type
+                else:
+                    pillar_type = f'{pillar_map_type}/{section}'
+                self._update_pillar_data(content, section, pillar_type)
 
         logger.info("Pillar data updated Successfully.")

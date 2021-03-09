@@ -59,9 +59,7 @@ hctl status | tee -a ${LOG_FILE}
 
 #configure and start sspl
 echo "INFO: Configuring sspl" | tee -a ${LOG_FILE}
-salt "*" state.apply components.sspl.config.commons | tee -a ${LOG_FILE}
-salt "*" cmd.run "/opt/seagate/cortx/sspl/bin/sspl_setup post_install -p LDR_R1"
-salt "*" cmd.run "/opt/seagate/cortx/sspl/bin/sspl_setup config -f"
+salt "*" state.apply components.sspl.config | tee -a ${LOG_FILE}
 systemctl start sspl-ll
 
 #start csm services

@@ -15,9 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install Motr:
+Install cortx-motr:
   pkg.installed:
     - pkgs:
       - cortx-motr: latest
-      # - motr-debuginfo
     - refresh: True

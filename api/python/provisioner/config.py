@@ -33,12 +33,19 @@ else:
             PROJECT_PATH = None
             break
 
+API_SPEC_PATH = CONFIG_MODULE_DIR / 'api_spec.yaml'
+PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
+CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
+ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
+
 # TODO
 #  - rename to defaults.py or constants.py or ...
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
 CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
+CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
+PRVSNR_TMP_DIR = Path(Path.home() / '.tmp/seagate/prvsnr/')
 CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
@@ -61,6 +68,9 @@ PRVSNR_USER_LOCAL_FILEROOT_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'salt'
 PRVSNR_USER_PILLAR_DIR = PRVSNR_USER_SALT_DIR / 'pillar'
 PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
 
+
+SALT_JOBS_CACHE_DIR = Path('/var/cache/salt/master/jobs')
+
 # Notes:
 # 1. how salt's pillar roots organized:
 #   - salt searches for files in each root
@@ -75,6 +85,7 @@ PRVSNR_USER_LOCAL_PILLAR_DIR = PRVSNR_USER_LOCAL_SALT_DIR / 'pillar'
 #     salt master/minion config files
 #     (e.g. default ones have less priority than user ones,
 #           shared user pillar has less priority than local one)
+PRVSNR_FACTORY_PILLAR_PREFIX = "u_factory_"
 PRVSNR_USER_PILLAR_PREFIX = 'uu_'
 PRVSNR_USER_LOCAL_PILLAR_PREFIX = 'zzz_'
 
@@ -86,6 +97,8 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 
+SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
+SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
 SALT_ROSTER_DEFAULT = '/etc/salt/roster'
 
 # TODO EOS-12076 EOS-12334
@@ -95,6 +108,7 @@ OS_ISO_DIR = 'os'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
 CORTX_PYTHON_ISO_DIR = 'python_deps'
+
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
@@ -116,14 +130,16 @@ PRVSNR_CORTX_DEPS_ISO = (
 # FIXME EOS-12334 should be inside factory installation directory
 #    relative paths
 PRVSNR_USER_FILES_SWUPDATE_REPOS_DIR = Path('misc_pkgs/swupdate/repo/files')
-PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('misc_pkgs/swupgrade/repo/files')
+PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR = Path('repos/files')
 PRVSNR_USER_FILES_SSL_CERTS_FILE = Path(
     'components/misc_pkgs/ssl_certs/files/stx.pem'
 )
 SSL_CERTS_FILE = Path('/etc/ssl/stx/stx.pem')
 
 GLUSTERFS_VOLUME_SALT_JOBS = Path('/srv/glusterfs/volume_salt_cache_jobs')
+GLUSTERFS_VOLUME_NAME_SALT_JOBS = 'volume_salt_cache_jobs'
 GLUSTERFS_VOLUME_PRVSNR_DATA = Path('/srv/glusterfs/volume_prvsnr_data')
+GLUSTERFS_VOLUME_NAME_PRVSNR_DATA = 'volume_prvsnr_data'
 
 GLUSTERFS_VOLUME_FILEROOT_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/salt'
 GLUSTERFS_VOLUME_PILLAR_DIR = GLUSTERFS_VOLUME_PRVSNR_DATA / 'srv/pillar'
@@ -133,7 +149,11 @@ SEAGATE_USER_FILEROOT_DIR_TMPL = str(
     'components/provisioner/files/users/{uname}'
 )
 
+SSH_PRIV_KEY = Path('/root/.ssh/id_rsa_prvsnr')
+SSH_PUB_KEY = Path('/root/.ssh/id_rsa_prvsnr.pub')
+
 ALL_MINIONS = '*'
+ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
@@ -168,10 +188,10 @@ CONTROLLER_BOTH = 'both'
 
 # configure_setup related Params
 CLUSTER = "cluster"
-STORAGE_ENCLOSURE = "storage-enclosure"
+STORAGE_ENCLOSURE = "storage"
 NODE = "node"
 NODE_DEFAULT = "srvnode-default"
-STORAGE_DEFAULT = "storage-enclosure-default"
+STORAGE_DEFAULT = "storage-default"
 
 PRVSNRUSERS_GROUP = 'prvsnrusers'
 
@@ -266,16 +286,21 @@ PRVSNR_USER_FACTORY_PROFILE_DIR = (
 
 def profile_base_dir(
     location: Union[str, Path] = None,
-    setup_name: Optional[str] = 'default'
+    setup_name: Optional[str] = 'default',
+    profile: Optional[Union[str, Path]] = None
 ):
+    if profile:
+        return Path(profile).resolve()
     if location is None:
         location = Path.home() / PROFILE_DIR_NAME
     else:
+        location = Path(location)
         location = location.resolve()
 
     return (location / setup_name)
 
 
+# TODO make a class
 def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     if base_dir is None:
         base_dir = profile_base_dir()
@@ -349,10 +374,15 @@ LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
 
 
+# TODO rename to DistType
 class DistrType(Enum):
     """Distribution types"""
-    CORTX = "cortx"       # only release packages
-    BUNDLE = "bundle"     # release packages along with all dependencies
+    # only release packages, optional separate os and deps
+    CORTX = "cortx"
+    # release packages along with all dependencies,
+    # optional python index inside,
+    # optional separate os
+    BUNDLE = "bundle"
 
 
 # Defines a "frozen" list for allowed commands and supported by provisioner
@@ -380,6 +410,8 @@ SETUP_INFO_FIELDS = (NODES, SERVERS_PER_NODE, STORAGE_TYPE, SERVER_TYPE)
 
 # TODO: EOS-12418-improvement: maybe, it makes sense to move it to values.py
 NOT_AVAILABLE = "N/A"
+
+CLI_NEW_SERVICE_USER_PWD_VALUE = '__GENERATE__'  # nosec
 
 
 class Checks(Enum):
@@ -508,6 +540,7 @@ class ReleaseInfo(Enum):
 CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 
+IS_REPO_KEY = "is_repo"
 
 class SWUpgradeRepos(Enum):
     """List of supported SW Upgrade Repositories."""
@@ -534,3 +567,9 @@ SW_UPGRADE_REPOS = {
         YUM_REPO_TYPE: False
     }
 }
+
+
+class CortxResourceT(Enum):
+    """Resource types in CORTX provisioner"""
+
+    REPOS = "cortx_repos"

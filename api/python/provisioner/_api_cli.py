@@ -19,6 +19,7 @@ import sys
 import os
 import subprocess
 import logging
+from pprint import pformat
 from typing import List, Dict, Optional
 
 import provisioner
@@ -51,7 +52,7 @@ def api_args_to_cli(fun, *args, **kwargs):
             res.extend([f"{k}={value_to_str(v)}"])
 
     res.extend([value_to_str(a) for a in args])
-    logger.debug("Cli command args: {}".format(res))
+    logger.debug(f"Cli command args: {pformat(res)}")
 
     return res
 
@@ -81,12 +82,12 @@ def process_cli_result(
             return res['ret']
         except KeyError:
             logger.error(
-                "No return data found in '{}', stderr: '{}'"
-                .format(stdout, stderr)
+                f"No return data found in '{stdout}', "
+                f"stderr: '{stderr}'"
             )
             raise errors.ProvisionerError(
-                "No return data found in '{}', stderr: '{}'"
-                .format(stdout, stderr)
+                f"No return data found in '{stdout}', "
+                f"stderr: '{stderr}'"
             )
 
 
@@ -100,7 +101,7 @@ def _run_cmd(cmd, env: Optional[Dict] = None, **kwargs):
         env = env_copy
 
     try:
-        logger.debug("Executing command {}".format(cmd))
+        logger.debug(f"Executing command: {cmd}")
         res = subprocess.run(cmd, env=env, **kwargs)
     # subprocess.run fails expectedly
     except subprocess.CalledProcessError as exc:

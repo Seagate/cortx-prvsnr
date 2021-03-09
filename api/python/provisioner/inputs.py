@@ -35,6 +35,10 @@ from .values import (
 )
 from .serialize import PrvsnrType, loads
 
+from . import config
+
+# cli_spec = load_yaml(config.CLI_SPEC_PATH)
+
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
@@ -55,13 +59,13 @@ def copy_attr(_attr, name=None, **changes):
     if not name:
         name = _attr.name
 
-    _UtilityClass = attr.make_class(
-        "_UtilityClass", {
+    _utility_type = attr.make_class(
+        "_UtilityType", {
             name: attr.ib(**attr_kw)
         }
     )
 
-    return attr.fields_dict(_UtilityClass)[name]
+    return attr.fields_dict(_utility_type)[name]
 
 
 @attr.s(auto_attribs=True)
@@ -93,6 +97,8 @@ class AttrParserArgs:
 
         if self.prefix:
             self.name = self.prefix + self.name
+
+        parser_args = {}
 
         parser_args = self._attr.metadata.get(
             METADATA_ARGPARSER, {}
@@ -130,14 +136,15 @@ class AttrParserArgs:
         if self._attr.default is not attr.NOTHING:
             # optional argument
             self.name = '--' + self.name.replace('_', '-')
-            default_v = self._attr.default
+            # default value for an object (attr) might be more
+            # complicated than for a parser
+            default_v = parser_args.get('default', self._attr.default)
             if isinstance(default_v, attr.Factory):
                 default_v = default_v.factory()
             self.default = default_v
-            self.metavar = (
-                parser_args.get('metavar')
-                or (self._attr.type.__name__ if self._attr.type else None)
-            )
+            self.metavar = parser_args.get('metavar')
+            if not self.metavar and self._attr.type:
+                self.metavar = getattr(self._attr.type, '__name__', None)
             if self.metavar:
                 self.metavar = self.metavar.upper()
 
@@ -182,6 +189,9 @@ class ParserFiller:
             if METADATA_ARGPARSER in _attr.metadata:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
+
+                # if isinstance(metadata, str):
+                #    metadata = KeyPath(metadata).value(cli_spec)
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
@@ -466,16 +476,37 @@ class Release(ParamGroupInputBase):
     target_build: str = ReleaseParams.target_build
 
 
-class StorageEnclosureParams():
-    _param_group = 'storage_enclosure'
+class ClusterParams():
+    _param_group = 'cluster'
+    cluster_id: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Cluster ID"
+    )
+    cluster_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="cluster ip address for public data network",
+        validator=Validation.check_ip4
+    )
+    mgmt_vip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="virtual ip address for management network",
+        validator=Validation.check_ip4
+    )
+
+@attr.s(auto_attribs=True)
+class Cluster(ParamGroupInputBase):
+    cluster_id: str = ClusterParams.cluster_id
+    cluster_ip: str = ClusterParams.cluster_ip
+    mgmt_vip: str = ClusterParams.mgmt_vip
+
+
+class StorageParams():
+    _param_group = 'storage'
     type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Type of storage"
     )
-    controller_primary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    controller_primary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Controller A IP",
         validator=Validation.check_ip4
     )
-    controller_secondary_mc_ip: str = ParamGroupInputBase._attr_ib(
+    controller_secondary_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Controller B IP",
         validator=Validation.check_ip4
     )
@@ -489,94 +520,23 @@ class StorageEnclosureParams():
     controller_type: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="Controller type"
     )
-    storage_metadata_device: str = ParamGroupInputBase._attr_ib(
+    storage_metadata_devices: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="Storage Metadata Device"
     )
-    storage_data_devices: str = ParamGroupInputBase._attr_ib(
+    storage_data_devices: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="Storage Data Devices"
     )
-    hostname: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Node Hostname"
-    )
 
 
 @attr.s(auto_attribs=True)
-class StorageEnclosure(ParamGroupInputBase):
-    type: str = StorageEnclosureParams.type
-    controller_a_ip: str = StorageEnclosureParams.controller_primary_mc_ip
-    controller_b_ip: str = StorageEnclosureParams.controller_secondary_mc_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    storage_metadata_device: str = StorageEnclosureParams.storage_metadata_device
-    storage_data_devices: str = StorageEnclosureParams.storage_data_devices
-    hostname: str = StorageEnclosureParams.hostname
-
-
-class NodeNetworkParams():
-    _param_group = 'node'
-    type: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Common Server configuration"
-    )
-    cluster_id: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Cluster ID"
-    )
-    network_data_interfaces: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data network interface"
-    )
-    bmc_user: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC User"
-    )
-    # TODO IMPROVE EOS-14361 mask secret
-    bmc_secret: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC password"
-    )
-    network_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node mgmt gateway IP",
-        validator=Validation.check_ip4
-    )
-    network_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management interface netmask",
-        validator=Validation.check_ip4
-    )
-    network_mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management network interface"
-    )
-    network_data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface netmask",
-        validator=Validation.check_ip4
-    )
-    network_data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data gateway IP",
-        validator=Validation.check_ip4
-    )
-    network_data_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-    network_mgmt_public_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node management interface IP",
-        validator=Validation.check_ip4
-    )
-    pvt_ip_addr: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface private IP",
-        validator=Validation.check_ip4
-    )
-
-
-@attr.s(auto_attribs=True)
-class NodeNetwork(ParamGroupInputBase):
-    cluster_id: str = NodeNetworkParams.cluster_id
-    bmc_user: str = NodeNetworkParams.bmc_user
-    bmc_secret: str = NodeNetworkParams.bmc_secret
-    network_mgmt_gateway: str = NodeNetworkParams.network_mgmt_gateway
-    network_mgmt_netmask: str = NodeNetworkParams.network_mgmt_netmask
-    network_mgmt_interfaces: List = NodeNetworkParams.network_mgmt_interfaces
-    network_data_netmask: str = NodeNetworkParams.network_data_netmask
-    network_data_gateway: str = NodeNetworkParams.network_data_gateway
-    network_data_interfaces: str = NodeNetworkParams.network_data_interfaces
-    network_data_public_ip_addr: str = NodeNetworkParams.network_data_public_ip_addr
-    network_mgmt_public_ip_addr: str = NodeNetworkParams.network_mgmt_public_ip_addr
-    pvt_ip_addr: str = NodeNetworkParams.pvt_ip_addr
+class Storage(ParamGroupInputBase):
+    type: str = StorageParams.type
+    controller_primary_ip: str = StorageParams.controller_primary_ip
+    controller_secondary_ip: str = StorageParams.controller_secondary_ip
+    controller_user: str = StorageParams.controller_user
+    controller_secret: str = StorageParams.controller_secret
+    storage_metadata_devices: List = StorageParams.storage_metadata_devices
+    storage_data_devices: List = StorageParams.storage_data_devices
 
 
 class NodeParams():
@@ -591,29 +551,8 @@ class NodeParams():
         _param_group, descr="mark node as a primary",
         converter=bool
     )
-    bmc_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node BMC  IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-
-
-@attr.s(auto_attribs=True)
-class Node(ParamGroupInputBase):
-    hostname: str = NodeParams.hostname
-    roles: List = NodeParams.roles
-    is_primary: str = NodeParams.is_primary
-    bmc_ip: str = NodeParams.bmc_ip
-
-
-class NetworkParams():
-    _param_group = 'network'
-    cluster_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="cluster ip address for public data network",
-        validator=Validation.check_ip4
-    )
-    mgmt_vip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="virtual ip address for management network",
-        validator=Validation.check_ip4
+    type: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="Common Server configuration"
     )
     dns_servers: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of dns servers as json"
@@ -621,6 +560,80 @@ class NetworkParams():
     search_domains: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of search domains as json"
     )
+    bmc_user: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC User"
+    )
+    bmc_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    # TODO IMPROVE EOS-14361 mask secret
+    bmc_secret: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node BMC password"
+    )
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data public network interfaces"
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data private network interfaces"
+    )
+    mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node mgmt gateway IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface netmask",
+        validator=Validation.check_ip4
+    )
+    mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network interfaces"
+    )
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
+        validator=Validation.check_ip4
+    )
+
+#
+#@attr.s(auto_attribs=True)
+#class Node(ParamGroupInputBase):
+#    hostname: str = NodeParams.hostname
+#    roles: List = NodeParams.roles
+#    is_primary: str = NodeParams.is_primary
+#    dns_servers: List = NodeParams.dns_servers
+#    search_domains: List = NodeParams.search_domains
+#    bmc_ip: str = NodeParams.bmc_ip
+#    bmc_user: str = NodeParams.bmc_user
+#    bmc_secret: str = NodeParams.bmc_secret
+#    mgmt_gateway: str = NodeParams.mgmt_gateway
+#    mgmt_netmask: str = NodeParams.mgmt_netmask
+#    mgmt_interfaces: List = NodeParams.mgmt_interfaces
+#    data_netmask: str = NodeParams.data_netmask
+#    data_gateway: str = NodeParams.data_gateway
+#    data_public_interfaces: List = NodeParams.data_public_interfaces
+#    data_private_interfaces: List = NodeParams.data_private_interfaces
+#    data_public_ip: str = NodeParams.data_public_ip
+#    mgmt_public_ip: str = NodeParams.mgmt_public_ip
+#    data_private_ip: str = NodeParams.data_private_ip
+#
+
+class NetworkParams():
+    _param_group = 'network'
     primary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node hostname"
     )
@@ -704,10 +717,6 @@ class NetworkParams():
 
 @attr.s(auto_attribs=True)
 class Network(ParamGroupInputBase):
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    dns_servers: List = NetworkParams.dns_servers
-    search_domains: List = NetworkParams.search_domains
     primary_hostname: str = NetworkParams.primary_hostname
     primary_data_roaming_ip: str = NetworkParams.primary_data_roaming_ip
     primary_mgmt_public_ip: str = NetworkParams.primary_mgmt_public_ip

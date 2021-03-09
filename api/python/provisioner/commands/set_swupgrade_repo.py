@@ -15,14 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-import os
 from pathlib import Path
+from typing import Type
 
+from ..salt import copy_to_file_roots
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
-from ..config import (REPO_CANDIDATE_NAME, SW_UPGRADE_REPOS, YUM_REPO_TYPE,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR, RELEASE_INFO_FILE,
-                      ReleaseInfo
+from ..config import (REPO_CANDIDATE_NAME,
+                      IS_REPO_KEY,
+                      RELEASE_INFO_FILE,
+                      ReleaseInfo,
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
                       )
 from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
 from ..utils import load_yaml
@@ -32,8 +35,35 @@ logger = logging.getLogger(__name__)
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
-    _REPO_DEST = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+    input_type: Type[inputs.SWUpgradeRepo] = inputs.SWUpgradeRepo
     _BASE_DIR_PILLAR = "release/upgrade/base_dir"
+
+    @staticmethod
+    def _prepare_single_iso_for_apply(repo: inputs.SWUpgradeRepo):
+        """Prepare repository for apply.
+
+        Parameters
+        ----------
+        repo : inputs.SWUpgradeRepo
+            SW Update repository parameters
+
+        Returns
+        -------
+        None
+
+        """
+        logger.debug(f"Copy single ISO for SW upgrade to salt "
+                     f"roots for release='{repo.release}'")
+        # if local - copy the repo to salt user file root
+        # TODO consider to use symlink instead
+        if repo.is_local():
+            dest = PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR / repo.release
+
+            if not repo.is_dir():  # iso file
+                dest = dest.with_name(dest.name + '.iso')
+
+            logger.debug(f"Copying {repo.source} to file roots")
+            copy_to_file_roots(repo.source, dest)
 
     def _single_repo_validation(self, release, repo_name):
         """
@@ -55,13 +85,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         # general check from pkg manager point of view
         try:
-            self._check_repo_is_valid(release, f"sw_upgrade_{repo_name}")
+            self._check_repo_is_valid(REPO_CANDIDATE_NAME,
+                                      f"sw_upgrade_{repo_name}")
         except SaltCmdResultError as exc:
             raise SWUpdateRepoSourceError(
                                         repo_name, f"malformed repo: '{exc}'")
 
         # there is no the same release repo is already active
-        if self._is_repo_enabled(f'sw_update_{release}'):
+        if self._is_repo_enabled(f'sw_upgrade_{repo_name}_{release}'):
             err_msg = (
                 "SW update repository for the release "
                 f"'{release}' has been already enabled"
@@ -71,9 +102,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # TODO IMPROVE later raise and error
             if False:
                 raise SWUpdateRepoSourceError(
+                    # FIXME repo is undefined here
                     str(repo.source),
                     (
-                        f"SW update repository for the release "
+                        f"SW upgrade repository for the release "
                         f"'{release}' has been already enabled"
                     )
                 )
@@ -121,11 +153,19 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
-            self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            self._apply(candidate_repo, targets)
+            self._prepare_single_iso_for_apply(candidate_repo)
 
-            iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME
+            base_dir = self._get_mount_dir()
+            candidate_repo.target_build = base_dir
+            candidate_repo.enabled = False
+
+            logger.debug("Configure pillars and apply states for "
+                         "candidate SW upgrade ISO")
+
+            self._apply(candidate_repo, targets=targets)
+
+            iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
             release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
             try:
@@ -155,16 +195,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
+            repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
                               if entry.is_dir()):
-                repo_info = SW_UPGRADE_REPOS.get(dir_entry.name, None)
+                repo_info = repo_map.get(dir_entry.name, None)
+
                 if repo_info is None:
                     raise SWUpdateRepoSourceError(
                                     str(repo.source),
                                     "Unexpected repository in single ISO: "
                                     f"{dir_entry.name}")
-                if repo_info[YUM_REPO_TYPE]:
-                    self._single_repo_validation(candidate_repo.release,
+                if repo_info[IS_REPO_KEY]:
+                    self._single_repo_validation(release,
                                                  dir_entry.name)
 
             repo.release = release
@@ -172,7 +214,32 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
+
             logger.info("Post-validation cleanup")
             self._apply(candidate_repo, targets)
 
+        return repo.metadata
+
+    def _run(self, params: inputs.SWUpgradeRepo, targets: str):
+        repo = params
+
+        base_dir = self._get_mount_dir()
+        repo.target_build = base_dir
+        repo.enabled = True
+
+        # TODO remove that block once that check fails the dynamic validation
+        # FIXME: Currently we use 'os' repo is indicator
+        if self._is_repo_enabled(f'sw_upgrade_os_{repo.release}'):
+            logger.warning(
+                "removing already enabled repository "
+                f"for the '{repo.release}' release"
+            )
+            _repo = inputs.SWUpgradeRepo(repo.release, values.UNDEFINED)
+            self._apply(_repo, targets=targets)
+
+        logger.info(f"Configuring update repo: release {repo.release}")
+        self._prepare_single_iso_for_apply(repo)
+
+        # call default set logic (set pillar, call related states)
+        self._apply(repo, targets)
         return repo.metadata

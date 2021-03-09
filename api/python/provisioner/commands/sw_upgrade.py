@@ -16,32 +16,26 @@
 #
 import logging
 from typing import Type
+import json
 
-from .. import inputs
+from .. import inputs, values
 from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
                         _apply_provisioner_config, _restart_salt_minions,
-                        _update_component, _pre_yum_rollback)
-from ..config import GroupChecks
+                        _update_component, _pre_yum_rollback, GetReleaseVersion
+                        )
+from ..config import GroupChecks, ReleaseInfo
 from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
-from ..salt import StatesApplier, local_minion_id, YumRollbackManager
+from ..pillar import PillarKey, PillarResolver, PillarUpdater
+from ..salt import (StatesApplier, local_minion_id, YumRollbackManager,
+                    get_last_txn_ids
+                    )
 from ..salt_master import config_salt_master
 from ..salt_minion import config_salt_minions
 from ..vendor import attr
+from . import sw_rollback
 
 
 logger = logging.getLogger(__name__)
-
-
-
-COMPONENTS_FOR_UPGRADE = (
-    'motr',
-    's3server',
-    'hare',
-    'ha.cortx-ha',
-    'sspl',
-    'uds',
-    'csm'
-)
 
 
 @attr.s(auto_attribs=True)
@@ -51,8 +45,7 @@ class SWUpgrade(CommandParserFillerMixin):
     @staticmethod
     def _ensure_upgrade_repos_configuration():
         logger.info("Ensure update repos are configured")
-        StatesApplier.apply(['components.misc_pkgs.swupgrade.repo'],
-                            local_minion_id())
+        StatesApplier.apply(['repos.upgrade'], local_minion_id())
 
         # logger.info("Check yum repos are good")
         # StatesApplier.apply(
@@ -76,16 +69,14 @@ class SWUpgrade(CommandParserFillerMixin):
             final_error_t = SWUpdateFatalError
         elif rollback_ctx is not None:
             if isinstance(update_exc, (SWStackUpdateError,)):
-                # rollback provisioner related configuration
                 try:
-                    config_salt_master()
-                    config_salt_minions()
-                    _apply_provisioner_config(targets)
+                    sw_rollback.SWRollback().run(targets=targets)
                 except Exception as exc:
                     # unrecoverable state: SW stack is in intermediate
                     # state, no sense to start the cluster
                     logger.exception(
-                            'Failed to restore SaltStack configuration')
+                            'Failed to restore CORTX components configuration'
+                    )
                     rollback_error = exc
                     final_error_t = SWUpdateFatalError
             else:
@@ -97,6 +88,38 @@ class SWUpgrade(CommandParserFillerMixin):
         # TODO IMPROVE
         raise final_error_t(update_exc,
                             rollback_error=rollback_error) from update_exc
+
+    @staticmethod
+    def _get_pillar(pillar_key_path: str, targets: str) -> dict:
+        """
+        Get Pillar value
+        Parameters
+        ----------
+        pillar_key_path: str
+            Pillar key path
+
+        targets: str
+            targets to retrieve the pillar values
+
+        Returns
+        -------
+        dict
+            dictionary with pillar values for each requested target
+
+        """
+        pillar_path = PillarKey(pillar_key_path)
+        pillar = PillarResolver(targets).get([pillar_path])
+
+        _res = dict()
+        for target, _pillar in pillar.items():
+            if (not _pillar[pillar_path]
+                    or _pillar[pillar_path] is values.MISSED):
+                raise ValueError("value is not specified for "
+                                 f"'{pillar_path}' and target '{target}'")
+            else:
+                _res[target] = _pillar[pillar_path]
+
+        return _res
 
     def run(self, targets):  # noqa
         # TODO:
@@ -122,6 +145,46 @@ class SWUpgrade(CommandParserFillerMixin):
         try:
             self._ensure_upgrade_repos_configuration()
 
+            local_minion = local_minion_id()
+
+            version_resolver = GetReleaseVersion()
+            release_info = version_resolver.run(targets=local_minion)  # str
+            release_info = json.loads(release_info)
+            cortx_version = (f"{release_info[ReleaseInfo.VERSION.value]}-"
+                             f"{release_info[ReleaseInfo.BUILD.value]}")
+
+            upgrade_data = self._get_pillar('upgrade', local_minion)
+
+            # TODO: we need to compare targets in yum_snapshots and targets
+            #  from parsed income parameter
+            #  for example:
+            #  yum_snapshots:
+            #    - <cortx_version>:
+            #       - srvnode-1: <id>
+            # and input targets = "*" for cluster with >= 2 nodes
+            # so possible scenario:
+            # provisioner sw_upgrade --targets="srvnode-1"
+            # provisioner sw_upgrade --targets="*"
+            txn_ids_dict = get_last_txn_ids(targets=targets,
+                                            multiple_targets_ok=True)
+
+            pillar_updater = PillarUpdater(targets)
+
+            yum_snapshot_path = PillarKey(
+                                    f"upgrade/yum_snapshots/{cortx_version}")
+
+            pi_group = inputs.PillarInputBase.from_args(
+                                                keypath=yum_snapshot_path,
+                                                value=txn_ids_dict)
+
+            pillar_updater.update(pi_group)
+            pillar_updater.apply()
+
+            sw_list = upgrade_data[local_minion].get("sw_list", None)
+
+            if not sw_list:
+                raise ValueError("upgrade/sw_list data is missed")
+
             with YumRollbackManager(
                             targets,
                             multiple_targets_ok=True,
@@ -137,7 +200,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
                     minion_conf_changes = config_salt_minions()
 
-                    for component in COMPONENTS_FOR_UPGRADE:
+                    for component in sw_list:
                         _update_component(component, targets)
                 except Exception as exc:
                     raise SWStackUpdateError(exc) from exc
