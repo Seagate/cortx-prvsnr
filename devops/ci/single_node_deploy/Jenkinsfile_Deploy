@@ -32,6 +32,8 @@ node {
         ])
     ])
 
+    cleanWs()
+
     def remote = [:]
     withEnv(["CORTX_RELEASE_REPO=${BUILD_URL}","SSHPASS=${PASSWORD}"]) {
         ansiColor('xterm') {
@@ -70,7 +72,7 @@ node {
                 sshCommand remote: remote, command: "sed -i 's/\${HOST_NAME}/${HOST_NAME}/g' /root/config.ini"
                 echo "Successfully created config.ini file!"
             }
-            
+
             stage("Install Provisioner API") {
                 sshCommand remote: remote, command: """
                     yum install -y yum-utils
@@ -148,9 +150,11 @@ node {
             }
         }
 
+        sh label: '', script: "mkdir archives"
+        
         sshGet remote: remote, from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
-        sshGet remote: remote, from: '/etc/yum.repos.d/RELEASE.INFO', into: 'archives/RELEASE.INFO', override: true
+        sshGet remote: remote, from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
         sshGet remote: remote, from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
-        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log', followSymlinks: false
+        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
     }
 }

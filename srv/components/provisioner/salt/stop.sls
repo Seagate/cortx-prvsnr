@@ -15,10 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# remove  all salt packages
-Remove_salt_packages:
-  pkg.purged:
-    - pkgs:
-      - cortx-prvsnr
-      - python36-cortx-prvsnr
-      - rsync
+Stop and disable salt-minion service:
+   service.dead:
+     - name: salt-minion
+     - enable: False
+
+Stop and disable salt-master service:
+   service.dead:
+     - name: salt-master
+     - enable: False

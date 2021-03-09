@@ -49,7 +49,13 @@ Stop-start rabbitmq service:
 
 Copy plugin to /usr/local/bin:
   cmd.run:
-    - name: cp $(find /var/lib/rabbitmq/ -name rabbitmqadmin) /usr/local/bin/rabbitmqadmin && chmod a+x /usr/local/bin/rabbitmqadmin
+    - name: |
+        # Fix for rabbitmq plugin copy failure
+        # Create /usr/local/bin if not exists
+        test -d /usr/local/bin || mkdir -p /usr/local/bin
+        # cp: cannot create regular file '/usr/local/bin/rabbitmqadmin': No such file or directory
+        cp $(find /var/lib/rabbitmq/ -name rabbitmqadmin) /usr/local/bin/rabbitmqadmin && \
+        chmod a+x /usr/local/bin/rabbitmqadmin
     - unless: test -f /usr/local/bin/rabbitmqadmin
     - require:
       - Stop-start rabbitmq service

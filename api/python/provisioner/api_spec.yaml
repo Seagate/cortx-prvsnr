@@ -76,6 +76,9 @@ set_network:
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
+
+set_cluster_id:
+  type: SetClusterId
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo
@@ -144,3 +147,6 @@ deploy_jbod:
   type: DeployJBOD
 deploy_dual:
   type: DeployDual
+
+destroy:
+  type: DestroyNode

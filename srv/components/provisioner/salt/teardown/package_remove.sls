@@ -19,6 +19,6 @@
 Remove_salt_packages:
   pkg.purged:
     - pkgs:
-      - cortx-prvsnr
-      - python36-cortx-prvsnr
-      - rsync
+      - salt-minion
+      - salt-master
+      - salt

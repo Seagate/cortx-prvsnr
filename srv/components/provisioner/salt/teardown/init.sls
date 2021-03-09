@@ -15,10 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# remove  all salt packages
-Remove_salt_packages:
-  pkg.purged:
-    - pkgs:
-      - cortx-prvsnr
-      - python36-cortx-prvsnr
-      - rsync
+include:
+  - components.provisioner.salt.stop
+  - components.provisioner.salt.teardown.remove_dir
+
