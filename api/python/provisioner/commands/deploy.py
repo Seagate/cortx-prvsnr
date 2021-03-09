@@ -57,6 +57,7 @@ deploy_states = dict(
         "system.network.data.direct",
         "misc_pkgs.rsyslog",
         "system.firewall",
+        "system.firewall.sanity_check",
         "system.logrotate",
         "system.chrony"
     ],
