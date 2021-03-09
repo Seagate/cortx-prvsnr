@@ -401,7 +401,7 @@ class SetNTP(CommandParserFillerMixin):
             StatesApplier.apply(self.post_states)
             raise
 
-    def _set_ctrl_ntp(self, params, targets):
+    def set_ctrl_ntp(params, targets):
         pillar_updater = PillarUpdater(targets)
         pillar_updater.update(params)
         script = (
@@ -461,7 +461,7 @@ class SetNTP(CommandParserFillerMixin):
         server_type = GrainsGet().run("virtual", targets=local_minion_id())
         logger.debug(f"Server type: {server_type}")
         if server_type[local_minion_id()]["virtual"] == "physical":
-            self._set_ctrl_ntp(params, targets)
+            self.set_ctrl_ntp(params, targets)
 
     def dynamic_validation(self, params, targets):
         pass
