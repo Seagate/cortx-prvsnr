@@ -47,13 +47,14 @@ pillar_set:
   type: PillarSet
   input_type: PillarInputBase
 set_ntp:
-  type: SetNTP
+  type: Set
   input_type: NTP
   states:
     post:
     - components.system.chrony.config
     - components.system.chrony.stop
     - components.system.chrony.start
+    - components.controller.ntp
 set_network:
   type: Set
   input_type: Network

@@ -464,7 +464,8 @@ parse_args()
                 ntp_tz=$(TZ="$_tz" date +%:z)
                 echo "parse_args(): ntp_server=$ntp_server, _tz=${_tz}, ntp_tz=$ntp_tz" >> $logfile
                 shift 3
-                ntp_opt=true ;;
+                ntp_opt=true
+                ;;
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
