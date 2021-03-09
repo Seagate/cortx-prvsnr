@@ -34,7 +34,7 @@ cli_status_get()
     status=`$xml_cmd --xpath 'string(//PROPERTY[@name="response-type"]['$node_cnt'])' $xml_doc`
     status_msg=`$xml_cmd --xpath 'string(//PROPERTY[@name="response"]['$node_cnt'])' $xml_doc`
     [[ $status == "Success" ]] || {
-        echo "Command failed on the controller with following error: "${status_msg}"" | tee -a "$logfile"
+        echo "Command failed on the controller with following error: '${status_msg}'" | tee -a "$logfile"
         exit 1
     }
     echo "cli_status_get(): Command run successfully" >> $logfile
