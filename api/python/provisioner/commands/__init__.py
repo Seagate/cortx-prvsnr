@@ -411,7 +411,7 @@ class Set(CommandParserFillerMixin):
             raise
 
     def _run(self, params, targets):
-        self._apply(params, targets)
+        self._apply(params, targets=targets)
 
     def dynamic_validation(self, params, targets):
         pass

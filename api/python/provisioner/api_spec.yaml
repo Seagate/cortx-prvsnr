@@ -90,7 +90,7 @@ set_swupgrade_repo:
   input_type: SWUpgradeRepo
   states:
     post:
-    - components.misc_pkgs.swupgrade.repo
+    - repos.upgrade
 sw_update:
   type: SWUpdate
 sw_upgrade:
