@@ -401,7 +401,8 @@ class SetNTP(CommandParserFillerMixin):
             StatesApplier.apply(self.post_states)
             raise
 
-    def set_ctrl_ntp(self):
+    @staticmethod
+    def set_ctrl_ntp():
         script = (
             PRVSNR_FILEROOT_DIR /
             'components/controller/files/scripts/controller-cli.sh'
