@@ -36,9 +36,9 @@ from .values import (
 )
 from .serialize import PrvsnrType, loads
 
-from . import config
+from . import config, utils
 
-# cli_spec = load_yaml(config.CLI_SPEC_PATH)
+cli_spec = utils.load_yaml(config.CLI_SPEC_PATH)
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
@@ -194,8 +194,8 @@ class ParserFiller:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
 
-                # if isinstance(metadata, str):
-                #    metadata = KeyPath(metadata).value(cli_spec)
+                if isinstance(metadata, str):
+                    metadata = KeyPath(metadata).value(cli_spec)
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
