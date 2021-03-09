@@ -1157,8 +1157,8 @@ class CreateUser(CommandParserFillerMixin):
             if 'srvnode-' in node
         ]
 
-        if (not cluster_pillar[cluster_path] or
-                cluster_pillar[cluster_path] is values.MISSED):
+        if (not cluster_pillar or
+                cluster_pillar is values.MISSED):
             raise BadPillarDataError(
                 'value for {} is not specified'.format(cluster_path.pi_key)
             )

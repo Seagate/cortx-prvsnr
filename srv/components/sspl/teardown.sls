@@ -15,24 +15,35 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.firewall'.format(grains['id'])) %}
-include:
-  - .prepare
-  - .install
-  - .config
+Stage - Reset SSPL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:reset')
 
-# Disable Firewall:
-#   service.dead:
-#     - name: firewalld
-#     - enable: false
+{% import_yaml 'components/defaults.yaml' as defaults %}
+Remove sspl packages:
+  pkg.purged:
+    - pkgs:
+      - cortx-sspl
+      - cortx-sspl-test
 
-Generate sspl checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
-    - makedirs: True
-    - create: True
-{%- else -%}
-Firewall already applied:
-  test.show_notification:
-    - text: "Firewall states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.firewall.teardown' to reprovision these states."
-{%- endif -%}
+Remove flask:
+  pip.removed:
+    - name: flask
+
+Delete sspl yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.sspl.repo.id }}
+
+Delete sspl_prereqs yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.sspl.uploads_repo.id }}
+
+Remove /opt/seagate/sspl configurations:
+  file.absent:
+    - names: 
+      - /opt/seagate/sspl
+      - /etc/sspl
+
+Delete sspl checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.sspl

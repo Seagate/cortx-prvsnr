@@ -1,20 +1,157 @@
-# Testing Using Docker
+# Provisioner Testing Approaches
 
 **Table of Contents**
 
-- [Installation](#Installation)
-  - [Docker configuration](#docker-configuration)
-  - [Docker on Fedora 32/33](#docker-on-fedora-33)
-  - [Python configuration](#python-configuration)
-- [Basic Docker commands](#basic-docker-commands)    
+- [Python environment preparation](#python-environment-preparation)
+- [Static validation](#static-validation)
+  - [Python code](#python-code)
+    - [flake8](#flake8)
+    - [Codacy tools](#codacy-tools)
+      - [Bandit](#bandit)
+      - [Prospector](#prospector)
+      - [Pylint](#pylint)
+      - [Radon](#radon)
+- [Unit testing](#unit-testing)
+- [Integration testing](#integration-testing)
+  - [Testing with Docker](#testing-with-Docker)
+    - [Docker configuration](#docker-configuration)
+    - [Docker on Fedora 32/33](#docker-on-fedora-33)
+    - [Docker containers for tests](#Docker-containers-for-tests)
+- [Appendix](#appendix)
+  - [Basic Docker commands](#basic-docker-commands)
 
 
-## Installation
+## Python environment preparation
+
+- Install `python3.6` package in system using your distributive package manager tool: **apt**, **dnf**, **yum**, etc.
+
+- Clone/Update the `cortx-prvsnr` repository
+
+- Create the Python virtual environment using `venv` module
+
+  ```bash
+  cd /path/to/cortx-prvsnr
+  python3.6 -m venv ./venv
+  ```
+
+  :warning: NOTE: For more details about Python virtual environment see
+  https://docs.python.org/3.6/library/venv.html
+
+- Activate created Python environment
+
+  ```bash
+  source venv/bin/activate
+  ```
+
+- Install provisioner API to `venv` with extras for testing:
+
+  ```bash
+  pip install -e api/python[test]
+  ```
+
+- [Optionally] Install provisioner API to `venv` with extras for Codacy testing tools:
+
+  ```bash
+  pip install -e api/python[codacy]
+  ```
+
+## Static validation
+
+There are multiple tools that help to do static validation to ensure
+the quality of the changes and alignment with code style accepted
+in the repository.
+
+### Python code
+
+#### flake8
+
+We encourage a contributor to use [flake8](https://flake8.pycqa.org/en/latest/)
+before pushing any changes:
+
+To test everything:
+
+```
+flake8
+```
+
+To test specific files / directories:
+
+```
+flake8 path/to/directory_or_file
+```
+
+#### Codacy tools
+
+GitHub repository is configured to validate each PR using [codacy](https://docs.codacy.com/).
+Codacy does the static analysis, checks duplications and complexity.
+For python it [uses](https://docs.codacy.com/getting-started/supported-languages-and-tools/) the
+following tools:
+
+  - static analysis:
+    [Bandit](https://github.com/PyCQA/bandit),
+    [Prospector](https://github.com/landscapeio/prospector2),
+    [Pylint](https://www.pylint.org/)
+  - duplications: [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
+  - complexity: [Radon](https://github.com/rubik/radon)
+
+All these tools (except [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
+which is not a python one) would be availble once you
+[installed API](#python-environment-preparation) with testing dependnecies.
+
+So in case your PR fails Codacy verification you may check the issues locally.
+
+**Note.** In case GitHub Codacy issue is not reproduced locally then it
+likely means you have a different version and/or different
+settings for a tool. In such cases Codacy report is the source of truth.
+
+##### Bandit
+
+```bash
+# test specific file
+bandit path/to/file.py
+
+# test the directory (project) recursively
+bandit -r path/to/directory
+```
+
+More [examples](https://github.com/PyCQA/bandit#usage).
+
+##### Prospector
+
+```bash
+prospector path/to/directory_or_file
+```
+
+##### Pylint
+
+```bash
+pylint path/to/directory_or_file
+```
+
+More running [examples](http://pylint.pycqa.org/en/latest/user_guide/run.html).
+
+##### Radon
+
+```bash
+# compute Cyclomatic Complexity, calculate the average complexity at the end and
+# print only results with a complexity rank of C or worse
+radon cc path/to/directory_or_file -a -nc
+```
+
+More [examples](https://radon.readthedocs.io/en/latest/commandline.html#the-cc-command).
+
+## Unit testing
+
+**TBD**
+
+## Integration testing
+
+### Testing with Docker
 
 #### Docker configuration
 
-The base Docker installation methods for popular Linux distributions are listed here:
-	https://docs.docker.com/engine/install/
+The base Docker installation methods for popular Linux distributions are listed
+[here](https://docs.docker.com/engine/install/).
 
 To run Docker commands without **sudo**, add your user to **docker** group
 
@@ -26,9 +163,7 @@ sudo usermod -aG docker $USER
 After that command, re-login/re-connect to your terminal or VM console.
 
 :warning: NOTE: for more information about post-installation steps, please,
-visit the official page:
-
-https://docs.docker.com/engine/install/linux-postinstall/
+visit the [official page](https://docs.docker.com/engine/install/linux-postinstall/).
 
 #### Docker on Fedora 33
 
@@ -101,33 +236,7 @@ sudo docker run hello-world
 ```
 </details>
 
-#### Python configuration
-
-- Install `python3.6` package in system using your distributive package manager tool: **apt**, **dnf**, **yum**, etc.
-
-- Clone/Update the `cortx-prvsnr` repository
-
-- Create the Python virtual environment using `venv` module
-
-  ```bash
-  cd /path/to/cortx-prvsnr
-  python3.6 -m venv ./venv
-  ```
-
-  :warning: NOTE: For more details about Python virtual environment see
-  https://docs.python.org/3.6/library/venv.html
-
-- Activate created Python environment
-
-  ```bash
-  source venv/bin/activate
-  ```
-
-- Install provisioner API to `venv`: 
-
-  ```bash
-  pip install -e api/python[test]
-  ```
+#### Docker containers for tests
 
 - Start the docker environment creation
 
@@ -166,6 +275,10 @@ sudo docker run hello-world
     - `--root-passwd <STR>` to set a root password for initial ssh access
     - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 6
 
+#### Integration test cases
+
+
+##### Provisioner setup
 
 - You may set up a provisioner inside the container using the local source mode
 
@@ -175,10 +288,13 @@ sudo docker run hello-world
 
   **:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
 
-#### TBD: Test other types of sources.
-#### TBD: Update with examples for multi node setups with HA mode enabled.
+**TBD: Test other types of sources.**
 
-## Basic Docker commands
+**TBD: Update with examples for multi node setups with HA mode enabled.**
+
+## Appendix
+
+### Basic Docker commands
 
 * List docker containers by their ID
 

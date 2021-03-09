@@ -15,24 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.firewall'.format(grains['id'])) %}
-include:
-  - .prepare
-  - .install
-  - .config
-
-# Disable Firewall:
-#   service.dead:
-#     - name: firewalld
-#     - enable: false
-
-Generate sspl checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
-    - makedirs: True
-    - create: True
-{%- else -%}
-Firewall already applied:
-  test.show_notification:
-    - text: "Firewall states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.firewall.teardown' to reprovision these states."
-{%- endif -%}
+# remove  all salt packages
+Remove_salt_packages:
+  pkg.purged:
+    - pkgs:
+      - cortx-prvsnr
+      - python36-cortx-prvsnr
+      - rsync

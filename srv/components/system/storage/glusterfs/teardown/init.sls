@@ -15,10 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Delete rsyslog provisioner conf:
-  file.absent:
-    - name: /etc/rsyslog.d/prvsnrfwd.conf
-
-Delete old rsyslog provisioner conf:
-  file.absent:
-    - name: /etc/rsyslog.d/2-prvsnrfwd.conf
+include:
+  - components.system.storage.glusterfs.teardown.stop
+  - components.system.storage.glusterfs.teardown.remove_bricks
+  - components.system.storage.glusterfs.teardown.package_remove

@@ -15,24 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.firewall'.format(grains['id'])) %}
-include:
-  - .prepare
-  - .install
-  - .config
+Stop and disable glustersharedstorage service:
+   service.dead:
+     - name: glustersharedstorage
+     - enable: False
 
-# Disable Firewall:
-#   service.dead:
-#     - name: firewalld
-#     - enable: false
+Stop and disable glusterfsd service:
+   service.dead:
+     - name: glusterfsd
+     - enable: False
 
-Generate sspl checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
-    - makedirs: True
-    - create: True
-{%- else -%}
-Firewall already applied:
-  test.show_notification:
-    - text: "Firewall states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.firewall.teardown' to reprovision these states."
-{%- endif -%}
+Stop and disable glusterd service:
+   service.dead:
+     - name: glusterd
+     - enable: False
