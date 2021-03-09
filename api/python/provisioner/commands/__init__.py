@@ -456,11 +456,11 @@ class SetNTP(CommandParserFillerMixin):
     def _run(self, params, targets):
         self._apply(params, targets)
         # Configure NTP only if the setup type is physical
-        from .get_setup_info import GetSetupInfo
-        setup_info = GetSetupInfo()
-        server_type = setup_info._get_server_type().get('server_type')
+        from .grains_get import GrainsGet
+        from ..salt import local_minion_id
+        server_type = GrainsGet().run("virtual", targets=local_minion_id())
         logger.debug(f"Server type: {server_type}")
-        if server_type == "physical":
+        if server_type[local_minion_id()]["virtual"] == "physical":
             self._set_ctrl_ntp(params, targets)
 
     def dynamic_validation(self, params, targets):

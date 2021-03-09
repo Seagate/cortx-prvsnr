@@ -460,8 +460,9 @@ parse_args()
                     echo "Error: Timezone not provided" && exit 1;
                 fi
                 ntp_server="$2"
-                ntp_tz="$3"
-                echo "parse_args(): ntp_server=$ntp_server, ntp_tz=$ntp_tz" >> $logfile
+                _tz=":${3}"
+                ntp_tz=$(TZ="$_tz" date +%:z)
+                echo "parse_args(): ntp_server=$ntp_server, _tz=${_tz}, ntp_tz=$ntp_tz" >> $logfile
                 shift 3
                 ntp_opt=true ;;
             *) echo "Invalid option $1"; exit 1;;
