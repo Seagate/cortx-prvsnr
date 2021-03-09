@@ -68,7 +68,8 @@ class ValidateSetup:
 
         return output
 
-    def _validate_node_count(self, num_of_nodes, parsed_nodes):
+    @staticmethod
+    def _validate_node_count(num_of_nodes, parsed_nodes):
         """
         Validates number of nodes.
 
