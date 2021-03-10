@@ -27,14 +27,14 @@ include:
 Merge healthschema:
   module.run:
     - sspl.merge_health_map_schema:
-      - source_json: /tmp/resource_health_view.json
+      - source_json: {{ pillar['sspl']['health_map_path'] }}/resource_health_view.json
     - require:
       - Run Resource Health View
 {% else %}
 Merge healthschema:
   file.copy:
     - name: {{ pillar['sspl']['health_map_path'] }}{{ pillar['sspl']['health_map_file'] }}
-    - source: /tmp/resource_health_view.json
+    - source: {{ pillar['sspl']['health_map_path'] }}/resource_health_view.json
     - makedirs: True
     - force: true
     - mode: 777

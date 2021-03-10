@@ -44,17 +44,27 @@ def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
   health_map_file = healthmap_schema_pillar['filename']
 
   data = local.cmd('*', 'file.read', [source_json])
-  node1_data = json.loads(data["srvnode-1"])
-  node2_data = json.loads(data["srvnode-2"])
+  node_data = []
+  for node in __pillar__['cluster'].keys():
+    if "srvnode-" in node:
+      node_data = json.loads(data[node])
 
-  node_1_rack_nodes = node1_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
-  node_2_rack_nodes = node2_data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
-  node_1_rack_nodes.update(node_2_rack_nodes)
+  node_rack_nodes = None
+  for i, node_data in enumerate(node_rack_nodes):
+    if i == 0:
+      node_rack_nodes = (
+        node_data[i]["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
+      )
+    else:
+      node_rack_nodes.update(
+        node_data[i]["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
+      )
+
   local.cmd('*', 'file.mkdir',[health_map_path])
   local.cmd(
     '*',
     'file.write',
-    [os.path.join(health_map_path, health_map_file), json.dumps(node1_data, indent=4)]
+    [os.path.join(health_map_path, health_map_file), json.dumps(node_rack_nodes, indent=4)]
   )
 
   # TODO use salt formulas, CSM suggested to have 777 permission just for hotfix
