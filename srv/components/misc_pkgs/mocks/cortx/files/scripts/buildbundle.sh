@@ -5,16 +5,22 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cortx_version=2.0.0
+orig_iso=
 output_dir=.
 output_type=deploy-cortx
 verbosity=0
 gen_iso=false
 
 tmp_dir=
+orig_bundle=
 cmd_prefix="bash"
 
 function trap_handler_exit {
     ret=$?
+
+    if [[ -d "$orig_bundle" ]]; then
+        umount "$orig_bundle" || true
+    fi
 
     if [[ -n "$tmp_dir" ]]; then
         rm -rf "$tmp_dir"
@@ -43,6 +49,8 @@ If '--gen-iso' is specified then an ISO file is generated as well.
 
 Options:
   -h,  --help           print this help and exit
+  -i,  --orig-iso FILE  original ISO for partial use,
+                            default: $orig_iso
   -o,  --out-dir DIR    output dir,
                             default: $output_dir
   -r,  --cortx-ver      cortx release version,
@@ -63,8 +71,8 @@ function parse_args {
         exit 1
     fi
 
-    local _opts=ho:r:t:v
-    local _long_opts=help,out-dir:,out-type:,cortx-ver:,verbose,gen-iso
+    local _opts=hi:o:r:t:v
+    local _long_opts=help,orig-iso:,out-dir:,out-type:,cortx-ver:,verbose,gen-iso
 
     local _getopt_res
     ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
@@ -80,6 +88,16 @@ function parse_args {
             -h|--help)
                 usage
                 exit 0
+                ;;
+            -i|--orig-iso)
+                orig_iso="$2"
+                if [[ -e "$orig_iso" ]]; then
+                    if [[ ! -f "$orig_iso" ]]; then
+                        >&2 echo "'$orig_iso' not a file"
+                        exit 5
+                    fi
+                fi
+                shift 2
                 ;;
             -o|--out-dir)
                 output_dir="$2"
@@ -136,7 +154,8 @@ fi
 
 if [[ "$verbosity" -ge 1 ]]; then
     parsed_args=""
-    parsed_args+="\toutput_dir=$output_dir\n\toutput_type=$output_type"
+    parsed_args+="\torig_iso=$orig_iso"
+    parsed_args+="\n\toutput_dir=$output_dir\n\toutput_type=$output_type"
     parsed_args+="\n\tverbosity=$verbosity"
     parsed_args+="\n\trelease=$cortx_version\n\tgen-iso=$gen_iso"
 
@@ -166,8 +185,16 @@ pushd "$output_dir"
     else
         yum_repos=("cortx_iso" "3rd_party")
 
+
         if [[ "$output_type" == "upgrade" ]]; then
             yum_repos+=("os")
+        else
+            if [[ -n "$orig_iso" ]]; then
+                orig_bundle="$build_dir/orig_bundle"
+                mkdir -p "$orig_bundle"
+                echo -e "Mounting orginal ISO $orig_iso into $orig_bundle"
+                mount -o loop "$orig_iso" "$orig_bundle"
+            fi
         fi
 
         mkdir python_deps "${yum_repos[@]}"
@@ -177,6 +204,16 @@ pushd "$output_dir"
     for repo in "${yum_repos[@]}"; do
         createrepo "$repo"
     done
+
+    if [[ -d "$orig_bundle" ]]; then
+        pushd 3rd_party
+            orig_repos=("EPEL-7" "commons/glusterfs" "commons/saltstack")
+            mkdir commons
+            for repo in "${orig_repos[@]}"; do
+                cp -r "$orig_bundle/3rd_party/$repo" "$repo"
+            done
+        popd
+    fi
 
     echo -e "Preparing a release info data"
     sed_cmds="s/{{ VERSION }}/$cortx_version/g"

@@ -16,7 +16,7 @@
   - [Testing with Docker](#testing-with-Docker)
     - [Docker configuration](#docker-configuration)
     - [Docker on Fedora 32/33](#docker-on-fedora-33)
-    - [Docker containers for tests](#Docker-containers-for-tests)
+    - [Docker test helpers](#Docker-test-helpers)
 - [Appendix](#appendix)
   - [Basic Docker commands](#basic-docker-commands)
 
@@ -236,17 +236,17 @@ sudo docker run hello-world
 ```
 </details>
 
-#### Docker containers for tests
+#### Docker test helpers
 
-- Start the docker environment creation
+- docker environment creation
 
   ```bash
-  pytest test/build_helpers -k test_build_setup_env -s --root-passwd root --nodes-num 1
+  pytest test/build_helpers/build_env -s --root-passwd root --nodes-num 1
   ```
 
   <details>
   <summary>The command above will create the docker container and will have the following output</summary>
-    
+
   ```
     ========================================================================================= test session starts ==========================================================================================
     platform linux -- Python 3.6.13, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
@@ -255,9 +255,9 @@ sudo docker run hello-world
     timeout: 7200.0s
     timeout method: signal
     timeout func_only: False
-    collected 1 item                                                                                                                                                                                       
-    
-    test/build_helpers/test_build_env.py::test_build_setup_env Host srvnode-1
+    collected 1 item
+
+    test/build_helpers/build_env/test_build_env.py::test_build_setup_env Host srvnode-1
       Hostname 172.17.0.2
       Port 22
       User root
@@ -266,14 +266,40 @@ sudo docker run hello-world
       IdentityFile /tmp/pytest-of-fdmitry/pytest-10/id_rsa.test
       IdentitiesOnly yes
       LogLevel FATAL
-    
+
     ```
   </details>
 
-    Possible options (you may check them using `pytest test/build_helpers --help`, `custom options` part)
+    Possible options (you may check them using `pytest test/build_helpers/build_env --help`, `custom options` part)
     - `--docker-mount-dev` to mount `/dev` into containers (necessary if you need to mount ISO inside a container)
     - `--root-passwd <STR>` to set a root password for initial ssh access
     - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 6
+
+- building testing bundles
+
+  ```bash
+  pytest test/build_helpers/build_bundles
+  ```
+
+  The command above will create three bundles in the root of the project.
+
+  They would respect the structure of CORTX distributions for deployment and upgrade
+  but include mocks for CORTX packages instead of real ones. Non CORTX yum repositories
+  inside would be just empty.
+
+  Optionally you may pack inside it real repositories of EPEL-7, SaltStack and GlusterFS that
+  are distributed inside official CORTX bundles. For that you need to download a bundle locally
+  and run the following command:
+
+  ```bash
+  pytest test/build_helpers/build_bundles --bundle-orig-single-iso <path-to-official-bundle>
+  ```
+
+  Options (you may check them using `pytest test/build_helpers/build_bundles --help`, `custom options` part)
+  - `--bundle-orig-single-iso=PATH`: original CORTX single ISO for partial use
+  - `--bundle-output=PATH`:  path to file or directory to output
+  - `--bundle-type=TYPE`: type of the bundle
+  - `--bundle-version=PATH`: version of the release, ignored if 'all' type is used
 
 #### Integration test cases
 
