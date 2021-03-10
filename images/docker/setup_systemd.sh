@@ -21,6 +21,9 @@
 
 set -eux
 
+yum install -y initscripts
+rm -rf /var/cache/yum
+
 cd /lib/systemd/system/sysinit.target.wants/
 
 for i in *; do
