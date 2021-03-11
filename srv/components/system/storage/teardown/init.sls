@@ -21,9 +21,9 @@
 #   - .tidy-up
 # {#% endif %#}
 
-Mount default OS swap device:
-  cmd.run:
-    - name: swapon -a || true
+# Mount default OS swap device:
+#   cmd.run:
+#     - name: swapon -a || true
 
 Delete storage checkpoint flag:
   file.absent:
