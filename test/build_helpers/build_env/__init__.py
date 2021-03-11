@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,18 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-set -eux
-
-yum -y install  \
-    git         \
-    python36    \
-    rpm-build   \
-    yum-utils   \
-    python3-devel \
-    rpmdevtools \
-    createrepo  \
-    genisoimage
-# Note. keep var cache here to speed up buildrpm.sh
-# (yum-builddep will update the cache if missed each time)
-# rm -rf /var/cache/yum
