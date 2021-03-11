@@ -44,20 +44,20 @@ def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
   health_map_file = healthmap_schema_pillar['filename']
 
   data = local.cmd('*', 'file.read', [source_json])
-  node_data = dict()
+  node_data = []
   for node in __pillar__['cluster'].keys():
     if "srvnode-" in node:
-      node_data.update(json.loads(data[node]))
+      node_data.append(json.loads(data[node]))
 
   node_rack_nodes = None
   for i, _data in enumerate(node_data):
     if i == 0:
       node_rack_nodes = (
-        _data[i]["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
+        _data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
       )
     else:
       node_rack_nodes.update(
-        _data[i]["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
+        _data["cluster"]["sites"]["001"]["rack"]["001"]["nodes"]
       )
 
   local.cmd('*', 'file.mkdir',[health_map_path])
