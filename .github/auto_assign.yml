@@ -8,12 +8,13 @@ addAssignees: true
 reviewers: 
   - nitin-seagate
   - ypise
-  - SomwanshiAnjali
+  - andkononykhin2
   - mazinamdar
 
-# A list of keywords to be skipped the process that add reviewers if pull requests include it 
+# A list of keywords to be skipped, if the process that add reviewers if pull requests include it 
 skipKeywords:
   - wip
+  - draft
 
 # A number of reviewers added to the pull request
 # Set 0 to add all the reviewers (default: 0)
