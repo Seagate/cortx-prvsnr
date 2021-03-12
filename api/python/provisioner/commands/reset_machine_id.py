@@ -51,8 +51,7 @@ class ResetMachineId(CommandParserFillerMixin):
     _run_args_type = RunArgsMachineIdAttrs
     description = "API to reset machine id on all nodes"
 
-    @staticmethod
-    def run(**kwargs):
+    def run(self, **kwargs):
 
         machine_id_reset_states = []
         if kwargs['force']:

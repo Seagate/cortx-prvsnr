@@ -26,8 +26,7 @@ from ..api import grains_get
 from ..config import LOCAL_MINION
 
 from provisioner.commands import (
-     PillarSet,
-     GetClusterId
+    PillarSet
 )
 from . import CommandParserFillerMixin
 
@@ -36,13 +35,29 @@ from provisioner.salt import local_minion_id
 
 logger = logging.getLogger(__name__)
 
+# TODO TEST
+@attr.s(auto_attribs=True)
+class GetClusterId(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsEmpty
+
+    def run(self):
+        # return list(function_run(
+        #     'grains.get',
+        #     fun_args=['cluster_id']
+        # ).values())[0]
+
+        PillarGet().run(
+            'cluster/cluster_id',
+            targets=local_minion_id()
+        )[local_minion_id()]
+
 
 @attr.s(auto_attribs=True)
 class SetClusterId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    @staticmethod
-    def run(targets=LOCAL_MINION):
+    def run(self, cluster_id=None):
         """set_cluster_id command execution method.
 
         Will be executed only on primary node.
@@ -61,17 +76,17 @@ class SetClusterId(CommandParserFillerMixin):
             )[local_minion_id()]["roles"]            # displays as a list
 
             if node_role[0] != "primary":
-                logger.error(
-                     "Error: ClusterID can be set only in the Primary node "
-                     f"of the cluster. Node role received: '{node_role[0]}'."
-                )
+                # logger.error(
+                #      "Error: ClusterID can be set only in the Primary node "
+                #      f"of the cluster. Node role received: '{node_role[0]}'."
+                # )
                 raise ValueError(
                      "Error: ClusterID can be set only in the Primary node "
                      f"of the cluster. Node role received: '{node_role[0]}'."
                 )
 
             logger.info(
-                "This is the Primary node of the cluster."
+                "Setting Cluster Id on Primary node of the cluster."
             )
 
             cluster_id_from_grains = grains_get(
@@ -79,8 +94,13 @@ class SetClusterId(CommandParserFillerMixin):
                 local_minion_id()
             )[local_minion_id()]["cluster_id"]
 
-            # double verification
-            cluster_id_from_pillar = GetClusterId.run(targets)
+            cluster_id_from_pillar = PillarGet().run(
+                'cluster/cluster_id',
+                targets=local_minion_id()
+            )[local_minion_id()]
+            cluster_id_from_pillar = GetClusterId.run()
+
+            # Check if Cluster ID is set in Grains
 
             if not cluster_id_from_grains:
                 logger.info(
@@ -92,7 +112,7 @@ class SetClusterId(CommandParserFillerMixin):
                 PillarSet().run(
                     'cluster/cluster_id',
                     f'{cluster_uuid}',
-                    targets=targets
+                    targets=local_minion_id()
                 )
 
             elif cluster_id_from_grains and not cluster_id_from_pillar:
@@ -102,7 +122,7 @@ class SetClusterId(CommandParserFillerMixin):
                 PillarSet().run(
                     'cluster/cluster_id',
                     f'{cluster_id_from_grains}',
-                    targets=targets
+                    targets=local_minion_id()
                 )
 
             else:

@@ -799,19 +799,6 @@ class GetResult(CommandParserFillerMixin):
 
 # TODO TEST
 @attr.s(auto_attribs=True)
-class GetClusterId(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsEmpty
-
-    def run(self):
-        return list(function_run(
-            'grains.get',
-            fun_args=['cluster_id']
-        ).values())[0]
-
-
-# TODO TEST
-@attr.s(auto_attribs=True)
 class GetNodeId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsBase
