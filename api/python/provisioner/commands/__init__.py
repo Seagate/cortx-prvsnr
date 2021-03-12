@@ -231,6 +231,27 @@ class RunArgsUser:
     targets: str = RunArgs.targets
 
 
+# TODO TEST
+@attr.s(auto_attribs=True)
+class GetClusterId(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = RunArgsEmpty
+
+    def run(self):
+        cluster_id = PillarGet().run(
+            'cluster/cluster_id',
+            targets=local_minion_id()
+        )[local_minion_id()]['cluster']['cluster_id']
+        
+        if not cluster_id:
+            cluster_id = GrainsGet().run(
+                "cluster_id",
+                targets=local_minion_id()
+            )[local_minion_id()]["cluster_id"]
+
+        return cluster_id
+
+
 #  - Notes:
 #       1. call salt pillar is good since salt will expand
 #          properly pillar itself
