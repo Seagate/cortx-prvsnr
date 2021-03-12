@@ -52,7 +52,7 @@ MAX_REMOTE_NAME_LEN = 80
 localhost = testinfra.get_host('local://')
 
 BUILD_BUNDLE_SCRIPT = (
-    (PROJECT_PATH if PROJECT_PATH else PRVSNR_ROOT_DIR)
+    (PROJECT_PATH or PRVSNR_ROOT_DIR)
     / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
 )
 
