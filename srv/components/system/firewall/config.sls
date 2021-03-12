@@ -44,14 +44,12 @@ include:
 
 {% endfor %}
 
-
-
+{% if not 'public-data-zone' in salt['firewalld.get_zones']() %}
 Add public data zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --new-zone public-data-zone
-    - unless: firewall-cmd --get-zones | grep public-data-zone
-    - watch_in:
-      - Start and enable firewalld service
+  module.run:
+    - firewalld.new_zone:
+      - public-data-zone
+{% endif %}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
 Data-zone:
@@ -109,8 +107,6 @@ Public data zone:
       {% for interface in pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
       - {{ interface }}
       {% endfor %}
-    # - rich_rules:
-    #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
     - require:
       - Add public data zone
       {% for service in pillar['firewall']['data_public']['ports'].keys() %}
@@ -139,12 +135,13 @@ Private data zone:
 {% else %}
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
 {% endif %}
+
+{% if not 'management-zone' in salt['firewalld.get_zones']() %}
 Add management zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --new-zone management-zone
-    - unless: firewall-cmd --get-zones | grep management-zone
-    - watch_in:
-      - Start and enable firewalld service
+  module.run:
+    - firewalld.new_zone:
+      - management-zone
+{% endif %}
 
 Management zone:
   firewalld.present:
@@ -176,25 +173,7 @@ Management zone:
       - {{ service }}
       {% endfor %}
 
-# Public Zone:
-#   firewalld.present:
-#     - name: public
-#     - block_icmp:
-#       - echo-reply
-#       - echo-request
-#     - masquerade: True
-#     - prune_services: False
-#     - prune_ports: True
-#     - prune_interfaces: True
-#     - require:
-#       - Public data zone
-#       - Management zone
-#     - watch_in:
-#       - service: Start and enable firewalld service
-
 Restart firewalld:
   module.run:
-    - cmd.run:
-      - firewall-cmd --reload
-    # - service.restart:
-    #   - firewalld
+    - service.restart:
+      - firewalld

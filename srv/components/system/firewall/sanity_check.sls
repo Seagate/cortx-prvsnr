@@ -16,14 +16,21 @@
 #
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-  {% set mgmt_if = 'mgmt0' %}
+  {% set mgmt_if = ['mgmt0'] %}
 {% else %}
-  {% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] %}
+  {% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'] %}
 {% endif %}
 
+{% set added_mgmt_if = salt['firewalld.get_interfaces'](zone='management-zone') %}
 Verify management zone interfaces:
-  cmd.run:
-    - name: firewall-cmd --zone=management-zone --list-interfaces | grep {{ mgmt_if }}
+{% if (added_mgmt_if | symmetric_difference(mgmt_if)) %}
+  test.fail_without_changes:
+    - name: {{ if (added_mgmt_if | symmetric_difference(mgmt_if)) }} interface verification failed on management-zone
+{% else %}
+  test.show_notification:
+    - text: Interfaces verification successful on management-zone
+{% endif %}
+
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {% set public_data_if = ['data0'] %}
@@ -33,19 +40,25 @@ Verify management zone interfaces:
   {% set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
 {% endif %}
 
-Verify public-data interfaces:
-  cmd.run:
-    - name: |
-    {% for interface in public_data_if %}
-        firewall-cmd --zone=public-data-zone --list-interfaces | grep {{ interface }}
-    {% endfor %}
+{% set added_public_data_if = salt['firewalld.get_interfaces'](zone='public-data-zone') %}
+Verify public data interfaces:
+{% if (added_public_data_if | symmetric_difference(public_data_if)) %}
+  test.fail_without_changes:
+    - name: {{ if (added_public_data_if | symmetric_difference(public_data_if)) }} interface verification failed on public-data-zone
+{% else %}
+  test.show_notification:
+    - text: Interfaces verification successful on public-data-zone
+{% endif %}
 
+{% set added_private_data_if = salt['firewalld.get_interfaces'](zone='trusted') %}
 Verify private-data interfaces:
-  cmd.run:
-    - name: |
-    {% for interface in private_data_if %}
-        firewall-cmd --zone=trusted --list-interfaces | grep {{ interface }}
-    {% endfor %}
+{% if (added_private_data_if | symmetric_difference(private_data_if)) %}
+  test.fail_without_changes:
+    - name: {{ if (added_private_data_if | symmetric_difference(private_data_if)) }} interface verification failed on private-data-zone
+{% else %}
+  test.show_notification:
+    - text: Interfaces verification successful on private-data-zone
+{% endif %}
 
 {% for nic in pillar['firewall'].keys() %}
 

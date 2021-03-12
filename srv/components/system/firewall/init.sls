@@ -26,7 +26,7 @@ include:
 #     - name: firewalld
 #     - enable: false
 
-Generate sspl checkpoint flag:
+Generate firewall checkpoint flag:
   file.managed:
     - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
     - makedirs: True
