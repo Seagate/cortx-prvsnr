@@ -82,7 +82,11 @@ pushd ~/rpmbuild/SOURCES/
 
     yum-builddep -y ${BASEDIR}/cortx-prvsnr.spec
 
-    rpmbuild -bb --define "_cortx_prvsnr_version ${CORTX_PRVSNR_VERSION}" --define "_cortx_prvsnr_git_ver git${GIT_VER}" --define "_build_number ${BUILD_NUMBER}" ${BASEDIR}/cortx-prvsnr.spec
+    rpmbuild -bb \
+        --define "_cortx_prvsnr_version ${CORTX_PRVSNR_VERSION}" \
+        --define "_cortx_prvsnr_git_ver git${GIT_VER}" \
+        --define "_build_number ${BUILD_NUMBER}" \
+        ${BASEDIR}/cortx-prvsnr.spec
 
 popd
 

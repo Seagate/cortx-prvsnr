@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from enum import Enum
 import sys
 import os
 import re
@@ -41,6 +42,7 @@ from provisioner.config import *  # noqa: E402, F403, F401 TODO improve
 
 # just to make flake8 happy
 from provisioner.config import PRVSNR_ROOT_DIR, PROJECT_PATH  # noqa: E402
+
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
 PRVSNR_PKG_NAME = 'cortx-prvsnr'
@@ -56,8 +58,15 @@ BUILD_BUNDLE_SCRIPT = (
     / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
 )
 
-BUNDLE_TYPES = ['deploy-cortx', 'deploy-bundle','upgrade']
+if not BUILD_BUNDLE_SCRIPT.exists():
+    BUILD_BUNDLE_SCRIPT = None
 
+class BundleT(Enum):
+    """Bundle types"""
+
+    DEPLOY_CORTX = 'deploy-cortx'
+    DEPLOY_BUNDLE = 'deploy-bundle'
+    UPGRADE = 'upgrade'
 
 
 # TODO check packer is available
@@ -819,14 +828,15 @@ def install_provisioner_api(mhost):
     mhost.check_output("pip3 install {}".format(mhost.repo / 'api/python'))
 
 
-def dump_options(request, options_list):
+def dump_options(request, run_options):
     opts_str = '\n'.join([
         '{}: {}'.format(opt, request.config.getoption(opt.replace('-', '_')))
-        for opt in options_list
+        for opt in run_options
     ])
     logger.info('Passed options:\n{}'.format(opts_str))
 
 
 def add_options(parser, options):
     for name, params in options.items():
-        parser.addoption("--" + name, **params)
+        name = (name if name.startswith('--') else f"--{name}")
+        parser.addoption(name, **params)

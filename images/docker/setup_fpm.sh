@@ -19,7 +19,9 @@
 
 set -eux
 
-yum install -y ruby-devel gcc make rpm-build rubygems python36
+NO_YUM_CLEAN="${NO_YUM_CLEAN:-}"
+
+yum install -y ruby-devel gcc make rpm-build rubygems python36 git
 
 # issues with pip>=10:
 # https://github.com/pypa/pip/issues/5240
@@ -28,4 +30,6 @@ python3 -m pip install -U pip setuptools
 
 gem install --no-ri --no-rdoc rake fpm
 
-rm -rf /var/cache/yum
+if [[ -z "$NO_YUM_CLEAN" ]]; then
+    rm -rf /var/cache/yum
+fi

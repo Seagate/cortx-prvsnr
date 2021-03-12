@@ -17,28 +17,21 @@
 
 import pytest
 
+from provisioner import inputs
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--bvt-repo-path", action='store',
-        default='./cortx-test.tgz',
-        help="path to cortx-test repo tar gzipped file"
-    )
-    parser.addoption(
-        "--bvt-test-targets", action='store',
-        default='avocado_test/bvt_test.py',
-        help="bvt test targets to run"
-    )
-    parser.addoption(
-        "--bvt-results-path", action='store',
-        default='./bvt.job-results.tgz',
-        help="path to tar gzipped archive with bvt test job result"
-    )
+
+@pytest.fixture(scope='session')
+def bundle_opts_t():
+    return inputs.ParserMixin
 
 
 @pytest.fixture(scope="session")
-def run_options(run_options):
+def run_options(run_options, bundle_opts_t: inputs.ParserMixin):
     return (
-        run_options +
-        ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
+        run_options + list(bundle_opts_t.parser_args())
     )
+
+
+@pytest.fixture(scope='session')
+def bundle_opts(request, bundle_opts_t: inputs.ParserMixin):
+    return bundle_opts_t.from_args(request.config.option)

@@ -22,76 +22,107 @@ from copy import deepcopy
 from collections import defaultdict
 
 from provisioner.vendor import attr
-from provisioner import utils
+from provisioner import utils, inputs
 
 from test import helper as h
 
 
 @attr.s(auto_attribs=True)
-class BundleOpts:
-    type: str
-    version: str
+class BundleOpts(inputs.ParserMixin):
+    parser_prefix = 'build-'
+
+    type: str = attr.ib(
+        default='deploy-bundle',
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "type of the bundle",
+                'metavar': 'TYPE',
+                'choices': ([t.value for t in h.BundleT] + ['all'])
+            }
+        }
+    )
+    version: str = attr.ib(
+        default='2.0.0',
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "version of the release, ignored if 'all' type is used"
+            }
+        }
+    )
     output: Union[str, Path] = attr.ib(
+        default='.',
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "path to file or directory to output"
+            }
+        },
         converter=utils.converter_path_resolved,
         validator=utils.validator_path
     )
     orig_single_iso: Union[str, Path] = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "original CORTX single ISO for partial use",
+                'metaver': 'PATH'
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists
+    )
+    prvsnr_pkg: Union[str, Path] = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "PATH to provisioner core rpm package",
+                'metaver': 'PATH'
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists
+    )
+    prvsnr_api_pkg: Union[str, Path] = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "PATH to provisioner API rpm package",
+                'metaver': 'PATH'
+            }
+        },
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
 
     def __attrs_post_init__(self):
-        if self.type == 'all' and not self.output.is_dir():
-            raise ValueError(f"{self.output} is not a directory")
+        if not self.output.is_dir():
+            if self.type == 'all':
+                raise ValueError(
+                    f"{self.output} is not a directory"
+                    " and can't be used to output all bundles"
+                )
 
-
-prvsnr_pytest_options = {
-    "bundle-orig-single-iso": dict(
-        action='store',
-        help="original CORTX single ISO for partial use",
-        default=None,
-        metavar='PATH'
-    ),
-    "bundle-output": dict(
-        action='store',
-        help="path to file or directory to output",
-        default=h.PROJECT_PATH,
-        metavar='PATH'
-    ),
-    "bundle-type": dict(
-        action='store',
-        help="type of the bundle",
-        default='deploy-bundle',
-        metavar='TYPE',
-        choices=(h.BUNDLE_TYPES + ['all'])
-    ),
-    "bundle-version": dict(
-        action='store',
-        help="version of the release, ignored if 'all' type is used",
-        default='2.0.0',
-        metavar='PATH'
-    )
-}
+            if not self.output.parent.is_dir():
+                raise ValueError(
+                    f"{self.output.parent} is not a directory"
+                )
 
 
 def pytest_addoption(parser):
-    h.add_options(parser, prvsnr_pytest_options)
+    h.add_options(
+        parser, BundleOpts.prepare_args()
+    )
 
 
 @pytest.fixture(scope="session")
-def options_list(options_list):
-    return options_list + list(prvsnr_pytest_options)
+def run_options(run_options):
+    return (
+        run_options + list(BundleOpts.parser_args())
+    )
 
 
 @pytest.fixture(scope='session')
 def bundle_opts(request):
-    opts = vars(request.config.option)
-    return BundleOpts(
-        **{
-            k[7:]: opts[k] for k in list(opts)
-            if k[7:] in attr.fields_dict(BundleOpts)
-        }
-    )
+    return BundleOpts.from_args(request.config.option)
 
 
 @pytest.fixture(scope='session')
