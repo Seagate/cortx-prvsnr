@@ -296,6 +296,7 @@ def test_commands_Get_from_spec(monkeypatch):
     assert get_cmd.input_type is ParamsListChild
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_commands_Get_run(test_pillar, param_spec):
     get_cmd = commands.Get.from_spec()
     param1 = 'some_param_gr/attr1'
@@ -340,6 +341,7 @@ def test_commands_Set_from_spec():
     assert get_cmd.post_states == [State(st) for st in states['post']]
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.patch_logging([(commands, ('error',))])
 def test_commands_Set_run(monkeypatch, some_param_gr, patch_logging):
     pre_states = [State('pre')]

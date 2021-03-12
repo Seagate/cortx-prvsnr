@@ -37,6 +37,7 @@ def script_name():
     return 'configure'
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
@@ -71,6 +72,7 @@ def test_configure_cortx_show(
 
 # TODO
 #  - mostly repeats 'test_functions_cortx_pillar_update_and_load_default'
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(

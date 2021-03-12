@@ -67,6 +67,7 @@ def default_res_copy(default_res):
 
 # TESTS
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_version(default_res_copy):
     default_res_copy.kwargs['version'] = True
     assert _parse_args(
@@ -74,6 +75,7 @@ def test_cli_parser_version(default_res_copy):
     ) == default_res_copy
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_creds(default_res_copy):
     username = 'someuser'
     password = 'somepass'
@@ -85,6 +87,7 @@ def test_cli_parser_creds(default_res_copy):
     )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_eauth(default_res_copy):
     for eauth in ('pam', 'ldap'):
         default_res_copy.kwargs['eauth'] = eauth
@@ -101,6 +104,7 @@ def test_cli_parser_eauth(default_res_copy):
         )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_output(default_res_copy):
     for output in config.PRVSNR_CLI_OUTPUT:
         default_res_copy.kwargs['output'] = output
@@ -117,6 +121,7 @@ def test_cli_parser_output(default_res_copy):
         )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_logging_nohandler(default_res_copy, log_handler_name):
     default_res_copy.kwargs[f'{log_handler_name}'] = False
     check(
@@ -138,6 +143,7 @@ def test_cli_parser_logging_nohandler(default_res_copy, log_handler_name):
         )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_logging_level(default_res_copy, log_handler_name):
     for level in ('DEBUG', 'INFO', 'WARN', 'ERROR'):
         default_res_copy.kwargs[f'{log_handler_name}_level'] = level
@@ -155,6 +161,7 @@ def test_cli_parser_logging_level(default_res_copy, log_handler_name):
         )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_cli_parser_logging_formatter(default_res_copy, log_handler_name):
     for formatter in prvsnr_config.logging['formatters']:
         default_res_copy.kwargs[f'{log_handler_name}_formatter'] = formatter

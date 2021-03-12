@@ -38,6 +38,7 @@ def script_name():
 
 # TODO test=True case
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.mock_cmds({'': ['salt']})
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])

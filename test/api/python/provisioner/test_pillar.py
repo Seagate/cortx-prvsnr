@@ -266,6 +266,7 @@ def test_pillar_updater_ensure_exists(tmpdir_function):
     assert f2.exists()
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.patch_logging([(pillar, ('error',))])
 def test_pillar_updater_update_values(
     some_param_gr, test_pillar, patch_logging
@@ -302,6 +303,7 @@ def test_pillar_updater_update_values(
     assert pu.pillar(fpath) == {'1': {'2': {'3': 'some-value'}}}
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.parametrize(
     'targets', [ALL_MINIONS, 'some_minion_id'], ids=['all', 'one']
 )
