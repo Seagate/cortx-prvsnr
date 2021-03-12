@@ -35,7 +35,7 @@ class MainMenu(Window):
     def create_window(self, **kwargs):
         color_code = kwargs['color_code']
         selected_rows = kwargs['menu_code']
-        col_code_attr = ColorCode().get_color_pair(color_code)
+        col_code_attr = ColorCode.get_color_pair(color_code)
         for idx, row in enumerate(self._menu):
             x = self.get_max_width() // 2 - len(row)//2
             y = self.get_max_height() // 2 - len(self._menu)//2 + idx

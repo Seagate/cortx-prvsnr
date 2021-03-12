@@ -25,9 +25,9 @@ from color_code import ColorCode
 def main(stdscr):
     curses.initscr()
     curses.curs_set(0)
-    cod = ColorCode()
+    ColorCode.init()
     for code, color in config.color_codes.items():
-        cod.create_color_pair(code, color[0], color[1])
+        ColorCode.create_color_pair(code, color[0], color[1])
     wind = MainMenu(stdscr)
     wind.create_default_window(config.default_window_color)
     wind.create_window(color_code=config.menu_color, menu_code=0)

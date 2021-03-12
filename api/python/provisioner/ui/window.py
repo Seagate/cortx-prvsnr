@@ -49,7 +49,7 @@ class Window:
         self._window.attroff(attr)
 
     def create_default_window(self, color_code):
-        col_code_attr = ColorCode().get_color_pair(color_code)
+        col_code_attr = ColorCode.get_color_pair(color_code)
         self.on_attr(col_code_attr)
         textpad.rectangle(
             self._window, 1, 1, self._max_h - 2, self._max_w - 2)

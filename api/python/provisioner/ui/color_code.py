@@ -21,19 +21,17 @@ import config
 
 
 class ColorCode:
-    _instance = None
 
-    def __init__(self):
-        if self._instance:
-            return self._instance
-        else:
-            curses.start_color()
-            self._instance = self
+    @staticmethod
+    def init():
+        curses.start_color()
 
-    def create_color_pair(self, code, color1, color2):
+    @staticmethod
+    def create_color_pair(code, color1, color2):
         curses.init_pair(code, color1, color2)
 
-    def get_color_pair(self, color_code):
+    @staticmethod
+    def get_color_pair(color_code):
         if not config.color_codes.get(color_code, None):
             raise Exception("No color code defined")
         return curses.color_pair(color_code)
