@@ -545,14 +545,11 @@ class NodeParams():
         _param_group, descr="node hostname"
     )
     roles: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="role of the node"
+        _param_group, descr="List of roles assigned to the node"
     )
     is_primary: bool = ParamGroupInputBase._attr_ib(
         _param_group, descr="mark node as a primary",
         converter=bool
-    )
-    type: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="Common Server configuration"
     )
     dns_servers: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="list of dns servers as json"

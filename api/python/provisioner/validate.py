@@ -18,18 +18,14 @@
 import logging
 from typing import List
 
-from ..inputs import (
+from .inputs import (
     ClusterParams,
     StorageParams,
     NodeParams
 )
-from ..vendor import attr
-from ..config import (
-    NODE_DEFAULT,
-    STORAGE_DEFAULT
-)
+from .vendor import attr
 
-from ..values import UNCHANGED
+from .values import UNCHANGED
 
 logger = logging.getLogger(__name__)
 
@@ -45,20 +41,23 @@ class ValidateSetup:
         The node names are parsed based on config-sections.
 
         """
-        section_list = []
+        section_list = sorted(list(content))
         output = {}
-        for section in content:
-            section_list.append(f"{section}")
 
         # Gives section names of only nodes : srvnode[1-12]
-        servers = [srv for srv in sorted(section_list) if "srvnode" in srv and "default" not in srv]
+        servers = [srv for srv in section_list if "srvnode" in srv
+                   and "default" not in srv]
 
         # Gives section names of only nodes : storage-enclosure[1-12]
-        enclosures = [enc for enc in sorted(section_list) if "storage" in enc and "default" not in enc]
+        enclosures = [enc for enc in section_list if "storage" in enc
+                      and "default" not in enc]
+
+        clusters = [cl for cl in section_list if "cluster" in cl]
+
+        elements = servers + enclosures + clusters
 
         output["section_list"] = section_list
-        output["server_default"] = f'{NODE_DEFAULT}'
-        output["storage_default"] = f'{STORAGE_DEFAULT}'
+        output["section_elements"] = elements
         output["server_list"] = servers
         output["storage_list"] = enclosures
 
