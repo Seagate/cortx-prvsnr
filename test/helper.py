@@ -51,6 +51,14 @@ MAX_REMOTE_NAME_LEN = 80
 
 localhost = testinfra.get_host('local://')
 
+BUILD_BUNDLE_SCRIPT = (
+    (PROJECT_PATH or PRVSNR_ROOT_DIR)
+    / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
+)
+
+BUNDLE_TYPES = ['deploy-cortx', 'deploy-bundle','upgrade']
+
+
 
 # TODO check packer is available
 @attr.s

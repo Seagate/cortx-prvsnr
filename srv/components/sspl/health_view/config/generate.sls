@@ -30,7 +30,7 @@ include:
 {% endif %}
 Run Resource Health View:
   cmd.run:
-    - name: /usr/bin/resource_health_view -n {{ enclosure }} --path /tmp
+    - name: /usr/bin/resource_health_view -n {{ enclosure }} --path {{ pillar['sspl']['health_map_path'] }}
 {% if not ("replace_node" in pillar["cluster"]
   and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
 # Should not be executed for replaced node

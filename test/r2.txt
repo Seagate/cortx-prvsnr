@@ -122,10 +122,47 @@ yum install /root/rpmbuild/RPMS/x86_64/cortx-prvsnr-2.0.0-0_git123456_el7.x86_64
 Step-4: Validate that `repos` states are available and visible for salt commands
 
 ```bash
-salt '*' state.id_exists "configure pip" repos.pip_config
+salt '*' state.sls_exists repos.upgrade
+```
+
+Expected output should be
+```
+srvnode-1:
+    True
+```
+
+Also you can validate after that command that variable `$?` is set to 0:
+```bash
+if [ $? -eq  0 ] ; then echo "No errors" ; else echo "Some error occurred"; fi
 ```
 
   NOTE: Useful command to list all salt states
 ```bash
 salt-call state.show_top
 ```
+
+[EOS-17831] - Bootstrap - Storage-Set-ID & Machine-ID assignment
+  1. Storage-set-id should be  assigned to machine
+  Steps: 
+    1. Deploy single node vm
+    2. Check in  cluster storage set id is assigned 
+    ``` salt-call pillar.get cluster:srvnode-1:storage_set_id ```
+    3. List storage_sets
+    ``` salt-call pillar.get cluster:storage_sets ```
+	
+  2. Machine_id is assigned to vm   
+  prereq: 
+    1. Take new fresh vm and check if machine id is available and make note of it
+    ``` cat /etc/machine-id ```
+    2. Deploy single node vm
+  Steps:
+    1. Check if machine id  is reset
+    ``` salt-call grains.get machine_id ```
+    2. Verify machine id from grains
+    ``` cat /etc/machine-id ```
+    3. Check if machine_id  is set in cluster
+    ``` salt-call pillar.get cluster:srvnode-1:machine_id ```
+
+
+[EOS-17235][EOS-16869] - Destroy cortx on single node vm
+   Steps : Verify if all steps are working fine from doc: https://github.com/Seagate/cortx-prvsnr/wiki/Teardown-Node

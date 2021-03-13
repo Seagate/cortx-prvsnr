@@ -363,7 +363,8 @@ REPO_BUILD_DIRS = [
     f'{PROFILE_DIR_NAME}',
     '__pycache__',
     'packer_cache',
-    'tmp'
+    'tmp',
+    '*.iso'
 ]
 
 # Using any base path is risky as it builds a dependency inside code.
