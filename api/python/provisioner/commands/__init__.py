@@ -242,7 +242,7 @@ class GetClusterId(CommandParserFillerMixin):
             'cluster/cluster_id',
             targets=local_minion_id()
         )[local_minion_id()]['cluster']['cluster_id']
-        
+
         if not cluster_id:
             cluster_id = GrainsGet().run(
                 "cluster_id",

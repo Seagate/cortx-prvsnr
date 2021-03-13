@@ -29,7 +29,6 @@ from . import CommandParserFillerMixin
 from . import (
     PillarSet, GetClusterId
 )
-from .grains_get import GrainsGet
 
 from ..vendor import attr
 from provisioner.salt import local_minion_id
