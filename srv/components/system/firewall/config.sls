@@ -121,6 +121,7 @@ s3:
   firewalld.service:
     - name: s3
     - ports:
+      - 443/tcp     # HTTPS
       - 7081/tcp
       {% for port in range(8081, 8099) %}
       - {{ port }}/tcp
@@ -150,8 +151,7 @@ uds:
 www:
   firewalld.service:
     - ports:
-      # - 80/tcp
-      - 443/tcp     # HTTPS
+      - 80/tcp
 
 Add public data zone:
   cmd.run:
@@ -181,7 +181,6 @@ Data-zone:
       - lnet
       - s3
       - uds
-      - www
     - require:
       - Add public data zone
       - consul
@@ -193,7 +192,6 @@ Data-zone:
       - lnet
       - s3
       - uds
-      - www
 
 # No restrictions for localhost
 Localhost:
@@ -317,7 +315,9 @@ Management zone:
       - saltmaster
       - ssh
       - uds
-      - www
+      {% if not 'physical' in grains['virtual'] %}
+      - www                 # Open port 80 in management interface for OVA
+      {% endif %}
       {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
       {% endif %}
@@ -340,7 +340,9 @@ Management zone:
       - smtp
       - saltmaster
       - uds
+      {% if not 'physical' in grains['virtual'] %}
       - www
+      {% endif %}
 
 # Public Zone:
 #   firewalld.present:
