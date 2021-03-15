@@ -18,77 +18,35 @@
 include:
   - .start
 
-{% set services = [] %}
+{% set services = [] -%}
 
-{% for nic in pillar['firewall'].keys() %}
-
-{% for service in pillar['firewall'][nic]['ports'] %}
-
-{% if service not in services %}
+{% for nw_interface in pillar['firewall'].keys() -%}
+  {% for service in set(pillar['firewall'][nw_interface]['ports'].keys()) -%}
 
 {{ service }}:
   firewalld.service:
     - name: {{ service }}
     - ports:
-      {% for port in pillar['firewall'][nic]['ports'][service] %}
+      {% for port in pillar['firewall'][nw_interface]['ports'][service] -%}
       - {{ port }}
-      {% endfor %}
+      {%- endfor %}
 
+  {%- endfor %}
+{%- endfor %}
 
-
-{% do services.append(service) %}
-{% endif %}
-
-
-{% endfor %}
-
-{% endfor %}
-
-{% if not 'public-data-zone' in salt['firewalld.get_zones']() %}
+{% if not 'public-data-zone' in salt['firewalld.get_zones']() -%}
 Add public data zone:
   module.run:
     - firewalld.new_zone:
       - public-data-zone
-{% endif %}
+{%- endif %}
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] -%}
-Data-zone:
-  firewalld.present:
-    - name: public-data-zone
-    - interfaces:
-      - data0
-    - default: False
-    - prune_ports: True
-    - prune_services: True
-    - prune_interfaces: True
-    - services:
-      {% for service in pillar['firewall']['data_public']['services'] %}
-      - {{ service }}
-      {% endfor %}
-      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
-      - {{ service }}
-      {% endfor %}
-    - require:
-      - Add public data zone
-      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
-      - {{ service }}
-      {% endfor %}
-
-# No restrictions for localhost
-Localhost:
-  firewalld.present:
-    - name: trusted
-    - interfaces:
-      - lo
-    - sources:
-      - 127.0.0.0/24
-    - default: False
-    - masquerade: False
-    - prune_ports: False
-    - prune_services: False
-    - prune_interfaces: False
-
+  {%- set data_if = ['data0'] -%}
 {% else -%}
+  {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
+{%- endif %}
+
 Public data zone:
   firewalld.present:
     - name: public-data-zone
@@ -96,84 +54,87 @@ Public data zone:
     - prune_ports: True
     - prune_services: True
     - prune_interfaces: True
-    - services:
-      {% for service in pillar['firewall']['data_public']['services'] %}
-      - {{ service }}
-      {% endfor %}
-      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
-      - {{ service }}
-      {% endfor %}
     - interfaces:
-      {% for interface in pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
+      {% for interface in data_if -%}
       - {{ interface }}
-      {% endfor %}
+      {%- endfor %}
+    - services:
+      {% for service in pillar['firewall']['data_public']['services'] -%}
+      - {{ service }}
+      {%- endfor %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() -%}
+      - {{ service }}
+      {%- endfor %}
     - require:
       - Add public data zone
-      {% for service in pillar['firewall']['data_public']['ports'].keys() %}
+      {% for service in pillar['firewall']['data_public']['ports'].keys() -%}
       - {{ service }}
-      {% endfor %}
+      {%- endfor %}
 
-Private data zone:
-  firewalld.present:
-    - name: trusted
-    - interfaces:
-      {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
-      - {{ interface }}
-      {% endfor %}
-    - default: False
-    - sources:
-      - 127.0.0.0/24
-      - 192.168.0.0/16
-    - masquerade: False
-    - prune_ports: False
-    - prune_services: False
-    - prune_interfaces: False
-{%- endif %}
 
-{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-  {%- set mgmt_if = 'mgmt0' -%}
-{% else %}
-  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] -%}
-{% endif %}
-
-{% if not 'management-zone' in salt['firewalld.get_zones']() %}
+{% if not 'management-zone' in salt['firewalld.get_zones']() -%}
 Add management zone:
   module.run:
     - firewalld.new_zone:
       - management-zone
-{% endif %}
+{%- endif %}
 
+{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] -%}
+  {%- set mgmt_if = ['mgmt0'] -%}
+{% else -%}
+  {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'] -%}
+{%- endif %}
 Management zone:
   firewalld.present:
     - name: management-zone
     - default: True
     - prune_ports: True
     - prune_services: True
-    - services:
-      {% for service in pillar['firewall']['mgmt_public']['services'] %}
-      - {{ service }}
-      {% endfor %}
-      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
-      - {{ service }}
-      {% endfor %}
-      {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
-      - glusterfs
-      {% endif %}
+    - prune_interfaces: True
     - interfaces:
-      - {{ mgmt_if }}
+    {% for interface in mgmt_if %}
+      - {{ interface }}
+    {% endfor %}
+    - services:
+      {% for service in pillar['firewall']['mgmt_public']['services'] -%}
+      - {{ service }}
+      {%- endfor %}
+      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() -%}
+      - {{ service }}
+      {%- endfor %}
     - port_fwd:
-      {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+      {% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
       - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['primary']['ip'] }}
-      {% else %}
+      {% else -%}
       - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['secondary']['ip'] }}
-      {% endif %}
+      {%- endif %}
     - require:
       - Add management zone
-      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
+      {% for service in pillar['firewall']['mgmt_public']['ports'].keys() -%}
       - {{ service }}
-      {% endfor %}
+      {%- endfor %}
+
+Private data zone:
+  firewalld.present:
+    - name: trusted
+    - default: False
+    - masquerade: False
+    - prune_ports: False
+    - prune_services: False
+    - prune_interfaces: True
+    - interfaces:
+      - lo
+      {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
+      - {{ interface }}
+      {%- endfor %}
+    - sources:
+      - 127.0.0.0/24
+      {% if pillar['cluster'][grains['id']]['network']['data']['private_ip'] -%}
+      - {{ pillar['cluster'][grains['id']]['network']['data']['private_ip'].rsplit('.',1)[0] }}.0/24
+      {%- endif %}
 
 Restart firewalld:
   module.run:
+    - firewalld.reload_rules: []
     - service.restart:
       - firewalld

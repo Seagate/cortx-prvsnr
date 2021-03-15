@@ -46,6 +46,9 @@ firewall:
       - ssh
       - high-availability
       - ftp
+      {%- if salt['cmd.run']('rpm -qa glusterfs-server') %}
+      - glusterfs
+      {%- endif %}
     ports:
       consul:
         - 8600/tcp
