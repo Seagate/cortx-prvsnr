@@ -42,6 +42,7 @@ CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
 CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
 PRVSNR_TMP_DIR = Path(  Path.home() / '.tmp/seagate/prvsnr/')
 CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
+PRVSNR_GEN_CONFIG = PRVSNR_ROOT_DIR / 'generated_configs'
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
