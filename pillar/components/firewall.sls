@@ -1,8 +1,6 @@
 firewall:
   data_public:
     services:
-      - ssh
-      - high-availability
     ports:
       consul:
         - 8600/tcp
@@ -28,11 +26,10 @@ firewall:
       uds:
         - 5000/tcp
         - 5125/udp
-      www:
-        - 443/tcp
       s3:
+        - 443/tcp
         - 7081/tcp
-        {% for port in range(8081, 8099) %}
+        {% for port in range(8081, 8092) %}
         - {{ port }}/tcp
         {% endfor %}
         - 514/tcp
@@ -44,7 +41,6 @@ firewall:
   mgmt_public:
     services:
       - ssh
-      - high-availability
       - ftp
       {%- if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
@@ -81,5 +77,3 @@ firewall:
       uds:
         - 5000/tcp
         - 5125/udp
-      www:
-        - 443/tcp
