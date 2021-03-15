@@ -1,0 +1,88 @@
+{%- set cluster_id = pillar['cluster']['cluster_id'] %}
+
+support:
+  user: {{ pillar['system']['service-user']['name'] }}
+  secret: {{ pillar['system']['service-user']['secret'] }}
+
+cortx:
+  software:
+    csm: 
+      user: 
+      secret:
+    openldap:
+      root:
+        user: {{ pillar['openldap']['root']['user'] }}
+        secret: {{ pillar['openldap']['root']['secret'] }}
+      sgiam:
+        user: {{ pillar['openldap']['sgiam']['user'] }}
+        secret: {{ pillar['openldap']['sgiam']['secret'] }}
+    corosync: 
+      user: {{ pillar['corosync-pacemaker']['user'] }}
+      secret: {{ pillar['corosync-pacemaker']['secret'] }}
+  release:
+    setup: {{ pillar['release']['setup'] }}
+    product: {{ pillar['release']['product'] }}
+
+system:
+  firewall: 
+
+
+cluster:
+  {{ cluster_id }}:
+    name: {{ pillar['corosync-pacemaker']['cluster_name'] }}
+    site_count: 1
+    site:
+      storage_node_count: 3
+    storage_set:
+      server_node_count: 3
+      storage_enclosure_count: 3
+    network: 
+      management:
+        virtual_host: 10.12.14.14
+      search_domains: {{ pillar['cluster']['search_domains'] }}
+      dns_servers: {{ pillar['cluster']['dns_servers'] }}
+    
+
+      
+server_node:
+{%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
+  {{ machine_id }}:
+    name: {{ node }} 
+    hostname: {{ pillar['cluster'][node]['hostname'] }}
+    roles: {{ pillar['cluster'][node]['roles'] }}
+    type: {{ pillar['cluster'][node]['node_type'] }}
+    bmc:
+      ip: {{ pillar['cluster'][node]['bmc']['ip'] }}
+      user: {{ pillar['cluster'][node]['bmc']['user'] }}
+      secret: {{ pillar['cluster'][node]['bmc']['secret'] }}
+    network:
+      management:
+        interfaces: {{ pillar['cluster'][node]['network']['mgmt']['interfaces'] }}
+        gateway: {{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
+        netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
+        public_fqdn: {{ pillar['cluster'][node]['network']['mgmt']['public_fqdn'] }}
+      data:
+        public_interfaces: {{ pillar['cluster'][node]['network']['data']['public_interfaces'] }}
+        private_interfaces: {{ pillar['cluster'][node]['network']['data']['private_interfaces'] }}
+        gateway: {{ pillar['cluster'][node]['network']['data']['gateway'] }}
+        netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
+        public_fqdn: {{ pillar['cluster'][node]['network']['data']['public_fqdn'] }}
+        private_fqdn: {{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}
+        roaming_ip: {{ pillar['cluster'][node]['network']['data']['roaming_ip'] }}
+        interface_type: {{ pillar['cluster'][node]['network']['data']['interface_type'] }}
+        transport_type: {{ pillar['cluster'][node]['network']['data']['transport_type'] }}
+    storage:
+      enclosure_id: {{ pillar['cluster'][node]['storage']['enclosure_id'] }}
+      cvg_count: {{ pillar['cluster'][node]['storage']['cvg_count'] }}
+      cvg[N]:
+        metadata_devices: {{ pillar['cluster'][node]['storage']['metadata_devices'] }} 
+        data_devices: {{ pillar['cluster'][node]['storage']['data_devices'] }}
+    site_id: {{ pillar['cluster'][node]['site_id'] }}
+    rack_id: {{ pillar['cluster'][node]['rack_id'] }}
+    node_id: {{ pillar['cluster'][node]['node_id'] }}
+    storage_set_id: {{ pillar['cluster'][node]['storage_set_id'] }}
+    cluster_id: {{ cluster_id }}
+    s3_instances: {{ pillar['cluster'][node]['s3_instances'] }}
+    
+{%- endfor %}
+
