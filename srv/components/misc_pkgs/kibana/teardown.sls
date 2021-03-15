@@ -35,4 +35,4 @@ Delete kibana service file:
 
 Delete kibana checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kibana
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kibana

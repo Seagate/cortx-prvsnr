@@ -15,13 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.logrotate'.format(grains['id'])) %}include:
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.logrotate'.format(grains['id'])) %}include:
   - components.system.logrotate.install
   - components.system.logrotate.config
 
 Generate logrotate checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.logrotate
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.logrotate
     - makedirs: True
     - create: True
 {%- else -%}

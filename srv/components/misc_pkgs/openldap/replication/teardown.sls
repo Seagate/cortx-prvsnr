@@ -24,10 +24,10 @@
 {% if 1 < (server_nodes|length) -%}
 # Cleanup
 {% for filename in [
-    '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif',
-    '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh',
-    '/opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif',
-    '/opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt'
+    '/opt/seagate/cortx_configs/provisioner_generated/ldap/create_replication_account.ldif',
+    '/opt/seagate/cortx_configs/provisioner_generated/ldap/check_ldap_replication.sh',
+    '/opt/seagate/cortx_configs/provisioner_generated/ldap/replicate.ldif',
+    '/opt/seagate/cortx_configs/provisioner_generated/ldap/hostlist.txt'
   ]
 %}
 {{ filename }}_del:
@@ -37,6 +37,6 @@
 
 Delete openldap replication checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap_replication
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.openldap_replication
 
 {%- endif %}

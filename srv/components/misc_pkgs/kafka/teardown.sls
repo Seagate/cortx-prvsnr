@@ -57,4 +57,4 @@ Remove zookeeper data directory:
 
 Remove kafka flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kafka
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka

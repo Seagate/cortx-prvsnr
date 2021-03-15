@@ -75,7 +75,7 @@ Restart systemd-journald:
 
 Delete system checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.system
 
 #Remove wheel access from sudoers:
 #  file.absent:

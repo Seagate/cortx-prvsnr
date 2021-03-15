@@ -307,7 +307,7 @@ function boxing_flag {
     # as this helps to ensure unboxing is executed only on primary node.
     echo -n "INFO: Creating flag file on primary node....." | tee -a ${LOG_FILE}
 
-    local file_name=${1:-/opt/seagate/cortx/provisioner/generated_configs/boxed}
+    local file_name=${1:-/opt/seagate/cortx_configs/provisioner_generated/boxed}
 
     if [ ! -f $file_name ]
     then
@@ -395,8 +395,8 @@ function seagate_refs_cleanup {
                 $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "cortx|seagate|salt" /etc/yum.repos.d/*.repo`;\
                     do if ! grep -q "file://" $file; then\
                             echo "Removing repo file: $file";
-                            mkdir -p /opt/seagate/cortx/provisioner/generated_configs/repos_backup_boxing;
-                            yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_boxing/;
+                            mkdir -p /opt/seagate/cortx_configs/provisioner_generated/repos_backup_boxing;
+                            yes | mv -f "$file" /opt/seagate/cortx_configs/provisioner_generated/repos_backup_boxing/;
                             rm -f "$file";
                         fi;
                     done'
@@ -404,7 +404,7 @@ function seagate_refs_cleanup {
             $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "baseurl=None|baseurl=/3rd_party|baseurl=/cortx_iso" /etc/yum.repos.d/*.repo`;\
                     do\
                     echo "Removing repo: $file";\
-                    yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_boxing;\
+                    yes | mv -f "$file" /opt/seagate/cortx_configs/provisioner_generated/repos_backup_boxing;\
                     done'  >> ${LOG_FILE}
             echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
             $ssh_cmd ${pvt_ips[$i]} "yum clean all || true"  >> ${LOG_FILE}
@@ -481,7 +481,7 @@ function remove_gfs_mounts {
 
     #Remove entries from stab Server A
     echo -e "\n------ Removing the gluster mountpoints from fstab on Server A ------" | tee -a ${LOG_FILE}
-    yes | cp -f /etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_server_a.org
+    yes | cp -f /etc/fstab /opt/seagate/cortx_configs/provisioner_generated/fstab_server_a.org
     sed -i.bak "\@^$hostname_a:$gfs_vol_prvsnr_data@d" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
     sed -i.bak1 "\@^$hostname_a:$gfs_vol_salt_cache_jobs@d" /etc/fstab 2>&1 | tee -a ${LOG_FILE}
 
@@ -489,7 +489,7 @@ function remove_gfs_mounts {
     # For simplicity copy fstab of Server B to Server A, remove
     # gluster vol entries and copy it back to Server B.
     echo -e "\nRemoving the gluster mountpoints from fstab on Server B" | tee -a ${LOG_FILE}
-    $scp_cmd ${pvt_ip_b}:/etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_server_b.org
+    $scp_cmd ${pvt_ip_b}:/etc/fstab /opt/seagate/cortx_configs/provisioner_generated/fstab_server_b.org
     $scp_cmd ${pvt_ip_b}:/etc/fstab /tmp/fstab_b
     sed -i.bak "\@^$hostname_a:$gfs_vol_prvsnr_data@d" /tmp/fstab_b 2>&1 | tee -a ${LOG_FILE}
     sed -i.bak1 "\@^$hostname_a:$gfs_vol_salt_cache_jobs@d" /tmp/fstab_b 2>&1 | tee -a ${LOG_FILE}

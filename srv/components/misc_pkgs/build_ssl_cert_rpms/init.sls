@@ -16,7 +16,7 @@
 #
 
 {% set node = grains['id'] %}
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.build_ssl_cert_rpms'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.build_ssl_cert_rpms'.format(grains['id'])) %}
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 include:
@@ -62,7 +62,7 @@ build_cert_rpms_non_primary_node:
 
 Generate openldap checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.build_ssl_cert_rpms
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.build_ssl_cert_rpms
     - makedirs: True
     - create: True
 {%- else -%}
