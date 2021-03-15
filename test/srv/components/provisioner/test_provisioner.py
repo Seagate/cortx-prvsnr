@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 #  - might makes sense. to verify for cluster case as well
 #  - split into more focused scenarios
 #  - tests for states relations
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('rsyslog-installed')

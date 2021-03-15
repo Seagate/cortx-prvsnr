@@ -146,6 +146,7 @@ def check_post_section(mhost, api_version=None):
         check_provisioner_group_dir(path, mhost)
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_rpm_prvsnr_is_buildable(rpm_prvsnr):
     pass
 
@@ -159,6 +160,7 @@ def test_rpm_prvsnr_depends_on_salt_3001(mhost):
     assert 'salt-minion = 3002\n' in depends
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_installation(mhost, mlocalhost):
@@ -197,6 +199,7 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     assert not diff_installed
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.verifies('EOS-6021')
 @pytest.mark.env_level('salt-installed')
@@ -236,10 +239,12 @@ def test_rpm_prvsnr_reinstall_retains_configuration(
     assert cluster_config_dict_new == cluster_config_dict
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):
     pass
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('base')
 def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
@@ -297,6 +302,7 @@ def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
     check_ssh_configuration(mhost, mlocalhost)
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.verifies('EOS-7327')
 @pytest.mark.env_level('salt-installed')
@@ -313,10 +319,12 @@ def test_rpm_prvsnr_installation_over_cli(mhost):
     assert mtime2 > mtime1
 
 
+@pytest.mark.skip(reason="EOS-18738")
 def test_rpm_prvsnr_api_is_buildable(rpm_prvsnr_api):
     pass
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_api_installation(mhost, mlocalhost):
@@ -331,6 +339,7 @@ def test_rpm_prvsnr_api_installation(mhost, mlocalhost):
     assert version == provisioner.__version__
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_api_removal(mhost, mlocalhost):
@@ -343,6 +352,7 @@ def test_rpm_prvsnr_api_removal(mhost, mlocalhost):
     assert mhost.host.group(PRVSNRUSERS_GROUP).exists
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.verifies('EOS-7327')
 @pytest.mark.env_level('salt-installed')
@@ -378,6 +388,7 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
     check_post_section(mhost, api_version=new_version)
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.env_level('base')
 def test_build_isos(
     mhost, rpm_prvsnr, rpm_prvsnr_api, tmpdir_function
