@@ -516,17 +516,19 @@ def replace_node(node_id, node_host=None, node_port=None, nowait=True):
     )
 
 
-def create_user(uname, passwd, targets=ALL_MINIONS, nowait=False):
+def create_user(uname, passwd, group_list=[], sudo=True, targets=ALL_MINIONS, nowait=False):
     r"""Creates an user.
 
     :param uname: name of the user. Default: None
     :param passwd: password for the user. Default: None
+    :param group_list: groups to which the user needs to be added to. Default: []
+    :param sudo: check if user needs root previeleages. Default: True
     :param targets: (optional) targets to create user. Default: all minions
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
         'create_user',
-        uname, passwd, targets=targets, nowait=nowait
+        uname, passwd, group_list, sudo, targets=targets, nowait=nowait
     )
 
 
@@ -536,7 +538,6 @@ def grains_get(*keys, targets=ALL_MINIONS, nowait=False):
 
     :param keys: grains keys to fetch data from the nodes
     :param targets: targets for grains data retrieving
-    :param nowait: Run asynchronously. Default: False
     :param nowait: Run asynchronously. Default: False
     :return:
     """
