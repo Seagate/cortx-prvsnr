@@ -16,18 +16,22 @@
 #
 
 import pytest
-import logging
 
-logger = logging.getLogger(__name__)
+from provisioner import inputs
 
 
-@pytest.mark.skip(reason="EOS-18738")
-@pytest.mark.timeout(1200)
-@pytest.mark.isolated
-@pytest.mark.hosts(['srvnode1'])
-def test_pillar_targets(
-    mhostsrvnode1, run_test, cortx_hosts
-):
-    run_test(mhostsrvnode1, env={
-        'TEST_MINION_ID': cortx_hosts['srvnode1']['minion_id']
-    })
+@pytest.fixture(scope='session')
+def bundle_opts_t():
+    return inputs.ParserMixin
+
+
+@pytest.fixture(scope="session")
+def run_options(run_options, bundle_opts_t: inputs.ParserMixin):
+    return (
+        run_options + list(bundle_opts_t.parser_args())
+    )
+
+
+@pytest.fixture(scope='session')
+def bundle_opts(request, bundle_opts_t: inputs.ParserMixin):
+    return bundle_opts_t.from_args(request.config.option)

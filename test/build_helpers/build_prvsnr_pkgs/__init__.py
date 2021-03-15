@@ -14,20 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-import pytest
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-@pytest.mark.skip(reason="EOS-18738")
-@pytest.mark.timeout(1200)
-@pytest.mark.isolated
-@pytest.mark.hosts(['srvnode1'])
-def test_pillar_targets(
-    mhostsrvnode1, run_test, cortx_hosts
-):
-    run_test(mhostsrvnode1, env={
-        'TEST_MINION_ID': cortx_hosts['srvnode1']['minion_id']
-    })

@@ -37,8 +37,8 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def options_list(options_list):
+def run_options(run_options):
     return (
-        options_list +
+        run_options +
         ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
     )

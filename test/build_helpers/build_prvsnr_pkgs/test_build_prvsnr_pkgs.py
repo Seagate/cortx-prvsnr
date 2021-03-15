@@ -21,13 +21,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(reason="EOS-18738")
-@pytest.mark.timeout(1200)
+@pytest.fixture
+def env_provider():
+    return 'docker'
+
+
 @pytest.mark.isolated
-@pytest.mark.hosts(['srvnode1'])
-def test_pillar_targets(
-    mhostsrvnode1, run_test, cortx_hosts
+def test_build_bundles(
+    request, rpm_build, tmpdir_function, bundle_opts,
 ):
-    run_test(mhostsrvnode1, env={
-        'TEST_MINION_ID': cortx_hosts['srvnode1']['minion_id']
-    })
+    prvsnr_pkg = rpm_build(
+        request, tmpdir_function, rpm_type='core',
+        version=bundle_opts.version,
+        release_number=str(bundle_opts.pkg_version)
+    )
+    prvsnr_api_pkg = rpm_build(
+        request, tmpdir_function, rpm_type='api',
+        pkg_version=str(bundle_opts.pkg_version)
+    )
+
+    for pkg in (prvsnr_pkg, prvsnr_api_pkg):
+        dest = bundle_opts.output / pkg.name
+        dest.write_bytes(pkg.read_bytes())

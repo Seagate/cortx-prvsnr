@@ -109,6 +109,7 @@ def run_test(
 
 
 # TODO split to different tests per each test case
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
@@ -154,6 +155,7 @@ def test_external_auth(
     )
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
@@ -170,6 +172,7 @@ def test_pillar_get_set(
 #     to separate that (less timeout if env is ready)
 # Note. ntpd service doesn't work in docker without additional tricks
 # (if it's actually possible)
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
@@ -182,6 +185,7 @@ def test_set_ntp(
     #   - run ntp.config state and check that nothing changed
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
@@ -211,6 +215,7 @@ def test_set_network(
 @pytest.mark.parametrize(
     "cluster", [True, False], ids=['cluster', 'singlenode']
 )
+@pytest.mark.skip(reason="EOS-18738")
 def test_set_swupdate_repo(
     request, cluster, api_type, api_run_mode
 ):
@@ -291,6 +296,7 @@ def test_set_swupdate_repo_for_reinstall(
     })
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
@@ -300,6 +306,7 @@ def test_cortx_update(
     run_test(mhostsrvnode1)
 
 
+@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
