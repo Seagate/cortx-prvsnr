@@ -61,6 +61,9 @@ ENV_LEVELS_HIERARCHY = {
                 'vm_box_version': '1.2.17'
             }
         },
+        'centos7.8.2003': {
+            'docker': 'centos:7.8.2003'
+        },
         'centos8.2.2004': {
             'docker': 'centos:8.2.2004'
         }
@@ -103,7 +106,7 @@ ENV_LEVELS_HIERARCHY = {
 
 
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
-DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
+DEFAULT_BASE_OS_NAME = 'centos7.8.2003'
 
 DEFAULT_CLUSTER_SPEC = {
     f'srvnode{node_id}': {
@@ -366,27 +369,28 @@ prvsnr_pytest_options = {
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
     ),
-    "prvsnr-cli-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Provisioner cli release to use, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    ),
-    "prvsnr-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Provisioner release to use, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    ),
-    "cortx-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Target release to verify, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    )
+# XXX outdated options (bvt scope)
+#    "prvsnr-cli-release": dict(
+#        action='store', default='integration/centos-7.7.1908/last_successful',
+#        help=(
+#            "Provisioner cli release to use, "
+#            "defaults to 'integration/centos-7.7.1908/last_successful'"
+#        )
+#    ),
+#    "prvsnr-release": dict(
+#        action='store', default='integration/centos-7.7.1908/last_successful',
+#        help=(
+#            "Provisioner release to use, "
+#            "defaults to 'integration/centos-7.7.1908/last_successful'"
+#        )
+#    ),
+#    "cortx-release": dict(
+#        action='store', default='integration/centos-7.7.1908/last_successful',
+#        help=(
+#            "Target release to verify, "
+#            "defaults to 'integration/centos-7.7.1908/last_successful'"
+#        )
+#    )
 }
 
 
@@ -422,13 +426,13 @@ def integration2():
 
 
 @pytest.fixture(scope="session")
-def options_list():
+def run_options():
     return list(prvsnr_pytest_options)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def dump_options(request, options_list):
-    h.dump_options(request, options_list)
+def dump_options(request, run_options):
+    h.dump_options(request, run_options)
 
 
 @pytest.fixture(scope="session")

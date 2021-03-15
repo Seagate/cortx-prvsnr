@@ -16,29 +16,30 @@
 #
 
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--bvt-repo-path", action='store',
-        default='./cortx-test.tgz',
-        help="path to cortx-test repo tar gzipped file"
-    )
-    parser.addoption(
-        "--bvt-test-targets", action='store',
-        default='avocado_test/bvt_test.py',
-        help="bvt test targets to run"
-    )
-    parser.addoption(
-        "--bvt-results-path", action='store',
-        default='./bvt.job-results.tgz',
-        help="path to tar gzipped archive with bvt test job result"
-    )
+@pytest.fixture
+def env_provider():
+    return 'docker'
 
 
-@pytest.fixture(scope="session")
-def run_options(run_options):
-    return (
-        run_options +
-        ["bvt-repo-path", "bvt-test-targets", "bvt-results-path"]
+@pytest.mark.isolated
+def test_build_bundles(
+    request, rpm_build, tmpdir_function, bundle_opts,
+):
+    prvsnr_pkg = rpm_build(
+        request, tmpdir_function, rpm_type='core',
+        version=bundle_opts.version,
+        release_number=str(bundle_opts.pkg_version)
     )
+    prvsnr_api_pkg = rpm_build(
+        request, tmpdir_function, rpm_type='api',
+        pkg_version=str(bundle_opts.pkg_version)
+    )
+
+    for pkg in (prvsnr_pkg, prvsnr_api_pkg):
+        dest = bundle_opts.output / pkg.name
+        dest.write_bytes(pkg.read_bytes())
