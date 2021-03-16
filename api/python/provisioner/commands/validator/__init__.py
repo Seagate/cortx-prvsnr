@@ -1,7 +1,7 @@
-from .validator import FileValidator, CatalogValidator, FileSchemeValidator
+from .validator import FileValidator, DirValidator, FileSchemeValidator
 
 __all__ = [
     "FileValidator",
-    "CatalogValidator",
+    "DirValidator",
     "FileSchemeValidator"
 ]

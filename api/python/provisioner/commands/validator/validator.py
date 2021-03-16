@@ -79,8 +79,21 @@ class FileValidator(Validator):
         Parameters
         ----------
         required: bool
+            if True validation raises an Exception if the file doesn't exist
         content_validator: Callable[[Path], None]
             callable object for file content validation
+
+        Notes
+        -----
+        TBD: other possible parameters
+        permissions: int/str
+            requested file permissions
+        owner: str
+            requested file owner
+        group: str
+            requested file group
+        is_symlink: bool
+            defines if file should be a symlink
         """
         self._required = required
         self._content_validator = content_validator
@@ -121,19 +134,32 @@ class FileValidator(Validator):
             self._content_validator(path)
 
 
-class CatalogValidator:
+class DirValidator:
 
     """Class for catalog validation."""
 
-    def __init__(self, files_scheme: Dict = None, required=False):
+    def __init__(self, files_scheme: Dict = None, required: bool = False):
         """
         Catalog validator initialization method.
 
         Parameters
         ----------
         files_scheme: Dict
+            Nested catalog structure for the validation path
 
-        required
+        required: bool
+            if True validation raises an Exception if the directory
+            doesn't exist
+
+        Notes
+        -----
+        TBD: other possible parameters
+        permissions: int/str
+            requested directory permissions
+        owner: str
+            requested directory owner
+        group: str
+            requested directory group
         """
         self._files_scheme = files_scheme
         self._required = required
@@ -170,9 +196,11 @@ class CatalogValidator:
 
         if self._files_scheme and isinstance(self._files_scheme, dict):
             for sub_path, validator in self._files_scheme.items():
-                if not isinstance(sub_path, Path):
+                if isinstance(sub_path, str):
+                    sub_path = Path(sub_path)
+                elif not isinstance(sub_path, Path):
                     raise ValueError("Keys of the nested catalog file scheme "
-                                     "should be instantiated from "
+                                     "should be a string or instantiated from "
                                      "'Path' class")
                 validator.validate(path / sub_path)
 
@@ -214,7 +242,9 @@ class FileSchemeValidator(SchemeValidator):
             If validation is failed.
         """
         for path, validator in self._scheme.items():
-            if not isinstance(path, Path):
-                raise ValueError("Keys of the files scheme should be "
-                                 "instantiated from 'Path' class")
+            if isinstance(base_path, str):
+                base_path = Path(base_path)
+            elif not isinstance(base_path, Path):
+                raise ValueError("Keys of the files scheme should be a strings"
+                                 " or instantiated from 'Path' class")
             validator.validate(base_path / path)

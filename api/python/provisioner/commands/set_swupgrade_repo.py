@@ -25,43 +25,45 @@ from ..config import (REPO_CANDIDATE_NAME,
                       IS_REPO_KEY,
                       RELEASE_INFO_FILE,
                       ReleaseInfo,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
+                      CORTX_ISO_DIR
                       )
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
 from ..utils import load_yaml
-from .validator import FileValidator, CatalogValidator, FileSchemeValidator
+from .validator import FileValidator, DirValidator, FileSchemeValidator
 
 logger = logging.getLogger(__name__)
 
 
+# NOTE: keys can be either Path object or strings
 SW_UPGRADE_BUNDLE_SCHEME = {
-    Path('3rd_party'): CatalogValidator(
+    '3rd_party': DirValidator(
         {
-            Path("THIRD_PARTY_RELEASE.INFO"): FileValidator(required=True),
-            Path("repodata"): CatalogValidator(
+            "THIRD_PARTY_RELEASE.INFO": FileValidator(required=True),
+            "repodata": DirValidator(
                 {
                     Path("repomd.xml"): FileValidator(required=True),
                 },
                 required=True),
         },
         required=False),
-    Path('cortx_iso'): CatalogValidator(
+    'cortx_iso': DirValidator(
         {
-            Path("RELEASE.INFO"): FileValidator(required=True),
-            Path("repodata"): CatalogValidator(
+            "RELEASE.INFO": FileValidator(required=True),
+            "repodata": DirValidator(
                 {
                     Path("repomd.xml"): FileValidator(required=True),
                 },
                 required=True),
         },
         required=True),
-    Path('python_deps'): CatalogValidator(required=False),
-    Path('os'): CatalogValidator(
+    'python_deps': DirValidator(required=False),
+    'os': DirValidator(
         {
-            Path("RELEASE.INFO"): FileValidator(required=False),
-            Path("repodata"): CatalogValidator(
+            "RELEASE.INFO": FileValidator(required=False),
+            "repodata": DirValidator(
                 {
                     Path("repomd.xml"): FileValidator(required=True),
                 },
@@ -205,7 +207,21 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-            release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
+            catalog_scheme_validator = FileSchemeValidator(
+                                                    SW_UPGRADE_BUNDLE_SCHEME)
+
+            try:
+                catalog_scheme_validator.validate(iso_mount_dir)
+            except ValidationError as e:
+                logger.debug("Catalog structure validation error occurred: "
+                             f"{e}")
+                raise SWUpdateRepoSourceError(
+                                        str(repo.source),
+                                        "Catalog structure validation error "
+                                        f"occurred:{str(e)}") from e
+
+            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                            f'{RELEASE_INFO_FILE}')
             try:
                 metadata = load_yaml(release_file)
             except Exception as exc:
@@ -233,18 +249,6 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            catalog_scheme_validator = FileSchemeValidator(
-                                                    SW_UPGRADE_BUNDLE_SCHEME)
-
-            try:
-                catalog_scheme_validator.validate(iso_mount_dir)
-            except ValidationError as e:
-                logger.debug("Catalog structure validation error occurred: "
-                             f"{e}")
-                raise SWUpdateRepoSourceError(
-                                        str(repo.source),
-                                        "Catalog structure validation error "
-                                        f"occurred:{str(e)}") from e
             else:
                 logger.info("Catalog structure validation succeeded")
 
