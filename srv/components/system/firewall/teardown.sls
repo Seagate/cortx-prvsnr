@@ -15,60 +15,54 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Ensure ssh works when the firwall servcie starts for the next time
+# Ensure ssh works when the firwall service starts for the next time
 Reset default zone:
   firewalld.present:
-    - name: trusted
+    - name: public
     - default: True
-    - prune_ports: False
+    - prune_ports: True
     - prune_services: False
     - prune_interfaces: False
 
-{% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] -%}
-  {% set mgmt_ifs = ['mgmt0'] %}
-{% else -%}
-  {% set mgmt_ifs = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'] %}
-{% endif -%}
-Remove public manaement interfaces:
-  cmd.run:
-    - name: |
-        {% for interface in mgmt_ifs -%}
-        firewall-cmd --remove-interface={{ interface }} --zone=public --permanent
-        {% endfor %}
+Remove public management interfaces:
+  firewalld.present:
+    - name: management-zone
+    - prune_interfaces: True
 
-{% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0']) %}
 Remove public data interfaces:
-  cmd.run:
-    - name: firewall-cmd --remove-interface=data0 --zone=public-data-zone --permanent
-    - onlyif: firewall-cmd --get-zones | grep public-data-zone
-{% else %}
-Remove public data interfaces:
-  cmd.run:
-    - name: |
-        {% for interface in pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] -%}
-        firewall-cmd --remove-interface={{ interface }} --zone=public-data-zone --permanent
-        {% endfor %}
-    - onlyif: firewall-cmd --get-zones | grep public-data-zone
+  firewalld.present:
+    - name: public-data-zone
+    - prune_interfaces: True
 
 Remove private data interfaces:
-  cmd.run:
-    - name: |
-        {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
-        firewall-cmd --remove-interface={{ interface }} --zone=trusted --permanent
-        {% endfor %}
-    - onlyif: firewall-cmd --get-zones | grep trusted
-{% endif %}
+  firewalld.present:
+    - name: trusted
+    - prune_interfaces: True
+    - prune_sources: True
 
+{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
 Remove public-data-zone:
-  cmd.run:
-    - name: firewall-cmd --permanent --delete-zone=public-data-zone
-    - onlyif: firewall-cmd --get-zones | grep public-data-zone
+  module.run:
+    - firewalld.delete_zone:
+      - zone: public-data-zone
     - require:
       - Reset default zone
+{% endif %}
 
-Reload firewall:
-  cmd.run:
-    - name: firewall-cmd --reload
+{% if 'management-zone' in salt['firewalld.get_zones']() %}
+Remove management-zone:
+  module.run:
+    - firewalld.delete_zone:
+      - zone: management-zone
+    - require:
+      - Reset default zone
+{% endif %}
+
+Refresh firewalld:
+  module.run:
+    - firewalld.reload_rules: []
+    - service.restart:
+      - firewalld
 
 Delete firewall checkpoint flag:
   file.absent:

@@ -32,9 +32,6 @@ Open public zone:
   firewalld.present:
     - name: public
     - default: True
-    - ports:
-      - 4505/tcp
-      - 4506/tcp
     - prune_ports: False
     - services:
       - ssh
