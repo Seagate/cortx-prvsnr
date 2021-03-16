@@ -29,7 +29,6 @@ def env_provider():
     return 'docker'
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('rpmbuild')
 @pytest.mark.hosts(['srvnode1'])
