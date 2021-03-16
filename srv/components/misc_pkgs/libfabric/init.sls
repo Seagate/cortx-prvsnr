@@ -15,26 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if 'lustre' in pillar['cluster'][grains['id']]['network']['data']['transport_type'] and
- not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.lustre'.format(grains['id'])) %}
+{% if 'libfabric' in pillar['cluster'][grains['id']]['network']['data']['transport_type'] %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.libfabric'.format(grains['id'])) -%}
 
 include:
-  - components.misc_pkgs.lustre.prepare
-  - components.misc_pkgs.lustre.install
-  - components.misc_pkgs.lustre.config
-  - components.misc_pkgs.lustre.start
-  - components.misc_pkgs.lustre.sanity_check
-
-Generate lustre checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.lustre
-    - makedirs: True
-    - create: True
+  - components.misc_pkgs.libfabric.prepare
+  - components.misc_pkgs.libfabric.install
+  - components.misc_pkgs.libfabric.config
 
 {%- else -%}
 
-Lustre already applied:
+Libfabric already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.lustre.teardown' to reprovision these states."
+    - text: "Libfabric states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.libfabric.teardown' and re-deploy to reprovision these states."
 
-{% endif %}
+{%- endif %}
+{%- endif %}

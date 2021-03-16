@@ -69,6 +69,7 @@ deploy_states = dict(
     prereq=[
         "misc_pkgs.kafka.teardown",
         "misc_pkgs.lustre.teardown",
+        "misc_pkgs.libfabric.teardown",
         "misc_pkgs.statsd.teardown",
         "misc_pkgs.kibana.teardown",
         "misc_pkgs.elasticsearch.teardown",

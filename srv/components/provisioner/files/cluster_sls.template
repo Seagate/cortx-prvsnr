@@ -82,7 +82,7 @@ cluster:
         private_interfaces:
           - eth2                      # Private Data (direct connect)
         interface_type: tcp           # tcp/o2ib
-        transport_type: lnet          # lnet/libfabric
+        transport_type: libfabric          # lnet/libfabric
         public_ip:                    # DHCP is assumed if left blank
         public_fqdn: {{ srvnode }}.data.public
         private_ip:                   # Fixed IP of Private Data Network

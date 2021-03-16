@@ -76,6 +76,7 @@ deploy_states = dict(
         "misc_pkgs.statsd",
         "misc_pkgs.consul.install",
         "misc_pkgs.lustre",
+        "misc_pkgs.libfabric",
         "misc_pkgs.consul.install",
     ],
     utils=[

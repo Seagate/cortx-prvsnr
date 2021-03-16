@@ -31,6 +31,7 @@ commons:
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7
     kafka: 2.13-2.7.0
+    isa-l: 2.30.0-1
     cortx:
       # TODO
       # - update install.sls files for components
