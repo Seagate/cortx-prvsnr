@@ -34,4 +34,6 @@ hostsfile:
         {% endfor -%}
         {% endif -%}
         {% endfor %}
+        {%- else %}
+        127.0.0.2     {{ grains['id'] }}
         {%- endif %}

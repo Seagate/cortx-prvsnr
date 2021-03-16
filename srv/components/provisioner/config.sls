@@ -28,6 +28,7 @@ provisioner_rsyslog_conf_updated:
     - watch_in:
       - service: Start rsyslog
 
+{% if 'single' not in pillar['cluster']['type'] %}
 # Always start glusterfshsaredstorage before salt-master
 Update glusterfssharedstorage.service:
   file.managed:
@@ -44,3 +45,4 @@ Reload updated services:
     - name: systemctl daemon-reload
     - onchanges:
       - file: Update salt-master.service
+{% endif %}
