@@ -22,6 +22,6 @@ mine_functions:
   node_machine_id:
     - mine_function: grains.get
     - machine_id
-  get_nodes_id:
+  get_node_id:
     - mine_function: grains.get
     - node_id

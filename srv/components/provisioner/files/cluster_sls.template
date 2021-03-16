@@ -42,7 +42,7 @@ cluster:
     rack_id:
     site_id:
     storage_set_id: {{ storage_set_id }}
-    node_id: {{ salt['mine.get'](srvnode , 'get_nodes_id')[srvnode] }}
+    node_id: {{ salt['mine.get'](srvnode , 'get_node_id')[srvnode] }}
     machine_id: {{ salt['mine.get'](srvnode , 'node_machine_id')[srvnode] }}
     hostname: {{ srvnode }}
     node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
