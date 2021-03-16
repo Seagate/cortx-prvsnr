@@ -16,7 +16,7 @@
 #
 
 {% if "physical" in grains['virtual'] %}
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.multipath'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.multipath'.format(grains['id'])) %}
 include:
   # - components.system.storage.teardown.tidy-up
   - components.system.storage.multipath.prepare
@@ -25,7 +25,7 @@ include:
 
 Generate multipath checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.multipath
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.multipath
     - makedirs: True
     - create: True
 {%- else -%}

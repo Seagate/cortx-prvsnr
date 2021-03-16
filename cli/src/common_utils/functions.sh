@@ -1887,13 +1887,13 @@ function set_node_id {
     fi
 
     pushd "$_installdir"
-        if [[ ! -e "/opt/seagate/cortx/provisioner/generated_configs/node_id" ]]; then
-            mkdir -p /opt/seagate/cortx/provisioner/generated_configs/
-            echo "node_id: \$(uuidgen)" > /opt/seagate/cortx/provisioner/generated_configs/node_id
+        if [[ ! -e "/opt/seagate/cortx_configs/provisioner_generated/node_id" ]]; then
+            mkdir -p /opt/seagate/cortx_configs/provisioner_generated/
+            echo "node_id: \$(uuidgen)" > /opt/seagate/cortx_configs/provisioner_generated/node_id
         fi
 
         if [[ -z "\$(grep "node_id" /etc/salt/grains 2>/dev/null)" ]]; then
-            cat /opt/seagate/cortx/provisioner/generated_configs/node_id >> /etc/salt/grains
+            cat /opt/seagate/cortx_configs/provisioner_generated/node_id >> /etc/salt/grains
         fi
 
         systemctl enable salt-minion
@@ -1960,13 +1960,13 @@ function set_cluster_id {
     fi
 
     pushd "$_installdir"
-        if [[ ! -e "/opt/seagate/cortx/provisioner/generated_configs/cluster_id" ]]; then
-            mkdir -p /opt/seagate/cortx/provisioner/generated_configs/
+        if [[ ! -e "/opt/seagate/cortx_configs/provisioner_generated/cluster_id" ]]; then
+            mkdir -p /opt/seagate/cortx_configs/provisioner_generated/
         fi
-        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/cortx/provisioner/generated_configs/cluster_id
+        echo "cluster_id: ${_cluster_uuid}" > /opt/seagate/cortx_configs/provisioner_generated/cluster_id
 
         if [[ -z "\$(grep "cluster_id" /etc/salt/grains 2>/dev/null)" ]]; then
-            cat /opt/seagate/cortx/provisioner/generated_configs/cluster_id >> /etc/salt/grains
+            cat /opt/seagate/cortx_configs/provisioner_generated/cluster_id >> /etc/salt/grains
         else
             sed -i "s/cluster_id:.*/cluster_id: ${_cluster_uuid}/g" /etc/salt/grains
         fi

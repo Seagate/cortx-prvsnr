@@ -166,3 +166,16 @@ salt-call state.show_top
 
 [EOS-17235][EOS-16869] - Destroy cortx on single node vm
    Steps : Verify if all steps are working fine from doc: https://github.com/Seagate/cortx-prvsnr/wiki/Teardown-Node
+
+[EOS-18270] - 3-node VM deployment implementation and integration - Phase-2 - 3rd Party SW
+Step 1: Run setup_provisioner command with --ha option
+Step 2: Run deploy_vm command to deploy system and prereq states
+        ```
+        provisioner deploy_vm --states system --setup-type 3_node
+        provisioner deploy_vm --states prereq --setup-type 3_node
+        ```
+Step 3: Ensure third party services are installed on all three vm'salt
+
+[EOS-13889]: Move generated configs directory in provsioner
+Step 1: Deploy single node vm
+Step 2: Verify checkpoint flags are created under /opt/seagate/cortx_configs/provisioner_generated/ directory

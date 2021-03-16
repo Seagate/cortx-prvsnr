@@ -20,7 +20,7 @@
 
 # Functions in this file address following:
 #   1. Check boxing flag file and proceed only if boxing.<timestamp> file is present
-#       /opt/seagate/cortx/provisioner/generated_configs/boxing.<timestamp>
+#       /opt/seagate/cortx_configs/provisioner_generated/boxing.<timestamp>
 #   2. Check if IP is available on management network interface on node. Wait till one is obtained.
 #   3. Check if hostname is available on node. Wait till one is obtained.
 #   4. Ping across nodes over direct network to check connectivity and fetch peer hostname. Wait till success.
@@ -51,7 +51,7 @@ function trap_handler {
 trap trap_handler ERR
 
 function check_boxing_flag {
-    if [[ -f '/opt/seagate/cortx/provisioner/generated_configs/boxed' ]]
+    if [[ -f '/opt/seagate/cortx_configs/provisioner_generated/boxed' ]]
     then
         echo "DEBUG: Boxed file found." >> ${LOG_FILE}
     else

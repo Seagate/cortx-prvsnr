@@ -40,7 +40,7 @@ Backup slapd config file:
 
 Generate Slapdpasswds:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
+    - name: sh /opt/seagate/cortx_configs/provisioner_generated/ldap/ldap_gen_passwd.sh
 
 Stop slapd:
   service.dead:
@@ -60,7 +60,7 @@ Clean up old mdb ldiff file:
 Copy mdb ldiff file, if not present:
   file.copy:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
-    - source: /opt/seagate/cortx/provisioner/generated_configs/ldap/olcDatabase={2}mdb.ldif
+    - source: /opt/seagate/cortx_configs/provisioner_generated/ldap/olcDatabase={2}mdb.ldif
     - force: True
     - user: ldap
     - group: ldap
