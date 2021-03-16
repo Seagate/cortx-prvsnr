@@ -18,9 +18,8 @@
 import logging
 
 from pathlib import Path
-from collections.abc import Mapping
 from typing import Type
-from cortx.utils.ConfStore import Conf
+from cortx.utils.conf_store.conf_store import Conf
 from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
 from ..salt import StateFunExecuter
@@ -31,20 +30,16 @@ from . import (
 )
 
 from ..config import (
-    PRVSNR_GEN_CONFIG_DIR
+    CORTX_CONFIG_DIR
 )
 
 from .. import (
     inputs
 )
 
-from .pillar import (
+from ..pillar import (
     PillarResolver,
     PillarKey
-)
-
-from ..utils import (
-    load_yaml
 )
 
 logger = logging.getLogger(__name__)
@@ -55,23 +50,7 @@ class ConfstorExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     description = "Export pillar template data to confstor"
 
-    @staticmethod
-    def _get_keys(obj, string=''):
-        """
-        This function returns all the nested keypaths along with
-        values in the dictionary.
-
-        """
-        for key, value in obj.items():
-            if isinstance(obj, Mapping):
-                if string:
-                    yield from _get_keys(value, f"{key}")
-                else:
-                    yield from _get_keys(value, f"{string}>{key}")
-            else:
-                yield (f"{string}>{key}", "{value}")
-
-    def run(self):
+    def run(self, **kwargs):
         """
         Confstor_export command execution method.
         It creates a pillar template and loads into the confstor
@@ -79,37 +58,46 @@ class ConfstorExport(CommandParserFillerMixin):
         """
 
         try:
-            Path(PRVSNR_GEN_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+            Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+            template_file_path = str( CORTX_CONFIG_DIR / 'confstor_template.sls')
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
-                    name=PRVSNR_GEN_CONFIG_DIR +
-                    '/confstor_template.sls',
-                    source='salt://components/system/files/confstor_template.yml.j2',
+                    name=template_file_path,
+                    source='salt://components/system/files/confstor_template.j2',
                     template='jinja'))
             logger.info("Pillar confstor template is created at "
-                        f"'{PRVSNR_GEN_CONFIG_DIR}'/confstor_template.sls"
+                        f"{template_file_path}"
                         )
         except Exception as exc:
             logger.exception(
                 f"Unable to create confstor template due to {exc}")
+            raise exc
 
         try:
 
-            yaml_dict = load_yaml(PRVSNR_GEN_CONFIG_DIR +
-                                  '/confstor_template.sls')
+            template_data = ""
+            with open(template_file_path, 'r') as f:
+                template_data = f.read().splitlines()
+
+            if not template_data :
+                raise Exception("No content in template file")
+
             pillar_confstor_path = "provisioner/common_config/confstore_url"
             pillar_key = PillarKey(pillar_confstor_path)
             pillar = PillarResolver(local_minion_id()).get([pillar_key])
             pillar = next(iter(pillar.values()))
 
-            #Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+            Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
 
             Conf.load('provisioner', pillar[PillarKey(pillar_key)])
 
-            for key, value in _get_keys(yaml_dict, ""):
-                Conf.set("provisioner", key, value)
+            for data in template_data:
+                if data:
+                    Conf.set("provisioner", data.split(':')[0], data.split(':')[1])
+            Conf.save("provisioner")
             logger.info("Template loaded to confstor")
 
         except Exception as exc:
             logger.exception(f"Unable to load template due to {exc}")
+            raise exc
