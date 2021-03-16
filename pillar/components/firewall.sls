@@ -15,6 +15,8 @@ firewall:
         - 68/udp
       dhserver:
         - 67/udp
+      haproxy:
+        - 443/tcp
       hare:
         - 8008/tcp
       nfs:
@@ -23,11 +25,7 @@ firewall:
         - 32803/tcp
         - 892/tcp
         - 875/tcp
-      uds:
-        - 5000/tcp
-        - 5125/udp
       s3:
-        - 443/tcp
         - 7081/tcp
         {% for port in range(8081, 8092) %}
         - {{ port }}/tcp
@@ -38,6 +36,9 @@ firewall:
         - 6379/tcp
         - 9443/tcp
         - 9086/tcp
+      uds:
+        - 5000/tcp
+        - 5125/udp
   mgmt_public:
     services:
       - ssh
