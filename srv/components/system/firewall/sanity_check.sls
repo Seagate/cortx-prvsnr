@@ -25,7 +25,7 @@
 Verify management zone interfaces:
 {% if (added_mgmt_if | symmetric_difference(mgmt_if)) %}
   test.fail_without_changes:
-    - name: {{ if (added_mgmt_if | symmetric_difference(mgmt_if)) }} interface verification failed on management-zone
+    - name: {{ (added_mgmt_if | symmetric_difference(mgmt_if)) }} interface verification failed on management-zone
 {% else %}
   test.show_notification:
     - text: Interfaces verification successful on management-zone
@@ -38,23 +38,24 @@ Verify management zone interfaces:
 {% else %}
   {% set public_data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
   {% set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
+  {% do private_data_if.extend(['lo']) %}
 {% endif %}
 
 {% set added_public_data_if = salt['firewalld.get_interfaces'](zone='public-data-zone') %}
 Verify public data interfaces:
 {% if (added_public_data_if | symmetric_difference(public_data_if)) %}
   test.fail_without_changes:
-    - name: {{ if (added_public_data_if | symmetric_difference(public_data_if)) }} interface verification failed on public-data-zone
+    - name: {{ (added_public_data_if | symmetric_difference(public_data_if)) }} interface verification failed on public-data-zone
 {% else %}
   test.show_notification:
     - text: Interfaces verification successful on public-data-zone
 {% endif %}
 
 {% set added_private_data_if = salt['firewalld.get_interfaces'](zone='trusted') %}
-Verify private-data interfaces:
+Verify private data interfaces:
 {% if (added_private_data_if | symmetric_difference(private_data_if)) %}
   test.fail_without_changes:
-    - name: {{ if (added_private_data_if | symmetric_difference(private_data_if)) }} interface verification failed on private-data-zone
+    - name: {{ (added_private_data_if | symmetric_difference(private_data_if)) }} interface verification failed on private-data-zone
 {% else %}
   test.show_notification:
     - text: Interfaces verification successful on private-data-zone
@@ -70,7 +71,7 @@ Verify private-data interfaces:
 Verify {{ nic }} services:
 {% if (added_services | symmetric_difference(services)) %}
   test.fail_without_changes:
-    - name: "{{ (services | symmetric_difference(added_services)) }} services verification failed on {{ nic }} "
+    - name: {{ (services | symmetric_difference(added_services)) }} services verification failed on {{ nic }}
 {% else %}
   test.show_notification:
     - text: {{ nic }} services verification successful
