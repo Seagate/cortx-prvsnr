@@ -27,10 +27,48 @@ from ..config import (REPO_CANDIDATE_NAME,
                       ReleaseInfo,
                       PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
                       )
-from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
+from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
+                      ValidationError
+                      )
 from ..utils import load_yaml
+from .validator import FileValidator, CatalogValidator, FileSchemeValidator
 
 logger = logging.getLogger(__name__)
+
+
+SW_UPGRADE_BUNDLE_SCHEME = {
+    Path('3rd_party'): CatalogValidator(
+        {
+            Path("THIRD_PARTY_RELEASE.INFO"): FileValidator(required=True),
+            Path("repodata"): CatalogValidator(
+                {
+                    Path("repomd.xml"): FileValidator(required=True),
+                },
+                required=True),
+        },
+        required=False),
+    Path('cortx_iso'): CatalogValidator(
+        {
+            Path("RELEASE.INFO"): FileValidator(required=True),
+            Path("repodata"): CatalogValidator(
+                {
+                    Path("repomd.xml"): FileValidator(required=True),
+                },
+                required=True),
+        },
+        required=True),
+    Path('python_deps'): CatalogValidator(required=False),
+    Path('os'): CatalogValidator(
+        {
+            Path("RELEASE.INFO"): FileValidator(required=False),
+            Path("repodata"): CatalogValidator(
+                {
+                    Path("repomd.xml"): FileValidator(required=True),
+                },
+                required=True),
+        },
+        required=False)
+}
 
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
@@ -194,6 +232,21 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         str(repo.source),
                         f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
+
+            catalog_scheme_validator = FileSchemeValidator(
+                                                    SW_UPGRADE_BUNDLE_SCHEME)
+
+            try:
+                catalog_scheme_validator.validate(iso_mount_dir)
+            except ValidationError as e:
+                logger.debug("Catalog structure validation error occurred: "
+                             f"{e}")
+                raise SWUpdateRepoSourceError(
+                                        str(repo.source),
+                                        "Catalog structure validation error "
+                                        f"occurred:{str(e)}") from e
+            else:
+                logger.info("Catalog structure validation succeeded")
 
             repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()

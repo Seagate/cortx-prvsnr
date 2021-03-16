@@ -214,9 +214,7 @@ class SetSWUpdateRepo(Set):
             f"source {repo.source}"
         )
 
-        candidate_repo = inputs.SWUpdateRepo(
-            REPO_CANDIDATE_NAME, repo.source
-        )
+        candidate_repo = inputs.SWUpdateRepo(REPO_CANDIDATE_NAME, repo.source)
 
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
