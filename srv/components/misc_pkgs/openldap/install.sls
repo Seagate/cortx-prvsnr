@@ -29,12 +29,14 @@ Update to latest selinux-policy:
 
 # FIXME EOS-12076 the following steps are about configuration, not installation
 
+{% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
 Backup slapd config file:
   file.copy:
     - name: /etc/sysconfig/slapd.bak
     - source: /etc/sysconfig/slapd
     - force: True
     - preserve: True
+{% endif %}
 
 Generate Slapdpasswds:
   cmd.run:
@@ -49,6 +51,7 @@ Add password file to ldap group:
     - name: chgrp ldap /etc/openldap/certs/password
     - onlyif: grep -q ldap /etc/group && test -f /etc/openldap/certs/password
 
+{% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
 {% if 'mdb' in pillar['openldap']['backend_db'] %}
 Clean up old mdb ldiff file:
   file.absent:
@@ -68,3 +71,4 @@ Copy mdb ldiff file, if not present:
 slapd:
   service.running:
     - enable: True
+{% endif %}

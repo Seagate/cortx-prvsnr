@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
 Start sldapd service:
   service.running:
     - name: slapd
@@ -24,3 +25,4 @@ Restart slapd service:
   module.run:
     - service.restart:
       - name: slapd
+{% endif %}

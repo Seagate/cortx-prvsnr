@@ -146,7 +146,7 @@ node {
                 sshCommand remote: remotes[0], command: """
                     yum install -y sshpass
                     export SSHPASS=${PASSWORD}
-                    sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
+                    sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
                     provisioner pillar_export
@@ -165,6 +165,31 @@ node {
                 """
                 echo "Successfully validated bootstrap!"
             }
+
+            stage("Platform setup") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states system --setup-type 3_node"
+                echo "Successfully deployed system states!"
+            }
+
+            stage("3rd Party Software Deployment") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states prereq --setup-type 3_node"
+                echo "Successfully deployed prereq states!"
+            }
+
+            //stage("Data Path States Deployment") {
+            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states iopath --setup-type 3_node"
+            //    echo "Successfully deployed iopath states!"
+            //}
+                        
+            //stage("Control Stack States Deployment") {
+            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states controlpath --setup-type 3_node"
+            //    echo "Successfully deployed controlpath states!"
+            //}
+            
+            //stage("HA States Deployment") {
+            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
+            //    echo "Successfully deployed HA states!"
+            //}
         }
         
         sh label: '', script: "mkdir archives"
