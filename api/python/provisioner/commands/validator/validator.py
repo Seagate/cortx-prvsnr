@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod, ABC
 from pathlib import Path
-from typing import Dict, Callable, Union
+from typing import Dict, Callable, Optional
 
 from ... import utils
 
@@ -11,21 +11,20 @@ from ...errors import ValidationError
 logger = logging.getLogger(__name__)
 
 
-class Validator(ABC):
+class PathValidator(ABC):
 
-    """Abstract Validator class defines the interface for inheritance."""
+    """Abstract Path Validator class defines the interface for inheritance."""
 
     @abstractmethod
-    def validate(self, *args, **kwargs):
+    def validate(self, path: Path):
         """
         Abstract validation method of Validator.
 
         Parameters
         ----------
-        args
-            list of positional arguments
-        kwargs
-            keyword-only arguments
+        path: Path
+            path for file validation
+
 
         Returns
         -------
@@ -40,7 +39,7 @@ class Validator(ABC):
 
 
 @attr.s(auto_attribs=True)
-class FileValidator(Validator):
+class FileValidator(PathValidator):
 
     """
     Class for file validation.
@@ -49,7 +48,7 @@ class FileValidator(Validator):
     ----------
     _required: bool
         if True validation raises an Exception if the file doesn't exist
-    _content_validator: Callable[[Path], None]
+    _content_validator: Optional[Callable[[Path], None]]
         callable object for file content validation.
 
         Should raise the `ValidationError` exception if file content validation
@@ -75,12 +74,12 @@ class FileValidator(Validator):
         validator=attr.validators.instance_of(bool),
         default=False
     )
-    _content_validator: Union[Callable[[Path], None], None] = attr.ib(
+    _content_validator: Optional[Callable[[Path], None]] = attr.ib(
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
 
-    def validate(self, path: Path):  # noqa: W0221
+    def validate(self, path: Path):
         """
         Validate the file by a given path.
 
@@ -117,14 +116,14 @@ class FileValidator(Validator):
 
 
 @attr.s(auto_attribs=True)
-class DirValidator(Validator):
+class DirValidator(PathValidator):
 
     """
     Class for catalog validation.
 
     Attributes
     ----------
-    _files_scheme: Dict
+    _files_scheme: Optional[Dict]
         Nested catalog structure for the validation path
 
     _required: bool
@@ -146,7 +145,7 @@ class DirValidator(Validator):
     instance.
     """
 
-    _files_scheme: Dict = attr.ib(
+    _files_scheme: Optional[Dict] = attr.ib(
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
@@ -162,7 +161,7 @@ class DirValidator(Validator):
         default=False
     )
 
-    def validate(self, path: Path):  # noqa: W0221
+    def validate(self, path: Path):
         """
         Validate the directory by a given path.
 
@@ -198,14 +197,14 @@ class DirValidator(Validator):
 
 
 @attr.s(auto_attribs=True)
-class FileSchemeValidator(Validator):
+class FileSchemeValidator(PathValidator):
 
     """
     Scheme Validator for files and directories.
 
     Attributes
     ----------
-    _scheme: Dict
+    _scheme: Optional[Dict]
         dictionary with files scheme
 
     Notes
@@ -214,7 +213,7 @@ class FileSchemeValidator(Validator):
     and converting keys of file scheme from string to `Path` instance.
     """
 
-    _scheme: Dict = attr.ib(
+    _scheme: Optional[Dict] = attr.ib(
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
