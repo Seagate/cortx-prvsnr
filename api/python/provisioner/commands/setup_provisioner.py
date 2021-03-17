@@ -602,6 +602,7 @@ class SetupCmdBase:
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
 
+
 @attr.s(auto_attribs=True)
 class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -1744,12 +1745,23 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
             logger.info("Generating a password for the service user")
-            service_user_password = str(uuid.uuid4()).split('-')[0]
+            ssh_client.cmd_run(
+                "salt-call state.apply components.system.install_mkpasswd",
+                targets=run_args.primary.minion_id
+            )
+            service_user_password = ssh_client.cmd_run(
+                    (
+                        'mkpasswd -l 12 -d 4 -c 4 -C 4 -s 0'
+                    ), targets=run_args.primary.minion_id
+                )
+
+            secret = service_user_password[run_args.primary.minion_id]
+
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
                     f' system/service-user/secret '
-                    f' \'"{service_user_password}"\''
+                    f' \'"{secret}"\''
                 ),
                 targets=run_args.primary.minion_id,
                 secure=True
