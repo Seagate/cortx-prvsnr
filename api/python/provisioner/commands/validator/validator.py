@@ -80,7 +80,7 @@ class FileValidator(Validator):
         default=None,
     )
 
-    def validate(self, path: Path):
+    def validate(self, path: Path):  # noqa: W0221
         """
         Validate the file by a given path.
 
@@ -162,7 +162,7 @@ class DirValidator(Validator):
         default=False
     )
 
-    def validate(self, path: Path):
+    def validate(self, path: Path):  # noqa: W0221
         """
         Validate the directory by a given path.
 
