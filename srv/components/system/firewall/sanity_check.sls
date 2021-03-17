@@ -65,8 +65,11 @@ Verify private data interfaces:
 
 {% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'management-zone'}) %}
 {% set added_services = salt['firewalld.list_services'](zone=zones[nic]) %}
-{% set services = pillar['firewall'][nic]['services'] %}
-{% do services.extend(pillar['firewall'][nic]['ports'].keys() | list) %}
+{% set services = pillar['firewall'][nic]['ports'].keys() | list %}
+
+{% if pillar['firewall'][nic]['services'] %}
+{% do services.extend(pillar['firewall'][nic]['services']) %}
+{% endif %}
 
 Verify {{ nic }} services:
 {% if (added_services | symmetric_difference(services)) %}
