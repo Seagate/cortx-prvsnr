@@ -27,7 +27,7 @@ from test import helper as h
 
 @attr.s(auto_attribs=True)
 class BundleOpts(inputs.ParserMixin):
-    parser_prefix = 'build-'
+    parser_prefix = 'pkgs-'
 
     version: str = attr.ib(
         default='2.0.0',

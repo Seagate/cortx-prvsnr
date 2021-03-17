@@ -55,7 +55,6 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function):
     return res
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])

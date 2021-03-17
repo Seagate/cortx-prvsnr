@@ -1,6 +1,6 @@
 firewall:
   data_public:
-    services:
+    services: []
     ports:
       consul:
         - 8600/tcp
