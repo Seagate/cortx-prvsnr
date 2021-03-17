@@ -219,9 +219,10 @@ class ParserFiller:
                             }
                         )
                         args = attr_parser_cls(attr_copy, prefix=parser_prefix)
+                        res[args.name] = args.kwargs
                 else:
                     args = attr_parser_cls(_attr, prefix=parser_prefix)
-                res[args.name] = args.kwargs
+                    res[args.name] = args.kwargs
 
         return res
 
@@ -248,13 +249,16 @@ class ParserFiller:
                 # )
                 arg_name = f"{parser_prefix}{_attr.name}".replace('-', '_')
                 if arg_name in kwargs:
+                    _dest = None
                     if positional and _attr.default is attr.NOTHING:
                         _dest = _args
                     elif optional and _attr.default is not attr.NOTHING:
                         _dest = _kwargs
-                    _dest[_attr.name] = kwargs[arg_name]
-                    if pop:
-                        kwargs.pop(arg_name)
+
+                    if _dest:
+                        _dest[_attr.name] = kwargs[arg_name]
+                        if pop:
+                            kwargs.pop(arg_name)
 
         return _args.values(), _kwargs, kwargs
 
