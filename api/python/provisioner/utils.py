@@ -60,7 +60,7 @@ def converter_path(value):
     return value if value is None else Path(str(value))
 
 
-def file_scheme_key_converter(value: dict):
+def converter_file_scheme_key(value: dict):
     """
     Convert incoming dict with file scheme to new one where keys are `Path`
     instances

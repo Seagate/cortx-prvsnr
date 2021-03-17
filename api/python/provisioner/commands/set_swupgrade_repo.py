@@ -24,50 +24,45 @@ from .. import inputs, values
 from ..config import (REPO_CANDIDATE_NAME,
                       IS_REPO_KEY,
                       RELEASE_INFO_FILE,
+                      THIRD_PARTY_RELEASE_INFO_FILE,
                       ReleaseInfo,
                       PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
-                      CORTX_ISO_DIR
+                      CORTX_ISO_DIR,
+                      CORTX_3RD_PARTY_ISO_DIR,
+                      CORTX_PYTHON_ISO_DIR,
+                      OS_ISO_DIR
                       )
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
 from ..utils import load_yaml
-from .validator import FileValidator, DirValidator, FileSchemeValidator
+from .validator import (FileValidator,
+                        DirValidator,
+                        FileSchemeValidator,
+                        YumRepoDataValidator)
 
 logger = logging.getLogger(__name__)
 
 
 # NOTE: keys can be either Path object or strings
 SW_UPGRADE_BUNDLE_SCHEME = {
-    '3rd_party': DirValidator(
+    CORTX_3RD_PARTY_ISO_DIR: DirValidator(
         {
-            "THIRD_PARTY_RELEASE.INFO": FileValidator(required=True),
-            "repodata": DirValidator(
-                {
-                    Path("repomd.xml"): FileValidator(required=True),
-                },
-                required=True),
+            THIRD_PARTY_RELEASE_INFO_FILE: FileValidator(required=True),
+            "repodata": YumRepoDataValidator(),
         },
         required=False),
-    'cortx_iso': DirValidator(
+    CORTX_ISO_DIR: DirValidator(
         {
-            "RELEASE.INFO": FileValidator(required=True),
-            "repodata": DirValidator(
-                {
-                    Path("repomd.xml"): FileValidator(required=True),
-                },
-                required=True),
+            RELEASE_INFO_FILE: FileValidator(required=True),
+            "repodata": YumRepoDataValidator(),
         },
         required=True),
-    'python_deps': DirValidator(required=False),
-    'os': DirValidator(
+    CORTX_PYTHON_ISO_DIR: DirValidator(required=False),
+    OS_ISO_DIR: DirValidator(
         {
-            "RELEASE.INFO": FileValidator(required=False),
-            "repodata": DirValidator(
-                {
-                    Path("repomd.xml"): FileValidator(required=True),
-                },
-                required=True),
+            RELEASE_INFO_FILE: FileValidator(required=False),
+            "repodata": YumRepoDataValidator(),
         },
         required=False)
 }
@@ -207,11 +202,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-            catalog_scheme_validator = FileSchemeValidator(
+            sw_upgrade_bundle_validator = FileSchemeValidator(
                                                     SW_UPGRADE_BUNDLE_SCHEME)
 
             try:
-                catalog_scheme_validator.validate(iso_mount_dir)
+                sw_upgrade_bundle_validator.validate(iso_mount_dir)
             except ValidationError as e:
                 logger.debug("Catalog structure validation error occurred: "
                              f"{e}")

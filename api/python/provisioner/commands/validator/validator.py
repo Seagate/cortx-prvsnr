@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod, ABC
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Dict, Callable, Union
 
 from ... import utils
 
@@ -72,10 +72,10 @@ class FileValidator(Validator):
     """
 
     _required: bool = attr.ib(
-        validator=attr.validators.optional(attr.validators.instance_of(bool)),
+        validator=attr.validators.instance_of(bool),
         default=False
     )
-    _content_validator: Callable[[Path], None] = attr.ib(
+    _content_validator: Union[Callable[[Path], None], None] = attr.ib(
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
@@ -111,9 +111,9 @@ class FileValidator(Validator):
         if not path.is_file():
             raise ValidationError(reason=f"'{path}' is not a regular file.")
 
-        if self._content_validator and callable(self._content_validator):
+        if self._content_validator:
             # Should raise an Exception if validation fails
-            self._content_validator(path)
+            self._content_validator(path)  # pylint: disable=not-callable
 
 
 @attr.s(auto_attribs=True)
@@ -150,17 +150,15 @@ class DirValidator(Validator):
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
-                # we can't refer to DirValidator here.
-                # Replace it to parent class
                 value_validator=attr.validators.instance_of(Validator),
                 mapping_validator=attr.validators.instance_of(dict)
             )
         ),
-        converter=utils.file_scheme_key_converter,
+        converter=utils.converter_file_scheme_key,
         default=None,
     )
     _required: bool = attr.ib(
-        validator=attr.validators.optional(attr.validators.instance_of(bool)),
+        validator=attr.validators.instance_of(bool),
         default=False
     )
 
@@ -194,7 +192,7 @@ class DirValidator(Validator):
         if not path.is_dir():
             raise ValidationError(reason=f"'{path}' is not a directory")
 
-        if self._files_scheme and isinstance(self._files_scheme, dict):
+        if self._files_scheme:
             for sub_path, validator in self._files_scheme.items():
                 validator.validate(path / sub_path)
 
@@ -225,7 +223,7 @@ class FileSchemeValidator(Validator):
                 mapping_validator=attr.validators.instance_of(dict)
             )
         ),
-        converter=utils.file_scheme_key_converter,
+        converter=utils.converter_file_scheme_key,
         default=None
     )
 
@@ -250,3 +248,12 @@ class FileSchemeValidator(Validator):
         """
         for path, validator in self._scheme.items():
             validator.validate(base_path / path)
+
+
+class YumRepoDataValidator(DirValidator):
+
+    """Special alias for yum repo data validation."""
+
+    def __init__(self):
+        super().__init__({Path("repomd.xml"): FileValidator(required=True)},
+                         required=True)
