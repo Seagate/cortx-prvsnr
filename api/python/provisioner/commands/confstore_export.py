@@ -19,7 +19,6 @@ import logging
 
 from pathlib import Path
 from typing import Type
-from cortx.utils.conf_store.conf_store import Conf
 from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
 from ..salt import StateFunExecuter
@@ -89,6 +88,8 @@ class ConfStoreExport(CommandParserFillerMixin):
             pillar = next(iter(pillar.values()))
 
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+
+            from cortx.utils.conf_store.conf_store import Conf
 
             Conf.load('provisioner', pillar[PillarKey(pillar_key)])
 
