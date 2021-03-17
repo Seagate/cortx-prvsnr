@@ -46,13 +46,13 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class ConfstorExport(CommandParserFillerMixin):
+class ConfStoreExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    description = "Export pillar template data to confstor"
+    description = "Export pillar template data to ConfStore"
 
     def run(self, **kwargs):
         """
-        Confstor_export command execution method.
+        confstore_export command execution method.
         It creates a pillar template and loads into the confstor
         of which the path specified in pillar
         """
