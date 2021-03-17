@@ -299,7 +299,6 @@ def test_functions_parse_args_parses_remote(parse_args):
         assert "remote=<{}>".format(hostspec) in res.stdout
 
 
-@pytest.mark.skip(reason="EOS-18738")
 def test_functions_parse_args_parses_ssh_config(parse_args, host_ssh_config):
     for arg in ('-F', '--ssh-config'):
         res = parse_args(
@@ -500,7 +499,6 @@ def test_functions_parse_args_calls_positional_args_cb(parse_args):
     assert "positional_args=<arg1 arg2 arg3>" in res.stdout
 
 
-@pytest.mark.skip(reason="EOS-18738")
 def test_functions_build_command(build_command, host_ssh_config):
     res = build_command()
     assert res.rc == 0
@@ -545,7 +543,6 @@ def test_functions_hostname_from_spec(run_script):
     assert "res=<hostname>" in res.stdout
 
 
-@pytest.mark.skip(reason="EOS-18738")
 def test_functions_check_host_in_ssh_config(run_script, mhost):
     host_ssh_config = mhost.tmpdir / 'ssh-config'
     script = """
@@ -575,7 +572,6 @@ def test_functions_check_host_in_ssh_config(run_script, mhost):
 # TODO
 #   - remote case is better to test from within virtual env as well
 #   - other cases: ip missed, ifconfig missed, hostname is 127.0.0.1
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_collect_addrs(
@@ -621,7 +617,6 @@ def test_functions_collect_addrs(
     assert set(collected) == set(expected)
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_check_host_reachable(
@@ -658,7 +653,6 @@ def test_functions_check_host_reachable(
 #   - case when they have the same IP in some non-shared interface
 #     (vbox only case for now)
 #   - actually we don't need cortx specific here, just two hosts
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
 @pytest.mark.parametrize(
@@ -709,7 +703,6 @@ def test_functions_get_reachable_names(
 
 
 # TODO check key for saltstack repo is imported
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
 def test_functions_install_repos(
@@ -772,7 +765,6 @@ def test_functions_systemd_libs_not_from_updates(mhost):
 
 
 # TODO actually utils env level is enough
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -806,7 +798,6 @@ def test_functions_install_provisioner(
 
 
 # TODO centos 7.6, 7.7
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -850,7 +841,6 @@ def test_functions_install_provisioner_rpm(
 
 # TODO
 #  - remote case is better to test from within virtual env as well
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -911,7 +901,6 @@ def test_functions_install_provisioner_local(
     assert not diff_installed
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -945,7 +934,6 @@ def test_functions_install_provisioner_proper_cluster_pillar(
     h.check_output(mhost, 'diff -us {} {}'.format(source_path, dest_path))
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
 @pytest.mark.env_level('network-manager-installed')
@@ -990,7 +978,6 @@ def test_functions_configure_network(
 # TODO install_salt cases:
 # - with sudo
 # - do not use localhost for remote tests
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('repos-installed')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -1018,7 +1005,6 @@ def test_functions_install_salt(
 #     instead of the localhost
 #   - integration test for master-minion connected scheme
 #     to check grains, minion-ids ...
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
@@ -1081,7 +1067,6 @@ def test_functions_configure_salt(
     assert grains['id'] == minion_id
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
@@ -1121,7 +1106,6 @@ def test_functions_configure_salt_master_host(
     )
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec(
@@ -1179,7 +1163,6 @@ def test_functions_accept_salt_key_singlenode(
     )
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.hosts(['srvnode1', 'srvnode2'])
@@ -1241,7 +1224,6 @@ def test_functions_accept_salt_key_cluster(
 
 # Note. 'salt-installed' is used since it has python3.6 installed
 # (TODO might need to improve)
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
@@ -1287,7 +1269,6 @@ def test_functions_cortx_pillar_show_skeleton(
     assert res.stdout.strip() == pillar_content
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})
@@ -1306,7 +1287,6 @@ def test_functions_cortx_pillar_update_fail(
 #     might be a subject of other test (e.g. for utils)
 #   - update and load default are related to each other but anyway makes sense
 #     to split into separate tests
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 @pytest.mark.cortx_spec({'': {'minion_id': 'srvnode-1', 'roles': ['primary']}})

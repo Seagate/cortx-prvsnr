@@ -56,7 +56,6 @@ def install_salt_config_files(project_path):
 
 
 # TODO split
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 def test_setup_provisioner_fail(mhost, run_script):
     ssh_config = '/tmp/ssh_config'
@@ -175,7 +174,6 @@ def test_setup_provisioner_fail(mhost, run_script):
 # TODO
 # - add checks:
 #   - network is configured
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.env_provider('vbox')
@@ -245,7 +243,6 @@ def check_setup_provisioner_results(mhostsrvnode1):
         assert states == states_expected
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.env_provider('vbox')
@@ -271,7 +268,6 @@ def test_setup_provisioner_cluster(
     check_setup_provisioner_results(mhostsrvnode1)
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.env_provider('vbox')

@@ -40,6 +40,8 @@ tests_require = [
     'pytest-xdist==1.29.0',
     'pytest-timeout==1.3.4',
     'pytest-mock==3.1.0',
+    'coverage==5.3.1',
+    'pytest-cov==2.11.0',
 ]
 
 codacy_require = [
