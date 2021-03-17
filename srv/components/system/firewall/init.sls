@@ -21,11 +21,6 @@ include:
   - .install
   - .config
 
-# Disable Firewall:
-#   service.dead:
-#     - name: firewalld
-#     - enable: false
-
 Generate firewall checkpoint flag:
   file.managed:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall

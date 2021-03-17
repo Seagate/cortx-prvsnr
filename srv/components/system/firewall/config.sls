@@ -61,6 +61,9 @@ Public data zone:
       - {{ interface }}
       {% endfor %}
     - services:
+      {% for service in pillar['firewall']['data_public']['services'] %}
+      - {{ service }}
+      {% endfor %}
       {% for service in pillar['firewall']['data_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}

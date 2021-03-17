@@ -61,43 +61,43 @@ Verify private data interfaces:
     - text: Interfaces verification successful on private-data-zone
 {% endif %}
 
-{% for nic in pillar['firewall'].keys() %}
+{% for network_interface in pillar['firewall'].keys() %}
 
 {% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'management-zone'}) %}
-{% set added_services = salt['firewalld.list_services'](zone=zones[nic]) %}
-{% set services = pillar['firewall'][nic]['ports'].keys() | list %}
+{% set added_services = salt['firewalld.list_services'](zone=zones[network_interface]) %}
+{% set services = pillar['firewall'][network_interface]['ports'].keys() | list %}
 
-{% if pillar['firewall'][nic]['services'] %}
-{% do services.extend(pillar['firewall'][nic]['services']) %}
+{% if pillar['firewall'][network_interface]['services'] %}
+{% do services.extend(pillar['firewall'][network_interface]['services']) %}
 {% endif %}
 
-Verify {{ nic }} services:
+Verify {{ network_interface }} services:
 {% if (added_services | symmetric_difference(services)) %}
   test.fail_without_changes:
-    - name: {{ (services | symmetric_difference(added_services)) }} services verification failed on {{ nic }}
+    - name: {{ (services | symmetric_difference(added_services)) }} services verification failed on {{ network_interface }}
 {% else %}
   test.show_notification:
-    - text: {{ nic }} services verification successful
+    - text: {{ network_interface }} services verification successful
 {% endif %}
 
 {% set ports = [] %}
 {% set added_ports = [] %}
-{% do added_ports.extend(salt['firewalld.list_ports'](zone=zones[nic])) %}
+{% do added_ports.extend(salt['firewalld.list_ports'](zone=zones[network_interface])) %}
 
-{% for service in pillar['firewall'][nic]['ports'] %}
+{% for service in pillar['firewall'][network_interface]['ports'] %}
 
 {% do added_ports.extend(salt['firewalld.get_service_ports'](service=service)) %}
-{% do ports.extend(pillar['firewall'][nic]['ports'][service]) %}
+{% do ports.extend(pillar['firewall'][network_interface]['ports'][service]) %}
 
 {% endfor %}
 
-Verify {{ nic }} ports:
+Verify {{ network_interface }} ports:
 {% if (added_ports | symmetric_difference(ports)) %}
   test.fail_without_changes:
-    - name: "{{ (ports | symmetric_difference(added_ports)) }} ports verification failed on {{ nic }}"
+    - name: "{{ (ports | symmetric_difference(added_ports)) }} ports verification failed on {{ network_interface }}"
 {% else %}
   test.show_notification:
-    - text: {{ nic }} ports verification successful
+    - text: {{ network_interface }} ports verification successful
 {% endif %}
 
 {% endfor %}
