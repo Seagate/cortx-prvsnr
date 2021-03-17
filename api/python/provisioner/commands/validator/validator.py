@@ -149,7 +149,7 @@ class DirValidator(PathValidator):
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
-                value_validator=attr.validators.instance_of(Validator),
+                value_validator=attr.validators.instance_of(PathValidator),
                 mapping_validator=attr.validators.instance_of(dict)
             )
         ),
@@ -217,8 +217,7 @@ class FileSchemeValidator(PathValidator):
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
-                value_validator=attr.validators.instance_of((FileValidator,
-                                                             DirValidator)),
+                value_validator=attr.validators.instance_of(PathValidator),
                 mapping_validator=attr.validators.instance_of(dict)
             )
         ),
