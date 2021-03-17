@@ -1745,7 +1745,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
             logger.info("Generating a password for the service user")
- 
+
             service_user_password = utils.generate_random_secret()
 
             ssh_client.cmd_run(

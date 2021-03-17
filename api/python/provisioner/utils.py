@@ -287,7 +287,7 @@ def node_hostname_validator(
             raise ValueError(msg)
 
 
-#Generate random 12 character password
+# Generate random 12 character password
 def generate_random_secret():
 
     passwd_strength = 12
