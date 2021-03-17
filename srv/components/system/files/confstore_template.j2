@@ -1,4 +1,4 @@
-{%- set cluster_id = pillar['cluster']['cluster_id'] %}
+{%- set cluster_id = grains['cluster_id'] %}
 support>user:{{ pillar['system']['service-user']['name'] }}
 support>secret:{{ pillar['system']['service-user']['secret'] }}
 cortx>software>csm>user:
