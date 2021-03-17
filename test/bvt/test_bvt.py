@@ -186,7 +186,6 @@ def get_bvt_results(
     logger.info("Stored results as '{}'".format(local_path))
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(3600)
 @pytest.mark.cortx_bvt
 @pytest.mark.isolated

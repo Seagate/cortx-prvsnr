@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 #  - might makes sense. to verify for cluster case as well
 #  - split into more focused scenarios
 #  - tests for states relations
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated  # noqa: C901 TODO improve
 @pytest.mark.env_provider('vbox')  # mount makes docker inappropriate
 @pytest.mark.hosts(['srvnode1'])
