@@ -226,14 +226,14 @@ class FileSchemeValidator(PathValidator):
         default=None
     )
 
-    def validate(self, base_path: Path):
+    def validate(self, path: Path):
         """
         Validate the catalog structure against validation scheme for given
         path
 
         Parameters
         ----------
-        base_path: Path
+        path: Path
             path for catalog scheme validation
 
         Returns
@@ -245,8 +245,8 @@ class FileSchemeValidator(PathValidator):
         ValidationError
             If validation is failed.
         """
-        for path, validator in self._scheme.items():
-            validator.validate(base_path / path)
+        for sub_path, validator in self._scheme.items():
+            validator.validate(path / sub_path)
 
 
 class YumRepoDataValidator(DirValidator):
