@@ -51,10 +51,7 @@ deploy_states = dict(
         "system.network.data.public",
         "system.network.data.direct",
         "misc_pkgs.rsyslog",
-        "system.firewall.prepare",
-        "system.firewall.install",
-        "system.firewall.start",
-        "system.firewall.config",
+        "system.firewall",
         "system.firewall.sanity_check",
         "system.logrotate",
         "system.chrony"

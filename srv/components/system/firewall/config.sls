@@ -37,12 +37,11 @@ Update {{ service }} for {{ nw_interface }}:
   {% endfor %}
 {% endfor %}
 
-{% if not 'public-data-zone' in salt['firewalld.get_zones']() %}
 Add public data zone:
   module.run:
     - firewalld.new_zone:
       - public-data-zone
-{% endif %}
+    - unless: firewall-cmd --list-all-zones | grep public-data-zone
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {% set data_if = ['data0'] %}
@@ -74,13 +73,11 @@ Public data zone:
       - {{ service }}
       {% endfor %}
 
-
-{% if not 'management-zone' in salt['firewalld.get_zones']() %}
 Add management zone:
   module.run:
     - firewalld.new_zone:
       - management-zone
-{% endif %}
+    - unless: firewall-cmd --list-all-zones | grep management-zone
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
   {% set mgmt_if = ['mgmt0'] %}
