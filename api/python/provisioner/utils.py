@@ -20,6 +20,8 @@ import logging
 import subprocess
 import time
 import yaml
+import string
+import secrets
 from shlex import quote
 
 from pathlib import Path, PosixPath
@@ -283,3 +285,14 @@ def node_hostname_validator(
                 f"{node_dict[section]} != {parser_obj[section]['hostname']}"
             )
             raise ValueError(msg)
+
+
+#Generate random 12 character password
+def generate_random_secret():
+
+    passwd_strength = 12
+    passwd_seed = (string.ascii_letters + string.digits)
+
+    return ''.join(
+        [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
+    )

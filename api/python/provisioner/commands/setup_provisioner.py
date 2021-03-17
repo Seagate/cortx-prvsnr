@@ -1745,23 +1745,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
             logger.info("Generating a password for the service user")
-            ssh_client.cmd_run(
-                "salt-call state.apply components.system.install_mkpasswd",
-                targets=run_args.primary.minion_id
-            )
-            service_user_password = ssh_client.cmd_run(
-                    (
-                        'mkpasswd -l 12 -d 4 -c 4 -C 4 -s 0'
-                    ), targets=run_args.primary.minion_id
-                )
-
-            secret = service_user_password[run_args.primary.minion_id]
+ 
+            service_user_password = utils.generate_random_secret()
 
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
                     f' system/service-user/secret '
-                    f' \'"{secret}"\''
+                    f' \'"{service_user_password}"\''
                 ),
                 targets=run_args.primary.minion_id,
                 secure=True
