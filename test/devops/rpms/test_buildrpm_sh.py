@@ -376,6 +376,7 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
 
     mhost.check_output('yum install -y {}'.format(new_rpm_remote))
     check_post_section(mhost, api_version=new_version)
+<<<<<<< HEAD
 
 
 @pytest.mark.env_level('base')
