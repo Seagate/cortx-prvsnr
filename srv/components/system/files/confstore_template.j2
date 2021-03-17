@@ -16,7 +16,7 @@ cluster>{{ cluster_id }}>site_count:1
 cluster>{{ cluster_id }}>site>storage_node_count:3
 cluster>{{ cluster_id }}>storage_set>server_node_count:3
 cluster>{{ cluster_id }}>storage_set>storage_enclosure_count:3
-cluster>{{ cluster_id }}>network>management>virtual_host:{{ pillar['cluster']['virtual_host'] }}
+cluster>{{ cluster_id }}>network>management>virtual_host:{{ pillar['cluster']['virtual_hosts'] }}
 cluster>{{ cluster_id }}>network>search_domains:{{ pillar['cluster']['search_domains'] }}
 cluster>{{ cluster_id }}>network>dns_servers:{{ pillar['cluster']['dns_servers'] }}
 {%- for storage_set in pillar['cluster']['storage_sets'].keys() %}
@@ -25,6 +25,9 @@ cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name:{{ storage
 {%- for node in pillar['cluster']['storage_sets'][storage_set] %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]:{{ node }}
 {%- endfor %}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>data:4
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>parity:2
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>spare:0
 {%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
 server_node>{{ machine_id }}>name:{{ node }}
@@ -56,18 +59,6 @@ server_node>{{ machine_id }}>network>data>roaming_ip:{{ pillar['cluster'][node][
 server_node>{{ machine_id }}>network>data>interface_type:{{ pillar['cluster'][node]['network']['data']['interface_type'] }}
 server_node>{{ machine_id }}>network>data>transport_type:{{ pillar['cluster'][node]['network']['data']['transport_type'] }}
 server_node>{{ machine_id }}>storage>enclosure_id:{{ pillar['cluster'][node]['storage']['enclosure_id'] }}
-server_node>{{ machine_id }}>storage>cvg_count:{{ pillar['cluster'][node]['storage']['cvg_count'] }}
-{%- for i in range(pillar['cluster'][node]['storage']['cvg_count']) %}
-{%- set outer_loop = loop %}
-{%- set metadata_devices = pillar['cluster'][node]['storage']['cvg'][outer_loop.index - 1]['metadata_devices'] %}
-{%- for device in metadata_devices %}
-server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>metadata_devices[{{ loop.index - 1 }}]:{{ device }}
-{%- endfor %}
-{%- set data_devices = pillar['cluster'][node]['storage']['cvg'][outer_loop.index - 1]['data_devices'] %}
-{%- for device in data_devices %}
-server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>data_devices[{{ loop.index - 1 }}]:{{ device }}
-{%- endfor %}
-{%- endfor %}
 server_node>{{ machine_id }}>site_id:{{ pillar['cluster'][node]['site_id'] }}
 server_node>{{ machine_id }}>rack_id:{{ pillar['cluster'][node]['rack_id'] }}
 server_node>{{ machine_id }}>node_id:{{ pillar['cluster'][node]['node_id'] }}
