@@ -21,7 +21,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.timeout(1200)
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])

@@ -32,17 +32,14 @@ def install_coverage():
         "yum install -y gcc cpp python3-devel"
     )
     _run(
-        "pip3 install -U api/python"
-    )
-    _run(
-        "pip3 install -r test-requirements.txt"
+        "pip3 install -U api/python[test]"
     )
 
 
 def prvsnr_coverage():
     print("Executing provisioner test cases and generating coverage report")
     _run(
-        "coverage run -m pytest \
+        "coverage run -m pytest -m unit\
         --cov test/ --cov-report=xml"
     )
     if os.path.isfile('coverage.xml'):

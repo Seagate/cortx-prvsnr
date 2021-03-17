@@ -50,7 +50,6 @@ pcs_mock_tmpl = '''
 '''
 
 
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 def test_cluster_mgmt(
