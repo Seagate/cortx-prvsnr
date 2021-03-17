@@ -1,45 +1,17 @@
 import logging
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Dict, Callable
 
+from ... import utils
+
+from ...vendor import attr
 from ...errors import ValidationError
 
 logger = logging.getLogger(__name__)
 
 
-class SchemeValidator:
-
-    """Base Scheme Validator. It defines the interface for child classes."""
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def validate(self, *args, **kwargs):
-        """
-        Abstract Scheme validation method.
-
-        Parameters
-        ----------
-        args
-            list of positional arguments
-        kwargs
-            keyword-only arguments
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValidationError
-            If validation is failed.
-        """
-        pass
-
-
-class Validator:
+class Validator(ABC):
 
     """Abstract Validator class defines the interface for inheritance."""
 
@@ -67,25 +39,25 @@ class Validator:
         pass
 
 
+@attr.s(auto_attribs=True)
 class FileValidator(Validator):
 
-    """Class for file validation."""
+    """
+    Class for file validation.
 
-    def __init__(self, *, required: bool = False,
-                 content_validator: Callable[[Path], None] = None):
-        """
-        File validator initialization method
+    Attributes
+    ----------
+    _required: bool
+        if True validation raises an Exception if the file doesn't exist
+    _content_validator: Callable[[Path], None]
+        callable object for file content validation.
 
-        Parameters
-        ----------
-        required: bool
-            if True validation raises an Exception if the file doesn't exist
-        content_validator: Callable[[Path], None]
-            callable object for file content validation
+        Should raise the `ValidationError` exception if file content validation
+        is failed
 
-        Notes
-        -----
-        TBD: other possible parameters
+    Notes
+    -----
+    TBD: other possible parameters
         permissions: int/str
             requested file permissions
         owner: str
@@ -94,9 +66,19 @@ class FileValidator(Validator):
             requested file group
         is_symlink: bool
             defines if file should be a symlink
-        """
-        self._required = required
-        self._content_validator = content_validator
+
+    At initialization time `attr.s` is responsible for `_required`
+    and `_content_validator` attributes validation.
+    """
+
+    _required: bool = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(bool)),
+        default=False
+    )
+    _content_validator: Callable[[Path], None] = attr.ib(
+        validator=attr.validators.optional(attr.validators.is_callable()),
+        default=None,
+    )
 
     def validate(self, path: Path):
         """
@@ -134,35 +116,53 @@ class FileValidator(Validator):
             self._content_validator(path)
 
 
-class DirValidator:
+@attr.s(auto_attribs=True)
+class DirValidator(Validator):
 
-    """Class for catalog validation."""
+    """
+    Class for catalog validation.
 
-    def __init__(self, files_scheme: Dict = None, required: bool = False):
-        """
-        Catalog validator initialization method.
+    Attributes
+    ----------
+    _files_scheme: Dict
+        Nested catalog structure for the validation path
 
-        Parameters
-        ----------
-        files_scheme: Dict
-            Nested catalog structure for the validation path
+    _required: bool
+        if True validation raises an Exception if the directory
+        doesn't exist
 
-        required: bool
-            if True validation raises an Exception if the directory
-            doesn't exist
+    Notes
+    -----
+    TBD: other possible parameters
+    permissions: int/str
+        requested directory permissions
+    owner: str
+        requested directory owner
+    group: str
+        requested directory group
 
-        Notes
-        -----
-        TBD: other possible parameters
-        permissions: int/str
-            requested directory permissions
-        owner: str
-            requested directory owner
-        group: str
-            requested directory group
-        """
-        self._files_scheme = files_scheme
-        self._required = required
+    At initialization time `attr.s` is responsible for `_file_scheme`
+    validation and converting keys of file scheme from string to `Path`
+    instance.
+    """
+
+    _files_scheme: Dict = attr.ib(
+        validator=attr.validators.optional(
+            attr.validators.deep_mapping(
+                key_validator=attr.validators.instance_of((str, Path)),
+                # we can't refer to DirValidator here.
+                # Replace it to parent class
+                value_validator=attr.validators.instance_of(Validator),
+                mapping_validator=attr.validators.instance_of(dict)
+            )
+        ),
+        converter=utils.file_scheme_key_converter,
+        default=None,
+    )
+    _required: bool = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(bool)),
+        default=False
+    )
 
     def validate(self, path: Path):
         """
@@ -196,31 +196,38 @@ class DirValidator:
 
         if self._files_scheme and isinstance(self._files_scheme, dict):
             for sub_path, validator in self._files_scheme.items():
-                if isinstance(sub_path, str):
-                    sub_path = Path(sub_path)
-                elif not isinstance(sub_path, Path):
-                    raise ValueError("Keys of the nested catalog file scheme "
-                                     "should be a string or instantiated from "
-                                     "'Path' class")
                 validator.validate(path / sub_path)
 
 
-class FileSchemeValidator(SchemeValidator):
+@attr.s(auto_attribs=True)
+class FileSchemeValidator(Validator):
 
-    """Scheme Validator for files and directories."""
+    """
+    Scheme Validator for files and directories.
 
-    def __init__(self, file_scheme: Dict):
-        """
-        Initialization method.
+    Attributes
+    ----------
+    _scheme: Dict
+        dictionary with files scheme
 
-        Parameters
-        ----------
-        file_scheme: Dict
-            dictionary with file scheme
-        """
-        super().__init__()
+    Notes
+    -----
+    At initialization time `attr.s` is responsible for `_scheme` validation
+    and converting keys of file scheme from string to `Path` instance.
+    """
 
-        self._scheme = file_scheme
+    _scheme: Dict = attr.ib(
+        validator=attr.validators.optional(
+            attr.validators.deep_mapping(
+                key_validator=attr.validators.instance_of((str, Path)),
+                value_validator=attr.validators.instance_of((FileValidator,
+                                                             DirValidator)),
+                mapping_validator=attr.validators.instance_of(dict)
+            )
+        ),
+        converter=utils.file_scheme_key_converter,
+        default=None
+    )
 
     def validate(self, base_path: Path):
         """
@@ -242,9 +249,4 @@ class FileSchemeValidator(SchemeValidator):
             If validation is failed.
         """
         for path, validator in self._scheme.items():
-            if isinstance(base_path, str):
-                base_path = Path(base_path)
-            elif not isinstance(base_path, Path):
-                raise ValueError("Keys of the files scheme should be a strings"
-                                 " or instantiated from 'Path' class")
             validator.validate(base_path / path)

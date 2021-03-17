@@ -128,8 +128,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._check_repo_is_valid(REPO_CANDIDATE_NAME,
                                       f"sw_upgrade_{repo_name}")
         except SaltCmdResultError as exc:
-            raise SWUpdateRepoSourceError(
-                                        repo_name, f"malformed repo: '{exc}'")
+            raise SWUpdateRepoSourceError(repo_name,
+                                          f"malformed repo: '{exc}'")
 
         # there is no the same release repo is already active
         if self._is_repo_enabled(f'sw_upgrade_{repo_name}_{release}'):
@@ -145,7 +145,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     # FIXME repo is undefined here
                     str(repo.source),
                     (
-                        f"SW upgrade repository for the release "
+                        "SW upgrade repository for the release "
                         f"'{release}' has been already enabled"
                     )
                 )
@@ -216,9 +216,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 logger.debug("Catalog structure validation error occurred: "
                              f"{e}")
                 raise SWUpdateRepoSourceError(
-                                        str(repo.source),
-                                        "Catalog structure validation error "
-                                        f"occurred:{str(e)}") from e
+                            str(repo.source),
+                            f"Catalog structure validation error occurred:{e}"
+                ) from e
 
             release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
                             f'{RELEASE_INFO_FILE}')
@@ -226,8 +226,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 metadata = load_yaml(release_file)
             except Exception as exc:
                 raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                            str(repo.source),
+                            f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
                 )
             else:
                 repo.metadata = metadata
@@ -245,8 +245,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     )
                 except KeyError:
                     raise SWUpdateRepoSourceError(
-                        str(repo.source),
-                        f"No release data found in '{RELEASE_INFO_FILE}'"
+                            str(repo.source),
+                            f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
             else:
