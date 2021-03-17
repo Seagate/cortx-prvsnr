@@ -53,25 +53,25 @@ class ConfStoreExport(CommandParserFillerMixin):
     def run(self, **kwargs):
         """
         confstore_export command execution method.
-        It creates a pillar template and loads into the confstor
+        It creates a pillar template and loads into the confstore
         of which the path specified in pillar
         """
 
         try:
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
-            template_file_path = str( CORTX_CONFIG_DIR / 'confstor_template.sls')
+            template_file_path = str( CORTX_CONFIG_DIR / 'confstore_template.sls')
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
                     name=template_file_path,
-                    source='salt://components/system/files/confstor_template.j2',
+                    source='salt://components/system/files/confstore_template.j2',
                     template='jinja'))
-            logger.info("Pillar confstor template is created at "
+            logger.info("Pillar confstore template is created at "
                         f"{template_file_path}"
                         )
         except Exception as exc:
             logger.exception(
-                f"Unable to create confstor template due to {exc}")
+                f"Unable to create confstore template due to {exc}")
             raise exc
 
         try:
@@ -83,8 +83,8 @@ class ConfStoreExport(CommandParserFillerMixin):
             if not template_data :
                 raise Exception("No content in template file")
 
-            pillar_confstor_path = "provisioner/common_config/confstore_url"
-            pillar_key = PillarKey(pillar_confstor_path)
+            pillar_confstore_path = "provisioner/common_config/confstore_url"
+            pillar_key = PillarKey(pillar_confstore_path)
             pillar = PillarResolver(local_minion_id()).get([pillar_key])
             pillar = next(iter(pillar.values()))
 
@@ -96,7 +96,7 @@ class ConfStoreExport(CommandParserFillerMixin):
                 if data:
                     Conf.set("provisioner", data.split(':')[0], data.split(':')[1])
             Conf.save("provisioner")
-            logger.info("Template loaded to confstor")
+            logger.info("Template loaded to confstore")
 
         except Exception as exc:
             logger.exception(f"Unable to load template due to {exc}")

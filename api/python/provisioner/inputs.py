@@ -663,7 +663,7 @@ class NetworkParams():
         _param_group, descr="cluster ip address for public data network",
         validator=Validation.check_ip4
     )
-    virtual_host: str = ParamGroupInputBase._attr_ib(
+    mgmt_vip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="virtual ip address for management network",
         validator=Validation.check_ip4
     )

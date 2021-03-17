@@ -93,8 +93,8 @@ class RunArgsConfigureSetup:
 @attr.s(auto_attribs=True)
 class NetworkParamsValidation:
     cluster_ip: str = NetworkParams.cluster_ip
-    virtual_host: str = NetworkParams.virtual_host
-    _optional_param = ['cluster_ip', 'virtual_hosts']
+    mgmt_vip: str = NetworkParams.mgmt_vip
+    _optional_param = ['cluster_ip', 'mgmt_vip']
 
     def __attrs_post_init__(self):
         params = attr.asdict(self)

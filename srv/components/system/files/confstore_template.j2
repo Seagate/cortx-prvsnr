@@ -16,7 +16,7 @@ cluster>{{ cluster_id }}>site_count:1
 cluster>{{ cluster_id }}>site>storage_node_count:3
 cluster>{{ cluster_id }}>storage_set>server_node_count:3
 cluster>{{ cluster_id }}>storage_set>storage_enclosure_count:3
-cluster>{{ cluster_id }}>network>management>virtual_host:{{ pillar['cluster']['virtual_hosts'] }}
+cluster>{{ cluster_id }}>network>management>virtual_host:{{ pillar['cluster']['mgmt_vip'] }}
 cluster>{{ cluster_id }}>network>search_domains:{{ pillar['cluster']['search_domains'] }}
 cluster>{{ cluster_id }}>network>dns_servers:{{ pillar['cluster']['dns_servers'] }}
 {%- for storage_set in pillar['cluster']['storage_sets'].keys() %}

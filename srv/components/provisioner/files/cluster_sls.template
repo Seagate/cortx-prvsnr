@@ -18,7 +18,7 @@
 
 {% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
 cluster:
-  virtual_hosts: 
+  mgmt_vip: 
   search_domains:                     # Do not update
   dns_servers:                        # Do not update
   storage_sets:
