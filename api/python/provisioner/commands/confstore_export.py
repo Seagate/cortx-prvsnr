@@ -61,7 +61,7 @@ class ConfStoreExport(CommandParserFillerMixin):
 
         try:
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
-            template_file_path = str( CORTX_CONFIG_DIR / 'confstore_template.sls')
+            template_file_path = str( CORTX_CONFIG_DIR / 'provisioner_confstore_template')
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
