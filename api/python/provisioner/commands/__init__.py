@@ -361,6 +361,8 @@ class Get(CommandParserFillerMixin):
 #   - update pillar related to some param(s)
 #   - call related states (before and after)
 #   - rollback if something goes wrong
+
+
 @attr.s(auto_attribs=True)
 class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
@@ -795,19 +797,6 @@ class GetResult(CommandParserFillerMixin):
 
     def run(self, cmd_id: str):
         return SaltJobsRunner.prvsnr_job_result(cmd_id)
-
-
-# TODO TEST
-@attr.s(auto_attribs=True)
-class GetClusterId(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsEmpty
-
-    def run(self):
-        return list(function_run(
-            'grains.get',
-            fun_args=['cluster_id']
-        ).values())[0]
 
 
 # TODO TEST
@@ -1381,11 +1370,14 @@ for cmd_name, spec in api_spec.items():
         command = getattr(_mod, cmd_cls)
     except AttributeError:
         try:
-            cmd_mod = importlib.import_module(
-                f'provisioner.commands.{cmd_name}'
-            )
+            if "cluster_id" in cmd_name:
+                mod_name = 'provisioner.commands.cluster_id'
+            else:
+                mod_name = f'provisioner.commands.{cmd_name}'
+
+            cmd_mod = importlib.import_module(mod_name)
         except Exception:
-            logger.error(f"Failed to import provisioner.commands.{cmd_name}")
+            logger.error(f"Failed to import '{mod_name}'")
             raise
         command = getattr(cmd_mod, cmd_cls)
     commands[cmd_name] = command.from_spec(**spec)

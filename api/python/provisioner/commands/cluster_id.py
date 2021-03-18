@@ -21,20 +21,66 @@ import logging
 import uuid
 from typing import Type
 
+from . import (
+     CommandParserFillerMixin
+)
 from .. import inputs
 from ..api import grains_get
-from ..config import LOCAL_MINION
+from ..config import (
+     LOCAL_MINION,
+     ALL_MINIONS
+)
+from ..vendor import attr
 
 from provisioner.commands import (
-     PillarSet,
-     GetClusterId
+     PillarGet,
+     PillarSet
 )
-from . import CommandParserFillerMixin
-
-from ..vendor import attr
 from provisioner.salt import local_minion_id
 
 logger = logging.getLogger(__name__)
+
+
+@attr.s(auto_attribs=True)
+class GetClusterId(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+
+    def run(self, targets=ALL_MINIONS):
+        """get_cluster_id command execution method.
+
+        Gets cluster ID from pillar data.
+
+        Execution:
+        `provisioner get_cluster_id`
+        Takes no mandatory argument as input.
+
+        """
+        try:
+            cluster_data = PillarGet().run(
+                'cluster',
+                targets=targets
+            )
+            cluster_id = [cluster_data[node]["cluster"]["cluster_id"]
+                          for node in cluster_data]
+
+            if len(set(cluster_id)) != 1:
+                logger.error(
+                     "Error: ClusterID assignment not unique across "
+                     f"the nodes of the cluster: {cluster_id}. "
+                     "To set one, execute `provisioner set_cluster_id` command."
+                )
+                return ValueError(
+                     "Error: ClusterID assignment not unique across "
+                     f"the nodes: {cluster_id}"
+                )
+
+            return cluster_id[0]
+
+        except Exception as exc:
+            raise ValueError(
+                "Error in retrieving cluster_id from "
+                f"Pillar data: {str(exc)}"
+            )
 
 
 @attr.s(auto_attribs=True)
