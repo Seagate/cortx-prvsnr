@@ -19,7 +19,6 @@ import logging
 from typing import Type, Union
 
 from . import CommandParserFillerMixin, RunArgsEmpty
-from .configure_setup import SetupType
 
 from .. import inputs, values
 
@@ -31,8 +30,6 @@ from ..vendor import attr
 
 
 logger = logging.getLogger(__name__)
-
-# SETUP_TYPE = SetupType.LDR_R1
 
 
 class OutputScheme:
@@ -164,27 +161,24 @@ class GetSetupInfo(CommandParserFillerMixin):
             res[config.SERVERS_PER_NODE] = 1
         elif 2 == len(node_list):
             res[config.SERVERS_PER_NODE] = 2
-            SETUP_TYPE = SetupType.LDR_R1
             res[config.NODES] = (
                 len(pillar[nodes_list])
             )
             res[config.STORAGE_SETS] = None
         elif (
             1 <= (len(node_list) // 3) and
-            0 != (len(node_list) % 3)
+            0 == (len(node_list) % 3)
         ):
             res[config.SERVERS_PER_NODE] = 1
-            SETUP_TYPE = SetupType.LDR_R2
             res[config.NODES] = (
                 len(pillar[nodes_list])
             )
             res[config.STORAGE_SETS] = (
-                len(pillar[nodes_list]) // res[config.SERVERS_PER_NODE]
+                len(pillar[nodes_list]) // 3
             )
         else:
             raise ValueError(
-                f"Unsupported number of nodes '{len(node_list)}'"
-                f"for '{SETUP_TYPE}' pillar value"
+                f"Unsupported number of nodes '{len(node_list)}' in given cluster information."
             )
 
         return res

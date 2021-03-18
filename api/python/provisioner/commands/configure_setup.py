@@ -184,17 +184,6 @@ class NodeParamsValidation:
         'cvg'
     ]
 
-    if (
-        not 'physical' in GrainsGet().run(
-            'virtual',
-            targets=local_minion_id()
-        )[local_minion_id()]['virtual']
-    ):
-        _optional_param.extend([
-            'bmc_user',
-            'bmc_secret'
-        ])
-
     def __attrs_post_init__(self):
         params = attr.asdict(self)
 
@@ -226,6 +215,17 @@ class NodeParamsValidation:
                     "List of metadata is specified. "
                     "However, list of data is unspecified."
                 )
+
+        if (
+            not 'physical' in GrainsGet().run(
+                'virtual',
+                targets=local_minion_id()
+            )[local_minion_id()]['virtual']
+        ):
+            self._optional_param.extend([
+                'bmc_user',
+                'bmc_secret'
+            ])
 
         missing_params = []
         for param, value in params.items():
