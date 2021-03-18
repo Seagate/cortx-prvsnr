@@ -20,5 +20,5 @@ set -eux
 
 touch /etc/fstab
 
-yum -y install sshpass python3
+yum -y install sshpass python3 gcc python3-devel
 rm -rf /var/cache/yum

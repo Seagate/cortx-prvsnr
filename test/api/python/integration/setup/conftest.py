@@ -162,14 +162,20 @@ def setup_hosts_specs(setup_hosts):
 
 
 @pytest.fixture
-def cli_args(source, ha, cli_log_args, setup_hosts_specs, run_host):
+def cli_args(
+    source, ha, cli_log_args, setup_hosts_specs, run_host, custom_opts
+):
     cmd = ['--source', source.value]
 
-    if setup_mode_cli == RunT.ONTARGET_CLI and source == SourceT.LOCAL:
+    if source == SourceT.LOCAL and setup_mode_cli == RunT.ONTARGET_CLI:
         cmd.extend(['--local-repo', run_host.repo])
+    elif source == SourceT.ISO:
+        cmd.extend(['--iso-cortx', str(custom_opts.cortx_iso)])
 
     if ha:
         cmd.append('--ha')
+
+    cmd.append('--pypi-repo')
 
     cmd.append(cli_log_args)
     cmd.extend(setup_hosts_specs)

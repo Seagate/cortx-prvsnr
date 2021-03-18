@@ -18,7 +18,7 @@
 import pytest
 import logging
 
-from . helper import RunT
+from . helper import RunT, SourceT
 
 from provisioner.commands.setup_provisioner import (
     SetupProvisioner
@@ -47,8 +47,12 @@ def test_setup_provisioner_api(
         'ha': ha,
         'profile': tmpdir_function / 'profile',
         'source': source.value,
-        'update': True
+        'update': True,
+        'pypi_repo': True
     }
+
+    if source == SourceT.ISO:
+        kwargs['iso_cortx'] = custom_opts.cortx_iso
 
     logger.info(f"Running setup API cmd with: {nodes} {kwargs}")
     if custom_opts.interactive:

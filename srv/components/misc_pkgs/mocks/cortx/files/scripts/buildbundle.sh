@@ -212,6 +212,7 @@ tmp_dir="$(mktemp -d)"
 build_dir="$tmp_dir"
 
 release_info="RELEASE.INFO"
+deps_release_info="THIRD_PARTY_RELEASE.INFO"
 
 echo -e "Building CORTX rpms, build dir: $build_dir"
 $cmd_prefix "${script_dir}/buildrpm.sh" "$cortx_version" "$build_dir"
@@ -243,23 +244,16 @@ pushd "$output_dir"
         cortx_dir="cortx_iso"
     fi
 
-    # we create repos before copying existent ones inside it (if any)
-    for repo in "${yum_repos[@]}"; do
-        createrepo "$repo"
-    done
-
-    # copying existent repos inside
     if [[ -d "$orig_bundle" ]]; then
-        pushd 3rd_party
-            orig_repos=("EPEL-7" "commons/glusterfs" "commons/saltstack")
-            mkdir commons
-            for repo in "${orig_repos[@]}"; do
-                cp -r "$orig_bundle/3rd_party/$repo" "$repo"
-            done
-        popd
+        cp -f "$orig_bundle"/cortx_iso/*cortx-prvsnr*.rpm "$cortx_dir"
+        cp -f "$orig_bundle"/cortx_iso/*cortx-py-utils*.rpm "$cortx_dir"
 
-        pushd "$cortx_dir"
-            cp -f "$orig_bundle"/cortx_iso/*cortx-prvsnr*.rpm .
+        pushd 3rd_party
+            orig_dirs=("commons/rsyslog-8.40")
+            mkdir commons
+            for dir in "${orig_dirs[@]}"; do
+                cp -r "$orig_bundle/3rd_party/$dir" "$dir"
+            done
         popd
     fi
 
@@ -276,15 +270,38 @@ pushd "$output_dir"
         fi
     popd
 
+    # we create repos before copying existent ones inside it (if any)
+    for repo in "${yum_repos[@]}"; do
+        createrepo "$repo"
+    done
+
+    # copying existent repos inside
+    if [[ -d "$orig_bundle" ]]; then
+        pushd 3rd_party
+            orig_repos=("EPEL-7" "commons/glusterfs" "commons/saltstack")
+            mkdir -p commons
+            for repo in "${orig_repos[@]}"; do
+                cp -r "$orig_bundle/3rd_party/$repo" "$repo"
+            done
+            cp -f "$orig_bundle/3rd_party/$deps_release_info" .
+        popd
+    fi
+
     echo -e "Preparing a release info data"
     sed_cmds="s/{{ VERSION }}/$cortx_version/g"
     sed_cmds+="; s/{{ DATE }}/$(LC_ALL=en_US.UTF-8 date --utc)/g"
     sed_cmds+="; s/{{ KERNEL }}/$(uname -r)/g"
-    sed "$sed_cmds" "${script_dir}/../${release_info}" >"$release_info"
+    sed "$sed_cmds" "${script_dir}/../${release_info}" >"$cortx_dir/$release_info"
     pkgs="$(find "$rpms_dir" -name '*.rpm' -type f -printf "%f\n")"
     for pkg in $pkgs; do
-        echo "- $pkg" >>"$release_info"
+        echo "- $pkg" >>"$cortx_dir/$release_info"
     done
+
+    # TODO improve
+    if [[ ! -f "3rd_party/$deps_release_info" ]]; then
+        touch "3rd_party/$deps_release_info"
+    fi
+
 
 if [[ "$gen_iso" == true ]]; then
     rm -rf "$output_dir.iso"

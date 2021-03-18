@@ -1141,18 +1141,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         add_file_roots = []
         add_pillar_roots = []
         if run_args.source == 'iso':
-            add_file_roots = [
-                run_args.iso_cortx.parent,
-            ]
+            add_file_roots.append(run_args.iso_cortx.parent)
             if run_args.iso_os:
                 add_file_roots.append(run_args.iso_os.parent)
             if run_args.iso_cortx_deps:
                 add_file_roots.append(run_args.iso_cortx_deps.parent)
 
         if run_args.bootstrap_key:
-            add_file_roots = [
-                run_args.bootstrap_key.parent
-            ]
+            add_file_roots.append(run_args.bootstrap_key.parent)
 
         profile.setup(
             paths,
