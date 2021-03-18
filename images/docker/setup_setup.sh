@@ -18,5 +18,7 @@
 
 set -eux
 
+touch /etc/fstab
+
 yum -y install sshpass python3
 rm -rf /var/cache/yum

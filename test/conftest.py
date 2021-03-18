@@ -449,6 +449,13 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 @pytest.fixture(scope='session')
+def get_fixture(request):
+    def _f(fixture_name):
+        return request.getfixturevalue(fixture_name)
+    return _f
+
+
+@pytest.fixture(scope='session')
 def unit():
     pass
 

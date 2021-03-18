@@ -59,7 +59,7 @@ class BundleOpts(inputs.ParserMixin):
         converter=utils.converter_path_resolved,
         validator=utils.validator_path
     )
-    orig_single_iso: Union[str, Path] = attr.ib(
+    orig_single_iso: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -70,7 +70,7 @@ class BundleOpts(inputs.ParserMixin):
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
-    prvsnr_pkg: Union[str, Path] = attr.ib(
+    prvsnr_pkg: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -81,7 +81,7 @@ class BundleOpts(inputs.ParserMixin):
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
-    prvsnr_api_pkg: Union[str, Path] = attr.ib(
+    prvsnr_api_pkg: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
