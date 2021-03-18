@@ -101,8 +101,6 @@ class AttrParserArgs:
 
         parser_args = {}
 
-        parser_args = {}
-
         parser_args = self._attr.metadata.get(
             METADATA_ARGPARSER, {}
         )

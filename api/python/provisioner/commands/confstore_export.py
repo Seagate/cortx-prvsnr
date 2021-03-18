@@ -21,8 +21,11 @@ from pathlib import Path
 from typing import Type
 from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
-from ..salt import StateFunExecuter
-
+from ..salt import (
+    StateFunExecuter,
+    local_minion_id,
+    cmd_run
+)
 
 from . import (
     CommandParserFillerMixin
@@ -98,6 +101,12 @@ class ConfStoreExport(CommandParserFillerMixin):
                     Conf.set("provisioner", data.split(':')[0], data.split(':')[1])
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
+
+            confstor_path = pillar[PillarKey(pillar_key)].split(':/')[1]
+
+            cmd = f"salt-cp '*' {confstor_path} {confstor_path}"
+            cmd_run(cmd, targets = local_minion_id())
+            logger.info("Confstore copied across all nodes of cluster")
 
         except Exception as exc:
             logger.exception(f"Unable to load template due to {exc}")
