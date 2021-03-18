@@ -334,10 +334,10 @@ class ConfigureSetup(CommandParserFillerMixin):
                 ret_val = [contents[key]]
             elif isinstance(contents[key], dict):
                 tmp_var = self._key_int_to_list(contents[key])
-                if isinstance(tmp_var, inp_list):
-                    if not isinstance(contents[key], inp_list):
+                if isinstance(tmp_var, list):
+                    if not isinstance(contents[key], list):
                         contents[key] = []
-                    contents[key].append(tmp_var)
+                    contents[key].extend(tmp_var)
             else:
                 ret_val = contents
 
