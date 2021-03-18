@@ -105,7 +105,7 @@ node {
                     sshpass -p $PASSWORD provisioner setup_provisioner --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source iso --config-path ~/config.ini --iso-cortx \${SINGLE_ISO} --iso-os \${OS_ISO} srvnode-1:\$(hostname -f)
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
-                    provisioner pillar_export
+                    provisioner confstore_export
                 """
                 echo "Successfully bootstrapped provisioner!"
             }

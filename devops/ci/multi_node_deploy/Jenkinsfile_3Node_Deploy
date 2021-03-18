@@ -149,7 +149,7 @@ node {
                     sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
-                    provisioner pillar_export
+                    provisioner confstore_export
                 """
             }
             
