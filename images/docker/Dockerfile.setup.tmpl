@@ -1,0 +1,5 @@
+FROM {parent}
+
+COPY images/docker/setup_setup.sh /tmp/
+RUN bash /tmp/setup_setup.sh \
+    && rm -f /tmp/setup_setup.sh

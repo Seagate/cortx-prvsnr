@@ -16,16 +16,50 @@
 #
 
 import pytest
-import logging
+from pathlib import Path
 from collections import defaultdict
 from copy import deepcopy
+from typing import Optional, Union
 
-from provisioner.commands.setup_provisioner import (
-    SetupProvisioner
-)
+import test.helper as h
+
+from provisioner.vendor import attr
+from provisioner import inputs, utils
 
 
-logger = logging.getLogger(__name__)
+@attr.s(auto_attribs=True)
+class SetupOpts(inputs.ParserMixin):
+    parser_prefix = 'setup-'
+
+    logdir: Optional[Union[str, Path]] = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "logdir to mount inside the container",
+                'metavar': 'PATH'
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=attr.validators.optional(
+            utils.validator_dir_exists
+        )
+    )
+
+
+def pytest_addoption(parser):
+    h.add_options(
+        parser, SetupOpts.prepare_args()
+    )
+
+
+@pytest.fixture(scope='session')
+def custom_opts_t():
+    return SetupOpts
+
+
+@pytest.fixture(scope='module')
+def env_level():
+    return 'setup'
 
 
 @pytest.fixture
@@ -34,7 +68,15 @@ def env_provider():
 
 
 @pytest.fixture
-def hosts_spec(hosts_spec, hosts, tmpdir_function):
+def logdir_host(tmpdir_function, custom_opts):
+    return (
+        None if custom_opts.logdir is None else
+        tmpdir_function / custom_opts.logdir.name
+    )
+
+
+@pytest.fixture
+def hosts_spec(hosts_spec, hosts, tmpdir_function, custom_opts, logdir_host):
     res = deepcopy(hosts_spec)
     for host in hosts:
         host_glusterfs = tmpdir_function / host / 'srv/glusterfs'
@@ -46,46 +88,15 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function):
         )
         docker_settings = docker_settings['docker']
         docker_settings['privileged'] = True
+
         docker_settings['volumes'][str(host_glusterfs)] = {
             'bind': '/srv/glusterfs', 'mode': 'rw'
         }
-        # docker_settings['volumes']['/dev'] = {
-        #     'bind': '/dev', 'mode': 'ro'
-        # }
+        docker_settings['volumes']['/dev'] = {
+            'bind': '/dev', 'mode': 'ro'
+        }
+        if custom_opts.logdir:
+            docker_settings['volumes'][
+                str(custom_opts.logdir)
+            ] = {'bind': str(logdir_host), 'mode': 'rw'}
     return res
-
-
-@pytest.mark.isolated
-@pytest.mark.env_level('utils')
-@pytest.mark.hosts(['srvnode1', 'srvnode2'])
-def test_setup_cluster(
-    mhostsrvnode1, mhostsrvnode2, ssh_config,
-    env_provider, ssh_key, tmpdir_function
-):
-    # mhostsrvnode1.check_output('echo root | passwd --stdin root')
-    # mhostsrvnode2.check_output('echo root | passwd --stdin root')
-    if env_provider == 'vbox':
-        for mhost in (mhostsrvnode1, mhostsrvnode2):
-            mhost.remote.cmd(
-                'snapshot', 'save', mhost.remote.name, 'initial --force'
-            )
-    print(ssh_config.read_text())
-
-    nodes = [
-        f'srvnode-1:{mhostsrvnode1.ssh_host}',
-        f'srvnode-2:{mhostsrvnode2.ssh_host}'
-    ]
-    kwargs = {
-        'bootstrap_key': ssh_key,
-        'ha': True,
-        'profile': tmpdir_function / 'test-setup',
-        'source': 'local',
-        'update': True
-    }
-
-    SetupProvisioner().run(nodes, **kwargs)
-    # TODO IMPROVE add more checks:
-    #   - saltstack activ-active configuration
-    #   - glusterfs configuration
-    #   - firewall configuration
-    #   - etc.
