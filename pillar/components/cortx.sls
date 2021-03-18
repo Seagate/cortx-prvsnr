@@ -21,6 +21,7 @@ cortx:
       user: csm
       secret:
     openldap:
+      backend_db: mdb
       root:
         user: admin
         secret:
