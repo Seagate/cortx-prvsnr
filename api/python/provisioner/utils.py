@@ -62,6 +62,25 @@ def converter_path(value):
     return value if value is None else Path(str(value))
 
 
+def converter_file_scheme_key(value: dict):
+    """
+    Convert incoming dict with file scheme to new one where keys are `Path`
+    instances
+
+    Parameters
+    ----------
+    value: dict
+        a given file scheme which represents some catalog structure
+
+    Returns
+    -------
+    dict
+        new dictionary object where keys are `Path` instances
+    """
+    return value if value is None else {converter_path(k): v for k, v in
+                                        value.items()}
+
+
 def converter_path_resolved(value):
     return value if value is None else Path(str(value)).resolve()
 

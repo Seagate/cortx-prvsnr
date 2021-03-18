@@ -24,13 +24,48 @@ from .. import inputs, values
 from ..config import (REPO_CANDIDATE_NAME,
                       IS_REPO_KEY,
                       RELEASE_INFO_FILE,
+                      THIRD_PARTY_RELEASE_INFO_FILE,
                       ReleaseInfo,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
+                      CORTX_ISO_DIR,
+                      CORTX_3RD_PARTY_ISO_DIR,
+                      CORTX_PYTHON_ISO_DIR,
+                      OS_ISO_DIR
                       )
-from ..errors import SaltCmdResultError, SWUpdateRepoSourceError
+from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
+                      ValidationError
+                      )
 from ..utils import load_yaml
+from .validator import (FileValidator,
+                        DirValidator,
+                        FileSchemeValidator,
+                        YumRepoDataValidator)
 
 logger = logging.getLogger(__name__)
+
+
+# NOTE: keys can be either Path object or strings
+SW_UPGRADE_BUNDLE_SCHEME = {
+    CORTX_3RD_PARTY_ISO_DIR: DirValidator(
+        {
+            THIRD_PARTY_RELEASE_INFO_FILE: FileValidator(required=True),
+            "repodata": YumRepoDataValidator(),
+        },
+        required=False),
+    CORTX_ISO_DIR: DirValidator(
+        {
+            RELEASE_INFO_FILE: FileValidator(required=True),
+            "repodata": YumRepoDataValidator(),
+        },
+        required=True),
+    CORTX_PYTHON_ISO_DIR: DirValidator(required=False),
+    OS_ISO_DIR: DirValidator(
+        {
+            RELEASE_INFO_FILE: FileValidator(required=False),
+            "repodata": YumRepoDataValidator(),
+        },
+        required=False)
+}
 
 
 class SetSWUpgradeRepo(SetSWUpdateRepo):
@@ -88,8 +123,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._check_repo_is_valid(REPO_CANDIDATE_NAME,
                                       f"sw_upgrade_{repo_name}")
         except SaltCmdResultError as exc:
-            raise SWUpdateRepoSourceError(
-                                        repo_name, f"malformed repo: '{exc}'")
+            raise SWUpdateRepoSourceError(repo_name,
+                                          f"malformed repo: '{exc}'")
 
         # there is no the same release repo is already active
         if self._is_repo_enabled(f'sw_upgrade_{repo_name}_{release}'):
@@ -105,7 +140,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     # FIXME repo is undefined here
                     str(repo.source),
                     (
-                        f"SW upgrade repository for the release "
+                        "SW upgrade repository for the release "
                         f"'{release}' has been already enabled"
                     )
                 )
@@ -167,13 +202,27 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-            release_file = f'{iso_mount_dir}/{RELEASE_INFO_FILE}'
+            sw_upgrade_bundle_validator = FileSchemeValidator(
+                                                    SW_UPGRADE_BUNDLE_SCHEME)
+
+            try:
+                sw_upgrade_bundle_validator.validate(iso_mount_dir)
+            except ValidationError as e:
+                logger.debug("Catalog structure validation error occurred: "
+                             f"{e}")
+                raise SWUpdateRepoSourceError(
+                            str(repo.source),
+                            f"Catalog structure validation error occurred:{e}"
+                ) from e
+
+            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                            f'{RELEASE_INFO_FILE}')
             try:
                 metadata = load_yaml(release_file)
             except Exception as exc:
                 raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                            str(repo.source),
+                            f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
                 )
             else:
                 repo.metadata = metadata
@@ -191,9 +240,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     )
                 except KeyError:
                     raise SWUpdateRepoSourceError(
-                        str(repo.source),
-                        f"No release data found in '{RELEASE_INFO_FILE}'"
+                            str(repo.source),
+                            f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
+
+            else:
+                logger.info("Catalog structure validation succeeded")
 
             repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
