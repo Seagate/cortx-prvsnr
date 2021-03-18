@@ -255,7 +255,7 @@ class ParserFiller:
                     elif optional and _attr.default is not attr.NOTHING:
                         _dest = _kwargs
 
-                    if _dest:
+                    if _dest is not None:
                         _dest[_attr.name] = kwargs[arg_name]
                         if pop:
                             kwargs.pop(arg_name)
@@ -314,7 +314,10 @@ class ParserMixin:
 
     @classmethod
     def from_args(cls, parsed_args, *args, **kwargs):
-        return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
+        if cls is ParserFiller:
+            return None
+        else:
+            return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
 
 
 @attr.s(auto_attribs=True)
