@@ -279,11 +279,14 @@ class ParserFiller:
     @staticmethod
     def from_args(cls, parsed_args: Union[dict, argparse.Namespace], pop=True):
         if isinstance(parsed_args, argparse.Namespace):
-            parsed_args = vars(parsed_args)
+            _parsed_args = vars(parsed_args)
 
-        _args, _kwargs, parsed_args = ParserFiller.extract_args(
-            cls, parsed_args, positional=True, optional=True, pop=pop
+        _args, _kwargs, _parsed_args = ParserFiller.extract_args(
+            cls, _parsed_args, positional=True, optional=True, pop=pop
         )
+
+        if pop:
+            parsed_args = _parsed_args
 
         return cls(*_args, **_kwargs), parsed_args
 
@@ -314,10 +317,7 @@ class ParserMixin:
 
     @classmethod
     def from_args(cls, parsed_args, *args, **kwargs):
-        if cls is ParserFiller:
-            return None
-        else:
-            return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
+        return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
 
 
 @attr.s(auto_attribs=True)
