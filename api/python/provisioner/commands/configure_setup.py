@@ -360,10 +360,10 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input[key] = [input[key]]
             else:
                 if input.get(key):
-                    if input[key] == 'None':
+                    if 'None' == input[key]:
                         input[key] = ''
                     else:
-                        input[key] = {input[key]}
+                        input[key] = input[key]
                 else:
                     input[key] = UNCHANGED
 
