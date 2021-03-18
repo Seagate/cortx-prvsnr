@@ -211,13 +211,14 @@ done
 tmp_dir="$(mktemp -d)"
 build_dir="$tmp_dir"
 
+release_info="RELEASE.INFO"
+
 echo -e "Building CORTX rpms, build dir: $build_dir"
 $cmd_prefix "${script_dir}/buildrpm.sh" "$cortx_version" "$build_dir"
 
 echo -e "Preparing a $output_type bundle, output dir: $output_dir"
 pushd "$output_dir"
     rpms_dir="${build_dir}/rpmbuild/RPMS/noarch/"
-    release_info="RELEASE.INFO"
 
     if [[ "$output_type" == "deploy-cortx" ]]; then
         cp -r "${rpms_dir}"/* .
