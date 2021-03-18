@@ -14,24 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-import pytest
-
-from provisioner import inputs
-
-
-@pytest.fixture(scope='session')
-def bundle_opts_t():
-    return inputs.ParserMixin
-
-
-@pytest.fixture(scope="session")
-def run_options(run_options, bundle_opts_t: inputs.ParserMixin):
-    return (
-        run_options + list(bundle_opts_t.parser_args())
-    )
-
-
-@pytest.fixture(scope='session')
-def bundle_opts(request, bundle_opts_t: inputs.ParserMixin):
-    return bundle_opts_t.from_args(request.config.option)

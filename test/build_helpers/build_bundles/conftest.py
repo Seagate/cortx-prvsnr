@@ -119,9 +119,9 @@ def custom_opts_t():
 
 
 @pytest.fixture(scope='session')
-def orig_single_iso_on_host(tmpdir_session, bundle_opts):
-    if bundle_opts.orig_single_iso:
-        return Path('/opt/iso') / bundle_opts.orig_single_iso.name
+def orig_single_iso_on_host(tmpdir_session, custom_opts):
+    if custom_opts.orig_single_iso:
+        return Path('/opt/iso') / custom_opts.orig_single_iso.name
 
 
 @pytest.fixture(scope='session')
@@ -134,7 +134,7 @@ def bundle_script_path_f():
 
 @pytest.fixture
 def hosts_spec(
-    hosts_spec, hosts, request, bundle_opts, orig_single_iso_on_host
+    hosts_spec, hosts, request, custom_opts, orig_single_iso_on_host
 ):
     res = deepcopy(hosts_spec)
     for host in hosts:
@@ -144,13 +144,13 @@ def hosts_spec(
         )
         docker_settings = docker_settings['docker']
 
-        if bundle_opts.orig_single_iso:
+        if custom_opts.orig_single_iso:
             docker_settings['privileged'] = True
             docker_settings['volumes']['/dev'] = {
                 'bind': '/dev', 'mode': 'ro'
             }
             docker_settings['volumes'][
-                str(bundle_opts.orig_single_iso.parent)
+                str(custom_opts.orig_single_iso.parent)
             ] = {'bind': str(orig_single_iso_on_host.parent), 'mode': 'ro'}
 
     return res
