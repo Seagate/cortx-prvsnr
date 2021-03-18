@@ -30,7 +30,7 @@ from typing import (
     Tuple,
     Union,
     Optional,
-    List
+    List, Type, Any, Callable
 )
 
 from . import config
@@ -57,6 +57,37 @@ def validator_path_exists(instance, attribute, value):
 
     if value and not value.exists():
         raise ValueError(f"Path {value} doesn't exist")
+
+
+def validator_subclass_of(
+        subclass: Union[Type[Any], Tuple[Type[Any], ...]]) -> Callable:
+    """
+    Custom subclass validator extends the base `attrs.validator` functionality.
+    This validation function allows to check if attribute value is subclass
+    of the provided `subclass` parameter
+
+    Parameters
+    ----------
+    subclass: Union[Type[Any], Tuple[Type[Any], ...]]
+        Any class name or tuple of classes
+
+    Returns
+    -------
+    Callable
+        subclass validation function
+
+    """
+    def validator(instance, attribute, value):
+        if not issubclass(value, subclass):
+            raise TypeError(
+                f"'{attribute.name}' must be {subclass!r} (got {value!r} "
+                f"that is a {value.__base__!r}).",
+                attribute,
+                subclass,
+                value,
+            )
+
+    return validator
 
 
 def converter_path(value):
