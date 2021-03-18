@@ -255,7 +255,7 @@ class ParserFiller:
                     elif optional and _attr.default is not attr.NOTHING:
                         _dest = _kwargs
 
-                    if _dest:
+                    if _dest is not None:
                         _dest[_attr.name] = kwargs[arg_name]
                         if pop:
                             kwargs.pop(arg_name)
@@ -279,11 +279,14 @@ class ParserFiller:
     @staticmethod
     def from_args(cls, parsed_args: Union[dict, argparse.Namespace], pop=True):
         if isinstance(parsed_args, argparse.Namespace):
-            parsed_args = vars(parsed_args)
+            _parsed_args = vars(parsed_args)
 
-        _args, _kwargs, parsed_args = ParserFiller.extract_args(
-            cls, parsed_args, positional=True, optional=True, pop=pop
+        _args, _kwargs, _parsed_args = ParserFiller.extract_args(
+            cls, _parsed_args, positional=True, optional=True, pop=pop
         )
+
+        if pop:
+            parsed_args = _parsed_args
 
         return cls(*_args, **_kwargs), parsed_args
 
