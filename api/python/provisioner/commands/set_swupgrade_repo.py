@@ -36,10 +36,11 @@ from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
 from ..utils import load_yaml
-from .validator import (FileValidator,
-                        DirValidator,
+from .validator import (DirValidator,
                         FileSchemeValidator,
-                        YumRepoDataValidator)
+                        YumRepoDataValidator,
+                        ReleaseInfoValidator
+                        )
 
 logger = logging.getLogger(__name__)
 
@@ -48,20 +49,20 @@ logger = logging.getLogger(__name__)
 SW_UPGRADE_BUNDLE_SCHEME = {
     CORTX_3RD_PARTY_ISO_DIR: DirValidator(
         {
-            THIRD_PARTY_RELEASE_INFO_FILE: FileValidator(required=True),
+            THIRD_PARTY_RELEASE_INFO_FILE: ReleaseInfoValidator(),
             "repodata": YumRepoDataValidator(),
         },
         required=False),
     CORTX_ISO_DIR: DirValidator(
         {
-            RELEASE_INFO_FILE: FileValidator(required=True),
+            RELEASE_INFO_FILE: ReleaseInfoValidator(),
             "repodata": YumRepoDataValidator(),
         },
         required=True),
     CORTX_PYTHON_ISO_DIR: DirValidator(required=False),
     OS_ISO_DIR: DirValidator(
         {
-            RELEASE_INFO_FILE: FileValidator(required=False),
+            RELEASE_INFO_FILE: ReleaseInfoValidator(required=False),
             "repodata": YumRepoDataValidator(),
         },
         required=False)

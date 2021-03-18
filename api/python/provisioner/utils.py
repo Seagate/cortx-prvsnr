@@ -16,6 +16,7 @@
 #
 
 import configparser
+import json
 import logging
 import subprocess
 import time
@@ -144,6 +145,28 @@ def load_yaml(path):
     except yaml.YAMLError as exc:
         logger.exception("Failed to load pillar data")
         raise BadPillarDataError(str(exc))
+
+
+def load_json(path: Union[Path, str]):
+    """
+    JSON load helper. Loads JSON from given `path`
+
+    Parameters
+    ----------
+    path: Path
+        Path to file with JSON content
+
+    Returns
+    -------
+    Any:
+        returns JSON-deserialized object
+
+    Raises
+    ------
+    JSONDecodeError
+    """
+    with open(path, 'r') as fh:
+        return json.load(fh)
 
 
 # TODO streamed write

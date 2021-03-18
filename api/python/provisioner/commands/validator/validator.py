@@ -1,9 +1,10 @@
 import logging
 from abc import abstractmethod, ABC
 from pathlib import Path
-from typing import Dict, Callable, Optional
+from typing import Dict, Callable, Optional, Type
 
 from ... import utils
+from ...config import ContentType
 
 from ...vendor import attr
 from ...errors import ValidationError
@@ -255,3 +256,200 @@ class YumRepoDataValidator(DirValidator):
     def __init__(self):
         super().__init__({Path("repomd.xml"): FileValidator(required=True)},
                          required=True)
+
+
+class FileScheme(ABC):
+
+    """
+    Abstract file scheme class.
+
+    It can be used to define an abstract interface if necessary.
+    Also it is useful to have the parent class for all file schemes inherited
+    from this one for comparison using `isinstance`, `type` and for `attr`
+    module.
+    """
+    pass
+
+
+@attr.s
+class ReleaseInfoScheme(FileScheme):
+
+    """
+    RELEASE.INFO file content scheme.
+
+    This class is used for `RELEASE.INFO` file content validation.
+
+    Attributes
+    ----------
+    name: str
+        Name of SW upgrade repository. It is the `NAME` field of `RELEASE.INFO`
+        file
+    release: Optional[str]
+        Release of SW upgrade repository. Can be absent. It is the `RELEASE`
+        field of `RELEASE.INFO` file
+    version: str
+        Version number of SW upgrade repository. It is the `VERSION` field of
+        `RELEASE.INFO` file
+    build: str
+        Build number of SW upgrade repository. It is the `BUILD` field of
+        `RELEASE.INFO` file
+    os: str
+        OS version for which this SW upgrade repo is intended.
+        It is the `OS` field of `RELEASE.INFO` file
+    components: list
+        List of RPMs provided by this SW upgrade repository.
+        It is the `COMPONENTS` field of `RELEASE.INFO` file
+    """
+
+    name: str = attr.ib(
+        validator=attr.validators.instance_of(str)
+    )
+    release: Optional[str] = attr.ib(
+        # TODO: when we the `RELEASE` will be introduce need to use here
+        #  a proper regex validation
+        validator=attr.validators.optional(
+            attr.validators.instance_of(str)
+        ),
+        default=None
+    )
+    version: str = attr.ib(
+        # regex is based on the current representation of `RELEASE` field
+        # number. It is 3 numbers divided by dots "."
+        validator=attr.validators.matches_re("^[0-9]+\.[0-9]+\.[0-9]+$")
+    )
+    build: str = attr.ib(
+        # regex is based on the current representation of `BUILD` number.
+        # It is 1 or more numbers
+        validator=attr.validators.matches_re("^[0-9]+$")
+    )
+    os: str = attr.ib(
+        validator=attr.validators.instance_of(str)
+    )
+    components: list = attr.ib(
+        validator=attr.validators.instance_of(list)
+    )
+
+
+@attr.s
+class ContentFileValidator(PathValidator):
+
+    """
+    Class implements the basic logic of file content validation.
+
+    Attributes
+    ----------
+    scheme: ReleaseInfoScheme
+        File content scheme for validation.
+
+    content_type: ContentType
+        Content type of the file. `ContentType.YAML` is default value
+
+    """
+
+    _scheme: Type[ReleaseInfoScheme] = attr.ib(
+        validator=attr.validators.instance_of(FileScheme)
+    )
+    _content_type: ContentType = attr.ib(
+        validator=attr.validators.in_(ContentType),
+        default=ContentType.YAML
+    )
+
+    def validate(self, path: Path):
+        """
+        Validates the file content of the provided `path`.
+
+        Parameters
+        ----------
+        path: Path
+            File path for content validation
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        try:
+            logging.debug(f"File content type: '{self._content_type}'")
+            if self._content_type == ContentType.YAML:
+                content = utils.load_yaml(path)
+            elif self._content_type == ContentType.JSON:
+                content = utils.load_json(path)
+            else:
+                raise ValidationError(
+                            f"File content type '{self._content_type}'"
+                            " is not supported")
+        except Exception as e:
+            raise ValidationError(
+                            f"File content validation is failed: {e}") from e
+
+        logging.debug(f"File content: '{content}'")
+        try:
+            if isinstance(content, dict):
+                content_model = self._scheme(**content)
+            elif isinstance(content, list):
+                content_model = self._scheme(*content)
+            else:
+                raise ValidationError("Unexpected top-level content type: "
+                                      f"'{type(content)}'")
+        except TypeError as e:
+            raise ValidationError(f"File content validation is failed: {e}")
+        else:
+            logging.info(f"File content validation is succeeded for '{path}'")
+
+    def __call__(self, *args, **kwargs):
+        """
+        Call-wrapper over self.validate method. It adds function-like behavior
+        for all class instances.
+
+        Parameters
+        ----------
+        args:
+            tuple of all positional arguments
+        kwargs:
+            dict with all keyword arguments
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        self.validate(*args, **kwargs)
+
+
+class ReleaseInfoValidator(FileValidator):
+
+    """
+    Special alias for `RELEASE.INFO` file validator.
+
+    Attributes
+    ----------
+    _required: bool
+        if `True` validation raises an Exception if the file doesn't exist.
+        `True` by default
+    _content_type: ContentType
+        Content type of the `RELEASE.INFO` file.
+        `ContentType.YAML` is default value
+    """
+
+    _required: bool = attr.ib(
+        validator=attr.validators.instance_of(bool),
+        # NOTE: it is a difference in comparison of `FileValidator`
+        default=True
+    )
+    _content_type: ContentType = attr.ib(
+        validator=attr.validators.in_(ContentType),
+        default=ContentType.YAML
+    )
+
+    def __attrs_post_init__(self):
+        self._content_validator = ContentFileValidator(
+                scheme=ReleaseInfoScheme,
+                content_type=self._content_type)
