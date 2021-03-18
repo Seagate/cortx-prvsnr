@@ -317,7 +317,10 @@ class ParserMixin:
 
     @classmethod
     def from_args(cls, parsed_args, *args, **kwargs):
-        return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
+        if cls is ParserFiller:
+            return None
+        else:
+            return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
 
 
 @attr.s(auto_attribs=True)
