@@ -64,7 +64,7 @@ class BundleOpts(inputs.ParserMixin):
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "original CORTX single ISO for partial use",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
@@ -75,7 +75,7 @@ class BundleOpts(inputs.ParserMixin):
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "PATH to provisioner core rpm package",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
@@ -86,7 +86,7 @@ class BundleOpts(inputs.ParserMixin):
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "PATH to provisioner API rpm package",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
@@ -113,16 +113,9 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(scope="session")
-def run_options(run_options):
-    return (
-        run_options + list(BundleOpts.parser_args())
-    )
-
-
 @pytest.fixture(scope='session')
-def bundle_opts(request):
-    return BundleOpts.from_args(request.config.option)
+def custom_opts_t():
+    return BundleOpts
 
 
 @pytest.fixture(scope='session')
