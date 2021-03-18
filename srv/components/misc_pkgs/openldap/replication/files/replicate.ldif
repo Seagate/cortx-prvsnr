@@ -37,7 +37,7 @@ olcServerID: {{ loop.index }}
 {%- endif -%}
 {% endfor %}
 
-dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+dn: olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config
 changetype: modify
 add: olcSyncRepl
 {% for node in server_node_list -%}
@@ -45,7 +45,7 @@ olcSyncRepl: rid={{ "{0:03d}".format(loop.index) }}
   provider=ldap://{{ node }}:389/
   bindmethod=simple
   binddn="cn=admin,dc=seagate,dc=com"
-  credentials={{ salt['lyveutil.decrypt']('openldap', salt['pillar.get']('cortx:software:openldap:root:secret', "seagate")) }}
+  credentials={{ salt['lyveutil.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:root:secret', "seagate")) }}
   searchbase="dc=s3,dc=seagate,dc=com"
   scope=sub
   schemachecking=on

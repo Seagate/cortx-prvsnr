@@ -7,7 +7,7 @@ objectClass: olcModuleList
 olcModulePath: /usr/lib64/openldap/
 olcModuleLoad: unique.la
 
-dn: olcOverlay=unique,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+dn: olcOverlay=unique,olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config
 objectClass: olcOverlayConfig
 objectClass: olcUniqueConfig
 olcOverlay: unique
