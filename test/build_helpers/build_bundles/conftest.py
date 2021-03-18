@@ -16,7 +16,7 @@
 #
 
 import pytest
-from typing import Union
+from typing import Union, Optional
 from pathlib import Path
 from copy import deepcopy
 from collections import defaultdict
