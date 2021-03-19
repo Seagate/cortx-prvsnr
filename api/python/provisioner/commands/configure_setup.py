@@ -36,7 +36,7 @@ from .grains_get import GrainsGet
 from ..salt import local_minion_id
 
 from ..values import (
-    UNCHANGED, UNDEFINED, NONE
+    UNCHANGED, UNDEFINED
 )
 
 from ..vendor import attr
@@ -296,6 +296,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         last_node_val: value to be assigned to last node in tree.
         """
         new_dict = dict()
+
         if len(inp_list) > 1:
             # Recurse
             new_dict[inp_list[0]] = self._list_to_dict(
@@ -350,8 +351,6 @@ class ConfigureSetup(CommandParserFillerMixin):
     def _parse_input(self, input):
         kv_to_dict = dict()
         for key in input.keys():
-            # logger.debug(f"Key: {key} :: Value:{input.get(key)}")
-
             if "," in input.get(key):
                 input[key] = [element.strip() for element in input.get(key).split(",")]
             elif (
@@ -366,7 +365,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             else:
                 if input.get(key):
                     if 'NONE' == input.get(key).upper():
-                        input[key] = ''
+                        input[key] = None
                     elif 'UNCHANGED' == input.get(key).upper():
                         input[key] = UNCHANGED
                     elif 'UNDEFINED' == input.get(key).upper():
