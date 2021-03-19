@@ -24,6 +24,7 @@ from provisioner.vendor import attr
 from ..salt import (
     StateFunExecuter,
     local_minion_id,
+    copy_to_file_roots,
     cmd_run
 )
 
@@ -32,6 +33,8 @@ from . import (
 )
 
 from ..config import (
+    ALL_MINIONS,
+    CONFSTORE_ROOT_FILE,
     CORTX_CONFIG_DIR
 )
 
@@ -104,8 +107,18 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             confstor_path = pillar[PillarKey(pillar_key)].split(':/')[1]
 
-            cmd = f"salt-cp '*' {confstor_path} {confstor_path}"
-            cmd_run(cmd, targets = local_minion_id())
+            dest = copy_to_file_roots(confstor_path, CONFSTORE_ROOT_FILE)
+            logger.debug("Copied confstore file to salt root directory")
+
+            StateFunExecuter.execute(
+                'file.managed',
+                fun_kwargs=dict(
+                    name=confstor_path,
+                    source=str(dest),
+                    makedirs=True
+                ),
+                targets=ALL_MINIONS
+            )
             logger.info("Confstore copied across all nodes of cluster")
 
         except Exception as exc:
