@@ -34,4 +34,4 @@ Delete cortx-ha yum repo:
 
 Delete cortx-ha checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-ha
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.cortx-ha

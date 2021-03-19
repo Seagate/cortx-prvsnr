@@ -602,6 +602,7 @@ class SetupCmdBase:
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
 
+
 @attr.s(auto_attribs=True)
 class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -1744,7 +1745,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
             logger.info("Generating a password for the service user")
-            service_user_password = str(uuid.uuid4()).split('-')[0]
+
+            service_user_password = utils.generate_random_secret()
+
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'

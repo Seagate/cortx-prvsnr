@@ -254,12 +254,12 @@ sudo docker run hello-world
   You may check the full list of options using `pytest test/build_helpers/build_prvsnr_pkgs --help`
   (`custom options` part):
 
-  - `--build-version=STR` release version (source version). Note. ignored for
+  - `--pkgs-version=STR` release version (source version). Note. ignored for
      api package, to set version for package please edit
      `api/python/provisioner/__metadata__.py`
-  - `--build-pkg-version=INT` package version (release tag),
+  - `--pkgs-pkg-version=INT` package version (release tag),
      should be greater or  equal 1
-  - `--build-output=DIR` path to directory to output
+  - `--pkgs-output=DIR` path to directory to output
 
 ##### Building testing bundles
 

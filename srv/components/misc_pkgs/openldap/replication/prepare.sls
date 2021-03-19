@@ -24,19 +24,19 @@
 {% if 1 < (server_nodes|length) -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/config.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/config.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/config.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/data.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/data.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/data.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/olcserverid.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/olcserverid.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/olcserverid.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_config.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_config.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/syncprov_config.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/syncprov.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/syncprov_mod.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/syncprov_mod.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/replicate.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif'}
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/replicate.ldif'}
 
   ]
 %}

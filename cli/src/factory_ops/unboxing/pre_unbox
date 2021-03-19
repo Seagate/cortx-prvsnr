@@ -219,15 +219,15 @@ seagate_refs_cleanup()
                 $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -liE "cortx|seagate|salt" /etc/yum.repos.d/*.repo`;\
                     do if ! grep -q "file://" $file; then\
                         echo "Removing repo file: $file";
-                        mkdir -p /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing
-                        yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing/; 
+                        mkdir -p /opt/seagate/cortx_configs/provisioner_generated/repos_backup_unboxing
+                        yes | mv -f "$file" /opt/seagate/cortx_configs/provisioner_generated/repos_backup_unboxing/; 
                         fi;
                     done'
             fi
             $ssh_cmd ${pvt_ips[$i]} 'for file in `grep -lE "baseurl=None|baseurl=/3rd_party|baseurl=/cortx_iso" /etc/yum.repos.d/*.repo`;\
                     do\
                     echo "Removing repo: $file";\
-                    yes | mv -f "$file" /opt/seagate/cortx/provisioner/generated_configs/repos_backup_unboxing;\
+                    yes | mv -f "$file" /opt/seagate/cortx_configs/provisioner_generated/repos_backup_unboxing;\
                     done'  >> ${LOG_FILE}
             echo "Cleaning yum cache on ${server_names[$i]}" | tee -a ${LOG_FILE}
             $ssh_cmd ${pvt_ips[$i]} "yum clean all || true"  >> ${LOG_FILE}

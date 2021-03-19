@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check if Boxing flag file is present
-box_flag_file="/opt/seagate/cortx/provisioner/generated_configs/boxed"
+box_flag_file="/opt/seagate/cortx_configs/provisioner_generated/boxed"
 if [[ -f $box_flag_file ]]; then
     echo "INFO: Boxing script already run, printing system details required for unboxing" | tee -a ${LOG_FILE}
     file=$(ls -lrt /root/Lyve_rack_SystemID_*.txt | tail -1 | awk '{ print $9 }')

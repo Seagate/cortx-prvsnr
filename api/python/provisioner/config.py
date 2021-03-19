@@ -96,6 +96,7 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
+THIRD_PARTY_RELEASE_INFO_FILE = 'THIRD_PARTY_RELEASE.INFO'
 
 SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
 SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
@@ -535,32 +536,6 @@ CRITICALLY_FAILED = {"critical": True, "failed": False}
 NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 
 IS_REPO_KEY = "is_repo"
-
-class SWUpgradeRepos(Enum):
-    """List of supported SW Upgrade Repositories."""
-
-    OS = "os"  # yum repo
-    third_party = "3rd_party"  # yum repo
-    cortx = "cortx_iso"  # yum repo
-    python = "python_deps"  # python index
-
-
-YUM_REPO_TYPE = "yum"
-
-SW_UPGRADE_REPOS = {
-    SWUpgradeRepos.OS.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.third_party.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.cortx.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.python.value: {
-        YUM_REPO_TYPE: False
-    }
-}
 
 
 class CortxResourceT(Enum):

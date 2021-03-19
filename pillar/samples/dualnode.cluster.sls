@@ -36,7 +36,7 @@ cluster:
     is_primary: true
     roles:
       - primary
-      - openldap_master
+      - openldap_server
     bmc:
       ip:
       user: ADMIN

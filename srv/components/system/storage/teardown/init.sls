@@ -27,4 +27,4 @@ Mount default OS swap device:
 
 Delete storage checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.storage
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.storage

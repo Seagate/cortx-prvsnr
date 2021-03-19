@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.lustre'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.lustre'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.lustre.prepare
   - components.misc_pkgs.lustre.install
@@ -25,7 +25,7 @@ include:
 
 Generate lustre checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.lustre
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.lustre
     - makedirs: True
     - create: True
 {%- else -%}

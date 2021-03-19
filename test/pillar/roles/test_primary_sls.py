@@ -29,7 +29,6 @@ def env_level():
 
 
 # TODO might makes sense to verify for cluster case as well
-@pytest.mark.skip(reason="EOS-18738")
 @pytest.mark.isolated
 @pytest.mark.hosts(['srvnode1'])
 @pytest.mark.env_level('salt-installed')
