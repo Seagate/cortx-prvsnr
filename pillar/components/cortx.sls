@@ -15,5 +15,26 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-openldap:
-  backend_db: mdb
+cortx:
+  software:
+    csm:
+      user: csm
+      secret:
+    openldap:
+      backend_db: mdb
+      root:
+        user: admin
+        secret:
+      sgiam:
+        user: sgiamadmin
+        secret:
+    corosync-pacemaker:
+      cluster_name: cortx_cluster
+      user: hacluster
+      secret:
+    support:
+      user: cortxsupport
+      password: 
+  release:
+    product: LR2
+    setup: cortx

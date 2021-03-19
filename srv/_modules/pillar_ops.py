@@ -70,7 +70,7 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
             data[key] = _update(val, path + '/' + key, cluster_id,
                                 new_passwd, cipher, cipher_key, decrypt)
         else:
-            if (("secret" in key) or ("password" in key)):
+            if ("secret" in key):
                 if not val:
                     val = new_passwd
 

@@ -101,22 +101,31 @@ node {
             stage("Prepare config.ini") {
                 sshCommand remote: remotes[0], command: """
                     echo '''
-                    [storage]
-                    type=other''' | sed -e 's/^[ \t]*//' > /root/config.ini
+                    [srvnode_default]
+                    network.data.private_interfaces=eth3,eth4
+                    network.data.public_interfaces=eth1,eth2
+                    network.mgmt.interfaces=eth0
+                    bmc.user=None
+                    bmc.secret=None
+                    storage.cvg.0.data_devices=/dev/sdc,/dev/sdd
+                    storage.cvg.0.metadata_devices=/dev/sdb
+                    network.data.private_ip=None
+
+                    [enclosure_default]
+                    type=other
+                    ''' | sed -e 's/^[ \t]*//' > /root/config.ini
                 """
-                for (remote in remotes)
+                for (remote in remotes) {
                     sshCommand remote: remotes[0], command: """
                         echo '''
                         [${remote.name}]
                         hostname=${remote.host}
-                        network.data.private_ip=None
-                        network.data.public_interfaces=eth1,eth2
-                        network.data.private_interfaces=eth3,eth4
-                        network.mgmt.interfaces=eth0
-                        bmc.user=None
-                        bmc.secret=None
+                        roles=primary,openldap_server
+
+                        [enclosure-${remote.name.split('-')[1]}]
                         ''' | sed -e 's/^[ \t]*//' >> /root/config.ini
                     """
+                }
                 echo "Successfully created config.ini file!"
             }
             
@@ -149,7 +158,7 @@ node {
                     sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
-                    provisioner pillar_export
+                    provisioner confstore_export
                 """
             }
             
