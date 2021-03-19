@@ -53,9 +53,6 @@ from . import (
     CommandParserFillerMixin
 )
 
-from .grains_get import GrainsGet
-from ..salt import local_minion_id
-
 logger = logging.getLogger(__name__)
 
 add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
