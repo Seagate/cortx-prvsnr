@@ -24,8 +24,7 @@ from provisioner.vendor import attr
 from ..salt import (
     StateFunExecuter,
     local_minion_id,
-    copy_to_file_roots,
-    cmd_run
+    copy_to_file_roots
 )
 
 from . import (
