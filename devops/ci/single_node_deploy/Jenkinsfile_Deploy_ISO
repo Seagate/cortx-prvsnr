@@ -65,7 +65,7 @@ node {
             
             stage("Prepare config.ini") {
                 sshCommand remote: remote, command: """
-                    curl -ks https://gist.githubusercontent.com/ypise/738c034063afddea284024a8bca3ae2f/raw/61b3a731d2c65df0e57068e901dbc1f315ed30f4/config.ini -o /root/config.ini
+                    curl -ks https://gist.githubusercontent.com/ypise/d155805fca3b4ffa2defb2d6b82a814e/raw/6dfb47b23cc264585f5510eae455a744c8ad18e7/config.ini -o /root/config.ini
                 """
                 sshCommand remote: remote, command: """
                     sed -i 's/\${HOST_NAME}/${HOST_NAME}/g' /root/config.ini

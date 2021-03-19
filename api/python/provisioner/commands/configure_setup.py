@@ -35,7 +35,10 @@ from . import PillarSet
 from .grains_get import GrainsGet
 from ..salt import local_minion_id
 
-from ..values import UNCHANGED
+from ..values import (
+    UNCHANGED, UNDEFINED, NONE
+)
+
 from ..vendor import attr
 
 
@@ -360,22 +363,26 @@ class ConfigureSetup(CommandParserFillerMixin):
                 input[key] = [input[key]]
             else:
                 if input.get(key):
-                    if 'None' == input[key]:
+                    if 'NONE' == input.get(key).upper():
                         input[key] = ''
+                    elif 'UNCHANGED' == input.get(key).upper():
+                        input[key] = UNCHANGED
+                    elif 'UNDEFINED' == input.get(key).upper():
+                        input[key] = UNDEFINED
                     else:
-                        input[key] = input[key]
+                        input[key] = input.get(key)
                 else:
-                    input[key] = UNCHANGED
+                    input[key] = None
 
             if '.' in key:
                 split_keys = key.split('.')
                 kv_to_dict = self._dict_merge(
                     kv_to_dict,
-                    self._list_to_dict(split_keys, input[key])
+                    self._list_to_dict(split_keys, input.get(key))
                 )
                 # logger.debug(f"KV to Dict ('.' separated): {kv_to_dict}")
             else:
-                kv_to_dict[key] = input[key]
+                kv_to_dict[key] = input.get(key)
 
         kv_to_dict = self._key_int_to_list(kv_to_dict)
         logger.debug(f"KV to Dict: {kv_to_dict}")
