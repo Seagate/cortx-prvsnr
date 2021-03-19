@@ -17,7 +17,7 @@
 
 storage:
     enclosure-1:
-      enc_id:
+      enclosure_id:
       type: RBOD                      # RBOD/JBOD/Virtual/Other
       controller:
         type:
