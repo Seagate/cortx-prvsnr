@@ -53,6 +53,7 @@ from . import (
     CommandParserFillerMixin
 )
 
+
 logger = logging.getLogger(__name__)
 
 add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
