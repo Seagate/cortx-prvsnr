@@ -53,6 +53,8 @@ from . import (
     CommandParserFillerMixin
 )
 
+from .grains_get import GrainsGet
+from ..salt import local_minion_id
 
 logger = logging.getLogger(__name__)
 
@@ -948,6 +950,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             setup_pillar_path = add_pillar_merge_prefix(
                 node_pillar_dir / 'setup.sls'
             )
+
+            enclosure_id = "enc_id"
+
             if run_args.rediscover or not setup_pillar_path.exists():
                 data = {
                     'setup': {
@@ -962,6 +967,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             ]},
                             {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
+                            {'enclosure_id': enclosure_id},
                             {'hostname_status': hostnamectl_status},
                         ]
                     }
@@ -1822,6 +1828,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=ALL_MINIONS
             )
+
+        logger.info("Refresh enclosure id on the system")
+        ssh_client.cmd_run(
+            "salt-call state.apply components.provisioner.config.enclosure_id",
+            targets=ALL_MINIONS
+        )
 
         inline_pillar = None
         if run_args.source == 'local':
