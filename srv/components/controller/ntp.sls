@@ -20,7 +20,7 @@
 {%- set user = pillar['storage']['enclosure-1']['controller']['user'] %}
 {%- set secret = pillar['storage']['enclosure-1']['controller']['secret'] %}
 {%- set ntp_server = pillar['system']['ntp']['time_server'] %}
-{%- set time_zone = pillar['system']['ntp']['time_zone'] -%}
+{%- set time_zone = pillar['system']['ntp']['time_zone'] %}
 
 Set NTP on enclosure:
   cmd.run:
