@@ -350,8 +350,10 @@ class ConfigureSetup(CommandParserFillerMixin):
     def _parse_input(self, input):
         kv_to_dict = dict()
         for key in input.keys():
-            if "," in input[key]:
-                input[key] = [element.strip() for element in input[key].split(",")]
+            # logger.debug(f"Key: {key} :: Value:{input.get(key)}")
+
+            if "," in input.get(key):
+                input[key] = [element.strip() for element in input.get(key).split(",")]
             elif (
                 'interfaces' in key or
                 'roles' in key or
@@ -360,7 +362,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             ):
                 # special case single value as array
                 # Need to fix this array having single value
-                input[key] = [input[key]]
+                input[key] = [input.get(key)]
             else:
                 if input.get(key):
                     if 'NONE' == input.get(key).upper():
@@ -369,6 +371,8 @@ class ConfigureSetup(CommandParserFillerMixin):
                         input[key] = UNCHANGED
                     elif 'UNDEFINED' == input.get(key).upper():
                         input[key] = UNDEFINED
+                    elif '' == input.get(key).upper():
+                        input[key] = None
                     else:
                         input[key] = input.get(key)
                 else:
