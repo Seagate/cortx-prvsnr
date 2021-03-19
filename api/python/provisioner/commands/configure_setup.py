@@ -22,28 +22,30 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Type
 
-from ..validate import (
-    ValidateSetup,
-    ClusterParamsValidation,
-    StorageParamsValidation,
-    NodeParamsValidation,
+from . import (
+    CommandParserFillerMixin,
+    PillarSet
 )
 from .. import inputs
-from ..vendor import attr
 from ..config import (
     NODE_DEFAULT,
     STORAGE_DEFAULT,
     CLUSTER, NODE,
     STORAGE
 )
-
+from ..salt import local_minion_id
 from ..utils import (
     run_subprocess_cmd
 )
-from ..values import UNCHANGED
-from . import (
-    CommandParserFillerMixin
+
+from ..validate import (
+    ValidateSetup,
+    ClusterParamsValidation,
+    StorageParamsValidation,
+    NodeParamsValidation,
 )
+from ..values import UNCHANGED
+from ..vendor import attr
 
 
 logger = logging.getLogger(__name__)
@@ -146,9 +148,9 @@ class ConfigureSetup(CommandParserFillerMixin):
                 'interfaces', 'devices', 'roles'
             ]
             if input_data[key] and "," in input_data[key]:
-                value = [f'\"{x.strip()}\"' for x in input_data[key].split(",")]
+                value = [x.strip() for x in input_data[key].split(",")]
                 value = ','.join(value)
-                input_data[key] = f'[{value}]'
+                input_data[key] = [value]
 
             elif key in keys_of_type_list:
                 input_data[key] = f'[\"{input_data[key]}\"]'
@@ -156,9 +158,9 @@ class ConfigureSetup(CommandParserFillerMixin):
             else:
                 if input_data[key]:
                     if input_data[key] == 'None':
-                        input_data[key] = '\"\"'
+                        input_data[key] = ''
                     else:
-                        input_data[key] = f'\"{input_data[key]}\"'
+                        input_data[key] = input_data[key]
                 else:
                     input_data[key] = UNCHANGED
 
@@ -176,13 +178,14 @@ class ConfigureSetup(CommandParserFillerMixin):
 
         """
         for pillar_key in set_content:
+            key_to_set = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
+            value_to_set = f'{set_content[pillar_key]}'
 
-            key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
-            value_to_set = f"{set_content[pillar_key]}"
-
-            run_subprocess_cmd([
-                   "provisioner", "pillar_set",
-                   key, value_to_set])
+            PillarSet().run(
+                key_to_set,
+                value_to_set,
+                targets=local_minion_id()
+            )
 
     def run(self, path, number_of_nodes):  # noqa: C901
 
@@ -203,84 +206,66 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.info("Updating salt data..")
         content = {section: dict(config.items(section))
                    for section in config.sections()}
-
         logger.debug(
             f"Config data read from provided file: {content}"
         )
 
         # Config sections segregated default-wise, node-wise.
-        parsed_nodes = validate._parse_nodes(content)
+        parsed = validate._parse_nodes(content)
+        pillar_map = parsed.pop("pillar_map")
 
-        pillar_map = {f'{NODE_DEFAULT}': f'{CLUSTER}',
-                      f'{NODE}': f'{CLUSTER}',
-                      f'{CLUSTER}': f'{CLUSTER}',
-                      f'{STORAGE}': f'{STORAGE}',
-                      f'{STORAGE_DEFAULT}': f'{STORAGE}'}
+        # TB merged: validate_node_count
 
-        for section in parsed_nodes['section_list']:
-            if 'srvnode' in section:
-                input_type = (f'{NODE_DEFAULT}' if 'default' in section
-                              else f'{NODE}')
-            elif 'storage' in section:
-                input_type = (f'{STORAGE_DEFAULT}' if 'default' in section
-                              else f'{STORAGE}')
+        for section in parsed:
+            input_type = section
+            set_content = deepcopy(parsed[section])
 
-            elif 'cluster' in section:
-                input_type = f'{CLUSTER}'
-
-            logger.debug(
-               f"Validating Params in section: {section}"
-            )
-
-            self._validate_params(input_type, content[section])
-            self._parse_input(content[section])
-
-            pillar_map_type = pillar_map[input_type]
-
-            default_exists = [
-                 node for node in parsed_nodes['section_list'] if "default" in node
-            ]
-
-            defaults = content[input_type] if 'default' in input_type else None
-
-            if default_exists:
-                if defaults:
-                    parse_data = (parsed_nodes['server_list']
-                              if input_type == f'{NODE_DEFAULT}'
-                              else parsed_nodes['storage_list'])
-
-                    # Contents of 'default' sections will be
-                    # updated with node data and applied to all nodes
-
-                    set_content = deepcopy(defaults)
-                    for each_node in parse_data:
-                        pillar_type = f'{pillar_map_type}/{each_node}'
-                        set_content.update(content[each_node])
-                        self._update_pillar_data(set_content, pillar_type)
-                else:
-                    if input_type == f'{CLUSTER}':
-                        pillar_type = pillar_map_type
-                        set_content = content[section]
-                        self._update_pillar_data(set_content, pillar_type)
-                    else:
-                        logger.info(
-                          f"Values already set for individual '{input_type}' type!"
-                        )
-                        continue
+            if f'{NODE_DEFAULT}' in parsed:
+                # 'default' sections found in config file
+                parse_section = (
+                   f'{NODE}' if section == f'{NODE_DEFAULT}'
+                   else f'{STORAGE}' if section == f'{STORAGE_DEFAULT}'
+                   else None
+                )
 
             else:
-                if input_type == f'{CLUSTER}':
-                    pillar_type = pillar_map_type
-                else:
-                    pillar_type = f'{pillar_map_type}/{section}'
-                set_content = content[section]
+                # 'default' sections NOT found in config file
+                parse_section = (
+                   None if f'{CLUSTER}' in section
+                   else section
+                )
+
+            if parse_section:
+                # All sections except "cluster" are handled here
+
+                parse_data = parsed[parse_section]
+                for each_node in parse_data:
+                    pillar_type = f'{pillar_map[parse_section]}/{each_node}'
+                    if "default" in section:
+
+                        # Contents of 'default' sections will be
+                        # updated with node data and applied to all nodes
+                        set_content.update(parse_data[each_node])
+                    else:
+                        set_content = parse_data[each_node]
+
+                    self._validate_params(input_type, set_content)
+                    self._parse_input(set_content)
+                    self._update_pillar_data(set_content, pillar_type)
+
+            elif (not parse_section) and (section == f'{CLUSTER}'):
+                pillar_type = pillar_map[section]
+                self._validate_params(input_type, set_content)
+                self._parse_input(set_content)
                 self._update_pillar_data(set_content, pillar_type)
 
         if content.get('cluster', None):
             if content.get('cluster').get('cluster_ip', None):
-                run_subprocess_cmd([
-                       "provisioner", "pillar_set",
-                       "s3clients/ip",
-                       f"{content.get('cluster').get('cluster_ip')}"])
+
+                PillarSet().run(
+                    "s3clients/ip",
+                    f"{content.get('cluster').get('cluster_ip')}",
+                    targets=local_minion_id()
+                )
 
         logger.info("Pillar data updated Successfully.")

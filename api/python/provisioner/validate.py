@@ -23,6 +23,13 @@ from .inputs import (
     StorageParams,
     NodeParams
 )
+from .config import (
+    NODE_DEFAULT,
+    STORAGE_DEFAULT,
+    NODE,
+    STORAGE,
+    CLUSTER
+)
 from .vendor import attr
 
 from .values import UNCHANGED
@@ -41,26 +48,34 @@ class ValidateSetup:
         The node names are parsed based on config-sections.
 
         """
-        section_list = sorted(list(content))
         output = {}
+        servers = {}
+        enclosures = {}
+        output["pillar_map"] = {}
 
-        # Gives section names of only nodes : srvnode[1-12]
-        servers = [srv for srv in section_list if "srvnode" in srv
-                   and "default" not in srv]
+        for section, data in content.items():
+            if 'srvnode' in section:
+                output["pillar_map"][f'{NODE}'] = f'{NODE}'
+                if 'default' in section:
+                    output[f'{NODE_DEFAULT}'] = data
+                else:
+                    servers[section] = data
 
-        # Gives section names of only nodes : storage-enclosure[1-12]
-        enclosures = [enc for enc in section_list if "storage" in enc
-                      and "default" not in enc]
+            elif 'storage' in section:
+                output["pillar_map"][f'{STORAGE}'] = f'{STORAGE}'
+                if 'default' in section:
+                    output[f'{STORAGE_DEFAULT}'] = data
+                else:
+                    enclosures[section] = data
 
-        clusters = [cl for cl in section_list if "cluster" in cl]
+            elif 'cluster' in section:
+                output["pillar_map"][f'{CLUSTER}'] = f'{CLUSTER}'
+                output[f'{CLUSTER}'] = data
 
-        elements = servers + enclosures + clusters
+        output[f'{NODE}'] = servers
+        output[f'{STORAGE}'] = enclosures
 
-        output["section_list"] = section_list
-        output["section_elements"] = elements
-        output["server_list"] = servers
-        output["storage_list"] = enclosures
-
+        logger.debug(f"Parsed config output: {output}")
         return output
 
 # TODO: validate node count method
