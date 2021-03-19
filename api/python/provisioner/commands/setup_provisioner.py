@@ -19,6 +19,7 @@ from typing import List, Dict, Type, Optional, Iterable
 # import socket
 import logging
 import uuid
+import os
 from pathlib import Path
 
 from .. import (
@@ -620,14 +621,20 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     def _prepare_roster(
         self, nodes: List[Node], priv_key, roster_path
     ):
-        roster = {
-            node.minion_id: {
+        tmp_dir = os.getenv('TMPDIR')
+        thin_dir = (Path(tmp_dir).resolve() / 'salt_thin_dir') if tmp_dir else None
+
+        roster = {}
+        for node in nodes:
+            roster[node.minion_id] = {
                 'host': node.host,
                 'user': node.user,
                 'port': node.port,
                 'priv': str(priv_key)
-            } for node in nodes
-        }
+            }
+            if thin_dir:
+                roster[node.minion_id]['thin_dir'] = str(thin_dir)
+
         dump_yaml(roster_path, roster)
 
     def _create_ssh_client(self, c_path, roster_file):
