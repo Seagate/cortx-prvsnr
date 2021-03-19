@@ -34,9 +34,6 @@ from ..config import (
     STORAGE
 )
 from ..salt import local_minion_id
-from ..utils import (
-    run_subprocess_cmd
-)
 
 from ..validate import (
     ValidateSetup,
