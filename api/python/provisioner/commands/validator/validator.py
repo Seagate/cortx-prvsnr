@@ -444,9 +444,9 @@ class ContentFileValidator(PathValidator):
         logging.debug(f"File content: '{content}'")
         try:
             if isinstance(content, dict):
-                content_model = self._scheme.from_dict(content)
+                self._scheme.from_dict(content)
             elif isinstance(content, list):
-                content_model = self._scheme.from_list(content)
+                self._scheme.from_list(content)
             else:
                 raise ValidationError("Unexpected top-level content type: "
                                       f"'{type(content)}'")
