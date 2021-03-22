@@ -1754,7 +1754,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
-                    f' system/service-user/secret '
+                    f' system/service-user/password '
                     f' \'"{service_user_password}"\''
                 ),
                 targets=run_args.primary.minion_id,

@@ -31,7 +31,7 @@ Setup Cluster:
       {%- for node_id in server_nodes %}
       - {{ node_id }}
       {%- endfor %}
-    - pcsclustername: {{ pillar['corosync-pacemaker']['cluster_name'] }}
+    - pcsclustername: {{ pillar['cortx']['software']['corosync-pacemaker']['cluster_name'] }}
     - extra_args:
       - '--start'
       - '--enable'

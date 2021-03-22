@@ -21,14 +21,19 @@ from pathlib import Path
 from typing import Type
 from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
-from ..salt import StateFunExecuter
-
+from ..salt import (
+    StateFunExecuter,
+    local_minion_id,
+    copy_to_file_roots
+)
 
 from . import (
     CommandParserFillerMixin
 )
 
 from ..config import (
+    ALL_MINIONS,
+    CONFSTORE_ROOT_FILE,
     CORTX_CONFIG_DIR
 )
 
@@ -58,7 +63,7 @@ class ConfStoreExport(CommandParserFillerMixin):
 
         try:
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
-            template_file_path = str( CORTX_CONFIG_DIR / 'confstore_template.sls')
+            template_file_path = str( CORTX_CONFIG_DIR / 'provisioner_confstore_template')
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
@@ -98,6 +103,22 @@ class ConfStoreExport(CommandParserFillerMixin):
                     Conf.set("provisioner", data.split(':')[0], data.split(':')[1])
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
+
+            confstor_path = pillar[PillarKey(pillar_key)].split(':/')[1]
+
+            dest = copy_to_file_roots(confstor_path, CONFSTORE_ROOT_FILE)
+            logger.debug("Copied confstore file to salt root directory")
+
+            StateFunExecuter.execute(
+                'file.managed',
+                fun_kwargs=dict(
+                    name=confstor_path,
+                    source=str(dest),
+                    makedirs=True
+                ),
+                targets=ALL_MINIONS
+            )
+            logger.info("Confstore copied across all nodes of cluster")
 
         except Exception as exc:
             logger.exception(f"Unable to load template due to {exc}")

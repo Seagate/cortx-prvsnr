@@ -19,10 +19,10 @@
 
 {%- set node_ids = {} -%}
 {%- set node_hosts = [] -%}
-{% set server_nodes = [ ] -%}
+{% set server_nodes = [] -%}
 {% for node in pillar['cluster'].keys() -%}
 {% if "srvnode-" in node -%}
-{% do server_nodes.append(node)-%}
+{% do server_nodes.append(node) %}
 {% endif -%}
 {% endfor -%}
 {%- for node in server_nodes -%}

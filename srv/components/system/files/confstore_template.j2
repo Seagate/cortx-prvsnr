@@ -1,21 +1,19 @@
 {%- set cluster_id = grains['cluster_id'] %}
 support>user:{{ pillar['system']['service-user']['name'] }}
-support>secret:{{ pillar['system']['service-user']['secret'] }}
-cortx>software>csm>user:
-cortx>software>csm>secret:
-cortx>software>openldap>root>user:{{ pillar['openldap']['root']['user'] }}
-cortx>software>openldap>root>secret:{{ pillar['openldap']['root']['secret'] }}
-cortx>software>openldap>sgiam>user:{{ pillar['openldap']['sgiam']['user'] }}
-cortx>software>openldap>sgiam>secret:{{ pillar['openldap']['sgiam']['secret'] }}
-cortx>software>corosync>user:{{ pillar['corosync-pacemaker']['user'] }}
-cortx>software>corosync>secret:{{ pillar['corosync-pacemaker']['secret'] }}
-cortx>release>setup:{{ pillar['release']['setup'] }}
-cortx>release>product:{{ pillar['release']['product'] }}
+support>password:{{ pillar['system']['service-user']['password'] }}
+cortx>software>csm>user:{{ pillar['cortx']['software']['csm']['user'] }}
+cortx>software>csm>secret:{{ pillar['cortx']['software']['csm']['secret'] }}
+cortx>software>openldap>root>user:{{ pillar['cortx']['software']['openldap']['root']['user'] }}
+cortx>software>openldap>root>secret:{{ pillar['cortx']['software']['openldap']['root']['secret'] }}
+cortx>software>openldap>sgiam>user:{{ pillar['cortx']['software']['openldap']['sgiam']['user'] }}
+cortx>software>openldap>sgiam>secret:{{ pillar['cortx']['software']['openldap']['sgiam']['secret'] }}
+cortx>software>corosync>user:{{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
+cortx>software>corosync>secret:{{ pillar['cortx']['software']['corosync-pacemaker']['secret'] }}
+cortx>release>setup:{{ pillar['cortx']['release']['setup'] }}
+cortx>release>product:{{ pillar['cortx']['release']['product'] }}
 cluster>{{ cluster_id }}>name:{{ pillar['corosync-pacemaker']['cluster_name'] }}
 cluster>{{ cluster_id }}>site_count:1
-cluster>{{ cluster_id }}>site>storage_node_count:3
-cluster>{{ cluster_id }}>storage_set>server_node_count:3
-cluster>{{ cluster_id }}>storage_set>storage_enclosure_count:3
+cluster>{{ cluster_id }}>site>storage_set_count:{{ pillar['cluster']['storage_sets'].keys() | length }}
 cluster>{{ cluster_id }}>network>management>virtual_host:{{ pillar['cluster']['mgmt_vip'] }}
 cluster>{{ cluster_id }}>network>search_domains:{{ pillar['cluster']['search_domains'] }}
 cluster>{{ cluster_id }}>network>dns_servers:{{ pillar['cluster']['dns_servers'] }}
@@ -23,7 +21,8 @@ cluster>{{ cluster_id }}>network>dns_servers:{{ pillar['cluster']['dns_servers']
 {%- set outer_loop = loop %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name:{{ storage_set }}
 {%- for node in pillar['cluster']['storage_sets'][storage_set] %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]:{{ node }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]:{{ pillar['cluster'][node]['machine_id'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]:encl{{ pillar['cluster'][node]['machine_id'] }}
 {%- endfor %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>data:4
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>parity:2
@@ -36,13 +35,13 @@ server_node>{{ machine_id }}>hostname:{{ pillar['cluster'][node]['hostname'] }}
 server_node>{{ machine_id }}>roles[{{ loop.index - 1 }}]:{{ role }}
 {%- endfor %}
 server_node>{{ machine_id }}>type:{{ pillar['cluster'][node]['node_type'] }}
-server_node>{{ machine_id }}>bmc>ip:{{ pillar['cluster'][node]['bmc']['ip'] }}
-server_node>{{ machine_id }}>bmc>user:{{ pillar['cluster'][node]['bmc']['user'] }}
-server_node>{{ machine_id }}>bmc>secret:{{ pillar['cluster'][node]['bmc']['secret'] }}
+server_node>{{ machine_id }}>bmc>ip:{{ salt["pillar.get"]('cluster:{0}:bmc:ip'.format(node), '') }}
+server_node>{{ machine_id }}>bmc>user:{{ salt["pillar.get"]('cluster:{0}:bmc:user'.format(node), '') }}
+server_node>{{ machine_id }}>bmc>secret:{{ salt["pillar.get"]('cluster:{0}:bmc:secret'.format(node), '') }}
 {%- for iface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
 server_node>{{ machine_id }}>network>management>interfaces[{{ loop.index - 1 }}]:{{ iface }}
 {%- endfor %}
-server_node>{{ machine_id }}>network>management>gateway:{{ pillar['cluster'][node]['network']['mgmt']['gateway'] }}
+server_node>{{ machine_id }}>network>management>gateway:{{ salt["pillar.get"]('cluster:{0}:network:mgmt:gateway'.format(node), grains['ip4_gw']) }}
 server_node>{{ machine_id }}>network>management>netmask:{{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
 server_node>{{ machine_id }}>network>management>public_fqdn:{{ pillar['cluster'][node]['network']['mgmt']['public_fqdn'] }}
 {%- for iface in pillar['cluster'][node]['network']['data']['public_interfaces'] %}
@@ -58,7 +57,19 @@ server_node>{{ machine_id }}>network>data>private_fqdn:{{ pillar['cluster'][node
 server_node>{{ machine_id }}>network>data>roaming_ip:{{ pillar['cluster'][node]['network']['data']['roaming_ip'] }}
 server_node>{{ machine_id }}>network>data>interface_type:{{ pillar['cluster'][node]['network']['data']['interface_type'] }}
 server_node>{{ machine_id }}>network>data>transport_type:{{ pillar['cluster'][node]['network']['data']['transport_type'] }}
-server_node>{{ machine_id }}>storage>enclosure_id:{{ pillar['cluster'][node]['storage']['enclosure_id'] }}
+server_node>{{ machine_id }}>storage>cvg_count:{{ pillar['cluster'][node]['storage']['cvg'] | length }}
+{%- for i in range(pillar['cluster'][node]['storage']['cvg'] | length) %}
+{%- set outer_loop = loop %}
+{%- set metadata_devices = pillar['cluster'][node]['storage']['cvg'][outer_loop.index - 1]['metadata_devices'] %}
+{%- for device in metadata_devices %}
+server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>metadata_devices[{{ loop.index - 1 }}]:{{ device }}
+{%- endfor %}
+{%- set data_devices = pillar['cluster'][node]['storage']['cvg'][outer_loop.index - 1]['data_devices'] %}
+{%- for device in data_devices %}
+server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>data_devices[{{ loop.index - 1 }}]:{{ device }}
+{%- endfor %}
+{%- endfor %}
+server_node>{{ machine_id }}>storage>enclosure_id:encl{{ machine_id }}
 server_node>{{ machine_id }}>site_id:{{ pillar['cluster'][node]['site_id'] }}
 server_node>{{ machine_id }}>rack_id:{{ pillar['cluster'][node]['rack_id'] }}
 server_node>{{ machine_id }}>node_id:{{ pillar['cluster'][node]['node_id'] }}
@@ -66,3 +77,4 @@ server_node>{{ machine_id }}>storage_set_id:{{ pillar['cluster'][node]['storage_
 server_node>{{ machine_id }}>cluster_id:{{ cluster_id }}
 server_node>{{ machine_id }}>s3_instances:{{ pillar['cluster'][node]['s3_instances'] }}
 {%- endfor %}
+
