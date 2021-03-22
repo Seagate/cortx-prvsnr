@@ -16,7 +16,7 @@
 #
 import logging
 from pathlib import Path
-from typing import Type
+from typing import Type, Tuple
 
 from ..salt import copy_to_file_roots
 from .set_swupdate_repo import SetSWUpdateRepo
@@ -30,16 +30,17 @@ from ..config import (REPO_CANDIDATE_NAME,
                       CORTX_ISO_DIR,
                       CORTX_3RD_PARTY_ISO_DIR,
                       CORTX_PYTHON_ISO_DIR,
-                      OS_ISO_DIR
+                      OS_ISO_DIR, HashType
                       )
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
-from ..utils import load_yaml
+from ..utils import load_yaml, load_checksum_from_file
 from .validator import (FileValidator,
                         DirValidator,
                         FileSchemeValidator,
-                        YumRepoDataValidator)
+                        YumRepoDataValidator,
+                        HashSumValidator)
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,49 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     )
                 )
 
+    @staticmethod
+    def _get_hash_params(params: inputs.SWUpgradeRepo) -> Tuple:
+        """
+        Parse and validate the provided hash parameters
+
+        Parameters
+        ----------
+        params: Type[inputs.SWUpgradeRepo]
+            input parameters which contain the hash parameters
+
+        Returns
+        -------
+        Tuple
+            Returns tuple with hash_sum, hash_type and file_name
+
+        """
+        hash_sum = None
+        hash_type = None
+        file_name = None
+
+        if Path(params.hash).exists():
+            _data = load_checksum_from_file(Path(params.hash))
+            hash_sum, hash_type, file_name = _data
+        if hash_sum is not None:
+            return hash_sum, hash_type, file_name
+
+        # by default if there are neither hash type nor file name
+        # in hash string
+        hash_sum = params.hash
+        if ":" in params.hash:
+            hash_type, hash_sum = params.hash.split(":")
+        if " " in hash_sum:
+            hash_sum, file_name = hash_sum.split(" ")
+
+        if hash_type is None and params.hash_type is not None:
+            try:
+                hash_type = HashType(params.hash_type)
+            except ValueError:
+                logger.warning("Unexpected `--hash-type` parameter value: "
+                               f"{params.hash_type}")
+
+        return hash_sum, HashType(hash_type), file_name
+
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
         """
         Validate single SW upgrade ISO structure.
@@ -171,6 +215,19 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     f"source {repo.source}")
 
         candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
+
+        hash_sum, hash_type, hash_file_name = self._get_hash_params(params)
+        upgrade_bundle_hash_validator = HashSumValidator(hash_sum=hash_sum,
+                                                         hash_type=hash_type)
+
+        try:
+            upgrade_bundle_hash_validator.validate(repo.source)
+        except ValidationError as e:
+            logger.debug("Check sum validation error occurred: {e}")
+            raise SWUpdateRepoSourceError(
+                str(repo.source),
+                f"Catalog structure validation error occurred:{e}"
+            ) from e
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other

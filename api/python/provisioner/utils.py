@@ -315,3 +315,61 @@ def generate_random_secret():
     return ''.join(
         [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
     )
+
+
+def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
+    """
+    Function helper to load hash checksum from the given file. Also, it parses
+    hash type of checksum if this info is available in the content.
+
+    Supported formats of checksum file:
+
+    1. <hash_type>:<check_sum> <file_name>
+    2. <hash_type>:<check_sum>
+    3. <check_sum> <file_name>
+    4. <check_sum>
+
+    where
+    <hash_type> - one of the values from `config.HashType` enumeration
+    <check_sum> - hexadecimal representation of hash checksum
+    <file_name> - a file name to which <hash_type> and <hash_sum> belongs to
+
+    Parameters
+    ----------
+    path: Path
+        path to file that contains expected check-sum
+
+    Returns
+    -------
+    Tuple
+        return tuple with parsed information:
+            (<check_sum>, <hash_type>, <file_name>)
+        each tuple element can be None
+    """
+    check_sum = None
+    hash_type = None
+    file_name = None
+    if not path.exists():
+        raise ValueError(f"File by provided path '{path}' doesn't exist.")
+
+    data = list()
+    with open(path, "r") as fh:
+        for line in fh:
+            line = line.strip()
+            data.append(line)
+
+    if not data:
+        raise ValueError(f"File by provided path '{path}' is empty.")
+
+    # NOTE: at this moment we consider that all necessary information is only
+    # in first-line
+    # TODO: for parsing we can use a proper regex
+    check_sum = data[0]
+    if ":" in check_sum:
+        hash_type, check_sum = check_sum.split(":")
+        # FIXME: line can contain file_name
+    elif " " in check_sum:
+        check_sum, file_name = check_sum.split(" ")
+
+    hash_type = hash_type and config.HashType(hash_type)
+    return check_sum, hash_type, file_name

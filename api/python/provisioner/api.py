@@ -232,7 +232,8 @@ def set_swupdate_repo(
     )
 
 
-def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
+def set_swupgrade_repo(release, source=None, hash=None, hash_type=None,
+                       dry_run=False, nowait=False):
     r"""Configures upgrade repository.
 
     Installs or removes a repository for sw upgrade release.
@@ -247,6 +248,11 @@ def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
+    hash:
+        (optional) hash value of single SW upgrade bundle ISO for verification
+    hash_type
+        (optional) type of hash value. See `config.HashType` for
+        possible values
     dry_run
         (optional) validate only. Default: False
     nowait
@@ -259,6 +265,7 @@ def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
 
     """
     return _api_call('set_swupgrade_repo', release, source=source,
+                     hash=hash, hash_type=hash_type,
                      dry_run=dry_run, nowait=nowait)
 
 

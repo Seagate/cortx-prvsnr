@@ -542,3 +542,11 @@ class CortxResourceT(Enum):
     """Resource types in CORTX provisioner"""
 
     REPOS = "cortx_repos"
+
+
+class HashType(Enum):
+
+    """Hash type enumeration."""
+
+    MD5 = "md5"
+    SHA256 = "sha256"
