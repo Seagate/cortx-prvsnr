@@ -1,4 +1,4 @@
-dn: olcOverlay=ppolicy,olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+dn: olcOverlay=ppolicy,olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy

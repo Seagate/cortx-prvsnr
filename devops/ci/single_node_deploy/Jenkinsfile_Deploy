@@ -68,7 +68,7 @@ node {
             }
             
             stage("Prepare config.ini") {
-                sshCommand remote: remote, command: "curl -O https://gist.githubusercontent.com/ypise/d2949b8c0e28db50c8ac670beebbf3f6/raw/3a2d97558d9da7c57dfda658b227ee156eeb6059/config.ini -o /root/config.ini"
+                sshCommand remote: remote, command: "curl -ks https://gist.githubusercontent.com/ypise/d155805fca3b4ffa2defb2d6b82a814e/raw/6dfb47b23cc264585f5510eae455a744c8ad18e7/config.ini -o /root/config.ini"
                 sshCommand remote: remote, command: "sed -i 's/\${HOST_NAME}/${HOST_NAME}/g' /root/config.ini"
                 echo "Successfully created config.ini file!"
             }
@@ -95,7 +95,7 @@ node {
                     sshpass -p $PASSWORD provisioner setup_provisioner srvnode-1:\$(hostname -f) --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
-                    provisioner pillar_export
+                    provisioner confstore_export
                 """
                 echo "Successfully bootstrapped provisioner!"
             }
