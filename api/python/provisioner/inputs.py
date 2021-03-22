@@ -976,12 +976,12 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
-    hash_str: Optional[Union[str, Path]] = attr.ib(
+    hash: Optional[Union[str, Path]] = attr.ib(
         metadata={
             METADATA_ARGPARSER: {
                 'help': ("Path to the file with ISO hash check sum or string"
-                         "with format: either <hash_type>: <hex_hash> or"
-                         "<hex_hash>")
+                         "with format: either '<hash_type>:<hex_hash>' or"
+                         "'<hex_hash>'")
             }
         },
         default=None,

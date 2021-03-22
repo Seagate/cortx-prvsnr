@@ -16,7 +16,7 @@
 #
 import logging
 from pathlib import Path
-from typing import Type, Tuple
+from typing import Type
 
 from ..salt import copy_to_file_roots
 from .set_swupdate_repo import SetSWUpdateRepo
@@ -35,7 +35,11 @@ from ..config import (REPO_CANDIDATE_NAME,
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
-from ..utils import load_yaml, load_checksum_from_file, load_checksum_from_str
+from ..utils import (load_yaml,
+                     load_checksum_from_file,
+                     load_checksum_from_str,
+                     HashInfo
+                     )
 from .validator import (FileValidator,
                         DirValidator,
                         FileSchemeValidator,
@@ -148,7 +152,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
     @staticmethod
     def _get_hash_params(
-            params: inputs.SWUpgradeRepo) -> Tuple[bytes, str, str]:
+            params: inputs.SWUpgradeRepo) -> HashInfo:
         """
         Parse and validate the provided hash parameters
 
@@ -159,33 +163,30 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Returns
         -------
-        Tuple
-            Returns tuple with hash_sum, hash_type and file_name
+        HashInfo
+            Returns `HashInfo` object with hash_sum, hash_type and filename
+            data about checksum
 
         """
-        hash_sum = None
-        hash_type = None
-        file_name = None
+        hash_info = None
 
-        if Path(params.hash_str).exists():
-            _data = load_checksum_from_file(Path(params.hash_str))
-            hash_sum, hash_type, file_name = _data
+        if Path(params.hash).exists():
+            _data = load_checksum_from_file(Path(params.hash))
+            hash_info = _data
 
-        if hash_sum is not None:
-            return hash_sum, hash_type, file_name
+        if hash_info is not None:
+            return hash_info
 
-        hash_sum, hash_type, file_name = load_checksum_from_str(
-                                                            params.hash_str)
+        hash_info = load_checksum_from_str(params.hash)
 
-        if hash_type is None and params.hash_type is not None:
+        if hash_info.hash_type is None and params.hash_type is not None:
             try:
-                hash_type = HashType(params.hash_type)
+                hash_info.hash_type = HashType(params.hash_type)
             except ValueError:
                 logger.warning("Unexpected `--hash-type` parameter value: "
                                f"{params.hash_type}")
 
-        hash_type = hash_type and HashType(hash_type)
-        return hash_sum, hash_type, file_name
+        return hash_info
 
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
         """
@@ -214,18 +215,22 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
 
-        hash_sum, hash_type, _ = self._get_hash_params(params)
-        upgrade_bundle_hash_validator = HashSumValidator(hash_sum=hash_sum,
-                                                         hash_type=hash_type)
+        if params.hash:
+            logger.info("'--hash' parameter is setup. Start checksum "
+                        "validation for the whole ISO file")
+            hash_info = self._get_hash_params(params)
+            upgrade_bundle_hash_validator = HashSumValidator(
+                hash_sum=hash_info.hash_sum,
+                hash_type=hash_info.hash_type)
 
-        try:
-            upgrade_bundle_hash_validator.validate(repo.source)
-        except ValidationError as e:
-            logger.debug("Check sum validation error occurred: {e}")
-            raise SWUpdateRepoSourceError(
-                str(repo.source),
-                f"Catalog structure validation error occurred:{e}"
-            ) from e
+            try:
+                upgrade_bundle_hash_validator.validate(repo.source)
+            except ValidationError as e:
+                logger.debug("Check sum validation error occurred: {e}")
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"Catalog structure validation error occurred:{e}"
+                ) from e
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other

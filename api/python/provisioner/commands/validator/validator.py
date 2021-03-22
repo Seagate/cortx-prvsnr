@@ -278,7 +278,8 @@ class HashSumValidator(PathValidator):
 
     """
     _hash_sum: Union[str, bytes, bytearray] = attr.ib(
-        validator=attr.validators.instance_of((str, bytes, bytearray))
+        validator=attr.validators.instance_of((str, bytes, bytearray)),
+        converter=lambda x: bytes.fromhex(x) if isinstance(x, str) else x
     )
     _hash_type: HashType = attr.ib(
         validator=attr.validators.in_(HashType),
@@ -320,9 +321,6 @@ class HashSumValidator(PathValidator):
                 if not data:
                     break
                 hash_method.update(data)
-
-        if isinstance(self._hash_sum, str):
-            self._hash_sum = bytes.fromhex(self._hash_sum)
 
         if not compare_digest(hash_method.digest(), self._hash_sum):
             raise ValidationError(

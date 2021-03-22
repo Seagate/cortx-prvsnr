@@ -17,7 +17,7 @@
 
 import importlib
 
-from .config import ALL_MINIONS, CONTROLLER_BOTH
+from .config import ALL_MINIONS, CONTROLLER_BOTH, HashType
 
 _api = None
 
@@ -232,8 +232,8 @@ def set_swupdate_repo(
     )
 
 
-def set_swupgrade_repo(release, source=None, hash_str=None, hash_type=None,
-                       dry_run=False, nowait=False):
+def set_swupgrade_repo(release, source=None, hash_str=None,
+                       hash_type=HashType.MD5, dry_run=False, nowait=False):
     r"""Configures upgrade repository.
 
     Installs or removes a repository for sw upgrade release.

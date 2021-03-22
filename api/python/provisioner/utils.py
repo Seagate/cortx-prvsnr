@@ -39,10 +39,24 @@ from .errors import (
     BadPillarDataError, ProvisionerError, SubprocessCmdError
 )
 
+from .vendor import attr
+
 logger = logging.getLogger(__name__)
 
 HASH_REGEX = re.compile(
     r"(?:([\w\-]+):)?([A-Za-z0-9]+)\s*([\w\-]+\.[A-Za-z0-9]*)?")
+
+
+HashInfo = attr.make_class(
+           "HashInfo",
+           {
+               'hash_sum': attr.ib(
+                   validator=attr.validators.optional(
+                       attr.validators.instance_of((bytes, bytearray))),
+                   default=None),
+               'hash_type': attr.ib(default=None),
+               'filename': attr.ib(default=None)
+           })
 
 
 # TODO TEST
@@ -321,7 +335,7 @@ def generate_random_secret():
     )
 
 
-def load_checksum_from_str(hash_str: str) -> Tuple[bytes, str, str]:
+def load_checksum_from_str(hash_str: str) -> HashInfo:
     """
     Function helper to load hash checksum from specially constructed string.
     It parses the hash type, hash sum and file name information from
@@ -346,25 +360,24 @@ def load_checksum_from_str(hash_str: str) -> Tuple[bytes, str, str]:
 
     Returns
     -------
-    Tuple
-        return tuple with parsed information:
-            (<check_sum>, <hash_type>, <file_name>)
-        each tuple element can be None
+    HashInfo
+        return `HashInfo` object-like variable with parsed information:
+            <check_sum>, <hash_type>, <file_name>
+        each field of this element can be `None`
     """
-    hash_type = None
-    hash_data = None
-    file_name = None
+    hash_info = HashInfo()
 
     if hash_str:
         search = HASH_REGEX.search(hash_str)
         if search:
-            hash_type, hash_data, file_name = search.groups()
+            hash_info(*search.groups())
 
-    hash_type = hash_type and config.HashType(hash_type)
-    return hash_data, hash_type, file_name
+    hash_info.hash_type = (hash_info.hash_type
+                           and config.HashType(hash_info.hash_type))
+    return hash_info
 
 
-def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
+def load_checksum_from_file(path: Path) -> HashInfo:
     """
     Function helper to load hash checksum from the given file. Also, it parses
     hash type of checksum if this info is available in the content.
@@ -388,23 +401,20 @@ def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
 
     Returns
     -------
-    Tuple
-        return tuple with parsed information:
-            (<check_sum>, <hash_type>, <file_name>)
-        each tuple element can be None
+    HashInfo
+        return `HashInfo` object-like variable with parsed information:
+            <check_sum>, <hash_type>, <file_name>
+        each field of this element can be `None`
     """
     if not path.exists():
         raise ValueError(f"File by provided path '{path}' doesn't exist.")
 
-    data = list()
     with open(path, "r") as fh:
-        for line in fh:
-            line = line.strip()
-            data.append(line)
+        line = fh.readline().strip()
 
-    if not data:
+    if not line:
         raise ValueError(f"File by provided path '{path}' is empty.")
 
     # NOTE: at this moment we consider that all necessary information is only
     # in first-line
-    return load_checksum_from_str(data[0])
+    return load_checksum_from_str(line)
