@@ -177,11 +177,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #     logic is still running, if not - forcibly remove the previous
         #     candidate
         #   - after first mount 'sw_update_candidate' listed in disabled repos
-        # TODO: need to have logic for sw upgrade
-        # if self._does_repo_exist(f'sw_update_{candidate_repo.release}'):
-        #     logger.warning(
-        #       'other repo candidate was found, proceeding with force removal'
-        #     )
+        # NOTE: yum repoinfo supports the wildcards in the name of a searching
+        #  repository
+        if self._does_repo_exist(f'sw_upgrade_*_{candidate_repo.release}'):
+            logger.warning(
+              'other repo candidate was found, proceeding with force removal'
+            )
         # TODO IMPROVE: it is not enough it may lead to locks when
         #  provisioner doesn't unmount `sw_update_candidate` repo
         # raise SWUpdateError(reason="Other repo candidate was found")
