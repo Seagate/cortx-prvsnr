@@ -993,8 +993,7 @@ class SWUpgradeRepo(SWUpdateRepo):
                          "'<hex_hash>'")
             }
         },
-        default=None,
-        converter=str
+        default=None
     )
     hash_type: Optional[str] = attr.ib(
         metadata={

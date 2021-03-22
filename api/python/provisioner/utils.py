@@ -44,17 +44,18 @@ from .vendor import attr
 logger = logging.getLogger(__name__)
 
 HASH_REGEX = re.compile(
-    r"(?:([\w\-]+):)?([A-Za-z0-9]+)\s*([\w\-]+\.[A-Za-z0-9]*)?")
+                    r"^(?:(.*):)?(?:([A-Fa-f0-9]+)(?:\s|$))(?:([^\s].*))?$")
 
 
 HashInfo = attr.make_class(
            "HashInfo",
            {
+               'hash_type': attr.ib(default=None),
                'hash_sum': attr.ib(
                    validator=attr.validators.optional(
                        attr.validators.instance_of((bytes, bytearray))),
-                   default=None),
-               'hash_type': attr.ib(default=None),
+                   default=None,
+                   converter=bytes.fromhex),
                'filename': attr.ib(default=None)
            })
 
@@ -366,15 +367,15 @@ def load_checksum_from_str(hash_str: str) -> HashInfo:
             <check_sum>, <hash_type>, <file_name>
         each field of this element can be `None`
     """
-    hash_info = HashInfo()
+    hash_info = None
 
     if hash_str:
         search = HASH_REGEX.search(hash_str)
         if search:
-            hash_info(*search.groups())
+            hash_info = HashInfo(*search.groups())
 
-    hash_info.hash_type = (hash_info.hash_type
-                           and config.HashType(hash_info.hash_type))
+            hash_info.hash_type = (hash_info.hash_type
+                                   and config.HashType(hash_info.hash_type))
     return hash_info
 
 
