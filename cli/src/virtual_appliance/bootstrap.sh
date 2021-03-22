@@ -31,9 +31,10 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+provisioner pillar_export
 #configure haproxy
-echo "INFO: Configuring haproxy" | tee -a ${LOG_FILE}
-salt "*" state.apply components.ha.haproxy.config | tee -a ${LOG_FILE}
+echo "INFO: Configuring haproxy and s3" | tee -a ${LOG_FILE}
+salt "*" state.apply components.s3server.config | tee -a ${LOG_FILE}
 echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a ${LOG_FILE}
 DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:0 --output=newline_values_only)
 DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
