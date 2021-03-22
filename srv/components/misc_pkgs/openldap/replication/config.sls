@@ -28,11 +28,11 @@ include:
 {% endif -%}
 {% endfor -%}
 {% if 1 < (server_nodes|length) -%}
-{% set ldap_password = salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) -%}
+{% set ldap_password = salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) -%}
 
 Load provider module:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov_mod.ldif && sleep 2
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx_configs/provisioner_generated/ldap/syncprov_mod.ldif && sleep 2
     - env:
       - password: {{ ldap_password }}
     - watch_in:
@@ -40,7 +40,7 @@ Load provider module:
 
 Push provider for data replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx/provisioner/generated_configs/ldap/syncprov.ldif && sleep 2
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx_configs/provisioner_generated/ldap/syncprov.ldif && sleep 2
     - env:
       - password: {{ ldap_password }}
     - watch_in:
@@ -48,7 +48,7 @@ Push provider for data replication:
 
 Configure openldap replication:
   cmd.run:
-    - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/cortx/provisioner/generated_configs/ldap/replicate.ldif && sleep 10 
+    - name: ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/seagate/cortx_configs/provisioner_generated/ldap/replicate.ldif && sleep 10 
     - watch_in:
       - Restart slapd service
     - require:
@@ -58,6 +58,6 @@ Configure openldap replication:
 
 Cleanup ldif files:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/ldap
+    - name: /opt/seagate/cortx_configs/provisioner_generated/ldap
 
 {% endif -%}

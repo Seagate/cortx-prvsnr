@@ -27,6 +27,6 @@ include:
 
 Generate s3clients checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.s3clients
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.s3clients
     - makedirs: True
     - create: True

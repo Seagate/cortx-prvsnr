@@ -51,8 +51,8 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def options_list(options_list):
-    return options_list + list(prvsnr_pytest_options)
+def run_options(run_options):
+    return run_options + list(prvsnr_pytest_options)
 
 
 @pytest.fixture(scope='session')

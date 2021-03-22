@@ -29,16 +29,18 @@ Update to latest selinux-policy:
 
 # FIXME EOS-12076 the following steps are about configuration, not installation
 
+{% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
 Backup slapd config file:
   file.copy:
     - name: /etc/sysconfig/slapd.bak
     - source: /etc/sysconfig/slapd
     - force: True
     - preserve: True
+{% endif %}
 
 Generate Slapdpasswds:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh
+    - name: sh /opt/seagate/cortx_configs/provisioner_generated/ldap/ldap_gen_passwd.sh
 
 Stop slapd:
   service.dead:
@@ -49,7 +51,8 @@ Add password file to ldap group:
     - name: chgrp ldap /etc/openldap/certs/password
     - onlyif: grep -q ldap /etc/group && test -f /etc/openldap/certs/password
 
-{% if 'mdb' in pillar['openldap']['backend_db'] %}
+{% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
+{% if 'mdb' in pillar['cortx']['software']['openldap']['backend_db'] %}
 Clean up old mdb ldiff file:
   file.absent:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
@@ -57,7 +60,7 @@ Clean up old mdb ldiff file:
 Copy mdb ldiff file, if not present:
   file.copy:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif
-    - source: /opt/seagate/cortx/provisioner/generated_configs/ldap/olcDatabase={2}mdb.ldif
+    - source: /opt/seagate/cortx_configs/provisioner_generated/ldap/olcDatabase={2}mdb.ldif
     - force: True
     - user: ldap
     - group: ldap
@@ -68,3 +71,4 @@ Copy mdb ldiff file, if not present:
 slapd:
   service.running:
     - enable: True
+{% endif %}

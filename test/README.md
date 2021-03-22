@@ -1,3 +1,5 @@
+><h3> <strong>WARNING !</strong> : This doc is out-of-date at the moment. Please refer to this <a href="https://github.com/Seagate/cortx-prvsnr/blob/pre-cortx-1.0/docs/testing.md">document</a> for latest documentation.<h3>
+
 # Integration Tests
 
 **Table of Contents**

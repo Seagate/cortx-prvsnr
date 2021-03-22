@@ -20,6 +20,8 @@ import logging
 import subprocess
 import time
 import yaml
+import string
+import secrets
 from shlex import quote
 
 from pathlib import Path, PosixPath
@@ -58,6 +60,25 @@ def validator_path_exists(instance, attribute, value):
 
 def converter_path(value):
     return value if value is None else Path(str(value))
+
+
+def converter_file_scheme_key(value: dict):
+    """
+    Convert incoming dict with file scheme to new one where keys are `Path`
+    instances
+
+    Parameters
+    ----------
+    value: dict
+        a given file scheme which represents some catalog structure
+
+    Returns
+    -------
+    dict
+        new dictionary object where keys are `Path` instances
+    """
+    return value if value is None else {converter_path(k): v for k, v in
+                                        value.items()}
 
 
 def converter_path_resolved(value):
@@ -273,8 +294,9 @@ def node_hostname_validator(
 
     for section in parser_obj.sections():
         if (
-            "srvnode" in section
-            and (
+            "srvnode" in section and
+            "srvnode_default" not in section and
+            (
                 node_dict[section] != parser_obj[section]["hostname"]
             )
         ):
@@ -283,3 +305,14 @@ def node_hostname_validator(
                 f"{node_dict[section]} != {parser_obj[section]['hostname']}"
             )
             raise ValueError(msg)
+
+
+# Generate random 12 character password
+def generate_random_secret():
+
+    passwd_strength = 12
+    passwd_seed = (string.ascii_letters + string.digits)
+
+    return ''.join(
+        [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
+    )

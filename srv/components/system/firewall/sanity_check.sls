@@ -16,14 +16,21 @@
 #
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
-  {% set mgmt_if = 'mgmt0' %}
+  {% set mgmt_if = ['mgmt0'] %}
 {% else %}
-  {% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'][0] %}
+  {% set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt']['interfaces'] %}
 {% endif %}
 
+{% set added_mgmt_if = salt['firewalld.get_interfaces'](zone='management-zone') %}
 Verify management zone interfaces:
-  cmd.run:
-    - name: firewall-cmd --zone=public --list-interfaces | grep {{ mgmt_if }}
+{% if (added_mgmt_if | symmetric_difference(mgmt_if)) %}
+  test.fail_without_changes:
+    - name: {{ (added_mgmt_if | symmetric_difference(mgmt_if)) }} interface verification failed on management-zone
+{% else %}
+  test.show_notification:
+    - text: Interfaces verification successful on management-zone
+{% endif %}
+
 
 {% if 'data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0'] %}
   {% set public_data_if = ['data0'] %}
@@ -31,52 +38,66 @@ Verify management zone interfaces:
 {% else %}
   {% set public_data_if = pillar['cluster'][grains['id']]['network']['data']['public_interfaces'] %}
   {% set private_data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
+  {% do private_data_if.extend(['lo']) %}
 {% endif %}
 
-Verify public-data interfaces:
-  cmd.run:
-    - name: |
-    {% for interface in public_data_if %}
-        firewall-cmd --zone=public-data-zone --list-interfaces | grep {{ interface }}
-    {% endfor %}
-
-Verify private-data interfaces:
-  cmd.run:
-    - name: |
-    {% for interface in private_data_if %}
-        firewall-cmd --zone=trusted --list-interfaces | grep {{ interface }}
-    {% endfor %}
-
-{% for nic in pillar['firewall'].keys() %}
-
-{% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'public'}) %}
-{% set added_services = salt['firewalld.list_services'](zone=zones[nic]) %}
-{% set services = pillar['firewall'][nic]['services'] %}
-{% do services.extend(pillar['firewall'][nic]['ports'].keys() | list) %}
-
-Verify {{ nic }} services:
-{% if (services | difference(added_services)) | length > 0 %}
+{% set added_public_data_if = salt['firewalld.get_interfaces'](zone='public-data-zone') %}
+Verify public data interfaces:
+{% if (added_public_data_if | symmetric_difference(public_data_if)) %}
   test.fail_without_changes:
-    - name: "{{ (services | difference(added_services)) }} service not added to {{ nic }} zone"
+    - name: {{ (added_public_data_if | symmetric_difference(public_data_if)) }} interface verification failed on public-data-zone
 {% else %}
   test.show_notification:
-    - text: echo {{ nic }} services verification successful
+    - text: Interfaces verification successful on public-data-zone
 {% endif %}
 
-{% for service in pillar['firewall'][nic]['ports'] %}
-
-{% set added_ports = salt['firewalld.get_service_ports'](service=service) %}
-{% set ports = pillar['firewall'][nic]['ports'][service] %}
-
-Verify {{ service }} ports against {{ nic }}:
-{% if (ports | difference(added_ports)) | length > 0 %}
+{% set added_private_data_if = salt['firewalld.get_interfaces'](zone='trusted') %}
+Verify private data interfaces:
+{% if (added_private_data_if | symmetric_difference(private_data_if)) %}
   test.fail_without_changes:
-    - name: "{{ (ports | difference(added_ports)) }} not added to {{ service }} service"
+    - name: {{ (added_private_data_if | symmetric_difference(private_data_if)) }} interface verification failed on private-data-zone
 {% else %}
   test.show_notification:
-    - text: echo {{ service }} ports verification successful on {{ nic }}
+    - text: Interfaces verification successful on private-data-zone
 {% endif %}
 
+{% for network_interface in pillar['firewall'].keys() %}
+
+{% set zones =  ({'data_public':'public-data-zone','mgmt_public': 'management-zone'}) %}
+{% set added_services = salt['firewalld.list_services'](zone=zones[network_interface]) %}
+{% set services = pillar['firewall'][network_interface]['ports'].keys() | list %}
+
+{% if pillar['firewall'][network_interface]['services'] %}
+{% do services.extend(pillar['firewall'][network_interface]['services']) %}
+{% endif %}
+
+Verify {{ network_interface }} services:
+{% if (added_services | symmetric_difference(services)) %}
+  test.fail_without_changes:
+    - name: {{ (services | symmetric_difference(added_services)) }} services verification failed on {{ network_interface }}
+{% else %}
+  test.show_notification:
+    - text: {{ network_interface }} services verification successful
+{% endif %}
+
+{% set ports = [] %}
+{% set added_ports = [] %}
+{% do added_ports.extend(salt['firewalld.list_ports'](zone=zones[network_interface])) %}
+
+{% for service in pillar['firewall'][network_interface]['ports'] %}
+
+{% do added_ports.extend(salt['firewalld.get_service_ports'](service=service)) %}
+{% do ports.extend(pillar['firewall'][network_interface]['ports'][service]) %}
 
 {% endfor %}
+
+Verify {{ network_interface }} ports:
+{% if (added_ports | symmetric_difference(ports)) %}
+  test.fail_without_changes:
+    - name: "{{ (ports | symmetric_difference(added_ports)) }} ports verification failed on {{ network_interface }}"
+{% else %}
+  test.show_notification:
+    - text: {{ network_interface }} ports verification successful
+{% endif %}
+
 {% endfor %}

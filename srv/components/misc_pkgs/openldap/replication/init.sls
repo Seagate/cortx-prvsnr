@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.openldap_replication'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.openldap_replication'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.openldap.replication.prepare
   - components.misc_pkgs.openldap.replication.config
@@ -23,7 +23,7 @@ include:
 
 Generate openldap replication checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.openldap_replication
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.openldap_replication
     - makedirs: True
     - create: True
 {%- else -%}

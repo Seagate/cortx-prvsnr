@@ -1,4 +1,4 @@
-{%- set db = pillar['openldap']['backend_db'] -%}
+{%- set db = pillar['cortx']['software']['openldap']['backend_db'] -%}
 dn: olcDatabase={0}config,cn=config
 changetype: modify
 replace: olcRootDN

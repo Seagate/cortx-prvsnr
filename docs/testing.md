@@ -17,6 +17,11 @@
     - [Docker configuration](#docker-configuration)
     - [Docker on Fedora 32/33](#docker-on-fedora-33)
     - [Docker test helpers](#Docker-test-helpers)
+      - [Docker environment creation](#docker-environment-creation)
+      - [Building provisioner packages](#building-provisioner-packages)
+      - [Building testing bundles](#building-testing-bundles)
+    - [Integration test cases](#Integration-test-cases)
+      - [Provisioner setup](#Provisioner-setup)
 - [Appendix](#appendix)
   - [Basic Docker commands](#basic-docker-commands)
 
@@ -238,14 +243,74 @@ sudo docker run hello-world
 
 #### Docker test helpers
 
-- docker environment creation
+##### Building provisioner packages
+
+  ```bash
+  pytest test/build_helpers/build_prvsnr_pkgs
+  ```
+
+  The command above will create provisioner packages (core and api) in the current directory.
+
+  You may check the full list of options using `pytest test/build_helpers/build_prvsnr_pkgs --help`
+  (`custom options` part):
+
+  - `--pkgs-version=STR` release version (source version). Note. ignored for
+     api package, to set version for package please edit
+     `api/python/provisioner/__metadata__.py`
+  - `--pkgs-pkg-version=INT` package version (release tag),
+     should be greater or  equal 1
+  - `--pkgs-output=DIR` path to directory to output
+
+##### Building testing bundles
+
+  ```bash
+  pytest test/build_helpers/build_bundles
+  ```
+
+  The command above will create three bundles in the current directory.
+
+  They would respect the structure of CORTX distributions for deployment and upgrade
+  but include mocks for CORTX packages instead of real ones. Non CORTX yum repositories
+  inside would be just empty.
+
+  Optionally you may pack inside real repositories of EPEL-7, SaltStack and
+  GlusterFS along with provisioner release packages that are distributed inside
+  official CORTX bundles. For that you need to download a bundle locally
+  and run the following command:
+
+  ```bash
+  pytest test/build_helpers/build_bundles --build-orig-single-iso <path-to-official-bundle>
+  ```
+
+  Also you may pack custom provisioner packages available locally:
+
+  ```bash
+  pytest test/build_helpers/build_bundles \
+            --build-prvsnr-pkg=<path-to-prvsnr-pkg> \
+            --build-prvsnr-api-pkg=<path-to-prvsnr-api-pkg>
+  ```
+
+  For the full list of available options please run
+  `pytest test/build_helpers/build_bundles --help` (`custom options` part):
+
+  - `--build-type=TYPE` type of the bundle [choices: deploy-cortx, deploy-bundle, upgrade, all]
+  - `--build-version=STR` version of the release, ignored if 'all' type is used
+  - `--build-output=BUILD_OUTPUT` path to file or directory to output
+  - `--build-orig-single-iso=BUILD_ORIG_SINGLE_ISO` original CORTX single ISO for partial use
+  - `--build-prvsnr-pkg=BUILD_PRVSNR_PKG PATH` to provisioner core rpm package
+  - `--build-prvsnr-api-pkg=BUILD_PRVSNR_API_PKG PATH` to provisioner API rpm package
+
+
+##### Docker environment creation
 
   ```bash
   pytest test/build_helpers/build_env -s --root-passwd root --nodes-num 1
   ```
 
+  The command above will create the docker container.
+
   <details>
-  <summary>The command above will create the docker container and will have the following output</summary>
+  <summary>It will result with the following example output</summary>
 
   ```
     ========================================================================================= test session starts ==========================================================================================
@@ -267,52 +332,27 @@ sudo docker run hello-world
       IdentitiesOnly yes
       LogLevel FATAL
 
-    ```
+  ```
   </details>
 
-    Possible options (you may check them using `pytest test/build_helpers/build_env --help`, `custom options` part)
+  You may check the full list of options using `pytest test/build_helpers/build_env --help`
+  (`custom options` part):
+
     - `--docker-mount-dev` to mount `/dev` into containers (necessary if you need to mount ISO inside a container)
     - `--root-passwd <STR>` to set a root password for initial ssh access
     - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 6
 
-- building testing bundles
-
-  ```bash
-  pytest test/build_helpers/build_bundles
-  ```
-
-  The command above will create three bundles in the root of the project.
-
-  They would respect the structure of CORTX distributions for deployment and upgrade
-  but include mocks for CORTX packages instead of real ones. Non CORTX yum repositories
-  inside would be just empty.
-
-  Optionally you may pack inside it real repositories of EPEL-7, SaltStack and GlusterFS that
-  are distributed inside official CORTX bundles. For that you need to download a bundle locally
-  and run the following command:
-
-  ```bash
-  pytest test/build_helpers/build_bundles --bundle-orig-single-iso <path-to-official-bundle>
-  ```
-
-  Options (you may check them using `pytest test/build_helpers/build_bundles --help`, `custom options` part)
-  - `--bundle-orig-single-iso=PATH`: original CORTX single ISO for partial use
-  - `--bundle-output=PATH`:  path to file or directory to output
-  - `--bundle-type=TYPE`: type of the bundle
-  - `--bundle-version=PATH`: version of the release, ignored if 'all' type is used
-
 #### Integration test cases
-
 
 ##### Provisioner setup
 
-- You may set up a provisioner inside the container using the local source mode
+You may set up a provisioner inside the container using the local source mode
 
-  ```bash
-  provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
-  ```
+```bash
+provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
+```
 
-  **:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
+**:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
 
 **TBD: Test other types of sources.**
 

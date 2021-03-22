@@ -19,8 +19,9 @@ import logging
 from copy import deepcopy
 import ipaddress
 import functools
-from typing import List, Union, Any, Iterable, Tuple, Dict
+from typing import List, Union, Any, Iterable, Tuple, Dict, Type
 from pathlib import Path
+import argparse
 
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
@@ -96,7 +97,7 @@ class AttrParserArgs:
         self.name = self.name.lstrip('_')
 
         if self.prefix:
-            self.name = self.prefix + self.name
+            self.name = f"{self.prefix}{self.name}"
 
         parser_args = {}
 
@@ -184,7 +185,10 @@ class InputAttrParserArgs(AttrParserArgs):
 
 class ParserFiller:
     @staticmethod
-    def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
+    def prepare_args(
+        cls, attr_parser_cls: Type[AttrParserArgs] = AttrParserArgs
+    ):
+        res = {}
         for _attr in attr.fields(cls):
             if METADATA_ARGPARSER in _attr.metadata:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
@@ -215,19 +219,105 @@ class ParserFiller:
                             }
                         )
                         args = attr_parser_cls(attr_copy, prefix=parser_prefix)
-                        parser.add_argument(args.name, **args.kwargs)
+                        res[args.name] = args.kwargs
                 else:
                     args = attr_parser_cls(_attr, prefix=parser_prefix)
-                    parser.add_argument(args.name, **args.kwargs)
+                    res[args.name] = args.kwargs
+
+        return res
+
+    @staticmethod
+    def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
+        _args = ParserFiller.prepare_args(cls, attr_parser_cls)
+        for name, kwargs in _args.items():
+            parser.add_argument(name, **kwargs)
+
+    @staticmethod
+    def extract_args(
+        cls, kwargs, positional=True, optional=True, pop=True
+    ):
+        _args = {}
+        _kwargs = {}
+
+        parser_prefix = getattr(cls, 'parser_prefix', '')
+
+        for _attr in attr.fields(cls):
+            if METADATA_ARGPARSER in _attr.metadata:
+                # name = (
+                #     _attr.name.split(parser_prefix, 1)[-1]
+                #     if parser_prefix else _attr.name
+                # )
+                arg_name = f"{parser_prefix}{_attr.name}".replace('-', '_')
+                if arg_name in kwargs:
+                    _dest = None
+                    if positional and _attr.default is attr.NOTHING:
+                        _dest = _args
+                    elif optional and _attr.default is not attr.NOTHING:
+                        _dest = _kwargs
+
+                    if _dest is not None:
+                        _dest[_attr.name] = kwargs[arg_name]
+                        if pop:
+                            kwargs.pop(arg_name)
+
+        return _args.values(), _kwargs, kwargs
 
     @staticmethod
     def extract_positional_args(cls, kwargs):
-        _args = []
+        _args, _, kwargs = ParserFiller.extract_args(
+            cls, kwargs, positional=True, optional=False
+        )
+        return _args, kwargs
+
+    @staticmethod
+    def extract_optional_args(cls, parsed_args):
+        _, _kwargs, kwargs = ParserFiller.extract_args(
+            cls, parsed_args, positional=False, optional=True
+        )
+        return _kwargs, kwargs
+
+    @staticmethod
+    def from_args(cls, parsed_args: Union[dict, argparse.Namespace], pop=True):
+        if isinstance(parsed_args, argparse.Namespace):
+            _parsed_args = vars(parsed_args)
+
+        _args, _kwargs, _parsed_args = ParserFiller.extract_args(
+            cls, _parsed_args, positional=True, optional=True, pop=pop
+        )
+
+        if pop:
+            parsed_args = _parsed_args
+
+        return cls(*_args, **_kwargs), parsed_args
+
+
+@attr.s(auto_attribs=True)
+class ParserMixin:
+
+    parser_prefix = ''
+
+    @classmethod
+    def parser_attrs(cls):
         for _attr in attr.fields(cls):
             if METADATA_ARGPARSER in _attr.metadata:
-                if _attr.default is attr.NOTHING and _attr.name in kwargs:
-                    _args.append(kwargs.pop(_attr.name))
-        return _args, kwargs
+                yield _attr
+
+    @classmethod
+    def parser_args(cls):
+        for _attr in cls.parser_attrs():
+            yield f"{cls.parser_prefix}{_attr.name.replace('_', '-')}"
+
+    @classmethod
+    def prepare_args(cls, *args, **kwargs):
+        return ParserFiller.prepare_args(cls, *args, **kwargs)
+
+    @classmethod
+    def fill_parser(cls, parser, *args, **kwargs):
+        return ParserFiller.fill_parser(cls, parser, *args, **kwargs)
+
+    @classmethod
+    def from_args(cls, parsed_args, *args, **kwargs):
+        return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
 
 
 @attr.s(auto_attribs=True)
@@ -436,7 +526,12 @@ class Validation():
     def check_ip4(instace, attribute, value):
         try:
             ip = None
-            if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
+            if (
+                value and
+                value != UNCHANGED and
+                value != 'None' and
+                value != '\"\"'
+            ):  # FIXME JBOD
                 ip = ipaddress.IPv4Address(value)
                 # TODO : Improve logic internally convert ip to
                 # canonical forms.
@@ -512,7 +607,7 @@ class StorageEnclosure(ParamGroupInputBase):
     controller_secret: str = StorageEnclosureParams.controller_secret
 
 
-class NodeNetworkParams():
+class NodeParams():
     _param_group = 'node'
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
@@ -525,6 +620,22 @@ class NodeNetworkParams():
     )
     data_private_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data private network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
+        validator=Validation.check_ip4
+    )
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -548,25 +659,13 @@ class NodeNetworkParams():
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network interfaces"
     )
-    data_public_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-    data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface netmask",
-        validator=Validation.check_ip4
-    )
-    data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data gateway IP",
-        validator=Validation.check_ip4
-    )
-    data_private_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface private IP",
-        validator=Validation.check_ip4
-    )
     bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC  IP", default=UNCHANGED,
         validator=Validation.check_ip4
+    )
+    cvg: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node storage Cylinder Volume Group (CVG) devices",
+        default=UNCHANGED
     )
 
 
@@ -631,9 +730,6 @@ class NetworkParams():
     secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node floating IP"
     )
-    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data gateway IP"
-    )
     secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node mgmt gateway IP"
     )
@@ -643,6 +739,9 @@ class NetworkParams():
     )
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node management interface netmask"
+    )
+    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data gateway IP"
     )
     secondary_data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node node data interface IP",

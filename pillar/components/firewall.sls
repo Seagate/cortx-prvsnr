@@ -1,8 +1,6 @@
 firewall:
   data_public:
-    services:
-      - ssh
-      - high-availability
+    services: []
     ports:
       consul:
         - 8600/tcp
@@ -17,6 +15,8 @@ firewall:
         - 68/udp
       dhserver:
         - 67/udp
+      haproxy:
+        - 443/tcp
       hare:
         - 8008/tcp
       nfs:
@@ -25,14 +25,9 @@ firewall:
         - 32803/tcp
         - 892/tcp
         - 875/tcp
-      uds:
-        - 5000/tcp
-        - 5125/udp
-      www:
-        - 443/tcp
       s3:
         - 7081/tcp
-        {% for port in range(8081, 8099) %}
+        {% for port in range(8081, 8092) %}
         - {{ port }}/tcp
         {% endfor %}
         - 514/tcp
@@ -41,11 +36,16 @@ firewall:
         - 6379/tcp
         - 9443/tcp
         - 9086/tcp
+      uds:
+        - 5000/tcp
+        - 5125/udp
   mgmt_public:
     services:
       - ssh
-      - high-availability
       - ftp
+      {%- if salt['cmd.run']('rpm -qa glusterfs-server') %}
+      - glusterfs
+      {%- endif %}
     ports:
       consul:
         - 8600/tcp
@@ -78,5 +78,3 @@ firewall:
       uds:
         - 5000/tcp
         - 5125/udp
-      www:
-        - 443/tcp

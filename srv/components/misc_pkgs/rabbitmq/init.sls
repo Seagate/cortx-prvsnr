@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.rabbitmq'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.rabbitmq'.format(grains['id'])) %}
 include:
   - components.misc_pkgs.rabbitmq.prepare
   - components.misc_pkgs.rabbitmq.install
@@ -24,7 +24,7 @@ include:
 
 Generate RabbitMQ checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.rabbitmq
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.rabbitmq
     - makedirs: True
     - create: True
 {%- else -%}

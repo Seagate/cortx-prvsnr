@@ -65,18 +65,32 @@ Builds different types of CORTX distribution.
 The type of a distribution, release version and output directory
 can be configured.
 
-If '--gen-iso' is specified then an ISO file is generated as well.
+If location of an original Cortx single repo image is specified
+(using '--orig-iso') then EPEL-7, SaltStack and GlusterFS repositories
+along with provisioner release packages would be copied from the ISO
+to a new bundle.
+
+Custom provisioner packages might be packed inside a bundle using
+'--prvsnr-pkg' and '--prvsnr-api-pkg' options.
+
+Finally if '--gen-iso' is specified then an ISO file is generated as well.
 
 Options:
-  -h,  --help           print this help and exit
-  -o,  --out-dir DIR    output dir,
-                            default: .
-  -r,  --cortx-ver      cortx release version,
-                            default: 2.0.0
-  -t,  --out-type       output type. Possible values: {deploy-cortx|deploy-single|upgrade}
-                            default: deploy-cortx,
-  -v,  --verbose        be more verbose
-       --gen-iso        generate ISO
+  -h,  --help                   print this help and exit
+  -i,  --orig-iso FILE          original ISO for partial use,
+                                    default:
+  -o,  --out-dir DIR            output dir,
+                                    default: .
+  -r,  --cortx-ver              cortx release version,
+                                    default: 2.0.0
+  -t,  --out-type               output type. Possible values: {deploy-cortx|deploy-single|upgrade}
+                                    default: deploy-cortx,
+  -v,  --verbose                be more verbose
+       --gen-iso                generate ISO
+       --prvsnr-pkg FILE        provisioner package location
+                                    default:
+       --prvsnr-api-pkg FILE    provisioner api package location
+                                    default:
 ```
 
 Where output types are:

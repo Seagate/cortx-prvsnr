@@ -26,6 +26,6 @@ include:
 
 Generate system checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.system
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.system
     - makedirs: True
     - create: True
