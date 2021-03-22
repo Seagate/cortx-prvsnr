@@ -167,14 +167,15 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         hash_type = None
         file_name = None
 
-        if Path(params.hash).exists():
-            _data = load_checksum_from_file(Path(params.hash))
+        if Path(params.hash_str).exists():
+            _data = load_checksum_from_file(Path(params.hash_str))
             hash_sum, hash_type, file_name = _data
 
         if hash_sum is not None:
             return hash_sum, hash_type, file_name
 
-        hash_sum, hash_type, file_name = load_checksum_from_str(params.hash)
+        hash_sum, hash_type, file_name = load_checksum_from_str(
+                                                            params.hash_str)
 
         if hash_type is None and params.hash_type is not None:
             try:
@@ -213,7 +214,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
 
-        hash_sum, hash_type, hash_file_name = self._get_hash_params(params)
+        hash_sum, hash_type, _ = self._get_hash_params(params)
         upgrade_bundle_hash_validator = HashSumValidator(hash_sum=hash_sum,
                                                          hash_type=hash_type)
 

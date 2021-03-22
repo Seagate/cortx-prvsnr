@@ -23,8 +23,6 @@ from typing import List, Union, Any, Iterable, Tuple, Dict, Type, Optional
 from pathlib import Path
 import argparse
 
-from provisioner.config import HashType
-
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
@@ -978,7 +976,7 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
-    hash: Optional[Union[str, Path]] = attr.ib(
+    hash_str: Optional[Union[str, Path]] = attr.ib(
         metadata={
             METADATA_ARGPARSER: {
                 'help': ("Path to the file with ISO hash check sum or string"
