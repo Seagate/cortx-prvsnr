@@ -35,7 +35,7 @@ from ..config import (REPO_CANDIDATE_NAME,
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
                       )
-from ..utils import load_yaml, load_checksum_from_file
+from ..utils import load_yaml, load_checksum_from_file, load_checksum_from_str
 from .validator import (FileValidator,
                         DirValidator,
                         FileSchemeValidator,
@@ -147,7 +147,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 )
 
     @staticmethod
-    def _get_hash_params(params: inputs.SWUpgradeRepo) -> Tuple:
+    def _get_hash_params(
+            params: inputs.SWUpgradeRepo) -> Tuple[bytes, str, str]:
         """
         Parse and validate the provided hash parameters
 
@@ -169,16 +170,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         if Path(params.hash).exists():
             _data = load_checksum_from_file(Path(params.hash))
             hash_sum, hash_type, file_name = _data
+
         if hash_sum is not None:
             return hash_sum, hash_type, file_name
 
-        # by default if there are neither hash type nor file name
-        # in hash string
-        hash_sum = params.hash
-        if ":" in params.hash:
-            hash_type, hash_sum = params.hash.split(":")
-        if " " in hash_sum:
-            hash_sum, file_name = hash_sum.split(" ")
+        hash_sum, hash_type, file_name = load_checksum_from_str(params.hash)
 
         if hash_type is None and params.hash_type is not None:
             try:
@@ -187,7 +183,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 logger.warning("Unexpected `--hash-type` parameter value: "
                                f"{params.hash_type}")
 
-        return hash_sum, HashType(hash_type), file_name
+        hash_type = hash_type and HashType(hash_type)
+        return hash_sum, hash_type, file_name
 
     def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
         """

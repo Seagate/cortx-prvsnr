@@ -17,6 +17,7 @@
 
 import configparser
 import logging
+import re
 import subprocess
 import time
 import yaml
@@ -39,6 +40,9 @@ from .errors import (
 )
 
 logger = logging.getLogger(__name__)
+
+HASH_REGEX = re.compile(
+    r"(?:([\w\-]+):)?([A-Za-z0-9]+)\s*([\w\-]+\.[A-Za-z0-9]*)?")
 
 
 # TODO TEST
@@ -317,6 +321,49 @@ def generate_random_secret():
     )
 
 
+def load_checksum_from_str(hash_str: str) -> Tuple[bytes, str, str]:
+    """
+    Function helper to load hash checksum from specially constructed string.
+    It parses the hash type, hash sum and file name information from
+    provided string.
+
+    Supported formats of checksum string:
+
+    1. <hash_type>:<check_sum> <file_name>
+    2. <hash_type>:<check_sum>
+    3. <check_sum> <file_name>
+    4. <check_sum>
+
+    where
+    <hash_type> - one of the values from `config.HashType` enumeration
+    <check_sum> - hexadecimal representation of hash checksum
+    <file_name> - a file name to which <hash_type> and <hash_sum> belongs to
+
+    Parameters
+    ----------
+    hash_str: str
+        Specially formatted string with hash data
+
+    Returns
+    -------
+    Tuple
+        return tuple with parsed information:
+            (<check_sum>, <hash_type>, <file_name>)
+        each tuple element can be None
+    """
+    hash_type = None
+    hash_data = None
+    file_name = None
+
+    if hash_str:
+        search = HASH_REGEX.search(hash_str)
+        if search:
+            hash_type, hash_data, file_name = search.groups()
+
+    hash_type = hash_type and config.HashType(hash_type)
+    return hash_data, hash_type, file_name
+
+
 def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
     """
     Function helper to load hash checksum from the given file. Also, it parses
@@ -346,9 +393,6 @@ def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
             (<check_sum>, <hash_type>, <file_name>)
         each tuple element can be None
     """
-    check_sum = None
-    hash_type = None
-    file_name = None
     if not path.exists():
         raise ValueError(f"File by provided path '{path}' doesn't exist.")
 
@@ -363,13 +407,4 @@ def load_checksum_from_file(path: Path) -> Tuple[bytes, str, str]:
 
     # NOTE: at this moment we consider that all necessary information is only
     # in first-line
-    # TODO: for parsing we can use a proper regex
-    check_sum = data[0]
-    if ":" in check_sum:
-        hash_type, check_sum = check_sum.split(":")
-        # FIXME: line can contain file_name
-    elif " " in check_sum:
-        check_sum, file_name = check_sum.split(" ")
-
-    hash_type = hash_type and config.HashType(hash_type)
-    return check_sum, hash_type, file_name
+    return load_checksum_from_str(data[0])
