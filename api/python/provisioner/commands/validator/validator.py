@@ -280,7 +280,8 @@ class HashSumValidator(FileValidator):
     """
     hash_sum: Union[str, bytes, bytearray] = attr.ib(
         validator=attr.validators.instance_of((str, bytes, bytearray)),
-        converter=lambda x: bytes.fromhex(x) if isinstance(x, str) else x
+        converter=lambda x: bytes.fromhex(x) if isinstance(x, str) else x,
+        default=None
     )
     hash_type: HashType = attr.ib(
         validator=attr.validators.in_(HashType),
