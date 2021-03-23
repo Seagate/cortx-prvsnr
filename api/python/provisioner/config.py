@@ -545,6 +545,14 @@ class CortxResourceT(Enum):
     REPOS = "cortx_repos"
 
 
+class ContentType(Enum):
+
+    """File content type enumeration."""
+
+    JSON = "json"
+    YAML = "yaml"
+
+
 class HashType(Enum):
 
     """Hash type enumeration."""
