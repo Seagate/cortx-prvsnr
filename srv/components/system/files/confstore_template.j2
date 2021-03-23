@@ -77,4 +77,21 @@ server_node>{{ machine_id }}>storage_set_id:{{ pillar['cluster'][node]['storage_
 server_node>{{ machine_id }}>cluster_id:{{ cluster_id }}
 server_node>{{ machine_id }}>s3_instances:{{ pillar['cluster'][node]['s3_instances'] }}
 {%- endfor %}
-
+{%- for enclosure in pillar['storage'].keys() %}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>name:{{ enclosure }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>type:{{ pillar['storage'][enclosure]['type'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>cluster_id:{{ pillar['cluster']['cluster_id'] }}
+{%- for _,nodes in pillar['cluster']['server_nodes'].items() %}
+{%- if pillar['cluster'][node]['enclosure'] == enclosure %}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>site_id:{{ pillar['cluster'][node]['site_id'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>storage_set_id:{{ pillar['cluster'][node]['storage_set_id'] }}
+{%- endif %}
+{%- endfor %}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>type:{{ pillar['storage'][enclosure]['controller']['type'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>user:{{ pillar['storage'][enclosure]['controller']['user'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>password:{{ pillar['storage'][enclosure]['controller']['secret'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>ip:{{ pillar['storage'][enclosure]['controller']['primary']['ip'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>port:{{ pillar['storage'][enclosure]['controller']['primary']['port'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secondary>ip:{{ pillar['storage'][enclosure]['controller']['secondary']['ip'] }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secondary>port:{{ pillar['storage'][enclosure]['controller']['secondary']['port'] }}
+{%- endfor %}
