@@ -51,7 +51,8 @@ HashInfo = attr.make_class(
                    validator=attr.validators.optional(
                        attr.validators.instance_of((bytes, bytearray))),
                    default=None,
-                   converter=bytes.fromhex),
+                   converter=lambda x: bytes.fromhex(x)
+                   if isinstance(x, str) else x),
                'filename': attr.ib(default=None)
            })
 
