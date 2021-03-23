@@ -24,9 +24,9 @@ cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name:{{ storage
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]:{{ pillar['cluster'][node]['machine_id'] }}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]:encl{{ pillar['cluster'][node]['machine_id'] }}
 {%- endfor %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>data:4
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>parity:2
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>spare:0
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>data:4
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>parity:2
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>spare:0
 {%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
 server_node>{{ machine_id }}>name:{{ node }}
