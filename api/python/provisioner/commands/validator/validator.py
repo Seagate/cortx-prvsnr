@@ -115,6 +115,7 @@ class FileValidator(PathValidator):
         default=False
     )
     content_validator: Optional[Callable[[Path], None]] = attr.ib(
+        init=False,
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
@@ -298,7 +299,7 @@ class YumRepoDataValidator(DirValidator):
 
 
 @attr.s(auto_attribs=True)
-class FileContentScheme(ABC):
+class FileContentScheme:
 
     """
     Abstract file scheme class.
@@ -344,7 +345,9 @@ class FileContentScheme(ABC):
             obj._unexpected_attributes = unexpected_attrs
             return obj
         elif isinstance(data, list):
-            return cls(*data)
+            obj = cls(*data)
+            obj._unexpected_attributes = unexpected_attrs
+            return obj
         else:
             raise ValidationError("Unexpected top-level content type: "
                                   f"'{type(data)}'")
@@ -435,6 +438,11 @@ class ContentFileValidator(PathValidator):
         default=ContentType.YAML
     )
 
+    _CONTENT_LOADER = {
+        ContentType.YAML: utils.load_yaml,
+        ContentType.JSON: utils.load_json,
+    }
+
     def validate(self, path: Path):
         """
         Validates the file content of the provided `path`.
@@ -455,10 +463,7 @@ class ContentFileValidator(PathValidator):
         """
         try:
             logging.debug(f"File content type: '{self.content_type}'")
-            if self.content_type == ContentType.YAML:
-                content = utils.load_yaml(path)
-            elif self.content_type == ContentType.JSON:
-                content = utils.load_json(path)
+            content = self._CONTENT_LOADER[self.content_type](path)
         except Exception as e:
             raise ValidationError(
                             f"File content validation is failed: {e}") from e
