@@ -19,7 +19,7 @@ import logging
 from copy import deepcopy
 import ipaddress
 import functools
-from typing import List, Union, Any, Iterable, Tuple, Dict, Type
+from typing import List, Union, Any, Iterable, Tuple, Dict, Type, Optional
 from pathlib import Path
 import argparse
 
@@ -985,6 +985,27 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
+    hash: Optional[Union[str, Path]] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': ("Path to the file with ISO hash check sum or string"
+                         "with format: either '<hash_type>:<hex_hash>' or"
+                         "'<hex_hash>'")
+            }
+        },
+        default=None
+    )
+    hash_type: Optional[str] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "Optional: hash type of `hash` parameter",
+                'choices': list(map(lambda elem: elem.value, config.HashType))
+            }
+        },
+        validator=attr.validators.optional(attr.validators.instance_of(str)),
+        default=None,
+        converter=lambda x: x and config.HashType(str(x))
+    )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade
     _target_build: str = attr.ib(default=None)

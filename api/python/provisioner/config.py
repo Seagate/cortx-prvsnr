@@ -551,3 +551,12 @@ class ContentType(Enum):
 
     JSON = "json"
     YAML = "yaml"
+
+
+class HashType(Enum):
+
+    """Hash type enumeration."""
+
+    MD5 = "md5"
+    SHA256 = "sha256"
+    SHA512 = "sha512"
