@@ -15,23 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
-
-Delete old enclosure_id:
-  file.absent:
-    - name: /etc/enclosure-id
-
-Reset enclosure_id from grains on {{ grains['id'] }}:
-  file.line:
-    - name: /etc/salt/grains
-    - mode: replace
-    - match: 'enclosure_id:'
-    - content: "enclosure_id:"
-
-Sync grains data after refreshing the enclosure_id:
-  module.run:
-    - saltutil.refresh_grains: []
-
-Reset enclosure_id in pillar data:
-  cmd.run:
-    - name: provisioner pillar_set storage/{{ enclosure }}/enclosure_id \"\"
+include:
+  - .reset
+  - .set

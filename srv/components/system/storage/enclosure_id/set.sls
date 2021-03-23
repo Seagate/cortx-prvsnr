@@ -19,7 +19,7 @@
 
 {% if "physical" in grains['virtual'] %}
   # Hardware
-  {% set ctrl_cli_utility = pillar['provisioner']['storage']['controller']['cli_utility_path'] %}
+  {% set ctrl_cli_utility = pillar['provisioner']['storage']['controller']['cli_utility_path'] %} 
   {% set host = pillar['storage'][enclosure ]['controller']['primary']['ip'] %}
   {% set user = pillar['storage'][enclosure]['controller']['user'] %}
   {% set secret = salt['lyveutil.decrypt']('storage', pillar['storage'][enclosure]['controller']['secret']) %}
@@ -38,7 +38,7 @@ Create script to generate enclosure id:
       - contents: |
           #!/bin/bash
           echo "Running controller-cli utility to get enclosure serial"
-          sh {{ ctrl_cli_utility }} host -h {{ host }} -u {{ user }} -p '{{ secret }}' {{ opt }} | grep -A2 Serial | tail -1 > /etc/enclosure_id
+          sh {{ ctrl_utility }} host -h {{ host }} -u {{ user }} -p '{{ secret }}' {{ opt }} | grep -A2 Serial | tail -1 > /etc/enclosure_id
           if [[ ! -s /etc/enclosure_id ]]; then
               echo "ERROR: Could not generate the enclosure id from controller cli utility, please check the {{ logs }} for more details"
               exit 1
@@ -60,8 +60,8 @@ Get enclosure_id for {{ grains['id'] }}:
 {% else %}
 
 # VM
-  {% if grains['machine_id'] %}
-    {% set machine_id = grains['machine_id'] %}
+  {% if grains['machine-id'] %}
+    {% set machine_id = grains['machine-id'] %}
 Get enclosure_id for {{ grains['id'] }}:
   cmd.run:
     - name: echo "enc_{{ machine_id }}" > /etc/enclosure-id

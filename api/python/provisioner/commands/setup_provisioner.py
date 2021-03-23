@@ -1828,10 +1828,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
         logger.info("Refresh enclosure id on the system")
-        ssh_client.cmd_run(
-            "salt-call state.apply components.provisioner.config.enclosure_id",
-            targets=ALL_MINIONS
-        )
+        for state in [
+            'components.system.storage.enclosure_id',
+            'components.system.storage.enclosure_id.set_pillar'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
 
         inline_pillar = None
         if run_args.source == 'local':
