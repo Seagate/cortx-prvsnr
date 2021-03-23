@@ -339,8 +339,9 @@ def node_hostname_validator(
 
     for section in parser_obj.sections():
         if (
-            "srvnode" in section
-            and (
+            "srvnode" in section and
+            "srvnode_default" not in section and
+            (
                 node_dict[section] != parser_obj[section]["hostname"]
             )
         ):

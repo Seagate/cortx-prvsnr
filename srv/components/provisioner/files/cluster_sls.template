@@ -39,10 +39,10 @@ cluster:
   {%- set srvnode = "srvnode-" + ((node_num + 1) | string) %}
   {%- set storage_set_id = "storage-set-" + ((node_num // 3) + 1)| string %}
   {{ srvnode }}:
-    rack_id:
-    site_id:
+    rack_id: 1
+    site_id: 1
     storage_set_id: {{ storage_set_id }}
-    node_id: {{ salt['mine.get'](srvnode , 'get_node_id')[srvnode] }}
+    node_id: {{ node_num }}
     machine_id: {{ salt['mine.get'](srvnode , 'node_machine_id')[srvnode] }}
     hostname: {{ srvnode }}
     node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
