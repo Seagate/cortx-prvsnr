@@ -59,7 +59,34 @@ def validator_path_exists(instance, attribute, value):
         raise ValueError(f"Path {value} doesn't exist")
 
 
-def validator_subclass_of(
+def converter_path(value):
+    return value if value is None else Path(str(value))
+
+
+def converter_file_scheme_key(value: dict):
+    """
+    Convert incoming dict with file scheme to new one where keys are `Path`
+    instances
+
+    Parameters
+    ----------
+    value: dict
+        a given file scheme which represents some catalog structure
+
+    Returns
+    -------
+    dict
+        new dictionary object where keys are `Path` instances
+    """
+    return value if value is None else {converter_path(k): v for k, v in
+                                        value.items()}
+
+
+def converter_path_resolved(value):
+    return value if value is None else Path(str(value)).resolve()
+
+
+def validator__subclass_of(
         subclass: Union[Type[Any], Tuple[Type[Any], ...]]) -> Callable:
     """
     Custom subclass validator extends the base `attrs.validator` functionality.
@@ -88,41 +115,6 @@ def validator_subclass_of(
             )
 
     return validator
-
-
-def converter_path(value):
-    return value if value is None else Path(str(value))
-
-
-def converter_file_scheme_key(value: dict):
-    """
-    Convert incoming dict with file scheme to new one where keys are `Path`
-    instances
-
-    Parameters
-    ----------
-    value: dict
-        a given file scheme which represents some catalog structure
-
-    Returns
-    -------
-    dict
-        new dictionary object where keys are `Path` instances
-    """
-    return value if value is None else {converter_path(k): v for k, v in
-                                        value.items()}
-
-
-def converter_path_resolved(value):
-    return value if value is None else Path(str(value)).resolve()
-
-
-def validator__subclass_of(classinfo):
-    def _f(attribute, value):
-        if not issubclass(value, classinfo):
-            raise TypeError(
-                f"'{attribute.name}' must be subclass of {classinfo}"
-            )
 
 
 def load_yaml_str(data):
@@ -196,8 +188,7 @@ def load_json(path: Union[Path, str]):
     ------
     JSONDecodeError
     """
-    with open(path, 'r') as fh:
-        return json.load(fh)
+    return json.loads(Path(path).read_text())
 
 
 # TODO streamed write

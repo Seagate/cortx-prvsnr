@@ -19,7 +19,7 @@ from .validator import (FileValidator,
                         FileSchemeValidator,
                         YumRepoDataValidator,
                         ContentFileValidator,
-                        ReleaseInfoScheme,
+                        ReleaseInfoContentScheme,
                         ReleaseInfoValidator
                         )
 
@@ -29,6 +29,6 @@ __all__ = [
     "FileSchemeValidator",
     "YumRepoDataValidator",
     "ContentFileValidator",
-    "ReleaseInfoScheme",
+    "ReleaseInfoContentScheme",
     "ReleaseInfoValidator"
 ]

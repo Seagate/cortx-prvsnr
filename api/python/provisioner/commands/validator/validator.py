@@ -17,7 +17,7 @@
 import logging
 from abc import abstractmethod, ABC
 from pathlib import Path
-from typing import Dict, Callable, Optional, Type
+from typing import Dict, Callable, Optional, Type, Union
 
 from ... import utils
 from ...config import ContentType
@@ -54,6 +54,29 @@ class PathValidator(ABC):
         """
         pass
 
+    def __call__(self, *args, **kwargs):
+        """
+        Call-wrapper over self.validate method. It adds function-like behavior
+        for all class instances.
+
+        Parameters
+        ----------
+        args:
+            tuple of all positional arguments
+        kwargs:
+            dict with all keyword arguments
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        self.validate(*args, **kwargs)
+
 
 @attr.s(auto_attribs=True)
 class FileValidator(PathValidator):
@@ -63,9 +86,9 @@ class FileValidator(PathValidator):
 
     Attributes
     ----------
-    _required: bool
+    required: bool
         if True validation raises an Exception if the file doesn't exist
-    _content_validator: Optional[Callable[[Path], None]]
+    content_validator: Optional[Callable[[Path], None]]
         callable object for file content validation.
 
         Should raise the `ValidationError` exception if file content validation
@@ -87,11 +110,11 @@ class FileValidator(PathValidator):
     and `_content_validator` attributes validation.
     """
 
-    _required: bool = attr.ib(
+    required: bool = attr.ib(
         validator=attr.validators.instance_of(bool),
         default=False
     )
-    _content_validator: Optional[Callable[[Path], None]] = attr.ib(
+    content_validator: Optional[Callable[[Path], None]] = attr.ib(
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
@@ -118,7 +141,7 @@ class FileValidator(PathValidator):
         logger.debug(f"Start '{path}' file validation")
 
         if not path.exists():
-            if self._required:
+            if self.required:
                 raise ValidationError(reason=f"File '{path}' should exist.")
             return
 
@@ -127,9 +150,9 @@ class FileValidator(PathValidator):
         if not path.is_file():
             raise ValidationError(reason=f"'{path}' is not a regular file.")
 
-        if self._content_validator:
+        if self.content_validator:
             # Should raise an Exception if validation fails
-            self._content_validator(path)  # pylint: disable=not-callable
+            self.content_validator(path)  # pylint: disable=not-callable
 
 
 @attr.s(auto_attribs=True)
@@ -140,10 +163,10 @@ class DirValidator(PathValidator):
 
     Attributes
     ----------
-    _files_scheme: Optional[Dict]
+    files_scheme: Optional[Dict]
         Nested catalog structure for the validation path
 
-    _required: bool
+    required: bool
         if True validation raises an Exception if the directory
         doesn't exist
 
@@ -162,7 +185,7 @@ class DirValidator(PathValidator):
     instance.
     """
 
-    _files_scheme: Optional[Dict] = attr.ib(
+    files_scheme: Optional[Dict] = attr.ib(
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
@@ -173,7 +196,7 @@ class DirValidator(PathValidator):
         converter=utils.converter_file_scheme_key,
         default=None,
     )
-    _required: bool = attr.ib(
+    required: bool = attr.ib(
         validator=attr.validators.instance_of(bool),
         default=False
     )
@@ -199,7 +222,7 @@ class DirValidator(PathValidator):
         logger.debug(f"Start '{path}' directory validation")
 
         if not path.exists():
-            if self._required:
+            if self.required:
                 raise ValidationError(reason=f"File '{path}' should exist.")
             return
 
@@ -208,8 +231,8 @@ class DirValidator(PathValidator):
         if not path.is_dir():
             raise ValidationError(reason=f"'{path}' is not a directory")
 
-        if self._files_scheme:
-            for sub_path, validator in self._files_scheme.items():
+        if self.files_scheme:
+            for sub_path, validator in self.files_scheme.items():
                 validator.validate(path / sub_path)
 
 
@@ -221,7 +244,7 @@ class FileSchemeValidator(PathValidator):
 
     Attributes
     ----------
-    _scheme: Optional[Dict]
+    scheme: Optional[Dict]
         dictionary with files scheme
 
     Notes
@@ -230,7 +253,7 @@ class FileSchemeValidator(PathValidator):
     and converting keys of file scheme from string to `Path` instance.
     """
 
-    _scheme: Optional[Dict] = attr.ib(
+    scheme: Optional[Dict] = attr.ib(
         validator=attr.validators.optional(
             attr.validators.deep_mapping(
                 key_validator=attr.validators.instance_of((str, Path)),
@@ -261,7 +284,7 @@ class FileSchemeValidator(PathValidator):
         ValidationError
             If validation is failed.
         """
-        for sub_path, validator in self._scheme.items():
+        for sub_path, validator in self.scheme.items():
             validator.validate(path / sub_path)
 
 
@@ -275,7 +298,7 @@ class YumRepoDataValidator(DirValidator):
 
 
 @attr.s(auto_attribs=True)
-class FileScheme(ABC):
+class FileContentScheme(ABC):
 
     """
     Abstract file scheme class.
@@ -296,36 +319,39 @@ class FileScheme(ABC):
         in the data scheme.
     """
 
-    # To avoid exception
-    #  <ValueError: No mandatory attributes allowed after an attribute with a
-    #   default value or factory.>
-    #  this attribute is not optional and doesn't have a default value
-    _unexpected_attributes: dict = attr.ib(
-        validator=attr.validators.instance_of(dict)
-    )
+    def set_unexpected_attributes(self, args: dict):
+        self._unexpected_attrs = args
+
+    def get_unexpected_attributes(self):
+        return getattr(self, "_unexpected_attrs", None)
+
+    _unexpected_attributes = property(get_unexpected_attributes,
+                                      set_unexpected_attributes)
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_args(cls, data: Union[list, dict]):
         unexpected_attrs = dict()
-        # TODO: it is good to make copy of input data parameter
-        for _attr in (data.keys() - set(a.name for a in cls.__attrs_attrs__)):
-            # NOTE: Remove unexpected attributes from initialization `data`
-            #  dictionary
-            unexpected_attrs[_attr] = data.pop(_attr)
+        if isinstance(data, dict):
+            # TODO: it is good to make copy of input data parameter
+            for _attr in (data.keys() - set(a for a in attr.fields_dict(cls))):
+                # NOTE: Remove unexpected attributes from initialization `data`
+                #  dictionary
+                unexpected_attrs[_attr] = data.pop(_attr)
 
-        # If some attributes are missed in `data`, the `attr` module is
-        #  responsible for that validation
-        return cls(unexpected_attributes=unexpected_attrs, **data)
-
-    @classmethod
-    def from_list(cls, data: list):
-        # the first attribute is `_unexpected_attributes`
-        attrs = [dict()] + data
-        return cls(*attrs)
+            # If some attributes are missed in `data`, the `attr` module is
+            #  responsible for that validation
+            obj = cls(**data)
+            obj._unexpected_attributes = unexpected_attrs
+            return obj
+        elif isinstance(data, list):
+            return cls(*data)
+        else:
+            raise ValidationError("Unexpected top-level content type: "
+                                  f"'{type(data)}'")
 
 
 @attr.s(auto_attribs=True)
-class ReleaseInfoScheme(FileScheme):
+class ReleaseInfoContentScheme(FileContentScheme):
 
     """
     RELEASE.INFO file content scheme.
@@ -393,18 +419,18 @@ class ContentFileValidator(PathValidator):
 
     Attributes
     ----------
-    _scheme: Type[FileScheme]
+    scheme: Type[FileContentScheme]
         File content scheme for validation.
 
-    _content_type: ContentType
+    content_type: ContentType
         Content type of the file. `ContentType.YAML` is default value
 
     """
 
-    _scheme: Type[FileScheme] = attr.ib(
-        validator=utils.validator_subclass_of(FileScheme)
+    scheme: Type[FileContentScheme] = attr.ib(
+        validator=utils.validator__subclass_of(FileContentScheme)
     )
-    _content_type: ContentType = attr.ib(
+    content_type: ContentType = attr.ib(
         validator=attr.validators.in_(ContentType),
         default=ContentType.YAML
     )
@@ -428,55 +454,22 @@ class ContentFileValidator(PathValidator):
             If validation is failed.
         """
         try:
-            logging.debug(f"File content type: '{self._content_type}'")
-            if self._content_type == ContentType.YAML:
+            logging.debug(f"File content type: '{self.content_type}'")
+            if self.content_type == ContentType.YAML:
                 content = utils.load_yaml(path)
-            elif self._content_type == ContentType.JSON:
+            elif self.content_type == ContentType.JSON:
                 content = utils.load_json(path)
-            else:
-                raise ValidationError(
-                            f"File content type '{self._content_type}'"
-                            " is not supported")
         except Exception as e:
             raise ValidationError(
                             f"File content validation is failed: {e}") from e
 
         logging.debug(f"File content: '{content}'")
         try:
-            if isinstance(content, dict):
-                self._scheme.from_dict(content)
-            elif isinstance(content, list):
-                self._scheme.from_list(content)
-            else:
-                raise ValidationError("Unexpected top-level content type: "
-                                      f"'{type(content)}'")
+            self.scheme.from_args(content)
         except TypeError as e:
             raise ValidationError(f"File content validation is failed: {e}")
         else:
             logging.info(f"File content validation is succeeded for '{path}'")
-
-    def __call__(self, *args, **kwargs):
-        """
-        Call-wrapper over self.validate method. It adds function-like behavior
-        for all class instances.
-
-        Parameters
-        ----------
-        args:
-            tuple of all positional arguments
-        kwargs:
-            dict with all keyword arguments
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValidationError
-            If validation is failed.
-        """
-        self.validate(*args, **kwargs)
 
 
 @attr.s(auto_attribs=True)
@@ -487,25 +480,25 @@ class ReleaseInfoValidator(FileValidator):
 
     Attributes
     ----------
-    _required: bool
+    required: bool
         if `True` validation raises an Exception if the file doesn't exist.
         `True` by default
-    _content_type: ContentType
+    content_type: ContentType
         Content type of the `RELEASE.INFO` file.
         `ContentType.YAML` is default value
     """
 
-    _required: bool = attr.ib(
+    required: bool = attr.ib(
         validator=attr.validators.instance_of(bool),
         # NOTE: it is a difference in comparison of `FileValidator`
         default=True
     )
-    _content_type: ContentType = attr.ib(
+    content_type: ContentType = attr.ib(
         validator=attr.validators.in_(ContentType),
         default=ContentType.YAML
     )
 
     def __attrs_post_init__(self):
-        self._content_validator = ContentFileValidator(
-                scheme=ReleaseInfoScheme,
-                content_type=self._content_type)
+        self.content_validator = ContentFileValidator(
+                scheme=ReleaseInfoContentScheme,
+                content_type=self.content_type)
