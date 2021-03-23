@@ -4,6 +4,7 @@ firewall:
     ports:
       haproxy:
         - 443/tcp
+      s3:
         - 9443/tcp
   mgmt_public:
     services:
