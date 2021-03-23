@@ -15,20 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
-storage:
-{%- for num in range(num_of_nodes) %}
-  enclosure-{{ (num + 1) }}:
-    enclosure_id:
-    type: RBOD                      # RBOD/JBOD/Virtual/Other
-    controller:
-      type:
-      primary:
-        ip: 10.0.0.2
-        port: 80
-      secondary:
-        ip: 10.0.0.3
-        port: 80
-      user: manage
-      secret:
-{% endfor -%}
+{% set enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
+
+Sync grains data for enclosure_id:
+  module.run:
+    - saltutil.refresh_grains: []
+
+Update enclosure_id in pillar:
+  cmd.run:
+    - name: provisioner pillar_set storage/{{ enclosure }}/enclosure_id \"{{ grains['enclosure_id'] }}\"
