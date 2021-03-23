@@ -15,7 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .reset
-  - .set
-  - .set_pillar
+{% set enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
+
+Sync grains data for enclosure_id:
+  module.run:
+    - saltutil.refresh_grains: []
+    - require:
+      - Replace enclosure id in grains
+
+Update enclosure_id in pillar:
+  cmd.run:
+    - name: provisioner pillar_set storage/{{ enclosure }}/enclosure_id \"{{ grains['enclosure_id'] }}\"

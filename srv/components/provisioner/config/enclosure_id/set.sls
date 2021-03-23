@@ -83,7 +83,3 @@ Sync grains data after refresh enclosure_id:
     - saltutil.refresh_grains: []
     - require:
       - Replace enclosure id in grains
-
-Update enclosure_ids in pillar:
-  cmd.run:
-    - name: provisioner pillar_set storage/{{ enclosure }}/enclosure_id \"{{ grains['enclosure_id'] }}\"
