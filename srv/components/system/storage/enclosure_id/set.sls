@@ -60,8 +60,8 @@ Get enclosure_id for {{ grains['id'] }}:
 {% else %}
 
 # VM
-  {% if grains['machine-id'] %}
-    {% set machine_id = grains['machine-id'] %}
+  {% if grains['machine_id'] %}
+    {% set machine_id = grains['machine_id'] %}
 Get enclosure_id for {{ grains['id'] }}:
   cmd.run:
     - name: echo "enc_{{ machine_id }}" > /etc/enclosure-id

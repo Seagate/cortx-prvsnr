@@ -20,8 +20,6 @@
 Sync grains data for enclosure_id:
   module.run:
     - saltutil.refresh_grains: []
-    - require:
-      - Replace enclosure id in grains
 
 Update enclosure_id in pillar:
   cmd.run:
