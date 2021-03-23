@@ -132,7 +132,7 @@ class AutoDeploy(SetupCmdBase, CommandParserFillerMixin):
             # TODO: To be parameterized when addressing EOS-16560
             setup_ctx.ssh_client.cmd_run(
                 (
-                    'provisioner pillar_export '
+                    'provisioner confstore_export '
                 ), targets=ALL_MINIONS
             )
 
