@@ -19,6 +19,7 @@
 storage:
 {%- for num in range(num_of_nodes) %}
   enclosure-{{ (num + 1) }}:
+    enclosure_id:
     type: RBOD                      # RBOD/JBOD/Virtual/Other
     controller:
       type:
