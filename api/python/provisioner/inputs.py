@@ -998,11 +998,13 @@ class SWUpgradeRepo(SWUpdateRepo):
     hash_type: Optional[str] = attr.ib(
         metadata={
             METADATA_ARGPARSER: {
-                'help': "Optional: hash type of `hash` parameter"
+                'help': "Optional: hash type of `hash` parameter",
+                'choices': list(map(lambda elem: elem.value, config.HashType))
             }
         },
         validator=attr.validators.optional(attr.validators.instance_of(str)),
-        default=None
+        default=None,
+        converter=lambda x: x and config.HashType(str(x))
     )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade

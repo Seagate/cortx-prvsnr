@@ -17,7 +17,6 @@
 
 import configparser
 import logging
-import re
 import subprocess
 import time
 import yaml
@@ -42,9 +41,6 @@ from .errors import (
 from .vendor import attr
 
 logger = logging.getLogger(__name__)
-
-HASH_REGEX = re.compile(
-                    r"^(?:(.*):)?(?:([A-Fa-f0-9]+)(?:\s|$))(?:([^\s].*))?$")
 
 
 HashInfo = attr.make_class(
@@ -367,15 +363,17 @@ def load_checksum_from_str(hash_str: str) -> HashInfo:
             <check_sum>, <hash_type>, <file_name>
         each field of this element can be `None`
     """
-    hash_info = None
+    hash_info = HashInfo()
+    hash_info.hash_sum = hash_str.strip()
+    if ":" in hash_str:
+        hash_info.hash_type, hash_info.hash_sum = hash_str.split(":")
 
-    if hash_str:
-        search = HASH_REGEX.search(hash_str)
-        if search:
-            hash_info = HashInfo(*search.groups())
+    if " " in hash_info.hash_sum:
+        hash_info.hash_sum, hash_info.file_name = hash_info.hash_sum.split(" ")
 
-            hash_info.hash_type = (hash_info.hash_type
-                                   and config.HashType(hash_info.hash_type))
+    hash_info.hash_type = (hash_info.hash_type
+                           and config.HashType(hash_info.hash_type))
+
     return hash_info
 
 

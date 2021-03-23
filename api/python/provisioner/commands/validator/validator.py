@@ -79,6 +79,7 @@ class FileValidator(PathValidator):
         default=False
     )
     _content_validator: Optional[Callable[[Path], None]] = attr.ib(
+        init=False,
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
@@ -262,7 +263,7 @@ class YumRepoDataValidator(DirValidator):
 
 
 @attr.s
-class HashSumValidator(PathValidator):
+class HashSumValidator(FileValidator):
 
     """
     Validator of hash-sum for the provided file and expected hash-sum for this
@@ -277,11 +278,11 @@ class HashSumValidator(PathValidator):
         Type of hash sum. See `Hashtype` for more information
 
     """
-    _hash_sum: Union[str, bytes, bytearray] = attr.ib(
+    hash_sum: Union[str, bytes, bytearray] = attr.ib(
         validator=attr.validators.instance_of((str, bytes, bytearray)),
         converter=lambda x: bytes.fromhex(x) if isinstance(x, str) else x
     )
-    _hash_type: HashType = attr.ib(
+    hash_type: HashType = attr.ib(
         validator=attr.validators.in_(HashType),
         default=HashType.MD5,
         converter=lambda x: HashType.MD5 if x is None else HashType(x)
@@ -306,14 +307,13 @@ class HashSumValidator(PathValidator):
         ValidationError
             If validation is failed.
         """
-        file_validator = FileValidator(required=True)
-        file_validator.validate(path)
+        super().validate(path)
 
-        if self._hash_type.value not in hashlib.algorithms_available:
-            raise ValidationError(f"Hash type '{self._hash_type.value}' is not"
+        if self.hash_type.value not in hashlib.algorithms_available:
+            raise ValidationError(f"Hash type '{self.hash_type.value}' is not"
                                   "supported by Python's `hashlib` module.")
 
-        hash_method = getattr(hashlib, self._hash_type.value)()
+        hash_method = getattr(hashlib, self.hash_type.value)()
 
         with open(path, 'rb') as fh:
             while True:
@@ -322,7 +322,7 @@ class HashSumValidator(PathValidator):
                     break
                 hash_method.update(data)
 
-        if not compare_digest(hash_method.digest(), self._hash_sum):
+        if not compare_digest(hash_method.digest(), self.hash_sum):
             raise ValidationError(
                     f"Hash sum of file '{path}': '{hash_method.hexdigest()}' "
-                    f"mismatches the provided one '{self._hash_sum.hex()}'")
+                    f"mismatches the provided one '{self.hash_sum.hex()}'")

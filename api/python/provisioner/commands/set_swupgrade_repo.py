@@ -183,7 +183,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             try:
                 hash_info.hash_type = HashType(params.hash_type)
             except ValueError:
-                logger.warning("Unexpected `--hash-type` parameter value: "
+                logger.warning("Unexpected `hash-type` parameter value: "
                                f"{params.hash_type}")
 
         return hash_info
@@ -216,7 +216,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
 
         if params.hash:
-            logger.info("'--hash' parameter is setup. Start checksum "
+            logger.info("`hash` parameter is setup. Start checksum "
                         "validation for the whole ISO file")
             hash_info = self._get_hash_params(params)
             upgrade_bundle_hash_validator = HashSumValidator(
