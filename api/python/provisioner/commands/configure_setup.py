@@ -351,7 +351,7 @@ class ConfigureSetup(CommandParserFillerMixin):
     def _parse_input(self, input):
         kv_to_dict = dict()
         for key in input.keys():
-            if "," in input.get(key):
+            if input.get(key) and "," in input.get(key):
                 input[key] = [element.strip() for element in input.get(key).split(",")]
             elif (
                 'interfaces' in key or
@@ -424,12 +424,12 @@ class ConfigureSetup(CommandParserFillerMixin):
                 'srvnode' in section and
                 srvnode_default
             ):
-                tmp_section = srvnode_default
+                tmp_section = deepcopy(srvnode_default)
             elif (
                 'enclosure' in section and
                 enclosure_default
             ):
-                tmp_section = enclosure_default
+                tmp_section = deepcopy(enclosure_default)
             else:
                 tmp_section = content[section]
 
