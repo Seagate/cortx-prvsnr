@@ -370,7 +370,7 @@ def load_checksum_from_str(hash_str: str) -> HashInfo:
         hash_info.hash_type, hash_info.hash_sum = hash_str.split(":")
 
     if " " in hash_info.hash_sum:
-        hash_info.hash_sum, hash_info.file_name = hash_info.hash_sum.split(" ")
+        hash_info.hash_sum, hash_info.filename = hash_info.hash_sum.split(" ")
 
     hash_info.hash_type = (hash_info.hash_type
                            and config.HashType(hash_info.hash_type))
