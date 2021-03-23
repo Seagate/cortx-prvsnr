@@ -1,7 +1,11 @@
+import hashlib
 import logging
 from abc import abstractmethod, ABC
+from hmac import compare_digest
 from pathlib import Path
-from typing import Dict, Callable, Optional
+from typing import Dict, Callable, Optional, Union
+
+from provisioner.config import HashType
 
 from ... import utils
 
@@ -75,6 +79,7 @@ class FileValidator(PathValidator):
         default=False
     )
     _content_validator: Optional[Callable[[Path], None]] = attr.ib(
+        init=False,
         validator=attr.validators.optional(attr.validators.is_callable()),
         default=None,
     )
@@ -255,3 +260,70 @@ class YumRepoDataValidator(DirValidator):
     def __init__(self):
         super().__init__({Path("repomd.xml"): FileValidator(required=True)},
                          required=True)
+
+
+@attr.s
+class HashSumValidator(FileValidator):
+
+    """
+    Validator of hash-sum for the provided file and expected hash-sum for this
+    file.
+
+    Attributes
+    ----------
+    hash_sum: Union[str, bytes, bytearray]
+        Hexadecimal string or byte-array object with expected hash-sum value
+        of validated file.
+    hash_type: HashType
+        Type of hash sum. See `Hashtype` for more information
+
+    """
+    hash_sum: Union[str, bytes, bytearray] = attr.ib(
+        validator=attr.validators.instance_of((str, bytes, bytearray)),
+        converter=lambda x: bytes.fromhex(x) if isinstance(x, str) else x,
+        default=None
+    )
+    hash_type: HashType = attr.ib(
+        validator=attr.validators.in_(HashType),
+        default=HashType.MD5,
+        converter=lambda x: HashType.MD5 if x is None else HashType(x)
+    )
+
+    def validate(self, path: Path):
+        """
+        Validates if hash-sum of the file provided by `path` matches
+        the attribute value of `_hash_sum`.
+
+        Parameters
+        ----------
+        path: Path
+            path to the file which hash-sum will be validated
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        super().validate(path)
+
+        if self.hash_type.value not in hashlib.algorithms_available:
+            raise ValidationError(f"Hash type '{self.hash_type.value}' is not"
+                                  "supported by Python's `hashlib` module.")
+
+        hash_method = getattr(hashlib, self.hash_type.value)()
+
+        with open(path, 'rb') as fh:
+            while True:
+                data = fh.read(4096)
+                if not data:
+                    break
+                hash_method.update(data)
+
+        if not compare_digest(hash_method.digest(), self.hash_sum):
+            raise ValidationError(
+                    f"Hash sum of file '{path}': '{hash_method.hexdigest()}' "
+                    f"mismatches the provided one '{self.hash_sum.hex()}'")
