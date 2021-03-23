@@ -16,5 +16,4 @@
 #
 
 include:
-  - .reset
-  - .set
+  - .config.set
