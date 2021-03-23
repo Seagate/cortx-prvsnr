@@ -20,7 +20,7 @@
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/va_bootstrap.log}"
-mkdir -p $(dirname "${LOG_FILE}")
+mkdir -p $(dirname ""${LOG_FILE}")"
 
 function trap_handler {
     echo "***** ERROR! *****"
@@ -33,39 +33,39 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 provisioner pillar_export
 #configure haproxy
-echo "INFO: Configuring haproxy and s3" | tee -a ${LOG_FILE}
-salt "*" state.apply components.s3server.config | tee -a ${LOG_FILE}
-echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a ${LOG_FILE}
+echo "INFO: Configuring haproxy and s3" | tee -a "${LOG_FILE}"
+salt "*" state.apply components.s3server.config | tee -a "${LOG_FILE}"
+echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a "${LOG_FILE}"
 DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:0 --output=newline_values_only)
 DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
 provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
-salt "*" state.apply components.s3clients.config | tee -a ${LOG_FILE}
+salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
 
 #restart services
-echo "INFO: Restarting haproxy" | tee -a ${LOG_FILE}
+echo "INFO: Restarting haproxy" | tee -a "${LOG_FILE}"
 systemctl restart haproxy
-echo "INFO: Restarting slapd" | tee -a ${LOG_FILE}
+echo "INFO: Restarting slapd" | tee -a "${LOG_FILE}"
 systemctl restart slapd
-echo "INFO: Restarting rabbitmq-server" | tee -a ${LOG_FILE}
+echo "INFO: Restarting rabbitmq-server" | tee -a "${LOG_FILE}"
 systemctl restart rabbitmq-server
-echo "INFO: Restarting elasticsearch" | tee -a ${LOG_FILE}
+echo "INFO: Restarting elasticsearch" | tee -a "${LOG_FILE}"
 systemctl restart elasticsearch
-echo "INFO: Restarting s3authserver" | tee -a ${LOG_FILE}
+echo "INFO: Restarting s3authserver" | tee -a "${LOG_FILE}"
 systemctl restart s3authserver
 
 #bootstrap cluster
-echo "INFO: Bootstraping cluster" | tee -a ${LOG_FILE}
-hctl bootstrap --mkfs /var/lib/hare/cluster.yaml | tee -a ${LOG_FILE}
-hctl status | tee -a ${LOG_FILE}
+echo "INFO: Bootstraping cluster" | tee -a "${LOG_FILE}"
+hctl bootstrap --mkfs /var/lib/hare/cluster.yaml | tee -a "${LOG_FILE}"
+hctl status | tee -a "${LOG_FILE}"
 
 #configure and start sspl
-echo "INFO: Configuring sspl" | tee -a ${LOG_FILE}
-salt "*" state.apply components.sspl.config | tee -a ${LOG_FILE}
+echo "INFO: Configuring sspl" | tee -a "${LOG_FILE}"
+salt "*" state.apply components.sspl.config | tee -a "${LOG_FILE}"
 systemctl start sspl-ll
 
 #start csm services
-echo "INFO: Restarting csm services" | tee -a ${LOG_FILE}
+echo "INFO: Restarting csm services" | tee -a "${LOG_FILE}"
 systemctl start csm_web
 systemctl start csm_agent
 
-echo "Done ! " | tee -a ${LOG_FILE}
+echo "Done ! " | tee -a "${LOG_FILE}"
