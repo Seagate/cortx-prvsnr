@@ -22,7 +22,7 @@ cluster>{{ cluster_id }}>network>dns_servers:{{ pillar['cluster']['dns_servers']
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name:{{ storage_set }}
 {%- for node in pillar['cluster']['storage_sets'][storage_set] %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]:{{ pillar['cluster'][node]['machine_id'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]:encl{{ pillar['cluster'][node]['machine_id'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]:{{ pillar['storage'][pillar['cluster'][node]['storage']['enclosure']]['enclosure_id'] }}
 {%- endfor %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>data:4
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>parity:2
@@ -80,9 +80,9 @@ server_node>{{ machine_id }}>s3_instances:{{ pillar['cluster'][node]['s3_instanc
 {%- for enclosure in pillar['storage'].keys() %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>name:{{ enclosure }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>type:{{ pillar['storage'][enclosure]['type'] }}
-storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>cluster_id:{{ pillar['cluster']['cluster_id'] }}
-{%- for _,nodes in pillar['cluster']['server_nodes'].items() %}
-{%- if pillar['cluster'][node]['enclosure'] == enclosure %}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>cluster_id:{{ grains['cluster_id'] }}
+{%- for _,node in pillar['cluster']['server_nodes'].items() %}
+{%- if pillar['cluster'][node]['storage']['enclosure'] == enclosure %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>site_id:{{ pillar['cluster'][node]['site_id'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>storage_set_id:{{ pillar['cluster'][node]['storage_set_id'] }}
 {%- endif %}
