@@ -179,3 +179,238 @@ Step 3: Ensure third party services are installed on all three vm'salt
 [EOS-13889]: Move generated configs directory in provsioner
 Step 1: Deploy single node vm
 Step 2: Verify checkpoint flags are created under /opt/seagate/cortx_configs/provisioner_generated/ directory
+
+
+[EOS-16883]: SW Upgrade structure validation
+
+Step-1: Create a mocked ISO bundles with RPMs:
+
+```bash
+pytest test/build_helpers/build_bundles
+```
+
+Step-2: Start the docker container
+
+```bash
+pytest test/build_helpers -k test_build_setup_env -s --root-passwd root --nodes-num 1
+```
+
+Step-3: Install provisioner API to created docker container
+
+```bash
+provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
+```
+
+NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
+
+Step-4: Copy the `devops` directory of `cortx-prvsnr` repository
+
+```bash
+cd /PATH/TO/cortx-prvsnr/
+docker cp ./devops/ <CONTAINER ID>:/opt/seagate/cortx/provisioner/devops
+```
+
+Step-5: Build core `cortx-prvsnr` RPM package
+
+```bash
+docker exec -it <CONTAINER ID> bash
+bash -x /opt/seagate/cortx/provisioner/devops/rpms/buildrpm.sh -g 123456
+yum install /root/rpmbuild/RPMS/x86_64/cortx-prvsnr-2.0.0-0_git123456_el7.x86_64.rpm
+```
+
+Step-6: Using the built single ISO SW upgrade bundle, run the command
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/<path>/<to>/sw_upgrade_bundle.iso
+```
+
+Command should not failed. Expected output should be like the following one
+```json
+{'VERSION': '2.0.0', 'BUILD': 277, 'DATETIME': 'Wed Mar  3 10:02:21 UTC 2021', 'KERNEL': '5.10.19-200.fc33.x86_64', 'NAME': 'CORTX', 'OS': 'Red Hat Enterprise Linux Server release 7.7 (Maipo)', 'COMPONENTS': ['cortx-csm_agent-2.0.0-1.noarch.rpm', 'cortx-ha-2.0.0-1.noarch.rpm', 'cortx-hare-2.0.0-1.noarch.rpm', 'cortx-sspl-2.0.0-1.noarch.rpm', 'uds-pyi-2.0.0-1.noarch.rpm', 'cortx-cli-2.0.0-1.noarch.rpm', 'cortx-sspl-test-2.0.0-1.noarch.rpm', 'cortx-csm_web-2.0.0-1.noarch.rpm', 'cortx-motr-2.0.0-1.noarch.rpm', 'cortx-s3iamcli-2.0.0-1.noarch.rpm', 'cortx-s3server-2.0.0-1.noarch.rpm']}
+
+```
+
+Note:
+To pass this test need to be sure that `sw_upgrade_bundle.iso` for SW upgrade has the following structure:
+
+```
+sw_upgrade_bundle.iso
+    - 3rd_party/
+        - THIRD_PARTY_RELEASE.INFO
+    - cortx_iso/
+        - RELEASE.INFO
+    - python_deps/
+    - os/
+```
+
+TODO: Create a negative cases
+
+[EOS-18732]: SW upgrade bundle check-sum verification
+
+Steps 1-5 from [EOS-16883] are the same
+
+Consider that SW upgrade ISO bundle is placed by the path
+`/root/single_cortx.iso`
+
+Step 6: Check MD5 hash sum:
+a) Calculate MD5 hash sum for `single_cortx.iso`
+
+```bash
+$ md5sum /root/single_cortx.iso
+fefa1db67588d2783b83f07f4f5beb5c  /root/single_cortx.iso
+```
+
+NOTE: Please, note that output of the command above will be different than presented one!
+
+b) Using the output from the command above run the following provisioner commands one by one
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="fefa1db67588d2783b83f07f4f5beb5c"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="fefa1db67588d2783b83f07f4f5beb5c"  --hash-type="md5"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="md5:fefa1db67588d2783b83f07f4f5beb5c"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="md5:fefa1db67588d2783b83f07f4f5beb5c /root/single_cortx.iso"
+```
+
+All commands should be succeeded. And output always should be the same as like output in [EOS-16883]: Step-6
+
+Step 7: Check sha256 hash sum:
+a) Calculate sha256 hash sum:
+
+```bash
+$ sha256sum /root/single_cortx.iso
+ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a  /root/single_cortx.iso
+```
+
+NOTE: Please, note that output of the command above will be different than presented one!
+
+b) Using the output from the command above run the following provisioner commands one by one
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a"  --hash-type="sha256"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="sha256:ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="sha256:ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a /root/single_cortx.iso"
+```
+
+All commands should be succeeded. And output always should be the same as like output in [EOS-16883]: Step-6
+
+Step 8: Check sha512 hash sum:
+a) Calculate sha256 hash sum:
+
+```bash
+$ sha512sum /root/single_cortx.iso
+ca6cb2dd717bbde5de59ba69b3d5178184e357b706dba87080f0c0801fe34c99efb5ba0e23b7f98b99ce3df209cff287d18214d21fa16288ab6b9ac4194ba14b  /root/single_cortx.iso
+```
+
+NOTE: Please, note that output of the command above will be different than presented one!
+
+b) Using the output from the command above run the following provisioner commands one by one
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="ca6cb2dd717bbde5de59ba69b3d5178184e357b706dba87080f0c0801fe34c99efb5ba0e23b7f98b99ce3df209cff287d18214d21fa16288ab6b9ac4194ba14b"  --hash-type="sha512"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="sha512:ca6cb2dd717bbde5de59ba69b3d5178184e357b706dba87080f0c0801fe34c99efb5ba0e23b7f98b99ce3df209cff287d18214d21fa16288ab6b9ac4194ba14b"
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="sha512:ca6cb2dd717bbde5de59ba69b3d5178184e357b706dba87080f0c0801fe34c99efb5ba0e23b7f98b99ce3df209cff287d18214d21fa16288ab6b9ac4194ba14b /root/single_cortx.iso"
+```
+
+All commands should be succeeded. And output always should be the same as like output in [EOS-16883]: Step-6
+
+
+Step 9: Test using a file with hash sum info:
+
+a) Calculate sha256 hash sum and write the hash data to the file
+
+```bash
+$ sha256sum /root/single_cortx.iso
+ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a  /root/single_cortx.iso
+
+$ echo "sha256:ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a" >/root/hash.data
+```
+
+NOTE: Please, note that output of the command above will be different than presented one!
+
+b) Using the file created in previous step, run the `set_swupgrade_repo` command
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash=/root/hash.data
+```
+
+Command should be succeeded. And output should be the same as like output in [EOS-16883]: Step-6
+
+Step 10: Negative cases
+
+a) Calculate for example sha256 hash sum
+```bash
+$ sha256sum /root/single_cortx.iso
+
+ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a  /root/single_cortx.iso
+```
+
+NOTE: Please, note that output of the command above will be different than presented one!
+
+b) In hash sum `ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a` need to change any hex-number.
+For example, it is enough to change the last hex-digit from "a" to "b", e.g.
+hash string should be like that
+`ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12b`
+
+c) Run the `set_swupgrade_repo` command with wrong hash string:
+
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12b"  --hash-type="sha256"
+```
+
+The exception output should be something like that and provisioner should stop command execution:
+```
+'repo source "/root/single_cortx.iso" is not acceptable, reason: Catalog structure validation error occurred:
+"Validation Failed. Reason: Hash sum of file \'/root/single_cortx.iso\': \'ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a\' mismatches the provided one \'ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12b\'"'
+```
+
+d) With correct hash sum `ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a` run the `set_swupgrade_repo` command with wrong `--hash-type` parameter
+
+```bash
+
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a"  --hash-type="md5"
+
+```
+
+Output should be the same as in c) sub-step.
+
+e) With correct hash sum `ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a` run the `set_swupgrade_repo` command with missed hash-prefix and without `--hash-type` parameter.
+Be default we use MD5 hash sum
+
+```bash
+
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a"
+
+```
+
+Output should be the same as in c) sub-step.
+
+f) With correct hash sum `ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a` run the `set_swupgrade_repo` command with incorrect hash-prefix:
+
+```bash
+
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso --hash="sha512:ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12a"
+
+```
+
+Output should be the same as in c) sub-step.
+
+
+[EOS-18743]:RELEASE.INFO file exists and has the necessary scheme
+
+The positive test scenario is the same as in [EOS-16883]: SW Upgrade structure validation.
+
+For negative test scenario need to create the wrong SW upgrade ISO bundle.
+Commands for manual ISO creation are listed in [EOS-15766]: Step-2: b)
+
+The better way to re-use ISO bundle created by the following command
+```bash
+pytest test/build_helpers/build_bundles
+```
+
+For example, it is enough to delete line which starts with `VERSION:` in file `cortx_iso/RELEASE.INFO`.
+And create the new ISO file with this change.
+
+The following command with broken `single_cortx.iso` should be failed
+```bash
+provisioner set_swupgrade_repo 2.0.1 --source=/root/single_cortx.iso
+```

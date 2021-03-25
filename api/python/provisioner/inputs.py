@@ -1002,7 +1002,8 @@ class SWUpgradeRepo(SWUpdateRepo):
                 'choices': list(map(lambda elem: elem.value, config.HashType))
             }
         },
-        validator=attr.validators.optional(attr.validators.instance_of(str)),
+        validator=attr.validators.optional(
+            attr.validators.in_(config.HashType)),
         default=None,
         converter=lambda x: x and config.HashType(str(x))
     )
