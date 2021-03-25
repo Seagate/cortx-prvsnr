@@ -189,15 +189,15 @@ try {
 
     stage('Notification') {
         if (config.sendNotif) {
-            /* TBD
             def emailMessage = [
                 body: '$DEFAULT_CONTENT',
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
-                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
+                //recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+                //to: '$DEFAULT_RECIPIENTS',
+                to: 'andkononykhin@gmail.com'
             ]
             emailext emailMessage
-            */
         }
     }
 }
