@@ -21,3 +21,4 @@ tmp
 venv/
 api/python/provisioner/srv/salt-vendor/*
 !api/python/provisioner/srv/salt-vendor/README.md
+devops/jenkins/credentials
