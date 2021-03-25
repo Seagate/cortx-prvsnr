@@ -30,9 +30,39 @@ IMAGE_NAME_FULL="$IMAGE_NAME":"$IMAGE_VERSION"
 
 CONTAINER_NAME=cortx-prvsnr-jenkins
 
+inputs_f="$script_dir"/jenkins_inputs
+jenkins_tmpl_f="$script_dir"/jenkins.yaml.tmpl
+jenkins_f="$script_dir"/jenkins.yaml
+
+
+if [[ ! -f "$inputs_f" ]]; then
+    >&2 echo "'$_file' not a file"
+    exit 5
+fi
+
+
+function parse_input {
+    local _param="$1"
+    echo "$(grep "${_param}" "$inputs_f" | head -n1 | sed "s/${_param}=\(.*\)/\1/")"
+}
+
+function set_param {
+    local _param="$1"
+    local _value="${2:-}"
+    sed -i "s/{{ ${_param} }}/$_value/g" "$jenkins_f"
+}
+
+
+params=("ADMIN_EMAIL_ADDRESS" "JENKINS_URL" "SMTP_SERVER" "SMTP_USER" "SMTP_PASSWORD")
+
+cp -f "$jenkins_tmpl_f" "$jenkins_f"
+
+for param in "${params[@]}"; do
+    set_param "$param" "$(parse_input "$param")"
+done
+
 docker build -t "$IMAGE_NAME_FULL" -f "$script_dir"/Dockerfile.jenkins "$script_dir"
 
-
-docker run -d -p 8080:8080 -p 50000:50000 \
+docker run --rm -d -p 8080:8080 -p 50000:50000 \
     --name "$CONTAINER_NAME" \
     -v jenkins_home:/var/jenkins_home "$IMAGE_NAME_FULL"
