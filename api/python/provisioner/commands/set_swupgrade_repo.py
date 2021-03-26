@@ -213,7 +213,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         logger.info(f"Validating upgrade repo: release {repo.release}, "
                     f"source {repo.source}")
 
-        candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME)
+        candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
 
         if params.hash:
             logger.info("`hash` parameter is setup. Start checksum "
