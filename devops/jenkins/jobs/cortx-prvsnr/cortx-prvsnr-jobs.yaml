@@ -1,0 +1,96 @@
+---
+- scm:
+    name: project-scm
+    scm:
+      - git:
+         name: origin
+         url: 'https://github.com/Seagate/cortx-prvsnr.git'
+         # credentials-id: '{credentials_id}' XXX
+         branches:
+          - '${sha1}'
+         skip-tag: true
+         wipe-workspace: true
+         clean: true
+         refspec: +refs/pull/*:refs/remotes/origin/pr/*
+
+- parameter:
+    name: commit-id-build-parameter
+    parameters:
+      - string:
+          name: sha1
+          default: pre-cortx-1.0
+          description: 'Commit id to build or refname (e.g. origin/pr/1234/head, origin/pr/1234/merge)'
+
+
+- parameter:
+    name: testing-topics
+    parameters:
+      - string:
+          description: 'Commit id to build or refname (e.g. origin/pr/1234/head, origin/pr/1234/merge)'
+
+      - validating-string:
+        name: topic
+        default: all
+        description: >
+          Space separated testing topics.
+          Available: deploy, config, upgrade, upgrade-bundle
+        regex: [A-Za-z]*
+        msg: Your entered value failed validation
+
+- job-template:
+    name: '{name}-pr-{type}'
+    # id: indy-ci-pipeline-template ??? XXX
+    project-type: pipeline
+    # concurrent: true ??? XXX
+    pipeline-scm:
+      scm:
+        - project-scm
+      script-path: '{jenkinsfile-path}'
+    sandbox: true
+
+    # template defaults
+    pr_target_branches:
+      - 'pre-cortx-1.0'
+    pr_admins: ''
+    pr_org_whitelist:
+      - Seagate
+    pr_allow_white_org_as_admins: true
+
+    parameters:
+      - commit-id-build-parameter
+
+    properties:
+      - build-discarder:
+          days-to-keep: 7
+          artifact-days-to-keep: 7
+      - github:
+          url: 'https://github.com/Seagate/cortx-prvsnr.git'
+
+    triggers:
+      - github-pull-request:
+          cron: 'H * * * *'  # TODO actually it doesn't work if hooks are used
+          # github-hooks: true
+          permit-all: false
+          admin-list: '{obj:pr_admins}'
+          org-list: '{obj:pr_org_whitelist}'
+          allow-whitelist-orgs-as-admins: '{pr_allow_white_org_as_admins}'
+          white-list-target-branches: '{obj:pr_target_branches}'
+          status-context: 'ci/cortx-prvsnr-jenkins/pr-merge'
+          cancel-builds-on-update: true  # TODO works only with JJB version >2.0.0
+
+- job-group:
+    name: '{name}-prs'
+    type:
+      - unit:
+          mail-to: andkononykhin@gmail.com
+          jenkinsfile-path: 'devops/ci/Jenkinsfile.unit'
+      - integration:
+          mail-to: andkononykhin@gmail.com
+          jenkinsfile-path: 'devops/ci/Jenkinsfile.integration'
+    jobs:
+      - '{name}-pr-{type}'
+
+- project:
+    name: cortx-prvsnr
+    jobs:
+    - '{name}-prs'
