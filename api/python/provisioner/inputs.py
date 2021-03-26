@@ -19,7 +19,7 @@ import logging
 from copy import deepcopy
 import ipaddress
 import functools
-from typing import List, Union, Any, Iterable, Tuple, Dict, Type
+from typing import List, Union, Any, Iterable, Tuple, Dict, Type, Optional
 from pathlib import Path
 import argparse
 
@@ -255,7 +255,7 @@ class ParserFiller:
                     elif optional and _attr.default is not attr.NOTHING:
                         _dest = _kwargs
 
-                    if _dest:
+                    if _dest is not None:
                         _dest[_attr.name] = kwargs[arg_name]
                         if pop:
                             kwargs.pop(arg_name)
@@ -279,11 +279,14 @@ class ParserFiller:
     @staticmethod
     def from_args(cls, parsed_args: Union[dict, argparse.Namespace], pop=True):
         if isinstance(parsed_args, argparse.Namespace):
-            parsed_args = vars(parsed_args)
+            _parsed_args = vars(parsed_args)
 
-        _args, _kwargs, parsed_args = ParserFiller.extract_args(
-            cls, parsed_args, positional=True, optional=True, pop=pop
+        _args, _kwargs, _parsed_args = ParserFiller.extract_args(
+            cls, _parsed_args, positional=True, optional=True, pop=pop
         )
+
+        if pop:
+            parsed_args = _parsed_args
 
         return cls(*_args, **_kwargs), parsed_args
 
@@ -523,7 +526,12 @@ class Validation():
     def check_ip4(instace, attribute, value):
         try:
             ip = None
-            if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
+            if (
+                value and
+                value != UNCHANGED and
+                value != 'None' and
+                value != '\"\"'
+            ):  # FIXME JBOD
                 ip = ipaddress.IPv4Address(value)
                 # TODO : Improve logic internally convert ip to
                 # canonical forms.
@@ -599,7 +607,7 @@ class StorageEnclosure(ParamGroupInputBase):
     controller_secret: str = StorageEnclosureParams.controller_secret
 
 
-class NodeNetworkParams():
+class NodeParams():
     _param_group = 'node'
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
@@ -612,6 +620,22 @@ class NodeNetworkParams():
     )
     data_private_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data private network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
+        validator=Validation.check_ip4
+    )
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -635,25 +659,13 @@ class NodeNetworkParams():
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network interfaces"
     )
-    data_public_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-    data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface netmask",
-        validator=Validation.check_ip4
-    )
-    data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data gateway IP",
-        validator=Validation.check_ip4
-    )
-    data_private_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface private IP",
-        validator=Validation.check_ip4
-    )
     bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC  IP", default=UNCHANGED,
         validator=Validation.check_ip4
+    )
+    cvg: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node storage Cylinder Volume Group (CVG) devices",
+        default=UNCHANGED
     )
 
 
@@ -718,9 +730,6 @@ class NetworkParams():
     secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node floating IP"
     )
-    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data gateway IP"
-    )
     secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node mgmt gateway IP"
     )
@@ -730,6 +739,9 @@ class NetworkParams():
     )
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node management interface netmask"
+    )
+    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data gateway IP"
     )
     secondary_data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node node data interface IP",
@@ -973,6 +985,27 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
+    hash: Optional[Union[str, Path]] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': ("Path to the file with ISO hash check sum or string"
+                         "with format: either '<hash_type>:<hex_hash>' or"
+                         "'<hex_hash>'")
+            }
+        },
+        default=None
+    )
+    hash_type: Optional[str] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "Optional: hash type of `hash` parameter",
+                'choices': list(map(lambda elem: elem.value, config.HashType))
+            }
+        },
+        validator=attr.validators.optional(attr.validators.instance_of(str)),
+        default=None,
+        converter=lambda x: x and config.HashType(str(x))
+    )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade
     _target_build: str = attr.ib(default=None)

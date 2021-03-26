@@ -1,9 +1,9 @@
 # AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.
 # CRC32 8f106f67
-dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }}
+dn: olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }}
 objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
-olcDatabase: {2}{{ pillar['openldap']['backend_db'] }}
+olcDatabase: {2}{{ pillar['cortx']['software']['openldap']['backend_db'] }}
 olcDbDirectory: /var/lib/ldap
 olcDbIndex: objectClass eq,pres
 olcDbIndex: ou,cn,mail,surname,givenname eq,pres,sub

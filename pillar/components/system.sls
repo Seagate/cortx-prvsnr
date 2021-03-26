@@ -21,7 +21,7 @@ system:
     time_zone: UTC             #To be replaced with input
   service-user:
     name: cortxub
-    secret:
+    password:
     groups:
       - wheel
     shell: /usr/bin/bash

@@ -948,6 +948,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             setup_pillar_path = add_pillar_merge_prefix(
                 node_pillar_dir / 'setup.sls'
             )
+
+            enclosure_id = "enc_id"
+
             if run_args.rediscover or not setup_pillar_path.exists():
                 data = {
                     'setup': {
@@ -962,6 +965,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             ]},
                             {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
+                            {'enclosure_id': enclosure_id},
                             {'hostname_status': hostnamectl_status},
                         ]
                     }
@@ -1751,7 +1755,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
-                    f' system/service-user/secret '
+                    f' system/service-user/password '
                     f' \'"{service_user_password}"\''
                 ),
                 targets=run_args.primary.minion_id,
@@ -1817,6 +1821,16 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         for state in [
             'components.provisioner.config.machine_id.reset',
             'components.provisioner.config.machine_id.refresh_grains'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
+
+        logger.info("Refresh enclosure id on the system")
+        for state in [
+            'components.system.storage.enclosure_id',
+            'components.system.storage.enclosure_id.config.set_pillar'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",

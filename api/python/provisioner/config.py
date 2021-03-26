@@ -47,6 +47,7 @@ CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
 CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
 PRVSNR_TMP_DIR = Path(Path.home() / '.tmp/seagate/prvsnr/')
 CONFSTORE_CLUSTER_CONFIG = CORTX_CONFIG_DIR / 'provisioner_cluster.json'
+CONFSTORE_ROOT_FILE = Path('components/system/files/provisioner_cluster.json')
 
 PRVSNR_ROOT_DIR = Path('/opt/seagate/cortx/provisioner')
 PRVSNR_FILEROOT_DIR = PRVSNR_ROOT_DIR / 'srv'
@@ -96,6 +97,7 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
+THIRD_PARTY_RELEASE_INFO_FILE = 'THIRD_PARTY_RELEASE.INFO'
 
 SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
 SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
@@ -536,34 +538,25 @@ NON_CRITICALLY_FAILED = {"critical": False, "failed": True}
 
 IS_REPO_KEY = "is_repo"
 
-class SWUpgradeRepos(Enum):
-    """List of supported SW Upgrade Repositories."""
-
-    OS = "os"  # yum repo
-    third_party = "3rd_party"  # yum repo
-    cortx = "cortx_iso"  # yum repo
-    python = "python_deps"  # python index
-
-
-YUM_REPO_TYPE = "yum"
-
-SW_UPGRADE_REPOS = {
-    SWUpgradeRepos.OS.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.third_party.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.cortx.value: {
-        YUM_REPO_TYPE: True
-    },
-    SWUpgradeRepos.python.value: {
-        YUM_REPO_TYPE: False
-    }
-}
-
 
 class CortxResourceT(Enum):
     """Resource types in CORTX provisioner"""
 
     REPOS = "cortx_repos"
+
+
+class ContentType(Enum):
+
+    """File content type enumeration."""
+
+    JSON = "json"
+    YAML = "yaml"
+
+
+class HashType(Enum):
+
+    """Hash type enumeration."""
+
+    MD5 = "md5"
+    SHA256 = "sha256"
+    SHA512 = "sha512"

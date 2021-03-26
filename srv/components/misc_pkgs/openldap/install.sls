@@ -52,7 +52,7 @@ Add password file to ldap group:
     - onlyif: grep -q ldap /etc/group && test -f /etc/openldap/certs/password
 
 {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
-{% if 'mdb' in pillar['openldap']['backend_db'] %}
+{% if 'mdb' in pillar['cortx']['software']['openldap']['backend_db'] %}
 Clean up old mdb ldiff file:
   file.absent:
     - name: /etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif

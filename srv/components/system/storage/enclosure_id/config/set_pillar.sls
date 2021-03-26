@@ -15,21 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{%- if "physical" in grains['virtual'] %}
-{%- set ctrl_a_ip = pillar['storage']['enclosure-1']['controller']['primary']['ip'] %}
-{%- set user = pillar['storage']['enclosure-1']['controller']['user'] %}
-{%- set secret = pillar['storage']['enclosure-1']['controller']['secret'] %}
-{%- set ntp_server = pillar['system']['ntp']['time_server'] %}
-{%- set time_zone = pillar['system']['ntp']['time_zone'] %}
+{% set enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
 
-Set NTP on enclosure:
+Sync grains data for enclosure_id:
+  module.run:
+    - saltutil.refresh_grains: []
+
+Update enclosure_id in pillar:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/srv/components/controller/files/scripts/controller-cli.sh host -h {{ ctrl_a_ip }} -u {{ user }} -p {{ secret }} -n {{ ntp_server }} {{ time_zone }}
-
-{% else %}
-
-No NTP on VM:
-  test.show_notification:
-    - text: "Skipping the NTP configuration on controller for VM"
-
-{% endif %}
+    - name: provisioner pillar_set storage/{{ enclosure }}/enclosure_id \"{{ grains['enclosure_id'] }}\"

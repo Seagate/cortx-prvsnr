@@ -1,5 +1,5 @@
 # Add necessary permissions
-dn: olcDatabase={2}{{ pillar['openldap']['backend_db'] }},cn=config
+dn: olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config
 changetype: modify
 add: olcAccess
 # Maintain the below order of permissions
