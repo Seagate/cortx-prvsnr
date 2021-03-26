@@ -1,57 +1,8 @@
-><h3> <strong>WARNING !</strong> : This doc is out-of-date at the moment. Please refer to this <a href="https://github.com/Seagate/cortx-prvsnr/blob/pre-cortx-1.0/docs/testing.md">document</a> for latest documentation.<h3>
-
-# Integration Tests
-
-**Table of Contents**
-
-- [Integration Tests](#integration-tests)
-  - [Introduction](#introduction)
-  - [Installation](#installation)
-  - [Run Static Linter](#run-static-linter)
-  - [Run tests](#run-tests)
-    - [Run unit tests only](#run-unit-tests-only)
-    - [Useful Options](#useful-options)
-    - [Custom Options](#custom-options)
-    - [Custom Markers](#custom-markers)
-  - [Test API](#test-api)
-    - [`helper.py`](#helperpy)
-      - [`PRVSNR_REPO_INSTALL_DIR`](#prvsnr_repo_install_dir)
-      - [`HostMeta`](#hostmeta)
-      - [`safe_filename`](#safe_filename)
-      - [`mock_system_cmd`](#mock_system_cmd)
-      - [`restore_system_cmd`](#restore_system_cmd)
-      - [`run`](#run)
-      - [`check_output`](#check_output)
-      - [`inject_repo`](#inject_repo)
-    - [`conftest.py`](#conftestpy)
-      - [`project_path`](#project_path)
-      - [`localhost`](#localhost)
-      - [`tmpdir_session`](#tmpdir_session)
-      - [`tmpdir_module`](#tmpdir_module)
-      - [`tmpdir_function`](#tmpdir_function)
-      - [`ssh_config`](#ssh_config)
-      - [`ssh_key`](#ssh_key)
-      - [`rpm_prvsnr`](#rpm_prvsnr)
-      - [`env_level`](#env_level)
-      - [`post_host_run_hook`](#post_host_run_hook)
-      - [`hosts`](#hosts)
-      - [`mock_hosts`](#mock_hosts)
-      - [`inject_ssh_config`](#inject_ssh_config)
-      - [`cortx_spec`](#cortx_spec)
-      - [`cortx_hosts`](#cortx_hosts)
-      - [`cortx_primary_host`](#cortx_primary_host)
-      - [`cortx_primary_host_label`](#cortx_primary_host_label)
-      - [`cortx_primary_host_ip`](#cortx_primary_host_ip)
-      - [`configure_salt`](#configure_salt)
-      - [`accept_salt_keys`](#accept_salt_keys)
-  - [To add new tests (In progress)](#to-add-new-tests-in-progress)
-  - [Test Environment Providers](#test-environment-providers)
-    - [Docker](#docker)
-    - [Vagrant](#vagrant)
-    - [Host Based](#host-based)
+:warning:
+**This doc is out-of-date at the moment. Please refer to [this](..//testing.md) for latest documentation.**
 
 
-## Introduction
+# Introduction
 
 The test framework is intended to leverage the development process:
 
@@ -67,24 +18,26 @@ recommended to use [`flake8`][flake8] for static checks.
 [flake8]: http://flake8.pycqa.org/en/latest/
 
 
-## Installation
+# Installation
 
-- create and activate a python3 virtual environment for (e.g. using
-  [`virtualenv`](https://virtualenv.pypa.io/en/latest/),
-  [`virtualenvwrapper`](https://virtualenvwrapper.readthedocs.io/en/latest/) or
-  [`pipenv`](https://pipenv-fork.readthedocs.io/en/latest/))
-- `pip install -r test-requirements.txt`
-
-## Run Static Linter
-
-- `flake8 test`
-
-## Run tests
-
-- `pytest -l -v`
+Please refer the [doc](../docs/testing.md#python-environment-preparation).
 
 
-### Run unit tests only
+# Runnning
+
+## Static Linter
+
+```bash
+flake8 test
+```
+
+## Functional testing
+
+```bash
+pytest -l -v
+```
+
+### Unit tests
 
 There is a subset of tests that verifies some scoped logic in a way
 of [unit testing](https://en.wikipedia.org/wiki/Unit_testing).
@@ -118,7 +71,7 @@ To mark a test as a unit you may:
 Please check `pytest --help` and
 [`pytest` docs](http://doc.pytest.org/en/latest/usage.html) for more info.
 
-
+<!--
 ### Custom Options
 
 - `--env-provider`: test environment provider, possible values: `host`,
@@ -147,14 +100,56 @@ Check `custom options` section of `pytest --help` for more information.
 
 Check `pytest --markers` for more information.
 
+-->
 
-## Test API
+# Test API
 
-Test framework has `helper.py` and `conftest.py` which declare and implement the
-API's that can be used in tests.  `helper.py` provides a set of helper functions
-and `conftest.py` provides a set of pytest fixtures that are accessible across
-multiple test files.
+Test framework has [helper.py][helper.py] and [conftest.py][conftest.py] which declare
+and implement the Cortx Provisioner testing framework API. It can be used in tests 
+for the common routine () and simplifies tests development allowing to focus mostly
+on a test scenarion instead of some infra management routine.
 
+[helper.py]: helper.py
+[conftest.py]: conftest.py
+
+
+[helper.py][helper.py] provides a set of helper functions and [conftest.py][conftest.py]
+provides a set of pytest fixtures that are accessible across multiple test modules.
+
+## Tips & Tricks
+
+### How to mark test as a Unit
+
+Option 1: use `unit` marker
+
+```python
+@pytest.mark.unit
+def test_something():
+    ...
+```
+
+Option 2: use `unit` fixture
+
+```python
+# for a test
+def test_something(unit):
+    ...
+
+# for all tests in a module
+# somemodule.py
+@pytest.fixture(scope='session', autouse=True)
+def unit():
+    ...
+
+# for all tests in multiple modules
+# conftest.py
+@pytest.fixture(scope='session', autouse=True)
+def unit():
+    ...
+```
+
+
+<!--
 
 ### `helper.py`
 
@@ -383,6 +378,7 @@ multiple test files.
 3. Add tests file according to the functionality. E.g, For component related
    tests, add/update `srv/components/` tests.
 
+-->
 
 ## Test Environment Providers
 
@@ -408,3 +404,53 @@ tests setup phase as well and removed during the teardown phase.
 ### Host Based
 
 *TODO*
+
+
+<!--
+
+- [Integration Tests](#integration-tests)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
+  - [Run Static Linter](#run-static-linter)
+  - [Run tests](#run-tests)
+    - [Run unit tests only](#run-unit-tests-only)
+    - [Useful Options](#useful-options)
+    - [Custom Options](#custom-options)
+    - [Custom Markers](#custom-markers)
+  - [Test API](#test-api)
+    - [`helper.py`](#helperpy)
+      - [`PRVSNR_REPO_INSTALL_DIR`](#prvsnr_repo_install_dir)
+      - [`HostMeta`](#hostmeta)
+      - [`safe_filename`](#safe_filename)
+      - [`mock_system_cmd`](#mock_system_cmd)
+      - [`restore_system_cmd`](#restore_system_cmd)
+      - [`run`](#run)
+      - [`check_output`](#check_output)
+      - [`inject_repo`](#inject_repo)
+    - [`conftest.py`](#conftestpy)
+      - [`project_path`](#project_path)
+      - [`localhost`](#localhost)
+      - [`tmpdir_session`](#tmpdir_session)
+      - [`tmpdir_module`](#tmpdir_module)
+      - [`tmpdir_function`](#tmpdir_function)
+      - [`ssh_config`](#ssh_config)
+      - [`ssh_key`](#ssh_key)
+      - [`rpm_prvsnr`](#rpm_prvsnr)
+      - [`env_level`](#env_level)
+      - [`post_host_run_hook`](#post_host_run_hook)
+      - [`hosts`](#hosts)
+      - [`mock_hosts`](#mock_hosts)
+      - [`inject_ssh_config`](#inject_ssh_config)
+      - [`cortx_spec`](#cortx_spec)
+      - [`cortx_hosts`](#cortx_hosts)
+      - [`cortx_primary_host`](#cortx_primary_host)
+      - [`cortx_primary_host_label`](#cortx_primary_host_label)
+      - [`cortx_primary_host_ip`](#cortx_primary_host_ip)
+      - [`configure_salt`](#configure_salt)
+      - [`accept_salt_keys`](#accept_salt_keys)
+  - [To add new tests (In progress)](#to-add-new-tests-in-progress)
+  - [Test Environment Providers](#test-environment-providers)
+    - [Docker](#docker)
+    - [Vagrant](#vagrant)
+    - [Host Based](#host-based)
+-->
