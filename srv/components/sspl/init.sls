@@ -19,7 +19,9 @@
 include:
   - components.sspl.prepare
   - components.sspl.install
-  - components.sspl.config
+  # - components.sspl.config.post_install
+  # - components.sspl.config.config
+  - components.sspl.config.init_mod
   - components.sspl.start
 #  - components.sspl.sanity_check
 

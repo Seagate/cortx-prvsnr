@@ -19,7 +19,9 @@
 include:
   - components.motr.prepare
   - components.motr.install
-  - components.motr.config
+#  - components.motr.config.post_install
+#  - components.motr.config.config
+  - components.motr.config.init_mod
   # - components.motr.start
   - components.motr.sanity_check
 

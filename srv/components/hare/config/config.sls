@@ -15,26 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.s3server'.format(grains['id'])) %}
 include:
-  - components.s3server.prepare
-  - components.s3server.install
-  # - components.s3server.config.post_install
-  # - components.s3server.config.config
-  - components.s3server.config.init_mod
-  - components.s3server.start
-  - components.s3server.sanity_check
+    - components.hare.config.post_install
 
-Generate s3server checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.s3server
-    - makedirs: True
-    - create: True
-
-{%- else -%}
-
-S3Server already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.s3server.teardown' to reprovision these states."
-
-{%- endif -%}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+Stage - Configure Hare:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:config')
+    - failhard: True
+    - require:
+      - Stage - Post Install Hare
+{% endif %}
