@@ -116,3 +116,27 @@ def run_test(request, prepare_test_env):
         return mhost.check_output(script)
 
     return f
+
+
+import test.helper as h
+
+@pytest.fixture(scope='session', params=h.LevelT)
+def test_level(request):
+    return request.param
+
+
+@pytest.fixture(scope='session', params=h.TopicT)
+def test_topic(request):
+    return request.param
+
+
+def pytest_collection_modifyitems(session, config, items):
+    for item in items:
+        if 'test_level' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['test_level'].value)
+            )
+        if 'test_topic' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['test_topic'].value)
+            )
