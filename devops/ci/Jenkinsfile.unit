@@ -9,7 +9,8 @@ Map config = [
     staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'cortx-prvsnr-ci'
+    nodeLabel: 'cortx-prvsnr-ci',
+    testMarkers: 'unit'
 ]
 
 
@@ -113,7 +114,9 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml"
     String pytestTargets = ""
-    String pytestMarkers = "unit"
+    String pytestMarkers = config.testMarkers
+
+    pytestMarkers = "${env.level} and ${env.topic}"
 
     def dockerImage = null
 

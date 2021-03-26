@@ -23,6 +23,10 @@ jenkins:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
 
+  markupFormatter:
+    rawHtml:
+      disableSyntaxHighlighting: false
+
   nodes:
     - permanent:
         name: agent1
@@ -38,6 +42,9 @@ unclassified:
   location:
     adminAddress: {{ ADMIN_EMAIL_ADDRESS }}
     url: {{ JENKINS_URL }}
+
+  ansiColorBuildWrapper:
+    globalColorMapName: "xterm"
 
   email-ext:
     defaultContentType: "text/html"
@@ -55,3 +62,6 @@ unclassified:
     authentication:
       username: {{ SMTP_USER }}
       password: {{ SMTP_PASSWORD }}
+
+  timestamper:
+    allPipelines: true
