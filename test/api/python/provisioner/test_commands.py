@@ -1284,7 +1284,7 @@ def test_commands_ConfigureCortx(monkeypatch):
 
 # ### FWUpdate ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_FWUpdate_happy_path(
     mocker, tmpdir_function, storage_enclosure_data, fw_source,
     controller_cli_script, state_fun_executer_m
@@ -1306,7 +1306,7 @@ def test_commands_FWUpdate_happy_path(
 
 # ### RebootController ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_RebootController_happy_path(
     mocker, tmpdir_function, storage_enclosure_data,
     controller_cli_script, state_fun_executer_m
@@ -1329,7 +1329,7 @@ def test_commands_RebootController_happy_path(
 
 # ### ShutdownController ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_ShutdownController_happy_path(
     mocker, tmpdir_function, storage_enclosure_data,
     controller_cli_script, state_fun_executer_m
