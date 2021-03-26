@@ -24,6 +24,18 @@ from copy import deepcopy
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.debug
+@pytest.mark.xfail
+def test_fail(test_level, test_topic):
+    pass
+
+@pytest.mark.debug
+def test_pass(test_level, test_topic):
+    pass
+
+
+
+
 @pytest.fixture
 def env_provider():
     return 'docker'
