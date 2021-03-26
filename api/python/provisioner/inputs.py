@@ -1003,7 +1003,8 @@ class SWUpgradeRepo(SWUpdateRepo):
             }
         },
         validator=attr.validators.optional(
-            attr.validators.in_(config.HashType)),
+            attr.validators.in_(config.HashType)
+        ),
         default=None,
         converter=lambda x: x and config.HashType(str(x))
     )
