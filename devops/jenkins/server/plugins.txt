@@ -15,6 +15,7 @@ antisamy-markup-formatter
 ghprb
 build-timeout
 timestamper
+ansicolor
 ws-cleanup
 email-ext
 docker-workflow

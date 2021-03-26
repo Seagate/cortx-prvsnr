@@ -1,0 +1,68 @@
+---
+
+- ghprb-trigger-params: &ghprb-trigger-params
+    name: 'ghprb-trigger-params'
+    ghprb_cron: '{ghprb_cron}'  # TODO actually it doesn't work if hooks are used
+    ghprb_user_whitelist: '{obj:ghprb_user_whitelist}'
+    ghprb_org_whitelist: '{obj:ghprb_org_whitelist}'
+    ghprb_allow_white_org_as_admins: '{obj:ghprb_allow_white_org_as_admins}'
+    ghprb_admins: '{obj:ghprb_admins}'
+    ghprb_target_branches: '{obj:ghprb_target_branches}'
+    ghprb_trigger_pattern: '{ghprb_trigger_pattern}'
+    ghprb_only_trigger_phrase: '{ghprb_only_trigger_phrase}'
+    ghprb_status_context: '{ghprb_status_context}'
+
+- job-template:
+    name: '{name}-pr-{type}'
+    project-type: pipeline
+    pipeline-scm:
+      scm:
+        - project-scm:
+            github_org: '{github_org}'
+      script-path: '{jenkinsfile-path}'
+    sandbox: true
+
+    properties:
+      - build-discarder:
+          days-to-keep: 7
+          artifact-days-to-keep: 7
+      - github:
+          url: 'https://github.com/{github_org}/cortx-prvsnr'
+
+    parameters:
+      - commit-id-build-parameter:
+          defaut_commit_id: '{defaut_commit_id}'
+      - testing-topics-parameter:
+          default_topic: '{default_topic}'
+      - testing-level-parameter:
+          default_level: '{default_level}'
+
+    ghprb_status_context: 'ci/cortx-prvsnr-jenkins/pr-merge/{type}'
+
+    triggers:
+      - ghprb-trigger:
+          <<: *ghprb-trigger-params
+
+- job-group:
+    name: '{name}-prs'
+    default_topic:
+    ghprb_cron: 'H/10 * * * *'
+    type:
+      - unit:
+          default_level: unit
+          ghprb_trigger_pattern: unit
+      - integration:
+          default_level: integration or integration_mocked
+          ghprb_trigger_pattern: integration
+      - integration-custom:
+          default_level: integration
+          ghprb_trigger_pattern: 'custom ([\w\s]+)'
+          # ghprb_cron: null  # consider push-events only
+          ghprb_only_trigger_phrase: true
+    jobs:
+      - '{name}-pr-{type}'
+
+- project:
+    name: cortx-prvsnr
+    jobs:
+      - '{name}-prs'

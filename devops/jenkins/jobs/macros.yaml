@@ -1,0 +1,61 @@
+---
+- scm:
+    name: project-scm
+    scm:
+      - git:
+         name: origin
+         url: 'https://github.com/{github_org}/cortx-prvsnr'
+         # credentials-id: '{credentials_id}' XXX
+         branches:
+          # 2nd brackets are to escape the 1st ones (not a template),
+          # the result should be ${sha1}
+          - '${{sha1}}'
+         skip-tag: true
+         wipe-workspace: true
+         clean: true
+         refspec: +refs/pull/*:refs/remotes/origin/pr/*
+
+- parameter:
+    name: commit-id-build-parameter
+    parameters:
+      - string:
+          name: sha1
+          default: '{defaut_commit_id}'
+          description: 'Commit id to build or refname (e.g. origin/pr/1234/head, origin/pr/1234/merge)'
+
+- parameter:
+    name: testing-topics-parameter
+    parameters:
+      - validating-string:
+          name: topic
+          default: '{default_topic}'
+          description: 'Space separated testing topics. Available: deploy, config, upgrade, upgrade_bundle'
+          regex: (all|deploy|config|upgrade|upgrade_bundle)
+          msg: Value validation failed
+
+- parameter:
+    name: testing-level-parameter
+    parameters:
+      - validating-string:
+          name: level
+          default: '{default_level}'
+          description: 'A testing level. Available options: unit, integration_mocked, integraton, system'
+          regex: (unit|integration_mocked|integraton|system)
+          msg: Value validation failed
+
+- trigger:
+    name: ghprb-trigger
+    triggers:
+      - github-pull-request:
+          cron: '{ghprb_cron}'  # TODO actually it doesn't work if hooks are used
+          # github-hooks: true
+          permit-all: false
+          white-list: '{obj:ghprb_user_whitelist}'
+          org-list: '{obj:ghprb_org_whitelist}'
+          allow-whitelist-orgs-as-admins: '{obj:ghprb_allow_white_org_as_admins}'
+          admin-list: '{obj:ghprb_admins}'
+          white-list-target-branches: '{obj:ghprb_target_branches}'
+          trigger-phrase: 'test {ghprb_trigger_pattern} please'
+          only-trigger-phrase: '{ghprb_only_trigger_phrase}'
+          status-context: '{ghprb_status_context}'
+          cancel-builds-on-update: true  # TODO works only with JJB version >2.0.0
