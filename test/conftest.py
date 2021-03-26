@@ -323,23 +323,33 @@ class LocalHostMeta(HostMeta):
         return 'mlocalhost'
 
 
+def _add_testing_levels_markers(config):
+    for level in h.LevelT:
+        config.addinivalue_line(
+            "markers",
+            f"{level.value}: mark test as a scenario"
+            f" with '{level.value}' level"
+        )
+
+
+def _add_testing_topics_markers(config):
+    for topic in h.TopicT:
+        config.addinivalue_line(
+            "markers",
+            f"{topic.value}: mark test as a scenario"
+            f" belongs to '{topic.value}' topic"
+        )
+
+
 def pytest_configure(config):
+    _add_testing_levels_markers(config)
+
+    _add_testing_topics_markers(config)
+
     config.addinivalue_line(
-        "markers", "unit: mark test as a unit "
-                   "level testing scenario"
+        "markers", "debug: mark test as a one for debug"
     )
-    config.addinivalue_line(
-        "markers", "integration1: mark test as an integration "
-                   "level testing scenario with mocked env"
-    )
-    config.addinivalue_line(
-        "markers", "integration2: mark test as an integration "
-                   "level testing scenario without mocks"
-    )
-    config.addinivalue_line(
-        "markers", "system: mark test as an system "
-                   "level testing scenario"
-    )
+
     config.addinivalue_line(
         "markers", "env_provider(string): mark test to be run "
                    "in the environment provided by the provider"
@@ -447,12 +457,26 @@ def pytest_addoption(parser):
 # TODO DOC how to apply markers dynamically so it woudl impact comllection
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        if "unit" in item.fixturenames:
-            item.add_marker(pytest.mark.unit)
-        elif "integration1" in item.fixturenames:
-            item.add_marker(pytest.mark.integration1)
+        for level in h.LevelT:
+            if level.value in item.fixturenames:
+                item.add_marker(getattr(pytest.mark, level.value))
+                break
         else:
-            item.add_marker(pytest.mark.integration2)
+            item.add_marker(getattr(pytest.mark, h.LevelT.NOLEVEL.value))
+
+        for topic in h.TopicT:
+            if topic.value in item.fixturenames:
+                item.add_marker(getattr(pytest.mark, topic.value))
+                break
+        else:
+            item.add_marker(getattr(pytest.mark, h.TopicT.NOTOPIC.value))
+
+
+for level in list(h.LevelT) + list(h.TopicT):
+    fixture_builder(
+        'session', name_with_scope=False, module_name=__name__,
+        fixture_name=level.value
+    )(lambda: None)
 
 
 @pytest.fixture(scope='session')
@@ -460,21 +484,6 @@ def get_fixture(request):
     def _f(fixture_name):
         return request.getfixturevalue(fixture_name)
     return _f
-
-
-@pytest.fixture(scope='session')
-def unit():
-    pass
-
-
-@pytest.fixture(scope='session')
-def integration1():
-    pass
-
-
-@pytest.fixture(scope='session')
-def integration2():
-    pass
 
 
 @pytest.fixture(scope='session')
