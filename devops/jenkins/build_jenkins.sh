@@ -22,6 +22,8 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 repo_root_dir="$(realpath $script_dir/../../../)"
 
+server_dir="$script_dir/server"
+
 IMAGE_VERSION=0.0.1
 
 IMAGE_NAME=seagate/cortx-prvsnr-jenkins
@@ -30,9 +32,9 @@ IMAGE_NAME_FULL="$IMAGE_NAME":"$IMAGE_VERSION"
 
 CONTAINER_NAME=cortx-prvsnr-jenkins
 
-inputs_f="$script_dir"/jenkins_inputs
-jenkins_tmpl_f="$script_dir"/jenkins.yaml.tmpl
-jenkins_f="$script_dir"/jenkins.yaml
+inputs_f="$server_dir"/jenkins_inputs
+jenkins_tmpl_f="$server_dir"/jenkins.yaml.tmpl
+jenkins_f="$server_dir"/jenkins.yaml
 
 
 if [[ ! -f "$inputs_f" ]]; then
@@ -61,7 +63,7 @@ for param in "${params[@]}"; do
     set_param "$param" "$(parse_input "$param")"
 done
 
-docker build -t "$IMAGE_NAME_FULL" -f "$script_dir"/Dockerfile.jenkins "$script_dir"
+docker build -t "$IMAGE_NAME_FULL" -f "$server_dir"/Dockerfile.jenkins "$server_dir"
 
 docker run --rm -d -p 8080:8080 -p 50000:50000 \
     --name "$CONTAINER_NAME" \
