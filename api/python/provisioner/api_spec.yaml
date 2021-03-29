@@ -30,7 +30,7 @@ get_params:
   type: Get
   input_type: ParamsList
 get_cluster_id:
-  type: GetClusterId
+  type: cluster_id.GetClusterId
 get_node_id:
   type: GetNodeId
 get_release_version:
@@ -78,7 +78,7 @@ set_network:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
 
 set_cluster_id:
-  type: SetClusterId
+  type: cluster_id.SetClusterId
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo

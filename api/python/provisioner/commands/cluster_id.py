@@ -45,7 +45,8 @@ logger = logging.getLogger(__name__)
 class GetClusterId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, targets=ALL_MINIONS):
+    @staticmethod
+    def run(targets=ALL_MINIONS):
         """get_cluster_id command execution method.
 
         Gets cluster ID from pillar data.
@@ -60,27 +61,35 @@ class GetClusterId(CommandParserFillerMixin):
                 'cluster',
                 targets=targets
             )
-            cluster_id = [cluster_data[node]["cluster"]["cluster_id"]
-                          for node in cluster_data]
+            cluster_id = []
+
+            for node in cluster_data:
+                if "cluster_id" in cluster_data[node]["cluster"]:
+                    cluster_id.append(
+                      cluster_data[node]["cluster"]["cluster_id"]
+                    )
+                else:
+                    raise ValueError(
+                         "ClusterID is not present in Pillar data for "
+                         "either of the nodes. To set one, execute "
+                         "`provisioner set_cluster_id` command."
+                    )
 
             if len(set(cluster_id)) != 1:
-                logger.error(
+                raise ValueError(
                      "Error: ClusterID assignment not unique across "
                      f"the nodes of the cluster: {cluster_id}. "
                      "To set one, execute `provisioner set_cluster_id` command."
                 )
-                return ValueError(
-                     "Error: ClusterID assignment not unique across "
-                     f"the nodes: {cluster_id}"
-                )
 
             return cluster_id[0]
 
-        except Exception as exc:
-            raise ValueError(
+        except ValueError as exc:
+            logger.error(
                 "Error in retrieving cluster_id from "
                 f"Pillar data: {str(exc)}"
             )
+            return None
 
 
 @attr.s(auto_attribs=True)
@@ -156,9 +165,7 @@ class SetClusterId(CommandParserFillerMixin):
                     "Bootstrapping completed and ClusterID is already set!"
                 )
 
-            logger.info(
-                "Success: Unique ClusterID assignment to pillar data."
-            )
+            return "Success: Unique ClusterID assignment to pillar data."
 
         except Exception as exc:
             raise ValueError(

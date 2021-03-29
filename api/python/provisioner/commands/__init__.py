@@ -15,19 +15,26 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import sys
-from typing import List, Dict, Type, Union
-from copy import deepcopy
+import importlib
+import json
 import logging
+import re
+import sys
+import yaml
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-import json
-import yaml
-import importlib
+from typing import List, Dict, Type, Union
 
-from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
-from .check import Check, SWUpdateDecisionMaker
-
+from ._basic import (
+    RunArgs,
+    CommandParserFillerMixin,
+    RunArgsBase
+)
+from .check import (
+    Check,
+    SWUpdateDecisionMaker
+)
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -1366,18 +1373,25 @@ commands = {}
 for cmd_name, spec in api_spec.items():
     spec = deepcopy(api_spec[cmd_name])  # TODO
     cmd_cls = spec.pop('type')
+
+    # If the format of 'type' is module.Type
+    if re.search(r'\.', cmd_cls):
+        mod_name = cmd_cls.split('.')[0]
+        cmd_cls = cmd_cls.split('.')[1]
+    else:
+        mod_name = cmd_name
+
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
         try:
-            if "cluster_id" in cmd_name:
-                mod_name = 'provisioner.commands.cluster_id'
-            else:
-                mod_name = f'provisioner.commands.{cmd_name}'
-
-            cmd_mod = importlib.import_module(mod_name)
+            cmd_mod = importlib.import_module(
+                f'provisioner.commands.{mod_name}'
+            )
         except Exception:
-            logger.error(f"Failed to import '{mod_name}'")
+            logger.error(
+                f"Failed to import 'provisioner.commands.{mod_name}'"
+            )
             raise
         command = getattr(cmd_mod, cmd_cls)
     commands[cmd_name] = command.from_spec(**spec)
