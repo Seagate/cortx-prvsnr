@@ -176,7 +176,13 @@ IFS=':' read -ra creds <<<"$(head -n1 "$creds_f")"
 juser="${creds[0]}"
 japitoken="${creds[1]}"
 
-docker build -t "$IMAGE_NAME_FULL" -f "$agent_dir"/Dockerfile.inbound-agent "$agent_dir"
+uid="$(id -u)"
+gid="$(id -g)"
+
+docker build -t "$IMAGE_NAME_FULL" \
+    --build-arg "uid=$uid" \
+    --build-arg "gid=$gid" \
+    -f "$agent_dir"/Dockerfile.inbound-agent "$agent_dir"
 
 
 IFS=':' read -ra agent_params <<<"$( \
@@ -200,14 +206,11 @@ else
     work_dir="$agent_work_dir"
 fi
 
-uid="$(id -u)"
-
 docker run --init -d \
     -v "$DOCKER_SOCKET":"$DOCKER_SOCKET" \
     -v "$work_dir":"$work_dir" \
     --name "$CONTAINER_NAME" \
     --rm \
-    -u "$uid":"$uid" \
     "$IMAGE_NAME_FULL" \
     -url "$jenkins_url" \
     -workDir="$work_dir" \
