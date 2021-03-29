@@ -1,7 +1,3 @@
-:warning:
-**This doc is out-of-date at the moment. Please refer to [this](..//testing.md) for latest documentation.**
-
-
 # Introduction
 
 The test framework is intended to leverage the development process:
