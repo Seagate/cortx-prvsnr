@@ -22,6 +22,8 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 repo_root_dir="$(realpath $script_dir/../../../)"
 
+agent_dir="$script_dir/agent"
+
 IMAGE_VERSION=0.0.1
 
 IMAGE_NAME=seagate/cortx-prvsnr-jenkins-inbound-agent
@@ -32,7 +34,7 @@ CONTAINER_NAME=cortx-prvsnr-jenkins-agent
 
 DOCKER_SOCKET=/var/run/docker.sock
 
-creds_f="$script_dir"/credentials
+creds_f="$agent_dir"/credentials
 work_dir=
 verbosity=0
 
@@ -174,7 +176,7 @@ IFS=':' read -ra creds <<<"$(head -n1 "$creds_f")"
 juser="${creds[0]}"
 japitoken="${creds[1]}"
 
-docker build -t "$IMAGE_NAME_FULL" -f "$script_dir"/Dockerfile.inbound-agent "$script_dir"
+docker build -t "$IMAGE_NAME_FULL" -f "$agent_dir"/Dockerfile.inbound-agent "$agent_dir"
 
 
 IFS=':' read -ra agent_params <<<"$( \
