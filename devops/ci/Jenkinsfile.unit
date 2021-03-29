@@ -193,7 +193,7 @@ try {
     stage('Notification') {
         if (config.sendNotif) {
             def emailMessage = [
-                body: '$DEFAULT_CONTENT',
+                body: '${JELLY_SCRIPT,template="html"}',
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
                 //recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
