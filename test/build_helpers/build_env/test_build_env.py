@@ -25,9 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.debug
-@pytest.mark.xfail
 def test_fail(test_level, test_topic):
-    pass
+    pytest.fail()
 
 @pytest.mark.debug
 def test_pass(test_level, test_topic):
