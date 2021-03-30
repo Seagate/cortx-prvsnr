@@ -16,7 +16,7 @@
 #
 
 import pytest
-from typing import Union
+from typing import Union, Optional
 from pathlib import Path
 from copy import deepcopy
 from collections import defaultdict
@@ -59,34 +59,34 @@ class BundleOpts(inputs.ParserMixin):
         converter=utils.converter_path_resolved,
         validator=utils.validator_path
     )
-    orig_single_iso: Union[str, Path] = attr.ib(
+    orig_single_iso: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "original CORTX single ISO for partial use",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
-    prvsnr_pkg: Union[str, Path] = attr.ib(
+    prvsnr_pkg: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "PATH to provisioner core rpm package",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
         validator=utils.validator_path_exists
     )
-    prvsnr_api_pkg: Union[str, Path] = attr.ib(
+    prvsnr_api_pkg: Optional[Union[str, Path]] = attr.ib(
         default=None,
         metadata={
             inputs.METADATA_ARGPARSER: {
                 'help': "PATH to provisioner API rpm package",
-                'metaver': 'PATH'
+                'metavar': 'PATH'
             }
         },
         converter=utils.converter_path_resolved,
@@ -113,22 +113,15 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(scope="session")
-def run_options(run_options):
-    return (
-        run_options + list(BundleOpts.parser_args())
-    )
+@pytest.fixture(scope='session')
+def custom_opts_t():
+    return BundleOpts
 
 
 @pytest.fixture(scope='session')
-def bundle_opts(request):
-    return BundleOpts.from_args(request.config.option)
-
-
-@pytest.fixture(scope='session')
-def orig_single_iso_on_host(tmpdir_session, bundle_opts):
-    if bundle_opts.orig_single_iso:
-        return Path('/opt/iso') / bundle_opts.orig_single_iso.name
+def orig_single_iso_on_host(tmpdir_session, custom_opts):
+    if custom_opts.orig_single_iso:
+        return Path('/opt/iso') / custom_opts.orig_single_iso.name
 
 
 @pytest.fixture(scope='session')
@@ -141,7 +134,7 @@ def bundle_script_path_f():
 
 @pytest.fixture
 def hosts_spec(
-    hosts_spec, hosts, request, bundle_opts, orig_single_iso_on_host
+    hosts_spec, hosts, request, custom_opts, orig_single_iso_on_host
 ):
     res = deepcopy(hosts_spec)
     for host in hosts:
@@ -151,13 +144,13 @@ def hosts_spec(
         )
         docker_settings = docker_settings['docker']
 
-        if bundle_opts.orig_single_iso:
+        if custom_opts.orig_single_iso:
             docker_settings['privileged'] = True
             docker_settings['volumes']['/dev'] = {
                 'bind': '/dev', 'mode': 'ro'
             }
             docker_settings['volumes'][
-                str(bundle_opts.orig_single_iso.parent)
+                str(custom_opts.orig_single_iso.parent)
             ] = {'bind': str(orig_single_iso_on_host.parent), 'mode': 'ro'}
 
     return res

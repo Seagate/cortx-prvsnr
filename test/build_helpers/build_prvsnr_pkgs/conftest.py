@@ -26,7 +26,7 @@ from test import helper as h
 
 
 @attr.s(auto_attribs=True)
-class BundleOpts(inputs.ParserMixin):
+class PkgsOpts(inputs.ParserMixin):
     parser_prefix = 'pkgs-'
 
     version: str = attr.ib(
@@ -82,10 +82,10 @@ class BundleOpts(inputs.ParserMixin):
 
 def pytest_addoption(parser):
     h.add_options(
-        parser, BundleOpts.prepare_args()
+        parser, PkgsOpts.prepare_args()
     )
 
 
 @pytest.fixture(scope='session')
-def bundle_opts_t():
-    return BundleOpts
+def custom_opts_t():
+    return PkgsOpts
