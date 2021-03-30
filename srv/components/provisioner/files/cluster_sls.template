@@ -92,7 +92,7 @@ cluster:
         mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
         roaming_ip:                   # Applies to private data network
     storage:
-      enclosure_id: enclosure-{{ (node_num + 1) }}
+      enclosure: enclosure-{{ (node_num + 1) }}
       metadata_devices:               # Device for /var/motr and possibly SWAP
         - /dev/sdb                    # Auto-populated by components.system.storage.multipath
       data_devices:                   # Data device/LUN from storage enclosure
