@@ -1066,3 +1066,33 @@ class SWUpgradeRepo(SWUpdateRepo):
                     'is_repo': False
                 }
             }
+
+
+@attr.s(auto_attribs=True)
+class SWUpgradeRemoveRepo(ParamDictItemInputBase):
+    _param_di = param_spec['swupgrade/repo']
+    release: str = ParamDictItemInputBase._attr_ib(
+        is_key=True,
+        descr="release version",
+        validator=attr.validators.matches_re(
+            "^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
+        converter=str
+    )
+
+    @property
+    def pillar_key(self):
+        # the local root pillar key for 'swupgrade' installation type
+        return self.release
+
+    @property
+    def pillar_value(self):
+        res = {
+            f"{repo}": None
+            for repo in (config.OS_ISO_DIR,
+                         config.CORTX_ISO_DIR,
+                         config.CORTX_3RD_PARTY_ISO_DIR,
+                         config.CORTX_PYTHON_ISO_DIR)
+        }
+        res[self.release] = None
+
+        return res

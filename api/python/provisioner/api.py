@@ -283,6 +283,29 @@ def set_swupgrade_repo(release, source=None, hash_str=None,
                      dry_run=dry_run, nowait=nowait)
 
 
+def remove_swupgrade_repo(release, dry_run=False, nowait=False):
+    r"""
+
+    Removes a repository for the given SW upgrade release.
+
+    Parameters
+    ----------
+    release
+        An update repository release label
+    dry_run
+        (optional) validate only. Default: False
+    nowait
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('remove_swupgrade_repo', release, dry_run=dry_run,
+                     nowait=nowait)
+
+
 def set_ssl_certs(
     source, restart=False, targets=ALL_MINIONS, dry_run=False, nowait=True
 ):
