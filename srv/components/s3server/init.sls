@@ -19,8 +19,6 @@
 include:
   - components.s3server.prepare
   - components.s3server.install
-  # - components.s3server.config.post_install
-  # - components.s3server.config.config
   - components.s3server.config.init_mod
   - components.s3server.start
   - components.s3server.sanity_check

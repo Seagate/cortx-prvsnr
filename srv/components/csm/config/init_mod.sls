@@ -17,7 +17,6 @@
 
 include:
     - components.csm.config.config
-    - components.csm.config.post_install
 
 Stage - Init CSM:
   cmd.run:

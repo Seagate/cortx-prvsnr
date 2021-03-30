@@ -16,7 +16,6 @@
 #
 
 include:
-    - components.hare.config.post_install
     - components.hare.config.config
 
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}

@@ -18,8 +18,6 @@
 include:
   - components.hare.prepare
   - components.hare.install
-#  - components.hare.config.post_install
-#  - components.hare.config.config
   - components.hare.config.init_mod
   - components.hare.sanity_check
 

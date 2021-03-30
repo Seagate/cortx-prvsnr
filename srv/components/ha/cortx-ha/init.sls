@@ -19,8 +19,6 @@
 include:
   - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
-#  - components.ha.cortx-ha.config.post_install
-#  - components.ha.cortx-ha.config.config
   - components.ha.cortx-ha.config.init_mod
   - components.ha.cortx-ha.sanity_test
   # - components.ha.cortx-ha.ha

@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 include:
-    - components.sspl.config.post_install
     - components.sspl.config.config
 Stage - Init SSPL:
   cmd.run:

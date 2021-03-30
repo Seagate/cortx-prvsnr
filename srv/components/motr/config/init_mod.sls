@@ -16,7 +16,6 @@
 #
 
 include:
-  - components.motr.config.post_install
   - components.motr.config.config
 
 Stage - Init Motr:

@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 include:
-    - components.s3server.config.post_install
     - components.s3server.config.config
 
 Stage - Init S3Server:

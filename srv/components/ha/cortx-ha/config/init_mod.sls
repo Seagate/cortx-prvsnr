@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 include:
-    - components.ha.cortx-ha.config.post_install
     - components.ha.cortx-ha.config.config
 Run cortx-ha init:
   cmd.run:
