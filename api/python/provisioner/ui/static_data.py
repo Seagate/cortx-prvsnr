@@ -90,8 +90,8 @@ class StaticNetworkWindow(Window):
         for idx, row in enumerate(values):
             y = self.get_max_height() // 3 - count_m // 2 + (idx + 1) * 2
             if not (idx == selected_rows):
-                self._window.addstr(y, x, f"{values[idx]}:")
-                self._window.addstr(y, 14, f" {self.data[values[idx]]}")
+                self._window.addstr(y, x, f"{row}:")
+                self._window.addstr(y, 14, f" {self.data[row]}")
 
         y = self.get_max_height() // 3 - count_m // 2 + (count_m + 1) * 2
 
