@@ -58,14 +58,16 @@ node {
                 sshCommand remote: remote, command: "exit"
                 echo "Successfully connected to VM ${remote.host}!"
             }
+        }    
 
-            stage("${remote.name}: Teardown of Cortx Stack!") {
-                sshCommand remote: remote, command: """
-                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states || true
-                """
-                echo "Successfully teardown of Cortx Stack!"
-            }
+        stage("${remotes[0].host}: Teardown of Cortx Stack!") {
+            sshCommand remote: remotes[0], command: """
+                /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states || true
+            """
+            echo "Successfully teardown of Cortx Stack!"
+        }
 
+        for (remote in remotes.reverse()) {
             stage("${remote.name}: Stop Salt services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
@@ -94,7 +96,7 @@ node {
                     pip3 freeze|xargs pip3 uninstall -y
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
-                    rm -rf ~/.cache/pip
+                    test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
                 """
                 echo "Successfully uninstalled rpms"
             }
@@ -102,20 +104,20 @@ node {
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
-                    rm -rf /opt/seagate/cortx
-                    rm -rf /opt/seagate/cortx_configs
-                    rm -rf /opt/seagate
+                    rm -rf /opt/seagate/cortx || true
+                    rm -rf /opt/seagate/cortx_configs || true
+                    rm -rf /opt/seagate || true
                     # Bricks cleanup
-                    test -e /var/lib/seagate && rm -rf /var/lib/seagate
-                    test -e /srv/glusterfs && rm -rf /srv/glusterfs
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
                     # Cleanup Salt
-                    test -e /var/cache/salt && rm -rf /var/cache/salt
-                    test -e /etc/salt && rm -rf /etc/salt
+                    test -e /var/cache/salt && rm -rf /var/cache/salt || true
+                    test -e /etc/salt && rm -rf /etc/salt || true
                     # Cleanup Provisioner profile directory
-                    test -e /opt/isos && rm -rf /opt/isos
-                    test -e /root/.provisioner && rm -rf /root/.provisioner
-                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
-                    test -e /root/.ssh && rm -rf /root/.ssh
+                    test -e /opt/isos && rm -rf /opt/isos || true
+                    test -e /root/.provisioner && rm -rf /root/.provisioner || true
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
                 echo "Successfully removed!"
             }

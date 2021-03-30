@@ -133,14 +133,25 @@ node {
                 sshCommand remote: remotes[0], command: """
                     yum install -y yum-utils
                     yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
-                    yum install --nogpgcheck -y python3 python36-m2crypto salt salt-master salt-minion
-                    rm -rf /etc/yum.repos.d/*3rd_party*.repo
                     yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
+                    
+                    cat <<EOF >/etc/pip.conf
+                    [global]
+                    timeout: 60
+                    index-url: $CORTX_RELEASE_REPO/python_deps/
+                    trusted-host: $(echo $CORTX_RELEASE_REPO | awk -F '/' '{print $3}')
+                    EOF
+
+                    yum install --nogpgcheck -y python3 cortx-prereq
+                    yum install --nogpgcheck -y python36-m2crypto salt salt-master salt-minion
                     yum install --nogpgcheck -y python36-cortx-prvsnr
+                    rm -rf /etc/yum.repos.d/*3rd_party*.repo
                     rm -rf /etc/yum.repos.d/*cortx_iso*.repo
                     yum clean all
                     rm -rf /var/cache/yum/
                     pip3 install jsonschema==3.0.2 requests
+                    rm -f /etc/pip.conf
+
                     provisioner --version
                 """
                 echo "Successfully installed Provisioner API!"
@@ -155,7 +166,7 @@ node {
                 sshCommand remote: remotes[0], command: """
                     yum install -y sshpass
                     export SSHPASS=${PASSWORD}
-                    sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
+                    provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
                     salt-call state.apply components.system.config.pillar_encrypt
                     provisioner confstore_export
@@ -185,20 +196,20 @@ node {
                 echo "Successfully deployed prereq states!"
             }
 
-            //stage("Data Path States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states iopath --setup-type 3_node"
-            //    echo "Successfully deployed iopath states!"
-            //}
+            stage("Data Path States Deployment") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states iopath --setup-type 3_node"
+                echo "Successfully deployed iopath states!"
+            }
                         
-            //stage("Control Stack States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states controlpath --setup-type 3_node"
-            //    echo "Successfully deployed controlpath states!"
-            //}
+            stage("Control Stack States Deployment") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states controlpath --setup-type 3_node"
+                echo "Successfully deployed controlpath states!"
+            }
             
-            //stage("HA States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
-            //    echo "Successfully deployed HA states!"
-            //}
+            stage("HA States Deployment") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
+                echo "Successfully deployed HA states!"
+            }
         }
         
         sh label: '', script: "mkdir archives"
