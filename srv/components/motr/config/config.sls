@@ -15,14 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Post Install SSPL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+include:
+  - components.motr.config.post_install
 
-Stage - Config SSPL:
+Stage - Config Motr:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
-
-Stage - Init SSPL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:config')
+    - failhard: True
+    - require:
+      - Stage - Post Install Motr

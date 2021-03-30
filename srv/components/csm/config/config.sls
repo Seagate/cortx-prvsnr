@@ -15,11 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#CSM Configuration and Initialization
-Stage - Post Install CSM:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:post_install')
-    - failhard: True
+include:
+    - components.csm.config.post_install
 
 Stage - Config CSM:
   cmd.run:
@@ -27,30 +24,6 @@ Stage - Config CSM:
     - failhard: True
     - require:
       - Stage - Post Install CSM
-
-# #Cortx-cli configuration
-# Stage - Config Cortx-cli:
-#   cmd.run:
-#     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/cli/conf/setup.yaml', 'cli:config')
-#     - onlyif: rpm -q cortx-cli
-
-# Add USL native.key file:
-#   file.managed:
-#     - source: salt://components/csm/files/tls/native.key
-#     - name: /var/csm/tls/native.key
-#     - makedirs: True
-#     - mode: 600
-#     - user: {{ pillar['system']['service-user']['name'] }}
-#     - group: {{ pillar['system']['service-user']['name'] }}
-
-# Add USL native.crt file:
-#   file.managed:
-#     - source: salt://components/csm/files/tls/native.crt
-#     - name: /var/csm/tls/native.crt
-#     - makedirs: True
-#     - mode: 600
-#     - user: {{ pillar['system']['service-user']['name'] }}
-#     - group: {{ pillar['system']['service-user']['name'] }}
 
 Add {{ pillar['system']['service-user']['name'] }} user to certs group:
   group.present:
@@ -67,10 +40,3 @@ Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
       - {{ pillar['system']['service-user']['name'] }}
     - require:
       - Stage - Config CSM
-
-Stage - Init CSM:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:init')
-    - failhard: True
-    - require:
-      - Add {{ pillar['system']['service-user']['name'] }} user to certs group

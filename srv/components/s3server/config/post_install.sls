@@ -14,29 +14,12 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
 include:
-  - components.hare.install
+  - components.s3server.install
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-Stage - Post Install Hare:
+Stage - Post Install S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
     - failhard: True
-    - require:
-      - Install cortx-hare
-
-Stage - Configure Hare:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:config')
-    - failhard: True
-    - require:
-      - Stage - Post Install Hare
-
-Stage - Initialize Hare:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:init')
-    - failhard: True
-    - require:
-      - Stage - Configure Hare
-{% endif %}
+    - Require:
+      - Install cortx-s3server

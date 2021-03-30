@@ -15,29 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Run cortx-ha post_install:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:post_install')
-    - failhard: True
-
+include:
+    - components.hare.config.post_install
+    - components.hare.config.config
 
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-
-Run cortx-ha config:
+Stage - Initialize Hare:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:init')
     - failhard: True
-
-{% else %}
-
-No HA config on secondary node:
-  test.show_notification:
-    - text: "HA config  applies to primary node. There's no execution on secondary node"
-
+    - require:
+      - Stage - Configure Hare
 {% endif %}
-
-Run cortx-ha init:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:init')
-    - failhard: True

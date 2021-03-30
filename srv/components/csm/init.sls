@@ -19,7 +19,9 @@
 include:
   - components.csm.prepare
   - components.csm.install
-  - components.csm.config
+  - components.csm.config.init_mod
+ # - components.csm.config.post_install
+ # - components.csm.config.config
   - components.csm.start
   - components.csm.sanity_check.csm_sanity
 

@@ -15,26 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.s3server'.format(grains['id'])) %}
 include:
-  - components.s3server.prepare
-  - components.s3server.install
-  # - components.s3server.config.post_install
-  # - components.s3server.config.config
-  - components.s3server.config.init_mod
-  - components.s3server.start
-  - components.s3server.sanity_check
+  - components.motr.config.post_install
+  - components.motr.config.config
 
-Generate s3server checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.s3server
-    - makedirs: True
-    - create: True
-
-{%- else -%}
-
-S3Server already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.s3server.teardown' to reprovision these states."
-
-{%- endif -%}
+Stage - Init Motr:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:init')
+    - failhard: True
+    - require:
+      - Stage - Config Motr
