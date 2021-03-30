@@ -43,7 +43,7 @@ class HostnameWindow(Window):
                    16,
                    y+3,
                    x,
-                   self.get_max_height()//4).create_textbox(color_code)
+                   self.get_max_height() // 4).create_textbox(color_code)
 
         self._window.clear()
 

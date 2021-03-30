@@ -28,7 +28,7 @@ class HeaderWindow(Window):
         col_code_attr = ColorCode().get_color_pair(color_code)
         self.on_attr(col_code_attr)
         self._window.addstr(self._max_h // 2,
-                            self._max_w // 2 - len(config.tittle)//2,
+                            self._max_w // 2 - len(config.tittle) // 2,
                             f"{config.tittle}")
         self._window.refresh()
         self.off_attr(col_code_attr)
