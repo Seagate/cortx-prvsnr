@@ -21,4 +21,9 @@ tmp
 venv/
 api/python/provisioner/srv/salt-vendor/*
 !api/python/provisioner/srv/salt-vendor/README.md
-devops/jenkins/credentials
+
+# generated configs for jenkins setup
+devops/jenkins/agent/credentials
+devops/jenkins/jobs/jenkins.ini
+devops/jenkins/server/jenkins.yaml
+devops/jenkins/server/jenkins_inputs
