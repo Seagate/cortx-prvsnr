@@ -69,26 +69,27 @@ Checklist:
     ## Sample config.ini for single node VM
     ```
     [storage_enclosure]
-    type=other
+    type=virtual
 
     [srvnode-1]
     hostname=host1.localdomain
-    network.data_nw.pvt_ip_addr=None
-    network.data_nw.iface=eth1, eth2
+    network.data_nw.pvt_ip_addr=192.254.254.254
+    network.data_nw.iface=eth1,eth2
     network.mgmt_nw.iface=eth0
     bmc.user=None
     bmc.secret=None
     ```
+    **NOTE**: The above sample is targeted towards use of OVA. Do ensure the NIC for private interface for VM is set to be **_host-only_** if the value for `network.data_nw.pvt_ip_addr=192.254.254.254` has been set.
 
     ## Sample config.ini for dual node VM
     ```
     [storage]
-    type=other
+    type=virtual
 
     [srvnode-1]
     hostname=host1.localdomain
     network.data_nw.pvt_ip_addr=None
-    network.data_nw.iface=eth1, eth2
+    network.data_nw.iface=eth1,eth2
     network.mgmt_nw.iface=eth0
     bmc.user=None
     bmc.secret=None

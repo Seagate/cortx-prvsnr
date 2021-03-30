@@ -31,6 +31,33 @@ trap trap_handler ERR
 
 BASEDIR=$(dirname "${BASH_SOURCE}")
 
+#reconfigure pillar
+provisioner configure_setup ~/config.ini 1
+
+#reconfigure network
+salt-call state.apply components.system.network
+salt-call state.apply components.system.network.mgmt.public
+salt-call state.apply components.system.network.data.public
+salt-call state.apply components.system.network.data.direct
+
+#reconfigure /etc/hosts
+salt-call state.apply components.system.config.hosts
+
+#reconfigure firewall
+salt-call state.apply components.system.firewall.teardown
+salt-call state.apply components.system.firewall
+
+#reconfigure lustre
+salt-call state.apply components.misc_pkgs.lustre.stop
+salt-call state.apply components.misc_pkgs.lustre.config
+salt-call state.apply components.misc_pkgs.lustre.start
+
+#reconfigure hare CDF
+salt-call state.apply components.hare.prepare
+
+#reconfigure CSM ha params (Not necessary on single node)
+# salt-call state.apply components.csm.prepare
+
 #configure haproxy
 echo "INFO: Configuring haproxy" | tee -a ${LOG_FILE}
 salt "*" state.apply components.ha.haproxy.config | tee -a ${LOG_FILE}
