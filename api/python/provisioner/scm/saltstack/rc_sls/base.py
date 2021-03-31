@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import ClassVar, Optional, Dict, Union, Any
+from typing import ClassVar, Optional, Dict, Union, Any, Iterable
 from pathlib import Path
 import importlib
 import logging
@@ -64,9 +64,12 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             if self.pillar_inline:
                 fun_kwargs['pillar'] = self.pillar_inline
 
-            self.client.state_apply(
-                self.sls, targets=targets, fun_kwargs=fun_kwargs
-            )
+            sls = (self.sls if isinstance(self.sls, Iterable) else [self.sls])
+
+            for _sls in sls:
+                self.client.state_apply(
+                    _sls, targets=targets, fun_kwargs=fun_kwargs
+                )
 
 
 # arbitrary dir and recursive are not support for now

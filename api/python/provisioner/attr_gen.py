@@ -17,6 +17,8 @@
 
 import sys
 import logging
+from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from provisioner.vendor import attr
 
@@ -50,6 +52,14 @@ def converter__nodes(*specs):
     ]
 
 
+def converter__version(value):
+    return (value if isinstance(value, Version) else Version(value))
+
+
+def converter__version_specifier(value):
+    return (value if isinstance(value, SpecifierSet) else SpecifierSet(value))
+
+
 # VALIDATORS
 def validator__path(instance, attribute, value):
     utils.validator_path(instance, attribute, value)
@@ -61,6 +71,16 @@ def validator__path_exists(instance, attribute, value):
 
 def validator__subclass_of(instance, attribute, value):
     utils.validator__subclass_of(instance, attribute, value)
+
+
+def validator__version(instance, attribute, value):
+    return attr.validators.instance_of(Version)(instance, attribute, value)
+
+
+def validator__version_specifier(instance, attribute, value):
+    return attr.validators.instance_of(SpecifierSet)(
+        instance, attribute, value
+    )
 
 
 def load_attrs_spec():

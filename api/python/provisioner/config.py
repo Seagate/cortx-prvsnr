@@ -544,6 +544,7 @@ class CortxResourceT(Enum):
     """Resource types in CORTX provisioner"""
 
     REPOS = "cortx_repos"
+    CONSUL = "consul"
 
 
 class ContentType(Enum):

@@ -26,3 +26,5 @@ nodes: {}
 path: {}
 path_exists:
   converter: path_resolved
+version: {}
+version_specifier: {}

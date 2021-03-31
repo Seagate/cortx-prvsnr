@@ -39,6 +39,8 @@ upgrade:
     help: configuration level
     choices: __py__:provisioner.config.ConfigLevelT
   iteration: upgrade round number
+  old_version: old version number
+  new_version: new version number
 glusterfs:
   peers:
     help: gluster peer host (IP/domain)

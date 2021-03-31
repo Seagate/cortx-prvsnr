@@ -74,7 +74,6 @@ def load_cli_spec():
 
         leaf.parent[leaf.key] = choices
 
-    # convert trivial descriptions (no help)
     def _nohelp_filter(leaf: utils.DictLeaf):
         return (
             leaf.key != 'help'
@@ -82,7 +81,7 @@ def load_cli_spec():
             and isinstance(leaf.value, str)
         )
 
-    # convert choices to objects
+    # convert trivial descriptions (no help)
     for leaf in utils.iterate_dict(res, filter_f=_nohelp_filter):
         leaf.parent[leaf.key] = dict(help=leaf.value)
 
