@@ -40,7 +40,7 @@ class StorageEnclosureParamsValidator:
         'controller_type'
     ]
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):    # noqa: D105
         params = attr.asdict(self)
         # FIXME why we allow any params for the following types?
         types = ['JBOD', 'virtual', 'RBOD', 'other']

@@ -106,7 +106,7 @@ class ConfigureSetup(CommandParserFillerMixin):
     }
 
 
-    def _parse_params(self, input):
+    def _parse_params(self, input):    # noqa: R0201
         params = {}
         for key in input.keys():
             val = key.split(".")

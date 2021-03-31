@@ -62,7 +62,7 @@ class NodeParamsValidator:
         'cvg'
     ]
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):    # noqa: D105
         params = attr.asdict(self)
 
         # If storage.cvg.metadata or storage.cvg.data is specified,
