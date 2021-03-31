@@ -33,7 +33,7 @@ class ReleaseParamsValidation:
     target_build: str = ReleaseParams.target_build
     _optional_param = []
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):    # noqa: D105
         params = attr.asdict(self)
         missing_params = []
         for param, value in params.items():

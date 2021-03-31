@@ -105,10 +105,10 @@ class ConfigureSetup(CommandParserFillerMixin):
         "storage": StorageEnclosureParamsValidator
     }
 
-
-    def _parse_params(self, input):    # noqa: R0201
+    @staticmethod
+    def _parse_params(input_data):
         params = {}
-        for key in input.keys():
+        for key in input_data.keys():
             val = key.split(".")
 
             if len(val) > 1:
@@ -119,7 +119,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 ]:
                     # Node specific '.' separated params
                     # The '.' get replaced with '_'
-                    params[f'{val[-2]}_{val[-1]}'] = input[key]
+                    params[f'{val[-2]}_{val[-1]}'] = input_data[key]
                 elif val[-1] in [
                     'data_devices', 'metadata_devices'
                 ]:
@@ -127,13 +127,13 @@ class ConfigureSetup(CommandParserFillerMixin):
                         params[val[-3]] = []
 
                     if int(val[-2]) < len(params[val[-3]]):
-                        params[val[-3]][int(val[-2])][val[-1]] = [input[key]]
+                        params[val[-3]][int(val[-2])][val[-1]] = [input_data[key]]
                     else:
                         params[val[-3]].append(
-                            { val[-1]: [input[key]] }
+                            { val[-1]: [input_data[key]] }
                         )
             else:
-                params[val[-1]] = input[key]
+                params[val[-1]] = input_data[key]
 
         logger.debug(f"Parsed params: {params}")
         return params
@@ -204,11 +204,11 @@ class ConfigureSetup(CommandParserFillerMixin):
         return ret_val
 
 
-    def _parse_input(self, input):
+    def _parse_input(self, input_data):
         kv_to_dict = dict()
-        for key in input.keys():
-            if input.get(key) and "," in input.get(key):
-                input[key] = [element.strip() for element in input.get(key).split(",")]
+        for key in input_data.keys():
+            if input_data.get(key) and "," in input_data.get(key):
+                input_data[key] = [element.strip() for element in input_data.get(key).split(",")]
             elif (
                 'interfaces' in key or
                 'roles' in key or
@@ -217,31 +217,31 @@ class ConfigureSetup(CommandParserFillerMixin):
             ):
                 # special case single value as array
                 # Need to fix this array having single value
-                input[key] = [input.get(key)]
+                input_data[key] = [input_data.get(key)]
             else:
-                if input.get(key):
-                    if 'NONE' == input.get(key).upper():
-                        input[key] = None
-                    elif 'UNCHANGED' == input.get(key).upper():
-                        input[key] = UNCHANGED
-                    elif 'UNDEFINED' == input.get(key).upper():
-                        input[key] = UNDEFINED
-                    elif '' == input.get(key).upper():
-                        input[key] = None
+                if input_data.get(key):
+                    if 'NONE' == input_data.get(key).upper():
+                        input_data[key] = None
+                    elif 'UNCHANGED' == input_data.get(key).upper():
+                        input_data[key] = UNCHANGED
+                    elif 'UNDEFINED' == input_data.get(key).upper():
+                        input_data[key] = UNDEFINED
+                    elif '' == input_data.get(key).upper():
+                        input_data[key] = None
                     else:
-                        input[key] = input.get(key)
+                        input_data[key] = input_data.get(key)
                 else:
-                    input[key] = None
+                    input_data[key] = None
 
             if '.' in key:
                 split_keys = key.split('.')
                 kv_to_dict = self._dict_merge(
                     kv_to_dict,
-                    self._list_to_dict(split_keys, input.get(key))
+                    self._list_to_dict(split_keys, input_data.get(key))
                 )
                 # logger.debug(f"KV to Dict ('.' separated): {kv_to_dict}")
             else:
-                kv_to_dict[key] = input.get(key)
+                kv_to_dict[key] = input_data.get(key)
 
         kv_to_dict = self._key_int_to_list(kv_to_dict)
         logger.debug(f"KV to Dict: {kv_to_dict}")
