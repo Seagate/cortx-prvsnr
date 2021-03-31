@@ -19,28 +19,27 @@ import configparser
 import logging
 
 from enum import Enum
-from typing import Type, List
+from typing import Type
 from copy import deepcopy
 from pathlib import Path
 
 from . import CommandParserFillerMixin
 
+from .validator import (
+    NetworkParamsValidator,
+    NodeParamsValidator,
+    StorageEnclosureParamsValidator
+)
 from ..inputs import (
     METADATA_ARGPARSER,
-    NetworkParams, NodeParams, NoParams,
-    ReleaseParams, StorageEnclosureParams
+    NoParams
 )
-
 from . import PillarSet
-from .grains_get import GrainsGet
-from ..salt import local_minion_id
 
 from ..values import (
     UNCHANGED, UNDEFINED
 )
-
 from ..vendor import attr
-
 
 logger = logging.getLogger(__name__)
 
@@ -96,157 +95,14 @@ class RunArgsConfigureSetup:
 
 
 @attr.s(auto_attribs=True)
-class NetworkParamsValidation:
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    _optional_param = ['cluster_ip', 'mgmt_vip']
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
-    target_build: str = ReleaseParams.target_build
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureParamsValidation:
-    type: str = StorageEnclosureParams.type
-    primary_ip: str = StorageEnclosureParams.primary_ip
-    secondary_ip: str = StorageEnclosureParams.secondary_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    controller_type: str = StorageEnclosureParams.controller_type
-    _optional_param = [
-        'controller_type'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        # FIXME why we allow any params for the following types?
-        types = ['JBOD', 'virtual', 'RBOD', 'other']
-        if params['type'] in types:
-            return
-        missing_params = []
-        for param, value in params.items():
-            if (
-                value == UNCHANGED and
-                param not in self._optional_param and
-                params['type'] == 'RBOD'
-            ):
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class NodeParamsValidation:
-    bmc_user: str = NodeParams.bmc_user
-    bmc_secret: str = NodeParams.bmc_secret
-    data_gateway: str = NodeParams.data_gateway
-    data_netmask: str = NodeParams.data_netmask
-    data_private_interfaces: List = NodeParams.data_private_interfaces
-    data_private_ip: str = NodeParams.data_private_ip
-    data_public_interfaces: List = NodeParams.data_public_interfaces
-    data_public_ip: str = NodeParams.data_public_ip
-    hostname: str = NodeParams.hostname
-    mgmt_gateway: str = NodeParams.mgmt_gateway
-    mgmt_interfaces: List = NodeParams.mgmt_interfaces
-    mgmt_netmask: str = NodeParams.mgmt_netmask
-    mgmt_public_ip: str = NodeParams.mgmt_public_ip
-    roles: List = NodeParams.roles
-    cvg: List = NodeParams.cvg
-
-    _optional_param = [
-        'data_public_ip',
-        'roles',
-        'data_netmask',
-        'data_gateway',
-        'data_private_ip',
-        'mgmt_interfaces',
-        'mgmt_public_ip',
-        'mgmt_netmask',
-        'mgmt_gateway',
-        'cvg'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-
-        # If storage.cvg.metadata or storage.cvg.data is specified,
-        # check entry for the other.
-        for data_set in params.get('cvg'):
-            logger.debug(f"DataSet being processed for CVG keys: {data_set}")
-            if (
-                data_set.get('data_devices') and
-                (
-                    (not data_set.get('metadata_devices')) or
-                    (data_set.get('metadata_devices') == UNCHANGED) or
-                    (data_set.get('metadata_devices') == '')
-                )
-            ):
-                raise ValueError(
-                    "List of data is specified. "
-                    "However, list of metadata is unspecified."
-                )
-            elif (
-                data_set.get('metadata_devices') and
-                (
-                    (not data_set.get('data_devices')) or
-                    (data_set.get('data_devices') == UNCHANGED) or
-                    (data_set.get('data_devices') == '')
-                )
-            ):
-                raise ValueError(
-                    "List of metadata is specified. "
-                    "However, list of data is unspecified."
-                )
-
-        if (
-            not 'physical' in GrainsGet().run(
-                'virtual',
-                targets=local_minion_id()
-            )[local_minion_id()]['virtual']
-        ):
-            self._optional_param.extend([
-                'bmc_user',
-                'bmc_secret'
-            ])
-
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[NoParams] = NoParams
     _run_args_type = RunArgsConfigureSetup
 
     validate_map = {
-        "cluster": NetworkParamsValidation,
-        "node": NodeParamsValidation,
-        "storage": StorageEnclosureParamsValidation
+        "cluster": NetworkParamsValidator,
+        "node": NodeParamsValidator,
+        "storage": StorageEnclosureParamsValidator
     }
 
 
@@ -404,7 +260,6 @@ class ConfigureSetup(CommandParserFillerMixin):
 
         input_type = None
         pillar_type = None
-        node_list = []
         srvnode_count = enclosure_count = int(number_of_nodes)
 
         # Process srvnode_default section
