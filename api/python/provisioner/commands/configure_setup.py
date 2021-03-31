@@ -105,10 +105,10 @@ class ConfigureSetup(CommandParserFillerMixin):
         "storage": StorageEnclosureParamsValidator
     }
 
-
-    def _parse_params(self, input):    # noqa: R0201
+    @staticmethod
+    def _parse_params(input_data):
         params = {}
-        for key in input.keys():
+        for key in input_data.keys():
             val = key.split(".")
 
             if len(val) > 1:
@@ -119,7 +119,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 ]:
                     # Node specific '.' separated params
                     # The '.' get replaced with '_'
-                    params[f'{val[-2]}_{val[-1]}'] = input[key]
+                    params[f'{val[-2]}_{val[-1]}'] = input_data[key]
                 elif val[-1] in [
                     'data_devices', 'metadata_devices'
                 ]:
@@ -127,13 +127,13 @@ class ConfigureSetup(CommandParserFillerMixin):
                         params[val[-3]] = []
 
                     if int(val[-2]) < len(params[val[-3]]):
-                        params[val[-3]][int(val[-2])][val[-1]] = [input[key]]
+                        params[val[-3]][int(val[-2])][val[-1]] = [input_data[key]]
                     else:
                         params[val[-3]].append(
-                            { val[-1]: [input[key]] }
+                            { val[-1]: [input_data[key]] }
                         )
             else:
-                params[val[-1]] = input[key]
+                params[val[-1]] = input_data[key]
 
         logger.debug(f"Parsed params: {params}")
         return params
