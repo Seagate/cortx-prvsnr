@@ -15,6 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Format notes:
+#   - top level keys are types of attributes
+#   - validators:
+#     - each type may have related validator as validator__<type>
+#     - if `validator` is specified explicitly as a key it overrides
+#   - converter: (the same as for validators)
+
 nodes: {}
 path: {}
 path_exists:

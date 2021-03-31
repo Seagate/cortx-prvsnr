@@ -18,7 +18,8 @@
 import sys
 import logging
 
-from ..vendor import attr
+from provisioner.vendor import attr
+
 from . import utils
 from . import config, inputs
 from .node import Node
@@ -28,7 +29,9 @@ _mod = sys.modules[__name__]
 
 logger = logging.getLogger(__name__)
 
-attrs_spec = utils.load_yaml(config.ATTRS_SPEC_PATH)
+VALIDATOR = 'validator'
+CONVERTER = 'converter'
+SEP = '__'
 
 
 # CONVERTERS FIXME move here from utils
@@ -37,7 +40,7 @@ def converter__path(value):
 
 
 def converter__path_resolved(value):
-    return utils.converter__path_resolved(value)
+    return utils.converter_path_resolved(value)
 
 
 def converter__nodes(*specs):
@@ -60,9 +63,26 @@ def validator__subclass_of(instance, attribute, value):
     utils.validator__subclass_of(instance, attribute, value)
 
 
-VALIDATOR = 'validator'
-CONVERTER = 'converter'
-SEP = '__'
+def load_attrs_spec():
+    res = utils.load_yaml(config.ATTRS_SPEC_PATH)
+
+    for attr_t in res:
+        for fun_t in (CONVERTER, VALIDATOR):
+            try:
+                fun = res[attr_t][fun_t]
+            except KeyError:
+                # to support functions named as a key
+                res[attr_t][fun_t] = getattr(
+                    _mod, f'{fun_t}{SEP}{attr_t}', None
+                )
+            else:
+                # to support functions explicitly defined
+                res[attr_t][fun_t] = getattr(_mod, f'{fun_t}{SEP}{fun}')
+
+    return res
+
+
+attrs_spec = load_attrs_spec()
 
 
 def attr_ib(key: str = None, **kwargs):
@@ -73,17 +93,7 @@ def attr_ib(key: str = None, **kwargs):
 
     _kwargs.update(kwargs)
 
-    for fun_t in (CONVERTER, VALIDATOR):
-        try:
-            fun = _kwargs[fun_t]
-        except KeyError:
-            # to support validators named as a key
-            _kwargs[fun_t] = getattr(_mod, f'{fun_t}{SEP}{key}', None)
-        else:
-            # to support validators explicitly defined
-            _kwargs[fun_t] = getattr(_mod, f'{fun_t}{SEP}{fun}')
-
-    cli_spec = _kwargs.pop('cli_spec')
+    cli_spec = _kwargs.pop('cli_spec', None)
     if cli_spec:
         _kwargs['metadata'] = _kwargs.pop('metadata', {})
         _kwargs['metadata'][inputs.METADATA_ARGPARSER] = cli_spec

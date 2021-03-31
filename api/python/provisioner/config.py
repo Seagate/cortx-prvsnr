@@ -159,6 +159,7 @@ ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
+CLI_SPEC_PY_OBJS_PREFIX = '__py__:'
 
 SECRET_MASK = '*' * 7
 
@@ -560,3 +561,10 @@ class HashType(Enum):
     MD5 = "md5"
     SHA256 = "sha256"
     SHA512 = "sha512"
+
+# UPGRADE ROUTINE
+class ConfigLevelT(Enum):
+    """CORTX configuration levels"""
+
+    CLUSTER = "cluster"
+    NODE = "node"
