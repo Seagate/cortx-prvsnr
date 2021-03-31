@@ -18,6 +18,7 @@
 import docker
 import time
 import json
+from typing import Type
 from pathlib import Path
 from collections import defaultdict
 
@@ -27,6 +28,7 @@ import testinfra
 import logging
 
 from provisioner.vendor import attr
+from provisioner import inputs
 import test.helper as h
 from .helper import (
     fixture_builder,
@@ -95,6 +97,7 @@ ENV_LEVELS_HIERARCHY = {
     'rpmbuild': 'base',
     'fpm': 'base',
     'utils': 'base',
+    'setup': 'utils',
     'network-manager-installed': 'base',
 
     # bvt
@@ -129,10 +132,13 @@ class HostMeta:
     machine_name = attr.ib(default=None)
     hostname = attr.ib(default=None)
     interface = attr.ib(default=None)
+    host_user = attr.ib(default=None)
 
     _hostname = attr.ib(init=False, default=None)
     _tmpdir = attr.ib(init=False, default=None)
     _repo = attr.ib(init=False, default=None)
+    _local_user_home = attr.ib(init=False, default=None)
+    _api_installed = attr.ib(init=False, default=False)
     _rpm_prvsnr = attr.ib(init=False, default=None)
     _rpm_prvsnr_cli = attr.ib(init=False, default=None)
     _rpm_prvsnr_api = attr.ib(init=False, default=None)
@@ -240,6 +246,20 @@ class HostMeta:
             )
         return self._repo
 
+    def api_installed(self, local_user=False):
+        if not self._api_installed:
+            logger.info(
+                f"Installing API on {self.hostname}"
+            )
+            self.check_output(
+                (
+                    f"LC_ALL=en_US.UTF-8"
+                    f" pip3 install --user {self.repo / 'api/python'}"
+                ),
+                local_user=local_user
+            )
+            self._api_installed = True
+
     @property
     def fixture_name(self):
         return 'mhost' + self.label
@@ -247,9 +267,24 @@ class HostMeta:
     def run(self, script, *args, force_dump=False, **kwargs):
         return h.run(self.host, script, *args, force_dump=force_dump, **kwargs)
 
-    def check_output(self, script, *args, force_dump=False, **kwargs):
+    def check_output(
+        self, script, *args, force_dump=False, local_user=False,
+        **kwargs
+    ):
+        if local_user and not self.host_user:
+            raise RuntimeError(
+                "connection for local user is not available"
+                f" for {self.remote.name}"
+            )
+
+        if local_user:
+            _host = self.host_user
+            script = f"source ~/.bash_profile; {script}"
+        else:
+            _host = self.host
+
         return h.check_output(
-            self.host, script, *args, force_dump=force_dump, **kwargs
+            _host, script, *args, force_dump=force_dump, **kwargs
         )
 
 
@@ -369,28 +404,31 @@ prvsnr_pytest_options = {
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
     ),
-# XXX outdated options (bvt scope)
-#    "prvsnr-cli-release": dict(
-#        action='store', default='integration/centos-7.7.1908/last_successful',
-#        help=(
-#            "Provisioner cli release to use, "
-#            "defaults to 'integration/centos-7.7.1908/last_successful'"
-#        )
-#    ),
-#    "prvsnr-release": dict(
-#        action='store', default='integration/centos-7.7.1908/last_successful',
-#        help=(
-#            "Provisioner release to use, "
-#            "defaults to 'integration/centos-7.7.1908/last_successful'"
-#        )
-#    ),
-#    "cortx-release": dict(
-#        action='store', default='integration/centos-7.7.1908/last_successful',
-#        help=(
-#            "Target release to verify, "
-#            "defaults to 'integration/centos-7.7.1908/last_successful'"
-#        )
-#    )
+    # XXX outdated options (bvt scope)
+    #    "prvsnr-cli-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Provisioner cli release to use, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    ),
+    #    "prvsnr-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Provisioner release to use, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    ),
+    #    "cortx-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Target release to verify, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    )
 }
 
 
@@ -411,6 +449,13 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 @pytest.fixture(scope='session')
+def get_fixture(request):
+    def _f(fixture_name):
+        return request.getfixturevalue(fixture_name)
+    return _f
+
+
+@pytest.fixture(scope='session')
 def unit():
     pass
 
@@ -425,9 +470,19 @@ def integration2():
     pass
 
 
+@pytest.fixture(scope='session')
+def custom_opts_t():
+    return inputs.ParserMixin
+
+
+@pytest.fixture(scope='session')
+def custom_opts(request, custom_opts_t: Type[inputs.ParserMixin]):
+    return custom_opts_t.from_args(request.config.option)
+
+
 @pytest.fixture(scope="session")
-def run_options():
-    return list(prvsnr_pytest_options)
+def run_options(custom_opts_t: Type[inputs.ParserMixin]):
+    return list(prvsnr_pytest_options) + list(custom_opts_t.parser_args())
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -450,6 +505,16 @@ def localhost():
     return h.localhost
 
 
+@pytest.fixture(scope="session")
+def local_user_id(localhost):
+    return h.localhost.check_output('id -u')
+
+
+@pytest.fixture(scope="session")
+def local_user_name(localhost):
+    return 'user'
+
+
 @pytest.fixture(scope='session')
 def ssh_key(tmpdir_session):
     bundled_key = MODULE_DIR / SSH_KEY_FILE_NAME
@@ -470,6 +535,15 @@ def vagrant_global_status_prune(localhost):
 @pytest.fixture(scope="session")
 def base_env(request):
     return request.config.getoption("base_env")
+
+
+@pytest.fixture(scope='session')
+def ask_proceed():
+
+    def _f():
+        input('Press any key to continue...')
+
+    return _f
 
 
 @pytest.fixture
@@ -1141,8 +1215,13 @@ def tmpdir_module(request, tmp_path_factory):
 
 
 @pytest.fixture
-def tmpdir_function(request, tmpdir_module):
-    res = tmpdir_module / safe_filename(request.node.name)
+def safe_function_name(request):
+    return Path(safe_filename(request.node.name))
+
+
+@pytest.fixture
+def tmpdir_function(safe_function_name, tmpdir_module):
+    res = tmpdir_module / safe_function_name
     res.mkdir()
     return res
 
@@ -1406,14 +1485,29 @@ def discover_remote(
     request, remote, ssh_config=None, host_fixture_label=None
 ):
     tmpdir = request.getfixturevalue('tmpdir_{}'.format(request.scope))
+    local_user_id = request.getfixturevalue('local_user_id')
+    local_user_name = request.getfixturevalue('local_user_name')
 
     _host = None
+    # TODO add support for local user host for non-docker cases
+    _host_user = None
     _iface = 'eth0'
     _ssh_config = None
     if isinstance(remote, h.Container):
         # update container data
         remote.container.reload()
         _host = testinfra.get_host(remote.container.id, connection='docker')
+        if int(local_user_id) == 0:
+            _host_user = _host
+        else:
+            _host.check_output(
+                f"adduser -u {local_user_id}"
+                f" {local_user_name}"
+            )
+            _host_user = testinfra.get_host(
+                f"{local_user_name}@{remote.container.id}",
+                connection='docker'
+            )
 
         #  ssh to be up
         service = _host.service
@@ -1492,7 +1586,8 @@ def discover_remote(
         request,
         label=host_fixture_label,
         machine_name=remote.name,
-        interface=_iface
+        interface=_iface,
+        host_user=_host_user
     )
 
 

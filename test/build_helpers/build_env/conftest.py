@@ -64,11 +64,3 @@ def nodes_num(request):
 def root_passwd(request):
     return request.config.getoption("root_passwd")
 
-
-@pytest.fixture(scope='session')
-def ask_proceed():
-
-    def _f():
-        input('Press any key to continue...')
-
-    return _f

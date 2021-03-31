@@ -75,6 +75,20 @@ def validator_path_exists(instance, attribute, value):
         raise ValueError(f"Path {value} doesn't exist")
 
 
+def validator_dir_exists(instance, attribute, value):
+    validator_path(instance, attribute, value)
+
+    if not value.is_dir():
+        raise ValueError(f"Path {value} is not a directory")
+
+
+def validator_file_exists(instance, attribute, value):
+    validator_path(instance, attribute, value)
+
+    if not value.is_file():
+        raise ValueError(f"Path {value} is not a file")
+
+
 def converter_path(value):
     return value if value is None else Path(str(value))
 
@@ -282,8 +296,9 @@ def run_subprocess_cmd(cmd, **kwargs):
         raise SubprocessCmdError(cmd, _kwargs, exc) from exc
     else:
         logger.debug(
-            f"Subprocess command {res.args} resulted in - stdout: {res.stdout}, "
-            f"returncode: {res.returncode},stderr: {res.stderr}"
+            f"Subprocess command {res.args} "
+            f"resulted in - stdout: {res.stdout}, "
+            f"returncode: {res.returncode}, stderr: {res.stderr}"
         )
         return res
 
