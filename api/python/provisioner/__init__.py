@@ -58,7 +58,9 @@ from .api import (  # noqa: F401
     get_factory_version,
     cmd_run,
     get_setup_info,
-    grains_get
+    grains_get,
+    set_hostname,
+    setup_firewall
 )
 
 from .values import (  # noqa: F401
@@ -99,6 +101,7 @@ __all__ = [
     'cmd_run',
     'get_setup_info',
     'grains_get',
+    'set_hostname',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',
