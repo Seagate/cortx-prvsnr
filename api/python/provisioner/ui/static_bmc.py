@@ -16,10 +16,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from static_data import StaticNetworkWindow
+from form_window import FormWindow
 
 
-class StaticBMCNetworkWindow(StaticNetworkWindow):
+class StaticBMCNetworkWindow(FormWindow):
 
     data = {'Ip': '10.10.10.13',
             'Netmask': '11.255.255.253',

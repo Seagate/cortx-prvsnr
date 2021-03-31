@@ -19,6 +19,6 @@
 from question_window import QuestionWindow
 
 
-class PrimaryWindow(QuestionWindow):
+class NetworkWindow(QuestionWindow):
 
-    _question = "Is this the first node configured for this new cluster?"
+    _question = "Are you sure you want to apply network changes?"

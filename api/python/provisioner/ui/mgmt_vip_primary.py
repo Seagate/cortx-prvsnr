@@ -16,9 +16,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
+import config
+from mgmt_vip import MgmtVIPWindow
 from question_window import QuestionWindow
 
 
-class PrimaryWindow(QuestionWindow):
+class IsPrimaryWindow(QuestionWindow):
 
     _question = "Is this the first node configured for this new cluster?"
+
+    def yes_action(self):
+        color_code = config.menu_color
+        wd = MgmtVIPWindow(self._window)
+        wd.create_window(
+                            color_code=color_code,
+                            component=self._parent
+                        )
+
+        if hasattr(wd, 'process_input'):
+            wd.process_input(color_code=color_code)

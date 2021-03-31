@@ -33,27 +33,28 @@ class Key(Enum):
     QUITE = 113
 
 
-sub_menu_network = {"DHCP": 'hostname:HostnameWindow',
+sub_menu_network = {"DHCP": 'confirm_dhcp_data:DHCPDataWindow',
                     "Static": 'static_data:StaticNetworkWindow'}
 
-sub_menu_mgmt_network = {"DHCP": 'hostname:HostnameWindow',
+sub_menu_mgmt_network = {"DHCP": 'confirm_dhcp_mgmt:DHCPMgmtWindow',
                          "Static": 'static_mgmt:StaticMGMTNetworkWindow'}
 
-sub_menu_bmc_network = {"DHCP": 'hostname:HostnameWindow',
+sub_menu_bmc_network = {"DHCP": 'confirm_dhcp_bmc:DHCPBmcWindow',
                         "Static": 'static_bmc:StaticBMCNetworkWindow'}
 
 menu_network = {'Management Network': sub_menu_mgmt_network,
                 'Data Network': sub_menu_network,
                 'BMC Network IP': sub_menu_bmc_network,
-                'Apply Network': 'hostname:HostnameWindow'}
+                'Apply Network': 'confirm_network:NetworkWindow'}
 
 menu = {
     'Set Hostname': 'hostname:HostnameWindow',
+    'Set Management VIP': 'mgmt_vip_primary:IsPrimaryWindow',
     'Setup Netowrk': menu_network,
     'Set Host Primary': 'is_primary:PrimaryWindow',
     'Setup storage': 'hostname:HostnameWindow',
-    'Setup firewall': 'hostname:HostnameWindow',
-    'Setup Time Server': 'hostname:HostnameWindow'
+    'Setup firewall': 'confirm_firewall:FirewallWindow',
+    'Setup Time Server': 'time_server:TimeServerWindow'
 }
 
 

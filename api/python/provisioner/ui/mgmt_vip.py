@@ -16,9 +16,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from question_window import QuestionWindow
+from form_window import FormWindow
 
 
-class PrimaryWindow(QuestionWindow):
+class MgmtVIPWindow(FormWindow):
 
-    _question = "Is this the first node configured for this new cluster?"
+    data = {'Management VIP': '10.250.230.254'}
+    component_type = 'Management VIP'

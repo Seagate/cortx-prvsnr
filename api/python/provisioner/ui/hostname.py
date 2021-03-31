@@ -16,37 +16,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from window import Window
-from color_code import ColorCode
-from text_box import TextBox
-from success import SuccessWindow
+from form_window import FormWindow
 
 
-class HostnameWindow(Window):
+class HostnameWindow(FormWindow):
 
-    def create_window(self, **kwargs):
-        color_code = kwargs['color_code']
-        comp_name = ' '.join(kwargs['component'])
-
-        self.create_menu_head()
-
-        col_code_attr = ColorCode.get_color_pair(color_code)
-        x = 3
-        y = self.get_max_height() // 2 - 1
-        self.on_attr(col_code_attr)
-        self._window.addstr(y, x, f"Please enter {comp_name} for this machine")
-        self.enable_keypad()
-        self.off_attr(col_code_attr)
-        data = TextBox(
-                   self._window,
-                   1,
-                   16,
-                   y+3,
-                   x,
-                   self.get_max_height() // 4).create_textbox(color_code)
-
-        self._window.clear()
-
-        win = SuccessWindow(self._window)
-        win.create_window(color_code=2,
-                          data=f"{' '.join(self._parent)}:{data}")
+    data = {'Hostname': 'test.seagate.com'}
+    component_type = 'hostname'
