@@ -193,6 +193,7 @@ for fun in [
     'cmd_run',
     'get_setup_info',
     'set_hostname',
-    'setup_firewall'
+    'setup_firewall',
+    'setup_timeserver'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

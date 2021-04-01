@@ -60,7 +60,8 @@ from .api import (  # noqa: F401
     get_setup_info,
     grains_get,
     set_hostname,
-    setup_firewall
+    setup_firewall,
+    setup_timeserver
 )
 
 from .values import (  # noqa: F401
@@ -102,6 +103,8 @@ __all__ = [
     'get_setup_info',
     'grains_get',
     'set_hostname',
+    'setup_firewall',
+    'setup_timeserver',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',

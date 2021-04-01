@@ -64,13 +64,6 @@ set_network:
       # - components.system.network.data.direct
       # - components.ha.corosync-pacemaker.config.cluster_ip
       # - components.ha.corosync-pacemaker.config.mgmt_vip
-setup_firewall:
-  type: Set
-  input_type: Firewall
-  states:
-    post:
-      - components.system.firewall
-      - components.system.firewall.sanity_check
 # set_cluster_ip:
 #   type: Set
 #   input_type: ClusterIP
@@ -144,6 +137,10 @@ configure_node:
   type: ConfigureNode
 set_hostname:
   type: SetHostname
+setup_firewall:
+  type: SetupFirewall
+setup_timeserver:
+  type: SetupTimeServer
 
 # setup commands
 setup_provisioner:
