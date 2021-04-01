@@ -100,7 +100,7 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             for data in template_data:
                 if data:
-                    Conf.set("provisioner", data.split(':')[0], data.split(':')[1])
+                    Conf.set("provisioner", data.split('=>')[0], data.split('=>')[1])
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
 
