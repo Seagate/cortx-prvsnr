@@ -19,3 +19,4 @@ Stage - Post Install Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
     - failhard: True
+
