@@ -15,13 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
-Add Motr yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.motr.repo.id }}
-    - enabled: True
-    - humanname: motr
-    - baseurl: {{ defaults.motr.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.motr.repo.gpgkey }}
+Stage - Prepare Motr:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 'motr:prepare')
+    - failhard: True

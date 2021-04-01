@@ -14,8 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-Stage - Prepare S3server:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 's3:prepare')
-    - failhard: True
+include:
+    - components.sspl.config.post_install
+    - components.sspl.config.config
+    - components.sspl.config.init_mod

@@ -15,16 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
 
-Add hare yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.hare.repo.id }}
-    - enabled: True
-    - humanname: hare
-    - baseurl: {{ defaults.hare.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.hare.repo.gpgkey }}
+Stage - Prepare Hare:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 'hare:prepare')
+    - failhard: True
 
 #Prepare cluster yaml:
 #  file.managed:

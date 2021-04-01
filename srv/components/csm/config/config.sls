@@ -15,7 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Prepare S3server:
+Stage - Config CSM:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 's3:prepare')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:config')
     - failhard: True
+
+Add {{ pillar['system']['service-user']['name'] }} user to certs group:
+  group.present:
+    - name: certs
+    - addusers:
+      - {{ pillar['system']['service-user']['name'] }}
+
+Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
+  group.present:
+    - name: prvsnrusers
+    - addusers:
+      - {{ pillar['system']['service-user']['name'] }}
