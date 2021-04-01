@@ -14,10 +14,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-include:
-    - components.sspl.config.config
 Stage - Init SSPL:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')
-    - require:
-      - Config SSPL

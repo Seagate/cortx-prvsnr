@@ -15,7 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Init CSM:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:init')
-    - failhard: True
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+include:
+    - components.hare.config.post_install
+    - components.hare.config.config
+    - components.hare.config.init_mod
+{% endif %}

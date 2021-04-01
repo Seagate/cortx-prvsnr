@@ -15,12 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.motr.config.config
-
 Stage - Init Motr:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:init')
     - failhard: True
-    - require:
-      - Stage - Config Motr

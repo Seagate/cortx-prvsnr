@@ -14,12 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-include:
-  - components.s3server.install
-
 Stage - Post Install S3Server:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:post_install')
     - failhard: True
-    - Require:
-      - Install cortx-s3server

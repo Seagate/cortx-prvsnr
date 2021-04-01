@@ -14,9 +14,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-include:
-    - components.ha.cortx-ha.config.post_install
-
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 Run cortx-ha config:

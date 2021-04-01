@@ -14,12 +14,8 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-include:
-    - components.ha.cortx-ha.install
 
 Run cortx-ha post_install:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:post_install')
     - failhard: True
-    - Require:
-        - Install cortx-ha

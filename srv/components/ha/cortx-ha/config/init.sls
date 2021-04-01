@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Init CSM:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:init')
-    - failhard: True
+include:
+    - components.ha.cortx-ha.config.post_install
+    - components.ha.cortx-ha.config.config
+    - components.ha.cortx-ha.config.init_mod

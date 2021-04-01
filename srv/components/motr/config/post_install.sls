@@ -14,13 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-include:
-  - components.motr.install
-
 Stage - Post Install Motr:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:post_install')
     - failhard: True
-    - require:
-      - Install cortx-motr
