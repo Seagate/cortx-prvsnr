@@ -873,10 +873,6 @@ class ParamDictItemInputBase(PrvsnrType, PillarItemsAPI):
 @attr.s(auto_attribs=True)
 class SWUpdateRepo(ParamDictItemInputBase):
     _param_di = param_spec['swupdate/repo']
-    release: str = ParamDictItemInputBase._attr_ib(
-        is_key=True,
-        descr=("release version")
-    )
     source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
         descr=(
             "repo source, might be a local path to a repo folder or iso file"
@@ -884,12 +880,16 @@ class SWUpdateRepo(ParamDictItemInputBase):
             "{} might be used to remove the repo"
             .format(UNDEFINED)
         ),
+        is_key=True,
         metavar='str',
         converter=lambda v: (
             UNCHANGED if v is None else (
                 v if is_special(v) or isinstance(v, Path) else str(v)
             )
         )
+    )
+    release: str = ParamDictItemInputBase._attr_ib(
+        descr="release version"
     )
     _repo_params: Dict = attr.ib(init=False, default=attr.Factory(dict))
     _metadata: Dict = attr.ib(init=False, default=attr.Factory(dict))

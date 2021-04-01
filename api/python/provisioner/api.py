@@ -210,15 +210,14 @@ def set_network(dry_run=False, nowait=False, **kwargs):
 
 
 def set_swupdate_repo(
-    release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
+        source, targets=ALL_MINIONS, dry_run=False, nowait=False
 ):
     r"""Configures update repository.
 
     Installs or removes a repository for sw update release.
 
-    :param release: An update repository release label
     :param targets: Host where to install repos
-    :param source: (optional) A path to a repository. Might be: a local
+    :param source: A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
@@ -228,11 +227,11 @@ def set_swupdate_repo(
     """
     return _api_call(
         'set_swupdate_repo',
-        release, source=source, targets=targets, dry_run=dry_run, nowait=nowait
+        source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
 
 
-def set_swupgrade_repo(release, source=None, hash_str=None,
+def set_swupgrade_repo(source, hash_str=None,
                        hash_type=HashType.MD5, dry_run=False, nowait=False):
     r"""Configures upgrade repository.
 
@@ -240,10 +239,8 @@ def set_swupgrade_repo(release, source=None, hash_str=None,
 
     Parameters
     ----------
-    release
-        An update repository release label
     source
-        (optional) A path to a repository. Might be: a local
+        A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
@@ -278,7 +275,7 @@ def set_swupgrade_repo(release, source=None, hash_str=None,
         repository metadata
 
     """
-    return _api_call('set_swupgrade_repo', release, source=source,
+    return _api_call('set_swupgrade_repo', source=source,
                      hash=hash_str, hash_type=hash_type,
                      dry_run=dry_run, nowait=nowait)
 

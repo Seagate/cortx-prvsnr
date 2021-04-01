@@ -214,7 +214,7 @@ class SetSWUpdateRepo(Set):
             f"source {repo.source}"
         )
 
-        candidate_repo = inputs.SWUpdateRepo(REPO_CANDIDATE_NAME, repo.source)
+        candidate_repo = inputs.SWUpdateRepo(repo.source, REPO_CANDIDATE_NAME)
 
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
@@ -326,9 +326,7 @@ class SetSWUpdateRepo(Set):
                 "removing already enabled repository "
                 f"for the '{repo.release}' release"
             )
-            _repo = inputs.SWUpdateRepo(
-                repo.release, values.UNDEFINED
-            )
+            _repo = inputs.SWUpdateRepo(values.UNDEFINED, repo.release)
             self._apply(_repo, targets=targets)
 
         logger.info(f"Configuring update repo: release {repo.release}")
