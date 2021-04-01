@@ -97,38 +97,52 @@ class FormWindow(Window):
         col_code_attr = ColorCode.get_color_pair(color_code)
         self.create_menu_head()
 
-        x = self.get_max_width() // 2
-        y = self.get_max_height() // 3 - 1
+        screen_y_height = self.get_max_height() // 3
+        # left margin for form heading
+        x = 3
+        # height for form heading
+        y = screen_y_height - 1
         self.enable_keypad()
 
         self.on_attr(col_code_attr)
-        self._window.addstr(y, 3, f"Please enter {self.component_type}"
+        # form heading
+        self._window.addstr(y, x, f"Please enter {self.component_type}"
                             " for this machine")
         self.off_attr(col_code_attr)
 
         values = list(self.data.keys())
+        # list all form content
         count_m = len(values)
-        x = 6
+        mid_count_m = count_m // 2
 
+        # left margin for any label
+        x_label = 6
+        # left margin for any values
+        x_values = x_label + 20
+
+        # Display form
         for idx, row in enumerate(values):
-            y = self.get_max_height() // 3 - count_m // 2 + (idx + 1) * 2
+            y = screen_y_height - mid_count_m + (idx + 1) * 2
             if not (idx == selected_rows):
-                self._window.addstr(y, x, f"{row}:")
-                self._window.addstr(y, 24, f" {self.data[row]['default']}")
+                self._window.addstr(y, x_label, f"{row}:")
+                self._window.addstr(y,
+                                    x_values, f" {self.data[row]['default']}")
 
-        y = self.get_max_height() // 3 - count_m // 2 + (count_m + 1) * 2
+        y = screen_y_height - mid_count_m + (count_m + 1) * 2
 
         # Cancel and Submit button
-        self.submit_button(x, y, values, selected_rows)
+        self.submit_button(x_label, y, values, selected_rows)
 
+        # Form window with default values
         if selected_rows < count_m:
-            y = (self.get_max_height() // 3 -
-                 count_m // 2 + (selected_rows + 1) * 2)
+            y = (screen_y_height -
+                 mid_count_m + (selected_rows + 1) * 2)
 
             self.on_attr(col_code_attr)
-            self._window.addstr(y, x-3, ">> ")
-            self._window.addstr(y, x, f"{values[selected_rows]}:")
+            self._window.addstr(y, x_label - 3, ">> ")
+            self._window.addstr(y, x_label, f"{values[selected_rows]}:")
 
+            # User want to edit some values from given form
             if edit:
                 if ('validation' in self.data[values[selected_rows]]):
                     validate = self.data[values[selected_rows]]['validation']
@@ -136,19 +150,20 @@ class FormWindow(Window):
                     validate = None
                 user_content = TextBox(
                     self,
-                    1,
-                    30,
+                    config.TBox.HEIGHT.value,
+                    config.TBox.WIDTH.value,
                     y,
-                    x + 20,
+                    x_values,
                     self.get_max_height() // 4
                 ).create_textbox(
                     color_code,
                     self.data[values[selected_rows]]['default'],
                     validate
                 )
+                # Update user input in data
                 self.data[values[selected_rows]]['default'] = user_content
             else:
-                self._window.addstr(y, 24,
+                self._window.addstr(y, x_values,
                                     f" {self.data[values[selected_rows]]['default']}")  # noqa: E501
             self.off_attr(col_code_attr)
 
@@ -159,21 +174,26 @@ class FormWindow(Window):
         while 1:
             key = self._window.getch()
             self._window.clear()
-
+            # go up in list of input values
             if key == curses.KEY_UP and current_row > 0:
-                current_row = current_row - 1
+                current_row -= 1
 
+            # go down in list of input values
             elif key == curses.KEY_DOWN and current_row < len(values):
-                current_row = current_row + 1
+                current_row += 1
 
+            # from submit button, select cancel button from screen
             elif current_row == len(values) and key == curses.KEY_LEFT:
-                current_row = current_row + 1
+                current_row += 1
 
+            # from cancel button, select submit button from  screen
             elif current_row == len(values) + 1 and key == curses.KEY_RIGHT:
-                current_row = current_row - 1
+                current_row -= 1
 
+            # selected any input value to edit or selected buttons
             elif key == curses.KEY_ENTER or key in (config.Key.EXIT_1.value,
                                                     config.Key.EXIT_2.value):
+                # if selected input values to edit
                 if current_row < len(values) and current_row >= 0:
                     self._window.clear()
                     self.create_window(
@@ -183,6 +203,7 @@ class FormWindow(Window):
                         edit=True
                     )
                     self._window.refresh()
+                # if selected submit button from screen
                 elif current_row == len(values):
                     self.update_pillar()
                     self.action()
@@ -193,6 +214,7 @@ class FormWindow(Window):
                         data=f"{self.component_type} : {formated_data}"
                     )
                     break
+                # if selected cancel button from screen
                 else:
                     break
 

@@ -27,13 +27,17 @@ from window import Window
 def main(stdscr):
     curses.initscr()
     curses.curs_set(0)
-    ColorCode.init()
-    for code, color in config.color_codes.items():
-        ColorCode.create_color_pair(code, color[0], color[1])
+    ColorCode()
 
     wind = Window(stdscr)
+    # Divide screen into 2 parts
+    # Header window 1 / 5 th of actual size of window
+    # starting from point(1, 1) to (max_height/5, max_width-1)
     header_window = curses.newwin(wind._max_h // 5, wind._max_w - 1, 1, 1)
     HeaderWindow(header_window).create_window(color_code=config.menu_color)
+
+    # Main window 4 / 5 th of actual size of window
+    # starting from point(max_height/5, 1) to (max_height , max_width-1)
     main_window = curses.newwin(
                       wind._max_h - wind._max_h // 5,
                       wind._max_w - 1,

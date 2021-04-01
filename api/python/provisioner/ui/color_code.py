@@ -18,21 +18,23 @@
 #
 import curses
 import config
-from error import ColorCodeNotDefined
+from provisioner.errors import ProvisionerError
 
 
 class ColorCode:
+    _color_codes = None
 
-    @staticmethod
-    def init():
+    def __init__(self):
         curses.start_color()
+        self._color_codes = config.color_codes
+        self.create_color_pair()
 
-    @staticmethod
-    def create_color_pair(code, color1, color2):
-        curses.init_pair(code, color1, color2)
+    def create_color_pair(self):
+        for code, color in self._color_codes.items():
+            curses.init_pair(code, color[0], color[1])
 
     @staticmethod
     def get_color_pair(color_code):
         if not config.color_codes.get(color_code, None):
-            raise ColorCodeNotDefined("No color code defined")
+            raise ProvisionerError(f"Color code {color_code} not defined")
         return curses.color_pair(color_code)

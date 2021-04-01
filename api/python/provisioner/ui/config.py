@@ -27,10 +27,30 @@ class ColorCodes(Enum):
     GREEN_N_WHITE = 4
 
 
+color_codes = {
+    ColorCodes.BLACK_N_WHITE.value: [curses.COLOR_BLACK, curses.COLOR_WHITE],
+    ColorCodes.GREEN_N_BLACK.value: [curses.COLOR_GREEN, curses.COLOR_BLACK],
+    ColorCodes.RED_N_BLACK.value: [curses.COLOR_RED, curses.COLOR_BLACK],
+    ColorCodes.GREEN_N_WHITE.value: [curses.COLOR_GREEN, curses.COLOR_WHITE]
+}
+
+
+error_color = ColorCodes.RED_N_BLACK.value
+default_window_color = ColorCodes.GREEN_N_BLACK.value
+menu_color = ColorCodes.GREEN_N_BLACK.value
+default_menu_head = ColorCodes.BLACK_N_WHITE.value
+
+
+# EXIT_1 and EXIT_2 exit codes for menu
 class Key(Enum):
     EXIT_1 = 10
     EXIT_2 = 13
-    QUITE = 113
+
+
+# TextBox height and width
+class TBox(Enum):
+    HEIGHT = 1
+    WIDTH = 30
 
 
 sub_menu_network = {"DHCP": 'confirm_dhcp_data:DHCPDataWindow',
@@ -57,18 +77,5 @@ menu = {
     'Setup Time Server': 'time_server:TimeServerWindow'
 }
 
-
-color_codes = {
-    ColorCodes.BLACK_N_WHITE.value: [curses.COLOR_BLACK, curses.COLOR_WHITE],
-    ColorCodes.GREEN_N_BLACK.value: [curses.COLOR_GREEN, curses.COLOR_BLACK],
-    ColorCodes.RED_N_BLACK.value: [curses.COLOR_RED, curses.COLOR_BLACK],
-    ColorCodes.GREEN_N_WHITE.value: [curses.COLOR_GREEN, curses.COLOR_WHITE]
-}
-
-
-error_color = ColorCodes.RED_N_BLACK.value
-default_window_color = ColorCodes.GREEN_N_BLACK.value
-menu_color = ColorCodes.GREEN_N_BLACK.value
-default_menu_head = ColorCodes.BLACK_N_WHITE.value
 
 tittle = "Lvye Rack II"

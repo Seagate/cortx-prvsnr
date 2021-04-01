@@ -25,8 +25,9 @@ class HeaderWindow(Window):
 
     def create_window(self, **kwargs):
         color_code = kwargs['color_code']
-        col_code_attr = ColorCode().get_color_pair(color_code)
+        col_code_attr = ColorCode.get_color_pair(color_code)
         self.on_attr(col_code_attr)
+        # Add tittle at the middle of header window
         self._window.addstr(self._max_h // 2,
                             self._max_w // 2 - len(config.tittle) // 2,
                             f"{config.tittle}")

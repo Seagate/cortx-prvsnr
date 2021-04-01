@@ -26,7 +26,7 @@ class SuccessWindow(Window):
     def create_window(self, **kwargs):
         color_code = kwargs['color_code']
         data = kwargs['data']
-        col_code_attr = ColorCode().get_color_pair(color_code)
+        col_code_attr = ColorCode.get_color_pair(color_code)
         x = 3
         y = self.get_max_height() // 2 - 1
         self.on_attr(col_code_attr)

@@ -49,12 +49,16 @@ class MainMenu(Window):
         self.create_menu_head()
 
         for idx, row in enumerate(self._menu):
+            # to display menu at the middle of screen
             x = self.get_max_width() // 2 - len(row) // 2
             y = self.get_max_height() // 2 - len(self._menu) // 2 + idx
 
             if idx == selected_rows:
+                # Selected row should be start with >> for
+                # better visual effects
+                row_curser = ">> "
                 self.on_attr(col_code_attr)
-                self._window.addstr(y, x-3, ">> ")
+                self._window.addstr(y, x - len(row_curser), row_curser)
                 self._window.addstr(y, x, row)
                 self.off_attr(col_code_attr)
             else:
@@ -81,14 +85,16 @@ class MainMenu(Window):
         while 1:
             key = self._window.getch()
             self._window.clear()
-
+            # go up in menu list
             if key == curses.KEY_UP and current_row > 0:
-                current_row = current_row - 1
+                current_row -= 1
+            # go down in menu list
             elif (
                 key == curses.KEY_DOWN and
                 current_row < len(self.get_menu()) - 1
             ):
-                current_row = current_row + 1
+                current_row += 1
+            # Select menu option from list
             elif key == curses.KEY_ENTER or key in (config.Key.EXIT_1.value,
                                                     config.Key.EXIT_2.value):
 
@@ -121,7 +127,7 @@ class MainMenu(Window):
                         except ImportError:
                             raise
 
-                        # Load window for given Menu
+                        # Load/Open window for given Menu
                         Pm_w = getattr(wid_mod, cls)
                         wd = Pm_w(self._window)
                         wd._parent = self._parent

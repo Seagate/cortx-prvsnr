@@ -1,7 +1,6 @@
 # Provisioner TUI
 
-This is northbound interface TUI for CORTX components that provides terminal UI
-to configure system.
+TUI (Terminal User Interface) provides user with a tool, which enables interaction with node configuration commands. This abstracts the need for user executing commands on shell terminal with necessary parameters; thus minimizing the possibilities of user errors and promoting usability.
 
 ## start with provisioner TUI
 
