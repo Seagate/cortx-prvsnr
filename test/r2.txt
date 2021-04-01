@@ -179,3 +179,27 @@ Step 3: Ensure third party services are installed on all three vm'salt
 [EOS-13889]: Move generated configs directory in provsioner
 Step 1: Deploy single node vm
 Step 2: Verify checkpoint flags are created under /opt/seagate/cortx_configs/provisioner_generated/ directory
+
+[EOS-17115]:Add additional keys to cluster ConfStor
+Step 1: Run setup provisioner on a single/multinode VM.
+Step 2: Run provisioner confstore to get confstore generated
+        ```
+        provisioner confstore_export
+        ```
+Step 3: Verify the confstore is generated across all nodes
+
+[EOS-18917]:Creation of custom grains for enclosure_id,netmask, serial number and multipath
+Step 1: Deploy single/multinode node vm
+Step 2: For fetching netmask from grains.
+        ```
+        salt "*" grains.get ip4_netmask
+        ```
+Step 3: Verify netmask from individual interfaces
+Step 4: For fetching enclosure-id 
+        ```
+        salt "*" grains.get enclosure_id
+        ```
+Step 4: For fetching serial number
+        ```
+        salt "*" grains.get lr-serial-number
+        ```
