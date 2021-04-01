@@ -148,8 +148,8 @@ Each component/sub-component directory should consist of an `.sls` (Salt state) 
   * PIP
   * Custom build requirements from source tar
 
-* `config`: Any configurations required for base (factory/field) setup of the component shall be covered in this file/directory. In ideal world, this would be a simple call to component provided `init` file. This state file should also allow for correcting any deviations caused by user over-rides.
-A representative config directory structure shall be:
+* `config`: Any configurations required for base (factory/field) setup of the component shall be covered in this file/directory. In ideal world, this would be a simple call to component provided `init` file. This state file should also allow for correcting any deviations caused by user over-rides.  
+A representative config directory structure shall be:  
 ```
 ├───component
 │   ├───config
@@ -160,11 +160,11 @@ A representative config directory structure shall be:
 
 ```
 
-Each sub-level file would consist of calls to respective southbound API as:
-* `init`: Represent states of the configuration and defines the execution sequence of the state files within config.
-* `post_install` : After installing the component , post_install call will be made through `/opt/seagate/cortx/csm/conf/setup.yaml` and it will call `[component]:post_install` command.
-* `config` : Copying configuration files to target directories and Modifying the Configuration to suit the target node environment will be covered from config , and these steps will be invoked from config command respective to the component.
-* `init_mod` : Execute initialization and configuration scripts of component will get covered with init_mod.
+Each sub-level file would consist of calls to respective southbound API as:  
+* `init`: Represent states of the configuration and defines the execution sequence of the state files within config.  
+* `post_install` : After installing the component , post_install call will be made through `/opt/seagate/cortx/csm/conf/setup.yaml` and it will call `[component]:post_install` command.  
+* `config` : Copying configuration files to target directories and Modifying the Configuration to suit the target node environment will be covered from config , and these steps will be invoked from config command respective to the component.  
+* `init_mod` : Execute initialization and configuration scripts of component will get covered with init_mod.  
 
 
 * `start`: Start component services.
