@@ -48,5 +48,5 @@ class SetupTimeServer(CommandParserFillerMixin):
             StatesApplier.apply(['components.system.chrony'], targets=LOCAL_MINION)
         except Exception as exc:
             logger.error("NTP configuration failed")
-            raise SaltError(exc)
+            raise exc
         logger.info("NTP setup successful")

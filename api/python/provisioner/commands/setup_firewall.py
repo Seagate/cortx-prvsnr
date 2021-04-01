@@ -44,5 +44,5 @@ class SetupFirewall(CommandParserFillerMixin):
             StatesApplier.apply(['components.system.firewall'], targets=LOCAL_MINION)
         except Exception as exc:
             logger.error("Firewall configuration failed")
-            raise SaltError(exc)
+            raise exc
         logger.info("CORTX firewall setup successful")

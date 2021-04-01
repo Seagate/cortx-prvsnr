@@ -48,25 +48,15 @@ class SetHostname(CommandParserFillerMixin):
 
     def run(self):
         try:
-            logger.info("Fetching server_id from grains data")
-            server_id = list(function_run(
-                'grains.get',
-                fun_args=['id'],
-                targets=LOCAL_MINION
-            ).values())[0]
-            if not server_id:
-                logger.error("Failed to get server_id grains")
-                raise SaltError('Failed to get server_id grains')
-
             logger.info("Fetching server hostname from cluster pillar")
             local_minion = local_minion_id()
             cluster_path = PillarKey('cluster')
             cluster_dict = PillarResolver(local_minion).get([cluster_path])
             cluster_dict = cluster_dict[local_minion][cluster_path]
-            server_hostname = cluster_dict[server_id]['hostname']
-            if not server_hostname:
+            server_hostname = cluster_dict[local_minion]['hostname']
+            if not server_hostname or server_hostname is values.MISSED::
                 logger.error("Failed to get hostname from cluster pillar")
-                raise SaltError("Failed to get hostname from cluster pillar")
+                raise ValueError("Failed to get hostname from cluster pillar")
 
             logger.info(f"Setting hostname to {server_hostname}")
             StateFunExecuter.execute(
@@ -80,6 +70,5 @@ class SetHostname(CommandParserFillerMixin):
                 targets=LOCAL_MINION
             )
         except Exception as exc:
-            raise SaltError(exc)
-
+            raise exc
         logger.info("Hostname set successfully")
