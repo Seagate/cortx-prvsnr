@@ -21,12 +21,12 @@ import logging
 from typing import List
 
 from ..grains_get import GrainsGet
-from ...inputs import (
+from provisioner.inputs import (
     NodeParams
 )
-from ...values import UNCHANGED
-from ...vendor import attr
-from ...salt import local_minion_id
+from provisioner.values import UNCHANGED
+from provisioner.vendor import attr
+from provisioner.salt import local_minion_id
 
 logger = logging.getLogger(__name__)
 

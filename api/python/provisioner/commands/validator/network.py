@@ -19,11 +19,11 @@
 
 import logging
 
-from ...inputs import (
+from provisioner.inputs import (
     NetworkParams
 )
-from ...values import UNCHANGED
-from ...vendor import attr
+from provisioner.values import UNCHANGED
+from provisioner.vendor import attr
 
 logger = logging.getLogger(__name__)
 
