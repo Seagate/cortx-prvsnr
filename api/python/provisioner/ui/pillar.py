@@ -16,16 +16,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from form_window import FormWindow
+from provisioner.commands import PillarSet
 
 
-class HostnameWindow(FormWindow):
+class Pillar:
 
-    data = {
-               'Hostname': {
-                               'default': 'test.seagate.com',
-                               'validation': 'hostname',
-                               'pillar_key': 'srvnode-0/hostname'
-                           }
-           }
-    component_type = 'hostname'
+    @staticmethod
+    def set_pillar(key, value):
+        result = True
+        try:
+            PillarSet().run(key, value, local=True)
+        except Exception:
+            result = False
+        return result

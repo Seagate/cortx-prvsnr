@@ -16,16 +16,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from form_window import FormWindow
+import re
+import ipaddress
 
 
-class HostnameWindow(FormWindow):
+class Validation:
 
-    data = {
-               'Hostname': {
-                               'default': 'test.seagate.com',
-                               'validation': 'hostname',
-                               'pillar_key': 'srvnode-0/hostname'
-                           }
-           }
-    component_type = 'hostname'
+    @staticmethod
+    def ipv4(ip):
+        try:
+            value = None
+            result = True
+            if ip:
+                value = ipaddress.IPv4Address(ip)
+                # TODO : Improve logic internally convert ip to
+                # canonical forms.
+                if ip != str(value):
+                    result = False
+        except ValueError:
+            result = False
+        return result
+
+    @staticmethod
+    def hostname(hostname):
+        result = True
+        hostname_regex = r"^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,6}$"
+        if len(hostname) > 253:
+            result = False
+        else:
+            if not re.search(hostname_regex, hostname):
+                result = False
+        return result

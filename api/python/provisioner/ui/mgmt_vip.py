@@ -21,5 +21,7 @@ from form_window import FormWindow
 
 class MgmtVIPWindow(FormWindow):
 
-    data = {'Management VIP': '10.250.230.254'}
+    data = {'Management VIP': {'default': '10.250.230.254',
+                               'validation': 'ipv4',
+                               'pillar_key': 'srvnode-0/mgmt_vip'}}
     component_type = 'Management VIP'

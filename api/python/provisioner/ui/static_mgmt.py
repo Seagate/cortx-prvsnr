@@ -21,7 +21,21 @@ from form_window import FormWindow
 
 class StaticMGMTNetworkWindow(FormWindow):
 
-    data = {'Ip': '10.10.10.12',
-            'Netmask': '11.255.255.252',
-            'Gateway': '198.162.0.2'}
+    data = {
+            'Ip': {
+                      'default': '10.10.10.12',
+                      'validation': 'ipv4',
+                      'pillar_key': 'srvnode-0/network/mgmt/public_ip'
+                  },
+            'Netmask': {
+                           'default': '1.255.255.252',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/network/mgmt/netmask'
+                       },
+            'Gateway': {
+                           'default': '198.162.0.2',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/network/mgmt/gateway'
+                       }
+           }
     component_type = 'Management Network'

@@ -21,8 +21,21 @@ from form_window import FormWindow
 
 class StaticBMCNetworkWindow(FormWindow):
 
-    data = {'Ip': '10.10.10.13',
-            'Netmask': '11.255.255.253',
-            'Gateway': '198.162.0.3'}
-
+    data = {
+            'Ip': {
+                      'default': '10.10.10.11',
+                      'validation': 'ipv4',
+                      'pillar_key': 'srvnode-0/bmc/ip'
+                  },
+            'Netmask': {
+                           'default': '1.255.255.251',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/bmc/netmask'
+                       },
+            'Gateway': {
+                           'default': '198.162.0.1',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/bmc/gateway'
+                       }
+           }
     component_type = 'BMC Network'

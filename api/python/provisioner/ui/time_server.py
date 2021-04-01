@@ -21,6 +21,15 @@ from form_window import FormWindow
 
 class TimeServerWindow(FormWindow):
 
-    data = {'Time Server': 'time.seagate.com',
-            'Time Zone': 'IST'}
+    data = {
+                'Time Server': {
+                                   'default': 'time.seagate.com',
+                                   'validation': 'hostname',
+                                   'pillar_key': 'srvnode-0/ntp/time_server'
+                               },
+                'Time Zone': {
+                                  'default': 'IST',
+                                  'pillar_key': 'srvnode-0/ntp/time_zone'
+                             }
+           }
     component_type = 'Time server'

@@ -21,7 +21,21 @@ from form_window import FormWindow
 
 class StaticNetworkWindow(FormWindow):
 
-    data = {'Ip': '10.10.10.11',
-            'Netmask': '1.255.255.251',
-            'Gateway': '198.162.0.1'}
+    data = {
+            'Ip': {
+                      'default': '10.10.10.11',
+                      'validation': 'ipv4',
+                      'pillar_key': 'srvnode-0/network/data/public_ip'
+                  },
+            'Netmask': {
+                           'default': '1.255.255.251',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/network/data/netmask'
+                       },
+            'Gateway': {
+                           'default': '198.162.0.1',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/network/data/gateway'
+                       }
+           }
     component_type = 'Data Network'

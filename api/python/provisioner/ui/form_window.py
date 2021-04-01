@@ -22,12 +22,34 @@ from window import Window
 from color_code import ColorCode
 from text_box import TextBox
 from success import SuccessWindow
+from pillar import Pillar
 
 
 class FormWindow(Window):
 
-    data = {'Ip': '10.10.10.11'}
+    data = {
+               'Ip': {
+                         'default': '127.0.0.1',
+                         'validation': 'ipv4',
+                         'pillar_key': 'srvnode-0/ip'
+                     }
+           }
     component_type = 'Default User input'
+
+    def update_pillar(self):
+        result = True
+        for key in self.data.keys():
+            if self.data[key]['pillar_key']:
+                if (not Pillar.set_pillar(self.data[key]['pillar_key'],
+                                          self.data[key]['default'])):
+                    result = False
+        return result
+
+    def format_data(self):
+        result = ''
+        for key in self.data.keys():
+            result = result + f"{key}: {self.data[key]['default']} "
+        return result
 
     def submit_button(self, x, y, menu, selected_rows):
         buttons = {
@@ -92,7 +114,7 @@ class FormWindow(Window):
             y = self.get_max_height() // 3 - count_m // 2 + (idx + 1) * 2
             if not (idx == selected_rows):
                 self._window.addstr(y, x, f"{row}:")
-                self._window.addstr(y, 24, f" {self.data[row]}")
+                self._window.addstr(y, 24, f" {self.data[row]['default']}")
 
         y = self.get_max_height() // 3 - count_m // 2 + (count_m + 1) * 2
 
@@ -108,8 +130,12 @@ class FormWindow(Window):
             self._window.addstr(y, x, f"{values[selected_rows]}:")
 
             if edit:
+                if ('validation' in self.data[values[selected_rows]]):
+                    validate = self.data[values[selected_rows]]['validation']
+                else:
+                    validate = None
                 user_content = TextBox(
-                    self._window,
+                    self,
                     1,
                     30,
                     y,
@@ -117,12 +143,13 @@ class FormWindow(Window):
                     self.get_max_height() // 4
                 ).create_textbox(
                     color_code,
-                    self.data[values[selected_rows]]
+                    self.data[values[selected_rows]]['default'],
+                    validate
                 )
-                self.data[values[selected_rows]] = user_content
+                self.data[values[selected_rows]]['default'] = user_content
             else:
                 self._window.addstr(y, 24,
-                                    f" {self.data[values[selected_rows]]}")
+                                    f" {self.data[values[selected_rows]]['default']}")  # noqa: E501
             self.off_attr(col_code_attr)
 
     def process_input(self, color_code):
@@ -157,11 +184,13 @@ class FormWindow(Window):
                     )
                     self._window.refresh()
                 elif current_row == len(values):
+                    self.update_pillar()
                     self.action()
+                    formated_data = self.format_data()
                     win = SuccessWindow(self._window)
                     win.create_window(
                         color_code=2,
-                        data=f"{self.component_type} : {str(self.data)}"
+                        data=f"{self.component_type} : {formated_data}"
                     )
                     break
                 else:
