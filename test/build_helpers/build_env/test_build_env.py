@@ -56,11 +56,16 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function, request):
 
 
 @pytest.mark.isolated
-@pytest.mark.env_level('utils')
 def test_build_setup_env(
     request, root_passwd, nodes_num, ssh_config, env_provider,
     ask_proceed
 ):
+    request.applymarker(
+        pytest.mark.env_level(
+            request.config.getoption("env_level") or 'utils'
+        )
+    )
+
     request.applymarker(
         pytest.mark.hosts([f'srvnode{i}' for i in range(1, nodes_num + 1)])
     )
