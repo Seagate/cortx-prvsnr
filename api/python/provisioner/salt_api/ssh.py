@@ -106,16 +106,26 @@ class SaltSSHSimpleResultSchema(SaltSSHResultSchemaBase):
 
 # TODO TEST EOS-8473
 @attr.s(auto_attribs=True)
-class SaltSSHJobResultSchema(SaltSSHResultSchemaBase):
-    retcode: int
-    jid: str
-    fun: str
-    fun_args: List
+class SaltSSHJobDummyResultSchema(SaltSSHResultSchemaBase):
     jresult: Any
 
     def __attrs_post_init__(self):
         """Do post init."""
+        # XXX it never fails just returns
         self._result = self.jresult
+
+
+# TODO TEST EOS-8473
+@attr.s(auto_attribs=True)
+class SaltSSHJobResultSchema(SaltSSHJobDummyResultSchema):
+    retcode: int
+    jid: str
+    fun: str
+    fun_args: List
+
+    def __attrs_post_init__(self):
+        """Do post init."""
+        super().__attrs_post_init__()
 
         # TODO IMPROVE better error presentation
         if self.retcode or (
@@ -181,7 +191,8 @@ class SaltSSHResultParser:
                     SaltSSHStateJobResultSchema
                     if cmd_args_view['fun'].startswith('state.')
                     else SaltSSHJobResultSchema
-                )
+                ),
+                SaltSSHJobDummyResultSchema
             ]
             for res_t in _types:
                 if cls._verify(res_t, _data):
@@ -200,6 +211,14 @@ class SaltSSHResultParser:
 
 
 # TODO TEST EOS-8473
+# FIXME not covered cases:
+#   - no error raised:
+#       - 'fun': 'state.apply', 'fun_args': ['r']:
+#           {'srvnode-1': {'return': ["No matching sls found for 'r' in env 'base'"]}}  # noqa: E501
+#       - 'fun': 'state.apply', 'fun_args': ['3']
+#           {'srvnode-1': {'return': "TypeError encountered executing state.apply: 'int' object is not iterable"}}  # noqa: E501
+#           Note. here salt-ssh just logs
+#               salt.client.ssh - ERROR - [__init__.py:1251]: cmd:resource TypeError encountered executing state.apply: 'int' object is not iterable  # noqa: E501
 @attr.s(auto_attribs=True)
 class SaltSSHClientResult(SaltClientJobResult):
     def _parse_raw_dict(self):
