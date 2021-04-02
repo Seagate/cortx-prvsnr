@@ -267,7 +267,7 @@ sudo docker run hello-world
   pytest test/build_helpers/build_bundles
   ```
 
-  The command above will create three bundles in the current directory.
+  The command above will create a deploy bundle (single repo) in the current directory.
 
   They would respect the structure of CORTX distributions for deployment and upgrade
   but include mocks for CORTX packages instead of real ones. Non CORTX yum repositories

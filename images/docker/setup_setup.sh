@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,31 +16,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import pytest
-import logging
+set -eux
 
-logger = logging.getLogger(__name__)
+touch /etc/fstab
 
-
-@pytest.fixture
-def env_provider():
-    return 'docker'
-
-
-@pytest.mark.isolated
-def test_build_prvsnr_pkgs(
-    request, rpm_build, tmpdir_function, custom_opts,
-):
-    prvsnr_pkg = rpm_build(
-        request, tmpdir_function, rpm_type='core',
-        version=custom_opts.version,
-        release_number=str(custom_opts.pkg_version)
-    )
-    prvsnr_api_pkg = rpm_build(
-        request, tmpdir_function, rpm_type='api',
-        pkg_version=str(custom_opts.pkg_version)
-    )
-
-    for pkg in (prvsnr_pkg, prvsnr_api_pkg):
-        dest = custom_opts.output / pkg.name
-        dest.write_bytes(pkg.read_bytes())
+yum -y install sshpass python3 gcc python3-devel
+rm -rf /var/cache/yum
