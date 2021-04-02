@@ -268,6 +268,7 @@ class LogLevelTypes(Enum):
 # bundled salt roots dirs
 BUNDLED_SALT_DIR = CONFIG_MODULE_DIR / 'srv'
 BUNDLED_SALT_FILEROOT_DIR = BUNDLED_SALT_DIR / 'salt'
+BUNDLED_SALT_FILEROOT_VENDOR_DIR = BUNDLED_SALT_DIR / 'salt-vendor'
 BUNDLED_SALT_PILLAR_DIR = BUNDLED_SALT_DIR / 'pillar'
 
 # profile parameters
