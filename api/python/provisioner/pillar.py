@@ -24,7 +24,7 @@ from pathlib import Path
 from . import values
 from .errors import BadPillarDataError
 from .vendor import attr
-from .utils import load_yaml, dump_yaml
+from . import utils
 from .salt import pillar_get, pillar_refresh
 from .config import (
     ALL_MINIONS,
@@ -148,6 +148,8 @@ class PillarIterable(PillarItemsAPI):
     # for each pillar item would be used'
     fpath: Optional[str] = None
 
+    expand: bool = False
+
     _pillars: Dict[PillarKey, Any] = attr.Factory(dict)
 
     def __attrs_post_init__(self):
@@ -165,6 +167,13 @@ class PillarIterable(PillarItemsAPI):
             raise TypeError(
                 f"unxpected type of 'pi_items': '{type(self.pi_items)}'"
             )
+
+        if self.expand:
+            # expand the tree into separated items
+            self._pillars = {
+                PillarKey(leaf.keypath, fpath=self.fpath): leaf.value
+                for leaf in utils.iterate_dict(self._pillars)
+            }
 
     def pillar_items(self) -> Iterable[Tuple[PillarKeyAPI, Any]]:
         return tuple(self._pillars.items())
@@ -383,7 +392,9 @@ class PillarUpdater:
         _path = self.add_merge_prefix(_path, local=self.local)
 
         if _path not in self._pillars:
-            self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
+            self._pillars[_path] = (
+                utils.load_yaml(_path) if _path.exists() else {}
+            )
         return self._pillars[_path]
 
     # TODO IMPROVE add option to verify updated pillar
@@ -444,7 +455,7 @@ class PillarUpdater:
     def dump(self) -> None:
         for path, pillar in self._pillars.items():
             self.ensure_exists(path)
-            dump_yaml(path, pillar)
+            utils.dump_yaml(path, pillar)
 
     # TODO test
     def apply(self, rollback_on_error=False) -> None:
@@ -480,13 +491,13 @@ class PillarUpdater:
                     PRVSNR_PILLAR_DIR / 'components' /
                     '{}.sls'.format(component)
                 )
-            return load_yaml(path)
+            return utils.load_yaml(path)
         elif reset:
             if path.exists():
                 path.unlink()
         elif pillar:
             cls.ensure_exists(path)
-            dump_yaml(path, pillar)
+            utils.dump_yaml(path, pillar)
 
 
 # FIXME EOS-15022 rename once tested enough
@@ -520,7 +531,9 @@ class PillarUpdaterNew(PillarUpdater):
             _path = self.pillar_path.host_path(path, self.targets)
 
         if _path not in self._pillars:
-            self._pillars[_path] = load_yaml(_path) if _path.exists() else {}
+            self._pillars[_path] = (
+                utils.load_yaml(_path) if _path.exists() else {}
+            )
         return self._pillars[_path]
 
     def refresh(self, targets: str = ALL_MINIONS):
