@@ -131,8 +131,10 @@ class ResourceManager:
         if trans_kwargs is None:
             trans_kwargs = {}
 
-        trans = transition_t(state, *trans_args, **trans_kwargs)
-        return trans.run(*args, targets=targets, **kwargs)
+        trans = transition_t(
+            state, *trans_args, targets=targets, **trans_kwargs
+        )
+        return trans.run(*args, **kwargs)
 
 
 # class ResourceManagerBase(ABC):

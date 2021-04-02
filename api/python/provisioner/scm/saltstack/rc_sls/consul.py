@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Any, Union
+from typing import Union
 import logging
 from pathlib import Path
 
@@ -50,12 +50,6 @@ class ConsulSLS(ResourceSLS):
     def version(self) -> str:
         return self.pillar.get('version', VERSION_LATEST)
 
-    def setup_roots(self, targets):
-        logger.info(
-            f"Preparing Consul roots for '{self.state.name}'"
-            f" on targets: {targets}"
-        )
-
 
 @attr.s
 class ConsulInstallSLS(ConsulSLS):
@@ -70,8 +64,8 @@ class ConsulInstallSLS(ConsulSLS):
         self._version = self.state.consul_version or VERSION_LATEST
         self.set_vendored(self.state.vendored)
 
-    def setup_roots(self, targets):
-        super().setup_roots(targets)
+    def setup_roots(self):
+        super().setup_roots()
         self.pillar_set(dict(version=str(self._version)))
 
 
@@ -80,8 +74,8 @@ class ConsulConfigSLS(ConsulSLS):
     sls = 'config'
     state_t = consul.ConsulConfig
 
-    def setup_roots(self, targets):
-        super().setup_roots(targets)
+    def setup_roots(self):
+        super().setup_roots()
 
         config = {}
         pillar = {'config': config, 'service': self.state.service}
@@ -139,7 +133,7 @@ class ConsulUpgradeSLS(ConsulSLS):
         }
     }
 
-    def run(self, targets: Any = config.ALL_TARGETS):
+    def run(self):
         for m_range, m_spec in self.migrations.items():
             if (
                 self.state.new_version == m_range.new_version
@@ -153,4 +147,4 @@ class ConsulUpgradeSLS(ConsulSLS):
             )
 
         self.sls = m_spec.get((self.state.iteration, self.state.level), None)
-        super().run(targets)
+        super().run()
