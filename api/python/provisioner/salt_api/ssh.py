@@ -266,6 +266,17 @@ class SaltSSHClient(SaltClientBase):
         },
         converter=utils.converter_path_resolved
     )
+    profile_name: str = attr.ib(
+        default=None,
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': (
+                    "name of the ssh profile. Ignored if"
+                    f" '--profile' is specified"
+                )
+            }
+        }
+    )
     ssh_options: Optional[Dict] = attr.ib(
         default=attr.Factory(
             lambda: [
@@ -298,6 +309,11 @@ class SaltSSHClient(SaltClientBase):
 
     def __attrs_post_init__(self):
         """Do post init."""
+
+        if not self.profile and self.profile_name:
+            self.profile = (
+                config.profile_base_dir().parent / self.profile_name
+            )
 
         if self.profile:
             paths = config.profile_paths(
