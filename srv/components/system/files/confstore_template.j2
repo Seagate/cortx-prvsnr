@@ -1,8 +1,8 @@
 {%- set cluster_id = grains['cluster_id'] %}
 support>user=>{{ pillar['system']['service-user']['name'] }}
 support>password=>{{ pillar['system']['service-user']['password'] }}
-cortx>software>csm>user=>{{ pillar['cortx']['software']['csm']['user'] }}
-cortx>software>csm>secret=>{{ pillar['cortx']['software']['csm']['secret'] }}
+cortx>software>csm>user=>{{ pillar['system']['service-user']['name'] }}
+cortx>software>csm>secret=>{{ pillar['system']['service-user']['password'] }}
 cortx>software>openldap>root>user=>{{ pillar['cortx']['software']['openldap']['root']['user'] }}
 cortx>software>openldap>root>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['openldap']['root']['secret'])) }}
 cortx>software>openldap>sgiam>user=>{{ pillar['cortx']['software']['openldap']['sgiam']['user'] }}
@@ -11,7 +11,7 @@ cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker
 cortx>software>corosync>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['corosync-pacemaker']['secret'])) }}
 cortx>software>common>message_bus_type=>kafka
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
-cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['data']['private_fqdn'] }}:9092
+cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:9092
 {%- endfor %}
 cortx>release>setup=>{{ pillar['cortx']['release']['setup'] }}
 cortx>release>product=>{{ pillar['cortx']['release']['product'] }}
@@ -93,7 +93,7 @@ storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>storage_set
 {%- endfor %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>type=>{{ pillar['storage'][enclosure]['controller']['type'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>user=>{{ pillar['storage'][enclosure]['controller']['user'] }}
-storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>password=>{{ salt['lyveutil.decrypt']('storage','{0}'.format(pillar['storage'][enclosure]['controller']['secret'])) }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secret=>{{ salt['lyveutil.decrypt']('storage','{0}'.format(pillar['storage'][enclosure]['controller']['secret'])) }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>ip=>{{ pillar['storage'][enclosure]['controller']['primary']['ip'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>port=>{{ pillar['storage'][enclosure]['controller']['primary']['port'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secondary>ip=>{{ pillar['storage'][enclosure]['controller']['secondary']['ip'] }}
