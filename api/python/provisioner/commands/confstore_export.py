@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Type
 from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
+from provisioner.api import grains_get
 from ..salt import (
     StateFunExecuter,
     local_minion_id,
@@ -53,6 +54,24 @@ logger = logging.getLogger(__name__)
 class ConfStoreExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     description = "Export pillar template data to ConfStore"
+
+    def _encrypt_value(self, key, value):
+        from cortx.utils.security import cipher
+        if not value:
+            return value
+        cypher_name = key.split('>')[0]
+        if 'bmc' in key:
+            cypher_id = key.split('>')[1]
+        elif 'storage_enclosure' in key:
+            cypher_id = key.split('>')[1]
+        else:
+            cypher_id = grains_get(
+                "cluster_id",
+                targets=local_minion_id()
+            )[local_minion_id()]["cluster_id"]
+        cipher_key = cipher.Cipher.generate_key(cypher_id, cypher_name)
+        return str(cipher.Cipher.encrypt(cipher_key, bytes(value, 'utf8')), 'utf-8')
+
 
     def run(self, **kwargs):
         """
@@ -100,7 +119,11 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             for data in template_data:
                 if data:
-                    Conf.set("provisioner", data.split('=>')[0], data.split('=>')[1])
+                    key = data.split('=>')[0]
+                    value = data.split('=>')[1]
+                    if 'secret' in key:
+                        value = self._encrypt_value(key, value)
+                    Conf.set("provisioner", key, value)
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
 
