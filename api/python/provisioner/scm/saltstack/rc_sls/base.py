@@ -15,11 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import ClassVar, Optional, Dict, Union, Any, Iterable
+from typing import ClassVar, Optional, Dict, Union, Any, List, Tuple
 from pathlib import Path
 import importlib
 import logging
 
+from provisioner import config, values
+from provisioner.pillar import PillarKey, PillarResolverNew
 from provisioner.values import _Singletone
 from provisioner.vendor import attr
 from provisioner.resources.base import (
@@ -29,21 +31,58 @@ from provisioner.resources.base import (
 )
 from provisioner.salt_api.base import SaltClientBase
 from provisioner.fileroot import ResourcePath
-from provisioner import config
 
 logger = logging.getLogger(__name__)
 
 MODULE_PATH = Path(__file__)
 MODULE_DIR = MODULE_PATH.resolve().parent
 
+VENDOR_SLS_PREFIX = 'vendor'
+
 
 @attr.s(auto_attribs=True)
 class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     """Base class for Salt state formulas that implement transitions."""
+    base_sls: ClassVar[Optional[str]] = None
     sls: ClassVar[Optional[str]] = None
 
     client: SaltClientBase
     pillar_inline: Dict = None
+
+    _pillar: Optional[dict] = attr.ib(init=False, default=None)
+
+    @property
+    def resource_type(self) -> config.CortxResourceT:
+        return self.state_t.resource_t.resource_t_id
+
+    @property
+    def resource_name(self) -> str:
+        return self.resource_type.value
+
+    @property
+    def pillar(self):
+        if self._pillar is None:
+            rc_key = PillarKey(self.resource_name)
+            pillar = PillarResolverNew(client=self.client).get((rc_key,))
+            rc_pillar = next(iter(pillar.values()))[rc_key]
+
+            self._pillar = (
+                rc_pillar if rc_pillar and rc_pillar is not values.MISSED
+                else {}
+            )
+        return self._pillar
+
+    @property
+    def is_vendored(self) -> bool:
+        return self.pillar.get('vendored', False)
+
+    def pillar_set(self, pillar: Dict, expand: bool = True):
+        return self.client.pillar_set({
+            self.resource_name: pillar
+        }, expand=expand)
+
+    def set_vendored(self, vendored: bool):
+        self.pillar_set(dict(vendored=vendored))
 
     def r_path(self, path: Union[str, Path]):
         return ResourcePath(self.resource_t, path)
@@ -64,11 +103,19 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             if self.pillar_inline:
                 fun_kwargs['pillar'] = self.pillar_inline
 
-            sls = (self.sls if isinstance(self.sls, Iterable) else [self.sls])
+            slss = (
+                self.sls if isinstance(self.sls, (List, Tuple)) else [self.sls]
+            )
 
-            for _sls in sls:
+            if self.is_vendored:
+                slss = [f'{VENDOR_SLS_PREFIX}.{sls}' for sls in slss]
+
+            if self.base_sls:
+                slss = [f'{self.base_sls}.{sls}' for sls in slss]
+
+            for sls in slss:
                 self.client.state_apply(
-                    _sls, targets=targets, fun_kwargs=fun_kwargs
+                    sls, targets=targets, fun_kwargs=fun_kwargs
                 )
 
 
