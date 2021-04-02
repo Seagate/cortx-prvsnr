@@ -22,6 +22,7 @@
 #     - if `validator` is specified explicitly as a key it overrides
 #   - converter: (the same as for validators)
 
+ipv4: {}
 nodes: {}
 path: {}
 path_exists:

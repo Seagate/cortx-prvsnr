@@ -15,19 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Union
-from pathlib import Path
+from typing import Union, List
 import logging
 from packaging.version import Version
+from ipaddress import IPv4Address
 
 from .base import (
     ResourceParams, ResourceBase, ResourceState
 )
-from provisioner import config
+from provisioner import config, attr_gen
 from provisioner.vendor import attr
 from provisioner.attr_gen import attr_ib
 
 logger = logging.getLogger(__name__)
+
+
+class VendorParamsMixin:
+    vendored: bool = attr_ib(cli_spec='setup/vendored', default=False)
 
 
 class UpgradeParams(ResourceParams):
@@ -49,8 +53,21 @@ class UpgradeParams(ResourceParams):
     )
 
 
-class ConsulParams(UpgradeParams):
-    pass
+class ConsulParams(UpgradeParams, VendorParamsMixin):
+    server: bool = attr_ib(cli_spec='consul/server', default=True)
+    bind_addr: IPv4Address = attr_ib(
+        'ipv4', cli_spec='consul/bind_addr', default='0.0.0.0'
+    )
+    # TODO List[ip4, domain] ???
+    retry_join: List[str] = attr_ib(
+        cli_spec='consul/retry_join', default=[]
+    )
+    version: Union[str, Version] = attr_ib(
+        'version', cli_spec='consul/vendor/version', default=None,
+        validator=attr.validators.optional(attr_gen.validator__version)
+    )
+
+    service: bool = attr_ib(init=False, default=True)
 
 
 @attr.s(auto_attribs=True)
@@ -65,6 +82,38 @@ class ConsulState(ResourceState):
 
 
 @attr.s
+class ConsulInstall(ConsulState):
+    name = 'install'
+    consul_version: Union[str, Version] = ConsulParams.version
+    vendored: bool = ConsulParams.vendored
+
+
+@attr.s
+class ConsulConfig(ConsulState):
+    name = 'config'
+
+    server: bool = ConsulParams.server
+    bind_addr: IPv4Address = ConsulParams.bind_addr
+    retry_join: List[str] = ConsulParams.retry_join
+    service: bool = ConsulParams.service
+
+
+@attr.s
+class ConsulStart(ConsulState):
+    name = 'start'
+
+
+@attr.s
+class ConsulStop(ConsulState):
+    name = 'stop'
+
+
+@attr.s
+class ConsulTeardown(ConsulState):
+    name = 'teardown'
+
+
+@attr.s
 class ConsulUpgrade(ConsulState):
     name = 'upgrade'
 
@@ -76,6 +125,8 @@ class ConsulUpgrade(ConsulState):
     # XXX - for UNCHANCGED values we may resolve real values here
     #       and validate only after that
     def __attrs_post_init__(self):  # noqa: C901
+        super().__attrs_post_init__()
+
         if not (self.new_version > self.old_version):
             raise ValueError(
                 f"New version '{self.new_version}' is less"

@@ -21,14 +21,16 @@ from pathlib import Path
 
 from .base import ResourceSLS
 
+from provisioner import config
 from provisioner.vendor import attr
 from provisioner.resources import consul
-from provisioner import config
 from packaging.specifiers import SpecifierSet
 from provisioner.attr_gen import attr_ib
 
 
 logger = logging.getLogger(__name__)
+
+VERSION_LATEST = 'latest'
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -37,31 +39,108 @@ class VersionRange:
     new_version: Union[str, Path] = attr_ib('version')
 
 
-migrations = {
-    VersionRange('>=1.2.4,<1.4.0', '1.6.9'): {
-        (1, config.ConfigLevelT.NODE): [
-            'consul.upgrade.ACL_tokens',
-            'consul.upgrade.1_6_9_config'
-        ]
-    },
-    VersionRange('>=1.4.0,<1.4.0', '1.6.9'): {
-        (1, config.ConfigLevelT.NODE): [
-            'consul.upgrade.ACL_tokens'
-        ]
-    }
-}
+@attr.s
+class ConsulSLS(ResourceSLS):
+    base_sls = 'resources.3rd_party.consul'
+
+    def __attrs_post_init__(self):
+        pass
+
+    @property
+    def version(self) -> str:
+        return self.pillar.get('version', VERSION_LATEST)
+
+    def setup_roots(self, targets):
+        logger.info(
+            f"Preparing Consul roots for '{self.state.name}'"
+            f" on targets: {targets}"
+        )
+
+
+@attr.s
+class ConsulInstallSLS(ConsulSLS):
+    sls = 'install'
+    state_t = consul.ConsulInstall
+
+    _version = str = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+
+        self._version = self.state.consul_version or VERSION_LATEST
+        self.set_vendored(self.state.vendored)
+
+    def setup_roots(self, targets):
+        super().setup_roots(targets)
+        self.pillar_set(dict(version=str(self._version)))
+
+
+@attr.s
+class ConsulConfigSLS(ConsulSLS):
+    sls = 'config'
+    state_t = consul.ConsulConfig
+
+    def setup_roots(self, targets):
+        super().setup_roots(targets)
+
+        config = {}
+        pillar = {'config': config, 'service': self.state.service}
+
+        config['server'] = self.state.server
+        config['bind_addr'] = str(self.state.bind_addr)
+        config['retry_join'] = self.state.retry_join
+
+        self.pillar_set(pillar, expand=True)
+
+
+@attr.s
+class ConsulStartSLS(ConsulSLS):
+    sls = 'start'
+    state_t = consul.ConsulStart
+
+
+@attr.s
+class ConsulStopSLS(ConsulSLS):
+    sls = 'stop'
+    state_t = consul.ConsulStop
+
+
+@attr.s
+class ConsulTeardownSLS(ConsulSLS):
+    sls = 'teardown'
+    state_t = consul.ConsulTeardown
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+
+        if self.is_vendored:
+            raise NotImplementedError(
+                'teardown for Consul vendored setup is not supported yet'
+            )
 
 
 # XXX validation after setup
-class ConsulUpgradeSLS(ResourceSLS):
+@attr.s
+class ConsulUpgradeSLS(ConsulSLS):
     sls = None
     state_t = consul.ConsulUpgrade
 
-    def setup_roots(self, targets):
-        pass
+    migrations = {
+        VersionRange('>=1.2.4,<1.4.0', '1.6.9'): {
+            (1, config.ConfigLevelT.NODE): [
+                'consul.upgrade.ACL_tokens',
+                'consul.upgrade.1_6_9_config'
+            ]
+        },
+        VersionRange('>=1.4.0,<1.4.0', '1.6.9'): {
+            (1, config.ConfigLevelT.NODE): [
+                'consul.upgrade.ACL_tokens'
+            ]
+        }
+    }
 
     def run(self, targets: Any = config.ALL_TARGETS):
-        for m_range, m_spec in migrations.items():
+        for m_range, m_spec in self.migrations.items():
             if (
                 self.state.new_version == m_range.new_version
                 and m_range.old_versions.contains(self.state.old_version)

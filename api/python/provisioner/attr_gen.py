@@ -19,6 +19,7 @@ import sys
 import logging
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
+from ipaddress import IPv4Address
 
 from provisioner.vendor import attr
 
@@ -53,11 +54,18 @@ def converter__nodes(*specs):
 
 
 def converter__version(value):
-    return (value if isinstance(value, Version) else Version(value))
+    return (
+        value if value is None or isinstance(value, Version)
+        else Version(value)
+    )
 
 
 def converter__version_specifier(value):
     return (value if isinstance(value, SpecifierSet) else SpecifierSet(value))
+
+
+def converter__ipv4(value) -> IPv4Address:
+    return IPv4Address(value)
 
 
 # VALIDATORS
@@ -75,6 +83,10 @@ def validator__subclass_of(instance, attribute, value):
 
 def validator__version(instance, attribute, value):
     return attr.validators.instance_of(Version)(instance, attribute, value)
+
+
+def validator__ipv4(instance, attribute, value):
+    return attr.validators.instance_of(IPv4Address)(instance, attribute, value)
 
 
 def validator__version_specifier(instance, attribute, value):

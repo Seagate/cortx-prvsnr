@@ -68,7 +68,7 @@ def iterate_dict(d, path: Path = None, filter_f=None) -> Iterator[DictLeaf]:
     # list: considering changes in base dictionary during the iteration
     for k in list(d):
         v = d[k]
-        _path = (Path(k) if path is None else (path / k))
+        _path = (Path(str(k)) if path is None else (path / k))
         if isinstance(v, dict):
             yield from iterate_dict(v, _path, filter_f)
         else:
