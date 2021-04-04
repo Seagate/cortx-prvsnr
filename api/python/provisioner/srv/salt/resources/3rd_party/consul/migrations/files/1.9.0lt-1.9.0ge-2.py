@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,21 +16,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Format notes:
-#   - top level keys are types of attributes
-#   - validators:
-#     - each type may have related validator as validator__<type>
-#     - if `validator` is specified explicitly as a key it overrides
-#   - converter: (the same as for validators)
 
-# TODO:
-# - optional support for validators
-# - None support for converters
+import json
+from pathlib import Path
 
-ipv4: {}
-nodes: {}
-path: {}
-path_exists:
-  converter: path_resolved
-version: {}
-version_specifier: {}
+CONFIG_PATH = '/etc/consul.d/config.json'
+TELEMETRY_KEY = 'telemetry'
+DISABLE_KEY = 'disable_compat_1.9'
+
+config_path = Path(CONFIG_PATH)
+
+config = json.loads(config_path.read_text())
+
+if TELEMETRY_KEY not in config:
+    config[TELEMETRY_KEY] = {}
+
+telemetry = config[TELEMETRY_KEY]
+
+telemetry[DISABLE_KEY] = (
+    telemetry.get(DISABLE_KEY) or True
+)
+
+config_path.write_text(json.dumps(config, indent=4))

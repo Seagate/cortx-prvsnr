@@ -43,12 +43,17 @@ upgrade:
   new_version: new version number
 consul:
     server: This flag is used to control if an agent is in server or client mode
-    bind_addr: The address that should be bound to for internal Consul cluster communications
+    bind_addr:
+      help: The address that should be bound to for internal Consul cluster communications
+      metavar: ipv4
     retry_join:
       help: Consul server for retry-join at start
       nargs: '*'
-    vendor:
-      version: Consul version to setup
+      metavar: ipv4
+    version: Consul version to setup
+    bootstrap_expect:
+      help: the number of expected servers in the Consul datacenter
+      metavar: number
 glusterfs:
   peers:
     help: gluster peer host (IP/domain)

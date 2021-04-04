@@ -24,7 +24,7 @@ from .base import ResourceSLS
 from provisioner import config
 from provisioner.vendor import attr
 from provisioner.resources import consul
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import Version, SpecifierSet
 from provisioner.attr_gen import attr_ib
 
 
@@ -36,7 +36,7 @@ VERSION_LATEST = 'latest'
 @attr.s(auto_attribs=True, frozen=True)
 class VersionRange:
     old_versions: Union[str, SpecifierSet] = attr_ib('version_specifier')
-    new_version: Union[str, Path] = attr_ib('version')
+    new_version: Union[str, Version] = attr_ib('version')
 
 
 @attr.s
@@ -82,6 +82,7 @@ class ConsulConfigSLS(ConsulSLS):
 
         config['server'] = self.state.server
         config['bind_addr'] = str(self.state.bind_addr)
+        config['bootstrap_expect'] = self.state.bootstrap_expect
         config['retry_join'] = self.state.retry_join
 
         self.pillar_set(pillar, expand=True)
@@ -120,18 +121,19 @@ class ConsulUpgradeSLS(ConsulSLS):
     state_t = consul.ConsulUpgrade
 
     migrations = {
-        VersionRange('>=1.2.4,<1.4.0', '1.6.9'): {
+        VersionRange('<1.9.0', '1.9.1'): {
             (1, config.ConfigLevelT.NODE): [
-                'consul.upgrade.ACL_tokens',
-                'consul.upgrade.1_6_9_config'
-            ]
-        },
-        VersionRange('>=1.4.0,<1.4.0', '1.6.9'): {
-            (1, config.ConfigLevelT.NODE): [
-                'consul.upgrade.ACL_tokens'
+                'migrations.1_9_0lt-1_9_0ge-1',
+            ],
+            (2, config.ConfigLevelT.NODE): [
+                'migrations.1_9_0lt-1_9_0ge-2',
             ]
         }
     }
+
+    @property
+    def is_vendored(self) -> bool:
+        return False
 
     def run(self):
         for m_range, m_spec in self.migrations.items():
@@ -147,4 +149,4 @@ class ConsulUpgradeSLS(ConsulSLS):
             )
 
         self.sls = m_spec.get((self.state.iteration, self.state.level), None)
-        super().run()
+        return super().run()

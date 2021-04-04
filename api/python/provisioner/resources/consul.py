@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Union, List
+from typing import Union, List, Optional
 import logging
 from packaging.version import Version
 from ipaddress import IPv4Address
@@ -43,7 +43,7 @@ class UpgradeParams(ResourceParams):
     )
     iteration: Union[str, int] = attr_ib(
         cli_spec='upgrade/iteration',
-        default=0,
+        default=1,
         converter=int
     )
     level: config.ConfigLevelT = attr_ib(
@@ -58,15 +58,23 @@ class ConsulParams(UpgradeParams, VendorParamsMixin):
     bind_addr: IPv4Address = attr_ib(
         'ipv4', cli_spec='consul/bind_addr', default='0.0.0.0'
     )
+    bootstrap_expect: Optional[int] = attr_ib(
+        cli_spec='consul/bootstrap_expect',
+        default=None,
+        converter=attr.converters.optional(int),
+        # TODO check positives only
+        validator=attr.validators.optional(
+            attr.validators.instance_of(int)
+        )
+    )
     # TODO List[ip4, domain] ???
     retry_join: List[str] = attr_ib(
         cli_spec='consul/retry_join', default=[]
     )
     version: Union[str, Version] = attr_ib(
-        'version', cli_spec='consul/vendor/version', default=None,
+        'version', cli_spec='consul/version', default=None,
         validator=attr.validators.optional(attr_gen.validator__version)
     )
-
     service: bool = attr_ib(init=False, default=True)
 
 
@@ -94,6 +102,7 @@ class ConsulConfig(ConsulState):
 
     server: bool = ConsulParams.server
     bind_addr: IPv4Address = ConsulParams.bind_addr
+    bootstrap_expect: Optional[int] = ConsulParams.bootstrap_expect
     retry_join: List[str] = ConsulParams.retry_join
     service: bool = ConsulParams.service
 
@@ -125,8 +134,6 @@ class ConsulUpgrade(ConsulState):
     # XXX - for UNCHANCGED values we may resolve real values here
     #       and validate only after that
     def __attrs_post_init__(self):  # noqa: C901
-        super().__attrs_post_init__()
-
         if not (self.new_version > self.old_version):
             raise ValueError(
                 f"New version '{self.new_version}' is less"

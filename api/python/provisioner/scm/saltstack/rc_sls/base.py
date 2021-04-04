@@ -116,6 +116,7 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     def run(self):
         self.setup_roots()
 
+        res = []
         # XXX possibly a divergence with a design
         # some SLS may just shifts root without any states appliance
         if self.sls:
@@ -134,9 +135,12 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
                 slss = [f'{self.base_sls}.{sls}' for sls in slss]
 
             for sls in slss:
-                self.client.state_apply(
+                _res = self.client.state_apply(
                     sls, targets=self.targets, fun_kwargs=fun_kwargs
                 )
+                res.append(_res)
+
+            return res
 
 
 # arbitrary dir and recursive are not support for now
