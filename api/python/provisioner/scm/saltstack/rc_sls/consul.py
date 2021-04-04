@@ -114,6 +114,16 @@ class ConsulTeardownSLS(ConsulSLS):
             )
 
 
+@attr.s
+class ConsulSanityCheckSLS(ConsulSLS):
+    sls = 'sanity_check'
+    state_t = consul.ConsulSanityCheck
+
+    @property
+    def is_vendored(self) -> bool:
+        return False
+
+
 # XXX validation after setup
 @attr.s
 class ConsulUpgradeSLS(ConsulSLS):

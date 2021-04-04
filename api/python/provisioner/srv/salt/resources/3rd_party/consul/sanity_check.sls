@@ -15,5 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - ..start
+Check Consul version:
+  cmd.run:
+    - name: consul -v
+
+# TODO better check basing on service module
+Check Consul service:
+  cmd.run:
+    - name: systemctl status consul

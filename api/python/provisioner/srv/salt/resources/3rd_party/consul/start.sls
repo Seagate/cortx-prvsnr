@@ -15,5 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - ..start
+Start Consul:
+  service.running:
+    - name: consul.service
+    - enable: True

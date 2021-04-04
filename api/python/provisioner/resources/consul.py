@@ -123,6 +123,11 @@ class ConsulTeardown(ConsulState):
 
 
 @attr.s
+class ConsulSanityCheck(ConsulState):
+    name = 'sanity-check'
+
+
+@attr.s
 class ConsulUpgrade(ConsulState):
     name = 'upgrade'
 
