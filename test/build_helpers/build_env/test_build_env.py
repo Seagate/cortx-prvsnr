@@ -56,6 +56,7 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function, request):
 
 
 @pytest.mark.isolated
+@pytest.mark.timeout(86400)  # one day timeout
 def test_build_setup_env(
     request, root_passwd, nodes_num, ssh_config, env_provider,
     ask_proceed
