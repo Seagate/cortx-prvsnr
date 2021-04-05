@@ -17,8 +17,8 @@
 #
 #
 import curses
-from color_code import ColorCode
-from window import Window
+from .color_code import ColorCode
+from .window import Window
 
 
 class SuccessWindow(Window):
