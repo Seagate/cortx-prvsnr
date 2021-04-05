@@ -1074,6 +1074,8 @@ class SWUpgradeRemoveRepo(ParamDictItemInputBase):
     release: str = ParamDictItemInputBase._attr_ib(
         is_key=True,
         descr="release version",
+        # TODO: It is the rough version of regex because we didn't have the
+        #  final representation of the release version from the RE team.
         validator=attr.validators.matches_re(
             "^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
         converter=str
@@ -1087,12 +1089,12 @@ class SWUpgradeRemoveRepo(ParamDictItemInputBase):
     @property
     def pillar_value(self):
         res = {
-            f"{repo}": None
+            f"{repo}": UNDEFINED
             for repo in (config.OS_ISO_DIR,
                          config.CORTX_ISO_DIR,
                          config.CORTX_3RD_PARTY_ISO_DIR,
-                         config.CORTX_PYTHON_ISO_DIR)
+                         config.CORTX_PYTHON_ISO_DIR,
+                         self.release)
         }
-        res[self.release] = None
 
         return res
