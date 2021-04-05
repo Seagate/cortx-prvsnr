@@ -17,14 +17,10 @@
 
 import logging
 from typing import Type
-from pathlib import Path
 from .. import inputs
 from . import CommandParserFillerMixin
-from ..config import CONFIG_MODULE_DIR
 from ..vendor import attr
-from ..utils import run_subprocess_cmd
-from ..errors import ProvisionerError
-
+from ..ui.main import start_tui
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +33,5 @@ class ConfigureNode(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
     def run(self, **kwargs):
-        ui_script_path = str(CONFIG_MODULE_DIR / 'ui/main.py')
-
-        if not Path(ui_script_path).is_file():
-            raise ProvisionerError(f'{ui_script_path} file is missing')
-
-        run_subprocess_cmd([f"python3 {ui_script_path}"],
-                           shell=True, stdout=None, stderr=None)
-        return
+        # Start northbound interface TUI
+        return start_tui()
