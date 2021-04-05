@@ -14,6 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# API for configuration of setup
 
 import configparser
 import logging
@@ -28,7 +29,8 @@ from . import CommandParserFillerMixin
 from .validator import (
     NetworkParamsValidator,
     NodeParamsValidator,
-    StorageEnclosureParamsValidator
+    StorageEnclosureParamsValidator,
+    ConfigValidator
 )
 from ..inputs import (
     METADATA_ARGPARSER,
@@ -120,6 +122,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                     # Node specific '.' separated params
                     # The '.' get replaced with '_'
                     params[f'{val[-2]}_{val[-1]}'] = input_data[key]
+
                 elif val[-1] in [
                     'data_devices', 'metadata_devices'
                 ]:
@@ -167,7 +170,10 @@ class ConfigureSetup(CommandParserFillerMixin):
 
 
     def _dict_merge(self, dict_1, dict_2):
-        """Merge dict_1 to dict_2 recursively"""
+        """
+        Merge dict_1 to dict_2 recursively
+
+        """
         for key in dict_2.keys():
             if key in dict_1:
                 if (
@@ -187,7 +193,10 @@ class ConfigureSetup(CommandParserFillerMixin):
 
 
     def _key_int_to_list(self, contents):
-        """Treat integer values in keys to arrays and update dict values"""
+        """
+        Treat integer values in keys to arrays and update dict values
+
+        """
         ret_val = None
         for key in contents.keys():
             if key.isdigit():
@@ -205,19 +214,25 @@ class ConfigureSetup(CommandParserFillerMixin):
 
 
     def _parse_input(self, input_data):
+        """
+        Parses content to string or arrays based on the category
+
+        """
         kv_to_dict = dict()
+        keys_of_type_list = [
+            'interfaces', 'roles', 'data_devices', 'metadata_devices'
+        ]
         for key in input_data.keys():
             if input_data.get(key) and "," in input_data.get(key):
-                input_data[key] = [element.strip() for element in input_data.get(key).split(",")]
-            elif (
-                'interfaces' in key or
-                'roles' in key or
-                'data_devices' in key or
-                'metadata_devices' in key
-            ):
+                input_data[key] = [
+                   element.strip() for element in input_data.get(key).split(",")
+                ]
+
+            elif any(k in key for k in keys_of_type_list):
                 # special case single value as array
                 # Need to fix this array having single value
                 input_data[key] = [input_data.get(key)]
+
             else:
                 if input_data.get(key):
                     if 'NONE' == input_data.get(key).upper():
@@ -252,72 +267,72 @@ class ConfigureSetup(CommandParserFillerMixin):
         if not Path(path).is_file():
             raise ValueError('config file is missing')
 
+        validate = ConfigValidator()
         config = configparser.ConfigParser()
         config.read(path)
         logger.info("Updating salt data")
-        content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
-        logger.debug(f"Data from config.ini: \n{content}")
 
-        input_type = None
-        pillar_type = None
-        srvnode_count = enclosure_count = int(number_of_nodes)
+        content = {section: dict(config.items(section))
+                   for section in config.sections()}
+        logger.debug(
+            f"Config data read from config.ini: \n{content}"
+        )
 
-        # Process srvnode_default section
+        # Parse config sections
+        parsed = validate._parse_sections(content)
+
+        # Validate node count
+        validate._validate_node_count(
+           number_of_nodes, parsed
+        )
+
+        pillar_map = {'node': 'cluster',
+                      'cluster': 'cluster',
+                      'storage': 'storage'}
+
+        # Process default sections
         # copy data from srvnode_default to individual server_node sections
         # delete srvnode_default section
+        # Same with enclosure_default section
+
         srvnode_default = enclosure_default = None
-        if content.get("srvnode_default"):
-            srvnode_default = content.get("srvnode_default")
+
+        if parsed["srvnode_default"]:
+            # 'default' sections found in config file
+
+            srvnode_default = parsed["srvnode_default"]
+            enclosure_default = parsed["enclosure_default"]
             del content["srvnode_default"]
-        if content.get("enclosure_default"):
-            enclosure_default = content.get("enclosure_default")
             del content["enclosure_default"]
 
-        logger.debug(f"Content ready for unification: \n{content}")
         for section in content.keys():
-            if (
-                'srvnode' in section and
-                srvnode_default
-            ):
+
+            if 'srvnode' in section and srvnode_default:
                 tmp_section = deepcopy(srvnode_default)
-            elif (
-                'enclosure' in section and
-                enclosure_default
-            ):
+
+            elif 'enclosure' in section and enclosure_default:
                 tmp_section = deepcopy(enclosure_default)
+
             else:
                 tmp_section = content[section]
 
             tmp_section.update(content[section])
             content[section] = tmp_section
-            logger.debug(f"Content {section}::{content[section]}")
 
-        logger.debug(f"Unified sections: \n{content}")
-
-        for section in content.keys():
             logger.debug(
-                f"Processing section: {section}\n"
-                f"Processing content: {content[section]}"
+                f"Processing content for {section}::{content[section]}"
             )
 
-            if 'srvnode' in section:
-                input_type = 'node'
-                pillar_type = f'cluster/{section}'
-                srvnode_count = srvnode_count - 1
-            elif 'enclosure' in section:
-                input_type = 'storage'
-                pillar_type = f'storage/{section}'
-                enclosure_count = enclosure_count - 1
+            input_type = ('node' if 'srvnode' in section
+                          else 'storage' if 'enclosure' in section
+                          else 'cluster')
+
+            pillar_type = f'{pillar_map[input_type]}/{section}'
 
             self._validate_params(input_type, content[section])
             content[section] = self._parse_input(content[section])
 
-            # logger.debug(f"Dictionarized contents: {content}")
+            logger.debug(f"Final content to set:: {content[section]}")
             PillarSet().run(f"{pillar_type}", content[section])
-
-        if srvnode_count > 0:
-            raise ValueError(f"Node information for {srvnode_count} node missing")
-        if enclosure_count > 0:
-            raise ValueError(f"Enclosure information for {enclosure_count} node missing")
 
         logger.info("Pillar data updated Successfully.")

@@ -28,6 +28,7 @@ from .validator import (FileValidator,
 from .network import NetworkParamsValidator
 from .node import NodeParamsValidator
 from .enclosure import StorageEnclosureParamsValidator
+from .config_sections import ConfigValidator
 
 __all__ = [
     "FileValidator",
@@ -40,5 +41,6 @@ __all__ = [
     "ReleaseInfoValidator",
     "NetworkParamsValidator",
     "NodeParamsValidator",
-    "StorageEnclosureParamsValidator"
+    "StorageEnclosureParamsValidator",
+    "ConfigValidator"
 ]
