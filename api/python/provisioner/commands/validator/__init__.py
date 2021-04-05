@@ -14,16 +14,20 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
 from .validator import (FileValidator,
                         DirValidator,
                         FileSchemeValidator,
                         YumRepoDataValidator,
                         HashSumValidator,
-                        YumRepoDataValidator,
                         ContentFileValidator,
                         ReleaseInfoContentScheme,
                         ReleaseInfoValidator
                         )
+
+from .network import NetworkParamsValidator
+from .node import NodeParamsValidator
+from .enclosure import StorageEnclosureParamsValidator
 
 __all__ = [
     "FileValidator",
@@ -31,8 +35,10 @@ __all__ = [
     "FileSchemeValidator",
     "YumRepoDataValidator",
     "HashSumValidator",
-    "YumRepoDataValidator",
     "ContentFileValidator",
     "ReleaseInfoContentScheme",
-    "ReleaseInfoValidator"
+    "ReleaseInfoValidator",
+    "NetworkParamsValidator",
+    "NodeParamsValidator",
+    "StorageEnclosureParamsValidator"
 ]
