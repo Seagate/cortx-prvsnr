@@ -15,21 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+import psutil
 
-Remove USL cert file:
-  file.absent:
-    - names:
-      - /var/csm/tls
 
-Remove uds package:
-  pkg.purged:
-    - name: uds
+def netmask():
+    """
+    Adds netmask of respective interface to grains data.
 
-Delete uds yum repo:
-  pkgrepo.absent:
-    - name: {{ defaults.uds.repo.id }}
+    """
 
-Delete uds checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.uds
+    interface_details = psutil.net_if_addrs()
+    netmask = {}
+    for iface in interface_details:
+        netmask[iface] = interface_details[iface][0].netmask
+
+    return {'ip4_netmask': netmask}

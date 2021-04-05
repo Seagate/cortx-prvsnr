@@ -1830,16 +1830,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 targets=ALL_MINIONS
             )
 
-        logger.info("Refresh enclosure id on the system")
-        for state in [
-            'components.system.storage.enclosure_id',
-            'components.system.storage.enclosure_id.config.set_pillar'
-        ]:
-            ssh_client.cmd_run(
-                f"salt-call state.apply {state}",
-                targets=ALL_MINIONS
-            )
-
         inline_pillar = None
         if run_args.source == 'local':
             for pkg in [
@@ -1897,6 +1887,17 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                "provisioner set_cluster_id"
             ), targets=run_args.primary.minion_id
         )
+
+        logger.info("Refresh enclosure id on the system")
+        for state in [
+            'components.system.storage.enclosure_id',
+            'components.system.storage.enclosure_id.config.set_pillar'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
+
 
         return setup_ctx
 
