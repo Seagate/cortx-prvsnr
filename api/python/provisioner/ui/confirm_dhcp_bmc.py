@@ -16,7 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from question_window import QuestionWindow
+from .question_window import QuestionWindow
 
 
 class DHCPBmcWindow(QuestionWindow):

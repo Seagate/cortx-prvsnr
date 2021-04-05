@@ -17,12 +17,12 @@
 #
 #
 import curses
-import config
-from window import Window
-from color_code import ColorCode
-from text_box import TextBox
-from success import SuccessWindow
-from pillar import Pillar
+from . import config
+from .window import Window
+from .color_code import ColorCode
+from .text_box import TextBox
+from .success import SuccessWindow
+from .pillar import Pillar
 
 
 class FormWindow(Window):

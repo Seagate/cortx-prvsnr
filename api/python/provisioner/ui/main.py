@@ -17,11 +17,11 @@
 #
 #
 import curses
-import config
-from main_menu import MainMenu
-from color_code import ColorCode
-from header import HeaderWindow
-from window import Window
+from . import config
+from .main_menu import MainMenu
+from .color_code import ColorCode
+from .header import HeaderWindow
+from .window import Window
 
 
 def main(stdscr):
@@ -51,5 +51,9 @@ def main(stdscr):
     winds.process_input(config.menu_color)
 
 
-if __name__ == '__main__':
+def start_tui():
     curses.wrapper(main)
+
+
+if __name__ == '__main__':
+    start_tui()

@@ -16,9 +16,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-import config
-from window import Window
-from color_code import ColorCode
+from . import config
+from .window import Window
+from .color_code import ColorCode
 
 
 class HeaderWindow(Window):

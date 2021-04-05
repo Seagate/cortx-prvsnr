@@ -17,8 +17,8 @@
 #
 #
 import curses
-from window import Window
-from color_code import ColorCode
+from .window import Window
+from .color_code import ColorCode
 
 
 class QuestionWindow(Window):

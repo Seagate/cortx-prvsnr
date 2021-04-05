@@ -17,10 +17,10 @@
 #
 #
 import curses
-import config
+from . import config
 import importlib
-from window import Window
-from color_code import ColorCode
+from .window import Window
+from .color_code import ColorCode
 
 
 class MainMenu(Window):
@@ -122,7 +122,7 @@ class MainMenu(Window):
 
                         try:
                             wid_mod = importlib.import_module(
-                                f'{module}'
+                                f'.{module}', 'provisioner.ui'
                             )
                         except ImportError:
                             raise

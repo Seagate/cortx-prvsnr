@@ -16,8 +16,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-import config
-from color_code import ColorCode
+from . import config
+from .color_code import ColorCode
 
 
 class Window:

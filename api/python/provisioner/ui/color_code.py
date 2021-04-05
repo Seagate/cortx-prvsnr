@@ -17,7 +17,7 @@
 #
 #
 import curses
-import config
+from . import config
 from provisioner.errors import ProvisionerError
 
 

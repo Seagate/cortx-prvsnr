@@ -16,7 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-from form_window import FormWindow
+from .form_window import FormWindow
 
 
 class TimeServerWindow(FormWindow):

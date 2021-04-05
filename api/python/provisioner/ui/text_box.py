@@ -18,8 +18,8 @@
 #
 import curses
 from curses.textpad import Textbox
-from validation import Validation
-from color_code import ColorCode
+from .validation import Validation
+from .color_code import ColorCode
 
 
 class TextBox():

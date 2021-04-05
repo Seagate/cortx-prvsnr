@@ -6,4 +6,4 @@ TUI (Terminal User Interface) provides user with a tool, which enables interacti
 
 1. command to start provisioner TUI
 
--  `python3 api/python/provisioner/ui/main.py`
+-  `provisioner configure_node`

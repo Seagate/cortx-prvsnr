@@ -16,9 +16,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-import config
-from mgmt_vip import MgmtVIPWindow
-from question_window import QuestionWindow
+from . import config
+from .mgmt_vip import MgmtVIPWindow
+from .question_window import QuestionWindow
 
 
 class IsPrimaryWindow(QuestionWindow):
