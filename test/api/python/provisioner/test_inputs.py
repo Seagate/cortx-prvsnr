@@ -620,64 +620,64 @@ def test_inputs_SWUpdateRepo_source_init(tmpdir_function, patch_logging):
 
     # special values
     for source in values._values.values():
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == source
 
-    res = SWUpdateRepo(None, some_release)
+    res = SWUpdateRepo(some_release, source=None)
     assert res.source == UNCHANGED
 
     # directory
     repo_dir = tmpdir_function / 'repo'
     repo_dir.mkdir()
     for source in (repo_dir, str(repo_dir)):
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == repo_dir
 
     # iso file
     repo_iso = tmpdir_function / 'repo.iso'
     repo_iso.touch()
     for source in (repo_iso, str(repo_iso)):
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == repo_iso
 
     # other existent file object
     non_iso_file = tmpdir_function / 'repo.file'
     non_iso_file.touch()
     with pytest.raises(SWUpdateRepoSourceError) as excinfo:
-        SWUpdateRepo(str(non_iso_file), some_release)
+        SWUpdateRepo(some_release, source=str(non_iso_file))
     assert excinfo.value.source == str(non_iso_file)
     assert excinfo.value.reason == 'not an iso file'
 
     # existent object but neither file nor dir
     bad_object = '/dev/null'
     with pytest.raises(SWUpdateRepoSourceError) as excinfo:
-        SWUpdateRepo(bad_object, some_release)
+        SWUpdateRepo(some_release, source=bad_object)
     assert excinfo.value.source == bad_object
     assert excinfo.value.reason == 'not a file or directory'
 
     # urls are expected to start with http:// or https://
     for source in ('http://some/http/url', 'https://some/http/url'):
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.source == source
 
     # any other cases are treated as invalid
     source = 'some/string'
     with pytest.raises(SWUpdateRepoSourceError) as excinfo:
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
     assert excinfo.value.source == source
     assert excinfo.value.reason == 'unexpected type of source'
 
     # TODO non absolute existent one
 
     # non canonical absolute path
-    res = SWUpdateRepo(repo_dir / '..' / 'repo.iso', some_release)
+    res = SWUpdateRepo(some_release, source=(repo_dir / '..' / 'repo.iso'))
     assert res.source == repo_iso
 
 
 def test_inputs_SWUpdateRepo_pillar_key(tmpdir_function):
     some_release = '1.2.3'
 
-    res = SWUpdateRepo('http://some/http/url', some_release)
+    res = SWUpdateRepo(some_release, source='http://some/http/url')
     assert res.pillar_key == some_release
 
 
@@ -692,23 +692,23 @@ def test_inputs_SWUpdateRepo_pillar_value(tmpdir_function):
 
     # special values
     for source in values._values.values():
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.pillar_value == source
 
-    res = SWUpdateRepo(None, some_release)
+    res = SWUpdateRepo(some_release, source=None)
     assert res.pillar_value == UNCHANGED
 
     # directory
-    res = SWUpdateRepo(repo_dir, some_release)
+    res = SWUpdateRepo(some_release, source=repo_dir)
     assert res.pillar_value == 'dir'
 
     # iso file
-    res = SWUpdateRepo(repo_iso, some_release)
+    res = SWUpdateRepo(some_release, source=repo_iso)
     assert res.pillar_value == 'iso'
 
     # urls are expected to start with http:// or https://
     for source in ('http://some/http/url', 'https://some/http/url'):
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         assert res.pillar_value == source
 
 
@@ -729,22 +729,22 @@ def test_inputs_SWUpdateRepo_is_apis(tmpdir_function):
 
     # special values
     for source in values._values.values():
-        res = SWUpdateRepo(source, some_release)
+        res = SWUpdateRepo(some_release, source=source)
         _check('is_special')
 
-    res = SWUpdateRepo(None, some_release)
+    res = SWUpdateRepo(some_release, source=None)
     _check('is_special')
 
     # directory
-    res = SWUpdateRepo(repo_dir, some_release)
+    res = SWUpdateRepo(some_release, source=repo_dir)
     _check('is_local', 'is_dir')
 
     # iso file
-    res = SWUpdateRepo(repo_iso, some_release)
+    res = SWUpdateRepo(some_release, source=repo_iso)
     _check('is_local', 'is_iso')
 
     # urls
-    res = SWUpdateRepo('https://some/http/url', some_release)
+    res = SWUpdateRepo(some_release, source='https://some/http/url')
     _check('is_remote')
 
 
