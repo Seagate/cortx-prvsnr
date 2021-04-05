@@ -210,7 +210,7 @@ def set_network(dry_run=False, nowait=False, **kwargs):
 
 
 def set_swupdate_repo(
-        release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
+    release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
 ):
     r"""Configures update repository.
 
@@ -227,8 +227,8 @@ def set_swupdate_repo(
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
-        'set_swupdate_repo', release,
-        source=source, targets=targets, dry_run=dry_run, nowait=nowait
+        'set_swupdate_repo',
+        release, source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
 
 
