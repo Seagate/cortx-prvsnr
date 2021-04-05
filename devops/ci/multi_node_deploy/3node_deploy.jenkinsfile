@@ -136,11 +136,11 @@ node {
                     yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
                     
                     cat <<EOF >/etc/pip.conf
-                    [global]
-                    timeout: 60
-                    index-url: $CORTX_RELEASE_REPO/python_deps/
-                    trusted-host: $(echo $CORTX_RELEASE_REPO | awk -F '/' '{print $3}')
-                    EOF
+[global]
+timeout: 60
+index-url: $CORTX_RELEASE_REPO/python_deps/
+trusted-host: \$(echo $CORTX_RELEASE_REPO | awk -F '/' '{print \$3}')
+EOF
 
                     yum install --nogpgcheck -y python3 cortx-prereq
                     yum install --nogpgcheck -y python36-m2crypto salt salt-master salt-minion
@@ -157,7 +157,7 @@ node {
                 echo "Successfully installed Provisioner API!"
             }
         
-            stage("Bootstrap Provisioner") {               
+            stage("Provisioner Bootstrap") {               
                 nodes = ""
                 for (remote in remotes) {
                     nodes += "${remote.name}:${remote.host}" + " "
@@ -173,7 +173,7 @@ node {
                 """
             }
             
-            stage("Validate Bootstrap Provisioner") {
+            stage("Validate Provisioner Bootstrap") {
                 sshCommand remote: remotes[0], command: """
                     salt '*' test.ping
                     salt "*" service.stop puppet

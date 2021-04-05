@@ -56,50 +56,85 @@ node {
         for ( remote in remotes.reverse() ) {
             stage("${remote.name}: SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
-                echo "Successfully connected to VM ${remote.host}!"
+                echo "Successful connected to VM ${remote.host}!"
             }
         }    
 
-        stage("${remotes[0].host}: Teardown of Cortx Stack!") {
+        stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
-                /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states || true
+                command -v provisioner &>/dev/null && command -v provisioner &>/dev/null && provisioner destroy --states ha || true
             """
-            echo "Successfully teardown of Cortx Stack!"
+            echo "Successful teardown: HA"
+        }
+
+        stage("Teardown: Control-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+            """
+            echo "Successful teardown: Control-Path"
+        }
+
+        stage("Teardown: IO-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+            """
+            echo "Successful teardown: IO-Path"
+        }
+
+        stage("Teardown: 3rd_Party") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+            """
+            echo "Successful teardown: 3rd-Party"
+        }
+
+        stage("Teardown: Platform") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+            """
+            echo "Successful teardown: Platform"
+        }
+
+        stage("Teardown: Provisioner Bootstrap") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+            """
+            echo "Successful teardown: Bootstrap"
         }
 
         for (remote in remotes.reverse()) {
-            stage("${remote.name}: Stop Salt services") {
-                sshCommand remote: remote, command: """
-                    systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
-                    systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
-                    systemctl status glusterd >/dev/null && systemctl stop glusterd || true
-                    systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
-                    systemctl status salt-master >/dev/null && systemctl stop salt-master || true
-                """
-                echo "Sucessfully stopped salt and gluster services"
-            }
+            // stage("${remote.name}: Stop Salt services") {
+            //     sshCommand remote: remote, command: """
+            //         systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
+            //         systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
+            //         systemctl status glusterd >/dev/null && systemctl stop glusterd || true
+            //         systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
+            //         systemctl status salt-master >/dev/null && systemctl stop salt-master || true
+            //     """
+            //     echo "Sucessfully stopped salt and gluster services"
+            // }
 
-            stage("${remote.name}: Uninstall rpms") {
-                sshCommand remote: remote, command: """
-                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
-                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
-                    yum erase -y salt-minion salt-master salt-api   # Salt packages
-                    yum erase -y python36-m2crypto                  # Salt dependency
-                    yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
-                    yum erase -y *cortx*
-                    yum autoremove -y
-                    yum clean all
-                    rm -rf /var/cache/yum
-                    # Remove cortx-py-utils
-                    pip3 uninstall -y cortx-py-utils
-                    # Cleanup pip packages
-                    pip3 freeze|xargs pip3 uninstall -y
-                    # Cleanup pip config
-                    test -e /etc/pip.conf && rm -f /etc/pip.conf
-                    test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
-                """
-                echo "Successfully uninstalled rpms"
-            }
+            // stage("${remote.name}: Uninstall rpms") {
+            //     sshCommand remote: remote, command: """
+            //         yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
+            //         yum erase -y gluster-fuse gluster-server        # Gluster FS packages
+            //         yum erase -y salt-minion salt-master salt-api   # Salt packages
+            //         yum erase -y python36-m2crypto                  # Salt dependency
+            //         yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+            //         yum erase -y *cortx*
+            //         yum autoremove -y
+            //         yum clean all
+            //         rm -rf /var/cache/yum
+            //         # Remove cortx-py-utils
+            //         pip3 uninstall -y cortx-py-utils
+            //         # Cleanup pip packages
+            //         pip3 freeze|xargs pip3 uninstall -y
+            //         # Cleanup pip config
+            //         test -e /etc/pip.conf && rm -f /etc/pip.conf
+            //         test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
+            //     """
+            //     echo "Successfully uninstalled rpms"
+            // }
 
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
@@ -110,6 +145,7 @@ node {
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
+                    test -e /var/lib/glusterd && rm -rf /var/lib/glusterd || true
                     # Cleanup Salt
                     test -e /var/cache/salt && rm -rf /var/cache/salt || true
                     test -e /etc/salt && rm -rf /etc/salt || true
@@ -119,7 +155,7 @@ node {
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
-                echo "Successfully removed!"
+                echo "Successfully removed file and directories!"
             }
         }
     }
