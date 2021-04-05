@@ -210,23 +210,24 @@ def set_network(dry_run=False, nowait=False, **kwargs):
 
 
 def set_swupdate_repo(
-        source, targets=ALL_MINIONS, dry_run=False, nowait=False
+        release, source=None, targets=ALL_MINIONS, dry_run=False, nowait=False
 ):
     r"""Configures update repository.
 
     Installs or removes a repository for sw update release.
 
-    :param targets: Host where to install repos
-    :param source: A path to a repository. Might be: a local
+    :param release: An update repository release label
+    :param source: (optional) A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
+    :param targets: Host where to install repos
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """
     return _api_call(
-        'set_swupdate_repo',
+        'set_swupdate_repo', release,
         source=source, targets=targets, dry_run=dry_run, nowait=nowait
     )
 

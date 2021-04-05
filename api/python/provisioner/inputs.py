@@ -1001,8 +1001,8 @@ class SWUpgradeRepo(SWUpdateRepo):
         )
     )
     release: str = ParamDictItemInputBase._attr_ib(
-        init=False,
-        descr="release version"
+        descr="release version",
+        default=None
     )
     hash: Optional[Union[str, Path]] = attr.ib(
         metadata={
