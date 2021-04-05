@@ -17,5 +17,23 @@
 
 Stage - Prepare S3server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 's3:prepare')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:prepare')
     - failhard: True
+
+# {% import_yaml 'components/defaults.yaml' as defaults %}
+
+# Add s3server_uploads yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.s3server.uploads_repo.id }}
+#     - enabled: True
+#     - humanname: s3server_uploads
+#     - baseurl: {{ defaults.s3server.uploads_repo.url }}
+#     - gpgcheck: 0
+
+# Add s3server yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.s3server.repo.id }}
+#     - enabled: True
+#     - baseurl: {{ defaults.s3server.repo.url }}
+#     - gpgcheck: 1
+#     - gpgkey: {{ defaults.s3server.repo.gpgkey }}

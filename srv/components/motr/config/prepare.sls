@@ -15,16 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Stage - Prepare Hare:
+Stage - Prepare Motr:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/<component>/conf/setup.yaml', 'hare:prepare')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:prepare')
     - failhard: True
 
-#Prepare cluster yaml:
-#  file.managed:
-#    - name: /var/lib/hare/cluster.yaml
-#    - source: salt://components/hare/files/cluster.cdf.tmpl
-#    - template: jinja
-#    - mode: 444
-#    - makedirs: True
+# {% import_yaml 'components/defaults.yaml' as defaults %}
+
+# Add Motr yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.motr.repo.id }}
+#     - enabled: True
+#     - humanname: motr
+#     - baseurl: {{ defaults.motr.repo.url }}
+#     - gpgcheck: 1
+#     - gpgkey: {{ defaults.motr.repo.gpgkey }}
