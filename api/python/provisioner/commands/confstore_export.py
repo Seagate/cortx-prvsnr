@@ -117,15 +117,22 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             Conf.load('provisioner', pillar[PillarKey(pillar_key)])
 
-            for data in template_data:
+            delimiter = '=>'
+            for i,data in enumerate(template_data):
                 if data:
-                    key = data.split('=>')[0]
-                    value = data.split('=>')[1]
+                    key = data.split(delimiter)[0]
+                    value = data.split(delimiter)[1]
                     if 'secret' in key:
                         value = self._encrypt_value(key, value)
+                        template_data[i] = key + delimiter + value
                     Conf.set("provisioner", key, value)
+
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
+
+            with open(template_file_path,'w') as stream:
+                for data in template_data:
+                    stream.writelines(data + '\n')
 
             confstor_path = pillar[PillarKey(pillar_key)].split(':/')[1]
 
