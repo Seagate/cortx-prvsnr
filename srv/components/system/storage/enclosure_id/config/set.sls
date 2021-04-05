@@ -15,47 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
-
 {% if "physical" in grains['virtual'] %}
-  # Hardware
-  {% set ctrl_cli_utility = pillar['provisioner']['storage']['controller']['cli_utility_path'] %} 
-  {% set host = pillar['storage'][enclosure ]['controller']['primary']['ip'] %}
-  {% set user = pillar['storage'][enclosure]['controller']['user'] %}
-  {% set secret = salt['lyveutil.decrypt']('storage', pillar['storage'][enclosure]['controller']['secret']) %}
-  {% set opt = "--show-license" %}
-  {% set logs = "/var/log/seagate/provisioner/controller-cli.log" %}
 
-Create script to generate enclosure id:
-  file.managed:
-      - name: /tmp/get_enclosure_id.sh
-      - create: True
-      - makedirs: True
-      - replace: True
-      - user: root
-      - group: root
-      - mode: 755
-      - contents: |
-          #!/bin/bash
-          echo "Running controller-cli utility to get enclosure serial"
-          sh {{ ctrl_utility }} host -h {{ host }} -u {{ user }} -p '{{ secret }}' {{ opt }} | grep -A2 Serial | tail -1 > /etc/enclosure_id
-          if [[ ! -s /etc/enclosure_id ]]; then
-              echo "ERROR: Could not generate the enclosure id from controller cli utility, please check the {{ logs }} for more details"
-              exit 1
-          elif [[ `cat /etc/enclosure_id | wc -w` -ne 1 ]]; then
-              echo "ERROR: The contents of /etc/enclosure_id looks incorrect, failing"
-              exit 1
-          else
-              echo "Enclosure id generated successfully and is kept at /etc/enclosure_id"
-              exit 0
-          fi
-
-#Run the script created above
-Get enclosure_id for {{ grains['id'] }}: 
-  cmd.run:
-    - name: bash /tmp/get_enclosure_id.sh
-    - require:
-      - Create script to generate enclosure id
+Get enclosure serial for {{ grains['id'] }}: 
+  module.run:
+    - controller_cli.fetch_enclosure_serial: []
 
 {% else %}
 
