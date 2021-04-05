@@ -19,28 +19,27 @@ import configparser
 import logging
 
 from enum import Enum
-from typing import Type, List
+from typing import Type
 from copy import deepcopy
 from pathlib import Path
 
 from . import CommandParserFillerMixin
 
+from .validator import (
+    NetworkParamsValidator,
+    NodeParamsValidator,
+    StorageEnclosureParamsValidator
+)
 from ..inputs import (
     METADATA_ARGPARSER,
-    NetworkParams, NodeParams, NoParams,
-    ReleaseParams, StorageEnclosureParams
+    NoParams
 )
-
 from . import PillarSet
-from .grains_get import GrainsGet
-from ..salt import local_minion_id
 
 from ..values import (
     UNCHANGED, UNDEFINED
 )
-
 from ..vendor import attr
-
 
 logger = logging.getLogger(__name__)
 
@@ -96,163 +95,20 @@ class RunArgsConfigureSetup:
 
 
 @attr.s(auto_attribs=True)
-class NetworkParamsValidation:
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    _optional_param = ['cluster_ip', 'mgmt_vip']
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
-    target_build: str = ReleaseParams.target_build
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureParamsValidation:
-    type: str = StorageEnclosureParams.type
-    primary_ip: str = StorageEnclosureParams.primary_ip
-    secondary_ip: str = StorageEnclosureParams.secondary_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    controller_type: str = StorageEnclosureParams.controller_type
-    _optional_param = [
-        'controller_type'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        # FIXME why we allow any params for the following types?
-        types = ['JBOD', 'virtual', 'RBOD', 'other']
-        if params['type'] in types:
-            return
-        missing_params = []
-        for param, value in params.items():
-            if (
-                value == UNCHANGED and
-                param not in self._optional_param and
-                params['type'] == 'RBOD'
-            ):
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class NodeParamsValidation:
-    bmc_user: str = NodeParams.bmc_user
-    bmc_secret: str = NodeParams.bmc_secret
-    data_gateway: str = NodeParams.data_gateway
-    data_netmask: str = NodeParams.data_netmask
-    data_private_interfaces: List = NodeParams.data_private_interfaces
-    data_private_ip: str = NodeParams.data_private_ip
-    data_public_interfaces: List = NodeParams.data_public_interfaces
-    data_public_ip: str = NodeParams.data_public_ip
-    hostname: str = NodeParams.hostname
-    mgmt_gateway: str = NodeParams.mgmt_gateway
-    mgmt_interfaces: List = NodeParams.mgmt_interfaces
-    mgmt_netmask: str = NodeParams.mgmt_netmask
-    mgmt_public_ip: str = NodeParams.mgmt_public_ip
-    roles: List = NodeParams.roles
-    cvg: List = NodeParams.cvg
-
-    _optional_param = [
-        'data_public_ip',
-        'roles',
-        'data_netmask',
-        'data_gateway',
-        'data_private_ip',
-        'mgmt_interfaces',
-        'mgmt_public_ip',
-        'mgmt_netmask',
-        'mgmt_gateway',
-        'cvg'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-
-        # If storage.cvg.metadata or storage.cvg.data is specified,
-        # check entry for the other.
-        for data_set in params.get('cvg'):
-            logger.debug(f"DataSet being processed for CVG keys: {data_set}")
-            if (
-                data_set.get('data_devices') and
-                (
-                    (not data_set.get('metadata_devices')) or
-                    (data_set.get('metadata_devices') == UNCHANGED) or
-                    (data_set.get('metadata_devices') == '')
-                )
-            ):
-                raise ValueError(
-                    "List of data is specified. "
-                    "However, list of metadata is unspecified."
-                )
-            elif (
-                data_set.get('metadata_devices') and
-                (
-                    (not data_set.get('data_devices')) or
-                    (data_set.get('data_devices') == UNCHANGED) or
-                    (data_set.get('data_devices') == '')
-                )
-            ):
-                raise ValueError(
-                    "List of metadata is specified. "
-                    "However, list of data is unspecified."
-                )
-
-        if (
-            not 'physical' in GrainsGet().run(
-                'virtual',
-                targets=local_minion_id()
-            )[local_minion_id()]['virtual']
-        ):
-            self._optional_param.extend([
-                'bmc_user',
-                'bmc_secret'
-            ])
-
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
     input_type: Type[NoParams] = NoParams
     _run_args_type = RunArgsConfigureSetup
 
     validate_map = {
-        "cluster": NetworkParamsValidation,
-        "node": NodeParamsValidation,
-        "storage": StorageEnclosureParamsValidation
+        "cluster": NetworkParamsValidator,
+        "node": NodeParamsValidator,
+        "storage": StorageEnclosureParamsValidator
     }
 
-
-    def _parse_params(self, input):
+    @staticmethod
+    def _parse_params(input_data):
         params = {}
-        for key in input.keys():
+        for key in input_data.keys():
             val = key.split(".")
 
             if len(val) > 1:
@@ -263,7 +119,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                 ]:
                     # Node specific '.' separated params
                     # The '.' get replaced with '_'
-                    params[f'{val[-2]}_{val[-1]}'] = input[key]
+                    params[f'{val[-2]}_{val[-1]}'] = input_data[key]
                 elif val[-1] in [
                     'data_devices', 'metadata_devices'
                 ]:
@@ -271,13 +127,13 @@ class ConfigureSetup(CommandParserFillerMixin):
                         params[val[-3]] = []
 
                     if int(val[-2]) < len(params[val[-3]]):
-                        params[val[-3]][int(val[-2])][val[-1]] = [input[key]]
+                        params[val[-3]][int(val[-2])][val[-1]] = [input_data[key]]
                     else:
                         params[val[-3]].append(
-                            { val[-1]: [input[key]] }
+                            { val[-1]: [input_data[key]] }
                         )
             else:
-                params[val[-1]] = input[key]
+                params[val[-1]] = input_data[key]
 
         logger.debug(f"Parsed params: {params}")
         return params
@@ -348,11 +204,11 @@ class ConfigureSetup(CommandParserFillerMixin):
         return ret_val
 
 
-    def _parse_input(self, input):
+    def _parse_input(self, input_data):
         kv_to_dict = dict()
-        for key in input.keys():
-            if input.get(key) and "," in input.get(key):
-                input[key] = [element.strip() for element in input.get(key).split(",")]
+        for key in input_data.keys():
+            if input_data.get(key) and "," in input_data.get(key):
+                input_data[key] = [element.strip() for element in input_data.get(key).split(",")]
             elif (
                 'interfaces' in key or
                 'roles' in key or
@@ -361,31 +217,31 @@ class ConfigureSetup(CommandParserFillerMixin):
             ):
                 # special case single value as array
                 # Need to fix this array having single value
-                input[key] = [input.get(key)]
+                input_data[key] = [input_data.get(key)]
             else:
-                if input.get(key):
-                    if 'NONE' == input.get(key).upper():
-                        input[key] = None
-                    elif 'UNCHANGED' == input.get(key).upper():
-                        input[key] = UNCHANGED
-                    elif 'UNDEFINED' == input.get(key).upper():
-                        input[key] = UNDEFINED
-                    elif '' == input.get(key).upper():
-                        input[key] = None
+                if input_data.get(key):
+                    if 'NONE' == input_data.get(key).upper():
+                        input_data[key] = None
+                    elif 'UNCHANGED' == input_data.get(key).upper():
+                        input_data[key] = UNCHANGED
+                    elif 'UNDEFINED' == input_data.get(key).upper():
+                        input_data[key] = UNDEFINED
+                    elif '' == input_data.get(key).upper():
+                        input_data[key] = None
                     else:
-                        input[key] = input.get(key)
+                        input_data[key] = input_data.get(key)
                 else:
-                    input[key] = None
+                    input_data[key] = None
 
             if '.' in key:
                 split_keys = key.split('.')
                 kv_to_dict = self._dict_merge(
                     kv_to_dict,
-                    self._list_to_dict(split_keys, input.get(key))
+                    self._list_to_dict(split_keys, input_data.get(key))
                 )
                 # logger.debug(f"KV to Dict ('.' separated): {kv_to_dict}")
             else:
-                kv_to_dict[key] = input.get(key)
+                kv_to_dict[key] = input_data.get(key)
 
         kv_to_dict = self._key_int_to_list(kv_to_dict)
         logger.debug(f"KV to Dict: {kv_to_dict}")
@@ -404,7 +260,6 @@ class ConfigureSetup(CommandParserFillerMixin):
 
         input_type = None
         pillar_type = None
-        node_list = []
         srvnode_count = enclosure_count = int(number_of_nodes)
 
         # Process srvnode_default section
