@@ -17,22 +17,20 @@
 
 provisioner:
   post_install:
-    script: null
+    cmd: null
     args: null
   config:
-    script: null
+    cmd: null
     args: null
   init:
-    script: null
+    cmd: null
     args: null
   test:
-    script: null
+    cmd: null
     args: null
   reset:
-    cmd: /opt/seagate/cortx/s3/bin/s3_setup
-    args:
-      - restore
-      - --config $URL
+    cmd: null
+    args: null
   backup:
     files:
       - /var/lib/seagate/cortx/provisioner/shared
