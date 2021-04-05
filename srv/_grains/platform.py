@@ -15,31 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import pytest
-import logging
+from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def env_provider():
-    return 'docker'
+FILENAME="/opt/seagate/lr-serial-number"
 
 
-@pytest.mark.isolated
-def test_build_prvsnr_pkgs(
-    request, rpm_build, tmpdir_function, custom_opts,
-):
-    prvsnr_pkg = rpm_build(
-        request, tmpdir_function, rpm_type='core',
-        version=custom_opts.version,
-        release_number=str(custom_opts.pkg_version)
-    )
-    prvsnr_api_pkg = rpm_build(
-        request, tmpdir_function, rpm_type='api',
-        pkg_version=str(custom_opts.pkg_version)
-    )
+def add_lr_serial_number():
+    """Populates lr-serial-number to grains."""
 
-    for pkg in (prvsnr_pkg, prvsnr_api_pkg):
-        dest = custom_opts.output / pkg.name
-        dest.write_bytes(pkg.read_bytes())
+    grains = {"lr-serial-number": None}
+
+    serial_file = Path(FILENAME)
+    if serial_file.is_file():
+        grains['lr-serial-number'] = serial_file.read_text()
+
+    return grains
