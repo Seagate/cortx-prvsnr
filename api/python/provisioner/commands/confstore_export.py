@@ -70,8 +70,13 @@ class ConfStoreExport(CommandParserFillerMixin):
                 targets=local_minion_id()
             )[local_minion_id()]["cluster_id"]
         cipher_key = cipher.Cipher.generate_key(cypher_id, cypher_name)
-        return str(cipher.Cipher.encrypt(cipher_key, bytes(value, 'utf8')), 'utf-8')
-
+        return str(
+            cipher.Cipher.encrypt(
+                cipher_key,
+                bytes(
+                    value,
+                    'utf8')),
+            'utf-8')
 
     def run(self, **kwargs):
         """
@@ -82,7 +87,9 @@ class ConfStoreExport(CommandParserFillerMixin):
 
         try:
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
-            template_file_path = str( CORTX_CONFIG_DIR / 'provisioner_confstore_template')
+            template_file_path = str(
+                CORTX_CONFIG_DIR /
+                'provisioner_confstore_template')
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
@@ -103,7 +110,7 @@ class ConfStoreExport(CommandParserFillerMixin):
             with open(template_file_path, 'r') as f:
                 template_data = f.read().splitlines()
 
-            if not template_data :
+            if not template_data:
                 raise Exception("No content in template file")
 
             pillar_confstore_path = "provisioner/common_config/confstore_url"
@@ -118,10 +125,9 @@ class ConfStoreExport(CommandParserFillerMixin):
             Conf.load('provisioner', pillar[PillarKey(pillar_key)])
 
             delimiter = '=>'
-            for i,data in enumerate(template_data):
+            for i, data in enumerate(template_data):
                 if data:
-                    key = data.split(delimiter)[0]
-                    value = data.split(delimiter)[1]
+                    key, value = data.split(delimiter)
                     if 'secret' in key:
                         value = self._encrypt_value(key, value)
                         template_data[i] = key + delimiter + value
@@ -130,9 +136,9 @@ class ConfStoreExport(CommandParserFillerMixin):
             Conf.save("provisioner")
             logger.info("Template loaded to confstore")
 
-            with open(template_file_path,'w') as stream:
+            with open(template_file_path, 'w') as stream:
                 for data in template_data:
-                    stream.writelines(data + '\n')
+                    stream.write(data + '\n')
 
             confstor_path = pillar[PillarKey(pillar_key)].split(':/')[1]
 
