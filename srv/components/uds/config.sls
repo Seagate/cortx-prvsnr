@@ -15,14 +15,3 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Update uds service:
-  file.managed:
-    - name: /usr/lib/systemd/system/uds.service
-    - source: salt://components/uds/files/uds.service
-
-Reload updated service units:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-      - file: Update uds service
