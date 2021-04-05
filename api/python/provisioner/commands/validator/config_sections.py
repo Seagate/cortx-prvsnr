@@ -123,3 +123,4 @@ class ConfigValidator:
 
         except Exception as exc:
             raise ValueError(f"Config Failed to apply: {str(exc)}")
+

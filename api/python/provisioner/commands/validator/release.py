@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
+class ReleaseParamsValidator:
     target_build: str = ReleaseParams.target_build
     _optional_param = []
 
@@ -45,3 +45,4 @@ class ReleaseParamsValidation:
                 "These are mandatory to configure the setup."
             )
             raise ValueError(f"Mandatory param missing {missing_params}")
+
