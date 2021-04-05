@@ -22,11 +22,6 @@ Remove USL cert file:
     - names:
       - /var/csm/tls
 
-#Stop service uds:
-#  service.dead:
-#    - name: uds
-#    - enable: False
-
 Remove uds package:
   pkg.purged:
     - name: uds
@@ -34,10 +29,6 @@ Remove uds package:
 Delete uds yum repo:
   pkgrepo.absent:
     - name: {{ defaults.uds.repo.id }}
-
-Remove uds service file:
-  file.absent:
-    - name: /usr/lib/systemd/system/uds.service
 
 Delete uds checkpoint flag:
   file.absent:
