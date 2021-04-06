@@ -159,6 +159,7 @@ ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
+CLI_SPEC_PY_OBJS_PREFIX = '__py__:'
 
 SECRET_MASK = '*' * 7
 
@@ -267,6 +268,7 @@ class LogLevelTypes(Enum):
 # bundled salt roots dirs
 BUNDLED_SALT_DIR = CONFIG_MODULE_DIR / 'srv'
 BUNDLED_SALT_FILEROOT_DIR = BUNDLED_SALT_DIR / 'salt'
+BUNDLED_SALT_FILEROOT_VENDOR_DIR = BUNDLED_SALT_DIR / 'salt-vendor'
 BUNDLED_SALT_PILLAR_DIR = BUNDLED_SALT_DIR / 'pillar'
 
 # profile parameters
@@ -543,6 +545,7 @@ class CortxResourceT(Enum):
     """Resource types in CORTX provisioner"""
 
     REPOS = "cortx_repos"
+    CONSUL = "consul"
 
 
 class ContentType(Enum):
@@ -560,3 +563,11 @@ class HashType(Enum):
     MD5 = "md5"
     SHA256 = "sha256"
     SHA512 = "sha512"
+
+
+# UPGRADE ROUTINE
+class ConfigLevelT(Enum):
+    """CORTX configuration levels"""
+
+    CLUSTER = "cluster"
+    NODE = "node"

@@ -522,7 +522,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         self, nodes: List[Node], priv_key, roster_path
     ):
         tmp_dir = os.getenv('TMPDIR')
-        thin_dir = (Path(tmp_dir).resolve() / 'salt_thin_dir') if tmp_dir else None
+        thin_dir = (
+            (Path(tmp_dir).resolve() / 'salt_thin_dir') if tmp_dir else None
+        )
 
         roster = {}
         for node in nodes:

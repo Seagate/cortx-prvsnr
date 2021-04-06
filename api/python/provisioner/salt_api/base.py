@@ -432,8 +432,11 @@ class SaltClientBase(ABC):
         self,
         pillar_items: Union[Dict, List, Tuple],
         fpath: str = None,
+        expand: bool = False,
         targets=config.ALL_MINIONS
     ):
         pi_updater = self.pillar_updater(targets)
-        pi_updater.update(PillarIterable(pillar_items, fpath=fpath))
+        pi_updater.update(
+            PillarIterable(pillar_items, fpath=fpath, expand=expand)
+        )
         pi_updater.apply()

@@ -87,7 +87,9 @@ class SetClusterId(CommandParserFillerMixin):
                     "ClusterID is not found in grains data. Generating one.."
                 )
                 cluster_uuid = str(uuid.uuid4())
-                logger.info("Setting the generated ClusterID across all nodes..")
+                logger.info(
+                    "Setting the generated ClusterID across all nodes.."
+                )
 
                 PillarSet().run(
                     'cluster/cluster_id',
@@ -97,7 +99,8 @@ class SetClusterId(CommandParserFillerMixin):
 
             elif cluster_id_from_grains and not cluster_id_from_pillar:
                 logger.info(
-                    "ClusterID is not set in pillar data. Proceeding to set now.."
+                    "ClusterID is not set in pillar data."
+                    " Proceeding to set now.."
                 )
                 PillarSet().run(
                     'cluster/cluster_id',

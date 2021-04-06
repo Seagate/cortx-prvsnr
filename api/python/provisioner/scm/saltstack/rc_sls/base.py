@@ -15,11 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import ClassVar, Optional, Dict, Union, Any
+from typing import ClassVar, Optional, Dict, Union, Any, List, Tuple
 from pathlib import Path
 import importlib
 import logging
 
+from provisioner import config, values, errors
+from provisioner.pillar import PillarKey, PillarResolverNew
 from provisioner.values import _Singletone
 from provisioner.vendor import attr
 from provisioner.resources.base import (
@@ -29,21 +31,75 @@ from provisioner.resources.base import (
 )
 from provisioner.salt_api.base import SaltClientBase
 from provisioner.fileroot import ResourcePath
-from provisioner import config
 
 logger = logging.getLogger(__name__)
 
 MODULE_PATH = Path(__file__)
 MODULE_DIR = MODULE_PATH.resolve().parent
 
+VENDOR_SLS_PREFIX = 'vendor'
+
 
 @attr.s(auto_attribs=True)
 class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     """Base class for Salt state formulas that implement transitions."""
+    base_sls: ClassVar[Optional[str]] = None
     sls: ClassVar[Optional[str]] = None
 
     client: SaltClientBase
     pillar_inline: Dict = None
+    targets: str = config.ALL_TARGETS
+
+    _pillar: Optional[dict] = attr.ib(init=False, default=None)
+
+    @property
+    def resource_type(self) -> config.CortxResourceT:
+        return self.state_t.resource_t.resource_t_id
+
+    @property
+    def resource_name(self) -> str:
+        return self.resource_type.value
+
+    @property
+    def pillar(self):
+        # XXX uses the pillar only
+        if self._pillar is None:
+            rc_key = PillarKey(self.resource_name)
+            pillar = PillarResolverNew(client=self.client).get((rc_key,))
+            self._pillar = {
+                target: (
+                    _pillar[rc_key]
+                    if _pillar[rc_key] and _pillar[rc_key] is not values.MISSED
+                    else {}
+                ) for target, _pillar in pillar.items()
+            }
+        return self._pillar
+
+    @property
+    def is_vendored(self) -> bool:
+        vendored = set(
+            [
+                pillar.get('vendored', False)
+                for pillar in self.pillar.values()
+            ]
+        )
+        if len(vendored) != 1:
+            raise errors.ProvisionerRuntimeError(
+                f"Mixed {self.resource_name} vendored setup"
+                f" detected for targets '{self.targets}'"
+            )
+        return list(vendored)[0]
+
+    def pillar_set(
+        self, pillar: Dict, expand: bool = True,
+        fpath=None
+    ):
+        return self.client.pillar_set({
+            self.resource_name: pillar
+        }, expand=expand, fpath=fpath, targets=self.targets)
+
+    def set_vendored(self, vendored: bool):
+        self.pillar_set(dict(vendored=vendored))
 
     def r_path(self, path: Union[str, Path]):
         return ResourcePath(self.resource_t, path)
@@ -51,12 +107,16 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     def fileroot_path(self, path: Union[str, Path]):
         return self.fileroot.path(self.r_path(path))
 
-    def setup_roots(self, targets):
-        pass
+    def setup_roots(self):
+        logger.info(
+            f"Preparing '{self.resource_name}' roots for"
+            f" '{self.state.name}' on targets: {self.targets}"
+        )
 
-    def run(self, targets: Any = config.ALL_TARGETS):
-        self.setup_roots(targets)
+    def run(self):
+        self.setup_roots()
 
+        res = []
         # XXX possibly a divergence with a design
         # some SLS may just shifts root without any states appliance
         if self.sls:
@@ -64,9 +124,23 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             if self.pillar_inline:
                 fun_kwargs['pillar'] = self.pillar_inline
 
-            self.client.state_apply(
-                self.sls, targets=targets, fun_kwargs=fun_kwargs
+            slss = (
+                self.sls if isinstance(self.sls, (List, Tuple)) else [self.sls]
             )
+
+            if self.is_vendored:
+                slss = [f'{VENDOR_SLS_PREFIX}.{sls}' for sls in slss]
+
+            if self.base_sls:
+                slss = [f'{self.base_sls}.{sls}' for sls in slss]
+
+            for sls in slss:
+                _res = self.client.state_apply(
+                    sls, targets=self.targets, fun_kwargs=fun_kwargs
+                )
+                res.append(_res)
+
+            return res
 
 
 # arbitrary dir and recursive are not support for now

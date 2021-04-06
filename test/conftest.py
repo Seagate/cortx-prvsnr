@@ -109,6 +109,7 @@ ENV_LEVELS_HIERARCHY = {
 
 
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
+ENV_LEVELS = list(ENV_LEVELS_HIERARCHY)
 DEFAULT_BASE_OS_NAME = 'centos7.8.2003'
 
 DEFAULT_CLUSTER_SPEC = {
@@ -398,6 +399,12 @@ prvsnr_pytest_options = {
         choices=['host', 'docker', 'vbox'],
         default='docker',
         help="test environment provider, defaults to docker"
+    ),
+    "env-level": dict(
+        action='store',
+        choices=ENV_LEVELS,
+        default=None,
+        help="test environment level"
     ),
     "prvsnr-src": dict(
         action='store', choices=['rpm', 'github', 'local'],

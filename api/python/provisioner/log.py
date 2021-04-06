@@ -80,7 +80,7 @@ class NoTraceExceptionFormatter(logging.Formatter):
         record.exc_text = ''
         return super().format(record)
 
-    def formatException(self, exc_info):
+    def formatException(self, exc_info):  # noqa: N802
         # TODO IMPROVE check docs for exc_info
         return repr(getattr(exc_info[1], 'reason', exc_info[1]))
 
@@ -113,7 +113,7 @@ class NoErrorSysLogHandler(logging.handlers.SysLogHandler):
                 else:
                     break
 
-    def handleError(self, record):
+    def handleError(self, record):  # noqa: N802
         t, v, _ = sys.exc_info()
         if issubclass(t, OSError) and 'Message too long' in str(v):
             raise LogMsgTooLong()
@@ -184,7 +184,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     },
                     default=hattrs['filename']
                 )
-                maxBytes: int = attr.ib(
+                maxBytes: int = attr.ib(  # noqa: N815
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
@@ -198,7 +198,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     default=hattrs['maxBytes'],
                     converter=int
                 )
-                backupCount: int = attr.ib(
+                backupCount: int = attr.ib(  # noqa: N815
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (

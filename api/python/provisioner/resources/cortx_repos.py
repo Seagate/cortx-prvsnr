@@ -22,9 +22,9 @@ import logging
 from .base import (
     ResourceParams, ResourceBase, ResourceState
 )
-from provisioner import config, inputs, utils
+from provisioner import config
 from provisioner.vendor import attr
-
+from provisioner.attr_gen import attr_ib
 
 logger = logging.getLogger(__name__)
 
@@ -33,69 +33,34 @@ logger = logging.getLogger(__name__)
 #       e.g. might be UNCHANGED or a real current value
 class CortxReposParams(ResourceParams):
     # TODO EOS-12076 validate it is a file or dir or url
-    cortx: Union[str, Path] = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "path/url to a CORTX distribution"
-                ),
-            }
-        },
+    cortx: Union[str, Path] = attr_ib(
+        'path_exists',
+        cli_spec='repos/cortx',
         # FIXME allow url as well
         # XXX copy validation routine from SetSWUpdateRepo
-        converter=utils.converter_path_resolved,
-        validator=utils.validator_path_exists
     )
-    dist_type: config.DistrType = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "the type of the distribution"
-                ),
-                'choices': [dt.value for dt in config.DistrType]
-            },
-        },
+    dist_type: config.DistrType = attr_ib(
+        cli_spec='repos/dist_type',
         default=config.DistrType.BUNDLE.value,
         # TODO EOS-12076 better validation
-        converter=(lambda v: config.DistrType(v))  # pylint: disable=unnecessary-lambda
+        converter=config.DistrType
     )
-    deps: Union[str, Path] = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "path/url to a CORTX 3rd parties distribution"
-                ),
-            }
-        },
+    deps: Union[str, Path] = attr_ib(
+        'path_exists',
+        cli_spec='repos/deps',
         default=None,
         # FIXME allow url as well
         # XXX copy validation routine from SetSWUpdateRepo
-        converter=utils.converter_path_resolved,
-        validator=utils.validator_path_exists
     )
-    os: Union[str, Path] = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "path/url to a CORTX OS distribution"
-                ),
-            }
-        },
+    os: Union[str, Path] = attr_ib(
+        'path_exists',
+        cli_spec='repos/os',
         default=None,
         # FIXME allow url as well
         # XXX copy validation routine from SetSWUpdateRepo
-        converter=utils.converter_path_resolved,
-        validator=utils.validator_path_exists
     )
-    py_index: bool = attr.ib(
-        metadata={
-            inputs.METADATA_ARGPARSER: {
-                'help': (
-                    "consider a custom python index inside CORTX distribution "
-                    "(for bundle distribution only)"
-                )
-            }
-        },
+    py_index: bool = attr_ib(
+        cli_spec='repos/py_index',
         default=False
     )
 
@@ -121,7 +86,7 @@ class CortxReposSetup(CortxReposState):
     os = CortxReposParams.os
     py_index = CortxReposParams.py_index
 
-    target_build: Path = attr.ib(
+    target_build: Path = attr_ib(
         init=False, default=None
     )
 
