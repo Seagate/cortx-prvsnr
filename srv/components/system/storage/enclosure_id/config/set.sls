@@ -17,7 +17,7 @@
 
 {% if "physical" in grains['virtual'] %}
 
-Get enclosure serial for {{ grains['id'] }}: 
+Get enclosure_id for {{ grains['id'] }}:
   module.run:
     - controller_cli.fetch_enclosure_serial: []
 

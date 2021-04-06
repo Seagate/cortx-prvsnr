@@ -20,7 +20,7 @@
 # $ salt-call saltutil.sync_modules
 # $ salt-call controller_cli.fetch_enclosure_serial
 # On successfull run, the fetched enclosure id/serial is kept at:
-# /etc/enclosure_id file. 
+# /etc/enclosure-id file.
 
 # Standard packages
 import logging
@@ -54,17 +54,17 @@ def fetch_enclosure_serial():
     _opt = "--show-license"
 
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
-    _cmd = f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt} | grep -A2 Serial | tail -1 > /etc/enclosure_id"
+    _cmd = f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt} | grep -A2 Serial | tail -1 > /etc/enclosure-id"
     subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
 
-    _enc_id_file = Path('/etc/enclosure_id')
+    _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():
         msg = f"ERROR: Could not generate the enclosure id from controller cli utility, please check the {str(logs)} for more details"
         # raise Exception(msg)
         logger.error(msg)
         return False
     else:
-        # Check if file /etc/enclosure_id has correct content:
+        # Check if file /etc/enclosure-id has correct content:
         # 1. has only one line and
         # 2. has only one word - enclosure serial.
         with open(_enc_id_file) as _fp:
@@ -81,10 +81,10 @@ def fetch_enclosure_serial():
                _n_words += 1
 
         if ((_line_cnt > 1) or (_n_words > 1)):
-            msg = "ERROR: The contents of /etc/enclosure_id looks incorrect, failing"
+            msg = "ERROR: The contents of /etc/enclosure-id looks incorrect, failing"
             logger.error(msg)
             return False
 
-    logger.info("Enclosure id generated successfully and is kept at /etc/enclosure_id")
+    logger.info("Enclosure id generated successfully and is kept at /etc/enclosure-id")
 
     return True
