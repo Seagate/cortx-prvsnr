@@ -1089,7 +1089,7 @@ class SWUpgradeRemoveRepo(ParamDictItemInputBase):
     @property
     def pillar_value(self):
         res = {
-            f"{repo}": UNDEFINED
+            f"{repo}": None
             for repo in (config.OS_ISO_DIR,
                          config.CORTX_ISO_DIR,
                          config.CORTX_3RD_PARTY_ISO_DIR,
