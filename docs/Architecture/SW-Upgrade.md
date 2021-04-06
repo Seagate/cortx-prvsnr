@@ -58,7 +58,7 @@ Hash type in `--hash` option has the higher priority than `--hash-type`.
 As mentioned in the `--hash` option description, you can specify a path to a file that contains hash data. The format of this file is
 the same as for the hash string.
 
-See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cli) how to pass
 credential for command authorization.
 
 Examples:
@@ -108,7 +108,7 @@ where
 
 `--targets=<hosts>`: **Optional**. Hosts for SW upgrade
 
-See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cli) how to pass
 credential for command authorization.
 
 ## Delete SW upgrade repository
@@ -122,7 +122,7 @@ where
 
 `<release>`: **Mandatory**. Release version of the SW upgrade repository
 
-See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cli) how to pass
 credential for command authorization.
 
 :warning: **NOTE**:
