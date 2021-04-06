@@ -598,3 +598,21 @@ def check(check_name, check_args: str = "",
     """
     return _api_call('check', check_name,
                      check_args_args=check_args, targets=targets)
+
+
+def set_hostname():
+    """
+    Set hostname for the system
+
+    :return:
+    """
+    return _api_call('set_hostname')
+
+
+def setup_firewall():
+    """
+    Setup CORTX firewall for the system
+
+    :return:
+    """
+    return _api_call('setup_firewall')

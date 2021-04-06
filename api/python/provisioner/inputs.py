@@ -559,6 +559,16 @@ class NTP(ParamGroupInputBase):
     )
 
 
+@attr.s(auto_attribs=True)
+class Hostname(ParamGroupInputBase):
+    _param_group = 'hostname'
+
+
+@attr.s(auto_attribs=True)
+class Firewall(ParamGroupInputBase):
+    _param_group = 'firewall'
+
+
 class ReleaseParams():
     _param_group = 'release'
     target_build: str = ParamGroupInputBase._attr_ib(
