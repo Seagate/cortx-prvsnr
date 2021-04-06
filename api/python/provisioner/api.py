@@ -616,12 +616,3 @@ def setup_firewall():
     :return:
     """
     return _api_call('setup_firewall')
-
-
-def setup_timeserver():
-    """
-    Setup NTP time server for the system
-
-    :return:
-    """
-    return _api_call('setup_timeserver')
