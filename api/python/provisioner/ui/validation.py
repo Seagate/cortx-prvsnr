@@ -40,6 +40,7 @@ class Validation:
     @staticmethod
     def hostname(hostname):
         result = True
+        # TODO: Improve logic for validation of hostname
         hostname_regex = r"^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,6}$"
         if len(hostname) > 253:
             result = False
