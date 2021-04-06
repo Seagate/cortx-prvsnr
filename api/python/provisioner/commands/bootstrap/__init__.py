@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .node_grains import NodeGrains, Node
+from .node import NodeGrains, Node
 
 __all__ = [
     "NodeGrains",
