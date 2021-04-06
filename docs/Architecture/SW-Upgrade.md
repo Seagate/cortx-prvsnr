@@ -2,18 +2,34 @@
 
 Table of contents:
 
+- [High Level SW Upgrade logic](#high-level-sw-upgrade-logic)
 - [Setup SW upgrade repository](#setup-sw-upgrade-repository)
 - [Apply SW upgrade](#apply-sw-upgrade)
 - [SW upgrade single ISO bundle structure](#sw-upgrade-single-iso-bundle-structure)
 - [Delete SW upgrade repository](#delete-sw-upgrade-repository)
+- [References](#references)
 
+
+## High Level SW Upgrade logic
+
+The high level logic of SW upgrade is:
+
+    1. Validate candidate SW upgrade single ISO bundle:
+        a. Mount ISO
+        b. ISO catalog structure validation
+        c. Validate content of `RELEASE.INFO` file for each separate bundle's repository
+        d. Setup yum repositories
+        e. Validate each separate yum repo
+    2. SW upgrade repositories setup:
+        a. Mount ISO
+        b. Setup yum repositories
+        c. Return the metadata information about installed SW upgrade repositories
 
 ## Setup SW upgrade repository
 
 The common structure of the `set_swupgrade_repo` command:
 ```bash
-provisioner set_swupgrade_repo </path/to/single/iso/bundle> --hash="<hash_type>:<hash> <filename>"  --hash-type="<hash_type>" \ 
---username=<provisioner_user> --password=<provisioner_user_password>`
+provisioner set_swupgrade_repo </path/to/single/iso/bundle> --hash="<hash_type>:<hash> <filename>"  --hash-type="<hash_type>"
 ```
 
 where
@@ -35,15 +51,19 @@ where
 - `<check_sum>`: hexadecimal representation of hash checksum
 - `<file_name>`: a file name to which <hash_type> and <hash_sum> belongs to
 
- `--hash-type="<hash_type>"` **Optional**. Type of hash value. Supported values: `md5`, `sha256`, `sha512`. See `config.HashType` for all possible values. 
+ `--hash-type="<hash_type>"` **Optional**. Type of hash value. Supported values: `md5`, `sha256`, `sha512`. See `config.HashType` for all possible values.
 
-`--username=<provisioner_user>`: **Optional**. Provisioner user which has necessary permissions
+:warning: **NOTE**: The `md5` is the default hash type. So you can omit hash type in `--hash` and in `--hash-type` options.
+Hash type in `--hash` option has the higher priority than `--hash-type`.
+As mentioned in the `--hash` option description, you can specify a path to a file that contains hash data. The format of this file is
+the same as for the hash string.
 
-`--password=<provisioner_user_password>`: **Optional**. Password of the provisioner user
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+credential for command authorization.
 
 Examples:
 ```bash
-provisioner set_swupgrade_repo /opt/iso/single_cortx.iso --hash="fefa1db67588d2783b83f07f4f5beb5c"  --hash-type="md5" --username=123456 --password=123456
+provisioner set_swupgrade_repo /opt/iso/single_cortx.iso --hash="fefa1db67588d2783b83f07f4f5beb5c"
 provisioner set_swupgrade_repo /opt/iso/single_cortx.iso --hash="sha256:ff01da01d4304729bfbad3aeca53b705c1d1d2132e94e4303c1ea210288de12b"
 provisioner set_swupgrade_repo /opt/iso/single_cortx.iso --hash="md5:fefa1db67588d2783b83f07f4f5beb5c /opt/iso/single_cortx.iso"
 ```
@@ -81,35 +101,38 @@ All fields above except `RELEASE` are mandatory fields for the `RELEASE.INFO` fi
 To initiate SW upgrade procedure run the command
 
 ```bash
-provisioner sw_upgrade --targets=<hosts> --username=<provisioner_user> --password=<provisioner_user_password>
+provisioner sw_upgrade --targets=<hosts>
 ```
 
 where
 
 `--targets=<hosts>`: **Optional**. Hosts for SW upgrade
 
-`--username=<provisioner_user>`: **Optional**. Provisioner user which has necessary permissions
-
-`--password=<provisioner_user_password>`: **Optional**. Password of the provisioner user
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+credential for command authorization.
 
 ## Delete SW upgrade repository
 
 To remove installed SW upgrade repository run the command:
 ```bash
-provisioner remove_swupgrade_repo <release> --username=<provisioner_user> --password=<provisioner_user_password>
+provisioner remove_swupgrade_repo <release>
 ```
 
 where
 
 `<release>`: **Mandatory**. Release version of the SW upgrade repository
 
-`--username=<provisioner_user>`: **Optional**. Provisioner user which has necessary permissions
+See [Passing crdedentials to CLI](#passing-crdedentials-to-cliapipythonreadmemdpassing-crdedentials-to-cli) how to pass
+credential for command authorization.
 
-`--password=<provisioner_user_password>`: **Optional**. Password of the provisioner user
-
-**NOTE:**
+:warning: **NOTE**:
 
 To see the list of SW upgrade repositories:
 ```bash
 yum repolist
 ```
+
+
+## References
+
+#### [Passing crdedentials to CLI](../../api/python/README.md#passing-crdedentials-to-cli)
