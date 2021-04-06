@@ -15,7 +15,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.nodejs'.format(grains['id'])) %}
 include:
   - .install
   - .config
   - .sanity_check
+
+Generate checkpoint flag:
+  file.managed:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.nodejs
+    - makedirs: True
+    - create: True
+
+{%- else -%}
+
+nodejs already applied:
+  test.show_notification:
+    - text: "NodeJS states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.nodejs.teardown' to reprovision these states."
+
+{%- endif %}
