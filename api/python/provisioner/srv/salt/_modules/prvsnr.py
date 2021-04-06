@@ -79,7 +79,7 @@ def _api_wrapper(fun):
         cmd = ['provisioner']
         cmd.extend(api_args_to_cli(fun, *args, **_kwargs))
         cmd = [quote(p) for p in cmd]
-        return __salt__['cmd.run'](' '.join(cmd), env=env)  # noqa: F821 pylint: disable=undefined-variable
+        return __salt__['cmd.run'](' '.join(cmd), env=env)  # noqa: F821, E501 pylint: disable=undefined-variable
 
     return _f
 

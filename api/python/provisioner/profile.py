@@ -72,7 +72,8 @@ def setup(
             'base': [str(d.resolve()) for d in add_file_roots] + [
                 str(profile_paths['salt_fileroot_dir']),
                 str(profile_paths['salt_factory_fileroot_dir']),
-                str(config.BUNDLED_SALT_FILEROOT_DIR)
+                str(config.BUNDLED_SALT_FILEROOT_DIR),
+                str(config.BUNDLED_SALT_FILEROOT_VENDOR_DIR),
             ]
         },
         'pillar_roots': {

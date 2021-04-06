@@ -260,7 +260,8 @@ def set_swupgrade_repo(source, hash_str=None,
         where
         <hash_type> - one of the values from `config.HashType` enumeration
         <check_sum> - hexadecimal representation of hash checksum
-        <file_name> - a file name to which <hash_type> and <hash_sum> belongs to
+        <file_name> - a file name to which <hash_type>
+                      and <hash_sum> belongs to
 
     hash_type
         (optional) type of hash value. See `config.HashType` for

@@ -149,7 +149,8 @@ class CortxReposSetupSLS(ResourceSLS):
         return file_roots, pillar
 
     def setup_roots(self, targets):
-        logger.info("Preparing CORTX repos roots")
+        super().setup_roots()
+
         if self.state.dist_type == config.DistrType.BUNDLE:
             file_roots, pillar = self.setup_roots_for_bundle(targets)
         else:
