@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from typing import Iterator
 import configparser
 import json
 import logging
@@ -56,6 +57,24 @@ HashInfo = attr.make_class(
                    if isinstance(x, str) else x),
                'filename': attr.ib(default=None)
            })
+
+
+DictLeaf = attr.make_class(
+    "DictLeaf", ('key', 'value', 'parent', 'keypath')
+)
+
+
+def iterate_dict(d, path: Path = None, filter_f=None) -> Iterator[DictLeaf]:
+    # list: considering changes in base dictionary during the iteration
+    for k in list(d):
+        v = d[k]
+        _path = (Path(str(k)) if path is None else (path / k))
+        if isinstance(v, dict):
+            yield from iterate_dict(v, _path, filter_f)
+        else:
+            leaf = DictLeaf(k, v, d, _path)
+            if not filter_f or filter_f(leaf):
+                yield leaf
 
 
 # TODO TEST

@@ -106,51 +106,36 @@ class PillarExport(PillarGet):
                 targets=local_minion_id()
             )[local_minion_id()]["ip4_interfaces"]
 
+            network_pillar = full_pillar_load["cluster"][
+                local_minion_id()]["network"]
+
             # Update interface IPs
             # Public Management Interface
             mgmt_if_public = (
                 "mgmt0" if "mgmt0" in ip4_interfaces
-                else full_pillar_load["cluster"] \
-                    [local_minion_id()] \
-                    ["network"] \
-                    ["mgmt"] \
-                    ["interfaces"][0]
+                else network_pillar["mgmt"]["interfaces"][0]
             )
-            full_pillar_load["cluster"] \
-                [local_minion_id()] \
-                ["network"] \
-                ["mgmt"] \
-                ["public_ip"] = ip4_interfaces[mgmt_if_public][0]
+            network_pillar["mgmt"]["public_ip"] = (
+                ip4_interfaces[mgmt_if_public][0]
+            )
 
             # Public Data Interface
             data_if_public = (
                 "data0" if "data0" in ip4_interfaces
-                else full_pillar_load["cluster"] \
-                    [local_minion_id()] \
-                    ["network"] \
-                    ["data"] \
-                    ["public_interfaces"][0]
+                else network_pillar["data"]["public_interfaces"][0]
             )
-            full_pillar_load["cluster"] \
-                [local_minion_id()] \
-                ["network"] \
-                ["data"] \
-                ["public_ip"] = ip4_interfaces[data_if_public][0]
+            network_pillar["data"]["public_ip"] = (
+                ip4_interfaces[data_if_public][0]
+            )
 
             # Private Data Interface
             data_if_private = (
                 "data0" if "data0" in ip4_interfaces
-                else full_pillar_load["cluster"] \
-                    [local_minion_id()] \
-                    ["network"] \
-                    ["data"] \
-                    ["private_interfaces"][0]
+                else network_pillar["data"]["private_interfaces"][0]
             )
-            full_pillar_load["cluster"] \
-                [local_minion_id()] \
-                ["network"] \
-                ["data"] \
-                ["private_ip"] = ip4_interfaces[data_if_private][0]
+            network_pillar["data"]["private_ip"] = (
+                ip4_interfaces[data_if_private][0]
+            )
 
             convert_data = self._convert_to_str(full_pillar_load, "")
 
@@ -163,7 +148,8 @@ class PillarExport(PillarGet):
             with open(pillar_dump_file, "w") as file_value:
                 json.dump(convert_data, file_value)
 
-            logger.info("SUCCESS: Pillar data exported as JSON to file "
+            logger.info(
+                "SUCCESS: Pillar data exported as JSON to file "
                 f"'{pillar_dump_file}'."
             )
 

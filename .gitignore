@@ -19,3 +19,5 @@ build
 .coverage
 tmp
 venv/
+api/python/provisioner/srv/salt-vendor/*
+!api/python/provisioner/srv/salt-vendor/README.md

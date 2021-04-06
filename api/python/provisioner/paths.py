@@ -74,7 +74,7 @@ class PillarPath(RootPath):
     def host_path(self, path, target: str):
         return self.add_merge_prefix(
             self, (
-                Path(self.all_hosts_dir.format(minion_id=target))
+                Path(self.host_dir_tmpl.format(minion_id=target))
                 / path
             )
         )

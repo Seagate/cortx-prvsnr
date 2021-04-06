@@ -22,6 +22,8 @@ import functools
 from typing import List, Union, Any, Iterable, Tuple, Dict, Type, Optional
 from pathlib import Path
 import argparse
+import importlib
+from enum import Enum
 
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
@@ -36,14 +38,57 @@ from .values import (
 )
 from .serialize import PrvsnrType, loads
 
-from . import config
+from . import config, utils
 
-# cli_spec = load_yaml(config.CLI_SPEC_PATH)
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
 logger = logging.getLogger(__name__)
+
+
+def load_cli_spec():
+    res = utils.load_yaml(config.CLI_SPEC_PATH)
+
+    def _choices_filter(leaf: utils.DictLeaf):
+        return (
+            leaf.key == 'choices'
+            and isinstance(leaf.value, str)
+            and leaf.value.startswith(config.CLI_SPEC_PY_OBJS_PREFIX)
+        )
+
+    # convert choices to objects
+    for leaf in utils.iterate_dict(res, filter_f=_choices_filter):
+        choices_spec = leaf.value.split(
+            config.CLI_SPEC_PY_OBJS_PREFIX
+        )[1].split('.')
+
+        mod_name = '.'.join(choices_spec[0:-1])
+        attr_name = choices_spec[-1]
+        module = importlib.import_module(mod_name)
+
+        choices = getattr(module, attr_name)
+
+        if issubclass(choices, Enum):
+            choices = [i.value for i in choices]
+
+        leaf.parent[leaf.key] = choices
+
+    def _nohelp_filter(leaf: utils.DictLeaf):
+        return (
+            leaf.key != 'help'
+            and ('help' not in leaf.parent)
+            and isinstance(leaf.value, str)
+        )
+
+    # convert trivial descriptions (no help)
+    for leaf in utils.iterate_dict(res, filter_f=_nohelp_filter):
+        leaf.parent[leaf.key] = dict(help=leaf.value)
+
+    return res
+
+
+cli_spec = load_cli_spec()
 
 
 # TODO IMPROVE use some attr api to copy spec
@@ -194,8 +239,13 @@ class ParserFiller:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
 
-                # if isinstance(metadata, str):
-                #    metadata = KeyPath(metadata).value(cli_spec)
+                if isinstance(metadata, str):
+                    metadata = KeyPath(metadata).value(cli_spec)
+                    _attr = copy_attr(
+                        _attr, metadata={
+                            METADATA_ARGPARSER: metadata
+                        }
+                    )
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
