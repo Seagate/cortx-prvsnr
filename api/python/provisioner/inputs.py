@@ -875,7 +875,7 @@ class SWUpdateRepo(ParamDictItemInputBase):
     _param_di = param_spec['swupdate/repo']
     release: str = ParamDictItemInputBase._attr_ib(
         is_key=True,
-        descr=("release version")
+        descr="release version"
     )
     source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
         descr=(
@@ -985,6 +985,25 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
+    source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
+        descr=(
+            "repo source, might be a local path to a repo folder or iso file"
+            " or an url to a remote repo, "
+            "{} might be used to remove the repo"
+            .format(UNDEFINED)
+        ),
+        is_key=True,
+        metavar='str',
+        converter=lambda v: (
+            UNCHANGED if v is None else (
+                v if is_special(v) or isinstance(v, Path) else str(v)
+            )
+        )
+    )
+    release: str = ParamDictItemInputBase._attr_ib(
+        descr="release version",
+        default=None
+    )
     hash: Optional[Union[str, Path]] = attr.ib(
         metadata={
             METADATA_ARGPARSER: {
