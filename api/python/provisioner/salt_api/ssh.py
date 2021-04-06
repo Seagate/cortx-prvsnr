@@ -272,7 +272,7 @@ class SaltSSHClient(SaltClientBase):
             inputs.METADATA_ARGPARSER: {
                 'help': (
                     "name of the ssh profile. Ignored if"
-                    f" '--profile' is specified"
+                    " '--profile' is specified"
                 )
             }
         }

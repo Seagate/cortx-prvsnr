@@ -17,7 +17,6 @@
 
 from typing import Union
 import logging
-from pathlib import Path
 
 from .base import ResourceSLS
 
