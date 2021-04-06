@@ -27,19 +27,19 @@ def env_provider():
 
 
 @pytest.mark.isolated
-def test_build_bundles(
-    request, rpm_build, tmpdir_function, bundle_opts,
+def test_build_prvsnr_pkgs(
+    request, rpm_build, tmpdir_function, custom_opts,
 ):
     prvsnr_pkg = rpm_build(
         request, tmpdir_function, rpm_type='core',
-        version=bundle_opts.version,
-        release_number=str(bundle_opts.pkg_version)
+        version=custom_opts.version,
+        release_number=str(custom_opts.pkg_version)
     )
     prvsnr_api_pkg = rpm_build(
         request, tmpdir_function, rpm_type='api',
-        pkg_version=str(bundle_opts.pkg_version)
+        pkg_version=str(custom_opts.pkg_version)
     )
 
     for pkg in (prvsnr_pkg, prvsnr_api_pkg):
-        dest = bundle_opts.output / pkg.name
+        dest = custom_opts.output / pkg.name
         dest.write_bytes(pkg.read_bytes())

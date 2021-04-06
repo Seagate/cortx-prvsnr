@@ -133,6 +133,8 @@ resource:
   type: Resource
 destroy:
   type: DestroyNode
+configure_node:
+  type: ConfigureNode
 
 # setup commands
 setup_provisioner:

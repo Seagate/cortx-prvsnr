@@ -35,7 +35,7 @@ def env_provider():
 def test_build_bundles(
     mhostsrvnode1,
     tmpdir_function,
-    bundle_opts,
+    custom_opts,
     bundle_script_path_f,
     orig_single_iso_on_host
 ):
@@ -43,10 +43,10 @@ def test_build_bundles(
 
     build_script = bundle_script_path_f(mhostsrvnode1)
 
-    b_types = [bundle_opts.type]
-    upgrade_ver = bundle_opts.version
+    b_types = [custom_opts.type]
+    upgrade_ver = custom_opts.version
 
-    if bundle_opts.type == 'all':
+    if custom_opts.type == 'all':
         upgrade_ver = upgrade_ver.split('.')
         upgrade_ver[-1] = str(int(upgrade_ver[-1]) + 1)
         upgrade_ver = '.'.join(upgrade_ver)
@@ -56,8 +56,8 @@ def test_build_bundles(
     for bt in b_types:
         bundles.append((
             tmpdir_function / bt, bt, (
-                upgrade_ver if bundle_opts.type == 'upgrade'
-                else bundle_opts.version
+                upgrade_ver if custom_opts.type == 'upgrade'
+                else custom_opts.version
             )
         ))
 
@@ -67,17 +67,17 @@ def test_build_bundles(
         if b_type == h.BundleT.DEPLOY_BUNDLE.value and orig_single_iso_on_host:
             add_opts.append(f"--orig-iso {orig_single_iso_on_host}")
 
-        if bundle_opts.prvsnr_pkg:
+        if custom_opts.prvsnr_pkg:
             prvsnr_pkg = mhostsrvnode1.copy_to_host(
-                bundle_opts.prvsnr_pkg,
-                tmpdir_function / bundle_opts.prvsnr_pkg.name
+                custom_opts.prvsnr_pkg,
+                tmpdir_function / custom_opts.prvsnr_pkg.name
             )
             add_opts.append(f"--prvsnr-pkg {prvsnr_pkg}")
 
-        if bundle_opts.prvsnr_api_pkg:
+        if custom_opts.prvsnr_api_pkg:
             prvsnr_api_pkg = mhostsrvnode1.copy_to_host(
-                bundle_opts.prvsnr_api_pkg,
-                tmpdir_function / bundle_opts.prvsnr_api_pkg.name
+                custom_opts.prvsnr_api_pkg,
+                tmpdir_function / custom_opts.prvsnr_api_pkg.name
             )
             add_opts.append(f"--prvsnr-api-pkg {prvsnr_api_pkg}")
 
@@ -89,7 +89,7 @@ def test_build_bundles(
         mhostsrvnode1.check_output(cmd)
         res.append(mhostsrvnode1.copy_from_host(b_dir.with_suffix('.iso')))
 
-    dest_dir = bundle_opts.output
+    dest_dir = custom_opts.output
     dest_name = None
 
     if not dest_dir.is_dir():

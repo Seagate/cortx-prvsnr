@@ -18,7 +18,7 @@
 ntp:
   _path: system.sls
   server: system/ntp/time_server
-  timezone: system/ntp/timezone
+  timezone: system/ntp/time_zone
 network:
   _path: cluster.sls
   cluster_ip: cluster/cluster_ip
