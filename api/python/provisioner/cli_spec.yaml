@@ -19,10 +19,11 @@
 #   - higher level keys - for groupping only
 #   - lowest level dictionaries will be passed
 #     to argparse's add_argument (like **kwargs)
-#   - TODO support for the leaf <spec_name>: <help string>
-#          as a shorthand for:
-#          <spec_name>:
-#            help: <help string>
+#   - a shorthand for a help-only spec is available:
+#           <spec_name>: <help string>
+#       is an equivalent for
+#           <spec_name>:
+#              help: <help string>
 
 repos:
   cortx: path/url to a CORTX distribution
