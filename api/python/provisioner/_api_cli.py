@@ -191,6 +191,8 @@ for fun in [
     'get_release_version',
     'get_factory_version',
     'cmd_run',
-    'get_setup_info'
+    'get_setup_info',
+    'set_hostname',
+    'setup_firewall'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
