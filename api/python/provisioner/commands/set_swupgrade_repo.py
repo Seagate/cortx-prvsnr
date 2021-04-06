@@ -213,7 +213,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         logger.info(f"Validating upgrade repo: release {repo.release}, "
                     f"source {repo.source}")
 
-        candidate_repo = inputs.SWUpgradeRepo(REPO_CANDIDATE_NAME, repo.source)
+        candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
 
         if params.hash:
             logger.info("`hash` parameter is setup. Start checksum "
@@ -347,7 +347,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 "removing already enabled repository "
                 f"for the '{repo.release}' release"
             )
-            _repo = inputs.SWUpgradeRepo(repo.release, values.UNDEFINED)
+            _repo = inputs.SWUpgradeRepo(values.UNDEFINED, repo.release)
             self._apply(_repo, targets=targets)
 
         logger.info(f"Configuring update repo: release {repo.release}")
