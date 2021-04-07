@@ -454,7 +454,7 @@ def pytest_addoption(parser):
 
 
 # TODO DOC how to modify tests collections
-# TODO DOC how to apply markers dynamically so it woudl impact comllection
+# TODO DOC how to apply markers dynamically so it would impact collection
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
         for level in h.LevelT:
@@ -470,6 +470,16 @@ def pytest_collection_modifyitems(session, config, items):
                 break
         else:
             item.add_marker(getattr(pytest.mark, h.TopicT.NOTOPIC.value))
+
+        if 'any_level' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['any_level'].value)
+            )
+
+        if 'any_topic' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['any_topic'].value)
+            )
 
 
 for level in list(h.LevelT) + list(h.TopicT):
@@ -560,6 +570,16 @@ def ask_proceed():
         input('Press any key to continue...')
 
     return _f
+
+
+@pytest.fixture(scope='session', params=h.LevelT)
+def any_level(request):
+    return request.param
+
+
+@pytest.fixture(scope='session', params=h.TopicT)
+def any_topic(request):
+    return request.param
 
 
 @pytest.fixture
