@@ -44,14 +44,14 @@ class QuestionWindow(Window):
         self._window.addstr(y, x, f"{self._question}")
         if selected == "Yes":
             self.on_attr(col_code_attr)
-            self._window.addstr(y+2, x, f">> Yes")
+            self._window.addstr(y+2, x, ">> Yes")
             self.off_attr(col_code_attr)
-            self._window.addstr(y+4, x+3, f"No")
+            self._window.addstr(y+4, x+3, "No")
         else:
             self.on_attr(col_code_attr)
-            self._window.addstr(y+4, x, f">> No")
+            self._window.addstr(y+4, x, ">> No")
             self.off_attr(col_code_attr)
-            self._window.addstr(y+2, x+3, f"Yes")
+            self._window.addstr(y+2, x+3, "Yes")
 
         self._window.refresh()
 

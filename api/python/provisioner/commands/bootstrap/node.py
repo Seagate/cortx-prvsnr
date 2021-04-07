@@ -95,7 +95,7 @@ class Node:
 
         return cls(**kwargs)
 
-    def __str__(self):
+    def __str__(self):    # noqa: D105
         return (
             '{}:{}@{}:{}'
             .format(

@@ -27,10 +27,7 @@ logger = logging.getLogger(__name__)
 class ConfigValidator:
 
     def _parse_sections(self, content):  # noqa: C901
-        """
-        Parses the content of config file.
-
-        """
+        """Parses the content of config file."""
         output = {}
         servers = {}
         enclosures = {}
@@ -58,7 +55,7 @@ class ConfigValidator:
 
         return output
 
-    def _validate_node_count(self, num_of_nodes, parsed):
+    def _validate_node_count(self, num_of_nodes, parsed):  # noqa: C901
         """
         Validates number of nodes.
 

@@ -22,7 +22,6 @@ FILENAME="/opt/seagate/lr-serial-number"
 
 def add_lr_serial_number():
     """Populates lr-serial-number to grains."""
-
     grains = {"lr-serial-number": None}
 
     serial_file = Path(FILENAME)
