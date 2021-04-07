@@ -6,7 +6,7 @@ def err = null
 dockerImage = "seagate/cortx-prvsnr:unit-123"
 
 Map config = [
-    staticValidation: true,
+    staticValidation: false,
     dynamicValidation: true,
     sendNotif: true,
     nodeLabel: 'cortx-prvsnr-ci',
