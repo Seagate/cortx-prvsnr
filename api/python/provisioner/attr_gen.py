@@ -17,9 +17,16 @@
 
 import sys
 import logging
+from typing import (
+    Tuple,
+    Union,
+    Type,
+    Any,
+    Callable
+)
+from ipaddress import IPv4Address
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
-from ipaddress import IPv4Address
 
 from provisioner.vendor import attr
 
@@ -61,7 +68,7 @@ def converter__version(value):
 
 
 def converter__version_specifier(value):
-    return (value if isinstance(value, SpecifierSet) else SpecifierSet(value))
+    return value if isinstance(value, SpecifierSet) else SpecifierSet(value)
 
 
 def converter__ipv4(value) -> IPv4Address:
@@ -77,8 +84,9 @@ def validator__path_exists(instance, attribute, value):
     utils.validator_path_exists(instance, attribute, value)
 
 
-def validator__subclass_of(instance, attribute, value):
-    utils.validator__subclass_of(instance, attribute, value)
+def validator__subclass_of(
+        subclass: Union[Type[Any], Tuple[Type[Any], ...]]) -> Callable:
+    utils.validator__subclass_of(subclass)
 
 
 def validator__version(instance, attribute, value):
