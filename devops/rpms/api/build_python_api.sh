@@ -183,7 +183,9 @@ if [[ "$in_docker" == true ]]; then
     output_dir="/tmp/out"
 fi
 
+    # FIXME make deps on salt and packages explicit
     # --depends "salt >= 3002" \
+    # --depends "salt >= 20.4" \
 $fpm_tool --input-type "python" \
     --output-type "$output_type" \
     --architecture "amd64" \
@@ -193,6 +195,7 @@ $fpm_tool --input-type "python" \
     --python-package-name-prefix "python36" \
     --python-bin "python3" \
     --python-disable-dependency salt \
+    --python-disable-dependency packaging \
     --no-python-downcase-dependencies \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
