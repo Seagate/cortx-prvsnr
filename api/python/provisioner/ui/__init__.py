@@ -13,4 +13,4 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-"""North Bound Interface TUI"""
+"""North Bound Interface TUI."""
