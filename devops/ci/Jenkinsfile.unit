@@ -14,6 +14,35 @@ Map config = [
 ]
 
 
+def getMarkers(String str) {
+    def pattern = /.*test (.+) please/
+    def matcher = (str =~ pattern)
+    return !!matcher ? matcher[0][1] : null
+}
+
+def test_markers = null
+
+if (env.ghprbCommentBody) {
+    test_markers = getMarkers(env.ghprbCommentBody)
+} else {
+    test_markers = []
+
+    if(env.topic) {
+        test_markers.add(env.topic)
+    }
+
+    if(env.level) {
+        test_markers.add(env.level)
+    }
+
+    test_markers = test_markers.join(' and ')
+}
+
+print test_markers
+
+return
+
+
 def nodeWrapper(label=null, body) {
     echo "Running on `${label}` node type"
     node(label) {
