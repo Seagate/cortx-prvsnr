@@ -55,7 +55,7 @@
           allow-whitelist-orgs-as-admins: '{obj:ghprb_allow_white_org_as_admins}'
           admin-list: '{obj:ghprb_admins}'
           white-list-target-branches: '{obj:ghprb_target_branches}'
-          trigger-phrase: 'test {ghprb_trigger_pattern} please'
+          trigger-phrase: 'ci: test {ghprb_trigger_pattern} please'
           only-trigger-phrase: '{ghprb_only_trigger_phrase}'
           status-context: '{ghprb_status_context}'
           cancel-builds-on-update: true  # TODO works only with JJB version >2.0.0
