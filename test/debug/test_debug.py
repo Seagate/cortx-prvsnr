@@ -22,13 +22,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# FIXME debug
 @pytest.mark.debug
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_debug_fail(any_level, any_topic):
     pytest.fail()
 
 
+# FIXME debug
 @pytest.mark.debug
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_debug_pass(any_level, any_topic):
     pass
