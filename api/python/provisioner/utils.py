@@ -15,7 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Iterator
+from typing import (
+    Tuple,
+    Union,
+    Optional,
+    List,
+    Type,
+    Any,
+    Callable,
+    Iterator
+)
 import configparser
 import json
 import logging
@@ -27,12 +36,6 @@ import secrets
 from shlex import quote
 
 from pathlib import Path, PosixPath
-from typing import (
-    Tuple,
-    Union,
-    Optional,
-    List, Type, Any, Callable
-)
 
 from . import config
 
