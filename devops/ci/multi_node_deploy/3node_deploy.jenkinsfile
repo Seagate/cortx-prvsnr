@@ -107,7 +107,7 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
-                    storage.cvg.0.data_devices=/dev/sdc,/dev/sdd
+                    storage.cvg.0.data_devices=/dev/sdc
                     storage.cvg.0.metadata_devices=/dev/sdb
                     network.data.private_ip=None
 
@@ -167,7 +167,7 @@ EOF
                     yum install -y sshpass
                     export SSHPASS=${PASSWORD}
                     provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
-                    provisioner configure_setup /root/config.ini 1
+                    provisioner configure_setup /root/config.ini 3
                     salt-call state.apply components.system.config.pillar_encrypt
                     provisioner confstore_export
                 """
