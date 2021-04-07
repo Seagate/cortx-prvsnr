@@ -29,8 +29,8 @@
       - validating-string:
           name: topic
           default: '{default_topic}'
-          description: 'Space separated testing topics. Available: deploy, config, upgrade, upgrade_bundle'
-          regex: (all|deploy|config|upgrade|upgrade_bundle)
+          description: 'Space separated testing topics. Options: (blank), deploy, config, upgrade, upgrade_bundle'
+          regex: (^$|deploy|config|upgrade|upgrade_bundle)
           msg: Value validation failed
 
 - parameter:

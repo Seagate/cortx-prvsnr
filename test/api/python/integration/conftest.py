@@ -18,7 +18,7 @@
 import pytest
 from pathlib import Path
 
-from test.helper import install_provisioner_api
+import test.helper as h
 
 collect_ignore = [
     'test_api_inner.py',
@@ -60,7 +60,7 @@ def prepare_test_env(hosts_meta, project_path, test_path):
         # TODO limit to only necessary ones
         for mhost in hosts_meta.values():
             if mhost is test_mhost:
-                install_provisioner_api(mhost)
+                h.install_provisioner_api(mhost)
                 # TODO use requirements or setup.py
                 mhost.check_output("pip3 install pytest==5.1.1")
                 inner_tests_path = mhost.tmpdir / 'test.py'

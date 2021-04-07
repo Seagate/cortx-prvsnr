@@ -48,8 +48,6 @@
     name: '{name}-prs'
     default_topic:
     ghprb_cron: 'H/10 * * * *'
-    # FIXME
-    ghprb_trigger_prefix: 'ci:'
     type:
       - unit:
           default_level: unit
