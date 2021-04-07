@@ -22,6 +22,10 @@ def getMarkers(String str) {
 
 if (env.ghprbCommentBody) {
     config.testMarkers = getMarkers(env.ghprbCommentBody)
+
+    if (!config.testMarkers) {
+       throw new Exception("GitHub comment lacks markers: $env.ghprbCommentBody")
+    }
 } else {
     def test_markers = []
 
@@ -138,7 +142,7 @@ Closure dynamicValidation = {
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml"
     String pytestTargets = ""
     // FIXME debug
-    String pytestMarkers = "(config.testMarkers) and debug"
+    String pytestMarkers = "(${config.testMarkers}) and debug"
 
     def dockerImage = null
 
