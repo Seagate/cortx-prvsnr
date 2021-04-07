@@ -4,6 +4,7 @@ TUI (Terminal User Interface) provides user with a tool, which enables interacti
 
 ## Start with provisioner TUI
 
- 1. Command to start provisioner TUI
-
- -  `provisioner configure_node`
+1.  Command to start provisioner TUI  
+    ```bash
+    provisioner configure_node
+    ```

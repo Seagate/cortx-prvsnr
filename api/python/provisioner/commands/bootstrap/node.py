@@ -95,7 +95,8 @@ class Node:
 
         return cls(**kwargs)
 
-    def __str__(self):    # noqa: D105
+    def __str__(self):  # noqa: D105
+        """Information of Node in Cortx cluster."""
         return (
             '{}:{}@{}:{}'
             .format(

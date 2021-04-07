@@ -170,7 +170,7 @@ class ConfigureSetup(CommandParserFillerMixin):
 
 
     def _dict_merge(self, dict_1, dict_2):
-        """Merge dict_1 to dict_2 recursively"""
+        """Merge dict_1 to dict_2 recursively."""
         for key in dict_2.keys():
             if key in dict_1:
                 if (

@@ -62,7 +62,6 @@ class ConfigValidator:
         Node count can only be 1 or multiples of 3.
         There cannot be mismatch between count of
         node sections and enclosure sections.
-
         """
         try:
             logger.info(
