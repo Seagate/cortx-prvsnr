@@ -9,6 +9,8 @@ update=all
 
 [jenkins]
 user=jenkins
-password=1234567890abcdef1234567890abcdef
-url=https://jenkins.example.com
+# password=1234567890abcdef1234567890abcdef
+# url=https://jenkins.example.com
+#   OR
+# url=http://localhost:8080
 query_plugins_info=False

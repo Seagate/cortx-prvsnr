@@ -2,19 +2,22 @@
 - defaults:
     name: global
 
+    # FIXME debug
     mail-to: andkononykhin@gmail.com
     github_org: andkononykhin
     defaut_commit_id: jenkins-config-automation
     jenkinsfile-path: 'devops/ci/Jenkinsfile.unit'
 
-    default_topic: all
+    default_topic:
 
 
+    # FIXME debug
     pr_user_whitelist:
       - andkononykhin
 
     # github pull request builder trigger defaults
     ghprb_cron: 'H * * * *'
+    # FIXME debug
     ghprb_user_whitelist:
       - andkononykhin
     ghprb_org_whitelist:
@@ -23,7 +26,7 @@
     ghprb_admins: []
     ghprb_target_branches:
       - 'pre-cortx-1.0'
-    ghprb_trigger_prefix: ''
+    ghprb_trigger_prefix: 'ci:'
     ghprb_trigger_pattern: 'this'
     ghprb_only_trigger_phrase: false
     ghprb_status_context:
