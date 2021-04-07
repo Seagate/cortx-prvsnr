@@ -156,8 +156,8 @@ class DestroyNode(Deploy):
                 self.setup_ctx.ssh_client.state_apply(
                     f"components.{state}"
                 )
-        except Exception:
-            logger.warn(f"Failed {state} on {targets}")
+        except Exception as exc:
+            logger.warn(f"Failed {state} on {targets} Error: {str(exc)}")
 
     def _run_cmd(self, cmds, targets=None):
         for cmd in cmds:
@@ -173,8 +173,8 @@ class DestroyNode(Deploy):
                     self.setup_ctx.ssh_client.cmd_run(
                         f"{cmd}"
                     )
-            except Exception:
-                logger.warn(f"Failed cmd {cmd} on {targets}")
+            except Exception as exc:
+                logger.warn(f"Failed cmd {cmd} on {targets} Error: {str(exc)}")
 
     def _run_states(self,  # noqa: C901 FIXME
         states_group: str, run_args: run_args_type):
