@@ -20,12 +20,10 @@ def getMarkers(String str) {
     return !!matcher ? matcher[0][1] : null
 }
 
-def test_markers = null
-
 if (env.ghprbCommentBody) {
-    test_markers = getMarkers(env.ghprbCommentBody)
+    config.testMarkers = getMarkers(env.ghprbCommentBody)
 } else {
-    test_markers = []
+    def test_markers = []
 
     if(env.topic) {
         test_markers.add(env.topic)
@@ -35,7 +33,7 @@ if (env.ghprbCommentBody) {
         test_markers.add(env.level)
     }
 
-    test_markers = test_markers.join(' and ')
+    config.testMarkers = test_markers.join(' and ')
 }
 
 print test_markers
@@ -143,9 +141,8 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml"
     String pytestTargets = ""
-    String pytestMarkers = config.testMarkers
-
-    pytestMarkers = "${env.level} and ${env.topic}"
+    // FIXME debug
+    String pytestMarkers = "(config.testMarkers) and debug"
 
     def dockerImage = null
 
