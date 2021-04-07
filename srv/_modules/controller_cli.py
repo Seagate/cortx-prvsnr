@@ -35,7 +35,7 @@ import sys
 sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
 
 # Cortx packages
-import provisioner
+#import provisioner
 
 from pathlib import Path
 logger = logging.getLogger(__name__)

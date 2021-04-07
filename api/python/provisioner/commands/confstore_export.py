@@ -14,12 +14,12 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
+# API to export pillar data to Confstore
 
 import logging
 
 from pathlib import Path
 from typing import Type
-from provisioner.salt import local_minion_id
 from provisioner.vendor import attr
 from provisioner.api import grains_get
 from ..salt import (
@@ -55,7 +55,7 @@ class ConfStoreExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     description = "Export pillar template data to ConfStore"
 
-    def _encrypt_value(self, key, value):
+    def _encrypt_value(self, key, value):  # noqa: C901
         from cortx.utils.security import cipher
         if not value:
             return value
@@ -81,10 +81,11 @@ class ConfStoreExport(CommandParserFillerMixin):
     def run(self, **kwargs):
         """
         confstore_export command execution method.
+
         It creates a pillar template and loads into the confstore
         of which the path specified in pillar
-        """
 
+        """
         try:
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
             template_file_path = str(

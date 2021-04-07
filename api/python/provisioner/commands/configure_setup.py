@@ -170,10 +170,7 @@ class ConfigureSetup(CommandParserFillerMixin):
 
 
     def _dict_merge(self, dict_1, dict_2):
-        """
-        Merge dict_1 to dict_2 recursively
-
-        """
+        """Merge dict_1 to dict_2 recursively."""
         for key in dict_2.keys():
             if key in dict_1:
                 if (
@@ -194,7 +191,8 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     def _key_int_to_list(self, contents):
         """
-        Treat integer values in keys to arrays and update dict values
+        Treat integer values in keys to arrays
+        and update dict values
 
         """
         ret_val = None
@@ -215,7 +213,8 @@ class ConfigureSetup(CommandParserFillerMixin):
 
     def _parse_input(self, input_data):
         """
-        Parses content to string or arrays based on the category
+        Parses content to string or arrays
+        based on the category
 
         """
         kv_to_dict = dict()

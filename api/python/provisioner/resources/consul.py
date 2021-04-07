@@ -136,9 +136,10 @@ class ConsulUpgrade(ConsulState):
     level = ConsulParams.level
     iteration = ConsulParams.iteration
 
-    # XXX - for UNCHANCGED values we may resolve real values here
+    # XXX - for UNCHANGED values we may resolve real values here
     #       and validate only after that
-    def __attrs_post_init__(self):  # noqa: C901
+
+    def __attrs_post_init__(self):    # noqa: D105
         if not (self.new_version > self.old_version):
             raise ValueError(
                 f"New version '{self.new_version}' is less"
