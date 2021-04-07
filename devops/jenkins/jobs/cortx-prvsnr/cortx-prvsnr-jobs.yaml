@@ -8,6 +8,7 @@
     ghprb_allow_white_org_as_admins: '{obj:ghprb_allow_white_org_as_admins}'
     ghprb_admins: '{obj:ghprb_admins}'
     ghprb_target_branches: '{obj:ghprb_target_branches}'
+    ghprb_trigger_prefix: '{ghprb_trigger_prefix}'
     ghprb_trigger_pattern: '{ghprb_trigger_pattern}'
     ghprb_only_trigger_phrase: '{ghprb_only_trigger_phrase}'
     ghprb_status_context: '{ghprb_status_context}'
@@ -47,6 +48,8 @@
     name: '{name}-prs'
     default_topic:
     ghprb_cron: 'H/10 * * * *'
+    # FIXME
+    ghprb_trigger_prefix: 'ci:'
     type:
       - unit:
           default_level: unit
@@ -59,8 +62,8 @@
           default_level: integration
           # ghprb_cron: null  # consider push-events only
           ghprb_only_trigger_phrase: true
-          trigger-phrase: 'ci custom: test {ghprb_trigger_pattern} please'
-          ghprb_trigger_pattern: '([\w\s]+)'
+          ghprb_trigger_prefix: 'ci custom:'
+          ghprb_trigger_pattern: '[\w\s]+'
     jobs:
       - '{name}-pr-{type}'
 

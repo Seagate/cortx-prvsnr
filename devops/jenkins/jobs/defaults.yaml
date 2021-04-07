@@ -15,13 +15,15 @@
 
     # github pull request builder trigger defaults
     ghprb_cron: 'H * * * *'
-    ghprb_user_whitelist: []
+    ghprb_user_whitelist:
+      - andkononykhin
     ghprb_org_whitelist:
       - Seagate
     ghprb_allow_white_org_as_admins: true
     ghprb_admins: []
     ghprb_target_branches:
       - 'pre-cortx-1.0'
+    ghprb_trigger_prefix: ''
     ghprb_trigger_pattern: 'this'
     ghprb_only_trigger_phrase: false
     ghprb_status_context:
