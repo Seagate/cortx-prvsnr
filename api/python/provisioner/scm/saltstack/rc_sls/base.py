@@ -113,7 +113,8 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             f" '{self.state.name}' on targets: {self.targets}"
         )
 
-    def run(self):
+    def run(self, targets=None):
+        self.targets = targets if targets else self.targets
         self.setup_roots()
 
         res = []

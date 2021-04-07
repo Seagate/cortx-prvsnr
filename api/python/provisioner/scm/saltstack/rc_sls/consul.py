@@ -43,6 +43,7 @@ class ConsulSLS(ResourceSLS):
     base_sls = 'resources.3rd_party.consul'
 
     def __attrs_post_init__(self):
+        """No Ops."""
         pass
 
     @property

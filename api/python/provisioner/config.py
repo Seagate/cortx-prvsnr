@@ -569,8 +569,6 @@ class HashType(Enum):
 
 # UPGRADE ROUTINE
 class ConfigLevelT(Enum):
-
     """CORTX configuration levels"""
-
     CLUSTER = "cluster"
     NODE = "node"

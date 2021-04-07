@@ -56,7 +56,9 @@ class UpgradeParams(ResourceParams):
 class ConsulParams(UpgradeParams, VendorParamsMixin):
     server: bool = attr_ib(cli_spec='consul/server', default=True)
     bind_addr: IPv4Address = attr_ib(
-        'ipv4', cli_spec='consul/bind_addr', default='0.0.0.0'
+        'ipv4',
+        cli_spec='consul/bind_addr',
+        default='0.0.0.0'
     )
     bootstrap_expect: Optional[int] = attr_ib(
         cli_spec='consul/bootstrap_expect',
