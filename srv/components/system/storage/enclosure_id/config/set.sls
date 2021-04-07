@@ -45,5 +45,6 @@ Replace enclosure id in grains:
 Sync grains data after refresh enclosure_id:
   module.run:
     - saltutil.refresh_grains: []
+    - mine.update: []
     - require:
       - Replace enclosure id in grains
