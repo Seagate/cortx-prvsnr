@@ -107,7 +107,7 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
-                    storage.cvg.0.data_devices=/dev/sdc
+                    storage.cvg.0.data_devices=/dev/sdc,/dev/sdd,/dev/sde,/dev/sdf,/dev/sdg,/dev/sdh,/dev/sdi
                     storage.cvg.0.metadata_devices=/dev/sdb
                     network.data.private_ip=None
 
