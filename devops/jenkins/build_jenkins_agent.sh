@@ -197,6 +197,7 @@ if [[ -z "$agent_secret" || -z "$agent_work_dir" ]]; then
     >&2 "$0: remote agent is not yet configured (no secret and/or working dir is set)"
 fi
 
+# TODO API to provide that remote setting to a user
 if [[ -n "$work_dir" ]]; then
     if [[ "$agent_work_dir" != "$work_dir" ]]; then
         >&2 "$0: remote agent working dir settings '$agent_work_dir' and the local one "$work_dir" are different"
@@ -210,7 +211,6 @@ docker run --init -d \
     -v "$DOCKER_SOCKET":"$DOCKER_SOCKET" \
     -v "$work_dir":"$work_dir" \
     --name "$CONTAINER_NAME" \
-    --rm \
     "$IMAGE_NAME_FULL" \
     -url "$jenkins_url" \
     -workDir="$work_dir" \
