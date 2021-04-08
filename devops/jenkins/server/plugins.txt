@@ -1,3 +1,4 @@
+# system level plugins
 configuration-as-code
 workflow-aggregator
 cloudbees-folder
@@ -9,6 +10,8 @@ credentials-binding
 git
 github
 github-branch-source
+
+# jobs
 pipeline-github-lib
 pipeline-stage-view
 antisamy-markup-formatter
@@ -20,3 +23,5 @@ ws-cleanup
 email-ext
 docker-workflow
 validating-string-parameter
+jobConfigHistory
+buildtriggerbadge
