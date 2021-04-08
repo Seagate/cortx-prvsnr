@@ -31,6 +31,7 @@ IMAGE_TAG="$IMAGE_VERSION"
 IMAGE_NAME_FULL="$IMAGE_NAME":"$IMAGE_VERSION"
 
 CONTAINER_NAME=cortx-prvsnr-jenkins
+VOLUME_NAME=jenkins_home
 
 inputs_f="$server_dir"/jenkins_inputs
 jenkins_tmpl_f="$server_dir"/jenkins.yaml.tmpl
@@ -65,6 +66,6 @@ done
 
 docker build -t "$IMAGE_NAME_FULL" -f "$server_dir"/Dockerfile.jenkins "$server_dir"
 
-docker run --rm -d -p 8080:8080 -p 50000:50000 \
+docker run -d -p 8080:8080 -p 50000:50000 \
     --name "$CONTAINER_NAME" \
-    -v jenkins_home:/var/jenkins_home "$IMAGE_NAME_FULL"
+    -v "$VOLUME_NAME":/var/jenkins_home "$IMAGE_NAME_FULL"
