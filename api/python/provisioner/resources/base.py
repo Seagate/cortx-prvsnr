@@ -97,7 +97,7 @@ class ResourceTransition(ABC):
     #       different bulk targeting (lists, globs, regex ...)
     @abstractmethod
     def run(self):
-        """Move a resource to a state"""
+        """Move a resource to a state."""
 
 
 @attr.s(auto_attribs=True)
