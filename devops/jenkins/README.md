@@ -197,3 +197,19 @@ You will likely need to verify the jenkins credentials you set.
 ### Provisioner Jobs on Jenkins
 
 *TBD*
+
+#### Summary
+
+```bash
+# activate python3 virtual env and run
+pip install -r jobs/requirements.txt
+
+# OR
+# pip3 install --user -r jobs/requirements.txt
+
+cp jobs/jenkins.ini.example jobs/jenkins.ini
+
+# edit jobs/jenkins.ini
+
+jenkins-jobs --conf jobs/jenkins.ini update -r jobs
+```
