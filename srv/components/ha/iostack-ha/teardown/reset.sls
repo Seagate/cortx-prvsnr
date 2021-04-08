@@ -14,8 +14,9 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+Remove Cortx-HA resources:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:reset')
+    - order: 1
+{% endif %}

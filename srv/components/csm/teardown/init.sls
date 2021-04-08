@@ -16,6 +16,5 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.csm.teardown.reset
+    - components.csm.teardown.cleanup

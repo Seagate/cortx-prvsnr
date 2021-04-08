@@ -14,8 +14,13 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+Cleanup Cortx-HA resources:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:cleanup')
+    - order: 1
+{% endif %}
 
-include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+# Delete iostack-ha checkpoint flag:
+#   file.absent:
+#     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.iostack-ha

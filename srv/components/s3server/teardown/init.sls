@@ -16,6 +16,5 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.s3server.teardown.reset
+    - components.s3server.teardown.cleanup
