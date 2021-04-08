@@ -19,3 +19,11 @@ include:
   - components.ha.cortx-ha.ha_cleanup
   - components.ha.cortx-ha.teardown.reset
   - components.ha.cortx-ha.teardown.cleanup
+
+Remove cortx-ha:
+  pkg.purged:
+    - name: cortx-ha
+
+Delete cortx-ha checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.cortx-ha

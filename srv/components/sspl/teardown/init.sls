@@ -19,3 +19,17 @@ include:
   - components.sspl.teardown.reset
   - components.sspl.teardown.cleanup
   - components.sspl.teardown.commons
+
+Remove sspl packages:
+  pkg.purged:
+    - pkgs:
+      - cortx-sspl
+      - cortx-sspl-test
+
+Remove flask:
+  pip.removed:
+    - name: flask
+
+Delete sspl checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl

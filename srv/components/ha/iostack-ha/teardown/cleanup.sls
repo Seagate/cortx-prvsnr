@@ -20,7 +20,3 @@ Cleanup Cortx-HA resources:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:cleanup')
     - order: 1
 {% endif %}
-
-# Delete iostack-ha checkpoint flag:
-#   file.absent:
-#     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.iostack-ha

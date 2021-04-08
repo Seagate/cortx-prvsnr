@@ -15,19 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 Stage - Reset Hare:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:reset')
-
-# {% import_yaml 'components/defaults.yaml' as defaults %}
-# {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-
-# Stage - Reset Hare:
-#   cmd.run:
-#     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:reset')
-
-# Remove cluster yaml:
-#   file.absent:
-#     - name: /var/lib/hare
-# {% endif %}
-
+{% endif %}

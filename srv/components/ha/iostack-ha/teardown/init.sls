@@ -18,3 +18,7 @@
 include:
     - components.ha.iostack-ha.teardown.reset
     - components.ha.iostack-ha.teardown.cleanup
+
+Delete iostack-ha checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.iostack-ha

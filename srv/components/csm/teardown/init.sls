@@ -18,3 +18,26 @@
 include:
     - components.csm.teardown.reset
     - components.csm.teardown.cleanup
+
+Remove csm package:
+  pkg.purged:
+    - pkgs:
+      - cortx-cli
+      - cortx-csm_agent
+      - cortx-csm_web
+
+Delete csm checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
+
+Remove csm user from prvsnrusers group:
+  group.present:
+    - name: prvsnrusers
+    - delusers:
+      - csm
+
+Remove csm user from certs group:
+  group.present:
+    - name: certs
+    - delusers:
+      - csm

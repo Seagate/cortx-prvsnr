@@ -18,3 +18,17 @@
 include:
     - components.s3server.teardown.reset
     - components.s3server.teardown.cleanup
+
+Stop s3authserver service:
+  service.dead:
+    - name: s3authserver
+    - enable: False
+    - init_delay: 2
+
+Remove cortx-s3server:
+  pkg.purged:
+    - name: cortx-s3server
+
+Delete s3server checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.s3server

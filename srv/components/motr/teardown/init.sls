@@ -18,3 +18,13 @@
 include:
     - components.motr.teardown.reset
     - components.motr.teardown.cleanup
+
+Remove Motr package:
+  pkg.purged:
+    - pkgs:
+      - cortx-motr
+      # - motr-debuginfo
+
+Delete Motr checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.motr

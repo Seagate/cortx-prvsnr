@@ -18,3 +18,11 @@
 include:
     - components.hare.teardown.reset
     - components.hare.teardown.cleanup
+
+Remove Hare:
+  pkg.purged:
+    - name: cortx-hare
+
+Remove hare checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.hare
