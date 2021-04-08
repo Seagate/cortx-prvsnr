@@ -15,7 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import ClassVar, Optional, Dict, Union, Any, List, Tuple
+from typing import (
+    ClassVar,
+    Optional,
+    Dict,
+    Any,
+    List,
+    Tuple
+)
 from pathlib import Path
 import importlib
 import logging
@@ -30,7 +37,7 @@ from provisioner.resources.base import (
     ResourceManager
 )
 from provisioner.salt_api.base import SaltClientBase
-from provisioner.fileroot import ResourcePath
+# from provisioner.fileroot import ResourcePath
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +55,6 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
 
     client: SaltClientBase
     pillar_inline: Dict = None
-    targets: str = config.ALL_TARGETS
 
     _pillar: Optional[dict] = attr.ib(init=False, default=None)
 
@@ -77,12 +83,10 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
 
     @property
     def is_vendored(self) -> bool:
-        vendored = set(
-            [
-                pillar.get('vendored', False)
-                for pillar in self.pillar.values()
-            ]
-        )
+        vendored = {
+            pillar.get('vendored', False)
+            for pillar in self.pillar.values()
+        }
         if len(vendored) != 1:
             raise errors.ProvisionerRuntimeError(
                 f"Mixed {self.resource_name} vendored setup"
@@ -101,11 +105,11 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     def set_vendored(self, vendored: bool):
         self.pillar_set(dict(vendored=vendored))
 
-    def r_path(self, path: Union[str, Path]):
-        return ResourcePath(self.resource_t, path)
+    # def r_path(self, path: Union[str, Path]):
+    #    return ResourcePath(self.resource_t, path)
 
-    def fileroot_path(self, path: Union[str, Path]):
-        return self.fileroot.path(self.r_path(path))
+    # def fileroot_path(self, path: Union[str, Path]):
+    #    return self.fileroot.path(self.r_path(path))
 
     def setup_roots(self):
         logger.info(
@@ -113,8 +117,7 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             f" '{self.state.name}' on targets: {self.targets}"
         )
 
-    def run(self, targets=None):
-        self.targets = targets if targets else self.targets
+    def run(self):
         self.setup_roots()
 
         res = []
@@ -141,7 +144,7 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
                 )
                 res.append(_res)
 
-            return res
+        return res
 
 
 # arbitrary dir and recursive are not support for now
@@ -156,10 +159,10 @@ class TypesLoader:
         if base_dir != MODULE_DIR or recursive:
             raise NotImplementedError()
 
-        py_files = [
-            i for i in base_dir.glob('**/.*.py' if recursive else '*.py')
-            # if i.name not in (MODULE_PATH.name, '__init__.py')
-        ]
+        py_files = list(
+            base_dir.glob('**/.*.py' if recursive else '*.py')
+        )
+        # if i.name not in (MODULE_PATH.name, '__init__.py')
 
         modules = [
             importlib.import_module(f'{__package__}.{f.stem}')

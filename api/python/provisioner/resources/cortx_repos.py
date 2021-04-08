@@ -19,12 +19,13 @@ from typing import Union
 from pathlib import Path
 import logging
 
-from .base import (
-    ResourceParams, ResourceBase, ResourceState
-)
 from provisioner import config
 from provisioner.vendor import attr
 from provisioner.attr_gen import attr_ib
+
+from .base import (
+    ResourceParams, ResourceBase, ResourceState
+)
 
 logger = logging.getLogger(__name__)
 

@@ -17,15 +17,17 @@
 
 from typing import Union, List, Optional
 import logging
-from packaging.version import Version
 from ipaddress import IPv4Address
+
+from packaging.version import Version
+
+from provisioner import config, attr_gen
+from provisioner.vendor import attr
+from provisioner.attr_gen import attr_ib
 
 from .base import (
     ResourceParams, ResourceBase, ResourceState
 )
-from provisioner import config, attr_gen
-from provisioner.vendor import attr
-from provisioner.attr_gen import attr_ib
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +144,7 @@ class ConsulUpgrade(ConsulState):
     #       and validate only after that
 
     def __attrs_post_init__(self):    # noqa: D105
-        if not (self.new_version > self.old_version):
+        if self.new_version <= self.old_version:
             raise ValueError(
                 f"New version '{self.new_version}' is less"
                 f" than old one '{self.old_version}'"
