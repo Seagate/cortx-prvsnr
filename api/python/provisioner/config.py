@@ -295,7 +295,7 @@ def profile_base_dir(
         location = Path(location)
         location = location.resolve()
 
-    return (location / setup_name)
+    return location / setup_name
 
 
 # TODO make a class

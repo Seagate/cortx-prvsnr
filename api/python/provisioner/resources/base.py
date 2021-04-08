@@ -90,13 +90,14 @@ class ResourceTransition(ABC):
     state: ResourceState = attr.ib(
         validator=attr.validators.instance_of(ResourceState)
     )
+    targets: str = ALL_TARGETS
 
     # XXX need abstraction for targets:
     #     - different SCM might use different aliases for all targets,
     #       different bulk targeting (lists, globs, regex ...)
     @abstractmethod
-    def run(self, targets: Any = ALL_TARGETS):
-        """Move a resource to a state on specified targets."""
+    def run(self):
+        """Move a resource to a state"""
 
 
 @attr.s(auto_attribs=True)
@@ -114,14 +115,15 @@ class ResourceManager:
     def run(
         self,
         state: ResourceState,
+        *args,
         targets: Any = ALL_TARGETS,
         trans_args=None, trans_kwargs=None,
-        *args, **kwargs
+        **kwargs
     ):
         """Apply state on specified targets."""
 
         try:
-            transition_t = self.transitions[type(state)]
+            transition_t = self.transitions[type(state)]  # pylint: disable=unsubscriptable-object
         except KeyError:
             raise TypeError(f'unsupported state type {type(state)}')
 
