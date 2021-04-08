@@ -16,6 +16,7 @@
 #
 # API to export pillar data to Confstore
 
+import importlib
 import logging
 
 from pathlib import Path
@@ -55,20 +56,26 @@ class ConfStoreExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     description = "Export pillar template data to ConfStore"
 
-    def _encrypt_value(self, key, value):  # noqa: C901
-        from cortx.utils.security import cipher
+    def _confstore_encrypt(self, key, value, cipher):
         if not value:
             return value
         cypher_name = key.split('>')[0]
+        cluster_id = grains_get("cluster_id",targets=local_minion_id())[local_minion_id()]["cluster_id"]
+        component_name = "cortx"
+
         if 'bmc' in key:
             cypher_id = key.split('>')[1]
+            component_name = "cluster"
         elif 'storage_enclosure' in key:
             cypher_id = key.split('>')[1]
+            component_name = "storage"
         else:
-            cypher_id = grains_get(
-                "cluster_id",
-                targets=local_minion_id()
-            )[local_minion_id()]["cluster_id"]
+            cypher_id = cluster_id
+
+        cipher_key = cipher.Cipher.generate_key(cluster_id, component_name)
+        value = cipher.Cipher.decrypt(cipher_key, secret.encode("utf-8"))).decode("utf-8")
+        
+         
         cipher_key = cipher.Cipher.generate_key(cypher_id, cypher_name)
         return str(
             cipher.Cipher.encrypt(
@@ -121,7 +128,9 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             Path(CORTX_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
 
-            from cortx.utils.conf_store.conf_store import Conf
+            Conf = importlib.import_module('cortx.utils.conf_store.conf_store.Conf')
+            
+            cipher = importlib.import_module('cortx.utils.security.cipher')
 
             Conf.load('provisioner', pillar[PillarKey(pillar_key)])
 
@@ -130,7 +139,7 @@ class ConfStoreExport(CommandParserFillerMixin):
                 if data:
                     key, value = data.split(delimiter)
                     if 'secret' in key:
-                        value = self._encrypt_value(key, value)
+                        value = self._confstore_encrypt(key, value, cipher)
                         template_data[i] = key + delimiter + value
                     Conf.set("provisioner", key, value)
 
