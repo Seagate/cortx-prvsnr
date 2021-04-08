@@ -55,18 +55,18 @@ node {
             stage("Storage Configuration Check") {
                 try { 
                     sshCommand remote: remote, command: """
-                        test 6 -le $(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
+                        test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
                     """
                     echo "The VM has 6+ number of attached disks. Check Successful!"
                 } catch(Exception ex) {
-                    error 'The VM should has less than 6 attached disks. Kindly provide a VM with 6+ attached disks.'
+                    error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
                 }
             }
             
             stage("Prepare config.ini") {
-                sshCommand remote: remote, command: '''
-                    device_list=$(lsblk -nd -o NAME -e 11|grep -v sda|paste -s -d, -)
-                    echo """
+                sshCommand remote: remote, command: """
+                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
+                    echo \"\"\"
                     [srvnode_default]
                     network.data.private_interfaces=eth3,eth4
                     network.data.public_interfaces=eth1,eth2
@@ -79,17 +79,19 @@ node {
 
                     [enclosure_default]
                     type=virtual
-                    """ | sed -e 's/^[ \t]*//' > /root/config.ini
-                '''
-                sshCommand remote: remote, command: '''
-                    echo """
+                    controller.type=virtual
+                    \"\"\" | sed -e 's/^[ \t]*//' > /root/config.ini
+                """
+                sshCommand remote: remote, command: """
+                    echo \"\"\"
                     [${remote.name}]
                     hostname=${remote.host}
                     roles=primary,openldap_server
 
                     [enclosure-${remote.name.split('-')[1]}]
-                    """ | sed -e 's/^[ \t]*//' >> /root/config.ini
-                '''
+                    \"\"\" >> /root/config.ini
+                    sed -ie 's/^[ \t]*//' /root/config.ini
+                """
                 echo "Successfully created config.ini file!"
             }
             
@@ -189,9 +191,14 @@ node {
         }
 
         sh label: '', script: "mkdir archives"
-        sshGet remote: remote, from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
-        sshGet remote: remote, from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
-        sshGet remote: remote, from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
-        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
+        
+        sshGet remote: remotes[0], from: '/root/config.ini', into: 'archives/config.ini', override: true
+        archiveArtifacts artifacts: 'archives/config.ini', followSymlinks: false
+        sshGet remote: remotes[0], from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
+        archiveArtifacts artifacts: 'archives/provisioner_cluster.json', followSymlinks: false
+
+        sshGet remote: remotes[0], from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
+        sshGet remote: remotes[0], from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
+        archiveArtifacts artifacts: 'archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
     }
 }

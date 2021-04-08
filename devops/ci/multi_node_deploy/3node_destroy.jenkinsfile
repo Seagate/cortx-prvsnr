@@ -103,38 +103,38 @@ node {
         }
 
         for (remote in remotes.reverse()) {
-            // stage("${remote.name}: Stop Salt services") {
-            //     sshCommand remote: remote, command: """
-            //         systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
-            //         systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
-            //         systemctl status glusterd >/dev/null && systemctl stop glusterd || true
-            //         systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
-            //         systemctl status salt-master >/dev/null && systemctl stop salt-master || true
-            //     """
-            //     echo "Sucessfully stopped salt and gluster services"
-            // }
+            stage("${remote.name}: Stop services") {
+                sshCommand remote: remote, command: """
+                    systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
+                    systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
+                    systemctl status glusterd >/dev/null && systemctl stop glusterd || true
+                    systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
+                    systemctl status salt-master >/dev/null && systemctl stop salt-master || true
+                """
+                echo "Sucessfully stopped salt and gluster services"
+            }
 
-            // stage("${remote.name}: Uninstall rpms") {
-            //     sshCommand remote: remote, command: """
-            //         yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
-            //         yum erase -y gluster-fuse gluster-server        # Gluster FS packages
-            //         yum erase -y salt-minion salt-master salt-api   # Salt packages
-            //         yum erase -y python36-m2crypto                  # Salt dependency
-            //         yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
-            //         yum erase -y *cortx*
-            //         yum autoremove -y
-            //         yum clean all
-            //         rm -rf /var/cache/yum
-            //         # Remove cortx-py-utils
-            //         pip3 uninstall -y cortx-py-utils
-            //         # Cleanup pip packages
-            //         pip3 freeze|xargs pip3 uninstall -y
-            //         # Cleanup pip config
-            //         test -e /etc/pip.conf && rm -f /etc/pip.conf
-            //         test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
-            //     """
-            //     echo "Successfully uninstalled rpms"
-            // }
+            stage("${remote.name}: Uninstall rpms") {
+                sshCommand remote: remote, command: """
+                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
+                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
+                    yum erase -y salt-minion salt-master salt-api   # Salt packages
+                    yum erase -y python36-m2crypto                  # Salt dependency
+                    yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    yum erase -y *cortx*
+                    yum autoremove -y
+                    yum clean all
+                    rm -rf /var/cache/yum
+                    # Remove cortx-py-utils
+                    pip3 uninstall -y cortx-py-utils
+                    # Cleanup pip packages
+                    pip3 freeze|xargs pip3 uninstall -y
+                    # Cleanup pip config
+                    test -e /etc/pip.conf && rm -f /etc/pip.conf
+                    test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
+                """
+                echo "Successfully uninstalled rpms"
+            }
 
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """

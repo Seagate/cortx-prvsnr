@@ -45,7 +45,7 @@ node {
                 """
                 echo "Successfully teardown of Cortx Stack!"
             }
-            stage("Stop Salt services") {
+            stage("Stop services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
                     systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
