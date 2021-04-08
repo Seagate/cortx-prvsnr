@@ -16,6 +16,6 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+  - components.ha.cortx-ha.ha_cleanup
+  - components.ha.cortx-ha.teardown.reset
+  - components.ha.cortx-ha.teardown.cleanup

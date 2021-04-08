@@ -16,6 +16,5 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.ha.iostack-ha.teardown.reset
+    - components.ha.iostack-ha.teardown.cleanup
