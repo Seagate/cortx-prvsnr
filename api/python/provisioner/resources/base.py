@@ -90,7 +90,7 @@ class ResourceTransition(ABC):
     state: ResourceState = attr.ib(
         validator=attr.validators.instance_of(ResourceState)
     )
-    targets: str = ALL_TARGETS
+    targets: str = attr.ib(kw_only=True, default=ALL_TARGETS)
 
     # XXX need abstraction for targets:
     #     - different SCM might use different aliases for all targets,
