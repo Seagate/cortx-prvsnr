@@ -3,6 +3,6 @@ FROM jenkins/jenkins:lts
 COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 
-COPY --chown=jenkins:jenkins jenkins_inputs /run/secrets/secrets.properties
+COPY --chown=jenkins:jenkins jenkins.properties /run/secrets/secrets.properties
 COPY --chown=jenkins:jenkins jenkins.yaml.tmpl /usr/share/jenkins/ref/jenkins.yaml
 ENV CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins.yaml
