@@ -28,7 +28,7 @@ provisioner_rsyslog_conf_updated:
     - watch_in:
       - service: Start rsyslog
 
-{% if 'single' not in pillar['cluster']['type'] %}
+{% if salt['saltutil.runner']("manage.up") | length > 1 %}
 # Always start glusterfshsaredstorage before salt-master
 Update glusterfssharedstorage.service:
   file.managed:
