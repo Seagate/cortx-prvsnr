@@ -1,1 +1,1 @@
-jenkins-job-builder
+jenkins-job-builder >= 3.9.0
