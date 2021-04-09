@@ -49,21 +49,6 @@ function parse_input {
     echo "$(grep "${_param}" "$inputs_f" | head -n1 | sed "s/${_param}=\(.*\)/\1/")"
 }
 
-function set_param {
-    local _param="$1"
-    local _value="${2:-}"
-    sed -i "s/{{ ${_param} }}/$_value/g" "$jenkins_f"
-}
-
-
-params=("ADMIN_EMAIL_ADDRESS" "JENKINS_URL" "SMTP_SERVER" "SMTP_USER" "SMTP_PASSWORD")
-
-cp -f "$jenkins_tmpl_f" "$jenkins_f"
-
-for param in "${params[@]}"; do
-    set_param "$param" "$(parse_input "$param")"
-done
-
 docker build -t "$IMAGE_NAME_FULL" -f "$server_dir"/Dockerfile.jenkins "$server_dir"
 
 docker run -d -p 8080:8080 -p 50000:50000 \
