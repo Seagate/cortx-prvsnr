@@ -89,8 +89,7 @@ If you need to adjust the configuration please consider to do:
 - update `server/jenkins_inputs` to change existent parameters values
 - update [server/jenkins.yaml.tmpl](server/jenkins.yaml.tmpl) if you need to
   change the configuration
-- update [server/jenkins_inputs.tmpl](server/jenkins_inputs.tmpl) and
-  [devops/jenkins/build_jenkins.sh](devops/jenkins/build_jenkins.sh) as well
+- update [server/jenkins_inputs.tmpl](server/jenkins_inputs.tmpl) as well
   if you need to expose a new parameter
 
 Once the change is ready you can stop jenkins and re-run
