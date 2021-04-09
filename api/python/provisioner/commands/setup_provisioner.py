@@ -1760,7 +1760,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Refresh enclosure id on the system")
         for state in [
             'components.system.storage.enclosure_id',
-            'components.system.storage.enclosure_id.config.sync'
+            'components.system.config.sync_salt'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
