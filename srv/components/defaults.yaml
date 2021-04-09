@@ -46,7 +46,7 @@ tmp_dir: /tmp
 
   # LEGACY REPOS STRUCTURE
 
- {% set common_repo = '/'.join([target_build, '3rd_party']) %}
+ {% set commons_repo = '/'.join([target_build, '3rd_party']) %}
 
   {% set epel_repo = "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/" %}
     # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
