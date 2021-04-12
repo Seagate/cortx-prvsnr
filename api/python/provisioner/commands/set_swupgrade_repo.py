@@ -17,6 +17,7 @@
 import logging
 from pathlib import Path
 from typing import Type
+import requests
 
 from ..salt import copy_to_file_roots
 from .set_swupdate_repo import SetSWUpdateRepo
@@ -215,22 +216,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
 
-        if params.hash:
-            logger.info("`hash` parameter is setup. Start checksum "
-                        "validation for the whole ISO file")
-            hash_info = self._get_hash_params(params)
-            upgrade_bundle_hash_validator = HashSumValidator(
-                hash_sum=hash_info.hash_sum,
-                hash_type=hash_info.hash_type)
+        if not candidate_repo.is_remote():
+            if params.hash:
+                logger.info("`hash` parameter is setup. Start checksum "
+                            "validation for the whole ISO file")
+                hash_info = self._get_hash_params(params)
+                upgrade_bundle_hash_validator = HashSumValidator(
+                    hash_sum=hash_info.hash_sum,
+                    hash_type=hash_info.hash_type)
 
-            try:
-                upgrade_bundle_hash_validator.validate(repo.source)
-            except ValidationError as e:
-                logger.debug("Check sum validation error occurred: {e}")
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    f"Catalog structure validation error occurred:{e}"
-                ) from e
+                try:
+                    upgrade_bundle_hash_validator.validate(repo.source)
+                except ValidationError as e:
+                    logger.debug("Check sum validation error occurred: {e}")
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Catalog structure validation error occurred:{e}"
+                    ) from e
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
@@ -266,18 +268,26 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             sw_upgrade_bundle_validator = FileSchemeValidator(
                                                     SW_UPGRADE_BUNDLE_SCHEME)
 
-            try:
-                sw_upgrade_bundle_validator.validate(iso_mount_dir)
-            except ValidationError as e:
-                logger.debug("Catalog structure validation error occurred: "
+            if not candidate_repo.is_remote(): 
+                try:
+                    sw_upgrade_bundle_validator.validate(iso_mount_dir)
+                except ValidationError as e:
+                    logger.debug("Catalog structure validation error occurred: "
                              f"{e}")
-                raise SWUpdateRepoSourceError(
+                    raise SWUpdateRepoSourceError(
                             str(repo.source),
                             f"Catalog structure validation error occurred:{e}"
-                ) from e
+                    ) from e
 
-            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
                             f'{RELEASE_INFO_FILE}')
+            else:
+                release_file = '{candidate_repo}/cortx_iso/{RELEASE_INFO_FILE}'
+                r = requests.get(release_file)
+                with open("RELEASE.INFO",'wb') as f:
+                    f.write(r.content)
+                release_file = "RELEASE.INFO"
+
             try:
                 metadata = load_yaml(release_file)
             except Exception as exc:

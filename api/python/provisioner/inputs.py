@@ -1112,7 +1112,27 @@ class SWUpgradeRepo(SWUpdateRepo):
 
             return res
         elif self.is_remote():
-            return self.source
+            return {
+                f'os': {
+                    'source': (f'{self.source}/os'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'cortx_iso': {
+                    'source': (f'{self.source}/cortx_iso'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'3rd_party': {
+                    'source': (f'{self.source}/3rd_party'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'python_deps': {
+                    'source': f'{self.source}/python_deps',
+                    'is_repo': False
+                }
+            }
         else:
             # source = 'iso' if self.source.is_file() else 'dir'
             iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
