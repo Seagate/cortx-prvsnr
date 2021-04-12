@@ -25,7 +25,6 @@
 {%- endif -%}
 include:
   - .start
-  - .stop
 
 public:
   firewalld.present:
@@ -36,18 +35,16 @@ public:
     - prune_interfaces: False
     - require:
       - Start and enable firewalld service
-    - watch_in:
-      - Stop and disable Firewalld service
 
 {% if ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
+
 Remove public data interfaces:
   cmd.run:
     - name: firewall-cmd --remove-interface=data0 --zone=public-data-zone --permanent
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service
-    - watch_in:
-      - Stop and disable Firewalld service
+
 {% else %}
 Remove public and private data interfaces:
   cmd.run:
@@ -57,8 +54,7 @@ Remove public and private data interfaces:
     - onlyif: firewall-cmd --get-zones | grep public-data-zone
     - require:
       - Start and enable firewalld service
-    - watch_in:
-      - Stop and disable Firewalld service
+
 {% endif %}
 
 Remove public-data-zone:
@@ -68,30 +64,11 @@ Remove public-data-zone:
     - require:
       - Start and enable firewalld service
       - public
-    - watch_in:
-      - Stop and disable Firewalld service
 
-#{% if not ('data0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['data0']) %}
-# Remove private-data-zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --delete-zone=private-data-zone
-#     - onlyif: firewall-cmd --get-zones | grep private-data-zone
-#     - require:
-#       - Start and enable firewalld service
-#       - public
-#     - watch_in:
-#       - Stop and disable Firewalld service
-#{% endif %}
-
-# Remove management-zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --delete-zone=management-zone
-#     - onlyif: firewall-cmd --get-zones | grep management-zone
-#     - require:
-#       - Start and enable firewalld service
-#       - public
-#     - watch_in:
-#       - Stop and disable Firewalld service
+Restart firewalld service post clean-up:
+  module.run:
+    - service.restart:
+      - firewalld
 
 {% endif %}
 

@@ -248,40 +248,13 @@ Private data zone:
     - name: trusted
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
+      - lo
     - default: False
     - masquerade: False
     - prune_ports: False
     - prune_services: False
     - prune_interfaces: False
 
-# Add private data zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --new-zone private-data-zone
-#     - unless: firewall-cmd --get-zones | grep private-data-zone
-#     - watch_in:
-#       - Start and enable firewalld service
-
-# Private data zone:
-#   firewalld.present:
-#     - name: private-data-zone
-#     - default: False
-#     - prune_ports: True
-#     - prune_services: True
-#     - prune_interfaces: True
-#     - services:
-#       - hare
-#       - high-availability
-#       - lnet
-#       - s3
-#     - interfaces:
-#       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][1] }}
-#     # - rich_rules:
-#     #   - 'rule family="ipv4" destination address="224.0.0.18" protocol value="vrrp" accept'
-#     - require:
-#       - Add private data zone
-#       - hare
-#       - lnet
-#       - s3
 {%- endif -%}
 
 {% if 'mgmt0' in grains['ip4_interfaces'] and grains['ip4_interfaces']['mgmt0'] %}
@@ -289,12 +262,6 @@ Private data zone:
 {% else %}
   {%- set mgmt_if = pillar['cluster'][grains['id']]['network']['mgmt_nw']['iface'][0] -%}
 {% endif %}
-# Add management zone:
-#   cmd.run:
-#     - name: firewall-cmd --permanent --new-zone management-zone
-#     - unless: firewall-cmd --get-zones | grep management-zone
-#     - watch_in:
-#       - Start and enable firewalld service
 
 Management zone:
   firewalld.present:
@@ -317,18 +284,20 @@ Management zone:
       - uds
       {% if not 'physical' in grains['virtual'] %}
       - www                 # Open port 80 in management interface for OVA
-      {% endif %}
       {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
       {% endif %}
+      {% endif %}
     - interfaces:
       - {{ mgmt_if }}
+    {% if not 'physical' in grains['virtual'] %}
     - port_fwd:
       {% if pillar['cluster'][grains['id']]['is_primary'] %}
       - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['primary_mc']['ip'] }}
       {% else %}
       - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['secondary_mc']['ip'] }}
       {% endif %}
+    {% endif %}
     - require:
       # - Add management zone
       - consul
@@ -343,22 +312,6 @@ Management zone:
       {% if not 'physical' in grains['virtual'] %}
       - www
       {% endif %}
-
-# Public Zone:
-#   firewalld.present:
-#     - name: public
-#     - block_icmp:
-#       - echo-reply
-#       - echo-request
-#     - masquerade: True
-#     - prune_services: False
-#     - prune_ports: True
-#     - prune_interfaces: True
-#     - require:
-#       - Public data zone
-#       - Management zone
-#     - watch_in:
-#       - service: Start and enable firewalld service
 
 Restart firewalld:
   module.run:
