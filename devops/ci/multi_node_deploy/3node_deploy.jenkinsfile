@@ -79,11 +79,11 @@ node {
                 for (remote in remotes) {
                     try { 
                         sshCommand remote: remote, command: """
-                            test 2 == \$(lsblk -d|grep -E 'sdb|sdc'|wc -l)
+                            test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
                         """
-                        echo "The VM has exactly 2 nos. of attached disks. Check Successful!"
+                        echo "The VM has 6+ number of attached disks. Check Successful!"
                     } catch(Exception ex) {
-                        error 'The VM should have exactly 2 attached disks. Kindly provide a VM with exactly 2 attached disks.'
+                        error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
                     }
                 }
             }            
@@ -100,53 +100,72 @@ node {
             
             stage("Prepare config.ini") {
                 sshCommand remote: remotes[0], command: """
-                    echo '''
+                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
+                    echo \"\"\"
                     [srvnode_default]
                     network.data.private_interfaces=eth3,eth4
                     network.data.public_interfaces=eth1,eth2
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
-                    storage.cvg.0.data_devices=/dev/sdc,/dev/sdd
-                    storage.cvg.0.metadata_devices=/dev/sdb
+                    storage.cvg.0.data_devices=\${device_list#*,}
+                    storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
 
                     [enclosure_default]
-                    type=other
-                    ''' | sed -e 's/^[ \t]*//' > /root/config.ini
+                    type=virtual
+                    controller.type=virtual
+                    \"\"\" | sed -e 's/^[ \t]*//' > /root/config.ini
                 """
                 for (remote in remotes) {
                     sshCommand remote: remotes[0], command: """
-                        echo '''
+                        echo \"\"\"
                         [${remote.name}]
                         hostname=${remote.host}
                         roles=primary,openldap_server
 
                         [enclosure-${remote.name.split('-')[1]}]
-                        ''' | sed -e 's/^[ \t]*//' >> /root/config.ini
+                        \"\"\" >> /root/config.ini
                     """
                 }
+                sshCommand remote: remotes[0], command: """
+                    sed -ie 's/^[ \t]*//' /root/config.ini
+                """
                 echo "Successfully created config.ini file!"
             }
             
             stage("Install Provisioner API") {
-                sshCommand remote: remotes[0], command: """
-                    yum install -y yum-utils
-                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
-                    yum install --nogpgcheck -y python3 python36-m2crypto salt salt-master salt-minion
-                    rm -rf /etc/yum.repos.d/*3rd_party*.repo
-                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
-                    yum install --nogpgcheck -y python36-cortx-prvsnr
-                    rm -rf /etc/yum.repos.d/*cortx_iso*.repo
-                    yum clean all
-                    rm -rf /var/cache/yum/
-                    pip3 install jsonschema==3.0.2 requests
-                    provisioner --version
-                """
+                for (remote in remotes) {
+                    sshCommand remote: remote, command: """
+                        yum install -y yum-utils
+                        yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
+                        yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
+                        
+                        echo '''
+                        [global]
+                        timeout: 60
+                        index-url: $CORTX_RELEASE_REPO/python_deps/
+                        trusted-host: \$(echo $CORTX_RELEASE_REPO | awk -F '/' '{print \$3}')
+                        ''' >/etc/pip.conf
+                        sed -ie 's/^[ \t]*//' /etc/pip.conf
+
+                        yum install --nogpgcheck -y java-1.8.0-openjdk-headless
+                        yum install --nogpgcheck -y python3 cortx-prereq sshpass
+                        yum install --nogpgcheck -y python36-m2crypto salt salt-master salt-minion
+                        yum install --nogpgcheck -y python36-cortx-prvsnr
+                        rm -rf /etc/yum.repos.d/*3rd_party*.repo
+                        rm -rf /etc/yum.repos.d/*cortx_iso*.repo
+                        yum clean all
+                        rm -rf /var/cache/yum/
+                        rm -f /etc/pip.conf
+
+                        provisioner --version
+                    """
+                }
                 echo "Successfully installed Provisioner API!"
             }
         
-            stage("Bootstrap Provisioner") {               
+            stage("Provisioner Bootstrap") {               
                 nodes = ""
                 for (remote in remotes) {
                     nodes += "${remote.name}:${remote.host}" + " "
@@ -155,14 +174,14 @@ node {
                 sshCommand remote: remotes[0], command: """
                     yum install -y sshpass
                     export SSHPASS=${PASSWORD}
-                    sshpass -e provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
-                    provisioner configure_setup /root/config.ini 1
+                    provisioner setup_provisioner ${nodes} --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --ha --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
+                    provisioner configure_setup /root/config.ini 3
                     salt-call state.apply components.system.config.pillar_encrypt
                     provisioner confstore_export
                 """
             }
             
-            stage("Validate Bootstrap Provisioner") {
+            stage("Validate Provisioner Bootstrap") {
                 sshCommand remote: remotes[0], command: """
                     salt '*' test.ping
                     salt "*" service.stop puppet
@@ -185,26 +204,40 @@ node {
                 echo "Successfully deployed prereq states!"
             }
 
-            //stage("Data Path States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states iopath --setup-type 3_node"
-            //    echo "Successfully deployed iopath states!"
-            //}
+            stage("Data Path States Deployment") {
+                timeout(30) {
+                    input 'Proceed with Data Path Stage?'
+                }
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states iopath --setup-type 3_node"
+                echo "Successfully deployed iopath states!"
+            }
                         
-            //stage("Control Stack States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states controlpath --setup-type 3_node"
-            //    echo "Successfully deployed controlpath states!"
-            //}
+            stage("Control Stack States Deployment") {
+                timeout(30) {
+                    input 'Proceed with Control Path Stage?'
+                }
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states controlpath --setup-type 3_node"
+                echo "Successfully deployed controlpath states!"
+            }
             
-            //stage("HA States Deployment") {
-            //    sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
-            //    echo "Successfully deployed HA states!"
-            //}
+            stage("HA States Deployment") {
+                timeout(30) {
+                    input 'Proceed with HA Setup Stage?'
+                }
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
+                echo "Successfully deployed HA states!"
+            }
         }
         
         sh label: '', script: "mkdir archives"
+        
+        sshGet remote: remotes[0], from: '/root/config.ini', into: 'archives/config.ini', override: true
+        archiveArtifacts artifacts: 'archives/config.ini', followSymlinks: false
         sshGet remote: remotes[0], from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
+        archiveArtifacts artifacts: 'archives/provisioner_cluster.json', followSymlinks: false
+
         sshGet remote: remotes[0], from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
         sshGet remote: remotes[0], from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
-        archiveArtifacts artifacts: 'archives/provisioner_cluster.json,archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
+        archiveArtifacts artifacts: 'archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
     }
 }

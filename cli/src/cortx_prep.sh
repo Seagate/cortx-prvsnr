@@ -70,11 +70,20 @@ gpgcheck=0
 name=Repository Base
 enabled=1
 EOF
+
+        touch /etc/pip.conf
+cat <<EOF >/etc/pip.conf
+[global]
+timeout: 60
+index-url: $CORTX_RELEASE_REPO/python_deps/
+trusted-host: $CORTX_RELEASE_REPO
+EOF
+
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
         yum clean all || true
         yum install -y \
-        python3 python36-m2crypto \
-        salt-api salt-master salt-minion \
+        java-1.8.0-openjdk-headless python3 cortx-prereq \
+        python36-m2crypto salt-api salt-master salt-minion \
         python36-cortx-prvsnr \
         sshpass \
         2>&1 | tee -a ${LOG_FILE}
@@ -89,7 +98,9 @@ EOF
         fi
 
         echo "INFO: Removing bootstrap and base repo files" 2>&1 | tee -a ${LOG_FILE}
-        rm -f /etc/yum.repos.d/bootstrap.repo && rm -f /etc/yum.repos.d/base.repo
+        rm -f /etc/yum.repos.d/bootstrap.repo
+        rm -f /etc/yum.repos.d/base.repo
+        rm -f /etc/pip.conf
         yum clean all || true
 
         echo "INFO: Unmounting ${cortx_iso} ${os_iso} from /tmp/iso_mount" 2>&1 | tee -a ${LOG_FILE}

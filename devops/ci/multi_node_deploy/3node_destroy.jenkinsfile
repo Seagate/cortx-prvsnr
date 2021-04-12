@@ -19,33 +19,91 @@ node {
     properties([
         buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
         parameters([
-            string(defaultValue: '', description: 'FQDN of VM to destroy on.', name: 'HOST_NAME', trim: true),
+            string(defaultValue: '', description: 'FQDN of first VM to destroy.', name: 'HOST_NAME_1', trim: true),
+            string(defaultValue: '', description: 'FQDN of second VM to destroy.', name: 'HOST_NAME_2', trim: true),
+            string(defaultValue: '', description: 'FQDN of third VM to destroy.', name: 'HOST_NAME_3', trim: true),
             password(description: 'root user password for the target node.', name: 'PASSWORD')
         ])
     ])
     
-    def remote = [:]
-    withEnv(["SSHPASS=${PASSWORD}"]) {
-        ansiColor('xterm') {
-            remote.name = "srvnode-1"
-            remote.host = HOST_NAME
-            remote.user = 'root'
-            remote.password = PASSWORD
-            remote.allowAnyHosts = true
-            stage("SSH Connectivity Check") {
-                if (PASSWORD.isEmpty()) {
-                    error "Target VM password cannot be empty."
-                }
+    def remotes = []
+    
+    def remote_node = [:]
+    remote_node.name = "srvnode-1"
+    remote_node.host = HOST_NAME_1
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[0] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-2"
+    remote_node.host = HOST_NAME_2
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[1] = remote_node
+    
+    remote_node = [:]
+    remote_node.name = "srvnode-3"
+    remote_node.host = HOST_NAME_3
+    remote_node.user = 'root'
+    remote_node.password = PASSWORD
+    remote_node.allowAnyHosts = true
+    remotes[2] = remote_node
+
+    ansiColor('xterm') {
+        for ( remote in remotes.reverse() ) {
+            stage("${remote.name}: SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
-                echo "Successfully connected to VM ${HOST_NAME}!"
+                echo "Successful connected to VM ${remote.host}!"
             }
-            stage("Teardown of Cortx Stack!") {
-                sshCommand remote: remote, command: """
-                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
-                """
-                echo "Successfully teardown of Cortx Stack!"
-            }
-            stage("Stop Salt services") {
+        }    
+
+        stage("Teardown: HA") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+            """
+            echo "Successful teardown: HA"
+        }
+
+        stage("Teardown: Control-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+            """
+            echo "Successful teardown: Control-Path"
+        }
+
+        stage("Teardown: IO-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+            """
+            echo "Successful teardown: IO-Path"
+        }
+
+        stage("Teardown: 3rd_Party") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+            """
+            echo "Successful teardown: 3rd-Party"
+        }
+
+        stage("Teardown: Platform") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+            """
+            echo "Successful teardown: Platform"
+        }
+
+        stage("Teardown: Provisioner Bootstrap") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+            """
+            echo "Successful teardown: Bootstrap"
+        }
+
+        for (remote in remotes.reverse()) {
+            stage("${remote.name}: Stop services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
                     systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
@@ -55,16 +113,15 @@ node {
                 """
                 echo "Sucessfully stopped salt and gluster services"
             }
-            stage("Uninstall rpms") {
+
+            stage("${remote.name}: Uninstall rpms") {
                 sshCommand remote: remote, command: """
                     yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
                     yum erase -y gluster-fuse gluster-server        # Gluster FS packages
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
-                    # Brute clean for any cortx rpm packages
                     yum erase -y *cortx*
-                    # Re-condition yum db
                     yum autoremove -y
                     yum clean all
                     rm -rf /var/cache/yum
@@ -74,19 +131,21 @@ node {
                     pip3 freeze|xargs pip3 uninstall -y
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
-                    rm -rf ~/.cache/pip
+                    test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
                 """
                 echo "Successfully uninstalled rpms"
             }
-            stage("Cleanup bricks and other directories") {
+
+            stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
-                    rm -rf /opt/seagate/cortx
-                    rm -rf /opt/seagate/cortx_configs
-                    rm -rf /opt/seagate
+                    rm -rf /opt/seagate/cortx || true
+                    rm -rf /opt/seagate/cortx_configs || true
+                    rm -rf /opt/seagate || true
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
+                    test -e /var/lib/glusterd && rm -rf /var/lib/glusterd || true
                     # Cleanup Salt
                     test -e /var/cache/salt && rm -rf /var/cache/salt || true
                     test -e /etc/salt && rm -rf /etc/salt || true
@@ -96,12 +155,9 @@ node {
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
-                echo "Successfully removed!"
+                echo "Successfully removed file and directories!"
             }
         }
-
-        // sh label: '', script: "mkdir -p archives/provisioner_cluster.json"
-        // archiveArtifacts artifacts: '/opt/seagate/cortx_configs/provisioner_cluster.json,/var/log/seagate/provisioner/setup.log', followSymlinks: false
     }
+    // archiveArtifacts artifacts: '/opt/seagate/cortx_configs/provisioner_cluster.json,/var/log/seagate/provisioner/setup.log', followSymlinks: false
 }
-
