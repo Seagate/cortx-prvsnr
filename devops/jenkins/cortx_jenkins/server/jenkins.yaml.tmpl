@@ -36,8 +36,91 @@ jenkins:
   mode: NORMAL
 
   authorizationStrategy:
-    loggedInUsersCanDoAnything:
-      allowAnonymousRead: false
+    roleBased:
+      roles:
+        global:
+        - assignments:
+          - "admin"
+          name: "admin"
+          pattern: ".*"
+          permissions:
+          - "Job/Move"
+          - "Job/Build"
+          - "Lockable Resources/View"
+          - "Credentials/Delete"
+          - "Credentials/ManageDomains"
+          - "Lockable Resources/Unlock"
+          - "View/Create"
+          - "Agent/Configure"
+          - "Job/Read"
+          - "Credentials/Update"
+          - "Agent/Create"
+          - "Job/Delete"
+          - "Agent/Build"
+          - "View/Configure"
+          - "Lockable Resources/Reserve"
+          - "Agent/Provision"
+          - "SCM/Tag"
+          - "Job/Create"
+          - "Job/Discover"
+          - "Credentials/View"
+          - "Agent/Connect"
+          - "Agent/Delete"
+          - "Run/Replay"
+          - "Agent/Disconnect"
+          - "Run/Delete"
+          - "Job/Cancel"
+          - "Overall/Read"
+          - "Run/Update"
+          - "Credentials/Create"
+          - "Overall/Administer"
+          - "View/Delete"
+          - "Job/Configure"
+          - "Job Config History/DeleteEntry"
+          - "Job/Workspace"
+          - "View/Read"
+        - assignments:
+          name: "agent-provider"
+          pattern: ".*"
+          permissions:
+          - "Overall/Read"
+          - "Agent/Configure"
+          - "Agent/Connect"
+          - "Agent/Disconnect"
+        - assignments:
+          name: "developer"
+          pattern: ".*"
+          permissions:
+          - "Job/Move"
+          - "Job/Build"
+          - "Credentials/Delete"
+          - "Job/Create"
+          - "Credentials/ManageDomains"
+          - "View/Create"
+          - "Job/Discover"
+          - "Job/Read"
+          - "Credentials/View"
+          - "Credentials/Update"
+          - "Run/Replay"
+          - "Run/Delete"
+          - "Job/Cancel"
+          - "Overall/Read"
+          - "Run/Update"
+          - "Job/Delete"
+          - "Credentials/Create"
+          - "View/Delete"
+          - "Job/Configure"
+          - "Job/Workspace"
+          - "View/Read"
+          - "View/Configure"
+        - assignments:
+          - "anonymous"
+          name: "reader"
+          pattern: ".*"
+          permissions:
+          - "Overall/Read"
+          - "Job/Discover"
+          - "View/Read"
 
   markupFormatter:
     rawHtml:
@@ -53,6 +136,11 @@ jenkins:
     - permanent:
         name: agent3
         <<: *jenkins_linux_node_anchor
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      enableCaptcha: false
 
 unclassified:
   location:
