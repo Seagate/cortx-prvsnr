@@ -27,7 +27,7 @@
 {% endfor -%}
 {%- for node in server_nodes -%}
     {%- set x=node_ids.update({node:loop.index}) -%}
-    {%- set y=node_hosts.append(pillar['cluster'][node]['hostname'] + ":2181") -%}
+    {%- set y=node_hosts.append(pillar['cluster'][node]['network']['data']['private_fqdn'] + ":9092") -%}
 {%- endfor -%}
 
 Update zoopkeeper cofig:

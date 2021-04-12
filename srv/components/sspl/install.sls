@@ -25,6 +25,7 @@ Install flask:
   pip.installed:
     - name: flask
     - version: 1.1.1
+    - bin_env: /usr/bin/pip3
 
 Install cortx-sspl-test:
   pkg.installed:

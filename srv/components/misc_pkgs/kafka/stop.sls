@@ -16,17 +16,14 @@
 #
 
 {% set kafka_version = pillar['commons']['version']['kafka'] %}
-
-Start zoopkeper:
+Stop kafka:
   cmd.run:
-    - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+    - name: ./bin/kafka-server-stop.sh -daemon config/server.properties
     - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - unless: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - onlyif: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
 
-Start kafka:
+Stop zookeeper:
   cmd.run:
-    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
+    - name: ./bin/zookeeper-server-stop.sh -daemon config/zookeeper.properties
     - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
-    - require:
-      - Start zoopkeper
+    - onlyif: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
