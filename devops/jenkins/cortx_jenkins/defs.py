@@ -129,6 +129,7 @@ class AgentActionT(Enum):
     START = "start"
     RESTART = "restart"
     REMOVE = "remove"
+    # CONFIG_DUMP = "config-dump"
 
 
 ServerActionT = AgentActionT
