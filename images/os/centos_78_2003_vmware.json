@@ -1,0 +1,44 @@
+{
+  "variables": {
+    "version": "0.0.1"
+  },
+  "builders": [
+    {
+      "type": "vmware-iso",
+      "boot_command": [
+        "<tab><wait>",
+        "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>"
+      ],
+      "iso_urls": [
+        "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-2003.iso",
+        "https://vault.centos.org/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
+      ],
+      "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+      "iso_target_path": "C:/Users/714502/Projects/iso/CentOS-7-x86_64-Minimal-2003.iso",
+      "guest_os_type": "CentOS 7 64-bit",
+      "vm_name": "cortxhost.localdomain",
+      "cpus": 2,
+      "memory": 2048,
+      "disk_size": 16000,
+      "disk_additional_size": [
+        10000,
+        10000
+      ],
+      "network": "nat",
+      "headless": false,
+      "ssh_username": "cortxub",
+      "ssh_password": "opensource!",
+      "ssh_port": 22,
+      "shutdown_command": "echo 'opensource!'|sudo -S shutdown -P now"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "hostnamectl set-hostname --static --pretty cortxhost.localdomain",
+        "sudo yum install -y vim"
+      ]
+    }
+  ]
+}
