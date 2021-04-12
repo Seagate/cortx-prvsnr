@@ -50,6 +50,46 @@ grep -q -i -e 'rhel\|centos' /etc/*-release && {
 }
 
 
+grep -q -i -e 'ubuntu' /etc/*-release && {
+    apt-get update -y
+
+    apt-get remove -y \
+            docker \
+            docker-engine \
+            docker.io \
+            containerd \
+            runc \
+        || true
+
+    apt-get -y \
+        install \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo \
+        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    apt-get update
+    apt-get install -y \
+        docker-ce \
+        docker-ce-cli \
+        containerd.io
+
+    if [[ -z "$NO_CLEANUP" ]]; then
+        rm -rf /var/lib/apt/lists/*
+    fi
+
+    exit 0
+}
+
+
+
+
 grep -q -i -e 'debian' /etc/*-release && {
     apt-get update -y
 
@@ -69,7 +109,7 @@ grep -q -i -e 'debian' /etc/*-release && {
         gnupg \
         lsb-release
 
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo \
         "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
         $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
