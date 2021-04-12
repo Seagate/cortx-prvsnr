@@ -19,11 +19,7 @@ import psutil
 
 
 def netmask():
-    """
-    Adds netmask of respective interface to grains data.
-
-    """
-
+    """Adds netmask of respective interface to grains data."""
     interface_details = psutil.net_if_addrs()
     netmask = {}
     for iface in interface_details:

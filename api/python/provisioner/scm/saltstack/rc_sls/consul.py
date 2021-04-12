@@ -17,15 +17,14 @@
 
 from typing import Union
 import logging
-
-from .base import ResourceSLS
+from packaging.specifiers import Version, SpecifierSet
 
 from provisioner import config
 from provisioner.vendor import attr
 from provisioner.resources import consul
-from packaging.specifiers import Version, SpecifierSet
 from provisioner.attr_gen import attr_ib
 
+from .base import ResourceSLS
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ class ConsulSLS(ResourceSLS):
     base_sls = 'resources.3rd_party.consul'
 
     def __attrs_post_init__(self):
-        pass
+        """No Ops."""
 
     @property
     def version(self) -> str:
@@ -76,13 +75,13 @@ class ConsulConfigSLS(ConsulSLS):
     def setup_roots(self):
         super().setup_roots()
 
-        config = {}
-        pillar = {'config': config, 'service': self.state.service}
+        consul_config = {}
+        pillar = {'config': consul_config, 'service': self.state.service}
 
-        config['server'] = self.state.server
-        config['bind_addr'] = str(self.state.bind_addr)
-        config['bootstrap_expect'] = self.state.bootstrap_expect
-        config['retry_join'] = self.state.retry_join
+        consul_config['server'] = self.state.server
+        consul_config['bind_addr'] = str(self.state.bind_addr)
+        consul_config['bootstrap_expect'] = self.state.bootstrap_expect
+        consul_config['retry_join'] = self.state.retry_join
 
         self.pillar_set(pillar, expand=True)
 
@@ -148,14 +147,12 @@ class ConsulUpgradeSLS(ConsulSLS):
         for m_range, m_spec in self.migrations.items():
             if (
                 self.state.new_version == m_range.new_version
-                and m_range.old_versions.contains(self.state.old_version)
+                and m_range.old_versions.contains(self.state.old_version)  # pylint: disable=no-member
             ):
-                break
-        else:
-            raise ValueError(
-                f"Consul migration from '{self.state.old_version}'"
-                f" to '{self.state.new_version}' is not supported"
-            )
+                self.sls = m_spec.get((self.state.iteration, self.state.level), None)
+                return super().run()
 
-        self.sls = m_spec.get((self.state.iteration, self.state.level), None)
-        return super().run()
+        raise ValueError(
+            f"Consul migration from '{self.state.old_version}'"
+            f" to '{self.state.new_version}' is not supported"
+        )

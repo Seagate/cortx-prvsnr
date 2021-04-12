@@ -17,15 +17,17 @@
 
 from typing import Union, List, Optional
 import logging
-from packaging.version import Version
 from ipaddress import IPv4Address
+
+from packaging.version import Version
+
+from provisioner import config, attr_gen
+from provisioner.vendor import attr
+from provisioner.attr_gen import attr_ib
 
 from .base import (
     ResourceParams, ResourceBase, ResourceState
 )
-from provisioner import config, attr_gen
-from provisioner.vendor import attr
-from provisioner.attr_gen import attr_ib
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,9 @@ class UpgradeParams(ResourceParams):
 class ConsulParams(UpgradeParams, VendorParamsMixin):
     server: bool = attr_ib(cli_spec='consul/server', default=True)
     bind_addr: IPv4Address = attr_ib(
-        'ipv4', cli_spec='consul/bind_addr', default='0.0.0.0'
+        'ipv4',
+        cli_spec='consul/bind_addr',
+        default='0.0.0.0'
     )
     bootstrap_expect: Optional[int] = attr_ib(
         cli_spec='consul/bootstrap_expect',
@@ -136,10 +140,11 @@ class ConsulUpgrade(ConsulState):
     level = ConsulParams.level
     iteration = ConsulParams.iteration
 
-    # XXX - for UNCHANCGED values we may resolve real values here
+    # XXX - for UNCHANGED values we may resolve real values here
     #       and validate only after that
-    def __attrs_post_init__(self):  # noqa: C901
-        if not (self.new_version > self.old_version):
+
+    def __attrs_post_init__(self):    # noqa: D105
+        if self.new_version <= self.old_version:
             raise ValueError(
                 f"New version '{self.new_version}' is less"
                 f" than old one '{self.old_version}'"

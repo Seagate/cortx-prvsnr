@@ -14,6 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# API to trigger TUI for node configuration
 
 import logging
 from typing import Type
@@ -27,11 +28,8 @@ logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class ConfigureNode(CommandParserFillerMixin):
-
-    """API to trigger TUI for node configuration"""
-
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def run(self, **kwargs):
+    def run(self, **kwargs):  # noqa: C901
         # Start northbound interface TUI
         return start_tui()

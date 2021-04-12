@@ -17,8 +17,6 @@
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-include:
-  - components.hare.stop
 
 Stage - Reset Hare:
   cmd.run:

@@ -25,3 +25,6 @@ mine_functions:
   get_node_id:
     - mine_function: grains.get
     - node_id
+  get_enclosure_id:
+    - mine_function: grains.get
+    - enclosure_id

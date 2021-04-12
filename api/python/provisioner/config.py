@@ -14,6 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
 from enum import Enum
 from pathlib import Path
 from typing import Union, Dict, Optional
@@ -294,7 +295,7 @@ def profile_base_dir(
         location = Path(location)
         location = location.resolve()
 
-    return (location / setup_name)
+    return location / setup_name
 
 
 # TODO make a class
@@ -542,6 +543,7 @@ IS_REPO_KEY = "is_repo"
 
 
 class CortxResourceT(Enum):
+
     """Resource types in CORTX provisioner"""
 
     REPOS = "cortx_repos"
@@ -568,6 +570,5 @@ class HashType(Enum):
 # UPGRADE ROUTINE
 class ConfigLevelT(Enum):
     """CORTX configuration levels"""
-
     CLUSTER = "cluster"
     NODE = "node"

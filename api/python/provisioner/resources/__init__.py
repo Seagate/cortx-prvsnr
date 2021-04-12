@@ -25,35 +25,35 @@ MODULE_PATH = Path(__file__)
 MODULE_DIR = MODULE_PATH.resolve().parent
 
 
-def list_components():
-    from .base import ComponentBase
-
-    py_files = [
-        i for i in MODULE_DIR.glob('*.py')
-        if i.name != MODULE_PATH.name and i.name == 'test.py'
-    ]
-
-    modules = [
-        importlib.import_module(f'{__package__}.{f.stem}')
-        for f in py_files
-    ]
-
-    res = []
-
-    for mod in modules:
-        for _attr_name in dir(mod):
-            _attr = getattr(mod, _attr_name)
-            try:
-                if not issubclass(_attr, ComponentBase):
-                    raise TypeError
-            except TypeError:
-                pass  # not a class or not a subclass of ComponentBase
-            else:
-                if _attr is not ComponentBase:
-                    if _attr.name:
-                        res.append(_attr)
-                    else:
-                        logger.debug(
-                            f"Ignoring component class {_attr}: "
-                            "undefined 'name'"
-                        )
+# def list_components():
+#     from .base import ComponentBase
+#
+#     py_files = [
+#         i for i in MODULE_DIR.glob('*.py')
+#         if i.name != MODULE_PATH.name and i.name == 'test.py'
+#     ]
+#
+#     modules = [
+#         importlib.import_module(f'{__package__}.{f.stem}')
+#         for f in py_files
+#     ]
+#
+#     res = []
+#
+#     for mod in modules:
+#         for _attr_name in dir(mod):
+#             _attr = getattr(mod, _attr_name)
+#             try:
+#                 if not issubclass(_attr, ComponentBase):
+#                     raise TypeError
+#             except TypeError:
+#                 pass  # not a class or not a subclass of ComponentBase
+#             else:
+#                 if _attr is not ComponentBase:
+#                     if _attr.name:
+#                         res.append(_attr)
+#                     else:
+#                         logger.debug(
+#                             f"Ignoring component class {_attr}: "
+#                             "undefined 'name'"
+#                         )

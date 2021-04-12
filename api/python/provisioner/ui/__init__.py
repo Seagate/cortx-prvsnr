@@ -1,6 +1,4 @@
-#
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
 # by the Free Software Foundation, either version 3 of the License, or
@@ -15,17 +13,4 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from pathlib import Path
-
-FILENAME="/opt/seagate/lr-serial-number"
-
-
-def add_lr_serial_number():
-    """Populates lr-serial-number to grains."""
-    grains = {"lr-serial-number": None}
-
-    serial_file = Path(FILENAME)
-    if serial_file.is_file():
-        grains['lr-serial-number'] = serial_file.read_text()
-
-    return grains
+"""North Bound Interface TUI."""
