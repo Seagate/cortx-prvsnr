@@ -25,7 +25,6 @@
 {%- endif -%}
 include:
   - .start
-  - .stop
 
 public:
   firewalld.present:
