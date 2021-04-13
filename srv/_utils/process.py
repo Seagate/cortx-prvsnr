@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,26 +14,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# How to test:
-# salt-call saltutil.clear_cache && salt-call saltutil.sync_modules
-# salt-call lyveutil.decrypt "component" "secret"
-
-from salt import client
+import subprocess
 
 
-def decrypt(component, secret):
-    """ Decrypt secret.
+def simple_process(cmd):
+    """ Returns simple command output """
 
-    Args:
-      secret: Secret to be decrypted.
-    """
-    from cortx.utils.security.cipher import Cipher, CipherInvalidToken
-    
-    retval = None
-    cluster_id = __grains__['cluster_id']
-    cipher_key = Cipher.generate_key(cluster_id, component)
+    res = subprocess.Popen(
+            [cmd],
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+            ).stdout.read().decode("utf-8").splitlines()
 
-    if secret:
-        retval = (Cipher.decrypt(cipher_key, secret.encode("utf-8"))).decode("utf-8")
-      
-    return retval
+    return res

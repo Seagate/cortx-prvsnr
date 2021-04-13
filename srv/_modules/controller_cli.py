@@ -25,7 +25,6 @@
 # Standard packages
 import logging
 import os
-import subprocess
 import sys
 
 #from shutil import copyfile
@@ -55,7 +54,7 @@ def fetch_enclosure_serial():
 
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
     _cmd = f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt} | grep -A2 Serial | tail -1 > /etc/enclosure-id"
-    subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
+    __utils__['process.simple_process'](_cmd)
 
     _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():

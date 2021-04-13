@@ -18,7 +18,7 @@
 include:
   - components.misc_pkgs.openldap.start
 
-{% set ldap_password = salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) %}
+{% set ldap_password = salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) %}
 Configure OpenLDAP - Base config:
   cmd.run:
     - name: ldapmodify -Y EXTERNAL -H ldapi:/// -w $password -f /opt/seagate/cortx_configs/provisioner_generated/ldap/cfg_ldap.ldif
@@ -41,7 +41,7 @@ Configure OpenLDAP - Schema:
     - env:
       - password: {{ ldap_password }}
     # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn={1}s3user,cn=schema,cn=config"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn={1}s3user,cn=schema,cn=config"
     - require:
       - Remove existing file
     - watch_in:
@@ -51,11 +51,11 @@ Configure OpenLDAP - Base data:
   cmd.run:
     - name: ldapadd -x -D "cn=admin,dc=seagate,dc=com" -w $password -f /opt/seagate/cortx_configs/provisioner_generated/ldap/ldap-init.ldif -H ldapi:///
     # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=seagate,dc=com"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=s3,dc=seagate,dc=com"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accounts,dc=s3,dc=seagate,dc=com"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accesskeys,dc=s3,dc=seagate,dc=com"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=idp,dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accounts,dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=accesskeys,dc=s3,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "ou=idp,dc=s3,dc=seagate,dc=com"
     - env:
       - password: {{ ldap_password }}
     - require:
@@ -69,7 +69,7 @@ Configure OpenLDAP - Add IAM admin:
     - env:
       - password: {{ ldap_password }}
     # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=sgiamadmin,dc=seagate,dc=com"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=sgiamadmin,dc=seagate,dc=com"
     - require:
       - Configure OpenLDAP - Base data
     - watch_in:
@@ -91,8 +91,8 @@ Configure OpenLDAP - Enable IAM constraints:
     - env:
       - password: {{ ldap_password }}
     # - unless:
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=module{0},cn=config"
-    #   - ldapsearch -x -w {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcOverlay=unique,olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "cn=module{0},cn=config"
+    #   - ldapsearch -x -w {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }} -D "cn=admin,dc=seagate,dc=com" -H ldap:// -b "olcOverlay=unique,olcDatabase={2}{{ pillar['cortx']['software']['openldap']['backend_db'] }},cn=config"
     - require:
       - Configure OpenLDAP - Setup permissions for IAM admin
     - watch_in:

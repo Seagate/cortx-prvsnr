@@ -24,7 +24,6 @@ import errno
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 
@@ -71,11 +70,7 @@ def storage_device_config():
                 time.sleep(_sleep_time)
 
                 logger.info(f"Command to populate multipath devices: {cmd}")
-                device_list = subprocess.Popen([cmd],
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE
-                                    ).stdout.read().decode("utf-8").splitlines()
+                device_list = __utils__['process.simple_process'](cmd)
 
                 if ( len(device_list) > 0 ):
                     logger.info("[ INFO ] Found multipath devices...")
@@ -112,7 +107,7 @@ def jbod_storage_config():
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
     _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
-    _device_list = subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
+    _device_list = __utils__['process.simple_process'](_cmd) 
 
     metadata_devices = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
     data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]
