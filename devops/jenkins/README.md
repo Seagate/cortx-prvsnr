@@ -2,6 +2,13 @@
 
 **Table of Contents**
 
+## Pre-requisites
+
+### docker installation
+
+```bash
+sudo bash cortx_jenkins/agent/setup_docker.sh
+```
 
 ## Jenkins configuration automation
 

@@ -68,6 +68,15 @@ def parse_args():
             " (including necessary credentials and other secrets)"
         )
     )
+    parser_server.add_argument(
+        '--ssl-domain',
+        metavar="domain",
+        default=str(defs.LOCALHOST),
+        help=(
+            "server name protected by the SSL certificate "
+            "(aka Common Name or CN)"
+        )
+    )
 
     parser_server.add_argument(
         'action',
