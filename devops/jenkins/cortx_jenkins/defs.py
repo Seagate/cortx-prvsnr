@@ -65,6 +65,10 @@ SERVER_JENKINS_HOME = '/var/jenkins_home'
 SERVER_INPUTS = CWD / 'jenkins.properties'
 SERVER_JENKINS_CONFIG = SERVER_DIR / 'jenkins.yaml'
 
+SERVER_HTTPS_CERT_NAME = 'cert.pem'
+SERVER_HTTPS_PK_NAME = 'key.pem'
+SERVER_HTTPS_RSA_NAME = 'key.rsa.pem'
+
 
 ###############
 #  AGENT     #

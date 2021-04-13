@@ -39,7 +39,8 @@ ServerCmdArgs = attr.make_class(
     'ServerCmdArgs', (
         'action',
         # 'verbose',
-        'properties'
+        'properties',
+        'ssl_domain'
     )
 )
 
@@ -59,11 +60,45 @@ def start_docker_server():
     run_subprocess_cmd([
         'docker', 'run', '-d',
         '-p', '8080:8080',
+        '-p', '8083:8083',
         '-p', '50000:50000',
         '-v', f"{defs.SERVER_VOLUME_NAME}:{defs.SERVER_JENKINS_HOME}",
         '--name', defs.SERVER_CONTAINER_NAME,
         defs.SERVER_IMAGE_NAME_FULL
     ])
+
+
+def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
+    cert_f = ctx_dir / defs.SERVER_HTTPS_CERT_NAME
+    rsa_f = ctx_dir / defs.SERVER_HTTPS_RSA_NAME
+    pk_f = ctx_dir / defs.SERVER_HTTPS_PK_NAME
+
+    if cert_f.exists() and rsa_f.exists() and (not force):
+        logger.debug(f"https cert exists")
+        return
+
+    # 'openssl req' (even with -newkey rsa:4096) creates PKCS#8 private key
+    #    (begins with '-----BEGIN PRIVATE KEY-----')
+    # and jenkins fails since it expects PKCS#1
+    #    (RSA key only, which begins only '-----BEGIN RSA PRIVATE KEY-----').
+    # ref: https://issues.jenkins.io/browse/JENKINS-22448
+    cert_gen_cmd = [
+        'openssl', 'req', '-x509',
+        '-newkey', 'rsa:4096',
+        '-keyout', str(pk_f),
+        '-out', str(cert_f),
+        '-days', '365',
+        '-nodes',
+        '-subj', f"/CN={ssl_cn}"
+    ]
+    run_subprocess_cmd(cert_gen_cmd)
+
+    rsa_convert_cmd = [
+        'openssl', 'rsa',
+        '-in', str(pk_f),
+        '-out', str(rsa_f)
+    ]
+    run_subprocess_cmd(rsa_convert_cmd)
 
 
 def get_server_container():
@@ -83,12 +118,14 @@ def start_server():
     start_docker_server()
 
 
-def prepare_server_ctx(properties, ctx_dir=defs.SERVER_CTX_DIR):
+def prepare_server_ctx(properties, ssl_cn, ctx_dir=defs.SERVER_CTX_DIR):
     ctx_dir.mkdir(parents=True, exist_ok=True)
     for _file in defs.SERVER_DOCKER_CTX_LIST:
         shutil.copy2(_file, ctx_dir / _file.name)
 
     shutil.copy2(properties, ctx_dir / defs.SERVER_INPUTS.name)
+
+    gen_self_signed_cert(ssl_cn, ctx_dir=ctx_dir)
 
 
 def manage_server(cmd_args):
@@ -125,7 +162,7 @@ def manage_server(cmd_args):
         )
 
     logger.info('Preparing server docker image context')
-    prepare_server_ctx(cmd_args.properties)
+    prepare_server_ctx(cmd_args.properties, cmd_args.ssl_domain)
 
     logger.info('Bulding server docker image')
     build_docker_image()
