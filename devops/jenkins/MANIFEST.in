@@ -1,14 +1,11 @@
 include LICENSE README.md
 
 recursive-include cortx_jenkins LICENSE LICENSE* *LICENSE*
+include cortx_jenkin/cortx-jenkins.toml.example
+exclude cortx_jenkin/cortx-jenkins.toml
 
+graft cortx_jenkins/server
 graft cortx_jenkins/agent
 graft cortx_jenkins/jobs
-graft cortx_jenkins/server
-
-exclude cortx_jenkins/agent/credentials
-exclude cortx_jenkins/jobs/jenkins.ini
-exclude cortx_jenkins/server/jenkins_inputs
-exclude cortx_jenkins/server/jenkins.yaml
 
 global-exclude *.py[cod] __pycache__ *.so

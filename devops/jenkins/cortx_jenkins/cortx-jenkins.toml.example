@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+# vim: ft=config
+# NOTE toml filetype is not built-in as of VIM 8.1, config is somehow close to
+
+title = "Cortx Jenkins Configuration"
+
+[global]
+url = 'https://localhost:8083'
+username = ''
+token = ''
+# you may want to set that to 'false' for debug cases
+# (e.g. when self-signed certificate is used)
+ssl_verify = true
+
+
+[server]
+# email address to use for jenkins admin notifications
+# "Notification e-mails from Jenkins to project owners will be
+# sent with this address in the from header. This can be just
+# "foo@acme.org" or it could be something like "Jenkins Daemon <foo@acme.org>""
+ADMIN_EMAIL_ADDRESS = ''
+
+# jenkins server url
+# "This value is used to let Jenkins know how to refer to itself,
+# ie. to display images or to create links in emails."
+JENKINS_URL = ''
+
+# smtp server to use for email notifications
+SMTP_SERVER = ''
+
+# smtp credentials
+SMTP_USER = ''
+SMTP_PASSWORD = ''
+
+# CREDENTIALS
+# GitHub token to use for status notifications pipelines
+GITHUB_USER_TOKEN= ''
+
+
+[agent]
+# Note. if credentials are not specified then ones
+#       from [credentials] section are used
+username = ''
+token = ''
+
+
+[jobs]
+  # properties from that section are passed directly to
+  # Jenkins Job Builder (JJB), please see JJB for the details
+
+  [jobs.job_builder]
+  ignore_cache = true
+  keep_descriptions = false
+  include_path = '.:scripts:~/git/'
+  recursive = false
+  exclude = '.*:manual:./development'
+  allow_duplicates = false
+  update = 'all'
+
+  [jobs.jenkins]
+  # Note. if credentials or url are not specified then
+  #       accordant ones from [global] section are used
+  # user = 'jenkins'
+  # password = '1234567890abcdef1234567890abcdef'
+  # url = 'https://jenkins.example.com:8083'
+  #   OR
+  # url = 'https://localhost:8083'
+  query_plugins_info = false

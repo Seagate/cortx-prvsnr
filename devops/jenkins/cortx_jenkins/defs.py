@@ -23,21 +23,31 @@ import re
 from enum import Enum
 from pathlib import Path
 
-from . import __metadata__ as meta
+from . import __title__
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
-JENKINS_URL_DEFAULT = 'http://localhost:8080/'
-
 CWD = Path.cwd()
 
-CTX_DIR = CWD / f".{meta.__title__}"
+PKGNAME = __title__
+CTX_DIR = CWD / f".{PKGNAME}"
 
 CREDS_FILE_DEFAULT = CWD / 'jenkins.credentials'
+CONFIG_FILE_EXAMPLE = SCRIPT_DIR / 'cortx-jenkins.toml.example'
+CONFIG_FILE = CWD / 'cortx-jenkins.toml'
+
+
+class ConfigSectionT(Enum):
+    """Jenkins config sections"""
+    GLOBAL = "global"
+    SERVER = "server"
+    AGENT = "agent"
+    JOBS = "jobs"
 
 ###############
 # SERVER      #
 ###############
+
 
 SERVER_DIR = SCRIPT_DIR / 'server'
 SERVER_CTX_DIR = CTX_DIR / 'server'
@@ -62,7 +72,7 @@ SERVER_DOCKER_CTX_LIST = (
 SERVER_VOLUME_NAME = 'jenkins_home'
 SERVER_JENKINS_HOME = '/var/jenkins_home'
 
-SERVER_INPUTS = CWD / 'jenkins.properties'
+SERVER_PROPERTIES_NAME = 'jenkins.properties'
 SERVER_JENKINS_CONFIG = SERVER_DIR / 'jenkins.yaml'
 
 SERVER_HTTPS_CERT_NAME = 'cert.pem'
@@ -107,7 +117,6 @@ AGENT_CONFIG_REGEX = re.compile(
 ###############
 
 JOBS_DIR = SCRIPT_DIR / 'jobs'
-JOBS_CONFIG_EXAMPLE = JOBS_DIR / 'jenkins.ini.example'
 
 JOBS_CTX_DIR = CTX_DIR / 'jobs'
 JOBS_CONFIG = CWD / 'jenkins.jobs.ini'
@@ -120,7 +129,7 @@ DOCKER_SOCKET = Path('/var/run/docker.sock')
 SERVER_CONTAINER_NAME = 'cortx-prvsnr-jenkins'
 
 LOGGING_FORMAT = '%(asctime)s - %(thread)d - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d]: %(message)s'  # noqa: E501
-LOGLEVEL_DEFAULT = 'WARNING'
+LOGLEVEL_DEFAULT = 'INFO'
 LOGLEVEL = os.getenv('LOGLEVEL', LOGLEVEL_DEFAULT).upper()
 
 LOCALHOST = 'localhost'
@@ -133,7 +142,6 @@ class AgentActionT(Enum):
     START = "start"
     RESTART = "restart"
     REMOVE = "remove"
-    # CONFIG_DUMP = "config-dump"
 
 
 ServerActionT = AgentActionT
@@ -143,4 +151,3 @@ class JobsActionT(Enum):
     """Jenkins agent actions"""
     UPDATE = "update"
     DELETE = "delete"
-    CONFIG_DUMP = "config-dump"

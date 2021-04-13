@@ -20,6 +20,7 @@
 
 import logging
 import shutil
+import configparser
 
 import attr
 import docker
@@ -37,10 +38,9 @@ docker_client = docker.from_env()
 
 ServerCmdArgs = attr.make_class(
     'ServerCmdArgs', (
+        'config',
         'action',
-        # 'verbose',
-        'properties',
-        'ssl_domain'
+        'ssl_domain',
     )
 )
 
@@ -59,7 +59,6 @@ def start_docker_server():
     # TODO use docker python wrapper
     run_subprocess_cmd([
         'docker', 'run', '-d',
-        '-p', '8080:8080',
         '-p', '8083:8083',
         '-p', '50000:50000',
         '-v', f"{defs.SERVER_VOLUME_NAME}:{defs.SERVER_JENKINS_HOME}",
@@ -74,7 +73,7 @@ def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
     pk_f = ctx_dir / defs.SERVER_HTTPS_PK_NAME
 
     if cert_f.exists() and rsa_f.exists() and (not force):
-        logger.debug(f"https cert exists")
+        logger.debug("https cert exists")
         return
 
     # 'openssl req' (even with -newkey rsa:4096) creates PKCS#8 private key
@@ -123,12 +122,20 @@ def prepare_server_ctx(properties, ssl_cn, ctx_dir=defs.SERVER_CTX_DIR):
     for _file in defs.SERVER_DOCKER_CTX_LIST:
         shutil.copy2(_file, ctx_dir / _file.name)
 
-    shutil.copy2(properties, ctx_dir / defs.SERVER_INPUTS.name)
+    config = configparser.ConfigParser()
+    config.optionxform = lambda option: option
+    section = 'server'
+    config.add_section(section)
+    for k, v in properties.items():
+        config.set(section, k, str(v))
+
+    with open(ctx_dir / defs.SERVER_PROPERTIES_NAME, 'w') as fh:
+        config.write(fh)
 
     gen_self_signed_cert(ssl_cn, ctx_dir=ctx_dir)
 
 
-def manage_server(cmd_args):
+def manage_server(cmd_args: ServerCmdArgs):
     cmd_args.action = defs.ServerActionT(cmd_args.action)
 
     # TODO copy-paste from agent
@@ -162,7 +169,10 @@ def manage_server(cmd_args):
         )
 
     logger.info('Preparing server docker image context')
-    prepare_server_ctx(cmd_args.properties, cmd_args.ssl_domain)
+    prepare_server_ctx(
+        cmd_args.config[defs.ConfigSectionT.SERVER.value],
+        cmd_args.ssl_domain
+    )
 
     logger.info('Bulding server docker image')
     build_docker_image()

@@ -22,7 +22,5 @@ venv/
 api/python/provisioner/srv/salt-vendor/*
 !api/python/provisioner/srv/salt-vendor/README.md
 
-# generated configs for jenkins setup
-devops/jenkins/agent/credentials
-devops/jenkins/jobs/jenkins.ini
-devops/jenkins/server/jenkins_inputs
+# generated config for jenkins setup
+devops/jenkins/cortx_jenkin/cortx-jenkins.toml
