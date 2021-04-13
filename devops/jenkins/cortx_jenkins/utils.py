@@ -19,6 +19,7 @@
 #
 
 import subprocess
+import os
 import logging
 
 
@@ -51,3 +52,12 @@ def run_subprocess_cmd(cmd, **kwargs):
             f"returncode: {res.returncode}, stderr: {res.stderr}"
         )
         return res
+
+
+def set_ssl_verify(verify):
+    if not verify:
+        logger.warning("Turning off HTTPS SSL verification")
+    # TODO find (update when appear) the better way how
+    #      to set that for python-jenkins package, current workaround
+    #      refers https://opendev.org/jjb/python-jenkins/src/commit/570a143c74d092efaf9bc68a3bae9b15804f4a63/jenkins/__init__.py#L345-L348  # noqa: E501
+    os.environ['PYTHONHTTPSVERIFY'] = ('1' if verify else '0')

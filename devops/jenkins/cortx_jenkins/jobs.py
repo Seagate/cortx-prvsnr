@@ -19,11 +19,12 @@
 #
 
 import logging
-from pathlib import Path
+import configparser
+from typing import Dict
 
 import attr
 
-from . import defs
+from . import defs, utils
 
 
 logger = logging.getLogger(__name__)
@@ -31,14 +32,38 @@ logger = logging.getLogger(__name__)
 
 JobsCmdArgs = attr.make_class(
     'JobsCmdArgs', (
+        'config',
         'action',
-        'ini_file',
-        'jjb_args',
+        'jjb_args'
     )
 )
 
 
-def manage_jobs(cmd_args):
+def gen_jobs_ini(config: Dict):
+    jobs_config = config[defs.ConfigSectionT.JOBS.value]
+    global_config = config[defs.ConfigSectionT.GLOBAL.value]
+
+    if not jobs_config['jenkins'].get('user'):
+        jobs_config['jenkins']['user'] = global_config['username']
+
+    if not jobs_config['jenkins'].get('password'):
+        jobs_config['jenkins']['password'] = global_config['token']
+
+    if not jobs_config['jenkins'].get('url'):
+        jobs_config['jenkins']['password'] = global_config['url']
+
+    _config = configparser.ConfigParser()
+    _config.optionxform = lambda option: option
+    for section in jobs_config:
+        _config.add_section(section)
+        for k, v in jobs_config[section].items():
+            _config.set(section, k, str(v))
+
+    with open(defs.JOBS_CONFIG, 'w') as fh:
+        _config.write(fh)
+
+
+def manage_jobs(cmd_args: JobsCmdArgs):
     # do not import that at module level to avoid too early
     # logging initialization that happens in JJB itself
     # pylint: disable=import-outside-toplevel
@@ -46,12 +71,15 @@ def manage_jobs(cmd_args):
 
     cmd_args.action = defs.JobsActionT(cmd_args.action)
 
-    if cmd_args.action == defs.JobsActionT.CONFIG_DUMP:
-        return Path(defs.JOBS_CONFIG_EXAMPLE).read_text()
+    gen_jobs_ini(cmd_args.config)
+
+    utils.set_ssl_verify(
+        cmd_args.config[defs.ConfigSectionT.GLOBAL.value]['ssl_verify']
+    )
 
     # defs.JobsActionT.UPDATE or defs.JobsActionT.DELETE
     argv = [
-        '--conf', str(cmd_args.ini_file),
+        '--conf', str(defs.JOBS_CONFIG),
         '-l', logging.getLevelName(logger.getEffectiveLevel()),
         cmd_args.action.value,
         '--recursive'

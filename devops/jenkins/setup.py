@@ -42,7 +42,8 @@ install_requires = [
     'requests==2.25.1',
     'attrs==20.3.0',
     'docker==5.0.0',
-    'jenkins-job-builder==3.9.0'
+    'jenkins-job-builder==3.9.0',
+    'toml>=0.10.1'
 ]
 
 tests_require = [

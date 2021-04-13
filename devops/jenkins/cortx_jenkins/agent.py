@@ -27,8 +27,7 @@ import requests
 import attr
 import docker
 
-from . import defs
-from .utils import run_subprocess_cmd
+from . import defs, utils
 
 docker_client = docker.from_env()
 
@@ -41,12 +40,10 @@ class NoOfflineAgentError(RuntimeError):
 
 AgentCmdArgs = attr.make_class(
     'AgentCmdArgs', (
+        'config',
         'action',
-        'creds_file',
         'name',
-        'work_dir',
-        # 'verbose',
-        'jenkins_url'
+        'work_dir'
     )
 )
 
@@ -71,7 +68,7 @@ def build_docker_image():
     gid = os.getgid()
 
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'build',
         '-t', defs.AGENT_IMAGE_NAME_FULL,
         '--build-arg', f"uid={uid}",
@@ -83,7 +80,7 @@ def build_docker_image():
 
 def start_docker_agent(work_dir, j_url, a_secret, a_name):
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'run', '--init', '-d',
         '-v', f"{defs.DOCKER_SOCKET}:{defs.DOCKER_SOCKET}",
         '-v', f"{work_dir}:{work_dir}",
@@ -113,7 +110,7 @@ def resolve_free_offline_agent(server):
     logger.debug(f"List of jenkins agents: {agents}")
 
     candidate = None
-    config = None
+    a_config = None
     for agent in agents:
         candidate = agent['name']
 
@@ -128,15 +125,15 @@ def resolve_free_offline_agent(server):
             and not a_info['temporarilyOffline']
             and (defs.EXPECTED_AGENT_LABELS & set(a_labels))
         ):
-            config = get_agent_config(server, candidate)
-            if config:
+            a_config = get_agent_config(server, candidate)
+            if a_config:
                 break
     else:
         raise NoOfflineAgentError(
             'no offline agent with acceptable parameters'
         )
 
-    return AgentData(candidate, config)
+    return AgentData(candidate, a_config)
 
 
 def get_agent_container():
@@ -159,7 +156,8 @@ def start_agent(j_url, agent_data):
         )
         j_server_bridge_ip = j_server_container.attrs[
             'NetworkSettings']['Networks']['bridge']['IPAddress']
-        j_url = j_url.replace(defs.LOCALHOST, j_server_bridge_ip)
+        j_url = j_url.replace(defs.LOCALHOST, j_server_bridge_ip).replace(
+            'https:', 'http:').replace(':8083', ':8080')
 
     start_docker_agent(
         agent_data.config.work_dir,
@@ -175,7 +173,7 @@ def prepare_agent_ctx(ctx_dir=defs.AGENT_CTX_DIR):
         shutil.copy2(_file, ctx_dir / _file.name)
 
 
-def manage_agent(cmd_args):
+def manage_agent(cmd_args: AgentCmdArgs):
     cmd_args.action = defs.AgentActionT(cmd_args.action)
 
     action_map = {
@@ -207,11 +205,21 @@ def manage_agent(cmd_args):
             'to either remove or start it'
         )
 
-    with open(cmd_args.creds_file) as _creds_f:
-        j_user, j_token = [
-            part.strip() for part in _creds_f.readline().split(':')
-        ]
-    logger.debug(f"Using jenkins user '{j_user}' credentials")
+    global_config = cmd_args.config[defs.ConfigSectionT.GLOBAL.value]
+    agent_config = cmd_args.config[defs.ConfigSectionT.AGENT.value]
+
+    j_user = (
+        agent_config.get('username') or global_config.get('username')
+    )
+    j_token = (
+        agent_config.get('token') or global_config.get('token')
+    )
+    j_url = global_config.get('url')
+    logger.debug(
+        f"Using jenkins user '{j_user}' credentials, server url '{j_url}'"
+    )
+
+    utils.set_ssl_verify(global_config['ssl_verify'])
 
     logger.info('Preparing agent docker image context')
     prepare_agent_ctx()
@@ -220,7 +228,7 @@ def manage_agent(cmd_args):
     build_docker_image()
 
     server = jenkins.Jenkins(
-        cmd_args.jenkins_url, username=j_user, password=j_token
+        j_url, username=j_user, password=j_token
     )
 
     if not cmd_args.name:
@@ -243,7 +251,7 @@ def manage_agent(cmd_args):
         f"Starting agent '{agent_data.name}' with working"
         f" directory {agent_data.config.work_dir}"
     )
-    start_agent(cmd_args.jenkins_url, agent_data)
+    start_agent(j_url, agent_data)
     logger.info(f"Agent '{agent_data.name}' started")
 
     j_agent_container = get_agent_container()
