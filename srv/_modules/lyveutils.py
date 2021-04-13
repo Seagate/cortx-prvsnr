@@ -60,10 +60,10 @@ def validate_firewall():
 
     for zone in fw_pillar:
         for services, ports in fw_pillar[zone]["ports"].items():
+            validate_services.append(services)
             for pt in ports:
-                validate_ports.append(pt)
-            for svc in services:
-                validate_services.append(svc)
+                port_num = int(''.join(filter(str.isdigit, pt)))
+                validate_ports.append(port_num)
 
     for port, service in zip(validate_ports, validate_services):
         tcp_port = __utils__['process.simple_process'](f"netstat -ltp | grep {port}")
