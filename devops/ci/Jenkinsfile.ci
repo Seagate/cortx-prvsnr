@@ -48,7 +48,9 @@ def nodeWrapper(label=null, body) {
             body()
         } finally {
             echo "Cleanup"
-            cleanDocker()
+            // TODO good cleanup routine
+            //      (current version will lead to docker rebuilds for all layers)
+            // cleanDocker()
             cleanWs()
         }
     }
