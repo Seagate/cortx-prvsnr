@@ -73,8 +73,8 @@ def build_docker_image():
         '-t', defs.AGENT_IMAGE_NAME_FULL,
         '--build-arg', f"uid={uid}",
         '--build-arg', f"gid={gid}",
-        '-f', defs.AGENT_DOCKERFILE,
-        defs.AGENT_DOCKER_CTX_DIR
+        '-f', str(defs.AGENT_DOCKERFILE),
+        str(defs.AGENT_DOCKER_CTX_DIR)
     ])
 
 
@@ -87,7 +87,7 @@ def start_docker_agent(work_dir, j_url, a_secret, a_name):
         '--name', defs.AGENT_CONTAINER_NAME,
         defs.AGENT_IMAGE_NAME_FULL,
         '-url', j_url,
-        '-workDir', work_dir,
+        '-workDir', str(work_dir),
         a_secret, a_name
     ])
 
