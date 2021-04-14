@@ -11,7 +11,7 @@ cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker
 cortx>software>corosync>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['corosync-pacemaker']['secret'])) }}
 cortx>software>common>message_bus_type=>kafka
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
-cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:9092
+cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:{{ pillar['cortx']['software']['kafka']['port'] }}
 {%- endfor %}
 cortx>release>setup=>{{ pillar['cortx']['release']['setup'] }}
 cortx>release>product=>{{ pillar['cortx']['release']['product'] }}
@@ -28,9 +28,9 @@ cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name=>{{ storag
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['machine_id'] }}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]=>{{ pillar['storage'][pillar['cluster'][node]['storage']['enclosure']]['enclosure_id'] }}
 {%- endfor %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>data=>4
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>parity=>2
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>spare=>2
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>data=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['data'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>parity=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['parity'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>spare=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['spare'] }}
 {%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
 server_node>{{ machine_id }}>name=>{{ node }}

@@ -111,6 +111,10 @@ node {
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
+                    storage.durability.sns.data=4
+                    storage.durability.sns.parity=2
+                    storage.durability.sns.spare=2
+
 
                     [enclosure_default]
                     type=virtual
@@ -150,8 +154,9 @@ node {
                         sed -ie 's/^[ \t]*//' /etc/pip.conf
 
                         yum install --nogpgcheck -y java-1.8.0-openjdk-headless
-                        yum install --nogpgcheck -y python3 cortx-prereq sshpass
+                        yum install --nogpgcheck -y python3 sshpass
                         yum install --nogpgcheck -y python36-m2crypto salt salt-master salt-minion
+                        yum install --nogpgcheck -y cortx-prereq
                         yum install --nogpgcheck -y python36-cortx-prvsnr
                         rm -rf /etc/yum.repos.d/*3rd_party*.repo
                         rm -rf /etc/yum.repos.d/*cortx_iso*.repo
