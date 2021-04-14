@@ -152,6 +152,13 @@ node {
                 echo "Successfully deployed system states!"
             }
             
+            stage("Base_utils Setup") {
+                sshCommand remote: remote, command: """
+                    provisioner deploy_vm --states base_utils --setup-type single
+                """
+                echo "Successfully deployed base_utils states!"
+            }
+            
             stage("3rd Party Software Deployment") {
                 sshCommand remote: remote, command: """
                     provisioner deploy_vm --states prereq --setup-type single
