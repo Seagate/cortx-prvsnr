@@ -50,8 +50,8 @@ def build_docker_image(ctx_dir=defs.SERVER_CTX_DIR):
     run_subprocess_cmd([
         'docker', 'build',
         '-t', defs.SERVER_IMAGE_NAME_FULL,
-        '-f', ctx_dir / defs.SERVER_DOCKERFILE.name,
-        ctx_dir
+        '-f', str(ctx_dir / defs.SERVER_DOCKERFILE.name),
+        str(ctx_dir)
     ])
 
 
