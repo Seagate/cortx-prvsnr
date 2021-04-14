@@ -51,7 +51,6 @@
 - job-group:
     name: '{name}-prs'
     default_topic:
-    ghprb_cron: 'H/10 * * * *'
     type:
       - unit:
           default_level: unit

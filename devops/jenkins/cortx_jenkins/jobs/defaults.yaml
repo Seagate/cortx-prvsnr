@@ -12,7 +12,7 @@
     topic_regex: (^$|deploy|config|upgrade|upgrade_bundle)
 
     # github pull request builder trigger defaults
-    ghprb_cron: 'H * * * *'
+    ghprb_cron: 'H/5 * * * *'
     # FIXME:
     ghprb_user_whitelist:
       - andkononykhin
