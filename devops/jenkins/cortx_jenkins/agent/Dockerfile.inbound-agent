@@ -22,8 +22,21 @@ RUN bash /tmp/setup_docker.sh \
 ARG uid=1000
 ARG gid=1000
 
+RUN groupadd -g ${gid} ${gid} || true
 RUN usermod -u ${uid} jenkins \
     && usermod -g ${gid} jenkins
+
+# Note. not a clean solution but may help to
+#       adjust user system records if needed
+#       (e.g. for python pwd.getpwuid(<uid>))
+# RUN userdel jenkins
+# RUN useradd -c "Jenkins user" -u 728015 -g 728015 jenkins
+
+ARG docker_gid=999
+
+RUN (groupadd docker || true) \
+    && groupmod -g ${docker_gid} docker
+
 
 RUN usermod -aG docker jenkins
 
