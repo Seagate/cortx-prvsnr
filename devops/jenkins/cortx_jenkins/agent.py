@@ -214,7 +214,9 @@ def manage_agent(cmd_args: AgentCmdArgs):
     j_token = (
         agent_config.get('token') or global_config.get('token')
     )
-    j_url = global_config.get('url')
+    j_url = (
+        agent_config.get('url') or global_config.get('url')
+    )
     logger.debug(
         f"Using jenkins user '{j_user}' credentials, server url '{j_url}'"
     )

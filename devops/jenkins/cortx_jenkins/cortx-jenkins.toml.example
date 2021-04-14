@@ -38,8 +38,9 @@ GITHUB_USER_TOKEN= ''
 
 
 [agent]
-# Note. if credentials are not specified then ones
-#       from [credentials] section are used
+# Note. if url or credentials are not specified then ones
+#       from [global] section are used
+url = ''
 username = ''
 token = ''
 
