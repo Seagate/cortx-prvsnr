@@ -253,6 +253,7 @@ try {
     currentBuild.result = 'FAILURE'
     err = _err
     throw _err
+
 } finally {
 
     if (err) {
