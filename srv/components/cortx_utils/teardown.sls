@@ -15,11 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Reset cortx-py-utils:
+Stage - cortx-py-utils Reset:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:reset')
 
-Stage - Cleanup cortx-py-utils:
+Stage - cortx-py-utils cleanup:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:cleanup')
 

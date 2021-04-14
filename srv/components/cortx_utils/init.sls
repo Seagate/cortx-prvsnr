@@ -17,4 +17,5 @@
 
 include:
   - .install
+  - .post_install
   - .config
