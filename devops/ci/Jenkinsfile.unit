@@ -61,10 +61,13 @@ def buildDocker(imageName, dockerfile, ctx, add_args='') {
 
 
 def buildUnitDocker() {
+    def uid = sh(returnStdout: true, script: 'id -u').trim()
+    def gid = sh(returnStdout: true, script: 'id -g').trim()
     return buildDocker(
         dockerImage,
         "devops/ci/Dockerfile.unit",
         "api",
+        "--build-arg uid=$uid --build-arg gid=$gid"
     )
 }
 

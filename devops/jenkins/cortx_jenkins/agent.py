@@ -21,6 +21,7 @@
 import os
 import logging
 import shutil
+import grp
 
 import jenkins
 import requests
@@ -66,6 +67,7 @@ AgentData = attr.make_class(
 def build_docker_image():
     uid = os.getuid()
     gid = os.getgid()
+    docker_gid = grp.getgrnam('docker').gr_gid
 
     # TODO use docker python wrapper
     utils.run_subprocess_cmd([
@@ -73,6 +75,7 @@ def build_docker_image():
         '-t', defs.AGENT_IMAGE_NAME_FULL,
         '--build-arg', f"uid={uid}",
         '--build-arg', f"gid={gid}",
+        '--build-arg', f"docker_gid={docker_gid}",
         '-f', str(defs.AGENT_DOCKERFILE),
         str(defs.AGENT_DOCKER_CTX_DIR)
     ])
