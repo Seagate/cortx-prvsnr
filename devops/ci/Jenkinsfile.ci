@@ -240,6 +240,8 @@ try {
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
+                    // FIXME
+                    sh 'env'
                     timeout(10) {
                         staticValidation()
                     }
