@@ -18,12 +18,3 @@
 Stage - cortx-py-utils Reset:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:reset')
-
-Stage - cortx-py-utils cleanup:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:cleanup')
-
-Remove cortx-py-utils package:
-  pkg.purged:
-    - pkgs:
-      - cortx-py-utils

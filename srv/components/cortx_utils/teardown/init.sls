@@ -15,7 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - cortx-utils post_install:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:post_install')
-    - failhard: True
+include:
+  - .reset
+  - .cleanup
+
+Remove cortx-py-utils package:
+  pkg.purged:
+    - pkgs:
+      - cortx-py-utils
