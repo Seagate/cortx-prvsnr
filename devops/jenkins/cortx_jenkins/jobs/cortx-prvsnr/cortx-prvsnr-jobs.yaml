@@ -35,8 +35,12 @@
           defaut_commit_id: '{defaut_commit_id}'
       - testing-level-parameter:
           default_level: '{default_level}'
+          level_regex: '{level_regex}'
+          topic_regex: '{topic_regex}'
       - testing-topics-parameter:
           default_topic: '{default_topic}'
+          level_regex: '{level_regex}'
+          topic_regex: '{topic_regex}'
 
     ghprb_status_context: 'ci/cortx-prvsnr-jenkins/pr-merge/{type}'
 
@@ -51,9 +55,11 @@
     type:
       - unit:
           default_level: unit
+          level_regex: unit
           ghprb_trigger_pattern: unit
       - integration:
-          default_level: integration or integration_mocked
+          default_level: integration_mocked
+          level_regex: (integration|integration_mocked)
           ghprb_trigger_pattern: integration
           ghprb_only_trigger_phrase: true
       - custom:

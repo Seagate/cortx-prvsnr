@@ -29,8 +29,8 @@
       - validating-string:
           name: topic
           default: '{default_topic}'
-          description: 'Space separated testing topics. Options: (blank), deploy, config, upgrade, upgrade_bundle'
-          regex: (^$|deploy|config|upgrade|upgrade_bundle)
+          description: 'Space separated testing topics. Options: {topic_regex}'
+          regex: '{topic_regex}'
           msg: Value validation failed
 
 - parameter:
@@ -39,8 +39,8 @@
       - validating-string:
           name: level
           default: '{default_level}'
-          description: 'A testing level. Available options: unit, integration_mocked, integraton, system'
-          regex: (unit|integration_mocked|integraton|system)
+          description: 'A testing level. Available options: {level_regex}'
+          regex: '{level_regex}'
           msg: Value validation failed
 
 - trigger:
