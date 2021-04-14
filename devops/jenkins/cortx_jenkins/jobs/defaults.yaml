@@ -11,8 +11,6 @@
     level_regex: (unit|integration_mocked|integration|system)
     topic_regex: (^$|deploy|config|upgrade|upgrade_bundle)
 
-    pr_user_whitelist: []
-
     # github pull request builder trigger defaults
     ghprb_cron: 'H * * * *'
     ghprb_user_whitelist: []
