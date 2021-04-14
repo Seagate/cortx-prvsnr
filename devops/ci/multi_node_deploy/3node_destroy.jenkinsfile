@@ -88,9 +88,9 @@ node {
             echo "Successful teardown: 3rd-Party"
         }
 
-        stage("Teardown: base_utils") {
-            sshCommand remote: remotes[0], command: "provisioner deploy_vm --states base_utils --setup-type 3_node"
-            echo "Successful teardown: base_utils"
+        stage("Teardown: utils") {
+            sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
+            echo "Successful teardown: utils"
         }
 
         stage("Teardown: Platform") {

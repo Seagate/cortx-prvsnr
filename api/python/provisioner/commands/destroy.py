@@ -63,8 +63,8 @@ deploy_states = dict(
         "s3server.teardown",
         "motr.teardown"
     ],
-    base_utils=[
-        "cotx_utils.teardown"
+    utils=[
+        "cortx_utils.teardown"
     ],
     prereq=[
         "misc_pkgs.lustre.teardown",
@@ -294,7 +294,7 @@ class DestroyNode(Deploy):
             self._run_states('controlpath', run_args)
             self._run_states('iopath', run_args)
             self._run_states('prereq', run_args)
-            self._run_states('base_utils', run_args)
+            self._run_states('utils', run_args)
             self._run_states('system', run_args)
             self._run_states('bootstrap', run_args)
             self._run_cmd(list_cmds)
@@ -308,9 +308,9 @@ class DestroyNode(Deploy):
                 logger.info("Teardown the system states")
                 self._run_states('system', run_args)
 
-            if 'base_utils' in run_args.states:
-                logger.info("Teardown Provisioner base_utils states")
-                self._run_states('base_utils', run_args)
+            if 'utils' in run_args.states:
+                logger.info("Teardown Provisioner utils states")
+                self._run_states('utils', run_args)
                 self._run_cmd(list_cmds)
 
             if 'prereq' in run_args.states:

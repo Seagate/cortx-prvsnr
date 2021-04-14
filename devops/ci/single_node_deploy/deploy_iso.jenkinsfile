@@ -155,11 +155,11 @@ node {
                 echo "Successfully deployed system states!"
             }
             
-            stage("Base_utils Setup") {
+            stage("utils Setup") {
                 sshCommand remote: remote, command: """
-                    provisioner deploy_vm --states base_utils --setup-type single
+                    provisioner deploy_vm --states utils --setup-type single
                 """
-                echo "Successfully deployed base_utils states!"
+                echo "Successfully deployed utils states!"
             }
             
             stage("3rd Party Software Deployment") {

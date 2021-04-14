@@ -56,8 +56,8 @@ deploy_states = dict(
         "system.logrotate",
         "system.chrony"
     ],
-    base_utils=[
-        "cotx_utils"
+    utils=[
+        "cortx_utils"
     ],
     prereq=[
         "misc_pkgs.ssl_certs",
@@ -208,7 +208,7 @@ class DeployVM(Deploy):
 
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
-            self._run_states('base_utils', run_args)
+            self._run_states('utils', run_args)
             self._run_states('prereq', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
@@ -222,9 +222,9 @@ class DeployVM(Deploy):
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
 
-            if 'base_utils' in run_args.states:
-                logger.info("Deploying the base_utils states")
-                self._run_states('base_utils', run_args)
+            if 'utils' in run_args.states:
+                logger.info("Deploying the utils states")
+                self._run_states('utils', run_args)
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
