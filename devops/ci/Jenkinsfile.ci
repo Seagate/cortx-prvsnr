@@ -267,8 +267,11 @@ try {
                 body: '${JELLY_SCRIPT,template="html"}',
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
-                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-                to: '$DEFAULT_RECIPIENTS',
+                recipientProviders: [
+                    [$class: 'DevelopersRecipientProvider'],
+                    [$class: 'RequesterRecipientProvider']
+                ],
+                // to: '$DEFAULT_RECIPIENTS',
             ]
             emailext emailMessage
         }
