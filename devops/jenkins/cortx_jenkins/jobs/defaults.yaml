@@ -13,7 +13,9 @@
 
     # github pull request builder trigger defaults
     ghprb_cron: 'H * * * *'
-    ghprb_user_whitelist: []
+    # FIXME:
+    ghprb_user_whitelist:
+      - andkononykhin
     ghprb_org_whitelist:
       - Seagate
     ghprb_allow_white_org_as_admins: true
