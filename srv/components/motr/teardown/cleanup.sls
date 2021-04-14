@@ -14,18 +14,11 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+Stage - Reset Motr:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:cleanup')
 
-include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
-
-Remove sspl packages:
+Remove Motr package:
   pkg.purged:
     - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
-
-Delete sspl checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+      - cortx-motr

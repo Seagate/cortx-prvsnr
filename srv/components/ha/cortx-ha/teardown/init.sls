@@ -16,16 +16,14 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+  - components.ha.cortx-ha.ha_cleanup
+  - components.ha.cortx-ha.teardown.reset
+  - components.ha.cortx-ha.teardown.cleanup
 
-Remove sspl packages:
+Remove cortx-ha:
   pkg.purged:
-    - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
+    - name: cortx-ha
 
-Delete sspl checkpoint flag:
+Delete cortx-ha checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.cortx-ha

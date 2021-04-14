@@ -16,16 +16,13 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.hare.teardown.reset
+    - components.hare.teardown.cleanup
 
-Remove sspl packages:
+Remove Hare:
   pkg.purged:
-    - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
+    - name: cortx-hare
 
-Delete sspl checkpoint flag:
+Remove hare checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.hare

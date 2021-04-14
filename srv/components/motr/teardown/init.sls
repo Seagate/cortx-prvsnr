@@ -16,16 +16,14 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.motr.teardown.reset
+    - components.motr.teardown.cleanup
 
-Remove sspl packages:
+Remove Motr package:
   pkg.purged:
     - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
+      - cortx-motr
 
-Delete sspl checkpoint flag:
+Delete Motr checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.motr

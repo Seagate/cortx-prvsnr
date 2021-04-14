@@ -16,16 +16,9 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.ha.iostack-ha.teardown.reset
+    - components.ha.iostack-ha.teardown.cleanup
 
-Remove sspl packages:
-  pkg.purged:
-    - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
-
-Delete sspl checkpoint flag:
+Delete iostack-ha checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.iostack-ha

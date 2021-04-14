@@ -15,26 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-
-Stage - Reset Hare:
+Stage - Reset S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:reset')
-
-Remove cluster yaml:
-  file.absent:
-    - name: /var/lib/hare
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:reset')
 {% endif %}
-
-Remove Hare:
-  pkg.purged:
-    - name: cortx-hare
-
-Delete Hare yum repo:
-  pkgrepo.absent:
-    - name: {{ defaults.hare.repo.id }}
-
-Remove hare checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.hare

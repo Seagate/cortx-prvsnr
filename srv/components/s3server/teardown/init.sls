@@ -16,16 +16,19 @@
 #
 
 include:
-  - components.sspl.teardown.reset
-  - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
+    - components.s3server.teardown.reset
+    - components.s3server.teardown.cleanup
 
-Remove sspl packages:
+Stop s3authserver service:
+  service.dead:
+    - name: s3authserver
+    - enable: False
+    - init_delay: 2
+
+Remove cortx-s3server:
   pkg.purged:
-    - pkgs:
-      - cortx-sspl
-      - cortx-sspl-test
+    - name: cortx-s3server
 
-Delete sspl checkpoint flag:
+Delete s3server checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.s3server
