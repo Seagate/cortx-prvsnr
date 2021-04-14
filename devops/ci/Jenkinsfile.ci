@@ -14,6 +14,9 @@ Map config = [
     testMarkers: 'unit'
 ]
 
+
+def localLib
+
 def getMarkers(String str) {
     def pattern = /.*test (.+) please/
     def matcher = (str =~ pattern)
@@ -39,6 +42,8 @@ if (env.ghprbCommentBody) {
 
     config.testMarkers = test_markers.join(' and ')
 }
+
+
 
 
 def nodeWrapper(label=null, body) {
@@ -223,6 +228,15 @@ Closure dynamicValidation = {
 
 try {
     timeout(300) {
+        /*
+        nodeWrapper('ubuntu') {
+            stage('Load local shared library') {
+                checkout scm
+                localLib = load 'devops/ci/pipeline.groovy'
+            }
+        }
+        */
+
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
@@ -269,8 +283,8 @@ try {
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
                 recipientProviders: [
-                    [$class: 'DevelopersRecipientProvider'],
-                    [$class: 'RequesterRecipientProvider']
+                    developers(),
+                    requestor()
                 ],
                 // to: '$DEFAULT_RECIPIENTS',
             ]
