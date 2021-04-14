@@ -15,29 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Run cortx-ha post_install:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:post_install')
-    - failhard: True
-
-
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-
-Run cortx-ha config:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
-    - failhard: True
-
-{% else %}
-
-No HA config on secondary node:
-  test.show_notification:
-    - text: "HA config  applies to primary node. There's no execution on secondary node"
-
-{% endif %}
-
-Run cortx-ha init:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:init')
-    - failhard: True
+include:
+    - components.csm.config.post_install
+    - components.csm.config.prepare
+    - components.csm.config.config
+    - components.csm.config.init_mod

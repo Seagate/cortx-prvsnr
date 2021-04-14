@@ -15,12 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
-Add cortx-ha yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.cortx_ha.repo.id }}
-    - enabled: True
-    - humanname: cortx-ha
-    - baseurl: {{ defaults.cortx_ha.repo.url }}
-    - gpgcheck: 0
+Stage - Post Install CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:post_install')
+    - failhard: True

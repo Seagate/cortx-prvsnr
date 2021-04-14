@@ -14,22 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-{% import_yaml 'components/defaults.yaml' as defaults %}
-
-Add hare yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.hare.repo.id }}
-    - enabled: True
-    - humanname: hare
-    - baseurl: {{ defaults.hare.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.hare.repo.gpgkey }}
-
-#Prepare cluster yaml:
-#  file.managed:
-#    - name: /var/lib/hare/cluster.yaml
-#    - source: salt://components/hare/files/cluster.cdf.tmpl
-#    - template: jinja
-#    - mode: 444
-#    - makedirs: True
+Stage - Post Install Motr:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:post_install')
+    - failhard: True

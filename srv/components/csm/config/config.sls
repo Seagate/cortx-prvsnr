@@ -15,20 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
-include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-  - components.csm.sanity_check.csm_sanity
+Stage - Config CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:config')
+    - failhard: True
 
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
-{% endif %}
+Add {{ pillar['system']['service-user']['name'] }} user to certs group:
+  group.present:
+    - name: certs
+    - addusers:
+      - {{ pillar['system']['service-user']['name'] }}
+
+Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
+  group.present:
+    - name: prvsnrusers
+    - addusers:
+      - {{ pillar['system']['service-user']['name'] }}

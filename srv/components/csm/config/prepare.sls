@@ -15,26 +15,31 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+Stage - Prepare CSM:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:prepare')
+    - failhard: True
 
-{% if pillar['release']['target_build'] %}
-Add CSM uploads repo:
-  pkgrepo.managed:
-    - name: {{ defaults.csm.uploads_repo.id }}
-    - enabled: True
-    - humanname: csm_uploads
-    - baseurl: {{ defaults.csm.uploads_repo.url }}
-    - gpgcheck: 0
+# {% import_yaml 'components/defaults.yaml' as defaults %}
 
-Add CSM repo:
-  pkgrepo.managed:
-    - name: {{ defaults.csm.repo.id }}
-    - enabled: True
-    - humanname: csm
-    - baseurl: {{ defaults.csm.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.csm.repo.gpgkey }}
-{% endif %}
+# {% if pillar['release']['target_build'] %}
+# Add CSM uploads repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.csm.uploads_repo.id }}
+#     - enabled: True
+#     - humanname: csm_uploads
+#     - baseurl: {{ defaults.csm.uploads_repo.url }}
+#     - gpgcheck: 0
+
+# Add CSM repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.csm.repo.id }}
+#     - enabled: True
+#     - humanname: csm
+#     - baseurl: {{ defaults.csm.repo.url }}
+#     - gpgcheck: 1
+#     - gpgkey: {{ defaults.csm.repo.gpgkey }}
+# {% endif %}
 
 {#% set server_nodes = [ ] -%#}
 {#% for node in pillar['cluster'].keys() -%#}

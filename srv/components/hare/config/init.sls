@@ -15,20 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-  - components.csm.sanity_check.csm_sanity
-
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
+    - components.hare.config.post_install
+    - components.hare.config.prepare
+    - components.hare.config.config
+    - components.hare.config.init_mod
 {% endif %}

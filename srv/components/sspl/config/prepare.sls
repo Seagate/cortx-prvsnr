@@ -15,20 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
-include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-  - components.csm.sanity_check.csm_sanity
+Stage - Prepare SSPL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:prepare')
+    - failhard: True
 
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
-{% endif %}
+# {% import_yaml 'components/defaults.yaml' as defaults %}
+
+# Add sspl_prereqs yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.sspl.uploads_repo.id }}
+#     - enabled: True
+#     - humanname: sspl_uploads
+#     - baseurl: {{ defaults.sspl.uploads_repo.url }}
+#     - gpgcheck: 0
+
+# Add sspl yum repo:
+#   pkgrepo.managed:
+#     - name: {{ defaults.sspl.repo.id }}
+#     - enabled: True
+#     - humanname: sspl
+#     - baseurl: {{ defaults.sspl.repo.url }}
+#     - gpgcheck: 1
+#     - gpgkey: {{ defaults.sspl.repo.gpgkey }}
+#     - require:
+#       - Add sspl_prereqs yum repo
+

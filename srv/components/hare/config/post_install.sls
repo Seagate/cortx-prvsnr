@@ -15,14 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Post Install SSPL:
+Stage - Post Install Hare:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:post_install')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/hare/conf/setup.yaml', 'hare:post_install')
+    - failhard: True
 
-Stage - Config SSPL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:config')
-
-Stage - Init SSPL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/sspl/conf/setup.yaml', 'sspl:init')

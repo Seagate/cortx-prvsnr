@@ -15,13 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% import_yaml 'components/defaults.yaml' as defaults %}
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
-Add Motr yum repo:
-  pkgrepo.managed:
-    - name: {{ defaults.motr.repo.id }}
-    - enabled: True
-    - humanname: motr
-    - baseurl: {{ defaults.motr.repo.url }}
-    - gpgcheck: 1
-    - gpgkey: {{ defaults.motr.repo.gpgkey }}
+Run cortx-ha config:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
+    - failhard: True
+    - Require:
+        - cortx-ha post_install
+
+{% else %}
+
+No HA config on secondary node:
+  test.show_notification:
+    - text: "HA config  applies to primary node. There's no execution on secondary node"
+
+{% endif %}

@@ -15,20 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
 include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-  - components.csm.sanity_check.csm_sanity
-
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
-{% endif %}
+    - components.motr.config.post_install
+    - components.motr.config.prepare
+    - components.motr.config.config
+    - components.motr.config.init_mod

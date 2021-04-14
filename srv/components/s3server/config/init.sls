@@ -16,25 +16,7 @@
 #
 
 include:
-  - components.motr.install
-
-Stage - Post Install Motr:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:post_install')
-    - failhard: True
-    - require:
-      - Install cortx-motr
-
-Stage - Config Motr:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:config')
-    - failhard: True
-    - require:
-      - Stage - Post Install Motr
-
-Stage - Init Motr:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:init')
-    - failhard: True
-    - require:
-      - Stage - Config Motr
+    - components.s3server.config.post_install
+    - components.s3server.config.prepare
+    - components.s3server.config.config
+    - components.s3server.config.init_mod

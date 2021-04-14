@@ -17,7 +17,6 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.cortx-ha'.format(grains['id'])) %}
 include:
-  - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
   - components.ha.cortx-ha.config
   - components.ha.cortx-ha.sanity_test
