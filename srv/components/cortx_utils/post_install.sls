@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - cortx-utils config:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:config')
+Stage - cortx-utils post_install:
+#/opt/seagate/cortx/utils/bin/utils_setup post_install --config yaml:///tmp/utils.post_install.tmpl.3-node
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:post_install')
     - failhard: True
