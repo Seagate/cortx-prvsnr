@@ -4,7 +4,7 @@
 
     # FIXME debug
     mail-to: andkononykhin@gmail.com
-    github_org: andkononykhin
+    github_org: Seagate
     defaut_commit_id: jenkins-config-automation
     jenkinsfile-path: 'devops/ci/Jenkinsfile.unit'
 
@@ -13,13 +13,13 @@
 
     # FIXME debug
     pr_user_whitelist:
-      - andkononykhin
+      - andkononykhin2
 
     # github pull request builder trigger defaults
     ghprb_cron: 'H * * * *'
     # FIXME debug
     ghprb_user_whitelist:
-      - andkononykhin
+      - andkononykhin2
     ghprb_org_whitelist:
       - Seagate
     ghprb_allow_white_org_as_admins: true
