@@ -16,5 +16,6 @@
 #
 include:
     - components.sspl.config.post_install
+    - components.sspl.config.prepare
     - components.sspl.config.config
     - components.sspl.config.init_mod

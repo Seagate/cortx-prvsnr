@@ -17,7 +17,6 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.s3server'.format(grains['id'])) %}
 include:
-  - components.s3server.prepare
   - components.s3server.install
   - components.s3server.config
   - components.s3server.start

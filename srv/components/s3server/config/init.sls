@@ -17,5 +17,6 @@
 
 include:
     - components.s3server.config.post_install
+    - components.s3server.config.prepare
     - components.s3server.config.config
     - components.s3server.config.init_mod

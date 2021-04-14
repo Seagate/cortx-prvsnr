@@ -17,5 +17,6 @@
 
 include:
     - components.motr.config.post_install
+    - components.motr.config.prepare
     - components.motr.config.config
     - components.motr.config.init_mod

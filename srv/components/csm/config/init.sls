@@ -17,5 +17,6 @@
 
 include:
     - components.csm.config.post_install
+    - components.csm.config.prepare
     - components.csm.config.config
     - components.csm.config.init_mod
