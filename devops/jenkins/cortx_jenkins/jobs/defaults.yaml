@@ -8,6 +8,8 @@
     jenkinsfile-path: 'devops/ci/Jenkinsfile.ci'
 
     default_topic:
+    level_regex: (unit|integration_mocked|integration|system)
+    topic_regex: (^$|deploy|config|upgrade|upgrade_bundle)
 
     pr_user_whitelist: []
 
