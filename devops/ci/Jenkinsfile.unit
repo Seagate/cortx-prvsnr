@@ -2,43 +2,15 @@
 
 def err = null
 
-//branchName = env.BRANCH_NAME.replace('/','_')
-dockerImage = "seagate/cortx-prvsnr:unit-123"
+branchName = env.BRANCH_NAME.replace('/','_')
+dockerImage = "seagate/cortx-prvsnr:unit-$branchName"
 
 Map config = [
-    staticValidation: false,
+    staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'cortx-prvsnr-ci',
-    testMarkers: 'unit'
+    nodeLabel: 'cortx-prvsnr-ci'
 ]
-
-
-def getMarkers(String str) {
-    def pattern = /.*test (.+) please/
-    def matcher = (str =~ pattern)
-    return !!matcher ? matcher[0][1] : null
-}
-
-if (env.ghprbCommentBody) {
-    config.testMarkers = getMarkers(env.ghprbCommentBody)
-
-    if (!config.testMarkers) {
-       throw new Exception("GitHub comment lacks markers: $env.ghprbCommentBody")
-    }
-} else {
-    def test_markers = []
-
-    if(env.topic) {
-        test_markers.add(env.topic)
-    }
-
-    if(env.level) {
-        test_markers.add(env.level)
-    }
-
-    config.testMarkers = test_markers.join(' and ')
-}
 
 
 def nodeWrapper(label=null, body) {
@@ -48,7 +20,7 @@ def nodeWrapper(label=null, body) {
             body()
         } finally {
             echo "Cleanup"
-            //cleanDocker()
+            cleanDocker()
             cleanWs()
         }
     }
@@ -61,13 +33,10 @@ def buildDocker(imageName, dockerfile, ctx, add_args='') {
 
 
 def buildUnitDocker() {
-    def uid = sh(returnStdout: true, script: 'id -u').trim()
-    def gid = sh(returnStdout: true, script: 'id -g').trim()
     return buildDocker(
         dockerImage,
         "devops/ci/Dockerfile.unit",
         "api",
-        "--build-arg uid=$uid --build-arg gid=$gid"
     )
 }
 
@@ -113,7 +82,7 @@ Closure staticValidation = {
             } catch (_err) {
                 archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
                 echo "Python static validation failed: $_err"
-                // throw _err
+                throw _err
             }
         }
     }
@@ -144,8 +113,7 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml"
     String pytestTargets = ""
-    // FIXME debug
-    String pytestMarkers = "(${config.testMarkers}) and debug"
+    String pytestMarkers = "unit"
 
     def dockerImage = null
 
@@ -221,14 +189,15 @@ try {
 
     stage('Notification') {
         if (config.sendNotif) {
+            /* TBD
             def emailMessage = [
-                body: '${JELLY_SCRIPT,template="html"}',
+                body: '$DEFAULT_CONTENT',
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
-                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-                to: '$DEFAULT_RECIPIENTS',
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
             ]
             emailext emailMessage
+            */
         }
     }
 }
