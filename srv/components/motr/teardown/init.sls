@@ -23,7 +23,6 @@ Remove Motr package:
   pkg.purged:
     - pkgs:
       - cortx-motr
-      # - motr-debuginfo
 
 Delete Motr checkpoint flag:
   file.absent:

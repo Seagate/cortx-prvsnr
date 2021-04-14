@@ -26,10 +26,6 @@ Remove csm package:
       - cortx-csm_agent
       - cortx-csm_web
 
-Delete csm checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-
 Remove csm user from prvsnrusers group:
   group.present:
     - name: prvsnrusers
@@ -41,3 +37,7 @@ Remove csm user from certs group:
     - name: certs
     - delusers:
       - csm
+
+Delete csm checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
