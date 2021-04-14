@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
+{% set kafka_version = pillar['cortx']['software']['kafka']['version'] %}
 
 {%- set node_ids = {} -%}
 {%- set node_hosts = [] -%}
@@ -27,7 +27,7 @@
 {% endfor -%}
 {%- for node in server_nodes -%}
     {%- set x=node_ids.update({node:loop.index}) -%}
-    {%- set y=node_hosts.append(pillar['cluster'][node]['hostname'] + ":2181") -%}
+    {%- set y=node_hosts.append(pillar['cluster'][node]['network']['data']['private_fqdn'] + ":" + "{pillar['cortx']['software']['kafka']['port']}") -%}
 {%- endfor -%}
 
 Update zoopkeeper cofig:
