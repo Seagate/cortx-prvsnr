@@ -143,7 +143,6 @@ def build_deploy_run_args(deploy_states: Dict):
                         "stages, if not specified - all are considered"
                     ),
                     'choices': [
-                        'prepare',
                         'install',
                         'config',
                         'start',

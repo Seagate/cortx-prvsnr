@@ -15,20 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
+{% set kafka_version = pillar['cortx']['software']['kafka']['version'] %}
 
-{%- set node_ids = {} -%}
-{%- set node_hosts = [] -%}
-{% set server_nodes = [] -%}
-{% for node in pillar['cluster'].keys() -%}
-{% if "srvnode-" in node -%}
+{% set node_ids = {} %}
+{% set node_hosts = [] %}
+{% set server_nodes = [] %}
+{% for node in pillar['cluster'].keys() %}
+{% if "srvnode-" in node %}
 {% do server_nodes.append(node) %}
-{% endif -%}
-{% endfor -%}
-{%- for node in server_nodes -%}
-    {%- set x=node_ids.update({node:loop.index}) -%}
-    {%- set y=node_hosts.append(pillar['cluster'][node]['hostname'] + ":2181") -%}
-{%- endfor -%}
+{% endif %}
+{% endfor %}
+{% for node in server_nodes %}
+    {% set x = node_ids.update({node:loop.index}) %}
+    {% set y = node_hosts.append( pillar['cluster'][node]['network']['data']['private_fqdn'] +
+      ":" +
+      (pillar['cortx']['software']['kafka']['port'] | string)
+    ) %}
+{% endfor %}
 
 Update zoopkeeper cofig:
   file.managed:
