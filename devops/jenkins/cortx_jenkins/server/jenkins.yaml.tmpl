@@ -26,6 +26,14 @@ credentials:
           id: "github-user-token"
           scope: GLOBAL
           secret: "${GITHUB_USER_TOKEN}"
+      - usernamePassword:
+          description: >-
+            A username and token pair of a GitHub user with write access
+            to cortx-prvsnr repository
+          id: "${GITHUB_USER_CREDENTIALS_ID}"
+          scope: GLOBAL
+          password: "${GITHUB_USER_TOKEN}"
+          username: "${GITHUB_USER_NAME}"
 
 
 # CONFIGURATION

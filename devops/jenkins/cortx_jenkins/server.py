@@ -67,6 +67,25 @@ def start_docker_server():
     ])
 
 
+def build_docker_smeeio_image(ctx_dir=defs.SERVER_CTX_DIR):
+    # TODO use docker python wrapper
+    run_subprocess_cmd([
+        'docker', 'build',
+        '-t', defs.SMEEIO_IMAGE_NAME_FULL,
+        '-f', str(ctx_dir / defs.SMEEIO_DOCKERFILE.name),
+        str(ctx_dir)
+    ])
+
+
+def start_docker_smeeio():
+    # TODO use docker python wrapper
+    run_subprocess_cmd([
+        'docker', 'run', '-d',
+        '--name', defs.SMEEIO_CONTAINER_NAME,
+        defs.SMEEIO_IMAGE_NAME_FULL
+    ])
+
+
 def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
     cert_f = ctx_dir / defs.SERVER_HTTPS_CERT_NAME
     rsa_f = ctx_dir / defs.SERVER_HTTPS_RSA_NAME
@@ -100,21 +119,27 @@ def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
     run_subprocess_cmd(rsa_convert_cmd)
 
 
-def get_server_container():
+def get_container(name):
     try:
-        return docker_client.containers.get(
-            defs.SERVER_CONTAINER_NAME
-        )
+        return docker_client.containers.get(name)
     except docker.errors.NotFound:
         logger.debug(
-            f"Docker container with '{defs.SERVER_CONTAINER_NAME}'"
-            " is not found"
+            f"Docker container '{name}' is not found"
         )
         return None
 
 
+def get_server_container():
+    return get_container(defs.SERVER_CONTAINER_NAME)
+
+
+def get_smeeio_container():
+    return get_container(defs.SMEEIO_CONTAINER_NAME)
+
+
 def start_server():
     start_docker_server()
+    start_docker_smeeio()
 
 
 def prepare_server_ctx(properties, ssl_cn, ctx_dir=defs.SERVER_CTX_DIR):
@@ -147,16 +172,24 @@ def manage_server(cmd_args: ServerCmdArgs):
     }
 
     j_server_container = get_server_container()
+    smeeio_container = get_server_container()
 
     if cmd_args.action in action_map:
         if not j_server_container:
             raise RuntimeError('Server container is not found')
 
+        if not smeeio_container:
+            logger.warning('Server container is not found')
+
         logger.info(
-            f"Doing server {' and '.join(action_map[cmd_args.action])}"
+            f"Doing server infra {' and '.join(action_map[cmd_args.action])}"
         )
         for action in action_map[cmd_args.action]:
+            logger.debug(f"Doing '{action}' for server")
             getattr(j_server_container, action)()
+            if smeeio_container:
+                logger.debug(f"Doing '{action}' for smeeio")
+                getattr(smeeio_container, action)()
 
         return (j_server_container.name, j_server_container.short_id)
 
@@ -165,6 +198,12 @@ def manage_server(cmd_args: ServerCmdArgs):
     if j_server_container:
         raise RuntimeError(
             'Existent server found, you may consider '
+            'to either remove or start it'
+        )
+
+    if smeeio_container:
+        logger.warning(
+            'Existent smeeio found, you may consider '
             'to either remove or start it'
         )
 
@@ -177,9 +216,16 @@ def manage_server(cmd_args: ServerCmdArgs):
     logger.info('Bulding server docker image')
     build_docker_image()
 
-    logger.info("Starting Jenkins server")
+    logger.info('Bulding smeeio docker image')
+    build_docker_smeeio_image()
+
+    logger.info("Starting Jenkins Server infra")
     start_server()
-    logger.info("Jenkins Server started")
+    logger.info("Jenkins Server infra started")
 
     j_server_container = get_server_container()
-    return (j_server_container.name, j_server_container.id)
+    smeeio_container = get_smeeio_container()
+    return [
+        (j_server_container.name, j_server_container.id),
+        (smeeio_container.name, smeeio_container.id),
+    ]

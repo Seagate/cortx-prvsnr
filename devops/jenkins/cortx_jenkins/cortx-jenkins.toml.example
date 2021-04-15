@@ -33,8 +33,10 @@ SMTP_USER = ''
 SMTP_PASSWORD = ''
 
 # CREDENTIALS
-# GitHub token to use for status notifications pipelines
-GITHUB_USER_TOKEN= ''
+# GitHub usename and token to use for status notifications pipelines
+GITHUB_USER_NAME = ''
+GITHUB_USER_TOKEN = ''
+GITHUB_USER_CREDENTIALS_ID = 'github-user-and-token'
 
 
 [agent]

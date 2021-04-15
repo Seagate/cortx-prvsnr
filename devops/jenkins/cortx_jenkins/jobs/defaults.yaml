@@ -3,7 +3,8 @@
     name: global
 
     # mail-to:
-    github_org: Seagate
+    # FIXME
+    github_org: andkononykhin
     defaut_commit_id: main
     jenkinsfile-path: 'devops/ci/Jenkinsfile.ci'
 
@@ -26,3 +27,22 @@
     ghprb_trigger_pattern: 'this'
     ghprb_only_trigger_phrase: false
     ghprb_status_context:
+
+    # GitHub Source Plugin (Multibranch for GitHub)
+    #   - https://plugins.jenkins.io/github-branch-source/
+    # JJB support:
+    #   - https://jenkins-job-builder.readthedocs.io/en/latest/project_workflow_multibranch.html#project_multibranch.github_scm
+    ghsource_periodic_folder_trigger: 5m
+    ghsource_head_filter_regex: '.*'
+    ghsource_pr_destined_regex: '.*'
+    # Valid options: no-pr, only-pr, all, false. (default ‘no-pr’)
+    ghsource_branch_discovery: no-pr
+    # Valid options: merge-current, current, both, false. (default ‘merge-current’)
+    ghsource_discover_pr_origin: merge-current
+    # Valid options: merge-current, current, both, false. (default ‘merge-current’)
+    ghsource_discover_pr_forks_strategy: merge-current
+    # Valid options: contributors, everyone, permission or nobody. (default ‘contributors’)
+    ghsource_discover_pr_forks_trust: permission
+    ghsource_discover_tags: false
+    ghsource_do_not_fetch_tags: true
+    ghsource_notification_context:

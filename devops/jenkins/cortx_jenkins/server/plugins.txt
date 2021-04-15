@@ -25,3 +25,10 @@ docker-workflow
 validating-string-parameter
 jobConfigHistory
 buildtriggerbadge
+
+# multibranch
+github-branch-source
+workflow-multibranch
+github-scm-trait-notification-context
+github-pr-comment-build
+scm-filter-branch-pr

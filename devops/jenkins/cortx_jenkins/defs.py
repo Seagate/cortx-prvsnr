@@ -44,12 +44,22 @@ class ConfigSectionT(Enum):
     AGENT = "agent"
     JOBS = "jobs"
 
-###############
-# SERVER      #
-###############
 
+#####################
+# SERVER & SMEE.IO  #
+#####################
 
 SERVER_DIR = SCRIPT_DIR / 'server'
+
+#  SMEE.IO
+SMEEIO_IMAGE_VERSION = '0.0.1'
+SMEEIO_IMAGE_NAME = 'seagate/cortx-prvsnr-jenkins-smeeio'
+SMEEIO_IMAGE_TAG = SMEEIO_IMAGE_VERSION
+SMEEIO_IMAGE_NAME_FULL = f"{SMEEIO_IMAGE_NAME}:{SMEEIO_IMAGE_VERSION}"
+SMEEIO_DOCKERFILE = SERVER_DIR / 'Dockerfile.smee.io'
+SMEEIO_CONTAINER_NAME = 'cortx-prvsnr-jenkins-smeeio'
+
+
 SERVER_CTX_DIR = CTX_DIR / 'server'
 
 SERVER_IMAGE_VERSION = '0.0.1'
@@ -66,7 +76,8 @@ SERVER_JENKINS_CONFIG_TMPL = SERVER_DIR / 'jenkins.yaml.tmpl'
 SERVER_DOCKER_CTX_LIST = (
     SERVER_DOCKERFILE,
     SERVER_PLUGINS_LIST,
-    SERVER_JENKINS_CONFIG_TMPL
+    SERVER_JENKINS_CONFIG_TMPL,
+    SMEEIO_DOCKERFILE
 )
 
 SERVER_VOLUME_NAME = 'jenkins_home'
@@ -120,6 +131,7 @@ JOBS_DIR = SCRIPT_DIR / 'jobs'
 
 JOBS_CTX_DIR = CTX_DIR / 'jobs'
 JOBS_CONFIG = CWD / 'jenkins.jobs.ini'
+
 
 ##############
 
