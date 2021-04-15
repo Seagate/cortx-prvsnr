@@ -349,6 +349,13 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "debug: mark test as a one for debug"
     )
+    config.addinivalue_line(
+        "markers", "outdated: mark test as an outdated (would be skipped)"
+    )
+    config.addinivalue_line(
+        "markers", "verified: mark test as verified (up-to-date) one"
+    )
+
 
     config.addinivalue_line(
         "markers", "env_provider(string): mark test to be run "
@@ -480,6 +487,10 @@ def pytest_collection_modifyitems(session, config, items):
             item.add_marker(
                 getattr(pytest.mark, item.callspec.params['any_topic'].value)
             )
+
+        for marker in ('debug', 'outdated'):
+            if item.get_closest_marker(marker):
+                item.add_marker(pytest.mark.skip)
 
 
 for level in list(h.LevelT) + list(h.TopicT):

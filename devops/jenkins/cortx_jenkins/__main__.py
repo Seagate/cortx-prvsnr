@@ -176,7 +176,7 @@ def parse_args():
         )
     )
 
-    parser_jobs = subparsers.add_parser(
+    subparsers.add_parser(
         'dump-config',
         description='Dumps configuration example',
         help=(
