@@ -156,7 +156,7 @@ node {
                 sshCommand remote: remote, command: "provisioner deploy_vm --states system --setup-type single"
                 echo "Successfully deployed system states!"
             }
-                     
+ 
             stage("3rd Party Software Deployment") {
                 sshCommand remote: remote, command: "provisioner deploy_vm --states prereq --setup-type single"
                 echo "Successfully deployed prereq states!"
