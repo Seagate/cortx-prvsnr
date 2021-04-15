@@ -25,7 +25,7 @@ from .errors import LockFileError
 from .salt import local_minion_id, function_run
 from .salt_minion import check_salt_minions_are_ready
 from .vendor import attr
-import utils
+from . import utils
 
 
 @attr.s(auto_attribs=True)
