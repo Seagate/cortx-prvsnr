@@ -204,7 +204,7 @@ node {
                 echo "Successfully deployed prereq states!"
             }
 
-            stage("Foundaion Deployment") {
+            stage("Foundation Deployment") {
                 sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
                 echo "Successfully deployed foundation states!"
             }

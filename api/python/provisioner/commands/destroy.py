@@ -311,7 +311,6 @@ class DestroyNode(Deploy):
             if 'utils' in run_args.states:
                 logger.info("Teardown foundation states")
                 self._run_states('utils', run_args)
-                self._run_cmd(list_cmds)
 
             if 'prereq' in run_args.states:
                 logger.info("Teardown the prereq states")

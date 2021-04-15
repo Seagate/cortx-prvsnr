@@ -17,5 +17,5 @@
 
 Stage - cortx-utils prepare:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:repare')
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:prepare')
     - failhard: True

@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install - cortx-py-utils:
+Install - cortx-utils:
   pkg.installed:
     - pkgs:
       - cortx-py-utils: latest
