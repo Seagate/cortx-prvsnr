@@ -51,4 +51,4 @@ Public management network configuration:
 {%- else %}
     - proto: dhcp
 {%- endif -%}
-{% endif -%} # Gateway check end
+{% endif -%}

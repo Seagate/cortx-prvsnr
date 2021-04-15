@@ -610,6 +610,27 @@ def set_hostname():
     return _api_call('set_hostname')
 
 
+def set_mgmt_network(mgmt_public_ip=None, mgmt_netmask=None,
+                     mgmt_gateway=None, mgmt_interfaces=None, local=False):
+    """
+
+    Set mgmt network for the system.
+
+    :param mgmt_public_ip: (optional) ip address for
+        node management interface
+    :param mgmt_netmask: (optional) netmask for
+        node management interface
+    :param mgmt_gateway: (optional) gateway ip address for
+        node
+    :param mgmt_interfaces: (optional) network interface for
+        node management interface
+    :param local: (optional) set values in local pillar
+    """
+    return _api_call('set_mgmt_network', mgmt_public_ip=mgmt_public_ip,
+                     mgmt_netmask=mgmt_netmask, mgmt_gateway=mgmt_gateway,
+                     mgmt_interfaces=mgmt_interfaces, local=local)
+
+
 def setup_firewall():
     """
     Setup CORTX firewall for the system
