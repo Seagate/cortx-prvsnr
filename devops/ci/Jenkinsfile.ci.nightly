@@ -259,7 +259,8 @@ try {
                     developers(),
                     requestor()
                 ],
-                to: '$DEFAULT_RECIPIENTS',
+                // FIXME hard coded
+                to: '$DEFAULT_RECIPIENTS' + 'CORTX.Provisioner@seagate.com',
             ]
             emailext emailMessage
         }

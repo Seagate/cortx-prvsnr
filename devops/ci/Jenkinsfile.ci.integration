@@ -255,7 +255,9 @@ try {
                     developers(),
                     requestor()
                 ],
-                to: '$DEFAULT_RECIPIENTS'
+                // FIXME not the best way: developers() provider should
+                // do the same but it is just silently resolved to empty list
+                to: '$DEFAULT_RECIPIENTS ' + env.CHANGE_AUTHOR_EMAIL
             ]
             emailext emailMessage
         }

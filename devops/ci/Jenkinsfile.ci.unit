@@ -258,7 +258,7 @@ try {
                     developers(),
                     requestor()
                 ],
-                to: '$DEFAULT_RECIPIENTS'
+                to: '$DEFAULT_RECIPIENTS ' + env.CHANGE_AUTHOR_EMAIL
             ]
             emailext emailMessage
         }
