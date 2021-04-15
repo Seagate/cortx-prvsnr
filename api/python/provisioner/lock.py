@@ -30,7 +30,6 @@ import utils
 
 @attr.s(auto_attribs=True)
 class Lock:
-
     """Base locking class that provides API for blocking concurrent
     provisioner API calls.
     """
@@ -49,6 +48,7 @@ class Lock:
         """
         Check if process is running by given pid and on given salt target
         Parameters
+
         ----------
         pid: str
             process pid for check
@@ -116,7 +116,7 @@ class Lock:
             #  1. Necessary metadata fields are missed
             #  2. The lock file initiator target is not alive
             #  3. The process by given pid is not running
-            lock_file.unlink(missing_ok=True)
+            lock_file.unlink()
 
     def acquire(self):
         """
@@ -149,8 +149,8 @@ class Lock:
         None
 
         """
-        if self._lockfile:
-            Path(self._lockfile).unlink(missing_ok=True)
+        if self._lockfile and Path(self._lockfile).exists():
+            Path(self._lockfile).unlink()
 
     def __enter__(self):
         """

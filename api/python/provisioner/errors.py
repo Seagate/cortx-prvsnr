@@ -375,7 +375,6 @@ class CriticalValidationError(ValidationError):
 
 
 class LockFileError(ProvisionerError):
-
     """Provisioner lock file exception."""
 
     def __init__(self, reason: Union[Exception, str]):
