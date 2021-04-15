@@ -25,8 +25,7 @@ import configparser
 import attr
 import docker
 
-from . import defs
-from .utils import run_subprocess_cmd
+from . import defs, utils
 
 docker_client = docker.from_env()
 
@@ -47,7 +46,7 @@ ServerCmdArgs = attr.make_class(
 
 def build_docker_image(ctx_dir=defs.SERVER_CTX_DIR):
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'build',
         '-t', defs.SERVER_IMAGE_NAME_FULL,
         '-f', str(ctx_dir / defs.SERVER_DOCKERFILE.name),
@@ -57,7 +56,7 @@ def build_docker_image(ctx_dir=defs.SERVER_CTX_DIR):
 
 def start_docker_server():
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'run', '-d',
         '-p', '8083:8083',
         '-p', '50000:50000',
@@ -69,7 +68,7 @@ def start_docker_server():
 
 def build_docker_smeeio_image(ctx_dir=defs.SERVER_CTX_DIR):
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'build',
         '-t', defs.SMEEIO_IMAGE_NAME_FULL,
         '-f', str(ctx_dir / defs.SMEEIO_DOCKERFILE.name),
@@ -77,12 +76,16 @@ def build_docker_smeeio_image(ctx_dir=defs.SERVER_CTX_DIR):
     ])
 
 
-def start_docker_smeeio():
+def start_docker_smeeio(smeeio_channel):
+    j_server_bridge_ip = utils.get_server_bridge_ip()
+
     # TODO use docker python wrapper
-    run_subprocess_cmd([
+    utils.run_subprocess_cmd([
         'docker', 'run', '-d',
         '--name', defs.SMEEIO_CONTAINER_NAME,
-        defs.SMEEIO_IMAGE_NAME_FULL
+        defs.SMEEIO_IMAGE_NAME_FULL,
+        "-u", smeeio_channel,
+        "--target", f"http://{j_server_bridge_ip}:8080/github-webhook/"
     ])
 
 
@@ -109,14 +112,14 @@ def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
         '-nodes',
         '-subj', f"/CN={ssl_cn}"
     ]
-    run_subprocess_cmd(cert_gen_cmd)
+    utils.run_subprocess_cmd(cert_gen_cmd)
 
     rsa_convert_cmd = [
         'openssl', 'rsa',
         '-in', str(pk_f),
         '-out', str(rsa_f)
     ]
-    run_subprocess_cmd(rsa_convert_cmd)
+    utils.run_subprocess_cmd(rsa_convert_cmd)
 
 
 def get_container(name):
@@ -137,9 +140,10 @@ def get_smeeio_container():
     return get_container(defs.SMEEIO_CONTAINER_NAME)
 
 
-def start_server():
+def start_server(config):
     start_docker_server()
-    start_docker_smeeio()
+    if config['smeeio_channel']:
+        start_docker_smeeio(config['smeeio_channel'])
 
 
 def prepare_server_ctx(properties, ssl_cn, ctx_dir=defs.SERVER_CTX_DIR):
@@ -211,9 +215,11 @@ def manage_server(cmd_args: ServerCmdArgs):
             'to either remove or start it'
         )
 
+    server_config = cmd_args.config[defs.ConfigSectionT.SERVER.value]
+
     logger.info('Preparing server docker image context')
     prepare_server_ctx(
-        cmd_args.config[defs.ConfigSectionT.SERVER.value],
+        server_config['properties'],
         cmd_args.ssl_domain
     )
 
@@ -224,7 +230,7 @@ def manage_server(cmd_args: ServerCmdArgs):
     build_docker_smeeio_image()
 
     logger.info("Starting Jenkins Server infra")
-    start_server()
+    start_server(server_config)
     logger.info("Jenkins Server infra started")
 
     j_server_container = get_server_container()

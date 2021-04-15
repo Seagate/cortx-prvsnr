@@ -21,6 +21,9 @@
 import subprocess
 import os
 import logging
+import docker
+
+from . import defs
 
 
 logger = logging.getLogger(__name__)
@@ -61,3 +64,13 @@ def set_ssl_verify(verify):
     #      to set that for python-jenkins package, current workaround
     #      refers https://opendev.org/jjb/python-jenkins/src/commit/570a143c74d092efaf9bc68a3bae9b15804f4a63/jenkins/__init__.py#L345-L348  # noqa: E501
     os.environ['PYTHONHTTPSVERIFY'] = ('1' if verify else '0')
+
+
+def get_server_bridge_ip():
+    docker_client = docker.from_env()
+
+    j_server_container = docker_client.containers.get(
+        defs.SERVER_CONTAINER_NAME
+    )
+    return j_server_container.attrs[
+        'NetworkSettings']['Networks']['bridge']['IPAddress']

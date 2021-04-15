@@ -154,11 +154,7 @@ def get_agent_container():
 
 def start_agent(j_url, agent_data):
     if defs.LOCALHOST in j_url:
-        j_server_container = docker_client.containers.get(
-            defs.SERVER_CONTAINER_NAME
-        )
-        j_server_bridge_ip = j_server_container.attrs[
-            'NetworkSettings']['Networks']['bridge']['IPAddress']
+        j_server_bridge_ip = utils.get_server_bridge_ip()
         j_url = j_url.replace(defs.LOCALHOST, j_server_bridge_ip).replace(
             'https:', 'http:').replace(':8083', ':8080')
 
