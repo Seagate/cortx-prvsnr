@@ -200,7 +200,6 @@
 #     jobs:
 #       - '{name}-pr-{type}'
 
-
 - job-group:
     name: '{name}-ci'
     ghsource_branch_discovery: no-pr
