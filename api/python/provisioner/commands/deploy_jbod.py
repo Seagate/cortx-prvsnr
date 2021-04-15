@@ -63,6 +63,9 @@ deploy_states = dict(
         'misc_pkgs.statsd.install',
         'misc_pkgs.statsd.start'
     ],
+    utils=[
+        "cortx_utils"
+    ],
     sync=[
     ],
     iopath=[
@@ -130,6 +133,7 @@ class DeployJBOD(Deploy):
             self._run_states('system', run_args)
             self._encrypt_pillar()
             self._run_states('prereq', run_args)
+            self._run_states('utils', run_args)
             self._run_states('sync', run_args)
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
@@ -139,6 +143,11 @@ class DeployJBOD(Deploy):
                 logger.info("Deploying the system states")
                 self._run_states('system', run_args)
                 self._encrypt_pillar()
+
+            if 'utils' in run_args.states:
+               logger.info("Deploying foundation states")
+               self._run_states('utils', run_args)
+               self._encrypt_pillar()
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")

@@ -74,6 +74,9 @@ deploy_states = dict(
         "misc_pkgs.kibana",
         "misc_pkgs.statsd"
     ],
+    utils=[
+        "cortx_utils"
+    ],
     sync=[
         "sync.software.rabbitmq"
     ],
@@ -382,6 +385,7 @@ class Deploy(CommandParserFillerMixin):
             self._rescan_scsi_bus()
             self._run_states('system', run_args)
             self._run_states('prereq', run_args)
+            self._run_states('utils', run_args)
             self._run_states('sync', run_args)
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
@@ -396,6 +400,10 @@ class Deploy(CommandParserFillerMixin):
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
                 self._run_states('prereq', run_args)
+
+            if 'utils' in run_args.states:
+                logger.info("Deploying the foundation states")
+                self._run_states('utils', run_args)
 
             if 'sync' in run_args.states:
                 logger.info("Deploying the sync states")
