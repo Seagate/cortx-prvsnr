@@ -62,6 +62,7 @@ PRVSNR_DATA_LOCAL_DIR = Path('/var/lib/seagate/cortx/provisioner/local')
 PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
+PRVSNR_LOCKS_FILES_DIR = PRVSNR_DATA_SHARED_DIR / 'locks'
 
 # reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
@@ -572,3 +573,10 @@ class ConfigLevelT(Enum):
     """CORTX configuration levels"""
     CLUSTER = "cluster"
     NODE = "node"
+
+
+class LockMetaDataFields(Enum):
+
+    """Provisioner Lock Metadata fields."""
+    PID = "pid"
+    SOURCE_TARGET = "source_target"

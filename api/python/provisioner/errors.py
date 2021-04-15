@@ -372,3 +372,14 @@ class CriticalValidationError(ValidationError):
 
     def __str__(self):
         return f'Critical checks failed: reason="{self.reason}"'
+
+
+class LockFileError(ProvisionerError):
+
+    """Provisioner lock file exception."""
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = f'Failed to acquire the lock file: {reason}'
+
+    def __str__(self):
+        return repr(self.reason)
