@@ -107,7 +107,7 @@ def jbod_storage_config():
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
     _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
-    _device_list = __utils__['process.simple_process'](_cmd) 
+    _device_list = __utils__['process.simple_process'](_cmd)
 
     metadata_devices = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
     data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]

@@ -21,7 +21,6 @@
 
 import logging
 import provisioner
-from salt import client
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ def decrypt(component, secret):
     Args:
       secret: Secret to be decrypted.
     """
-    from cortx.utils.security.cipher import Cipher, CipherInvalidToken
+    from cortx.utils.security.cipher import Cipher
 
     retval = None
     cluster_id = __grains__['cluster_id']
@@ -43,18 +42,19 @@ def decrypt(component, secret):
 
     return retval
 
-#TODO: verify command - most likely to return False always
 
-def validate_firewall():
-    """ Validates open ports
+def validate_firewall():  # noqa: C901
+    """Validates firewall ports from pillar data.
 
-    Validates ports from pillar firewall data.
-    Args: Takes no mandatory argument as input.
+    Args:
+      Takes no mandatory argument as input.
 
     """
+    validate = False
     _target_node = __grains__['id']
     data = provisioner.pillar_get()
     fw_pillar = data[_target_node]["firewall"]
+
     validate_ports = []
     validate_services = []
 
@@ -73,10 +73,10 @@ def validate_firewall():
         udp_svc = __utils__['process.simple_process'](f"netstat -lu | grep {service}")
 
     if (tcp_port or udp_port) and (tcp_svc or udp_svc):
+        validate = True
         logger.info("Success: Validation of open firewall ports")
 
-        return True
     else:
-        logger.error("Error in validating open firewall ports")
+        logger.error("Failed: Validation of open firewall ports")
 
-        return False
+    return validate

@@ -18,8 +18,7 @@ import subprocess
 
 
 def simple_process(cmd):
-    """ Returns simple command output """
-
+    """Returns simple shell command output"""
     res = subprocess.Popen(
             [cmd],
             shell=True,
