@@ -7,7 +7,7 @@ branchName = branchName.replace('/','_')
 dockerImage = "seagate/cortx-prvsnr:ci-${branchName}"
 
 Map config = [
-    staticValidation: true,
+    staticValidation: false,
     dynamicValidation: true,
     sendNotif: true,
     nodeLabel: 'cortx-prvsnr-ci',
@@ -255,7 +255,7 @@ try {
                     developers(),
                     requestor()
                 ],
-                // to: '$DEFAULT_RECIPIENTS',
+                to: '$DEFAULT_RECIPIENTS'
             ]
             emailext emailMessage
         }

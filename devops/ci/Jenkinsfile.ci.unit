@@ -209,7 +209,9 @@ try {
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
+                    // just to dump the env
                     sh 'env'
+
                     timeout(10) {
                         staticValidation()
                     }
@@ -256,7 +258,7 @@ try {
                     developers(),
                     requestor()
                 ],
-                // to: '$DEFAULT_RECIPIENTS',
+                to: '$DEFAULT_RECIPIENTS'
             ]
             emailext emailMessage
         }
