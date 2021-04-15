@@ -45,7 +45,8 @@ class Lock:
 
     @staticmethod
     def _check_pid(pid: str, target: str) -> bool:
-        """Check if process is running by given pid and on given salt target.
+        """
+        Check if process is running by given pid and on given salt target.
 
         Parameters
         ----------

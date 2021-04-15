@@ -576,7 +576,6 @@ class ConfigLevelT(Enum):
 
 
 class LockMetaDataFields(Enum):
-
     """Provisioner Lock Metadata fields."""
 
     PID = "pid"
