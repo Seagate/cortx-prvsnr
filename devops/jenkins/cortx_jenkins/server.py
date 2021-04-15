@@ -172,7 +172,9 @@ def manage_server(cmd_args: ServerCmdArgs):
     }
 
     j_server_container = get_server_container()
-    smeeio_container = get_server_container()
+    smeeio_container = get_smeeio_container()
+
+    res = []
 
     if cmd_args.action in action_map:
         if not j_server_container:
@@ -187,11 +189,13 @@ def manage_server(cmd_args: ServerCmdArgs):
         for action in action_map[cmd_args.action]:
             logger.debug(f"Doing '{action}' for server")
             getattr(j_server_container, action)()
+            res.append(j_server_container)
             if smeeio_container:
                 logger.debug(f"Doing '{action}' for smeeio")
                 getattr(smeeio_container, action)()
+                res.append(smeeio_container)
 
-        return (j_server_container.name, j_server_container.short_id)
+        return [(cont.name, cont.short_id) for cont in res]
 
     # cmd_args.action == ServerActionT.CREATE:
 
@@ -225,7 +229,5 @@ def manage_server(cmd_args: ServerCmdArgs):
 
     j_server_container = get_server_container()
     smeeio_container = get_smeeio_container()
-    return [
-        (j_server_container.name, j_server_container.id),
-        (smeeio_container.name, smeeio_container.id),
-    ]
+    res = [j_server_container, smeeio_container]
+    return [(cont.name, cont.short_id) for cont in res]
