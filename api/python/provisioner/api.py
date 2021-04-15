@@ -640,8 +640,8 @@ def setup_firewall():
     return _api_call('setup_firewall')
 
 
-def set_data_network(data_public_ip=None, data_netmask=None,data_gateway=None, 
-                        data_public_interfaces=None, data_private_ip=None, 
+def set_data_network(data_public_ip=None, data_netmask=None,data_gateway=None,
+                        data_public_interfaces=None, data_private_ip=None,
                         data_private_interfaces=None, local=False):
     """
     Set data network for the system
