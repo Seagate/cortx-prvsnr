@@ -1,0 +1,263 @@
+#!/usr/bin/env groovy
+
+def err = null
+def branchName = env.ghprbSourceBranch ?: env.BRANCH_NAME ?: env.sha1 ?: 'nobranch'
+branchName = branchName.replace('/','_')
+
+dockerImage = "seagate/cortx-prvsnr:ci-${branchName}"
+
+Map config = [
+    staticValidation: true,
+    dynamicValidation: true,
+    sendNotif: true,
+    nodeLabel: 'cortx-prvsnr-ci',
+    testMarkers: 'integration or integration_mocked'
+]
+
+
+def nodeWrapper(label=null, body) {
+    echo "Running on `${label}` node type"
+    node(label) {
+        try {
+            body()
+        } finally {
+            echo "Cleanup"
+            // TODO good cleanup routine
+            //      (current version will lead to docker rebuilds for all layers)
+            // cleanDocker()
+            cleanWs()
+        }
+    }
+}
+
+def buildDocker(imageName, dockerfile, ctx, add_args='') {
+    return docker.build("$imageName", "$add_args -f $dockerfile $ctx")
+}
+
+def buildUnitDocker() {
+    def uid = sh(returnStdout: true, script: 'id -u').trim()
+    def gid = sh(returnStdout: true, script: 'id -g').trim()
+    return buildDocker(
+        dockerImage,
+        "devops/ci/Dockerfile.unit",
+        "api",
+        "--build-arg uid=$uid --build-arg gid=$gid"
+    )
+}
+
+def cleanDocker(){
+    sh("docker rmi -f ${dockerImage} || true")
+}
+
+Closure preparePythonEnv = {
+    String testPipenvReport = "pipenv.out"
+    stage('Prepare python environment') {
+        try {
+            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                sh "bash -x devops/ci/create_python_env.sh $testPipenvReport >/dev/null 2>&1"
+            }
+        } catch (_err) {
+            archiveArtifacts artifacts: testPipenvReport, allowEmptyArchive: true
+            throw _err
+        }
+    }
+}
+
+
+Closure staticValidation = {
+    def test_err
+
+    checkout scm
+
+    def dockerImage = null
+
+    stage('Build docker image') {
+        dockerImage = buildUnitDocker()
+    }
+
+    dockerImage.inside {
+        // preparePythonEnv()
+
+        String testPythonReport = "flake8.out.txt"  // TODO not configurable for now
+        stage('Check python') {
+            // TODO check other python sources (not only 'test')
+            try {
+                sh "bash -x devops/ci/validate_python.sh"
+            } catch (_err) {
+                archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
+                echo "Python static validation failed: $_err"
+                // throw _err
+            }
+        }
+    }
+
+    return
+
+
+
+    /*
+    preparePythonEnv()
+
+    String testPythonReport = "flake8.out"  // TODO not configurable for now
+    stage('Check python') {
+        // TODO check other python sources (not only 'test')
+        try {
+            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                sh "pipenv run bash -x devops/ci/validate_python.sh"
+            }
+        } catch (_err) {
+            archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
+            echo "Python static validation failed: $_err"
+            // TODO that should break the pipeline actually
+            // throw _err
+        }
+    }
+    */
+
+    String testYamlReport = "yamllint.out"  // TODO not configurable for now
+    stage('Check yaml') {
+        try {
+            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+                sh "bash -x devops/ci/validate_yaml.sh ."
+            }
+        } catch (_err) {
+            archiveArtifacts artifacts: testYamlReport, allowEmptyArchive: true
+            echo "YAML static validation failed: $_err"
+            // TODO that should break the pipeline actually
+            // throw _err
+        }
+    }
+}
+
+
+Closure dynamicValidation = {
+    checkout scm
+
+    // tags are needed for some tests
+    sh "git fetch --tags"
+
+    def test_err
+    String testReportFileNameXml = "pytest.xml"
+    String testReportFileNamePlain = "pytest.out.txt"
+    String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
+    String pytestTargets = ""
+    // FIXME debug
+    String pytestMarkers = "(${config.testMarkers}) and debug"
+
+    /*
+    try {
+        stage('Clean VirtualBox environment') {
+            sh "bash -x devops/ci/clean_vbox.sh vms"
+        }
+
+        preparePythonEnv()
+
+        // TODO is it a best way to ensure pipenv available
+        withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
+            // run tests
+            stage('Run tests') {
+                sh """
+                    pipenv run bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                """
+            }
+        }
+    */
+
+    def dockerImage = null
+
+    stage('Build docker image') {
+        dockerImage = buildUnitDocker()
+    }
+
+    try {
+        dockerImage.inside {
+            // run tests
+            stage('Run tests') {
+                sh """
+                    bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                """
+            }
+        }
+    } catch (_err) {
+        test_err = _err
+        throw _err
+    } finally {
+        stage("Upload reports") {
+            sh "ls -la pytest* || true"
+            if (test_err) {
+                archiveArtifacts artifacts: testReportFileNamePlain, allowEmptyArchive: true
+            }
+            junit testResults: testReportFileNameXml, allowEmptyResults: true
+        }
+    }
+}
+
+
+// PIPELINE
+
+try {
+    timeout(300) {
+        /*
+        nodeWrapper('ubuntu') {
+            stage('Load local shared library') {
+                checkout scm
+                localLib = load 'devops/ci/pipeline.groovy'
+            }
+        }
+        */
+
+        stage('Static validation') {
+            if (config.staticValidation) {
+                nodeWrapper(config.nodeLabel) {
+                    timeout(10) {
+                        staticValidation()
+                    }
+                }
+            } else {
+                echo "skipped"
+            }
+        }
+
+        stage('Build / Test') {
+            if (config.dynamicValidation) {
+                nodeWrapper(config.nodeLabel) {
+                    timeout(180) {
+                        dynamicValidation()
+                    }
+                }
+            } else {
+                echo "skipped"
+            }
+        }
+
+        currentBuild.result = 'SUCCESS'
+    }
+} catch (Exception _err) {
+    currentBuild.result = 'FAILURE'
+    err = _err
+    throw _err
+
+} finally {
+
+    if (err) {
+        stage('Error dump') {
+            echo "Pipeline failed: $err"
+        }
+    }
+
+    stage('Notification') {
+        if (config.sendNotif) {
+            def emailMessage = [
+                body: '${JELLY_SCRIPT,template="html"}',
+                replyTo: '$DEFAULT_REPLYTO',
+                subject: '$DEFAULT_SUBJECT',
+                recipientProviders: [
+                    developers(),
+                    requestor()
+                ],
+                // to: '$DEFAULT_RECIPIENTS',
+            ]
+            emailext emailMessage
+        }
+    }
+}
