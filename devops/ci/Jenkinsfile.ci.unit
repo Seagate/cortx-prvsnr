@@ -158,8 +158,7 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
     String pytestTargets = ""
-    // FIXME debug
-    String pytestMarkers = "(${config.testMarkers}) and debug"
+    String pytestMarkers = "(${config.testMarkers})"
 
     /*
     try {
