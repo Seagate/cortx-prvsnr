@@ -155,20 +155,20 @@ node {
                 echo "Successfully deployed system states!"
             }
             
-            stage("utils Setup") {
-                sshCommand remote: remote, command: """
-                    provisioner deploy_vm --states utils --setup-type single
-                """
-                echo "Successfully deployed utils states!"
-            }
-            
             stage("3rd Party Software Deployment") {
                 sshCommand remote: remote, command: """
                     provisioner deploy_vm --states prereq --setup-type single
                 """
                 echo "Successfully deployed prereq states!"
             }
-            
+
+            stage("Foundation Setup") {
+                sshCommand remote: remote, command: """
+                    provisioner deploy_vm --states utils --setup-type single
+                """
+                echo "Successfully deployed Foundation states!"
+            }
+
             catchError {
                 timeout(30) {
                     input 'Proceed with Data Path Stage?'

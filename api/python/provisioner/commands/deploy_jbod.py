@@ -46,9 +46,6 @@ deploy_states = dict(
         'system.logrotate',
         'system.chrony'
     ],
-    utils=[
-        "cortx_utils"
-    ],
     prereq=[
         'misc_pkgs.ssl_certs',
         'ha.haproxy.prepare',
@@ -65,6 +62,9 @@ deploy_states = dict(
         'misc_pkgs.kibana.start',
         'misc_pkgs.statsd.install',
         'misc_pkgs.statsd.start'
+    ],
+    utils=[
+        "cortx_utils"
     ],
     sync=[
     ],
@@ -144,11 +144,10 @@ class DeployJBOD(Deploy):
                 self._run_states('system', run_args)
                 self._encrypt_pillar()
 
-            #TODO: is the utils required here for jbod?
-            #if 'utils' in run_args.states:
-            #    logger.info("Deploying the utils states")
-            #    self._run_states('utils', run_args)
-            #    self._encrypt_pillar()
+            if 'utils' in run_args.states:
+               logger.info("Deploying foundation states")
+               self._run_states('utils', run_args)
+               self._encrypt_pillar()
 
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")

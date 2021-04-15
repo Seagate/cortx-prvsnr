@@ -204,14 +204,14 @@ node {
                 echo "Successfully deployed system states!"
             }
 
-            stage("utils Software Deployment") {
-                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
-                echo "Successfully deployed utils states!"
-            }
-
             stage("3rd Party Software Deployment") {
                 sshCommand remote: remotes[0], command: "provisioner deploy_vm --states prereq --setup-type 3_node"
                 echo "Successfully deployed prereq states!"
+            }
+
+            stage("Foundaion Deployment") {
+                sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
+                echo "Successfully deployed foundation states!"
             }
 
             stage("Data Path States Deployment") {

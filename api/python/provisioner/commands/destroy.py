@@ -293,8 +293,8 @@ class DestroyNode(Deploy):
             self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
             self._run_states('iopath', run_args)
-            self._run_states('prereq', run_args)
             self._run_states('utils', run_args)
+            self._run_states('prereq', run_args)
             self._run_states('system', run_args)
             self._run_states('bootstrap', run_args)
             self._run_cmd(list_cmds)
@@ -309,7 +309,7 @@ class DestroyNode(Deploy):
                 self._run_states('system', run_args)
 
             if 'utils' in run_args.states:
-                logger.info("Teardown Provisioner utils states")
+                logger.info("Teardown foundation states")
                 self._run_states('utils', run_args)
                 self._run_cmd(list_cmds)
 

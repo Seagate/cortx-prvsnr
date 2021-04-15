@@ -81,16 +81,16 @@ node {
             echo "Successful teardown: IO-Path"
         }
 
+        stage("Teardown: Foundation") {
+            sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
+            echo "Successful teardown: Foundation"
+        }
+
         stage("Teardown: 3rd_Party") {
             sshCommand remote: remotes[0], command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
             """
             echo "Successful teardown: 3rd-Party"
-        }
-
-        stage("Teardown: utils") {
-            sshCommand remote: remotes[0], command: "provisioner deploy_vm --states utils --setup-type 3_node"
-            echo "Successful teardown: utils"
         }
 
         stage("Teardown: Platform") {

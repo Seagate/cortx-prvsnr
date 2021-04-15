@@ -19,7 +19,7 @@ include:
   - .reset
   - .cleanup
 
-Remove cortx-py-utils package:
+Remove cortx-utils package:
   pkg.purged:
     - pkgs:
       - cortx-py-utils
