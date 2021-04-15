@@ -194,6 +194,7 @@ for fun in [
     'get_setup_info',
     'set_hostname',
     'set_mgmt_network',
-    'setup_firewall'
+    'setup_firewall',
+    'set_data_network'
 ]:
     setattr(mod, fun, _api_wrapper(fun))
