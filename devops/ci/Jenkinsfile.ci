@@ -17,6 +17,11 @@ Map config = [
 
 def localLib
 
+
+def commentCauseClass = ''
+print currentBuild.getBuildCauses()
+
+
 def getMarkers(String str) {
     def pattern = /.*test (.+) please/
     def matcher = (str =~ pattern)
