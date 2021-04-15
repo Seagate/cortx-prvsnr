@@ -108,7 +108,7 @@
 
           property-strategies:
               all-branches:
-                - trigger-build-on-pr-comment: "ci: build"
+                - trigger-build-on-pr-comment: '{ghsource_trigger_pr_comment_regex}'
           #         - suppress-scm-triggering: true
           #         - pipeline-branch-durability-override: max-survivability
           #         - trigger-build-on-pr-comment: "Ci build!"
@@ -205,13 +205,19 @@
     name: '{name}-ci'
     ghsource_branch_discovery: no-pr
     jenkinsfile-path: 'devops/ci/Jenkinsfile.ci.{type}'
+    ghsource_trigger_prefix: 'ci:'
+    ghsource_trigger_pattern: 'this'
+    ghsource_trigger_pr_comment_regex: '{ghsource_trigger_prefix}\s+build\s+{ghsource_trigger_pattern}\s+please'
     type:
       - unit:
           ghsource_head_filter_regex: "PR-.*"
+          ghsource_trigger_pattern: unit
       - integration:
           ghsource_pr_destined_regex: "(main|pre-cortx-1.0)"
+          ghsource_trigger_pattern: integration
       - nightly:
           ghsource_head_filter_regex: "(main|pre-cortx-1.0)"
+          ghsource_trigger_pr_comment_regex: ''
     jobs:
       - '{name}-ci-{type}'
 
