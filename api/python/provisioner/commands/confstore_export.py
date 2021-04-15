@@ -18,7 +18,6 @@
 
 import importlib
 import logging
-from enum import Enum
 from pathlib import Path
 from typing import Type
 from provisioner.vendor import attr
@@ -51,32 +50,25 @@ from ..pillar import (
 logger = logging.getLogger(__name__)
 
 
-class ConfstoreKey(Enum):
-    """Confstore delimiters and encrytion keys"""
-
-    BMC = "bmc"
-    STORAGE = "storage_enclosure"
-    KEYDELIMITER = ">"
-    KVDELIMITER = "=>"
-    CLUSTERID = "cluster_id"
-
-
 @attr.s(auto_attribs=True)
 class ConfStoreExport(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     description = "Export pillar template data to ConfStore"
 
+    key_delimiter = ">"
+    kv_delimiter = "=>"
+
     def _confstore_encrypt(self, key, value, cipher):  # noqa: C901
         if not value:
             return value
-        cluster_id = grains_get(ConfstoreKey.CLUSTERID.value, targets=local_minion_id())[
-            local_minion_id()][ConfstoreKey.CLUSTERID.value]
+        cluster_id = grains_get("cluster_id", targets=local_minion_id())[
+            local_minion_id()]["cluster_id"]
         component_name = "cortx"
-        unique_seed = key.split(ConfstoreKey.KEYDELIMITER.value)[1]
+        unique_seed = key.split(self.key_delimiter)[1]
 
-        if ConfstoreKey.BMC.value in key:
+        if "bmc" in key:
             component_name = "cluster"
-        elif ConfstoreKey.STORAGE.value in key:
+        elif "storage_enclosure" in key:
             component_name = "storage"
         else:
             unique_seed = cluster_id
@@ -86,7 +78,7 @@ class ConfStoreExport(CommandParserFillerMixin):
             cipher_key, value.encode("utf-8")
         ).decode("utf-8")
 
-        root_node = key.split(ConfstoreKey.KEYDELIMITER.value)[0]
+        root_node = key.split(self.key_delimiter)[0]
 
         cipher_key = cipher.Cipher.generate_key(unique_seed, root_node)
         return str(
@@ -153,7 +145,7 @@ class ConfStoreExport(CommandParserFillerMixin):
 
             for data in template_data:
                 if data:
-                    key, value = data.split(ConfstoreKey.KVDELIMITER.value)
+                    key, value = data.split(self.kv_delimiter)
                     if 'secret' in key:
                         value = self._confstore_encrypt(key, value, cipher)
                     conf.Conf.set("provisioner", key, value)
