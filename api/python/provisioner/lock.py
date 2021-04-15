@@ -97,7 +97,7 @@ class Lock:
         for lock_file in self._get_lock_files():
             try:
                 lock_metadata = utils.load_json(lock_file)
-            except Exception:
+            except json.decoder.JSONDecodeError:
                 # Metadata is not well-formatted as proper json
                 pass  # delete this lock file in the end of the loop
             else:
