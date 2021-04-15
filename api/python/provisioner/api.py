@@ -601,13 +601,16 @@ def check(check_name, check_args: str = "",
                      check_args_args=check_args, targets=targets)
 
 
-def set_hostname():
+def set_hostname(hostname=None, local=False):
     """
     Set hostname for the system
 
+    :param hostname: (optional) hostname to be set.
+    :param local: (optional) set values in local pillar
+
     :return:
     """
-    return _api_call('set_hostname')
+    return _api_call('set_hostname', hostname=hostname, local=local)
 
 
 def set_mgmt_network(local=False, **kwargs):
@@ -635,3 +638,28 @@ def setup_firewall():
     :return:
     """
     return _api_call('setup_firewall')
+
+
+def set_data_network(data_public_ip=None, data_netmask=None, 
+                data_gateway=data_gateway, data_public_interfaces=data_public_interfaces, 
+                data_private_ip=data_private_ip, data_private_interfaces=data_private_interfaces, 
+                local=False):
+    """
+    Set data network for the system
+
+    :param data_public_ip: (optional) ip address for public data interface
+    :param data_netmask: (optional) netmask for data interface
+    :param data_gateway: (optional) gateway for data interface
+    :param data_public_interfaces: (optional) list of public data interfaces
+
+    :param data_private_ip: (optional) ip address for private data interface
+    :param data_private_interfaces: (optional) list of private data interfaces
+
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_data_network', data_public_ip=data_public_ip, data_netmask=data_netmask,
+                data_gateway=data_gateway, data_public_interfaces=data_public_interfaces,
+                data_private_ip=data_private_ip, data_private_interfaces=data_private_interfaces,
+                local=local)
