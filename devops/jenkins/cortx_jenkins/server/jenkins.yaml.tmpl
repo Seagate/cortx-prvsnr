@@ -178,6 +178,9 @@ unclassified:
 
   email-ext:
     defaultContentType: "text/html"
+    defaultSubject: >-
+      [Jenkins][cortx-prvsnr CI] $PROJECT_NAME - Build # $BUILD_NUMBER
+      - $BUILD_STATUS!
     mailAccount:
       smtpHost: "${SMTP_SERVER}"
       smtpPort: "465"
