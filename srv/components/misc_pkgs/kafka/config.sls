@@ -29,7 +29,7 @@
     {% set x = node_ids.update({node:loop.index}) %}
     {% set y = node_hosts.append( pillar['cluster'][node]['network']['data']['private_fqdn'] +
       ":" +
-      (pillar['cortx']['software']['kafka']['port'] | string)
+      (pillar['cortx']['software']['zookeeper']['client_port'] | string)
     ) %}
 {% endfor %}
 
