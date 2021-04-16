@@ -1,5 +1,58 @@
 # Introduction
 
+# Integration Tests
+
+**Table of Contents**
+
+- [Integration Tests](#integration-tests)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
+  - [Run Static Linter](#run-static-linter)
+  - [Run tests](#run-tests)
+    - [Run unit tests only](#run-unit-tests-only)
+    - [Useful Options](#useful-options)
+    - [Custom Options](#custom-options)
+    - [Custom Markers](#custom-markers)
+  - [Test API](#test-api)
+    - [`helper.py`](#helperpy)
+      - [`PRVSNR_REPO_INSTALL_DIR`](#prvsnr_repo_install_dir)
+      - [`HostMeta`](#hostmeta)
+      - [`safe_filename`](#safe_filename)
+      - [`mock_system_cmd`](#mock_system_cmd)
+      - [`restore_system_cmd`](#restore_system_cmd)
+      - [`run`](#run)
+      - [`check_output`](#check_output)
+      - [`inject_repo`](#inject_repo)
+    - [`conftest.py`](#conftestpy)
+      - [`project_path`](#project_path)
+      - [`localhost`](#localhost)
+      - [`tmpdir_session`](#tmpdir_session)
+      - [`tmpdir_module`](#tmpdir_module)
+      - [`tmpdir_function`](#tmpdir_function)
+      - [`ssh_config`](#ssh_config)
+      - [`ssh_key`](#ssh_key)
+      - [`rpm_prvsnr`](#rpm_prvsnr)
+      - [`env_level`](#env_level)
+      - [`post_host_run_hook`](#post_host_run_hook)
+      - [`hosts`](#hosts)
+      - [`mock_hosts`](#mock_hosts)
+      - [`inject_ssh_config`](#inject_ssh_config)
+      - [`cortx_spec`](#cortx_spec)
+      - [`cortx_hosts`](#cortx_hosts)
+      - [`cortx_primary_host`](#cortx_primary_host)
+      - [`cortx_primary_host_label`](#cortx_primary_host_label)
+      - [`cortx_primary_host_ip`](#cortx_primary_host_ip)
+      - [`configure_salt`](#configure_salt)
+      - [`accept_salt_keys`](#accept_salt_keys)
+  - [To add new tests (In progress)](#to-add-new-tests-in-progress)
+  - [Test Environment Providers](#test-environment-providers)
+    - [Docker](#docker)
+    - [Vagrant](#vagrant)
+    - [Host Based](#host-based)
+
+
+## Introduction
+
 The test framework is intended to leverage the development process:
 
 - provide fast feedback regarding proposed changes
@@ -67,7 +120,6 @@ To mark a test as a unit you may:
 Please check `pytest --help` and
 [`pytest` docs](http://doc.pytest.org/en/latest/usage.html) for more info.
 
-<!--
 ### Custom Options
 
 - `--env-provider`: test environment provider, possible values: `host`,
@@ -96,7 +148,6 @@ Check `custom options` section of `pytest --help` for more information.
 
 Check `pytest --markers` for more information.
 
--->
 
 # Test API
 
@@ -145,7 +196,6 @@ def unit():
 ```
 
 
-<!--
 
 ### `helper.py`
 
@@ -374,7 +424,6 @@ def unit():
 3. Add tests file according to the functionality. E.g, For component related
    tests, add/update `srv/components/` tests.
 
--->
 
 ## Test Environment Providers
 
@@ -400,53 +449,3 @@ tests setup phase as well and removed during the teardown phase.
 ### Host Based
 
 *TODO*
-
-
-<!--
-
-- [Integration Tests](#integration-tests)
-  - [Introduction](#introduction)
-  - [Installation](#installation)
-  - [Run Static Linter](#run-static-linter)
-  - [Run tests](#run-tests)
-    - [Run unit tests only](#run-unit-tests-only)
-    - [Useful Options](#useful-options)
-    - [Custom Options](#custom-options)
-    - [Custom Markers](#custom-markers)
-  - [Test API](#test-api)
-    - [`helper.py`](#helperpy)
-      - [`PRVSNR_REPO_INSTALL_DIR`](#prvsnr_repo_install_dir)
-      - [`HostMeta`](#hostmeta)
-      - [`safe_filename`](#safe_filename)
-      - [`mock_system_cmd`](#mock_system_cmd)
-      - [`restore_system_cmd`](#restore_system_cmd)
-      - [`run`](#run)
-      - [`check_output`](#check_output)
-      - [`inject_repo`](#inject_repo)
-    - [`conftest.py`](#conftestpy)
-      - [`project_path`](#project_path)
-      - [`localhost`](#localhost)
-      - [`tmpdir_session`](#tmpdir_session)
-      - [`tmpdir_module`](#tmpdir_module)
-      - [`tmpdir_function`](#tmpdir_function)
-      - [`ssh_config`](#ssh_config)
-      - [`ssh_key`](#ssh_key)
-      - [`rpm_prvsnr`](#rpm_prvsnr)
-      - [`env_level`](#env_level)
-      - [`post_host_run_hook`](#post_host_run_hook)
-      - [`hosts`](#hosts)
-      - [`mock_hosts`](#mock_hosts)
-      - [`inject_ssh_config`](#inject_ssh_config)
-      - [`cortx_spec`](#cortx_spec)
-      - [`cortx_hosts`](#cortx_hosts)
-      - [`cortx_primary_host`](#cortx_primary_host)
-      - [`cortx_primary_host_label`](#cortx_primary_host_label)
-      - [`cortx_primary_host_ip`](#cortx_primary_host_ip)
-      - [`configure_salt`](#configure_salt)
-      - [`accept_salt_keys`](#accept_salt_keys)
-  - [To add new tests (In progress)](#to-add-new-tests-in-progress)
-  - [Test Environment Providers](#test-environment-providers)
-    - [Docker](#docker)
-    - [Vagrant](#vagrant)
-    - [Host Based](#host-based)
--->
