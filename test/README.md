@@ -1,4 +1,4 @@
-# Introduction
+><h3> <strong>WARNING !</strong> : This doc is out-of-date at the moment. Please refer to this <a href="https://github.com/Seagate/cortx-prvsnr/blob/pre-cortx-1.0/docs/testing.md">document</a> for latest documentation.<h3>
 
 # Integration Tests
 
@@ -67,26 +67,24 @@ recommended to use [`flake8`][flake8] for static checks.
 [flake8]: http://flake8.pycqa.org/en/latest/
 
 
-# Installation
+## Installation
 
-Please refer the [doc](../docs/testing.md#python-environment-preparation).
+- create and activate a python3 virtual environment for (e.g. using
+  [`virtualenv`](https://virtualenv.pypa.io/en/latest/),
+  [`virtualenvwrapper`](https://virtualenvwrapper.readthedocs.io/en/latest/) or
+  [`pipenv`](https://pipenv-fork.readthedocs.io/en/latest/))
+- `pip install -r test-requirements.txt`
+
+## Run Static Linter
+
+- `flake8 test`
+
+## Run tests
+
+- `pytest -l -v`
 
 
-# Runnning
-
-## Static Linter
-
-```bash
-flake8 test
-```
-
-## Functional testing
-
-```bash
-pytest -l -v
-```
-
-### Unit tests
+### Run unit tests only
 
 There is a subset of tests that verifies some scoped logic in a way
 of [unit testing](https://en.wikipedia.org/wiki/Unit_testing).
@@ -120,6 +118,7 @@ To mark a test as a unit you may:
 Please check `pytest --help` and
 [`pytest` docs](http://doc.pytest.org/en/latest/usage.html) for more info.
 
+
 ### Custom Options
 
 - `--env-provider`: test environment provider, possible values: `host`,
@@ -149,52 +148,12 @@ Check `custom options` section of `pytest --help` for more information.
 Check `pytest --markers` for more information.
 
 
-# Test API
+## Test API
 
-Test framework has [helper.py][helper.py] and [conftest.py][conftest.py] which declare
-and implement the Cortx Provisioner testing framework API. It can be used in tests 
-for the common routine () and simplifies tests development allowing to focus mostly
-on a test scenarion instead of some infra management routine.
-
-[helper.py]: helper.py
-[conftest.py]: conftest.py
-
-
-[helper.py][helper.py] provides a set of helper functions and [conftest.py][conftest.py]
-provides a set of pytest fixtures that are accessible across multiple test modules.
-
-## Tips & Tricks
-
-### How to mark test as a Unit
-
-Option 1: use `unit` marker
-
-```python
-@pytest.mark.unit
-def test_something():
-    ...
-```
-
-Option 2: use `unit` fixture
-
-```python
-# for a test
-def test_something(unit):
-    ...
-
-# for all tests in a module
-# somemodule.py
-@pytest.fixture(scope='session', autouse=True)
-def unit():
-    ...
-
-# for all tests in multiple modules
-# conftest.py
-@pytest.fixture(scope='session', autouse=True)
-def unit():
-    ...
-```
-
+Test framework has `helper.py` and `conftest.py` which declare and implement the
+API's that can be used in tests.  `helper.py` provides a set of helper functions
+and `conftest.py` provides a set of pytest fixtures that are accessible across
+multiple test files.
 
 
 ### `helper.py`
