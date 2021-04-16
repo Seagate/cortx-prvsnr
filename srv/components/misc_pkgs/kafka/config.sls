@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['cortx']['software']['kafka']['version'] %}
 
 {% set node_ids = {} %}
 {% set node_hosts = [] %}
@@ -35,7 +34,7 @@
 
 Update zoopkeeper cofig:
   file.managed:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/zookeeper.properties
+    - name: /opt/kafka/config/zookeeper.properties
     - source: salt://components/misc_pkgs/kafka/files/zookeeper.properties
     - template: jinja
     - backup: '.bak'
@@ -48,7 +47,7 @@ Create zookeeper id:
 
 Update broker_id in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^broker.id=.*
     - repl: broker.id={{ node_ids[grains['id']] }}
     - append_if_not_found: True
@@ -56,14 +55,14 @@ Update broker_id in kafka config:
 
 Update log_dir in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^log.dirs=.*
     - repl: log.dirs=/var/log/kafka
     - append_if_not_found: True
 
 Update connections in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^zookeeper.connect=.*
     - repl: zookeeper.connect={{ node_hosts|join(',')}}
     - append_if_not_found: True

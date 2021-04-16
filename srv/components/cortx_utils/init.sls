@@ -19,3 +19,4 @@ include:
   - .install
   - .post_install
   - .config
+  - .sanity_check
