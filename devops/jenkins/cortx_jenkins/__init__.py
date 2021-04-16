@@ -15,7 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .__metadata__ import (  # noqa: F401
+"""Cortx Jenkins management tool."""
+
+from .__metadata__ import (
     __title__,
     __version__,
     __author__,
@@ -28,3 +30,17 @@ from .__metadata__ import (  # noqa: F401
     __download_url__,
     __license__,
 )
+
+__all__ = [
+    '__title__',
+    '__version__',
+    '__author__',
+    '__author_email__',
+    '__maintainer__',
+    '__maintainer_email__',
+    '__url__',
+    '__description__',
+    '__long_description__',
+    '__download_url__',
+    '__license__'
+]

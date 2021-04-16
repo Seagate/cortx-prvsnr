@@ -61,6 +61,7 @@ BUILD_BUNDLE_SCRIPT = (
 if not BUILD_BUNDLE_SCRIPT.exists():
     BUILD_BUNDLE_SCRIPT = None
 
+
 class BundleT(Enum):
     """Bundle types"""
 
@@ -70,6 +71,7 @@ class BundleT(Enum):
 
 
 class LevelT(Enum):
+
     """Test level types"""
 
     NOLEVEL = 'nolevel'
@@ -87,7 +89,6 @@ class TopicT(Enum):
     CONFIG = 'config'
     UPGRADE_BUNDLE = 'upgrade_bundle'
     UPGRADE = 'upgrade'
-
 
 
 # TODO check packer is available
