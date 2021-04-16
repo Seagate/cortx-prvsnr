@@ -17,7 +17,6 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.motr'.format(grains['id'])) %}
 include:
-  - components.motr.prepare
   - components.motr.install
   - components.motr.config
   # - components.motr.start
