@@ -18,7 +18,7 @@
 #
 #
 
-import subprocess
+import subprocess  # nosec to suppress Bandit
 import os
 import logging
 import docker
@@ -44,7 +44,7 @@ def run_subprocess_cmd(cmd, **kwargs):
 
     try:
         logger.debug(f"Subprocess command {cmd}, kwargs: {_kwargs}")
-        res = subprocess.run(cmd, check=True, **_kwargs)
+        res = subprocess.run(cmd, check=True, **_kwargs)  # nosec to suppress Bandit
     except subprocess.CalledProcessError as exc:
         logger.exception(f"Failed to run cmd '{cmd}, stderr: '{exc.stderr}''")
         raise

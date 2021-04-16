@@ -148,6 +148,7 @@ LOCALHOST = 'localhost'
 
 
 class AgentActionT(Enum):
+
     """Jenkins agent actions"""
     CREATE = "create"
     STOP = "stop"
@@ -160,6 +161,7 @@ ServerActionT = AgentActionT
 
 
 class JobsActionT(Enum):
+
     """Jenkins agent actions"""
     UPDATE = "update"
     DELETE = "delete"

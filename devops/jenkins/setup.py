@@ -35,7 +35,7 @@ except NameError:
 
 metadata = {'__file__': os.path.join(here, PACKAGE_DIR, '__metadata__.py')}
 with open(metadata['__file__'], 'r') as f:
-    exec(f.read(), metadata)
+    exec(f.read(), metadata)  # nosec pylint: disable=exec-used
 
 install_requires = [
     'python-jenkins==1.7.0',
