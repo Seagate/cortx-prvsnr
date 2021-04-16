@@ -601,7 +601,7 @@ def check(check_name, check_args: str = "",
                      check_args_args=check_args, targets=targets)
 
 
-def set_hostname(hostname=None, local=False):
+def set_hostname(local=local, **kwargs):
     """
     Set hostname for the system
 
@@ -610,7 +610,7 @@ def set_hostname(hostname=None, local=False):
 
     :return:
     """
-    return _api_call('set_hostname', hostname=hostname, local=local)
+    return _api_call('set_hostname', local=local, **kwargs)
 
 
 def set_mgmt_network(local=False, **kwargs):
@@ -640,9 +640,7 @@ def setup_firewall():
     return _api_call('setup_firewall')
 
 
-def set_data_network(data_public_ip=None, data_netmask=None,data_gateway=None,
-                        data_public_interfaces=None, data_private_ip=None,
-                        data_private_interfaces=None, local=False):
+def set_data_network(local=local, **kwargs):
     """
     Set data network for the system
 
@@ -658,7 +656,4 @@ def set_data_network(data_public_ip=None, data_netmask=None,data_gateway=None,
 
     :return:
     """
-    return _api_call('set_data_network', data_public_ip=data_public_ip, data_netmask=data_netmask,
-                data_gateway=data_gateway, data_public_interfaces=data_public_interfaces,
-                data_private_ip=data_private_ip, data_private_interfaces=data_private_interfaces,
-                local=local)
+    return _api_call('set_data_network', local=local, **kwargs)
