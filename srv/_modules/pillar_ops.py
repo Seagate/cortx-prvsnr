@@ -95,10 +95,5 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
 
 
 def _generate_secret():
-
-    passwd_strength = 12
-    passwd_seed = (string.ascii_letters + string.digits)
-
-    return ''.join(
-        [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
-    )
+    from provisioner import utils    
+    return utils.generate_random_secret()
