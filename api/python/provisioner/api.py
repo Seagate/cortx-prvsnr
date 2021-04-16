@@ -601,7 +601,7 @@ def check(check_name, check_args: str = "",
                      check_args_args=check_args, targets=targets)
 
 
-def set_hostname(local=local, **kwargs):
+def set_hostname(local=False, **kwargs):
     """
     Set hostname for the system
 
@@ -640,7 +640,7 @@ def setup_firewall():
     return _api_call('setup_firewall')
 
 
-def set_data_network(local=local, **kwargs):
+def set_data_network(local=False, **kwargs):
     """
     Set data network for the system
 
