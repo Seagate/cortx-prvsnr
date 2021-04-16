@@ -105,7 +105,7 @@ class Lock:
                     target = lock_metadata.get(
                         LockMetaDataFields.SOURCE_TARGET.value, None)
                     pid = lock_metadata.get(
-                        LockMetaDataFields.PID, None)
+                        LockMetaDataFields.PID.value, None)
                     if (target and pid and
                             check_salt_minions_are_ready(targets=[target]) and
                             self._check_pid(pid, target)):
@@ -126,6 +126,9 @@ class Lock:
         -------
 
         """
+        if not Path(PRVSNR_LOCKS_FILES_DIR).exists():
+            Path(PRVSNR_LOCKS_FILES_DIR).mkdir()
+
         self._handle_old_lock_files()
 
         lock_filename = self._lock_filename_tmpl.substitute(
