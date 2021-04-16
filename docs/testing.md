@@ -92,12 +92,15 @@ Codacy does the static analysis, checks duplications and complexity.
 For python it [uses](https://docs.codacy.com/getting-started/supported-languages-and-tools/) the
 following tools:
 
-  - static analysis:
-    [Bandit](https://github.com/PyCQA/bandit),
-    [Prospector](https://github.com/landscapeio/prospector2),
-    [Pylint](https://www.pylint.org/)
-  - duplications: [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
-  - complexity: [Radon](https://github.com/rubik/radon)
+  - python:
+    - static analysis:
+      [Bandit](https://github.com/PyCQA/bandit),
+      [Prospector](https://github.com/landscapeio/prospector2),
+      [Pylint](https://www.pylint.org/)
+    - duplications: [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
+    - complexity: [Radon](https://github.com/rubik/radon)
+  - markdown:
+    - [remark-lint](https://github.com/remarkjs/remark-lint)
 
 All these tools (except [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
 which is not a python one) would be availble once you
@@ -126,6 +129,11 @@ More [examples](https://github.com/PyCQA/bandit#usage).
 ```bash
 prospector path/to/directory_or_file
 ```
+
+Internally prospector uses different tools:
+  - [pep257](https://github.com/GreenSteam/pep257/) to check dockstring against [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+  - [pyflakes](https://github.com/PyCQA/pyflakes) to check various source code errors
+  - ...
 
 ##### Pylint
 
