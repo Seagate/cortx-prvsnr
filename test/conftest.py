@@ -18,6 +18,7 @@
 import docker
 import time
 import json
+from importlib import import_module
 from typing import Type
 from pathlib import Path
 from collections import defaultdict
@@ -356,7 +357,6 @@ def pytest_configure(config):
         "markers", "verified: mark test as verified (up-to-date) one"
     )
 
-
     config.addinivalue_line(
         "markers", "env_provider(string): mark test to be run "
                    "in the environment provided by the provider"
@@ -457,7 +457,17 @@ prvsnr_pytest_options = {
 
 
 def pytest_addoption(parser):
+    # TODO find a way when inner module can do that itself
+    #      (currently pytest_addoption is called before any imports
+    #       of low level test modules)
+    setup_opts_module = import_module(
+        'test.api.python.integration.setup.conftest'
+    )
+
     h.add_options(parser, prvsnr_pytest_options)
+    h.add_options(
+        parser, setup_opts_module.SetupOpts.prepare_args()
+    )
 
 
 # TODO DOC how to modify tests collections
