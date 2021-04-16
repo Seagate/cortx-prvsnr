@@ -74,9 +74,12 @@ class ConfStoreExport(CommandParserFillerMixin):
             unique_seed = cluster_id
 
         cipher_key = cipher.Cipher.generate_key(cluster_id, component_name)
-        value = cipher.Cipher.decrypt(
-            cipher_key, value.encode("utf-8")
-        ).decode("utf-8")
+        try:
+            value = cipher.Cipher.decrypt(
+                cipher_key, value.encode("utf-8")
+            ).decode("utf-8")
+        except cipher.CipherInvalidToken:
+            logger.warning("Decryption for {key} failed as key already decrypted ")
 
         root_node = key.split(self.key_delimiter)[0]
 
