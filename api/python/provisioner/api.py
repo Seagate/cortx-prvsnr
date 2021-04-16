@@ -610,8 +610,7 @@ def set_hostname():
     return _api_call('set_hostname')
 
 
-def set_mgmt_network(mgmt_public_ip=None, mgmt_netmask=None,
-                     mgmt_gateway=None, mgmt_interfaces=None, local=False):
+def set_mgmt_network(local=False, **kwargs):
     """
 
     Set mgmt network for the system.
@@ -626,9 +625,7 @@ def set_mgmt_network(mgmt_public_ip=None, mgmt_netmask=None,
         node management interface
     :param local: (optional) set values in local pillar
     """
-    return _api_call('set_mgmt_network', mgmt_public_ip=mgmt_public_ip,
-                     mgmt_netmask=mgmt_netmask, mgmt_gateway=mgmt_gateway,
-                     mgmt_interfaces=mgmt_interfaces, local=local)
+    return _api_call('set_mgmt_network', local=local, **kwargs)
 
 
 def setup_firewall():
