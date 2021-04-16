@@ -1,54 +1,13 @@
 #!/usr/bin/env groovy
 
 def err = null
-def branchName = env.ghprbSourceBranch ?: env.BRANCH_NAME ?: env.sha1 ?: 'nobranch'
-branchName = branchName.replace('/','_')
-
-dockerImage = "seagate/cortx-prvsnr:ci-${branchName}"
 
 Map config = [
     staticValidation: true,
     dynamicValidation: true,
     sendNotif: true,
-    nodeLabel: 'cortx-prvsnr-ci',
-    testMarkers: 'unit'
+    nodeLabel: 'centos-prvsnr-node'
 ]
-
-
-def localLib
-
-
-def commentCauseClass = ''
-print currentBuild.getBuildCauses()
-
-
-def getMarkers(String str) {
-    def pattern = /.*test (.+) please/
-    def matcher = (str =~ pattern)
-    return !!matcher ? matcher[0][1] : null
-}
-
-if (env.ghprbCommentBody) {
-    config.testMarkers = getMarkers(env.ghprbCommentBody)
-
-    if (!config.testMarkers) {
-       throw new Exception("GitHub comment lacks markers: $env.ghprbCommentBody")
-    }
-} else {
-    def test_markers = []
-
-    if(env.topic) {
-        test_markers.add(env.topic)
-    }
-
-    if(env.level) {
-        test_markers.add(env.level)
-    }
-
-    config.testMarkers = test_markers.join(' and ')
-}
-
-
 
 
 def nodeWrapper(label=null, body) {
@@ -58,32 +17,11 @@ def nodeWrapper(label=null, body) {
             body()
         } finally {
             echo "Cleanup"
-            // TODO good cleanup routine
-            //      (current version will lead to docker rebuilds for all layers)
-            // cleanDocker()
             cleanWs()
         }
     }
 }
 
-def buildDocker(imageName, dockerfile, ctx, add_args='') {
-    return docker.build("$imageName", "$add_args -f $dockerfile $ctx")
-}
-
-def buildUnitDocker() {
-    def uid = sh(returnStdout: true, script: 'id -u').trim()
-    def gid = sh(returnStdout: true, script: 'id -g').trim()
-    return buildDocker(
-        dockerImage,
-        "devops/ci/Dockerfile.unit",
-        "api",
-        "--build-arg uid=$uid --build-arg gid=$gid"
-    )
-}
-
-def cleanDocker(){
-    sh("docker rmi -f ${dockerImage} || true")
-}
 
 Closure preparePythonEnv = {
     String testPipenvReport = "pipenv.out"
@@ -105,33 +43,6 @@ Closure staticValidation = {
 
     checkout scm
 
-    def dockerImage = null
-
-    stage('Build docker image') {
-        dockerImage = buildUnitDocker()
-    }
-
-    dockerImage.inside {
-        // preparePythonEnv()
-
-        String testPythonReport = "flake8.out.txt"  // TODO not configurable for now
-        stage('Check python') {
-            // TODO check other python sources (not only 'test')
-            try {
-                sh "bash -x devops/ci/validate_python.sh"
-            } catch (_err) {
-                archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
-                echo "Python static validation failed: $_err"
-                // throw _err
-            }
-        }
-    }
-
-    return
-
-
-
-    /*
     preparePythonEnv()
 
     String testPythonReport = "flake8.out"  // TODO not configurable for now
@@ -148,7 +59,6 @@ Closure staticValidation = {
             // throw _err
         }
     }
-    */
 
     String testYamlReport = "yamllint.out"  // TODO not configurable for now
     stage('Check yaml') {
@@ -177,10 +87,8 @@ Closure dynamicValidation = {
     String testReportFileNamePlain = "pytest.out.txt"
     String pytestArgs = "-l -vv --junit-xml=$testReportFileNameXml --env-provider docker"
     String pytestTargets = ""
-    // FIXME debug
-    String pytestMarkers = "(${config.testMarkers}) and debug"
+    String pytestMarkers = "not cortx_bvt"
 
-    /*
     try {
         stage('Clean VirtualBox environment') {
             sh "bash -x devops/ci/clean_vbox.sh vms"
@@ -194,23 +102,6 @@ Closure dynamicValidation = {
             stage('Run tests') {
                 sh """
                     pipenv run bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
-                """
-            }
-        }
-    */
-
-    def dockerImage = null
-
-    stage('Build docker image') {
-        dockerImage = buildUnitDocker()
-    }
-
-    try {
-        dockerImage.inside {
-            // run tests
-            stage('Run tests') {
-                sh """
-                    bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
                 """
             }
         }
@@ -233,15 +124,6 @@ Closure dynamicValidation = {
 
 try {
     timeout(300) {
-        /*
-        nodeWrapper('ubuntu') {
-            stage('Load local shared library') {
-                checkout scm
-                localLib = load 'devops/ci/pipeline.groovy'
-            }
-        }
-        */
-
         stage('Static validation') {
             if (config.staticValidation) {
                 nodeWrapper(config.nodeLabel) {
@@ -272,7 +154,6 @@ try {
     currentBuild.result = 'FAILURE'
     err = _err
     throw _err
-
 } finally {
 
     if (err) {
@@ -283,17 +164,15 @@ try {
 
     stage('Notification') {
         if (config.sendNotif) {
+            /* TBD
             def emailMessage = [
-                body: '${JELLY_SCRIPT,template="html"}',
+                body: '$DEFAULT_CONTENT',
                 replyTo: '$DEFAULT_REPLYTO',
                 subject: '$DEFAULT_SUBJECT',
-                recipientProviders: [
-                    developers(),
-                    requestor()
-                ],
-                // to: '$DEFAULT_RECIPIENTS',
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
             ]
             emailext emailMessage
+            */
         }
     }
 }
