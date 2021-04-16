@@ -23,7 +23,6 @@ include:
 Start sshd service:
   service.running:
     - name: sshd
-    - enable: True
 
 Stage - Prepare S3server:
   cmd.run:
