@@ -63,6 +63,7 @@ if not BUILD_BUNDLE_SCRIPT.exists():
 
 
 class BundleT(Enum):
+
     """Bundle types."""
 
     DEPLOY_CORTX = 'deploy-cortx'
@@ -71,6 +72,7 @@ class BundleT(Enum):
 
 
 class LevelT(Enum):
+
     """Test level types."""
 
     NOLEVEL = 'nolevel'
@@ -81,6 +83,7 @@ class LevelT(Enum):
 
 
 class TopicT(Enum):
+
     """Test topic types."""
 
     NOTOPIC = 'notopic'

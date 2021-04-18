@@ -38,6 +38,7 @@ CONFIG_FILE = CWD / 'cortx-jenkins.toml'
 
 
 class ConfigSectionT(Enum):
+
     """Jenkins config sections"""
     GLOBAL = "global"
     SERVER = "server"
@@ -162,6 +163,6 @@ ServerActionT = AgentActionT
 
 class JobsActionT(Enum):
 
-    """Jenkins agent actions"""
+    """Jenkins jobs actions"""
     UPDATE = "update"
     DELETE = "delete"
