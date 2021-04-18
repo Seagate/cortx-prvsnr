@@ -230,7 +230,7 @@ def pytest_collection_modifyitems(session, config, items):
         if (
             hasattr(item, 'callspec')
             and item.callspec.params.get('source') == SourceT.LOCAL
-            and item.callspec.params.get('ha')
+            and not item.callspec.params.get('ha')
             and item.callspec.params.get('hosts_num') == ScaleFactorT.SINGLE
         ):
             item.add_marker(pytest.mark.verified)
