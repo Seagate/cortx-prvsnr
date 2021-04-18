@@ -190,7 +190,7 @@ Closure dynamicValidation = {
             // run tests
             stage('Run tests') {
                 sh """
-                    bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                    PROJECT_PATH=. bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
                 """
             }
         }

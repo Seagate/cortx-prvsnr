@@ -12,7 +12,6 @@ COPY python $PROJECT_PATH
 
 # FIXME not the best choice to install that globally
 RUN pip3 install ${PROJECT_PATH}[test]
-
 RUN rm -rf $PROJECT_PATH
 
 ARG user=test
