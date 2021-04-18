@@ -1,5 +1,12 @@
 FROM python:3.6-slim-buster
 
+# TODO similar to  images/docker/setup_system_packages.sh
+#      but for debian
+# 'ip' tool is necessary for testinfra to explore interfaces
+RUN apt-get update \
+    && apt-get install -y iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG PROJECT_PATH=/tmp/project
 COPY python $PROJECT_PATH
 
