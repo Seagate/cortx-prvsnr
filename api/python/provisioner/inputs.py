@@ -1203,7 +1203,7 @@ class SWUpgradeRemoveRepo(ParamDictItemInputBase):
         # TODO: It is the rough version of regex because we didn't have the
         #  final representation of the release version from the RE team.
         validator=attr.validators.matches_re(
-            "^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
+            r"^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
         converter=str
     )
 

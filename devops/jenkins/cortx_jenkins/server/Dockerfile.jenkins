@@ -1,0 +1,34 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+FROM jenkins/jenkins:lts
+
+COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
+
+COPY --chown=jenkins:jenkins jenkins.properties /run/secrets/secrets.properties
+COPY --chown=jenkins:jenkins jenkins.yaml.tmpl /usr/share/jenkins/ref/jenkins.yaml
+ENV CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins.yaml
+
+COPY --chown=jenkins:jenkins cert.pem /var/lib/jenkins/cert
+COPY --chown=jenkins:jenkins key.rsa.pem /var/lib/jenkins/pk
+
+# plain http port is not going to be exposed via docker run command
+# but should be available for sibling docker agent containers
+ENV JENKINS_OPTS --httpPort=8080 --httpsPort=8083 --httpsCertificate=/var/lib/jenkins/cert --httpsPrivateKey=/var/lib/jenkins/pk
+
+EXPOSE 8083
