@@ -28,6 +28,7 @@ from typing import (
 import configparser
 import json
 import logging
+import random
 import subprocess
 import time
 import yaml
@@ -408,12 +409,11 @@ def node_hostname_validator(
 # Generate random 14 character password
 def generate_random_secret():
 
-    passwd_strength = 14
     passwd_seed = random.sample(string.ascii_uppercase,
                                 4) + random.sample(string.digits,
-                                                   4) + random.sample(string.ascii_lowercase,
+                                                   3) + random.sample(string.ascii_lowercase,
                                                                       4) + random.sample(string.punctuation,
-                                                                                         4)
+                                                                                         3)
     random.shuffle(passwd_seed)
 
     return ''.join(passwd_seed)

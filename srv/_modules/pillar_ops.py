@@ -85,7 +85,8 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
                     if decrypt:
                         provisioner.pillar_set(path + '/' + key, val)
                     else:
-                        logger.debug(f"Setting pillar {path + '/' + key} to {val}")
+                        logger.debug(
+                            f"Setting pillar {path + '/' + key} to {val}")
                         provisioner.pillar_set(
                             path + '/' + key,
                             str(cipher.Cipher.encrypt(cipher_key,
@@ -95,5 +96,6 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
 
 
 def _generate_secret():
-    from provisioner import utils    
-    return utils.generate_random_secret()
+
+    from provisioner.utils import generate_random_secret
+    return generate_random_secret()
