@@ -15,12 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
 Start zoopkeper:
   cmd.run:
     - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
     - cwd: /opt/kafka
     - unless: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+
+#TODO: find better solution to add delay
+Wait for zookeeper to start:
+  module.run:
+    - test.sleep:
+      - length: 10
+    - require:
+      - Start zoopkeper
 
 Start kafka:
   cmd.run:
@@ -28,4 +35,4 @@ Start kafka:
     - cwd: /opt/kafka
     - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
     - require:
-      - Start zoopkeper
+      - Wait for zookeeper to start

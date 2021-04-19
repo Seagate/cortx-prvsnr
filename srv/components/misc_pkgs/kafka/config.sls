@@ -26,7 +26,7 @@
 {% endfor %}
 {% for node in server_nodes %}
     {% set x = node_ids.update({node:loop.index}) %}
-    {% set y = node_hosts.append( pillar['cluster'][node]['network']['data']['private_fqdn'] +
+    {% set y = node_hosts.append( pillar['cluster'][node]['network']['mgmt']['public_fqdn'] +
       ":" +
       (pillar['cortx']['software']['zookeeper']['client_port'] | string)
     ) %}
@@ -58,6 +58,13 @@ Update log_dir in kafka config:
     - name: /opt/kafka/config/server.properties
     - pattern: ^log.dirs=.*
     - repl: log.dirs=/var/log/kafka
+    - append_if_not_found: True
+
+update listner in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^#listeners=*
+    - repl: listeners=PLAINTEXT://{{pillar['cluster'][grains['id']]['network']['data']['private_fqdn']}}:{{pillar['cortx']['software']['kafka']['port']}}
     - append_if_not_found: True
 
 Update connections in kafka config:
