@@ -98,4 +98,7 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
 def _generate_secret():
 
     from provisioner.utils import generate_random_secret
-    return generate_random_secret()
+    secret = generate_random_secret()
+    if __grains__['lr-serial-number']:
+        secret = secret + __grains__['lr-serial-number']
+    return secret
