@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Dummy placeholder for iostack-ha.install:
-  test.show_notification:
-    - text: "To avoid empty yaml file with comments resulting in minion non-zero exit."
+Stage - cortx-utils cleanup:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:cleanup')

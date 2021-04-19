@@ -15,12 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-Stage - Test CSM HA:
+Stage - cortx-utils post_install:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:ha_sanity')
-{% else %}
-Stage - Test CSM HA:
-  test.show_notification:
-    - text: "HA Sanity for CSM only applies to primary node."
-{% endif %}
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:post_install')
+    - failhard: True

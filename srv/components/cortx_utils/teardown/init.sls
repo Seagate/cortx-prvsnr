@@ -15,8 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-start LDR-R1 HA cluster:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:test')
-{% endif %}
+include:
+  - .reset
+  - .cleanup
+
+Remove cortx-utils package:
+  pkg.purged:
+    - pkgs:
+      - cortx-py-utils

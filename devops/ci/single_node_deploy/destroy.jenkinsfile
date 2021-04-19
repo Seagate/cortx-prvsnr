@@ -25,26 +25,29 @@ node {
     ])
     
     def remote = [:]
+    remote.name = "srvnode-1"
+    remote.host = HOST_NAME
+    remote.user = 'root'
+    remote.password = PASSWORD
+    remote.allowAnyHosts = true
     withEnv(["SSHPASS=${PASSWORD}"]) {
         ansiColor('xterm') {
-            remote.name = "srvnode-1"
-            remote.host = HOST_NAME
-            remote.user = 'root'
-            remote.password = PASSWORD
-            remote.allowAnyHosts = true
+
             stage("SSH Connectivity Check") {
                 if (PASSWORD.isEmpty()) {
                     error "Target VM password cannot be empty."
                 }
                 sshCommand remote: remote, command: "exit"
-                echo "Successfully connected to VM ${HOST_NAME}!"
+                echo "Successfully connected to VM ${HOST_NAME}."
             }
-            stage("Teardown of Cortx Stack!") {
+
+            stage("Teardown of Cortx Stack") {
                 sshCommand remote: remote, command: """
                     /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
                 """
-                echo "Successfully teardown of Cortx Stack!"
+                echo "Successfully teardown of Cortx Stack."
             }
+
             stage("Stop services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
@@ -53,8 +56,9 @@ node {
                     systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
                     systemctl status salt-master >/dev/null && systemctl stop salt-master || true
                 """
-                echo "Sucessfully stopped salt and gluster services"
+                echo "Sucessfully stopped salt and gluster services."
             }
+
             stage("Uninstall rpms") {
                 sshCommand remote: remote, command: """
                     yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
@@ -76,8 +80,9 @@ node {
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
                     rm -rf ~/.cache/pip
                 """
-                echo "Successfully uninstalled rpms"
+                echo "Successfully uninstalled rpms."
             }
+
             stage("Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
@@ -96,7 +101,14 @@ node {
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
-                echo "Successfully removed!"
+                echo "Successfully removed."
+            }
+
+            stage("Cleanup logs") {
+                sshCommand remote: remote, command: """
+                    rm -rf /var/log/seagate
+                """
+                echo "Successfully removed logs from the node ${remote.host}."
             }
         }
 
