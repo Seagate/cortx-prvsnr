@@ -19,7 +19,7 @@
 include:
   - components.ha.cortx-ha.install
   - components.ha.cortx-ha.config
-  - components.ha.cortx-ha.sanity_test
+#  - components.ha.cortx-ha.sanity_test
 
 Generate cortx_ha checkpoint flag:
   file.managed:

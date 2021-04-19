@@ -18,7 +18,7 @@
 include:
   - components.hare.install
   - components.hare.config
-  - components.hare.sanity_check
+#  - components.hare.sanity_check
 
 Generate hare checkpoint flag:
   file.managed:
