@@ -76,6 +76,13 @@ set_firewall:
     states:
       post:
         - components.system.firewall
+set_mgmt_network:
+    type: Set
+    input_type: MgmtNetwork
+    states:
+      post:
+        - components.system.network.mgmt.public
+
 # set_cluster_ip:
 #   type: Set
 #   input_type: ClusterIP

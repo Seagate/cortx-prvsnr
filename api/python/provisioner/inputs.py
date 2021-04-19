@@ -619,6 +619,26 @@ class Firewall(ParamGroupInputBase):
     _param_group = 'firewall'
 
 
+@attr.s(auto_attribs=True)
+class MgmtNetwork(ParamGroupInputBase):
+    _param_group = 'mgmt_network'
+    mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node mgmt gateway IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface netmask",
+        validator=Validation.check_ip4
+    )
+    mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network interfaces"
+    )
+
+
 class ReleaseParams():
     _param_group = 'release'
     target_build: str = ParamGroupInputBase._attr_ib(

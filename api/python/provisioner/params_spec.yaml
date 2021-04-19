@@ -57,6 +57,13 @@ release:
   _path: release.sls
   target_build: release/target_build
 
+mgmt_network:
+  _path: cluster.sls
+  mgmt_public_ip: cluster/srvnode-0/network/mgmt/public_ip
+  mgmt_netmask: cluster/srvnode-0/network/mgmt/netmask
+  mgmt_gateway: cluster/srvnode-0/network/mgmt/gateway
+  mgmt_interfaces: cluster/srvnode-0/network/mgmt/interfaces
+
 storage:
   _path: storage.sls
   controller_a_ip: storage/enclosure-1/controller/primary/ip
