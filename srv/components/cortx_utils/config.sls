@@ -15,10 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#Render ha input params template:
-#  file.managed:
-#    - name: /opt/seagate/cortx/iostack-ha/conf/build-ha-args.yaml
-#    - source: salt://components/ha/iostack-ha/files/ha-params.tmpl
-#    - template: jinja
-#    - mode: 444
-#    - makedirs: True
+Stage - cortx-utils config:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:config')
+    - failhard: True

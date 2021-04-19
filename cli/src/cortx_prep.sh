@@ -82,10 +82,10 @@ EOF
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
         yum clean all || true
         yum install -y \
-        java-1.8.0-openjdk-headless python3 cortx-prereq \
+        tmux sshpass \
+        java-1.8.0-openjdk-headless python3 \
         python36-m2crypto salt-api salt-master salt-minion \
-        python36-cortx-prvsnr \
-        sshpass \
+        cortx-prereq python36-cortx-prvsnr \
         2>&1 | tee -a ${LOG_FILE}
 
         echo "INFO: Verifying cortx-prvsnr installation" 2>&1 | tee -a ${LOG_FILE}

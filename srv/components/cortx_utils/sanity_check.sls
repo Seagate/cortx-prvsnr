@@ -15,8 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-Stage - Post Update Hare:
+Stage - cortx-utils test:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:post_update')
-{% endif %}
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:test')
+    - failhard: True

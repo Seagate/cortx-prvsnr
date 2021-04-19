@@ -15,18 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 include:
-  - components.ha.iostack-ha.config.post_install
-  - components.ha.iostack-ha.config.config
-
-start LDR-R1 HA cluster:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/iostack-ha/conf/setup.yaml', 'iostack-ha:init')
-
-{% else %}
-setup LDR-R1 HA config on non-primary node:
-  test.show_notification:
-    - text: "No changes needed on non-primary node."
-{% endif %}
+  - .install
+  - .post_install
+  - .config
+  - .sanity_check

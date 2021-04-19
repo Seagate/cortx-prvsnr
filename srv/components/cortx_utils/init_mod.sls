@@ -15,13 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.ha.iostack-ha.prepare
-  - components.ha.iostack-ha.install
-  - components.ha.iostack-ha.config
-
-Generate iostack-ha checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.iostack-ha
-    - makedirs: True
-    - create: True
+Stage - cortx-utils init:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:init')
+    - failhard: True
