@@ -20,13 +20,22 @@
 # salt-call lyveutils.decrypt "component" "secret"
 
 import logging
+import os
+import sys
+
+# Update PYTHONPATH to include Provisioner API installed at:
+# /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
+sys.path.append(os.path.join(
+       'usr', 'local', 'lib', 'python3.6', 'site-packages'))
+
 import provisioner
+from provisioner.utils import run_subprocess_cmd
 
 logger = logging.getLogger(__name__)
 
 
 def decrypt(component, secret):
-    """ Decrypt secret.
+    """Decrypt secret.
 
     Args:
       secret: Secret to be decrypted.
@@ -51,6 +60,7 @@ def validate_firewall():  # noqa: C901
 
     """
     validate = False
+    ret_code = False
     _target_node = __grains__['id']
     data = provisioner.pillar_get()
     fw_pillar = data[_target_node]["firewall"]
@@ -65,18 +75,32 @@ def validate_firewall():  # noqa: C901
                 port_num = int(''.join(filter(str.isdigit, pt)))
                 validate_ports.append(port_num)
 
+    # TODO: Future scope: as utilities increase in Salt,
+    # opt for wrapper around run_subprocess_cmd and
+    # use it in salt utility modules as srv/_utils/<file>.py
+
     for port, service in zip(validate_ports, validate_services):
-        tcp_port = __utils__['process.simple_process'](f"netstat -ltp | grep {port}")
-        tcp_svc = __utils__['process.simple_process'](f"netstat -lt | grep {service}")
 
-        udp_port = __utils__['process.simple_process'](f"netstat -lup | grep {port}")
-        udp_svc = __utils__['process.simple_process'](f"netstat -lu | grep {service}")
+        tcp_port = run_subprocess_cmd([f"ss -ltrp | grep {port}"], shell=True).stdout
+        tcp_svc = run_subprocess_cmd([f"ss -lt | grep {service}"], shell=True).stdout
 
-    if (tcp_port or udp_port) and (tcp_svc or udp_svc):
+        udp_port = run_subprocess_cmd([f"ss -lurp | grep {port}"], shell=True).stdout
+        udp_svc = run_subprocess_cmd([f"ss -lu | grep {service}"], shell=True).stdout
+
+        # Either of TCP/ UDP port and service should pass
+        if not (
+            (tcp_port or udp_port) and
+            (tcp_svc or udp_svc)
+        ):
+            ret_code = True
+
+    if ret_code:
+        logger.error(
+            "Failed: Validation of open firewall ports. Ensure all services "
+            "and ports mentioned in pillar are running and accessible."
+        )
+    else:
         validate = True
         logger.info("Success: Validation of open firewall ports")
-
-    else:
-        logger.error("Failed: Validation of open firewall ports")
 
     return validate

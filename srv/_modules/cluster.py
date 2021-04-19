@@ -20,21 +20,19 @@
 # $ salt-call saltutil.sync_modules && salt-call cluster.nw_roaming_ip
 
 # Standard packages
-import errno
-import json
 import logging
 import os
 import sys
 import time
 
-from shutil import copyfile
-
 # Update PYTHONPATH to include Provisioner API installed at:
 # /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
-sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
+sys.path.append(os.path.join(
+       'usr', 'local', 'lib', 'python3.6', 'site-packages'))
 
 # Cortx packages
 import provisioner
+from provisioner.utils import run_subprocess_cmd
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +45,13 @@ def storage_device_config():
     ]
     for node in server_nodes:
         cluster_dict = provisioner.pillar_get(f"cluster/{node}/roles", targets=node)
+
         if "primary" in cluster_dict[node][f"cluster/{node}/roles"]:
-            cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
+            cmd = ("multipath -ll | grep prio=50 -B2 |"
+                  " grep mpath|sort -k2.2 | awk '{ print $1 }'")
         else:
-            cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
+            cmd = ("multipath -ll | grep prio=10 -B2 |"
+                  " grep mpath|sort -k2.2 | awk '{ print $1 }'")
 
         device_list = []
         _timeout = 60
@@ -58,7 +59,8 @@ def storage_device_config():
         _sleep_time = 5
         while device_list == []:
             if ( _count == 0 ):
-                logger.info(f"[ INFO ] Attempt {_count} Waiting for multipath device to come up...")
+                logger.info(f"[ INFO ] Attempt {_count} "
+                       "Waiting for multipath device to come up...")
 
             if ( _count > _timeout ):
                 msg = ("[ ERROR ] multipath devices don't exist. "
@@ -70,7 +72,7 @@ def storage_device_config():
                 time.sleep(_sleep_time)
 
                 logger.info(f"Command to populate multipath devices: {cmd}")
-                device_list = __utils__['process.simple_process'](cmd)
+                device_list = run_subprocess_cmd([cmd], shell=True).stdout.splitlines()
 
                 if ( len(device_list) > 0 ):
                     logger.info("[ INFO ] Found multipath devices...")
@@ -107,7 +109,7 @@ def jbod_storage_config():
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
     _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
-    _device_list = __utils__['process.simple_process'](_cmd)
+    _device_list = run_subprocess_cmd([_cmd], shell=True).stdout.splitlines()
 
     metadata_devices = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
     data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]

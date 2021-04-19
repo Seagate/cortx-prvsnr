@@ -302,10 +302,10 @@ def run_subprocess_cmd(cmd, **kwargs):
     )
 
     _kwargs.update(kwargs)
-    _kwargs['check'] = True
 
     if isinstance(cmd, str):
         cmd = cmd.split()
+        _kwargs['check'] = True
 
     try:
         # TODO IMPROVE EOS-8473 logging level

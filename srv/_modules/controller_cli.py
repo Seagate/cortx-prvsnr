@@ -27,14 +27,13 @@ import logging
 import os
 import sys
 
-#from shutil import copyfile
-
 # Update PYTHONPATH to include Provisioner API installed at:
 # /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
-sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
+sys.path.append(os.path.join(
+       'usr', 'local', 'lib', 'python3.6', 'site-packages'))
 
 # Cortx packages
-#import provisioner
+from provisioner.utils import run_subprocess_cmd
 
 from pathlib import Path
 logger = logging.getLogger(__name__)
@@ -53,12 +52,15 @@ def fetch_enclosure_serial():
     _opt = "--show-license"
 
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
-    _cmd = f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt} | grep -A2 Serial | tail -1 > /etc/enclosure-id"
-    __utils__['process.simple_process'](_cmd)
+    _cmd = (f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt}"
+           " | grep -A2 Serial | tail -1 > /etc/enclosure-id")
+    run_subprocess_cmd([_cmd], shell=True).stdout.splitlines()
 
     _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():
-        msg = f"ERROR: Could not generate the enclosure id from controller cli utility, please check the {str(logs)} for more details"
+        msg = ("ERROR: Could not generate the enclosure id "
+              "from controller cli utility, please check "
+              f"the {str(logs)} for more details")
         # raise Exception(msg)
         logger.error(msg)
         return False

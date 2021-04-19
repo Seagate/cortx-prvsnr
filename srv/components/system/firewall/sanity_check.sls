@@ -102,7 +102,3 @@ Verify {{ network_interface }} ports:
 
 {% endfor %}
 
-Validate pillar firewall:
-  module.run:
-    - lyveutils.validate_firewall: []
-
