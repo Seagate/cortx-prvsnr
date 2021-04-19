@@ -28,36 +28,44 @@ node {
                 README.txt
                 RELEASE.INFO
                 THIRD_PARTY_RELEASE.INFO''', name: 'BUILD_URL', trim: true),
-            password(description: 'root user password for the target node.', name: 'PASSWORD')
+            password(description: 'root user password for the target node.', name: 'PASSWORD'),
+            booleanParam(
+                defaultValue: false,
+                description: '''
+                    enable debugging/step-walking through various stages of deployment
+                ''',
+                name: 'DEBUG'
+            )
         ])
     ])
 
     cleanWs()
 
     def remote = [:]
+    remote.name = "srvnode-1"
+    remote.host = HOST_NAME
+    remote.user = 'root'
+    remote.password = PASSWORD
+    remote.allowAnyHosts = true
+
     withEnv(["CORTX_RELEASE_REPO=${BUILD_URL}","SSHPASS=${PASSWORD}"]) {
         ansiColor('xterm') {
-            remote.name = "srvnode-1"
-            remote.host = HOST_NAME
-            remote.user = 'root'
-            remote.password = PASSWORD
-            remote.allowAnyHosts = true
-
             stage("SSH Connectivity Check") {
+                echo "DEBUG is set to: ${DEBUG}"
                 if (PASSWORD.isEmpty()) {
                     error "Target VM password cannot be empty."
                 }
-                
+
                 sshCommand remote: remote, command: "exit"
                 echo "Successfully connected to VM ${HOST_NAME}!"
             }
-            
+
             stage("Build URL Check") {
                 sh label: '', returnStatus: true, script: 'test 200 == $(curl -ksI ${BUILD_URL}/RELEASE.INFO|grep "HTTP/1.1" | cut -d " " -f 2)'
             }
-            
+
             stage("Storage Configuration Check") {
-                try { 
+                try {
                     sshCommand remote: remote, command: """
                         test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
                     """
@@ -66,7 +74,7 @@ node {
                     error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
                 }
             }
-            
+
             stage("Prepare config.ini") {
                 sshCommand remote: remote, command: """
                     device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
@@ -107,7 +115,7 @@ node {
                     yum install -y yum-utils
                     yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
                     yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
-                    
+
                     echo '''
                     [global]
                     timeout: 60
@@ -131,7 +139,7 @@ node {
                 """
                 echo "Successfully installed Provisioner API!"
             }
-            
+
             stage("Bootstrap Provisioner") {
                 sshCommand remote: remote, command: """
                     yum install -y sshpass
@@ -142,7 +150,7 @@ node {
                 """
                 echo "Successfully bootstrapped provisioner!"
             }
-            
+
             stage("Validate Bootstrap Provisioner") {
                 sshCommand remote: remote, command: """
                     salt '*' test.ping
@@ -155,58 +163,65 @@ node {
                 """
                 echo "Successfully validated bootstrap!"
             }
-            
+
             stage("Platform Setup") {
                 sshCommand remote: remote, command: "provisioner deploy_vm --states system --setup-type single"
                 echo "Successfully deployed system states!"
             }
- 
+
             stage("3rd Party Software Deployment") {
                 sshCommand remote: remote, command: "provisioner deploy_vm --states prereq --setup-type single"
                 echo "Successfully deployed prereq states!"
             }
 
             stage("Foundation Setup") {
+                // if (DEBUG) {
+                //     timeout(30) {
+                //         input 'Proceed with Foundation Deployment Stage?'
+                //     }
+                // }
                 sshCommand remote: remote, command: "provisioner deploy_vm --states utils --setup-type single"
                 echo "Successfully deployed Foundation states!"
             }
-   
-            catchError {
-                stage("Data Path States Deployment") {
-                    // timeout(30) {
-                    //     input 'Proceed with Data Path Stage?'
-                    // }
-                    sshCommand remote: remote, command: "provisioner deploy_vm --states iopath --setup-type single"
-                    echo "Successfully deployed iopath states!"
+
+            stage("Data Path States Deployment") {
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with Data Path Stage?'
+                    }
                 }
+                sshCommand remote: remote, command: "provisioner deploy_vm --states iopath --setup-type single"
+                echo "Successfully deployed iopath states!"
             }
-            
+
             stage("Control Stack States Deployment") {
-                // timeout(30) {
-                //     input 'Proceed with Control Path Stage?'
-                // }
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with Control Path Stage?'
+                    }
+                }
                 sshCommand remote: remote, command: "provisioner deploy_vm --states controlpath --setup-type single"
                 echo "Successfully deployed controlpath states!"
             }
-            
+
             stage("HA States Deployment") {
-                // timeout(30) {
-                //     input 'Proceed with HA Setup Stage?'
-                // }
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with HA Setup Stage?'
+                    }
+                }
                 sshCommand remote: remote, command: "provisioner deploy_vm --states ha --setup-type single"
                 echo "Successfully deployed HA states!"
             }
         }
-
-        sh label: '', script: "mkdir archives"
-        
-        sshGet remote: remotes[0], from: '/root/config.ini', into: 'archives/config.ini', override: true
-        archiveArtifacts artifacts: 'archives/config.ini', followSymlinks: false
-        sshGet remote: remotes[0], from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
-        archiveArtifacts artifacts: 'archives/provisioner_cluster.json', followSymlinks: false
-
-        sshGet remote: remotes[0], from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
-        sshGet remote: remotes[0], from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
-        archiveArtifacts artifacts: 'archives/setup.log,archives/RELEASE_FACTORY.INFO', followSymlinks: false
+    }
+    
+    sh label: '', script: "mkdir -p ${WORKSPACE}/archives"
+    dir("${WORKSPACE}/archives") {
+        deleteDir()
+        sshGet remote: remote, from: "/root/config.ini", into: "${WORKSPACE}/archives/config.ini", override: true
+        sshGet remote: remote, from: "/opt/seagate/cortx_configs/provisioner_cluster.json", into: "${WORKSPACE}/archives/provisioner_cluster.json", override: true
+        sshGet remote: remote, from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
+        sshGet remote: remote, from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
     }
 }

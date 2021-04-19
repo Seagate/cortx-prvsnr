@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+BASEDIR=$(dirname "${BASH_SOURCE}")
 
 usage() {
   echo "Usage: \
@@ -19,8 +20,11 @@ while getopts ":h" o; do
 done
 shift $((OPTIND-1))
 
-# packer validate ./centos_75_1804_vbox.json
-# packer build ./centos_75_1804_vbox.json
+# packer validate ${BASEDIR}/centos_75_1804_vbox.json
+# packer build ${BASEDIR}/centos_75_1804_vbox.json
 
-packer validate ./centos_75_1804_hyperv.json
-# packer build ./centos_75_1804_hyperv.json
+# packer validate ${BASEDIR}/centos_75_1804_hyperv.json
+# packer build ${BASEDIR}/centos_75_1804_hyperv.json
+
+packer validate ${BASEDIR}/centos_78_2003_hyperv.json
+# packer build ${BASEDIR}/centos_78_2003_hyperv.json
