@@ -15,9 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+Update hostname file permissions:
+  cmd.run:
+    - name: "chattr -i /etc/hostname"
+
 Set hostname:
-  network.system:
-    - name: set_hostname
-    - hostname: {{ pillar['cluster'][grains['id']]['hostname'] }}
-    - apply_hostname: True
-    - retain_settings: True
+  cmd.run:
+    - name: "hostnamectl set-hostname {{ pillar['cluster'][grains['id']]['hostname'] }}"
+    - require:
+      - Update hostname file permissions
