@@ -193,6 +193,7 @@ for fun in [
     'cmd_run',
     'get_setup_info',
     'set_hostname',
+    'set_mgmt_network',
     'setup_firewall'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

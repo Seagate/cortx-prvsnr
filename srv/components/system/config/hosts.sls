@@ -55,7 +55,13 @@ Hostsfile update for data interfaces:
         {{ grains['ip4_interfaces']['data0'][0] }}    {{ srvnode }}    {{ srvnode }}.data.public
         {% else -%}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}    {{ srvnode }}.data.public
+          {% if pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0] %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}    {{ srvnode }}    {{ srvnode }}.data.private
+          {% else %}
+        # Private IP is not assigned or the system doesn't have an interface for Private IP
+        # Defaulting to lo interface
+        127.0.0.2    {{ srvnode }}    {{ srvnode }}.data.private
+          {% endif %}
         {% endif -%}
         {% endfor -%}
         {% endfor -%}
