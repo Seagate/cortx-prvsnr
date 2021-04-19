@@ -26,7 +26,7 @@
 {% endfor %}
 {% for node in server_nodes %}
     {% set x = node_ids.update({node:loop.index}) %}
-    {% set y = node_hosts.append( pillar['cluster'][node]['network']['mgmt']['public_fqdn'] +
+    {% set y = node_hosts.append( pillar['cluster'][node]['network']['data']['private_fqdn'] +
       ":" +
       (pillar['cortx']['software']['zookeeper']['client_port'] | string)
     ) %}

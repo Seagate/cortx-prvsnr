@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 Start zoopkeper:
   cmd.run:
     - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
