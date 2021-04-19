@@ -19,8 +19,8 @@
 include:
   - components.motr.install
   - components.motr.config
-  # - components.motr.start
-  - components.motr.sanity_check
+#  - components.motr.start
+#  - components.motr.sanity_check
 
 Generate motr checkpoint flag:
   file.managed:
