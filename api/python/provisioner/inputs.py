@@ -612,6 +612,9 @@ class NTP(ParamGroupInputBase):
 @attr.s(auto_attribs=True)
 class Hostname(ParamGroupInputBase):
     _param_group = 'hostname'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="hostname to be set"
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -638,6 +641,30 @@ class MgmtNetwork(ParamGroupInputBase):
         _param_group, descr="node management network interfaces"
     )
 
+class DataNetwork(ParamGroupInputBase):
+    _param_group = 'data_network'
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data network interfaces"
+    )
 
 class ReleaseParams():
     _param_group = 'release'
