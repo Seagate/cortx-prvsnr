@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
+
 include:
   - .stop
 
@@ -25,7 +25,7 @@ Remove java:
 
 Remove kafka directory:
   file.absent:
-    - name: /opt/kafka/kafka_{{ kafka_version }}
+    - name: /opt/kafka
 
 Remove zookeeper data directory:
   file.absent:

@@ -20,7 +20,7 @@ include:
   - components.s3server.install
   - components.s3server.config
   - components.s3server.start
-  - components.s3server.sanity_check
+#  - components.s3server.sanity_check
 
 Generate s3server checkpoint flag:
   file.managed:
