@@ -31,13 +31,10 @@ import logging
 import random
 import subprocess
 import time
-import yaml
 import string
-import secrets
 from shlex import quote
-
 from pathlib import Path, PosixPath
-
+import yaml
 from . import config
 
 from .errors import (
@@ -406,13 +403,16 @@ def node_hostname_validator(
             raise ValueError(msg)
 
 
-# Generate random 14 character password
 def generate_random_secret():
+    """
+    Generates a random 14 character password
+    """
 
+    special_characters = '!#$%&-.@_'
     passwd_seed = random.sample(string.ascii_uppercase,
                                 4) + random.sample(string.digits,
                                                    3) + random.sample(string.ascii_lowercase,
-                                                                      4) + random.sample(string.punctuation,
+                                                                      4) + random.sample(special_characters,
                                                                                          3)
     random.shuffle(passwd_seed)
 
