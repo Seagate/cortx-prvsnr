@@ -17,7 +17,7 @@
 
 from enum import Enum
 
-ROOT_PASSWD = 'root'
+ROOT_PASSWD = 'root'  # nosec
 
 
 class ScaleFactorT(Enum):

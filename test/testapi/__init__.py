@@ -14,3 +14,26 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+from .integration import (
+    root_passwd,
+    hosts_num,
+    hosts_num_module,
+    setup_hosts,
+    HostMeta
+)
+
+fixtures = [
+    root_passwd,
+    hosts_num,
+    hosts_num_module,
+    setup_hosts,
+]
+
+__all__ = [
+    'root_passwd',
+    'hosts_num',
+    'hosts_num_module',
+    'setup_hosts',
+    'HostMeta'
+]

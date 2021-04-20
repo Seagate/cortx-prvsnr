@@ -40,7 +40,6 @@ class HostMeta:
 
     label = attr.ib(converter=lambda v: '' if not v else v, default='')
     machine_name = attr.ib(default=None)
-    hostname = attr.ib(default=None)
     interface = attr.ib(default=None)
     host_user = attr.ib(default=None)
 
@@ -82,7 +81,7 @@ class HostMeta:
         if self._tmpdir is None:
             tmpdir_function = self.request.getfixturevalue('tmpdir_function')
             # TODO non linux systems
-            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')
+            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')  # nosec
             self.host.check_output("mkdir -p {}".format(self._tmpdir))
         return self._tmpdir
 

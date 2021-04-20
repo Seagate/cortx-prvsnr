@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import sys
 import docker
 import time
 import json
@@ -36,13 +37,14 @@ from .helper import (
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
 
-from .testapi.integration import (  # noqa: F401
-    root_passwd,
-    hosts_num,
-    hosts_num_module,
-    setup_hosts,
-    HostMeta
-)
+from . import testapi
+from .testapi.integration import HostMeta
+
+mod = sys.modules[__name__]
+
+# Note. Just to make that explicit and lint tools happy
+for fixture in testapi.fixtures:
+    setattr(mod, fixture.__name__, fixture)
 
 logger = logging.getLogger(__name__)
 
