@@ -47,3 +47,5 @@ Sync grains data after refresh enclosure_id:
     - saltutil.refresh_grains: []
     - require:
       - Replace enclosure id in grains
+    - watch_in:
+      - Sync salt data

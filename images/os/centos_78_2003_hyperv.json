@@ -1,0 +1,42 @@
+{
+  "variables": {
+    "version": "0.0.1"
+  },
+  "builders": [
+    {
+      "type": "hyperv-iso",
+      "boot_command": [
+        "<tab><wait>",
+        " ks=http://10.127.112.194:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>"
+      ],
+      "http_directory": "./",
+      "cpus": 2,
+      "disk_size": 16000,
+      "disk_additional_size": [
+        40000,
+        40000
+      ],
+      "memory": 2048,
+      "switch_name": "Default Switch",
+      "iso_urls": [
+        "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-2003.iso",
+        "https://vault.centos.org/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
+      ],
+      "iso_target_path": "C:/Users/714502/Projects/iso/CentOS-7-x86_64-Minimal-2003.iso",
+      "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+      "ssh_username": "cortxub",
+      "ssh_password": "opensource!",
+      "ssh_timeout" : "60m",
+      "boot_wait": "10s",
+      "enable_secure_boot": false,
+      "enable_dynamic_memory": true,
+      "generation": 1,
+      "guest_additions_mode": "disable",
+      "keep_registered": true,
+      "communicator":"ssh",
+      "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+      "vm_name": "cortxhost.localdomain",
+      "skip_compaction": false
+    }
+  ]
+}

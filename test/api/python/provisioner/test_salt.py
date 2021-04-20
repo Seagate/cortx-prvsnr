@@ -282,6 +282,7 @@ def test_salt_runner_cmd(monkeypatch, eauth):
     _check_exc_attrs(excinfo.value, expected_value)
 
 
+@pytest.mark.outdated
 def test_salt_client_cmd(monkeypatch):  # noqa: C901 FIXME
     salt_cmd_args = []
     salt_cmd_res = {}

@@ -48,7 +48,9 @@ codacy_require = [
     'bandit==1.7.0',
     'prospector==1.3.1',
     'pylint==2.5.3',
-    'radon==4.3.2'
+    'radon==4.3.2',
+    'pyflakes==2.1.1',
+    'pep257==0.7.0'
 ]
 
 

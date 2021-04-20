@@ -1,0 +1,227 @@
+/**
+* Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published
+* by the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <https://www.gnu.org/licenses/>.
+* For any questions about this software or licensing,
+* please email opensource@seagate.com or cortx-questions@seagate.com.
+*/
+
+node {
+    properties([
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
+        parameters([
+            string(defaultValue: '', description: 'FQDN of VM to deploy on.', name: 'HOST_NAME', trim: true),
+            string(defaultValue: '', description: '''Build having following directory structure:
+                3rd_party/
+                cortx_iso/
+                iso/
+                python_deps/
+                README.txt
+                RELEASE.INFO
+                THIRD_PARTY_RELEASE.INFO''', name: 'BUILD_URL', trim: true),
+            password(description: 'root user password for the target node.', name: 'PASSWORD'),
+            booleanParam(
+                defaultValue: false,
+                description: '''
+                    enable debugging/step-walking through various stages of deployment
+                ''',
+                name: 'DEBUG'
+            )
+        ])
+    ])
+
+    cleanWs()
+
+    def remote = [:]
+    remote.name = "srvnode-1"
+    remote.host = HOST_NAME
+    remote.user = 'root'
+    remote.password = PASSWORD
+    remote.allowAnyHosts = true
+
+    withEnv(["CORTX_RELEASE_REPO=${BUILD_URL}","SSHPASS=${PASSWORD}"]) {
+        ansiColor('xterm') {
+            stage("SSH Connectivity Check") {
+                echo "DEBUG is set to: ${DEBUG}"
+                if (PASSWORD.isEmpty()) {
+                    error "Target VM password cannot be empty."
+                }
+
+                sshCommand remote: remote, command: "exit"
+                echo "Successfully connected to VM ${HOST_NAME}!"
+            }
+
+            stage("Build URL Check") {
+                sh label: '', returnStatus: true, script: 'test 200 == $(curl -ksI ${BUILD_URL}/RELEASE.INFO|grep "HTTP/1.1" | cut -d " " -f 2)'
+            }
+
+            stage("Storage Configuration Check") {
+                try {
+                    sshCommand remote: remote, command: """
+                        test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
+                    """
+                    echo "The VM has 6+ number of attached disks. Check Successful!"
+                } catch(Exception ex) {
+                    error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
+                }
+            }
+
+            stage("Prepare config.ini") {
+                sshCommand remote: remote, command: """
+                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
+                    echo \"\"\"
+                    [srvnode_default]
+                    network.data.private_interfaces=eth3,eth4
+                    network.data.public_interfaces=eth1,eth2
+                    network.mgmt.interfaces=eth0
+                    bmc.user=None
+                    bmc.secret=None
+                    storage.cvg.0.data_devices=\${device_list#*,}
+                    storage.cvg.0.metadata_devices=\${device_list%%,*}
+                    network.data.private_ip=None
+                    storage.durability.sns.data=1
+                    storage.durability.sns.parity=0
+                    storage.durability.sns.spare=0
+
+                    [enclosure_default]
+                    type=virtual
+                    controller.type=virtual
+                    \"\"\" | sed -e 's/^[ \t]*//' > /root/config.ini
+                """
+                sshCommand remote: remote, command: """
+                    echo \"\"\"
+                    [${remote.name}]
+                    hostname=${remote.host}
+                    roles=primary,openldap_server
+
+                    [enclosure-${remote.name.split('-')[1]}]
+                    \"\"\" >> /root/config.ini
+                    sed -ie 's/^[ \t]*//' /root/config.ini
+                """
+                echo "Successfully created config.ini file!"
+            }
+
+            stage("Install Provisioner API") {
+                sshCommand remote: remote, command: """
+                    yum install -y yum-utils
+                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
+                    yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
+
+                    echo '''
+                    [global]
+                    timeout: 60
+                    index-url: $CORTX_RELEASE_REPO/python_deps/
+                    trusted-host: \$(echo $CORTX_RELEASE_REPO | awk -F '/' '{print \$3}')
+                    ''' >/etc/pip.conf
+                    sed -ie 's/^[ \t]*//' /etc/pip.conf
+
+                    yum install --nogpgcheck -y java-1.8.0-openjdk-headless
+                    yum install --nogpgcheck -y python3 sshpass
+                    yum install --nogpgcheck -y python36-m2crypto salt salt-master salt-minion
+                    yum install --nogpgcheck -y cortx-prereq
+                    yum install --nogpgcheck -y python36-cortx-prvsnr
+                    rm -rf /etc/yum.repos.d/*3rd_party*.repo
+                    rm -rf /etc/yum.repos.d/*cortx_iso*.repo
+                    yum clean all
+                    rm -rf /var/cache/yum/
+                    rm -f /etc/pip.conf
+
+                    provisioner --version
+                """
+                echo "Successfully installed Provisioner API!"
+            }
+
+            stage("Bootstrap Provisioner") {
+                sshCommand remote: remote, command: """
+                    yum install -y sshpass
+                    sshpass -p $PASSWORD provisioner setup_provisioner srvnode-1:\$(hostname -f) --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
+                    provisioner configure_setup /root/config.ini 1
+                    salt-call state.apply components.system.config.pillar_encrypt
+                    provisioner confstore_export
+                """
+                echo "Successfully bootstrapped provisioner!"
+            }
+
+            stage("Validate Bootstrap Provisioner") {
+                sshCommand remote: remote, command: """
+                    salt '*' test.ping
+                    salt "*" service.stop puppet
+                    salt "*" service.disable puppet
+                    salt '*' pillar.get release
+                    salt '*' grains.get node_id
+                    salt '*' grains.get cluster_id
+                    salt '*' grains.get roles
+                """
+                echo "Successfully validated bootstrap!"
+            }
+
+            stage("Platform Setup") {
+                sshCommand remote: remote, command: "provisioner deploy_vm --states system --setup-type single"
+                echo "Successfully deployed system states!"
+            }
+
+            stage("3rd Party Software Deployment") {
+                sshCommand remote: remote, command: "provisioner deploy_vm --states prereq --setup-type single"
+                echo "Successfully deployed prereq states!"
+            }
+
+            stage("Foundation Setup") {
+                // if (DEBUG) {
+                //     timeout(30) {
+                //         input 'Proceed with Foundation Deployment Stage?'
+                //     }
+                // }
+                sshCommand remote: remote, command: "provisioner deploy_vm --states utils --setup-type single"
+                echo "Successfully deployed Foundation states!"
+            }
+
+            stage("Data Path States Deployment") {
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with Data Path Stage?'
+                    }
+                }
+                sshCommand remote: remote, command: "provisioner deploy_vm --states iopath --setup-type single"
+                echo "Successfully deployed iopath states!"
+            }
+
+            stage("Control Stack States Deployment") {
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with Control Path Stage?'
+                    }
+                }
+                sshCommand remote: remote, command: "provisioner deploy_vm --states controlpath --setup-type single"
+                echo "Successfully deployed controlpath states!"
+            }
+
+            stage("HA States Deployment") {
+                if (true == DEBUG) {
+                    timeout(30) {
+                        input 'Proceed with HA Setup Stage?'
+                    }
+                }
+                sshCommand remote: remote, command: "provisioner deploy_vm --states ha --setup-type single"
+                echo "Successfully deployed HA states!"
+            }
+        }
+    }
+    
+    sh label: '', script: "mkdir -p ${WORKSPACE}/archives"
+    dir("${WORKSPACE}/archives") {
+        deleteDir()
+        sshGet remote: remote, from: "/root/config.ini", into: "${WORKSPACE}/archives/config.ini", override: true
+        sshGet remote: remote, from: "/opt/seagate/cortx_configs/provisioner_cluster.json", into: "${WORKSPACE}/archives/provisioner_cluster.json", override: true
+        sshGet remote: remote, from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
+        sshGet remote: remote, from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
+    }
+}

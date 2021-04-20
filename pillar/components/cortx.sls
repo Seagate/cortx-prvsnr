@@ -32,9 +32,17 @@ cortx:
       cluster_name: cortx_cluster
       user: hacluster
       secret:
+    kafka:
+      version: 2.13-2.7.0
+      port: 9092
+    zookeeper:
+      # Ref: https://docs.confluent.io/platform/current/zookeeper/deployment.html#multi-node-setup
+      client_port: 2181
+      leaderport_port: 2888
+      election_port: 3888
     support:
       user: cortxsupport
-      password: 
+      password:
   release:
     product: LR2
     setup: cortx

@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import pytest
+
 from provisioner.errors import (
     ProvisionerError, SubprocessCmdError, SaltCmdError,
     PrvsnrTypeDecodeError, SWUpdateRepoSourceError, PillarSetError,
@@ -47,6 +49,7 @@ def test_SaltCmdError_str():
         f"salt command failed, reason {reason}, args {cmd_args}")
 
 
+@pytest.mark.outdated
 def test_PrvsnrTypeDecodeError_str():
     spec_dict = {'1': {'2': '3'}}
     reason = 'some-reason'
@@ -57,6 +60,7 @@ def test_PrvsnrTypeDecodeError_str():
                                                                    reason)
 
 
+@pytest.mark.outdated
 def test_SWUpdateRepoSourceError_str():
     source = 'some-src'
     reason = 'some-reason'
@@ -67,6 +71,7 @@ def test_SWUpdateRepoSourceError_str():
         source, reason)
 
 
+@pytest.mark.outdated
 def test_PillarSetError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
@@ -86,6 +91,7 @@ def test_PillarSetError_repr():
         obj.__class__.__name__, reason, rollback_error)
 
 
+@pytest.mark.outdated
 def test_ClusterMaintenanceError_str():
     enable = True
     reason = 'some-reason'
@@ -112,6 +118,7 @@ def test_ClusterMaintenanceDisableError_init():
     assert obj.reason == reason
 
 
+@pytest.mark.outdated
 def test_SWStackUpdateError_str():
     reason = 'some-reason'
 
@@ -120,6 +127,7 @@ def test_SWStackUpdateError_str():
     assert str(obj) == "failed to update SW stack, reason: {!r}".format(reason)
 
 
+@pytest.mark.outdated
 def test_HAPostUpdateError_str():
     reason = 'some-reason'
 
@@ -129,6 +137,7 @@ def test_HAPostUpdateError_str():
         .format(reason)
 
 
+@pytest.mark.outdated
 def test_ClusterNotHealthyError_str():
     reason = 'some-reason'
 
@@ -138,6 +147,7 @@ def test_ClusterNotHealthyError_str():
         .format(reason)
 
 
+@pytest.mark.outdated
 def test_SWUpdateError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
@@ -157,6 +167,7 @@ def test_SWUpdateError_repr():
         obj.__class__.__name__, reason, rollback_error)
 
 
+@pytest.mark.outdated
 def test_SWUpdateFatalError_str():
     reason = 'some-reason'
     rollback_error = 'some-error'
@@ -166,6 +177,7 @@ def test_SWUpdateFatalError_str():
     assert str(obj) == "FATAL: update failed: {!r}".format(obj)
 
 
+@pytest.mark.outdated
 def test_SSLCertsUpdateError_str():
     prov_obj = ProvisionerError()
     rollback_error = 'some-error'

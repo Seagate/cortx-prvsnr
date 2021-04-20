@@ -15,33 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
 
-Stop zookeeper:
-  cmd.run:
-    - name: ./bin/zookeeper-server-stop.sh -daemon config/zookeeper.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - onlyif: ps ax | grep 'zookeeper' | grep -v grep
-
-Stop kafka:
-  cmd.run:
-    - name: ./bin/kafka-server-stop.sh -daemon config/server.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - onlyif: ps ax | grep 'kafka' | grep -v grep
-
-{% set zookeeper_pid = salt['cmd.shell']("ps ax | grep zookeeper | grep -v grep | awk '{{print $1}}'") %}
-Kill zookeeper process:
-  module.run:
-    - ps.kill_pid:
-      - pid: {{ zookeeper_pid }}
-      - signal: 9
-
-{% set kafka_pid = salt['cmd.shell']("ps ax | grep kafka | grep -v grep | awk '{{print $1}}'") %}
-Kill kafka process:
-  module.run:
-    - ps.kill_pid:
-      - pid: {{ kafka_pid }}
-      - signal: 9
+include:
+  - .stop
 
 Remove java:
   pkg.purged:
@@ -49,7 +25,7 @@ Remove java:
 
 Remove kafka directory:
   file.absent:
-    - name: /opt/kafka/kafka_{{ kafka_version }}
+    - name: /opt/kafka
 
 Remove zookeeper data directory:
   file.absent:
