@@ -17,22 +17,28 @@
 
 from enum import Enum
 from pathlib import Path
+import os
 from typing import Union, Dict, Optional
 
 CONFIG_MODULE_DIR = Path(__file__).resolve().parent
 
 # Note. might be incorrect in case package installation
 
-try:
-    PROJECT_PATH = CONFIG_MODULE_DIR.parents[2]
-except IndexError:
-    PROJECT_PATH = None
+PROJECT_PATH = os.getenv('PROJECT_PATH')
+
+if not PROJECT_PATH:
+    try:
+        PROJECT_PATH = CONFIG_MODULE_DIR.parents[2]
+    except IndexError:
+        PROJECT_PATH = None
 else:
-    # TODO IMPROVE more accurate way for that
-    for path in ('srv', 'pillar', 'files'):
-        if not (PROJECT_PATH / path).is_dir():
-            PROJECT_PATH = None
-            break
+    PROJECT_PATH = Path(PROJECT_PATH).resolve()
+
+# TODO IMPROVE more accurate way for that
+for path in ('srv', 'pillar', 'files'):
+    if not (PROJECT_PATH / path).is_dir():
+        PROJECT_PATH = None
+        break
 
 API_SPEC_PATH = CONFIG_MODULE_DIR / 'api_spec.yaml'
 PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'

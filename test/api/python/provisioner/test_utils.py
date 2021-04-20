@@ -118,6 +118,7 @@ def test_run_subprocess_cmd_raises_exception(mocker, patch_logging):
     assert "FileNotFoundError" in str(exec.value.reason)
 
 
+@pytest.mark.outdated
 def test_run_subprocess_cmd_happy_path(mocker):
     cmd_name = "ls -l"
     return_value = "some-return-value"

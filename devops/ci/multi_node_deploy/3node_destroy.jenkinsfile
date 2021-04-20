@@ -53,10 +53,11 @@ node {
     remotes[2] = remote_node
 
     ansiColor('xterm') {
+
         for ( remote in remotes.reverse() ) {
             stage("${remote.name}: SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
-                echo "Successful connected to VM ${remote.host}!"
+                echo "Successful connected to VM ${remote.host}."
             }
         }    
 
@@ -79,6 +80,11 @@ node {
                 command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
             """
             echo "Successful teardown: IO-Path"
+        }
+
+        stage("Teardown: Foundation") {
+            sshCommand remote: remotes[0], command: "provisioner destroy --states utils --setup-type 3_node"
+            echo "Successful teardown: Foundation"
         }
 
         stage("Teardown: 3rd_Party") {
@@ -111,7 +117,7 @@ node {
                     systemctl status salt-minion >/dev/null && systemctl stop salt-minion || true
                     systemctl status salt-master >/dev/null && systemctl stop salt-master || true
                 """
-                echo "Sucessfully stopped salt and gluster services"
+                echo "Sucessfully stopped salt and gluster services."
             }
 
             stage("${remote.name}: Uninstall rpms") {
@@ -133,7 +139,7 @@ node {
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
                     test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
                 """
-                echo "Successfully uninstalled rpms"
+                echo "Successfully uninstalled rpms."
             }
 
             stage("${remote.name}: Cleanup bricks and other directories") {
@@ -155,7 +161,14 @@ node {
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
-                echo "Successfully removed file and directories!"
+                echo "Successfully removed file and directories."
+            }
+
+            stage("${remote.name}: Cleanup logs") {
+                sshCommand remote: remote, command: """
+                    rm -rf /var/log/seagate
+                """
+                echo "Successfully removed logs from the node ${remote.host}."
             }
         }
     }

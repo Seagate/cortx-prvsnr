@@ -37,7 +37,7 @@ class ScaleFactorT(Enum):
 
     NODE1 = 1
     NODE3 = 3
-    NODE6 = 6
+    # NODE6 = 6
     SINGLE = 1  # an alias
 
 

@@ -76,6 +76,9 @@ node {
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
+                    storage.durability.sns.data=1
+                    storage.durability.sns.parity=0
+                    storage.durability.sns.spare=0
 
                     [enclosure_default]
                     type=virtual
@@ -158,7 +161,14 @@ node {
                 """
                 echo "Successfully deployed prereq states!"
             }
-            
+
+            stage("Foundation Setup") {
+                sshCommand remote: remote, command: """
+                    provisioner deploy_vm --states utils --setup-type single
+                """
+                echo "Successfully deployed Foundation states!"
+            }
+
             catchError {
                 timeout(30) {
                     input 'Proceed with Data Path Stage?'

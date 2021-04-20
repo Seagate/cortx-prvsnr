@@ -612,12 +612,61 @@ class NTP(ParamGroupInputBase):
 @attr.s(auto_attribs=True)
 class Hostname(ParamGroupInputBase):
     _param_group = 'hostname'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="hostname to be set"
+    )
 
 
 @attr.s(auto_attribs=True)
 class Firewall(ParamGroupInputBase):
     _param_group = 'firewall'
 
+
+@attr.s(auto_attribs=True)
+class MgmtNetwork(ParamGroupInputBase):
+    _param_group = 'mgmt_network'
+    mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node mgmt gateway IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface netmask",
+        validator=Validation.check_ip4
+    )
+    mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network interfaces"
+    )
+
+
+@attr.s(auto_attribs=True)
+class DataNetwork(ParamGroupInputBase):
+    _param_group = 'data_network'
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data network interfaces"
+    )
 
 class ReleaseParams():
     _param_group = 'release'
@@ -1112,7 +1161,28 @@ class SWUpgradeRepo(SWUpdateRepo):
 
             return res
         elif self.is_remote():
-            return self.source
+            return {
+                f'{config.OS_ISO_DIR}': {
+                    'source': f'{self.source}/{config.OS_ISO_DIR}',
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_ISO_DIR}': {
+                    'source': f'{self.source}/{config.CORTX_ISO_DIR}',
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                    'source': (f'{self.source}/'
+                               f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_PYTHON_ISO_DIR}': {
+                    'source': f'{self.source}/{config.CORTX_PYTHON_ISO_DIR}',
+                    'is_repo': False
+                }
+            }
         else:
             # source = 'iso' if self.source.is_file() else 'dir'
             iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
@@ -1156,7 +1226,7 @@ class SWUpgradeRemoveRepo(ParamDictItemInputBase):
         # TODO: It is the rough version of regex because we didn't have the
         #  final representation of the release version from the RE team.
         validator=attr.validators.matches_re(
-            "^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
+            r"^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
         converter=str
     )
 

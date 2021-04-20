@@ -372,7 +372,7 @@ class Set(CommandParserFillerMixin):
     pre_states: List[State] = attr.Factory(list)
     post_states: List[State] = attr.Factory(list)
 
-    _run_args_type = RunArgsUpdate
+    _run_args_type = RunArgsPillarSet
 
     # TODO input class type
     @classmethod
@@ -383,8 +383,8 @@ class Set(CommandParserFillerMixin):
             post_states=[State(state) for state in states.get('post', [])]
         )
 
-    def _apply(self, params, targets):
-        pillar_updater = PillarUpdater(targets)
+    def _apply(self, params, targets, local):
+        pillar_updater = PillarUpdater(targets, local=local)
 
         pillar_updater.update(params)
         try:
@@ -412,8 +412,8 @@ class Set(CommandParserFillerMixin):
             StatesApplier.apply(self.post_states)
             raise
 
-    def _run(self, params, targets):
-        self._apply(params, targets=targets)
+    def _run(self, params, targets, local):
+        self._apply(params, targets=targets, local=local)
 
     def dynamic_validation(self, params, targets):
         pass
@@ -422,7 +422,8 @@ class Set(CommandParserFillerMixin):
     # - class for pillar file
     # - caching (load once)
     @api_lock
-    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
+    def run(self, *args, targets=ALL_MINIONS, dry_run=False,
+            local=False, **kwargs):
         # static validation
         if len(args) == 1 and isinstance(args[0], self.input_type):
             params = args[0]
@@ -434,7 +435,7 @@ class Set(CommandParserFillerMixin):
         if dry_run:
             return res
 
-        return self._run(params, targets)
+        return self._run(params, targets, local)
 
 
 # TODO IMPROVE EOS-8940 move to separate module

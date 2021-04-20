@@ -68,6 +68,9 @@ deploy_states = dict(
         "misc_pkgs.statsd",
         "misc_pkgs.consul.install"
     ],
+    utils=[
+        "cortx_utils"
+    ],
     sync=[
         "sync.software.rabbitmq"
     ],
@@ -206,6 +209,7 @@ class DeployVM(Deploy):
         if run_args.states is None:  # all states
             self._run_states('system', run_args)
             self._run_states('prereq', run_args)
+            self._run_states('utils', run_args)
 
             if run_args.setup_type != SetupType.SINGLE:
                 self._run_states('sync', run_args)
@@ -221,6 +225,10 @@ class DeployVM(Deploy):
             if 'prereq' in run_args.states:
                 logger.info("Deploying the prereq states")
                 self._run_states('prereq', run_args)
+
+            if 'utils' in run_args.states:
+                logger.info("Deploying foundation states")
+                self._run_states('utils', run_args)
 
             if (
                 'sync' in run_args.states and

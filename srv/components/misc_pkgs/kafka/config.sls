@@ -15,24 +15,26 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
 
-{%- set node_ids = {} -%}
-{%- set node_hosts = [] -%}
-{% set server_nodes = [] -%}
-{% for node in pillar['cluster'].keys() -%}
-{% if "srvnode-" in node -%}
+{% set node_ids = {} %}
+{% set node_hosts = [] %}
+{% set server_nodes = [] %}
+{% for node in pillar['cluster'].keys() %}
+{% if "srvnode-" in node %}
 {% do server_nodes.append(node) %}
-{% endif -%}
-{% endfor -%}
-{%- for node in server_nodes -%}
-    {%- set x=node_ids.update({node:loop.index}) -%}
-    {%- set y=node_hosts.append(pillar['cluster'][node]['hostname'] + ":2181") -%}
-{%- endfor -%}
+{% endif %}
+{% endfor %}
+{% for node in server_nodes %}
+    {% set x = node_ids.update({node:loop.index}) %}
+    {% set y = node_hosts.append( pillar['cluster'][node]['network']['data']['private_fqdn'] +
+      ":" +
+      (pillar['cortx']['software']['zookeeper']['client_port'] | string)
+    ) %}
+{% endfor %}
 
 Update zoopkeeper cofig:
   file.managed:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/zookeeper.properties
+    - name: /opt/kafka/config/zookeeper.properties
     - source: salt://components/misc_pkgs/kafka/files/zookeeper.properties
     - template: jinja
     - backup: '.bak'
@@ -45,7 +47,7 @@ Create zookeeper id:
 
 Update broker_id in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^broker.id=.*
     - repl: broker.id={{ node_ids[grains['id']] }}
     - append_if_not_found: True
@@ -53,14 +55,21 @@ Update broker_id in kafka config:
 
 Update log_dir in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^log.dirs=.*
     - repl: log.dirs=/var/log/kafka
     - append_if_not_found: True
 
+update listner in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^#listeners=.*
+    - repl: listeners=PLAINTEXT://{{pillar['cluster'][grains['id']]['network']['data']['private_fqdn']}}:{{pillar['cortx']['software']['kafka']['port']}}
+    - append_if_not_found: True
+
 Update connections in kafka config:
   file.replace:
-    - name: /opt/kafka/kafka_{{ kafka_version }}/config/server.properties
+    - name: /opt/kafka/config/server.properties
     - pattern: ^zookeeper.connect=.*
     - repl: zookeeper.connect={{ node_hosts|join(',')}}
     - append_if_not_found: True

@@ -4,21 +4,22 @@ support>password=>{{ pillar['system']['service-user']['password'] }}
 cortx>software>csm>user=>{{ pillar['system']['service-user']['name'] }}
 cortx>software>csm>secret=>{{ pillar['system']['service-user']['password'] }}
 cortx>software>openldap>root>user=>{{ pillar['cortx']['software']['openldap']['root']['user'] }}
-cortx>software>openldap>root>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['openldap']['root']['secret'])) }}
+cortx>software>openldap>root>secret=>{{ pillar['cortx']['software']['openldap']['root']['secret'] }}
 cortx>software>openldap>sgiam>user=>{{ pillar['cortx']['software']['openldap']['sgiam']['user'] }}
-cortx>software>openldap>sgiam>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['openldap']['sgiam']['secret'])) }}
+cortx>software>openldap>sgiam>secret=>{{ pillar['cortx']['software']['openldap']['sgiam']['secret'] }}
 cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
-cortx>software>corosync>secret=>{{ salt['lyveutil.decrypt']('cortx','{0}'.format(pillar['cortx']['software']['corosync-pacemaker']['secret'])) }}
+cortx>software>corosync>secret=>{{ pillar['cortx']['software']['corosync-pacemaker']['secret'] }}
 cortx>software>common>message_bus_type=>kafka
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
-cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:9092
+cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:{{ pillar['cortx']['software']['kafka']['port'] }}
 {%- endfor %}
 cortx>release>setup=>{{ pillar['cortx']['release']['setup'] }}
 cortx>release>product=>{{ pillar['cortx']['release']['product'] }}
 cluster>{{ cluster_id }}>name=>{{ pillar['corosync-pacemaker']['cluster_name'] }}
 cluster>{{ cluster_id }}>site_count=>1
 cluster>{{ cluster_id }}>site>storage_set_count=>{{ pillar['cluster']['storage_sets'].keys() | length }}
-cluster>{{ cluster_id }}>network>management>virtual_host=>{{ pillar['cluster']['mgmt_vip'] }}
+{% set mgmt_vip = salt['mine.get']('srvnode-1', 'node_ip_addrs') | dictsort() %}
+cluster>{{ cluster_id }}>network>management>virtual_host=>{{ pillar['cluster']['mgmt_vip'] if pillar['cluster']['mgmt_vip'] else mgmt_vip[0][1][pillar['cluster']['srvnode-1']['network']['mgmt']['interfaces'][0]][0] }}
 cluster>{{ cluster_id }}>network>search_domains=>{{ pillar['cluster']['search_domains'] }}
 cluster>{{ cluster_id }}>network>dns_servers=>{{ pillar['cluster']['dns_servers'] }}
 {%- for storage_set in pillar['cluster']['storage_sets'].keys() %}
@@ -28,9 +29,9 @@ cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name=>{{ storag
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['machine_id'] }}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]=>{{ pillar['storage'][pillar['cluster'][node]['storage']['enclosure']]['enclosure_id'] }}
 {%- endfor %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>data=>4
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>parity=>2
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>spare=>2
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>data=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['data'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>parity=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['parity'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>sns>spare=>{{ pillar['cluster']['srvnode-1']['storage']['durability']['sns']['spare'] }}
 {%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
 server_node>{{ machine_id }}>name=>{{ node }}
@@ -42,7 +43,7 @@ server_node>{{ machine_id }}>roles[{{ loop.index - 1 }}]=>{{ role }}
 server_node>{{ machine_id }}>type=>{{ pillar['cluster'][node]['node_type'] }}
 server_node>{{ machine_id }}>bmc>ip=>{{ salt["pillar.get"]('cluster:{0}:bmc:ip'.format(node), '') }}
 server_node>{{ machine_id }}>bmc>user=>{{ salt["pillar.get"]('cluster:{0}:bmc:user'.format(node), '') }}
-server_node>{{ machine_id }}>bmc>secret=>{{ salt['lyveutil.decrypt']('cluster','{0}'.format(pillar['cluster'][node]['bmc']['secret'])) }}
+server_node>{{ machine_id }}>bmc>secret=>{{ pillar['cluster'][node]['bmc']['secret'] }}
 {%- for iface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
 server_node>{{ machine_id }}>network>management>interfaces[{{ loop.index - 1 }}]=>{{ iface }}
 {%- endfor %}
@@ -59,7 +60,8 @@ server_node>{{ machine_id }}>network>data>gateway=>{{ pillar['cluster'][node]['n
 server_node>{{ machine_id }}>network>data>netmask=>{{ pillar['cluster'][node]['network']['data']['netmask'] }}
 server_node>{{ machine_id }}>network>data>public_fqdn=>{{ pillar['cluster'][node]['network']['data']['public_fqdn'] }}
 server_node>{{ machine_id }}>network>data>private_fqdn=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}
-server_node>{{ machine_id }}>network>data>roaming_ip=>{{ pillar['cluster'][node]['network']['data']['roaming_ip'] }}
+{% set roaming_ip = pillar['cluster'][node]['network']['data']['roaming_ip'] %}
+server_node>{{ machine_id }}>network>data>roaming_ip=>{{ roaming_ip if roaming_ip else "127.0.0.1" }}
 server_node>{{ machine_id }}>network>data>interface_type=>{{ pillar['cluster'][node]['network']['data']['interface_type'] }}
 server_node>{{ machine_id }}>network>data>transport_type=>{{ pillar['cluster'][node]['network']['data']['transport_type'] }}
 server_node>{{ machine_id }}>storage>cvg_count=>{{ pillar['cluster'][node]['storage']['cvg'] | length }}
@@ -94,7 +96,7 @@ storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>storage_set
 {%- endfor %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>type=>{{ pillar['storage'][enclosure]['controller']['type'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>user=>{{ pillar['storage'][enclosure]['controller']['user'] }}
-storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secret=>{{ salt['lyveutil.decrypt']('storage','{0}'.format(pillar['storage'][enclosure]['controller']['secret'])) }}
+storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secret=>{{ pillar['storage'][enclosure]['controller']['secret'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>ip=>{{ pillar['storage'][enclosure]['controller']['primary']['ip'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>primary>port=>{{ pillar['storage'][enclosure]['controller']['primary']['port'] }}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>secondary>ip=>{{ pillar['storage'][enclosure]['controller']['secondary']['ip'] }}

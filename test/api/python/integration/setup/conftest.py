@@ -21,8 +21,6 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Optional, Union
 
-import test.helper as h
-
 from provisioner.vendor import attr
 from provisioner import inputs, utils
 
@@ -70,12 +68,6 @@ class SetupOpts(inputs.ParserMixin):
         validator=attr.validators.optional(
             utils.validator_path_exists
         )
-    )
-
-
-def pytest_addoption(parser):
-    h.add_options(
-        parser, SetupOpts.prepare_args()
     )
 
 
@@ -231,3 +223,14 @@ def hosts_spec(hosts_spec, hosts, tmpdir_function, custom_opts, logdir_host):
                 str(custom_opts.logdir)
             ] = {'bind': str(logdir_host), 'mode': 'rw'}
     return res
+
+
+def pytest_collection_modifyitems(session, config, items):
+    for item in items:
+        if (
+            hasattr(item, 'callspec')
+            and item.callspec.params.get('source') == SourceT.LOCAL
+            and not item.callspec.params.get('ha')
+            and item.callspec.params.get('hosts_num') == ScaleFactorT.SINGLE
+        ):
+            item.add_marker(pytest.mark.verified)
