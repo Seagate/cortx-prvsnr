@@ -23,7 +23,7 @@
 
     {% set single_iso_repo = {version: repos.pop(version, None)} %}
 
-    { % if single_iso_repo % }
+    { % if single_iso_repo[version] % }
 
     # to mount the single ISO first
     { { setup_repos(single_iso_repo, base_dir) } }

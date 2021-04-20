@@ -252,10 +252,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
 
-            self._prepare_single_iso_for_apply(candidate_repo)
+            if not candidate_repo.is_remote():
+                self._prepare_single_iso_for_apply(candidate_repo)
 
-            base_dir = self._get_mount_dir()
-            candidate_repo.target_build = base_dir
+                base_dir = self._get_mount_dir()
+                candidate_repo.target_build = base_dir
+
             candidate_repo.enabled = False
 
             logger.debug("Configure pillars and apply states for "
@@ -263,12 +265,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             self._apply(candidate_repo, targets=targets)
 
-            iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+            if not candidate_repo.is_remote():
+                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-            sw_upgrade_bundle_validator = FileSchemeValidator(
-                                                    SW_UPGRADE_BUNDLE_SCHEME)
+                sw_upgrade_bundle_validator = FileSchemeValidator(
+                    SW_UPGRADE_BUNDLE_SCHEME
+                )
 
-            if not candidate_repo.is_remote(): 
                 try:
                     sw_upgrade_bundle_validator.validate(iso_mount_dir)
                 except ValidationError as e:
