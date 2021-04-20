@@ -30,6 +30,16 @@ from .vendor import attr
 from . import utils
 
 
+# TODO: EOS-6601:
+#  Not covered cases:
+#  - non-atomic operation of locking (thus possible race conditions)
+#  - make granular and allow some concurrent commands if they impact
+#    different targets
+
+
+LockContext = attr.make_class("LockContext", ('lock_file', 'pid', 'targets'))
+
+
 @attr.s(auto_attribs=True)
 class Lock:
     """Base locking class that provides API for blocking concurrent
@@ -97,7 +107,7 @@ class Lock:
         None
 
         """
-        exc = None
+        exc_ctx = None
         for lock_file in self._get_lock_files():
             try:
                 lock_metadata = utils.load_json(lock_file)
@@ -113,11 +123,9 @@ class Lock:
                     if (target and pid and
                             check_salt_minions_are_ready(targets=[target]) and
                             self._check_pid(pid, target)):
-                        exc = LockFileAcquireError(
-                            lock_file,
-                            f"Process with PID='{pid}' is "
-                            f"running on target='{target}'"
-                        )
+
+                        exc_ctx = LockContext(lock_file=lock_file, pid=pid,
+                                              targets=target)
                         # NOTE: to clean all orphan lock files
                         continue  # raise an exception later
 
@@ -127,8 +135,12 @@ class Lock:
             #  3. The process by given pid is not running
             lock_file.unlink()
 
-        if exc:
-            raise exc
+        if exc_ctx:
+            raise LockFileAcquireError(
+                exc_ctx.lock_file,
+                f"Process with PID='{exc_ctx.pid}' is "
+                f"running on target='{exc_ctx.targets}'"
+            )
 
     def acquire(self):
         """
