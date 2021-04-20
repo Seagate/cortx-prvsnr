@@ -15,7 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import json
+import logging
 import os
+from enum import Enum
 from pathlib import Path
 from string import Template
 from typing import Iterable, Callable
@@ -30,6 +32,8 @@ from .vendor import attr
 from . import utils
 
 
+logger = logging.getLogger(__name__)
+
 # TODO: EOS-6601:
 #  Not covered cases:
 #  - non-atomic operation of locking (thus possible race conditions)
@@ -38,6 +42,16 @@ from . import utils
 
 
 LockContext = attr.make_class("LockContext", ('lock_file', 'pid', 'targets'))
+
+
+class LockFileRemovalReasons(Enum):
+    """It is a simple enumeration class with all possible variants of
+    Lock file removal reasons
+
+    """
+    IS_MALFORMED = "Lock file metadata is malformed"
+    IS_EMPTY = "Lock file metadata is empty"
+    IS_ORPHANED = "Lock file is orphaned"
 
 
 @attr.s(auto_attribs=True)
@@ -113,9 +127,14 @@ class Lock:
                 lock_metadata = utils.load_json(lock_file)
             except json.decoder.JSONDecodeError:
                 # Metadata is not well-formatted as proper json
-                pass  # delete this lock file in the end of the loop
+                # NOTE: delete this lock file in the end of the loop
+                removal_reason = LockFileRemovalReasons.IS_MALFORMED
             else:
+                removal_reason = LockFileRemovalReasons.IS_EMPTY
+
                 if lock_metadata:
+                    removal_reason = LockFileRemovalReasons.IS_ORPHANED
+
                     target = lock_metadata.get(
                         LockMetaDataFields.SOURCE_TARGET.value, None)
                     pid = lock_metadata.get(
@@ -133,6 +152,8 @@ class Lock:
             #  1. Necessary metadata fields are missed
             #  2. The lock file initiator target is not alive
             #  3. The process by given pid is not running
+            logger.warning(f"Delete lock file '{lock_file.resolve()}': "
+                           f"{removal_reason}")
             lock_file.unlink()
 
         if exc_ctx:
