@@ -39,7 +39,7 @@ from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
 from ..utils import (load_yaml,
                      load_checksum_from_file,
                      load_checksum_from_str,
-                     HashInfo
+                     HashInfo, load_yaml_str
                      )
 from .validator import (DirValidator,
                         FileSchemeValidator,
@@ -272,32 +272,38 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 try:
                     sw_upgrade_bundle_validator.validate(iso_mount_dir)
                 except ValidationError as e:
-                    logger.debug("Catalog structure validation error occurred: "
-                             f"{e}")
+                    logger.debug(
+                        f"Catalog structure validation error occurred: {e}")
                     raise SWUpdateRepoSourceError(
                             str(repo.source),
                             f"Catalog structure validation error occurred:{e}"
                     ) from e
 
                 release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
-                            f'{RELEASE_INFO_FILE}')
+                                f'{RELEASE_INFO_FILE}')
+                try:
+                    metadata = load_yaml(release_file)
+                except Exception as exc:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                    )
             else:
-                release_file = '{candidate_repo}/cortx_iso/{RELEASE_INFO_FILE}'
+                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
+                                f'{RELEASE_INFO_FILE}')
                 r = requests.get(release_file)
-                with open("RELEASE.INFO",'wb') as f:
-                    f.write(r.content)
-                release_file = "RELEASE.INFO"
 
-            try:
-                metadata = load_yaml(release_file)
-            except Exception as exc:
-                raise SWUpdateRepoSourceError(
-                            str(repo.source),
-                            f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
-                )
-            else:
-                repo.metadata = metadata
-                logger.debug(f"Resolved metadata {metadata}")
+                try:
+                    metadata = load_yaml_str(r.content.decode("utf-8"))
+                except Exception as exc:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Failed to load '{RELEASE_INFO_FILE}' "
+                        f"file from remote URL: {exc}"
+                    )
+
+            repo.metadata = metadata
+            logger.debug(f"Resolved metadata {metadata}")
 
             # the metadata file includes release info
             # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field

@@ -1113,23 +1113,26 @@ class SWUpgradeRepo(SWUpdateRepo):
             return res
         elif self.is_remote():
             return {
-                f'os': {
-                    'source': (f'{self.source}/os'),
+                f'{config.OS_ISO_DIR}': {
+                    'source': f'{self.source}/os/{config.OS_ISO_DIR}',
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'cortx_iso': {
-                    'source': (f'{self.source}/cortx_iso'),
+                f'{config.CORTX_ISO_DIR}': {
+                    'source': f'{self.source}/cortx_iso/'
+                              f'{config.CORTX_ISO_DIR}',
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'3rd_party': {
-                    'source': (f'{self.source}/3rd_party'),
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                    'source': f'{self.source}/3rd_party/'
+                              f'{config.CORTX_3RD_PARTY_ISO_DIR}',
                     'is_repo': True,
                     'enabled': self.enabled
                 },
-                f'python_deps': {
-                    'source': f'{self.source}/python_deps',
+                f'{config.CORTX_PYTHON_ISO_DIR}': {
+                    'source': f'{self.source}/python_deps/'
+                              f'{config.CORTX_PYTHON_ISO_DIR}',
                     'is_repo': False
                 }
             }
