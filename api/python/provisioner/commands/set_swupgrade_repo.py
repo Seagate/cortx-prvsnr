@@ -353,7 +353,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         return repo.metadata
 
-    def _run(self, params: inputs.SWUpgradeRepo, targets: str):
+    def _run(self, params: inputs.SWUpgradeRepo, targets: str,
+             local: bool = False):
         repo = params
 
         base_dir = self._get_mount_dir()
@@ -368,11 +369,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 f"for the '{repo.release}' release"
             )
             _repo = inputs.SWUpgradeRepo(values.UNDEFINED, repo.release)
-            self._apply(_repo, targets=targets, local=False)
+            self._apply(_repo, targets=targets, local=local)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_single_iso_for_apply(repo)
 
         # call default set logic (set pillar, call related states)
-        self._apply(repo, targets)
+        self._apply(repo, targets, local=local)
         return repo.metadata

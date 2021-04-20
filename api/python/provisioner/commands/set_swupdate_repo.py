@@ -317,7 +317,8 @@ class SetSWUpdateRepo(Set):
         return repo.metadata
 
     # TODO rollback
-    def _run(self, params: inputs.SWUpdateRepo, targets: str):
+    def _run(self, params: inputs.SWUpdateRepo, targets: str,
+             local: bool = False):
         repo = params
 
         # TODO remove that block once that check fails the dynamic validation
@@ -326,14 +327,12 @@ class SetSWUpdateRepo(Set):
                 "removing already enabled repository "
                 f"for the '{repo.release}' release"
             )
-            _repo = inputs.SWUpdateRepo(
-                repo.release, values.UNDEFINED
-            )
-            self._apply(_repo, targets=targets, local=False)
+            _repo = inputs.SWUpdateRepo(repo.release, values.UNDEFINED)
+            self._apply(_repo, targets=targets, local=local)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
 
         # call default set logic (set pillar, call related states)
-        self._apply(repo, targets=targets, local=False)
+        self._apply(repo, targets=targets, local=local)
         return repo.metadata
