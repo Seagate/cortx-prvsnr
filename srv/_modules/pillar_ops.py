@@ -99,6 +99,8 @@ def _generate_secret():
 
     from provisioner.utils import generate_random_secret
     secret = generate_random_secret()
-    if __grains__['lr-serial-number']:
-        secret = secret + __grains__['lr-serial-number']
+    serial_number = getattr(sys.modules[__name__], '__grains__')['lr-serial-number']
+    if serial_number:
+        secret = secret + serial_number
     return secret
+
