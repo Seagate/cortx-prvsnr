@@ -15,15 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
 Stop kafka:
   cmd.run:
     - name: ./bin/kafka-server-stop.sh -daemon config/server.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - cwd: /opt/kafka
     - onlyif: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+
+#TODO: find better solution to add delay
+Wait for kafka to stop:
+  module.run:
+    - test.sleep:
+      - length: 10
+    - require:
+      - Stop kafka
 
 Stop zookeeper:
   cmd.run:
     - name: ./bin/zookeeper-server-stop.sh -daemon config/zookeeper.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
+    - cwd: /opt/kafka
     - onlyif: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - require:
+      - Wait for kafka to stop
