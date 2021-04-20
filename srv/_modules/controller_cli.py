@@ -55,7 +55,7 @@ def fetch_enclosure_serial():
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
     _cmd = (f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt}"
            " | grep -A2 Serial | tail -1 > /etc/enclosure-id")
-    run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()
+    run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()  # nosec
 
     _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():

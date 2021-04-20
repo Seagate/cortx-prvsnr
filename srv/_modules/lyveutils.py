@@ -83,14 +83,14 @@ def validate_firewall():  # noqa: C901
     for port, service in zip(validate_ports, validate_services):
 
         tcp_port = run_subprocess_cmd([f"ss -ltrp | grep {port}"],
-                                     check=False, shell=True).stdout
+                                     check=False, shell=True).stdout  # nosec
         tcp_svc = run_subprocess_cmd([f"ss -lt | grep {service}"],
-                                     check=False, shell=True).stdout
+                                     check=False, shell=True).stdout  # nosec
 
         udp_port = run_subprocess_cmd([f"ss -lurp | grep {port}"],
-                                     check=False, shell=True).stdout
+                                     check=False, shell=True).stdout  # nosec
         udp_svc = run_subprocess_cmd([f"ss -lu | grep {service}"],
-                                     check=False, shell=True).stdout
+                                     check=False, shell=True).stdout  # nosec
 
         # Either of TCP/ UDP port and service should pass
         if not (
