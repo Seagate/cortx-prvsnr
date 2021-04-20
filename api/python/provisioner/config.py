@@ -159,6 +159,9 @@ SSH_PUB_KEY = Path('/root/.ssh/id_rsa_prvsnr.pub')
 ALL_MINIONS = '*'
 ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
+# NOTE: used mostly by provisioner Lock files since '*' can not be used as a
+# part of file name
+ALL_TARGETS_ALIAS = 'all'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 CLI_SPEC_PY_OBJS_PREFIX = '__py__:'

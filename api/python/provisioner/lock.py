@@ -20,8 +20,10 @@ from pathlib import Path
 from string import Template
 from typing import Iterable, Callable
 
-from .config import PRVSNR_LOCKS_FILES_DIR, LockMetaDataFields
-from .errors import LockFileError
+from .config import (PRVSNR_LOCKS_FILES_DIR, LockMetaDataFields,
+                     ALL_TARGETS_ALIAS
+                     )
+from .errors import LockFileAcquireError
 from .salt import local_minion_id, function_run
 from .salt_minion import check_salt_minions_are_ready
 from .vendor import attr
@@ -35,12 +37,13 @@ class Lock:
     """
 
     targets: str = attr.ib(
-        default="all"
+        default=ALL_TARGETS_ALIAS
     )
     _lockfile: str = attr.ib(
         init=False,
         default=None
     )
+    # TODO: We can update some of our constant to use a Template-based approach
     _lock_filename_tmpl = Template("provisioner.$TARGETS.lock")
 
     @staticmethod
@@ -109,8 +112,11 @@ class Lock:
                     if (target and pid and
                             check_salt_minions_are_ready(targets=[target]) and
                             self._check_pid(pid, target)):
-                        raise LockFileError(f"Process with PID='{pid}' is "
-                                            f"running on target='{target}'")
+                        raise LockFileAcquireError(
+                            lock_file,
+                            f"Process with PID='{pid}' is "
+                            f"running on target='{target}'"
+                        )
 
             # NOTE: Delete file in the following cases:
             #  1. Necessary metadata fields are missed
@@ -199,7 +205,7 @@ def api_lock(fun) -> Callable:
     """
 
     def wrapper(*args, **kwargs):
-        with Lock():
+        with Lock(targets=ALL_TARGETS_ALIAS):
             return fun(*args, **kwargs)
 
     return wrapper
