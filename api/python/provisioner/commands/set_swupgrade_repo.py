@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
+import tempfile
 from pathlib import Path
 from typing import Type
 from configparser import ConfigParser
@@ -180,14 +181,15 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         """
         logger.debug("Start Python index validation")
         test_package_name = next(index_path.iterdir())
-        cmd = (f"pip3 download {test_package_name} --dest=/tmp/ "
-               f"--find-links file://{index_path.resolve()}")
-        try:
-            cmd_run(cmd, targets=local_minion_id(),
-                    fun_kwargs=dict(python_shell=True))
-        except Exception as e:
-            raise SWUpdateRepoSourceError(
-                index_path, "Python index validation failed: "f"{e}")
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cmd = (f"pip3 download {test_package_name} --dest={tmp_dir.name}/ "
+                   f"--find-links file://{index_path.resolve()}")
+            try:
+                cmd_run(cmd, targets=local_minion_id(),
+                        fun_kwargs=dict(python_shell=True))
+            except Exception as e:
+                raise SWUpdateRepoSourceError(
+                    index_path, "Python index validation failed: "f"{e}")
 
         logger.debug("Python index validation succeeded")
 
