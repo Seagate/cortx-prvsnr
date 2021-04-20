@@ -197,6 +197,7 @@ PRVSNR_CLI_OUTPUT = tuple(list(PRVSNR_CLI_MACHINE_OUTPUT) + ['plain'])
 PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
 
 PRVSNR_CONFIG_FILE = 'provisioner.conf'
+PIP_CONFIG_FILE = '/etc/pip.conf'
 
 # logging
 PRVSNR_LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')

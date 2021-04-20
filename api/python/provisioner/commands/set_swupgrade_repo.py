@@ -17,8 +17,9 @@
 import logging
 from pathlib import Path
 from typing import Type
+from configparser import ConfigParser
 
-from ..salt import copy_to_file_roots
+from ..salt import copy_to_file_roots, cmd_run, local_minion_id
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
 from ..config import (REPO_CANDIDATE_NAME,
@@ -30,7 +31,8 @@ from ..config import (REPO_CANDIDATE_NAME,
                       CORTX_ISO_DIR,
                       CORTX_3RD_PARTY_ISO_DIR,
                       CORTX_PYTHON_ISO_DIR,
-                      OS_ISO_DIR, HashType
+                      OS_ISO_DIR, HashType,
+                      PIP_CONFIG_FILE
                       )
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
@@ -41,6 +43,7 @@ from ..utils import (load_yaml,
                      HashInfo
                      )
 from .validator import (DirValidator,
+                        FileValidator,
                         FileSchemeValidator,
                         ReleaseInfoValidator,
                         YumRepoDataValidator,
@@ -63,7 +66,11 @@ SW_UPGRADE_BUNDLE_SCHEME = {
             "repodata": YumRepoDataValidator(),
         },
         required=True),
-    CORTX_PYTHON_ISO_DIR: DirValidator(required=False),
+    CORTX_PYTHON_ISO_DIR: DirValidator(
+        {
+            "index.html": FileValidator(required=True)
+        },
+        required=False),
     OS_ISO_DIR: DirValidator(
         {
             RELEASE_INFO_FILE: ReleaseInfoValidator(required=False),
@@ -149,6 +156,40 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"'{release}' has been already enabled"
                     )
                 )
+
+    @staticmethod
+    def _validate_python_index(index_path: Path):
+        """
+        Perform the dynamic validation for SW upgrade Python index by
+        the given index path `index_path`
+
+        Parameters
+        ----------
+        index_path: Path
+            Path to the SW upgrade Python index
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        SWUpdateRepoSourceError
+            If Python index validation fails
+
+        """
+        logger.debug(f"Start Python index validation")
+        test_package_name = next(index_path.iterdir())
+        cmd = (f"pip3 download {test_package_name} --dest=/tmp/ "
+               f"--find-links file://{index_path.absolute()}")
+        try:
+            cmd_run(cmd, targets=local_minion_id(),
+                    fun_kwargs=dict(python_shell=True))
+        except Exception as e:
+            raise SWUpdateRepoSourceError(
+                index_path, "Python index validation failed: "f"{e}")
+
+        logger.debug(f"Python index validation succeeded")
 
     @staticmethod
     def _get_hash_params(
@@ -321,6 +362,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 if repo_info[IS_REPO_KEY]:
                     self._single_repo_validation(release,
                                                  dir_entry.name)
+                elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
+                    self._validate_python_index(dir_entry)
 
             repo.release = release
 
@@ -332,6 +375,54 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._apply(candidate_repo, targets)
 
         return repo.metadata
+
+    @staticmethod
+    def _setup_python_index(repo: inputs.SWUpgradeRepo):
+        """
+        Setup Python index
+
+        Parameters
+        ----------
+        repo: inputs.SWUpgradeRepo
+            SW upgrade repository parameters
+
+        Returns
+        -------
+
+        """
+        def setup_default():
+            _config = ConfigParser()
+
+            _config['global'] = {
+                'timeout': '60',
+                'index-url': f'file:///{python_index_path}'
+            }
+            return _config
+
+        iso_mount_dir = repo.target_build / repo.release
+        python_index_path = iso_mount_dir / CORTX_PYTHON_ISO_DIR
+        if python_index_path in iso_mount_dir.iterdir():
+            if not Path(PIP_CONFIG_FILE).exists():
+                config = setup_default()
+
+            else:
+                config = ConfigParser()
+                config.read(PIP_CONFIG_FILE)
+                extra_index_url = config['global'].get('extra-index-url', None)
+                if extra_index_url:
+                    if str(python_index_path) not in extra_index_url:
+                        # NOTE: if is needed to avoid index duplication
+                        config['global']['extra-index-url'] = (
+                            f"{extra_index_url}\n"
+                            f"file://{python_index_path.absolute()}"
+                        )
+                else:
+                    config['global']['extra-index-url'] = (
+                        f"file://{python_index_path.absolute()}"
+                    )
+
+            with open(PIP_CONFIG_FILE, 'w') as conf_fh:
+                config.write(conf_fh)
 
     def _run(self, params: inputs.SWUpgradeRepo, targets: str):
         repo = params
@@ -355,4 +446,5 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         # call default set logic (set pillar, call related states)
         self._apply(repo, targets)
+        self._setup_python_index(repo)
         return repo.metadata
