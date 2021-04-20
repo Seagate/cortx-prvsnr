@@ -178,7 +178,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             If Python index validation fails
 
         """
-        logger.debug(f"Start Python index validation")
+        logger.debug("Start Python index validation")
         test_package_name = next(index_path.iterdir())
         cmd = (f"pip3 download {test_package_name} --dest=/tmp/ "
                f"--find-links file://{index_path.absolute()}")
@@ -189,7 +189,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             raise SWUpdateRepoSourceError(
                 index_path, "Python index validation failed: "f"{e}")
 
-        logger.debug(f"Python index validation succeeded")
+        logger.debug("Python index validation succeeded")
 
     @staticmethod
     def _get_hash_params(
