@@ -180,10 +180,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         """
         logger.debug("Start Python index validation")
-        test_package_name = next(index_path.iterdir())
+        test_package_name = next(index_path.iterdir()).name
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cmd = (f"pip3 download {test_package_name} --dest={tmp_dir.name}/ "
-                   f"--find-links file://{index_path.resolve()}")
+            cmd = (f"pip3 download {test_package_name} --dest={tmp_dir}/ "
+                   f"--index-url file://{index_path.resolve()}")
             try:
                 cmd_run(cmd, targets=local_minion_id(),
                         fun_kwargs=dict(python_shell=True))
