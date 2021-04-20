@@ -1,3 +1,7 @@
+:warning:
+**This doc is out-of-date at the moment.
+
+
 # Build Verification Testing Pipeline
 
 The [pipeline](../devops/bvt/Jenkinsfile.bvt) automates new releases verification using

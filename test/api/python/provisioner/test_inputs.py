@@ -525,6 +525,7 @@ def test_inputs_NTP():
 # ### Network ###
 
 
+@pytest.mark.outdated
 def test_inputs_NETWORK():
     assert NetworkParams._param_group == 'network'
     for param in _param_spec:
@@ -614,6 +615,7 @@ def test_inputs_SWUpdateRepo_attrs():
     assert fattr.default is UNCHANGED
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(inputs, ('error',))])
 def test_inputs_SWUpdateRepo_source_init(tmpdir_function, patch_logging):
     some_release = '1.2.3'
@@ -858,6 +860,7 @@ def test_ParserFiller_fill_parser_input_checks(mocker):
     assert add_args_m.call_count == len(expected_calls)
 
 
+@pytest.mark.outdated
 def test_ParserFiller_extract_positional_args_happy_path():
     SC = attr.make_class("SC", {
         "x": attr.ib(
@@ -874,6 +877,7 @@ def test_ParserFiller_extract_positional_args_happy_path():
     assert ret == ([attr.fields(SC).x], {})
 
 
+@pytest.mark.outdated
 def test_ParserFiller_extract_positional_args_no_metadata_argparser():
     SC = attr.make_class("SC", {
         "x": attr.ib(
@@ -886,6 +890,7 @@ def test_ParserFiller_extract_positional_args_no_metadata_argparser():
     assert ret == ([], attr.fields_dict(SC))
 
 
+@pytest.mark.outdated
 def test_ParserFiller_extract_positional_args_default_is_not_NOTHING():
     SC = attr.make_class("SC", {
         "x": attr.ib(

@@ -1,0 +1,63 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+---
+- defaults:
+    name: global
+
+    github_org: Seagate
+    defaut_commit_id: main
+    jenkinsfile-path: 'devops/ci/Jenkinsfile.ci'
+
+    default_topic:
+    level_regex: (unit|integration_mocked|integration|system)
+    topic_regex: (^$|deploy|config|upgrade|upgrade_bundle)
+
+    # github pull request builder trigger defaults
+    ghprb_cron: 'H/5 * * * *'
+    ghprb_user_whitelist:
+      - andkononykhin
+    ghprb_org_whitelist:
+      - Seagate
+    ghprb_allow_white_org_as_admins: true
+    ghprb_admins: []
+    ghprb_target_branches:
+      - 'pre-cortx-1.0'
+    ghprb_trigger_prefix: 'ci:'
+    ghprb_trigger_pattern: 'this'
+    ghprb_only_trigger_phrase: false
+    ghprb_status_context:
+
+    # GitHub Source Plugin (Multibranch for GitHub)
+    #   - https://plugins.jenkins.io/github-branch-source/
+    # JJB support:
+    #   - https://jenkins-job-builder.readthedocs.io/en/latest/project_workflow_multibranch.html#project_multibranch.github_scm
+    ghsource_periodic_folder_trigger: 5m
+    ghsource_head_filter_regex: '.*'
+    ghsource_pr_destined_regex: '.*'
+    ghsource_trigger_pr_comment_regex: ''
+    # Valid options: no-pr, only-pr, all, false. (default ‘no-pr’)
+    ghsource_branch_discovery: no-pr
+    # Valid options: merge-current, current, both, false. (default ‘merge-current’)
+    ghsource_discover_pr_origin: merge-current
+    # Valid options: merge-current, current, both, false. (default ‘merge-current’)
+    ghsource_discover_pr_forks_strategy: merge-current
+    # Valid options: contributors, everyone, permission or nobody. (default ‘contributors’)
+    ghsource_discover_pr_forks_trust: permission
+    ghsource_discover_tags: false
+    ghsource_do_not_fetch_tags: true
+    ghsource_notification_context:
