@@ -63,7 +63,7 @@ Update log_dir in kafka config:
 update listner in kafka config:
   file.replace:
     - name: /opt/kafka/config/server.properties
-    - pattern: ^#listeners=*
+    - pattern: ^#listeners=.*
     - repl: listeners=PLAINTEXT://{{pillar['cluster'][grains['id']]['network']['data']['private_fqdn']}}:{{pillar['cortx']['software']['kafka']['port']}}
     - append_if_not_found: True
 
