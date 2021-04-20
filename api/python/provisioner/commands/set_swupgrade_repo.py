@@ -281,6 +281,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                             str(repo.source),
                             f"Catalog structure validation error occurred:{e}"
                     ) from e
+                else:
+                    logger.info("Catalog structure validation succeeded")
 
                 release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
                                 f'{RELEASE_INFO_FILE}')
@@ -324,22 +326,21 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                             f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            else:
-                logger.info("Catalog structure validation succeeded")
+            if not candidate_repo.is_remote():
+                # NOTE: this block only for local SW upgrade ISO bundles
+                repo_map = candidate_repo.pillar_value
+                for dir_entry in (entry for entry in
+                                  Path(iso_mount_dir).iterdir() if
+                                  entry.is_dir()):
+                    repo_info = repo_map.get(dir_entry.name, None)
 
-            repo_map = candidate_repo.pillar_value
-            for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
-                              if entry.is_dir()):
-                repo_info = repo_map.get(dir_entry.name, None)
-
-                if repo_info is None:
-                    raise SWUpdateRepoSourceError(
-                                    str(repo.source),
-                                    "Unexpected repository in single ISO: "
-                                    f"{dir_entry.name}")
-                if repo_info[IS_REPO_KEY]:
-                    self._single_repo_validation(release,
-                                                 dir_entry.name)
+                    if repo_info is None:
+                        raise SWUpdateRepoSourceError(
+                                        str(repo.source),
+                                        "Unexpected repository in single ISO: "
+                                        f"{dir_entry.name}")
+                    if repo_info[IS_REPO_KEY]:
+                        self._single_repo_validation(release, dir_entry.name)
 
             repo.release = release
 

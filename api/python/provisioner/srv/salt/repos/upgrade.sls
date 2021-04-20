@@ -23,12 +23,12 @@
 
     {% set single_iso_repo = {version: repos.pop(version, None)} %}
 
-    { % if single_iso_repo[version] % }
+    {% if single_iso_repo[version] %}
 
-    # to mount the single ISO first
-    { { setup_repos(single_iso_repo, base_dir) } }
+        # to mount the single ISO first
+        {{ setup_repos(single_iso_repo, base_dir) }}
 
-    { % endif % }
+    {% endif %}
 
     {% set upgrade_repos = dict() %}
     {% for release in repos %}
