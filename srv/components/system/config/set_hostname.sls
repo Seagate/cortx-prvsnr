@@ -15,12 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Update hostname file permissions:
+Make hostname file modifiable:
   cmd.run:
     - name: "chattr -i /etc/hostname"
 
 Set hostname:
-  cmd.run:
-    - name: "hostnamectl set-hostname {{ pillar['cluster'][grains['id']]['hostname'] }}"
+  network.system:
+    - name: set_hostname
+    - hostname: {{ pillar['cluster'][grains['id']]['hostname'] }}
+    - apply_hostname: True
+    - retain_settings: True
     - require:
-      - Update hostname file permissions
+      - Make hostname file modifiable
+
+Restore hostname file protection:
+  cmd.run:
+    - name: "chattr +i /etc/hostname"
+    - require:
+      - Make hostname file modifiable
