@@ -104,7 +104,8 @@ def storage_device_config():
 
 
 def jbod_storage_config():
-    _target_node = __grains__['id']
+
+    _target_node = getattr(sys.modules[__name__], '__grains__')['id']
     _data_field = "cluster/{0}/storage/data_devices".format(_target_node)
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
