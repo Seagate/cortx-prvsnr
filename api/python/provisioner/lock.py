@@ -97,6 +97,7 @@ class Lock:
         None
 
         """
+        exc = None
         for lock_file in self._get_lock_files():
             try:
                 lock_metadata = utils.load_json(lock_file)
@@ -112,17 +113,22 @@ class Lock:
                     if (target and pid and
                             check_salt_minions_are_ready(targets=[target]) and
                             self._check_pid(pid, target)):
-                        raise LockFileAcquireError(
+                        exc = LockFileAcquireError(
                             lock_file,
                             f"Process with PID='{pid}' is "
                             f"running on target='{target}'"
                         )
+                        # NOTE: to clean all orphan lock files
+                        continue  # raise an exception later
 
             # NOTE: Delete file in the following cases:
             #  1. Necessary metadata fields are missed
             #  2. The lock file initiator target is not alive
             #  3. The process by given pid is not running
             lock_file.unlink()
+
+        if exc:
+            raise exc
 
     def acquire(self):
         """
