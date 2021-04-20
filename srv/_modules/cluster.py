@@ -72,7 +72,7 @@ def storage_device_config():
                 time.sleep(_sleep_time)
 
                 logger.info(f"Command to populate multipath devices: {cmd}")
-                device_list = run_subprocess_cmd([cmd], shell=True).stdout.splitlines()
+                device_list = run_subprocess_cmd([cmd], check=False, shell=True).stdout.splitlines()
 
                 if ( len(device_list) > 0 ):
                     logger.info("[ INFO ] Found multipath devices...")
@@ -88,7 +88,7 @@ def storage_device_config():
         metadata_devices.append(f"/dev/disk/by-id/dm-name-{device_list[0]}")
         metadata_field = f"cluster/{node}/storage/metadata_devices".format(node)
         provisioner.pillar_set(metadata_field, metadata_devices)
-        
+
         data_device = [f"/dev/disk/by-id/dm-name-{device}" for device in device_list[1:]]
         data_field = f"cluster/{node}/storage/data_devices"
         provisioner.pillar_set(data_field, data_device)
@@ -109,7 +109,7 @@ def jbod_storage_config():
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
     _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
-    _device_list = run_subprocess_cmd([_cmd], shell=True).stdout.splitlines()
+    _device_list = run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()
 
     metadata_devices = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
     data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]

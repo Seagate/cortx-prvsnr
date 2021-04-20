@@ -78,14 +78,19 @@ def validate_firewall():  # noqa: C901
     # TODO: Future scope: as utilities increase in Salt,
     # opt for wrapper around run_subprocess_cmd and
     # use it in salt utility modules as srv/_utils/<file>.py
+    # Ref: https://github.com/Seagate/cortx-prvsnr/pull/1111#discussion_r614055880
 
     for port, service in zip(validate_ports, validate_services):
 
-        tcp_port = run_subprocess_cmd([f"ss -ltrp | grep {port}"], shell=True).stdout
-        tcp_svc = run_subprocess_cmd([f"ss -lt | grep {service}"], shell=True).stdout
+        tcp_port = run_subprocess_cmd([f"ss -ltrp | grep {port}"],
+                                     check=False, shell=True).stdout
+        tcp_svc = run_subprocess_cmd([f"ss -lt | grep {service}"],
+                                     check=False, shell=True).stdout
 
-        udp_port = run_subprocess_cmd([f"ss -lurp | grep {port}"], shell=True).stdout
-        udp_svc = run_subprocess_cmd([f"ss -lu | grep {service}"], shell=True).stdout
+        udp_port = run_subprocess_cmd([f"ss -lurp | grep {port}"],
+                                     check=False, shell=True).stdout
+        udp_svc = run_subprocess_cmd([f"ss -lu | grep {service}"],
+                                     check=False, shell=True).stdout
 
         # Either of TCP/ UDP port and service should pass
         if not (

@@ -38,6 +38,7 @@ from provisioner.utils import run_subprocess_cmd
 from pathlib import Path
 logger = logging.getLogger(__name__)
 
+
 def fetch_enclosure_serial():
 
     current_node = __grains__['id']
@@ -54,7 +55,7 @@ def fetch_enclosure_serial():
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
     _cmd = (f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt}"
            " | grep -A2 Serial | tail -1 > /etc/enclosure-id")
-    run_subprocess_cmd([_cmd], shell=True).stdout.splitlines()
+    run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()
 
     _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():
@@ -79,7 +80,7 @@ def fetch_enclosure_serial():
         _n_words = 1
         for i in _words:
             if i == " ":
-               _n_words += 1
+                _n_words += 1
 
         if ((_line_cnt > 1) or (_n_words > 1)):
             msg = "ERROR: The contents of /etc/enclosure-id looks incorrect, failing"

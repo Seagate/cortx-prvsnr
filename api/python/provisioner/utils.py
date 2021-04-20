@@ -294,18 +294,18 @@ def ensure(  # noqa: C901 FIXME
                 raise ProvisionerError(f'no more tries for {name}')
 
 
-def run_subprocess_cmd(cmd, **kwargs):
+def run_subprocess_cmd(cmd, check=True, **kwargs):
     _kwargs = dict(
         universal_newlines=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        check=check
     )
 
     _kwargs.update(kwargs)
 
     if isinstance(cmd, str):
         cmd = cmd.split()
-        _kwargs['check'] = True
 
     try:
         # TODO IMPROVE EOS-8473 logging level
