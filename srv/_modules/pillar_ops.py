@@ -85,7 +85,8 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
                     if decrypt:
                         provisioner.pillar_set(path + '/' + key, val)
                     else:
-                        logger.debug(f"Setting pillar {path + '/' + key} to {val}")
+                        logger.debug(
+                            f"Setting pillar {path + '/' + key} to {val}")
                         provisioner.pillar_set(
                             path + '/' + key,
                             str(cipher.Cipher.encrypt(cipher_key,
@@ -96,9 +97,10 @@ def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
 
 def _generate_secret():
 
-    passwd_strength = 12
-    passwd_seed = (string.ascii_letters + string.digits)
+    from provisioner.utils import generate_random_secret
+    secret = generate_random_secret()
+    serial_number = getattr(sys.modules[__name__], '__grains__')['lr-serial-number']
+    if serial_number:
+        secret = secret + serial_number
+    return secret
 
-    return ''.join(
-        [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
-    )
