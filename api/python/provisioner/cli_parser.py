@@ -87,7 +87,7 @@ def parse_args(args=None, commands: Optional[List] = None):
     general_group = parser_common.add_argument_group('general')
     general_group.add_argument(
         "--version", action='store_true',
-        help="show version and quit"
+        help="show version and exit"
     )
 
     auth_group = parser_common.add_argument_group('authentication')

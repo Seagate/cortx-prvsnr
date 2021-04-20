@@ -3,6 +3,8 @@ include provisioner/api_spec.yaml
 include provisioner/cli_spec.yaml
 include provisioner/attrs_spec.yaml
 include provisioner/params_spec.yaml
+include provisioner/cli_spec.yaml
+include provisioner/attrs_spec.yaml
 include provisioner/provisioner.conf
 
 recursive-include provisioner LICENSE LICENSE* *LICENSE*

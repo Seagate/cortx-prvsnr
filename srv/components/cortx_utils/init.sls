@@ -19,4 +19,6 @@ include:
   - .install
   - .post_install
   - .config
+{% if grains['id'] == 'srvnode-1' %}
   - .sanity_check
+{% endif %}
