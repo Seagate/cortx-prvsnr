@@ -43,7 +43,7 @@ def decrypt(component, secret):
     from cortx.utils.security.cipher import Cipher
 
     retval = None
-    cluster_id = __grains__['cluster_id']
+    cluster_id = __grains__['cluster_id']    # noqa: F821
     cipher_key = Cipher.generate_key(cluster_id, component)
 
     if secret:
@@ -61,7 +61,7 @@ def validate_firewall():  # noqa: C901
     """
     validate = False
     ret_code = False
-    _target_node = __grains__['id']
+    _target_node = __grains__['id']    # noqa: F821
     data = provisioner.pillar_get()
     fw_pillar = data[_target_node]["firewall"]
 
