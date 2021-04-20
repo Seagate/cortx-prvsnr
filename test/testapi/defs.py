@@ -15,29 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import pytest
-from typing import List
 from enum import Enum
 
-
-from test.conftest import HostMeta
-
-from test.testapi import defs
+ROOT_PASSWD = 'root'
 
 
-class RunT(Enum):
-    """Modes of setup run"""
+class ScaleFactorT(Enum):
+    """Types of setup relative to nodes number"""
 
-    REMOTE_CLI = 'remote_cli'       # logic is run on the host system via CLI
-    REMOTE_API = 'remote_api'       # via API
-    ONTARGET_CLI = 'ontarget_cli'   # logic is run on a target system via CLI
-    # ONTARGET_API = 'ontarget_api' # via API
-
-ScaleFactorT = defs.ScaleFactorT
-
-
-class SourceT(Enum):
-    """Types of sources for setup"""
-
-    LOCAL = 'local'
-    ISO = 'iso'
+    NODE1 = 1
+    NODE3 = 3
+    # NODE6 = 6
+    SINGLE = 1  # an alias

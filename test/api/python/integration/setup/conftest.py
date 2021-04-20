@@ -26,7 +26,6 @@ from provisioner import inputs, utils
 
 from . helper import (
     RunT, ScaleFactorT, SourceT,
-    create_hosts, set_root_passwd
 )
 
 
@@ -76,11 +75,6 @@ def custom_opts_t():
     return SetupOpts
 
 
-@pytest.fixture(scope='session')
-def root_passwd():
-    return 'root'
-
-
 @pytest.fixture(scope='module')
 def env_level():
     return 'setup'
@@ -107,13 +101,6 @@ def ha(request, hosts_num):
         pytest.skip()
     else:
         return request.param
-
-
-@pytest.fixture
-def setup_hosts(request, hosts_num, root_passwd, mlocalhost):
-    mhosts = create_hosts(request, hosts_num)
-    set_root_passwd(mhosts, root_passwd)
-    return mhosts
 
 
 @pytest.fixture
