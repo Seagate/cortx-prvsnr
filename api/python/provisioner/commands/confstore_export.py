@@ -79,7 +79,7 @@ class ConfStoreExport(CommandParserFillerMixin):
                 cipher_key, value.encode("utf-8")
             ).decode("utf-8")
         except cipher.CipherInvalidToken:
-            logger.warning("Decryption for {key} failed as key already decrypted ")
+            logger.warning(f"Decryption for {key} failed as key already decrypted ")
 
         root_node = key.split(self.key_delimiter)[0]
 
