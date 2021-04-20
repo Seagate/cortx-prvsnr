@@ -98,7 +98,8 @@ setup(
     install_requires=[
         'PyYAML',
         'salt == 3002.2',
-        'packaging >= 16.8'
+        'packaging >= 16.8',
+        'requests>=2.14.2'
     ],  # TODO
     setup_requires=([] + pytest_runner),
     extras_require={

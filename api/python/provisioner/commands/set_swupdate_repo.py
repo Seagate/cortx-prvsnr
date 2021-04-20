@@ -239,7 +239,7 @@ class SetSWUpdateRepo(Set):
             logger.debug("Configuring update candidate repo for validation")
             self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
             # general check from pkg manager point of view
             try:
@@ -312,12 +312,13 @@ class SetSWUpdateRepo(Set):
             # remove the repo
             candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
         return repo.metadata
 
     # TODO rollback
-    def _run(self, params: inputs.SWUpdateRepo, targets: str):
+    def _run(self, params: inputs.SWUpdateRepo, targets: str,
+             local: bool = False):
         repo = params
 
         # TODO remove that block once that check fails the dynamic validation
@@ -326,14 +327,12 @@ class SetSWUpdateRepo(Set):
                 "removing already enabled repository "
                 f"for the '{repo.release}' release"
             )
-            _repo = inputs.SWUpdateRepo(
-                repo.release, values.UNDEFINED
-            )
-            self._apply(_repo, targets=targets)
+            _repo = inputs.SWUpdateRepo(repo.release, values.UNDEFINED)
+            self._apply(_repo, targets=targets, local=local)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
 
         # call default set logic (set pillar, call related states)
-        self._apply(repo, targets=targets)
+        self._apply(repo, targets=targets, local=local)
         return repo.metadata

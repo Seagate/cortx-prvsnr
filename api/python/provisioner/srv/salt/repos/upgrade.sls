@@ -21,10 +21,14 @@
 
 {% for version, repos in pillar['release']['upgrade']['repos'].items() %}
 
-    {% set single_iso_repo = {version: repos.pop(version)} %}
+    {% set single_iso_repo = {version: repos.pop(version, None)} %}
 
-    # to mount the single ISO first
-    {{ setup_repos(single_iso_repo, base_dir) }}
+    {% if single_iso_repo[version] %}
+
+        # to mount the single ISO first
+        {{ setup_repos(single_iso_repo, base_dir) }}
+
+    {% endif %}
 
     {% set upgrade_repos = dict() %}
     {% for release in repos %}
