@@ -641,6 +641,8 @@ class MgmtNetwork(ParamGroupInputBase):
         _param_group, descr="node management network interfaces"
     )
 
+
+@attr.s(auto_attribs=True)
 class DataNetwork(ParamGroupInputBase):
     _param_group = 'data_network'
     data_public_ip: str = ParamGroupInputBase._attr_ib(
