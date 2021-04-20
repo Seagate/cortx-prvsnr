@@ -54,6 +54,7 @@ def conf_cmd(conf_file, conf_key):
 
     logger.debug(f"Setup config file: {conf_file}")
 
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
     confstore_url = __pillar__['provisioner']['common_config']['confstore_url']
     ret_val = ''
     with open(conf_file, 'r') as fd:

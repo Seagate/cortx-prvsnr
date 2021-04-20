@@ -44,12 +44,12 @@ def fetch_enclosure_serial():
     current_node = getattr(sys.modules[__name__], '__grains__')['id']
 
     current_enclosure = "enclosure-" + ((current_node).split('-'))[1]
-    pillar = getattr(sys.modules[__name__], '__pillar__')
-    ctrl_cli_utility = pillar['provisioner']['storage']['controller']['cli_utility_path']
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
+    ctrl_cli_utility = __pillar__['provisioner']['storage']['controller']['cli_utility_path']
 
-    host = pillar['storage'][current_enclosure ]['controller']['primary']['ip']
-    user = pillar['storage'][current_enclosure]['controller']['user']
-    secret = pillar['storage'][current_enclosure]['controller']['secret']
+    host = __pillar__['storage'][current_enclosure ]['controller']['primary']['ip']
+    user = __pillar__['storage'][current_enclosure]['controller']['user']
+    secret = __pillar__['storage'][current_enclosure]['controller']['secret']
     logs = "/var/log/seagate/provisioner/controller-cli.log"
     _opt = "--show-license"
 

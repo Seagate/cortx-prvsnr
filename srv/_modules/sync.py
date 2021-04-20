@@ -18,6 +18,7 @@
 import logging
 import os
 import subprocess
+import sys
 import yaml
 
 from pathlib import Path
@@ -39,6 +40,9 @@ def sync_files(component="provisioner"):
     /var/lib/seagate/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
+
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
+    __grains__ = getattr(sys.modules[__name__], '__grains__')
 
     # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
@@ -132,6 +136,9 @@ def backup_files(component="provisioner"):
     /var/lib/srvnode-1/provisioner/provisioner_custom_config.conf
     on srvnode-2.
     """
+
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
+    __grains__ = getattr(sys.modules[__name__], '__grains__')
 
     # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
@@ -237,6 +244,9 @@ def restore_files(component="provisioner"):
     /var/lib/seagate/provisioner/srvnode-1/provisioner_custom_config.conf
     on srvnode-2.
     """
+
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
+    __grains__ = getattr(sys.modules[__name__], '__grains__')
 
     # setup.yaml is source of backup:files list
     yaml_file = Path(f'/opt/seagate/cortx/{component}/conf/setup.yaml')
