@@ -23,7 +23,7 @@ include:
 Update ha user:
   user.present:
     - name: {{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
-    - password: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['cortx']['software']['corosync-pacemaker']['secret']) }}
+    - password: {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['corosync-pacemaker']['secret']) }}
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
