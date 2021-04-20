@@ -61,11 +61,35 @@ BUILD_BUNDLE_SCRIPT = (
 if not BUILD_BUNDLE_SCRIPT.exists():
     BUILD_BUNDLE_SCRIPT = None
 
+
 class BundleT(Enum):
-    """Bundle types"""
+
+    """Bundle types."""
 
     DEPLOY_CORTX = 'deploy-cortx'
     DEPLOY_BUNDLE = 'deploy-bundle'
+    UPGRADE = 'upgrade'
+
+
+class LevelT(Enum):
+
+    """Test level types."""
+
+    NOLEVEL = 'nolevel'
+    UNIT = 'unit'
+    INTEGRATION_MOCKED = 'integration_mocked'
+    INTEGRATION = 'integration'
+    SYSTEM = 'system'
+
+
+class TopicT(Enum):
+
+    """Test topic types."""
+
+    NOTOPIC = 'notopic'
+    DEPLOY = 'deploy'
+    CONFIG = 'config'
+    UPGRADE_BUNDLE = 'upgrade_bundle'
     UPGRADE = 'upgrade'
 
 
@@ -608,7 +632,8 @@ def restore_system_cmd(host, cmd, bin_path='/usr/local/bin'):
 
 
 def fixture_builder(
-    scope, name_with_scope=True, suffix=None, module_name=__name__
+    scope, name_with_scope=True, suffix=None,
+    module_name=__name__, fixture_name=None
 ):
 
     scopes = scope if type(scope) in (list, tuple) else [scope]
@@ -624,7 +649,7 @@ def fixture_builder(
                     ('_' + _scope) if name_with_scope else None,
                     suffix
                 ) if part
-            ]
+            ] if fixture_name is None else [fixture_name]
             _f = pytest.fixture(scope=_scope)(f)
             setattr(_f, '__name__', ''.join(name_parts))
             setattr(mod, _f.__name__, _f)

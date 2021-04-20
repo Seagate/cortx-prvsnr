@@ -64,18 +64,32 @@ set_network:
       # - components.system.network.data.direct
       # - components.ha.corosync-pacemaker.config.cluster_ip
       # - components.ha.corosync-pacemaker.config.mgmt_vip
+set_data_network:
+  type: Set
+  input_type: DataNetwork
+  states:
+    post:
+      - components.system.network.data.public
+      - components.system.network.data.direct
 set_hostname:
   type: Set
   input_type: Hostname
   states:
     post:
       - components.system.config.set_hostname
-set_firewall:
+setup_firewall:
     type: Set
     input_type: Firewall
     states:
       post:
         - components.system.firewall
+set_mgmt_network:
+    type: Set
+    input_type: MgmtNetwork
+    states:
+      post:
+        - components.system.network.mgmt.public
+
 # set_cluster_ip:
 #   type: Set
 #   input_type: ClusterIP

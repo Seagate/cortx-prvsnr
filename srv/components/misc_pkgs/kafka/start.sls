@@ -15,16 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
 
 Start zoopkeper:
   cmd.run:
     - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - unless: ps ax | grep 'zookeeper' | grep -v grep
+    - cwd: /opt/kafka
+    - unless: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+
+#TODO: find better solution to add delay
+Wait for zookeeper to start:
+  module.run:
+    - test.sleep:
+      - length: 10
+    - require:
+      - Start zoopkeper
 
 Start kafka:
   cmd.run:
     - name: ./bin/kafka-server-start.sh -daemon config/server.properties
-    - cwd: /opt/kafka/kafka_{{ kafka_version }}
-    - unless: ps ax | grep 'kafka' | grep -v grep
+    - cwd: /opt/kafka
+    - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+    - require:
+      - Wait for zookeeper to start

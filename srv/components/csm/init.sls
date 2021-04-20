@@ -17,11 +17,10 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
 include:
-  - components.csm.prepare
   - components.csm.install
   - components.csm.config
   - components.csm.start
-  - components.csm.sanity_check.csm_sanity
+#  - components.csm.sanity_check
 
 Generate csm checkpoint flag:
   file.managed:

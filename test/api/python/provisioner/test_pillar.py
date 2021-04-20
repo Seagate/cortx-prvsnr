@@ -396,6 +396,7 @@ def test_pillar_updater_refresh(monkeypatch):
     assert pillar_refresh_called == 1
 
 
+@pytest.mark.outdated
 def test_pillar_updater_component_pillar(monkeypatch, tmpdir_function):
     mock_res = []
 

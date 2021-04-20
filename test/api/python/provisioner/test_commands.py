@@ -97,6 +97,7 @@ def state_fun_executer_m(mocker):
 
 # ### PillarGet ###
 
+@pytest.mark.outdated
 def test_commands_RunArgs_types():
     assert typing.get_type_hints(commands.RunArgs) == {
         'targets': str,
@@ -209,6 +210,7 @@ def test_commands_PillarSet_run_dry_run(patch_logging, mocker):
     pillar_updater_m.assert_not_called()
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 def test_commands_PillarSet_run_happy_path(patch_logging, mocker):
     pillar_updater_m = mocker.patch.object(
@@ -230,6 +232,7 @@ def test_commands_PillarSet_run_happy_path(patch_logging, mocker):
     ]
 
 
+@pytest.mark.outdated
 @pytest.mark.parametrize(
     'rollback_exc', [None, TypeError('someerror')],
     ids=['rollback_ok', 'rollback_failed']
@@ -605,6 +608,7 @@ def mock_swupdate(mocker):
     return (mock_manager, mocks, calls)
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('info',))])
 def test_commands_SWUpdate_run_happy_path(
     patch_logging, mocker, mock_swupdate
@@ -687,6 +691,7 @@ def test_commands_SWUpdate_run_pre_stages_failed(
     assert mock_manager.mock_calls == expected_calls
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 def test_commands_SWUpdate_run_maintenance_enable_failed(
     patch_logging, mocker, mock_swupdate
@@ -727,6 +732,7 @@ def test_commands_SWUpdate_run_maintenance_enable_failed(
     assert mock_manager.mock_calls == expected_calls
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 @pytest.mark.parametrize(
     "rollback_error",
@@ -805,6 +811,7 @@ def test_commands_SWUpdate_run_sw_stack_update_failed(
     assert mock_manager.mock_calls == expected_calls
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 @pytest.mark.parametrize(
     "rollback_error",
@@ -882,6 +889,7 @@ def test_commands_SWUpdate_run_maintenance_disable_failed(
 
 
 # TODO IMPROVE DRY EOS-8940 (very close to upper tests)
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 @pytest.mark.parametrize(
     "rollback_error",
@@ -961,6 +969,7 @@ def test_commands_SWUpdate_run_ha_post_update_failed(
     assert mock_manager.mock_calls == expected_calls
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 @pytest.mark.parametrize(
     "rollback_error",
@@ -1042,6 +1051,7 @@ def test_commands_SWUpdate_run_ensure_cluster_is_healthy_failed(
     assert mock_manager.mock_calls == expected_calls
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 def test_commands_SWUpdate_run_maintenance_enable_at_rollback_failed(
     patch_logging, mocker, mock_swupdate
@@ -1120,6 +1130,7 @@ post_rollback_stages = [
 ]
 
 
+@pytest.mark.outdated
 @pytest.mark.patch_logging([(commands, ('error',))])
 @pytest.mark.parametrize(
     "post_rollback_stage_idx",
@@ -1284,7 +1295,7 @@ def test_commands_ConfigureCortx(monkeypatch):
 
 # ### FWUpdate ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_FWUpdate_happy_path(
     mocker, tmpdir_function, storage_enclosure_data, fw_source,
     controller_cli_script, state_fun_executer_m
@@ -1306,7 +1317,7 @@ def test_commands_FWUpdate_happy_path(
 
 # ### RebootController ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_RebootController_happy_path(
     mocker, tmpdir_function, storage_enclosure_data,
     controller_cli_script, state_fun_executer_m
@@ -1329,7 +1340,7 @@ def test_commands_RebootController_happy_path(
 
 # ### ShutdownController ###
 
-@pytest.mark.integration1
+@pytest.mark.integration_mocked
 def test_commands_ShutdownController_happy_path(
     mocker, tmpdir_function, storage_enclosure_data,
     controller_cli_script, state_fun_executer_m

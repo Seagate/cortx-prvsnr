@@ -601,13 +601,34 @@ def check(check_name, check_args: str = "",
                      check_args_args=check_args, targets=targets)
 
 
-def set_hostname():
+def set_hostname(local=False, **kwargs):
     """
     Set hostname for the system
 
+    :param hostname: (optional) hostname to be set.
+    :param local: (optional) set values in local pillar
+
     :return:
     """
-    return _api_call('set_hostname')
+    return _api_call('set_hostname', local=local, **kwargs)
+
+
+def set_mgmt_network(local=False, **kwargs):
+    """
+
+    Set mgmt network for the system.
+
+    :param mgmt_public_ip: (optional) ip address for
+        node management interface
+    :param mgmt_netmask: (optional) netmask for
+        node management interface
+    :param mgmt_gateway: (optional) gateway ip address for
+        node
+    :param mgmt_interfaces: (optional) network interface for
+        node management interface
+    :param local: (optional) set values in local pillar
+    """
+    return _api_call('set_mgmt_network', local=local, **kwargs)
 
 
 def setup_firewall():
@@ -617,3 +638,22 @@ def setup_firewall():
     :return:
     """
     return _api_call('setup_firewall')
+
+
+def set_data_network(local=False, **kwargs):
+    """
+    Set data network for the system
+
+    :param data_public_ip: (optional) ip address for public data interface
+    :param data_netmask: (optional) netmask for data interface
+    :param data_gateway: (optional) gateway for data interface
+    :param data_public_interfaces: (optional) list of public data interfaces
+
+    :param data_private_ip: (optional) ip address for private data interface
+    :param data_private_interfaces: (optional) list of private data interfaces
+
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_data_network', local=local, **kwargs)

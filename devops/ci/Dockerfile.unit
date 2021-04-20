@@ -1,9 +1,25 @@
 FROM python:3.6-slim-buster
 
-ARG PROJECT_PATH=/tmp/project
+# TODO similar to  images/docker/setup_system_packages.sh
+#      but for debian
+# 'ip' tool is necessary for testinfra to explore interfaces
+RUN apt-get update \
+    && apt-get install -y iproute2 \
+    && rm -rf /var/lib/apt/lists/*
 
+ARG PROJECT_PATH=/tmp/project
 COPY python $PROJECT_PATH
 
+# FIXME not the best choice to install that globally
 RUN pip3 install ${PROJECT_PATH}[test]
-
 RUN rm -rf $PROJECT_PATH
+
+ARG user=test
+ARG group=test
+ARG uid=1000
+ARG gid=1000
+
+RUN groupadd -g ${gid} ${group}
+RUN useradd -c "test user" -d /home/${user} -u ${uid} -g ${gid} -m ${user}
+
+USER ${user}

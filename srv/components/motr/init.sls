@@ -17,11 +17,10 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.motr'.format(grains['id'])) %}
 include:
-  - components.motr.prepare
   - components.motr.install
   - components.motr.config
-  # - components.motr.start
-  - components.motr.sanity_check
+#  - components.motr.start
+#  - components.motr.sanity_check
 
 Generate motr checkpoint flag:
   file.managed:

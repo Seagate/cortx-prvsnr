@@ -17,19 +17,25 @@
 
 {% import_yaml 'components/defaults.yaml' as defaults %}
 
-{% set kafka_version = pillar['commons']['version']['kafka'] %}
+{% set kafka_version = pillar['cortx']['software']['kafka']['version'] %}
 
 Install Java:
   pkg.installed:
     - pkgs:
       - java-1.8.0-openjdk-headless
-      #- java-1.8.0-openjdk-devel
 
 Extract Kafka:
   archive.extracted:
-    - name: /opt/kafka
+    - name: /opt
     - source: {{ defaults.commons.repo.url }}/commons/kafka/kafka_{{ kafka_version }}.tgz
     - keep_source: True
     - clean: True
     - trim_output: True
     - skip_verify: True
+
+Move contents to /opt/kafka:
+  file.rename:
+    - name: /opt/kafka
+    - source: /opt/kafka_{{ kafka_version }}
+    - makedirs: True
+    - force: True

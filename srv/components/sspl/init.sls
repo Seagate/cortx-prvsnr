@@ -17,7 +17,6 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.sspl'.format(grains['id'])) %}
 include:
-  - components.sspl.prepare
   - components.sspl.install
   - components.sspl.config
   - components.sspl.start
