@@ -263,7 +263,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.debug("Configure pillars and apply states for "
                          "candidate SW upgrade ISO")
 
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
             if not candidate_repo.is_remote():
                 iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
@@ -348,7 +348,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             candidate_repo.source = values.UNDEFINED
 
             logger.info("Post-validation cleanup")
-            self._apply(candidate_repo, targets)
+            self._apply(candidate_repo, targets, local=False)
 
         return repo.metadata
 
@@ -367,7 +367,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 f"for the '{repo.release}' release"
             )
             _repo = inputs.SWUpgradeRepo(values.UNDEFINED, repo.release)
-            self._apply(_repo, targets=targets)
+            self._apply(_repo, targets=targets, local=False)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_single_iso_for_apply(repo)

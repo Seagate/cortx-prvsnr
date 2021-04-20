@@ -239,7 +239,7 @@ class SetSWUpdateRepo(Set):
             logger.debug("Configuring update candidate repo for validation")
             self._prepare_repo_for_apply(candidate_repo, enabled=False)
 
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
             # general check from pkg manager point of view
             try:
@@ -312,7 +312,7 @@ class SetSWUpdateRepo(Set):
             # remove the repo
             candidate_repo.source = values.UNDEFINED
             logger.info("Post-validation cleanup")
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
         return repo.metadata
 
@@ -329,11 +329,11 @@ class SetSWUpdateRepo(Set):
             _repo = inputs.SWUpdateRepo(
                 repo.release, values.UNDEFINED
             )
-            self._apply(_repo, targets=targets)
+            self._apply(_repo, targets=targets, local=False)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_repo_for_apply(repo, enabled=True)
 
         # call default set logic (set pillar, call related states)
-        self._apply(repo, targets=targets)
+        self._apply(repo, targets=targets, local=False)
         return repo.metadata
