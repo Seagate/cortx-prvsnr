@@ -181,7 +181,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         logger.debug("Start Python index validation")
         test_package_name = next(index_path.iterdir())
         cmd = (f"pip3 download {test_package_name} --dest=/tmp/ "
-               f"--find-links file://{index_path.absolute()}")
+               f"--find-links file://{index_path.resolve()}")
         try:
             cmd_run(cmd, targets=local_minion_id(),
                     fun_kwargs=dict(python_shell=True))
@@ -390,36 +390,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         -------
 
         """
-        def setup_default():
-            _config = ConfigParser()
-
-            _config['global'] = {
-                'timeout': '60',
-                'index-url': f'file:///{python_index_path}'
-            }
-            return _config
-
         iso_mount_dir = repo.target_build / repo.release
         python_index_path = iso_mount_dir / CORTX_PYTHON_ISO_DIR
         if python_index_path in iso_mount_dir.iterdir():
-            if not Path(PIP_CONFIG_FILE).exists():
-                config = setup_default()
-
-            else:
-                config = ConfigParser()
-                config.read(PIP_CONFIG_FILE)
-                extra_index_url = config['global'].get('extra-index-url', None)
-                if extra_index_url:
-                    if str(python_index_path) not in extra_index_url:
-                        # NOTE: if is needed to avoid index duplication
-                        config['global']['extra-index-url'] = (
-                            f"{extra_index_url}\n"
-                            f"file://{python_index_path.absolute()}"
-                        )
-                else:
+            config = ConfigParser()
+            config.read(PIP_CONFIG_FILE)
+            extra_index_url = config['global'].get('extra-index-url', None)
+            if extra_index_url:
+                if str(python_index_path) not in extra_index_url:
+                    # NOTE: if is needed to avoid index duplication
                     config['global']['extra-index-url'] = (
-                        f"file://{python_index_path.absolute()}"
+                        f"{extra_index_url}\n"
+                        f"file://{python_index_path.resolve()}"
                     )
+            else:
+                config['global']['extra-index-url'] = (
+                    f"file://{python_index_path.resolve()}"
+                )
 
             with open(PIP_CONFIG_FILE, 'w') as conf_fh:
                 config.write(conf_fh)
