@@ -146,6 +146,7 @@ jenkins:
           permissions:
           - "Overall/Read"
           - "Job/Discover"
+          - "Job/Read"
           - "View/Read"
 
   markupFormatter:
@@ -165,7 +166,7 @@ jenkins:
 
   securityRealm:
     local:
-      allowsSignup: false
+      allowsSignup: true
       enableCaptcha: false
 
 unclassified:
