@@ -28,15 +28,13 @@ from typing import (
 import configparser
 import json
 import logging
+import random
 import subprocess
 import time
-import yaml
 import string
-import secrets
 from shlex import quote
-
 from pathlib import Path, PosixPath
-
+import yaml
 from . import config
 
 from .errors import (
@@ -49,17 +47,17 @@ logger = logging.getLogger(__name__)
 
 
 HashInfo = attr.make_class(
-           "HashInfo",
-           {
-               'hash_type': attr.ib(default=None),
-               'hash_sum': attr.ib(
-                   validator=attr.validators.optional(
-                       attr.validators.instance_of((bytes, bytearray))),
-                   default=None,
-                   converter=lambda x: bytes.fromhex(x)
-                   if isinstance(x, str) else x),
-               'filename': attr.ib(default=None)
-           })
+    "HashInfo",
+    {
+        'hash_type': attr.ib(default=None),
+        'hash_sum': attr.ib(
+            validator=attr.validators.optional(
+                attr.validators.instance_of((bytes, bytearray))),
+            default=None,
+            converter=lambda x: bytes.fromhex(x)
+            if isinstance(x, str) else x),
+        'filename': attr.ib(default=None)
+    })
 
 
 DictLeaf = attr.make_class(
@@ -306,7 +304,7 @@ def run_subprocess_cmd(cmd, **kwargs):
     _kwargs.update(kwargs)
     _kwargs['check'] = True
 
-    if type(cmd) is str:
+    if isinstance(cmd, str):
         cmd = cmd.split()
 
     try:
@@ -360,7 +358,7 @@ def repo_tgz(
         exclude = get_repo_archive_exclusions()
 
         cmd = (
-            ['tar', '-czf',  str(dest)] +
+            ['tar', '-czf', str(dest)] +
             exclude +
             ['-C', str(project_path)] +
             include_dirs
@@ -405,15 +403,20 @@ def node_hostname_validator(
             raise ValueError(msg)
 
 
-# Generate random 12 character password
 def generate_random_secret():
+    """
+    Generates a random 14 character password
+    """
 
-    passwd_strength = 12
-    passwd_seed = (string.ascii_letters + string.digits)
+    special_characters = '!#$%&-.@_'
+    passwd_seed = random.sample(string.ascii_uppercase,
+                                4) + random.sample(string.digits,
+                                                   3) + random.sample(string.ascii_lowercase,
+                                                                      4) + random.sample(special_characters,
+                                                                                         3)
+    random.shuffle(passwd_seed)
 
-    return ''.join(
-        [secrets.choice(seq=passwd_seed) for index in range(passwd_strength)]
-    )
+    return ''.join(passwd_seed)
 
 
 def load_checksum_from_str(hash_str: str) -> HashInfo:

@@ -15,10 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
+import tempfile
 from pathlib import Path
 from typing import Type
+import requests
+from configparser import ConfigParser
 
-from ..salt import copy_to_file_roots
+from ..salt import copy_to_file_roots, cmd_run, local_minion_id
 from .set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
 from ..config import (REPO_CANDIDATE_NAME,
@@ -30,7 +33,8 @@ from ..config import (REPO_CANDIDATE_NAME,
                       CORTX_ISO_DIR,
                       CORTX_3RD_PARTY_ISO_DIR,
                       CORTX_PYTHON_ISO_DIR,
-                      OS_ISO_DIR, HashType
+                      OS_ISO_DIR, HashType,
+                      PIP_CONFIG_FILE
                       )
 from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                       ValidationError
@@ -38,9 +42,10 @@ from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
 from ..utils import (load_yaml,
                      load_checksum_from_file,
                      load_checksum_from_str,
-                     HashInfo
+                     HashInfo, load_yaml_str
                      )
 from .validator import (DirValidator,
+                        FileValidator,
                         FileSchemeValidator,
                         ReleaseInfoValidator,
                         YumRepoDataValidator,
@@ -63,7 +68,11 @@ SW_UPGRADE_BUNDLE_SCHEME = {
             "repodata": YumRepoDataValidator(),
         },
         required=True),
-    CORTX_PYTHON_ISO_DIR: DirValidator(required=False),
+    CORTX_PYTHON_ISO_DIR: DirValidator(
+        {
+            "index.html": FileValidator(required=True)
+        },
+        required=False),
     OS_ISO_DIR: DirValidator(
         {
             RELEASE_INFO_FILE: ReleaseInfoValidator(required=False),
@@ -151,6 +160,41 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 )
 
     @staticmethod
+    def _validate_python_index(index_path: Path):
+        """
+        Perform the dynamic validation for SW upgrade Python index by
+        the given index path `index_path`
+
+        Parameters
+        ----------
+        index_path: Path
+            Path to the SW upgrade Python index
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        SWUpdateRepoSourceError
+            If Python index validation fails
+
+        """
+        logger.debug("Start Python index validation")
+        test_package_name = next(index_path.iterdir()).name
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cmd = (f"pip3 download {test_package_name} --dest={tmp_dir}/ "
+                   f"--index-url file://{index_path.resolve()}")
+            try:
+                cmd_run(cmd, targets=local_minion_id(),
+                        fun_kwargs=dict(python_shell=True))
+            except Exception as e:
+                raise SWUpdateRepoSourceError(
+                    index_path, "Python index validation failed: "f"{e}")
+
+        logger.debug("Python index validation succeeded")
+
+    @staticmethod
     def _get_hash_params(
             params: inputs.SWUpgradeRepo) -> HashInfo:
         """
@@ -215,22 +259,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
 
-        if params.hash:
-            logger.info("`hash` parameter is setup. Start checksum "
-                        "validation for the whole ISO file")
-            hash_info = self._get_hash_params(params)
-            upgrade_bundle_hash_validator = HashSumValidator(
-                hash_sum=hash_info.hash_sum,
-                hash_type=hash_info.hash_type)
+        if not candidate_repo.is_remote():
+            if params.hash:
+                logger.info("`hash` parameter is setup. Start checksum "
+                            "validation for the whole ISO file")
+                hash_info = self._get_hash_params(params)
+                upgrade_bundle_hash_validator = HashSumValidator(
+                    hash_sum=hash_info.hash_sum,
+                    hash_type=hash_info.hash_type)
 
-            try:
-                upgrade_bundle_hash_validator.validate(repo.source)
-            except ValidationError as e:
-                logger.debug("Check sum validation error occurred: {e}")
-                raise SWUpdateRepoSourceError(
-                    str(repo.source),
-                    f"Catalog structure validation error occurred:{e}"
-                ) from e
+                try:
+                    upgrade_bundle_hash_validator.validate(repo.source)
+                except ValidationError as e:
+                    logger.debug("Check sum validation error occurred: {e}")
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Catalog structure validation error occurred:{e}"
+                    ) from e
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
@@ -250,44 +295,63 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
 
-            self._prepare_single_iso_for_apply(candidate_repo)
+            if not candidate_repo.is_remote():
+                self._prepare_single_iso_for_apply(candidate_repo)
 
-            base_dir = self._get_mount_dir()
-            candidate_repo.target_build = base_dir
+                base_dir = self._get_mount_dir()
+                candidate_repo.target_build = base_dir
+
             candidate_repo.enabled = False
 
             logger.debug("Configure pillars and apply states for "
                          "candidate SW upgrade ISO")
 
-            self._apply(candidate_repo, targets=targets)
+            self._apply(candidate_repo, targets=targets, local=False)
 
-            iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+            if not candidate_repo.is_remote():
+                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-            sw_upgrade_bundle_validator = FileSchemeValidator(
-                                                    SW_UPGRADE_BUNDLE_SCHEME)
+                sw_upgrade_bundle_validator = FileSchemeValidator(
+                    SW_UPGRADE_BUNDLE_SCHEME
+                )
 
-            try:
-                sw_upgrade_bundle_validator.validate(iso_mount_dir)
-            except ValidationError as e:
-                logger.debug("Catalog structure validation error occurred: "
-                             f"{e}")
-                raise SWUpdateRepoSourceError(
+                try:
+                    sw_upgrade_bundle_validator.validate(iso_mount_dir)
+                except ValidationError as e:
+                    logger.debug(
+                        f"Catalog structure validation error occurred: {e}")
+                    raise SWUpdateRepoSourceError(
                             str(repo.source),
                             f"Catalog structure validation error occurred:{e}"
-                ) from e
+                    ) from e
+                else:
+                    logger.info("Catalog structure validation succeeded")
 
-            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
-                            f'{RELEASE_INFO_FILE}')
-            try:
-                metadata = load_yaml(release_file)
-            except Exception as exc:
-                raise SWUpdateRepoSourceError(
-                            str(repo.source),
-                            f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
-                )
+                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                                f'{RELEASE_INFO_FILE}')
+                try:
+                    metadata = load_yaml(release_file)
+                except Exception as exc:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                    )
             else:
-                repo.metadata = metadata
-                logger.debug(f"Resolved metadata {metadata}")
+                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
+                                f'{RELEASE_INFO_FILE}')
+                r = requests.get(release_file)
+
+                try:
+                    metadata = load_yaml_str(r.content.decode("utf-8"))
+                except Exception as exc:
+                    raise SWUpdateRepoSourceError(
+                        str(repo.source),
+                        f"Failed to load '{RELEASE_INFO_FILE}' "
+                        f"file from remote URL: {exc}"
+                    )
+
+            repo.metadata = metadata
+            logger.debug(f"Resolved metadata {metadata}")
 
             # the metadata file includes release info
             # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
@@ -305,22 +369,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                             f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            else:
-                logger.info("Catalog structure validation succeeded")
+            if not candidate_repo.is_remote():
+                # NOTE: this block only for local SW upgrade ISO bundles
+                repo_map = candidate_repo.pillar_value
+                for dir_entry in (entry for entry in
+                                  Path(iso_mount_dir).iterdir() if
+                                  entry.is_dir()):
+                    repo_info = repo_map.get(dir_entry.name, None)
 
-            repo_map = candidate_repo.pillar_value
-            for dir_entry in (entry for entry in Path(iso_mount_dir).iterdir()
-                              if entry.is_dir()):
-                repo_info = repo_map.get(dir_entry.name, None)
-
-                if repo_info is None:
-                    raise SWUpdateRepoSourceError(
-                                    str(repo.source),
-                                    "Unexpected repository in single ISO: "
-                                    f"{dir_entry.name}")
-                if repo_info[IS_REPO_KEY]:
-                    self._single_repo_validation(release,
-                                                 dir_entry.name)
+                    if repo_info is None:
+                        raise SWUpdateRepoSourceError(
+                                        str(repo.source),
+                                        "Unexpected repository in single ISO: "
+                                        f"{dir_entry.name}")
+                    if repo_info[IS_REPO_KEY]:
+                        self._single_repo_validation(release, dir_entry.name)
+                    elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
+                        self._validate_python_index(dir_entry)
 
             repo.release = release
 
@@ -329,11 +394,47 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             candidate_repo.source = values.UNDEFINED
 
             logger.info("Post-validation cleanup")
-            self._apply(candidate_repo, targets)
+            self._apply(candidate_repo, targets, local=False)
 
         return repo.metadata
 
-    def _run(self, params: inputs.SWUpgradeRepo, targets: str):
+    @staticmethod
+    def _setup_python_index(repo: inputs.SWUpgradeRepo):
+        """
+        Setup Python index
+
+        Parameters
+        ----------
+        repo: inputs.SWUpgradeRepo
+            SW upgrade repository parameters
+
+        Returns
+        -------
+
+        """
+        iso_mount_dir = repo.target_build / repo.release
+        python_index_path = iso_mount_dir / CORTX_PYTHON_ISO_DIR
+        if python_index_path in iso_mount_dir.iterdir():
+            config = ConfigParser()
+            config.read(PIP_CONFIG_FILE)
+            extra_index_url = config['global'].get('extra-index-url', None)
+            if extra_index_url:
+                if str(python_index_path) not in extra_index_url:
+                    # NOTE: if is needed to avoid index duplication
+                    config['global']['extra-index-url'] = (
+                        f"{extra_index_url}\n"
+                        f"file://{python_index_path.resolve()}"
+                    )
+            else:
+                config['global']['extra-index-url'] = (
+                    f"file://{python_index_path.resolve()}"
+                )
+
+            with open(PIP_CONFIG_FILE, 'w') as conf_fh:
+                config.write(conf_fh)
+
+    def _run(self, params: inputs.SWUpgradeRepo, targets: str,
+             local: bool = False):
         repo = params
 
         base_dir = self._get_mount_dir()
@@ -348,11 +449,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 f"for the '{repo.release}' release"
             )
             _repo = inputs.SWUpgradeRepo(values.UNDEFINED, repo.release)
-            self._apply(_repo, targets=targets)
+            self._apply(_repo, targets=targets, local=local)
 
         logger.info(f"Configuring update repo: release {repo.release}")
         self._prepare_single_iso_for_apply(repo)
 
         # call default set logic (set pillar, call related states)
-        self._apply(repo, targets)
+        self._apply(repo, targets, local=local)
+        self._setup_python_index(repo)
         return repo.metadata

@@ -68,6 +68,7 @@ PRVSNR_DATA_LOCAL_DIR = Path('/var/lib/seagate/cortx/provisioner/local')
 PRVSNR_USER_SALT_DIR = PRVSNR_DATA_SHARED_DIR / 'srv'
 PRVSNR_USER_LOCAL_SALT_DIR = PRVSNR_DATA_LOCAL_DIR / 'srv'
 PRVSNR_FACTORY_PROFILE_DIR = PRVSNR_DATA_SHARED_DIR / 'factory_profile'
+PRVSNR_LOCKS_FILES_DIR = PRVSNR_DATA_SHARED_DIR / 'locks'
 
 # reflects salt-master file_roots configuration
 PRVSNR_USER_FILEROOT_DIR = PRVSNR_USER_SALT_DIR / 'salt'
@@ -164,6 +165,9 @@ SSH_PUB_KEY = Path('/root/.ssh/id_rsa_prvsnr.pub')
 ALL_MINIONS = '*'
 ALL_TARGETS = ALL_MINIONS  # XXX rethink later
 LOCAL_MINION = '__local__'
+# NOTE: used mostly by provisioner Lock files since '*' can not be used as a
+# part of file name
+ALL_TARGETS_ALIAS = 'all'
 
 PRVSNR_VALUES_PREFIX = 'PRVSNR_'
 CLI_SPEC_PY_OBJS_PREFIX = '__py__:'
@@ -203,6 +207,7 @@ PRVSNR_CLI_OUTPUT = tuple(list(PRVSNR_CLI_MACHINE_OUTPUT) + ['plain'])
 PRVSNR_CLI_OUTPUT_DEFAULT = 'plain'
 
 PRVSNR_CONFIG_FILE = 'provisioner.conf'
+PIP_CONFIG_FILE = '/etc/pip.conf'
 
 # logging
 PRVSNR_LOG_ROOT_DIR = Path('/var/log/seagate/provisioner')
@@ -578,3 +583,10 @@ class ConfigLevelT(Enum):
     """CORTX configuration levels"""
     CLUSTER = "cluster"
     NODE = "node"
+
+
+class LockMetaDataFields(Enum):
+    """Provisioner Lock Metadata fields."""
+
+    PID = "pid"
+    SOURCE_TARGET = "source_target"
