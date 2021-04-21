@@ -230,6 +230,7 @@
           ghsource_head_filter_regex: "PR-.*"
           ghsource_trigger_pattern: unit
       - integration:
+          ghsource_head_filter_regex: "PR-.*"
           ghsource_pr_destined_regex: "(main|stable)"
           ghsource_trigger_pattern: integration
       - nightly:
