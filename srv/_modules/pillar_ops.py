@@ -40,9 +40,10 @@ def encrypt(decrypt=False):
 
     logger.debug(f"encrypt called with decrypt={decrypt}")
 
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
     cipher = _import_cipher()
     pillar_list = __pillar__.keys()
-    cluster_id = __grains__['cluster_id']
+    cluster_id = getattr(sys.modules[__name__], '__grains__')['cluster_id']
     new_passwd = _generate_secret()
     logger.debug(f"generated password for blank entries: {new_passwd}")
 

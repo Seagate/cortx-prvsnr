@@ -25,6 +25,7 @@
 import sys
 import yaml
 
+
 # def update(name: str, ref_pillar: str, type: str=None, backup: bool=True) -> bool:
 def conf_update(name, ref_pillar, type=None, backup=True):
   """Update component config file.
@@ -35,11 +36,8 @@ def conf_update(name, ref_pillar, type=None, backup=True):
     type: Type of config file YAML/INI
     backup: Backup config file before modification as bool (Default: True)
   """
-  # print("Name: {0}".format(name))
-  # print("Pillar ref: {0}".format(ref_pillar))
 
   pillar_dict = _read_pillar(ref_pillar)
-  #print("Pillar dict: {0}".format(pillar_dict))
   config_dict = None
   if type and 'YAML' in type.upper():
     config_dict = _read_yaml(name)
@@ -47,7 +45,6 @@ def conf_update(name, ref_pillar, type=None, backup=True):
     config_dict = _read_ini(name)
   else:
     config_dict = _read_config_file(name)
-  #print("Config file dict: {0}".format(config_dict))
   with open(name, 'w') as fd:
     yaml.dump(pillar_dict, fd, default_flow_style=False, width=1, indent=4)
 
@@ -131,6 +128,7 @@ def _read_ini(config_filename):
 def _read_pillar(ref_component_pillar):
   from collections import OrderedDict
   from json import loads, dumps
+  __pillar__ = getattr(sys.modules[__name__], '__pillar__')
   pillar_data = __pillar__[ref_component_pillar]
   pillar_dict = loads(dumps(dict(pillar_data)))
   return pillar_dict
