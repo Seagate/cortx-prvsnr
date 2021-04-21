@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import sys
 import docker
 import time
 import json
@@ -28,7 +29,6 @@ import testinfra
 
 import logging
 
-from provisioner.vendor import attr
 from provisioner import inputs
 import test.helper as h
 from .helper import (
@@ -36,6 +36,15 @@ from .helper import (
     safe_filename,
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
+
+from . import testapi
+from .testapi.integration import HostMeta
+
+mod = sys.modules[__name__]
+
+# Note. Just to make that explicit and lint tools happy
+for fixture in testapi.fixtures:
+    setattr(mod, fixture.__name__, fixture)
 
 logger = logging.getLogger(__name__)
 
@@ -122,174 +131,6 @@ DEFAULT_CLUSTER_SPEC = {
 }
 
 
-@attr.s
-class HostMeta:
-    # TODO validators for all
-    remote = attr.ib()
-    host = attr.ib()
-    ssh_config = attr.ib()
-    request = attr.ib()
-
-    label = attr.ib(converter=lambda v: '' if not v else v, default='')
-    machine_name = attr.ib(default=None)
-    hostname = attr.ib(default=None)
-    interface = attr.ib(default=None)
-    host_user = attr.ib(default=None)
-
-    _hostname = attr.ib(init=False, default=None)
-    _tmpdir = attr.ib(init=False, default=None)
-    _repo = attr.ib(init=False, default=None)
-    _local_user_home = attr.ib(init=False, default=None)
-    _api_installed = attr.ib(init=False, default=False)
-    _rpm_prvsnr = attr.ib(init=False, default=None)
-    _rpm_prvsnr_cli = attr.ib(init=False, default=None)
-    _rpm_prvsnr_api = attr.ib(init=False, default=None)
-
-    def __attrs_post_init__(self):
-        # TODO more smarter logic to get interface that is asseccible from host
-        # (relates to https://github.com/hashicorp/vagrant/issues/2779)
-        if self.interface is None:
-            if (
-                isinstance(self.remote, h.VagrantMachine) and
-                (self.remote.provider == 'vbox')
-            ):
-                self.interface = 'enp0s8'
-            else:
-                self.interface = 'eth0'
-
-        assert self.host.interface(self.interface).exists
-
-    @property
-    def hostname(self):
-        if self._hostname is None:
-            self._hostname = self.host.check_output('hostname')
-        return self._hostname
-
-    @property
-    def ssh_host(self):
-        return self.host.interface(self.interface).addresses[0]
-
-    @property
-    def tmpdir(self):
-        if self._tmpdir is None:
-            tmpdir_function = self.request.getfixturevalue('tmpdir_function')
-            # TODO non linux systems
-            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')
-            self.host.check_output("mkdir -p {}".format(self._tmpdir))
-        return self._tmpdir
-
-    def copy_from_host(self, host_path, local_path=None):
-        tmpdir_local = self.request.getfixturevalue('tmpdir_function')
-
-        if local_path is None:
-            local_path = tmpdir_local / host_path.name
-        else:
-            local_path = local_path.resolve()
-            # ensure that it's inside tmpdir
-            local_path.relative_to(tmpdir_local)
-
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-
-        h.localhost.check_output(
-            "scp -r -F {} {}:{} {}".format(
-                self.ssh_config,
-                self.hostname,
-                host_path,
-                local_path
-            )
-        )
-        return local_path
-
-    def copy_to_host(self, local_path, host_path=None):
-        if host_path is None:
-            host_path = self.tmpdir / local_path.name
-
-        self.host.check_output(
-            "mkdir -p {}".format(host_path.parent)
-        )
-
-        h.localhost.check_output(
-            "scp -r -F {} {} {}:{}".format(
-                self.ssh_config,
-                local_path,
-                self.hostname,
-                host_path
-            )
-        )
-        return host_path
-
-    @property
-    def rpm_prvsnr(self):
-        if self._rpm_prvsnr is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr')
-            self._rpm_prvsnr = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr
-
-    @property
-    def rpm_prvsnr_cli(self):
-        if self._rpm_prvsnr_cli is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_cli')
-            self._rpm_prvsnr_cli = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr_cli
-
-    @property
-    def rpm_prvsnr_api(self):
-        if self._rpm_prvsnr_api is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_api')
-            self._rpm_prvsnr_api = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr_api
-
-    @property
-    def repo(self):
-        if self._repo is None:
-            repo_tgz = self.request.getfixturevalue('repo_tgz')
-            self._repo = h.inject_repo(
-                self.host, self.ssh_config, repo_tgz
-            )
-        return self._repo
-
-    def api_installed(self, local_user=False):
-        if not self._api_installed:
-            logger.info(
-                f"Installing API on {self.hostname}"
-            )
-            self.check_output(
-                (
-                    f"LC_ALL=en_US.UTF-8"
-                    f" pip3 install --user {self.repo / 'api/python'}"
-                ),
-                local_user=local_user
-            )
-            self._api_installed = True
-
-    @property
-    def fixture_name(self):
-        return 'mhost' + self.label
-
-    def run(self, script, *args, force_dump=False, **kwargs):
-        return h.run(self.host, script, *args, force_dump=force_dump, **kwargs)
-
-    def check_output(
-        self, script, *args, force_dump=False, local_user=False,
-        **kwargs
-    ):
-        if local_user and not self.host_user:
-            raise RuntimeError(
-                "connection for local user is not available"
-                f" for {self.remote.name}"
-            )
-
-        if local_user:
-            _host = self.host_user
-            script = f"source ~/.bash_profile; {script}"
-        else:
-            _host = self.host
-
-        return h.check_output(
-            _host, script, *args, force_dump=force_dump, **kwargs
-        )
-
-
 class LocalHostMeta(HostMeta):
     @property
     def hostname(self):
@@ -351,6 +192,9 @@ def pytest_configure(config):
         "markers", "debug: mark test as a one for debug"
     )
     config.addinivalue_line(
+        "markers", "example: mark test as an example"
+    )
+    config.addinivalue_line(
         "markers", "outdated: mark test as an outdated (would be skipped)"
     )
     config.addinivalue_line(
@@ -374,6 +218,11 @@ def pytest_configure(config):
         "markers", "hosts(list): mark test as expecting "
                    "the specified list of hosts by labels, "
                    "default: ['']"
+    )
+    config.addinivalue_line(
+        "markers", "hosts_num: mark test as expecting "
+                   "the specified number of hosts"
+                   "default: undefined"
     )
     config.addinivalue_line(
         "markers", "isolated: mark test to be run in the isolated "
@@ -498,7 +347,7 @@ def pytest_collection_modifyitems(session, config, items):
                 getattr(pytest.mark, item.callspec.params['any_topic'].value)
             )
 
-        for marker in ('debug', 'outdated'):
+        for marker in ('debug', 'outdated', 'example'):
             if item.get_closest_marker(marker):
                 item.add_marker(pytest.mark.skip)
 

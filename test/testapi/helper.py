@@ -15,29 +15,28 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import pytest
+import logging
 from typing import List
-from enum import Enum
+
+import pytest
+
+logger = logging.getLogger(__name__)
 
 
-from test.conftest import HostMeta
+def create_hosts(request, hosts_num):  # -> List[HostMeta]:
+    request.applymarker(
+        pytest.mark.hosts(
+            [f'srvnode{i}' for i in range(1, hosts_num + 1)]
+        )
+    )
 
-from test.testapi import defs
-
-
-class RunT(Enum):
-    """Modes of setup run"""
-
-    REMOTE_CLI = 'remote_cli'       # logic is run on the host system via CLI
-    REMOTE_API = 'remote_api'       # via API
-    ONTARGET_CLI = 'ontarget_cli'   # logic is run on a target system via CLI
-    # ONTARGET_API = 'ontarget_api' # via API
-
-ScaleFactorT = defs.ScaleFactorT
+    return [
+        request.getfixturevalue(f'mhostsrvnode{i}')
+        for i in range(1, hosts_num + 1)
+    ]
 
 
-class SourceT(Enum):
-    """Types of sources for setup"""
-
-    LOCAL = 'local'
-    ISO = 'iso'
+# def set_root_passwd(mhosts: List[HostMeta], passwd: str):
+def set_root_passwd(mhosts: List, passwd: str):
+    for mhost in mhosts:
+        mhost.check_output(f'echo {passwd} | passwd --stdin root')

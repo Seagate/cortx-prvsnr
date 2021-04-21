@@ -16,28 +16,17 @@
 #
 
 import pytest
-from typing import List
-from enum import Enum
 
 
-from test.conftest import HostMeta
-
-from test.testapi import defs
-
-
-class RunT(Enum):
-    """Modes of setup run"""
-
-    REMOTE_CLI = 'remote_cli'       # logic is run on the host system via CLI
-    REMOTE_API = 'remote_api'       # via API
-    ONTARGET_CLI = 'ontarget_cli'   # logic is run on a target system via CLI
-    # ONTARGET_API = 'ontarget_api' # via API
-
-ScaleFactorT = defs.ScaleFactorT
+@pytest.mark.example
+@pytest.mark.hosts_num(3)
+def test_example_3nodes(setup_hosts):
+    # setup_hosts here is a list of HostMeta,
+    # which provides a set of API
+    pass
 
 
-class SourceT(Enum):
-    """Types of sources for setup"""
-
-    LOCAL = 'local'
-    ISO = 'iso'
+@pytest.mark.example
+@pytest.mark.hosts_num(1)
+def test_example_remote_commands(setup_hosts):
+    print(setup_hosts[0].check_output('hostname'))
