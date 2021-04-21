@@ -408,7 +408,7 @@ def generate_random_secret():
     Generates a random 14 character password
     """
 
-    special_characters = '!#$%&-.@_'
+    special_characters = '=#+&-()_'
     passwd_seed = random.sample(string.ascii_uppercase,
                                 4) + random.sample(string.digits,
                                                    3) + random.sample(string.ascii_lowercase,
