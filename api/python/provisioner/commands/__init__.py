@@ -25,6 +25,8 @@ import json
 import yaml
 import importlib
 
+from ..lock import api_lock
+
 from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
 from .check import Check, SWUpdateDecisionMaker
 
@@ -419,6 +421,7 @@ class Set(CommandParserFillerMixin):
     # TODO
     # - class for pillar file
     # - caching (load once)
+    @api_lock
     def run(self, *args, targets=ALL_MINIONS, dry_run=False,
             local=False, **kwargs):
         # static validation
