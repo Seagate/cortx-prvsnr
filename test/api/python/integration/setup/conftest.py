@@ -217,7 +217,14 @@ def pytest_collection_modifyitems(session, config, items):
         if (
             hasattr(item, 'callspec')
             and item.callspec.params.get('source') == SourceT.LOCAL
+            # disable HA cases
+            # since it fails by some reason FIXME
             and not item.callspec.params.get('ha')
+            # disable on-target testing for local source
+            # since it requires source to be available on target TODO
+            and not item.callspec.params.get('setup_mode_cli') == RunT.ONTARGET_CLI
+            # disable multi node testing
+            # need to verify TODO
             and item.callspec.params.get('hosts_num') == ScaleFactorT.SINGLE
         ):
             item.add_marker(pytest.mark.verified)

@@ -21,7 +21,9 @@ def err = null
 def branchName = env.ghprbSourceBranch ?: env.BRANCH_NAME ?: env.sha1 ?: 'nobranch'
 branchName = branchName.replace('/','_')
 
-dockerImage = "seagate/cortx-prvsnr:ci-${branchName}"
+dockerImageUnitName = "seagate/cortx-prvsnr:ci-unit-${branchName}"
+dockerImageIntegrationName = "seagate/cortx-prvsnr:ci-integration-${branchName}"
+testUser = 'test'
 
 Map config = [
     staticValidation: false,
@@ -55,15 +57,32 @@ def buildUnitDocker() {
     def uid = sh(returnStdout: true, script: 'id -u').trim()
     def gid = sh(returnStdout: true, script: 'id -g').trim()
     return buildDocker(
-        dockerImage,
+        dockerImageUnitName,
         "devops/ci/Dockerfile.unit",
         "api",
-        "--build-arg uid=$uid --build-arg gid=$gid"
+        "--build-arg TEST_USER=${testUser} --build-arg uid=$uid --build-arg gid=$gid"
+    )
+}
+
+def buildIntegrationDocker() {
+    def docker_gid = sh(
+        returnStdout: true,
+        script: 'getent group docker | awk -F":" "{print \\$3}"'
+    ).trim()
+    def dockerfile_src = 'devops/ci/Dockerfile.integration.tmpl'
+    def dockerfile = 'devops/ci/Dockerfile.integration'
+    sh("sed 's~{parent}~${dockerImageUnitName}~g' ${dockerfile_src}  > ${dockerfile}")
+    return buildDocker(
+        dockerImageIntegrationName,
+        dockerfile,
+        "devops/jenkins/cortx_jenkins/agent",
+        " --build-arg docker_gid=$docker_gid"
     )
 }
 
 def cleanDocker(){
-    sh("docker rmi -f ${dockerImage} || true")
+    sh("docker rmi -f ${dockerImageUnitName} || true")
+    sh("docker rmi -f ${dockerImageIntegrationName} || true")
 }
 
 Closure preparePythonEnv = {
@@ -182,15 +201,16 @@ Closure dynamicValidation = {
     def dockerImage = null
 
     stage('Build docker image') {
-        dockerImage = buildUnitDocker()
+        _ = buildUnitDocker()
+        dockerImage = buildIntegrationDocker()
     }
 
     try {
-        dockerImage.inside {
+        dockerImage.inside("-v /var/run/docker.sock:/var/run/docker.sock -u ${testUser}") {
             // run tests
             stage('Run tests') {
                 sh """
-                    bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
+                    PROJECT_PATH=\$PWD bash -x devops/ci/run_tests.sh "$pytestArgs $pytestTargets" "$pytestMarkers" "$testReportFileNamePlain"
                 """
             }
         }
