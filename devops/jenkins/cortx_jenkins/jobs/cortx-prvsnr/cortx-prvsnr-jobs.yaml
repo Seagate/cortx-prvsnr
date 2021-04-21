@@ -233,6 +233,9 @@
           ghsource_pr_destined_regex: "(main|stable)"
           ghsource_trigger_pattern: integration
       - nightly:
+          ghsource_branch_discovery: all
+          ghsource_discover_pr_origin: false
+          ghsource_discover_pr_forks_strategy: false
           ghsource_head_filter_regex: "(main|stable)"
           ghsource_trigger_pr_comment_regex: ''
           ghsource_suppress_scm_triggering: true

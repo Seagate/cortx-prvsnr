@@ -233,7 +233,7 @@ Closure dynamicValidation = {
 
 try {
     properties([
-        pipelineTriggers([cron('H H * * *')])
+        pipelineTriggers([cron('TZ=EST\nH H(13-20) * * *')])
     ])
 
     timeout(300) {
