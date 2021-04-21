@@ -67,3 +67,8 @@ Refresh firewalld:
 Delete firewall checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
+
+Stop and disable firewalld service:
+  service.dead:
+    - name: firewalld
+    - enable: False
