@@ -28,7 +28,7 @@ include:
 {% endif -%}
 {% endfor -%}
 {% if 1 < (server_nodes|length) -%}
-{% set ldap_password = salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) -%}
+{% set ldap_password = salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) -%}
 
 Load provider module:
   cmd.run:

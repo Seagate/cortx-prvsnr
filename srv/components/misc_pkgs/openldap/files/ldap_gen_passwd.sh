@@ -17,8 +17,8 @@
 #
 
 
-{%- set openldap_admin_secret = salt['lyveutil.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:root:secret', "seagate")) %}
-{%- set openldap_iam_secret = salt['lyveutil.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:sgiam:secret', "ldapadmin")) %}
+{%- set openldap_admin_secret = salt['lyveutils.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:root:secret', "seagate")) %}
+{%- set openldap_iam_secret = salt['lyveutils.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:sgiam:secret', "ldapadmin")) %}
 
 ROOTDNPASSWORD="{{ openldap_admin_secret }}"
 LDAPADMINPASS="{{ openldap_iam_secret }}"

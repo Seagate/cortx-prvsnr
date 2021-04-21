@@ -19,4 +19,4 @@ Verify ldap certificates valid and slapd is running:
   cmd.run:
     - name: ldapsearch -b "dc=s3,dc=seagate,dc=com" -x -w $password -D "cn=admin,dc=seagate,dc=com" -H ldap://
     - env:
-      - password: {{ salt['lyveutil.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }}
+      - password: {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }}

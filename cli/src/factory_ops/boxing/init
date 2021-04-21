@@ -111,7 +111,7 @@ fi
 echo "INFO: Resolving service user credentials" | tee -a ${LOG_FILE}
 service_user_name=$(salt-call pillar.get system:service-user:name --output=newline_values_only)
 service_user_secret_encrypted=$(salt-call pillar.get system:service-user:secret --output=newline_values_only)
-service_user_secret=$(salt-call lyveutil.decrypt system "$service_user_secret_encrypted" --output=newline_values_only)
+service_user_secret=$(salt-call lyveutils.decrypt system "$service_user_secret_encrypted" --output=newline_values_only)
 
 if [[ -z "$service_user_name" || -z "$service_user_secret" ]]; then
     msg="ERROR: credentials for a service user are not found"

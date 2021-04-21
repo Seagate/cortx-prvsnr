@@ -30,7 +30,7 @@ seagate_users_dir_created:
 service_user_configured:
   user.present:
     - name: {{ user_data['name'] }}
-    - password: {{ salt['lyveutil.decrypt']('system', user_data['secret']) }}
+    - password: {{ salt['lyveutils.decrypt']('system', user_data['secret']) }}
     - hash_password: True
     - home: {{ base_dir }}/{{ user_data['name'] }}
     - shell: {{ user_data['shell'] }}

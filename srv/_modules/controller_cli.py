@@ -25,26 +25,26 @@
 # Standard packages
 import logging
 import os
-import subprocess
 import sys
-
-#from shutil import copyfile
 
 # Update PYTHONPATH to include Provisioner API installed at:
 # /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
-sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
+sys.path.append(os.path.join(
+       'usr', 'local', 'lib', 'python3.6', 'site-packages'))
 
 # Cortx packages
-#import provisioner
+from provisioner.utils import run_subprocess_cmd
 
 from pathlib import Path
 logger = logging.getLogger(__name__)
 
+
 def fetch_enclosure_serial():
 
-    current_node = __grains__['id']
+    current_node = getattr(sys.modules[__name__], '__grains__')['id']
 
     current_enclosure = "enclosure-" + ((current_node).split('-'))[1]
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
     ctrl_cli_utility = __pillar__['provisioner']['storage']['controller']['cli_utility_path']
 
     host = __pillar__['storage'][current_enclosure ]['controller']['primary']['ip']
@@ -54,12 +54,15 @@ def fetch_enclosure_serial():
     _opt = "--show-license"
 
     logger.info("[ INFO ] Running controller-cli utility to get enclosure serial...")
-    _cmd = f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt} | grep -A2 Serial | tail -1 > /etc/enclosure-id"
-    subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
+    _cmd = (f"sh {ctrl_cli_utility} host -h {host} -u {user} -p '{secret}' {_opt}"
+           " | grep -A2 Serial | tail -1 > /etc/enclosure-id")
+    run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()  # nosec
 
     _enc_id_file = Path('/etc/enclosure-id')
     if not _enc_id_file.exists():
-        msg = f"ERROR: Could not generate the enclosure id from controller cli utility, please check the {str(logs)} for more details"
+        msg = ("ERROR: Could not generate the enclosure id "
+              "from controller cli utility, please check "
+              f"the {str(logs)} for more details")
         # raise Exception(msg)
         logger.error(msg)
         return False
@@ -78,7 +81,7 @@ def fetch_enclosure_serial():
         _n_words = 1
         for i in _words:
             if i == " ":
-               _n_words += 1
+                _n_words += 1
 
         if ((_line_cnt > 1) or (_n_words > 1)):
             msg = "ERROR: The contents of /etc/enclosure-id looks incorrect, failing"

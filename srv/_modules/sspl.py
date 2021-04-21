@@ -39,6 +39,7 @@ import commons
 def merge_health_map_schema(source_json="/tmp/resource_health_view.json"):
 
   local = salt.client.LocalClient()
+  __pillar__ = getattr(sys.modules[__name__], '__pillar__')
   healthmap_schema_pillar = __pillar__['commons']['health_map_schema']
   health_map_path = healthmap_schema_pillar['path']
   health_map_file = healthmap_schema_pillar['filename']

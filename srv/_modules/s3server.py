@@ -30,6 +30,7 @@ import commons
 
 # def _read_pillar(ref_component_pillar: str) -> dict:
 def _read_pillar(ref_component_pillar):
+  __pillar__ = getattr(sys.modules[__name__], '__pillar__')
   return __pillar__[ref_component_pillar]
 
 
