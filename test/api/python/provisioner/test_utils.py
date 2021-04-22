@@ -130,20 +130,23 @@ def test_run_subprocess_cmd_happy_path(mocker):
     assert utils.run_subprocess_cmd(cmd_name) == return_value
 
 
-def test_run_subprocess_cmd_check_is_true(mocker):
+def test_run_subprocess_cmd_check_is_kept(mocker):
     cmd_name = "ls"
     kwargs = dict(
         universal_newlines=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    kwargs["check"] = False
 
     run_m = mocker.patch.object(utils.subprocess, 'run', autospec=True)
 
+    kwargs["check"] = False
     utils.run_subprocess_cmd(cmd_name, **kwargs)
+    run_m.assert_called_with([cmd_name], **kwargs)
+
     kwargs["check"] = True
-    run_m.assert_called_once_with([cmd_name], **kwargs)
+    utils.run_subprocess_cmd(cmd_name, **kwargs)
+    run_m.assert_called_with([cmd_name], **kwargs)
 
 
 def test_repo_tgz_with_invalid_path(mocker, tmpdir_function):

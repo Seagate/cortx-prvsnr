@@ -126,7 +126,7 @@
           property-strategies:
               all-branches:
                 - trigger-build-on-pr-comment: '{ghsource_trigger_pr_comment_regex}'
-          #         - suppress-scm-triggering: true
+                - suppress-scm-triggering: '{obj:ghsource_suppress_scm_triggering}'
           #         - pipeline-branch-durability-override: max-survivability
           #         - trigger-build-on-pr-comment: "Ci build!"
           #         - trigger-build-on-pr-review: true
@@ -230,11 +230,16 @@
           ghsource_head_filter_regex: "PR-.*"
           ghsource_trigger_pattern: unit
       - integration:
-          ghsource_pr_destined_regex: "(main|pre-cortx-1.0)"
+          ghsource_head_filter_regex: "PR-.*"
+          ghsource_pr_destined_regex: "(main|stable)"
           ghsource_trigger_pattern: integration
       - nightly:
-          ghsource_head_filter_regex: "(main|pre-cortx-1.0)"
+          ghsource_branch_discovery: all
+          ghsource_discover_pr_origin: false
+          ghsource_discover_pr_forks_strategy: false
+          ghsource_head_filter_regex: "(main|stable)"
           ghsource_trigger_pr_comment_regex: ''
+          ghsource_suppress_scm_triggering: true
     jobs:
       - '{name}-ci-{type}'
 
