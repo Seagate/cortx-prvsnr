@@ -1132,8 +1132,10 @@ class CreateUser(CommandParserFillerMixin):
 
     def run(self, uname, passwd, targets: str = ALL_MINIONS):
 
+        # workaround for EOS-19668, not raising exception
+        # instead creating the folder, if not present.
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError('/opt/seagate/users directory missing')
+            Path(SEAGATE_USER_HOME_DIR).mkdir(parents=True)
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname
