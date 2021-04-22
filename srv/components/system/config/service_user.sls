@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if salt['pillar.get']('system:service-user:secret') %}
+{% if salt['pillar.get']('system:service-user:password') %}
 
     {% set base_dir = '/opt/seagate/users' %}
     {% set user_data = salt['pillar.get']('system:service-user') %}
@@ -30,7 +30,7 @@ seagate_users_dir_created:
 service_user_configured:
   user.present:
     - name: {{ user_data['name'] }}
-    - password: {{ salt['lyveutils.decrypt']('system', user_data['secret']) }}
+    - password: {{ user_data['password'] }}
     - hash_password: True
     - home: {{ base_dir }}/{{ user_data['name'] }}
     - shell: {{ user_data['shell'] }}
