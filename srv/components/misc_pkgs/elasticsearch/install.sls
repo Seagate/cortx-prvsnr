@@ -21,8 +21,8 @@ Install JDK:
 
 Install elasticsearch:
   pkg.installed:
-    - name: elasticsearch-oss
-    - version: {{ pillar['commons']['version']['elasticsearch-oss'] }}
+    - name: opendistroforelasticsearch
+    - version: {{ pillar['commons']['version']['opendistroforelasticsearch'] }}
 
 {#% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('elasticsearch'))) %#}
 # Downgrade elasticsearch to 6.8.8:

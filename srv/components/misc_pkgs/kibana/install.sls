@@ -17,8 +17,8 @@
 
 Install Kibana:
   pkg.installed:
-    - name: kibana-oss
-    - version: {{ pillar['commons']['version']['kibana-oss'] }}
+    - name: opendistroforelasticsearch-kibana
+    - version: {{ pillar['commons']['version']['opendistroforelasticsearch-kibana'] }}
 
 {#% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('kibana'))) %#}
 # Downgrade elasticsearch to 6.8.8:

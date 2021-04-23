@@ -23,7 +23,7 @@ Remove ES and related pkgs:
     - pkgs:
       - rsyslog-elasticsearch
       - rsyslog-mmjsonparse
-      - elasticsearch-oss
+      - opendistroforelasticsearch
       - java-1.8.0-openjdk-headless
 
 Remove elasticsearch config:

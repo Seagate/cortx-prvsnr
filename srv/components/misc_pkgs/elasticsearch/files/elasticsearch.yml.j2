@@ -95,7 +95,9 @@
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 network.bind_host: ['localhost', {{ grains['id'] }} ]
 network.publish_host: [{{ grains['id'] }}]
+network.host: [{{ grains['id'] }}, 'localhost' ]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
+discovery.seed_hosts: {{ server_nodes }}
 discovery.zen.ping.unicast.hosts: {{ server_nodes }}
 {%- if 2 >= (server_nodes|length) %}
 discovery.zen.minimum_master_nodes: 1
