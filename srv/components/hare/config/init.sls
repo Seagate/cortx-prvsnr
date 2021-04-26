@@ -15,10 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 include:
     - components.hare.config.post_install
     - components.hare.config.prepare
     - components.hare.config.config
     - components.hare.config.init_mod
-{% endif %}
