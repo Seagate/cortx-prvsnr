@@ -1133,7 +1133,8 @@ class CreateUser(CommandParserFillerMixin):
     def run(self, uname, passwd, targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError('/opt/seagate/users directory missing')
+            raise ValueError("'/opt/seagate/users' directory missing. "
+                    "Ensure it is created before proceeding to create a new user.")
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname

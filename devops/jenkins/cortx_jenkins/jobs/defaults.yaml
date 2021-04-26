@@ -50,6 +50,7 @@
     ghsource_head_filter_regex: '.*'
     ghsource_pr_destined_regex: '.*'
     ghsource_trigger_pr_comment_regex: ''
+    ghsource_suppress_scm_triggering: false
     # Valid options: no-pr, only-pr, all, false. (default ‘no-pr’)
     ghsource_branch_discovery: no-pr
     # Valid options: merge-current, current, both, false. (default ‘merge-current’)
