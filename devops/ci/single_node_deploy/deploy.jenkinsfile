@@ -67,17 +67,16 @@ node {
             stage("Storage Configuration Check") {
                 try {
                     sshCommand remote: remote, command: """
-                        test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
+                        test 2 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
                     """
-                    echo "The VM has 6+ number of attached disks. Check Successful!"
+                    echo "The VM has 2+ number of attached disks. Check Successful!"
                 } catch(Exception ex) {
-                    error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
+                    error 'The VM should have atleast 2 attached disks. Kindly provide a VM with 2+ attached disks.'
                 }
             }
 
             stage("Prepare config.ini") {
                 sshCommand remote: remote, command: """
-                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
                     echo \"\"\"
                     [srvnode_default]
                     network.data.private_interfaces=eth3,eth4
@@ -85,8 +84,8 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
-                    storage.cvg.0.data_devices=\${device_list#*,}
-                    storage.cvg.0.metadata_devices=\${device_list%%,*}
+                    storage.cvg.0.data_devices=/dev/sdc
+                    storage.cvg.0.metadata_devices=/dev/sdb
                     network.data.private_ip=None
                     storage.durability.sns.data=1
                     storage.durability.sns.parity=0
