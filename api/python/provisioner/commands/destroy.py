@@ -91,6 +91,7 @@ deploy_states = dict(
         "provisioner.salt.stop",
         "system.storage.glusterfs.teardown.volume_remove",
         "system.storage.glusterfs.teardown",
+        "system.storage.glusterfs.teardown.cache_remove",
         "provisioner.salt.teardown",
         "provisioner.salt.teardown.package_remove",
         "provisioner.passwordless_remove",

@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.system.storage.glusterfs.teardown.stop
-  - components.system.storage.glusterfs.teardown.remove_bricks
-  - components.system.storage.glusterfs.teardown.package_remove
+Remove glusterd cache:
+  file.absent:
+    name: /var/lib/glusterd
