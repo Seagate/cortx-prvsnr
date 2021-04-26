@@ -20,5 +20,7 @@ Remove_salt_packages:
   pkg.purged:
     - pkgs:
       - cortx-prvsnr
+      - cortx-prvsnr-cli
       - python36-cortx-prvsnr
       - rsync
+      - python36-m2crypto 
