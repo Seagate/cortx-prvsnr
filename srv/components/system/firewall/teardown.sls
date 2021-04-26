@@ -23,6 +23,11 @@ Reset default zone:
     - prune_ports: True
     - prune_services: False
     - prune_interfaces: False
+    - services:
+      - ssh
+    - ports:
+      - 4505/tcp
+      - 4506/tcp
 
 Remove public management interfaces:
   firewalld.present:
@@ -58,9 +63,10 @@ Remove management-zone:
       - Reset default zone
 {% endif %}
 
-firewalld:
-  service.running:
-    - reload: True
+Refresh firewalld:
+  module.run:
+    - service.restart:
+      - firewalld
 
 Delete firewall checkpoint flag:
   file.absent:
