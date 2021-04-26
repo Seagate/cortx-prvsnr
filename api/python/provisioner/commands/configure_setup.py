@@ -36,6 +36,7 @@ from ..inputs import (
     METADATA_ARGPARSER,
     NoParams
 )
+from ..pillar import PillarIterable
 from . import PillarSet
 
 from ..values import (
@@ -130,10 +131,11 @@ class ConfigureSetup(CommandParserFillerMixin):
                         params[val[-3]] = []
 
                     if int(val[-2]) < len(params[val[-3]]):
-                        params[val[-3]][int(val[-2])][val[-1]] = [input_data[key]]
+                        params[val[-3]][int(val[-2])][val[-1]
+                                                      ] = [input_data[key]]
                     else:
                         params[val[-3]].append(
-                            { val[-1]: [input_data[key]] }
+                            {val[-1]: [input_data[key]]}
                         )
             else:
                 params[val[-1]] = input_data[key]
@@ -141,12 +143,10 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.debug(f"Parsed params: {params}")
         return params
 
-
     def _validate_params(self, input_type, content):
         params = self._parse_params(content)
         logger.debug(f"Validating {input_type}::{params}")
         self.validate_map[input_type](**params)
-
 
     def _list_to_dict(self, inp_list, last_node_val: None):
         """Recursively convert a list to a nested dictionary
@@ -168,7 +168,6 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.debug(f"Section list to Dict: {new_dict}")
         return new_dict
 
-
     def _dict_merge(self, dict_1, dict_2):
         """Merge dict_1 to dict_2 recursively."""
         for key in dict_2.keys():
@@ -188,28 +187,30 @@ class ConfigureSetup(CommandParserFillerMixin):
         logger.debug(f"The merged dictionaries: {dict_1}")
         return dict_1
 
-
     def _key_int_to_list(self, contents):
         """
         Treat integer values in keys to arrays
         and update dict values
 
         """
-        ret_val = None
+
+        ret_val = []
         for key in contents.keys():
             if key.isdigit():
-                ret_val = [contents[key]]
+                ret_val.insert(int(key), contents[key])
             elif isinstance(contents[key], dict):
-                tmp_var = self._key_int_to_list(contents[key])
-                if isinstance(tmp_var, list):
+                ret_val = self._key_int_to_list(contents[key])
+                if isinstance(ret_val, list):
                     if not isinstance(contents[key], list):
                         contents[key] = []
-                    contents[key].extend(tmp_var)
+                    contents[key].extend(ret_val)
+                    ret_val = contents
+                else:
+                    contents[key] = ret_val
+                    ret_val = contents
             else:
                 ret_val = contents
-
         return ret_val
-
 
     def _parse_input(self, input_data):
         """
@@ -219,12 +220,12 @@ class ConfigureSetup(CommandParserFillerMixin):
         """
         kv_to_dict = dict()
         keys_of_type_list = [
-            'interfaces', 'roles', 'data_devices', 'metadata_devices'
+            'interfaces', 'roles', 'data_devices', 'metadata_devices', 'cvg'
         ]
         for key in input_data.keys():
             if input_data.get(key) and "," in input_data.get(key):
                 input_data[key] = [
-                   element.strip() for element in input_data.get(key).split(",")
+                    element.strip() for element in input_data.get(key).split(",")
                 ]
 
             elif any(k in key for k in keys_of_type_list):
@@ -256,11 +257,9 @@ class ConfigureSetup(CommandParserFillerMixin):
                 # logger.debug(f"KV to Dict ('.' separated): {kv_to_dict}")
             else:
                 kv_to_dict[key] = input_data.get(key)
-
         kv_to_dict = self._key_int_to_list(kv_to_dict)
         logger.debug(f"KV to Dict: {kv_to_dict}")
         return kv_to_dict
-
 
     def run(self, path, number_of_nodes):  # noqa: C901
         if not Path(path).is_file():
@@ -269,6 +268,9 @@ class ConfigureSetup(CommandParserFillerMixin):
         validate = ConfigValidator()
         config = configparser.ConfigParser()
         config.read(path)
+
+        final_dict = {'cluster': {}, 'storage': {}}
+
         logger.info("Updating salt data")
 
         content = {section: dict(config.items(section))
@@ -282,12 +284,8 @@ class ConfigureSetup(CommandParserFillerMixin):
 
         # Validate node count
         validate._validate_node_count(
-           number_of_nodes, parsed
+            number_of_nodes, parsed
         )
-
-        pillar_map = {'node': 'cluster',
-                      'cluster': 'cluster',
-                      'storage': 'storage'}
 
         # Process default sections
         # copy data from srvnode_default to individual server_node sections
@@ -319,19 +317,27 @@ class ConfigureSetup(CommandParserFillerMixin):
             content[section] = tmp_section
 
             logger.debug(
-                f"Processing content for {section}::{content[section]}"
+                f"Processing content for {section}:{content[section]}"
             )
-
             input_type = ('node' if 'srvnode' in section
                           else 'storage' if 'enclosure' in section
                           else 'cluster')
 
-            pillar_type = f'{pillar_map[input_type]}/{section}'
-
             self._validate_params(input_type, content[section])
             content[section] = self._parse_input(content[section])
+            if 'srvnode' in section:
+                final_dict['cluster'].update({section: content[section]})
+            elif 'enclosure' in section:
+                final_dict['storage'].update({section: content[section]})
+            else:
+                final_dict.update({section: content[section]})
 
-            logger.debug(f"Final content to set:: {content[section]}")
-            PillarSet().run(f"{pillar_type}", content[section])
-
+            logger.debug(
+                f"Content to set for {section}: {content[section]}")
+        logger.debug(f"Final dict to be set to pillar: {final_dict}")
+        PillarSet(
+            input_type=PillarIterable).run(
+            PillarIterable(
+                final_dict,
+                expand=True))
         logger.info("Pillar data updated Successfully.")
