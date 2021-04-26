@@ -122,9 +122,6 @@ node {
 
             stage("${remote.name}: Uninstall rpms") {
                 sshCommand remote: remote, command: """
-                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
-                    yum erase -y glusterfs-fuse glusterfs-server glusterfs     # Gluster FS packages
-                    yum erase -y *gluster*
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
