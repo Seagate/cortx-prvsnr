@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
 
 Run cortx-ha config:
   cmd.run:
@@ -23,11 +22,3 @@ Run cortx-ha config:
     - failhard: True
     - Require:
         - cortx-ha post_install
-
-{% else %}
-
-No HA config on secondary node:
-  test.show_notification:
-    - text: "HA config  applies to primary node. There's no execution on secondary node"
-
-{% endif %}
