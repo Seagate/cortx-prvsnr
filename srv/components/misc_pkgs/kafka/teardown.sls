@@ -31,6 +31,14 @@ Remove zookeeper data directory:
   file.absent:
     - name: /var/lib/zookeeper
 
+Remove zookeeper log directory:
+  file.absent:
+    - name: /var/log/zookeeper
+
+Remove kafka log directory:
+  file.absent:
+    - name: /var/log/kafka
+
 Remove kafka flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka

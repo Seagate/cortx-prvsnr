@@ -39,6 +39,26 @@ Update zoopkeeper cofig:
     - template: jinja
     - backup: '.bak'
 
+Update permissions for datadir:
+  file.directory:
+    - name: /var/lib/zookeeper
+    - user: kafka
+    - group: kafka
+    - makedirs: True
+    - recurse:
+      - user
+      - group
+
+Update permissions for datalogdir:
+  file.directory:
+    - name: /var/log/zookeeper
+    - user: kafka
+    - group: kafka
+    - makedirs: True
+    - recurse:
+      - user
+      - group
+
 Create zookeeper id:
   file.append:
    - name: /var/lib/zookeeper/myid
