@@ -58,17 +58,10 @@ Remove management-zone:
       - Reset default zone
 {% endif %}
 
-Refresh firewalld:
-  module.run:
-    - firewalld.reload_rules: []
-    - service.restart:
-      - firewalld
+firewalld:
+  service.running:
+    - reload: True
 
 Delete firewall checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
-
-Stop and disable firewalld service:
-  service.dead:
-    - name: firewalld
-    - enable: False
