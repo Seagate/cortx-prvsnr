@@ -137,13 +137,39 @@ Make SWAP:
       - Make lv_main_swap
       - cmd: Ensure SWAP partition is unmounted
 
-# Activate SWAP device
-Enable swap:
-  mount.swap:
-    - name: /dev/vg_metadata_{{ node }}/lv_main_swap
-    - persist: True
-    - require:
-      - cmd: Make SWAP
+Verify sysvol_swap parition in the fstab:
+  module.run:
+    - mount.set_fstab:
+      - name: swap
+      - device: /dev/mapper/vg_sysvol-lv_swap
+      - fstype: swap
+      - opts:
+        - defaults
+        - pri=0
+
+Verify lv_main_swap parition in the fstab:
+  module.run:
+    - mount.set_fstab:
+      - name: none
+      - device: /dev/vg_metadata_{{ node }}/lv_main_swap
+      - fstype: swap
+      - opts:
+        - defaults
+        - pri=32767
+      - require:
+        - cmd: Make SWAP
+
+Enable sysvol_swap:
+  module.run:
+    - mount.swapon:
+      - name: /dev/mapper/vg_sysvol-lv_swap
+      - priority: "0"
+
+Enable lv_main_swap:
+  module.run:
+    - mount.swapon:
+      - name: /dev/vg_metadata_{{ node }}/lv_main_swap
+      - priority: 32767
 
 # Format metadata partion
 Make metadata partition:
