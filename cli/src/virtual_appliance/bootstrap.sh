@@ -20,7 +20,7 @@
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/va_bootstrap.log}"
-mkdir -p $(dirname ""${LOG_FILE}")"
+mkdir -p $(dirname "${LOG_FILE}")
 
 function trap_handler {
     echo "***** ERROR! *****"
