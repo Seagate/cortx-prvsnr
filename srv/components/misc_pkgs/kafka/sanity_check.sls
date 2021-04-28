@@ -15,9 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Test kafka:
+Test kafka-zookeeper:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
         attempts: 5
         until: True
@@ -25,5 +25,5 @@ Test kafka:
 
 Test kafka:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
 
