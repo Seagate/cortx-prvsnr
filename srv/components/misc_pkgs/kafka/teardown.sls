@@ -23,6 +23,10 @@ Remove java:
   pkg.purged:
     - name: java-1.8.0-openjdk-headless
 
+Remove kafka:
+  pkg.purged:
+    - name: kafka
+
 Remove kafka directory:
   file.absent:
     - name: /opt/kafka

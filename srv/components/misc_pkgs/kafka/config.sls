@@ -44,10 +44,12 @@ Update permissions for datadir:
     - name: /var/lib/zookeeper
     - user: kafka
     - group: kafka
+    - dir_mode: 755
     - makedirs: True
     - recurse:
       - user
       - group
+      - mode
 
 Update permissions for datalogdir:
   file.directory:
@@ -55,9 +57,11 @@ Update permissions for datalogdir:
     - user: kafka
     - group: kafka
     - makedirs: True
+    - dir_mode: 755
     - recurse:
       - user
       - group
+      - mode
 
 Create zookeeper id:
   file.append:
