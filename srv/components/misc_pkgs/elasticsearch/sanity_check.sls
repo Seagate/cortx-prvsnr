@@ -14,3 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+Ensure elastic serarch is running:
+  cmd.run:
+    - name: "for ((i=0; i<5; i++)); do curl http://localhost:9200 >/dev/null 2>&1 && break; sleep 5; done"
