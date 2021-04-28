@@ -15,13 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% for i in range(5) -%}
-Test Kafka-zookeeper:
-    cmd.run:
-        -name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
-        - test.sleep:
-          - length: 2
-{% endfor -%}
+Test kafka:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 10
 
 Test kafka:
   cmd.run:
