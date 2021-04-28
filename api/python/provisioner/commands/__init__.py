@@ -1390,7 +1390,7 @@ for cmd_name, spec in api_spec.items():
     except AttributeError:
         try:
             cmd_mod = importlib.import_module(
-                f'provisioner.commands.{cmd_module_path}'
+                f'.{cmd_module_path}'
             )
         except Exception:
             logger.error(f"Failed to import provisioner.commands.{cmd_name}")
