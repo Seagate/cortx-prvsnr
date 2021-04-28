@@ -112,13 +112,13 @@ set_swupdate_repo:
     post:
     - components.misc_pkgs.swupdate.repo
 set_swupgrade_repo:
-  type: SetSWUpgradeRepo
+  type: upgrade.SetSWUpgradeRepo
   input_type: SWUpgradeRepo
   states:
     post:
     - repos.upgrade
 remove_swupgrade_repo:
-  type: RemoveSWUpgradeRepo
+  type: upgrade.RemoveSWUpgradeRepo
   input_type: SWUpgradeRemoveRepo
   states:
     post:
@@ -126,7 +126,7 @@ remove_swupgrade_repo:
 sw_update:
   type: SWUpdate
 sw_upgrade:
-  type: SWUpgrade
+  type: upgrade.SWUpgrade
 fw_update:
   type: FWUpdate
 sw_rollback:
