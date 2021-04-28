@@ -21,35 +21,35 @@ from typing import Type
 import requests
 from configparser import ConfigParser
 
-from ..salt import copy_to_file_roots, cmd_run, local_minion_id
-from .set_swupdate_repo import SetSWUpdateRepo
+from ...salt import copy_to_file_roots, cmd_run, local_minion_id
+from ..set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
-from ..config import (REPO_CANDIDATE_NAME,
-                      IS_REPO_KEY,
-                      RELEASE_INFO_FILE,
-                      THIRD_PARTY_RELEASE_INFO_FILE,
-                      ReleaseInfo,
-                      PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
-                      CORTX_ISO_DIR,
-                      CORTX_3RD_PARTY_ISO_DIR,
-                      CORTX_PYTHON_ISO_DIR,
-                      OS_ISO_DIR, HashType,
-                      PIP_CONFIG_FILE
+from ...config import (REPO_CANDIDATE_NAME,
+                       IS_REPO_KEY,
+                       RELEASE_INFO_FILE,
+                       THIRD_PARTY_RELEASE_INFO_FILE,
+                       ReleaseInfo,
+                       PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
+                       CORTX_ISO_DIR,
+                       CORTX_3RD_PARTY_ISO_DIR,
+                       CORTX_PYTHON_ISO_DIR,
+                       OS_ISO_DIR, HashType,
+                       PIP_CONFIG_FILE
+                       )
+from ...errors import (SaltCmdResultError, SWUpdateRepoSourceError,
+                       ValidationError
+                       )
+from ...utils import (load_yaml,
+                      load_checksum_from_file,
+                      load_checksum_from_str,
+                      HashInfo, load_yaml_str
                       )
-from ..errors import (SaltCmdResultError, SWUpdateRepoSourceError,
-                      ValidationError
-                      )
-from ..utils import (load_yaml,
-                     load_checksum_from_file,
-                     load_checksum_from_str,
-                     HashInfo, load_yaml_str
-                     )
-from .validator import (DirValidator,
-                        FileValidator,
-                        FileSchemeValidator,
-                        ReleaseInfoValidator,
-                        YumRepoDataValidator,
-                        HashSumValidator)
+from ..validator import (DirValidator,
+                         FileValidator,
+                         FileSchemeValidator,
+                         ReleaseInfoValidator,
+                         YumRepoDataValidator,
+                         HashSumValidator)
 
 logger = logging.getLogger(__name__)
 
