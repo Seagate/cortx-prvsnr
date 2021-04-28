@@ -61,8 +61,14 @@ iopath_states=(
     "motr"
 )
 
+utils_states=(
+# states to be applied in desired sequence
+    "cortx_utils"
+)
+
 prereq_states=(
     # states to be applied in desired sequence
+    "misc_pkgs.kafka"
     "misc_pkgs.lustre"
     "misc_pkgs.statsd"
     "misc_pkgs.kibana"
@@ -206,6 +212,7 @@ if [[ "$run_all" == true ]]; then
     teardown_states "${controlpath_states[@]}"
     teardown_states "${iopath_states[@]}"
     teardown_states "${prereq_states[@]}"
+    teardown_states  "${utils_states[@]}"
     teardown_states "${system_states[@]}"
 fi
 
@@ -231,6 +238,7 @@ fi
 
 if [[ "$remove_system" == true ]]; then
     l_info "Unconfiguring the settings from System group states"
+    teardown_states  "${utils_states[@]}"
     teardown_states  "${system_states[@]}"
 fi
 
