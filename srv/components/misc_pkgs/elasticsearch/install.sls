@@ -19,10 +19,14 @@ Install JDK:
   pkg.installed:
     - name: java-1.8.0-openjdk-headless
 
+# Install elasticsearch:
+#   pkg.installed:
+#     - name: opendistroforelasticsearch
+#     - version: {{ pillar['commons']['version']['opendistroforelasticsearch'] }}
+
 Install elasticsearch:
-  pkg.installed:
-    - name: opendistroforelasticsearch
-    - version: {{ pillar['commons']['version']['opendistroforelasticsearch'] }}
+  cmd.run:
+    - name: yum install opendistroforelasticsearch-1.12.0 --nogpgcheck
 
 {#% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('elasticsearch'))) %#}
 # Downgrade elasticsearch to 6.8.8:
