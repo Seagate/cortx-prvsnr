@@ -40,8 +40,13 @@ salt-call state.apply components.system.network.mgmt.public
 salt-call state.apply components.system.network.data.public
 salt-call state.apply components.system.network.data.direct
 
+salt-call state.apply components.system.config.sync_salt
+
 #reconfigure /etc/hosts
 salt-call state.apply components.system.config.hosts
+
+#reconfigure kafka
+salt-call state.apply components.misc_pkgs.kafka.start 
 
 #reconfigure firewall
 salt-call state.apply components.system.firewall.teardown
@@ -50,9 +55,6 @@ salt-call state.apply components.system.firewall
 #reconfigure lustre
 salt-call state.apply components.misc_pkgs.lustre.stop
 salt-call state.apply components.misc_pkgs.lustre.config
-
-#reconfigure hare CDF
-salt-call state.apply components.hare.config
 
 #configure haproxy
 echo "INFO: Configuring haproxy and s3" | tee -a "${LOG_FILE}"
@@ -63,6 +65,9 @@ DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_valu
 provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
 salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
 provisioner confstore_export
+
+#reconfigure hare CDF
+# salt-call state.apply components.hare.config.prepare
 
 #restart services
 echo "INFO: Restarting haproxy" | tee -a "${LOG_FILE}"

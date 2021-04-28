@@ -30,7 +30,7 @@ Start zoopkeper:
 Wait for zookeeper to start:
   module.run:
     - test.sleep:
-      - length: 10
+      - length: 30
     - require:
       - Start zoopkeper
 
