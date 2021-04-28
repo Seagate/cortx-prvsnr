@@ -14,9 +14,14 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+{% for i in range(5) -%}
 Test Kafka-zookeeper:
     cmd.run:
         -name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+        - test.sleep:
+          - length: 2
+{% endfor -%}
 
 Test kafka:
   cmd.run:
