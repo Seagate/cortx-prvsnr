@@ -1757,8 +1757,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "{\"inline\": {\"no_encrypt\": True}}"
                 )
 
-        logger.info("Refresh enclosure id on the system")
+        logger.info(
+             "Encrypt pillar values and Refresh enclosure id on the system"
+        )
         for state in [
+            'components.system.config.pillar_encrypt',
             'components.system.storage.enclosure_id',
             'components.system.config.sync_salt'
         ]:
@@ -1766,7 +1769,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=ALL_MINIONS
             )
-
 
 
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
