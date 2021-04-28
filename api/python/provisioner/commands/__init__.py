@@ -1381,13 +1381,16 @@ class CreateUser(CommandParserFillerMixin):
 commands = {}
 for cmd_name, spec in api_spec.items():
     spec = deepcopy(api_spec[cmd_name])  # TODO
-    cmd_cls = spec.pop('type')
+    cmd_path = spec.pop('type')
+
+    cmd_module_path = '.'.join(cmd_path.split('.')[0:-1])
+    cmd_cls = cmd_path.split('.')[-1]
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
         try:
             cmd_mod = importlib.import_module(
-                f'provisioner.commands.{cmd_name}'
+                f'provisioner.commands.{cmd_module_path}'
             )
         except Exception:
             logger.error(f"Failed to import provisioner.commands.{cmd_name}")
