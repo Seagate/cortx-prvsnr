@@ -67,6 +67,7 @@ deploy_states = dict(
         "cortx_utils.teardown"
     ],
     prereq=[
+        "misc_pkgs.kafka.teardown",
         "misc_pkgs.lustre.teardown",
         "misc_pkgs.statsd.teardown",
         "misc_pkgs.kibana.teardown",
