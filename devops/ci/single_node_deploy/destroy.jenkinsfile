@@ -43,7 +43,8 @@ node {
 
             stage("Teardown of Cortx Stack") {
                 sshCommand remote: remote, command: """
-                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
+                provisioner destroy
+                provisioner destroy --states bootstrap
                 """
                 echo "Successfully teardown of Cortx Stack."
             }
