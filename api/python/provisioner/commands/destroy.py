@@ -83,7 +83,7 @@ deploy_states = dict(
         "system.chrony.teardown",
         "system.logrotate.teardown",
         "system.firewall.teardown",
-        "misc_pkgs.rsyslog.teadrwon",
+        "misc_pkgs.rsyslog.teardown",
         "system.storage.teardown",
         "system.storage.multipath.teardown",
         "system.teardown"
