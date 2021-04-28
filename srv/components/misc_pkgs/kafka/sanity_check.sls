@@ -21,9 +21,13 @@ Test kafka-zookeeper:
     - retry:
         attempts: 5
         until: True
-        interval: 10
+        interval: 2
 
 Test kafka:
   cmd.run:
     - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 2
 
