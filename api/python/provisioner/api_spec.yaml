@@ -118,7 +118,7 @@ set_swupgrade_repo:
     post:
     - repos.upgrade
 remove_swupgrade_repo:
-  type: RemoveSWUpgradeRepo
+  type: upgrade.RemoveSWUpgradeRepo
   input_type: SWUpgradeRemoveRepo
   states:
     post:

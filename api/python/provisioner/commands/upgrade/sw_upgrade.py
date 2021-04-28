@@ -19,20 +19,27 @@ from typing import Type
 import json
 
 from .. import inputs, values
-from ..commands import (CommandParserFillerMixin, Check, SWUpdateDecisionMaker,
-                        _apply_provisioner_config, _restart_salt_minions,
-                        _update_component, _pre_yum_rollback, GetReleaseVersion
-                        )
-from ..config import GroupChecks, ReleaseInfo
-from ..errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
-from ..pillar import PillarKey, PillarResolver, PillarUpdater
-from ..salt import (StatesApplier, local_minion_id, YumRollbackManager,
-                    get_last_txn_ids
-                    )
-from ..salt_master import config_salt_master
-from ..salt_minion import config_salt_minions
-from ..vendor import attr
-from . import sw_rollback
+from ...commands import (CommandParserFillerMixin,
+                         Check,
+                         SWUpdateDecisionMaker,
+                         _apply_provisioner_config,
+                         _restart_salt_minions,
+                         _update_component,
+                         _pre_yum_rollback,
+                         GetReleaseVersion
+                         )
+from ...config import GroupChecks, ReleaseInfo
+from ...errors import SWStackUpdateError, SWUpdateError, SWUpdateFatalError
+from ...pillar import PillarKey, PillarResolver, PillarUpdater
+from ...salt import (StatesApplier,
+                     local_minion_id,
+                     YumRollbackManager,
+                     get_last_txn_ids
+                     )
+from ...salt_master import config_salt_master
+from ...salt_minion import config_salt_minions
+from ...vendor import attr
+from .. import sw_rollback
 
 
 logger = logging.getLogger(__name__)
