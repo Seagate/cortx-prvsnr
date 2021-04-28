@@ -10,9 +10,9 @@ firewall:
     services:
       - ssh
       - ftp
-      {%- if salt['cmd.run']('rpm -qa glusterfs-server') %}
+      {#%- if salt['cmd.run']('rpm -qa glusterfs-server') %#}
       - glusterfs
-      {%- endif %}
+      {#%- endif %#}
     ports:
       csm:
         - 28100/tcp

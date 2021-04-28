@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 # Ensure ssh works when the firwall service starts for the next time
 Reset default zone:
   firewalld.present:
@@ -28,47 +29,74 @@ Reset default zone:
     - ports:
       - 4505/tcp
       - 4506/tcp
+    - watch_in:
+      - Delete firewall checkpoint flag
 
-Remove public management interfaces:
-  firewalld.present:
-    - name: management-zone
-    - prune_interfaces: True
-
+{#% if 'public-data-zone' in salt['firewalld.get_zones']() %#}
 Remove public data interfaces:
   firewalld.present:
     - name: public-data-zone
     - prune_interfaces: True
-
-Remove private data interfaces:
-  firewalld.present:
-    - name: trusted
-    - prune_interfaces: True
-    - prune_sources: True
-
-{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
+    - watch_in:
+      - Delete firewall checkpoint flag
+    
 Remove public-data-zone:
   module.run:
     - firewalld.delete_zone:
       - zone: public-data-zone
     - require:
       - Reset default zone
-{% endif %}
+    - watch_in:
+      - Delete firewall checkpoint flag
+{#% endif %#}
 
-{% if 'management-zone' in salt['firewalld.get_zones']() %}
+{#% if 'management-zone' in salt['firewalld.get_zones']() %#}
+Remove public management interfaces:
+  firewalld.present:
+    - name: management-zone
+    - prune_interfaces: True
+    - watch_in:
+      - Delete firewall checkpoint flag
+
 Remove management-zone:
   module.run:
     - firewalld.delete_zone:
       - zone: management-zone
     - require:
       - Reset default zone
-{% endif %}
+    - watch_in:
+      - Delete firewall checkpoint flag
+
+{#% endif %#}
+
+Remove private data interfaces:
+  firewalld.present:
+    - name: trusted
+    - prune_interfaces: True
+    - prune_sources: True
+    - watch_in:
+      - Delete firewall checkpoint flag
+
+Delete firewall checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
+    - contents: {{ grains['id'] }}.firewall
 
 Refresh firewalld:
   module.run:
     - service.restart:
       - firewalld
+    - watch_in:
+      - Delete firewall checkpoint flag
 
-Delete firewall checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
-
+# Restart salt-minion service:
+#  cmd.run:
+#    - name: 'systemctl restart salt-minion'
+#    - bg: True
+#    - require:
+#      - Remove public management interfaces
+#      - Remove management-zone
+#      - Remove public data interfaces
+#      - Remove public-data-zone
+#      - Remove private data interfaces
+#      - Refresh firewalld
