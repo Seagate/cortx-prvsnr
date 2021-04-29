@@ -15,20 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.kafka'.format(grains['id'])) %}
-include:
-  - .install
-  - .config
-  - .start
-  - .sanity_check
+Test kafka-zookeeper:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 2
 
-Generate kafka checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka
-    - makedirs: True
-    - create: True
-{%- else -%}
-Kafka already applied:
-  test.show_notification:
-    - text: "Kafka states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.Kafka.teardown' to reprovision these states."
-{% endif %}
+Test kafka:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 2
+
