@@ -19,10 +19,6 @@
 include:
   - .stop
 
-Remove java:
-  pkg.purged:
-    - name: java-1.8.0-openjdk-headless
-
 Remove kafka:
   pkg.purged:
     - name: kafka
