@@ -115,14 +115,14 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
+                    storage.data_devices=\${device_list#*,}
+                    storage.metadata_devices=\${device_list%%,*}
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
                     storage.durability.sns.data=4
                     storage.durability.sns.parity=2
                     storage.durability.sns.spare=2
-
-
                     [enclosure_default]
                     type=virtual
                     controller.type=virtual
