@@ -14,11 +14,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-Stage - Reset Motr:
+Stage - Cleanup Motr:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:cleanup')
-
-Remove Motr package:
-  pkg.purged:
-    - pkgs:
-      - cortx-motr

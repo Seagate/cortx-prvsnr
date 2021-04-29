@@ -18,7 +18,6 @@
 include:
   - components.sspl.teardown.reset
   - components.sspl.teardown.cleanup
-  - components.sspl.teardown.commons
 
 Remove sspl packages:
   pkg.purged:
