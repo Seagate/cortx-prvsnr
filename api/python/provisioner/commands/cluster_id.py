@@ -62,7 +62,8 @@ class ClusterId(CommandParserFillerMixin):
                 cluster_id = CLUSTER_ID_FILE.read_text().replace('\n', '')
 
             else:
-                logger.info("ClusterID file does not exist. Creating now..")
+                logger.info("ClusterID file does not exist "
+                            "or is empty. Creating now..")
 
                 # TODO: Rid of this step once we move out of grains data
                 cluster_id = grains_get(
@@ -185,7 +186,7 @@ class ClusterId(CommandParserFillerMixin):
 
             elif (cluster_id_from_pillar and
                         cluster_id_from_setup != cluster_id_from_pillar):
-                logger.info(
+                logger.error(
                    "Mismatch in cluster_id value between "
                    "setup and pillar data. Setting unique value now.."
                 )
