@@ -87,5 +87,3 @@ test -e ${PWD}/api/python/setup.py && \
   install_dir=${PWD} || \
   install_dir=/opt/seagate/cortx/provisioner
 
-chown -R :"$prvsnr_group" "${install_dir}/cli"
-chmod -R 750 "${install_dir}/cli"
