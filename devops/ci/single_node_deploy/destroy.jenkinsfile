@@ -129,8 +129,8 @@ node {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
                     test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx
-                    test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx_configs
-                    test -e /opt/seagate/cortx && rm -rf /opt/seagate
+                    test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
+                    test -e /opt/seagate && rm -rf /opt/seagate
                     test -e /etc/csm && rm -rf /etc/csm
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate
