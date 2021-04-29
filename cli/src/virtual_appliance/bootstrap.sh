@@ -33,12 +33,15 @@ BASEDIR=$(dirname "${BASH_SOURCE}")
 
 #reconfigure pillar
 provisioner configure_setup ~/config.ini 1
+provisioner confstore_export
 
 #reconfigure network
 salt-call state.apply components.system.network
 salt-call state.apply components.system.network.mgmt.public
 salt-call state.apply components.system.network.data.public
 salt-call state.apply components.system.network.data.direct
+
+salt-call state.apply components.system.config.sync_salt
 
 #reconfigure /etc/hosts
 salt-call state.apply components.system.config.hosts
@@ -47,12 +50,14 @@ salt-call state.apply components.system.config.hosts
 salt-call state.apply components.system.firewall.teardown
 salt-call state.apply components.system.firewall
 
+#reconfigure kafka
+salt-call state.apply components.misc_pkgs.kafka.teardown
+salt-call state.apply components.misc_pkgs.kafka
+salt-call state.apply components.cortx_utils
+
 #reconfigure lustre
 salt-call state.apply components.misc_pkgs.lustre.stop
 salt-call state.apply components.misc_pkgs.lustre.config
-
-#reconfigure hare CDF
-salt-call state.apply components.hare.config
 
 #configure haproxy
 echo "INFO: Configuring haproxy and s3" | tee -a "${LOG_FILE}"
@@ -62,7 +67,9 @@ DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:
 DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
 provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
 salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
-provisioner confstore_export
+
+#reconfigure hare CDF
+salt-call state.apply components.hare.config
 
 #restart services
 echo "INFO: Restarting haproxy" | tee -a "${LOG_FILE}"
