@@ -67,6 +67,7 @@ deploy_states = dict(
         "cortx_utils.teardown"
     ],
     prereq=[
+        "misc_pkgs.kafka.teardown",
         "misc_pkgs.lustre.teardown",
         "misc_pkgs.statsd.teardown",
         "misc_pkgs.kibana.teardown",
@@ -82,7 +83,7 @@ deploy_states = dict(
         "system.chrony.teardown",
         "system.logrotate.teardown",
         "system.firewall.teardown",
-        "misc_pkgs.rsyslog.teadrwon",
+        "misc_pkgs.rsyslog.teardown",
         "system.storage.teardown",
         "system.storage.multipath.teardown",
         "system.teardown"
@@ -91,6 +92,7 @@ deploy_states = dict(
         "provisioner.salt.stop",
         "system.storage.glusterfs.teardown.volume_remove",
         "system.storage.glusterfs.teardown",
+        "system.storage.glusterfs.teardown.cache_remove",
         "provisioner.salt.teardown",
         "provisioner.salt.teardown.package_remove",
         "provisioner.passwordless_remove",
