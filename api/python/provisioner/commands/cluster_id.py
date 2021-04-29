@@ -81,7 +81,7 @@ class ClusterId(CommandParserFillerMixin):
 
                 # TODO: check if there's a better way to make file immutable
                 _cmd = f"chattr +i {CLUSTER_ID_FILE} && lsattr {CLUSTER_ID_FILE}"
-                run_subprocess_cmd([_cmd], check=False, shell=True).stdout
+                run_subprocess_cmd([_cmd], check=False, shell=True)     # nosec
 
             return cluster_id
 
@@ -118,20 +118,24 @@ class ClusterId(CommandParserFillerMixin):
                     cluster_id.append(
                       cluster_data[node]["cluster"]["cluster_id"]
                     )
-                else:
+
+            if cluster_id:
+                if len(set(cluster_id)) != 1:
                     logger.error(
-                      "ClusterID is not present in Pillar data for "
-                      "either of the nodes."
+                      "ERROR: ClusterID assignment not unique across "
+                      f"the nodes of the cluster: {cluster_id}. "
+                      "Possible warning: Check if cluster values "
+                      "have been manually tampered with."
                     )
 
-            if len(set(cluster_id)) != 1:
-                logger.error(
-                  "ERROR: ClusterID assignment not unique across "
-                  f"the nodes of the cluster: {cluster_id}. "
-                  "Possible warning: Cluster values have been manually tampered with."
-                )
+                else:
+                    res = cluster_id[0]
 
-            res = cluster_id[0]
+            else:
+                logger.error(
+                     "ClusterID is not present in Pillar data for "
+                     "either of the nodes."
+                )
 
         except ValueError as exc:
             logger.error(
@@ -158,8 +162,8 @@ class ClusterId(CommandParserFillerMixin):
 
             if node_role[0] != "primary":
                 raise ValueError(
-                  "Error: ClusterID can be set only in the Primary node "
-                  f"of the cluster. Node role received: '{node_role[0]}'."
+                     "Error: ClusterID can be set only in the Primary node "
+                     f"of the cluster. Node role received: '{node_role[0]}'."
                 )
 
             logger.info("This is the Primary node of the cluster.")
@@ -169,12 +173,18 @@ class ClusterId(CommandParserFillerMixin):
             # double verification
             cluster_id_from_pillar = self._get_cluster_id()
 
-            if not cluster_id_from_pillar:
+            if cluster_id_from_setup == cluster_id_from_pillar:
+                logger.info(
+                  "Bootstrapping completed and ClusterID is set!"
+                )
+
+            elif not cluster_id_from_pillar:
                 logger.info(
                    "ClusterID not set in pillar data. Setting now.."
                 )
 
-            elif cluster_id_from_setup != cluster_id_from_pillar:
+            elif (cluster_id_from_pillar and
+                        cluster_id_from_setup != cluster_id_from_pillar):
                 logger.info(
                    "Mismatch in cluster_id value between "
                    "setup and pillar data. Setting unique value now.."
@@ -186,11 +196,7 @@ class ClusterId(CommandParserFillerMixin):
                 targets=targets
             )
 
-            logger.info(
-                "Bootstrapping completed and ClusterID is already set!"
-            )
-
-            return "Success: Unique ClusterID assignment to pillar data."
+            return f"cluster_id: {cluster_id_from_setup}"
 
         except Exception as exc:
             raise ValueError(
