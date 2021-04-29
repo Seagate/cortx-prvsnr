@@ -41,12 +41,51 @@ node {
                 echo "Successfully connected to VM ${HOST_NAME}."
             }
 
-            stage("Teardown of Cortx Stack") {
-                sshCommand remote: remote, command: """
-                provisioner destroy
-                provisioner destroy --states bootstrap
-                """
-                echo "Successfully teardown of Cortx Stack."
+            stage("Teardown: HA") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+            """
+            echo "Successful teardown: HA"
+            }
+
+            stage("Teardown: Control-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+            """
+            echo "Successful teardown: Control-Path"
+            }
+
+            stage("Teardown: IO-Path") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+            """
+            echo "Successful teardown: IO-Path"
+            }
+
+            stage("Teardown: Foundation") {
+            sshCommand remote: remotes[0], command: "provisioner destroy --states utils || true"
+            echo "Successful teardown: Foundation"
+            }
+
+            stage("Teardown: 3rd_Party") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+            """
+            echo "Successful teardown: 3rd-Party"
+            }
+
+            stage("Teardown: Platform") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+            """
+            echo "Successful teardown: Platform"
+            }
+
+            stage("Teardown: Provisioner Bootstrap") {
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+            """
+            echo "Successful teardown: Bootstrap"
             }
 
             stage("Stop services") {
@@ -64,7 +103,6 @@ node {
                 sshCommand remote: remote, command: """
                     yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
                     yum erase -y glusterfs-fuse glusterfs-server glusterfs     # Gluster FS packages
-                    yum erase -y *gluster*
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
