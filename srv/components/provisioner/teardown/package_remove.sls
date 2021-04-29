@@ -23,4 +23,3 @@ Remove_salt_packages:
       - cortx-prvsnr-cli
       - python36-cortx-prvsnr
       - rsync
-      - python36-m2crypto 
