@@ -1811,7 +1811,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         ssh_client.cmd_run(
             (
-               "provisioner set_cluster_id"
+               "provisioner cluster_id"
             ), targets=run_args.primary.minion_id
         )
 
