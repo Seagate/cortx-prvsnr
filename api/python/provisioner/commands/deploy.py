@@ -72,7 +72,8 @@ deploy_states = dict(
         "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
-        "misc_pkgs.statsd"
+        "misc_pkgs.statsd",
+        "misc_pkgs.consul.install"
     ],
     utils=[
         "cortx_utils"
@@ -83,22 +84,31 @@ deploy_states = dict(
     iopath=[
         "misc_pkgs.lustre",
         "motr",
-        "s3server"
+        "s3server",
+        "hare"
     ],
+    # The R1 HW HA sequence
+    # ha=[
+    #     "ha.corosync-pacemaker",
+    #     "ha.haproxy.start",
+    #     "hare",
+    #     "ha.cortx-ha",
+    #     "ha.iostack-ha"
+    # ],
+
     ha=[
-        "ha.corosync-pacemaker",
+        "ha.corosync-pacemaker.install",
+        "ha.corosync-pacemaker.config.base",
         "ha.haproxy.start",
-        "hare",
-        "ha.cortx-ha",
-        "ha.iostack-ha"
+        "ha.cortx-ha"
     ],
     # states to be applied in desired sequence
     controlpath=[
         "sspl",
         "uds",
-        "csm",
-        "ha.ctrlstack-ha",
-        "ha.cortx-ha.ha"
+        "csm"
+        # "ha.ctrlstack-ha",
+        # "ha.cortx-ha.ha"
     ],
     backup=[
         "provisioner.backup",
@@ -259,7 +269,10 @@ class Deploy(CommandParserFillerMixin):
         setup_type = (
             SetupType.SINGLE
             if (1 == len(run_args.targets))
-            else run_args.setup_type
+            else (run_args.setup_type
+                  if run_args.setup_type
+                  else SetupType.GENERIC)
+
         )
         targets = run_args.targets
         states = deploy_states[states_group]
@@ -268,35 +281,26 @@ class Deploy(CommandParserFillerMixin):
         primary = self._primary_id()
         secondaries = f"not {primary}"
 
+        hw_states = [
+            "system.storage.multipath",
+            "misc_pkgs.ipmi.bmc_watchdog",
+        ]
+
         # apply states
-        if setup_type == SetupType.SINGLE:
-            # TODO use salt orchestration
-            for state in states:
+        for state in states:
+
+            if state in hw_states and not self._is_hw():
+                continue
+
+            if setup_type == SetupType.SINGLE:
+                # TODO use salt orchestration
                 if "sync" not in state:
                     self._apply_state(f"components.{state}", targets, stages)
-        else:
-            # FIXME EOS-12076 the following logic is only
-            #       for legacy dual node setup
-            for state in states:
-                if state == "ha.corosync-pacemaker":
-                    for _state, target in (
-                        ("install", targets),
-                        ("config.base", targets),
-                        ("config.authorize", primary),
-                        ("config.setup_cluster", primary),
-                        ("config.cluster_ip", primary),
-                        ("config.stonith", primary)
-                    ):
-                        self._apply_state(
-                            f"components.ha.corosync-pacemaker.{_state}",
-                            target,
-                            stages
-                        )
-
-                elif state in (
+            else:
+                if state in (
                     "system.storage",
                     "sspl",
-                    "csm",
+                    "ha.cortx-ha",
                     "provisioner.backup"
                 ):
                     # Execute first on secondaries then on primary.
@@ -307,15 +311,27 @@ class Deploy(CommandParserFillerMixin):
 
                 elif state in (
                     "sync.software.rabbitmq",
-                    "sync.software.openldap",
-                    "system.storage.multipath",
-                    "sync.files"
+                    "system.storage.multipath"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
+                # elif state == "ha.corosync-pacemaker":
+                #     for _state, target in (
+                #         ("install", targets),
+                #         ("config.base", targets),
+                #         ("config.authorize", primary),
+                #         ("config.setup_cluster", primary),
+                #         ("config.cluster_ip", primary),
+                #         ("config.stonith", primary)
+                #     ):
+                #         self._apply_state(
+                #             f"components.ha.corosync-pacemaker.{_state}",
+                #             target,
+                #             stages
+                #         )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
 
@@ -324,48 +340,41 @@ class Deploy(CommandParserFillerMixin):
         # TODO IMPROVE do wee need to wait 2 seconds after each operation
         #      as it was in legacy bash script
         logger.info("Updating Salt data")
-        logger.info("Syncing states")
-        self._function_run('saltutil.sync_all', targets=targets)
 
-        logger.info("Refreshing pillars")
-        self._function_run('saltutil.refresh_pillar', targets=targets)
-
-        logger.info("Refreshing grains")
-        self._function_run('saltutil.refresh_grains', targets=targets)
+        self._apply_state("components.system.config.sync_salt", targets)
 
     def _encrypt_pillar(self):
         # FIXME ??? EOS-12076 targets
         # Encrypt passwords in pillar data
         logger.info("Encrypting salt pillar data")
-        encrypt_tool = config.PRVSNR_ROOT_DIR / 'cli/pillar_encrypt'
-        self._cmd_run(
-            f"python3 {encrypt_tool}",
-            targets=self._primary_id()
-        )
-        self._update_salt()
+
+        self._apply_state(
+            "components.system.config.pillar_encrypt",
+            self._primary_id())
 
     def _destroy_storage(self, run_args, nofail=True):
         targets = run_args.targets
 
-        # FIXME VERIFY EOS-12076
-        if (
-            (run_args.setup_type != SetupType.SINGLE) and
-            (targets == config.ALL_MINIONS)
-        ):
-            targets = f"not {self._primary_id()}"
+        # # FIXME VERIFY EOS-12076
+        # if (
+        #     (run_args.setup_type != SetupType.SINGLE) and
+        #     (targets == config.ALL_MINIONS)
+        # ):
+        #     targets = f"not {self._primary_id()}"
 
         # Old remnant partitios from previous deployments has to be cleaned-up
-        logger.info("Removing components.system.storage from both nodes.")
+        logger.info("Removing components.system.storage from all nodes.")
         self._apply_state("components.system.storage.teardown", targets)
 
     def _rescan_scsi_bus(self, targets=config.ALL_MINIONS, nofail=True):
-        logger.info("Rescan SCSI bus")
-        try:
-            return self._cmd_run("rescan-scsi-bus.sh", targets=targets)
-        except errors.SaltCmdResultError:
-            logger.exception("rescan-scsi-bus.sh failed")
-            if not nofail:
-                raise
+        if self._is_hw():
+            logger.info("Rescan SCSI bus")
+            try:
+                return self._cmd_run("rescan-scsi-bus.sh", targets=targets)
+            except errors.SaltCmdResultError:
+                logger.exception("rescan-scsi-bus.sh failed")
+                if not nofail:
+                    raise
 
     def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)
@@ -390,7 +399,7 @@ class Deploy(CommandParserFillerMixin):
             self._run_states('iopath', run_args)
             self._run_states('ha', run_args)
             self._run_states('controlpath', run_args)
-            self._run_states('backup', run_args)
+            # self._run_states('backup', run_args)
         else:
             if 'system' in run_args.states:
                 logger.info("Deploying the system states")
