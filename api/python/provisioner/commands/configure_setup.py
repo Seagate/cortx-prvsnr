@@ -124,7 +124,7 @@ class ConfigureSetup(CommandParserFillerMixin):
                     # The '.' get replaced with '_'
                     params[f'{val[-2]}_{val[-1]}'] = input_data[key]
 
-                elif val[-1] in [
+                elif 'cvg' in val and val[-1] in [
                     'data_devices', 'metadata_devices'
                 ]:
                     if not params.get(val[-3]):
