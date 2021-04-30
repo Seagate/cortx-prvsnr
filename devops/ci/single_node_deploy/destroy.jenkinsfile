@@ -41,11 +41,53 @@ node {
                 echo "Successfully connected to VM ${HOST_NAME}."
             }
 
-            stage("Teardown of Cortx Stack") {
-                sshCommand remote: remote, command: """
-                    /opt/seagate/cortx/provisioner/cli/destroy-vm --ctrlpath-states --iopath-states --prereq-states --system-states --ha-states || true
-                """
-                echo "Successfully teardown of Cortx Stack."
+            stage("Teardown: HA") {
+            sshCommand remote: remote, command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+            """
+            echo "Successful teardown: HA"
+            }
+
+            stage("Teardown: Control-Path") {
+            sshCommand remote: remote, command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+            """
+            echo "Successful teardown: Control-Path"
+            }
+
+            stage("Teardown: IO-Path") {
+            sshCommand remote: remote, command: """
+                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+            """
+            echo "Successful teardown: IO-Path"
+            }
+
+            stage("Teardown: Foundation") {
+            sshCommand remote: remote, command: """ 
+                command -v provisioner &>/dev/null && provisioner destroy --states utils || true
+            """
+            echo "Successful teardown: Foundation"
+            }
+
+            stage("Teardown: 3rd_Party") {
+            sshCommand remote: remote, command: """ 
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+            """
+            echo "Successful teardown: 3rd-Party"
+            }
+
+            stage("Teardown: Platform") {
+            sshCommand remote: remote, command: """ 
+                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+            """
+            echo "Successful teardown: Platform"
+            }
+
+            stage("Teardown: Provisioner Bootstrap") {
+            sshCommand remote: remote, command: """ 
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+            """
+            echo "Successful teardown: Bootstrap"
             }
 
             stage("Stop services") {
@@ -62,7 +104,7 @@ node {
             stage("Uninstall rpms") {
                 sshCommand remote: remote, command: """
                     yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
-                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
+                    yum erase -y glusterfs-fuse glusterfs-server glusterfs     # Gluster FS packages
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
@@ -86,15 +128,18 @@ node {
             stage("Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
-                    rm -rf /opt/seagate/cortx
-                    rm -rf /opt/seagate/cortx_configs
-                    rm -rf /opt/seagate
+                    test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx
+                    test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
+                    test -e /opt/seagate && rm -rf /opt/seagate
+                    test -e /etc/csm && rm -rf /etc/csm
                     # Bricks cleanup
-                    test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
-                    test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs
+                    test -e /var/lib/glusterd && rm -rf /var/lib/glusterd || true
                     # Cleanup Salt
-                    test -e /var/cache/salt && rm -rf /var/cache/salt || true
-                    test -e /etc/salt && rm -rf /etc/salt || true
+                    test -e /var/cache/salt && rm -rf /var/cache/salt
+                    test -e /etc/salt && rm -rf /etc/salt
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
                     # Cleanup Provisioner profile directory
                     test -e /opt/isos && rm -rf /opt/isos || true
                     test -e /root/.provisioner && rm -rf /root/.provisioner || true

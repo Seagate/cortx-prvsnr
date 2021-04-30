@@ -19,9 +19,9 @@
 include:
   - .stop
 
-Remove java:
+Remove kafka:
   pkg.purged:
-    - name: java-1.8.0-openjdk-headless
+    - name: kafka
 
 Remove kafka directory:
   file.absent:
@@ -30,6 +30,14 @@ Remove kafka directory:
 Remove zookeeper data directory:
   file.absent:
     - name: /var/lib/zookeeper
+
+Remove zookeeper log directory:
+  file.absent:
+    - name: /var/log/zookeeper
+
+Remove kafka log directory:
+  file.absent:
+    - name: /var/log/kafka
 
 Remove kafka flag:
   file.absent:

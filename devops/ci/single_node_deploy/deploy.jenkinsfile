@@ -67,11 +67,11 @@ node {
             stage("Storage Configuration Check") {
                 try {
                     sshCommand remote: remote, command: """
-                        test 6 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
+                        test 2 -le \$(lsblk -nd -o NAME -e 11|grep -v sda|wc -l)
                     """
-                    echo "The VM has 6+ number of attached disks. Check Successful!"
+                    echo "The VM has 2+ number of attached disks. Check Successful!"
                 } catch(Exception ex) {
-                    error 'The VM should have 6+ attached disks. Kindly provide a VM with 6+ attached disks.'
+                    error 'The VM should have atleast 2 attached disks. Kindly provide a VM with 2+ attached disks.'
                 }
             }
 
@@ -85,6 +85,8 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
+                    storage.data_devices=\${device_list#*,}
+                    storage.metadata_devices=\${device_list%%,*}
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
@@ -104,8 +106,7 @@ node {
                     roles=primary,openldap_server
 
                     [enclosure-${remote.name.split('-')[1]}]
-                    \"\"\" >> /root/config.ini
-                    sed -ie 's/^[ \t]*//' /root/config.ini
+                    \"\"\" | sed -e 's/^[ \t]*//' >> /root/config.ini
                 """
                 echo "Successfully created config.ini file!"
             }
@@ -175,7 +176,7 @@ node {
             }
 
             stage("Foundation Setup") {
-                // if (DEBUG) {
+                // if (DEBUG.toBoolean()) {
                 //     timeout(30) {
                 //         input 'Proceed with Foundation Deployment Stage?'
                 //     }
@@ -185,7 +186,7 @@ node {
             }
 
             stage("Data Path States Deployment") {
-                if (true == DEBUG) {
+                if (true == DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with Data Path Stage?'
                     }
@@ -195,7 +196,7 @@ node {
             }
 
             stage("Control Stack States Deployment") {
-                if (true == DEBUG) {
+                if (true == DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with Control Path Stage?'
                     }
@@ -205,7 +206,7 @@ node {
             }
 
             stage("HA States Deployment") {
-                if (true == DEBUG) {
+                if (true == DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with HA Setup Stage?'
                     }

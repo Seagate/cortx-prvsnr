@@ -20,11 +20,8 @@ Make hostname file modifiable:
     - name: "chattr -i /etc/hostname"
 
 Set hostname:
-  network.system:
-    - name: set_hostname
-    - hostname: {{ pillar['cluster'][grains['id']]['hostname'] }}
-    - apply_hostname: True
-    - retain_settings: True
+  cmd.run:
+    - name: "hostnamectl set-hostname {{ pillar['cluster'][grains['id']]['hostname'] }}"
     - require:
       - Make hostname file modifiable
 

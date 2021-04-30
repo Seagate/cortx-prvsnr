@@ -21,7 +21,7 @@ def err = null
 def branchName = env.ghprbSourceBranch ?: env.BRANCH_NAME ?: env.sha1 ?: 'nobranch'
 branchName = branchName.replace('/','_')
 
-dockerImage = "seagate/cortx-prvsnr:ci-${branchName}"
+dockerImage = "seagate/cortx-prvsnr:ci-unit-${branchName}"
 
 Map config = [
     staticValidation: true,

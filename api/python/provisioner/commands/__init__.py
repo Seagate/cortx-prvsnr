@@ -1133,7 +1133,8 @@ class CreateUser(CommandParserFillerMixin):
     def run(self, uname, passwd, targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError('/opt/seagate/users directory missing')
+            raise ValueError("'/opt/seagate/users' directory missing. "
+                    "Ensure it is created before proceeding to create a new user.")
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname
@@ -1380,14 +1381,21 @@ class CreateUser(CommandParserFillerMixin):
 commands = {}
 for cmd_name, spec in api_spec.items():
     spec = deepcopy(api_spec[cmd_name])  # TODO
-    cmd_cls = spec.pop('type')
+    cmd_path = spec.pop('type')
+
+    cmd_module_path = '.'.join(cmd_path.split('.')[0:-1])
+    cmd_cls = cmd_path.split('.')[-1]
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
         try:
-            cmd_mod = importlib.import_module(
-                f'provisioner.commands.{cmd_name}'
-            )
+            import_path = 'provisioner.commands'
+            if cmd_module_path:
+                import_path = f'{import_path}.{cmd_module_path}.{cmd_name}'
+            else:
+                import_path = f'provisioner.commands.{cmd_name}'
+
+            cmd_mod = importlib.import_module(import_path)
         except Exception:
             logger.error(f"Failed to import provisioner.commands.{cmd_name}")
             raise

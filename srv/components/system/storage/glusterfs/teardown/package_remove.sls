@@ -22,3 +22,7 @@ Remove_glusterfs_packages:
       - glusterfs
       - glusterfs-fuse
       - glusterfs-server
+      - glusterfs-cli
+      - glusterfs-libs
+      - glusterfs-client
+      - glusterfs-api

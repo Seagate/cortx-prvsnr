@@ -1,0 +1,21 @@
+FROM {parent}
+
+USER root
+
+# docker
+COPY setup_docker.sh /tmp/
+RUN bash /tmp/setup_docker.sh \
+    && rm -f /tmp/setup_docker.sh
+
+RUN apt-get update \
+    && apt-get install -y sshpass \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG docker_gid=999
+
+RUN (groupadd docker || true) \
+    && groupmod -g ${docker_gid} docker
+
+RUN usermod -aG docker ${TEST_USER}
+
+USER ${TEST_USER}

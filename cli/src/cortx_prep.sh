@@ -75,8 +75,7 @@ EOF
 cat <<EOF >/etc/pip.conf
 [global]
 timeout: 60
-index-url: $CORTX_RELEASE_REPO/python_deps/
-trusted-host: $CORTX_RELEASE_REPO
+index-url: file:///tmp/iso_mount/cortx/python_deps/
 EOF
 
         echo "INFO: Installing cortx-prvsnr packages" 2>&1 | tee -a ${LOG_FILE}
