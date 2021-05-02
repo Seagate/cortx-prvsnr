@@ -1761,7 +1761,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
              "Encrypt pillar values and Refresh enclosure id on the system"
         )
         for state in [
-            'components.system.config.pillar_encrypt',
+            *(
+                ()
+                if run_args.source == 'local'
+                else ('components.system.config.pillar_encrypt', )
+            ),
             'components.system.storage.enclosure_id',
             'components.system.config.sync_salt'
         ]:
@@ -1769,7 +1773,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=ALL_MINIONS
             )
-
 
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
