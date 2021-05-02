@@ -1,20 +1,20 @@
 {
   "variables": {
-    "version": "0.0.1"
+    "version": "2.0.1"
   },
   "builders": [
     {
       "type": "vmware-iso",
       "boot_command": [
         "<tab><wait>",
-        "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>"
+        "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>",
+        " ks=https://raw.githubusercontent.com/Seagate/cortx-prvsnr/main/images/os/kickstart_centos_78_2003.cfg"
       ],
       "iso_urls": [
         "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-2003.iso",
         "https://vault.centos.org/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
       ],
       "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
-      "iso_target_path": "C:/Users/714502/Projects/iso/CentOS-7-x86_64-Minimal-2003.iso",
       "guest_os_type": "CentOS 7 64-bit",
       "vm_name": "cortxhost.localdomain",
       "cpus": 2,
@@ -24,6 +24,7 @@
         10000,
         10000
       ],
+      "disk_type_id": 1,
       "network": "nat",
       "headless": false,
       "ssh_username": "cortxub",
@@ -37,7 +38,18 @@
       "type": "shell",
       "inline": [
         "hostnamectl set-hostname --static --pretty cortxhost.localdomain",
-        "sudo yum install -y vim"
+        "sudo yum install -y git vim",
+        "sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine",
+        "sudo yum install -y yum-utils",
+        "sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo",
+        "sudo yum install -y docker-ce docker-ce-cli containerd.io",
+        "sudo systemctl start docker",
+        "sudo systemctl enable docker",
+        "sudo mkdir -p /opt/seagate/artifacts && cd /opt/seagate",
+        "sudo git clone https://github.com/Seagate/cortx --recursive && cd cortx",
+        "sudo docker run -v /opt/seagate/artifacts:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace ghcr.io/seagate/cortx-build:centos-7.8.2003 make checkout BRANCH=stable",
+        "sudo docker run -v /opt/seagate/artifacts:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace -v /opt/seagate/etc/yum.repos.d:/etc/yum.repos.d/motr-kernel-devel ghcr.io/seagate/cortx-build:centos-7.8.2003 make clean build",
+        "sudo docker run --rm -v /opt/seagate:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace ghcr.io/seagate/cortx-build:centos-7.8.2003 make iso_generation"
       ]
     }
   ]
