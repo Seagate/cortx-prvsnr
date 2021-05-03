@@ -22,7 +22,6 @@ Install JDK:
 Install elasticsearch:
   pkg.installed:
     - name: opendistroforelasticsearch
-    - version: {{ pillar['commons']['version']['opendistroforelasticsearch'] }}
     - gpgcheck: 0
 
 

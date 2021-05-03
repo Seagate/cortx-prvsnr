@@ -18,7 +18,6 @@
 Install Kibana:
   pkg.installed:
     - name: opendistroforelasticsearch-kibana
-    - version: {{ pillar['commons']['version']['opendistroforelasticsearch-kibana'] }}
     - gpgcheck: 0
 
 
