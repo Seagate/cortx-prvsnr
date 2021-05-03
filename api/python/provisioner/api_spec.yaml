@@ -151,6 +151,10 @@ salt:
   type: SaltClient
 generate_roster:
   type: GenerateRoster
+generate_config:
+  type: GenerateConfig
+cluster_formation:
+  type: ClusterFormation
 reset_machine_id:
   type: ResetMachineId
 confstore_export:
