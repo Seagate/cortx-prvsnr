@@ -115,14 +115,14 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
+                    storage.data_devices=\${device_list#*,}
+                    storage.metadata_devices=\${device_list%%,*}
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
                     storage.durability.sns.data=4
                     storage.durability.sns.parity=2
                     storage.durability.sns.spare=2
-
-
                     [enclosure_default]
                     type=virtual
                     controller.type=virtual
@@ -226,7 +226,7 @@ node {
             }
 
             stage("Foundation Deployment") {
-                // if (DEBUG) {
+                // if (DEBUG.toBoolean()) {
                 //     timeout(30) {
                 //         input 'Proceed with Foundation Deployment Stage?'
                 //     }
@@ -236,7 +236,7 @@ node {
             }
 
             stage("Data Path States Deployment") {
-                if (DEBUG) {
+                if (DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with Data Path Stage?'
                     }
@@ -246,7 +246,7 @@ node {
             }
                         
             stage("Control Stack States Deployment") {
-                if (DEBUG) {
+                if (DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with Control Path Stage?'
                     }
@@ -256,7 +256,7 @@ node {
             }
             
             stage("HA States Deployment") {
-                if (DEBUG) {
+                if (DEBUG.toBoolean()) {
                     timeout(30) {
                         input 'Proceed with HA Setup Stage?'
                     }

@@ -17,4 +17,4 @@
 
 Remove glusterd cache:
   file.absent:
-    name: /var/lib/glusterd
+    - name: /var/lib/glusterd

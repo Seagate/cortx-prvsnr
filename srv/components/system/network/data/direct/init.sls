@@ -26,9 +26,9 @@
 
 Private data network configuration:
   network.managed:
-    - name: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][1] }}
+    - name: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][0] }}
     - enabled: True
-    - device: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][1] }}
+    - device: {{ pillar['cluster'][node]['network']['data']['private_interfaces'][0] }}
     - type: eth
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - defroute: no

@@ -18,6 +18,7 @@
 # Setup SWAP and /var/motr
 {% set node = grains['id'] %}
 
+{% for cvg in pillar['cluster'][node]['storage']['cvg'] %}
 # Make SWAP
 Ensure SWAP partition is unmounted:
   cmd.run:
@@ -26,14 +27,14 @@ Ensure SWAP partition is unmounted:
 Label first LUN:
   module.run:
     - partition.mklabel:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
+      - device: {{ cvg['metadata_devices'][0] }}
       - label_type: gpt
 
 # Create /var/motr partition - it's NOT part of LVM!
 Create metadata partition:
   module.run:
     - partition.mkpartfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
+      - device: {{ cvg['metadata_devices'][0] }}
       - part_type: primary
       - fs_type: ext4
       - start: 0%
@@ -47,7 +48,7 @@ Create metadata partition:
 Create LVM partition:
   module.run:
     - partition.mkpart:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
+      - device: {{ cvg['metadata_devices'][0] }}
       - part_type: primary
       - fs_type: ext2
 {% if "physical" in grains['virtual'] %}
@@ -64,7 +65,7 @@ Create LVM partition:
 Set LVM flag:
   module.run:
     - partition.toggle:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}
+      - device: {{ cvg['metadata_devices'][0] }}
       - partition: 2
       - flag: lvm
     - require:
@@ -74,7 +75,7 @@ Set LVM flag:
 # Creating LVM physical volume using pvcreate
 Make pv_metadata:
   lvm.pv_present:
-    - name: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2
+    - name: {{ cvg['metadata_devices'][0] }}2
     - require:
       - Set LVM flag
 # done creating LVM physical volumes
@@ -83,7 +84,7 @@ Make pv_metadata:
 Make vg_metadata_{{ node }}:
   lvm.vg_present:
     - name: vg_metadata_{{ node }}
-    - devices: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2
+    - devices: {{ cvg['metadata_devices'][0] }}2
     # - kwargs:
     #   - addtag: {{ node }}
     - require:
@@ -149,7 +150,7 @@ Enable swap:
 Make metadata partition:
   module.run:
     - extfs.mkfs:
-      - device: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}1
+      - device: {{ cvg['metadata_devices'][0] }}1
       - fs_type: ext4
       - label: cortx_metadata
       - require:
@@ -159,8 +160,8 @@ Make metadata partition:
 # Format SWAP
 #Make SWAP partition:
 #  cmd.run:
-#    - name: sleep 10 && mkswap -f {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2 && sleep 5
-#    - onlyif: test -e {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2
+#    - name: sleep 10 && mkswap -f {{ cvg['metadata_devices'][0] }}2 && sleep 5
+#    - onlyif: test -e {{ cvg['metadata_devices'][0] }}2
 #    - require:
 #      - Create swap partition
 #      - cmd: Ensure SWAP partition is unmounted
@@ -168,7 +169,7 @@ Make metadata partition:
 # Activate SWAP device
 #Enable swap:
 #  mount.swap:
-#    - name: {{ pillar['cluster'][node]['storage']['metadata_devices'][0] }}2
+#    - name: {{ cvg['metadata_devices'][0] }}2
 #    - persist: True    # don't add /etc/fstab entry
 #    - require:
 #      - cmd: Make SWAP partition
@@ -196,3 +197,4 @@ Update partition tables of primary node:
   cmd.run:
     - name: timeout -k 10 30 partprobe || true
 {% endif %}
+{% endfor %} # The CVG loop
