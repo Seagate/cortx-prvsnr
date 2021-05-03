@@ -31,6 +31,7 @@ from ..salt import (
     sls_exists
 )
 from ..vendor import attr
+from ..utils import ensure
 # TODO IMPROVE EOS-8473
 
 from . import (
@@ -73,7 +74,11 @@ deploy_states = dict(
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
         "misc_pkgs.statsd",
-        "misc_pkgs.consul.install"
+        "misc_pkgs.consul.install",
+        "misc_pkgs.lustre",
+        "misc_pkgs.consul.install",
+        "ha.corosync-pacemaker.install",
+        "ha.corosync-pacemaker.config.base"
     ],
     utils=[
         "cortx_utils"
@@ -82,24 +87,11 @@ deploy_states = dict(
         "sync.software.rabbitmq"
     ],
     iopath=[
-        "misc_pkgs.lustre",
         "motr",
         "s3server",
         "hare"
     ],
-    # The R1 HW HA sequence
-    # ha=[
-    #     "ha.corosync-pacemaker",
-    #     "ha.haproxy.start",
-    #     "hare",
-    #     "ha.cortx-ha",
-    #     "ha.iostack-ha"
-    # ],
-
     ha=[
-        "ha.corosync-pacemaker.install",
-        "ha.corosync-pacemaker.config.base",
-        "ha.haproxy.start",
         "ha.cortx-ha"
     ],
     # states to be applied in desired sequence
@@ -107,8 +99,6 @@ deploy_states = dict(
         "sspl",
         "uds",
         "csm"
-        # "ha.ctrlstack-ha",
-        # "ha.cortx-ha.ha"
     ],
     backup=[
         "provisioner.backup",
@@ -304,6 +294,8 @@ class Deploy(CommandParserFillerMixin):
                     "provisioner.backup"
                 ):
                     # Execute first on secondaries then on primary.
+                    if state == "sspl":
+                        self.ensure_consul_running()
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
@@ -318,22 +310,10 @@ class Deploy(CommandParserFillerMixin):
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
-                # elif state == "ha.corosync-pacemaker":
-                #     for _state, target in (
-                #         ("install", targets),
-                #         ("config.base", targets),
-                #         ("config.authorize", primary),
-                #         ("config.setup_cluster", primary),
-                #         ("config.cluster_ip", primary),
-                #         ("config.stonith", primary)
-                #     ):
-                #         self._apply_state(
-                #             f"components.ha.corosync-pacemaker.{_state}",
-                #             target,
-                #             stages
-                #         )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
+                    if state == "ha.cortx-ha":
+                        self.ensure_consul_running()
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
@@ -355,13 +335,6 @@ class Deploy(CommandParserFillerMixin):
     def _destroy_storage(self, run_args, nofail=True):
         targets = run_args.targets
 
-        # # FIXME VERIFY EOS-12076
-        # if (
-        #     (run_args.setup_type != SetupType.SINGLE) and
-        #     (targets == config.ALL_MINIONS)
-        # ):
-        #     targets = f"not {self._primary_id()}"
-
         # Old remnant partitios from previous deployments has to be cleaned-up
         logger.info("Removing components.system.storage from all nodes.")
         self._apply_state("components.system.storage.teardown", targets)
@@ -375,6 +348,41 @@ class Deploy(CommandParserFillerMixin):
                 logger.exception("rescan-scsi-bus.sh failed")
                 if not nofail:
                     raise
+
+    def check_consul_running(self):
+        consul_map = {"srvnode-1": "hare-consul-agent-c1",
+                      "srvnode-2": "hare-consul-agent-c2"}
+        result_flag = True
+        for target in consul_map:
+            if self.setup_ctx:
+                res = self.setup_ctx.ssh_client.run(
+                    'service.status',
+                    fun_args=[consul_map[target]],
+                    targets=target
+                )
+            else:
+                res = function_run(
+                    'service.status',
+                    fun_args=[consul_map[target]],
+                    targets=target
+                )
+
+            if not res[target]:
+                result_flag = False
+                logger.info(f"Consul is not running on {target}")
+        if result_flag:
+            logger.info("Consul found running on respective nodes.")
+            return True
+
+    def ensure_consul_running(self, tries=15, wait=5):
+        logger.info("Validating availability of hare-consul-agent.")
+        try:
+            ensure(self.check_consul_running, tries=tries, wait=wait)
+        except errors.ProvisionerError:
+            logger.error("Unable to get healthy hare-consul-agent service "
+                         "Exiting further deployment...")
+            raise errors.ProvisionerError("Unable to get healthy "
+                                          "hare-consul-agent service.")
 
     def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)
