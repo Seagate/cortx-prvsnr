@@ -11,7 +11,7 @@ Host {{ node['host'] }}
     LogLevel ERROR
     BatchMode yes
 
-Host {{ node_id }} {{ node_id }}.data.private
+Host {{ node_id }}
     HostName {{ node_id }}.data.private
     Port {{ node['port'] }}
     User {{ node['user'] }}
