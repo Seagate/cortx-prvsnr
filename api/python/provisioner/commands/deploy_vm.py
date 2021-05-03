@@ -193,53 +193,6 @@ class DeployVM(Deploy):
                 self._run_states('sync', run_args)
 
             if 'iopath' in run_args.states:
-                logger.info("Recreating the metadata partitions")
-                self._apply_state(
-                    "components.system.storage",
-                    run_args.targets,
-                    run_args.stages
-                )
-
-                if run_args.setup_type != SetupType.SINGLE:
-                    metadata_device_keypath = PillarKey(
-                        f"cluster/{self._primary_id()}"
-                        "/storage/metadata_devices"
-                    )
-                    logger.info(
-                        f"Resolving pillar key {metadata_device_keypath}"
-                    )
-                    pillar = PillarResolver(self._primary_id()).get(
-                        [metadata_device_keypath]
-                    )
-                    metadata_devices = pillar[self._primary_id()][metadata_device_keypath][0]  # noqa: E501
-                    metadata_devices = f"{metadata_devices}1"
-                    # TODO IMPROVE EOS-12076 hard coded
-                    mount_point = '/var/motr'
-
-                    logger.info(
-                        f"Mounting partition {metadata_devices} "
-                        f"into {mount_point} (with fstab record)"
-                    )
-                    fun_kwargs = dict(
-                                   name=mount_point,
-                                   device=metadata_devices,
-                                   fstype='ext4',
-                                   mkmnt=True,
-                                   persist=True)
-                    if self.setup_ctx:
-                        self.setup_ctx.ssh_client.run(
-                            'state.single',
-                            fun_args=['mount.mounted'],
-                            fun_kwargs=fun_kwargs,
-                            targets=self._primary_id()
-                        )
-                    else:
-                        StateFunExecuter.execute(
-                            'mount.mounted',
-                            fun_kwargs=fun_kwargs,
-                            targets=self._primary_id()
-                        )
-
                 logger.info("Deploying the io path states")
                 self._run_states('iopath', run_args)
 

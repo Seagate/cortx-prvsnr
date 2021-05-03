@@ -14,6 +14,20 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-Stage - Cleanup Motr:
+
+Test kafka-zookeeper:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:cleanup')
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 2
+
+Test kafka:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+        attempts: 5
+        until: True
+        interval: 2
+

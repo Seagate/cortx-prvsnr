@@ -83,7 +83,7 @@ deploy_states = dict(
         "system.chrony.teardown",
         "system.logrotate.teardown",
         "system.firewall.teardown",
-        "misc_pkgs.rsyslog.teadrwon",
+        "misc_pkgs.rsyslog.teardown",
         "system.storage.teardown",
         "system.storage.multipath.teardown",
         "system.teardown"
@@ -289,7 +289,8 @@ class DestroyNode(Deploy):
         list_cmds.append(f"rm -rf {str(config.profile_base_dir().parent)}")
         list_cmds.append(f"rm -rf {config.CORTX_ROOT_DIR}")
         list_cmds.append(f"rm -rf {config.PRVSNR_DATA_SHARED_DIR}")
-        list_cmds.append("yum remove -y salt salt-minion salt-master")
+        list_cmds.append(
+            "yum remove -y salt salt-minion salt-master python36-m2crypto")
 
         if run_args.states is None:  # all states
             self._run_states('ha', run_args)
