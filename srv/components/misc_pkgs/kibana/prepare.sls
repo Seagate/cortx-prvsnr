@@ -22,3 +22,8 @@ Add OpenDistro yum repo:
     - humanname: OpenDistro
     - baseurl: http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/custom-deps/csm/
     - gpgcheck: 0
+
+Remove kibana dependency pkg:
+  pkg.purged:
+    - pkgs:
+      - kibana-oss

@@ -93,6 +93,7 @@
 {% endif -%}
 {% endfor -%}
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
+node.name: {{ grains['id'] }}
 network.host: [{{ grains['id'] }}, 'localhost' ]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
 discovery.seed_hosts: {{ server_nodes }}

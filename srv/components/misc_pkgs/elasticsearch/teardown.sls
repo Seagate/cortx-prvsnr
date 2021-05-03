@@ -34,6 +34,10 @@ Remove elasticsearch data:
   file.absent:
     - name: /var/lib/elasticsearch
 
+Remove elasticsearch data:
+  file.absent:
+    - name: /var/log/elasticsearch
+
 Delete elasticsearch checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.elasticsearch

@@ -57,3 +57,13 @@ Load rsyslog module for elasticsearch:
       - Install rsyslog extras
     - watch_in:
       - service: Start rsyslog
+
+Delete elasticsearch security plugin:
+  file.absent:
+    - name: /usr/share/elasticsearch/plugins/opendistro_security
+
+Reload service units:
+  cmd.run:
+    - name: systemctl daemon-reload
+    - onchanges:
+      - file: Configure Elasticsearch
