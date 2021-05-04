@@ -34,10 +34,10 @@ class DataStore(ABC):
         pass
 
     @abstractmethod
-    def get_data(self, model_name):
+    def get_data(self, key):
         """Get odata from data store
 
-            :param model_name: Get data from DS using model_name
+            :param model_name: Get key data from DS using model_name
 
         """
         pass
@@ -111,5 +111,5 @@ class ConfStore(DataStore):
         Conf.save(self._index)
         return result
 
-    def get_data(self, index_name):
-        return Conf.get(self._index, index_name)
+    def get_data(self, key):
+        return Conf.get(self._index, key)
