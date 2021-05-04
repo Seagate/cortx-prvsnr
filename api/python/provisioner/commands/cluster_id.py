@@ -63,19 +63,9 @@ class ClusterId(CommandParserFillerMixin):
 
             else:
                 logger.info("ClusterID file does not exist "
-                            "or is empty. Creating now..")
+                            "or is empty. Generating an ID to set..")
 
-                # TODO: Rid of this step once we move out of grains data
-                cluster_id = grains_get(
-                    "cluster_id",
-                    local_minion_id()
-                )[local_minion_id()]["cluster_id"]
-
-                if not cluster_id:
-                    logger.info(
-                        "ClusterID is not found in grains data. Generating one.."
-                    )
-                    cluster_id = str(uuid.uuid4())
+                cluster_id = str(uuid.uuid4())
 
                 with open(CLUSTER_ID_FILE, "w+") as file_value:
                     file_value.write(cluster_id)
@@ -138,6 +128,7 @@ class ClusterId(CommandParserFillerMixin):
                      "either of the nodes."
                 )
 
+        # Raising error and returning None to handle in `run()`
         except ValueError as exc:
             logger.error(
                 "Error in retrieving cluster_id from "
@@ -169,19 +160,20 @@ class ClusterId(CommandParserFillerMixin):
 
             logger.info("This is the Primary node of the cluster.")
 
-            cluster_id_from_setup = self._initial_check()
+            cluster_id_from_pillar = self._get_cluster_id()
+
+            if not cluster_id_from_pillar:
+                logger.info(
+                   "ClusterID not set in pillar data. "
+                   "Checking setup file.."
+                )
 
             # double verification
-            cluster_id_from_pillar = self._get_cluster_id()
+            cluster_id_from_setup = self._initial_check()
 
             if cluster_id_from_setup == cluster_id_from_pillar:
                 logger.info(
                   "Bootstrapping completed and ClusterID is set!"
-                )
-
-            elif not cluster_id_from_pillar:
-                logger.info(
-                   "ClusterID not set in pillar data. Setting now.."
                 )
 
             elif (cluster_id_from_pillar and
@@ -189,6 +181,9 @@ class ClusterId(CommandParserFillerMixin):
                 logger.error(
                    "Mismatch in cluster_id value between "
                    "setup and pillar data. Setting unique value now.."
+                   "\nPossible warning: Check if cluster values "
+                   "have been manually tampered with."
+
                 )
 
             PillarSet().run(
