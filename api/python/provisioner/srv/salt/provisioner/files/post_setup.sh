@@ -33,6 +33,7 @@ groupadd -f "$prvsnr_group"
 
 shared_dir=/var/lib/seagate/cortx/provisioner/shared
 factory_profile_dir="${shared_dir}/factory_profile"
+prvsnr_locks_dir="${shared_dir}/locks"
 user_srv_dir="${shared_dir}/srv"
 user_srv_fileroot_dir="${user_srv_dir}/salt"
 user_srv_pillar_dir="${user_srv_dir}/pillar"
@@ -49,6 +50,7 @@ groupadd -f "$prvsnr_group"
 echo "Configuring access for provisioner data ..."
 # TODO IMPROVE EOS-9581 consider to remove _old dirs someday
 for path in "$factory_profile_dir" \
+            "$prvsnr_locks_dir" \
             "$user_srv_fileroot_dir" \
             "$user_srv_pillar_dir" \
             "$prvsnr_log_dir" \
@@ -59,6 +61,7 @@ done
 
 for path in "$user_srv_dir" \
             "$factory_profile_dir" \
+            "$prvsnr_locks_dir" \
             "$seagate_log_dir" \
             "$prvsnr_log_dir" \
             "$user_srv_fileroot_dir_old" \
@@ -84,5 +87,3 @@ test -e ${PWD}/api/python/setup.py && \
   install_dir=${PWD} || \
   install_dir=/opt/seagate/cortx/provisioner
 
-chown -R :"$prvsnr_group" "${install_dir}/cli"
-chmod -R 750 "${install_dir}/cli"

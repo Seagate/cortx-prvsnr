@@ -15,10 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Run cortx-ha config:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
-    - failhard: True
-    - Require:
-        - cortx-ha post_install
+Remove glusterd cache:
+  file.absent:
+    - name: /var/lib/glusterd

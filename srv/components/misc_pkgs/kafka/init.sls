@@ -20,6 +20,7 @@ include:
   - .install
   - .config
   - .start
+  - .sanity_check
 
 Generate kafka checkpoint flag:
   file.managed:

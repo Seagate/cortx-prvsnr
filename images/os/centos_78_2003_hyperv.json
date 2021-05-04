@@ -7,7 +7,7 @@
       "type": "hyperv-iso",
       "boot_command": [
         "<tab><wait>",
-        " ks=http://10.127.112.194:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>"
+        " ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/kickstart_centos_78_2003.cfg<enter>"
       ],
       "http_directory": "./",
       "cpus": 2,

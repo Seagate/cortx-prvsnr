@@ -50,6 +50,8 @@ ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
 #  - then rename base.py to config.py
 #  - remove PRVSNR_ prefix
 
+CLUSTER_ID_FILE = Path('/etc/cluster-id')
+
 CORTX_CONFIG_DIR = Path('/opt/seagate/cortx_configs')
 CORTX_ROOT_DIR = Path('/opt/seagate/cortx')
 PRVSNR_TMP_DIR = Path(Path.home() / '.tmp/seagate/prvsnr/')

@@ -23,6 +23,11 @@ Reset default zone:
     - prune_ports: True
     - prune_services: False
     - prune_interfaces: False
+    - services:
+      - ssh
+    - ports:
+      - 4505/tcp
+      - 4506/tcp
 
 Remove public management interfaces:
   firewalld.present:
@@ -60,10 +65,10 @@ Remove management-zone:
 
 Refresh firewalld:
   module.run:
-    - firewalld.reload_rules: []
     - service.restart:
       - firewalld
 
 Delete firewall checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
+

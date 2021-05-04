@@ -15,10 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from .set_swupgrade_repo import SetSWUpgradeRepo
+from .sw_upgrade import SWUpgrade
+from .remove_swupgrade_repo import RemoveSWUpgradeRepo
 
-Run cortx-ha config:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:config')
-    - failhard: True
-    - Require:
-        - cortx-ha post_install
+__all__ = [
+    "SetSWUpgradeRepo",
+    "SWUpgrade",
+    "RemoveSWUpgradeRepo"
+]

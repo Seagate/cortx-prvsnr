@@ -83,7 +83,7 @@ node {
         }
 
         stage("Teardown: Foundation") {
-            sshCommand remote: remotes[0], command: "provisioner destroy --states utils --setup-type 3_node"
+            sshCommand remote: remotes[0], command: "provisioner destroy --states utils || true"
             echo "Successful teardown: Foundation"
         }
 
@@ -122,8 +122,6 @@ node {
 
             stage("${remote.name}: Uninstall rpms") {
                 sshCommand remote: remote, command: """
-                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
-                    yum erase -y gluster-fuse gluster-server        # Gluster FS packages
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
@@ -145,16 +143,18 @@ node {
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
                     # Cortx software dirs
-                    rm -rf /opt/seagate/cortx || true
-                    rm -rf /opt/seagate/cortx_configs || true
-                    rm -rf /opt/seagate || true
+                    test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx
+                    test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
+                    test -e /opt/seagate && rm -rf /opt/seagate
+                    test -e /etc/csm && rm -rf /etc/csm
                     # Bricks cleanup
-                    test -e /var/lib/seagate && rm -rf /var/lib/seagate || true
-                    test -e /srv/glusterfs && rm -rf /srv/glusterfs || true
+                    test -e /var/lib/seagate && rm -rf /var/lib/seagate
+                    test -e /srv/glusterfs && rm -rf /srv/glusterfs
                     test -e /var/lib/glusterd && rm -rf /var/lib/glusterd || true
                     # Cleanup Salt
-                    test -e /var/cache/salt && rm -rf /var/cache/salt || true
-                    test -e /etc/salt && rm -rf /etc/salt || true
+                    test -e /var/cache/salt && rm -rf /var/cache/salt
+                    test -e /etc/salt && rm -rf /etc/salt
+                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
                     # Cleanup Provisioner profile directory
                     test -e /opt/isos && rm -rf /opt/isos || true
                     test -e /root/.provisioner && rm -rf /root/.provisioner || true

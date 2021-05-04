@@ -16,6 +16,8 @@
 #
 
 # read-only commands
+cluster_id:
+  type: ClusterId
 get_result:
   type: GetResult
 grains_get:
@@ -29,8 +31,6 @@ pillar_export:
 get_params:
   type: Get
   input_type: ParamsList
-get_cluster_id:
-  type: GetClusterId
 get_node_id:
   type: GetNodeId
 get_release_version:
@@ -103,8 +103,6 @@ set_mgmt_network:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
 
-set_cluster_id:
-  type: SetClusterId
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo
@@ -112,13 +110,13 @@ set_swupdate_repo:
     post:
     - components.misc_pkgs.swupdate.repo
 set_swupgrade_repo:
-  type: SetSWUpgradeRepo
+  type: upgrade.SetSWUpgradeRepo
   input_type: SWUpgradeRepo
   states:
     post:
     - repos.upgrade
 remove_swupgrade_repo:
-  type: RemoveSWUpgradeRepo
+  type: upgrade.RemoveSWUpgradeRepo
   input_type: SWUpgradeRemoveRepo
   states:
     post:
@@ -126,7 +124,7 @@ remove_swupgrade_repo:
 sw_update:
   type: SWUpdate
 sw_upgrade:
-  type: SWUpgrade
+  type: upgrade.SWUpgrade
 fw_update:
   type: FWUpdate
 sw_rollback:

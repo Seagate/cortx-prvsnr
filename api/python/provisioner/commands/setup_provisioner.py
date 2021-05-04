@@ -794,6 +794,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE many hard coded values
 
         cluster_id_path = all_minions_dir / 'cluster_id'
+
+        # TODO: This new cluster_id generation step must be removed
+        # as it is handled in last step of bootstrap (cluster_id API)
+
         if not cluster_id_path.exists():
             cluster_uuid = str(uuid.uuid4())
             dump_yaml(cluster_id_path, dict(cluster_id=cluster_uuid))
@@ -1757,8 +1761,11 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "{\"inline\": {\"no_encrypt\": True}}"
                 )
 
-        logger.info("Refresh enclosure id on the system")
+        logger.info(
+             "Encrypt pillar values and Refresh enclosure id on the system"
+        )
         for state in [
+            'components.system.config.pillar_encrypt',
             'components.system.storage.enclosure_id',
             'components.system.config.sync_salt'
         ]:
@@ -1766,7 +1773,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=ALL_MINIONS
             )
-
 
 
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
@@ -1809,7 +1815,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         ssh_client.cmd_run(
             (
-               "provisioner set_cluster_id"
+               "provisioner cluster_id"
             ), targets=run_args.primary.minion_id
         )
 
