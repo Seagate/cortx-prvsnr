@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -14,22 +15,10 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# API to trigger TUI for node configuration
-
-import logging
-from typing import Type
-from .. import inputs
-from . import CommandParserFillerMixin
-from ..vendor import attr
-from ..northbound.ui.main import start_tui
-
-logger = logging.getLogger(__name__)
+#
+from .question_window import QuestionWindow
 
 
-@attr.s(auto_attribs=True)
-class ConfigureNode(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+class DHCPBmcWindow(QuestionWindow):
 
-    def run(self, **kwargs):  # noqa: C901
-        # Start northbound interface TUI
-        return start_tui()
+    _question = "Are you sure you want to set DHCP for BMC network?"

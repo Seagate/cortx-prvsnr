@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -14,22 +15,26 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# API to trigger TUI for node configuration
-
-import logging
-from typing import Type
-from .. import inputs
-from . import CommandParserFillerMixin
-from ..vendor import attr
-from ..northbound.ui.main import start_tui
-
-logger = logging.getLogger(__name__)
+#
+import curses
+from . import config
+from provisioner.errors import ProvisionerError
 
 
-@attr.s(auto_attribs=True)
-class ConfigureNode(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+class ColorCode:
+    _color_codes = None
 
-    def run(self, **kwargs):  # noqa: C901
-        # Start northbound interface TUI
-        return start_tui()
+    def __init__(self):
+        curses.start_color()
+        self._color_codes = config.color_codes
+        self.create_color_pair()
+
+    def create_color_pair(self):
+        for code, color in self._color_codes.items():
+            curses.init_pair(code, color[0], color[1])
+
+    @staticmethod
+    def get_color_pair(color_code):
+        if not config.color_codes.get(color_code, None):
+            raise ProvisionerError(f"Color code {color_code} not defined")
+        return curses.color_pair(color_code)
