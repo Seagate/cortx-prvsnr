@@ -134,7 +134,7 @@ class DeployVM(Deploy):
 
                 elif state in (
                     "sync.software.rabbitmq",
-                    "sync.software.openldap"
+                    "sync.software.openldap",
                     "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
