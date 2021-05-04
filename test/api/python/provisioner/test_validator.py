@@ -69,7 +69,7 @@ def read_file(file_name):
 
 
 def md5(file_name):
-    md5_hash = hashlib.md5()
+    md5_hash = hashlib.md5()  # noqa: B303
     for chunk in read_file(file_name):
         md5_hash.update(chunk)
     return md5_hash.hexdigest()
