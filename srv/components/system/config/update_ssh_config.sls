@@ -15,10 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Fail provisioning if this check returns non-zero
-#Check system hostname:
-#  cmd.run:
-#    - name: test $(salt --no-color srvnode-1 grains.get host|tail -1|tr -d "[:blank:]") == $(hostname)
+remove old ssh config file:
+  file.absent:
+    - name: /root/.ssh/config
 
-include:
-  - components.system.config.ssh_check
+update_ssh_config:
+  file.managed:
+    - name: /root/.ssh/config
+    - source: salt://components/system/files/ssh_config
+    - keep_source: True
+    - replace: True
+    - mode: 600
+    - template: jinja
+    - require:
+      - remove old ssh config file

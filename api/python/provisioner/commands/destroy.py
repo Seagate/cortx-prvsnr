@@ -226,7 +226,8 @@ class DestroyNode(Deploy):
                     "provisioner.teardown",
                     "provisioner.passwordless_remove",
                     "misc_pkgs.openldap.teardown",
-                    "misc_pkgs.rabbitmq"
+                    "misc_pkgs.rabbitmq",
+                    "ha.cortx-ha.teardown"
                 ):
 
                     logger.info(f"Applying '{state}' on {secondaries}")
@@ -237,7 +238,6 @@ class DestroyNode(Deploy):
                     self._apply_states(state, primary)
 
                 elif state in (
-                    "ha.cortx-ha.teardown",
                     "sspl.teardown"
                 ):
                     logger.info(f"Applying '{state}' on {primary}")
