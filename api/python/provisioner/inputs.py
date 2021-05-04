@@ -640,6 +640,10 @@ class MgmtNetwork(ParamGroupInputBase):
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network interfaces"
     )
+    mgmt_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network mtu",
+        default=1500
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -667,6 +671,11 @@ class DataNetwork(ParamGroupInputBase):
     data_private_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node private data network interfaces"
     )
+    data_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network mtu",
+        default=1500
+    )
+
 
 class ReleaseParams():
     _param_group = 'release'
