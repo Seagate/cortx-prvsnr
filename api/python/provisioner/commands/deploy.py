@@ -82,6 +82,7 @@ deploy_states = dict(
     ],
     iopath=[
         "misc_pkgs.lustre",
+        "misc_pkgs.libfabric",
         "motr",
         "s3server"
     ],
