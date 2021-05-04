@@ -19,7 +19,9 @@ include:
   - components.system.config.core_dump
   - components.system.config.hosts
   - components.system.config.journald
-  - components.system.config.pillar_encrypt
-  - components.system.config.service_user
   - components.system.config.sshd
   - components.system.config.tmp_conf
+  - components.system.config.update_ssh_config
+  - components.system.config.pillar_encrypt
+  - components.system.config.service_user
+  

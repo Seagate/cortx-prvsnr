@@ -15,10 +15,25 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Fail provisioning if this check returns non-zero
-#Check system hostname:
-#  cmd.run:
-#    - name: test $(salt --no-color srvnode-1 grains.get host|tail -1|tr -d "[:blank:]") == $(hostname)
+{% set server_nodes = [ ] -%}
+{% for node in pillar['cluster'].keys() -%}
+{% if "srvnode-" in node -%}
+{% do server_nodes.append(node)-%}
+{% endif -%}
+{% endfor -%}
 
-include:
-  - components.system.config.ssh_check
+{%- for node in server_nodes %}
+
+check_{{ pillar['cluster'][node]['hostname'] }}_reachable:
+  cmd.run:
+    - name: ssh -q -o "ConnectTimeout=5" {{ pillar['cluster'][node]['hostname'] }} exit
+
+check_{{ node }}_reachable:
+  cmd.run:
+    - name: ssh -q -o "ConnectTimeout=5" {{ node }} exit
+
+check_{{ node }}.data.private_reachable:
+  cmd.run:
+    - name: ssh -q -o "ConnectTimeout=5" {{ node }}.data.private exit
+
+{%- endfor %}
