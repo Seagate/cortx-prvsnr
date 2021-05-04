@@ -38,6 +38,10 @@ Remove elasticsearch logs:
   file.absent:
     - name: /var/log/elasticsearch
 
+Remove opnedistro repo:
+  file.absent:
+    -name: /etc/yum.repos.d/opendistro.repo
+
 Delete elasticsearch checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.elasticsearch
