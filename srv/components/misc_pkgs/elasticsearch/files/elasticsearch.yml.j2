@@ -100,11 +100,3 @@ discovery.seed_hosts: {{ server_nodes }}
 cluster.initial_master_nodes: {{ server_nodes }}
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
-
-
-# network.bind_host: ['localhost', {{ grains['id'] }} ]
-# network.publish_host: [{{ grains['id'] }}]
-# discovery.zen.ping.unicast.hosts: {{ server_nodes }}
-# {%- if 2 >= (server_nodes|length) %}
-# discovery.zen.minimum_master_nodes: 1
-# {%- endif %} 

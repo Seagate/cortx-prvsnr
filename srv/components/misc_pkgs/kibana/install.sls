@@ -15,14 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+Remove kibana dependency pkg:
+  pkg.purged:
+    - pkgs:
+      - kibana-oss
+
 Install Kibana:
   pkg.installed:
     - name: opendistroforelasticsearch-kibana
+    - version: {{ pillar['commons']['version']['opendistroforelasticsearch-kibana'] }}
     - gpgcheck: 0
 
-
-{#% if (grains['os_family'] and ('7.3.2-1' in salt['pkg_resource.version']('kibana'))) %#}
-# Downgrade elasticsearch to 6.8.8:
-#   cmd.run:
-#     - name: yum downgrade -y kibana
-{#% endif %#}
