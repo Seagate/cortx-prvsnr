@@ -90,6 +90,7 @@ def sha512(file_name):
 
 
 # NOTE: we can use here pytest_mock.plugin.MockFixture
+@pytest.mark.unit
 def test_hash_sum_validator():
     with patch("builtins.open", mock_open(read_data=SINGLE_ISO_CONTENT)):
 
@@ -185,6 +186,7 @@ def test_hash_sum_validator():
             hash_validator.validate(pathlib.Path(SINGLE_ISO_PATH))
 
 
+@pytest.mark.unit
 def test_release_info_validator():
     # Positive case: RELEASE.INFO data is well-formed
     with patch.object(pathlib.Path, 'exists', new=lambda x: True), \
