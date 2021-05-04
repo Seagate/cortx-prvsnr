@@ -90,7 +90,7 @@ cluster:
         netmask:
         gateway:                      # Gateway IP of Public Data Network. Not required for DHCP.
         mtu: {% if "physical" in grains["virtual"] %} 9000 {% else %} 1500 {% endif %}
-        roaming_ip:                   # Applies to private data network
+        roaming_ip: 127.0.0.1         # Applies to private data network
     storage:
       enclosure: enclosure-{{ (node_num + 1) }}
       cvg:
