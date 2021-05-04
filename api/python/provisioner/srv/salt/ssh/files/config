@@ -1,18 +1,7 @@
 {% for node_id, node in pillar['node_specs'].items() %}
 
-Host {{ node['host'] }}
+Host {{ node_id }} {{ node['host'] }}
     HostName {{ node['host'] }}
-    Port {{ node['port'] }}
-    User {{ node['user'] }}
-    UserKnownHostsFile /dev/null
-    StrictHostKeyChecking no
-    IdentityFile /root/.ssh/id_rsa_prvsnr
-    IdentitiesOnly yes
-    LogLevel ERROR
-    BatchMode yes
-
-Host {{ node_id }}
-    HostName {{ node_id }}.data.private
     Port {{ node['port'] }}
     User {{ node['user'] }}
     UserKnownHostsFile /dev/null
