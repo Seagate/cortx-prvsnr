@@ -23,12 +23,4 @@ check_{{ node_id }}_reachable:
   cmd.run:
     - name: ssh -q -o "ConnectTimeout=5" {{ node_id }} exit
 
-check_{{ node_id }}.data.private_reachable:
-  cmd.run:
-    - name: ssh -q -o "ConnectTimeout=5" {{ node_id }}.data.private exit
-
-check_{{ node['host'] }}_reachable:
-  cmd.run:
-    - name: ssh -q -o "ConnectTimeout=5" {{ node['host'] }} exit
-
 {% endfor %}

@@ -93,12 +93,10 @@
 {% endif -%}
 {% endfor -%}
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
-network.bind_host: ['localhost', {{ grains['id'] }} ]
-network.publish_host: [{{ grains['id'] }}]
+node.name: {{ grains['id'] }}
+network.host: [{{ grains['id'] }}, 'localhost' ]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
-discovery.zen.ping.unicast.hosts: {{ server_nodes }}
-{%- if 2 >= (server_nodes|length) %}
-discovery.zen.minimum_master_nodes: 1
-{%- endif %} 
+discovery.seed_hosts: {{ server_nodes }}
+cluster.initial_master_nodes: {{ server_nodes }}
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
