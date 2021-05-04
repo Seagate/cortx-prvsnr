@@ -303,7 +303,8 @@ class Deploy(CommandParserFillerMixin):
                     "sync.software.rabbitmq",
                     "sync.software.openldap",
                     "system.storage.multipath",
-                    "sync.files"
+                    "sync.files",
+                    "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
