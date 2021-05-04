@@ -27,3 +27,4 @@ Remove ES dependency pkg:
   pkg.purged:
     - pkgs:
       - elasticsearch-oss
+  
