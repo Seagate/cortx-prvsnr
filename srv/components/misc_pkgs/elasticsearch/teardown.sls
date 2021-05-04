@@ -40,7 +40,7 @@ Remove elasticsearch logs:
 
 Remove opnedistro repo:
   pkgrepo.absent:
-    - name: /etc/yum.repos.d/opendistro.repo
+    - name: opendistro
 
 Delete elasticsearch checkpoint flag:
   file.absent:
