@@ -290,8 +290,6 @@ class Deploy(CommandParserFillerMixin):
                 if state in (
                     "system.storage",
                     "sspl",
-                    "ha.cortx-ha",
-                    "provisioner.backup"
                 ):
                     # Execute first on secondaries then on primary.
                     if state == "sspl":
@@ -303,7 +301,10 @@ class Deploy(CommandParserFillerMixin):
 
                 elif state in (
                     "sync.software.rabbitmq",
-                    "system.storage.multipath"
+                    "sync.software.openldap",
+                    "system.storage.multipath",
+                    "sync.files",
+                    "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
