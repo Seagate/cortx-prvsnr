@@ -106,7 +106,7 @@ logging.silent: true
 #i18n.locale: "en"
 
 elasticsearch.hosts: https://{{ grains['id'] }}:{{ pillar['elasticsearch']['http_port'] }}
-server.host: ["{{ pillar['cluster'][grains['id']]['hostname'] }}"]
+server.host: "{{ pillar['cluster'][grains['id']]['hostname'] }}"
 
 # elasticsearch.ssl.verificationMode: none
 # elasticsearch.username: kibanaserver

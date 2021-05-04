@@ -34,7 +34,7 @@ Remove elasticsearch data:
   file.absent:
     - name: /var/lib/elasticsearch
 
-Remove elasticsearch data:
+Remove elasticsearch logs:
   file.absent:
     - name: /var/log/elasticsearch
 
