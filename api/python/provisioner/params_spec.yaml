@@ -69,7 +69,7 @@ data_network:
   data_public_interfaces: cluster/srvnode-0/network/data/public_interfaces
   data_private_ip: cluster/srvnode-0/network/data/private_ip
   data_private_interfaces: cluster/srvnode-0/network/data/private_interfaces
-
+  data_mtu: cluster/srvnode-0/network/data/mtu
 
 release:
   _path: release.sls
@@ -81,6 +81,7 @@ mgmt_network:
   mgmt_netmask: cluster/srvnode-0/network/mgmt/netmask
   mgmt_gateway: cluster/srvnode-0/network/mgmt/gateway
   mgmt_interfaces: cluster/srvnode-0/network/mgmt/interfaces
+  mgmt_mtu: cluster/srvnode-0/network/mgmt/mtu
 
 storage:
   _path: storage.sls
