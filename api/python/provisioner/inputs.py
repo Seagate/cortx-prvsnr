@@ -640,6 +640,10 @@ class MgmtNetwork(ParamGroupInputBase):
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network interfaces"
     )
+    mgmt_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network mtu",
+        default=1500
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -667,6 +671,11 @@ class DataNetwork(ParamGroupInputBase):
     data_private_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node private data network interfaces"
     )
+    data_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network mtu",
+        default=1500
+    )
+
 
 class ReleaseParams():
     _param_group = 'release'
@@ -798,6 +807,9 @@ class NetworkParams():
         _param_group, descr="primary node hostname"
     )
     primary_data_roaming_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data roaming IP"
+    )
+    primary_data_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node floating IP"
     )
     primary_data_gateway: str = ParamGroupInputBase._attr_ib(
@@ -819,9 +831,6 @@ class NetworkParams():
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data interface netmask"
     )
-    primary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data network interface"
-    )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC  IP",
         validator=Validation.check_ip4
@@ -836,7 +845,10 @@ class NetworkParams():
     secondary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node hostname"
     )
-    secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
+    secondary_data_roaming_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data roaming IP"
+    )
+    secondary_data_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node floating IP"
     )
     secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
@@ -859,9 +871,6 @@ class NetworkParams():
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data interface netmask"
     )
-    secondary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data network interface"
-    )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC  IP",
         validator=Validation.check_ip4
@@ -883,24 +892,24 @@ class Network(ParamGroupInputBase):
     search_domains: List = NetworkParams.search_domains
     primary_hostname: str = NetworkParams.primary_hostname
     primary_data_roaming_ip: str = NetworkParams.primary_data_roaming_ip
+    primary_data_floating_ip: str = NetworkParams.primary_data_floating_ip
     primary_mgmt_public_ip: str = NetworkParams.primary_mgmt_public_ip
     primary_mgmt_netmask: str = NetworkParams.primary_mgmt_netmask
     primary_mgmt_gateway: str = NetworkParams.primary_mgmt_gateway
     primary_data_netmask: str = NetworkParams.primary_data_netmask
     primary_data_gateway: str = NetworkParams.primary_data_gateway
-    primary_data_network_iface: List = NetworkParams.primary_data_network_iface
     primary_data_public_ip: str = NetworkParams.primary_data_public_ip
     primary_bmc_ip: str = NetworkParams.primary_bmc_ip
     primary_bmc_user: str = NetworkParams.primary_bmc_user
     primary_bmc_secret: str = NetworkParams.primary_bmc_secret
     secondary_hostname: str = NetworkParams.secondary_hostname
-    secondary_floating_ip: str = NetworkParams.secondary_floating_ip
+    secondary_data_roaming_ip: str = NetworkParams.secondary_data_roaming_ip
+    secondary_data_floating_ip: str = NetworkParams.secondary_data_floating_ip
     secondary_mgmt_public_ip: str = NetworkParams.secondary_mgmt_public_ip
     secondary_mgmt_netmask: str = NetworkParams.secondary_mgmt_netmask
     secondary_data_gateway: str = NetworkParams.secondary_data_gateway
     secondary_mgmt_gateway: str = NetworkParams.secondary_mgmt_gateway
     secondary_data_netmask: str = NetworkParams.secondary_data_netmask
-    secondary_data_network_iface: List = NetworkParams.secondary_data_network_iface  # noqa: E501
     secondary_bmc_ip: str = NetworkParams.secondary_bmc_ip
     secondary_bmc_user: str = NetworkParams.secondary_bmc_user
     secondary_bmc_secret: str = NetworkParams.secondary_bmc_secret
