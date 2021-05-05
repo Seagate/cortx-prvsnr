@@ -24,6 +24,7 @@
 Stop kafka:
   service.dead:
     - name: kafka
+    - enable: False
 
 Ensure kafka has stopped:
   cmd.run:
@@ -34,7 +35,7 @@ Ensure kafka has stopped:
         until: False
         interval: 2
     - require:
-      - Start kafka
+      - Stop kafka
 
 #Stop zookeeper:
 #  cmd.run:
@@ -47,6 +48,7 @@ Ensure kafka has stopped:
 Stop zookeeper:
   service.dead:
     - name: kafka-zookeeper
+    - enable: False
     - require:
       - Ensure kafka has stopped
 
