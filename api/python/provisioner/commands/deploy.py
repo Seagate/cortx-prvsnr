@@ -307,14 +307,12 @@ class Deploy(CommandParserFillerMixin):
                     "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
+                    if state == "ha.cortx-ha":
+                        self.ensure_consul_running()
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
-                else:
-                    self._apply_state(f"components.{state}", targets, stages)
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
