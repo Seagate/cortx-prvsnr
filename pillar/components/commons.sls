@@ -22,11 +22,9 @@ commons:
   version:
     consul: 1.9.1-1
     # elasticsearch: 6.8.8-1
-    #elasticsearch-oss: 6.8.8-1
-    opendistroforelasticsearch: 1.12.0
+    elasticsearch-oss: 6.8.8-1
     erlang: latest
-    #kibana-oss: 6.8.8-1
-    opendistroforelasticsearch-kibana: 1.12.0-1
+    kibana-oss: 6.8.8-1
     nodejs: v12.13.0
     rabbitmq: latest
     rsyslog: 8.40.0-1.el7

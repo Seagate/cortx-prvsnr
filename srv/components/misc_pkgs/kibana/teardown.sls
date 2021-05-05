@@ -20,7 +20,7 @@ include:
 
 Remove kibana:
   pkg.purged:
-    - name: opendistroforelasticsearch-kibana
+    - name: kibana-oss
 
 Remove kibana config:
   file.absent:
