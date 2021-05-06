@@ -41,6 +41,25 @@ ssh_pub_key_deployed:
     - requires:
       - ssh_dir_created
 
+copy_ssh_priv_key_deployed:
+  file.managed:
+    - name: /root/.ssh/id_rsa
+    - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
+    - show_changes: False
+    - keep_source: True
+    - mode: 600
+    - requires:
+      - ssh_dir_created
+
+copy_ssh_pub_key_deployed:
+  file.managed:
+    - name: /root/.ssh/id_rsa.pub
+    - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
+    - keep_source: True
+    - mode: 600
+    - requires:
+      - ssh_dir_created
+
 ssh_key_authorized:
   ssh_auth.present:
     - source: /root/.ssh/id_rsa_prvsnr.pub
