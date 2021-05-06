@@ -54,7 +54,7 @@ Start kafka:
 
 Ensure kafka has started:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
     # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
         attempts: 10
