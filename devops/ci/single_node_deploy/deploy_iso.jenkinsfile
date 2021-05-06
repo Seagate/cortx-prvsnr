@@ -197,16 +197,23 @@ node {
                 """
                 echo "Successfully deployed controlpath states!"
             }
+
+            stage("Start Cluster") {
+                sshCommand remote: remote, command: "cortx cluster start"
+                sshCommand remote: remote, command: "hctl status"
+                echo "Successfully started Cortx cluster!"
+            }
         }
 
-        sh label: '', script: "mkdir archives"
-        
-        sshGet remote: remotes[0], from: '/root/config.ini', into: 'archives/config.ini', override: true
-        archiveArtifacts artifacts: 'archives/config.ini', followSymlinks: false
-        sshGet remote: remotes[0], from: '/opt/seagate/cortx_configs/provisioner_cluster.json', into: 'archives/provisioner_cluster.json', override: true
-        sshGet remote: remotes[0], from: '/etc/yum.repos.d/RELEASE_FACTORY.INFO', into: 'archives/RELEASE_FACTORY.INFO', override: true
-        sshGet remote: remotes[0], from: '/var/log/seagate/provisioner/setup.log', into: 'archives/setup.log', override: true
+        sh label: '', script: "mkdir -p ${WORKSPACE}/archives"
+        dir("${WORKSPACE}/archives") {
+            deleteDir()
+            sshGet remote: remote, from: "/root/config.ini", into: "${WORKSPACE}/archives/config.ini", override: true
+            sshGet remote: remote, from: "/opt/seagate/cortx_configs/provisioner_cluster.json", into: "${WORKSPACE}/archives/provisioner_cluster.json", override: true
+            sshGet remote: remote, from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
+            sshGet remote: remote, from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
 
-        archiveArtifacts artifacts: '${WORKSPACE}/archives', followSymlinks: false
+            archiveArtifacts artifacts: "${WORKSPACE}/archives", followSymlinks: false
+        }
     }
 }

@@ -271,8 +271,14 @@ node {
                 sshCommand remote: remotes[0], command: "provisioner deploy_vm --states ha --setup-type 3_node"
                 echo "Successfully deployed HA states!"
             }
+
+            stage("Start Cluster") {
+                sshCommand remote: remotes[0], command: "cortx cluster start"
+                sshCommand remote: remotes[0], command: "hctl status"
+                echo "Successfully started Cortx cluster!"
+            }
         }
-    } 
+    }
     
     sh label: '', script: "mkdir -p ${WORKSPACE}/archives"
     dir("${WORKSPACE}/archives") {
