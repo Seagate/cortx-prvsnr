@@ -43,9 +43,8 @@ ssh_pub_key_deployed:
 
 # Special case for cortx-ha: paramiko by default use id_rsa key
 
-copy_ssh_priv_key_deployed:
+/root/.ssh/id_rsa:
   file.managed:
-    - name: /root/.ssh/id_rsa
     - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
     - show_changes: False
     - keep_source: True
@@ -53,9 +52,8 @@ copy_ssh_priv_key_deployed:
     - requires:
       - ssh_dir_created
 
-copy_ssh_pub_key_deployed:
+/root/.ssh/id_rsa.pub:
   file.managed:
-    - name: /root/.ssh/id_rsa.pub
     - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
     - keep_source: True
     - mode: 600
