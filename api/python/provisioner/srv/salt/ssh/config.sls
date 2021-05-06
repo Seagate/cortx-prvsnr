@@ -41,6 +41,8 @@ ssh_pub_key_deployed:
     - requires:
       - ssh_dir_created
 
+# Special case for cortx-ha: paramiko by default use id_rsa key
+
 copy_ssh_priv_key_deployed:
   file.managed:
     - name: /root/.ssh/id_rsa
