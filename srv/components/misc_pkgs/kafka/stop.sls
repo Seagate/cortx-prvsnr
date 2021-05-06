@@ -24,12 +24,16 @@
 Stop kafka:
   service.dead:
     - name: kafka
+    - enable: False
 
-#TODO: find better solution to add delay
-Wait for kafka to stop:
-  module.run:
-    - test.sleep:
-      - length: 10
+Ensure kafka has stopped:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+        attempts: 10
+        until: False
+        interval: 2
     - require:
       - Stop kafka
 
@@ -39,10 +43,22 @@ Wait for kafka to stop:
 #    - cwd: /opt/kafka
 #    - onlyif: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
 #    - require:
-#      - Wait for kafka to stop
+#      - Ensure kafka has stopped
 
 Stop zookeeper:
   service.dead:
     - name: kafka-zookeeper
+    - enable: False
     - require:
-      - Wait for kafka to stop
+      - Ensure kafka has stopped
+
+Ensure kafka-zookeeper has stopped:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+        attempts: 10
+        until: False
+        interval: 2
+    - require:
+      - Stop zookeeper

@@ -15,19 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Test kafka-zookeeper:
+Ensure kafka is online:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - name: telnet {{ grains['id'] }}.data.private {{ pillar['cortx']['software']['zookeeper']['client_port'] }}
     - retry:
-        attempts: 5
+    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+        attempts: 10
         until: True
         interval: 2
-
-Test kafka:
-  cmd.run:
-    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
-    - retry:
-        attempts: 5
-        until: True
-        interval: 2
-

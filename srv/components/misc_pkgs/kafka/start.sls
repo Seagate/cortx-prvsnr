@@ -26,23 +26,39 @@ Start zoopkeper:
     - name: kafka-zookeeper
     - enable: True
 
-#TODO: find better solution to add delay
-Wait for zookeeper to start:
-  module.run:
-    - test.sleep:
-      - length: 10
+Ensure kafka-zookeeper has started:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+        attempts: 10
+        until: True
+        interval: 2
     - require:
       - Start zoopkeper
 
-#Start kafka:
+# Start kafka:
 #  cmd.run:
 #    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
 #    - cwd: /opt/kafka
 #    - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
+#    - require:
+#       - Ensure kafka-zookeeper has started
 
 Start kafka:
   service.running:
     - name: kafka
     - enable: True
     - require:
-      - Wait for zookeeper to start
+      - Ensure kafka-zookeeper has started
+
+Ensure kafka has started:
+  cmd.run:
+    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - retry:
+    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+        attempts: 10
+        until: True
+        interval: 2
+    - require:
+      - Start kafka
