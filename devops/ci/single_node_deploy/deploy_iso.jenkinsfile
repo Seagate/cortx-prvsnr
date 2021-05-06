@@ -206,14 +206,12 @@ node {
         }
 
         sh label: '', script: "mkdir -p ${WORKSPACE}/archives"
-        dir("${WORKSPACE}/archives") {
-            deleteDir()
-            sshGet remote: remote, from: "/root/config.ini", into: "${WORKSPACE}/archives/config.ini", override: true
-            sshGet remote: remote, from: "/opt/seagate/cortx_configs/provisioner_cluster.json", into: "${WORKSPACE}/archives/provisioner_cluster.json", override: true
-            sshGet remote: remote, from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
-            sshGet remote: remote, from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
+        
+        sshGet remote: remote, from: "/root/config.ini", into: "${WORKSPACE}/archives/config.ini", override: true
+        sshGet remote: remote, from: "/opt/seagate/cortx_configs/provisioner_cluster.json", into: "${WORKSPACE}/archives/provisioner_cluster.json", override: true
+        sshGet remote: remote, from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
+        sshGet remote: remote, from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
 
-            archiveArtifacts artifacts: "${WORKSPACE}/archives", followSymlinks: false
-        }
+        archiveArtifacts artifacts: "archives", followSymlinks: false
     }
 }

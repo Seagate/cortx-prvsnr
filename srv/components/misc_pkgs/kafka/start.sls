@@ -28,7 +28,7 @@ Start zoopkeper:
 
 Ensure kafka-zookeeper has started:
   cmd.run:
-    - name: test 1 -le $(ps ax  | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
     # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
         attempts: 10
@@ -41,7 +41,7 @@ Ensure kafka-zookeeper has started:
 #  cmd.run:
 #    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
 #    - cwd: /opt/kafka
-#    - unless: test 1 -le $(ps ax | grep java |  grep ' kafka\.Kafka ' | grep -v grep | awk '{print $1}' | wc -l)
+#    - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
 #    - require:
 #       - Ensure kafka-zookeeper has started
 

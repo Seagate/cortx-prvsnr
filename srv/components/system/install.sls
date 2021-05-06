@@ -42,3 +42,8 @@ python-pip:
     - reload_modules: True
     - bin_env: /usr/bin/pip
     - upgrade: True
+
+Install cortx python dependencies:
+  pip.installed:
+    - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
+    - bin_env: /usr/bin/pip3
