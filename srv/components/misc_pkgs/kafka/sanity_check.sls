@@ -17,7 +17,7 @@
 
 Ensure kafka is online:
   cmd.run:
-    - name: telnet {{ grains['id'] }}.data.private {{ pillar['cortx']['software']['zookeeper']['client_port'] }}
+    - name: ss -nltp|grep {{ pillar['cortx']['software']['zookeeper']['client_port'] }} >/dev/null
     - retry:
     # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
         attempts: 10
