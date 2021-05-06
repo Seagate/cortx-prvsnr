@@ -114,7 +114,6 @@ node {
                     yum erase -y *cortx*
                     # Cleanup pip packages
                     pip3 freeze|xargs pip3 uninstall -y
-                    yum remove -y python3
                     # Re-condition yum db
                     yum autoremove -y
                     yum clean all
@@ -127,7 +126,7 @@ node {
                     test -e /var/cache/yum && rm -rf /var/cache/yum
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
-                    rm -rf ~/.cache/pip
+                    test -e ~/.cache/pip && rm -rf ~/.cache/pip
                     # Cortx software dirs
                     test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx
                     test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
