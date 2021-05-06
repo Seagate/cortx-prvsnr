@@ -38,6 +38,9 @@ Update zoopkeeper cofig:
     - source: salt://components/misc_pkgs/kafka/files/zookeeper.properties
     - template: jinja
     - backup: '.bak'
+    - user: kafka
+    - group: kafka
+    - mode: 644
 
 Update permissions for datadir:
   file.directory:
@@ -65,9 +68,12 @@ Update permissions for datalogdir:
 
 Create zookeeper id:
   file.append:
-   - name: /var/lib/zookeeper/myid
-   - text: {{ node_ids[grains['id']] }}
-   - makedirs: True
+    - name: /var/lib/zookeeper/myid
+    - text: {{ node_ids[grains['id']] }}
+    - makedirs: True
+    - user: kafka
+    - group: kafka
+    - mode: 644
 
 Update broker_id in kafka config:
   file.replace:
