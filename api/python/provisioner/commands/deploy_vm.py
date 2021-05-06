@@ -125,6 +125,7 @@ class DeployVM(Deploy):
                 #       for legacy dual node setup
                 if state in (
                     "sspl",
+                    "ha.cortx-ha"
                 ):
                     # Execute first on secondaries then on primary.
                     self._apply_state(
@@ -134,8 +135,7 @@ class DeployVM(Deploy):
 
                 elif state in (
                     "sync.software.rabbitmq",
-                    "sync.software.openldap",
-                    "ha.cortx-ha"
+                    "sync.software.openldap"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
