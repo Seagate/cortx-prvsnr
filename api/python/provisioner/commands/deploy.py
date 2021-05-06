@@ -313,6 +313,9 @@ class Deploy(CommandParserFillerMixin):
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
+                else:
+                     # Execute on all targets
+                    self._apply_state(f"components.{state}", targets, stages)
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
