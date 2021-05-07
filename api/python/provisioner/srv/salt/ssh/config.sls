@@ -24,20 +24,26 @@ ssh_dir_created:
 
 ssh_priv_key_deployed:
   file.managed:
-    - name: /root/.ssh/id_rsa_prvsnr
-    - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
     - show_changes: False
     - keep_source: True
     - mode: 600
+    - names:
+      - /root/.ssh/id_rsa_prvsnr:
+        - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
+      - /root/.ssh/id_rsa:
+        - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
     - requires:
       - ssh_dir_created
 
 ssh_pub_key_deployed:
   file.managed:
-    - name: /root/.ssh/id_rsa_prvsnr.pub
-    - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
     - keep_source: True
     - mode: 600
+    - names:
+      - /root/.ssh/id_rsa_prvsnr.pub:
+        - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
+      - /root/.ssh/id_rsa.pub:
+        - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
     - requires:
       - ssh_dir_created
 
