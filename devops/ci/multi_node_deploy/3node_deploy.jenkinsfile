@@ -200,13 +200,6 @@ node {
                     salt-call state.apply components.system.config.pillar_encrypt
                     provisioner confstore_export
                 """
-                for (remote in remotes) {
-                    sshCommand remote: remote, command: """
-                        cp /root/.ssh/id_rsa_prvsnr /root/.ssh/id_rsa
-                        cp /root/.ssh/id_rsa_prvsnr.pub /root/.ssh/id_rsa.pub
-                    """
-                }
-
             }
             
             stage("Validate Provisioner Bootstrap") {
