@@ -17,7 +17,7 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.consul'.format(grains['id'])) %}
 include:
-  - components.misc_pkgs.consul.prepare
+# - components.misc_pkgs.consul.prepare
   - components.misc_pkgs.consul.install
   - components.misc_pkgs.consul.config
   - components.misc_pkgs.consul.start

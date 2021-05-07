@@ -18,9 +18,9 @@
 include:
   - components.misc_pkgs.consul.stop
 
-# Remove Consul:
-#   file.absent:
-#     - name: /opt/consul
+Remove Consul File:
+  file.absent:
+    - name: /usr/bin/consul
 
 # Remove consul from bash_profile:
 #   file.blockreplace:
@@ -33,40 +33,40 @@ include:
 #   cmd.run:
 #     - name: source ~/.bashrc
 
-# Remove Consul data directory:
-#   file.absent:
-#     - name: /opt/consul/data
+Remove Consul data directory:
+   file.absent:
+     - name: /var/lib/consul
 
-# Remove Consul config directory:
-#   file.absent:
-#     - name: /etc/consul.d
+Remove Consul config directory:
+   file.absent:
+     - name: /etc/consul.d
 
-# Remove Consul agent config file:
-#   file.absent:
-#     - name: /etc/consul.d/consul.json
+Remove Consul agent config file:
+   file.absent:
+     - name: /etc/consul.d/consul_server.json
 
-# Remove Consul server config file:
-#   file.absent:
-#     - name: /etc/consul.d/consul_server.json
-#     - source: salt://components/misc_pkgs/consul/files/consul_server.json
-#     - mode: 640
-#     - template: jinja
+Remove Consul server config file:
+   file.absent:
+     - name: /etc/consul.d/consul_server.json
+     - source: salt://components/misc_pkgs/consul/files/consul_server.json
+     - mode: 640
+     - template: jinja
 
-# Remove Consul Agent Service:
-#   file.absent:
-#     - name: /etc/systemd/system/consul.service
-#     - source: salt://components/misc_pkgs/consul/files/consul.service
-#     - makedirs: True
-#     - mode: 644
+Remove Consul Agent Service:
+   file.absent:
+     - name:  /usr/lib/systemd/system/consul.service
+     - source: salt://components/misc_pkgs/consul/files/consul.service
+     - makedirs: True
+     - mode: 644
 
-# Reload service daemons post consul-agent.service removal:
-#   cmd.run:
-#     - name: systemctl daemon-reload
+Reload service daemons post consul-agent.service removal:
+   cmd.run:
+     - name: systemctl daemon-reload
 
-# Remove Consul user:
-#   user.absent:
-#     - name: consul
-
+Remove Consul user:
+   user.absent:
+     - name: consul
+    
 Remove Consul:
   pkg.purged:
     - name: consul

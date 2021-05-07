@@ -22,9 +22,9 @@
 #     - system: True
 #     - shell: /bin/false
 
-# Create Consul bin directory:
+# Update Consul bin directory:
 #   file.directory:
-#     - name: /opt/consul/bin
+#     - name: /usr/bin/consul
 #     - makedirs: True
 #     - dir_mode: 755
 #     - file_mode: 644
@@ -39,7 +39,7 @@
 
 # Create Consul data directory:
 #   file.directory:
-#     - name: /opt/consul/data
+#     - name: /var/lib/consul
 #     - makedirs: True
 #     - dir_mode: 755
 #     - file_mode: 644
@@ -52,7 +52,7 @@
 #     - require:
 #       - user: Create Consul user
 
-# Create Consul config directory:
+# Update Consul config directory:
 #   file.directory:
 #     - name: /etc/consul.d
 #     - makedirs: True
@@ -80,7 +80,7 @@
 
 # Create Consul Agent Service:
 #   file.managed:
-#     - name: /etc/systemd/system/consul.service
+#     - name: /usr/lib/systemd/system/consul.service
 #     - source: salt://components/misc_pkgs/consul/files/consul.service
 #     - makedirs: True
 #     - mode: 640

@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start Consul:
+Stop Consul:
   service.dead:
     - name: consul.service
     - enable: False

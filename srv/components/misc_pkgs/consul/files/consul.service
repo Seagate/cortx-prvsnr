@@ -5,9 +5,11 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/opt/consul/bin/consul agent -node {{ grains['id'] }} -node-id {{ grains['node_id'] }} -config-dir=/etc/consul.d/
+user=consul
+group=consul
+ExecStart=/usr/bin/consul agent -node {{ grains['id'] }} -node-id {{ grains['node_id'] }} -config-dir=/etc/consul.d/
 ExecStartPost=/bin/sleep 5 
-ExecReload=/usr/local/bin/consul reload
+ExecReload=/usr/bin/consul reload
 KillMode=process
 Restart=on-failure
 

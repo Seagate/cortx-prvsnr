@@ -3,32 +3,39 @@
 {% else %}
 {%- set data_if = pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] -%}
 {% endif %}
-
-{%- set data_ip = grains['ip4_interfaces'][data_if][0][0] -%}
-{%- set retry_list = [] -%}
-{% set server_nodes = [ ] %}
+{%- set data_ip = grains['ip4_interfaces'][data_if[0]] -%}
+{% set server_nodes = [ ] -%}
 {% for node in pillar['cluster'].keys() -%}
 {% if "srvnode-" in node -%}
 {% do server_nodes.append(node)-%}
 {% endif -%}
 {% endfor -%}
-{%- for node in (server_nodes | difference(grains['id'])) -%}
-{%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-{%- do retry_list.append(ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0]) %}
-{%- endfor %}
-{%- endfor %}
 {
-  "bind_addr": "{{ data_ip }}",
-  "client_addr": "127.0.0.1 {{ data_ip }}",
-  "data_dir": "/opt/consul/data",
-  "log_level": "INFO",
-  "bootstrap_expect": {{ server_nodes|length }},
-  "server": true,
-  "ui": true,
-  "leave_on_terminate": true,
-  {%- if "single" not in pillar["cluster"]["type"] %}
-  "retry_join": {{ retry_list | replace("'", '"') }},
-  {%- endif %}
-  "rejoin_after_leave": true
+     "advertise_addr": "{{ data_ip[0] }}",
+     "bind_addr": "{{ data_ip[0] }}",
+     "bootstrap_expect": {{ server_nodes|length }},
+     "client_addr": "127.0.0.1 {{ data_ip[0] }}",
+     "datacenter": "DC1",
+     "data_dir": "/var/lib/consul",
+     "domain": "consul",
+     "enable_local_script_checks": true,
+     "dns_config": {
+     "enable_truncate": true,
+     "only_passing": true
+     },
+     "enable_syslog": true,
+     "leave_on_terminate": true,
+     "log_level": "INFO",
+     "rejoin_after_leave": true,
+     "log_level": "INFO",
+     "rejoin_after_leave": true,
+     "retry_join": [
+       "{{ server_nodes[0] }}"
+     ],
+     "server": true,
+     "start_join": [
+       "{{ server_nodes[0] }}"
+     ],
 }
+
 
