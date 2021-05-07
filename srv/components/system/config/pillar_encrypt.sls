@@ -20,7 +20,6 @@ Install cortx-py-utils python dependencies:
   pip.installed:
     - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
     - bin_env: /usr/bin/pip3
-    - target: /usr/lib64/python3.6/site-packages/
 
 Install cortx-py-utils:           # Package for cryptography
   pkg.installed:

@@ -122,26 +122,30 @@ node {
 
             stage("${remote.name}: Uninstall rpms") {
                 sshCommand remote: remote, command: """
+                    yum erase -y cortx-prvsnr cortx-prvsnr-cli      # Cortx Provisioner packages
+                    # Remove cortx-py-utils
+                    pip3 uninstall -y cortx-py-utils
+                    yum erase -y glusterfs-fuse glusterfs-server glusterfs     # Gluster FS packages
                     yum erase -y salt-minion salt-master salt-api   # Salt packages
                     yum erase -y python36-m2crypto                  # Salt dependency
                     yum erase -y python36-cortx-prvsnr              # Cortx Provisioner API packages
+                    # Brute clean for any cortx rpm packages
                     yum erase -y *cortx*
-                    yum autoremove -y
-                    yum clean all
-                    rm -rf /var/cache/yum
-                    # Remove cortx-py-utils
-                    pip3 uninstall -y cortx-py-utils
                     # Cleanup pip packages
                     pip3 freeze|xargs pip3 uninstall -y
-                    # Cleanup pip config
-                    test -e /etc/pip.conf && rm -f /etc/pip.conf
-                    test -e ~/.cache/pip && rm -rf ~/.cache/pip || true
+                    # Re-condition yum db
+                    yum autoremove -y
+                    yum clean all
                 """
                 echo "Successfully uninstalled rpms."
             }
 
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
+                    test -e /var/cache/yum && rm -rf /var/cache/yum
+                    # Cleanup pip config
+                    test -e /etc/pip.conf && rm -f /etc/pip.conf
+                    test -e ~/.cache/pip && rm -rf ~/.cache/pip
                     # Cortx software dirs
                     test -e /opt/seagate/cortx && rm -rf /opt/seagate/cortx
                     test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs

@@ -67,13 +67,16 @@ Update permissions for datalogdir:
       - mode
 
 Create zookeeper id:
-  file.append:
+  file.managed:
     - name: /var/lib/zookeeper/myid
-    - text: {{ node_ids[grains['id']] }}
+    - contents:
+      - {{ node_ids[grains['id']] }}
+    - create: True
     - makedirs: True
     - user: kafka
     - group: kafka
     - mode: 644
+    - dir_mode: 755
 
 Update broker_id in kafka config:
   file.replace:
