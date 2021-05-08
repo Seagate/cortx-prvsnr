@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -14,22 +15,27 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# API to trigger TUI for node configuration
-
-import logging
-from typing import Type
-from .. import inputs
-from . import CommandParserFillerMixin
-from ..vendor import attr
-from ..northbound.ui.main import start_tui
-
-logger = logging.getLogger(__name__)
+#
+from .form_window import FormWindow
 
 
-@attr.s(auto_attribs=True)
-class ConfigureNode(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+class StaticBMCNetworkWindow(FormWindow):
 
-    def run(self, **kwargs):  # noqa: C901
-        # Start northbound interface TUI
-        return start_tui()
+    data = {
+            'Ip': {
+                      'default': '10.10.10.11',
+                      'validation': 'ipv4',
+                      'pillar_key': 'srvnode-0/bmc/ip'
+                  },
+            'Netmask': {
+                           'default': '1.255.255.251',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/bmc/netmask'
+                       },
+            'Gateway': {
+                           'default': '198.162.0.1',
+                           'validation': 'ipv4',
+                           'pillar_key': 'srvnode-0/bmc/gateway'
+                       }
+           }
+    component_type = 'BMC Network'

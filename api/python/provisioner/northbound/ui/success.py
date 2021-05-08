@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -14,22 +15,22 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# API to trigger TUI for node configuration
-
-import logging
-from typing import Type
-from .. import inputs
-from . import CommandParserFillerMixin
-from ..vendor import attr
-from ..northbound.ui.main import start_tui
-
-logger = logging.getLogger(__name__)
+#
+import curses
+from .color_code import ColorCode
+from .window import Window
 
 
-@attr.s(auto_attribs=True)
-class ConfigureNode(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+class SuccessWindow(Window):
 
-    def run(self, **kwargs):  # noqa: C901
-        # Start northbound interface TUI
-        return start_tui()
+    def create_window(self, **kwargs):
+        color_code = kwargs['color_code']
+        data = kwargs['data']
+        col_code_attr = ColorCode.get_color_pair(color_code)
+        x = 3
+        y = self.get_max_height() // 2 - 1
+        self.on_attr(col_code_attr)
+        self._window.addstr(y, x, f"{data} is set Successfully")
+        self.off_attr(col_code_attr)
+        self._window.refresh()
+        curses.napms(1000)

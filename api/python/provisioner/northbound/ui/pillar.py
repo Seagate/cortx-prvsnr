@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -14,22 +15,17 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# API to trigger TUI for node configuration
-
-import logging
-from typing import Type
-from .. import inputs
-from . import CommandParserFillerMixin
-from ..vendor import attr
-from ..northbound.ui.main import start_tui
-
-logger = logging.getLogger(__name__)
+#
+from provisioner.commands import PillarSet
 
 
-@attr.s(auto_attribs=True)
-class ConfigureNode(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+class Pillar:
 
-    def run(self, **kwargs):  # noqa: C901
-        # Start northbound interface TUI
-        return start_tui()
+    @staticmethod
+    def set_pillar(key, value):
+        result = True
+        try:
+            PillarSet().run(key, value, local=True)
+        except Exception:
+            result = False
+        return result
