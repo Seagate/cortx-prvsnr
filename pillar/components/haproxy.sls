@@ -27,3 +27,4 @@ haproxy:
         s3server:
             ssl_enabled: true
     nbproc: 12
+    nbthread: 16
