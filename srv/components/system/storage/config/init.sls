@@ -14,3 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+include:
+  - components.system.storage.config.prepare
+  - components.system.storage.config.config

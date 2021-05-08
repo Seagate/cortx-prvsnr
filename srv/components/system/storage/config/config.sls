@@ -15,16 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .base-teardown
-{% if "physical" in grains['virtual'] %}
-  - .tidy-up
-{% endif %}
-
-Mount default OS swap device:
-  cmd.run:
-    - name: swapon -a || true
-
-Delete storage checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.storage
+# Disable system swap
+Deactivate and unmount system SWAP:
+  module.run:
+    # Deactivate SWAP
+    - mount.swapoff:
+      - name: /dev/dm-1
+    # Remove SWAP from /etc/fstab
+    - mount.rm_fstab:
+      - name: swap
+      - device: /dev/mapper/vg_sysvol-lv_swap

@@ -108,8 +108,7 @@ class ConfigureSetup(CommandParserFillerMixin):
         "storage": StorageEnclosureParamsValidator
     }
 
-    @staticmethod
-    def _parse_params(input_data):
+    def _parse_params(self, input_data):
         params = {}
         for key in input_data.keys():
             val = key.split(".")

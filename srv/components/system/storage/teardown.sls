@@ -15,18 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.storage'.format(grains['id']))%}
-include:
-  - components.system.storage.install
-  - components.system.storage.config
+# Enable system swap
+Mount and activate system SWAP:
+  module.run:
+    # Add SWAP from /etc/fstab
+    - mount.set_fstab:
+      - name: swap
+      - device: /dev/mapper/vg_sysvol-lv_swap
+      - fstype: swap
+    # Deactivate SWAP
+    - mount.swapon:
+      - name: /dev/mapper/vg_sysvol-lv_swap
+      - priority: -2
 
-Generate storage checkpoint flag:
-  file.managed:
+Delete storage checkpoint flag:
+  file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.storage
-    - makedirs: True
-    - create: True
-{%- else -%}
-Storage already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.storage.teardown' to reprovision these states."
-{% endif %}

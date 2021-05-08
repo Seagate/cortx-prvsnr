@@ -280,5 +280,5 @@ node {
     sshGet remote: remotes[0], from: "/etc/yum.repos.d/RELEASE_FACTORY.INFO", into: "${WORKSPACE}/archives/RELEASE_FACTORY.INFO", override: true
     sshGet remote: remotes[0], from: "/var/log/seagate/provisioner/setup.log", into: "${WORKSPACE}/archives/setup.log", override: true
 
-    archiveArtifacts artifacts: "archives", followSymlinks: false
+    archiveArtifacts artifacts: "archives/*", followSymlinks: false
 }

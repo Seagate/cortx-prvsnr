@@ -15,18 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.storage'.format(grains['id']))%}
-include:
-  - components.system.storage.install
-  - components.system.storage.config
+# TODO: Add logic to capture existing system SWAP partitions into a pillar
 
-Generate storage checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.storage
-    - makedirs: True
-    - create: True
-{%- else -%}
-Storage already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.storage.teardown' to reprovision these states."
-{% endif %}
+List SWAP partitions:
+  module.run:
+    # List SWAP
+    - mount.swaps: []
