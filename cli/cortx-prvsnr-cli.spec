@@ -36,8 +36,8 @@ CORTX Provisioner Command line interface. Provides utilities to deploy CORTX Obj
 /bin/cp -pr cli/src %{buildroot}/opt/seagate/cortx/provisioner/cli
 /bin/cp -pr files/etc/yum.repos.d %{buildroot}/opt/seagate/cortx/provisioner/files/etc
 
-if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh/ ]]; then
-  /bin/rm -rf %{buildroot}/opt/seagate/cortx/provisioner/srv/components/system/files/.ssh
+if [[ -e %{buildroot}/opt/seagate/cortx/provisioner/cortx/srv/system/files/.ssh/ ]]; then
+  /bin/rm -rf %{buildroot}/opt/seagate/cortx/provisioner/cortx/srv/system/files/.ssh
 fi
 
 %clean

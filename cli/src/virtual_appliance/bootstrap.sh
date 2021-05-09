@@ -36,27 +36,27 @@ provisioner configure_setup ~/config.ini 1
 provisioner confstore_export
 
 #reconfigure network
-salt-call state.apply components.system.network
-salt-call state.apply components.system.network.mgmt.public
-salt-call state.apply components.system.network.data.public
-salt-call state.apply components.system.network.data.direct
+salt-call state.apply system.network
+salt-call state.apply system.network.mgmt.public
+salt-call state.apply system.network.data.public
+salt-call state.apply system.network.data.direct
 
-salt-call state.apply components.system.config.sync_salt
+salt-call state.apply system.config.sync_salt
 
 #reconfigure /etc/hosts
-salt-call state.apply components.system.config.hosts
+salt-call state.apply system.config.hosts
 
 #reconfigure firewall
-salt-call state.apply components.system.firewall.teardown
-salt-call state.apply components.system.firewall
+salt-call state.apply system.firewall.teardown
+salt-call state.apply system.firewall
 
 #reconfigure kafka
-salt-call state.apply components.misc_pkgs.kafka
-salt-call state.apply components.cortx_utils
+salt-call state.apply misc_pkgs.kafka
+salt-call state.apply cortx_utils
 
 #reconfigure lustre
-salt-call state.apply components.misc_pkgs.lustre.stop
-salt-call state.apply components.misc_pkgs.lustre.config
+salt-call state.apply misc_pkgs.lustre.stop
+salt-call state.apply misc_pkgs.lustre.config
 
 echo "INFO: Restarting rabbitmq-server" | tee -a "${LOG_FILE}"
 systemctl restart rabbitmq-server
@@ -66,27 +66,27 @@ systemctl restart elasticsearch
 
 #configure s3server
 echo "INFO: Configuring haproxy and s3" | tee -a "${LOG_FILE}"
-salt "*" state.apply components.s3server.config | tee -a "${LOG_FILE}"
-salt "*" state.apply components.s3server.start | tee -a "${LOG_FILE}"
+salt "*" state.apply s3server.config | tee -a "${LOG_FILE}"
+salt "*" state.apply s3server.start | tee -a "${LOG_FILE}"
 
 echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a "${LOG_FILE}"
 DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:0 --output=newline_values_only)
 DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
 provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
-salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
+salt "*" state.apply s3clients.config | tee -a "${LOG_FILE}"
 
 #reconfigure hare CDF
-salt-call state.apply components.hare.config
+salt-call state.apply hare.config
 
 #configure and start sspl
 echo "INFO: Configuring sspl" | tee -a "${LOG_FILE}"
-salt "*" state.apply components.sspl.config | tee -a "${LOG_FILE}"
-salt "*" state.apply components.sspl.start | tee -a "${LOG_FILE}"
+salt "*" state.apply sspl.config | tee -a "${LOG_FILE}"
+salt "*" state.apply sspl.start | tee -a "${LOG_FILE}"
 
 #start csm services
 echo "INFO: Restarting csm services" | tee -a "${LOG_FILE}"
-salt "*" state.apply components.csm.config | tee -a "${LOG_FILE}"
-salt "*" state.apply components.csm.start | tee -a "${LOG_FILE}"
+salt "*" state.apply csm.config | tee -a "${LOG_FILE}"
+salt "*" state.apply csm.start | tee -a "${LOG_FILE}"
 
 #bootstrap cluster
 echo "INFO: Bootstraping cluster" | tee -a "${LOG_FILE}"

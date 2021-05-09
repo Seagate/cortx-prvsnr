@@ -101,7 +101,7 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
-       --prereq-states             deploy only prereq states (components.misc_pkgs)
+       --prereq-states             deploy only prereq states (misc_pkgs)
        --sync-states               deploy only the software synchronization
        --iopath-states             deploy only iopath states (motr, s3server & Hare)
        --ctrlpath-states           deploy only control path states (sspl & csm)
@@ -151,30 +151,30 @@ function run_states {
     for state in ${states[@]}; do
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
-            l_info "Installing 'components.$state'"
-            $cmd salt srvnode-1 state.apply components.$state $salt_opts
+            l_info "Installing '$state'"
+            $cmd salt srvnode-1 state.apply $state $salt_opts
             sleep 2     # Mindfulness break
         else
             if [[ "$state" == "sspl" ]]; then
                 # Execute first on srvnode-2 then on srvnode-1.
-                l_info "Installing 'components.$state' for non primary nodes"
-                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
+                l_info "Installing '$state' for non primary nodes"
+                $cmd salt -C "not srvnode-1" state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Installing 'components.$state' for primary node"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+                l_info "Installing '$state' for primary node"
+                $cmd salt srvnode-1 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "sync.software.rabbitmq"
                 || "$state" == "sync.software.openldap" ]]; then
                 # Execute first on srvnode-1 then on srvnode-2.
-                l_info "Installing 'components.$state' for primary node"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+                l_info "Installing '$state' for primary node"
+                $cmd salt srvnode-1 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Installing 'components.$state' for non primary nodes"
-                $cmd salt -C "not srvnode-1" state.apply components.$state  $salt_opts
+                l_info "Installing '$state' for non primary nodes"
+                $cmd salt -C "not srvnode-1" state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
             else
-                l_info "Installing 'components.$state' for both nodes"
-                $cmd salt "*" state.apply components.$state $salt_opts
+                l_info "Installing '$state' for both nodes"
+                $cmd salt "*" state.apply $state $salt_opts
                 sleep 2     # Mindfulness break
             fi
         fi
@@ -255,7 +255,7 @@ fi
 
 if [[ "$run_io_states" == true ]]; then
     l_info "Recreating the metadata partitions"
-    salt '*' state.apply components.system.storage
+    salt '*' state.apply system.storage
     if [[ "$singlenode" != true ]]; then
         # Mount partition
         salt-call mount.mount /var/motr $(salt-call pillar.get cluster:srvnode-1:storage:metadata_devices:0 --output=newline_values_only)1 True ext4

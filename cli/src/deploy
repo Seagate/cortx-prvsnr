@@ -128,7 +128,7 @@ $base_options_usage
 Options:
     -S <tgt_node>,  --singlenode=<tgt_node>      switch to single node mode setup
     --system-states                              deploy only system states
-    --prereq-states                              deploy only prereq states (components.misc_pkgs)
+    --prereq-states                              deploy only prereq states (misc_pkgs)
     --sync-states                                deploy only the software synchronization
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ha-states                                  deploy only ha states (corosync-pacemaker, iostack-ha)
@@ -219,8 +219,8 @@ function run_states {
     if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
         for state in ${states[@]}; do
-            l_info "Applying 'components.$state' on node: $tgt_node"
-            $cmd salt "$tgt_node" state.apply components.$state $salt_opts
+            l_info "Applying '$state' on node: $tgt_node"
+            $cmd salt "$tgt_node" state.apply $state $salt_opts
             sleep 2     # Mindfulness break
         done
     else
@@ -228,21 +228,21 @@ function run_states {
             if [[ "$state" == "ha.corosync-pacemaker" ]]; then
                 # Execute first on srvnode-2 then on srvnode-1.
                 
-                l_info "Applying 'components.ha.corosync-pacemaker.install' for both nodes"
-                $cmd salt srvnode-[1,2] state.apply components.ha.corosync-pacemaker.install  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.install' for both nodes"
+                $cmd salt srvnode-[1,2] state.apply ha.corosync-pacemaker.install  $salt_opts
                 sleep 2     # Mindfulness break
                 
-                l_info "Applying 'components.ha.corosync-pacemaker.config.base' for both nodes"
-                $cmd salt srvnode-[1,2] state.apply components.ha.corosync-pacemaker.config.base  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.config.base' for both nodes"
+                $cmd salt srvnode-[1,2] state.apply ha.corosync-pacemaker.config.base  $salt_opts
                 
-                l_info "Applying 'components.ha.corosync-pacemaker.config.authorize' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.authorize  $salt_opts
-                l_info "Applying 'components.ha.corosync-pacemaker.config.setup_cluster' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.setup_cluster  $salt_opts
-                l_info "Applying 'components.ha.corosync-pacemaker.config.cluster_ip' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.cluster_ip  $salt_opts
-                l_info "Applying 'components.ha.corosync-pacemaker.config.stonith' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.ha.corosync-pacemaker.config.stonith  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.config.authorize' for srvnode-1"
+                $cmd salt srvnode-1 state.apply ha.corosync-pacemaker.config.authorize  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.config.setup_cluster' for srvnode-1"
+                $cmd salt srvnode-1 state.apply ha.corosync-pacemaker.config.setup_cluster  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.config.cluster_ip' for srvnode-1"
+                $cmd salt srvnode-1 state.apply ha.corosync-pacemaker.config.cluster_ip  $salt_opts
+                l_info "Applying 'ha.corosync-pacemaker.config.stonith' for srvnode-1"
+                $cmd salt srvnode-1 state.apply ha.corosync-pacemaker.config.stonith  $salt_opts
             elif [[  "$state" == "system.storage"
                 || "$state" == "sspl"
                 || "$state" == "csm"
@@ -257,11 +257,11 @@ function run_states {
                 fi
 
                 # Execute first on srvnode-2 then on srvnode-1.
-                l_info "Applying 'components.$state' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+                l_info "Applying '$state' for srvnode-2"
+                $cmd salt srvnode-2 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+                l_info "Applying '$state' for srvnode-1"
+                $cmd salt srvnode-1 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
 
             elif [[ "$state" == "sync.software.rabbitmq"
@@ -271,16 +271,16 @@ function run_states {
                 ]]; then
                 
                 # Execute first on srvnode-1 then on srvnode-2.
-                l_info "Applying 'components.$state' for srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts
+                l_info "Applying '$state' for srvnode-1"
+                $cmd salt srvnode-1 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
-                l_info "Applying 'components.$state' for srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts
+                l_info "Applying '$state' for srvnode-2"
+                $cmd salt srvnode-2 state.apply $state  $salt_opts
                 sleep 2     # Mindfulness break
 
             else
-                l_info "Applying 'components.$state' for both nodes"
-                $cmd salt srvnode-[1,2] state.apply components.$state $salt_opts
+                l_info "Applying '$state' for both nodes"
+                $cmd salt srvnode-[1,2] state.apply $state $salt_opts
                 sleep 2     # Mindfulness break
 
                 # Consul takes time to come online after initialization (around 2-3 mins at times)
@@ -367,8 +367,8 @@ fi
 
 # if [[ "$run_io_states" == true || "$run_ha_states" == true ]]; then
 #     l_info "Recreating the metadata partitions"
-#     salt 'srvnode-2' state.apply components.system.storage $salt_opts
-#     salt 'srvnode-1' state.apply components.system.storage $salt_opts
+#     salt 'srvnode-2' state.apply system.storage $salt_opts
+#     salt 'srvnode-1' state.apply system.storage $salt_opts
 # fi
 
 if [[ "$run_io_states" == true ]]; then

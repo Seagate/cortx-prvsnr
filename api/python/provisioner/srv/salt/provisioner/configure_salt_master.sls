@@ -22,7 +22,7 @@
 salt_master_configured:
   file.managed:
     - name: /etc/salt/master
-    - source: {{ install_dir }}/srv/components/provisioner/salt_master/files/master
+    - source: {{ install_dir }}/cortx/srv/provisioner/salt_master/files/master
     - keep_source: True
     - backup: minion
 
@@ -47,7 +47,7 @@ salt_master_enabled:
       - salt_master_configured
       - salt_master_pki_set
 
-# TODO DRY copied from srv/components/provisioner/salt_master/config.sls
+# TODO DRY copied from srv/provisioner/salt_master/config.sls
 salt_master_restarted:
   cmd.run:
     # 1. test.true will prevent restart of salt-master if the config is malformed

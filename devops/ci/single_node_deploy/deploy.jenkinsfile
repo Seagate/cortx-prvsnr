@@ -146,7 +146,7 @@ node {
                     yum install -y sshpass
                     sshpass -p $PASSWORD provisioner setup_provisioner srvnode-1:\$(hostname -f) --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build ${CORTX_RELEASE_REPO}
                     provisioner configure_setup /root/config.ini 1
-                    salt-call state.apply components.system.config.pillar_encrypt
+                    salt-call state.apply system.config.pillar_encrypt
                     provisioner confstore_export
                 """
                 echo "Successfully bootstrapped provisioner!"

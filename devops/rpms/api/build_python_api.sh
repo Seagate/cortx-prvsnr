@@ -197,8 +197,8 @@ $fpm_tool --input-type "python" \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
     --rpm-auto-add-directories \
-    --before-install "$input_dir/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
-    --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \
+    --before-install "$input_dir/provisioner/cortx/srv/salt/provisioner/files/pre_setup.sh" \
+    --after-install "$input_dir/provisioner/cortx/srv/salt/provisioner/files/post_setup.sh" \
     --package "${output_dir}" \
     $iteration \
     "${input_dir}"

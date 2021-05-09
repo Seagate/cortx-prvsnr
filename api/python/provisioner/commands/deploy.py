@@ -285,7 +285,7 @@ class Deploy(CommandParserFillerMixin):
             if setup_type == SetupType.SINGLE:
                 # TODO use salt orchestration
                 if "sync" not in state:
-                    self._apply_state(f"components.{state}", targets, stages)
+                    self._apply_state(f"{state}", targets, stages)
             else:
                 if state in (
                     "system.storage",
@@ -295,9 +295,9 @@ class Deploy(CommandParserFillerMixin):
                     if state == "sspl":
                         self.ensure_consul_running()
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
 
                 elif state in (
                     "sync.software.rabbitmq",
@@ -309,13 +309,13 @@ class Deploy(CommandParserFillerMixin):
                     # Execute first on primary then on secondaries.
                     if state == "ha.cortx-ha":
                         self.ensure_consul_running()
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
                 else:
                      # Execute on all targets
-                    self._apply_state(f"components.{state}", targets, stages)
+                    self._apply_state(f"{state}", targets, stages)
 
     def _update_salt(self, targets=config.ALL_MINIONS):
         # TODO IMPROVE why do we need that
@@ -323,7 +323,7 @@ class Deploy(CommandParserFillerMixin):
         #      as it was in legacy bash script
         logger.info("Updating Salt data")
 
-        self._apply_state("components.system.config.sync_salt", targets)
+        self._apply_state("system.config.sync_salt", targets)
 
     def _encrypt_pillar(self):
         # FIXME ??? EOS-12076 targets
@@ -331,15 +331,15 @@ class Deploy(CommandParserFillerMixin):
         logger.info("Encrypting salt pillar data")
 
         self._apply_state(
-            "components.system.config.pillar_encrypt",
+            "system.config.pillar_encrypt",
             self._primary_id())
 
     def _destroy_storage(self, run_args, nofail=True):
         targets = run_args.targets
 
         # Old remnant partitios from previous deployments has to be cleaned-up
-        logger.info("Removing components.system.storage from all nodes.")
-        self._apply_state("components.system.storage.teardown", targets)
+        logger.info("Removing system.storage from all nodes.")
+        self._apply_state("system.storage.teardown", targets)
 
     def _rescan_scsi_bus(self, targets=config.ALL_MINIONS, nofail=True):
         if self._is_hw():

@@ -61,7 +61,7 @@ def test_setup_ssh_known_hosts(
     mhostsrvnode1.check_output(
         "salt '{}' state.sls_id"
         " 'Add csm user to prvsnrusers group'"
-        " components.csm.config"
+        " csm.config"
         .format(minion_id)
     )
 

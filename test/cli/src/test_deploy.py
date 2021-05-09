@@ -61,7 +61,7 @@ def test_deploy_cortx_commands(
 
     if singlenode:
         expected_lines = [
-            'SALT-ARGS: srvnode-1 state.apply components.{}'.format(state)
+            'SALT-ARGS: srvnode-1 state.apply {}'.format(state)
             for state in [
                 'system',
                 'ha.haproxy',
@@ -76,13 +76,13 @@ def test_deploy_cortx_commands(
         ]
     else:
         expected_lines = [
-            'SALT-ARGS: srvnode-[1,2] state.apply components.{}'.format(state)
+            'SALT-ARGS: srvnode-[1,2] state.apply {}'.format(state)
             for state in ['system', 'ha.haproxy', 'misc_pkgs.openldap']
         ] + [
-            'SALT-ARGS: srvnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms',  # noqa: E501
-            'SALT-ARGS: srvnode-2 state.apply components.misc_pkgs.build_ssl_cert_rpms'  # noqa: E501
+            'SALT-ARGS: srvnode-1 state.apply misc_pkgs.build_ssl_cert_rpms',  # noqa: E501
+            'SALT-ARGS: srvnode-2 state.apply misc_pkgs.build_ssl_cert_rpms'  # noqa: E501
         ] + [
-            'SALT-ARGS: srvnode-[1,2] state.apply components.{}'.format(state)
+            'SALT-ARGS: srvnode-[1,2] state.apply {}'.format(state)
             for state in ['cortx', 's3server', 'hare', 'sspl', 'csm']
         ]
 

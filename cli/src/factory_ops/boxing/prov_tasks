@@ -81,7 +81,7 @@ function get_nw_interface_names {
 function stop_rabbitmq_cluster {
     echo -n "INFO: Removing RabbitMQ from both nodes....." | tee -a ${LOG_FILE}
 
-    salt "*" state.apply components.misc_pkgs.rabbitmq.teardown ${salt_opts} || (
+    salt "*" state.apply misc_pkgs.rabbitmq.teardown ${salt_opts} || (
         echo -e "\nERROR: Remove RabbitMQ from both nodes failed." | tee -a ${LOG_FILE}
     ) && ( echo "Done" | tee -a ${LOG_FILE} )
 }
@@ -113,7 +113,7 @@ function backup_files {
 
 
 function configure_service_port {
-    salt "srvnode-1" state.apply components.system.network.mgmt.service_port ${salt_opts} || (
+    salt "srvnode-1" state.apply system.network.mgmt.service_port ${salt_opts} || (
         echo "ERROR: Failed to configure service port on srvnode-1." | tee -a ${LOG_FILE}
         exit 25
     )
@@ -123,7 +123,7 @@ function configure_service_port {
 function update_ssh_settings {
     echo -n "INFO: Updating ssh settings on both nodes....." | tee -a ${LOG_FILE}
 
-    salt "*" state.apply components.system.config.sshd_boxing ${salt_opts} || (
+    salt "*" state.apply system.config.sshd_boxing ${salt_opts} || (
         echo "ERROR: Failed to update ssh settings from both nodes." | tee -a ${LOG_FILE}
         exit 1
     )
@@ -280,7 +280,7 @@ function reset_pub_data_ips {
 
     echo "INFO: Resetting the IPs of public data network interface on both nodes." | tee -a ${LOG_FILE}
     if [[ ! -z $pub_dip1 && ! -z $pub_dip2 ]]; then
-        salt '*' state.apply components.system.network.data.direct ${salt_opts}
+        salt '*' state.apply system.network.data.direct ${salt_opts}
     else
         echo "The IPs of public data network interface are already reset on both nodes"
     fi

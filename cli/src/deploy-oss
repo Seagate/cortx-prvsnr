@@ -84,7 +84,7 @@ General options:
 $base_options_usage
 Options:
        -S,  --singlenode           switch to single node mode setup
-       --prereq-states             deploy only prereq states (components.misc_pkgs)
+       --prereq-states             deploy only prereq states (misc_pkgs)
        --system-states             deploy only system states
 "
 }
@@ -117,7 +117,7 @@ function run_states {
 
     # apply states
     for state in ${states[@]}; do
-        $cmd salt "*" state.apply components.$state
+        $cmd salt "*" state.apply $state
     done
 }
 

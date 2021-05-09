@@ -245,8 +245,8 @@ echo "Ok." | tee -a ${LOG_FILE}
 
 # Re-configure firewall
 echo -n "Re-configuring firewall................................." | tee -a ${LOG_FILE}
-salt "*" state.apply components.system.firewall.teardown ${salt_opts}
-salt "*" state.apply components.system.firewall ${salt_opts}
+salt "*" state.apply system.firewall.teardown ${salt_opts}
+salt "*" state.apply system.firewall ${salt_opts}
 # sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
@@ -262,37 +262,37 @@ sleep 2
 # if [[ ! -z "$static_data_ip_a" && ! -z "$static_data_ip_b" ]]; then
 #     # Assign Static IPs on both the nodes
 #     echo -n "Assigning static IPs to public data network................................." | tee -a ${LOG_FILE}
-#     salt "*" state.apply components.system.network.data.direct ${salt_opts}
+#     salt "*" state.apply system.network.data.direct ${salt_opts}
 #     sleep 5     # Mindfulness break
 #     echo "Ok." | tee -a ${LOG_FILE}
 # fi
 
 # Update ClusterIP
 echo -n "Configuring Data Network VIP................................................" | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
+salt "srvnode-1" state.apply ha.corosync-pacemaker.config.cluster_ip ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Update HAProxy config
 echo -n "Updating new VIPs in haproxy configuration.................................." | tee -a ${LOG_FILE}
-salt "*" state.apply components.ha.haproxy.config ${salt_opts}
+salt "*" state.apply ha.haproxy.config ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Update Management_vip
 echo -n "Configuring Management Network VIP.........................................." | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
+salt "srvnode-1" state.apply ha.corosync-pacemaker.config.mgmt_vip ${salt_opts}
 sleep 5     # Mindfulness break
 echo "Ok." | tee -a ${LOG_FILE}
 
 # Re-run Stonith
 echo -n "Fencing the cluster with Stonith............................................" | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.ha.corosync-pacemaker.config.stonith ${salt_opts}
+salt "srvnode-1" state.apply ha.corosync-pacemaker.config.stonith ${salt_opts}
 sleep 5     # Mindfulness break...Breathe in...Breathe out
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Updating Management VIP in CSM HA configuration file........................" | tee -a ${LOG_FILE}
-salt "*" state.apply components.csm.prepare ${salt_opts}
+salt "*" state.apply csm.prepare ${salt_opts}
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing build URL from Salt configuration" | tee -a ${LOG_FILE}
@@ -318,19 +318,19 @@ ensure_healthy_cluster
 
 # Update SSPL init
 echo -n "Configuring Cortx RAS services on server A.................................." | tee -a ${LOG_FILE}
-salt "srvnode-2" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+salt "srvnode-2" state.apply sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring Cortx RAS services on server B.................................." | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.sspl.config.commons ${salt_opts}; sleep 5
+salt "srvnode-1" state.apply sspl.config.commons ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring CSM services on Server B........................................" | tee -a ${LOG_FILE}
-salt "srvnode-2" state.apply components.csm.config ${salt_opts}; sleep 5
+salt "srvnode-2" state.apply csm.config ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo -n "Configuring CSM services on Server A........................................" | tee -a ${LOG_FILE}
-salt "srvnode-1" state.apply components.csm.config ${salt_opts}; sleep 5
+salt "srvnode-1" state.apply csm.config ${salt_opts}; sleep 5
 echo "Ok." | tee -a ${LOG_FILE}
 
 echo "Removing Lustre URL (RedHat) from Salt configuration" | tee -a ${LOG_FILE}

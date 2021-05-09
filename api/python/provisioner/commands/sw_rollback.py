@@ -69,7 +69,7 @@ class SWRollback(CommandParserFillerMixin):
 
     @staticmethod
     def _rollback_component(component, targets):
-        state_name = "components.{}.rollback".format(component)
+        state_name = "{}.rollback".format(component)
         try:
             logger.info(
                 "Restoring {} configuration on {}".format(component, targets)

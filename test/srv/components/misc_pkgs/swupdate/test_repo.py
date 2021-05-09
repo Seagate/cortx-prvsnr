@@ -143,7 +143,7 @@ def test_swupdate_repo(
         update_pillar()
         # apply states
         mhostsrvnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
+            "salt '{0}' state.apply misc_pkgs.swupdate.repo"
             .format(minion_id)
         )
         if mount_dir:
@@ -169,7 +169,7 @@ def test_swupdate_repo(
         update_pillar()
         # apply states
         mhostsrvnode1.check_output(
-            "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
+            "salt '{0}' state.apply misc_pkgs.swupdate.repo"
             .format(minion_id)
         )
         # check repo is not listed anymore
@@ -194,6 +194,6 @@ def test_swupdate_repo(
     update_pillar()
     # apply states, should just does nothing
     mhostsrvnode1.check_output(
-        "salt '{0}' state.apply components.misc_pkgs.swupdate.repo"
+        "salt '{0}' state.apply misc_pkgs.swupdate.repo"
         .format(minion_id)
     )

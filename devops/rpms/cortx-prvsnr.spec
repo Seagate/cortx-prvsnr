@@ -14,8 +14,8 @@ Requires: python36
 Requires: python36-PyYAML
 Requires: python36-pip
 Requires: rsync
-#Requires: salt-master = 3002.2
-#Requires: salt-minion = 3002.2
+#Requires: salt-master >= 3002.2
+#Requires: salt-minion >= 3002.2
 #Requires: salt-ssh
 #Requires: salt-syndic
 
@@ -45,9 +45,9 @@ mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{files,conf}
 
 # Copy files
 cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
-cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
-cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
-cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
+cp -R cortx/pillar %{buildroot}/opt/seagate/cortx/provisioner
+cp -R cortx/srv %{buildroot}/opt/seagate/cortx/provisioner
+cp -R srv/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
 cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
 
 
@@ -64,6 +64,6 @@ rm -rf %{buildroot}
 /opt/seagate/cortx/provisioner/conf
 /opt/seagate/cortx/provisioner/cli
 /opt/seagate/cortx/provisioner/files
-/opt/seagate/cortx/provisioner/pillar
-/opt/seagate/cortx/provisioner/srv
+/opt/seagate/cortx/provisioner/cortx/pillar
+/opt/seagate/cortx/provisioner/cortx/srv
 /opt/seagate/cortx/provisioner/srv_ext

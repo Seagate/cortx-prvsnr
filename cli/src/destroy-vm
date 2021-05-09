@@ -156,32 +156,32 @@ function teardown_states {
     # apply states
     for state in ${states[@]}; do
         if [[ "$state" == "hare" ]]; then
-            l_info "Applying state 'components.$state.teardown'"
+            l_info "Applying state '$state.teardown'"
             hctl shutdown || true 2>&1|tee ${LOG_FILE}
         fi
         if [[ "$singlenode" == true ]]; then
         # TODO use salt orchestration
-            l_info "Applying state 'components.$state.teardown'"
-            $cmd salt srvnode-1 state.apply components.$state.teardown $salt_opts || true
+            l_info "Applying state '$state.teardown'"
+            $cmd salt srvnode-1 state.apply $state.teardown $salt_opts || true
             sleep 2     # Mindfulness break
         else
             if [[ "$state" == "sspl" || "$state" == "ha.cortx-ha" ]]; then
                 l_info "Applying state $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-1 state.apply $state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Applying state $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-2 state.apply $state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             elif [[ "$state" == "misc_pkgs.openldap" || "$state" == "misc_pkgs.rabbitmq" ]]; then
                 l_info "Applying state $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-2 state.apply $state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Applying state $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state.teardown  $salt_opts || true
+                $cmd salt srvnode-1 state.apply $state.teardown  $salt_opts || true
                 sleep 2     # Mindfulness break
             else
                 l_info "Applying state $state from both nodes"
-                $cmd salt '*' state.apply components.$state.teardown $salt_opts || true
+                $cmd salt '*' state.apply $state.teardown $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
         fi

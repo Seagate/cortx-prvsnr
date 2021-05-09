@@ -51,64 +51,64 @@ set_ntp:
   input_type: NTP
   states:
     post:
-    - components.system.chrony.config
-    - components.system.chrony.stop
-    - components.system.chrony.start
-    - components.controller.ntp
+    - system.chrony.config
+    - system.chrony.stop
+    - system.chrony.start
+    - controller.ntp
 set_network:
   type: Set
   input_type: Network
   states:
     post:
-      - components.system.network.config
-      # - components.system.network.data.direct
-      # - components.ha.corosync-pacemaker.config.cluster_ip
-      # - components.ha.corosync-pacemaker.config.mgmt_vip
+      - system.network.config
+      # - system.network.data.direct
+      # - ha.corosync-pacemaker.config.cluster_ip
+      # - ha.corosync-pacemaker.config.mgmt_vip
 set_data_network:
   type: Set
   input_type: DataNetwork
   states:
     post:
-      - components.system.network.data.public
-      - components.system.network.data.direct
+      - system.network.data.public
+      - system.network.data.direct
 set_hostname:
   type: Set
   input_type: Hostname
   states:
     post:
-      - components.system.config.set_hostname
+      - system.config.set_hostname
 setup_firewall:
     type: Set
     input_type: Firewall
     states:
       post:
-        - components.system.firewall
+        - system.firewall
 set_mgmt_network:
     type: Set
     input_type: MgmtNetwork
     states:
       post:
-        - components.system.network.mgmt.public
+        - system.network.mgmt.public
 
 # set_cluster_ip:
 #   type: Set
 #   input_type: ClusterIP
 #   states:
 #     post:
-#       - components.ha.corosync-pacemaker.config.cluster_ip
+#       - ha.corosync-pacemaker.config.cluster_ip
 # set_mgmt_vip:
 #   type: Set
 #   input_type: MgmtVIP
 #   states:
 #     post:
-#       - components.ha.corosync-pacemaker.config.mgmt_vip
+#       - ha.corosync-pacemaker.config.mgmt_vip
 
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo
   states:
     post:
-    - components.misc_pkgs.swupdate.repo
+    - misc_pkgs.swupdate.repo
 set_swupgrade_repo:
   type: upgrade.SetSWUpgradeRepo
   input_type: SWUpgradeRepo

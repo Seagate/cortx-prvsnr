@@ -59,9 +59,9 @@ def test_bootstrap_cortx_commands(
     assert res.rc == 0
 
     srvnode_1_line = "SALT-ARGS: srvnode-1 state.apply " \
-                     "components.ha.ctrlstack-ha"
+                     "ha.ctrlstack-ha"
     srvnode_2_line = "SALT-ARGS: srvnode-2 state.apply " \
-                     "components.ha.ctrlstack-ha"
+                     "ha.ctrlstack-ha"
 
     if singlenode:
         expected_lines = [

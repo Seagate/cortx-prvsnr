@@ -70,7 +70,7 @@ Options:
     -S<tgt_node>,  --singlenode=<tgt_node>       switch to single node mode setup
     --removenode-states                          deploy only states for removeind a node from cluster
     --system-states                              deploy only system states
-    --prereq-states                              deploy only prereq states (components.misc_pkgs)
+    --prereq-states                              deploy only prereq states (misc_pkgs)
     --iopath-states                              deploy only iopath states (motr, s3server & Hare)
     --ctrlpath-states                            deploy only control path states (sspl & csm)
     --sync-states                                deploy only the software synchronization
@@ -371,18 +371,18 @@ function run_states {
                 if [[ -z local_node ]]; then
                     l_error "unable to identify local node. Check Salt services are running."
                 else
-                    l_info "Applying 'components.$state' on node: $local_node"
-                    $cmd salt "$local_node" state.apply components.$state $salt_opts
+                    l_info "Applying '$state' on node: $local_node"
+                    $cmd salt "$local_node" state.apply $state $salt_opts
                 fi
             elif [[ $state == "sspl.health_view" ]]; then
                 l_info "Generating HealthMap Schema: srvnode-2"
-                $cmd salt "srvnode-2" state.apply components.sspl.health_view $salt_opts
+                $cmd salt "srvnode-2" state.apply sspl.health_view $salt_opts
                 l_info "Generating HealthMap Schema: srvnode-1"
-                $cmd salt "srvnode-1" state.apply components.sspl.health_view $salt_opts
+                $cmd salt "srvnode-1" state.apply sspl.health_view $salt_opts
                 l_info "HealthMap Schema ready for CSM."
             else
-                l_info "Applying 'components.$state' on node: ${tgt_node}"
-                $cmd salt "${tgt_node}" state.apply components.$state $salt_opts
+                l_info "Applying '$state' on node: ${tgt_node}"
+                $cmd salt "${tgt_node}" state.apply $state $salt_opts
                 sleep 2     # Mindfulness break
             fi
 
@@ -441,9 +441,9 @@ if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     l_info "Stage 1: Applying multipath..."
     l_info "=================================================="
     l_info "Applying multipath states on node: ${tgt_node}"
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.prepare ${salt_opts}
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.install ${salt_opts}
-    $cmd salt ${tgt_node} state.apply components.system.storage.multipath.config ${salt_opts}
+    $cmd salt ${tgt_node} state.apply system.storage.multipath.prepare ${salt_opts}
+    $cmd salt ${tgt_node} state.apply system.storage.multipath.install ${salt_opts}
+    $cmd salt ${tgt_node} state.apply system.storage.multipath.config ${salt_opts}
 
     l_info "Generating multipath flag file current node."
     test -d ${flag_file_dir} || mkdir -p ${flag_file_dir}
@@ -467,12 +467,12 @@ elif [[ -e ${flag_file_dir}/${tgt_node}.multipath
     l_info "=================================================="
     l_info "Stage 2.0: Applying update repo (if exists)..."
     l_info "=================================================="
-    $cmd salt ${tgt_node} state.apply components.misc_pkgs.swupdate.repo ${salt_opts}
+    $cmd salt ${tgt_node} state.apply misc_pkgs.swupdate.repo ${salt_opts}
 
     # update provisioner
-    $cmd salt ${tgt_node} state.apply components.provisioner.update ${salt_opts}
-    $cmd salt ${tgt_node} state.sls_id salt_master_config_updated components.provisioner.salt_master.config ${salt_opts}
-    $cmd salt ${tgt_node} state.sls_id salt_minion_config_updated components.provisioner.salt_minion.config  ${salt_opts}
+    $cmd salt ${tgt_node} state.apply provisioner.update ${salt_opts}
+    $cmd salt ${tgt_node} state.sls_id salt_master_config_updated provisioner.salt_master.config ${salt_opts}
+    $cmd salt ${tgt_node} state.sls_id salt_minion_config_updated provisioner.salt_minion.config  ${salt_opts}
     $cmd salt ${tgt_node} cmd.run 'systemctl restart salt-minion salt-master' ${salt_opts}
     python3 -c "from provisioner import salt_minion; salt_minion.ensure_salt_minions_are_ready(['$tgt_node'])"
 

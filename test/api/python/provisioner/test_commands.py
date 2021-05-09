@@ -471,7 +471,7 @@ def test_commnads_ensure_update_repos_configuration(patch_logging, mocker):
     commands._ensure_update_repos_configuration(target)
 
     mocker.call.StatesApplier.apply(
-        ['components.misc_pkgs.swupdate.repo'], target
+        ['misc_pkgs.swupdate.repo'], target
     )
 
 
@@ -515,7 +515,7 @@ def test_commnads_update_component(patch_logging, mocker):
     commands._update_component(component, target)
 
     mocker.call.StatesApplier.apply(
-        [f"components.{component}.update"], target
+        [f"{component}.update"], target
     )
 
 
@@ -527,7 +527,7 @@ def test_commnads_apply_provisioner_config(patch_logging, mocker):
     commands._apply_provisioner_config(target)
 
     mocker.call.StatesApplier.apply(
-        ["components.provisioner.config"], target
+        ["provisioner.config"], target
     )
 
 

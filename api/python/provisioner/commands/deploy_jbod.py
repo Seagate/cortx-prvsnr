@@ -114,7 +114,7 @@ class DeployJBOD(Deploy):
 
         # apply states
         for state in states:
-            self._apply_state(f"components.{state}", targets, stages)
+            self._apply_state(f"{state}", targets, stages)
 
     def run(self, **kwargs):
         run_args = self._run_args_type(**kwargs)

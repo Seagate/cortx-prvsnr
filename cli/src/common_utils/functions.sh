@@ -1048,7 +1048,7 @@ function configure_multipath {
     l_info "Installing and Configuring multipath '$_minion_id'"
 
     if [[ $($_cmd rpm -qa salt-master) ]]; then
-        $_cmd salt -t $_timeout "$_minion_id" state.apply components.system.storage.multipath
+        $_cmd salt -t $_timeout "$_minion_id" state.apply system.storage.multipath
     fi
 
     l_info  "Installing and Configuring multipath on $_minion_id complete."
@@ -1414,7 +1414,7 @@ function configure_salt {
         # re-config salt-master
         if [[ ! -f /etc/salt/master.org ]]; then
             mv -f /etc/salt/master /etc/salt/master.org
-            cp srv/components/provisioner/salt_master/files/master /etc/salt/master
+            cp srv/provisioner/salt_master/files/master /etc/salt/master
         fi
 
         if [[ "$_primary" == true ]]; then
@@ -1425,7 +1425,7 @@ function configure_salt {
         # re-config salt minion
         if [[ ! -f /etc/salt/minion.org ]]; then
             mv -f /etc/salt/minion /etc/salt/minion.org
-            cp srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
+            cp srv/provisioner/salt_minion/files/minion /etc/salt/minion
         fi
 
         if [[ -n "$_primary_host" ]]; then
@@ -1433,9 +1433,9 @@ function configure_salt {
         fi
 
         if [[ "$_primary" == true ]]; then
-            cp -f srv/components/provisioner/salt_minion/files/grains.primary /etc/salt/grains
+            cp -f srv/provisioner/salt_minion/files/grains.primary /etc/salt/grains
         else
-            cp -f srv/components/provisioner/salt_minion/files/grains.secondary /etc/salt/grains
+            cp -f srv/provisioner/salt_minion/files/grains.secondary /etc/salt/grains
         fi
         echo "$_minion_id" >/etc/salt/minion_id
 
@@ -1989,7 +1989,7 @@ EOF
 #   Configures rsyslog to capture provisioner logs in custom log file
 #
 #   TODO IMPROVE this function is not necessary since we have
-#        components.provisioner.config for the same logic,
+#        provisioner.config for the same logic,
 #        should be a part of salt based provisioner configuration
 #
 #   Args:
@@ -2030,8 +2030,8 @@ function configure_provisioner_api_logs {
     #yum -y install rsyslog         # Installs rsyslog 8.24 from base
 
     # Preapare to install rsyslog 8.40 from common_uploads repo
-    salt-call state.apply components.system.prepare
-    salt-call state.apply components.provisioner.config
+    salt-call state.apply system.prepare
+    salt-call state.apply provisioner.config
 EOF
 
     if [[ -n "$_hostspec" ]]; then

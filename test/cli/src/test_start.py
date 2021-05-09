@@ -57,13 +57,13 @@ def test_start_cortx_commands(
 
     if restart:
         expected_lines = [
-            "SALT-ARGS: * state.apply components.stop",
-            "SALT-ARGS: * state.apply components.start"
+            "SALT-ARGS: * state.apply stop",
+            "SALT-ARGS: * state.apply start"
 
         ]
     else:
         expected_lines = [
-            "SALT-ARGS: * state.apply components.start"
+            "SALT-ARGS: * state.apply start"
         ]
 
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)

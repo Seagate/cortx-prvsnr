@@ -260,7 +260,7 @@ def test_set_swupdate_repo_for_reinstall(
         "yum install -y {}".format(mhostsrvnode1.rpm_prvsnr)
     )
 
-    test_file_path = 'srv/components/test.sls'
+    test_file_path = 'srv/test.sls'
 
     def mhost_init_cb(mhost):
         mhost.check_output(

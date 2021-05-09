@@ -57,7 +57,7 @@ def test_stop_cortx_commands(
     assert res.rc == 0
 
     expected_lines = [
-        "SALT-ARGS: * state.apply components.stop"
+        "SALT-ARGS: * state.apply stop"
     ]
     assert res.stdout.count('SALT-ARGS: ') == len(expected_lines)
 

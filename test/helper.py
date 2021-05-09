@@ -55,7 +55,7 @@ localhost = testinfra.get_host('local://')
 
 BUILD_BUNDLE_SCRIPT = (
     (PROJECT_PATH or PRVSNR_ROOT_DIR)
-    / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
+    / 'srv/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
 )
 
 if not BUILD_BUNDLE_SCRIPT.exists():

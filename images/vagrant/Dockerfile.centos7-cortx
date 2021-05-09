@@ -43,7 +43,7 @@ RUN yum install -y salt-minion \
 # config salt and set up salt scripts
 COPY files/etc/salt/minion_masterless /etc/salt/minion
 COPY pillar /opt/seagate/cortx/provisioner/pillar/
-COPY srv /opt/seagate/cortx/provisioner/srv/
+COPY srv /opt/seagate/cortx/provisioner/cortx/srv/
 
 # TODO should be a part of salt (rsyslog, sudo)
 RUN yum install -y net-tools rsyslog sudo \
@@ -80,7 +80,7 @@ CMD ["/usr/sbin/init"]
 #  docker network connect data0 centos7-cortx --ip 172.19.10.101
 #  docker network connect bridge centos7-cortx # for external networks access
 #
-#  salt-call state.apply components.system
+#  salt-call state.apply system
 #  ...
 #  bash -c 'journalctl -f | grep -E -i "motr|lnet"' &
 #

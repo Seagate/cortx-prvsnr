@@ -20,7 +20,7 @@
 salt_minion_configured:
   file.managed:
     - name: /etc/salt/minion
-    - source: {{ install_dir }}/srv/components/provisioner/salt_minion/files/minion
+    - source: {{ install_dir }}/srv/provisioner/salt_minion/files/minion
     - keep_source: True
     - backup: minion
     - template: jinja
@@ -30,7 +30,7 @@ salt_minion_configured:
 salt_minion_grains_configured:
   file.managed:
     - name: /etc/salt/grains
-    - source: {{ install_dir }}/srv/components/provisioner/salt_minion/files/grains
+    - source: {{ install_dir }}/srv/provisioner/salt_minion/files/grains
     - keep_source: True
     - backup: minion
     - template: jinja

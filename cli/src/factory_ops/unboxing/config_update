@@ -504,8 +504,8 @@ function update_cluster_sls {
 function recover_rabbitmq_cluster {
     # # Update RabbitMQ cluster
     echo -n "Starting rabbitmq cluster......" 2>&1|tee -a ${LOG_FILE}
-    salt "srvnode-1" state.apply components.misc_pkgs.rabbitmq ${salt_opts}; sleep 5
-    salt "srvnode-2" state.apply components.misc_pkgs.rabbitmq ${salt_opts}; sleep 5
+    salt "srvnode-1" state.apply misc_pkgs.rabbitmq ${salt_opts}; sleep 5
+    salt "srvnode-2" state.apply misc_pkgs.rabbitmq ${salt_opts}; sleep 5
     echo "Done"
 }
 

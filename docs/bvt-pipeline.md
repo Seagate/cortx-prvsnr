@@ -27,7 +27,7 @@ Please refer [here](https://github.com/Seagate/cortx-prvsnr#jenkins-agent).
 
 The pipeline accepts the following parameters:
 
-- `cortxRelease`: CORTX stack release to use as source for provisioner and CORTX stack components.
+- `cortxRelease`: CORTX stack release to use as source for provisioner and CORTX stack 
 Default: `integration/centos-7.7.1908/last_successful`.
 - `cortxTestRepoVersion`: version of the [cortx-test](https://seagit.okla.seagate.com/eos/qa/cortx-test/)
 repository to use. Default: `release`.

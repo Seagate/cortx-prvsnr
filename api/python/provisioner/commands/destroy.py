@@ -153,13 +153,13 @@ class DestroyNode(Deploy):
         try:
             if targets:
                 self.setup_ctx.ssh_client.state_apply(
-                    f"components.{state}",
+                    f"{state}",
                     targets=targets,
                     tgt_type='pcre'
                 )
             else:
                 self.setup_ctx.ssh_client.state_apply(
-                    f"components.{state}"
+                    f"{state}"
                 )
         except Exception as exc:
             logger.warn(f"Failed {state} on {targets} Error: {str(exc)}")

@@ -47,10 +47,10 @@ sudo cp ${BASEDIR}/files/etc/yum.repos.d/*.repo /etc/yum.repos.d/
 sudo yum install -y salt-ssh salt-minion salt-master
 
 # Update salt-master config
-sudo cp ${BASEDIR}/srv/components/provisioner/salt_minion/files/minion /etc/salt/minion
+sudo cp ${BASEDIR}/cortx/srv/provisioner/salt_minion/files/minion /etc/salt/minion
 sudo sed -i "s/master:.*/master: $(hostname)/g" /etc/salt/minion
 # Update salt-master config
-sudo cp ${BASEDIR}/srv/components/provisioner/salt_master/files/master /etc/salt/master
+sudo cp ${BASEDIR}/cortx/srv/provisioner/salt_master/files/master /etc/salt/master
 
 sudo systemctl enable salt-master
 sudo systemctl restart salt-master

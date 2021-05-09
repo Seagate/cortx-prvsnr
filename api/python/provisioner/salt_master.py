@@ -106,7 +106,7 @@ def config_salt_master():
     # apply new configuration
     res = runner_function_run(
         'salt.cmd',
-        fun_args=('state.apply', 'components.provisioner.salt_master.config')
+        fun_args=('state.apply', 'provisioner.salt_master.config')
     )
     state_name = 'file_|-salt_master_config_updated_|-/etc/salt/master_|-managed'  # noqa: E501
     changes = res[state_name]['changes']

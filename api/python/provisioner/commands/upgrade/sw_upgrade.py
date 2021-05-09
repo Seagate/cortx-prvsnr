@@ -56,7 +56,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
         # logger.info("Check yum repos are good")
         # StatesApplier.apply(
-        #     ['components.misc_pkgs.sw_update.repo.sanity_check'],
+        #     ['misc_pkgs.sw_update.repo.sanity_check'],
         #     local_minion_id()
         # )
 

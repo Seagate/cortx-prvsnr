@@ -1033,13 +1033,13 @@ def test_functions_configure_salt(
     mhost.check_output(
         'diff -q {} /etc/salt/master'.format(
             h.PRVSNR_REPO_INSTALL_DIR /
-            'srv/components/provisioner/salt_master/files/master'
+            'srv/provisioner/salt_master/files/master'
         )
     )
 
     minion_config_source = (
         h.PRVSNR_REPO_INSTALL_DIR /
-        'srv/components/provisioner/salt_minion/files/minion'
+        'srv/provisioner/salt_minion/files/minion'
     )
     mhost.check_output(
         'sed -i "s/^master: .*/master: srvnode-1/g" {}'

@@ -143,7 +143,7 @@ function set_public_data_nw_config {
         backup_ifcfg ${remote} ${public_data_if}
         
         _linfo "Setting ifcfg-${public_data_if} on ${node_name}"
-        ssh_over_pvt_data ${remote} "salt-call --local state.apply components.system.network.data.public ${SALT_OPTS}"
+        ssh_over_pvt_data ${remote} "salt-call --local state.apply system.network.data.public ${SALT_OPTS}"
 
     done
 }

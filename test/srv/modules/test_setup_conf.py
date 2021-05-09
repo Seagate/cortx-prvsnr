@@ -26,19 +26,19 @@ logger = logging.getLogger(__name__)
 
 test_data = [
   (
-    "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+    "/opt/seagate/cortx/provisioner/cortx/srv/_modules/files/samples/setup.yaml",
     "test:post_install"
   ),
   (
-    "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+    "/opt/seagate/cortx/provisioner/cortx/srv/_modules/files/samples/setup.yaml",
     "test:config"
   ),
   (
-    "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+    "/opt/seagate/cortx/provisioner/cortx/srv/_modules/files/samples/setup.yaml",
     "test:init"
   ),
   (
-    "/opt/seagate/cortx/provisioner/srv/_modules/files/samples/setup.yaml",
+    "/opt/seagate/cortx/provisioner/cortx/srv/_modules/files/samples/setup.yaml",
     "test:test"
   )
 ]

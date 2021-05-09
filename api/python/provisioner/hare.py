@@ -114,7 +114,7 @@ def cluster_maintenance_disable(**kwargs):
 def apply_ha_post_update(targets=ALL_MINIONS):
     logger.info(f"Applying Hare post_update logic on {targets}")
     return StatesApplier.apply(
-        ["components.ha.iostack-ha.post_update"],
+        ["ha.iostack-ha.post_update"],
         targets
     )
 

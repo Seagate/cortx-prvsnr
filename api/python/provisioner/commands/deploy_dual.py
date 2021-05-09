@@ -154,7 +154,7 @@ class DeployDual(Deploy):
         if setup_type == SetupType.SINGLE:
             # TODO use salt orchestration
             for state in states:
-                self._apply_state(f"components.{state}", targets, stages)
+                self._apply_state(f"{state}", targets, stages)
         else:
             # FIXME EOS-12076 the following logic is only
             #       for legacy dual node setup
@@ -174,9 +174,9 @@ class DeployDual(Deploy):
                         self.ensure_consul_running()
                     # Execute first on secondaries then on primary.
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
 
                 elif state in (
                     "sync.software.rabbitmq",
@@ -185,12 +185,12 @@ class DeployDual(Deploy):
                     "sync.files"
                 ):
                     # Execute first on primary then on secondaries.
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
                 else:
-                    self._apply_state(f"components.{state}", targets, stages)
+                    self._apply_state(f"{state}", targets, stages)
                     if state == "ha.cortx-ha":
                         self.ensure_consul_running()
 

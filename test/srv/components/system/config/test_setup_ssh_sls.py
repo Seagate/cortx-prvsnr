@@ -34,7 +34,7 @@ def test_setup_ssh_known_hosts(
     minion_id = cortx_hosts['srvnode1']['minion_id']
 
     mhostsrvnode1.check_output(
-        "salt '{}' state.apply components.system.config.setup_ssh".format(
+        "salt '{}' state.apply system.config.setup_ssh".format(
             minion_id
         )
     )

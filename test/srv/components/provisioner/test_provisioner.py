@@ -32,7 +32,7 @@ def test_provisioner_config_sls(
     mhostsrvnode1, cortx_hosts, configure_salt, accept_salt_keys
 ):
     minion_id = cortx_hosts['srvnode1']['minion_id']
-    config_state = 'components.provisioner.config'
+    config_state = 'provisioner.config'
     config_file_path = '/etc/rsyslog.d/prvsnrfwd.conf'
 
     host = mhostsrvnode1.host

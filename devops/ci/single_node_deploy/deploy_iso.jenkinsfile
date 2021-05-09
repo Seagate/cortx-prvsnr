@@ -128,7 +128,7 @@ node {
                     OS_ISO=\$(ls -1 /opt/isos/cortx-os-*.iso)
                     sshpass -p $PASSWORD provisioner setup_provisioner --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source iso --config-path ~/config.ini --iso-cortx \${SINGLE_ISO} --iso-os \${OS_ISO} srvnode-1:\$(hostname -f)
                     provisioner configure_setup /root/config.ini 1
-                    salt-call state.apply components.system.config.pillar_encrypt
+                    salt-call state.apply ig.pillar_encrypt
                     provisioner confstore_export
                 """
                 echo "Successfully bootstrapped provisioner!"

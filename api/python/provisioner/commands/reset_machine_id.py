@@ -58,15 +58,15 @@ class ResetMachineId(CommandParserFillerMixin):
         if kwargs['force']:
             logger.debug("machine_id on all nodes shall be forcefully reset.")
             machine_id_reset_states.append(
-                "components.provisioner.config.machine_id.force_reset")
+                "provisioner.config.machine_id.force_reset")
         else:
             logger.debug("machine_id on all nodes shall be reset.")
             machine_id_reset_states.append(
-                "components.provisioner.config.machine_id.reset")
+                "provisioner.config.machine_id.reset")
 
         logger.debug("Refresh grains on all nodes post machine_id reset.")
         machine_id_reset_states.append(
-            "components.provisioner.config.machine_id.refresh_grains")
+            "provisioner.config.machine_id.refresh_grains")
 
         logger.info("Resetting machine_id on all nodes.")
         StatesApplier.apply(machine_id_reset_states)

@@ -23,7 +23,7 @@ There is a set of SaltStack states that can be applied to:
 ## Mocking the environment
 
 ```bash
-sudo salt "srvnode-1" state.apply components.misc_pkgs.mocks.cortx
+sudo salt "srvnode-1" state.apply misc_pkgs.mocks.cortx
 ```
 
 That would:
@@ -34,7 +34,7 @@ That would:
 ## Building upgrade bundle
 
 ```bash
-sudo salt "srvnode-1" state.apply components.misc_pkgs.mocks.cortx.build_upgrade
+sudo salt "srvnode-1" state.apply misc_pkgs.mocks.cortx.build_upgrade
 ```
 
 That would create a bundle release directory (along with ISO) with CORTX packages repository inside.
@@ -44,7 +44,7 @@ By default it will be located at `/var/lib/seagate/cortx/provisioner/local/cortx
 The output directory might be configured using an inline pillar, e.g.:
 
 ```bash
-salt "srvnode-1" state.apply components.misc_pkgs.mocks.cortx.build_upgrade \
+salt "srvnode-1" state.apply misc_pkgs.mocks.cortx.build_upgrade \
     pillar='{"inline": {"upgrade_repo_dir": "/tmp/cortx-upgrade"}}'
 ```
 
@@ -53,7 +53,7 @@ salt "srvnode-1" state.apply components.misc_pkgs.mocks.cortx.build_upgrade \
 Under the hood the states above use [buildbundle.sh](srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh) script.
 
 **Note**. Once provisioner is installed on a system the script is available as
-`/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh`.
+`/opt/seagate/cortx/provisioner/cortx/srv/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh`.
 
 It comes with the following usage help:
 

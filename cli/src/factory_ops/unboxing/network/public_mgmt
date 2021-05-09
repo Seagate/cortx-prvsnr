@@ -162,9 +162,9 @@ function set_mgmt_nw_config {
         backup_ifcfg ${remote} ${mgmt_if}
         
         _linfo "Setting /etc/resolv.conf on ${node_name} for interface: ${mgmt_if}"
-        ssh_over_pvt_data ${remote} "salt-call --local state.apply components.system.network ${SALT_OPTS}"
+        ssh_over_pvt_data ${remote} "salt-call --local state.apply system.network ${SALT_OPTS}"
         _linfo "Setting ifcfg-${mgmt_if} on ${node_name}"
-        ssh_over_pvt_data ${remote} "salt-call --local state.apply components.system.network.mgmt.public ${SALT_OPTS}"
+        ssh_over_pvt_data ${remote} "salt-call --local state.apply system.network.mgmt.public ${SALT_OPTS}"
 
     done
 }

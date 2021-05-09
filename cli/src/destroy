@@ -160,7 +160,7 @@ function teardown_states {
         # TODO use salt orchestration
         for state in ${states[@]}; do
             l_info "Removing $state from node: "$tgt_node""
-            $cmd salt "$tgt_node" state.apply components.$state $salt_opts || true
+            $cmd salt "$tgt_node" state.apply $state $salt_opts || true
             sleep 2     # Mindfulness break
         done
     else
@@ -170,10 +170,10 @@ function teardown_states {
                 || "$state" == "sspl.teardown" ]]; then
 
                 l_info "Removing $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
+                $cmd salt srvnode-1 state.apply $state  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
+                $cmd salt srvnode-2 state.apply $state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             elif [[ "$state" == "misc_pkgs.openldap.teardown"
@@ -181,16 +181,16 @@ function teardown_states {
                 || "$state" == "system.storage.multipath.teardown" ]]; then
                 
                 l_info "Removing $state from srvnode-2"
-                $cmd salt srvnode-2 state.apply components.$state  $salt_opts || true
+                $cmd salt srvnode-2 state.apply $state  $salt_opts || true
                 sleep 2     # Mindfulness break
                 l_info "Removing $state from srvnode-1"
-                $cmd salt srvnode-1 state.apply components.$state  $salt_opts || true
+                $cmd salt srvnode-1 state.apply $state  $salt_opts || true
                 sleep 2     # Mindfulness break
             
             else
             
                 l_info "Removing $state from both nodes"
-                $cmd salt '*' state.apply components.$state $salt_opts || true
+                $cmd salt '*' state.apply $state $salt_opts || true
                 sleep 2     # Mindfulness break
             fi
         done

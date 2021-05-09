@@ -4,7 +4,7 @@ FROM {parent}
 # setup provisioner repo and salt
 COPY files /opt/seagate/cortx/provisioner/files/
 COPY pillar /opt/seagate/cortx/provisioner/pillar/
-COPY srv /opt/seagate/cortx/provisioner/srv/
+COPY srv /opt/seagate/cortx/provisioner/cortx/srv/
 COPY cli/src/setup-provisioner /opt/seagate/cortx/provisioner/cli/src/
 RUN sed -i 's/\(systemctl restart\)/#\1/g' /opt/seagate/cortx/provisioner/cli/src/setup-provisioner \
     && cat /opt/seagate/cortx/provisioner/cli/src/setup-provisioner \

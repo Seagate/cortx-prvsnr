@@ -241,29 +241,29 @@ Vagrant.configure("2") do |config|
           sudo salt-key -A -y
           sleep 2
 
-          #sudo salt srvnode-1 state.apply components.system
-          #sudo salt srvnode-1 state.apply components.system.storage
+          #sudo salt srvnode-1 state.apply system
+          #sudo salt srvnode-1 state.apply system.storage
           
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms
+          #sudo salt srvnode-1 state.apply misc_pkgs.build_ssl_cert_rpms
           # HA component
-          #sudo salt srvnode-1 state.apply components.ha.corosync-pacemaker
-          #sudo salt srvnode-1 state.apply components.ha.haproxy
+          #sudo salt srvnode-1 state.apply ha.corosync-pacemaker
+          #sudo salt srvnode-1 state.apply ha.haproxy
           # Others
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.consul
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.elasticsearch
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.kibana
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.statsd
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.nodejs
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
+          #sudo salt srvnode-1 state.apply misc_pkgs.consul
+          #sudo salt srvnode-1 state.apply misc_pkgs.elasticsearch
+          #sudo salt srvnode-1 state.apply misc_pkgs.kibana
+          #sudo salt srvnode-1 state.apply misc_pkgs.statsd
+          #sudo salt srvnode-1 state.apply misc_pkgs.nodejs
+          #sudo salt srvnode-1 state.apply penldap
           
           # IP path components
-          #sudo salt srvnode-1 state.apply components.motr
-          #sudo salt srvnode-1 state.apply components.s3server
-          #sudo salt srvnode-1 state.apply components.hare
+          #sudo salt srvnode-1 state.apply motr
+          #sudo salt srvnode-1 state.apply s3server
+          #sudo salt srvnode-1 state.apply hare
 
           # Management path components
-          #sudo salt srvnode-1 state.apply components.sspl
-          #sudo salt srvnode-1 state.apply components.csm
+          #sudo salt srvnode-1 state.apply sspl
+          #sudo salt srvnode-1 state.apply csm
 
         SHELL
 
@@ -271,7 +271,7 @@ Vagrant.configure("2") do |config|
       #  node_config.vm.provision :salt do |salt|
       #    # Master/Minion specific configs.
       #    salt.masterless = true
-      #    salt.minion_config = './srv/components/provisioner/salt_minion/files/minion'
+      #    salt.minion_config = './cortx/srv/provisioner/salt_minion/files/minion'
       #
       #    # Generic configs
       #    salt.install_type = 'stable'

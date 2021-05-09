@@ -74,7 +74,7 @@ Besides [general](#common-options) set of options it expects the following ones:
   - `rpm` to install from using rpm package (default).
 - `--salt-master=HOSTNAME` the hostname/IP to use to configure salt minions connections to salt-master.
   By default it is not set the script will try to discover it itself. As a final fallback the default
-  value will be used (it is specified in salt minion's [config file](../srv/components/provisioner/salt_minion/files/minion)
+  value will be used (it is specified in salt minion's [config file](../cortx/srv/provisioner/salt_minion/files/minion)
   and is `srvnode-1` for now).
 
 Also the script expects one optional positional argument to specify a version of the provisioner repository to install.

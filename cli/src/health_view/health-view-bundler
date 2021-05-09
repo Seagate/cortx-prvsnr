@@ -42,7 +42,7 @@ function generate_health_view {
 
   l_info "Generating Health View" 2>&1 | tee -a $LOG_FILE
 
-  salt-call state.apply components.sspl.health_view.config.generate 2>&1 | tee -a $LOG_FILE
+  salt-call state.apply sspl.health_view.config.generate 2>&1 | tee -a $LOG_FILE
   mv /tmp/resource_health_view.json $health_view_dir/$health_view_file
 
   if [[ -z $health_view_dir/$health_view_file ]]; then

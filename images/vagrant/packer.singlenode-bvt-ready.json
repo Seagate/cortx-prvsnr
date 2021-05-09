@@ -46,7 +46,7 @@
         "bash ./setup-provisioner -S -vv --repo-src rpm \"{{user `prvsnr_release`}}\"",
         "pip3 install -U /opt/seagate/cortx/provisioner/api/python",
         "bash /tmp/setup_pillar_singlenode.sh \"{{user `mgmt_if`}}\" \"{{user `data_if`}}\"  \"{{user `mgmt_device`}}\" \"{{user `data_device`}}\" \"{{user `release`}}\"",
-        "sed -i 's/python36/python3/g' /opt/seagate/cortx/provisioner/srv/components/system/install.sls",
+        "sed -i 's/python36/python3/g' /opt/seagate/cortx/provisioner/cortx/srv/system/install.sls",
         "systemctl restart rsyslog  # TODO check if it's really needed for sspl",
         "yum install -y gcc python3-devel && pip3 install zope pyinotify pika jsonschema # TODO remove that one EOS-4653 is fixed",
         "yum install sg3_utils -y",
@@ -54,8 +54,8 @@
         "sed -i \"s/hostname: srvnode-1/hostname: $(hostname)/g\" /opt/seagate/cortx/provisioner/pillar/components/cluster.sls",
         "sed -i '/\"system.storage\"/d' ./deploy",
         "bash ./deploy -S -vv",
-        "sed -i 's/python36/python3/g' /opt/seagate/cortx/provisioner/srv/components/s3clients/awscli/install.sls",
-        "salt srvnode-1 state.apply components.s3clients",
+        "sed -i 's/python36/python3/g' /opt/seagate/cortx/provisioner/cortx/srv/s3clients/awscli/install.sls",
+        "salt srvnode-1 state.apply s3clients",
         "rm -f /tmp/setup_pillar_singlenode.sh"
       ]
     }

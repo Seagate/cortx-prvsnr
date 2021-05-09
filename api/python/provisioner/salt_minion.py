@@ -106,8 +106,8 @@ def config_salt_minions(targets=ALL_MINIONS):
 
     # apply new configuration
     res = StatesApplier.apply(
-        ['components.provisioner.salt_minion.config'], targets
-    )['components.provisioner.salt_minion.config']
+        ['provisioner.salt_minion.config'], targets
+    )['provisioner.salt_minion.config']
 
     state_name = 'file_|-salt_minion_config_updated_|-/etc/salt/minion_|-managed'  # noqa: E501
     changes = {

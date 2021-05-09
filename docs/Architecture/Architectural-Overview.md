@@ -90,9 +90,9 @@ The `stx_disks.py` is available as a sample module for reference.
 
 These are the Salt state formulae. They are categorized into components and sub-components under `./src/components`.
 
-Each EOS component represents a folder. There are other components which are either common (covered under `./srv/components/misc` and `./srv/components/ha`) and system level configurations (covered under `./srv/components/system`).
+Each EOS component represents a folder. There are other components which are either common (covered under `./cortx/srv/misc` and `./cortx/srv/ha`) and system level configurations (covered under `./cortx/srv/system`).
 
-Sub-components are sub-directories under `./srv/components/<component>`.
+Sub-components are sub-directories under `./cortx/srv/<component>`.
 
 As of writing the components directory looks like:
 

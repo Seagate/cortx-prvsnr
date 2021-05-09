@@ -118,7 +118,7 @@ class DeployVM(Deploy):
             if setup_type == SetupType.SINGLE:
                 logger.debug("Executing for single node.")
                 if not state.startswith("sync"):
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
             else:
                 logger.debug("Executing for multiple nodes.")
                 # FIXME EOS-12076 the following logic is only
@@ -128,9 +128,9 @@ class DeployVM(Deploy):
                 ):
                     # Execute first on secondaries then on primary.
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
 
                 elif state in (
                     "sync.software.rabbitmq",
@@ -138,12 +138,12 @@ class DeployVM(Deploy):
                     "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
-                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"{state}", primary, stages)
                     self._apply_state(
-                        f"components.{state}", secondaries, stages
+                        f"{state}", secondaries, stages
                     )
                 else:
-                    self._apply_state(f"components.{state}", targets, stages)
+                    self._apply_state(f"{state}", targets, stages)
 
     def run(self, **kwargs):  # noqa: C901
         run_args = self._run_args_type(**kwargs)

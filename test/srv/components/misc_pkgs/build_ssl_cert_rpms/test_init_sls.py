@@ -46,12 +46,12 @@ def test_build_ssl_cert_rpms_appliance(
     )
 
     mhostsrvnode1.check_output(
-        "salt '*' state.apply components.system.config.setup_ssh"
+        "salt '*' state.apply system.config.setup_ssh"
     )
 
     for label in ('srvnode1', 'srvnode2'):
         mhostsrvnode1.check_output(
-            "salt '{}' state.apply components.misc_pkgs.build_ssl_cert_rpms"
+            "salt '{}' state.apply misc_pkgs.build_ssl_cert_rpms"
             .format(cortx_hosts[label]['minion_id'])
         )
 

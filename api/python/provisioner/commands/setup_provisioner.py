@@ -1498,7 +1498,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 # so we have to apply docker using on-server salt
                 logger.info("Installing Docker")
                 ssh_client.cmd_run(
-                    "salt-call --local state.apply components.misc_pkgs.docker"
+                    "salt-call --local state.apply misc_pkgs.docker"
                 )
 
             logger.info("Configuring glusterfs servers")
@@ -1719,7 +1719,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         logger.info("Configuring provisioner logging")
         if run_args.source in ('iso', 'rpm'):
             ssh_client.cmd_run(
-                "salt-call state.apply components.system.prepare",
+                "salt-call state.apply system.prepare",
                 targets=master_targets
             )
 
@@ -1736,8 +1736,8 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # if we call init.sls for machine_id states.
         logger.info("Refresh machine id on the system")
         for state in [
-            'components.provisioner.config.machine_id.reset',
-            'components.provisioner.config.machine_id.refresh_grains'
+            'provisioner.config.machine_id.reset',
+            'provisioner.config.machine_id.refresh_grains'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
@@ -1768,10 +1768,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             *(
                 ()
                 if run_args.source == 'local'
-                else ('components.system.config.pillar_encrypt', )
+                else ('system.config.pillar_encrypt', )
             ),
-            'components.system.storage.enclosure_id',
-            'components.system.config.sync_salt'
+            'system.storage.enclosure_id',
+            'system.config.sync_salt'
         ]:
             ssh_client.cmd_run(
                 f"salt-call state.apply {state}",
@@ -1781,7 +1781,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
-                "salt-call state.apply components.provisioner.config "
+                "salt-call state.apply provisioner.config "
                 f"{pillar}"
             ),
             targets=ALL_MINIONS
@@ -1802,12 +1802,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             #       condition (EOS-15134)
             for node in run_args.nodes:
                 ssh_client.cmd_run(
-                    "salt-call state.apply components.misc_pkgs.ipmi",
+                    "salt-call state.apply misc_pkgs.ipmi",
                     targets=node.minion_id
                 )
         else:
             ssh_client.cmd_run(
-                "salt-call state.apply components.misc_pkgs.ipmi"
+                "salt-call state.apply misc_pkgs.ipmi"
             )
 
         # TODO EOS-18920 Validation for node role

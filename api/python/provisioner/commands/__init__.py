@@ -442,12 +442,12 @@ class Set(CommandParserFillerMixin):
 def _ensure_update_repos_configuration(targets=ALL_MINIONS):
     logger.info("Ensuring update repos are configured")
     StatesApplier.apply(
-        ['components.misc_pkgs.swupdate.repo'], targets
+        ['misc_pkgs.swupdate.repo'], targets
     )
 
     logger.info("Checking if yum repos are good")
     StatesApplier.apply(
-        ['components.misc_pkgs.sw_update.repo.sanity_check'], targets
+        ['misc_pkgs.sw_update.repo.sanity_check'], targets
     )
 
 
@@ -471,7 +471,7 @@ def _pre_yum_rollback(
 
 
 def _update_component(component, targets=ALL_MINIONS):
-    state_name = "components.{}.update".format(component)
+    state_name = "{}.update".format(component)
     try:
         logger.info(
             "Updating {} on {}".format(component, targets)
@@ -486,7 +486,7 @@ def _update_component(component, targets=ALL_MINIONS):
 
 def _apply_provisioner_config(targets=ALL_MINIONS):
     logger.info(f"Applying Provisioner config logic on {targets}")
-    StatesApplier.apply(["components.provisioner.config"], targets)
+    StatesApplier.apply(["provisioner.config"], targets)
 
 
 def _consul_export(stage):
@@ -902,7 +902,7 @@ class SetSSLCerts(CommandParserFillerMixin):
         source = Path(source).resolve()
         dest = PRVSNR_USER_FILES_SSL_CERTS_FILE
         time_stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        state_name = "components.misc_pkgs.ssl_certs"
+        state_name = "misc_pkgs.ssl_certs"
 
         if not source.is_file():
             logger.error(f"Provided input '{source}' is not a file. "
