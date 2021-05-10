@@ -1813,13 +1813,19 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO EOS-18920 Validation for node role
         # to execute cluster_id api
 
-        logger.info("Setting unique ClusterID to pillar file "
-                    f"on node: {run_args.primary.minion_id}")
+        logger.info(
+             "Setting unique ClusterID to pillar file on all nodes"
+        )
 
         ssh_client.cmd_run(
             (
                "provisioner cluster_id"
             ), targets=run_args.primary.minion_id
+        )
+
+        ssh_client.cmd_run(
+            "salt-call state.apply components.provisioner.config.cluster_id",
+            targets=ALL_MINIONS
         )
 
 
