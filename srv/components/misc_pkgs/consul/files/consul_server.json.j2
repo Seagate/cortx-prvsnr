@@ -31,11 +31,23 @@
      "log_level": "INFO",
      "rejoin_after_leave": true,
      "retry_join": [
-       "{{ server_nodes[0] }}"
+       {% for node in server_nodes -%}
+          {% if not loop.last %}
+          "{{ node }}",
+          {% else %}
+          "{{ node }}"
+          {% endif %}
+        {% endfor -%}
      ],
      "server": true,
      "start_join": [
-       "{{ server_nodes[0] }}"
+       {% for node in server_nodes -%}
+          {% if not loop.last %}
+          "{{ node }}",
+          {% else %}
+          "{{ node }}"
+          {% endif %}
+        {% endfor -%}
      ]
 }
 
