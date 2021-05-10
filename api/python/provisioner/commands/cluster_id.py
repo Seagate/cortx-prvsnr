@@ -36,7 +36,6 @@ from provisioner.config import (
      ALL_MINIONS
 )
 from provisioner.salt import local_minion_id
-from provisioner.utils import run_subprocess_cmd
 from provisioner.vendor import attr
 
 logger = logging.getLogger(__name__)
@@ -168,10 +167,10 @@ class ClusterId(CommandParserFillerMixin):
                        "ClusterID not set in pillar data. "
                        "Checking setup file.."
                     )
-    
+
                 # double verification
                 cluster_id_from_setup = self._initial_check(node_role[0])
-    
+
                 if cluster_id_from_setup == cluster_id_from_pillar:
                     logger.info(
                       "Bootstrapping completed and ClusterID is set!"
