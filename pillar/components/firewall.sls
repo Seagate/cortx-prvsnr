@@ -35,7 +35,3 @@ firewall:
       uds:
         - 5000/tcp
         - 5000/udp
-      consul:
-        - 8301/tcp
-        - 8300/tcp
-        - 8600/tcp

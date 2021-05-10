@@ -25,7 +25,6 @@ saltmaster:
     - ports:
       - 4505/tcp
       - 4506/tcp
-      - 8301/tcp
 
 # glusterfs:
 #   firewalld.service:

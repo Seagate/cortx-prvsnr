@@ -62,11 +62,7 @@ Remove Consul Agent Service:
 Reload service daemons post consul-agent.service removal:
    cmd.run:
      - name: systemctl daemon-reload
-
-Remove Consul user:
-   user.absent:
-     - name: consul
-    
+  
 Remove Consul:
   pkg.purged:
     - name: consul
