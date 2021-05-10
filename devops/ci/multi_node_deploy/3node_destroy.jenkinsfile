@@ -25,9 +25,9 @@ node {
             password(description: 'root user password for the target node.', name: 'PASSWORD')
         ])
     ])
-    
+
     def remotes = []
-    
+
     def remote_node = [:]
     remote_node.name = "srvnode-1"
     remote_node.host = HOST_NAME_1
@@ -35,7 +35,7 @@ node {
     remote_node.password = PASSWORD
     remote_node.allowAnyHosts = true
     remotes[0] = remote_node
-    
+
     remote_node = [:]
     remote_node.name = "srvnode-2"
     remote_node.host = HOST_NAME_2
@@ -43,7 +43,7 @@ node {
     remote_node.password = PASSWORD
     remote_node.allowAnyHosts = true
     remotes[1] = remote_node
-    
+
     remote_node = [:]
     remote_node.name = "srvnode-3"
     remote_node.host = HOST_NAME_3
@@ -59,7 +59,7 @@ node {
                 sshCommand remote: remote, command: "exit"
                 echo "Successful connected to VM ${remote.host}."
             }
-        }    
+        }
 
         stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
@@ -109,6 +109,24 @@ node {
         }
 
         for (remote in remotes.reverse()) {
+            stage("${remote.name}: Storage reclaim") {
+                sshCommand remote: remote, command: """ 
+                    # Wipe the MBR of metadata volume
+                    for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
+                        echo "Removing volume group \${vggroup}"
+                        vgremove --force \${vggroup}
+                    done
+                    partprobe
+
+                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g')
+                    for device in \${device_list}
+                    do
+                        wipefs --all \${device}
+                    done
+                """
+                echo "Successful storage reclaim"
+            }
+
             stage("${remote.name}: Stop services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true

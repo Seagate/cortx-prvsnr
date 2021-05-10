@@ -90,6 +90,24 @@ node {
             echo "Successful teardown: Bootstrap"
             }
 
+            stage("Storage reclaim") {
+                sshCommand remote: remote, command: """ 
+                    # Wipe the MBR of metadata volume
+                    for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
+                        echo "Removing volume group \${vggroup}"
+                        vgremove --force \${vggroup}
+                    done
+                    partprobe
+
+                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g')
+                    for device in \${device_list}
+                    do
+                        wipefs --all \${device}
+                    done
+                """
+                echo "Successful storage reclaim"
+            }
+
             stage("Stop services") {
                 sshCommand remote: remote, command: """
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
