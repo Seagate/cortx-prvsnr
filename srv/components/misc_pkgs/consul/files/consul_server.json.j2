@@ -16,6 +16,7 @@
      "bootstrap_expect": {{ server_nodes|length }},
      "client_addr": "127.0.0.1 {{ data_ip[0] }}",
      "datacenter": "DC1",
+     "node_name": "{{ grains['id'] }}",
      "data_dir": "/var/lib/consul",
      "domain": "consul",
      "enable_local_script_checks": true,
@@ -35,7 +36,7 @@
      "server": true,
      "start_join": [
        "{{ server_nodes[0] }}"
-     ],
+     ]
 }
 
 

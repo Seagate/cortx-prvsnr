@@ -61,7 +61,7 @@ deploy_states = dict(
         "misc_pkgs.elasticsearch",
         "misc_pkgs.kibana",
         "misc_pkgs.statsd",
-        "misc_pkgs.consul.install",
+        "misc_pkgs.consul",
         "misc_pkgs.lustre"
     ],
     sync=[

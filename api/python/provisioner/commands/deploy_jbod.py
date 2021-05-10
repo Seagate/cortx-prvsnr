@@ -50,7 +50,7 @@ deploy_states = dict(
         'misc_pkgs.ssl_certs',
         'ha.haproxy.prepare',
         'ha.haproxy.install',
-        'misc_pkgs.consul.install',
+        'misc_pkgs.consul',
         'misc_pkgs.openldap.prepare',
         'misc_pkgs.openldap.install',
         'misc_pkgs.rabbitmq.install',
