@@ -17,6 +17,7 @@
 
 from typing import List, Dict, Type, Optional
 # import socket
+import configparser
 import logging
 import uuid
 import os
@@ -1040,10 +1041,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.config_path:
             node_hostname_validator(run_args.nodes, run_args.config_path)
         else:
-            # config.ini was not provided, possible replace_node call
-            logger.warning(
+            logger.error(
                 "config.ini was not provided, possible replace_node call."
                 "Skipping validation."
+            )
+            raise ValueError(
+                "config.ini file was not provided, it is mandatory for bootstrap process."
             )
 
         # generate setup name
@@ -1744,6 +1747,27 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 targets=ALL_MINIONS
             )
 
+        # temporary fix to get controller passwd
+        # directly without encrypting: EOS-19773
+        conf = configparser.ConfigParser()
+        conf.read(run_args.config_path)
+
+        secret_data = {}
+        for section in conf.sections():
+            secret = [v for k, v in conf.items(section)
+                      if "controller.secret" in k]
+            secret_data[section] = secret
+
+            if secret_data[section] and 'default' not in section:
+                logger.info("Updating pillar values for HW")
+                ssh_client.cmd_run(
+                    (
+                        'provisioner pillar_set --fpath storage.sls '
+                        f'storage/{section}/controller/secret '
+                        f' \'"{secret_data[section][0]}"\''
+                    ), targets=ALL_MINIONS
+                )
+
         inline_pillar = None
         if run_args.source == 'local':
             for pkg in [
@@ -1762,14 +1786,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
         logger.info(
-             "Encrypt pillar values and Refresh enclosure id on the system"
+             "Refresh enclosure id on the system"
         )
         for state in [
-            *(
-                ()
-                if run_args.source == 'local'
-                else ('components.system.config.pillar_encrypt', )
-            ),
             'components.system.storage.enclosure_id',
             'components.system.config.sync_salt'
         ]:

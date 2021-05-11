@@ -523,8 +523,8 @@ main()
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
         || "$shutdown_ctrl_opt" = true || "$ntp_opt" = true
         || "$show_license" = true ]]; then
-        echo "main(): Decrypting the password received from api" >> $logfile
-        pass=`salt-call lyveutils.decrypt storage ${pass} --output=newline_values_only`
+        #echo "main(): Decrypting the password received from api" >> $logfile
+        #pass=`salt-call lyveutils.decrypt storage ${pass} --output=newline_values_only`
         #echo "main(): decrypted password: $pass" >> $logfile
         ssh_cred="$ssh_tool -p $pass"
         ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"
