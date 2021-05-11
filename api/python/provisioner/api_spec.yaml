@@ -165,6 +165,10 @@ configure_node:
 # setup commands
 setup_provisioner:
   type: SetupProvisioner
+bootstrap_provisioner:
+  type: BootstrapProvisioner
+post_provisioner:
+  type: PostProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:
