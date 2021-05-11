@@ -18,10 +18,16 @@
 # Setup SWAP and /var/motr
 {% set node = grains['id'] %}
 
-# Make SWAP
-Ensure SWAP partition is unmounted:
-  cmd.run:
-    - name: swapoff -a && sleep 2
+# Disable system swap
+Deactivate and unmount system SWAP:
+  module.run:
+    # Deactivate SWAP
+    - mount.swapoff:
+      - name: /dev/dm-1
+    # Remove SWAP from /etc/fstab
+    - mount.rm_fstab:
+      - name: swap
+      - device: /dev/mapper/vg_sysvol-lv_swap
 
 Label first LUN:
   module.run:
@@ -135,17 +141,6 @@ Make SWAP:
     - onlyif: test -e /dev/vg_metadata_{{ node }}/lv_main_swap
     - require:
       - Make lv_main_swap
-      - cmd: Ensure SWAP partition is unmounted
-
-Verify sysvol_swap parition in the fstab:
-  module.run:
-    - mount.set_fstab:
-      - name: swap
-      - device: /dev/mapper/vg_sysvol-lv_swap
-      - fstype: swap
-      - opts:
-        - defaults
-        - pri=0
 
 Verify lv_main_swap parition in the fstab:
   module.run:
@@ -158,12 +153,6 @@ Verify lv_main_swap parition in the fstab:
         - pri=32767
       - require:
         - cmd: Make SWAP
-
-Enable sysvol_swap:
-  module.run:
-    - mount.swapon:
-      - name: /dev/mapper/vg_sysvol-lv_swap
-      - priority: "0"
 
 Enable lv_main_swap:
   module.run:
