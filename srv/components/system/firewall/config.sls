@@ -225,7 +225,9 @@ Public data zone:
       - nfs
       - ssh
       - uds
-      - www
+      {% if not 'physical' in grains['virtual'] %}
+      - www                 # Open port 80 in public-data interface for OVA
+      {% endif %}
       - s3
     - interfaces:
       - {{ pillar['cluster'][grains['id']]['network']['data_nw']['iface'][0] }}
@@ -240,7 +242,9 @@ Public data zone:
       - haproxy
       - nfs
       - uds
+      {% if not 'physical' in grains['virtual'] %}
       - www
+      {% endif %}
       - s3
 
 Private data zone:
@@ -282,11 +286,8 @@ Management zone:
       - saltmaster
       - ssh
       - uds
-      {% if not 'physical' in grains['virtual'] %}
-      - www                 # Open port 80 in management interface for OVA
       {% if salt['cmd.run']('rpm -qa glusterfs-server') %}
       - glusterfs
-      {% endif %}
       {% endif %}
     - interfaces:
       - {{ mgmt_if }}
@@ -309,9 +310,6 @@ Management zone:
       - smtp
       - saltmaster
       - uds
-      {% if not 'physical' in grains['virtual'] %}
-      - www
-      {% endif %}
 
 Restart firewalld:
   module.run:
