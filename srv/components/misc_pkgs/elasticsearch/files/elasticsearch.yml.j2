@@ -94,7 +94,9 @@
 {% endfor -%}
 cluster.name: {{ pillar['elasticsearch']['cluster_name'] }}
 node.name: {{ grains['id'] }}
-network.host: [{{ grains['id'] }}, 'localhost' ]
+# network.host: [{{ grains['id'] }}, 'localhost' ]
+network.bind_host: ['localhost', {{ grains['id'] }} ]
+network.publish_host: [{{ grains['id'] }}]
 http.port: {{ pillar['elasticsearch']['http_port'] }}
 discovery.seed_hosts: {{ server_nodes }}
 cluster.initial_master_nodes: {{ server_nodes }}

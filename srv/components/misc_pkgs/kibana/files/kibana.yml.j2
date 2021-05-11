@@ -105,7 +105,7 @@ logging.silent: true
 # Supported languages are the following: English - en , by default , Chinese - zh-CN .
 #i18n.locale: "en"
 
-elasticsearch.hosts: https://{{ grains['id'] }}:{{ pillar['elasticsearch']['http_port'] }}
+elasticsearch.hosts: https://localhost:{{ pillar['elasticsearch']['http_port'] }}
 server.host: "{{ pillar['cluster'][grains['id']]['hostname'] }}"
 
 # elasticsearch.ssl.verificationMode: none
