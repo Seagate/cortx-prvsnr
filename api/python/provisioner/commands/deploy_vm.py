@@ -20,13 +20,7 @@ import logging
 
 from .. import (
     inputs,
-    config,
-    values,
     errors
-)
-from ..pillar import (
-    PillarKey,
-    PillarResolver
 )
 from ..vendor import attr
 # TODO IMPROVE EOS-8473
@@ -103,22 +97,6 @@ class DeployVM(Deploy):
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
-    @staticmethod
-    def _get_node_list():
-        """Retrieve pillar data."""
-        pillar_key = PillarKey("cluster")
-        pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
-        pillar = next(iter(pillar.values()))
-        if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
-            raise ValueError("value is not specified for cluster")
-        else:
-            cluster = pillar[pillar_key]
-            nodes = []
-            for key in cluster:
-                if 'srvnode' in key:
-                    nodes.append(key)
-            return nodes
-
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = run_args.setup_type
@@ -161,10 +139,10 @@ class DeployVM(Deploy):
                         f"components.{state}", secondaries, stages
                     )
                 elif state in (
-                    "ha.cortx-ha"
+                    "ha.cortx-ha",
                 ):
                     # Execute first on primary then on secondary sequentially.
-                    nodes = DeployVM._get_node_list()
+                    nodes = Deploy._get_node_list()
                     self._apply_state(f"components.{state}", primary, stages)
                     if primary in nodes:
                         nodes.remove(primary)
