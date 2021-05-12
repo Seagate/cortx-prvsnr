@@ -102,6 +102,22 @@ class DeployVM(Deploy):
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
+    @staticmethod
+    def _get_node_list():
+        """Retrieve pillar data."""
+        pillar_key = PillarKey("cluster")
+        pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
+        pillar = next(iter(pillar.values()))
+        if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
+            raise ValueError(f"value is not specified for {key}")
+        else:
+            cluster = pillar[pillar_key]
+            nodes = []
+            for key in cluster:
+                if 'srvnode' in key:
+                    nodes.append(key)
+            return nodes 
+
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = run_args.setup_type
@@ -111,9 +127,6 @@ class DeployVM(Deploy):
 
         primary = self._primary_id()
         secondaries = f"not {primary}"
-        # Temperory fix for EOS-20526
-        second_node = "srvnode-2"
-        third_node = "srvnode-3"
 
         # apply states
         for state in states:
@@ -146,12 +159,16 @@ class DeployVM(Deploy):
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
-                elif state in ("ha.cortx-ha"):
-                    #Execute firt on primary, then on second node and then on the third
+                elif state in (
+                    "ha.cortx-ha"
+                ):
+                    # Execute first on primary then on secondaries sequentially.
+                    nodes = DeployVM._get_node_list()
                     self._apply_state(f"components.{state}", primary, stages)
-                    self._apply_state(f"components.{state}", second_node, stages)
-                    self._apply_state(f"components.{state}", third_node, stages)
-
+                    if primary in nodes:
+                        nodes.remove(primary)
+                    for node in nodes:
+                        self._apply_state(f"components.{state}", node, stages)
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
 
