@@ -19,13 +19,11 @@ import logging
 from typing import Type
 
 from ..salt import (
-    StatesApplier,
-    cmd_run
+    StatesApplier
 )
 from .. import (
     inputs,
-    utils,
-    config
+    utils
 )
 from ..vendor import attr
 
