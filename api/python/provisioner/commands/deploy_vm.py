@@ -20,9 +20,10 @@ import logging
 
 from .. import (
     inputs,
+    config,
+    values,
     errors
 )
-from ..salt import StateFunExecuter
 from ..pillar import (
     PillarKey,
     PillarResolver
@@ -109,14 +110,14 @@ class DeployVM(Deploy):
         pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
         pillar = next(iter(pillar.values()))
         if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
-            raise ValueError(f"value is not specified for {key}")
+            raise ValueError(f"value is not specified for cluster")
         else:
             cluster = pillar[pillar_key]
             nodes = []
             for key in cluster:
                 if 'srvnode' in key:
                     nodes.append(key)
-            return nodes 
+            return nodes
 
     def _run_states(self, states_group: str, run_args: run_args_type):
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
@@ -162,7 +163,7 @@ class DeployVM(Deploy):
                 elif state in (
                     "ha.cortx-ha"
                 ):
-                    # Execute first on primary then on secondaries sequentially.
+                    # Execute first on primary then on secondary sequentially.
                     nodes = DeployVM._get_node_list()
                     self._apply_state(f"components.{state}", primary, stages)
                     if primary in nodes:
