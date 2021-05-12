@@ -109,6 +109,8 @@ node {
                 sshCommand remote: remotes[0], command: """
                     device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
                     echo \"\"\"
+                    [cluster]
+                    mgmt_vip=${MGMT_VIP}
                     [srvnode_default]
                     network.data.private_interfaces=eth3,eth4
                     network.data.public_interfaces=eth1,eth2
@@ -267,7 +269,9 @@ node {
 
             stage("Start Cluster") {
                 sshCommand remote: remotes[0], command: "cortx cluster start"
-                sshCommand remote: remotes[0], command: "hctl status"
+                sshCommand remote: remotes[0], command: "sleep 300s"
+                sshCommand remote: remotes[0], command: "hctl status || true"
+                sshCommand remote: remotes[0], command: "pcs status || true"
                 echo "Successfully started Cortx cluster!"
             }
         }

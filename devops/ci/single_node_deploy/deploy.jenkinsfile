@@ -103,7 +103,7 @@ node {
                     echo \"\"\"
                     [${remote.name}]
                     hostname=${remote.host}
-                    roles=primary,openldap_server
+                    roles=primary,openldap_server,kafka_server
 
                     [enclosure-${remote.name.split('-')[1]}]
                     \"\"\" | sed -e 's/^[ \t]*//' >> /root/config.ini
@@ -217,7 +217,9 @@ node {
 
             stage("Start Cluster") {
                 sshCommand remote: remote, command: "cortx cluster start"
-                sshCommand remote: remote, command: "hctl status"
+                sshCommand remote: remote, command: "sleep 300s"
+                sshCommand remote: remote, command: "hctl status || true"
+                sshCommand remote: remote, command: "pcs status || true"
                 echo "Successfully started Cortx cluster!"
             }
         }
