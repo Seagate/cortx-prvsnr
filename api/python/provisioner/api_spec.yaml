@@ -141,6 +141,8 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
+create_service_user:
+  type: CreateServiceUser
 cmd_run:
   type: CmdRun
 configure_setup:
