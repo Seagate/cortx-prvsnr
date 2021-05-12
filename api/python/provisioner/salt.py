@@ -1165,6 +1165,15 @@ def sls_exists(state, targets=ALL_MINIONS, summary_only=True, **kwargs):
     else:
         return res
 
+# TODO FIXME test
+def ping(targets=ALL_MINIONS, **kwargs):
+    return function_run('test.ping', targets=targets, **kwargs)
+
+
+# TODO FIXME test
+def list_minions(targets=ALL_MINIONS):
+    return list(ping(targets))
+
 
 # TODO TEST
 def process_provisioner_cmd_res(res):

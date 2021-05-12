@@ -348,7 +348,8 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     as 'cortx_version' and yum txn ids for each node
     upgrade:
       sw_list:
-        - motr
+        - motr:
+          sls: <base_sls_path>
         - s3server
         ...
       yum_snapshots:

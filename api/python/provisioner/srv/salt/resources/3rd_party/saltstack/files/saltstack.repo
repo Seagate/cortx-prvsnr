@@ -1,0 +1,9 @@
+[saltstack]
+name=Salt repo for RHEL/CentOS $releasever PY3
+baseurl=https://repo.saltproject.io/py3/redhat/$releasever/$basearch/archive/3002.2
+skip_if_unavailable=True
+failovermethod=priority
+enabled=1
+enabled_metadata=1
+gpgcheck=1
+gpgkey=https://repo.saltproject.io/py3/redhat/$releasever/$basearch/archive/3002.2/SALTSTACK-GPG-KEY.pub, https://repo.saltproject.io/py3/redhat/$releasever/$basearch/archive/3002.2/base/RPM-GPG-KEY-CentOS-7

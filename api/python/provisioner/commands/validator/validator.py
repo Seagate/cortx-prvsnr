@@ -20,13 +20,12 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
+from provisioner import utils
 from provisioner.salt import local_minion_id, cmd_run
+from provisioner.config import ContentType, HashType
 
-from ... import utils
-from ...config import ContentType, HashType
-
-from ...vendor import attr
-from ...errors import ValidationError
+from provisioner.vendor import attr
+from provisioner.errors import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -411,12 +410,87 @@ class FileContentScheme:
             obj._unexpected_attributes = unexpected_attrs
             return obj
         else:
-            raise ValidationError("Unexpected top-level content type: "
-                                  f"'{type(data)}'")
+            raise ValidationError(
+                f"Unexpected content type: '{type(data)}'"
+            )
 
 
 @attr.s(auto_attribs=True)
-class ReleaseInfoContentScheme(FileContentScheme):
+class ReleaseInfoCommonContentScheme(FileContentScheme):
+
+    """
+    Common Cortx release info files content scheme.
+
+    Attributes
+    ----------
+    NAME: str
+        Name of SW upgrade repository. It is the `NAME` field of `RELEASE.INFO`
+        file
+    RELEASE: Optional[str]
+        Release of SW upgrade repository. Can be absent. It is the `RELEASE`
+        field of `RELEASE.INFO` file
+    VERSION: str
+        Version number of SW upgrade repository. It is the `VERSION` field of
+        `RELEASE.INFO` file
+    BUILD: str
+        Build number of SW upgrade repository. It is the `BUILD` field of
+        `RELEASE.INFO` file
+    OS: str
+        OS version for which this SW upgrade repo is intended.
+        It is the `OS` field of `RELEASE.INFO` file
+    """
+
+    NAME: str = attr.ib(
+        validator=attr.validators.instance_of(str)
+    )
+    VERSION: str = attr.ib(
+        # regex is based on the current representation of `RELEASE` field
+        # number. It is 3 numbers divided by dots "."
+        validator=attr.validators.matches_re(r"^[0-9]+\.[0-9]+\.[0-9]+$"),
+        converter=str
+    )
+    BUILD: str = attr.ib(
+        # regex is based on the current representation of `BUILD` number.
+        # It is 1 or more numbers
+        validator=attr.validators.matches_re(r"^[0-9]+$"),
+        converter=str
+    )
+    OS: str = attr.ib(
+        validator=attr.validators.instance_of(str)
+    )
+    RELEASE: Optional[str] = attr.ib(
+        # TODO: when the `RELEASE` field will be introduced need to use here
+        #  a proper regex validation
+        validator=attr.validators.optional(
+            attr.validators.instance_of(str)
+        ),
+        default=None
+    )
+
+
+@attr.s(auto_attribs=True)
+class ReleaseInfoContentScheme(ReleaseInfoCommonContentScheme):
+
+    """
+    RELEASE.INFO file content scheme.
+
+    This class is used for `RELEASE.INFO` file content validation.
+
+    Attributes
+    ----------
+    COMPONENTS: list
+        List of RPMs provided by this SW upgrade repository.
+        It is the `COMPONENTS` field of `RELEASE.INFO` file
+    """
+
+    COMPONENTS: list = attr.ib(
+        validator=attr.validators.instance_of(list),
+        kw_only=True
+    )
+
+
+@attr.s(auto_attribs=True)
+class ThirdPartyReleaseInfoContentScheme(FileContentScheme):
 
     """
     RELEASE.INFO file content scheme.
@@ -445,34 +519,13 @@ class ReleaseInfoContentScheme(FileContentScheme):
         It is the `COMPONENTS` field of `RELEASE.INFO` file
     """
 
-    NAME: str = attr.ib(
-        validator=attr.validators.instance_of(str)
+    # TODO validator (current format looks odd: os-version-build)
+    THIRD_PARTY_VERSION: str = attr.ib(
+        converter=str, kw_only=True
     )
-    VERSION: str = attr.ib(
-        # regex is based on the current representation of `RELEASE` field
-        # number. It is 3 numbers divided by dots "."
-        validator=attr.validators.matches_re("^[0-9]+\.[0-9]+\.[0-9]+$"),
-        converter=str
-    )
-    BUILD: str = attr.ib(
-        # regex is based on the current representation of `BUILD` number.
-        # It is 1 or more numbers
-        validator=attr.validators.matches_re("^[0-9]+$"),
-        converter=str
-    )
-    OS: str = attr.ib(
-        validator=attr.validators.instance_of(str)
-    )
-    COMPONENTS: list = attr.ib(
-        validator=attr.validators.instance_of(list)
-    )
-    RELEASE: Optional[str] = attr.ib(
-        # TODO: when the `RELEASE` field will be introduced need to use here
-        #  a proper regex validation
-        validator=attr.validators.optional(
-            attr.validators.instance_of(str)
-        ),
-        default=None
+    THIRD_PARTY_COMPONENTS: dict = attr.ib(
+        validator=attr.validators.instance_of(dict),
+        kw_only=True
     )
 
 
@@ -523,27 +576,30 @@ class ContentFileValidator(PathValidator):
         ValidationError
             If validation is failed.
         """
+        logging.debug(f"File content type: '{self.content_type}'")
         try:
-            logging.debug(f"File content type: '{self.content_type}'")
             content = self._CONTENT_LOADER[self.content_type](path)
         except Exception as e:
             raise ValidationError(
-                            f"File content validation is failed: {e}") from e
+                f"Failed to load the content of {path}: {e}"
+            ) from e
 
         logging.debug(f"File content: '{content}'")
         try:
             self.scheme.from_args(content)
         except TypeError as e:
-            raise ValidationError(f"File content validation is failed: {e}")
+            raise ValidationError(
+                f"File content validation is failed for {path}: {e}"
+            ) from e
         else:
             logging.info(f"File content validation is succeeded for '{path}'")
 
 
 @attr.s(auto_attribs=True)
-class ReleaseInfoValidator(FileValidator):
+class ReleaseInfoValidatorBase(FileValidator):
 
     """
-    Special alias for `RELEASE.INFO` file validator.
+    Special alias for release info file validators.
 
     Attributes
     ----------
@@ -633,3 +689,28 @@ class AuthenticityValidator(PathValidator):
                 f'Authenticity check is failed: "{e}"') from e
 
         return res
+
+
+class ReleaseInfoValidator(ReleaseInfoValidatorBase):
+
+    """
+    Special alias for `RELEASE.INFO` file validator.
+    """
+
+    def __attrs_post_init__(self):
+        self.content_validator = ContentFileValidator(
+                scheme=ReleaseInfoContentScheme,
+                content_type=self.content_type)
+
+
+@attr.s(auto_attribs=True)
+class ThirdPartyReleaseInfoValidator(ReleaseInfoValidatorBase):
+
+    """
+    Special alias for `THIRD_PARTY_RELEASE.INFO` file validator.
+    """
+
+    def __attrs_post_init__(self):
+        self.content_validator = ContentFileValidator(
+                scheme=ThirdPartyReleaseInfoContentScheme,
+                content_type=self.content_type)

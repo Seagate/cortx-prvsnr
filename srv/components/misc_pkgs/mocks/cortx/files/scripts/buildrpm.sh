@@ -5,7 +5,8 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 VERSION="${1:-2.0.0}"
-BUILD_DIR="${2:-(realpath ~)}"
+BUILD="${2:-1}"
+BUILD_DIR="${3:-(realpath ~)}"
 SPEC=cortx-mock.spec
 SPEC_NO_API=cortx-mock-no-api.spec
 
@@ -55,6 +56,7 @@ pushd "${BUILD_DIR}"
                "--define" "_topdir ${BUILD_DIR}/rpmbuild"
                "--define" "__NAME__ ${pkg}"
                "--define" "__VERSION__ ${VERSION}"
+               "--define" "__BUILD__ ${BUILD}"
             )
 
             if [[ -n "$comp" ]]; then

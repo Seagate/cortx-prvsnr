@@ -21,6 +21,30 @@ from pathlib import Path
 import pytest
 
 from provisioner.vendor import attr
+from provisioner import config
+from provisioner.commands._basic import RunArgsSaltClient
+from provisioner.commands.helper import (
+    SSHProfileGenerator, EnsureNodesReady
+)
+from provisioner.resources.saltstack import (
+    SaltClusterConfig,
+    SaltMasterStart,
+    SaltMinionStart
+)
+from provisioner.resources.provisioner import (
+    ProvisionerInstallLocal,
+    ProvisionerAPIInstall
+)
+
+from provisioner.scm.saltstack.rc_sls.saltstack import (
+    SaltClusterConfigSLS,
+    SaltMasterStartSLS,
+    SaltMinionStartSLS
+)
+from provisioner.scm.saltstack.rc_sls.provisioner import (
+    ProvisionerInstallLocalSLS,
+    ProvisionerAPIInstallSLS
+)
 
 from test import helper as h
 
@@ -81,7 +105,7 @@ class HostMeta:
         if self._tmpdir is None:
             tmpdir_function = self.request.getfixturevalue('tmpdir_function')
             # TODO non linux systems
-            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')  # nosec
+            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')  # noqa: E501, nosec
             self.host.check_output("mkdir -p {}".format(self._tmpdir))
         return self._tmpdir
 
@@ -221,3 +245,117 @@ def setup_hosts(request, hosts_num, root_passwd, mlocalhost):
     mhosts = helper.create_hosts(request, hosts_num)
     helper.set_root_passwd(mhosts, root_passwd)
     return mhosts
+
+
+@pytest.fixture
+def setup_hosts_specs(setup_hosts):
+    return [
+        f"srvnode-{i + 1}:{mhost.ssh_host}"
+        for i, mhost in enumerate(setup_hosts)
+    ]
+
+
+@pytest.fixture
+def ssh_profile(tmpdir_function):
+    profile = tmpdir_function / 'ssh_profile'
+    SSHProfileGenerator(profile=profile).run()
+    return profile
+
+
+@pytest.fixture
+def ensure_ready(ssh_profile, ssh_key, setup_hosts_specs):
+    EnsureNodesReady(
+        nodes=setup_hosts_specs, profile=ssh_profile, ssh_key=ssh_key
+    ).run()
+
+
+@pytest.fixture
+def ssh_client(ssh_profile, ssh_key, setup_hosts_specs, ensure_ready):
+    return RunArgsSaltClient(
+        salt_client_type='ssh',
+        salt_ssh_profile=ssh_profile
+    ).client
+
+
+@pytest.fixture
+def salt_configured(ssh_client):
+    SaltClusterConfigSLS(
+        state=SaltClusterConfig(
+            onchanges_minion='stop',
+            onchanges_master='restart',
+        ),
+        client=ssh_client
+    ).run()
+
+
+@pytest.fixture
+def salt_ready(ssh_client, salt_configured):
+    SaltMasterStartSLS(
+        state=SaltMasterStart(),
+        client=ssh_client
+    ).run()
+
+    SaltMinionStartSLS(
+        state=SaltMinionStart(),
+        client=ssh_client
+    ).run()
+
+    # TODO ensure minions are ready
+
+
+@pytest.fixture
+def provisioner_installed(ssh_client):
+    ProvisionerInstallLocalSLS(
+        state=ProvisionerInstallLocal(),
+        client=ssh_client
+    ).run()
+
+
+@pytest.fixture
+def provisioner_api_installed(ssh_client, provisioner_installed):
+    ProvisionerAPIInstallSLS(
+        state=ProvisionerAPIInstall(api_distr='pip'),
+        client=ssh_client
+    ).run()
+
+
+@pytest.fixture
+def cortx_mocks_deployed(
+    ssh_client, salt_configured, provisioner_installed
+):
+    ssh_client.cmd_run(
+        "salt '*' state.apply components.misc_pkgs.mocks.cortx",
+        targets=ssh_client.roster_targets[0]
+    )
+
+
+@pytest.fixture
+def cortx_upgrade_iso_mock_path():
+    return config.PRVSNR_DATA_LOCAL_DIR / 'cortx_repos/upgrade_mock_2.1.0.iso'
+
+
+@pytest.fixture
+def cortx_upgrade_iso_mock(
+    ssh_client,
+    cortx_upgrade_iso_mock_path,
+    salt_configured,
+    provisioner_installed
+):
+    ssh_client.cmd_run(
+        "salt '*' state.apply components.misc_pkgs.mocks.cortx.build_upgrade",
+        targets=ssh_client.roster_targets[0]
+    )
+    return cortx_upgrade_iso_mock
+
+
+@pytest.fixture
+def cortx_upgrade_iso_mock_installed(
+    ssh_client,
+    cortx_upgrade_iso_mock,
+    provisioner_api_installed
+):
+    ssh_client.provisioner_cmd(
+        'set_swupgrade_repo',
+        fun_args=[cortx_upgrade_iso_mock],
+        targets=ssh_client.roster_targets[0]
+    )

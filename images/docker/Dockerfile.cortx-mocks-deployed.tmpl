@@ -1,0 +1,5 @@
+FROM {parent}
+
+COPY images/docker/setup_cortx_mocks.sh /tmp/
+RUN bash /tmp/setup_cortx_mocks.sh \
+    && rm -f /tmp/setup_cortx_mocks.sh

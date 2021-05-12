@@ -1,0 +1,8 @@
+cachedir: /tmp/salt/cachedir
+file_roots:
+    base:
+    - /tmp/salt/srv/salt
+pillar_roots:
+    base:
+    - /tmp/salt/srv/pillar
+log_file: /tmp/salt/log/salt_master.log

@@ -16,13 +16,15 @@
 #
 
 import logging
-from typing import Any, Union, Optional
+from typing import Any, Union, ClassVar
 from pathlib import Path
 
 from .vendor import attr
 from .paths import FileRootPath, USER_SHARED_FILEROOT
 from .salt_api.base import SaltClientBase
 from .salt_api.runner import SaltRunnerClient
+from .salt_api.caller import SaltLocalCallerClient
+
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -30,18 +32,27 @@ logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class FileRoot:
-    _root: FileRootPath = USER_SHARED_FILEROOT
-    refresh_on_update: bool = True
-    local_runner_client: Optional[SaltClientBase] = attr.Factory(
+    # TODO local client may require a separate parent class
+    def_local_client_t: ClassVar[SaltClientBase] = (
+        #SaltLocalCallerClient
         SaltRunnerClient
     )
+
+    _root: FileRootPath = USER_SHARED_FILEROOT
+    local_client: SaltClientBase = attr.Factory(def_local_client_t)
+    refresh_on_update: bool = True
+
+    _runner: SaltRunnerClient = attr.ib(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self._runner = SaltRunnerClient(c_path=self.local_client.c_path)
 
     def refresh(self):
         # TODO DOC
         # ensure it would be visible for salt-master / salt-minions
         # TODO makes sense to move to client, so ssh and runner clients
         #      may do that in a different way
-        self.local_runner_client.run(
+        self._runner.run(
             'fileserver.clear_file_list_cache',
             fun_kwargs=dict(backend='roots')
         )
@@ -107,12 +118,12 @@ class FileRoot:
             #       name=str(dest)
             #     )
             # )
-            self.local_runner_client.cmd_run(
+            self.local_client.cmd_run(
                 "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
                 .format(dest.parent, source, dest)
             )
         else:
-            self.local_runner_client.state_single(
+            self.local_client.state_single(
                 'file.managed',
                 fun_kwargs=dict(
                     source=str(source),

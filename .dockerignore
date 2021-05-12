@@ -2,3 +2,5 @@
 !cli
 !images
 !files
+!api/python/provisioner/srv/salt/resources/**
+!.build/repo.tgz

@@ -52,6 +52,7 @@ from ..validator import (DirValidator,
                          FileValidator,
                          FileSchemeValidator,
                          ReleaseInfoValidator,
+                         ThirdPartyReleaseInfoValidator,
                          YumRepoDataValidator,
                          HashSumValidator)
 from provisioner.vendor import attr
@@ -64,7 +65,7 @@ logger = logging.getLogger(__name__)
 SW_UPGRADE_BUNDLE_SCHEME = {
     CORTX_3RD_PARTY_ISO_DIR: DirValidator(
         {
-            THIRD_PARTY_RELEASE_INFO_FILE: ReleaseInfoValidator(),
+            THIRD_PARTY_RELEASE_INFO_FILE: ThirdPartyReleaseInfoValidator(),
             "repodata": YumRepoDataValidator(),
         },
         required=False),
@@ -174,7 +175,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             if False:
                 raise SWUpdateRepoSourceError(
                     # FIXME repo is undefined here
-                    str(repo.source),
+                    # str(repo.source),
+                    str(repo_name),
                     (
                         "SW upgrade repository for the release "
                         f"'{release}' has been already enabled"
@@ -203,7 +205,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         """
         logger.debug("Start Python index validation")
-        test_package_name = next(index_path.iterdir()).name
+
+        pkgs = [p for p in index_path.iterdir() if p.is_dir()]
+        if not pkgs:
+            logger.debug("Python index is empty, skip the validation")
+            return
+
+        test_package_name = pkgs[0]
         with tempfile.TemporaryDirectory() as tmp_dir:
             cmd = (f"pip3 download {test_package_name} --dest={tmp_dir}/ "
                    f"--index-url file://{index_path.resolve()}")
@@ -550,7 +558,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         """
         iso_mount_dir = repo.target_build / repo.release
         python_index_path = iso_mount_dir / CORTX_PYTHON_ISO_DIR
-        if python_index_path in iso_mount_dir.iterdir():
+        if (
+            python_index_path.exists()
+            and [p for p in python_index_path.iterdir() if p.is_dir()]
+        ):
             config = ConfigParser()
             config.read(PIP_CONFIG_FILE)
             extra_index_url = config['global'].get('extra-index-url', None)

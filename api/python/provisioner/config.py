@@ -367,21 +367,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     }
 
 
-# TODO IMPROVE EOS-8473 better name
-REPO_BUILD_DIRS = [
-    '.build',
-    'build',
-    '.boxes',
-    '.eggs',
-    '.vdisks',
-    '.vagrant',
-    '.pytest_cache',
-    f'{PROFILE_DIR_NAME}',
-    '__pycache__',
-    'packer_cache',
-    'tmp',
-    '*.iso'
-]
+REPO_VERSION_RAW = '__raw__'  # to not interfere with any reasonable git refs
 
 
 LOCALHOST_IP = '127.0.0.1'
@@ -636,3 +622,44 @@ class SWUpgradeInfoFields(Enum):
 
     VERSION = "version"
     VERSION_CONSTRAINT = "version_constraint"
+
+
+class CortxFlows(Enum):
+
+    """Cortx configuration flows."""
+
+    DEPLOY = "deploy"
+    UPGRADE = "upgrade"
+    UPGRADE_OFFLINE = "upgrade-offline"
+
+
+class MiniAPILevels(Enum):
+
+    """Mini Provisioner API Levels."""
+
+    CLUSTER = "cluster"
+    NODE = "node"
+
+
+class MiniAPIHooks(Enum):
+
+    """Mini Provisioner API Hooks."""
+
+    POST_INSTALL = 'post_install'
+    PREPARE = 'prepare'
+    CONFIG = 'config'
+    INIT = 'init'
+    TEST = 'test'
+    UPGRADE = 'upgrade'
+    RESET = 'reset'
+    CLEANUP = 'cleanup'
+    BACKUP = 'backup'
+    RESTORE = 'restore'
+    SUPPORT_BUNDLE = 'support_bundle'
+
+class MiniAPIEvents(Enum):
+
+    """Mini Provisioner API Events."""
+
+    PRE = 'pre'
+    POST = 'post'

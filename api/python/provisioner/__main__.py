@@ -44,7 +44,7 @@ from .commands.setup_provisioner import (
 )
 from .base import prvsnr_config
 
-from . import cli_parser
+from . import cli_parser, utils, __version__
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +210,10 @@ def _main():
     #      for secure levels if needed
     _set_logging(output_type, log_args, parsed_args)
 
+    # TODO make that configuration smarter
+    #      (one may need this noisy logs in some case)
+    utils.make_salt_logs_quiet()
+
     general_args = GeneralArgs(
         **{
             k: parsed_args.kwargs.pop(k) for k in list(parsed_args.kwargs)
@@ -225,6 +229,8 @@ def _main():
 
     if general_args.version:
         return __version__
+
+    logger.info(f"Running provisioner version: {__version__}")
 
     if parsed_args.cmd is None:
         logger.error("No command Provided. "

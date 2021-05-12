@@ -18,4 +18,4 @@
 include:
   - .backup
   - .install
-  - .config
+  - .migrate

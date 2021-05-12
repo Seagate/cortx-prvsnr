@@ -124,7 +124,7 @@ class Resource(CommandParserFillerMixin):
         })
 
         if run_args.runner_minion_id:
-            return salt_args.salt_client.provisioner_cmd(
+            return salt_args.client.provisioner_cmd(
                 'resource',
                 fun_args=([state_t.name] + list(args)),
                 fun_kwargs=_kwargs,

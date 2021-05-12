@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,7 +16,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .backup
-  - .install
-  - .config
+set -eux
+
+cd ${PYTHON_PROJECT}
+pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.repo
+pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.salt-master.install
+pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.salt-minion.install
+
+which salt-master salt-minion
+salt-master --version
+salt-minion --version
+
+rm -rf /var/cache/yum

@@ -163,21 +163,19 @@ def test_repo_tgz_with_invalid_path(mocker, tmpdir_function):
 
 def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
     dest_dir = tmpdir_function / 'repo_tgz_path'
-    exclude = "excluded"
     project_path = 'some-path'
     include_dirs = ['dir1', 'dir2']
 
-    mocker.patch.object(
-        utils, 'get_repo_archive_exclusions',
-        autospec=True, return_value=[exclude]
-    )
     run_m = mocker.patch.object(utils, 'run_subprocess_cmd', autospec=True)
 
     assert utils.repo_tgz(
         dest_dir, project_path=project_path, include_dirs=include_dirs
     ) == dest_dir
+
     run_m.assert_called_once_with(
-        ['tar', '-czf', str(dest_dir), exclude, '-C', project_path]
+        ['tar', '-czf', str(dest_dir)]
+        + ['--exclude-vcs', '--exclude-vcs-ignores', '--sort', 'name']
+        + ['-C', project_path]
         + include_dirs
     )
 

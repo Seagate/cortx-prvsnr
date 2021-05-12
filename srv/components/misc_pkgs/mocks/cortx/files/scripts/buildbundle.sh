@@ -5,6 +5,7 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cortx_version=2.0.0
+cortx_build=177
 orig_iso=
 output_dir=.
 output_type=deploy-cortx
@@ -65,7 +66,9 @@ Options:
                                     default: $output_dir
   -r,  --cortx-ver              cortx release version,
                                     default: $cortx_version
-  -t,  --out-type               output type. Possible values: {deploy-cortx|deploy-single|upgrade}
+  -b,  --cortx-build            cortx release build number,
+                                    default: $cortx_build
+  -t,  --out-type               output type. Possible values: {deploy-cortx|deploy-bundle|upgrade}
                                     default: $output_type,
   -v,  --verbose                be more verbose
        --gen-iso                generate ISO
@@ -105,8 +108,8 @@ function parse_args {
         exit 1
     fi
 
-    local _opts=hi:o:r:t:v
-    local _long_opts=help,orig-iso:,out-dir:,out-type:,cortx-ver:,verbose,gen-iso,prvsnr-pkg:,prvsnr-api-pkg:
+    local _opts=hi:o:r:b:t:v
+    local _long_opts=help,orig-iso:,out-dir:,out-type:,cortx-ver:,cortx-build:,verbose,gen-iso,prvsnr-pkg:,prvsnr-api-pkg:
 
     local _getopt_res
     ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
@@ -141,6 +144,10 @@ function parse_args {
                 shift 2
                 ;;
             -r|--cortx-ver)
+                cortx_version="$2"
+                shift 2
+                ;;
+            -b|--cortx-build)
                 cortx_version="$2"
                 shift 2
                 ;;
@@ -196,7 +203,7 @@ if [[ "$verbosity" -ge 1 ]]; then
     parsed_args+="\torig_iso=$orig_iso"
     parsed_args+="\n\toutput_dir=$output_dir\n\toutput_type=$output_type"
     parsed_args+="\n\tverbosity=$verbosity"
-    parsed_args+="\n\trelease=$cortx_version\n\tgen-iso=$gen_iso"
+    parsed_args+="\n\trelease=$cortx_version\n\tbuild=$cortx_build\n\tgen-iso=$gen_iso"
     parsed_args+="\n\tprvsnr_pkg=$prvsnr_pkg\n\tprvsnr_api_pkg=$prvsnr_api_pkg"
 
     echo -e "Parsed arguments:\n$parsed_args"
@@ -212,19 +219,23 @@ tmp_dir="$(mktemp -d)"
 build_dir="$tmp_dir"
 
 echo -e "Building CORTX rpms, build dir: $build_dir"
-$cmd_prefix "${script_dir}/buildrpm.sh" "$cortx_version" "$build_dir"
+$cmd_prefix "${script_dir}/buildrpm.sh" "$cortx_version" "$cortx_build" "$build_dir"
 
 echo -e "Preparing a $output_type bundle, output dir: $output_dir"
 pushd "$output_dir"
     rpms_dir="${build_dir}/rpmbuild/RPMS/noarch/"
     release_info="RELEASE.INFO"
+    third_party_release_info="THIRD_PARTY_RELEASE.INFO"
+    python_index_file="index.html"
+    third_party_dir="3rd_party"
+    python_deps_dir="python_deps"
 
     if [[ "$output_type" == "deploy-cortx" ]]; then
         cp -r "${rpms_dir}"/* .
         yum_repos=(".")
         cortx_dir="."
     else
-        yum_repos=("cortx_iso" "3rd_party")
+        yum_repos=("cortx_iso" "$third_party_dir")
 
         if [[ "$output_type" == "upgrade" ]]; then
             yum_repos+=("os")
@@ -234,10 +245,10 @@ pushd "$output_dir"
             echo -e "Mounting orginal ISO $orig_iso into $orig_bundle"
             mount -o loop "$orig_iso" "$orig_bundle"
         else
-            yum_repos+=("3rd_party/EPEL-7" "3rd_party/commons/glusterfs" "3rd_party/commons/saltstack")
+            yum_repos+=("$third_party_dir/EPEL-7" "$third_party_dir/commons/glusterfs" "$third_party_dir/commons/saltstack")
         fi
 
-        mkdir -p python_deps "${yum_repos[@]}"
+        mkdir -p "$python_deps_dir" "${yum_repos[@]}"
         cp -r "${rpms_dir}"/* cortx_iso
         cortx_dir="cortx_iso"
     fi
@@ -249,11 +260,11 @@ pushd "$output_dir"
 
     # copying existent repos inside
     if [[ -d "$orig_bundle" ]]; then
-        pushd 3rd_party
+        pushd "$third_party_dir"
             orig_repos=("EPEL-7" "commons/glusterfs" "commons/saltstack")
             mkdir commons
             for repo in "${orig_repos[@]}"; do
-                cp -r "$orig_bundle/3rd_party/$repo" "$repo"
+                cp -r "$orig_bundle/$third_party_dir/$repo" "$repo"
             done
         popd
 
@@ -277,6 +288,7 @@ pushd "$output_dir"
 
     echo -e "Preparing a release info data"
     sed_cmds="s/{{ VERSION }}/$cortx_version/g"
+    sed_cmds+="; s/{{ BUILD }}/$cortx_build/g"
     sed_cmds+="; s/{{ DATE }}/$(LC_ALL=en_US.UTF-8 date --utc)/g"
     sed_cmds+="; s/{{ KERNEL }}/$(uname -r)/g"
     sed "$sed_cmds" "${script_dir}/../${release_info}" >"$release_info"
@@ -284,6 +296,27 @@ pushd "$output_dir"
     for pkg in $pkgs; do
         echo "- $pkg" >>"$release_info"
     done
+    if [[ "$cortx_dir" != "." ]]; then
+      cp -f "$release_info" "$cortx_dir"
+    fi
+
+    if [[ -d "$third_party_dir" ]]; then
+        pushd "$third_party_dir"
+            if [[ ! -f "$third_party_release_info" ]]; then
+                sed "$sed_cmds" "${script_dir}/../${third_party_release_info}" >"$third_party_release_info"
+            fi
+        popd
+    fi
+
+    if [[ -d "$python_deps_dir" ]]; then
+        pushd "$python_deps_dir"
+            if [[ ! -f "$python_index_file" ]]; then
+                cp "${script_dir}/../${python_index_file}" .
+            fi
+        popd
+        touch "$python_deps_dir/index.html"
+    fi
+popd
 
 if [[ "$gen_iso" == true ]]; then
     rm -rf "$output_dir.iso"

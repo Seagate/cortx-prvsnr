@@ -16,11 +16,23 @@
 #
 
 from .integration import (
+    HostMeta,
     root_passwd,
     hosts_num,
     hosts_num_module,
     setup_hosts,
-    HostMeta
+    setup_hosts_specs,
+    ssh_profile,
+    ensure_ready,
+    ssh_client,
+    salt_configured,
+    salt_ready,
+    provisioner_installed,
+    provisioner_api_installed,
+    cortx_mocks_deployed,
+    cortx_upgrade_iso_mock_path,
+    cortx_upgrade_iso_mock,
+    cortx_upgrade_iso_mock_installed
 )
 
 fixtures = [
@@ -28,12 +40,36 @@ fixtures = [
     hosts_num,
     hosts_num_module,
     setup_hosts,
+    setup_hosts_specs,
+    ssh_profile,
+    ensure_ready,
+    ssh_client,
+    salt_configured,
+    salt_ready,
+    provisioner_installed,
+    provisioner_api_installed,
+    cortx_mocks_deployed,
+    cortx_upgrade_iso_mock_path,
+    cortx_upgrade_iso_mock,
+    cortx_upgrade_iso_mock_installed
 ]
 
 __all__ = [
+    'HostMeta',
     'root_passwd',
     'hosts_num',
     'hosts_num_module',
-    'setup_hosts',
-    'HostMeta'
+    'setup_hosts'
+    'setup_hosts_specs',
+    'ssh_profile',
+    'ensure_ready',
+    'ssh_client',
+    'salt_configured',
+    'salt_ready',
+    'provisioner_installed',
+    'provisioner_api_installed',
+    'cortx_mocks_deployed',
+    'cortx_upgrade_iso_mock_path',
+    'cortx_upgrade_iso_mock',
+    'cortx_upgrade_iso_mock_installed'
 ]

@@ -1030,9 +1030,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE EOS-8473 make generic logic
         run_args = RunArgsSetupProvisionerGeneric(nodes=nodes, **kwargs)
 
-        # TODO IMPROVE EOS-8473 better configuration way
-        salt_logger = logging.getLogger('salt.fileclient')
-        salt_logger.setLevel(logging.WARNING)
+        utils.make_salt_logs_quiet()
 
         # Config file validation against CLI args (Fail-Fast)
         if run_args.config_path:
@@ -1829,7 +1827,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             "salt-call state.apply components.provisioner.config.cluster_id",
             targets=ALL_MINIONS
         )
-
 
         return setup_ctx
 
