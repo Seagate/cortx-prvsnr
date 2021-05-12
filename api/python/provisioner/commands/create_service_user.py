@@ -30,7 +30,8 @@ from .. import (
 from ..vendor import attr
 
 from . import (
-    CommandParserFillerMixin
+    CommandParserFillerMixin,
+    PillarSet
 )
 
 
@@ -62,26 +63,15 @@ class CreateServiceUser(CommandParserFillerMixin):
         user = kwargs.pop('user')
         if user:
             logger.info(f"Updating service user name {user}")
-            cmd_run(
-                (
-                    'provisioner pillar_set'
-                    f' system/service-user/name '
-                    f' \'"{user}"\''
-                ),
-                targets=config.LOCAL_MINION,
-                secure=True
+            PillarSet().run(
+                'system/service-user/name',
+                f'{user}'
             )
 
         service_user_password = utils.generate_random_secret()
-
-        cmd_run(
-            (
-                'provisioner pillar_set'
-                f' system/service-user/password '
-                f' \'"{service_user_password}"\''
-            ),
-            targets=config.LOCAL_MINION,
-            secure=True
+        PillarSet().run(
+                'system/service-user/password',
+                f'{service_user_password}'
         )
 
         logger.info("Creating service user.")
