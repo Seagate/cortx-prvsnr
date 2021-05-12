@@ -26,5 +26,10 @@ haproxy:
             ssl_enabled: true
         s3server:
             ssl_enabled: true
-    nbproc: 12
-    nbthread: 16
+    nbproc: 1
+    {% if "physical" in grains['virtual'] %}
+        nbthread: 32
+    {% else %}
+        nbthread: 2
+    {% endif %}
+    maxconn: 150
