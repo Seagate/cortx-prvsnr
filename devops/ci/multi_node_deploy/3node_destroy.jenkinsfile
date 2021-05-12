@@ -181,6 +181,7 @@ node {
                     test -e /opt/isos && rm -rf /opt/isos || true
                     test -e /root/.provisioner && rm -rf /root/.provisioner || true
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    #test -e /etc/yum.repos.d && pushd /etc/yum.repos.d;rm -fv !("redhat.repo");popd || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
                 echo "Successfully removed file and directories."
