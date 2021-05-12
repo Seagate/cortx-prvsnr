@@ -110,7 +110,7 @@ class DeployVM(Deploy):
         pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
         pillar = next(iter(pillar.values()))
         if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
-            raise ValueError(f"value is not specified for cluster")
+            raise ValueError("value is not specified for cluster")
         else:
             cluster = pillar[pillar_key]
             nodes = []
