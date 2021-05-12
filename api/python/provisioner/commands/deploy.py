@@ -270,6 +270,9 @@ class Deploy(CommandParserFillerMixin):
 
         primary = self._primary_id()
         secondaries = f"not {primary}"
+        # Temperory fix for EOS-20526
+        second_node = "srvnode-2"
+        third_node = "srvnode-3"
 
         hw_states = [
             "system.storage.multipath",
@@ -304,15 +307,17 @@ class Deploy(CommandParserFillerMixin):
                     "sync.software.openldap",
                     "system.storage.multipath",
                     "sync.files",
-                    "ha.cortx-ha"
                 ):
-                    # Execute first on primary then on secondaries.
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
+                elif state in ("ha.cortx-ha"):
+                    # Execute first on primary then on secondaries in a sequence.
+                    self.ensure_consul_running()
+                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"components.{state}", second_node, stages)
+                    self._apply_state(f"components.{state}", third_node, stages)
                 else:
                      # Execute on all targets
                     self._apply_state(f"components.{state}", targets, stages)
