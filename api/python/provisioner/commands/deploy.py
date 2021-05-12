@@ -306,6 +306,7 @@ class Deploy(CommandParserFillerMixin):
                     "sync.software.rabbitmq",
                     "sync.software.openldap",
                     "system.storage.multipath",
+                    "csm",
                     "sync.files",
                 ):
                     self._apply_state(f"components.{state}", primary, stages)

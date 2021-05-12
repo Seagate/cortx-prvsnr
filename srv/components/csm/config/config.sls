@@ -31,3 +31,18 @@ Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
     - name: prvsnrusers
     - addusers:
       - {{ pillar['system']['service-user']['name'] }}
+
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
+Generate TLS certs:
+  module.run:
+    - csm.generate_csm_tls
+{% endif %}
+
+Copy TLS certs to minions:
+  file.recurse:
+    - source: salt://components/csm/files/tls/
+    - name: /var/csm/tls
+    - user: {{ pillar["cortx"]["software"]["csm"]["user"] }}
+    - group: {{ pillar["cortx"]["software"]["csm"]["user"] }}
+    - file_mode: 600
+
