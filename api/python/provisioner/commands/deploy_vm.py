@@ -111,6 +111,9 @@ class DeployVM(Deploy):
 
         primary = self._primary_id()
         secondaries = f"not {primary}"
+        # Temperory fix for EOS-20526
+        second_node = "srvnode-2"
+        third_node = "srvnode-3"
 
         # apply states
         for state in states:
@@ -135,13 +138,18 @@ class DeployVM(Deploy):
                 elif state in (
                     "sync.software.rabbitmq",
                     "sync.software.openldap",
-                    "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
+                elif state in ("ha.cortx-ha"):
+                    #Execute firt on primary, then on second node and then on the third
+                    self._apply_state(f"components.{state}", primary, stages)
+                    self._apply_state(f"components.{state}", second_node, stages)
+                    self._apply_state(f"components.{state}", third_node, stages)
+
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
 
