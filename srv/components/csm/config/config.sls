@@ -35,7 +35,7 @@ Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
 {% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
 Generate TLS certs:
   module.run:
-    - csm.generate_csm_tls
+    - csm.generate_csm_tls: []
 {% endif %}
 
 Copy TLS certs to minions:

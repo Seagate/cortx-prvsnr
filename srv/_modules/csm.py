@@ -47,7 +47,8 @@ DEST = '/var/csm/tls'
 
 
 def generate_csm_tls():
-    csm_user = __pillar__['cortx']['software']['csm']['user']
+    csm_user = getattr(sys.modules[__name__], '__pillar__')[
+        'cortx']['software']['csm']['user']
     tls_root_dir = PRVSNR_USER_FILEROOT_DIR / PRVSNR_USER_TLS_CERT_DIR
 
     cmd_run(
