@@ -15,10 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove kibana dependency pkg:
-  pkg.purged:
-    - pkgs:
-      - kibana-oss
+# Remove kibana dependency pkg:
+#   pkg.purged:
+#     - pkgs:
+#       - kibana-oss
 
 Install Kibana:
   pkg.installed:

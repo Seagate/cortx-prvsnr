@@ -17,7 +17,7 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.elasticsearch'.format(grains['id'])) %}
 include:
-  - components.misc_pkgs.elasticsearch.prepare
+# - components.misc_pkgs.elasticsearch.prepare
   - components.misc_pkgs.elasticsearch.install
   - components.misc_pkgs.elasticsearch.config
   - components.misc_pkgs.elasticsearch.start
