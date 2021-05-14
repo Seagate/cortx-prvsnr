@@ -4,7 +4,7 @@
     'srvnode-1': {
         'hostname': 'localhost-1',
         'signature': {
-            'name': 'srvnode1_signature'
+            'name': 'srvnode1_signature',
             'address': 'node1ABC'
         }
     }
