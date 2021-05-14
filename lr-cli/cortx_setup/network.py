@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class Network():
 
-    def config(transport_type = None, interface_type = None, 
+    def config(transport_type = None, interface_type = None,
                 network_type = None, interfaces = None
             ):
         node_id = local_minion_id()
@@ -20,7 +20,7 @@ class Network():
                 targets=node_id,
                 local=True
             )
-        
+
         elif interface_type:
             logger.info("Updating interface type in pillar data")
             PillarSet().run(

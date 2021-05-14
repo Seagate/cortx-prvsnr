@@ -23,11 +23,11 @@ setup(
     author='Seagate',
     author_email='support@seagate.com',
     maintainer='Seagate',
-    maintainer_email=f'maintainer',
+    maintainer_email=f'{"maintainer"}',
     url='https://github.com/Seagate/cortx-prvsnr',
     description='cortx_setup API',
-    long_description=f'description',
-    download_url=f'url',
+    long_description=f'{"description"}',
+    download_url=f'{"url"}',
     license='Seagate',
     classifiers=[
         "Programming Language :: Python :: 3.6"
