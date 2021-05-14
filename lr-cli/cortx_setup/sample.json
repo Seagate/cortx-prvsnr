@@ -1,0 +1,23 @@
+# Sample of expected Node Signature for stamping
+
+{
+    'srvnode-1': {
+        'hostname': 'localhost-1',
+        'signature': {
+            'name': 'srvnode1_signature'
+            'address': 'node1ABC'
+        }
+    }
+}
+
+# On node-2:
+
+{
+    'srvnode-2': {
+        'hostname': 'localhost-2',
+        'signature': {
+            'name': 'srvnode2_signature',
+            'address': 'node2ABC'
+        }
+    }
+}
