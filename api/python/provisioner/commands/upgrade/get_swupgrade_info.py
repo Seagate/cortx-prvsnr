@@ -19,7 +19,8 @@ from typing import Type
 
 from packaging import version
 from provisioner import inputs
-from provisioner.config import CORTX_ISO_DIR, REPO_CANDIDATE_NAME
+from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
+                                SWUpgradeInfoFields)
 
 from provisioner.salt import local_minion_id, cmd_run
 from provisioner.commands import CommandParserFillerMixin
@@ -53,7 +54,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
     _run_args_type = GetSWUpgradeInfoArgs
 
     @staticmethod
-    def _get_package_info(release: str) -> dict:
+    def _get_package_version(release: str) -> dict:
         """
         Function returns information about CORTX packages and their versions.
 
@@ -85,13 +86,25 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             logger.debug(f"There are no packages in repository '{repo}'")
 
         res = dict()
+        # NOTE: Format is following
+        # ```
+        #  {
+        #      'cortx-motr': {
+        #             'version': '2.0.0-277',
+        #          },
+        #  }
+        # ```
+        #
+        # TODO: Along the with 'version', field we need to add
+        #  'constraint version' field to provide necessary information about
+        #  compatibility with old versions
         for entry in packages:
             pkg, ver = entry.split(" ")
-            res[pkg] = ver
+            res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res
 
-    def run(self, release: str = None):
+    def run(self, release: str = None) -> dict:
         """
         Main function for Get SW Upgrade Repo command. Command returns
         information about CORTX packages and their versions.
@@ -126,4 +139,4 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
             release = max(upgrade_releases, key=version.parse)
 
-        return self._get_package_info(release)
+        return self._get_package_version(release)
