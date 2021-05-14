@@ -242,14 +242,14 @@ output: highstate
 # authorization from it. master_tries will still cycle through all
 # the masters in a given try, so it is appropriate if you expect
 # occasional downtime from the master(s).
-#master_tries: 1
+master_tries: 5
 
 # If authentication fails due to SaltReqTimeoutError during a ping_interval,
 # cause sub minion process to restart.
 #auth_safemode: False
 
 # Ping Master to ensure connection is alive (minutes).
-ping_interval: 5
+ping_interval: 2
 
 # To auto recover minions if master changes IP address (DDNS)
 #    auth_tries: 10
