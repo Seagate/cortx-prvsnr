@@ -35,6 +35,14 @@ Remove zookeeper log directory:
   file.absent:
     - name: /var/log/zookeeper
 
+Remove accepted epoch:
+  file.absent:
+    - name: /var/lib/zookeeper/version-2/acceptedEpoch
+
+Remove current epoch:
+  file.absent:
+    - name: /var/lib/zookeeper/version-2/currentEpoch
+
 Remove kafka log directory:
   file.absent:
     - name: /var/log/kafka
