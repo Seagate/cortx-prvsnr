@@ -1209,7 +1209,7 @@ function install_provisioner {
         popd
     elif [[ "$_repo_src" == "rpm" ]]; then
         if [[ -z "$_prvsnr_version" ]]; then
-            _prvsnr_version="http://cortx-storage.colo.seagate.com/releases/cortx/github/release/${_os_release}/last_successful/"
+            _prvsnr_version="http://${release_server}/releases/cortx/github/release/${_os_release}/last_successful/"
         fi
     fi
 

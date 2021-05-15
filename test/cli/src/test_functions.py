@@ -831,7 +831,7 @@ def test_functions_install_provisioner_rpm(
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
     assert baseurl == (
-        'http://cortx-storage.colo.seagate.com/releases/cortx/{}'
+        'http://<cortx_release_server>/releases/cortx/{}'
         .format(
             'integration/centos-7.7.1908/last_successful'
             if version is None else version
