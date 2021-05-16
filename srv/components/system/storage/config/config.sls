@@ -16,11 +16,14 @@
 #
 
 # Disable system swap
+{% set swap_devices = salt['mount.swaps']().keys() %}
 Deactivate and unmount system SWAP:
   module.run:
     # Deactivate SWAP
+    {% for swap_device in swap_devices %}
     - mount.swapoff:
-      - name: /dev/dm-1
+      - name: {{ swap_device }}
+    {% endfor %}
     # Remove SWAP from /etc/fstab
     - mount.rm_fstab:
       - name: swap
