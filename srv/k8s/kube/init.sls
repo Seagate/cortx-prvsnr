@@ -15,18 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+include:
+  - k8s.kube.prepare
+  - k8s.kube.install
+  - k8s.kube.start
+  - k8s.kube.sanity_check

@@ -18,5 +18,5 @@
 include:
   - k8s.prepare
   - k8s.containerd
-  # - k8s.docker
-  - k8s.kubectl
+  - k8s.docker
+  - k8s.kube

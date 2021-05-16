@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-Verify kubectl configuration:
-  cmd.run:
-    - name: kubectl cluster-info
+include:
+  - k8s.containerd.teardown
+  - k8s.docker.teardown
+  - k8s.kube.teardown

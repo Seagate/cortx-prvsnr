@@ -15,11 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Setup package repo for kubectl:
-  pkgrepo.managed:
-    - name: kubernetes
-    - humanname: Kubernetes
-    - baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-    - gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-    - gpgcheck: 1
-    - enabled: True
+
+include:
+  - k8s.kube.config.kubeadm
+  - k8s.kube.config.calico
+  - k8s.kube.config.finalize

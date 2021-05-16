@@ -16,17 +16,13 @@
 #
 
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+Setup package repo for kubectl:
+  pkgrepo.managed:
+    - name: kubernetes
+    - humanname: Kubernetes
+    - baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    - gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    - gpgcheck: 1
+    - repo_gpgcheck: 1
+    - exclude: kubelet kubeadm kubectl
+    - enabled: True

@@ -17,7 +17,7 @@
 
 include:
   - k8s.prepare
-  - k8s.docker.prepare
-  - k8s.docker.install
-  - k8s.docker.config
-  - k8s.docker.start
+  - k8s.containerd.prepare
+  - k8s.containerd.install
+  - k8s.containerd.config
+  - k8s.containerd.start

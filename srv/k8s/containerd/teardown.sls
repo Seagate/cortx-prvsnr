@@ -15,11 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 include:
-  - k8s.docker.stop
+  - k8s.containerd.stop
 
-Remove docker config:
+Remove containerd:
+  pkg.purged:
+    - name: containerd.io
+
+Remove package repo for containerd:
+  pkgrepo.absent:
+    - name: docker-ce-stable
+
+Containerd directory cleanup:
   file.absent:
-    - name: /etc/docker/daemon.json
-
-
+    - name: /etc/containerd

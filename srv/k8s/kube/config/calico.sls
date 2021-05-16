@@ -16,17 +16,12 @@
 #
 
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+{% if 'srvnode-1' in grains['id'] %}
+Install the Tigera Calico operator and custom resource definitions:
+  cmd.run:
+    - name: kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+
+Install Calico by creating the necessary custom resource:
+  cmd.run:
+    - name: kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+{% endif %}

@@ -16,17 +16,14 @@
 #
 
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+Set SELinux in disabled mode:
+  selinux.mode:
+    - name: disabled
+    - unless:
+      - (sestatus | grep -iE "SELinux status:.*disabled") >/dev/null
+
+Update file /etc/selinux/config:
+  file.replace:
+    - name: /etc/selinux/config
+    - pattern: SELINUX=.*
+    - repl: SELINUX=Disabled

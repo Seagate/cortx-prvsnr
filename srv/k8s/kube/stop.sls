@@ -15,10 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
 
-include:
-  - k8s.kubectl.prepare
-  - k8s.kubectl.install
-  - k8s.kubectl.start
-  - k8s.kubectl.sanity_check
+Stop kubelet service:
+  service.dead:
+    - name: kubelet
+    - enable: False

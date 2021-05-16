@@ -15,8 +15,20 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+include:
+  - k8s.kube.stop
 
-Stop kube:
-  cmd.script:
-    - name: kube-down.sh
-    - source: https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/kube-down.sh
+Remove CNI config:
+  file.absent:
+    - name: /etc/cni/net.d
+
+Remove kube packages:
+  pkg.purged:
+    - pkgs:
+      - kubectl
+      - kubelet
+      - kubeadm
+
+Setup package repo for kubectl:
+  pkgrepo.absent:
+    - name: kubernetes

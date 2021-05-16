@@ -15,18 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Reference: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+Install kube packages:
+  pkg.installed:
+    - pkgs:
+      - kubectl
+      - kubelet
+      - kubeadm
+    - refresh: True
+    - allow_updates: False
+    - disableexcludes: kubernetes

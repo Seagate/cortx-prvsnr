@@ -16,17 +16,23 @@
 #
 
 
-Create docker config file for k8s:
+Setup module for k8s:
   file.managed:
-    - name: /etc/docker/daemon.json
+    - name: /etc/modules-load.d/k8s.conf
     - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+        br_netfilter
+
+Load module using modprobe:
+  cmd.run:
+    - name: modprobe br_netfilter
+
+Setup systemctl for k8s:
+  file.managed:
+    - name: /etc/sysctl.d/k8s.conf
+    - contents: |
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+
+Update systemctl for bridge network:
+  cmd.run:
+    - name: sysctl --system

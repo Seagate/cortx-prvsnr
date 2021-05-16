@@ -15,5 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - k8s.teardown.containerd
+
+{% if 'srvnode-1' in grains['id'] %}
+Allow pods scheduling on all nodes:
+  cmd.run:
+    - name: kubectl taint nodes --all node-role.kubernetes.io/master-
+{% endif %}

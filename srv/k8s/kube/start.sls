@@ -16,7 +16,7 @@
 #
 
 
-Start kube:
-  cmd.script:
-    - name: kube-up.sh
-    - source: https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/kube-up.sh
+Start kubelet service:
+  service.running:
+    - name: kubelet
+    - enable: True

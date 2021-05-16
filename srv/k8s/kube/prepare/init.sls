@@ -16,17 +16,13 @@
 #
 
 
-Create docker config file for k8s:
-  file.managed:
-    - name: /etc/docker/daemon.json
-    - contents: |
-        {
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-            "max-size": "100m"
-          },
-          "storage-driver": "overlay2"
-        }
-    - makedirs: True
-    - dir_mode: 755
+include:
+  - components.system.storage.config
+  - k8s.kube.prepare.setup_selinux
+  - k8s.kube.prepare.nw_bridge
+  - k8s.kube.prepare.kube_repo
+
+Disabled firewall for k8s:
+  service.dead:
+    - name: firewalld
+    - enable: False

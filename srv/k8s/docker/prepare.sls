@@ -17,6 +17,9 @@
 
 Setup package repo for docker:
   pkgrepo.managed:
-    - name: docker-repo
-    - humanname: docker-repo
-    - baseurl: https://download.docker.com/linux/centos/docker-ce.repo
+    - name: docker-ce-stable
+    - humanname: Docker CE Stable - $basearch
+    - baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    - enabled: 1
+    - gpgcheck: 1
+    - gpgkey: https://download.docker.com/linux/centos/gpg

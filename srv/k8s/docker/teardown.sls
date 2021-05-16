@@ -18,8 +18,20 @@
 include:
   - k8s.docker.stop
 
+Remove docker:
+  pkg.purged:
+    - pkgs:
+      - docker-ce
+      - docker-ce-cli
+
 Remove docker config:
   file.absent:
-    - name: /etc/docker/daemon.json
+    - name: /etc/docker
 
+Remove docker data:
+  file.absent:
+    - name: /var/lib/docker
 
+Remove package repo for docker:
+  pkgrepo.absent:
+    - name: docker-ce-stable
