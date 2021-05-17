@@ -568,7 +568,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ]
         )
 
-    def _run(self, nodes, **kwargs):  # noqa: C901 FIXME
+    def _run(self, nodes, **kwargs):  # noqa: MC0001, C901 FIXME
         # TODO update install repos logic (salt repo changes)
         # TODO firewall make more salt oriented
         # TODO sources: github | gitrepo | rpm

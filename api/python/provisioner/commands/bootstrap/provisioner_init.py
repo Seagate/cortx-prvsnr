@@ -300,137 +300,150 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
     def secondaries(self):
         return self.nodes[1:]
 
-    def __attrs_post_init__(self):  # noqa: C901
-        # TODO review params check logic per dist type
-        logger.debug(f"Provisioner setup Source is: '{self.source}'")
 
-        # check sources
-        if self.source == 'local':
-            if not self.local_repo:
-                raise ValueError("local repo is undefined")
-            if (
-                not self.pypi_repo and
-                self.dist_type != config.DistrType.BUNDLE
-            ):
-                logger.warning(
-                    "Custom pip repo cannot be used "
-                    "for non bundled distributions "
-                    "hence pip will be configured to install from pypi.org "
-                )
-                self.pypi_repo = True
-        elif self.source == 'iso':
-            if not self.iso_cortx:
-                raise ValueError("ISO for CORTX is undefined")
+    def __source_local(self):
+        if not self.local_repo:
+            raise ValueError("local repo is undefined")
+        if (
+            not self.pypi_repo and
+            self.dist_type != config.DistrType.BUNDLE
+        ):
+            logger.warning(
+                "Custom pip repo cannot be used "
+                "for non bundled distributions "
+                "hence pip will be configured to install from pypi.org "
+            )
+            self.pypi_repo = True
 
-            iso_names = []
-            if self.iso_os:
-                if self.iso_os.suffix != '.iso':
-                    raise ValueError(
-                        ".iso extension is expected for OS ISO"
-                    )
-                iso_names.append(self.iso_os.name)
 
-            if self.iso_cortx.suffix != '.iso':
-                raise ValueError(".iso extension is expected for CORTX ISO")
-            iso_names.append(self.iso_cortx.name)
+    def __source_iso(self):
+        if not self.iso_cortx:
+            raise ValueError("ISO for CORTX is undefined")
 
-            if self.iso_cortx_deps:
-                if self.iso_cortx_deps.suffix != '.iso':
-                    raise ValueError(
-                        ".iso extension is expected for CORTX deps ISO"
-                    )
-                if not self.pypi_repo:
-                    logger.warning(
-                        "Custom python repo can be used only "
-                        "for single ISO based setup "
-                        "hence pip will be configured to install from pypi.org"
-                    )
-                    self.pypi_repo = True
-                iso_names.append(self.iso_cortx_deps.name)
-
-            if len(iso_names) != len(set(iso_names)):
+        iso_names = []
+        if self.iso_os:
+            if self.iso_os.suffix != '.iso':
                 raise ValueError(
-                    "ISO files have collision in names"
+                    ".iso extension is expected for OS ISO"
                 )
+            iso_names.append(self.iso_os.name)
 
-            if self.dist_type != config.DistrType.BUNDLE:
-                logger.info(
-                    "The type of distribution would be set to "
-                    f"{config.DistrType.BUNDLE}"
+        if self.iso_cortx.suffix != '.iso':
+            raise ValueError(".iso extension is expected for CORTX ISO")
+        iso_names.append(self.iso_cortx.name)
+
+        if self.iso_cortx_deps:
+            if self.iso_cortx_deps.suffix != '.iso':
+                raise ValueError(
+                    ".iso extension is expected for CORTX deps ISO"
                 )
-                self.dist_type = config.DistrType.BUNDLE
-
-            if (
-                self.target_build !=
-                attr.fields(type(self)).target_build.default
-            ):
+            if not self.pypi_repo:
                 logger.warning(
-                    "`target_build` value would be ignored "
-                    "for ISO based installation"
-                )
-
-            release_sls = (
-                config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
-            )
-            # iso files will be mounted into dirs inside that directory
-            base_dir = Path(
-                utils.load_yaml(release_sls)['release']['base']['base_dir']
-            )
-
-            if not self.iso_cortx_deps:
-                base_dir /= config.CORTX_SINGLE_ISO_DIR
-
-            self.target_build = f'file://{base_dir}'
-
-            if (
-                self.url_cortx_deps !=
-                attr.fields(type(self)).url_cortx_deps.default
-            ):
-                logger.warning(
-                    "`url_cortx_deps` value would be ignored "
-                    "for ISO based installation"
-                )
-                self.url_cortx_deps = None
-
-        elif self.source == 'rpm':
-            if not self.target_build:
-                raise ValueError('`target_build` should be specified')
-            if self.dist_type == config.DistrType.BUNDLE and (
-                self.url_cortx_deps !=
-                attr.fields(type(self)).url_cortx_deps.default
-            ):
-                logger.warning(
-                    "`url_cortx_deps` value would be ignored "
-                    "for bundle distribution type"
-                )
-                self.url_cortx_deps = None
-            if (
-                not self.pypi_repo and
-                self.dist_type != config.DistrType.BUNDLE
-            ):
-                logger.warning(
-                    "Custom pip repo cannot be used "
-                    "for non bundled distributions "
+                    "Custom python repo can be used only "
+                    "for single ISO based setup "
                     "hence pip will be configured to install from pypi.org"
                 )
                 self.pypi_repo = True
+            iso_names.append(self.iso_cortx_deps.name)
+
+        if len(iso_names) != len(set(iso_names)):
+            raise ValueError(
+                "ISO files have collision in names"
+            )
+
+        if self.dist_type != config.DistrType.BUNDLE:
+            logger.info(
+                "The type of distribution would be set to "
+                f"{config.DistrType.BUNDLE}"
+            )
+            self.dist_type = config.DistrType.BUNDLE
+
+        if (
+            self.target_build !=
+            attr.fields(type(self)).target_build.default
+        ):
+            logger.warning(
+                "`target_build` value would be ignored "
+                "for ISO based installation"
+            )
+
+        release_sls = (
+            config.BUNDLED_SALT_PILLAR_DIR / 'groups/all/release.sls'
+        )
+        # iso files will be mounted into dirs inside that directory
+        base_dir = Path(
+            utils.load_yaml(release_sls)['release']['base']['base_dir']
+        )
+
+        if not self.iso_cortx_deps:
+            base_dir /= config.CORTX_SINGLE_ISO_DIR
+
+        self.target_build = f'file://{base_dir}'
+
+        if (
+            self.url_cortx_deps !=
+            attr.fields(type(self)).url_cortx_deps.default
+        ):
+            logger.warning(
+                "`url_cortx_deps` value would be ignored "
+                "for ISO based installation"
+            )
+            self.url_cortx_deps = None
+
+
+    def __source_rpm(self):
+        if not self.target_build:
+            raise ValueError('`target_build` should be specified')
+        if self.dist_type == config.DistrType.BUNDLE and (
+            self.url_cortx_deps !=
+            attr.fields(type(self)).url_cortx_deps.default
+        ):
+            logger.warning(
+                "`url_cortx_deps` value would be ignored "
+                "for bundle distribution type"
+            )
+            self.url_cortx_deps = None
+        if (
+            not self.pypi_repo and
+            self.dist_type != config.DistrType.BUNDLE
+        ):
+            logger.warning(
+                "Custom pip repo cannot be used "
+                "for non bundled distributions "
+                "hence pip will be configured to install from pypi.org"
+            )
+            self.pypi_repo = True
+
+
+    def __attrs_post_init__(self):
+        # TODO review params check logic per dist type
+        logger.debug(f"Provisioner setup Source is: '{self.source}'")
+
+        if len(self.nodes) < 2 and self.ha:
+            raise ValueError(
+                'HA is supported only for multi-node deployment.'
+            )
+
+        # check sources
+        if self.source == 'local':
+            self.__source_local()
+        elif self.source == 'iso':
+            self.__source_iso()
+        elif self.source == 'rpm':
+            self.__source_rpm()
         else:
-            logger.error(
-                "Invalid or Unsupported Provisioner source "
-                f"{self.source} provided for deployment"
-            )
-            raise NotImplementedError(
-                f"{self.source} provisioner source is not supported yet"
-            )
+            try:
+                raise NotImplementedError(
+                    "Invalid or Unsupported Provisioner source"
+                    " provided for deployment:"
+                    f" {self.source}"
+                )
+            except Exception as ex:
+                logger.exception(ex)
 
         # TODO EOS-18920 Validation for all run_args
         # Cumulate all checks and exceptions related to
         # input cmd args in a single method
-
-        if len(self.nodes) < 2 and self.ha:
-            raise ValueError(
-                'HA is supported only for multiple nodes installation'
-            )
 
 
 @attr.s(auto_attribs=True)
