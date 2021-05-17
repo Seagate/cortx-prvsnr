@@ -36,7 +36,7 @@ from ..utils import (
     dump_yaml,
     load_yaml
 )
-from .setup_provisioner import (
+from .bootstrap_provisioner import (
     RunArgsSetupProvisionerGeneric,
     SetupCmdBase,
     SetupCtx

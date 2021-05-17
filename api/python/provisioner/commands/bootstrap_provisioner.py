@@ -987,31 +987,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         return pillar
 
-    def _prepare_glusterfs_pillar(self, profile_paths, in_docker=False):
-        pillar_all_dir = profile_paths['salt_pillar_dir'] / 'groups/all'
-        pillar_all_dir.mkdir(parents=True, exist_ok=True)
-
-        glusterfs_pillar_path = pillar_all_dir / 'glusterfs.sls'
-        if glusterfs_pillar_path.exists():
-            data = load_yaml(glusterfs_pillar_path)['glusterfs']
-        else:
-            data = {
-                'in_docker': in_docker,
-                'volumes': {
-                    'volume_salt_cache_jobs': {
-                        'export_dir': str(config.GLUSTERFS_VOLUME_SALT_JOBS),
-                        'mount_dir': '/var/cache/salt/master/jobs'
-                    },
-                    'volume_prvsnr_data': {
-                        'export_dir': str(config.GLUSTERFS_VOLUME_PRVSNR_DATA),
-                        'mount_dir': str(config.PRVSNR_DATA_SHARED_DIR)
-                    }
-                }
-            }
-            dump_yaml(glusterfs_pillar_path,  dict(glusterfs=data))
-
-        return data
-
     def _clean_salt_cache(self, paths):
         run_subprocess_cmd(
             [
@@ -1341,7 +1316,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.ha:
             SetupGluster(setup_ctx=setup_ctx,
                          nodes=run_args.nodes).run(nodes, **kwargs)
-        # HA LOGIC END TODO wrap to a method / funciton
 
         #   CONFIGURE SALT
         logger.info("Configuring salt minions")
