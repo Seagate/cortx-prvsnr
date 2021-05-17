@@ -105,7 +105,37 @@ This is the **primary deployment method** for CORTX software.
     /opt/isos/cortx-prep-<version>.sh
     ```
 
-1.  Create `config.ini` file. Refer to [this section](https://github.com/Seagate/cortx-prvsnr/wiki/Auto-Deploy-Provisioner-CLI-Commands/#configini-example) for an example.
+1.  Create `config.ini` file. Refer below example:
+
+    ```
+    [cluster]
+    cluster_ip=172.19.219.26
+    mgmt_vip=10.237.65.68
+
+    [storage_enclosure]
+    type=5U84
+    controller.primary_mc.ip=10.0.0.2
+    controller.secondary_mc.ip=10.0.0.3
+    controller.user=manage
+    controller.secret='Seagate123$'
+    controller.type=gallium
+
+    [srvnode-1]
+    hostname=sm26-r19.pun.seagate.com
+    network.mgmt_nw.iface=eno1
+    network.data_nw.public_ip_addr=172.19.19.26
+    network.data_nw.iface=enp175s0f0, enp175s0f1
+    bmc.user=bmcadmin
+    bmc.secret='adminBMC!'
+
+    [srvnode-2]
+    hostname=sm27-r19.pun.seagate.com
+    network.mgmt_nw.iface=eno1
+    network.data_nw.public_ip_addr=172.19.19.27
+    network.data_nw.iface=enp175s0f0, enp175s0f1
+    bmc.secret='adminBMC!'
+    bmc.user=bmcadmin
+    ```
 
 1.  Download `config.ini` to the primary server (Server-A), for example, to `/root`
 
