@@ -25,11 +25,11 @@ from .salt import cmd_run, StatesApplier
 from .utils import ensure
 from . import errors
 
-try:
-    # TODO: what is the correct import path?
-    from cortx.hare import CortxClusterManager
-except ImportError:
-    CortxClusterManager = None
+# try:
+#     # TODO: EOS-20624: what is the correct import path
+#     from cortx.hare import CortxClusterManager
+# except ImportError:
+#     CortxClusterManager = None
 
 
 logger = logging.getLogger(__name__)
@@ -185,17 +185,28 @@ def r2_check_cluster_health_status() -> bool:
         False otherwise
 
     """
-    # ret = cluster_status()
-    # return 'OFFLINE:' in ret
-    cm = CortxClusterManager()
     try:
-        res = cm.cluster_controller.status()
+        res = cmd_run('cluster status', targets=LOCAL_MINION)
     except Exception as e:
-        logger.debug(f"Some Hare exception occurred: {e}")
+        logger.debug(f'Some HA exception occured: {e}')
         return False
     else:
-        # TODO: we need to parse the output
         if not res:
             return False
 
         return True
+
+    if False:
+        # TODO: EOS-20624: Switch to Python API
+        cm = CortxClusterManager()
+        try:
+            res = cm.cluster_controller.status()
+        except Exception as e:
+            logger.debug(f"Some Hare exception occurred: {e}")
+            return False
+        else:
+            # TODO: we need to parse the output
+            if not res:
+                return False
+
+            return True
