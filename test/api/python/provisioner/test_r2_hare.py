@@ -17,13 +17,99 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from provisioner.hare import r2_check_cluster_health_status
+from provisioner.errors import ClusterStopError
+from provisioner.hare import (
+    r2_check_cluster_health_status,
+    r2_cluster_stop,
+    r2_cluster_start
+)
+from provisioner.config import HareStatus
+
+
+@pytest.mark.unit
+def test_cluster_stop():
+    """
+    Test for Provisioner wrapper over HA cluster stop command.
+
+    Returns
+    -------
+
+    """
+    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.FAILED.value,
+                    'msg': "Can't stop the cluster"
+                }
+        }
+
+        with pytest.raises(ClusterStopError):
+            r2_cluster_stop()
+
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.IN_PROGRESS.value,
+                    'msg': "Stopping of cluster is in progress"
+                }
+        }
+        r2_cluster_stop()
+
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.SUCCEEDED.value,
+                    'msg': "Cluster is stopped"
+                }
+        }
+        r2_cluster_stop()
+
+
+@pytest.mark.unit
+def test_cluster_start():
+    """
+    Test for Provisioner wrapper over HA cluster start command.
+
+    Returns
+    -------
+
+    """
+    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.FAILED.value,
+                    'msg': "Can't start the cluster"
+                }
+        }
+
+        with pytest.raises(ClusterStopError):
+            r2_cluster_start()
+
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.IN_PROGRESS.value,
+                    'msg': "Starting of cluster is in progress"
+                }
+        }
+        r2_cluster_start()
+
+        mh.return_value = {
+            'srvnode-1':
+                {
+                    'status': HareStatus.SUCCEEDED.value,
+                    'msg': "Cluster is started"
+                }
+        }
+        r2_cluster_start()
 
 
 @pytest.mark.unit
 def test_cluster_health_status_over_cli():
     """
-    Test for Provisioner wrappers over HA CLI commands.
+    Test for Provisioner wrapper over HA cluster status command.
 
     Returns
     -------
@@ -39,7 +125,9 @@ def test_cluster_health_status_over_cli():
 
         assert r2_check_cluster_health_status() is False
 
-        mh.return_value = dict(res=True)
+        mh.return_value = {
+            'srvnode-1': {'res': True}
+        }
 
         assert r2_check_cluster_health_status() is True
 

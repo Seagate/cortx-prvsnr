@@ -20,7 +20,9 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
+from provisioner.vendor import attr
+
+from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR, HareStatus
 from .salt import cmd_run, StatesApplier
 from .utils import ensure
 from . import errors
@@ -188,7 +190,7 @@ def r2_check_cluster_health_status() -> bool:
     try:
         res = cmd_run('cluster status', targets=LOCAL_MINION)
     except Exception as e:
-        logger.debug(f'Some HA exception occured: {e}')
+        logger.debug(f'Some HA exception occurred: {e}')
         return False
     else:
         if not res:
@@ -210,3 +212,69 @@ def r2_check_cluster_health_status() -> bool:
                 return False
 
             return True
+
+
+HareOutputWrapper = attr.make_class(
+    "HareOutputWrapper",
+    {
+        'status': attr.ib(
+            validator=attr.validators.in_(HareStatus),
+            converter=lambda x: x and HareStatus(str(x)),
+            default=None),
+        'msg': attr.ib(default=None)
+    }
+)
+
+
+def r2_cluster_stop() -> HareOutputWrapper:
+    """
+    Wrapper over HA CLI command to stop the cluster
+
+    Returns
+    -------
+    HareOutputWrapper
+        return HareOutputWrapper instance with parsed output of HA cluster
+        stop command
+
+    Raises
+    ------
+    errors.ClusterStopError
+        raise this exception if HA cluster stop command returns failed status
+
+    """
+    res = cmd_run('cluster stop', targets=LOCAL_MINION)
+
+    res = next(iter(res.values()))
+    parsed_res = HareOutputWrapper(**res)
+
+    if parsed_res.status == HareStatus.FAILED:
+        raise errors.ClusterStopError(parsed_res.msg)
+
+    return parsed_res
+
+
+def r2_cluster_start() -> HareOutputWrapper:
+    """
+    Wrapper over HA CLI command to start the cluster
+
+    Returns
+    -------
+    HareOutputWrapper
+        return HareOutputWrapper instance with parsed output of HA cluster
+        start command
+
+    Raises
+    ------
+    errors.ClusterStopError
+        raise this exception if HA cluster start command returns failed status
+
+    """
+    res = cmd_run('cluster start', targets=LOCAL_MINION)
+
+    res = next(iter(res.values()))
+    parsed_res = HareOutputWrapper(**res)
+
+    if parsed_res.status == HareStatus.FAILED:
+        raise errors.ClusterStopError(parsed_res.msg)
+
+    return parsed_res
