@@ -36,7 +36,6 @@ from provisioner.config import (
      ALL_MINIONS
 )
 from provisioner.salt import local_minion_id
-from provisioner.utils import run_subprocess_cmd
 from provisioner.vendor import attr
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ logger = logging.getLogger(__name__)
 class ClusterId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def _initial_check(self):
+    def _initial_check(self, role):
         """Pre-checks
 
         checks:
@@ -62,17 +61,17 @@ class ClusterId(CommandParserFillerMixin):
                 cluster_id = CLUSTER_ID_FILE.read_text().replace('\n', '')
 
             else:
-                logger.info("ClusterID file does not exist "
-                            "or is empty. Generating an ID to set..")
+                if role != "primary":
+                    raise ValueError(
+                       "ClusterID can be set only on the Primary node "
+                       f"of the cluster. Role of current node: '{role}'. "
+                       "Execute the same command from the Primary node."
+                    )
+                else:
+                    logger.info("ClusterID file does not exist "
+                                "or is empty. Generating an ID to set..")
 
-                cluster_id = str(uuid.uuid4())
-
-                with open(CLUSTER_ID_FILE, "w+") as file_value:
-                    file_value.write(cluster_id)
-
-                # TODO: check if there's a better way to make file immutable
-                _cmd = f"chattr +i {CLUSTER_ID_FILE} && lsattr {CLUSTER_ID_FILE}"
-                run_subprocess_cmd([_cmd], check=False, shell=True)     # nosec
+                    cluster_id = str(uuid.uuid4())
 
             return cluster_id
 
@@ -112,8 +111,8 @@ class ClusterId(CommandParserFillerMixin):
 
             if cluster_id:
                 if len(set(cluster_id)) != 1:
-                    logger.error(
-                      "ERROR: ClusterID assignment not unique across "
+                    logger.warning(
+                      "ClusterID assignment NOT unique across "
                       f"the nodes of the cluster: {cluster_id}. "
                       "Possible warning: Check if cluster values "
                       "have been manually tampered with."
@@ -123,7 +122,7 @@ class ClusterId(CommandParserFillerMixin):
                     res = cluster_id[0]
 
             else:
-                logger.error(
+                logger.warning(
                      "ClusterID is not present in Pillar data for "
                      "either of the nodes."
                 )
@@ -153,44 +152,44 @@ class ClusterId(CommandParserFillerMixin):
             )[local_minion_id()]["roles"]            # displays as a list
 
             if node_role[0] != "primary":
-                raise ValueError(
-                     "Error: ClusterID can be set only in the Primary node "
-                     f"of the cluster. Node role received: '{node_role[0]}'."
-                )
-
-            logger.info("This is the Primary node of the cluster.")
-
-            cluster_id_from_pillar = self._get_cluster_id()
-
-            if not cluster_id_from_pillar:
                 logger.info(
-                   "ClusterID not set in pillar data. "
-                   "Checking setup file.."
+                     f"Node role received: '{node_role[0]}'."
                 )
+                cluster_id_from_setup = self._initial_check(node_role[0])
 
-            # double verification
-            cluster_id_from_setup = self._initial_check()
+            else:
+                logger.info("This is the Primary node of the cluster.")
 
-            if cluster_id_from_setup == cluster_id_from_pillar:
-                logger.info(
-                  "Bootstrapping completed and ClusterID is set!"
+                cluster_id_from_pillar = self._get_cluster_id()
+
+                if not cluster_id_from_pillar:
+                    logger.info(
+                       "ClusterID not set in pillar data. "
+                       "Checking setup file.."
+                    )
+
+                # double verification
+                cluster_id_from_setup = self._initial_check(node_role[0])
+
+                if cluster_id_from_setup == cluster_id_from_pillar:
+                    logger.info(
+                      "Bootstrapping completed and ClusterID is set!"
+                    )
+
+                elif (cluster_id_from_pillar and
+                            cluster_id_from_setup != cluster_id_from_pillar):
+                    logger.warning(
+                       "Mismatch in cluster_id value between "
+                       "setup and pillar data. Setting unique value now.."
+                       "\nPossible warning: Check if cluster values "
+                       "have been manually tampered with."
+                    )
+
+                PillarSet().run(
+                    'cluster/cluster_id',
+                    f'{cluster_id_from_setup}',
+                    targets=targets
                 )
-
-            elif (cluster_id_from_pillar and
-                        cluster_id_from_setup != cluster_id_from_pillar):
-                logger.error(
-                   "Mismatch in cluster_id value between "
-                   "setup and pillar data. Setting unique value now.."
-                   "\nPossible warning: Check if cluster values "
-                   "have been manually tampered with."
-
-                )
-
-            PillarSet().run(
-                'cluster/cluster_id',
-                f'{cluster_id_from_setup}',
-                targets=targets
-            )
 
             return f"cluster_id: {cluster_id_from_setup}"
 
