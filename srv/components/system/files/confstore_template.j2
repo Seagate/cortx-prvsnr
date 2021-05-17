@@ -9,6 +9,13 @@ cortx>software>openldap>sgiam>user=>{{ pillar['cortx']['software']['openldap']['
 cortx>software>openldap>sgiam>secret=>{{ pillar['cortx']['software']['openldap']['sgiam']['secret'] }}
 cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
 cortx>software>corosync>secret=>{{ pillar['cortx']['software']['corosync-pacemaker']['secret'] }}
+cortx>software>uds>certificate_path=>/var/csm/tls
+cortx>software>uds>domain_crt=>domain.crt
+cortx>software>uds>domain_key=>domain.key
+cortx>software>uds>native_crt=>native.crt
+cortx>software>uds>native_key=>native.key
+cortx>software>ssl>certificate_path=>/etc/ssl/stx/stx.pem
+cortx>software>ssl>private_key_path=>/etc/ssl/stx/stx.pem
 cortx>software>common>message_bus_type=>kafka
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
 cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:{{ pillar['cortx']['software']['kafka']['port'] }}
