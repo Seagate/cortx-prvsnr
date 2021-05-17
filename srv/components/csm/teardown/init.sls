@@ -38,10 +38,6 @@ Remove csm user from certs group:
     - delusers:
       - csm
 
-Remove tls certs:
-  file.absent:
-    - name: /var/csm/tls
-
 Delete csm checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
