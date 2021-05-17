@@ -631,12 +631,14 @@ def test_set_swupdate_repo_for_reinstall():
 #   - install CORTX stack first from some release
 #   - set some newer release
 #   - call udpate
-def test_cortx_update():
-    api_call(
-        'set_swupdate_repo',
-        '1.2.3',
-        source='http://<cortx_release_server>/releases/cortx/integration/centos-7.7.1908/last_successful',  # noqa: E501
-        targets=minion_id
-    )
+# FIXME: We would need an input from RE team, whether a release repo will be public or not.
+# If not - we will make that thing optional so the test can be run inside Seagate network only.
+# def test_cortx_update():
+#     api_call(
+#         'set_swupdate_repo',
+#         '1.2.3',
+#         source='http://<cortx_release_server>/releases/cortx/integration/centos-7.7.1908/last_successful',  # noqa: E501
+#         targets=minion_id
+#     )
 
-    api_call('cortx_update', targets=minion_id)
+#     api_call('cortx_update', targets=minion_id)
