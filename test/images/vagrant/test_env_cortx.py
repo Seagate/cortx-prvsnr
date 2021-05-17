@@ -76,7 +76,7 @@ def test_singlenode_deploy_ready_env(mhostsrvnode1, request):
         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
     ).split('=')[1]
     assert baseurl == (
-        'http://cortx-storage.colo.seagate.com/releases/cortx/{}'
+        'http://<cortx_release_server>/releases/cortx/{}'
         .format(request.config.getoption('prvsnr_release'))
     )
 
