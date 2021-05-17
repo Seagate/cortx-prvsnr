@@ -15,12 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set cluster_id = pillar['cluster']['cluster_id'] %}
-
 Create cluster-id file:
   file.managed:
     - name: /etc/cluster-id
-    - contents: {{ cluster_id }}
+    - contents: {{ pillar['cluster']['cluster_id'] }}
 
 Make file immutable:
   cmd.run:
