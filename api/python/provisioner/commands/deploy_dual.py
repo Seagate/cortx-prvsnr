@@ -163,8 +163,7 @@ class DeployDual(Deploy):
                     "system.storage",
                     "sspl",
                     "csm",
-                    "provisioner.backup",
-                    "ha.cortx-ha"
+                    "provisioner.backup"
                 ):
                     # Consul takes time to come online after initialization
                     # (around 2-3 mins at times). We need to ensure
