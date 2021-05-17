@@ -24,7 +24,7 @@ include:
 Mount default OS swap device:
   module.run:
     - mount.swapon:
-      - name: /dev/dm-1
+      - name: /dev/mapper/vg_sysvol-lv_swap
     - mount.set_fstab:
       - name: swap
       - device: /dev/mapper/vg_sysvol-lv_swap
