@@ -22,8 +22,13 @@ include:
 {% endif %}
 
 Mount default OS swap device:
-  cmd.run:
-    - name: swapon -a || true
+  module.run:
+    - mount.swapon:
+      - name: /dev/mapper/vg_sysvol-lv_swap
+    - mount.set_fstab:
+      - name: swap
+      - device: /dev/mapper/vg_sysvol-lv_swap
+      - fstype: swap
 
 Delete storage checkpoint flag:
   file.absent:
