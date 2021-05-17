@@ -32,10 +32,13 @@ from ..pillar import PillarUpdater
 from . import (
     CommandParserFillerMixin
 )
-from .bootstrap_provisioner import (
-    BootstrapProvisioner,
+from .bootstrap import (
     RunArgsSetupProvisionerGeneric,
     SetupCmdBase
+)
+
+from .bootstrap_provisioner import (
+    BootstrapProvisioner
 )
 
 
@@ -72,8 +75,6 @@ class PostProvisioner(SetupCmdBase, CommandParserFillerMixin):
         ssh_client = BootstrapProvisioner()._create_ssh_client(
             paths['salt_master_file'], paths['salt_roster_file']
         )
-
-        # setup_ctx = SetupCtx(run_args, paths, ssh_client)
 
         if not run_args.field_setup:
             logger.info("Generating a password for the service user")
