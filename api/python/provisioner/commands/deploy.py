@@ -21,6 +21,7 @@ import logging
 from .. import (
     config,
     inputs,
+    values,
     errors
 )
 from ..salt import (
@@ -42,6 +43,10 @@ from .setup_provisioner import SetupCtx
 from .configure_setup import (
     RunArgsConfigureSetupAttrs,
     SetupType
+)
+from ..pillar import (
+    PillarKey,
+    PillarResolver
 )
 
 
@@ -168,6 +173,22 @@ class Deploy(CommandParserFillerMixin):
     _run_args_type = run_args_type
     setup_ctx: Optional[SetupCtx] = None
 
+    @staticmethod
+    def _get_node_list():
+        """Retrieve pillar data."""
+        pillar_key = PillarKey("cluster")
+        pillar = PillarResolver(config.LOCAL_MINION).get([pillar_key])
+        pillar = next(iter(pillar.values()))
+        if not pillar[pillar_key] or pillar[pillar_key] is values.MISSED:
+            raise ValueError("value is not specified for cluster")
+        else:
+            cluster = pillar[pillar_key]
+            nodes = []
+            for key in cluster:
+                if 'srvnode' in key:
+                    nodes.append(key)
+            return nodes
+
     def _primary_id(self):
         if self.setup_ctx:
             return self.setup_ctx.run_args.primary.minion_id
@@ -254,7 +275,7 @@ class Deploy(CommandParserFillerMixin):
                 else:
                     logger.warning(f"State {_state} is missed, ignored")
 
-    def _run_states(self, states_group: str, run_args: run_args_type):
+    def _run_states(self, states_group: str, run_args: run_args_type):  # noqa: C901, E501
         # FIXME VERIFY EOS-12076 Mindfulness breaks in legacy version
         setup_type = (
             SetupType.SINGLE
@@ -270,9 +291,6 @@ class Deploy(CommandParserFillerMixin):
 
         primary = self._primary_id()
         secondaries = f"not {primary}"
-        # Temperory fix for EOS-20526
-        second_node = "srvnode-2"
-        third_node = "srvnode-3"
 
         hw_states = [
             "system.storage.multipath",
@@ -313,14 +331,18 @@ class Deploy(CommandParserFillerMixin):
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
-                elif state in ("ha.cortx-ha"):
-                    # Execute first on primary then on secondaries in a sequence.
-                    self.ensure_consul_running()
+                elif state in (
+                    "ha.cortx-ha",
+                ):
+                    # Execute first on primary then on secondary sequentially.
+                    nodes = Deploy._get_node_list()
                     self._apply_state(f"components.{state}", primary, stages)
-                    self._apply_state(f"components.{state}", second_node, stages)
-                    self._apply_state(f"components.{state}", third_node, stages)
+                    if primary in nodes:
+                        nodes.remove(primary)
+                    for node in nodes:
+                        self._apply_state(f"components.{state}", node, stages)
                 else:
-                     # Execute on all targets
+                    # Execute on all targets
                     self._apply_state(f"components.{state}", targets, stages)
 
     def _update_salt(self, targets=config.ALL_MINIONS):
