@@ -14,13 +14,46 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-from provisioner.hare import r2_check_cluster_health_status
 import pytest
 from unittest.mock import patch, MagicMock
 
+from provisioner.hare import r2_check_cluster_health_status
+
 
 @pytest.mark.unit
+def test_cluster_health_status_over_cli():
+    """
+    Test for Provisioner wrappers over HA CLI commands.
+
+    Returns
+    -------
+
+    """
+    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
+        mh.side_effect = Exception("Some Exception")
+
+        assert r2_check_cluster_health_status() is False
+
+        mh.reset_mock(side_effect=True)
+        mh.return_value = dict()
+
+        assert r2_check_cluster_health_status() is False
+
+        mh.return_value = dict(res=True)
+
+        assert r2_check_cluster_health_status() is True
+
+
+@pytest.mark.skip(reason='EOS-20624')
+@pytest.mark.unit
 def test_cluster_health_status():
+    """
+    Test for Provisioner wrappers over Hare Python API calls.
+
+    Returns
+    -------
+
+    """
     with patch("provisioner.hare.CortxClusterManager", MagicMock) as mh:
         mh.cluster_controller = MagicMock()
         mh.cluster_controller.status.side_effect = Exception("Some Exception")
