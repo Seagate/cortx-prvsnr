@@ -17,7 +17,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from provisioner.errors import ClusterStopError
+from provisioner.errors import ClusterStopError, ProvisionerError
 from provisioner.hare import (
     r2_check_cluster_health_status,
     r2_cluster_stop,
@@ -133,6 +133,24 @@ def test_cluster_health_status_over_cli():
 
 
 @pytest.mark.skip(reason='EOS-20624')
+    with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
+        # TODO: `ensure` function for check_cluster_is_online is used withou
+        #  expected_exc parameter
+        # mh.side_effect = Exception("Some Exception")
+
+        # with pytest.raises(ProvisionerError):
+        #     r2_check_cluster_health_status()
+        # mh.reset_mock(side_effect=True)
+
+        mh.return_value = False
+        with pytest.raises(ProvisionerError):
+            r2_check_cluster_health_status()
+
+        mh.return_value = True
+        r2_check_cluster_health_status()
+
+
+@pytest.mark.skip(reason='EOS-20624: Hare Python API is not ready yet')
 @pytest.mark.unit
 def test_cluster_health_status():
     """

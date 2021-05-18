@@ -278,3 +278,13 @@ def r2_cluster_start() -> HareOutputWrapper:
         raise errors.ClusterStopError(parsed_res.msg)
 
     return parsed_res
+
+
+def r2_check_cluster_health_status():
+    """
+    Wrapper over API of the hare which provides the capability to check
+    the health status of cluster.
+
+
+    """
+    ensure_cluster_is_healthy()
