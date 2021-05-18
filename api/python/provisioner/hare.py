@@ -183,7 +183,7 @@ def r2_check_cluster_health_status():
     Raises
     ------
     ProvisionerError
-        raise this exception if the number of tries were exceeded
+        raise this exception if the number of tries was exceeded
     """
     ensure_cluster_is_healthy()
 
@@ -203,7 +203,7 @@ def r2_cluster_stop(tries: int = 30, wait: float = 10):
     Raises
     ------
     ProvisionerError
-        raise this exception if the number of tries were exceeded
+        raise this exception if the number of tries was exceeded
 
     """
     ensure_cluster_is_stopped(tries=tries, wait=wait)
@@ -224,7 +224,7 @@ def r2_cluster_start(tries: int = 30, wait: float = 10):
     Raises
     ------
     ProvisionerError
-        raise this exception if the number of tries were exceeded
+        raise this exception if the number of tries was exceeded
 
     """
     ensure_cluster_is_started(tries=tries, wait=wait)
