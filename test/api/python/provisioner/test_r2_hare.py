@@ -17,6 +17,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
+from provisioner.errors import ProvisionerError
 from provisioner.hare import r2_check_cluster_health_status
 
 
@@ -29,19 +30,21 @@ def test_cluster_health_status_over_cli():
     -------
 
     """
-    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
-        mh.side_effect = Exception("Some Exception")
+    with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
+        # TODO: `ensure` function for check_cluster_is_online is used withou
+        #  expected_exc parameter
+        # mh.side_effect = Exception("Some Exception")
 
-        assert r2_check_cluster_health_status() is False
+        # with pytest.raises(ProvisionerError):
+        #     r2_check_cluster_health_status()
+        # mh.reset_mock(side_effect=True)
 
-        mh.reset_mock(side_effect=True)
-        mh.return_value = dict()
+        mh.return_value = False
+        with pytest.raises(ProvisionerError):
+            r2_check_cluster_health_status()
 
-        assert r2_check_cluster_health_status() is False
-
-        mh.return_value = dict(res=True)
-
-        assert r2_check_cluster_health_status() is True
+        mh.return_value = True
+        r2_check_cluster_health_status()
 
 
 @pytest.mark.skip(reason='EOS-20624')
