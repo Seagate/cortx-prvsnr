@@ -73,8 +73,10 @@ def test_cluster_start():
 def test_cluster_health_status_over_cli():
     """
     Test for Provisioner wrappers over HA CLI commands.
+
     Returns
     -------
+
     """
     with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
         # TODO: `ensure` function for check_cluster_is_online is used without
@@ -98,8 +100,10 @@ def test_cluster_health_status_over_cli():
 def test_cluster_health_status():
     """
     Test for Provisioner wrappers over Hare Python API calls.
+
     Returns
     -------
+
     """
     with patch("provisioner.hare.CortxClusterManager", MagicMock) as mh:
         mh.cluster_controller = MagicMock()

@@ -18,6 +18,11 @@
 Remove nodejs:
   file.absent:
     - name: /opt/nodejs
+
+Delete nodejs checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.nodejs
+
 #
 #Remove nodejs from bash_profile:
 #  file.replace:

@@ -125,6 +125,8 @@ sw_update:
   type: SWUpdate
 sw_upgrade:
   type: upgrade.SWUpgrade
+get_swupgrade_info:
+  type: upgrade.GetSWUpgradeInfo
 fw_update:
   type: FWUpdate
 sw_rollback:
@@ -141,6 +143,8 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
+create_service_user:
+  type: CreateServiceUser
 cmd_run:
   type: CmdRun
 configure_setup:
@@ -163,6 +167,10 @@ configure_node:
 # setup commands
 setup_provisioner:
   type: SetupProvisioner
+bootstrap_provisioner:
+  type: BootstrapProvisioner
+post_provisioner:
+  type: PostProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:

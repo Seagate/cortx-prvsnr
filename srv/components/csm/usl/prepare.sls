@@ -15,21 +15,32 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
-include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-#  - components.csm.sanity_check
-  - components.csm.usl
+Stage - Post Install USL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:post_install')
+    - failhard: True
 
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
+Stage - Prepare USL:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:prepare')
+    - failhard: True
+
+{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
+
+Generate TLS certs:
+  module.run:
+    - csm.generate_csm_tls: []
+
+{% else %}
+
+Copy TLS certs to minions:
+  file.recurse:
+    - source: salt://components/csm/files/tls/
+    - name: /var/csm/tls
+    - user: {{ pillar["cortx"]["software"]["csm"]["user"] }}
+    - group: {{ pillar["cortx"]["software"]["csm"]["user"] }}
+    - file_mode: 600
+
 {% endif %}
+
+

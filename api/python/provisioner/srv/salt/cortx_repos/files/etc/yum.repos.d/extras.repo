@@ -1,5 +1,5 @@
 [extras]
 gpgcheck=0
 enabled=1
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-Extras/
+baseurl=https://vault.centos.org/7.8.2003/extras/x86_64/
 name=extras

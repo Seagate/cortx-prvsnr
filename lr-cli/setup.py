@@ -15,21 +15,27 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
-include:
-  - components.csm.install
-  - components.csm.config
-  - components.csm.start
-#  - components.csm.sanity_check
-  - components.csm.usl
+from setuptools import setup
 
-Generate csm checkpoint flag:
-  file.managed:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
-    - makedirs: True
-    - create: True
-{%- else -%}
-CSM already applied:
-  test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.csm.teardown' to reprovision these states."
-{% endif %}
+setup(
+    name='cortx_setup',
+    version='2.0.0',
+    author='Seagate',
+    author_email='support@seagate.com',
+    maintainer='Seagate',
+    maintainer_email=f'{"maintainer"}',
+    url='https://github.com/Seagate/cortx-prvsnr',
+    description='cortx_setup API',
+    long_description=f'{"description"}',
+    download_url=f'{"url"}',
+    license='Seagate',
+    classifiers=[
+        "Programming Language :: Python :: 3.6"
+    ],
+    keywords='cortx_setup API',
+    package_dir={'cortx_setup': 'cortx_setup'},
+    include_package_data=True,
+    install_requires=[
+        'cortx-prvsnr >= 2.0.42'
+    ],
+)

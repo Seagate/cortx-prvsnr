@@ -20,7 +20,6 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-
 from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
 from .salt import cmd_run, StatesApplier
 from .utils import ensure
