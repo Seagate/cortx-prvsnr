@@ -21,6 +21,7 @@ from packaging import version
 from provisioner import inputs
 from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
                                 SWUpgradeInfoFields)
+from provisioner.pillar import PillarResolver, PillarKey
 
 from provisioner.salt import local_minion_id, cmd_run
 from provisioner.commands import CommandParserFillerMixin
@@ -95,7 +96,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         #  }
         # ```
         #
-        # TODO: Along the with 'version', field we need to add
+        # TODO: EOS-20507: Along the with 'version', field we need to add
         #  'constraint version' field to provide necessary information about
         #  compatibility with old versions
         for entry in packages:
@@ -127,16 +128,18 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
             # TODO: make get pillar API public and available for others to
             #  avoid code duplication
-            pillars = SWUpgrade._get_pillar('release/upgrade', local_minion)
+            pillars = PillarResolver(local_minion).get(
+                [PillarKey('release/upgrade/repos')],
+                fail_on_undefined=True
+            )
 
-            upgrade_releases = pillars[local_minion].get("repos", None)
+            upgrade_releases = list(pillars[local_minion][
+                PillarKey('release/upgrade/repos')].keys())
 
-            if not upgrade_releases:
-                raise ValueError("release/upgrade/repos pillars are missed")
-
-            upgrade_releases = list(upgrade_releases.keys())
             upgrade_releases.remove(REPO_CANDIDATE_NAME)
 
+            # NOTE: Assumption: we expect that SW Upgrade release version
+            # is formatted according to PEP-440
             release = max(upgrade_releases, key=version.parse)
 
         return self._get_package_version(release)
