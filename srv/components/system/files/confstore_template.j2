@@ -54,8 +54,8 @@ server_node>{{ machine_id }}>bmc>secret=>{{ pillar['cluster'][node]['bmc']['secr
 {%- for iface in pillar['cluster'][node]['network']['mgmt']['interfaces'] %}
 server_node>{{ machine_id }}>network>management>interfaces[{{ loop.index - 1 }}]=>{{ iface }}
 {%- endfor %}
-server_node>{{ machine_id }}>network>management>gateway=>{{ salt["pillar.get"]('cluster:{0}:network:mgmt:gateway'.format(node), grains['ip4_gw']) }}
-server_node>{{ machine_id }}>network>management>netmask=>{{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
+{% set mgmt_gateway = pillar['cluster'][node]['network']['mgmt']['gateway'] %}
+server_node>{{ machine_id }}>network>management>gateway=>{{ mgmt_gateway if mgmt_gateway else salt["grains.get"]('ip4_gw') }}
 server_node>{{ machine_id }}>network>management>public_fqdn=>{{ pillar['cluster'][node]['network']['mgmt']['public_fqdn'] }}
 {%- for iface in pillar['cluster'][node]['network']['data']['public_interfaces'] %}
 server_node>{{ machine_id }}>network>data>public_interfaces[{{ loop.index - 1 }}]=>{{ iface }}
