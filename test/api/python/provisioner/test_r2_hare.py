@@ -17,13 +17,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from provisioner.errors import ClusterStopError, ProvisionerError
+from provisioner.errors import ProvisionerError
 from provisioner.hare import (
     r2_check_cluster_health_status,
     r2_cluster_stop,
     r2_cluster_start
 )
-from provisioner.config import HareStatus
 
 
 @pytest.mark.unit
@@ -35,35 +34,17 @@ def test_cluster_stop():
     -------
 
     """
-    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.FAILED.value,
-                    'msg': "Can't stop the cluster"
-                }
-        }
+    with patch('provisioner.hare.cluster_status',
+               MagicMock()) as cluster_status_mock, \
+            patch('provisioner.hare.cmd_run', MagicMock()) as cmd_run_mock:
+        cmd_run_mock.return_value = {'srvnode-1': True}
 
-        with pytest.raises(ClusterStopError):
-            r2_cluster_stop()
-
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.IN_PROGRESS.value,
-                    'msg': "Stopping of cluster is in progress"
-                }
-        }
+        cluster_status_mock.return_value = "OFFLINE:"
         r2_cluster_stop()
 
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.SUCCEEDED.value,
-                    'msg': "Cluster is stopped"
-                }
-        }
-        r2_cluster_stop()
+        cluster_status_mock.return_value = "ONLINE:"
+        with pytest.raises(ProvisionerError):
+            r2_cluster_stop(tries=2, wait=0.5)
 
 
 @pytest.mark.unit
@@ -75,34 +56,16 @@ def test_cluster_start():
     -------
 
     """
-    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.FAILED.value,
-                    'msg': "Can't start the cluster"
-                }
-        }
+    with patch('provisioner.hare.check_cluster_is_online',
+               MagicMock()) as check_cluster_mock,\
+            patch('provisioner.hare.cmd_run', MagicMock()) as cmd_run_mock:
+        cmd_run_mock.return_value = {'srvnode-1': True}
 
-        with pytest.raises(ClusterStopError):
-            r2_cluster_start()
+        check_cluster_mock.return_value = False
+        with pytest.raises(ProvisionerError):
+            r2_cluster_start(tries=2, wait=0.5)
 
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.IN_PROGRESS.value,
-                    'msg': "Starting of cluster is in progress"
-                }
-        }
-        r2_cluster_start()
-
-        mh.return_value = {
-            'srvnode-1':
-                {
-                    'status': HareStatus.SUCCEEDED.value,
-                    'msg': "Cluster is started"
-                }
-        }
+        check_cluster_mock.return_value = True
         r2_cluster_start()
 
 
@@ -114,7 +77,7 @@ def test_cluster_health_status_over_cli():
     -------
     """
     with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
-        # TODO: `ensure` function for check_cluster_is_online is used withou
+        # TODO: `ensure` function for check_cluster_is_online is used without
         #  expected_exc parameter
         # mh.side_effect = Exception("Some Exception")
 

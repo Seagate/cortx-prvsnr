@@ -20,9 +20,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from provisioner.vendor import attr
 
-from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR, HareStatus
+from .config import LOCAL_MINION, ALL_MINIONS, PRVSNR_ROOT_DIR
 from .salt import cmd_run, StatesApplier
 from .utils import ensure
 from . import errors
@@ -157,13 +156,14 @@ def check_cluster_is_online():
     return next(iter(res.values()))
 
 
-def ensure_cluster_is_stopped(tries=30, wait=1):
+def ensure_cluster_is_stopped(tries: int = 30, wait: float = 10):
     cluster_stop()
-    # no additional checks are needed since
-    # cluster stop is a sync operation
+    # NOTE: In new HA API cluster stop command is async.
+    # So ensure block is added
+    ensure(check_cluster_is_offline, tries=tries, wait=wait)
 
 
-def ensure_cluster_is_started(tries=30, wait=10):
+def ensure_cluster_is_started(tries: int = 30, wait: float = 10):
     cluster_start()
     ensure(check_cluster_is_online, tries=tries, wait=wait)
 
@@ -180,71 +180,51 @@ def r2_check_cluster_health_status():
     Wrapper over API of the hare which provides the capability to check
     the health status of cluster.
 
+    Raises
+    ------
+    ProvisionerError
+        raise this exception if the number of tries were exceeded
     """
     ensure_cluster_is_healthy()
 
 
-HareOutputWrapper = attr.make_class(
-    "HareOutputWrapper",
-    {
-        'status': attr.ib(
-            validator=attr.validators.in_(HareStatus),
-            converter=lambda x: x and HareStatus(str(x)),
-            default=None),
-        'msg': attr.ib(default=None)
-    }
-)
-
-
-def r2_cluster_stop() -> HareOutputWrapper:
+def r2_cluster_stop(tries: int = 30, wait: float = 10):
     """
     Wrapper over HA CLI command to stop the cluster
 
-    Returns
-    -------
-    HareOutputWrapper
-        return HareOutputWrapper instance with parsed output of HA cluster
-        stop command
+    Parameters
+    ----------
+    tries: int
+        number of tries
+
+    wait: float
+        wait time in seconds between tries
 
     Raises
     ------
-    errors.ClusterStopError
-        raise this exception if HA cluster stop command returns failed status
+    ProvisionerError
+        raise this exception if the number of tries were exceeded
 
     """
-    res = cmd_run('cluster stop', targets=LOCAL_MINION)
-
-    res = next(iter(res.values()))
-    parsed_res = HareOutputWrapper(**res)
-
-    if parsed_res.status == HareStatus.FAILED:
-        raise errors.ClusterStopError(parsed_res.msg)
-
-    return parsed_res
+    ensure_cluster_is_stopped(tries=tries, wait=wait)
 
 
-def r2_cluster_start() -> HareOutputWrapper:
+def r2_cluster_start(tries: int = 30, wait: float = 10):
     """
     Wrapper over HA CLI command to start the cluster
 
-    Returns
-    -------
-    HareOutputWrapper
-        return HareOutputWrapper instance with parsed output of HA cluster
-        start command
+    Parameters
+    ----------
+    tries: int
+        number of tries
+
+    wait: float
+        wait time in seconds between tries
 
     Raises
     ------
-    errors.ClusterStopError
-        raise this exception if HA cluster start command returns failed status
+    ProvisionerError
+        raise this exception if the number of tries were exceeded
 
     """
-    res = cmd_run('cluster start', targets=LOCAL_MINION)
-
-    res = next(iter(res.values()))
-    parsed_res = HareOutputWrapper(**res)
-
-    if parsed_res.status == HareStatus.FAILED:
-        raise errors.ClusterStopError(parsed_res.msg)
-
-    return parsed_res
+    ensure_cluster_is_started(tries=tries, wait=wait)
