@@ -109,30 +109,10 @@ def test_cluster_start():
 @pytest.mark.unit
 def test_cluster_health_status_over_cli():
     """
-    Test for Provisioner wrapper over HA cluster status command.
-
+    Test for Provisioner wrappers over HA CLI commands.
     Returns
     -------
-
     """
-    with patch('provisioner.hare.cmd_run', MagicMock()) as mh:
-        mh.side_effect = Exception("Some Exception")
-
-        assert r2_check_cluster_health_status() is False
-
-        mh.reset_mock(side_effect=True)
-        mh.return_value = dict()
-
-        assert r2_check_cluster_health_status() is False
-
-        mh.return_value = {
-            'srvnode-1': {'res': True}
-        }
-
-        assert r2_check_cluster_health_status() is True
-
-
-@pytest.mark.skip(reason='EOS-20624')
     with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
         # TODO: `ensure` function for check_cluster_is_online is used withou
         #  expected_exc parameter
@@ -155,10 +135,8 @@ def test_cluster_health_status_over_cli():
 def test_cluster_health_status():
     """
     Test for Provisioner wrappers over Hare Python API calls.
-
     Returns
     -------
-
     """
     with patch("provisioner.hare.CortxClusterManager", MagicMock) as mh:
         mh.cluster_controller = MagicMock()
