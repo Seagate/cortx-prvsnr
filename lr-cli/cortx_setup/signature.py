@@ -21,7 +21,6 @@
 import argparse
 import logging
 import subprocess  # noqa
-import yaml
 
 from pathlib import Path
 
@@ -32,9 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 class Signature:
-    
+
     def __init__(self):
-        lr_signature_file_path = Path("/etc/node-signature.yaml")
+        self.lr_signature_file_path = Path("/etc/node-signature.yaml")
 
     def get(self, **kwargs):
         """signature get command execution method.
