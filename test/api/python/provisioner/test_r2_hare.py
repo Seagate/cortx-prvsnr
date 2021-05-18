@@ -18,7 +18,55 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from provisioner.errors import ProvisionerError
-from provisioner.hare import r2_check_cluster_health_status
+from provisioner.hare import (
+    r2_check_cluster_health_status,
+    r2_cluster_stop,
+    r2_cluster_start
+)
+
+
+@pytest.mark.unit
+def test_cluster_stop():
+    """
+    Test for Provisioner wrapper over HA cluster stop command.
+
+    Returns
+    -------
+
+    """
+    with patch('provisioner.hare.cluster_status',
+               MagicMock()) as cluster_status_mock, \
+            patch('provisioner.hare.cmd_run', MagicMock()) as cmd_run_mock:
+        cmd_run_mock.return_value = {'srvnode-1': True}
+
+        cluster_status_mock.return_value = "OFFLINE:"
+        r2_cluster_stop()
+
+        cluster_status_mock.return_value = "ONLINE:"
+        with pytest.raises(ProvisionerError):
+            r2_cluster_stop(tries=2, wait=0.5)
+
+
+@pytest.mark.unit
+def test_cluster_start():
+    """
+    Test for Provisioner wrapper over HA cluster start command.
+
+    Returns
+    -------
+
+    """
+    with patch('provisioner.hare.check_cluster_is_online',
+               MagicMock()) as check_cluster_mock,\
+            patch('provisioner.hare.cmd_run', MagicMock()) as cmd_run_mock:
+        cmd_run_mock.return_value = {'srvnode-1': True}
+
+        check_cluster_mock.return_value = False
+        with pytest.raises(ProvisionerError):
+            r2_cluster_start(tries=2, wait=0.5)
+
+        check_cluster_mock.return_value = True
+        r2_cluster_start()
 
 
 @pytest.mark.unit
@@ -31,7 +79,7 @@ def test_cluster_health_status_over_cli():
 
     """
     with patch('provisioner.hare.check_cluster_is_online', MagicMock()) as mh:
-        # TODO: `ensure` function for check_cluster_is_online is used withou
+        # TODO: `ensure` function for check_cluster_is_online is used without
         #  expected_exc parameter
         # mh.side_effect = Exception("Some Exception")
 
