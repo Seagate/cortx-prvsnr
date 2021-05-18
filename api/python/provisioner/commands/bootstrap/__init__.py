@@ -16,8 +16,16 @@
 #
 
 from .node import NodeGrains, Node
+from .provisioner_init import (
+    RunArgsSetupProvisionerGeneric,
+    SetupCtx,
+    SetupCmdBase
+)
 
 __all__ = [
     "NodeGrains",
-    "Node"
+    "Node",
+    "RunArgsSetupProvisionerGeneric",
+    "SetupCtx",
+    "SetupCmdBase"
 ]

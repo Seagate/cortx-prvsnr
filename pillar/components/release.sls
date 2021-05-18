@@ -23,7 +23,7 @@ release:
                     #   rhel7.7 or centos7.7   <- OS ISO is mounted here
                     #   3rd_party              <- CORTX 3rd party ISO is mounted here
                     #   cortx_iso              <- CORTX ISO (main) is mounted here
-    target_build: http://cortx-storage.colo.seagate.com/releases/cortx/github/release/rhel-7.7.1908/last_successful/
+    target_build: http://<release_server>/releases/cortx/github/release/rhel-7.7.1908/last_successful/
     update:
         base_dir: /opt/seagate/cortx/updates
         repos: {}  # dictionary with (release, source) pairs,

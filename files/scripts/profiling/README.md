@@ -3,7 +3,7 @@
 - During deployment, save the output of the provisioner auto_deploy_vm command in some file.**
 
 ```sh
-provisioner auto_deploy_vm srvnode-1:ssc-vm-c-1810.colo.seagate.com --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build http://cortx-storage.colo.seagate.com/releases/cortx_builds/centos-7.8.2003/531/ | tee deploy_log 
+provisioner auto_deploy_vm srvnode-1:ssc-vm-c-1810.colo.seagate.com --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --source rpm --config-path ~/config.ini --dist-type bundle --target-build http://<cortx_release_server>/releases/cortx_builds/centos-7.8.2003/531/ | tee deploy_log 
 ```
 
 ```sh

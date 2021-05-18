@@ -163,8 +163,7 @@ class DeployDual(Deploy):
                     "system.storage",
                     "sspl",
                     "csm",
-                    "provisioner.backup",
-                    "ha.cortx-ha"
+                    "provisioner.backup"
                 ):
                     # Consul takes time to come online after initialization
                     # (around 2-3 mins at times). We need to ensure
@@ -189,10 +188,18 @@ class DeployDual(Deploy):
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
+                elif state in (
+                    "ha.cortx-ha",
+                ):
+                    # Execute first on primary then on secondary sequentially.
+                    nodes = Deploy._get_node_list()
+                    self._apply_state(f"components.{state}", primary, stages)
+                    if primary in nodes:
+                        nodes.remove(primary)
+                    for node in nodes:
+                        self._apply_state(f"components.{state}", node, stages)
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
 
     def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)

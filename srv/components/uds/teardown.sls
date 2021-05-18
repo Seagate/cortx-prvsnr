@@ -24,7 +24,7 @@ Remove USL cert file:
 
 Remove uds package:
   pkg.purged:
-    - name: uds
+    - name: uds-pyi
 
 Delete uds yum repo:
   pkgrepo.absent:

@@ -31,3 +31,7 @@ Remove statsd configuration:
 Remove /opt/statsd-utils:
   file.absent:
     - name: /opt/statsd-utils
+
+Delete statsd checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.statsd
