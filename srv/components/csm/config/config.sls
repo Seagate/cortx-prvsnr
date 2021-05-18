@@ -31,3 +31,4 @@ Add {{ pillar['system']['service-user']['name'] }} user to prvsnrusers group:
     - name: prvsnrusers
     - addusers:
       - {{ pillar['system']['service-user']['name'] }}
+

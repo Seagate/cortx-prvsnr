@@ -18,7 +18,7 @@
 cortx:
   software:
     csm:
-      user: csm
+      user: cortxub
       secret:
     openldap:
       backend_db: mdb

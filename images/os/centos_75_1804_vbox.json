@@ -8,7 +8,7 @@
       "http_directory": ".",
       "iso_urls": [
         "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-1804.iso",
-        "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/7.5.1804.isos/CentOS-7-x86_64-Minimal-1804.iso"
+        "https://vault.centos.org/7.5.1804/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso"
       ],
       "iso_checksum": "FABDC67FF3A1674A489953EFFA285DFD",
       "iso_checksum_type": "md5",

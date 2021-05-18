@@ -39,7 +39,7 @@
       "type": "shell",
       "inline": [
         "set -ex",
-        "echo -e '[cortx-prvsnr-cli]\ngpgcheck=0\nenabled=0\nbaseurl=http://cortx-storage.colo.seagate.com/releases/cortx/{{user `prvsnr_cli_release`}}\nname=cortx-prvsnr-cli' >/etc/yum.repos.d/cortx-prvsnr-cli.repo",
+        "echo -e '[cortx-prvsnr-cli]\ngpgcheck=0\nenabled=0\nbaseurl=http://<release_server>/releases/cortx/{{user `prvsnr_cli_release`}}\nname=cortx-prvsnr-cli' >/etc/yum.repos.d/cortx-prvsnr-cli.repo",
         "yum --enablerepo=cortx-prvsnr-cli install -y cortx-prvsnr-cli",
         "sed -i \"s/HostName srvnode-1/HostName $(hostname)/g\" /root/.ssh/config",
         "cd /opt/seagate/cortx/provisioner/cli",

@@ -19,6 +19,7 @@
 
     {% set base_dir = '/opt/seagate/users' %}
     {% set user_data = salt['pillar.get']('system:service-user') %}
+    {% set roles = salt['pillar.get']('system:' + grains["id"] + ':roles') %}
 
 seagate_users_dir_created:
   file.directory:
@@ -36,7 +37,7 @@ service_user_configured:
     - shell: {{ user_data['shell'] }}
     - groups: {{ user_data['groups'] }}
     # would be activated at unboxing time
-    {% if not "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
+    {% if roles and not "primary" in roles -%}
     - expire: 1
     {% endif %}
 
