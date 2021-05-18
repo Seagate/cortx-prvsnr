@@ -27,8 +27,6 @@ from provisioner.salt import local_minion_id, cmd_run
 from provisioner.commands import CommandParserFillerMixin
 from provisioner.vendor import attr
 
-from . import SWUpgrade
-
 
 logger = logging.getLogger(__name__)
 
