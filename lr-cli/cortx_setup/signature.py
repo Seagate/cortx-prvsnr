@@ -20,7 +20,7 @@
 
 import argparse
 import logging
-import subprocess
+import subprocess  # noqa
 import yaml
 
 from pathlib import Path
@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class Signature:
 
+    @staticmethod
     def get(**kwargs):
         """signature get command execution method.
 
@@ -72,6 +73,7 @@ class Signature:
               f"Failed: GET LR signature from ConfStore: {str(exc)}"
             )
 
+    @staticmethod
     def set(**kwargs):
         """signature set command execution method.
 
@@ -100,7 +102,7 @@ class Signature:
                     subprocess.Popen(_cmd, shell=True)     # nosec
 
                     with open(lr_sign_file, 'r') as fo:
-                        data = yaml.load(fo, yaml.SafeLoader)
+                        data = yaml.safe_load(fo)
 
                 Conf.load(index, f'yaml://{lr_sign_file}')
                 data['signature'].update({key: value})
