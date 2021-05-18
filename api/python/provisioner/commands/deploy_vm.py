@@ -130,8 +130,7 @@ class DeployVM(Deploy):
                 elif state in (
                     "sync.software.rabbitmq",
                     "sync.software.openldap",
-                    "csm",
-                    "ha.cortx-ha"
+                    "csm"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
