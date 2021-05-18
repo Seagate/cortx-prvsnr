@@ -589,3 +589,10 @@ class LockMetaDataFields(Enum):
 
     PID = "pid"
     SOURCE_TARGET = "source_target"
+
+
+class SWUpgradeInfoFields(Enum):
+    """Named fields for meta information about SW upgrade repository"""
+
+    VERSION = "version"
+    VERSION_CONSTRAINT = "version_constraint"
