@@ -25,6 +25,13 @@ from .salt import cmd_run, StatesApplier
 from .utils import ensure
 from . import errors
 
+# try:
+#     # TODO: EOS-20624: what is the correct import path
+#     from cortx.hare import CortxClusterManager
+# except ImportError:
+#     CortxClusterManager = None
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -164,3 +171,13 @@ def ensure_cluster_is_started(tries=30, wait=10):
 def ensure_cluster_is_healthy(tries=1, wait=10):
     logger.info("Ensuring cluster is online and healthy")
     ensure(check_cluster_is_online, tries=tries, wait=wait)
+
+
+def r2_check_cluster_health_status():
+    """
+    Wrapper over API of the hare which provides the capability to check
+    the health status of cluster.
+
+
+    """
+    ensure_cluster_is_healthy()
