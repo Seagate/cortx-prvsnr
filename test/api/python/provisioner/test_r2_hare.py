@@ -47,7 +47,7 @@ def test_cluster_health_status_over_cli():
         r2_check_cluster_health_status()
 
 
-@pytest.mark.skip(reason='EOS-20624')
+@pytest.mark.skip(reason='EOS-20624: Hare Python API is not ready yet')
 @pytest.mark.unit
 def test_cluster_health_status():
     """
