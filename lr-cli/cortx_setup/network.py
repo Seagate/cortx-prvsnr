@@ -17,7 +17,7 @@ class Network():
         """
         Update provided network details in pillar data
 
-        :param trasport_type:
+        :param transport_type:
             (optional) Transport type for network e.g {lnet|libfabric}.
         :param interface_type:
             (optional) Interface type for network e.g {tcp|o2ib}.
