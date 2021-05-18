@@ -175,43 +175,13 @@ def ensure_cluster_is_healthy(tries=1, wait=10):
     ensure(check_cluster_is_online, tries=tries, wait=wait)
 
 
-def r2_check_cluster_health_status() -> bool:
+def r2_check_cluster_health_status():
     """
     Wrapper over API of the hare which provides the capability to check
     the health status of cluster.
 
-    Returns
-    -------
-    bool
-        True if the health status check of the cluster succeeds and
-        False otherwise
-
     """
-    try:
-        res = cmd_run('cluster status', targets=LOCAL_MINION)
-    except Exception as e:
-        logger.debug(f'Some HA exception occurred: {e}')
-        return False
-    else:
-        if not res:
-            return False
-
-        return True
-
-    if False:
-        # TODO: EOS-20624: Switch to Python API
-        cm = CortxClusterManager()
-        try:
-            res = cm.cluster_controller.status()
-        except Exception as e:
-            logger.debug(f"Some Hare exception occurred: {e}")
-            return False
-        else:
-            # TODO: we need to parse the output
-            if not res:
-                return False
-
-            return True
+    ensure_cluster_is_healthy()
 
 
 HareOutputWrapper = attr.make_class(
@@ -278,13 +248,3 @@ def r2_cluster_start() -> HareOutputWrapper:
         raise errors.ClusterStopError(parsed_res.msg)
 
     return parsed_res
-
-
-def r2_check_cluster_health_status():
-    """
-    Wrapper over API of the hare which provides the capability to check
-    the health status of cluster.
-
-
-    """
-    ensure_cluster_is_healthy()
