@@ -38,5 +38,5 @@ class NetworkConfig(Command):
     }
 
     def run(self, **kwargs):
-        self.logger.info("My name is mazhe")
-        print(f"this is for test {kwargs}")
+        self.logger.info("This is network config API")
+        print(f"This is network config API {kwargs}")

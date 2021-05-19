@@ -23,7 +23,7 @@ import commands
 
 
 def handle_parser(subparsers, name, cls_name):
-    parser_foo = subparsers.add_parser(name)
+    parser = subparsers.add_parser(name)
     cls = getattr(commands, cls_name)
     args = cls(logger=Log.logger).get_args()
     for arg, value in args.items():
@@ -31,13 +31,13 @@ def handle_parser(subparsers, name, cls_name):
         if value['optional']:
             cmd = "--"+arg
         value.pop('optional')
-        parser_foo.add_argument(cmd, **value)
-    parser_foo.set_defaults(command=cls_name)
+        parser.add_argument(cmd, **value)
+    parser.set_defaults(command=cls_name)
 
 
 def handle_sub_parser(subparsers, name):
-    parser_foo = subparsers.add_parser(name)
-    return parser_foo
+    parser = subparsers.add_parser(name)
+    return parser
 
 
 def handle_apis(parser, apis):
