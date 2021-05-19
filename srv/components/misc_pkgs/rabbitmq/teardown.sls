@@ -56,4 +56,4 @@ Remove rabbitmq logs:
 
 Delete rabbitmq checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.rabbitmq
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.rabbitmq

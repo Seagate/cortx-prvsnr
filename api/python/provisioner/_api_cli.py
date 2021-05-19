@@ -174,7 +174,9 @@ for fun in [
     'set_ntp',
     'set_network',
     'set_swupdate_repo',
+    'set_swupgrade_repo',
     'sw_update',
+    'sw_upgrade',
     'sw_rollback',
     'set_ssl_certs',
     'fw_update',
@@ -189,6 +191,10 @@ for fun in [
     'get_release_version',
     'get_factory_version',
     'cmd_run',
-    'get_setup_info'
+    'get_setup_info',
+    'set_hostname',
+    'set_mgmt_network',
+    'setup_firewall',
+    'set_data_network'
 ]:
     setattr(mod, fun, _api_wrapper(fun))

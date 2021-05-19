@@ -15,21 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.firewall'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.firewall'.format(grains['id'])) %}
 include:
   - .prepare
   - .install
   - .config
-  - .sanity_check
 
-# Disable Firewall:
-#   service.dead:
-#     - name: firewalld
-#     - enable: false
-
-Generate sspl checkpoint flag:
+Generate firewall checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.firewall
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
     - makedirs: True
     - create: True
 {%- else -%}

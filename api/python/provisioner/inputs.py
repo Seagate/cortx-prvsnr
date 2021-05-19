@@ -19,8 +19,11 @@ import logging
 from copy import deepcopy
 import ipaddress
 import functools
-from typing import List, Union, Any, Iterable, Tuple, Dict
+from typing import List, Union, Any, Iterable, Tuple, Dict, Type, Optional
 from pathlib import Path
+import argparse
+import importlib
+from enum import Enum
 
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
@@ -35,10 +38,57 @@ from .values import (
 )
 from .serialize import PrvsnrType, loads
 
+from . import config, utils
+
+
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
 METADATA_ARGPARSER = '_param_argparser'
 
 logger = logging.getLogger(__name__)
+
+
+def load_cli_spec():
+    res = utils.load_yaml(config.CLI_SPEC_PATH)
+
+    def _choices_filter(leaf: utils.DictLeaf):
+        return (
+            leaf.key == 'choices'
+            and isinstance(leaf.value, str)
+            and leaf.value.startswith(config.CLI_SPEC_PY_OBJS_PREFIX)
+        )
+
+    # convert choices to objects
+    for leaf in utils.iterate_dict(res, filter_f=_choices_filter):
+        choices_spec = leaf.value.split(
+            config.CLI_SPEC_PY_OBJS_PREFIX
+        )[1].split('.')
+
+        mod_name = '.'.join(choices_spec[0:-1])
+        attr_name = choices_spec[-1]
+        module = importlib.import_module(mod_name)
+
+        choices = getattr(module, attr_name)
+
+        if issubclass(choices, Enum):
+            choices = [i.value for i in choices]
+
+        leaf.parent[leaf.key] = choices
+
+    def _nohelp_filter(leaf: utils.DictLeaf):
+        return (
+            leaf.key != 'help'
+            and ('help' not in leaf.parent)
+            and isinstance(leaf.value, str)
+        )
+
+    # convert trivial descriptions (no help)
+    for leaf in utils.iterate_dict(res, filter_f=_nohelp_filter):
+        leaf.parent[leaf.key] = dict(help=leaf.value)
+
+    return res
+
+
+cli_spec = load_cli_spec()
 
 
 # TODO IMPROVE use some attr api to copy spec
@@ -55,13 +105,13 @@ def copy_attr(_attr, name=None, **changes):
     if not name:
         name = _attr.name
 
-    _UtilityClass = attr.make_class(
-        "_UtilityClass", {
+    _utility_type = attr.make_class(
+        "_UtilityType", {
             name: attr.ib(**attr_kw)
         }
     )
 
-    return attr.fields_dict(_UtilityClass)[name]
+    return attr.fields_dict(_utility_type)[name]
 
 
 @attr.s(auto_attribs=True)
@@ -92,7 +142,9 @@ class AttrParserArgs:
         self.name = self.name.lstrip('_')
 
         if self.prefix:
-            self.name = self.prefix + self.name
+            self.name = f"{self.prefix}{self.name}"
+
+        parser_args = {}
 
         parser_args = self._attr.metadata.get(
             METADATA_ARGPARSER, {}
@@ -130,14 +182,15 @@ class AttrParserArgs:
         if self._attr.default is not attr.NOTHING:
             # optional argument
             self.name = '--' + self.name.replace('_', '-')
-            default_v = self._attr.default
+            # default value for an object (attr) might be more
+            # complicated than for a parser
+            default_v = parser_args.get('default', self._attr.default)
             if isinstance(default_v, attr.Factory):
                 default_v = default_v.factory()
             self.default = default_v
-            self.metavar = (
-                parser_args.get('metavar')
-                or (self._attr.type.__name__ if self._attr.type else None)
-            )
+            self.metavar = parser_args.get('metavar')
+            if not self.metavar and self._attr.type:
+                self.metavar = getattr(self._attr.type, '__name__', None)
             if self.metavar:
                 self.metavar = self.metavar.upper()
 
@@ -177,11 +230,22 @@ class InputAttrParserArgs(AttrParserArgs):
 
 class ParserFiller:
     @staticmethod
-    def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
+    def prepare_args(
+        cls, attr_parser_cls: Type[AttrParserArgs] = AttrParserArgs
+    ):
+        res = {}
         for _attr in attr.fields(cls):
             if METADATA_ARGPARSER in _attr.metadata:
                 parser_prefix = getattr(cls, 'parser_prefix', None)
                 metadata = _attr.metadata[METADATA_ARGPARSER]
+
+                if isinstance(metadata, str):
+                    metadata = KeyPath(metadata).value(cli_spec)
+                    _attr = copy_attr(
+                        _attr, metadata={
+                            METADATA_ARGPARSER: metadata
+                        }
+                    )
 
                 if metadata.get('action') == 'store_bool':
                     for name, default, m_changes in (
@@ -205,19 +269,105 @@ class ParserFiller:
                             }
                         )
                         args = attr_parser_cls(attr_copy, prefix=parser_prefix)
-                        parser.add_argument(args.name, **args.kwargs)
+                        res[args.name] = args.kwargs
                 else:
                     args = attr_parser_cls(_attr, prefix=parser_prefix)
-                    parser.add_argument(args.name, **args.kwargs)
+                    res[args.name] = args.kwargs
+
+        return res
+
+    @staticmethod
+    def fill_parser(cls, parser, attr_parser_cls=AttrParserArgs):
+        _args = ParserFiller.prepare_args(cls, attr_parser_cls)
+        for name, kwargs in _args.items():
+            parser.add_argument(name, **kwargs)
+
+    @staticmethod
+    def extract_args(
+        cls, kwargs, positional=True, optional=True, pop=True
+    ):
+        _args = {}
+        _kwargs = {}
+
+        parser_prefix = getattr(cls, 'parser_prefix', '')
+
+        for _attr in attr.fields(cls):
+            if METADATA_ARGPARSER in _attr.metadata:
+                # name = (
+                #     _attr.name.split(parser_prefix, 1)[-1]
+                #     if parser_prefix else _attr.name
+                # )
+                arg_name = f"{parser_prefix}{_attr.name}".replace('-', '_')
+                if arg_name in kwargs:
+                    _dest = None
+                    if positional and _attr.default is attr.NOTHING:
+                        _dest = _args
+                    elif optional and _attr.default is not attr.NOTHING:
+                        _dest = _kwargs
+
+                    if _dest is not None:
+                        _dest[_attr.name] = kwargs[arg_name]
+                        if pop:
+                            kwargs.pop(arg_name)
+
+        return _args.values(), _kwargs, kwargs
 
     @staticmethod
     def extract_positional_args(cls, kwargs):
-        _args = []
+        _args, _, kwargs = ParserFiller.extract_args(
+            cls, kwargs, positional=True, optional=False
+        )
+        return _args, kwargs
+
+    @staticmethod
+    def extract_optional_args(cls, parsed_args):
+        _, _kwargs, kwargs = ParserFiller.extract_args(
+            cls, parsed_args, positional=False, optional=True
+        )
+        return _kwargs, kwargs
+
+    @staticmethod
+    def from_args(cls, parsed_args: Union[dict, argparse.Namespace], pop=True):
+        if isinstance(parsed_args, argparse.Namespace):
+            _parsed_args = vars(parsed_args)
+
+        _args, _kwargs, _parsed_args = ParserFiller.extract_args(
+            cls, _parsed_args, positional=True, optional=True, pop=pop
+        )
+
+        if pop:
+            parsed_args = _parsed_args
+
+        return cls(*_args, **_kwargs), parsed_args
+
+
+@attr.s(auto_attribs=True)
+class ParserMixin:
+
+    parser_prefix = ''
+
+    @classmethod
+    def parser_attrs(cls):
         for _attr in attr.fields(cls):
             if METADATA_ARGPARSER in _attr.metadata:
-                if _attr.default is attr.NOTHING and _attr.name in kwargs:
-                    _args.append(kwargs.pop(_attr.name))
-        return _args, kwargs
+                yield _attr
+
+    @classmethod
+    def parser_args(cls):
+        for _attr in cls.parser_attrs():
+            yield f"{cls.parser_prefix}{_attr.name.replace('_', '-')}"
+
+    @classmethod
+    def prepare_args(cls, *args, **kwargs):
+        return ParserFiller.prepare_args(cls, *args, **kwargs)
+
+    @classmethod
+    def fill_parser(cls, parser, *args, **kwargs):
+        return ParserFiller.fill_parser(cls, parser, *args, **kwargs)
+
+    @classmethod
+    def from_args(cls, parsed_args, *args, **kwargs):
+        return ParserFiller.from_args(cls, parsed_args, *args, **kwargs)[0]
 
 
 @attr.s(auto_attribs=True)
@@ -426,7 +576,12 @@ class Validation():
     def check_ip4(instace, attribute, value):
         try:
             ip = None
-            if value and value != UNCHANGED and value != 'None':  # FIXME JBOD
+            if (
+                value and
+                value != UNCHANGED and
+                value != 'None' and
+                value != '\"\"'
+            ):  # FIXME JBOD
                 ip = ipaddress.IPv4Address(value)
                 # TODO : Improve logic internally convert ip to
                 # canonical forms.
@@ -451,6 +606,74 @@ class NTP(ParamGroupInputBase):
     )
     timezone: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="ntp server timezone"
+    )
+
+
+@attr.s(auto_attribs=True)
+class Hostname(ParamGroupInputBase):
+    _param_group = 'hostname'
+    hostname: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="hostname to be set"
+    )
+
+
+@attr.s(auto_attribs=True)
+class Firewall(ParamGroupInputBase):
+    _param_group = 'firewall'
+
+
+@attr.s(auto_attribs=True)
+class MgmtNetwork(ParamGroupInputBase):
+    _param_group = 'mgmt_network'
+    mgmt_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node mgmt gateway IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface IP",
+        validator=Validation.check_ip4
+    )
+    mgmt_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management interface netmask",
+        validator=Validation.check_ip4
+    )
+    mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network interfaces"
+    )
+    mgmt_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node management network mtu",
+        default=1500
+    )
+
+
+@attr.s(auto_attribs=True)
+class DataNetwork(ParamGroupInputBase):
+    _param_group = 'data_network'
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_public_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node public data network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data interface IP",
+        validator=Validation.check_ip4
+    )
+    data_private_interfaces: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node private data network interfaces"
+    )
+    data_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network mtu",
+        default=1500
     )
 
 
@@ -502,7 +725,7 @@ class StorageEnclosure(ParamGroupInputBase):
     controller_secret: str = StorageEnclosureParams.controller_secret
 
 
-class NodeNetworkParams():
+class NodeParams():
     _param_group = 'node'
     hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node hostname"
@@ -515,6 +738,22 @@ class NodeNetworkParams():
     )
     data_private_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node data private network interfaces"
+    )
+    data_private_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface private IP",
+        validator=Validation.check_ip4
+    )
+    data_public_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface IP", default=UNCHANGED,
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
     )
     bmc_user: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC User"
@@ -538,25 +777,13 @@ class NodeNetworkParams():
     mgmt_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node management network interfaces"
     )
-    data_public_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface IP", default=UNCHANGED,
-        validator=Validation.check_ip4
-    )
-    data_netmask: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface netmask",
-        validator=Validation.check_ip4
-    )
-    data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data gateway IP",
-        validator=Validation.check_ip4
-    )
-    data_private_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="node data interface private IP",
-        validator=Validation.check_ip4
-    )
     bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node BMC  IP", default=UNCHANGED,
         validator=Validation.check_ip4
+    )
+    cvg: List = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node storage Cylinder Volume Group (CVG) devices",
+        default=UNCHANGED
     )
 
 
@@ -580,6 +807,9 @@ class NetworkParams():
         _param_group, descr="primary node hostname"
     )
     primary_data_roaming_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="primary node data roaming IP"
+    )
+    primary_data_floating_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node floating IP"
     )
     primary_data_gateway: str = ParamGroupInputBase._attr_ib(
@@ -601,9 +831,6 @@ class NetworkParams():
     primary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node data interface netmask"
     )
-    primary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="primary node data network interface"
-    )
     primary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="primary node BMC  IP",
         validator=Validation.check_ip4
@@ -618,11 +845,11 @@ class NetworkParams():
     secondary_hostname: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node hostname"
     )
-    secondary_floating_ip: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node floating IP"
+    secondary_data_roaming_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data roaming IP"
     )
-    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data gateway IP"
+    secondary_data_floating_ip: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node floating IP"
     )
     secondary_mgmt_gateway: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node mgmt gateway IP"
@@ -634,15 +861,15 @@ class NetworkParams():
     secondary_mgmt_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node management interface netmask"
     )
+    secondary_data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="secondary node data gateway IP"
+    )
     secondary_data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node node data interface IP",
         validator=Validation.check_ip4
     )
     secondary_data_netmask: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node data interface netmask"
-    )
-    secondary_data_network_iface: List = ParamGroupInputBase._attr_ib(
-        _param_group, descr="secondary node data network interface"
     )
     secondary_bmc_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="secondary node BMC  IP",
@@ -665,24 +892,24 @@ class Network(ParamGroupInputBase):
     search_domains: List = NetworkParams.search_domains
     primary_hostname: str = NetworkParams.primary_hostname
     primary_data_roaming_ip: str = NetworkParams.primary_data_roaming_ip
+    primary_data_floating_ip: str = NetworkParams.primary_data_floating_ip
     primary_mgmt_public_ip: str = NetworkParams.primary_mgmt_public_ip
     primary_mgmt_netmask: str = NetworkParams.primary_mgmt_netmask
     primary_mgmt_gateway: str = NetworkParams.primary_mgmt_gateway
     primary_data_netmask: str = NetworkParams.primary_data_netmask
     primary_data_gateway: str = NetworkParams.primary_data_gateway
-    primary_data_network_iface: List = NetworkParams.primary_data_network_iface
     primary_data_public_ip: str = NetworkParams.primary_data_public_ip
     primary_bmc_ip: str = NetworkParams.primary_bmc_ip
     primary_bmc_user: str = NetworkParams.primary_bmc_user
     primary_bmc_secret: str = NetworkParams.primary_bmc_secret
     secondary_hostname: str = NetworkParams.secondary_hostname
-    secondary_floating_ip: str = NetworkParams.secondary_floating_ip
+    secondary_data_roaming_ip: str = NetworkParams.secondary_data_roaming_ip
+    secondary_data_floating_ip: str = NetworkParams.secondary_data_floating_ip
     secondary_mgmt_public_ip: str = NetworkParams.secondary_mgmt_public_ip
     secondary_mgmt_netmask: str = NetworkParams.secondary_mgmt_netmask
     secondary_data_gateway: str = NetworkParams.secondary_data_gateway
     secondary_mgmt_gateway: str = NetworkParams.secondary_mgmt_gateway
     secondary_data_netmask: str = NetworkParams.secondary_data_netmask
-    secondary_data_network_iface: List = NetworkParams.secondary_data_network_iface  # noqa: E501
     secondary_bmc_ip: str = NetworkParams.secondary_bmc_ip
     secondary_bmc_user: str = NetworkParams.secondary_bmc_user
     secondary_bmc_secret: str = NetworkParams.secondary_bmc_secret
@@ -766,7 +993,7 @@ class SWUpdateRepo(ParamDictItemInputBase):
     _param_di = param_spec['swupdate/repo']
     release: str = ParamDictItemInputBase._attr_ib(
         is_key=True,
-        descr=("release version")
+        descr="release version"
     )
     source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
         descr=(
@@ -876,4 +1103,156 @@ class SWUpdateRepo(ParamDictItemInputBase):
 
 @attr.s(auto_attribs=True)
 class SWUpgradeRepo(SWUpdateRepo):
+    source: Union[str, Path] = ParamDictItemInputBase._attr_ib(
+        descr=(
+            "repo source, might be a local path to a repo folder or iso file"
+            " or an url to a remote repo, "
+            "{} might be used to remove the repo"
+            .format(UNDEFINED)
+        ),
+        is_key=True,
+        metavar='str',
+        converter=lambda v: (
+            UNCHANGED if v is None else (
+                v if is_special(v) or isinstance(v, Path) else str(v)
+            )
+        )
+    )
+    release: str = ParamDictItemInputBase._attr_ib(
+        descr="release version",
+        default=None
+    )
+    hash: Optional[Union[str, Path]] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': ("Path to the file with ISO hash check sum or string"
+                         "with format: either '<hash_type>:<hex_hash>' or"
+                         "'<hex_hash>'")
+            }
+        },
+        default=None
+    )
+    hash_type: Optional[str] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "Optional: hash type of `hash` parameter",
+                'choices': list(map(lambda elem: elem.value, config.HashType))
+            }
+        },
+        validator=attr.validators.optional(
+            attr.validators.in_(config.HashType)
+        ),
+        default=None,
+        converter=lambda x: x and config.HashType(str(x))
+    )
     _param_di = param_spec['swupgrade/repo']
+    # file path to base directory for SW upgrade
+    _target_build: str = attr.ib(default=None)
+    # parameter to enable or disabled repository
+    _enabled: bool = attr.ib(default=False)
+
+    @property
+    def pillar_key(self):
+        # the local root pillar key for 'swupgrade' installation type
+        return self.release
+
+    @property
+    def pillar_value(self):
+        if self.is_special():
+            res = {
+                f"{repo}": None
+                for repo in (config.OS_ISO_DIR,
+                             config.CORTX_ISO_DIR,
+                             config.CORTX_3RD_PARTY_ISO_DIR,
+                             config.CORTX_PYTHON_ISO_DIR)
+            }
+            res[self.release] = None
+
+            return res
+        elif self.is_remote():
+            return {
+                f'{config.OS_ISO_DIR}': {
+                    'source': f'{self.source}/{config.OS_ISO_DIR}',
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_ISO_DIR}': {
+                    'source': f'{self.source}/{config.CORTX_ISO_DIR}',
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                    'source': (f'{self.source}/'
+                               f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_PYTHON_ISO_DIR}': {
+                    'source': f'{self.source}/{config.CORTX_PYTHON_ISO_DIR}',
+                    'is_repo': False
+                }
+            }
+        else:
+            # source = 'iso' if self.source.is_file() else 'dir'
+            iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+            return {
+                f'{self.release}': {
+                    'source': f'salt://{iso_dir}/{self.release}.iso',
+                    'is_repo': False
+                },
+                f'{config.OS_ISO_DIR}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.OS_ISO_DIR}'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_ISO_DIR}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.CORTX_ISO_DIR}'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                    'source': (f'file://{self.target_build}/{self.release}/'
+                               f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
+                    'is_repo': True,
+                    'enabled': self.enabled
+                },
+                f'{config.CORTX_PYTHON_ISO_DIR}': {
+                    'source': f'file://{self.target_build}/{self.release}/'
+                              f'{config.CORTX_PYTHON_ISO_DIR}',
+                    'is_repo': False
+                }
+            }
+
+
+@attr.s(auto_attribs=True)
+class SWUpgradeRemoveRepo(ParamDictItemInputBase):
+    _param_di = param_spec['swupgrade/repo']
+    release: str = ParamDictItemInputBase._attr_ib(
+        is_key=True,
+        descr="release version",
+        # TODO: It is the rough version of regex because we didn't have the
+        #  final representation of the release version from the RE team.
+        validator=attr.validators.matches_re(
+            r"^[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+$"),
+        converter=str
+    )
+
+    @property
+    def pillar_key(self):
+        # the local root pillar key for 'swupgrade' installation type
+        return self.release
+
+    @property
+    def pillar_value(self):
+        res = {
+            f"{repo}": None
+            for repo in (config.OS_ISO_DIR,
+                         config.CORTX_ISO_DIR,
+                         config.CORTX_3RD_PARTY_ISO_DIR,
+                         config.CORTX_PYTHON_ISO_DIR,
+                         self.release)
+        }
+
+        return res

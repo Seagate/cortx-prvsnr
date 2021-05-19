@@ -36,7 +36,7 @@ olcSyncRepl: rid={{ "{0:03d}".format(100+loop.index) }}
   provider=ldap://{{ node }}:389/
   bindmethod=simple
   binddn="cn=admin,cn=config"
-  credentials={{ salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:admin:secret', "seagate")) }}
+  credentials={{ salt['lyveutils.decrypt']('cortx', salt['pillar.get']('openldap:admin:secret', "seagate")) }}
   searchbase="cn=config"
   scope=sub
   schemachecking=on

@@ -22,23 +22,14 @@ Remove USL cert file:
     - names:
       - /var/csm/tls
 
-#Stop service uds:
-#  service.dead:
-#    - name: uds
-#    - enable: False
-
 Remove uds package:
   pkg.purged:
-    - name: uds
+    - name: uds-pyi
 
 Delete uds yum repo:
   pkgrepo.absent:
     - name: {{ defaults.uds.repo.id }}
 
-Remove uds service file:
-  file.absent:
-    - name: /usr/lib/systemd/system/uds.service
-
 Delete uds checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.uds
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.uds

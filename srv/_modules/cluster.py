@@ -20,22 +20,19 @@
 # $ salt-call saltutil.sync_modules && salt-call cluster.nw_roaming_ip
 
 # Standard packages
-import errno
-import json
 import logging
 import os
-import subprocess
 import sys
 import time
 
-from shutil import copyfile
-
 # Update PYTHONPATH to include Provisioner API installed at:
 # /usr/local/lib/python3.6/site-packages/cortx-prvsnr-*
-sys.path.append(os.path.join('usr','local','lib', 'python3.6', 'site-packages'))
+sys.path.append(os.path.join(
+       'usr', 'local', 'lib', 'python3.6', 'site-packages'))
 
 # Cortx packages
 import provisioner
+from provisioner.utils import run_subprocess_cmd
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +45,13 @@ def storage_device_config():
     ]
     for node in server_nodes:
         cluster_dict = provisioner.pillar_get(f"cluster/{node}/roles", targets=node)
+
         if "primary" in cluster_dict[node][f"cluster/{node}/roles"]:
-            cmd = "multipath -ll | grep prio=50 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
+            cmd = ("multipath -ll | grep prio=50 -B2 |"
+                  " grep mpath|sort -k2.2 | awk '{ print $1 }'")
         else:
-            cmd = "multipath -ll | grep prio=10 -B2|grep mpath|sort -k2.2 | awk '{ print $1 }'"
+            cmd = ("multipath -ll | grep prio=10 -B2 |"
+                  " grep mpath|sort -k2.2 | awk '{ print $1 }'")
 
         device_list = []
         _timeout = 60
@@ -59,7 +59,8 @@ def storage_device_config():
         _sleep_time = 5
         while device_list == []:
             if ( _count == 0 ):
-                logger.info(f"[ INFO ] Attempt {_count} Waiting for multipath device to come up...")
+                logger.info(f"[ INFO ] Attempt {_count} "
+                       "Waiting for multipath device to come up...")
 
             if ( _count > _timeout ):
                 msg = ("[ ERROR ] multipath devices don't exist. "
@@ -71,11 +72,7 @@ def storage_device_config():
                 time.sleep(_sleep_time)
 
                 logger.info(f"Command to populate multipath devices: {cmd}")
-                device_list = subprocess.Popen([cmd],
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE
-                                    ).stdout.read().decode("utf-8").splitlines()
+                device_list = run_subprocess_cmd([cmd], check=False, shell=True).stdout.splitlines()  # nosec
 
                 if ( len(device_list) > 0 ):
                     logger.info("[ INFO ] Found multipath devices...")
@@ -91,7 +88,7 @@ def storage_device_config():
         metadata_devices.append(f"/dev/disk/by-id/dm-name-{device_list[0]}")
         metadata_field = f"cluster/{node}/storage/metadata_devices".format(node)
         provisioner.pillar_set(metadata_field, metadata_devices)
-        
+
         data_device = [f"/dev/disk/by-id/dm-name-{device}" for device in device_list[1:]]
         data_field = f"cluster/{node}/storage/data_devices"
         provisioner.pillar_set(data_field, data_device)
@@ -107,12 +104,13 @@ def storage_device_config():
 
 
 def jbod_storage_config():
-    _target_node = __grains__['id']
+
+    _target_node = getattr(sys.modules[__name__], '__grains__')['id']
     _data_field = "cluster/{0}/storage/data_devices".format(_target_node)
     _metadata_field = "cluster/{0}/storage/metadata_devices".format(_target_node)
 
     _cmd = "multipath -ll | grep mpath | sort -k2.2 | awk '{ print $1 }'"
-    _device_list = subprocess.Popen([_cmd],shell=True,stdout=subprocess.PIPE).stdout.read().decode("utf-8").splitlines()
+    _device_list = run_subprocess_cmd([_cmd], check=False, shell=True).stdout.splitlines()  # nosec
 
     metadata_devices = ["/dev/disk/by-id/dm-name-{0}".format(_device_list[0])]
     data_device = ["/dev/disk/by-id/dm-name-{0}".format(device) for device in _device_list[1:]]

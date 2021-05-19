@@ -1190,7 +1190,7 @@ class Check(CommandParserFillerMixin):
 
         res: List[CheckEntry] = list()
         #  TODO use of salt python API with function_run
-        _DECRYPT_PSWD_CMD = ('salt-call lyveutil.decrypt cluster {val}'
+        _DECRYPT_PSWD_CMD = ('salt-call lyveutils.decrypt cluster {val}'
                              ' --output=newline_values_only')
         minion_id = local_minion_id()
 

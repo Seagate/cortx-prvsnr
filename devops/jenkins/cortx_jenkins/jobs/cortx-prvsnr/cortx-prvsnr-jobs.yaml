@@ -1,0 +1,251 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+---
+
+- ghprb-trigger-params: &ghprb-trigger-params
+    name: 'ghprb-trigger-params'
+    ghprb_cron: '{ghprb_cron}'  # TODO actually it doesn't work if hooks are used
+    ghprb_user_whitelist: '{obj:ghprb_user_whitelist}'
+    ghprb_org_whitelist: '{obj:ghprb_org_whitelist}'
+    ghprb_allow_white_org_as_admins: '{obj:ghprb_allow_white_org_as_admins}'
+    ghprb_admins: '{obj:ghprb_admins}'
+    ghprb_target_branches: '{obj:ghprb_target_branches}'
+    ghprb_trigger_prefix: '{ghprb_trigger_prefix}'
+    ghprb_trigger_pattern: '{ghprb_trigger_pattern}'
+    ghprb_only_trigger_phrase: '{ghprb_only_trigger_phrase}'
+    ghprb_status_context: '{ghprb_status_context}'
+
+- job-template:
+    name: '{name}-pr-{type}'
+    project-type: pipeline
+    pipeline-scm:
+      scm:
+        - project-scm:
+            github_org: '{github_org}'
+      script-path: '{jenkinsfile-path}'
+    sandbox: true
+
+    properties:
+      - build-discarder:
+          days-to-keep: 7
+          artifact-days-to-keep: 7
+      - github:
+          url: 'https://github.com/{github_org}/cortx-prvsnr'
+
+    parameters:
+      - commit-id-build-parameter:
+          defaut_commit_id: '{defaut_commit_id}'
+      - testing-level-parameter:
+          default_level: '{default_level}'
+          level_regex: '{level_regex}'
+          topic_regex: '{topic_regex}'
+      - testing-topics-parameter:
+          default_topic: '{default_topic}'
+          level_regex: '{level_regex}'
+          topic_regex: '{topic_regex}'
+
+    ghprb_status_context: 'ci/cortx-prvsnr-jenkins/pr-merge/{type}'
+
+    triggers:
+      - ghprb-trigger:
+          <<: *ghprb-trigger-params
+
+- job-template:
+    name: '{name}-ci-{type}'
+    project-type: multibranch
+    script-path: '{jenkinsfile-path}'
+    periodic-folder-trigger: '{ghsource_periodic_folder_trigger}'
+
+    # vars
+    ghsource_notification_context: 'ci/cortx-prvsnr-jenkins/{type}'
+
+    scm:
+      - github:
+          # api-uri: http://example.org/github
+          # ssh-checkout:
+          #     credentials: 'ssh_secret'
+          repo: cortx-prvsnr
+          repo-owner: '{github_org}'
+          # TODO make jinja template
+          credentials-id: github-user-and-token
+          branch-discovery: '{ghsource_branch_discovery}'
+
+          head-filter-regex: '{ghsource_head_filter_regex}'
+
+          discover-pr-forks-strategy: '{ghsource_discover_pr_forks_strategy}'
+          discover-pr-forks-trust: '{ghsource_discover_pr_forks_trust}'
+          discover-pr-origin: '{ghsource_discover_pr_origin}'
+          discover-tags: '{obj:ghsource_discover_tags}'
+          # Change the default GitHub check notification context from
+          # “continuous-integration/jenkins/SUFFIX” to a custom text,
+          # Requires the Github Custom Notification Context SCM Behaviour.
+          # (github-scm-trait-notification-context)
+          notification-context: '{ghsource_notification_context}'
+
+          do-not-fetch-tags: '{obj:ghsource_do_not_fetch_tags}'
+
+          # A regular expression for filtering discovered source branches.
+          # Requires the SCM API Plugin.
+          #head-filter-regex: "(.*/master|.*/release/.*)"
+
+          # Definition of Filter Branch PR behaviors.
+          # Requires the SCM Filter Branch PR Plugin.
+          head-pr-filter-behaviors:
+              head-pr-destined-regex:
+                  branch-regexp: '{ghsource_pr_destined_regex}'
+                  tag-regexp: ".*"
+          #    head-pr-destined-wildcard:
+          #        branch-includes: "foo*"
+          #        tag-includes: "qaz*"
+          #        branch-excludes: "bar*"
+          #        tag-excludes: "*baz"
+          #    head-pr-originated-regex:
+          #        branch-regexp: "(foo/.*|bar/.*)"
+          #        tag-regexp: "1\\..*"
+          #    head-pr-originated-wildcard:
+          #        branch-includes: "qaz*"
+          #        tag-includes: "bar*"
+          #        branch-excludes: "baz*"
+          #        tag-excludes: "*qaz"
+
+          property-strategies:
+              all-branches:
+                - trigger-build-on-pr-comment: '{ghsource_trigger_pr_comment_regex}'
+                - suppress-scm-triggering: '{obj:ghsource_suppress_scm_triggering}'
+          #         - pipeline-branch-durability-override: max-survivability
+          #         - trigger-build-on-pr-comment: "Ci build!"
+          #         - trigger-build-on-pr-review: true
+          #         - trigger-build-on-pr-update: true
+
+          # build-strategies:
+          #    - all-strategies-match:
+          #         strategies:
+          #           - regular-branches: true
+          #           - skip-initial-build: true
+          #     - any-strategies-match:
+          #         strategies:
+          #           - change-request: {}
+          #           - tags: {}
+          #     - tags:
+          #         ignore-tags-newer-than: 1
+          #         ignore-tags-older-than: 7
+          #     - tags: {}
+          #     - change-request:
+          #         ignore-target-only-changes: true
+          #     - change-request: {}
+          #      - regular-branches: true
+          #     - skip-initial-build: true
+          #     - named-branches:
+          #         - exact-name:
+          #             name: 'test'
+          #             case-sensitive: true
+          #         - regex-name:
+          #             regex: 'test.*$'
+          #             case-sensitive: true
+          #         - wildcards-name:
+          #             excludes: 'testexclude'
+          #             includes: 'testinclude'
+          #     - named-branches:
+          #         - exact-name: {}
+          #         - regex-name: {}
+          #         - wildcards-name: {}
+          # clean:
+          #     after: true
+          #     before: true
+          # committer:
+          #     user: CI System
+          #     email: no-reply@ci.example.com
+          # prune: true
+          # local-branch: true
+          # sparse-checkout:
+          #     paths:
+          #         - "path1"
+          #         - "path2"
+          #         - "path3"
+          # shallow-clone: true
+          # depth: 3
+
+          # disable-pr-notifications: true
+          # refspecs:
+          #   - '+refs/heads/*:refs/remotes/@{remote}/*'
+          # submodule:
+          #     disable: false
+          #     recursive: true
+          #     parent-credentials: true
+          #     timeout: 100
+          #     threads: 1
+          # timeout: "100"
+          # skip-notifications: true
+          # use-author: true
+          # wipe-workspace: true
+          # lfs-pull: true
+
+# - job-group:
+#     name: '{name}-prs'
+#     default_topic:
+#     type:
+#       - unit:
+#           default_level: unit
+#           level_regex: unit
+#           ghprb_trigger_pattern: unit
+#       - integration:
+#           default_level: integration_mocked
+#           level_regex: (integration|integration_mocked)
+#           ghprb_trigger_pattern: integration
+#           ghprb_only_trigger_phrase: true
+#       - custom:
+#           default_level: integration
+#           # ghprb_cron: null  # consider push-events only
+#           ghprb_only_trigger_phrase: true
+#           ghprb_trigger_prefix: 'ci custom:'
+#           ghprb_trigger_pattern: '[\w\s]+'
+#     jobs:
+#       - '{name}-pr-{type}'
+
+
+- job-group:
+    name: '{name}-ci'
+    ghsource_branch_discovery: no-pr
+    jenkinsfile-path: 'devops/ci/Jenkinsfile.ci.{type}'
+    ghsource_trigger_prefix: 'ci:'
+    ghsource_trigger_pattern: 'this'
+    ghsource_trigger_pr_comment_regex: '{ghsource_trigger_prefix}\s+build\s+{ghsource_trigger_pattern}\s+please'
+    type:
+      - unit:
+          ghsource_head_filter_regex: "PR-.*"
+          ghsource_trigger_pattern: unit
+      - integration:
+          ghsource_head_filter_regex: "PR-.*"
+          ghsource_pr_destined_regex: "(main|stable)"
+          ghsource_trigger_pattern: integration
+      - nightly:
+          ghsource_branch_discovery: all
+          ghsource_discover_pr_origin: false
+          ghsource_discover_pr_forks_strategy: false
+          ghsource_head_filter_regex: "(main|stable)"
+          ghsource_trigger_pr_comment_regex: ''
+          ghsource_suppress_scm_triggering: true
+    jobs:
+      - '{name}-ci-{type}'
+
+
+
+- project:
+    name: cortx-prvsnr
+    jobs:
+      - '{name}-ci'

@@ -15,17 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.cortx-ha'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.cortx-ha'.format(grains['id'])) %}
 include:
-  - components.ha.cortx-ha.prepare
   - components.ha.cortx-ha.install
   - components.ha.cortx-ha.config
-  - components.ha.cortx-ha.sanity_test
-  # - components.ha.cortx-ha.ha
+#  - components.ha.cortx-ha.sanity_test
 
 Generate cortx_ha checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.cortx-ha
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.cortx-ha
     - makedirs: True
     - create: True
 {%- else -%}

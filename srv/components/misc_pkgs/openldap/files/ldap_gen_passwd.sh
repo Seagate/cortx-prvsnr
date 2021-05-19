@@ -17,8 +17,8 @@
 #
 
 
-{%- set openldap_admin_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:root:secret', "seagate")) %}
-{%- set openldap_iam_secret = salt['lyveutil.decrypt']('openldap', salt['pillar.get']('openldap:sgiam:secret', "ldapadmin")) %}
+{%- set openldap_admin_secret = salt['lyveutils.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:root:secret', "seagate")) %}
+{%- set openldap_iam_secret = salt['lyveutils.decrypt']('cortx', salt['pillar.get']('cortx:software:openldap:sgiam:secret', "ldapadmin")) %}
 
 ROOTDNPASSWORD="{{ openldap_admin_secret }}"
 LDAPADMINPASS="{{ openldap_iam_secret }}"
@@ -26,12 +26,12 @@ LDAPADMINPASS="{{ openldap_iam_secret }}"
 SHA=$(slappasswd -s $ROOTDNPASSWORD)
 ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')
 EXPR='s/olcRootPW: *.*/olcRootPW: '$ESC_SHA'/g'
-CFG_FILE=/opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif
+CFG_FILE=/opt/seagate/cortx_configs/provisioner_generated/ldap/cfg_ldap.ldif
 sed -i "$EXPR" $CFG_FILE
 
 # generate encrypted password for ldap admin
 #SHA=$(slappasswd -s $LDAPADMINPASS)
 #ESC_SHA=$(echo $SHA | sed 's/[/]/\\\//g')
 EXPR='s/userPassword: *.*/userPassword: '$LDAPADMINPASS'/g'
-ADMIN_USERS_FILE=/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif
+ADMIN_USERS_FILE=/opt/seagate/cortx_configs/provisioner_generated/ldap/iam-admin.ldif
 sed -i "$EXPR" $ADMIN_USERS_FILE

@@ -19,3 +19,8 @@ build
 .coverage
 tmp
 venv/
+api/python/provisioner/srv/salt-vendor/*
+!api/python/provisioner/srv/salt-vendor/README.md
+
+# generated config for jenkins setup
+devops/jenkins/cortx_jenkin/cortx-jenkins.toml

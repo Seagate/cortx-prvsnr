@@ -114,46 +114,46 @@ The only manager which we support for the moment is `SaltStack`:
 
 The following base abstractions (classes) ...
 
-  - `ResourceBase`
-  - `ResourceParams`
-  - `ResourceState`
-  - `ResourceTransition`
-  - `ResourceManagerBase`
+- `ResourceBase`
+- `ResourceParams`
+- `ResourceState`
+- `ResourceTransition`
+- `ResourceManagerBase`
   
 ... along with specific implementation for cortx repositories resource
-  - `CortxRepos`
-  - `CortxReposSetup`
-  - `CortxReposParams`
+- `CortxRepos`
+- `CortxReposSetup`
+- `CortxReposParams`
 
 ... and for SaltStack as a resource manager
-  - `SLSResourceManager`
-  -  `CortxReposSetupSLS`
+- `SLSResourceManager`
+-  `CortxReposSetupSLS`
 
 ... should provide you a mind of feeling of the new approach.
 
 Also the change introduced the following CLI commands:
 
-  - `provisioner helper` a group of helper commands, in particular
-    - `provisioner helper generate-profile` to generate ssh profile when salt-ssh is run in a custom env (e.g. at bootstrap)
-    - `provisioner helper ensure-nodes-ready` to ensure that node targets are accessible and salt-ssh functions might be run there
-  - `provisioner resource` a group of commands to configure target system resources, the only `cortx_repos` resource is supported for now:
-    - `provisioner resource cortx_repos setup` - a command to setup repositories on target machines
+- `provisioner helper` a group of helper commands, in particular
+  - `provisioner helper generate-profile` to generate ssh profile when salt-ssh is run in a custom env (e.g. at bootstrap)
+  - `provisioner helper ensure-nodes-ready` to ensure that node targets are accessible and salt-ssh functions might be run there
+- `provisioner resource` a group of commands to configure target system resources, the only `cortx_repos` resource is supported for now:
+  - `provisioner resource cortx_repos setup` - a command to setup repositories on target machines
 
 
 ### How to try that out
 
-  - setup docker and python environment as described [here](docs/testing.md)
-  - run `pytest test/build_helpers -k test_build_setup_env -s --docker-mount-dev --nodes-num 3` to create 3 docker containers
-    - **Note** by default it would set `root` as password for root user there
-    - **Note** in output you will see ssh configuration along with path to ssh-config file
-  - run `provisioner helper generate-profile --profile-name EOS-17600-test --cleanup` to generate ssh profile
-  - run `provisioner helper ensure-nodes-ready --profile-name EOS-17600-test srvnode-1:<IP1> srvnode-2:<IP2> srvnode-3:<IP3>` to ensure that nodes are ready for provisioner setup routine
-    - values of IP* might be get from ssh configuration mentioned above
-    - **Note** you would be prompted for root password for an initial access to the nodes
-    - **Note** you may try more automated options passing a key from ssh configuration as `--ssh-key` (would be used for access) or as `--bootstrap-key` (would be used for initial access only). In both cases root password won't be required.
-  - run `provisioner resource cortx_repos setup --dist-type bundle --salt-client-type ssh --salt-ssh-profile-name EOS-17600-test <PATH-TO-BUNDLE>`
-    -  `PATH-TO-BUNDLE` is path to a single repo image used currently for deployment
-    - **Note** `--dist-type cortx` is supported and implies a flat yum repository with only cortx packages inside
+- setup docker and python environment as described [here](docs/testing.md)
+- run `pytest test/build_helpers -k test_build_setup_env -s --docker-mount-dev --nodes-num 3` to create 3 docker containers
+  - **Note** by default it would set `root` as password for root user there
+  - **Note** in output you will see ssh configuration along with path to ssh-config file
+- run `provisioner helper generate-profile --profile-name EOS-17600-test --cleanup` to generate ssh profile
+- run `provisioner helper ensure-nodes-ready --profile-name EOS-17600-test srvnode-1:<IP1> srvnode-2:<IP2> srvnode-3:<IP3>` to ensure that nodes are ready for provisioner setup routine
+  - values of IP* might be get from ssh configuration mentioned above
+  - **Note** you would be prompted for root password for an initial access to the nodes
+  - **Note** you may try more automated options passing a key from ssh configuration as `--ssh-key` (would be used for access) or as `--bootstrap-key` (would be used for initial access only). In both cases root password won't be required.
+- run `provisioner resource cortx_repos setup --dist-type bundle --salt-client-type ssh --salt-ssh-profile-name EOS-17600-test <PATH-TO-BUNDLE>`
+  -  `PATH-TO-BUNDLE` is path to a single repo image used currently for deployment
+  - **Note** `--dist-type cortx` is supported and implies a flat yum repository with only cortx packages inside
 
 ## Output
 

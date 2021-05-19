@@ -2,58 +2,62 @@
 
 **Table of Contents**
 
-- [Python environment preparation](#python-environment-preparation)
-- [Static validation](#static-validation)
-  - [Python code](#python-code)
-    - [flake8](#flake8)
-    - [Codacy tools](#codacy-tools)
-      - [Bandit](#bandit)
-      - [Prospector](#prospector)
-      - [Pylint](#pylint)
-      - [Radon](#radon)
-- [Unit testing](#unit-testing)
-- [Integration testing](#integration-testing)
-  - [Testing with Docker](#testing-with-Docker)
-    - [Docker configuration](#docker-configuration)
-    - [Docker on Fedora 32/33](#docker-on-fedora-33)
-    - [Docker containers for tests](#Docker-containers-for-tests)
-- [Appendix](#appendix)
-  - [Basic Docker commands](#basic-docker-commands)
-
+*   [Python environment preparation](#python-environment-preparation)
+*   [Static validation](#static-validation)
+    *   [Python code](#python-code)
+        *   [flake8](#flake8)
+        *   [Codacy tools](#codacy-tools)
+            *   [Bandit](#bandit)
+            *   [Prospector](#prospector)
+            *   [Pylint](#pylint)
+            *   [Radon](#radon)
+*   [Unit testing](#unit-testing)
+*   [Integration testing](#integration-testing)
+    *   [Testing with Docker](#testing-with-Docker)
+        *   [Docker configuration](#docker-configuration)
+        *   [Docker on Fedora 32/33](#docker-on-fedora-33)
+        *   [Docker test helpers](#Docker-test-helpers)
+            *   [Docker environment creation](#docker-environment-creation)
+            *   [Building provisioner packages](#building-provisioner-packages)
+            *   [Building testing bundles](#building-testing-bundles)
+        *   [Integration test cases](#Integration-test-cases)
+            *   [Provisioner setup](#Provisioner-setup)
+*   [Appendix](#appendix)
+    *   [Basic Docker commands](#basic-docker-commands)
 
 ## Python environment preparation
 
-- Install `python3.6` package in system using your distributive package manager tool: **apt**, **dnf**, **yum**, etc.
+*   Install `python3.6` package in system using your distributive package manager tool: **apt**, **dnf**, **yum**, etc.
 
-- Clone/Update the `cortx-prvsnr` repository
+*   Clone/Update the `cortx-prvsnr` repository
 
-- Create the Python virtual environment using `venv` module
+*   Create the Python virtual environment using `venv` module
 
-  ```bash
-  cd /path/to/cortx-prvsnr
-  python3.6 -m venv ./venv
-  ```
+    ```bash
+    cd /path/to/cortx-prvsnr
+    python3.6 -m venv ./venv
+    ```
 
-  :warning: NOTE: For more details about Python virtual environment see
-  https://docs.python.org/3.6/library/venv.html
+    :warning: NOTE: For more details about Python virtual environment see
+    https://docs.python.org/3.6/library/venv.html
 
-- Activate created Python environment
+*   Activate created Python environment
 
-  ```bash
-  source venv/bin/activate
-  ```
+    ```bash
+    source venv/bin/activate
+    ```
 
-- Install provisioner API to `venv` with extras for testing:
+*   Install provisioner API to `venv` with extras for testing:
 
-  ```bash
-  pip install -e api/python[test]
-  ```
+    ```bash
+    pip install -e api/python[test]
+    ```
 
-- [Optionally] Install provisioner API to `venv` with extras for Codacy testing tools:
+*   \[Optionally] Install provisioner API to `venv` with extras for Codacy testing tools:
 
-  ```bash
-  pip install -e api/python[codacy]
-  ```
+    ```bash
+    pip install -e api/python[codacy]
+    ```
 
 ## Static validation
 
@@ -70,15 +74,11 @@ before pushing any changes:
 
 To test everything:
 
-```
-flake8
-```
+    flake8
 
 To test specific files / directories:
 
-```
-flake8 path/to/directory_or_file
-```
+    flake8 path/to/directory_or_file
 
 #### Codacy tools
 
@@ -87,12 +87,15 @@ Codacy does the static analysis, checks duplications and complexity.
 For python it [uses](https://docs.codacy.com/getting-started/supported-languages-and-tools/) the
 following tools:
 
-  - static analysis:
-    [Bandit](https://github.com/PyCQA/bandit),
-    [Prospector](https://github.com/landscapeio/prospector2),
-    [Pylint](https://www.pylint.org/)
-  - duplications: [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
-  - complexity: [Radon](https://github.com/rubik/radon)
+*   python:
+    *   static analysis:
+        [Bandit](https://github.com/PyCQA/bandit),
+        [Prospector](https://github.com/landscapeio/prospector2),
+        [Pylint](https://www.pylint.org/)
+    *   duplications: [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
+    *   complexity: [Radon](https://github.com/rubik/radon)
+*   markdown:
+    *   [remark-lint](https://github.com/remarkjs/remark-lint)
 
 All these tools (except [PMD CPD](https://pmd.github.io/pmd/pmd_userdocs_cpd.html)
 which is not a python one) would be availble once you
@@ -121,6 +124,12 @@ More [examples](https://github.com/PyCQA/bandit#usage).
 ```bash
 prospector path/to/directory_or_file
 ```
+
+Internally prospector uses different tools:
+
+*   [pep257](https://github.com/GreenSteam/pep257/) to check dockstring against [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+*   [pyflakes](https://github.com/PyCQA/pyflakes) to check various source code errors
+*   ...
 
 ##### Pylint
 
@@ -176,8 +185,8 @@ Docker is not supported by **Fedora 33** officially. You can use the following m
 sudo dnf remove docker-*
 sudo dnf config-manager --disable docker-*
 ```
-</details>
 
+</details>
 
 <details>
 <summary>2. As docker doesn't support <strong>CGroups2</strong>, enable old <strong>CGroups</strong>
@@ -186,8 +195,8 @@ sudo dnf config-manager --disable docker-*
 ```bash
 sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
 ```
-</details>
 
+</details>
 
 <details>
 <summary>3. Configure firewall</summary>
@@ -196,18 +205,18 @@ sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
 sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0
 sudo firewall-cmd --permanent --zone=FedoraWorkstation --add-masquerade
 ```
-</details>
 
+</details>
 
 <details>
 <summary>4. Install Moby (an open-source project created by Docker)</summary>
 
-   ```bash
-   sudo dnf install moby-engine docker-compose
-   sudo systemctl enable docker
-   ```
-</details>
+```bash
+sudo dnf install moby-engine docker-compose
+sudo systemctl enable docker
+```
 
+</details>
 
 <details>
 <summary>5. Add your user to <strong>docker</strong> group to run docker without <strong>sudo</strong></summary>
@@ -216,8 +225,8 @@ sudo firewall-cmd --permanent --zone=FedoraWorkstation --add-masquerade
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
-</details>
 
+</details>
 
 <details>
 <summary>6. Restart your computer</summary>
@@ -225,8 +234,8 @@ sudo usermod -aG docker $USER
 ```bash
 sudo reboot
 ```
-</details>
 
+</details>
 
 <details>
 <summary>7. To test your installation you need running the following command</summary>
@@ -234,59 +243,121 @@ sudo reboot
 ```bash
 sudo docker run hello-world
 ```
+
 </details>
 
-#### Docker containers for tests
+#### Docker test helpers
 
-- Start the docker environment creation
+##### Building provisioner packages
 
-  ```bash
-  pytest test/build_helpers -k test_build_setup_env -s --root-passwd root --nodes-num 1
-  ```
+```bash
+pytest test/build_helpers/build_prvsnr_pkgs
+```
+
+The command above will create provisioner packages (core and api) in the current directory.
+
+You may check the full list of options using `pytest test/build_helpers/build_prvsnr_pkgs --help`
+(`custom options` part):
+
+*   `--pkgs-version=STR` release version (source version). Note. ignored for
+    api package, to set version for package please edit
+    `api/python/provisioner/__metadata__.py`
+*   `--pkgs-pkg-version=INT` package version (release tag),
+    should be greater or  equal 1
+*   `--pkgs-output=DIR` path to directory to output
+
+##### Building testing bundles
+
+```bash
+pytest test/build_helpers/build_bundles
+```
+
+The command above will create a deploy bundle (single repo) in the current directory.
+
+They would respect the structure of CORTX distributions for deployment and upgrade
+but include mocks for CORTX packages instead of real ones. Non CORTX yum repositories
+inside would be just empty.
+
+Optionally you may pack inside real repositories of EPEL-7, SaltStack and
+GlusterFS along with provisioner release packages that are distributed inside
+official CORTX bundles. For that you need to download a bundle locally
+and run the following command:
+
+```bash
+pytest test/build_helpers/build_bundles --build-orig-single-iso <path-to-official-bundle>
+```
+
+Also you may pack custom provisioner packages available locally:
+
+```bash
+pytest test/build_helpers/build_bundles \
+          --build-prvsnr-pkg=<path-to-prvsnr-pkg> \
+          --build-prvsnr-api-pkg=<path-to-prvsnr-api-pkg>
+```
+
+For the full list of available options please run
+`pytest test/build_helpers/build_bundles --help` (`custom options` part):
+
+*   `--build-type=TYPE` type of the bundle \[choices: deploy-cortx, deploy-bundle, upgrade, all]
+*   `--build-version=STR` version of the release, ignored if 'all' type is used
+*   `--build-output=BUILD_OUTPUT` path to file or directory to output
+*   `--build-orig-single-iso=BUILD_ORIG_SINGLE_ISO` original CORTX single ISO for partial use
+*   `--build-prvsnr-pkg=BUILD_PRVSNR_PKG PATH` to provisioner core rpm package
+*   `--build-prvsnr-api-pkg=BUILD_PRVSNR_API_PKG PATH` to provisioner API rpm package
+
+##### Docker environment creation
+
+```bash
+pytest test/build_helpers/build_env -s --root-passwd root --nodes-num 1
+```
+
+The command above will create the docker container.
 
   <details>
-  <summary>The command above will create the docker container and will have the following output</summary>
-    
-  ```
-    ========================================================================================= test session starts ==========================================================================================
-    platform linux -- Python 3.6.13, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
-    rootdir: /home/fdmitry/Work/cortx-prvsnr, inifile: pytest.ini
-    plugins: timeout-1.3.4, testinfra-3.1.0, mock-3.1.0, xdist-1.29.0, forked-1.3.0
-    timeout: 7200.0s
-    timeout method: signal
-    timeout func_only: False
-    collected 1 item                                                                                                                                                                                       
-    
-    test/build_helpers/test_build_env.py::test_build_setup_env Host srvnode-1
-      Hostname 172.17.0.2
-      Port 22
-      User root
-      UserKnownHostsFile /dev/null
-      StrictHostKeyChecking no
-      IdentityFile /tmp/pytest-of-fdmitry/pytest-10/id_rsa.test
-      IdentitiesOnly yes
-      LogLevel FATAL
-    
-    ```
+  <summary>It will result with the following example output</summary>
+
+```
+  ========================================================================================= test session starts ==========================================================================================
+  platform linux -- Python 3.6.13, pytest-5.1.1, py-1.10.0, pluggy-0.13.1
+  rootdir: /home/fdmitry/Work/cortx-prvsnr, inifile: pytest.ini
+  plugins: timeout-1.3.4, testinfra-3.1.0, mock-3.1.0, xdist-1.29.0, forked-1.3.0
+  timeout: 7200.0s
+  timeout method: signal
+  timeout func_only: False
+  collected 1 item
+
+  test/build_helpers/build_env/test_build_env.py::test_build_setup_env Host srvnode-1
+    Hostname 172.17.0.2
+    Port 22
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    IdentityFile /tmp/pytest-of-fdmitry/pytest-10/id_rsa.test
+    IdentitiesOnly yes
+    LogLevel FATAL
+
+```
+
   </details>
 
-    Possible options (you may check them using `pytest test/build_helpers --help`, `custom options` part)
+You may check the full list of options using `pytest test/build_helpers/build_env --help`
+(`custom options` part):
+
     - `--docker-mount-dev` to mount `/dev` into containers (necessary if you need to mount ISO inside a container)
     - `--root-passwd <STR>` to set a root password for initial ssh access
     - `--nodes-num <INT>` number of nodes, currently it can be from 1 to 6
 
 #### Integration test cases
 
-
 ##### Provisioner setup
 
-- You may set up a provisioner inside the container using the local source mode
+You may set up a provisioner inside the container using the local source mode
 
-  ```bash
-  provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
-  ```
+```bash
+provisioner setup_provisioner --source local --logfile --logfile-filename ./setup.log --console-formatter full srvnode-1:172.17.0.2
+```
 
-  **:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
+**:warning:** NOTE: For **srvnode-1**, **srvnode-2**, etc. parameter values use the **Hostname** output from previous step
 
 **TBD: Test other types of sources.**
 
@@ -296,24 +367,24 @@ sudo docker run hello-world
 
 ### Basic Docker commands
 
-* List docker containers by their ID
+*   List docker containers by their ID
 
-  ```bash
-  docker ps
-  ```
+    ```bash
+    docker ps
+    ```
 
-  :warning:NOTE: Use `docker ps --help`  to see all options
+    :warning:NOTE: Use `docker ps --help`  to see all options
 
-* Copy sources from host to docker container
+*   Copy sources from host to docker container
 
-  ```bash
-  docker cp /PATH/TO/SOURCE <CONTAINER ID>:/DESTINATION/PATH
-  ```
+    ```bash
+    docker cp /PATH/TO/SOURCE <CONTAINER ID>:/DESTINATION/PATH
+    ```
 
-  :warning: NOTE: You can find `<CONTAINER ID>` from `docker ps` command output
+    :warning: NOTE: You can find `<CONTAINER ID>` from `docker ps` command output
 
-* Enter to docker container (create the new Bash session)
+*   Enter to docker container (create the new Bash session)
 
-  ```bash
-  docker exec -it <CONTAINER ID> bash
-  ```
+    ```bash
+    docker exec -it <CONTAINER ID> bash
+    ```

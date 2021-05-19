@@ -218,7 +218,7 @@ function configure_gluster_vols() {
     # add entries in fstab server A
     time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
     echo -e "\nAdding entry for gluster volume (${gfs_vol_salt_cache_jobs}) in fstab of Server A" | tee -a ${LOG_FILE}
-    yes | cp -f /etc/fstab /opt/seagate/cortx/provisioner/generated_configs/fstab_a_unboxing_${time_stamp}
+    yes | cp -f /etc/fstab /opt/seagate/cortx_configs/provisioner_generated/fstab_a_unboxing_${time_stamp}
     if grep -q ${gfs_vol_salt_cache_jobs} /etc/fstab; then
         echo "/etc/fstab already has the entry for ${gfs_vol_salt_cache_jobs} on Server A" >> ${LOG_FILE}
         #Comment the existing entry and add the new one
@@ -239,7 +239,7 @@ function configure_gluster_vols() {
     fstab_b="/tmp/fstab_b_unboxing"
     echo "Copying the fstab from Server B to Server A for update" >> ${LOG_FILE}
     ${scp_cmd} ${pvt_ip_b}:/etc/fstab ${fstab_b}
-    yes | cp -f ${fstab_b} /opt/seagate/cortx/provisioner/generated_configs/fstab_b_unboxing_${time_stamp}
+    yes | cp -f ${fstab_b} /opt/seagate/cortx_configs/provisioner_generated/fstab_b_unboxing_${time_stamp}
     if grep -q ${gfs_vol_salt_cache_jobs} ${fstab_b}; then
         echo "/etc/fstab already has the entry for ${gfs_vol_salt_cache_jobs} on Server B" >> ${LOG_FILE}
         #Comment the existing entry and add the new one
@@ -542,10 +542,10 @@ function lock_unboxing_user {
 }
 
 function remove_boxing_flag {
-    if [[ -f '/opt/seagate/cortx/provisioner/generated_configs/boxed' ]]
+    if [[ -f '/opt/seagate/cortx_configs/provisioner_generated/boxed' ]]
     then
         echo "DEBUG: Boxed file found. Removing boxed file." >> ${LOG_FILE}
-        rm -f /opt/seagate/cortx/provisioner/generated_configs/boxed || true
+        rm -f /opt/seagate/cortx_configs/provisioner_generated/boxed || true
     else
         echo "\
 ERROR: Boxing command was not run

@@ -435,7 +435,7 @@ ping -c1 ${repl_node_hostname} >/dev/null 2>&1 \
 # Update salt states
 update_salt_n_system
 
-flag_file_dir=/opt/seagate/cortx/provisioner/generated_configs
+flag_file_dir=/opt/seagate/cortx_configs/provisioner_generated
 if [[ ! -e ${flag_file_dir}/${tgt_node}.multipath ]]; then
     l_info "=================================================="
     l_info "Stage 1: Applying multipath..."

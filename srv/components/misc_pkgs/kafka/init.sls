@@ -15,15 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.kafka'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.kafka'.format(grains['id'])) %}
 include:
   - .install
   - .config
   - .start
+  - .sanity_check
 
 Generate kafka checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.kafka
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka
     - makedirs: True
     - create: True
 {%- else -%}

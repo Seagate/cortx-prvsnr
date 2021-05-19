@@ -16,7 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-set -euE
+#set -euE
 
 script_dir=$(dirname $0)
 export logdir="/var/log/seagate/provisioner"
@@ -460,10 +460,12 @@ parse_args()
                     echo "Error: Timezone not provided" && exit 1;
                 fi
                 ntp_server="$2"
-                ntp_tz="$3"
-                echo "parse_args(): ntp_server=$ntp_server, ntp_tz=$ntp_tz" >> $logfile
+                _tz=":${3}"
+                ntp_tz=$(TZ="$_tz" date +%:z)
+                echo "parse_args(): ntp_server=$ntp_server, _tz=${_tz}, ntp_tz=$ntp_tz" >> $logfile
                 shift 3
-                ntp_opt=true ;;
+                ntp_opt=true
+                ;;
             *) echo "Invalid option $1"; exit 1;;
         esac
     done
@@ -519,9 +521,10 @@ main()
 
     # Decrypt the password. Required only for commands received from api
     if [[ "$update_fw" = true || "$restart_ctrl_opt" = true
-        || "$shutdown_ctrl_opt" = true ]]; then
+        || "$shutdown_ctrl_opt" = true || "$ntp_opt" = true
+        || "$show_license" = true ]]; then
         echo "main(): Decrypting the password received from api" >> $logfile
-        pass=`salt-call lyveutil.decrypt storage ${pass} --output=newline_values_only`
+        pass=`salt-call lyveutils.decrypt storage ${pass} --output=newline_values_only`
         #echo "main(): decrypted password: $pass" >> $logfile
         ssh_cred="$ssh_tool -p $pass"
         ssh_cmd="$ssh_base_cmd $ssh_opts $user@$host"

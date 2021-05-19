@@ -798,45 +798,47 @@ def test_functions_install_provisioner(
 
 
 # TODO centos 7.6, 7.7
-@pytest.mark.isolated
-@pytest.mark.env_level('salt-installed')
-@pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
-@pytest.mark.parametrize("version", [
-    None,
-    CORTX_RELEASE_TEST_TAG,
-    'components/dev/centos-7.7.1908/provisioner/last_successful',
-    'components/dev/centos-7.7.1908/provisioner/20'
-], ids=[
-    'default', 'tag', 'lastdev', 'somedev'
-])
-def test_functions_install_provisioner_rpm(
-    run_script, mhost, mlocalhost,
-    ssh_config, remote, version
-):
-    prvsnr_version = "''" if version is None else version
-    hostspec = mhost.hostname if remote else "''"
-    ssh_config = ssh_config if remote else "''"
-    with_sudo = 'false'  # TODO
+# FIXME: We would need an input from RE team, whether a release repo will be public or not.
+# If not - we will make that thing optional so the test can be run inside Seagate network only.
+# @pytest.mark.isolated
+# @pytest.mark.env_level('salt-installed')
+# @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
+# @pytest.mark.parametrize("version", [
+#     None,
+#     CORTX_RELEASE_TEST_TAG,
+#     'components/dev/centos-7.7.1908/provisioner/last_successful',
+#     'components/dev/centos-7.7.1908/provisioner/20'
+# ], ids=[
+#     'default', 'tag', 'lastdev', 'somedev'
+# ])
+# def test_functions_install_provisioner_rpm(
+#     run_script, mhost, mlocalhost,
+#     ssh_config, remote, version
+# ):
+#     prvsnr_version = "''" if version is None else version
+#     hostspec = mhost.hostname if remote else "''"
+#     ssh_config = ssh_config if remote else "''"
+#     with_sudo = 'false'  # TODO
 
-    script = """
-        install_provisioner rpm {} {} {} {}
-    """.format(prvsnr_version, hostspec, ssh_config, with_sudo)
+#     script = """
+#         install_provisioner rpm {} {} {} {}
+#     """.format(prvsnr_version, hostspec, ssh_config, with_sudo)
 
-    res = run_script(script, mhost=(mlocalhost if remote else mhost))
-    assert res.rc == 0
+#     res = run_script(script, mhost=(mlocalhost if remote else mhost))
+#     assert res.rc == 0
 
-    assert mhost.host.package('cortx-prvsnr').is_installed
-    assert mhost.host.package('python36-cortx-prvsnr').is_installed
-    baseurl = mhost.check_output(
-        'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
-    ).split('=')[1]
-    assert baseurl == (
-        'http://cortx-storage.colo.seagate.com/releases/cortx/{}'
-        .format(
-            'integration/centos-7.7.1908/last_successful'
-            if version is None else version
-        )
-    )
+#     assert mhost.host.package('cortx-prvsnr').is_installed
+#     assert mhost.host.package('python36-cortx-prvsnr').is_installed
+#     baseurl = mhost.check_output(
+#         'cat /etc/yum.repos.d/prvsnr.repo | grep baseurl'
+#     ).split('=')[1]
+#     assert baseurl == (
+#         'http://<cortx_release_server>/releases/cortx/{}'
+#         .format(
+#             'integration/centos-7.7.1908/last_successful'
+#             if version is None else version
+#         )
+#     )
 
 
 # TODO

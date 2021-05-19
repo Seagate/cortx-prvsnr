@@ -16,9 +16,12 @@
 #
 
 from typing import Optional, List
+import logging
 
 from . import config
 from .utils import dump_yaml, run_subprocess_cmd
+
+logger = logging.getLogger(__name__)
 
 
 # TODO TEST EOS-8473
@@ -31,7 +34,10 @@ def setup(
     if profile_paths is None:
         profile_paths = config.profile_paths()
 
-    if clean:
+    if clean and profile_paths['base_dir'].exists():
+        logger.warning(
+            f"Cleaning up existing profile {profile_paths['base_dir']}"
+        )
         run_subprocess_cmd(['rm', '-rf', str(profile_paths['base_dir'])])
 
     if add_file_roots is None:
@@ -66,7 +72,8 @@ def setup(
             'base': [str(d.resolve()) for d in add_file_roots] + [
                 str(profile_paths['salt_fileroot_dir']),
                 str(profile_paths['salt_factory_fileroot_dir']),
-                str(config.BUNDLED_SALT_FILEROOT_DIR)
+                str(config.BUNDLED_SALT_FILEROOT_DIR),
+                str(config.BUNDLED_SALT_FILEROOT_VENDOR_DIR),
             ]
         },
         'pillar_roots': {

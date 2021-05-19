@@ -16,6 +16,8 @@
 #
 
 # read-only commands
+cluster_id:
+  type: ClusterId
 get_result:
   type: GetResult
 grains_get:
@@ -29,8 +31,6 @@ pillar_export:
 get_params:
   type: Get
   input_type: ParamsList
-get_cluster_id:
-  type: GetClusterId
 get_node_id:
   type: GetNodeId
 get_release_version:
@@ -54,6 +54,7 @@ set_ntp:
     - components.system.chrony.config
     - components.system.chrony.stop
     - components.system.chrony.start
+    - components.controller.ntp
 set_network:
   type: Set
   input_type: Network
@@ -63,6 +64,32 @@ set_network:
       # - components.system.network.data.direct
       # - components.ha.corosync-pacemaker.config.cluster_ip
       # - components.ha.corosync-pacemaker.config.mgmt_vip
+set_data_network:
+  type: Set
+  input_type: DataNetwork
+  states:
+    post:
+      - components.system.network.data.public
+      - components.system.network.data.direct
+set_hostname:
+  type: Set
+  input_type: Hostname
+  states:
+    post:
+      - components.system.config.set_hostname
+setup_firewall:
+    type: Set
+    input_type: Firewall
+    states:
+      post:
+        - components.system.firewall
+set_mgmt_network:
+    type: Set
+    input_type: MgmtNetwork
+    states:
+      post:
+        - components.system.network.mgmt.public
+
 # set_cluster_ip:
 #   type: Set
 #   input_type: ClusterIP
@@ -75,6 +102,7 @@ set_network:
 #   states:
 #     post:
 #       - components.ha.corosync-pacemaker.config.mgmt_vip
+
 set_swupdate_repo:
   type: SetSWUpdateRepo
   input_type: SWUpdateRepo
@@ -82,15 +110,23 @@ set_swupdate_repo:
     post:
     - components.misc_pkgs.swupdate.repo
 set_swupgrade_repo:
-  type: SetSWUpgradeRepo
+  type: upgrade.SetSWUpgradeRepo
   input_type: SWUpgradeRepo
   states:
     post:
-    - components.misc_pkgs.swupgrade.repo
+    - repos.upgrade
+remove_swupgrade_repo:
+  type: upgrade.RemoveSWUpgradeRepo
+  input_type: SWUpgradeRemoveRepo
+  states:
+    post:
+    - repos.upgrade
 sw_update:
   type: SWUpdate
 sw_upgrade:
-  type: SWUpgrade
+  type: upgrade.SWUpgrade
+get_swupgrade_info:
+  type: upgrade.GetSWUpgradeInfo
 fw_update:
   type: FWUpdate
 sw_rollback:
@@ -107,6 +143,8 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
+create_service_user:
+  type: CreateServiceUser
 cmd_run:
   type: CmdRun
 configure_setup:
@@ -117,10 +155,22 @@ generate_roster:
   type: GenerateRoster
 reset_machine_id:
   type: ResetMachineId
+confstore_export:
+  type: ConfStoreExport
+resource:
+  type: Resource
+destroy:
+  type: DestroyNode
+configure_node:
+  type: ConfigureNode
 
 # setup commands
 setup_provisioner:
   type: SetupProvisioner
+bootstrap_provisioner:
+  type: BootstrapProvisioner
+post_provisioner:
+  type: PostProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:
@@ -144,5 +194,6 @@ deploy_jbod:
 deploy_dual:
   type: DeployDual
 
-destroy:
-  type: DestroyNode
+# others
+helper:
+  type: Helper

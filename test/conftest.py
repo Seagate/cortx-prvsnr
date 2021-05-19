@@ -15,9 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import sys
 import docker
 import time
 import json
+from importlib import import_module
+from typing import Type
 from pathlib import Path
 from collections import defaultdict
 
@@ -26,13 +29,22 @@ import testinfra
 
 import logging
 
-from provisioner.vendor import attr
+from provisioner import inputs
 import test.helper as h
 from .helper import (
     fixture_builder,
     safe_filename,
     PRVSNR_REPO_INSTALL_DIR, mock_system_cmd, restore_system_cmd
 )
+
+from . import testapi
+from .testapi.integration import HostMeta
+
+mod = sys.modules[__name__]
+
+# Note. Just to make that explicit and lint tools happy
+for fixture in testapi.fixtures:
+    setattr(mod, fixture.__name__, fixture)
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +72,9 @@ ENV_LEVELS_HIERARCHY = {
                 'vm_box_name': 'geerlingguy/centos7',
                 'vm_box_version': '1.2.17'
             }
+        },
+        'centos7.8.2003': {
+            'docker': 'centos:7.8.2003'
         },
         'centos8.2.2004': {
             'docker': 'centos:8.2.2004'
@@ -92,6 +107,7 @@ ENV_LEVELS_HIERARCHY = {
     'rpmbuild': 'base',
     'fpm': 'base',
     'utils': 'base',
+    'setup': 'utils',
     'network-manager-installed': 'base',
 
     # bvt
@@ -103,7 +119,8 @@ ENV_LEVELS_HIERARCHY = {
 
 
 BASE_OS_NAMES = list(ENV_LEVELS_HIERARCHY['base'])
-DEFAULT_BASE_OS_NAME = 'centos7.7.1908'
+ENV_LEVELS = list(ENV_LEVELS_HIERARCHY)
+DEFAULT_BASE_OS_NAME = 'centos7.8.2003'
 
 DEFAULT_CLUSTER_SPEC = {
     f'srvnode{node_id}': {
@@ -112,142 +129,6 @@ DEFAULT_CLUSTER_SPEC = {
         'roles': ['primary' if node_id == 1 else 'secondary'],
     } for node_id in range(1, MAX_NODES_NUMBER + 1)
 }
-
-
-@attr.s
-class HostMeta:
-    # TODO validators for all
-    remote = attr.ib()
-    host = attr.ib()
-    ssh_config = attr.ib()
-    request = attr.ib()
-
-    label = attr.ib(converter=lambda v: '' if not v else v, default='')
-    machine_name = attr.ib(default=None)
-    hostname = attr.ib(default=None)
-    interface = attr.ib(default=None)
-
-    _hostname = attr.ib(init=False, default=None)
-    _tmpdir = attr.ib(init=False, default=None)
-    _repo = attr.ib(init=False, default=None)
-    _rpm_prvsnr = attr.ib(init=False, default=None)
-    _rpm_prvsnr_cli = attr.ib(init=False, default=None)
-    _rpm_prvsnr_api = attr.ib(init=False, default=None)
-
-    def __attrs_post_init__(self):
-        # TODO more smarter logic to get interface that is asseccible from host
-        # (relates to https://github.com/hashicorp/vagrant/issues/2779)
-        if self.interface is None:
-            if (
-                isinstance(self.remote, h.VagrantMachine) and
-                (self.remote.provider == 'vbox')
-            ):
-                self.interface = 'enp0s8'
-            else:
-                self.interface = 'eth0'
-
-        assert self.host.interface(self.interface).exists
-
-    @property
-    def hostname(self):
-        if self._hostname is None:
-            self._hostname = self.host.check_output('hostname')
-        return self._hostname
-
-    @property
-    def ssh_host(self):
-        return self.host.interface(self.interface).addresses[0]
-
-    @property
-    def tmpdir(self):
-        if self._tmpdir is None:
-            tmpdir_function = self.request.getfixturevalue('tmpdir_function')
-            # TODO non linux systems
-            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')
-            self.host.check_output("mkdir -p {}".format(self._tmpdir))
-        return self._tmpdir
-
-    def copy_from_host(self, host_path, local_path=None):
-        tmpdir_local = self.request.getfixturevalue('tmpdir_function')
-
-        if local_path is None:
-            local_path = tmpdir_local / host_path.name
-        else:
-            local_path = local_path.resolve()
-            # ensure that it's inside tmpdir
-            local_path.relative_to(tmpdir_local)
-
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-
-        h.localhost.check_output(
-            "scp -r -F {} {}:{} {}".format(
-                self.ssh_config,
-                self.hostname,
-                host_path,
-                local_path
-            )
-        )
-        return local_path
-
-    def copy_to_host(self, local_path, host_path=None):
-        if host_path is None:
-            host_path = self.tmpdir / local_path.name
-
-        self.host.check_output(
-            "mkdir -p {}".format(host_path.parent)
-        )
-
-        h.localhost.check_output(
-            "scp -r -F {} {} {}:{}".format(
-                self.ssh_config,
-                local_path,
-                self.hostname,
-                host_path
-            )
-        )
-        return host_path
-
-    @property
-    def rpm_prvsnr(self):
-        if self._rpm_prvsnr is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr')
-            self._rpm_prvsnr = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr
-
-    @property
-    def rpm_prvsnr_cli(self):
-        if self._rpm_prvsnr_cli is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_cli')
-            self._rpm_prvsnr_cli = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr_cli
-
-    @property
-    def rpm_prvsnr_api(self):
-        if self._rpm_prvsnr_api is None:
-            rpm_local_path = self.request.getfixturevalue('rpm_prvsnr_api')
-            self._rpm_prvsnr_api = self.copy_to_host(rpm_local_path)
-        return self._rpm_prvsnr_api
-
-    @property
-    def repo(self):
-        if self._repo is None:
-            repo_tgz = self.request.getfixturevalue('repo_tgz')
-            self._repo = h.inject_repo(
-                self.host, self.ssh_config, repo_tgz
-            )
-        return self._repo
-
-    @property
-    def fixture_name(self):
-        return 'mhost' + self.label
-
-    def run(self, script, *args, force_dump=False, **kwargs):
-        return h.run(self.host, script, *args, force_dump=force_dump, **kwargs)
-
-    def check_output(self, script, *args, force_dump=False, **kwargs):
-        return h.check_output(
-            self.host, script, *args, force_dump=force_dump, **kwargs
-        )
 
 
 class LocalHostMeta(HostMeta):
@@ -284,23 +165,42 @@ class LocalHostMeta(HostMeta):
         return 'mlocalhost'
 
 
+def _add_testing_levels_markers(config):
+    for level in h.LevelT:
+        config.addinivalue_line(
+            "markers",
+            f"{level.value}: mark test as a scenario"
+            f" with '{level.value}' level"
+        )
+
+
+def _add_testing_topics_markers(config):
+    for topic in h.TopicT:
+        config.addinivalue_line(
+            "markers",
+            f"{topic.value}: mark test as a scenario"
+            f" belongs to '{topic.value}' topic"
+        )
+
+
 def pytest_configure(config):
+    _add_testing_levels_markers(config)
+
+    _add_testing_topics_markers(config)
+
     config.addinivalue_line(
-        "markers", "unit: mark test as a unit "
-                   "level testing scenario"
+        "markers", "debug: mark test as a one for debug"
     )
     config.addinivalue_line(
-        "markers", "integration1: mark test as an integration "
-                   "level testing scenario with mocked env"
+        "markers", "example: mark test as an example"
     )
     config.addinivalue_line(
-        "markers", "integration2: mark test as an integration "
-                   "level testing scenario without mocks"
+        "markers", "outdated: mark test as an outdated (would be skipped)"
     )
     config.addinivalue_line(
-        "markers", "system: mark test as an system "
-                   "level testing scenario"
+        "markers", "verified: mark test as verified (up-to-date) one"
     )
+
     config.addinivalue_line(
         "markers", "env_provider(string): mark test to be run "
                    "in the environment provided by the provider"
@@ -318,6 +218,11 @@ def pytest_configure(config):
         "markers", "hosts(list): mark test as expecting "
                    "the specified list of hosts by labels, "
                    "default: ['']"
+    )
+    config.addinivalue_line(
+        "markers", "hosts_num: mark test as expecting "
+                   "the specified number of hosts"
+                   "default: undefined"
     )
     config.addinivalue_line(
         "markers", "isolated: mark test to be run in the isolated "
@@ -361,74 +266,124 @@ prvsnr_pytest_options = {
         default='docker',
         help="test environment provider, defaults to docker"
     ),
+    "env-level": dict(
+        action='store',
+        choices=ENV_LEVELS,
+        default=None,
+        help="test environment level"
+    ),
     "prvsnr-src": dict(
         action='store', choices=['rpm', 'github', 'local'],
         default='rpm',
         help="Provisioner source to use, defaults to 'rpm'"
     ),
-    "prvsnr-cli-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Provisioner cli release to use, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    ),
-    "prvsnr-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Provisioner release to use, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    ),
-    "cortx-release": dict(
-        action='store', default='integration/centos-7.7.1908/last_successful',
-        help=(
-            "Target release to verify, "
-            "defaults to 'integration/centos-7.7.1908/last_successful'"
-        )
-    )
+    # XXX outdated options (bvt scope)
+    #    "prvsnr-cli-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Provisioner cli release to use, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    ),
+    #    "prvsnr-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Provisioner release to use, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    ),
+    #    "cortx-release": dict(
+    #        action='store',
+    #        default='integration/centos-7.7.1908/last_successful',
+    #        help=(
+    #            "Target release to verify, "
+    #            "defaults to 'integration/centos-7.7.1908/last_successful'"
+    #        )
+    #    )
 }
 
 
 def pytest_addoption(parser):
+    # TODO find a way when inner module can do that itself
+    #      (currently pytest_addoption is called before any imports
+    #       of low level test modules)
+    setup_opts_module = import_module(
+        'test.api.python.integration.setup.conftest'
+    )
+
     h.add_options(parser, prvsnr_pytest_options)
+    h.add_options(
+        parser, setup_opts_module.SetupOpts.prepare_args()
+    )
 
 
 # TODO DOC how to modify tests collections
-# TODO DOC how to apply markers dynamically so it woudl impact comllection
+# TODO DOC how to apply markers dynamically so it would impact collection
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        if "unit" in item.fixturenames:
-            item.add_marker(pytest.mark.unit)
-        elif "integration1" in item.fixturenames:
-            item.add_marker(pytest.mark.integration1)
+        for level in h.LevelT:
+            if level.value in item.fixturenames:
+                item.add_marker(getattr(pytest.mark, level.value))
+                break
         else:
-            item.add_marker(pytest.mark.integration2)
+            item.add_marker(getattr(pytest.mark, h.LevelT.NOLEVEL.value))
+
+        for topic in h.TopicT:
+            if topic.value in item.fixturenames:
+                item.add_marker(getattr(pytest.mark, topic.value))
+                break
+        else:
+            item.add_marker(getattr(pytest.mark, h.TopicT.NOTOPIC.value))
+
+        if 'any_level' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['any_level'].value)
+            )
+
+        if 'any_topic' in item.fixturenames:
+            item.add_marker(
+                getattr(pytest.mark, item.callspec.params['any_topic'].value)
+            )
+
+        for marker in ('debug', 'outdated', 'example'):
+            if item.get_closest_marker(marker):
+                item.add_marker(pytest.mark.skip)
+
+
+for level in list(h.LevelT) + list(h.TopicT):
+    fixture_builder(
+        'session', name_with_scope=False, module_name=__name__,
+        fixture_name=level.value
+    )(lambda: None)
 
 
 @pytest.fixture(scope='session')
-def unit():
-    pass
+def get_fixture(request):
+    def _f(fixture_name):
+        return request.getfixturevalue(fixture_name)
+    return _f
 
 
 @pytest.fixture(scope='session')
-def integration1():
-    pass
+def custom_opts_t():
+    return inputs.ParserMixin
 
 
 @pytest.fixture(scope='session')
-def integration2():
-    pass
+def custom_opts(request, custom_opts_t: Type[inputs.ParserMixin]):
+    return custom_opts_t.from_args(request.config.option)
 
 
 @pytest.fixture(scope="session")
-def options_list():
-    return list(prvsnr_pytest_options)
+def run_options(custom_opts_t: Type[inputs.ParserMixin]):
+    return list(prvsnr_pytest_options) + list(custom_opts_t.parser_args())
 
 
 @pytest.fixture(scope="session", autouse=True)
-def dump_options(request, options_list):
-    h.dump_options(request, options_list)
+def dump_options(request, run_options):
+    h.dump_options(request, run_options)
 
 
 @pytest.fixture(scope="session")
@@ -444,6 +399,16 @@ def docker_client():
 @pytest.fixture(scope="session")
 def localhost():
     return h.localhost
+
+
+@pytest.fixture(scope="session")
+def local_user_id(localhost):
+    return h.localhost.check_output('id -u')
+
+
+@pytest.fixture(scope="session")
+def local_user_name(localhost):
+    return 'user'
 
 
 @pytest.fixture(scope='session')
@@ -466,6 +431,25 @@ def vagrant_global_status_prune(localhost):
 @pytest.fixture(scope="session")
 def base_env(request):
     return request.config.getoption("base_env")
+
+
+@pytest.fixture(scope='session')
+def ask_proceed():
+
+    def _f():
+        input('Press any key to continue...')
+
+    return _f
+
+
+@pytest.fixture(scope='session', params=h.LevelT)
+def any_level(request):
+    return request.param
+
+
+@pytest.fixture(scope='session', params=h.TopicT)
+def any_topic(request):
+    return request.param
 
 
 @pytest.fixture
@@ -1137,8 +1121,13 @@ def tmpdir_module(request, tmp_path_factory):
 
 
 @pytest.fixture
-def tmpdir_function(request, tmpdir_module):
-    res = tmpdir_module / safe_filename(request.node.name)
+def safe_function_name(request):
+    return Path(safe_filename(request.node.name))
+
+
+@pytest.fixture
+def tmpdir_function(safe_function_name, tmpdir_module):
+    res = tmpdir_module / safe_function_name
     res.mkdir()
     return res
 
@@ -1402,14 +1391,29 @@ def discover_remote(
     request, remote, ssh_config=None, host_fixture_label=None
 ):
     tmpdir = request.getfixturevalue('tmpdir_{}'.format(request.scope))
+    local_user_id = request.getfixturevalue('local_user_id')
+    local_user_name = request.getfixturevalue('local_user_name')
 
     _host = None
+    # TODO add support for local user host for non-docker cases
+    _host_user = None
     _iface = 'eth0'
     _ssh_config = None
     if isinstance(remote, h.Container):
         # update container data
         remote.container.reload()
         _host = testinfra.get_host(remote.container.id, connection='docker')
+        if int(local_user_id) == 0:
+            _host_user = _host
+        else:
+            _host.check_output(
+                f"adduser -u {local_user_id}"
+                f" {local_user_name}"
+            )
+            _host_user = testinfra.get_host(
+                f"{local_user_name}@{remote.container.id}",
+                connection='docker'
+            )
 
         #  ssh to be up
         service = _host.service
@@ -1488,7 +1492,8 @@ def discover_remote(
         request,
         label=host_fixture_label,
         machine_name=remote.name,
-        interface=_iface
+        interface=_iface,
+        host_user=_host_user
     )
 
 

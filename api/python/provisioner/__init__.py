@@ -40,7 +40,10 @@ from .api import (  # noqa: F401
     set_ntp,
     set_network,
     set_swupdate_repo,
+    set_swupgrade_repo,
     sw_update,
+    sw_upgrade,
+    get_swupgrade_info,
     fw_update,
     sw_rollback,
     set_ssl_certs,
@@ -56,7 +59,11 @@ from .api import (  # noqa: F401
     get_factory_version,
     cmd_run,
     get_setup_info,
-    grains_get
+    grains_get,
+    set_hostname,
+    set_mgmt_network,
+    setup_firewall,
+    set_data_network
 )
 
 from .values import (  # noqa: F401
@@ -78,7 +85,10 @@ __all__ = [
     'set_ntp',
     'set_network',
     'set_swupdate_repo',
+    'set_swupgrade_repo',
     'sw_update',
+    'sw_upgrade',
+    'get_swupgrade_info',
     'sw_rollback',
     'set_ssl_certs',
     'fw_update',
@@ -95,6 +105,10 @@ __all__ = [
     'cmd_run',
     'get_setup_info',
     'grains_get',
+    'set_hostname',
+    'set_mgmt_network',
+    'setup_firewall',
+    'set_data_network',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',

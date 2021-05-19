@@ -32,11 +32,11 @@ from . import inputs
 from .errors import LogMsgTooLong
 from .base import prvsnr_config
 from .config import (
-    LOG_NULL_HANDLER as null_handler,
-    LOG_CONSOLE_HANDLER as console_handler,
-    LOG_FILE_HANDLER as logfile_handler,
-    LOG_FILE_SALT_HANDLER as saltlogfile_handler,
-    LOG_CMD_FILTER as cmd_filter,
+    LOG_NULL_HANDLER as NULL_HANDLER,
+    LOG_CONSOLE_HANDLER as CONSOLE_HANDLER,
+    LOG_FILE_HANDLER as LOGFILE_HANDLER,
+    LOG_FILE_SALT_HANDLER as SALTLOGFILE_HANDLER,
+    LOG_CMD_FILTER as CMD_FILTER,
     LOG_HUMAN_FORMATTER,
     LOG_TRUNC_MSG_TMPL,
     LOG_TRUNC_MSG_SIZE_MAX
@@ -80,7 +80,7 @@ class NoTraceExceptionFormatter(logging.Formatter):
         record.exc_text = ''
         return super().format(record)
 
-    def formatException(self, exc_info):
+    def formatException(self, exc_info):  # noqa: N802
         # TODO IMPROVE check docs for exc_info
         return repr(getattr(exc_info[1], 'reason', exc_info[1]))
 
@@ -113,7 +113,7 @@ class NoErrorSysLogHandler(logging.handlers.SysLogHandler):
                 else:
                     break
 
-    def handleError(self, record):
+    def handleError(self, record):  # noqa: N802
         t, v, _ = sys.exc_info()
         if issubclass(t, OSError) and 'Message too long' in str(v):
             raise LogMsgTooLong()
@@ -156,15 +156,15 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     }, default=hattrs['formatter']
                 )
 
-        if hname == null_handler:
+        if hname == NULL_HANDLER:
             return _NullLogHandler
-        elif hname == console_handler:
+        elif hname == CONSOLE_HANDLER:
             @attr.s(auto_attribs=True)
             class _ConsoleStreamLogHandler(_LogHandler):
                 stream: str = attr.ib(
                     metadata={
                         inputs.METADATA_ARGPARSER: {
-                            'help': f"{console_handler} log stream",
+                            'help': f"{CONSOLE_HANDLER} log stream",
                             'choices': ['stderr', 'stdout']
                         }
                     },
@@ -172,7 +172,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     converter=(lambda stream: 'ext://sys.{}'.format(stream))
                 )
             return _ConsoleStreamLogHandler
-        elif hname in (logfile_handler, saltlogfile_handler):
+        elif hname in (LOGFILE_HANDLER, SALTLOGFILE_HANDLER):
             @attr.s(auto_attribs=True)
             class _FileLogHandler(_LogHandler):
                 filename: str = attr.ib(
@@ -184,7 +184,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     },
                     default=hattrs['filename']
                 )
-                maxBytes: int = attr.ib(
+                maxBytes: int = attr.ib(  # noqa: N815
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
@@ -198,7 +198,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
                     default=hattrs['maxBytes'],
                     converter=int
                 )
-                backupCount: int = attr.ib(
+                backupCount: int = attr.ib(  # noqa: N815
                     metadata={
                         inputs.METADATA_ARGPARSER: {
                             'help': (
@@ -220,11 +220,11 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
         'hcls': {}
     }
 
-    if type(log_config.get('filters', {}).get(cmd_filter)) is dict:
+    if isinstance(log_config.get('filters', {}).get(CMD_FILTER), dict):
         log_attrs.update({
             'cmd': attr.ib(
                 type=str,
-                default=log_config['filters'][cmd_filter].get(
+                default=log_config['filters'][CMD_FILTER].get(
                     'cmd', 'unknown'
                 ),
                 converter=(lambda cmd: cmd if cmd else 'unknown')
@@ -236,10 +236,10 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
         # Note. null handler is not dynamically configurable
         log_attrs.update({
             hname: attr.ib(
-                init=(hname != null_handler),
+                init=(hname != NULL_HANDLER),
                 type=bool,
                 default=(hname in log_config['root']['handlers']),
-                metadata=(None if hname == null_handler else {
+                metadata=(None if hname == NULL_HANDLER else {
                     inputs.METADATA_ARGPARSER: {
                         'help': "{} logging handler".format(hname),
                         'action': 'store_bool'
@@ -312,7 +312,7 @@ def build_log_args_cls(log_config=None):  # noqa: C901 FIXME
             res['root']['handlers'][:] = root_handlers + human_handlers
 
             if hasattr(self, 'cmd'):
-                res['filters'][cmd_filter]['cmd'] = self.cmd
+                res['filters'][CMD_FILTER]['cmd'] = self.cmd
 
             return res
 

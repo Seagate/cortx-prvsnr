@@ -33,6 +33,8 @@ rm -rf %{buildroot}
 # Turn off the brp-python-bytecompile automagic
 %global _python_bytecompile_extra 0
 %global __python %{__python3}
+# helps with newer builders (e.g. on centos 8.2)
+%global debug_package %{nil}
 
 
 

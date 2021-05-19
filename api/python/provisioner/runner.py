@@ -28,7 +28,13 @@ from .errors import ProvisionerError
 @attr.s(auto_attribs=True)
 class SimpleRunner:
     commands: List
-    nowait: bool = False
+    nowait: bool = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "run the command as a salt job in async mode"
+            }
+        }, default=False
+    )
 
     @classmethod
     def fill_parser(cls, parser):

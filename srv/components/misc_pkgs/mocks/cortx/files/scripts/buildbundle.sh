@@ -5,16 +5,24 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cortx_version=2.0.0
+orig_iso=
 output_dir=.
 output_type=deploy-cortx
 verbosity=0
 gen_iso=false
+prvsnr_pkg=
+prvsnr_api_pkg=
 
 tmp_dir=
+orig_bundle=
 cmd_prefix="bash"
 
 function trap_handler_exit {
     ret=$?
+
+    if [[ -d "$orig_bundle" ]]; then
+        umount "$orig_bundle" || true
+    fi
 
     if [[ -n "$tmp_dir" ]]; then
         rm -rf "$tmp_dir"
@@ -39,20 +47,54 @@ Builds different types of CORTX distribution.
 The type of a distribution, release version and output directory
 can be configured.
 
-If '--gen-iso' is specified then an ISO file is generated as well.
+If location of an original Cortx single repo image is specified
+(using '--orig-iso') then EPEL-7, SaltStack and GlusterFS repositories
+along with provisioner release packages would be copied from the ISO
+to a new bundle.
+
+Custom provisioner packages might be packed inside a bundle using
+'--prvsnr-pkg' and '--prvsnr-api-pkg' options.
+
+Finally if '--gen-iso' is specified then an ISO file is generated as well.
 
 Options:
-  -h,  --help           print this help and exit
-  -o,  --out-dir DIR    output dir,
-                            default: $output_dir
-  -r,  --cortx-ver      cortx release version,
-                            default: $cortx_version
-  -t,  --out-type       output type. Possible values: {deploy-cortx|deploy-single|upgrade}
-                            default: $output_type,
-  -v,  --verbose        be more verbose
-       --gen-iso        generate ISO
+  -h,  --help                   print this help and exit
+  -i,  --orig-iso FILE          original ISO for partial use,
+                                    default: $orig_iso
+  -o,  --out-dir DIR            output dir,
+                                    default: $output_dir
+  -r,  --cortx-ver              cortx release version,
+                                    default: $cortx_version
+  -t,  --out-type               output type. Possible values: {deploy-cortx|deploy-single|upgrade}
+                                    default: $output_type,
+  -v,  --verbose                be more verbose
+       --gen-iso                generate ISO
+       --prvsnr-pkg FILE        provisioner package location
+                                    default: $prvsnr_pkg
+       --prvsnr-api-pkg FILE    provisioner api package location
+                                    default: $prvsnr_api_pkg
 "
 }
+
+
+function check_file {
+    local _file="$1"
+    if [[ ! -f "$_file" ]]; then
+        >&2 echo "'$_file' not a file"
+        exit 5
+    fi
+}
+
+function check_file_exists {
+    local _file="$1"
+    if [[ ! -e "$_file" ]]; then
+        >&2 echo "no file '$_file'"
+        exit 5
+    else
+        check_file "$_file"
+    fi
+}
+
 
 function parse_args {
     set -eu
@@ -63,8 +105,8 @@ function parse_args {
         exit 1
     fi
 
-    local _opts=ho:r:t:v
-    local _long_opts=help,out-dir:,out-type:,cortx-ver:,verbose,gen-iso
+    local _opts=hi:o:r:t:v
+    local _long_opts=help,orig-iso:,out-dir:,out-type:,cortx-ver:,verbose,gen-iso,prvsnr-pkg:,prvsnr-api-pkg:
 
     local _getopt_res
     ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
@@ -80,6 +122,11 @@ function parse_args {
             -h|--help)
                 usage
                 exit 0
+                ;;
+            -i|--orig-iso)
+                orig_iso="$2"
+                check_file_exists "$orig_iso"
+                shift 2
                 ;;
             -o|--out-dir)
                 output_dir="$2"
@@ -110,6 +157,16 @@ function parse_args {
                 gen_iso=true
                 shift
                 ;;
+            --prvsnr-pkg)
+                prvsnr_pkg="$2"
+                check_file_exists "$prvsnr_pkg"
+                shift 2
+                ;;
+            --prvsnr-api-pkg)
+                prvsnr_api_pkg="$2"
+                check_file_exists "$prvsnr_api_pkg"
+                shift 2
+                ;;
             --)
                 shift
                 break
@@ -136,9 +193,11 @@ fi
 
 if [[ "$verbosity" -ge 1 ]]; then
     parsed_args=""
-    parsed_args+="\toutput_dir=$output_dir\n\toutput_type=$output_type"
+    parsed_args+="\torig_iso=$orig_iso"
+    parsed_args+="\n\toutput_dir=$output_dir\n\toutput_type=$output_type"
     parsed_args+="\n\tverbosity=$verbosity"
     parsed_args+="\n\trelease=$cortx_version\n\tgen-iso=$gen_iso"
+    parsed_args+="\n\tprvsnr_pkg=$prvsnr_pkg\n\tprvsnr_api_pkg=$prvsnr_api_pkg"
 
     echo -e "Parsed arguments:\n$parsed_args"
 fi
@@ -162,21 +221,59 @@ pushd "$output_dir"
 
     if [[ "$output_type" == "deploy-cortx" ]]; then
         cp -r "${rpms_dir}"/* .
-        yum_repos=.
+        yum_repos=(".")
+        cortx_dir="."
     else
         yum_repos=("cortx_iso" "3rd_party")
 
         if [[ "$output_type" == "upgrade" ]]; then
             yum_repos+=("os")
+        elif [[ -n "$orig_iso" ]]; then
+            orig_bundle="$build_dir/orig_bundle"
+            mkdir -p "$orig_bundle"
+            echo -e "Mounting orginal ISO $orig_iso into $orig_bundle"
+            mount -o loop "$orig_iso" "$orig_bundle"
+        else
+            yum_repos+=("3rd_party/EPEL-7" "3rd_party/commons/glusterfs" "3rd_party/commons/saltstack")
         fi
 
-        mkdir python_deps "${yum_repos[@]}"
+        mkdir -p python_deps "${yum_repos[@]}"
         cp -r "${rpms_dir}"/* cortx_iso
+        cortx_dir="cortx_iso"
     fi
 
+    # we create repos before copying existent ones inside it (if any)
     for repo in "${yum_repos[@]}"; do
         createrepo "$repo"
     done
+
+    # copying existent repos inside
+    if [[ -d "$orig_bundle" ]]; then
+        pushd 3rd_party
+            orig_repos=("EPEL-7" "commons/glusterfs" "commons/saltstack")
+            mkdir commons
+            for repo in "${orig_repos[@]}"; do
+                cp -r "$orig_bundle/3rd_party/$repo" "$repo"
+            done
+        popd
+
+        pushd "$cortx_dir"
+            cp -f "$orig_bundle"/cortx_iso/*cortx-prvsnr*.rpm .
+        popd
+    fi
+
+    # pack provided provisioner packages (if any) inside bundle
+    pushd "$cortx_dir"
+        if [[ -f "$prvsnr_pkg" ]]; then
+            rm -f cortx-prvsnr*.rpm
+            cp -f "$prvsnr_pkg" .
+        fi
+
+        if [[ -f "$prvsnr_api_pkg" ]]; then
+            rm -f python36-cortx-prvsnr*.rpm
+            cp -f "$prvsnr_api_pkg" .
+        fi
+    popd
 
     echo -e "Preparing a release info data"
     sed_cmds="s/{{ VERSION }}/$cortx_version/g"

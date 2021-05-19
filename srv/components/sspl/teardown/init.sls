@@ -16,5 +16,15 @@
 #
 
 include:
-  - components.sspl.teardown.sspl
-  - components.sspl.teardown.commons
+  - components.sspl.teardown.reset
+  - components.sspl.teardown.cleanup
+
+Remove sspl packages:
+  pkg.purged:
+    - pkgs:
+      - cortx-sspl
+      - cortx-sspl-test
+
+Delete sspl checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.sspl

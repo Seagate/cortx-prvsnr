@@ -15,17 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.motr'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.motr'.format(grains['id'])) %}
 include:
-  - components.motr.prepare
   - components.motr.install
   - components.motr.config
-  # - components.motr.start
-  - components.motr.sanity_check
+#  - components.motr.start
+#  - components.motr.sanity_check
 
 Generate motr checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.motr
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.motr
     - makedirs: True
     - create: True
 

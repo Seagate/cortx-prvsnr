@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from enum import Enum
 import sys
 import os
 import re
@@ -41,6 +42,7 @@ from provisioner.config import *  # noqa: E402, F403, F401 TODO improve
 
 # just to make flake8 happy
 from provisioner.config import PRVSNR_ROOT_DIR, PROJECT_PATH  # noqa: E402
+
 PRVSNR_REPO_INSTALL_DIR = PRVSNR_ROOT_DIR
 
 PRVSNR_PKG_NAME = 'cortx-prvsnr'
@@ -50,6 +52,45 @@ PRVSNR_CLI_PKG_NAME = 'cortx-prvsnr-cli'
 MAX_REMOTE_NAME_LEN = 80
 
 localhost = testinfra.get_host('local://')
+
+BUILD_BUNDLE_SCRIPT = (
+    (PROJECT_PATH or PRVSNR_ROOT_DIR)
+    / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
+)
+
+if not BUILD_BUNDLE_SCRIPT.exists():
+    BUILD_BUNDLE_SCRIPT = None
+
+
+class BundleT(Enum):
+
+    """Bundle types."""
+
+    DEPLOY_CORTX = 'deploy-cortx'
+    DEPLOY_BUNDLE = 'deploy-bundle'
+    UPGRADE = 'upgrade'
+
+
+class LevelT(Enum):
+
+    """Test level types."""
+
+    NOLEVEL = 'nolevel'
+    UNIT = 'unit'
+    INTEGRATION_MOCKED = 'integration_mocked'
+    INTEGRATION = 'integration'
+    SYSTEM = 'system'
+
+
+class TopicT(Enum):
+
+    """Test topic types."""
+
+    NOTOPIC = 'notopic'
+    DEPLOY = 'deploy'
+    CONFIG = 'config'
+    UPGRADE_BUNDLE = 'upgrade_bundle'
+    UPGRADE = 'upgrade'
 
 
 # TODO check packer is available
@@ -591,7 +632,8 @@ def restore_system_cmd(host, cmd, bin_path='/usr/local/bin'):
 
 
 def fixture_builder(
-    scope, name_with_scope=True, suffix=None, module_name=__name__
+    scope, name_with_scope=True, suffix=None,
+    module_name=__name__, fixture_name=None
 ):
 
     scopes = scope if type(scope) in (list, tuple) else [scope]
@@ -607,7 +649,7 @@ def fixture_builder(
                     ('_' + _scope) if name_with_scope else None,
                     suffix
                 ) if part
-            ]
+            ] if fixture_name is None else [fixture_name]
             _f = pytest.fixture(scope=_scope)(f)
             setattr(_f, '__name__', ''.join(name_parts))
             setattr(mod, _f.__name__, _f)
@@ -811,14 +853,15 @@ def install_provisioner_api(mhost):
     mhost.check_output("pip3 install {}".format(mhost.repo / 'api/python'))
 
 
-def dump_options(request, options_list):
+def dump_options(request, run_options):
     opts_str = '\n'.join([
         '{}: {}'.format(opt, request.config.getoption(opt.replace('-', '_')))
-        for opt in options_list
+        for opt in run_options
     ])
     logger.info('Passed options:\n{}'.format(opts_str))
 
 
 def add_options(parser, options):
     for name, params in options.items():
-        parser.addoption("--" + name, **params)
+        name = (name if name.startswith('--') else f"--{name}")
+        parser.addoption(name, **params)

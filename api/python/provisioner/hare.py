@@ -25,6 +25,13 @@ from .salt import cmd_run, StatesApplier
 from .utils import ensure
 from . import errors
 
+# try:
+#     # TODO: EOS-20624: what is the correct import path
+#     from cortx.hare import CortxClusterManager
+# except ImportError:
+#     CortxClusterManager = None
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -148,13 +155,14 @@ def check_cluster_is_online():
     return next(iter(res.values()))
 
 
-def ensure_cluster_is_stopped(tries=30, wait=1):
+def ensure_cluster_is_stopped(tries: int = 30, wait: float = 10):
     cluster_stop()
-    # no additional checks are needed since
-    # cluster stop is a sync operation
+    # NOTE: In new HA API cluster stop command is async.
+    # So ensure block is added
+    ensure(check_cluster_is_offline, tries=tries, wait=wait)
 
 
-def ensure_cluster_is_started(tries=30, wait=10):
+def ensure_cluster_is_started(tries: int = 30, wait: float = 10):
     cluster_start()
     ensure(check_cluster_is_online, tries=tries, wait=wait)
 
@@ -164,3 +172,58 @@ def ensure_cluster_is_started(tries=30, wait=10):
 def ensure_cluster_is_healthy(tries=1, wait=10):
     logger.info("Ensuring cluster is online and healthy")
     ensure(check_cluster_is_online, tries=tries, wait=wait)
+
+
+def r2_check_cluster_health_status():
+    """
+    Wrapper over API of the hare which provides the capability to check
+    the health status of cluster.
+
+    Raises
+    ------
+    ProvisionerError
+        raise this exception if the number of tries was exceeded
+    """
+    ensure_cluster_is_healthy()
+
+
+def r2_cluster_stop(tries: int = 30, wait: float = 10):
+    """
+    Wrapper over HA CLI command to stop the cluster
+
+    Parameters
+    ----------
+    tries: int
+        number of tries
+
+    wait: float
+        wait time in seconds between tries
+
+    Raises
+    ------
+    ProvisionerError
+        raise this exception if the number of tries was exceeded
+
+    """
+    ensure_cluster_is_stopped(tries=tries, wait=wait)
+
+
+def r2_cluster_start(tries: int = 30, wait: float = 10):
+    """
+    Wrapper over HA CLI command to start the cluster
+
+    Parameters
+    ----------
+    tries: int
+        number of tries
+
+    wait: float
+        wait time in seconds between tries
+
+    Raises
+    ------
+    ProvisionerError
+        raise this exception if the number of tries was exceeded
+
+    """
+    ensure_cluster_is_started(tries=tries, wait=wait)

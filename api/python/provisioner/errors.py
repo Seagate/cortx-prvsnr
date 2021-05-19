@@ -18,6 +18,7 @@
 import subprocess
 import json
 import logging
+from pathlib import Path
 from typing import Dict, Union, Any
 
 
@@ -300,6 +301,22 @@ class ClusterNotHealthyError(ProvisionerError):
         )
 
 
+class ClusterStopError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return f'Failed to stop the cluster {self.reason}'
+
+
+class CLusterStartError(ClusterStopError):
+
+    def __str__(self):
+        return f'Failed to start the cluster {self.reason}'
+
+
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
@@ -372,3 +389,22 @@ class CriticalValidationError(ValidationError):
 
     def __str__(self):
         return f'Critical checks failed: reason="{self.reason}"'
+
+
+class LockFileAcquireError(ProvisionerError):
+    """Provisioner lock file exception."""
+
+    def __init__(self, lock_file: Union[str, Path],
+                 reason: Union[Exception, str]):
+        self.reason = reason
+        self.lock_file = lock_file
+
+    def __str__(self):
+        return (f'Failed to acquire the lock file "{self.lock_file}": '
+                f'{self.reason}')
+
+    def __repr__(self):
+        return (
+            "{}(lock_file={!r}, reason={!r})"
+            .format(self.__class__.__name__, self.lock_file, self.reason)
+        )

@@ -1,0 +1,101 @@
+{
+  "variables": {
+    "version": "2.0.1",
+    "host": "",
+    "vcenter_server": "",
+    "datastore": "",
+    "cluster": "",
+    "datacenter": "",
+    "username": "",
+    "password": ""
+  },
+  "builders": [
+    {
+      "type": "vsphere-iso",
+      "host": "{{ user `host` }}",
+      "vcenter_server": "{{ user `vcenter_server` }}",
+      "datastore": "{{ user `datastore` }}",
+      "cluster": "{{ user `cluster` }}",
+      "datacenter": "{{ user `datacenter` }}",
+      "username": "{{ user `username` }}",
+      "password": "{{ user `password` }}",
+      "insecure_connection": true,
+      "boot_command": [
+        "<tab><wait>",
+        " ks=https://raw.githubusercontent.com/Seagate/cortx-prvsnr/main/images/os/kickstart_centos_78_2003.cfg"
+      ],
+      "boot_wait": "10s",
+      "boot_order": "disk,cdrom",
+      "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+      "iso_urls": [
+        "file://C:/Users/Public/Projects/VM/CentOS-7-x86_64-Minimal-2003.iso",
+        "https://vault.centos.org/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
+      ],
+      "iso_target_path": ".",
+      "guest_os_type": "centos7_64Guest",
+      "vm_name": "cortxhost-yash",
+      "CPUs": 4,
+      "RAM": 4096,
+      "RAM_reservation": 1024,
+      "disk_controller_type": [
+        "pvscsi",
+        "pvscsi"
+      ],
+      "storage": [
+        {
+          "disk_size": 20000,
+          "disk_thin_provisioned": true,
+          "disk_controller_index": 0
+        },
+        {
+          "disk_size": 20000,
+          "disk_thin_provisioned": true,
+          "disk_controller_index": 1
+        },
+        {
+          "disk_size": 20000,
+          "disk_thin_provisioned": true,
+          "disk_controller_index": 1
+        }
+      ],
+      "network_adapters": [
+        {
+          "network": "VM Network",
+          "network_card": "vmxnet3"
+        },
+        {
+          "network": "Physical-Data1",
+          "network_card": "vmxnet3"
+        },
+        {
+          "network": "Physical-Data2",
+          "network_card": "vmxnet3"
+        }
+      ],
+      "ssh_username": "cortxub",
+      "ssh_password": "opensource!",
+      "ssh_port": 22,
+      "shutdown_command": "echo 'opensource!'|sudo -S shutdown -P now"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "hostnamectl set-hostname --static --pretty cortxhost.localdomain",
+        "sudo yum install -y git vim",
+        "sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine",
+        "sudo yum install -y yum-utils",
+        "sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo",
+        "sudo yum install -y docker-ce docker-ce-cli containerd.io",
+        "sudo systemctl start docker",
+        "sudo systemctl enable docker",
+        "sudo mkdir -p /opt/seagate/artifacts && cd /opt/seagate",
+        "sudo git clone https://github.com/Seagate/cortx --recursive && cd cortx",
+        "sudo docker run -v /opt/seagate/artifacts:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace ghcr.io/seagate/cortx-build:centos-7.8.2003 make checkout BRANCH=stable",
+        "sudo docker run -v /opt/seagate/artifacts:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace -v /opt/seagate/etc/yum.repos.d:/etc/yum.repos.d/motr-kernel-devel ghcr.io/seagate/cortx-build:centos-7.8.2003 make clean build",
+        "sudo docker run --rm -v /opt/seagate:/var/artifacts -v /opt/seagate/cortx:/cortx-workspace ghcr.io/seagate/cortx-build:centos-7.8.2003 make iso_generation"
+      ]
+    }
+  ]
+}

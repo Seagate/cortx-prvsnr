@@ -15,17 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not salt['file.file_exists']('/opt/seagate/cortx/provisioner/generated_configs/{0}.csm'.format(grains['id'])) %}
+{% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.csm'.format(grains['id'])) %}
 include:
-  - components.csm.prepare
   - components.csm.install
   - components.csm.config
   - components.csm.start
-  - components.csm.sanity_check.csm_sanity
+#  - components.csm.sanity_check
+  - components.csm.usl
 
 Generate csm checkpoint flag:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.csm
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.csm
     - makedirs: True
     - create: True
 {%- else -%}

@@ -35,4 +35,4 @@ Delete Lustre yum repo:
 
 Remove lustre checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.lustre
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.lustre

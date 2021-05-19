@@ -15,10 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import List, Dict, Type, Optional, Iterable
+from typing import List, Dict, Type, Optional
 # import socket
 import logging
 import uuid
+import os
 from pathlib import Path
 
 from .. import (
@@ -26,6 +27,10 @@ from .. import (
     config,
     profile,
     utils
+)
+from .bootstrap import (
+    NodeGrains,
+    Node
 )
 from ..vendor import attr
 from ..errors import (
@@ -53,117 +58,9 @@ from . import (
     CommandParserFillerMixin
 )
 
-
 logger = logging.getLogger(__name__)
 
 add_pillar_merge_prefix = PillarUpdater.add_merge_prefix
-
-
-# TODO TEST EOS-8473
-# TODO IMPROVE EOS-8473 converters and validators
-@attr.s(auto_attribs=True)
-class NodeGrains:
-    fqdn: str = None
-    host: str = None
-    ipv4: List = attr.Factory(list)
-    fqdns: List = attr.Factory(list)
-    not_used: Dict = attr.Factory(dict)
-
-    @classmethod
-    def from_grains(cls, **kwargs):
-        # Note. assumtion that 'not_used' doesn't appear in grains
-        not_used = {
-            k: kwargs.pop(k) for k in list(kwargs)
-            if k not in attr.fields_dict(cls)
-        }
-        return cls(**kwargs, not_used=not_used)
-
-    @property
-    def addrs(self):
-        res = []
-        for _attr in ('host', 'fqdn', 'fqdns', 'ipv4'):
-            v = getattr(self, _attr)
-            if v:
-                if type(v) is list:
-                    res.extend(v)
-                else:  # str is expected
-                    res.append(v)
-        return list(set(res))
-
-
-# TODO TEST EOS-8473
-@attr.s(auto_attribs=True)
-class Node:
-    minion_id: str
-    host: str
-    user: str = 'root'
-    port: int = 22
-
-    grains: Optional[NodeGrains] = None
-    # ordered by priority
-    _ping_addrs: List = attr.Factory(list)
-
-    @classmethod
-    def from_spec(cls, spec: str) -> 'Node':
-        kwargs = {}
-
-        parts = spec.split(':')
-        kwargs['minion_id'] = parts[0]
-        hostspec = parts[1]
-
-        try:
-            kwargs['port'] = parts[2]
-        except IndexError:
-            pass
-
-        parts = hostspec.split('@')
-        try:
-            kwargs['user'] = parts[0]
-            kwargs['host'] = parts[1]
-        except IndexError:
-            del kwargs['user']
-            kwargs['host'] = parts[0]
-
-        return cls(**kwargs)
-
-    def __str__(self):
-        return (
-            '{}:{}@{}:{}'
-            .format(
-                self.minion_id,
-                self.user,
-                self.host,
-                self.port
-            )
-        )
-
-    @property
-    def addrs(self):
-        return list(set([self.host] + self.grains.addrs))
-
-    @property
-    def ping_addrs(self):
-        return self._ping_addrs
-
-    @ping_addrs.setter
-    def ping_addrs(self, addrs: Iterable):
-        # TODO IMPROVE EOS-8473 more effective way to order
-        #      w.g. use dict (it remembers the order) and set intersection
-        priorities = [
-            self.grains.fqdn
-        ] + self.grains.fqdns + [
-            self.host,
-            self.grains.host
-        ] + self.grains.ipv4
-
-        self._ping_addrs[:] = []
-        for addr in priorities:
-            if addr in addrs and (addr not in self._ping_addrs):
-                self._ping_addrs.append(addr)
-
-        for addr in addrs:
-            if addr not in self._ping_addrs:
-                self._ping_addrs.append(addr)
 
 
 # TODO TEST EOS-8473
@@ -556,6 +453,10 @@ class RunArgsSetupProvisionerGeneric(RunArgsSetupProvisionerBase):
                 f"{self.source} provisioner source is not supported yet"
             )
 
+        # TODO EOS-18920 Validation for all run_args
+        # Cumulate all checks and exceptions related to
+        # input cmd args in a single method
+
         if len(self.nodes) < 2 and self.ha:
             raise ValueError(
                 'HA is supported only for multiple nodes installation'
@@ -591,7 +492,6 @@ class SetupCmdBase:
             ).replace(':', '_')
         return res
 
-
 # TODO TEST EOS-8473
 # TODO DOC highlights
 #   - multiple setups support
@@ -602,6 +502,8 @@ class SetupCmdBase:
 #         (each to each reachability is checked)
 #   - parallel setup of multiple nodes
 #   - paswordless ssh setup to nodes is supported
+
+
 @attr.s(auto_attribs=True)
 class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -619,14 +521,22 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
     def _prepare_roster(
         self, nodes: List[Node], priv_key, roster_path
     ):
-        roster = {
-            node.minion_id: {
+        tmp_dir = os.getenv('TMPDIR')
+        thin_dir = (
+            (Path(tmp_dir).resolve() / 'salt_thin_dir') if tmp_dir else None
+        )
+
+        roster = {}
+        for node in nodes:
+            roster[node.minion_id] = {
                 'host': node.host,
                 'user': node.user,
                 'port': node.port,
                 'priv': str(priv_key)
-            } for node in nodes
-        }
+            }
+            if thin_dir:
+                roster[node.minion_id]['thin_dir'] = str(thin_dir)
+
         dump_yaml(roster_path, roster)
 
     def _create_ssh_client(self, c_path, roster_file):
@@ -811,6 +721,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ]
         )
 
+    # TODO EOS-18920: Create separate modules for
+    # each `prepare_` logic in commands/bootstrap/
+
     def _prepare_salt_config(self, run_args, ssh_client, profile_paths):  # noqa: E501, C901 FIXME
         minions_dir = (
             profile_paths['salt_fileroot_dir'] / "provisioner/files/minions"
@@ -881,6 +794,10 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE many hard coded values
 
         cluster_id_path = all_minions_dir / 'cluster_id'
+
+        # TODO: This new cluster_id generation step must be removed
+        # as it is handled in last step of bootstrap (cluster_id API)
+
         if not cluster_id_path.exists():
             cluster_uuid = str(uuid.uuid4())
             dump_yaml(cluster_id_path, dict(cluster_id=cluster_uuid))
@@ -947,6 +864,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             setup_pillar_path = add_pillar_merge_prefix(
                 node_pillar_dir / 'setup.sls'
             )
+
+            enclosure_id = "enc_id"
+
             if run_args.rediscover or not setup_pillar_path.exists():
                 data = {
                     'setup': {
@@ -961,6 +881,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             ]},
                             {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
+                            {'enclosure_id': enclosure_id},
                             {'hostname_status': hostnamectl_status},
                         ]
                     }
@@ -1105,7 +1026,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO sources: github | gitrepo | rpm
         # TODO get latest tags for github source
 
-        # validation
+        # TODO EOS-18920 Validation for config.ini
+        # Restrict bootstrap to 1-node or multiples of 3s?
+
         # TODO IMPROVE EOS-8473 make generic logic
         run_args = RunArgsSetupProvisionerGeneric(nodes=nodes, **kwargs)
 
@@ -1140,18 +1063,14 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         add_file_roots = []
         add_pillar_roots = []
         if run_args.source == 'iso':
-            add_file_roots = [
-                run_args.iso_cortx.parent,
-            ]
+            add_file_roots.append(run_args.iso_cortx.parent)
             if run_args.iso_os:
                 add_file_roots.append(run_args.iso_os.parent)
             if run_args.iso_cortx_deps:
                 add_file_roots.append(run_args.iso_cortx_deps.parent)
 
         if run_args.bootstrap_key:
-            add_file_roots = [
-                run_args.bootstrap_key.parent
-            ]
+            add_file_roots.append(run_args.bootstrap_key.parent)
 
         profile.setup(
             paths,
@@ -1284,6 +1203,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         setup_ctx = SetupCtx(run_args, paths, ssh_client)
 
+        # we iterate explicitly here to make the progress clearer in console
         for node in run_args.nodes:
             logger.info(
                 f"Ensuring '{node.minion_id}' is ready to accept commands"
@@ -1414,6 +1334,9 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             raise NotImplementedError(
                 f"{run_args.source} provisioner source is not supported yet"
             )
+
+        # TODO EOS-18920: Wrap complete HA logic
+        # to a separate module in commands/bootstrap/
 
         if run_args.ha:
             # TODO glusterfs use usual pillar instead inline one
@@ -1743,11 +1666,13 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 )
 
             logger.info("Generating a password for the service user")
-            service_user_password = str(uuid.uuid4()).split('-')[0]
+
+            service_user_password = utils.generate_random_secret()
+
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set'
-                    f' system/service-user/secret '
+                    f' system/service-user/password '
                     f' \'"{service_user_password}"\''
                 ),
                 targets=run_args.primary.minion_id,
@@ -1836,6 +1761,23 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     "{\"inline\": {\"no_encrypt\": True}}"
                 )
 
+        logger.info(
+             "Encrypt pillar values and Refresh enclosure id on the system"
+        )
+        for state in [
+            *(
+                ()
+                if run_args.source == 'local'
+                else ('components.system.config.pillar_encrypt', )
+            ),
+            'components.system.storage.enclosure_id',
+            'components.system.config.sync_salt'
+        ]:
+            ssh_client.cmd_run(
+                f"salt-call state.apply {state}",
+                targets=ALL_MINIONS
+            )
+
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
@@ -1867,6 +1809,25 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 "salt-call state.apply components.misc_pkgs.ipmi"
             )
+
+        # TODO EOS-18920 Validation for node role
+        # to execute cluster_id api
+
+        logger.info(
+             "Setting unique ClusterID to pillar file on all nodes"
+        )
+
+        ssh_client.cmd_run(
+            (
+               "provisioner cluster_id"
+            ), targets=run_args.primary.minion_id
+        )
+
+        ssh_client.cmd_run(
+            "salt-call state.apply components.provisioner.config.cluster_id",
+            targets=ALL_MINIONS
+        )
+
 
         return setup_ctx
 

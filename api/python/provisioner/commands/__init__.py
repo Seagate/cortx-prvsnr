@@ -25,8 +25,11 @@ import json
 import yaml
 import importlib
 
+from ..lock import api_lock
+
 from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
 from .check import Check, SWUpdateDecisionMaker
+
 from ..vendor import attr
 from ..errors import (
     BadPillarDataError,
@@ -331,7 +334,6 @@ class Get(CommandParserFillerMixin):
             res[minion_id] = {str(p): v for p, v in data.items()}
         return res
 
-
 # TODO
 #   - how to support targetted pillar
 #       - per group (grains)
@@ -351,7 +353,7 @@ class Set(CommandParserFillerMixin):
     pre_states: List[State] = attr.Factory(list)
     post_states: List[State] = attr.Factory(list)
 
-    _run_args_type = RunArgsUpdate
+    _run_args_type = RunArgsPillarSet
 
     # TODO input class type
     @classmethod
@@ -362,8 +364,8 @@ class Set(CommandParserFillerMixin):
             post_states=[State(state) for state in states.get('post', [])]
         )
 
-    def _apply(self, params, targets):
-        pillar_updater = PillarUpdater(targets)
+    def _apply(self, params, targets, local):
+        pillar_updater = PillarUpdater(targets, local=local)
 
         pillar_updater.update(params)
         try:
@@ -391,8 +393,8 @@ class Set(CommandParserFillerMixin):
             StatesApplier.apply(self.post_states)
             raise
 
-    def _run(self, params, targets):
-        self._apply(params, targets)
+    def _run(self, params, targets, local):
+        self._apply(params, targets=targets, local=local)
 
     def dynamic_validation(self, params, targets):
         pass
@@ -400,7 +402,9 @@ class Set(CommandParserFillerMixin):
     # TODO
     # - class for pillar file
     # - caching (load once)
-    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
+    @api_lock
+    def run(self, *args, targets=ALL_MINIONS, dry_run=False,
+            local=False, **kwargs):
         # static validation
         if len(args) == 1 and isinstance(args[0], self.input_type):
             params = args[0]
@@ -412,7 +416,7 @@ class Set(CommandParserFillerMixin):
         if dry_run:
             return res
 
-        return self._run(params, targets)
+        return self._run(params, targets, local)
 
 
 # TODO IMPROVE EOS-8940 move to separate module
@@ -815,7 +819,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
-            exclude_rpms = 'cortx-py|prvsnr-cli'
+            exclude_rpms = 'cortx-py|prvsnr-cli|cortx-sspl-test'
             res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",  # noqa: E501
                                targets=LOCAL_MINION)
             rpms = res[next(iter(res))].split("\n")
@@ -1105,14 +1109,21 @@ class ConfigureCortx(CommandParserFillerMixin):
 commands = {}
 for cmd_name, spec in api_spec.items():
     spec = deepcopy(api_spec[cmd_name])  # TODO
-    cmd_cls = spec.pop('type')
+    cmd_path = spec.pop('type')
+
+    cmd_module_path = '.'.join(cmd_path.split('.')[0:-1])
+    cmd_cls = cmd_path.split('.')[-1]
     try:
         command = getattr(_mod, cmd_cls)
     except AttributeError:
         try:
-            cmd_mod = importlib.import_module(
-                f'provisioner.commands.{cmd_name}'
-            )
+            import_path = 'provisioner.commands'
+            if cmd_module_path:
+                import_path = f'{import_path}.{cmd_module_path}.{cmd_name}'
+            else:
+                import_path = f'provisioner.commands.{cmd_name}'
+
+            cmd_mod = importlib.import_module(import_path)
         except Exception:
             logger.error(f"Failed to import provisioner.commands.{cmd_name}")
             raise

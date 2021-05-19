@@ -22,8 +22,8 @@ include:
 # This has to happen only after pacemaker is installed.
 Update ha user:
   user.present:
-    - name: {{ pillar['corosync-pacemaker']['user'] }}
-    - password: {{ salt['lyveutil.decrypt']('corosync-pacemaker', pillar['corosync-pacemaker']['secret']) }}
+    - name: {{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
+    - password: {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['corosync-pacemaker']['secret']) }}
     - hash_password: True
     - createhome: False
     - shell: /sbin/nologin
@@ -33,7 +33,7 @@ Add hacluster user to haclient group:
   group.present:
     - name: haclient
     - addusers:
-      - {{ pillar['corosync-pacemaker']['user'] }}
+      - {{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
 
 Enable corosync service:
   service.dead:

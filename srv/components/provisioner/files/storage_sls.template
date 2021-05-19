@@ -18,7 +18,9 @@
 {% set num_of_nodes = pillar['provisioner']['cluster_info']['num_of_nodes'] | int -%}
 storage:
 {%- for num in range(num_of_nodes) %}
+  {%- set node = "srvnode-" + ((num + 1) | string) %}
   enclosure-{{ (num + 1) }}:
+    enclosure_id: {{ salt['mine.get'](node , 'get_enclosure_id')[node] }}
     type: RBOD                      # RBOD/JBOD/Virtual/Other
     controller:
       type:

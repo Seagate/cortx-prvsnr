@@ -40,13 +40,17 @@ tests_require = [
     'pytest-xdist==1.29.0',
     'pytest-timeout==1.3.4',
     'pytest-mock==3.1.0',
+    'coverage==5.3.1',
+    'pytest-cov==2.11.0',
 ]
 
 codacy_require = [
     'bandit==1.7.0',
     'prospector==1.3.1',
     'pylint==2.5.3',
-    'radon==4.3.2'
+    'radon==4.3.2',
+    'pyflakes==2.1.1',
+    'pep257==0.7.0'
 ]
 
 
@@ -93,7 +97,9 @@ setup(
     },
     install_requires=[
         'PyYAML',
-        'salt == 3002.2'
+        'salt == 3002.2',
+        'packaging >= 16.8',
+        'requests>=2.14.2'
     ],  # TODO
     setup_requires=([] + pytest_runner),
     extras_require={

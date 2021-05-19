@@ -47,9 +47,10 @@ Vagrant.configure("2") do |config|
       
       node_config.vm.provider :hyperv do |hv, override|
         # Configure salt nodes
-        override.vm.box_url = "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_hyperv.box"
+        # override.vm.box_url = "https://app.vagrantup.com/centos/boxes/7/versions/2004.01/providers/hyperv.box"
         override.vm.box_download_insecure = true
-        override.vm.box = "centos_7.7.1908_hyperv"
+        override.vm.box = "centos/7"
+        override.vm.box_version = "2004.01"
         override.vm.box_check_update = false
         override.vm.boot_timeout = 600
         override.vm.hostname = node['name']
@@ -104,9 +105,10 @@ Vagrant.configure("2") do |config|
 
       node_config.vm.provider :virtualbox do |vb, override|
         # Configure salt nodes
-        override.vm.box_url = "http://cortx-storage.colo.seagate.com/prvsnr/vendor/centos/vagrant.boxes/centos_7.7.1908_vbox.box"
+        # override.vm.box_url = "https://app.vagrantup.com/centos/boxes/7/versions/2004.01/providers/virtualbox.box"
         override.vm.box_download_insecure = true
-        override.vm.box = "centos_7.7.1908_vbox"
+        override.vm.box = "centos/7"
+        override.vm.box_version = "2004.01"
         override.vm.box_check_update = false
         override.vm.boot_timeout = 600
         override.vm.hostname = node['name']

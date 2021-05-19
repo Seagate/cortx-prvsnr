@@ -24,9 +24,9 @@
 {% if 1 < (server_nodes|length) -%}
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/create_replication_account.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/create_replication_account.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/create_replication_account.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/replication/files/check_ldap_replication.sh',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/check_ldap_replication.sh' },
   ]
 %}
 {{ filename.dest }}_copy:
@@ -43,7 +43,7 @@
 
 Hostlist file:
   file.managed:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt
+    - name: /opt/seagate/cortx_configs/provisioner_generated/ldap/hostlist.txt
     - contents: |
         {{ grains['id'] -}}
         {%- for node in (server_nodes | difference([grains['id']])) %}
@@ -56,10 +56,10 @@ Hostlist file:
 
 Replication sanity check:
   cmd.run:
-    - name: sh /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh -s /opt/seagate/cortx/provisioner/generated_configs/ldap/hostlist.txt -p $password || true
+    - name: sh /opt/seagate/cortx_configs/provisioner_generated/ldap/check_ldap_replication.sh -s /opt/seagate/cortx_configs/provisioner_generated/ldap/hostlist.txt -p $password || true
     - env:
-      - password: {{ salt['lyveutil.decrypt']('openldap', pillar['openldap']['root']['secret']) }}
-    - onlyif: test -f /opt/seagate/cortx/provisioner/generated_configs/ldap/check_ldap_replication.sh
+      - password: {{ salt['lyveutils.decrypt']('cortx', pillar['cortx']['software']['openldap']['root']['secret']) }}
+    - onlyif: test -f /opt/seagate/cortx_configs/provisioner_generated/ldap/check_ldap_replication.sh
     - watch_in:
       - Restart slapd service
 

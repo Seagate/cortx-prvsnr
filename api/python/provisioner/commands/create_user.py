@@ -16,44 +16,25 @@
 #
 
 import sys
-from typing import List, Dict, Type, Union
-from copy import deepcopy
+from typing import Type
 import logging
-from datetime import datetime
 from pathlib import Path
-import json
-import yaml
-import importlib
 
-from ._basic import RunArgs, CommandParserFillerMixin, RunArgsBase
-from .check import Check, SWUpdateDecisionMaker
+from ._basic import RunArgs, CommandParserFillerMixin
 from ..vendor import attr
 from ..config import (
     ALL_MINIONS,
     PRVSNR_FILEROOT_DIR, LOCAL_MINION,
-    PRVSNR_CORTX_COMPONENTS,
     PRVSNR_CLI_DIR,
-    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
-    GroupChecks,
+    SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL
 )
 from ..pillar import (
-    KeyPath,
     PillarKey,
-    PillarUpdater,
     PillarResolver
 )
 # TODO IMPROVE EOS-8473
-from ..utils import (
-    load_yaml,
-    dump_yaml_str,
-)
-from ..api_spec import api_spec
 from ..salt import (
-    StatesApplier,
     StateFunExecuter,
-    State,
-    SaltJobsRunner, function_run,
-    copy_to_file_roots, cmd_run as salt_cmd_run,
     local_minion_id
 )
 from ..salt_minion import config_salt_minions
@@ -108,7 +89,8 @@ class CreateUser(CommandParserFillerMixin):
     def run(self, uname, passwd, groups_list=[], sudo=True, targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError('/opt/seagate/users directory missing')
+            raise ValueError("'/opt/seagate/users' directory missing. "
+                    "Ensure it is created before proceeding to create a new user.")
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname

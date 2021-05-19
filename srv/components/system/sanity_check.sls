@@ -20,6 +20,5 @@
 #  cmd.run:
 #    - name: test $(salt --no-color srvnode-1 grains.get host|tail -1|tr -d "[:blank:]") == $(hostname)
 
-Dummy placeholder for system.sanity_check:
-  test.show_notification:
-    - text: "A yaml file with comments results in minion non-zero exit"
+include:
+  - components.system.config.ssh_check

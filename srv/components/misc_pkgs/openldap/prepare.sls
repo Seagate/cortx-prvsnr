@@ -17,7 +17,7 @@
 
 Create tmp dir:
   file.directory:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/ldap
+    - name: /opt/seagate/cortx_configs/provisioner_generated/ldap
     - clean: True
     - makedirs: True
     - force: True
@@ -25,33 +25,33 @@ Create tmp dir:
 # File copy operation on primary
 {% for filename in [
     { "src": 'salt://components/misc_pkgs/openldap/files/cfg_ldap.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/cfg_ldap.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/cfg_ldap.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/cn={1}s3user.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/cn={1}s3user.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/cn={1}s3user.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/iam-admin-access.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin-access.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/iam-admin-access.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/iam-admin.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-admin.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/iam-admin.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/iam-constraints.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/iam-constraints.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/iam-constraints.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/ldap_gen_passwd.sh',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ldap_gen_passwd.sh' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/ldap_gen_passwd.sh' },
     { "src": 'salt://components/misc_pkgs/openldap/files/ldap-init.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ldap-init.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/ldap-init.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/olcDatabase={2}mdb.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/olcDatabase={2}mdb.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/olcDatabase={2}mdb.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/ppolicy-default.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ppolicy-default.ldif'},
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/ppolicy-default.ldif'},
     { "src": 'salt://components/misc_pkgs/openldap/files/ppolicymodule.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ppolicymodule.ldif'},
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/ppolicymodule.ldif'},
     { "src": 'salt://components/misc_pkgs/openldap/files/ppolicyoverlay.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/ppolicyoverlay.ldif'},
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/ppolicyoverlay.ldif'},
     { "src": 'salt://components/misc_pkgs/openldap/files/slapdlog.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/slapdlog.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/slapdlog.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/test_data.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/test_data.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/test_data.ldif' },
     { "src": 'salt://components/misc_pkgs/openldap/files/resultssizelimit.ldif',
-      "dest": '/opt/seagate/cortx/provisioner/generated_configs/ldap/resultssizelimit.ldif' },
+      "dest": '/opt/seagate/cortx_configs/provisioner_generated/ldap/resultssizelimit.ldif' },
     ]
 %}
 {{ filename.dest }}:

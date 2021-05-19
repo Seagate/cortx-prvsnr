@@ -73,4 +73,4 @@ Remove Consul:
 
 Delete consul checkpoint flag:
   file.absent:
-    - name: /opt/seagate/cortx/provisioner/generated_configs/{{ grains['id'] }}.consul
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.consul

@@ -14,28 +14,35 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# API for configuration of setup
 
-import logging
 import configparser
+import logging
+
 from enum import Enum
-from typing import Type, List
+from typing import Type
 from copy import deepcopy
 from pathlib import Path
 
+from . import CommandParserFillerMixin
+
+from .validator import (
+    NetworkParamsValidator,
+    NodeParamsValidator,
+    StorageEnclosureParamsValidator,
+    ConfigValidator
+)
 from ..inputs import (
-    NetworkParams, ReleaseParams, StorageEnclosureParams,
-    NodeNetworkParams
+    METADATA_ARGPARSER,
+    NoParams
 )
-from .. import inputs
+from ..pillar import PillarIterable
+from . import PillarSet
+
+from ..values import (
+    UNCHANGED, UNDEFINED
+)
 from ..vendor import attr
-
-from ..utils import run_subprocess_cmd
-
-from ..values import UNCHANGED
-from . import (
-    CommandParserFillerMixin
-)
-
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +59,14 @@ class SetupType(Enum):
 class RunArgsConfigureSetupAttrs:
     path: str = attr.ib(
         metadata={
-            inputs.METADATA_ARGPARSER: {
+            METADATA_ARGPARSER: {
                 'help': "config path to update pillar"
             }
         }
     )
     setup_type: str = attr.ib(
         metadata={
-            inputs.METADATA_ARGPARSER: {
+            METADATA_ARGPARSER: {
                 'help': "the type of the setup",
                 'choices': [st.value for st in SetupType]
             }
@@ -70,7 +77,7 @@ class RunArgsConfigureSetupAttrs:
     )
     number_of_nodes: int = attr.ib(
         metadata={
-            inputs.METADATA_ARGPARSER: {
+            METADATA_ARGPARSER: {
                 'help': "No of nodes in cluster"
             }
         },
@@ -91,198 +98,245 @@ class RunArgsConfigureSetup:
 
 
 @attr.s(auto_attribs=True)
-class NetworkParamsValidation:
-    cluster_ip: str = NetworkParams.cluster_ip
-    mgmt_vip: str = NetworkParams.mgmt_vip
-    _optional_param = ['cluster_ip', 'mgmt_vip']
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class ReleaseParamsValidation:
-    target_build: str = ReleaseParams.target_build
-    _optional_param = []
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class StorageEnclosureParamsValidation:
-    type: str = StorageEnclosureParams.type
-    primary_ip: str = StorageEnclosureParams.primary_ip
-    secondary_ip: str = StorageEnclosureParams.secondary_ip
-    controller_user: str = StorageEnclosureParams.controller_user
-    controller_secret: str = StorageEnclosureParams.controller_secret
-    controller_type: str = StorageEnclosureParams.controller_type
-    _optional_param = [
-        'controller_type'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        # FIXME why we allow any params for the following types?
-        types = ['JBOD', 'virtual', 'RBOD', 'other']
-        if params['type'] in types:
-            return
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
-class NodeParamsValidation:
-    hostname: str = NodeNetworkParams.hostname
-    roles: List = NodeNetworkParams.roles
-    data_public_interfaces: List = NodeNetworkParams.data_public_interfaces
-    data_private_interfaces: List = NodeNetworkParams.data_private_interfaces
-    data_public_ip: str = NodeNetworkParams.data_public_ip
-    data_netmask: str = NodeNetworkParams.data_netmask
-    data_gateway: str = NodeNetworkParams.data_gateway
-    mgmt_interfaces: List = NodeNetworkParams.mgmt_interfaces
-    mgmt_public_ip: str = NodeNetworkParams.mgmt_public_ip
-    mgmt_netmask: str = NodeNetworkParams.mgmt_netmask
-    mgmt_gateway: str = NodeNetworkParams.mgmt_gateway
-    data_private_ip: str = NodeNetworkParams.data_private_ip
-    bmc_user: str = NodeNetworkParams.bmc_user
-    bmc_secret: str = NodeNetworkParams.bmc_secret
-
-    _optional_param = [
-        'data_public_ip',
-        'roles',
-        'data_netmask',
-        'data_gateway',
-        'data_private_ip',
-        'mgmt_interfaces',
-        'mgmt_public_ip',
-        'mgmt_netmask',
-        'mgmt_gateway'
-    ]
-
-    def __attrs_post_init__(self):
-        params = attr.asdict(self)
-        missing_params = []
-        for param, value in params.items():
-            if value == UNCHANGED and param not in self._optional_param:
-                missing_params.append(param)
-        if len(missing_params) > 0:
-            raise ValueError(f"Mandatory param missing {missing_params}")
-
-
-@attr.s(auto_attribs=True)
 class ConfigureSetup(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
+    input_type: Type[NoParams] = NoParams
     _run_args_type = RunArgsConfigureSetup
 
     validate_map = {
-        "cluster": NetworkParamsValidation,
-        "node": NodeParamsValidation,
-        "storage": StorageEnclosureParamsValidation
+        "cluster": NetworkParamsValidator,
+        "node": NodeParamsValidator,
+        "storage": StorageEnclosureParamsValidator
     }
 
-    def _parse_params(self, input):
+    def _parse_params(self, input_data):
         params = {}
-        for key in input:
-            logger.debug(f"Key being processed: {key}")
+        for key in input_data.keys():
             val = key.split(".")
-            if len(val) > 1 and val[-1] in [
-                'ip', 'user', 'secret', 'type', 'interfaces',
-                'private_interfaces', 'public_interfaces',
-                'gateway', 'netmask', 'public_ip', 'private_ip'
-            ]:
-                params[f'{val[-2]}_{val[-1]}'] = input[key]
-                logger.debug(f"Params generated: {params}")
+
+            if len(val) > 1:
+                if val[-1] in [
+                    'ip', 'user', 'secret', 'type', 'interfaces',
+                    'private_interfaces', 'public_interfaces',
+                    'gateway', 'netmask', 'public_ip', 'private_ip'
+                ]:
+                    # Node specific '.' separated params
+                    # The '.' get replaced with '_'
+                    params[f'{val[-2]}_{val[-1]}'] = input_data[key]
+
+                elif 'cvg' in val and val[-1] in [
+                    'data_devices', 'metadata_devices'
+                ]:
+                    if not params.get(val[-3]):
+                        params[val[-3]] = []
+
+                    if int(val[-2]) < len(params[val[-3]]):
+                        params[val[-3]][int(val[-2])][val[-1]
+                                                      ] = [input_data[key]]
+                    else:
+                        params[val[-3]].append(
+                            {val[-1]: [input_data[key]]}
+                        )
             else:
-                logger.debug(f"Params generated: {params}")
-                params[val[-1]] = input[key]
+                params[val[-1]] = input_data[key]
+
+        logger.debug(f"Parsed params: {params}")
         return params
 
     def _validate_params(self, input_type, content):
         params = self._parse_params(content)
+        logger.debug(f"Validating {input_type}::{params}")
         self.validate_map[input_type](**params)
 
-    def _parse_input(self, input):
-        for key in input:
-            if input[key] and "," in input[key]:
-                value = [f'\"{x.strip()}\"' for x in input[key].split(",")]
-                value = ','.join(value)
-                input[key] = f'[{value}]'
-            elif 'interfaces' in key or 'roles' in key:
+    def _list_to_dict(self, inp_list, last_node_val: None):
+        """Recursively convert a list to a nested dictionary
+
+        inp_list: List to be converted to a Python dict
+        last_node_val: value to be assigned to last node in tree.
+        """
+        new_dict = dict()
+
+        if len(inp_list) > 1:
+            # Recurse
+            new_dict[inp_list[0]] = self._list_to_dict(
+                inp_list[1:],
+                last_node_val
+            )
+        else:
+            new_dict[inp_list[0]] = last_node_val
+
+        logger.debug(f"Section list to Dict: {new_dict}")
+        return new_dict
+
+    def _dict_merge(self, dict_1, dict_2):
+        """Merge dict_1 to dict_2 recursively."""
+        for key in dict_2.keys():
+            if key in dict_1:
+                if (
+                    isinstance(dict_1[key], dict) and
+                    isinstance(dict_2[key], dict)
+                ):
+                    # Recurse
+                    logger.debug(f"recursing: {dict_1}::{dict_2}")
+                    self._dict_merge(dict_1[key], dict_2[key])
+            else:
+                # Create new dictionary node
+                logger.debug(f"dict node create: {dict_1}::{dict_2}")
+                dict_1[key] = dict_2[key]
+
+        logger.debug(f"The merged dictionaries: {dict_1}")
+        return dict_1
+
+    def _key_int_to_list(self, contents):
+        """
+        Treat integer values in keys to arrays
+        and update dict values
+
+        """
+
+        ret_val = []
+        for key in contents.keys():
+            if key.isdigit():
+                ret_val.insert(int(key), contents[key])
+            elif isinstance(contents[key], dict):
+                ret_val = self._key_int_to_list(contents[key])
+                if isinstance(ret_val, list):
+                    if not isinstance(contents[key], list):
+                        contents[key] = []
+                    contents[key].extend(ret_val)
+                    ret_val = contents
+                else:
+                    contents[key] = ret_val
+                    ret_val = contents
+            else:
+                ret_val = contents
+        return ret_val
+
+    def _parse_input(self, input_data):
+        """
+        Parses content to string or arrays
+        based on the category
+
+        """
+        kv_to_dict = dict()
+        keys_of_type_list = [
+            'interfaces', 'roles', 'data_devices', 'metadata_devices', 'cvg'
+        ]
+        for key in input_data.keys():
+            if input_data.get(key) and "," in input_data.get(key):
+                input_data[key] = [
+                    element.strip() for element in input_data.get(key).split(",")
+                ]
+
+            elif any(k in key for k in keys_of_type_list):
                 # special case single value as array
                 # Need to fix this array having single value
-                input[key] = f'[\"{input[key]}\"]'
-            else:
-                if input[key]:
-                    if input[key] == 'None':
-                        input[key] = '\"\"'
-                    else:
-                        input[key] = f'\"{input[key]}\"'
-                else:
-                    input[key] = UNCHANGED
+                input_data[key] = [input_data.get(key)]
 
-    def _parse_pillar_key(self, key):
-        pillar_key = deepcopy(key)
-        return pillar_key.replace(".", "/")
+            else:
+                if input_data.get(key):
+                    if 'NONE' == input_data.get(key).upper():
+                        input_data[key] = None
+                    elif 'UNCHANGED' == input_data.get(key).upper():
+                        input_data[key] = UNCHANGED
+                    elif 'UNDEFINED' == input_data.get(key).upper():
+                        input_data[key] = UNDEFINED
+                    elif '' == input_data.get(key).upper():
+                        input_data[key] = None
+                    else:
+                        input_data[key] = input_data.get(key)
+                else:
+                    input_data[key] = None
+
+            if '.' in key:
+                split_keys = key.split('.')
+                kv_to_dict = self._dict_merge(
+                    kv_to_dict,
+                    self._list_to_dict(split_keys, input_data.get(key))
+                )
+                # logger.debug(f"KV to Dict ('.' separated): {kv_to_dict}")
+            else:
+                kv_to_dict[key] = input_data.get(key)
+        kv_to_dict = self._key_int_to_list(kv_to_dict)
+        logger.debug(f"KV to Dict: {kv_to_dict}")
+        return kv_to_dict
 
     def run(self, path, number_of_nodes):  # noqa: C901
-
         if not Path(path).is_file():
             raise ValueError('config file is missing')
 
+        validate = ConfigValidator()
         config = configparser.ConfigParser()
         config.read(path)
-        logger.info("Updating salt data :")
-        content = {section: dict(config.items(section)) for section in config.sections()}  # noqa: E501
-        logger.debug(f"params data {content}")
 
-        input_type = None
-        pillar_type = None
-        node_list = []
-        count = int(number_of_nodes)
+        final_dict = {'cluster': {}, 'storage': {}}
 
-        for section in content:
-            input_type = section
-            pillar_type = section
-            if 'srvnode' in section:
-                input_type = 'node'
-                pillar_type = f'cluster/{section}'
-                count = count - 1
-                node_list.append(f"\"{section}\"")
+        logger.info("Updating salt data")
+
+        content = {section: dict(config.items(section))
+                   for section in config.sections()}
+        logger.debug(
+            f"Config data read from config.ini: \n{content}"
+        )
+
+        # Parse config sections
+        parsed = validate._parse_sections(content)
+
+        # Validate node count
+        validate._validate_node_count(
+            number_of_nodes, parsed
+        )
+
+        # Process default sections
+        # copy data from srvnode_default to individual server_node sections
+        # delete srvnode_default section
+        # Same with enclosure_default section
+
+        srvnode_default = enclosure_default = None
+
+        if parsed["srvnode_default"]:
+            # 'default' sections found in config file
+
+            srvnode_default = parsed["srvnode_default"]
+            enclosure_default = parsed["enclosure_default"]
+            del content["srvnode_default"]
+            del content["enclosure_default"]
+
+        for section in content.keys():
+
+            if 'srvnode' in section and srvnode_default:
+                tmp_section = deepcopy(srvnode_default)
+
+            elif 'enclosure' in section and enclosure_default:
+                tmp_section = deepcopy(enclosure_default)
+
+            else:
+                tmp_section = content[section]
+
+            tmp_section.update(content[section])
+            content[section] = tmp_section
+
+            logger.debug(
+                f"Processing content for {section}:{content[section]}"
+            )
+            input_type = ('node' if 'srvnode' in section
+                          else 'storage' if 'enclosure' in section
+                          else 'cluster')
 
             self._validate_params(input_type, content[section])
-            self._parse_input(content[section])
+            content[section] = self._parse_input(content[section])
+            if 'srvnode' in section:
+                final_dict['cluster'].update({section: content[section]})
+            elif 'enclosure' in section:
+                final_dict['storage'].update({section: content[section]})
+            else:
+                final_dict.update({section: content[section]})
 
-            for pillar_key in content[section]:
-                key = f'{pillar_type}/{self._parse_pillar_key(pillar_key)}'
-                run_subprocess_cmd([
-                       "provisioner", "pillar_set",
-                       key, f"{content[section][pillar_key]}"])
-
-        if content.get('cluster', None):
-            if content.get('cluster').get('cluster_ip', None):
-                run_subprocess_cmd([
-                       "provisioner", "pillar_set",
-                       "s3clients/ip",
-                       f"{content.get('cluster').get('cluster_ip')}"])
-
-        if count > 0:
-            raise ValueError(f"Node information for {count} node missing")
-
+            logger.debug(
+                f"Content to set for {section}: {content[section]}")
+        logger.debug(f"Final dict to be set to pillar: {final_dict}")
+        PillarSet(
+            input_type=PillarIterable).run(
+            PillarIterable(
+                final_dict,
+                expand=True))
         logger.info("Pillar data updated Successfully.")

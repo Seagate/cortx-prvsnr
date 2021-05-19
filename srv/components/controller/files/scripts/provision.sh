@@ -1803,7 +1803,7 @@ ntp_config()
     ntp_status_get >> $_ntp_status_before
 
     # Run command to set the provided ntp address
-    _cmd="set ntp-parameters ntp enabled ntpaddress "${ntp_server}" timezone "${ntp_tz}""
+    _cmd="set ntp-parameters ntp enabled ntpaddress ${ntp_server} timezone \"${ntp_tz}\""
     echo "ntp_config(): Running command _cmd=${_cmd}" >> $logfile
     cmd_run "$_cmd"
 

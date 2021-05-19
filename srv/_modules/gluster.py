@@ -22,10 +22,13 @@
 # salt-call gluster.is_brick_present <volume> <brick>
 # salt-call gluster.remove_peer <hostname>
 
+import sys
+
 
 def add_brick(volume, brick):
     """ Add bricks to existing volume
     """
+    __salt__ = getattr(sys.modules[__name__], '__salt__')
     res = __salt__["glusterfs.info"](volume)
     rep_cnt = res[volume]['replicaCount']
 
@@ -45,6 +48,7 @@ def add_brick(volume, brick):
 def remove_brick(volume, brick):
     """ Remove bricks to existing volume
     """
+    __salt__ = getattr(sys.modules[__name__], '__salt__')
     res = __salt__["glusterfs.info"](volume)
     rep_cnt = res[volume]['replicaCount']
 
@@ -69,6 +73,7 @@ def remove_brick(volume, brick):
 def is_brick_present(volume, brick):
     """Check if brick present in volume
     """
+    __salt__ = getattr(sys.modules[__name__], '__salt__')
     res = __salt__["glusterfs.info"](volume)
     bricks = res[volume]['bricks']
     is_present = False
@@ -83,6 +88,7 @@ def is_brick_present(volume, brick):
 def _detach_node(node):
     """Remove node from cluster
     """
+    __salt__ = getattr(sys.modules[__name__], '__salt__')
     cmd = f"echo 'y'|gluster peer detach {node}"
     res = __salt__["cmd.shell"](cmd)
     return res
@@ -92,6 +98,7 @@ def remove_peer(node):
     """Remove bricks from this node and detach
        from cluster
     """
+    __pillar__ = getattr(sys.modules[__name__], '__pillar__')
     volumes = __pillar__['glusterfs']['volumes']
 
     for volume in volumes:

@@ -105,6 +105,7 @@ class RunArgsSaltFun:
     )
 
 
+# TODO DOC example how to organize subcommands
 @attr.s(auto_attribs=True)
 class SaltClient(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams

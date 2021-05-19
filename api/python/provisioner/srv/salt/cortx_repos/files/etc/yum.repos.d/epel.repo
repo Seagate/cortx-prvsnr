@@ -1,6 +1,7 @@
 [epel]
-gpgcheck=0
+name=Extra Packages for Enterprise Linux 7 - $basearch
+#baseurl=http://download.fedoraproject.org/pub/epel/7/$basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch&infra=$infra&content=$contentdir
+failovermethod=priority
 enabled=1
-#baseurl=https://dl.fedoraproject.org/pub/epel/7/x86_64/
-baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
-name=epel
+gpgcheck=0

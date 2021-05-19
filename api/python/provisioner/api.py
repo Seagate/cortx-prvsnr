@@ -17,7 +17,7 @@
 
 import importlib
 
-from .config import ALL_MINIONS, CONTROLLER_BOTH
+from .config import ALL_MINIONS, CONTROLLER_BOTH, HashType
 
 _api = None
 
@@ -217,12 +217,12 @@ def set_swupdate_repo(
     Installs or removes a repository for sw update release.
 
     :param release: An update repository release label
-    :param targets: Host where to install repos
     :param source: (optional) A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
+    :param targets: Host where to install repos
     :param dry_run: (optional) validate only. Default: False
     :param nowait: (optional) Run asynchronously. Default: False
     """
@@ -232,21 +232,40 @@ def set_swupdate_repo(
     )
 
 
-def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
+def set_swupgrade_repo(source, hash_str=None,
+                       hash_type=HashType.MD5, dry_run=False, nowait=False):
     r"""Configures upgrade repository.
 
     Installs or removes a repository for sw upgrade release.
 
     Parameters
     ----------
-    release
-        An update repository release label
     source
-        (optional) A path to a repository. Might be: a local
+        A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
         If path to an iso file is provide then it is mounted before
         installation and unmounted before removal.
+    hash_str:
+        (optional) hash value of single SW upgrade bundle ISO for verification
+        Can be either string with hash data or path to the file with that data.
+
+        Supported formats of checksum string
+
+        1. <hash_type>:<check_sum> <file_name>
+        2. <hash_type>:<check_sum>
+        3. <check_sum> <file_name>
+        4. <check_sum>
+
+        where
+        <hash_type> - one of the values from `config.HashType` enumeration
+        <check_sum> - hexadecimal representation of hash checksum
+        <file_name> - a file name to which <hash_type>
+                      and <hash_sum> belongs to
+
+    hash_type
+        (optional) type of hash value. See `config.HashType` for
+        possible values
     dry_run
         (optional) validate only. Default: False
     nowait
@@ -258,8 +277,32 @@ def set_swupgrade_repo(release, source=None, dry_run=False, nowait=False):
         repository metadata
 
     """
-    return _api_call('set_swupgrade_repo', release, source=source,
+    return _api_call('set_swupgrade_repo', source=source,
+                     hash=hash_str, hash_type=hash_type,
                      dry_run=dry_run, nowait=nowait)
+
+
+def remove_swupgrade_repo(release, dry_run=False, nowait=False):
+    r"""
+
+    Removes a repository for the given SW upgrade release.
+
+    Parameters
+    ----------
+    release
+        An update repository release label
+    dry_run
+        (optional) validate only. Default: False
+    nowait
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('remove_swupgrade_repo', release, dry_run=dry_run,
+                     nowait=nowait)
 
 
 def set_ssl_certs(
@@ -346,6 +389,25 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
 
     """
     return _api_call('sw_upgrade', targets=targets, nowait=nowait)
+
+
+def get_swupgrade_info(release: str = None, nowait=False):
+    """
+    Return information about CORTX packages and their versions.
+
+    Parameters
+    ----------
+    release:
+        (optional) SW Upgrade repository release version
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('get_swupgrade_info', release=release, nowait=nowait)
 
 
 def fw_update(source, dry_run=False, nowait=False):
@@ -557,3 +619,61 @@ def check(check_name, check_args: str = "",
     """
     return _api_call('check', check_name,
                      check_args_args=check_args, targets=targets)
+
+
+def set_hostname(local=False, **kwargs):
+    """
+    Set hostname for the system
+
+    :param hostname: (optional) hostname to be set.
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_hostname', local=local, **kwargs)
+
+
+def set_mgmt_network(local=False, **kwargs):
+    """
+
+    Set mgmt network for the system.
+
+    :param mgmt_public_ip: (optional) ip address for
+        node management interface
+    :param mgmt_netmask: (optional) netmask for
+        node management interface
+    :param mgmt_gateway: (optional) gateway ip address for
+        node
+    :param mgmt_interfaces: (optional) network interface for
+        node management interface
+    :param local: (optional) set values in local pillar
+    """
+    return _api_call('set_mgmt_network', local=local, **kwargs)
+
+
+def setup_firewall():
+    """
+    Setup CORTX firewall for the system
+
+    :return:
+    """
+    return _api_call('setup_firewall')
+
+
+def set_data_network(local=False, **kwargs):
+    """
+    Set data network for the system
+
+    :param data_public_ip: (optional) ip address for public data interface
+    :param data_netmask: (optional) netmask for data interface
+    :param data_gateway: (optional) gateway for data interface
+    :param data_public_interfaces: (optional) list of public data interfaces
+
+    :param data_private_ip: (optional) ip address for private data interface
+    :param data_private_interfaces: (optional) list of private data interfaces
+
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_data_network', local=local, **kwargs)

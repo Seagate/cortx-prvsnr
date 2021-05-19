@@ -379,35 +379,6 @@ def test_rpm_prvsnr_api_provioner_is_available_after_update(
 
 
 @pytest.mark.env_level('base')
-def test_build_bundles(mhost, tmpdir_function):
-    res = []
-
-    deploy_cortx_dir = tmpdir_function / 'cortx-deploy'
-    deploy_bundle_dir = tmpdir_function / 'cortx-deploy-bundle'
-    upgrade_bundle_dir = tmpdir_function / 'cortx-upgrade'
-
-    build_script = (
-        Path(mhost.repo)
-        / 'srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh'
-    )
-
-    # XXX hard-coded
-    for b_dir, b_type, b_version in [
-        (deploy_cortx_dir, 'deploy-cortx', '2.0.0'),
-        (deploy_bundle_dir, 'deploy-bundle', '2.0.0'),
-        (upgrade_bundle_dir, 'upgrade', '2.1.0')
-    ]:
-        mhost.check_output(
-            f"{build_script} -o {b_dir} -t {b_type} -r {b_version} --gen-iso"
-        )
-        res.append(mhost.copy_from_host(b_dir.with_suffix('.iso')))
-
-    for iso_path in res:
-        dest = PROJECT_PATH / f"tmp/{iso_path.name}"
-        dest.write_bytes(iso_path.read_bytes())
-
-
-@pytest.mark.env_level('base')
 def test_build_isos(
     mhost, rpm_prvsnr, rpm_prvsnr_api, tmpdir_function
 ):

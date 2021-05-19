@@ -87,7 +87,7 @@ def parse_args(args=None, commands: Optional[List] = None):
     general_group = parser_common.add_argument_group('general')
     general_group.add_argument(
         "--version", action='store_true',
-        help="show version and quit"
+        help="show version and exit"
     )
 
     auth_group = parser_common.add_argument_group('authentication')
@@ -141,7 +141,6 @@ def parse_args(args=None, commands: Optional[List] = None):
 
         # TODO description and help strings
         for cmd_name, cmd in commands.items():
-
             desc = getattr(cmd, 'description', f'{cmd_name} configuration')
 
             subparser = subparsers.add_parser(
