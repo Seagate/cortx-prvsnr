@@ -37,8 +37,8 @@ from ..salt import (
     StateFunExecuter,
     local_minion_id
 )
-from ..salt_minion import config_salt_minions
 from .. import inputs, values
+from ..errors import BadPillarDataError
 
 _mod = sys.modules[__name__]
 logger = logging.getLogger(__name__)
@@ -68,6 +68,14 @@ class RunArgsUser:
             }
         }
     )
+    commands_list: list = attr.ib(
+        default=[],
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "list of commands the user needs to have access to"
+            }
+        }
+    )
     sudo: bool = attr.ib(
         default=True,
         metadata={
@@ -80,17 +88,24 @@ class RunArgsUser:
     targets: str = RunArgs.targets
 
 
-
 @attr.s(auto_attribs=True)
 class CreateUser(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = RunArgsUser
 
-    def run(self, uname, passwd, groups_list=[], sudo=True, targets: str = ALL_MINIONS):
+    def run(
+            self,
+            uname: str,
+            passwd: str,
+            sudo: bool = True,
+            group_list: list = [],
+            commands_list: list = [],
+            targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError("'/opt/seagate/users' directory missing. "
-                    "Ensure it is created before proceeding to create a new user.")
+            raise ValueError(
+                "'/opt/seagate/users' directory missing. "
+                "Ensure it is created before proceeding to create a new user.")
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname
@@ -159,7 +174,7 @@ class CreateUser(CommandParserFillerMixin):
         def _generate_ssh_config():
             for node in nodes_list:
                 hostname = PillarKey(
-                    'cluster/'+node+'/hostname'
+                    'cluster/' + node + '/hostname'
                 )
 
                 hostname_pillar = PillarResolver(LOCAL_MINION).get([hostname])
@@ -171,6 +186,7 @@ class CreateUser(CommandParserFillerMixin):
                         'value for {} is not specified'.format(hostname.pi_key)
                     )
 
+                # TODO make it optional for user
                 ssh_config = f'''Host {node} {hostname_pillar[hostname]}
     Hostname {hostname_pillar[hostname]}
     User {uname}
@@ -190,6 +206,9 @@ class CreateUser(CommandParserFillerMixin):
                 )
 
         def _copy_minion_nodes():
+            """
+            Copy the ssh directory from local/primary node to minions
+            """
             StateFunExecuter.execute(
                 'file.recurse',
                 fun_kwargs=dict(
@@ -235,9 +254,8 @@ class CreateUser(CommandParserFillerMixin):
             targets=targets
         )
 
-        if groups_list:
-            logger.info(f"Creating a new group '{group_name}' with "
-                        "limited access for csm admin users")
+        if not group_list:
+            logger.info(f"Creating a new group '{uname}'.")
             StateFunExecuter.execute(
                 'group.present',
                 fun_kwargs=dict(
@@ -257,53 +275,59 @@ class CreateUser(CommandParserFillerMixin):
             ),
             targets=targets
         )
+        # default commands user has access to
+        default_commands = [
+            '/usr/bin/tail',
+            '/usr/sbin/ifup',
+            '/usr/sbin/ifdown',
+            '/usr/sbin/ip',
+            '/usr/sbin/subscription-manager',
+            '/usr/bin/cat',
+            '/usr/bin/cd',
+            '/usr/bin/ls',
+            '/usr/sbin/pcs',
+            '/usr/bin/salt',
+            '/usr/local/bin/salt',
+            '/usr/bin/salt-call',
+            '/bin/salt-call',
+            '/usr/local/bin/salt-call',
+            '/usr/bin/yum',
+            '/usr/bin/dir',
+            '/usr/bin/cp',
+            '/usr/bin/systemctl',
+            '/opt/seagate/cortx/csm/lib/cortxcli',
+            '/usr/bin/cortxcli',
+            '/usr/bin/provisioner',
+            '/var/log',
+            '/tmp',
+            '/usr/bin/lsscsi',
+            '/usr/sbin/mdadm',
+            '/usr/sbin/sfdisk',
+            '/usr/sbin/mkfs',
+            '/usr/bin/rsync',
+            '/bin/rsync',
+            '/usr/sbin/smartctl',
+            '/usr/bin/ipmitool',
+            '/usr/bin/sspl_bundle_generate',
+            '/usr/bin/rabbitmqctl',
+            '/usr/sbin/rabbitmqctl',
+            '/var/lib/rabbitmq',
+            '/var/log/rabbitmq',
+            f'{SEAGATE_USER_HOME_DIR}',
+            f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init',
+            f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'
+        ]
+
+        if not commands_list:
+            commands_list = default_commands
 
         StateFunExecuter.execute(
             'file.managed',
             fun_kwargs=dict(
-                name=f"/etc/sudoers.d/'{uname}'",
-                contents=('## Restricted access for csm group users \n'
-                          '%csm-admin   ALL = NOPASSWD: '
-                          '/usr/bin/tail, '
-                          '/usr/sbin/ifup, '
-                          '/usr/sbin/ifdown, '
-                          '/usr/sbin/ip, '
-                          '/usr/sbin/subscription-manager, '
-                          '/usr/bin/cat, '
-                          '/usr/bin/cd, '
-                          '/usr/bin/ls, '
-                          '/usr/sbin/pcs, '
-                          '/usr/bin/salt, '
-                          '/usr/local/bin/salt, '
-                          '/usr/bin/salt-call, '
-                          '/bin/salt-call, '
-                          '/usr/local/bin/salt-call, '
-                          '/usr/bin/yum, '
-                          '/usr/bin/dir, '
-                          '/usr/bin/cp, '
-                          '/usr/bin/systemctl, '
-                          '/opt/seagate/cortx/csm/lib/cortxcli, '
-                          '/usr/bin/cortxcli, '
-                          '/usr/bin/provisioner, '
-                          '/var/log, '
-                          '/tmp, '
-                          '/usr/bin/lsscsi, '
-                          '/usr/sbin/mdadm, '
-                          '/usr/sbin/sfdisk, '
-                          '/usr/sbin/mkfs, '
-                          '/usr/bin/rsync, '
-                          '/bin/rsync, '
-                          '/usr/sbin/smartctl, '
-                          '/usr/bin/ipmitool, '
-                          '/usr/bin/sspl_bundle_generate, '
-                          '/usr/bin/sspl_bundle_generate, '
-                          '/usr/bin/rabbitmqctl, '
-                          '/usr/sbin/rabbitmqctl, '
-                          '/var/lib/rabbitmq, '
-                          '/var/log/rabbitmq, '
-                          f'{SEAGATE_USER_HOME_DIR}, '
-                          f'{PRVSNR_CLI_DIR}/factory_ops/boxing/init, '
-                          f'{PRVSNR_CLI_DIR}/factory_ops/unboxing/init'),
+                name=f"/etc/sudoers.d/{uname}",
+                contents=('## Restricted access for {uname} group users \n'
+                          f'%{uname}   ALL = NOPASSWD: '
+                          f'{" ,".join(commands_list)}'),
                 create=True,
                 replace=True,
                 user='root',
@@ -320,7 +344,7 @@ class CreateUser(CommandParserFillerMixin):
                 password=passwd,
                 hash_password=True,
                 home=str(home_dir),
-                groups=groups_list
+                groups=group_list
             ),
             targets=targets,
             secure=True
@@ -342,4 +366,3 @@ class CreateUser(CommandParserFillerMixin):
             )
         )
         _passwordless_ssh()
-

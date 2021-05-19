@@ -344,6 +344,8 @@ class Get(CommandParserFillerMixin):
 #   - update pillar related to some param(s)
 #   - call related states (before and after)
 #   - rollback if something goes wrong
+
+
 @attr.s(auto_attribs=True)
 class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
@@ -611,9 +613,9 @@ class SWUpdate(CommandParserFillerMixin):
                         _restart_salt_minions()
                     except Exception:
                         logger.exception(
-                           "FAILED: Restarting salt minions. "
-                           "For more info, check by executing command: \n"
-                           "systemctl status salt-minion -l"
+                            "FAILED: Restarting salt minions. "
+                            "For more info, check by executing command: \n"
+                            "systemctl status salt-minion -l"
                         )
 
         except Exception as update_exc:
@@ -724,8 +726,9 @@ class FWUpdate(CommandParserFillerMixin):
         source = Path(source).resolve()
 
         if not source.is_file():
-            logger.error(f"Provided input '{source}' is not a file. "
-                         "Please provide a valid file to proceed with FW Update.")
+            logger.error(
+                f"Provided input '{source}' is not a file. "
+                "Please provide a valid file to proceed with FW Update.")
             raise ValueError(f"{source} is not a file")
 
         script = (
