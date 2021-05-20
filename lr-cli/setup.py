@@ -15,10 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
 from setuptools import setup
 
 setup(
-    name='cortx_setup',
+    name="cortx_setup",
     version='2.0.0',
     author='Seagate',
     author_email='support@seagate.com',
@@ -33,8 +34,16 @@ setup(
         "Programming Language :: Python :: 3.6"
     ],
     keywords='cortx_setup API',
+    packages=[
+        'cortx_setup',
+        'cortx_setup.commands',
+        'cortx_setup.commands.network'
+    ],
     package_dir={'cortx_setup': 'cortx_setup'},
     include_package_data=True,
+    entry_points={
+        'console_scripts': ['cortx_setup=cortx_setup.main:main'],
+    },
     install_requires=[
         'cortx-prvsnr >= 2.0.42'
     ],
